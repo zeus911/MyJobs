@@ -400,6 +400,8 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
     Outputs:
     :response:          Sends a .csv file to the user.
     """
+    candidates = [user for user in User.objects.all()[0:50]]
+    import ipdb; ipdb.set_trace();
     response = HttpResponse(mimetype='text/csv')
     time = datetime.now().strftime('%m%d%Y')
     company_id = request.REQUEST.get('company')
@@ -409,18 +411,20 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
         raise Http404
     response['Content-Disposition'] = ('attachment; filename=' +
                                        company.name+"_DE_"+time+'.csv')
-    writer = csv.writer(response)
-
-    users_units = ProfileUnits.objects.filter(
-        user__in=candidates).select_related('user__id', 'content_type__name')
-
-    # Creating header for CSV
-    headers = ["primary_email"]
+    writer = csv.writer(response) 
+#    user_ids = [x.id for x in candidates]
+#    users_db = User.objects.filter(id__in=user_ids).prefetch_related('profileunits')
+#    user_units = [(user, [y.content_type for y in user.profileunits_set.all()]) for user in users_db]
     models = [model for model in
               ProfileUnits.__subclasses__() if model._meta.module_name
               not in models_excluded]
-
-    tup = [(x.user.id, x.content_type.name) for x in users_units]
+    model_names = [model._meta.module_name for model  in models]
+    users_units = [unit for unit in ProfileUnits.objects.filter(
+        user__in=candidates).select_related('user', 'content_type__name', 
+                                            *model_names).order_by('user')]
+    # Creating header for CSV
+    headers = ["primary_email"]
+#    tup = [(x.user.id, x.content_type.name) for x in users_units]
     tup_counter = Counter(tup)
     final_count = {}
     module_names = [x._meta.module_name for x in models]
