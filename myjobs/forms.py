@@ -1,9 +1,5 @@
 from django.forms import *
-from django.contrib.auth.tokens import default_token_generator
-from django.contrib.sites.models import get_current_site
-from django.core.validators import validate_email, ValidationError
-from django.template import loader, Context
-from django.utils.http import int_to_base36
+from django.core.validators import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
 from myjobs.models import User
