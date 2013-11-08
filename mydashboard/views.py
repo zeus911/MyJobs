@@ -367,12 +367,12 @@ def export_candidates(request):
     This function will be handling which export type to execute.
     Only function accessible through url.
     """
-    #try:
-    if request.GET['ex-t'] == 'csv':
-        candidates = filter_candidates(request)
-        response = export_csv(request, candidates)
-    #except:
-    #    raise Http404
+    try:
+        if request.GET['ex-t'] == 'csv':
+            candidates = filter_candidates(request)
+            response = export_csv(request, candidates)
+    except:
+        raise Http404
     return response
 
 
@@ -387,9 +387,9 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
     and or fields in either lists (models_excluded and fields_excluded). The
     header is always the first line in the csv.
 
-    User data creation iterates through the list of candidates and references
-    the header to determine what model and field to use getattr. Each user has
-    their own line in the csv.
+    User data creation iterates through the list of profileunits. The
+    profileunits are ordered_by user so when the user changes it prints the
+    past user's row and makes a new row for the current user.
 
     Inputs:
     :candidates:        A set list of Users
@@ -400,7 +400,6 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
     Outputs:
     :response:          Sends a .csv file to the user.
     """
-    candidates = [user for user in User.objects.all()[0:50]]
 
     response = HttpResponse(mimetype='text/csv')
     time = datetime.now().strftime('%m%d%Y')
@@ -412,9 +411,6 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
     response['Content-Disposition'] = ('attachment; filename=' +
                                        company.name+"_DE_"+time+'.csv')
     writer = csv.writer(response)
-#    user_ids = [x.id for x in candidates]
-#    users_db = User.objects.filter(id__in=user_ids).prefetch_related('profileunits')
-#    user_units = [(user, [y.content_type for y in user.profileunits_set.all()]) for user in users_db]
     models = [model for model in
               ProfileUnits.__subclasses__() if model._meta.module_name
               not in models_excluded]
@@ -458,12 +454,10 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
     writer.writerow(headers)
 
     # Making user info rows
-    #for user in candidates:
     user_fields = []
     temp_user = None
     for unit in users_units:
         user = unit.user
-
         continued = False
         num = 0
         if user == temp_user:
@@ -473,16 +467,12 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
             temp_user = user
             del_user_num = candidates.index(temp_user)
             del(candidates[del_user_num])
-        #grouped_units = {}
 
-        #units = users_units.filter(user=user)
-        #for k, v in itertools.groupby(units, lambda x: x.content_type.name):
-        #    grouped_units[k.replace(" ", "")] = list(v)
-        #if units:
         if not continued:
             if user_fields:
                 writer.writerow(user_fields)
-        user_fields = [user.email]
+            user_fields = [user.email]
+        # Filling in user_fields with default data
         whileloop = True
         while num > len(headers)-1 or whileloop == True:
             if not len(user_fields) == len(headers):
@@ -490,13 +480,7 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
                 num += 1
             else:
                 whileloop = False
-
-        #for header in headers[1:]:
-        #    header_split = header.split('_')
-        #    model = header_split[0]
-        #    num = header_split[-1]
-        #    field = "_".join(header_split[1:-1])
-
+        
         instance = getattr(unit, unit.content_type.name.replace(" ", ""))
         fields = [field for field in
                   instance._meta.get_all_field_names() if unicode(field) not
@@ -506,6 +490,7 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
         for field in fields:
             value = getattr(instance, field, u'')
             value = unicode(value).encode('utf8')
+            # Find where to put value in user_fields
             n = 1
             position = headers.index(
                 unit.content_type.name.replace(" ", "") + "_" + field + "_" + str(n))
@@ -515,6 +500,8 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
                     unit.content_type.name.replace(" ", "") + "_" + field + "_" + str(n))
             user_fields[position] = '"%s"' % value.replace('\r\n', '')
 
+    # Everyone that didn't get included from the above code, doesn't have
+    # profileunits. Fill in user_fields with default value.
     for user in candidates:
         user_fields = [user.email]
         for header in headers[1:]:
