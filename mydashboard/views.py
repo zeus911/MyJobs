@@ -358,7 +358,7 @@ def filter_candidates(request):
             user__opt_in_employers=False).order_by('-created_on')
     for search in candidate_searches:
         candidates.append(search.user)
-    return set(candidates)
+    return list(set(candidates))
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
@@ -367,12 +367,12 @@ def export_candidates(request):
     This function will be handling which export type to execute.
     Only function accessible through url.
     """
-    try:
-        if request.GET['ex-t'] == 'csv':
-            candidates = filter_candidates(request)
-            response = export_csv(request, candidates)
-    except:
-        raise Http404
+    #try:
+    if request.GET['ex-t'] == 'csv':
+        candidates = filter_candidates(request)
+        response = export_csv(request, candidates)
+    #except:
+    #    raise Http404
     return response
 
 
@@ -401,7 +401,7 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
     :response:          Sends a .csv file to the user.
     """
     candidates = [user for user in User.objects.all()[0:50]]
-    import ipdb; ipdb.set_trace();
+
     response = HttpResponse(mimetype='text/csv')
     time = datetime.now().strftime('%m%d%Y')
     company_id = request.REQUEST.get('company')
@@ -411,30 +411,29 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
         raise Http404
     response['Content-Disposition'] = ('attachment; filename=' +
                                        company.name+"_DE_"+time+'.csv')
-    writer = csv.writer(response) 
+    writer = csv.writer(response)
 #    user_ids = [x.id for x in candidates]
 #    users_db = User.objects.filter(id__in=user_ids).prefetch_related('profileunits')
 #    user_units = [(user, [y.content_type for y in user.profileunits_set.all()]) for user in users_db]
     models = [model for model in
               ProfileUnits.__subclasses__() if model._meta.module_name
               not in models_excluded]
-    model_names = [model._meta.module_name for model  in models]
-    users_units = [unit for unit in ProfileUnits.objects.filter(
-        user__in=candidates).select_related('user', 'content_type__name', 
-                                            *model_names).order_by('user')]
+    model_names = [model._meta.module_name for model in models]
+    users_units = ProfileUnits.objects.filter(
+        user__in=candidates).select_related('user', 'user__id', 'profileunits', 'content_type__name',
+                                            *model_names).order_by('user')
     # Creating header for CSV
     headers = ["primary_email"]
-#    tup = [(x.user.id, x.content_type.name) for x in users_units]
+    tup = [(x.user.id, x.content_type.name) for x in users_units]
     tup_counter = Counter(tup)
     final_count = {}
-    module_names = [x._meta.module_name for x in models]
     tup_most_common = tup_counter.most_common()
-    for module_name in module_names:
+    for model_name in model_names:
         for counted_model in tup_most_common:
-            if (counted_model[0][1].replace(" ", "") == unicode(module_name)
+            if (counted_model[0][1].replace(" ", "") == unicode(model_name)
                     and counted_model[0][1].replace(" ", "")
                     not in final_count):
-                final_count[module_name] = counted_model[1]
+                final_count[model_name] = counted_model[1]
     for model in models:
         module_count = 0
         current_count = 1
@@ -459,33 +458,67 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
     writer.writerow(headers)
 
     # Making user info rows
-    for user in candidates:
-        grouped_units = {}
-        user_fields = [user.email]
-        units = users_units.filter(user=user)
-        for k, v in itertools.groupby(units, lambda x: x.content_type.name):
-            grouped_units[k.replace(" ", "")] = list(v)
-        if units:
-            for header in headers[1:]:
-                header_split = header.split('_')
-                model = header_split[0]
-                num = header_split[-1]
-                field = "_".join(header_split[1:-1])
-                if model in grouped_units:
-                    try:
-                        pu_instance = grouped_units[model][int(num)-1]
-                        instance = getattr(
-                            pu_instance, pu_instance.content_type.name.replace(
-                                " ", ""))
-                    except IndexError:
-                        instance = None
+    #for user in candidates:
+    user_fields = []
+    temp_user = None
+    for unit in users_units:
+        user = unit.user
 
-                value = getattr(instance, field, u'')
-                value = unicode(value).encode('utf8')
-                user_fields.append('"%s"' % value.replace('\r\n', ''))
+        continued = False
+        num = 0
+        if user == temp_user:
+            continued = True
         else:
-            for header in headers[1:]:
+            continued = False
+            temp_user = user
+            del_user_num = candidates.index(temp_user)
+            del(candidates[del_user_num])
+        #grouped_units = {}
+
+        #units = users_units.filter(user=user)
+        #for k, v in itertools.groupby(units, lambda x: x.content_type.name):
+        #    grouped_units[k.replace(" ", "")] = list(v)
+        #if units:
+        if not continued:
+            if user_fields:
+                writer.writerow(user_fields)
+        user_fields = [user.email]
+        whileloop = True
+        while num > len(headers)-1 or whileloop == True:
+            if not len(user_fields) == len(headers):
                 user_fields.append('""')
+                num += 1
+            else:
+                whileloop = False
+
+        #for header in headers[1:]:
+        #    header_split = header.split('_')
+        #    model = header_split[0]
+        #    num = header_split[-1]
+        #    field = "_".join(header_split[1:-1])
+
+        instance = getattr(unit, unit.content_type.name.replace(" ", ""))
+        fields = [field for field in
+                  instance._meta.get_all_field_names() if unicode(field) not
+                  in [u'id', u'user', u'profileunits_ptr', u'date_created',
+                  u'date_updated', u'content_type']]
+
+        for field in fields:
+            value = getattr(instance, field, u'')
+            value = unicode(value).encode('utf8')
+            n = 1
+            position = headers.index(
+                unit.content_type.name.replace(" ", "") + "_" + field + "_" + str(n))
+            while not user_fields[position] == '""':
+                n += 1
+                position = headers.index(
+                    unit.content_type.name.replace(" ", "") + "_" + field + "_" + str(n))
+            user_fields[position] = '"%s"' % value.replace('\r\n', '')
+
+    for user in candidates:
+        user_fields = [user.email]
+        for header in headers[1:]:
+            user_fields.append('""')
         writer.writerow(user_fields)
 
     return response
