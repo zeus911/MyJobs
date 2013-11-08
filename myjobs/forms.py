@@ -9,8 +9,20 @@ from django.utils.translation import ugettext_lazy as _
 from myjobs.models import User
 from myprofile.models import Name, SecondaryEmail
 
-def make_choices(user):
-    choices = [('none', 'Do not use gravatar')]
+def make_choices(user, default_value='', default_text=''):
+    """
+    Turns the set of email addresses associated with a user into a list
+    suitable for use in a ChoiceField
+
+    Inputs:
+    :user: User instance
+    :default_value: Optional; What will be stored in the database
+    :default_name: Optional; What will be displayed in place of :default_value:
+        on forms
+    """
+    choices = []
+    if default_value and default_text:
+        choices.append((default_value, default_text))
     if user.is_active:
         choices.append((user.email, user.email))
         for email in SecondaryEmail.objects.filter(user=user, verified=True):
@@ -60,7 +72,7 @@ class EditAccountForm(Form):
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user',None)
-        self.choices = make_choices(self.user)
+        self.choices = make_choices(self.user, 'none', 'Do not use Gravatar')
         super(EditAccountForm, self).__init__(*args, **kwargs)
         self.fields["gravatar"] = ChoiceField(label=_("Gravatar Email"),
                                               widget=Select(attrs=
