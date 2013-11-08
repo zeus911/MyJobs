@@ -84,23 +84,38 @@
                                                 </b>
                                             </li>
                                             <li id="back-btn-li" class="no-show"><a id="back-btn"><span class="arrow-left"></span></a></li>
+
                                             {% if not user.is_disabled %}
-                                            <li><a id="profile-link" href="{% url 'view_profile' %}">{% trans "Profile" %}</a></li>
-                                            {% if user.is_active %}
-                                            <li><a id="savedsearch-link" href="{% url 'saved_search_main' %}">{% trans "Saved Searches" %}</a></li>
-                                            {% if group_member and user.is_active and company_name|length == 1  %}
-                                            <li><a id="candidate-link-one" href="{% url 'dashboard' %}?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
-                                            {% elif group_member and user.is_active and company_name|length >= 2 %}
-                                            <li><a id="candidate-link">{% trans "Candidates" %}</a></li>
+                                                <li><a id="profile-link" href="{% url 'view_profile' %}">{% trans "Profile" %}</a></li>
+
+                                                {% if user.is_active %}
+
+                                                    <li><a id="savedsearch-link" href="{% url 'saved_search_main' %}">{% trans "Saved Searches" %}</a></li>
+
+                                                    {% if group_member and user.is_active and company_name|length == 1  %}
+
+                                                        <li><a id="candidate-link-one" href="{% url 'dashboard' %}?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
+
+                                                    {% elif group_member and user.is_active and company_name|length >= 2 %}
+
+                                                        <li><a id="candidate-link">{% trans "Candidates" %}</a></li>
+
+                                                    {% endif %}
+                                                {% endif %}
+
+                                                <li><a id="account-link" href="{% url 'edit_account' %}">{% trans "Account Settings" %}</a></li>
+                                                <li><a id="settings-link">{% trans "Settings" %}</a></li>
+
                                             {% endif %}
-                                            {% endif %}
-                                            <li><a id="account-link" href="{% url 'edit_account' %}">{% trans "Account Settings" %}</a></li>
-                                            <li><a id="settings-link">{% trans "Settings" %}</a></li>
-                                            {% endif %}
+
                                             <li><a id="logout-link" href="{% url 'auth_logout' %}">Log Out</a></li>
+
                                             {% for company in company_name %}
-                                            <li><a class="company-nav-item sub-nav-item no-show" href="{% url 'dashboard' %}?company={{ company.id }}">{{ company|truncatechars:"20" }}</a></li>
+
+                                                <li><a class="company-nav-item sub-nav-item no-show" href="{% url 'dashboard' %}?company={{ company.id }}">{{ company|truncatechars:"20" }}</a></li>
+
                                             {% endfor %}
+
                                             <li><a class="settings-nav-item sub-nav-item no-show" href="{% url 'edit_account' %}">{% trans "Account Settings" %}</a></li>
                                             <li><a class="settings-nav-item sub-nav-item no-show" href="{% url 'auth_logout' %}">Log Out</a></li>
                                         </ul>{# /pop-menu #}
