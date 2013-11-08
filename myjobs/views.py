@@ -498,7 +498,6 @@ def toolbar(request):
     if referer.netloc.endswith('.jobs') and referer.netloc != 'www.my.jobs':
         max_age = 30 * 24 * 60 * 60
         last_name = request.REQUEST.get('site_name', referer.netloc)
-        print last_name
         response.set_cookie(key='lastmicrosite',
                             value='%s://%s' % (referer.scheme, referer.netloc),
                             max_age=max_age,

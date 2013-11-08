@@ -576,3 +576,15 @@ class MyJobsViewsTests(TestCase):
         response = self.client.get(reverse('toolbar'))
         p3p = str(response["P3P"])
         self.assertEqual('CP="ALL' in p3p, True)
+
+    def test_referring_site_in_topbar(self):
+        self.client.get(
+            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&callback=foo',
+            HTTP_REFERER='http://indianapolis.jobs')
+
+        last_site = self.client.cookies.get('lastmicrosite').value
+        last_name = self.client.cookies.get('lastmicrositename').value
+
+        response = self.client.get(reverse('home'))
+        self.assertIn(last_site, response.content)
+        self.assertIn(last_name, response.content)
