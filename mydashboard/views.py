@@ -500,6 +500,9 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
                     unit.content_type.name.replace(" ", "") + "_" + field + "_" + str(n))
             user_fields[position] = '"%s"' % value.replace('\r\n', '')
 
+        if unit is list(users_units)[-1]:
+            writer.writerow(user_fields)
+
     # Everyone that didn't get included from the above code, doesn't have
     # profileunits. Fill in user_fields with default value.
     for user in candidates:
