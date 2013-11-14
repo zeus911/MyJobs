@@ -935,6 +935,7 @@ em.pendingText {
 }
 
 .topbar #last-microsite .arrow {
+    position: absolute;
     float: left;
     margin-left: 2px;
     border-right: 0px;
