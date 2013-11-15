@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    @page {
+        size: a4 portrait;
+        @frame header_frame {
+            -pdf-frame-content: header_content;
+            left: 50pt; width: 512pt; top: 50pt; height: 40pt;
+        }
+
+        @frame content_fram {
+            left: 50pt; width: 512pt; top: 90pt; height: 632pt;
+        }
+
+        @frame footer_frame {
+            -pdf-frame-content: footer_content;
+            left: 530pt; width: 512pt; top: 772pt; height: 20pt;
+        }
+    }
+
+    .center{
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+
+<div id="header_content"><h1>{{ company.name }}</h1></div>
+<div id="footer_content"><pdf:pagenumber> of <pdf:pagecount> </div>
+
+<div>
+    <table>
+        <tr>
+            <td><h3>Name</h3></td>
+            <td><h3>Email Address</h3></td>
+        </tr>
+    </table>
+</div>
+
+{% for user, name in candidates.items %}
+<table>
+    <tr>
+        <td>{{ name }}</td>
+        <td>{{ user.email }}</td>
+    </tr>
+</table>
+{% endfor %}
+<div class="center">
+    <h3>Candidates with no name given</h3>
+</div>
+{% for candidate in no_name_cand %}
+<table>
+    <tr>
+        <td></td>
+        <td>{{ candidate.email }}</td>
+    </tr>
+</table>
+{% endfor %}
+</body>
+</html>
