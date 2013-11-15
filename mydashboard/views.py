@@ -534,6 +534,7 @@ def export_pdf(request, candidates):
                                                              'user__id',
                                                              'content_type',
                                                              'name')
+    cand_count = len(candidates)
     for name in names:
         user = name.user
         candidate_info[user] = name.get_full_name()
@@ -541,7 +542,8 @@ def export_pdf(request, candidates):
         del(candidates[del_user_num])
     data_dict = {'company': company,
                  'candidates': candidate_info,
-                 'no_name_cand': candidates}
+                 'no_name_cand': candidates,
+                 'count': cand_count}
     template = get_template('mydashboard/export/candidate_listing.html')
     html = template.render(Context(data_dict))
 
