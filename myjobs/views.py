@@ -494,7 +494,7 @@ def toolbar(request):
     response = '%s(%s);' % (callback, json.dumps(data))
     response = HttpResponse(response, content_type="text/javascript")
     caller = request.REQUEST.get('site', '')
-    if not caller.endswith('www.my.jobs'):
+    if caller and not caller.endswith('www.my.jobs'):
         max_age = 30 * 24 * 60 * 60
         last_name = request.REQUEST.get('site_name', caller)
         response.set_cookie(key='lastmicrosite',
