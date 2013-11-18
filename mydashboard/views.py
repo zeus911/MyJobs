@@ -1,23 +1,26 @@
 import operator
 import csv
-import itertools
 
 from datetime import datetime, timedelta
 from collections import Counter
+import cStringIO as StringIO
 
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Q
 from django.http import Http404, HttpResponse
-from django.template import RequestContext
+from django.template import RequestContext, Context
+from django.template.loader import get_template
 from django.shortcuts import render_to_response
 
 from mydashboard.helpers import saved_searches
 from mydashboard.models import *
 from myjobs.models import User
 from myprofile.models import (PrimaryNameProfileUnitManager,
-                              ProfileUnits)
+                              ProfileUnits, Name)
 from mysearches.models import SavedSearch
+
 from endless_pagination.decorators import page_template
+from xhtml2pdf import pisa
 
 
 @page_template("mydashboard/dashboard_activity.html")
@@ -371,6 +374,9 @@ def export_candidates(request):
         if request.GET['ex-t'] == 'csv':
             candidates = filter_candidates(request)
             response = export_csv(request, candidates)
+        elif request.GET['ex-t'] == 'pdf':
+            candidates = filter_candidates(request)
+            response = export_pdf(request, candidates)
     except:
         raise Http404
     return response
@@ -513,3 +519,33 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
 
     return response
 
+
+def export_pdf(request, candidates):
+    result = StringIO.StringIO()
+    company_id = request.REQUEST.get('company')
+    try:
+        company = Company.objects.get(id=company_id)
+    except Company.DoesNotExist:
+        raise Http404
+
+    candidate_info = {}
+    names = Name.objects.filter(user__in=candidates,
+                                primary=True).select_related('user',
+                                                             'user__id',
+                                                             'content_type',
+                                                             'name')
+    cand_count = len(candidates)
+    for name in names:
+        user = name.user
+        candidate_info[user] = name.get_full_name()
+        del_user_num = candidates.index(user)
+        del(candidates[del_user_num])
+    data_dict = {'company': company,
+                 'candidates': candidate_info,
+                 'no_name_cand': candidates,
+                 'count': cand_count}
+    template = get_template('mydashboard/export/candidate_listing.html')
+    html = template.render(Context(data_dict))
+
+    pisa_status = pisa.CreatePDF(html, dest=result)
+    return HttpResponse(result.getvalue(), mimetype='application/pdf')
