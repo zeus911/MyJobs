@@ -5,6 +5,7 @@ import hmac
 import json
 import logging
 import urllib2
+from urlparse import urlparse
 
 from django.contrib.auth import authenticate, logout
 from django.contrib.sessions.models import Session
@@ -491,4 +492,17 @@ def toolbar(request):
                 "employer": employer}
     callback = request.GET.get('callback', '')
     response = '%s(%s);' % (callback, json.dumps(data))
-    return HttpResponse(response, content_type="text/javascript")
+    response = HttpResponse(response, content_type="text/javascript")
+    caller = request.REQUEST.get('site', '')
+    if caller and not caller.endswith('www.my.jobs'):
+        max_age = 30 * 24 * 60 * 60
+        last_name = request.REQUEST.get('site_name', caller)
+        response.set_cookie(key='lastmicrosite',
+                            value=caller,
+                            max_age=max_age,
+                            domain='.my.jobs')
+        response.set_cookie(key='lastmicrositename',
+                            value=last_name,
+                            max_age=max_age,
+                            domain='.my.jobs')
+    return response
