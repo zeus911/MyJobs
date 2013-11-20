@@ -53,8 +53,7 @@ a:hover {
     overflow-x: hidden;    
 }
 .activity-mobile input {
-    display: inline;
-    width: 105px;
+    display: inline;    
 }
 
 /* Sort by field in saved search save/edit */
@@ -166,6 +165,41 @@ table#row-link-table {
 #row-link-table ul {
     list-style-type: none;
     margin-left: -10px;
+}
+
+.date_activity {
+    float: right;    
+    margin-right: 60px;
+    margin-top: -80px;
+    
+}
+.date_activity a {
+    display: block;
+    text-decoration: none;    
+}
+.arrow-down {
+    float: right;
+	width: 0; 
+	height: 0; 
+	border-left: 15px solid transparent;
+	border-right: 15px solid transparent;	
+	border-top: 15px solid #444;
+	margin-top: -34px;
+	margin-right: -38px;
+}
+.date_activity .date_range {
+    display: none;
+}
+.date_activity:hover .date_range {
+    display: block;
+    position: absolute;
+	height: 200px;
+	width: 250px;
+	background: #f2f2f2;
+	box-shadow: 0 0 4px #888888;	
+	padding: 8px;
+	z-index: 1000;
+	margin-left: -82px;
 }
 
 .link-list {     
