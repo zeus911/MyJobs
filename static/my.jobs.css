@@ -167,13 +167,13 @@ table#row-link-table {
     margin-left: -10px;
 }
 
-.date_activity {
+#date_activity {
     float: right;    
     margin-right: 60px;
     margin-top: -80px;
     
 }
-.date_activity a {
+#date_activity a {
     display: block;
     text-decoration: none;    
 }
@@ -187,11 +187,11 @@ table#row-link-table {
 	margin-top: -34px;
 	margin-right: -38px;
 }
-.date_activity .date_range {
-    display: none;
-}
-.date_activity:hover .date_range {
-    display: block;
+
+
+
+.date_range {
+    display: none;    
     position: absolute;
 	height: 200px;
 	width: 250px;
@@ -199,7 +199,9 @@ table#row-link-table {
 	box-shadow: 0 0 4px #888888;	
 	padding: 8px;
 	z-index: 1000;
-	margin-left: -82px;
+	margin-top: -40px;
+	margin-left: 32px;
+	
 }
 
 .link-list {     
