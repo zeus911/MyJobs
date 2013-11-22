@@ -373,18 +373,18 @@ def export_candidates(request):
     This function will be handling which export type to execute.
     Only function accessible through url.
     """
-    #try:
-    if request.GET['ex-t'] == 'csv':
-        candidates = filter_candidates(request)
-        response = export_csv(request, candidates)
-    elif request.GET['ex-t'] == 'pdf':
-        candidates = filter_candidates(request)
-        response = export_pdf(request, candidates)
-    elif request.GET['ex-t'] == 'xml':
-        candidates = filter_candidates(request)
-        response = export_xml(request, candidates)
-    #except:
-    #    raise Http404
+    try:
+        if request.GET['ex-t'] == 'csv':
+            candidates = filter_candidates(request)
+            response = export_csv(request, candidates)
+        elif request.GET['ex-t'] == 'pdf':
+            candidates = filter_candidates(request)
+            response = export_pdf(request, candidates)
+        elif request.GET['ex-t'] == 'xml':
+            candidates = filter_candidates(request)
+            response = export_xml(request, candidates)
+    except:
+        raise Http404
     return response
 
 
@@ -524,6 +524,9 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
 
 
 def export_pdf(request, candidates):
+    """
+    Generates an HTML page which then gets converted to pdf.
+    """
     result = StringIO.StringIO()
     company_id = request.REQUEST.get('company')
     try:
