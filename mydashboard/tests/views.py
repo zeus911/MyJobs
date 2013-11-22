@@ -171,3 +171,9 @@ class MyDashboardViewsTests(TestCase):
             reverse('export_candidates')+'?company=' +
             str(self.company.id)+'&ex-t=pdf')
         self.assertEqual(response.status_code, 200)
+
+    def test_export_xml(self):
+        response = self.client.post(
+            reverse('export_candidates')+'?company=' +
+            str(self.company.id)+'&ex-t=xml')
+        self.assertEqual(response.status_code, 200)
