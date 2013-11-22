@@ -579,7 +579,7 @@ class MyJobsViewsTests(TestCase):
 
     def test_referring_site_in_topbar(self):
         self.client.get(
-            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&callback=foo',
+            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=indianapolis.jobs&callback=foo',
             HTTP_REFERER='http://indianapolis.jobs')
 
         last_site = self.client.cookies.get('lastmicrosite').value
