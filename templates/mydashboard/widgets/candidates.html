@@ -1,0 +1,19 @@
+{% load user_ops %}
+{% load i18n %}
+
+<div>
+    <heading>Candidates</heading>
+    <div id="count-box">
+        <span id="count-text">
+            {% if candidates  %}
+                {% with candidates|count_candidates as count %}
+                    {{ count }}
+                {% endwith %}
+            {% else %}
+                0
+            {% endif %}
+        </span>
+    </div>
+</div>
+
+<span class="fake-url">Export Candidate List</span>

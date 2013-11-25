@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load common_tags %}
+{% load widget_manager %}
 {% block site-title %}
     {% with name_obj=user|get_name_obj %}
         <title>{{ company_name }} Activity Information on My.jobs</title>
@@ -142,9 +143,17 @@ $(document).ready(function()
         </div>
         
         <div class="span4">
-            
-            {% include "mydashboard/profile.html" %}            
-            
+            <div class="formBox" id="company-information">
+
+                {% for widget in dashboard_widgets %}
+                    {% with widget|widget_template as w_template %}
+                        {% if w_template %}
+                            {% include w_template %}
+                        {% endif %}
+                    {% endwith %}
+                {% endfor %}
+
+            </div>
         </div>
     </div>{# /row #}
 </div>{# /wrapper #}
