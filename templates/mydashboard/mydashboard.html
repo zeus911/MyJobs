@@ -122,7 +122,8 @@ $(document).ready(function()
                         <div class="span3 form-label"><strong>Export:</strong></div>
                         <a class="btn" href="{% url 'export_candidates' %}?company={{ company_id }}&ex-t=csv">CSV</a>
                         <a class="btn" href="{% url 'export_candidates' %}?company={{ company_id }}&ex-t=pdf">PDF</a>
-                        <a class="btn" href="{% url 'export_candidates' %}?company={{ company_id }}&ex-t=xml">XML</a>
+                        <a class="btn" href="{% url 'export_candidates' %}?company={{ company_id }}&ex-t=xml">HR-XML</a>
+                        <a class="btn" href="{% url 'export_candidates' %}?company={{ company_id }}&ex-t=json">HR-JSON</a>
                     </div>
                     <div class="span2 pull-right primary-btn-padding hide-mobile"><input type="submit" class="btn primary" value="View Activity"></div>
                 </form>

@@ -164,16 +164,28 @@ class MyDashboardViewsTests(TestCase):
         response = self.client.post(
             reverse('export_candidates')+'?company=' +
             str(self.company.id)+'&ex-t=csv')
+        self.assertTrue(response.content)
         self.assertEqual(response.status_code, 200)
 
     def test_export_pdf(self):
         response = self.client.post(
             reverse('export_candidates')+'?company=' +
             str(self.company.id)+'&ex-t=pdf')
+        self.assertTrue(response.content.index('PDF'))
+        self.assertEqual(response.templates[0].name,
+                         'mydashboard/export/candidate_listing.html')
         self.assertEqual(response.status_code, 200)
 
     def test_export_xml(self):
         response = self.client.post(
             reverse('export_candidates')+'?company=' +
             str(self.company.id)+'&ex-t=xml')
+        self.assertTrue(response.content.index('candidates'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_export_json(self):
+        response = self.client.post(
+            reverse('export_candidates')+'?company=' +
+            str(self.company.id)+'&ex-t=json')
+        self.assertTrue(response.content.index('candidates'))
         self.assertEqual(response.status_code, 200)
