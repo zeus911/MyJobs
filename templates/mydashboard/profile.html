@@ -39,7 +39,7 @@
                                 <td>                                
                                 <div class="microsite-name"><a href="{% url 'microsite_activity' %}?company={{ company_id }}&url={{url.url}}">{{url.url|url_domain}}</a></div>
                                 </td>
-                           <tr>
+                           </tr>
                            {% endfor %}                    
                            </table>
                         </div>{# /accordion-body #}
@@ -52,7 +52,7 @@
                         <td>                        
                         <a href="microsite?company={{ company_id }}&url={{url.url}}"><h4 class="mobile-site-links">{{url.url|url_domain}}</h4></a>
                         </td>
-                    <tr>
+                    </tr>
                     {% endfor %}
                     
                  </table>
