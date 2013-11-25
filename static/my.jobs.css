@@ -53,8 +53,7 @@ a:hover {
     overflow-x: hidden;    
 }
 .activity-mobile input {
-    display: inline;
-    width: 105px;
+    display: inline;    
 }
 
 /*Employer Dashboard Widgets */
@@ -190,6 +189,43 @@ table#row-link-table {
 #row-link-table ul {
     list-style-type: none;
     margin-left: -10px;
+}
+
+#date_activity {
+    float: right;    
+    margin-right: 60px;
+    margin-top: -80px;
+    
+}
+#date_activity a {
+    display: block;
+    text-decoration: none;    
+}
+.arrow-down {
+    float: right;
+	width: 0; 
+	height: 0; 
+	border-left: 15px solid transparent;
+	border-right: 15px solid transparent;	
+	border-top: 15px solid #444;
+	margin-top: -34px;
+	margin-right: -38px;
+}
+
+
+
+.date_range {
+    display: none;    
+    position: absolute;
+	height: 200px;
+	width: 250px;
+	background: #f2f2f2;
+	box-shadow: 0 0 4px #888888;	
+	padding: 8px;
+	z-index: 1000;
+	margin-top: -40px;
+	margin-left: 32px;
+	
 }
 
 .link-list {     

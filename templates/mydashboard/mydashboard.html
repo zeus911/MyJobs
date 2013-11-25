@@ -22,6 +22,11 @@
 <script>
 $(document).ready(function()
 {
+    
+   $("#date_activity a").click(function () {
+    $(".date_range").toggle();
+   });
+        
    $('#row-link-table tr').each(function(i,e)
    {
       $(e).children('td').click(function()
@@ -61,8 +66,7 @@ $(document).ready(function()
     var _href = $("a.endless_more").attr("href");
     if (_href.length < 100) {
         $("a.endless_more").attr("href", _href + '&before={{ before|date:'m/d/Y' }}&after={{ after|date:'m/d/Y' }}');
-    }
-   
+    }    
 });
 </script>
 {% endblock %}
@@ -88,46 +92,25 @@ $(document).ready(function()
         <div class="span12" id="profileSubtitleBar">
             &nbsp;
         </div>
+        
+        <div id="date_activity">
+            {% if date_display %}
+                <a href="#"><h1>{{ date_display }}</h1></a>
+            {% else %}
+                <a href="#"><h1>30 Days</h1></a>
+            {% endif %}
+            
+            <a href="#"><div class="arrow-down"></div></a>
+            
+         </div>
+         
     </div>
     <div class="row">
         <div class="span8" id="moduleColumn">            
         
             <div class="formBox">
-            <h3 class="hide-mobile">Candidate Activity</h3><h3 class="candidate-activity-mobile">Job Seeker Activity</h3>
-                               
-                <form action='{% url 'dashboard' %}?company={{ company_id }}' method='POST' class="move-left">
-                    {% csrf_token %}
-                    <div class="hide-mobile">
-                        <div class="span2 form-label"><strong>Date Range:</strong></div><input name="after" type="text" placeholder="{{ after|date:'m/d/Y' }}" class="datepicker"> <strong>to</strong> <input name="before" type="text" placeholder="{{ before|date:'m/d/Y' }}" class="datepicker"></br>
-                        <div class="span2 form-label">&nbsp;</div>
-                    </div>
-                    <div class="activity-mobile">
-                        <input class="btn btn-success" type="hidden" name="first-hide" id="first-hide"> 
-                        <input class="btn" type="submit" name="today" id="today" value="Today">&nbsp;<input class="btn" type="submit" name="seven_days" id="seven_days" value="7 Days">&nbsp;<input class="btn" type="submit" name="thirty_days" id="thirty_days" value="30 days">                        
-                    </div>
-                    <div class="hide-mobile">
-                        <br>
-                        <div class="span3 form-label"><strong>Filter by site:</strong></div>
-                        <select name="microsite" class="microsite-list btn">
-                            <option value="{{ company_name }}">All</option>
-                            {% for url in company_microsites %}
-                                {% ifequal site_name url.url %}
-                                <option value="{{ url.url|cut:'http://' }}" selected="selected">{{ url.url|url_domain }}</option>
-                                {% else %}
-                                <option value="{{ url.url|cut:'http://' }}">{{ url.url|url_domain }}</option>
-                                {% endifequal %}
-                            {% endfor %}
-                        </select>
-                        <br>
-                        <br>
-                        <div class="span3 form-label"><strong>Export:</strong></div>
-                        <a class="btn" href="{% url 'export_candidates' %}?company={{ company_id }}&ex-t=csv">CSV</a>
-                        <a class="btn" href="{% url 'export_candidates' %}?company={{ company_id }}&ex-t=pdf">PDF</a>
-                    </div>
-                    <div class="span2 pull-right primary-btn-padding hide-mobile"><input type="submit" class="btn primary" value="View Activity"></div>
-                </form>
-                <br>
-                <hr>
+            <h3 class="hide-mobile">Candidate Activity</h3><h3 class="candidate-activity-mobile">Job Seeker Activity</h3>                
+                
                 <div class="pull-left"><strong>Activity between {{after.date}} and {{before.date}} for {{ site_name|cut:"http://" }}</strong></div><br>
                 
                 {% include page_template %}           
@@ -143,7 +126,23 @@ $(document).ready(function()
         </div>
         
         <div class="span4">
-
+            
+            <div class="date_range">
+                <form action='{% url 'dashboard' %}?company={{ company_id }}' method='POST'>
+                    {% csrf_token %}
+                    <div class="activity-mobile">
+                        <input class="btn btn-success" type="hidden" name="first-hide" id="first-hide">
+                        <input class="btn" type="submit" name="today" id="today" value="Today">&nbsp;<input class="btn" type="submit" name="seven_days" id="seven_days" value="7 Days">&nbsp;<input class="btn" type="submit" name="thirty_days" id="thirty_days" value="30 days">
+                    </div>
+                    <div class="hide-mobile">
+                        <br>
+                        <input name="after" type="text" placeholder="{{ after|date:'m/d/Y' }}" class="datepicker"> <strong>to</strong><br>
+                        <input name="before" type="text" placeholder="{{ before|date:'m/d/Y' }}" class="datepicker">
+                    </div>
+                    <div class="span2 pull-right primary-btn-padding hide-mobile"><input type="submit" class="btn primary" value="View Activity"></div>
+                </form>
+            </div>
+            
             {% if dashboard_widgets %}
 
             <div class="formBox" id="company-information">
