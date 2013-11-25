@@ -143,6 +143,9 @@ $(document).ready(function()
         </div>
         
         <div class="span4">
+
+            {% if dashboard_widgets %}
+
             <div class="formBox" id="company-information">
 
                 {% for widget in dashboard_widgets %}
@@ -154,7 +157,10 @@ $(document).ready(function()
                 {% endfor %}
 
             </div>
-        </div>
+
+            {% endif %}
+
+        </div> {# /.span4 #}
     </div>{# /row #}
 </div>{# /wrapper #}
 
