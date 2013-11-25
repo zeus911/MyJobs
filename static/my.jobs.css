@@ -64,6 +64,7 @@ a:hover {
     padding: 20px 0 20px 0;
     border: 5px solid #000000;
     border-radius: 5px;
+    text-align: center;
 }
 #count-text{
     font-size: 1.7em;
