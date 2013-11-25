@@ -25,8 +25,8 @@
                     {{candidate.url|url_domain}}<br>
                     {{candidate.created_on.date}}                    
                 </td>
-             </tr>
-             <tr class="candidate-activity-mobile">
+            </tr>
+            <tr class="candidate-activity-mobile">
                 <td>
                     <span class="gravatar pull-left">{% get_gravatar candidate.user '45' %}</span> 
                 </td>
@@ -38,8 +38,8 @@
                         <div class="bar bar-{% completion_level candidate.user.profile_completion %}" style="width: {{ candidate.user.profile_completion }}%"></div>
                     </div>
                 </td>
-             <tr>
-             {% endfor %}                    
+            </tr>
+            {% endfor %}
          </table>
          
          {% show_more %}
