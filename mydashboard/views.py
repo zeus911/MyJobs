@@ -140,6 +140,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         raise Http404
     
     admin_you = request.user
+
+    # List of dashboard widgets to display.
+    dashboard_widgets = ["candidates"]
     
     context = {'company_name': company.name,
                'company_microsites': authorized_microsites,
@@ -153,7 +156,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                'view_name': 'Company Dashboard',
                'date_button': requested_date_button,
                'candidates_page': candidates_page,
-               'date_display': date_display               
+               'dashboard_widgets': dashboard_widgets,
+               'date_display': date_display,
                }
     
     if extra_context is not None:
