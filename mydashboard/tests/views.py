@@ -55,9 +55,8 @@ class MyDashboardViewsTests(TestCase):
             reverse('dashboard')+'?company='+str(self.company.id),
             {'microsite': 'test.jobs'})
         soup = BeautifulSoup(response.content)
-        # 16 searches total, two rows per search
-        #self.assertEqual(len(soup.select('#row-link-table tr')), 30)
-        self.assertEqual(len(response.context['candidates']), 16)
+        # 10 searches total, two rows per search
+        self.assertEqual(len(soup.select('#row-link-table tr')), 20)
 
         old_search = SavedSearch.objects.all()[0]
         old_search.created_on -= timedelta(days=31)
@@ -67,9 +66,7 @@ class MyDashboardViewsTests(TestCase):
             reverse('dashboard')+'?company='+str(self.company.id),
             {'microsite': 'test.jobs'})
         soup = BeautifulSoup(response.content)
-        self.assertEqual(len(response.context['candidates']), 16)
-        #self.assertEqual(len(soup.select('#row-link-table tr')), 30)
-
+        self.assertEqual(len(soup.select('#row-link-table tr')), 20)
 
     # Tests to see if redirect from /candidates/ goes to candidates/view/
     def test_redirect_to_candidates_views_default_page(self):
