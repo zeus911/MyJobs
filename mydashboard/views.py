@@ -560,7 +560,7 @@ def export_pdf(request, candidates):
 
 def export_hr(request, candidates, export_type, models_excluded=[]):
     """
-    Generates xml.
+    Generates HR-XML or HR-JSON, depending on export_type.
 
     """
     time = datetime.now().strftime('%m%d%Y')
