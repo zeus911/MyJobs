@@ -24,9 +24,17 @@ $(document).ready(function()
 {
     
    $("#date_activity a").click(function () {
-    $(".date_range").toggle();
+      $(".date_range").toggle();
    });
-        
+   
+   $("#export_menu a").click(function () {
+      $(".export_options").toggle();    
+   });
+   
+   $(".toggle_btn").on('click',function(){
+      $(this).children('.icon-minus, .icon-plus').toggleClass("icon-minus icon-plus");
+   });
+   
    $('#row-link-table tr').each(function(i,e)
    {
       $(e).children('td').click(function()
@@ -49,8 +57,8 @@ $(document).ready(function()
         }else{
             $(this).collapse('hide');
         };
-    });
-
+    });  
+    
    $('[class*=details-heading]').click(function(){
         var icon = $(this).children('a').children('span').children('i');
         var item = $(this).next();

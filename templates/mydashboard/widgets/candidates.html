@@ -15,4 +15,11 @@
     </div>
 </div>
 <br>
-<a href="#" class="fake-url">Export Candidate List<i class="icon icon-plus"></i></a>
+<div id="export_menu">
+    <a href="#" class="toggle_btn">Export Candidate List<i class="icon icon-plus"></i></a>
+</div>
+<div class="export_options">
+    <a class="btn" href="{% url 'export_candidates' %}?company={{ company_id }}&ex-t=csv">CSV</a>
+    <a class="btn" href="{% url 'export_candidates' %}?company={{ company_id }}&ex-t=pdf">PDF</a>
+</div>
+
