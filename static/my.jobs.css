@@ -80,7 +80,9 @@ a:hover {
 .fake-url:hover{
     color: #4B5661;
 }
-
+#export_menu .icon {
+    margin-left: 5px;   
+}
 .export_options{
     display:none;
     padding: 8px;
