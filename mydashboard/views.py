@@ -374,18 +374,18 @@ def export_candidates(request):
     Only function accessible through url.
     """
     export_type = request.GET['ex-t']
-    #try:
-    if export_type == 'csv':
-        candidates = filter_candidates(request)
-        response = export_csv(request, candidates)
-    elif export_type == 'pdf':
-        candidates = filter_candidates(request)
-        response = export_pdf(request, candidates)
-    elif export_type == 'xml' or export_type == 'json':
-        candidates = filter_candidates(request)
-        response = export_hr(request, candidates, export_type)
-    #except:
-    #    raise Http404
+    try:
+        if export_type == 'csv':
+            candidates = filter_candidates(request)
+            response = export_csv(request, candidates)
+        elif export_type == 'pdf':
+            candidates = filter_candidates(request)
+            response = export_pdf(request, candidates)
+        elif export_type == 'xml' or export_type == 'json':
+            candidates = filter_candidates(request)
+            response = export_hr(request, candidates, export_type)
+    except:
+        raise Http404
     return response
 
 
