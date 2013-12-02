@@ -358,12 +358,30 @@ table#row-link-table {
 }
 
 /* Contact Form Styles */
-#success-table tr td{
+#success-table tr td {
     min-width: 101px;
 }
 
-#success-table tr td + td{
+#success-table tr td + td {
     font-weight: bold;
+}
+
+/* About Page Styles */
+.about-section {
+    margin-top: 20px;
+    float: left;
+    border-top: 1px solid rgb(201, 201, 201)
+}
+
+.testimonials > div {
+    margin-top: 10px;
+    float: left;
+    border-top: 1px solid rgb(201, 201, 201)
+}
+
+.testimonials > div > p > small {
+    color: #999;
+    font-size: 0.85em;
 }
 
 /* Form Styles */
@@ -1603,6 +1621,15 @@ td .gravatar-blank,
         width: auto;
     }
 
+    .btn {
+        display: block !important;
+    }
+
+    .btn + .btn{
+        margin-left: 0;
+        margin-top: 5px;
+    }
+
     .btn-link{
         display: block !important;
         background-color: #cccccc;
@@ -1636,6 +1663,13 @@ td .gravatar-blank,
     /* Contact Form Styles */
     #success-table tr td{
         min-width: 0;
+    }
+
+    /* About Page Styles */
+    .testimonials iframe {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
     }
     
     /*Employer Dashboard*/    

@@ -1,41 +1,50 @@
 {% extends 'static_page.html' %}
 {% block site-title %}
-        <title>About My.jobs</title>
-        <meta name="title" content="About My.jobs">
+        <title>.JOBS Overview</title>
+        <meta name="title" content=".JOBS Overview">
 {% endblock site-title%}
 {% block meta-extra %}{% endblock %}
 {% block header %}
-    <h1>About My.jobs</h1>
+    <h1>.JOBS Overview</h1>
 {% endblock header %}
 {% block text %}
-    <p>This platform is designed to make finding employment easier. This is done by empowering the job seeker to control their data, and then making it easy for them to connect to like minded and interested employers.</p>
 
-    <h2>What it is for Job Seekers</h2>
+    <iframe width="451" height="338" src="http://player.vimeo.com/video/19787663?title=0&amp;byline=0&amp;portrait=0&amp;color=ffffff" frameborder="0" _origwidth="451"></iframe>
 
-	<p>My.jobs is a single base of operations for your job search experience. It is about three things:</p>
+    <div>
+        <h2>.JOBS</h2>
+        <p>The .JOBS platform is a Top Level Domain (TLD) that provides an interactive, community-driven network of job related sites.</p>
+            <ul style="margin-top:-15px">
+                <li>Direct connection to hundreds of thousands of jobs from companies like IBM, Conoco Phillips, Newell Rubbermaid, AT&T and hundreds of other large and small organizations.</li>
+                <li>Direct connection to federal, state and local government agencies, educational institutions and non-profit organizations jobs are available.</li>
+                <li>New jobs are added daily with special emphasis on veterans and military, people with disabilities, diversity, green jobs and many others.</li>
+                <li>Share and Follow tabs make it a seamless and intuitive way to utilize social networking within your job search on the .JOBS platform.</li>
+                <li>Many unique personalization tools offer an enhanced experience for all visitors.</li>
+            </ul>
+        <a class="btn" href="http://www.my.jobs/">Search for jobs</a>
+    </div>
 
-    <ol>
-        <li>Privacy - You control what data is shown and to whom</li>
-        <li>Control - You are in charge of your job search</li>
-        <li>Convenience - Do it all in one place</li>
-    </ol>
+    <div class="about-section">
+        <h2>About DirectEmployers</h2>
+        <p>Since October 2001, DirectEmployers has been committed to making the connection between employers and job seekers more efficient, quicker and easier, and the .JOBS platform is the next big step.</p>
+        <a class="btn" href="http://www.directemployers.org">About DirectEmployers</a>
+        <a class="btn" href="http://www.directemployers.org/about/member-companies/">Member Companies</a>
+    </div>
 
-    <h2>What it is for Employers</h2>
+    <div class="about-section">
+        <h2>About the .JOBS Top-Level Domain</h2>
+        <p>A place to find interested job seekers. People who are looking for you and your company. It is also a place where you can stay in touch with qualified job seekers, even when you don't have an opening right now.</p>
+        <a class="btn" href="http://www.goto.jobs/">About .JOBS TLD</a>
+    </div>
 
-    <p>A place to find interested job seekers. People who are looking for you and your company. It is also a place where you can stay in touch with qualified job seekers, even when you don't have an opening right now.</p>
+    <div class="about-section">
+        <h2>Employer Solutions and Resources</h2>
+        <p>The international .JOBS Social Recruiting Platform contains over 40,000 geographical, occupational, and country-name domains ending in the intuitive .JOBS suffix. DirectEmployers Association helps you WIN the war on talent by providing customizable tools necessary to attract and engage relevant candidates, all while providing real-time candidate tracking and analytics during the ­apply process.</p>
+        <a class="btn" href="http://universe.jobs/">Solutions</a>
+        <a class="btn" href="http://universe.jobs/resources/">White Paper</a>
+        <a class="btn" href="http://casestudy.jobs/">Case Studies</a>
+        <a class="btn" href="{% url 'testimonials' %}">Testimonials</a>
+    </div>
 
-    <h2>What it is not</h2>
-
-    <p>We have big plans for My.jobs, but we also know what we do not want it to be</p>
-
-    <ul>
-        <li>Another social platform. This is a place to put your existing social networks to use, not another contacts list to manage.</li>
-	    <li>Another job board. This is not just a place to create another profile and check it every day. This is the place to check all of your jobs boards. At one time. In one place.</li>
-	    <li>Something to exploit you. This is a place for job seekers to control who sees them and a place for employers to share open positions without getting fleeced.</li>
-    </ul>
-
-    <h2>Why?</h2>
-
-    <p>My.jobs is funded and maintained by the <a href="http://directemployersfoundation.org">DirectEmployers Foundation</a>, an organization dedicated to a fair, open, and trusted job search experience.</p>
 {% endblock text %}
-{% block quick-links %}{% endblock quick-links %}
+
