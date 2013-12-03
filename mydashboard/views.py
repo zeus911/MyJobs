@@ -103,12 +103,12 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         after = datetime.now() - timedelta(days=7)
         before = datetime.now()
         requested_date_button = 'seven_days'
-        date_display = '7 Days'
+        date_display = '7'
     elif 'thirty_days' in request.REQUEST:
         after = datetime.now() - timedelta(days=30)
         before = datetime.now()
         requested_date_button = 'thirty_days'
-        date_display = '30 Days'
+        date_display = '30'
     else:
         if requested_after_date:            
             after = datetime.strptime(requested_after_date, '%m/%d/%Y')            
@@ -129,6 +129,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
             else:
                 # Defaults to the date and time that the page is accessed
                 before = datetime.now()
+                
+        date_display = before - after
     
     # Specific microsite searches saved between two dates
     try:

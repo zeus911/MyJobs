@@ -103,7 +103,11 @@ $(document).ready(function()
         
         <div id="date_activity">
             {% if date_display %}
-                <a href="#"><h1>{{ date_display }}</h1></a>
+                {% if date_display = "Today" %}
+                    <a href="#"><h1>{{ date_display }}</h1></a>
+                {% else %}
+                    <a href="#"><h1>{{ date_display.days }} Days</h1></a>
+                {% endif %}
             {% else %}
                 <a href="#"><h1>30 Days</h1></a>
             {% endif %}
