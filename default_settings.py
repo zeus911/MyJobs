@@ -160,6 +160,9 @@ INSTALLED_APPS = (
     'endless_pagination'
 )
 
+# Captcha SSL
+RECAPTCHA_USE_SSL = True
+
 # Add all MyJobs apps here. This separation ensures that automated Jenkins tests
 # only run on these apps
 PROJECT_APPS = ('myjobs','myprofile','mysearches','registration',
