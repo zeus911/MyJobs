@@ -130,6 +130,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                 # Defaults to the date and time that the page is accessed
                 before = datetime.now()
                 
+    if date_display != 'Today':
         date_display = before - after
     
     # Specific microsite searches saved between two dates
