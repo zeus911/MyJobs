@@ -53,8 +53,42 @@ a:hover {
     overflow-x: hidden;    
 }
 .activity-mobile input {
-    display: inline;
-    width: 105px;
+    display: inline;    
+}
+
+/*Employer Dashboard Widgets */
+#count-box{
+    width: 30%;
+    height: 30%;
+    margin: 5px auto 0 auto;
+    padding: 20px 0 20px 0;
+    border: 5px solid #000000;
+    border-radius: 5px;
+    text-align: center;
+}
+#count-text{
+    font-size: 1.7em;
+    font-weight: bolder;
+    margin: auto;
+}
+.fake-url{
+    color: #5a6d81;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.fake-url:hover{
+    color: #4B5661;
+}
+#export_menu .icon {
+    margin-left: 5px;   
+}
+.export_options{
+    display:none;
+    padding: 8px;
+}
+#export_minus {
+    display: none;
 }
 
 /* Sort by field in saved search save/edit */
@@ -166,6 +200,43 @@ table#row-link-table {
 #row-link-table ul {
     list-style-type: none;
     margin-left: -10px;
+}
+
+#date_activity {
+    float: right;    
+    margin-right: 60px;
+    margin-top: -80px;
+    
+}
+#date_activity a {
+    display: block;
+    text-decoration: none;    
+}
+.arrow-down {
+    float: right;
+	width: 0; 
+	height: 0; 
+	border-left: 15px solid transparent;
+	border-right: 15px solid transparent;	
+	border-top: 15px solid #444;
+	margin-top: -34px;
+	margin-right: -38px;
+}
+
+
+
+.date_range {
+    display: none;    
+    position: absolute;
+	height: 200px;
+	width: 250px;
+	background: #f2f2f2;
+	box-shadow: 0 0 4px #888888;	
+	padding: 8px;
+	z-index: 1000;
+	margin-top: -40px;
+	margin-left: 32px;
+	
 }
 
 .link-list {     
