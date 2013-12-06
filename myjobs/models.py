@@ -5,6 +5,7 @@ import uuid
 
 from django.utils.safestring import mark_safe
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, _user_has_perm, Group, PermissionsMixin
+from django.contrib.sites.models import Site
 from django.core.mail import EmailMessage
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -202,6 +203,10 @@ class User(AbstractBaseUser, PermissionsMixin):
                                             login'), default=False)
 
     user_guid = models.CharField(max_length=100, db_index=True, unique=True)
+    username = models.CharField(max_length=255, unique=True)
+    first_name = models.CharField(max_length=255, blank=True)
+    last_name = models.CharField(max_length=255, blank=True)
+
 
     USERNAME_FIELD = 'email'
     objects = CustomUserManager()
@@ -335,3 +340,13 @@ class EmailLog(models.Model):
     event = models.CharField(max_length=11)
     received = models.DateField()
     processed = models.BooleanField(default=False, blank=True)
+
+
+class CustomHomepage(Site):
+    logo_url = models.URLField('Logo Image URL', max_length=200, null=True,
+                               blank=True)
+
+
+class Tickets(models.Model):
+    ticket = models.CharField(max_length=255)
+    user = models.ForeignKey('User')

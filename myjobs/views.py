@@ -29,7 +29,7 @@ from secrets import options, my_agent_auth
 from tastypie.models import ApiKey
 
 from myjobs.decorators import user_is_allowed
-from myjobs.models import User, EmailLog
+from myjobs.models import User, EmailLog, Tickets
 from myjobs.forms import *
 from myjobs.helpers import *
 from myjobs.templatetags.common_tags import get_name_obj
@@ -77,7 +77,6 @@ def home(request):
     originally from.
 
     """
-
     # TODO - rename using snake case
     registrationform = RegistrationForm(auto_id=False)
     loginform = CustomAuthForm(auto_id=False)
@@ -510,3 +509,26 @@ def toolbar(request):
                             max_age=max_age,
                             domain='.my.jobs')
     return response
+
+
+def cas(request):
+    # TODO: fix default url
+    redirect_url = request.GET.get('url', 'http://127.0.0.1:8001/')
+    user = request.user
+
+    if not user or user.is_anonymous():
+        guid = request.COOKIES.get('myguid')
+        try:
+            user = User.objects.get(user_guid=guid)
+        except User.DoesNotExist:
+            pass
+    if not user or user.is_anonymous():
+        return redirect(redirect_url)
+    else:
+        ticket = Tickets()
+        ticket.ticket = 'randomly generated ticket id'
+        ticket.user = request.user
+        ticket.save()
+
+        return redirect("%s?ticket=%s&uid=%s" % (redirect_url, ticket.ticket,
+                                                 ticket.user.user_guid))
