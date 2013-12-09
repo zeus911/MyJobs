@@ -348,5 +348,8 @@ class CustomHomepage(Site):
 
 
 class Tickets(models.Model):
+    class Meta:
+        unique_together = ['ticket', 'user']
+
     ticket = models.CharField(max_length=255)
     user = models.ForeignKey('User')

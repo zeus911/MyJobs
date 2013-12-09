@@ -5,6 +5,7 @@ import hmac
 import json
 import logging
 import urllib2
+import uuid
 from urlparse import urlparse
 
 from django.contrib.auth import authenticate, logout
@@ -29,7 +30,7 @@ from secrets import options, my_agent_auth
 from tastypie.models import ApiKey
 
 from myjobs.decorators import user_is_allowed
-from myjobs.models import User, EmailLog, Tickets
+from myjobs.models import User, EmailLog, Tickets, CustomHomepage
 from myjobs.forms import *
 from myjobs.helpers import *
 from myjobs.templatetags.common_tags import get_name_obj
@@ -513,7 +514,7 @@ def toolbar(request):
 
 def cas(request):
     # TODO: fix default url
-    redirect_url = request.GET.get('url', 'http://127.0.0.1:8001/')
+    redirect_url = request.GET.get('redirect_url', 'http://127.0.0.1:8001/')
     user = request.user
 
     if not user or user.is_anonymous():
@@ -523,12 +524,34 @@ def cas(request):
         except User.DoesNotExist:
             pass
     if not user or user.is_anonymous():
-        return redirect(redirect_url)
+        return redirect("%s?ticket=%s&uid=%s" % (redirect_url, 'none',
+                                                 'none'))
     else:
         ticket = Tickets()
-        ticket.ticket = 'randomly generated ticket id'
-        ticket.user = request.user
-        ticket.save()
+        try:
+            ticket.ticket = uuid.uuid4()
+            ticket.user = request.user
+            ticket.save()
+        except:
+            return cas(request)
 
-        return redirect("%s?ticket=%s&uid=%s" % (redirect_url, ticket.ticket,
-                                                 ticket.user.user_guid))
+        response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
+                                                     ticket.ticket,
+                                                     ticket.user.user_guid))
+
+        caller = urlparse(redirect_url)
+        try:
+            page = CustomHomepage.objects.get(
+                domain=caller.netloc.split(":")[0])
+            response.set_cookie(key='lastmicrosite',
+                                value=page.domain,
+                                max_age=30 * 24 * 60 * 60,
+                                domain='.my.jobs')
+            response.set_cookie(key='lastmicrositename',
+                                value=page.name,
+                                max_age=30 * 24 * 60 * 60,
+                                domain='.my.jobs')
+        except CustomHomepage.DoesNotExist:
+            pass
+
+        return response
