@@ -93,20 +93,25 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     
     # All searches saved on the employer's company microsites       
     candidate_searches = SavedSearch.objects.select_related('user')
-        
+    
+    date_display = False
+
     # Pre-set Date ranges
     if 'today' in request.REQUEST:
         after = datetime.now() - timedelta(days=1)
         before = datetime.now()
         requested_date_button = 'today'
+        date_display = 'Today'
     elif 'seven_days' in request.REQUEST:
         after = datetime.now() - timedelta(days=7)
         before = datetime.now()
         requested_date_button = 'seven_days'
+        date_display = '7'
     elif 'thirty_days' in request.REQUEST:
         after = datetime.now() - timedelta(days=30)
         before = datetime.now()
         requested_date_button = 'thirty_days'
+        date_display = '30'
     else:
         if requested_after_date:            
             after = datetime.strptime(requested_after_date, '%m/%d/%Y')            
@@ -127,6 +132,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
             else:
                 # Defaults to the date and time that the page is accessed
                 before = datetime.now()
+                
+    if date_display != 'Today':
+        date_display = before - after
     
     # Specific microsite searches saved between two dates
     try:
@@ -138,6 +146,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         raise Http404
     
     admin_you = request.user
+
+    # List of dashboard widgets to display.
+    dashboard_widgets = ["candidates"]
     
     context = {'company_name': company.name,
                'company_microsites': authorized_microsites,
@@ -150,7 +161,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                'site_name': site_name,
                'view_name': 'Company Dashboard',
                'date_button': requested_date_button,
-               'candidates_page': candidates_page,               
+               'candidates_page': candidates_page,
+               'dashboard_widgets': dashboard_widgets,
+               'date_display': date_display,
                }
     
     if extra_context is not None:

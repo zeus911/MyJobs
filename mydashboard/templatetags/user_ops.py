@@ -3,6 +3,7 @@ from django import template
 from urlparse import urlparse
 from myjobs.models import User
 from myprofile.models import ProfileUnits, Name
+from itertools import groupby
 
 register = template.Library()
 
@@ -42,3 +43,17 @@ def url_domain(value):
     updated_url = urlparse(active_url)
 
     return updated_url.netloc
+
+
+@register.filter(name='count_candidates')
+def count_candidates(savedsearches):
+    """
+    Groups all saved searches to users and returns the length of the list.
+
+    Inputs:
+    :savedsearches: List of SavedSearches from dashboard/views.py
+
+    Outputs:
+                    Integer representing number of candidates
+    """
+    return len(set(([k for k, v in groupby(savedsearches, lambda x: x.user)])))
