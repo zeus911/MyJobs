@@ -39,7 +39,7 @@
         <div class="topbar-inner">
             <div class="wrapper">
                 <div class="row">
-                    <div class="span5" id="logo-block">
+                    <div class="span6v-1-8" id="logo-block">
                         <a href="http://www.my.jobs/">
                             <h3 id="topbar-logo" class="pull-left">my.jobs</h3>
                         </a>
@@ -62,7 +62,35 @@
 
                         {% if user.is_authenticated %}
 
-                        <div class="pull-right span7">
+                        <div class="span6">
+                            <ul class="nav nav-tabs pull-right menu-tabs">
+
+                                {% is_a_group_member user "Employer" as group_member %}
+                                {% get_company_name user as company_name %}
+                                <li class="{% active_tab 'My Profile' %}"><a href="{% url 'view_profile' %}">{% trans "Profile" %}</a></li>
+                                {% if user.is_active %}
+                                <li class="{% active_tab 'Saved Searches' %}"><a href="{% url 'saved_search_main' %}">{% trans "Saved Searches" %}</a></li>
+                                {% if group_member and company_name|length >= 1 %}
+                                <li class="{% active_tab 'Company Dashboard' %}" id="company-dropdown">
+                                    {% if company_name|length == 1 %}
+                                    <a id="candidate-tab" href="{% url 'dashboard' %}?company={{ company_name.0.id }}">{% trans "Candidates" %}</a>
+                                    {% else %}
+                                    <a id="candidate-tab">{% trans "Candidates" %}</a>
+                                    <ul id="company-menu" class="no-show">
+                                        {% for company in company_name %}
+                                        <li><a id="company-item" href="{% url 'dashboard' %}?company={{ company.id }}">{{ company }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                    {% endif %}
+                                    {# /company-menu #}
+                                </li>
+                                {% endif %}
+                                {% endif %}
+                                <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
+                            </ul>{# /nav nav-tabs pull-right menu-tabs #}
+                        </div>{# /span6 #}
+
+                        <div class="span2v-1-8">
                             <div class="menu-bar pagination-right pull-right">
                                 <ul id="nav" class="pull-right">
                                     <li>
@@ -122,32 +150,7 @@
                                     </li>
                                 </ul>{# /nav #}
                             </div>{# /menu-bar pagination-right pull-right #}
-                            <ul class="nav nav-tabs pull-right menu-tabs">
-
-                                {% is_a_group_member user "Employer" as group_member %}
-                                {% get_company_name user as company_name %}
-                                <li class="{% active_tab 'My Profile' %}"><a href="{% url 'view_profile' %}">{% trans "Profile" %}</a></li>
-                                {% if user.is_active %}
-                                <li class="{% active_tab 'Saved Searches' %}"><a href="{% url 'saved_search_main' %}">{% trans "Saved Searches" %}</a></li>
-                                {% if group_member and company_name|length >= 1 %}
-                                <li class="{% active_tab 'Company Dashboard' %}" id="company-dropdown">
-                                    {% if company_name|length == 1 %}
-                                    <a id="candidate-tab" href="{% url 'dashboard' %}?company={{ company_name.0.id }}">{% trans "Candidates" %}</a>
-                                    {% else %}
-                                    <a id="candidate-tab">{% trans "Candidates" %}</a>
-                                    <ul id="company-menu" class="no-show">
-                                        {% for company in company_name %}
-                                        <li><a id="company-item" href="{% url 'dashboard' %}?company={{ company.id }}">{{ company }}</a></li>
-                                        {% endfor %}
-                                    </ul>
-                                    {% endif %}
-                                    {# /company-menu #}
-                                </li>
-                                {% endif %}
-                                {% endif %}
-                                <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
-                            </ul>{# /nav nav-tabs pull-right menu-tabs #}
-                        </div>{# /pull-right span7 #}
+                        </div>{# /span2v1-8 #}
 
                         {% else %}
                         <div class="pull-right span7">
