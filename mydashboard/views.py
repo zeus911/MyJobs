@@ -1,9 +1,11 @@
 import operator
 import csv
+import json
+import cStringIO as StringIO
 
 from datetime import datetime, timedelta
-from collections import Counter
-import cStringIO as StringIO
+from collections import Counter, OrderedDict
+from itertools import groupby
 
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Q
@@ -21,6 +23,7 @@ from mysearches.models import SavedSearch
 
 from endless_pagination.decorators import page_template
 from xhtml2pdf import pisa
+from lxml import etree
 
 
 @page_template("mydashboard/dashboard_activity.html")
@@ -383,13 +386,17 @@ def export_candidates(request):
     This function will be handling which export type to execute.
     Only function accessible through url.
     """
+    export_type = request.GET['ex-t']
     try:
-        if request.GET['ex-t'] == 'csv':
+        if export_type == 'csv':
             candidates = filter_candidates(request)
             response = export_csv(request, candidates)
-        elif request.GET['ex-t'] == 'pdf':
+        elif export_type == 'pdf':
             candidates = filter_candidates(request)
             response = export_pdf(request, candidates)
+        elif export_type == 'xml' or export_type == 'json':
+            candidates = filter_candidates(request)
+            response = export_hr(request, candidates, export_type)
     except:
         raise Http404
     return response
@@ -435,7 +442,8 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
               not in models_excluded]
     model_names = [model._meta.module_name for model in models]
     users_units = ProfileUnits.objects.filter(
-        user__in=candidates).select_related('user', 'user__id', 'profileunits', 'content_type__name',
+        user__in=candidates).select_related('user', 'user__id', 'profileunits',
+                                            'content_type__name',
                                             *model_names).order_by('user')
     # Creating header for CSV
     headers = ["primary_email"]
@@ -456,10 +464,7 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
             module_count = final_count[model._meta.module_name]
         while current_count <= module_count:
             models_with_fields = []
-            fields = [field for field in
-                      model._meta.get_all_field_names() if unicode(field) not
-                      in [u'id', u'user', u'profileunits_ptr', u'date_created',
-                      u'date_updated', u'content_type']]
+            fields = retrieve_fields(model)
             for field in fields:
                 if field not in fields_excluded:
                     ufield = model._meta.module_name + "_" + field + "_" + str(
@@ -501,10 +506,7 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
                 whileloop = False
         
         instance = getattr(unit, unit.content_type.name.replace(" ", ""))
-        fields = [field for field in
-                  instance._meta.get_all_field_names() if unicode(field) not
-                  in [u'id', u'user', u'profileunits_ptr', u'date_created',
-                  u'date_updated', u'content_type']]
+        fields = retrieve_fields(instance)
 
         for field in fields:
             value = getattr(instance, field, u'')
@@ -512,11 +514,13 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
             # Find where to put value in user_fields
             n = 1
             position = headers.index(
-                unit.content_type.name.replace(" ", "") + "_" + field + "_" + str(n))
+                unit.content_type.name.replace(" ", "") + "_" + field + "_" +
+                str(n))
             while not user_fields[position] == '""':
                 n += 1
                 position = headers.index(
-                    unit.content_type.name.replace(" ", "") + "_" + field + "_" + str(n))
+                    unit.content_type.name.replace(" ", "") + "_" + field +
+                    "_" + str(n))
             user_fields[position] = '"%s"' % value.replace('\r\n', '')
 
         if unit is list(users_units)[-1]:
@@ -534,6 +538,9 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
 
 
 def export_pdf(request, candidates):
+    """
+    Generates an HTML page which then gets converted to pdf.
+    """
     result = StringIO.StringIO()
     company_id = request.REQUEST.get('company')
     try:
@@ -562,3 +569,128 @@ def export_pdf(request, candidates):
 
     pisa_status = pisa.CreatePDF(html, dest=result)
     return HttpResponse(result.getvalue(), mimetype='application/pdf')
+
+
+def export_hr(request, candidates, export_type, models_excluded=[]):
+    """
+    Generates HR-XML or HR-JSON, depending on export_type.
+
+    """
+    time = datetime.now().strftime('%m%d%Y')
+    company_id = request.REQUEST.get('company')
+    try:
+        company = Company.objects.get(id=company_id)
+    except Company.DoesNotExist:
+        raise Http404
+
+    models = [model for model in
+              ProfileUnits.__subclasses__() if model._meta.module_name
+              not in models_excluded]
+    model_names = [model._meta.module_name for model in models]
+    users_units = ProfileUnits.objects.filter(
+        user__in=candidates).select_related('user', 'user__id', 'profileunits',
+                                            'content_type__name', *model_names)
+
+    # initial dict for grouped units
+    gu = {}
+    for k1, v1 in groupby(users_units, lambda x: x.user):
+        pus = []
+        for k2, v2 in groupby(v1, lambda x: x.content_type.name):
+            pus.append((k2, list(v2)))
+
+        pus = OrderedDict(pus)
+        gu[k1] = pus
+
+    if export_type == 'xml':
+        root = etree.Element("candidates")
+        for user, units in gu.items():
+            new_candidate = etree.SubElement(root, "candidate")
+            etree.SubElement(new_candidate, "email").text = user.email
+            for unit in units.values():
+                fields = []
+                if len(unit) > 1:
+                    name = unit[0].get_verbose().replace(" ", "")
+                    if str(name).endswith('y'):
+                        name = name[:-1] + "ies"
+                    elif str(name).endswith('s'):
+                        name += 'es'
+                    else:
+                        name += 's'
+                    xunit = etree.SubElement(new_candidate, name)
+                    for u in unit:
+                        instance = getattr(
+                            u, u.content_type.name.replace(" ", ""))
+                        if not fields:
+                            fields = retrieve_fields(instance)
+                        more_units = etree.SubElement(
+                            xunit, u.get_verbose().replace(" ", ""))
+                        for field in fields:
+                            value = unicode(getattr(instance, field))
+                            etree.SubElement(more_units, field).text = value
+                else:
+                    xunit = etree.SubElement(
+                        new_candidate, unit[0].get_verbose().replace(" ", ""))
+                    instance = getattr(
+                        unit[0], unit[0].content_type.name.replace(" ", ""))
+                    fields = retrieve_fields(instance)
+                    for field in fields:
+                        value = unicode(getattr(instance, field))
+                        etree.SubElement(xunit, field).text = value
+        response = HttpResponse(etree.tostring(root, pretty_print=True),
+                                mimetype='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename=' + \
+                                          company.name + "_DE_"+time+'.xml'
+        return response
+    elif export_type == 'json':
+        full_json = {}
+        user_info = {}
+        for user, units in gu.items():
+            units_info = {}
+            for unit in units.values():
+                fields = []
+                if len(unit) > 1:
+                    name = unit[0].get_verbose().replace(" ", "")
+                    if str(name).endswith('y'):
+                        name = name[:-1] + "ies"
+                    else:
+                        name += "s"
+                    model_info = {}
+                    n = 0
+                    for model in unit:
+                        model_name = model.get_verbose().replace(" ", "")
+                        instance = getattr(
+                            model, model.content_type.name.replace(" ", ""))
+                        if not fields:
+                            fields = retrieve_fields(instance)
+                        field_info = {}
+                        for field in fields:
+                            value = unicode(getattr(instance, field))
+                            field_info[field] = value
+                        n += 1
+                        model_info[model_name+str(n)] = field_info
+                    units_info[name] = model_info
+                else:
+                    name = unit[0].get_verbose().replace(" ", "")
+                    instance = getattr(
+                        unit[0], unit[0].content_type.name.replace(" ", ""))
+                    fields = retrieve_fields(instance)
+                    field_info = {}
+                    for field in fields:
+                        value = unicode(getattr(instance, field))
+                        field_info[field] = value
+                    units_info[name] = field_info
+            user_info[user.email] = units_info
+        full_json['candidates'] = user_info
+        response = HttpResponse(json.dumps(full_json, indent=4),
+                                mimetype='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename=' + \
+                                          company.name + "_DE_"+time+'.json'
+        return response
+
+
+def retrieve_fields(instance):
+    fields = [field for field in instance._meta.get_all_field_names()
+              if unicode(field) not in [u'id', u'user', u'profileunits_ptr',
+                                        u'date_created', u'date_updated',
+                                        u'content_type']]
+    return fields
