@@ -92,6 +92,15 @@ def home(request):
         nexturl = urllib2.unquote(nexturl)
         nexturl = urllib2.quote(nexturl)
 
+    last_ms = request.COOKIES.get('lastmicrosite')
+    logo_url = ''
+    if last_ms:
+        try:
+            last_ms = urlparse(last_ms).netloc
+            logo_url = CustomHomepage.objects.get(domain=last_ms).logo_url
+        except CustomHomepage.DoesNotExist:
+            pass
+
     data_dict = {'num_modules': len(settings.PROFILE_COMPLETION_MODULES),
                  'registrationform': registrationform,
                  'loginform': loginform,
@@ -100,7 +109,9 @@ def home(request):
                  'address_form': address_form,
                  'work_form': work_form,
                  'education_form': education_form,
-                 'nexturl': nexturl}
+                 'nexturl': nexturl,
+                 'logo_url': logo_url,
+                 }
 
     if request.method == "POST":
         if request.POST.get('action') == "register":
