@@ -43,6 +43,10 @@ class About(TemplateView):
     template_name = "about.html"
 
 
+class Testimonials(TemplateView):
+    template_name = "testimonials.html"
+
+
 class Privacy(TemplateView):
     template_name = "privacy-policy.html"
 
@@ -226,7 +230,7 @@ def contact(request):
             else:
                 project = jira.project('MJA')
                 components = []
-                component_ids = {'My.Jobs Error': {'id': '12903'},
+                component_ids = {'My.jobs Error': {'id': '12903'},
                                  'Job Seeker': {'id': '12901'},
                                  'Employer': {'id': '12900'},
                                  'Partner': {'id': '12902'}, }
