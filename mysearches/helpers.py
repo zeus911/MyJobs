@@ -63,7 +63,7 @@ def get_rss_soup(rss_url):
     """
 
     rss_feed = urllib2.urlopen(rss_url).read()
-    return BeautifulSoup(rss_feed)
+    return BeautifulSoup(rss_feed, "html.parser")
 
 def parse_rss(feed_url, frequency='W', num_items=20, offset=0):
     """
