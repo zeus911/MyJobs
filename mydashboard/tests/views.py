@@ -55,8 +55,8 @@ class MyDashboardViewsTests(TestCase):
             reverse('dashboard')+'?company='+str(self.company.id),
             {'microsite': 'test.jobs'})
         soup = BeautifulSoup(response.content)
-        # 15 searches total, two rows per search
-        self.assertEqual(len(soup.select('#row-link-table tr')), 30)
+        # 10 searches total, two rows per search
+        self.assertEqual(len(soup.select('#row-link-table tr')), 20)
 
         old_search = SavedSearch.objects.all()[0]
         old_search.created_on -= timedelta(days=31)
@@ -66,7 +66,7 @@ class MyDashboardViewsTests(TestCase):
             reverse('dashboard')+'?company='+str(self.company.id),
             {'microsite': 'test.jobs'})
         soup = BeautifulSoup(response.content)
-        self.assertEqual(len(soup.select('#row-link-table tr')), 30)
+        self.assertEqual(len(soup.select('#row-link-table tr')), 20)
 
     # Tests to see if redirect from /candidates/ goes to candidates/view/
     def test_redirect_to_candidates_views_default_page(self):
@@ -164,10 +164,28 @@ class MyDashboardViewsTests(TestCase):
         response = self.client.post(
             reverse('export_candidates')+'?company=' +
             str(self.company.id)+'&ex-t=csv')
+        self.assertTrue(response.content)
         self.assertEqual(response.status_code, 200)
 
     def test_export_pdf(self):
         response = self.client.post(
             reverse('export_candidates')+'?company=' +
             str(self.company.id)+'&ex-t=pdf')
+        self.assertTrue(response.content.index('PDF'))
+        self.assertEqual(response.templates[0].name,
+                         'mydashboard/export/candidate_listing.html')
+        self.assertEqual(response.status_code, 200)
+
+    def test_export_xml(self):
+        response = self.client.post(
+            reverse('export_candidates')+'?company=' +
+            str(self.company.id)+'&ex-t=xml')
+        self.assertTrue(response.content.index('candidates'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_export_json(self):
+        response = self.client.post(
+            reverse('export_candidates')+'?company=' +
+            str(self.company.id)+'&ex-t=json')
+        self.assertTrue(response.content.index('candidates'))
         self.assertEqual(response.status_code, 200)

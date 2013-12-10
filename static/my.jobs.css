@@ -491,6 +491,14 @@ ul.ui-autocomplete {
 }
 
 /*Topbar Styles*/
+.span6v-1-8{
+    width: 340px;
+}
+
+.span2v-1-8{
+    width: 100px;
+}
+
 .topbar-inner {
     background-color: #444;
 }

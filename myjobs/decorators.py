@@ -14,7 +14,7 @@ def user_is_allowed(model=None, pk_name=None, pass_user=False):
     decorated view
 
     Expects that the query string contains a :verify-email: key if the
-    request originates from a My.Jobs email; The user using this address
+    request originates from a My.jobs email; The user using this address
     is added to the view's kwargs as :user: if :pass_user: is True. If the
     user is not anonymous, passing :verify-email: will ensure that the user
     owns that address.
