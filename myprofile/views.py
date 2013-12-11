@@ -50,6 +50,7 @@ def edit_profile(request):
 
     data_dict = {'profile_config': profile_config,
                  'unit_names': empty_display_names,
+                 'user': user,
                  'view_name': 'My Profile'}
 
     return render_to_response('myprofile/edit_profile.html', data_dict,

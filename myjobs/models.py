@@ -334,17 +334,55 @@ class User(AbstractBaseUser, PermissionsMixin):
                 message_infos.append(m)
         return message_infos
 
-    def primary_name(self, update=False, f_name="", l_name=""):
+    def full_name(self, default=""):
+        """
+        Returns the user's full name based off of first_name and last_name
+        from the user model.
+
+        Inputs:
+        :default:   Can add a default if the user doesn't have a first_name
+                    or last_name.
+        """
+        if self.first_name and self.last_name:
+            return "%s %s" % (self.first_name, self.last_name)
+        else:
+            return default
+
+    def add_primary_name(self, update=False, f_name="", l_name=""):
+        """
+        Primary function that adds the primary user's ProfileUnit.Name object
+        first and last name to the user model, if Name object exists.
+
+        Inputs:
+        :update:    Update is a flag that should be used to determine if to use
+                    this function as an update (must provide f_name and l_name
+                    if that is the case) or if the function needs to be called
+                    to set the user's first_name and last_name in the model.
+
+        :f_name:    If the update flag is set to true this needs to have the
+                    given_name value from the updating Name object.
+
+        :l_name:    If the update flag is set to true this needs to have the
+                    family_name value from the updating Name object.
+        """
         if update:
             self.first_name = f_name
             self.last_name = l_name
             self.save()
         else:
-            name_obj = self.profileunits_set.filter(
-                content_type__name="name").get(name__primary=True)
-            self.first_name = name_obj.given_name
-            self.last_name = name_obj.family_name
-            self.save()
+            try:
+                name_obj = self.profileunits_set.filter(
+                    content_type__name="name").get(name__primary=True)
+            except:
+                name_obj = False
+            if name_obj:
+                self.first_name = name_obj.name.given_name
+                self.last_name = name_obj.name.family_name
+                self.save()
+            else:
+                self.first_name = ""
+                self.last_name = ""
+                self.save()
 
 
 class EmailLog(models.Model):
