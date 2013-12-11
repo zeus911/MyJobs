@@ -92,6 +92,15 @@ def home(request):
         nexturl = urllib2.unquote(nexturl)
         nexturl = urllib2.quote(nexturl)
 
+    last_ms = request.COOKIES.get('lastmicrosite')
+    logo_url = ''
+    if last_ms:
+        try:
+            last_ms = urlparse(last_ms).netloc
+            logo_url = CustomHomepage.objects.get(domain=last_ms).logo_url
+        except CustomHomepage.DoesNotExist:
+            pass
+
     data_dict = {'num_modules': len(settings.PROFILE_COMPLETION_MODULES),
                  'registrationform': registrationform,
                  'loginform': loginform,
@@ -100,7 +109,9 @@ def home(request):
                  'address_form': address_form,
                  'work_form': work_form,
                  'education_form': education_form,
-                 'nexturl': nexturl}
+                 'nexturl': nexturl,
+                 'logo_url': logo_url,
+                 }
 
     if request.method == "POST":
         if request.POST.get('action') == "register":
@@ -230,7 +241,7 @@ def contact(request):
             else:
                 project = jira.project('MJA')
                 components = []
-                component_ids = {'My.Jobs Error': {'id': '12903'},
+                component_ids = {'My.jobs Error': {'id': '12903'},
                                  'Job Seeker': {'id': '12901'},
                                  'Employer': {'id': '12900'},
                                  'Partner': {'id': '12902'}, }
@@ -514,7 +525,7 @@ def toolbar(request):
 
 def cas(request):
     # TODO: fix default url
-    redirect_url = request.GET.get('redirect_url', 'http://127.0.0.1:8001/')
+    redirect_url = request.GET.get('redirect_url', 'http://www.my.jobs/')
     user = request.user
 
     if not user or user.is_anonymous():
@@ -524,34 +535,36 @@ def cas(request):
         except User.DoesNotExist:
             pass
     if not user or user.is_anonymous():
-        return redirect("%s?ticket=%s&uid=%s" % (redirect_url, 'none',
-                                                 'none'))
+        response = redirect("%s?ticket=%s&uid=%s" % (redirect_url, 'none',
+                                                     'none'))
     else:
         ticket = Tickets()
         try:
             ticket.ticket = uuid.uuid4()
+            ticket.session_id = request.COOKIES.get('sessionid')
             ticket.user = request.user
             ticket.save()
-        except:
+        except Exception, e:
+            print e
             return cas(request)
 
         response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
                                                      ticket.ticket,
                                                      ticket.user.user_guid))
-
-        caller = urlparse(redirect_url)
-        try:
-            page = CustomHomepage.objects.get(
-                domain=caller.netloc.split(":")[0])
-            response.set_cookie(key='lastmicrosite',
-                                value=page.domain,
+    caller = urlparse(redirect_url)
+    try:
+        page = CustomHomepage.objects.get(domain=caller.netloc.split(":")[0])
+        response.set_cookie(key='lastmicrosite',
+                                value="%s://%s" % (caller.scheme,
+                                                   caller.netloc),
                                 max_age=30 * 24 * 60 * 60,
-                                domain='.my.jobs')
-            response.set_cookie(key='lastmicrositename',
+                                domain='ec2-23-20-67-65.compute-1.amazonaws.com')
+        response.set_cookie(key='lastmicrositename',
                                 value=page.name,
                                 max_age=30 * 24 * 60 * 60,
-                                domain='.my.jobs')
-        except CustomHomepage.DoesNotExist:
-            pass
+                                domain='ec2-23-20-67-65.compute-1.amazonaws.com')
+    except CustomHomepage.DoesNotExist:
+        pass
 
-        return response
+    return response
+

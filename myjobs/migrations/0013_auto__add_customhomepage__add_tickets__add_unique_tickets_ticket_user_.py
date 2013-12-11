@@ -23,13 +23,43 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'myjobs', ['Tickets'])
 
+        # Adding unique constraint on 'Tickets', fields ['ticket', 'user']
+        db.create_unique(u'myjobs_tickets', ['ticket', 'user_id'])
+
+        # Adding field 'User.username'
+        db.add_column(u'myjobs_user', 'username',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
+                      keep_default=False)
+
+        # Adding field 'User.first_name'
+        db.add_column(u'myjobs_user', 'first_name',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
+                      keep_default=False)
+
+        # Adding field 'User.last_name'
+        db.add_column(u'myjobs_user', 'last_name',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
+                      keep_default=False)
+
 
     def backwards(self, orm):
+        # Removing unique constraint on 'Tickets', fields ['ticket', 'user']
+        db.delete_unique(u'myjobs_tickets', ['ticket', 'user_id'])
+
         # Deleting model 'CustomHomepage'
         db.delete_table(u'myjobs_customhomepage')
 
         # Deleting model 'Tickets'
         db.delete_table(u'myjobs_tickets')
+
+        # Deleting field 'User.username'
+        db.delete_column(u'myjobs_user', 'username')
+
+        # Deleting field 'User.first_name'
+        db.delete_column(u'myjobs_user', 'first_name')
+
+        # Deleting field 'User.last_name'
+        db.delete_column(u'myjobs_user', 'last_name')
 
 
     models = {
@@ -67,7 +97,7 @@ class Migration(SchemaMigration):
             'received': ('django.db.models.fields.DateField', [], {})
         },
         u'myjobs.tickets': {
-            'Meta': {'object_name': 'Tickets'},
+            'Meta': {'unique_together': "(['ticket', 'user'],)", 'object_name': 'Tickets'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ticket': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})
@@ -94,7 +124,7 @@ class Migration(SchemaMigration):
             'profile_completion': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'user_guid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'}),
-            'username': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'})
+            'username': ('django.db.models.fields.CharField', [], {'max_length': '255'})
         },
         u'sites.site': {
             'Meta': {'ordering': "('domain',)", 'object_name': 'Site', 'db_table': "'django_site'"},

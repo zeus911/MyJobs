@@ -8,32 +8,14 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'User.username'
-        db.add_column(u'myjobs_user', 'username',
-                      self.gf('django.db.models.fields.CharField')(default='', unique=True, max_length=255),
-                      keep_default=False)
 
-        # Adding field 'User.first_name'
-        db.add_column(u'myjobs_user', 'first_name',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
-                      keep_default=False)
-
-        # Adding field 'User.last_name'
-        db.add_column(u'myjobs_user', 'last_name',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
-                      keep_default=False)
-
+        # Changing field 'Tickets.session_id'
+        db.alter_column(u'myjobs_tickets', 'session_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True))
 
     def backwards(self, orm):
-        # Deleting field 'User.username'
-        db.delete_column(u'myjobs_user', 'username')
 
-        # Deleting field 'User.first_name'
-        db.delete_column(u'myjobs_user', 'first_name')
-
-        # Deleting field 'User.last_name'
-        db.delete_column(u'myjobs_user', 'last_name')
-
+        # Changing field 'Tickets.session_id'
+        db.alter_column(u'myjobs_tickets', 'session_id', self.gf('django.db.models.fields.CharField')(default='', max_length=255))
 
     models = {
         u'auth.group': {
@@ -56,6 +38,11 @@ class Migration(SchemaMigration):
             'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
+        u'myjobs.customhomepage': {
+            'Meta': {'ordering': "('domain',)", 'object_name': 'CustomHomepage', '_ormbases': [u'sites.Site']},
+            'logo_url': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
+            u'site_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['sites.Site']", 'unique': 'True', 'primary_key': 'True'})
+        },
         u'myjobs.emaillog': {
             'Meta': {'object_name': 'EmailLog'},
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '254'}),
@@ -63,6 +50,13 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'processed': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'received': ('django.db.models.fields.DateField', [], {})
+        },
+        u'myjobs.tickets': {
+            'Meta': {'unique_together': "(['ticket', 'user'],)", 'object_name': 'Tickets'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'session_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
+            'ticket': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})
         },
         u'myjobs.user': {
             'Meta': {'object_name': 'User'},
@@ -86,7 +80,13 @@ class Migration(SchemaMigration):
             'profile_completion': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'user_guid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'}),
-            'username': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'})
+            'username': ('django.db.models.fields.CharField', [], {'max_length': '255'})
+        },
+        u'sites.site': {
+            'Meta': {'ordering': "('domain',)", 'object_name': 'Site', 'db_table': "'django_site'"},
+            'domain': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '50'})
         }
     }
 
