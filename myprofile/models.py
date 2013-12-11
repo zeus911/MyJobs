@@ -4,7 +4,7 @@ from django.core.validators import ValidationError
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.utils.translation import ugettext_lazy as _
 from collections import OrderedDict
 
@@ -82,8 +82,9 @@ class Name(ProfileUnits):
     def save(self, *args, **kwargs):
         """
         Custom name save method to ensure only one name object per user
-        has one primary=True. We avoid a race condition by locking the transaction
-        using select_for_update.
+        has one primary=True. We avoid a race condition by locking the
+        transaction using select_for_update. Also, this function updates the
+        user's first_name and last_name.
         """
         duplicate_names = Name.objects.filter(user=self.user,
                                               given_name=self.given_name,
@@ -96,22 +97,36 @@ class Name(ProfileUnits):
                     duplicate = duplicate_names[0]
                     if duplicate.primary is False:
                         try:
-                            current_primary = Name.objects.select_for_update().get(
-                                primary=True, user=self.user)
+                            current_primary = Name.objects.select_for_update(
+                            ).get(primary=True, user=self.user)
                         except Name.DoesNotExist:
                             duplicate.primary = True
+                            self.user.add_primary_name(
+                                update=True, f_name=duplicate.given_name,
+                                l_name=duplicate.family_name)
                             duplicate.save()
                         else:
                             current_primary.primary = False
                             current_primary.save()
                             duplicate.primary = True
+                            self.user.add_primary_name(
+                                update=True, f_name=duplicate.given_name,
+                                l_name=duplicate.family_name)
                             duplicate.save()
             elif self.id in [name.id for name in duplicate_names]:
+                self.user_full_name_check()
                 super(Name, self).save(*args, **kwargs)
         else:
             if self.primary:
                 self.switch_primary_name()
             else:
+                try:
+                    primary = Name.objects.get(primary=True, user=self.user)
+                except Name.DoesNotExist:
+                    primary = False
+                if not primary:
+                    self.user.add_primary_name(update=True, f_name="",
+                                               l_name="")
                 super(Name, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -122,11 +137,24 @@ class Name(ProfileUnits):
             temp = Name.objects.select_for_update().get(primary=True,
                                                         user=self.user)
         except Name.DoesNotExist:
+            self.user_full_name_check()
             super(Name, self).save(*args, **kwargs)
         else:
             temp.primary = False
             temp.save()
+            self.user.add_primary_name(update=True, f_name=self.given_name,
+                                       l_name=self.family_name)
             super(Name, self).save(*args, **kwargs)
+
+    def user_full_name_check(self):
+        if self.primary:
+            self.user.add_primary_name(update=True, f_name=self.given_name,
+                                       l_name=self.family_name)
+        else:
+            if self.user.full_name() == self.get_full_name():
+                self.user.add_primary_name(update=True, f_name="", l_name="")
+            else:
+                self.user.add_primary_name()
 
 
 def save_primary(sender, instance, created, **kwargs):
@@ -134,13 +162,21 @@ def save_primary(sender, instance, created, **kwargs):
     if len(Name.objects.filter(user=user)) == 1 and created:
         try:
             user.profileunits_set.get(content_type__name="name",
-                                          name__primary=True)
+                                      name__primary=True)
         except ProfileUnits.DoesNotExist:
             instance.primary = True
+            instance.user.add_primary_name(update=True,
+                                           f_name=instance.given_name,
+                                           l_name=instance.family_name)
             instance.save()
 
 
+def delete_primary(sender, instance, **kwargs):
+    user = instance.user
+    user.add_primary_name(update=True, f_name="", l_name="")
+
 post_save.connect(save_primary, sender=Name, dispatch_uid="save_primary")
+post_delete.connect(delete_primary, sender=Name, dispatch_uid="delete_primary")
 
 
 class Education(ProfileUnits):
