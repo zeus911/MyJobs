@@ -20,6 +20,7 @@ class Migration(SchemaMigration):
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('ticket', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'])),
+            ('session_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
         ))
         db.send_create_signal(u'myjobs', ['Tickets'])
 
@@ -99,6 +100,7 @@ class Migration(SchemaMigration):
         u'myjobs.tickets': {
             'Meta': {'unique_together': "(['ticket', 'user'],)", 'object_name': 'Tickets'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'session_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'ticket': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})
         },

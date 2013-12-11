@@ -19,7 +19,6 @@ class UserResourceTests(TestCase):
         self.client = TestClient()
         create_api_key(User, instance=self.user, created=True)
         self.data = {'email': 'foo@example.com',
-                     'username': self.user.email,
                      'api_key': self.user.api_key.key
         }
 
@@ -90,7 +89,6 @@ class SavedSearchResourceTests(TestCase):
                      ('ALICE@EXAMPLE.COM', 'www.my.jobs/search?q=python')]:
             self.data['email'] = data[0]
             self.data['url'] = data[1]
-            self.data['username'] = self.user.email
             self.data['api_key'] = self.user.api_key.key
             response = self.make_response(self.data)
             self.assertEqual(response.status_code, 200)
@@ -109,7 +107,6 @@ class SavedSearchResourceTests(TestCase):
 
     def test_new_search_new_user(self):
         self.data['email'] = 'new@example.com'
-        self.data['username'] = self.user.email
         self.data['api_key'] = self.user.api_key.key
         response = self.make_response(self.data)
         self.assertEqual(response.status_code, 200)
@@ -124,7 +121,6 @@ class SavedSearchResourceTests(TestCase):
         SecondaryEmail.objects.create(user=self.user,
                                       email='secondary@example.com')
         self.data['email'] = 'secondary@example.com'
-        self.data['username'] = self.user.email
         self.data['api_key'] = self.user.api_key.key
         response = self.make_response(self.data)
         self.assertEqual(response.status_code, 200)
@@ -138,7 +134,6 @@ class SavedSearchResourceTests(TestCase):
 
     def test_new_search_invalid_url(self):
         self.data['url'] = 'google.com'
-        self.data['username'] = self.user.email
         self.data['api_key'] = self.user.api_key.key
         response = self.make_response(self.data)
         self.assertEqual(response.status_code, 200)
@@ -149,7 +144,6 @@ class SavedSearchResourceTests(TestCase):
 
     def test_new_search_no_url(self):
         del self.data['url']
-        self.data['username'] = self.user.email
         self.data['api_key'] = self.user.api_key.key
         response = self.make_response(self.data)
         self.assertEqual(response.status_code, 200)
@@ -160,7 +154,6 @@ class SavedSearchResourceTests(TestCase):
 
     def test_no_email(self):
         del self.data['email']
-        self.data['username'] = self.user.email
         self.data['api_key'] = self.user.api_key.key
         response = self.make_response(self.data)
         self.assertEqual(response.status_code, 200)
@@ -181,7 +174,6 @@ class SavedSearchResourceTests(TestCase):
                    ('invalid_user@example.com', 'invalid_key')]
 
         for header in headers:
-            self.data['username'] = header[0]
             self.data['api_key'] = header[1]
             response = self.make_response(self.data)
             self.assertEqual(response.status_code, 401)
@@ -189,7 +181,6 @@ class SavedSearchResourceTests(TestCase):
             self.assertEqual(SavedSearch.objects.count(), 0)
 
     def test_existing_search(self):
-        self.data['username'] = self.user.email
         self.data['api_key'] = self.user.api_key.key
         response = self.make_response(self.data)
         self.assertEqual(response.status_code, 200)
