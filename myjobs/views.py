@@ -558,11 +558,11 @@ def cas(request):
                                 value="%s://%s" % (caller.scheme,
                                                    caller.netloc),
                                 max_age=30 * 24 * 60 * 60,
-                                domain='ec2-23-20-67-65.compute-1.amazonaws.com')
+                                domain='.my.jobs')
         response.set_cookie(key='lastmicrositename',
                                 value=page.name,
                                 max_age=30 * 24 * 60 * 60,
-                                domain='ec2-23-20-67-65.compute-1.amazonaws.com')
+                                domain='.my.jobs')
     except CustomHomepage.DoesNotExist:
         pass
 
