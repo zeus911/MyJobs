@@ -64,7 +64,11 @@ class SavedSearchHelperTests(TestCase):
     def test_parse_rss(self):
         feed_url = 'http://www.my.jobs/feed/rss'
         items = parse_rss(feed_url)
-        self.assertTrue(len(items) <= 20)
+        self.assertEqual(len(items), 1)
+
+        item = items[0]
+        for element in ['pubdate', 'title', 'description', 'link']:
+            self.assertTrue(item[element])
 
     def test_url_sort_options(self):
         feed = 'http://www.my.jobs/jobs/feed/rss?date_sort=False'

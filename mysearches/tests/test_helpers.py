@@ -1,3 +1,7 @@
+from datetime import datetime
+from StringIO import StringIO
+
+
 def return_file(url, *args, **kwargs):
     """
     Translate a url into a known local file. Reduces the time that tests take
@@ -9,10 +13,12 @@ def return_file(url, *args, **kwargs):
     :kwargs: Ignored
 
     Outputs:
-    :file: File object with a `read()` method
+    :file: File-like object
     """
+    rss = False
     if 'feed/rss' in url:
         file_ = 'rss.rss'
+        rss = True
     elif 'mcdonalds/careers/' in url or \
        url.endswith('?location=chicago&q=nurse'):
         file_ = 'careers.html'
@@ -23,4 +29,12 @@ def return_file(url, *args, **kwargs):
 
     target = 'mysearches/tests/local/'
     target += file_
-    return open(target)
+
+    if rss:
+        contents = open(target).read() % \
+            {'date': datetime.strftime(datetime.now(), "%c -0300")}
+        stream = StringIO(contents)
+    else:
+        stream = open(target)
+
+    return stream
