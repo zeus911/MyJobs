@@ -353,3 +353,4 @@ class Tickets(models.Model):
 
     ticket = models.CharField(max_length=255)
     user = models.ForeignKey('User')
+    session_id = models.CharField(max_length=255, blank=True, null=True)

@@ -525,7 +525,7 @@ def toolbar(request):
 
 def cas(request):
     # TODO: fix default url
-    redirect_url = request.GET.get('redirect_url', 'http://127.0.0.1:8001/')
+    redirect_url = request.GET.get('redirect_url', 'http://www.my.jobs/')
     user = request.user
 
     if not user or user.is_anonymous():
@@ -535,34 +535,36 @@ def cas(request):
         except User.DoesNotExist:
             pass
     if not user or user.is_anonymous():
-        return redirect("%s?ticket=%s&uid=%s" % (redirect_url, 'none',
-                                                 'none'))
+        response = redirect("%s?ticket=%s&uid=%s" % (redirect_url, 'none',
+                                                     'none'))
     else:
         ticket = Tickets()
         try:
             ticket.ticket = uuid.uuid4()
+            ticket.session_id = request.COOKIES.get('sessionid')
             ticket.user = request.user
             ticket.save()
-        except:
+        except Exception, e:
+            print e
             return cas(request)
 
         response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
                                                      ticket.ticket,
                                                      ticket.user.user_guid))
-
-        caller = urlparse(redirect_url)
-        try:
-            page = CustomHomepage.objects.get(
-                domain=caller.netloc.split(":")[0])
-            response.set_cookie(key='lastmicrosite',
-                                value=page.domain,
+    caller = urlparse(redirect_url)
+    try:
+        page = CustomHomepage.objects.get(domain=caller.netloc.split(":")[0])
+        response.set_cookie(key='lastmicrosite',
+                                value="%s://%s" % (caller.scheme,
+                                                   caller.netloc),
                                 max_age=30 * 24 * 60 * 60,
-                                domain='.my.jobs')
-            response.set_cookie(key='lastmicrositename',
+                                domain='ec2-23-20-67-65.compute-1.amazonaws.com')
+        response.set_cookie(key='lastmicrositename',
                                 value=page.name,
                                 max_age=30 * 24 * 60 * 60,
-                                domain='.my.jobs')
-        except CustomHomepage.DoesNotExist:
-            pass
+                                domain='ec2-23-20-67-65.compute-1.amazonaws.com')
+    except CustomHomepage.DoesNotExist:
+        pass
 
-        return response
+    return response
+
