@@ -334,6 +334,18 @@ class User(AbstractBaseUser, PermissionsMixin):
                 message_infos.append(m)
         return message_infos
 
+    def primary_name(self, update=False, f_name="", l_name=""):
+        if update:
+            self.first_name = f_name
+            self.last_name = l_name
+            self.save()
+        else:
+            name_obj = self.profileunits_set.filter(
+                content_type__name="name").get(name__primary=True)
+            self.first_name = name_obj.given_name
+            self.last_name = name_obj.family_name
+            self.save()
+
 
 class EmailLog(models.Model):
     email = models.EmailField(max_length=254)
