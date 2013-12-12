@@ -18,8 +18,8 @@ class Migration(SchemaMigration):
         # Adding model 'Sessions'
         db.create_table(u'myjobs_sessions', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('mj_session_id', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('ms_session_id', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('mj_session_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+            ('ms_session_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
             ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'])),
         ))
         db.send_create_signal(u'myjobs', ['Sessions'])
@@ -103,8 +103,8 @@ class Migration(SchemaMigration):
         u'myjobs.sessions': {
             'Meta': {'object_name': 'Sessions'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'mj_session_id': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'ms_session_id': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'mj_session_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
+            'ms_session_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})
         },
         u'myjobs.tickets': {

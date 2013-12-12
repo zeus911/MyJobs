@@ -407,20 +407,27 @@ class Tickets(models.Model):
     user = models.ForeignKey('User')
 
 class Sessions(models.Model):
-    mj_session_id = models.CharField(max_length=255)
-    ms_session_id = models.CharField(max_length=255)
+    mj_session_id = models.CharField(max_length=255, blank=True, null=True)
+    ms_session_id = models.CharField(max_length=255, blank=True, null=True)
     user = models.ForeignKey('User')
 
 
 def save_related_session(sender, user, request, **kwargs):
-    session = Sessions.objects.get(user__id=user.id)
-    session.ms_session_id = request.sessions._session_key
-    session.save()
+    if user.is_authenticated():
+        session, _ = Sessions.objects.get_or_create(user=user)
+        session.mj_session_id = request.session._session_key
+        session.user = user
+        session.save()
 
 
 def delete_related_session(sender, user, request, **kwargs):
-    session = Sessions.objects.get(user__id=user.id)
-    Session.objects.get(session_key=session.ms_session_id).delete()
+    if user.is_authenticated():
+        session = Sessions.objects.get(user=user)
+        if session.ms_session_id:
+            try:
+                Session.objects.get(session_key=session.ms_session_id).delete()
+            except Session.DoesNotExist:
+                pass
 
 user_logged_in.connect(save_related_session)
 user_logged_out.connect(delete_related_session)
