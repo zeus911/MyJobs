@@ -524,7 +524,6 @@ def toolbar(request):
 
 
 def cas(request):
-    # TODO: fix default url
     redirect_url = request.GET.get('redirect_url', 'http://www.my.jobs/')
     user = request.user
 
