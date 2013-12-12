@@ -1783,7 +1783,30 @@ td .gravatar-blank,
     #company-information {
         margin-top: 10px;
     }
-
+    
+    #date_activity a {
+        border: none;
+        background-color: transparent;
+    }
+    
+    #date-selection {
+            
+    }
+    
+    #date-selection input[type="submit"].btn {
+        display: inline !important;
+        margin-right: 5px;
+    }
+    
+    .date_range {
+        margin-top: -246px;
+        margin-left: 75px;
+    }
+    
+    .arrow-down {
+        margin-top: -46px;   
+    }
+    
     .formBox h4 {
         border: none;
         background-color: transparent;
@@ -1937,7 +1960,7 @@ td .gravatar-blank,
     }
     
     .refresh {
-        margin-top: 5px;
+        display: inline-block !important;
     }
     
     .profile-form-input {
