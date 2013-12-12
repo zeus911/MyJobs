@@ -15,12 +15,20 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'myjobs', ['CustomHomepage'])
 
+        # Adding model 'Sessions'
+        db.create_table(u'myjobs_sessions', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('mj_session_id', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('ms_session_id', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'])),
+        ))
+        db.send_create_signal(u'myjobs', ['Sessions'])
+
         # Adding model 'Tickets'
         db.create_table(u'myjobs_tickets', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('ticket', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'])),
-            ('session_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
         ))
         db.send_create_signal(u'myjobs', ['Tickets'])
 
@@ -44,6 +52,9 @@ class Migration(SchemaMigration):
 
         # Deleting model 'CustomHomepage'
         db.delete_table(u'myjobs_customhomepage')
+
+        # Deleting model 'Sessions'
+        db.delete_table(u'myjobs_sessions')
 
         # Deleting model 'Tickets'
         db.delete_table(u'myjobs_tickets')
@@ -89,10 +100,16 @@ class Migration(SchemaMigration):
             'processed': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'received': ('django.db.models.fields.DateField', [], {})
         },
+        u'myjobs.sessions': {
+            'Meta': {'object_name': 'Sessions'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'mj_session_id': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'ms_session_id': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})
+        },
         u'myjobs.tickets': {
             'Meta': {'unique_together': "(['ticket', 'user'],)", 'object_name': 'Tickets'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'session_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'ticket': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})
         },

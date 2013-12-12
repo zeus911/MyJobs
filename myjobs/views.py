@@ -541,13 +541,11 @@ def cas(request):
         ticket = Tickets()
         try:
             ticket.ticket = uuid.uuid4()
-            ticket.session_id = request.COOKIES.get('sessionid')
+            ticket.session_id = request.session.session_key
             ticket.user = request.user
             ticket.save()
-        except Exception, e:
-            print e
+        except Exception:
             return cas(request)
-
         response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
                                                      ticket.ticket,
                                                      ticket.user.user_guid))

@@ -12,6 +12,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
 from django.http import HttpResponse
+from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.contrib.sessions.models import Session
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
@@ -403,4 +405,22 @@ class Tickets(models.Model):
 
     ticket = models.CharField(max_length=255)
     user = models.ForeignKey('User')
-    session_id = models.CharField(max_length=255, blank=True, null=True)
+
+class Sessions(models.Model):
+    mj_session_id = models.CharField(max_length=255)
+    ms_session_id = models.CharField(max_length=255)
+    user = models.ForeignKey('User')
+
+
+def save_related_session(sender, user, request, **kwargs):
+    session = Sessions.objects.get(user__id=user.id)
+    session.ms_session_id = request.sessions._session_key
+    session.save()
+
+
+def delete_related_session(sender, user, request, **kwargs):
+    session = Sessions.objects.get(user__id=user.id)
+    Session.objects.get(session_key=session.ms_session_id).delete()
+
+user_logged_in.connect(save_related_session)
+user_logged_out.connect(delete_related_session)
