@@ -203,7 +203,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                                             login'), default=False)
 
     user_guid = models.CharField(max_length=100, db_index=True, unique=True)
-    username = models.CharField(max_length=255)
+
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
 

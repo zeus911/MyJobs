@@ -27,11 +27,6 @@ class Migration(SchemaMigration):
         # Adding unique constraint on 'Tickets', fields ['ticket', 'user']
         db.create_unique(u'myjobs_tickets', ['ticket', 'user_id'])
 
-        # Adding field 'User.username'
-        db.add_column(u'myjobs_user', 'username',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
-                      keep_default=False)
-
         # Adding field 'User.first_name'
         db.add_column(u'myjobs_user', 'first_name',
                       self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
@@ -52,9 +47,6 @@ class Migration(SchemaMigration):
 
         # Deleting model 'Tickets'
         db.delete_table(u'myjobs_tickets')
-
-        # Deleting field 'User.username'
-        db.delete_column(u'myjobs_user', 'username')
 
         # Deleting field 'User.first_name'
         db.delete_column(u'myjobs_user', 'first_name')
@@ -125,8 +117,7 @@ class Migration(SchemaMigration):
             'password_change': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'profile_completion': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'user_guid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
-            'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'}),
-            'username': ('django.db.models.fields.CharField', [], {'max_length': '255'})
+            'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'})
         },
         u'sites.site': {
             'Meta': {'ordering': "('domain',)", 'object_name': 'Site', 'db_table': "'django_site'"},
