@@ -1680,6 +1680,19 @@ td .gravatar-blank,
         content: attr(data-title);
     }
     
+    .form-label {
+        text-align: left;
+        margin-left: 0px;        
+    }
+    
+    .account-box select {
+        width: 100%;    
+    }
+    
+    .formBox select {
+        width: 100%;    
+    }
+    
     #moduleColumn td.action {
         width: auto;
     }
