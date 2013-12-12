@@ -413,7 +413,7 @@ class Sessions(models.Model):
 
 
 def save_related_session(sender, user, request, **kwargs):
-    if user.is_authenticated():
+    if user and user.is_authenticated():
         session, _ = Sessions.objects.get_or_create(user=user)
         session.mj_session_id = request.session._session_key
         session.user = user
@@ -421,7 +421,7 @@ def save_related_session(sender, user, request, **kwargs):
 
 
 def delete_related_session(sender, user, request, **kwargs):
-    if user.is_authenticated():
+    if user and user.is_authenticated():
         session = Sessions.objects.get(user=user)
         if session.ms_session_id:
             try:
