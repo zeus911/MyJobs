@@ -1935,15 +1935,27 @@ td .gravatar-blank,
         padding-left: 0;
         padding-right: 0;
     }
-
+    
+    .refresh {
+        margin-top: 5px;
+    }
+    
+    .profile-form-input {
+        padding-bottom: 5px;    
+    }
+    
+    #saved-search-form label[for^='id_edit_sort_by'] {
+        margin: 0px;    
+    }
+    
     #saved-search-form div[class*=id_edit_sort_by] {
         display: inline;
     }
 
     #saved-search-form label[for=id_url],
     #saved-search-form label[for=id_edit_url] {
-        padding-left: 3%;
-        margin-left:-10px;
+        width: 100%;
+        padding-left: 3%;        
         background-color: #ccc;
         border: 1px solid #bbb;
     }
