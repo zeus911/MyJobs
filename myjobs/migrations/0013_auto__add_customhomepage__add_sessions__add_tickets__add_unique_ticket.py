@@ -25,7 +25,7 @@ class Migration(SchemaMigration):
         db.send_create_signal(u'myjobs', ['Sessions'])
 
         # Adding model 'Ticket'
-        db.create_table(u'myjobs_tickets', (
+        db.create_table(u'myjobs_ticket', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('ticket', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'])),
@@ -33,7 +33,7 @@ class Migration(SchemaMigration):
         db.send_create_signal(u'myjobs', ['Ticket'])
 
         # Adding unique constraint on 'Ticket', fields ['ticket', 'user']
-        db.create_unique(u'myjobs_tickets', ['ticket', 'user_id'])
+        db.create_unique(u'myjobs_ticket', ['ticket', 'user_id'])
 
         # Adding field 'User.first_name'
         db.add_column(u'myjobs_user', 'first_name',
@@ -48,7 +48,7 @@ class Migration(SchemaMigration):
 
     def backwards(self, orm):
         # Removing unique constraint on 'Ticket', fields ['ticket', 'user']
-        db.delete_unique(u'myjobs_tickets', ['ticket', 'user_id'])
+        db.delete_unique(u'myjobs_ticket', ['ticket', 'user_id'])
 
         # Deleting model 'CustomHomepage'
         db.delete_table(u'myjobs_customhomepage')
@@ -57,7 +57,7 @@ class Migration(SchemaMigration):
         db.delete_table(u'myjobs_sessions')
 
         # Deleting model 'Ticket'
-        db.delete_table(u'myjobs_tickets')
+        db.delete_table(u'myjobs_ticket')
 
         # Deleting field 'User.first_name'
         db.delete_column(u'myjobs_user', 'first_name')
