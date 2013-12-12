@@ -399,7 +399,7 @@ class CustomHomepage(Site):
                                blank=True)
 
 
-class Tickets(models.Model):
+class Ticket(models.Model):
     class Meta:
         unique_together = ['ticket', 'user']
 

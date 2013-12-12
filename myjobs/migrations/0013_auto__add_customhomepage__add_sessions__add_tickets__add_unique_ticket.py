@@ -24,15 +24,15 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'myjobs', ['Sessions'])
 
-        # Adding model 'Tickets'
+        # Adding model 'Ticket'
         db.create_table(u'myjobs_tickets', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('ticket', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'])),
         ))
-        db.send_create_signal(u'myjobs', ['Tickets'])
+        db.send_create_signal(u'myjobs', ['Ticket'])
 
-        # Adding unique constraint on 'Tickets', fields ['ticket', 'user']
+        # Adding unique constraint on 'Ticket', fields ['ticket', 'user']
         db.create_unique(u'myjobs_tickets', ['ticket', 'user_id'])
 
         # Adding field 'User.first_name'
@@ -47,7 +47,7 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        # Removing unique constraint on 'Tickets', fields ['ticket', 'user']
+        # Removing unique constraint on 'Ticket', fields ['ticket', 'user']
         db.delete_unique(u'myjobs_tickets', ['ticket', 'user_id'])
 
         # Deleting model 'CustomHomepage'
@@ -56,7 +56,7 @@ class Migration(SchemaMigration):
         # Deleting model 'Sessions'
         db.delete_table(u'myjobs_sessions')
 
-        # Deleting model 'Tickets'
+        # Deleting model 'Ticket'
         db.delete_table(u'myjobs_tickets')
 
         # Deleting field 'User.first_name'
@@ -108,7 +108,7 @@ class Migration(SchemaMigration):
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})
         },
         u'myjobs.tickets': {
-            'Meta': {'unique_together': "(['ticket', 'user'],)", 'object_name': 'Tickets'},
+            'Meta': {'unique_together': "(['ticket', 'user'],)", 'object_name': 'Ticket'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ticket': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})

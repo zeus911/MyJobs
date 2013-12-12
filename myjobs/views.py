@@ -30,7 +30,7 @@ from secrets import options, my_agent_auth
 from tastypie.models import ApiKey
 
 from myjobs.decorators import user_is_allowed
-from myjobs.models import User, EmailLog, Tickets, CustomHomepage
+from myjobs.models import User, EmailLog, Ticket, CustomHomepage
 from myjobs.forms import *
 from myjobs.helpers import *
 from myjobs.templatetags.common_tags import get_name_obj
@@ -538,7 +538,7 @@ def cas(request):
         response = redirect("%s?ticket=%s&uid=%s" % (redirect_url, 'none',
                                                      'none'))
     else:
-        ticket = Tickets()
+        ticket = Ticket()
         try:
             ticket.ticket = uuid.uuid4()
             ticket.session_id = request.session.session_key
@@ -546,9 +546,9 @@ def cas(request):
             ticket.save()
         except Exception:
             return cas(request)
-        response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
-                                                     ticket.ticket,
-                                                     ticket.user.user_guid))
+        response = redirect("https://secure.my.jobs/?next=%s" % (redirect_url,
+                                                                 ticket.ticket,
+                                                                 ticket.user.user_guid))
     caller = urlparse(redirect_url)
     try:
         page = CustomHomepage.objects.get(domain=caller.netloc.split(":")[0])
