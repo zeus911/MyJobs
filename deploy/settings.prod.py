@@ -3,18 +3,14 @@ from default_settings import *
 
 DEBUG = False
 
-DATABASES = {
-    'default': {
-        'NAME': 'myjobs1',
-        'ENGINE': 'django.db.backends.mysql',
-        #'USER': 'db_mjuser',
-        'USER': 'def_mj_root',
-        'PASSWORD': PROD_DB_PASSWD,
-        #'HOST': 'myjobs.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
-        'HOST': 'db-myjobs1.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
-        'PORT': '3306'
-    },
-}
+
+DATABASES = {'default': {'NAME': 'dseo_mj',
+                         'ENGINE': 'django.db.backends.mysql',
+                         'USER': 'dseo_mj',
+                         'PASSWORD': PROD_DB_PASSWD,
+                         'HOST': 'db-dseomjprod.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
+                         'PORT': '3306', }
+            }
 
 ALLOWED_HOSTS = ['secure.my.jobs', 'my.jobs', 'localhost']
 
