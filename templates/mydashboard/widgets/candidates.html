@@ -19,8 +19,7 @@
     <a href="#" class="toggle_btn">Export Candidate List<i class="icon icon-plus"></i></a>
 </div>
 <div class="export_options">
-    <a class="btn" href="{% url 'export_candidates' %}?company={{ company_id }}&ex-t=csv">CSV</a>
-    <a class="btn" href="{% url 'export_candidates' %}?company={{ company_id }}&ex-t=pdf">PDF</a>
+    <a class="btn" href="{% url 'export_candidates' %}?company={{ company_id }}&ex-t=csv">CSV</a>    
     <a class="btn" href="{% url 'export_candidates' %}?company={{ company_id }}&ex-t=json">JSON</a>
     <a class="btn" href="{% url 'export_candidates' %}?company={{ company_id }}&ex-t=xml">XML</a>
 </div>
