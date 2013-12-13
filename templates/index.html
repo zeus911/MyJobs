@@ -12,8 +12,12 @@
 {% block content %}
     <div class="row" id="titleRow">
         <div class="span8"  id="title">
+            {% if not logo_url %}
             <h1>{% trans 'My.jobs' %}</h1>
             <h2>The Right Place for You.</h2>
+            {% else %}
+            <img src="{{ logo_url }}" />
+            {% endif %}
         </div>
         <div class="span4">
             <div class="loginBox formBox">

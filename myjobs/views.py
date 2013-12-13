@@ -5,6 +5,7 @@ import hmac
 import json
 import logging
 import urllib2
+import uuid
 from urlparse import urlparse
 
 from django.contrib.auth import authenticate, logout
@@ -29,7 +30,7 @@ from secrets import options, my_agent_auth
 from tastypie.models import ApiKey
 
 from myjobs.decorators import user_is_allowed
-from myjobs.models import User, EmailLog
+from myjobs.models import User, EmailLog, Ticket, CustomHomepage
 from myjobs.forms import *
 from myjobs.helpers import *
 from myjobs.templatetags.common_tags import get_name_obj
@@ -77,7 +78,6 @@ def home(request):
     originally from.
 
     """
-
     # TODO - rename using snake case
     registrationform = RegistrationForm(auto_id=False)
     loginform = CustomAuthForm(auto_id=False)
@@ -92,6 +92,15 @@ def home(request):
         nexturl = urllib2.unquote(nexturl)
         nexturl = urllib2.quote(nexturl)
 
+    last_ms = request.COOKIES.get('lastmicrosite')
+    logo_url = ''
+    if last_ms:
+        try:
+            last_ms = urlparse(last_ms).netloc
+            logo_url = CustomHomepage.objects.get(domain=last_ms).logo_url
+        except CustomHomepage.DoesNotExist:
+            pass
+
     data_dict = {'num_modules': len(settings.PROFILE_COMPLETION_MODULES),
                  'registrationform': registrationform,
                  'loginform': loginform,
@@ -100,7 +109,9 @@ def home(request):
                  'address_form': address_form,
                  'work_form': work_form,
                  'education_form': education_form,
-                 'nexturl': nexturl}
+                 'nexturl': nexturl,
+                 'logo_url': logo_url,
+                 }
 
     if request.method == "POST":
         if request.POST.get('action') == "register":
@@ -510,3 +521,47 @@ def toolbar(request):
                             max_age=max_age,
                             domain='.my.jobs')
     return response
+
+
+def cas(request):
+    redirect_url = request.GET.get('redirect_url', 'http://www.my.jobs/')
+    user = request.user
+
+    if not user or user.is_anonymous():
+        guid = request.COOKIES.get('myguid')
+        try:
+            user = User.objects.get(user_guid=guid)
+        except User.DoesNotExist:
+            pass
+    if not user or user.is_anonymous():
+        response = redirect("%s?ticket=%s&uid=%s" % (redirect_url, 'none',
+                                                     'none'))
+    else:
+        ticket = Ticket()
+        try:
+            ticket.ticket = uuid.uuid4()
+            ticket.session_id = request.session.session_key
+            ticket.user = request.user
+            ticket.save()
+        except Exception:
+            return cas(request)
+        response = redirect("https://secure.my.jobs/?next=%s" % (redirect_url,
+                                                                 ticket.ticket,
+                                                                 ticket.user.user_guid))
+    caller = urlparse(redirect_url)
+    try:
+        page = CustomHomepage.objects.get(domain=caller.netloc.split(":")[0])
+        response.set_cookie(key='lastmicrosite',
+                                value="%s://%s" % (caller.scheme,
+                                                   caller.netloc),
+                                max_age=30 * 24 * 60 * 60,
+                                domain='.my.jobs')
+        response.set_cookie(key='lastmicrositename',
+                                value=page.name,
+                                max_age=30 * 24 * 60 * 60,
+                                domain='.my.jobs')
+    except CustomHomepage.DoesNotExist:
+        pass
+
+    return response
+

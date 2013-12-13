@@ -5,12 +5,15 @@ import uuid
 
 from django.utils.safestring import mark_safe
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, _user_has_perm, Group, PermissionsMixin
+from django.contrib.sites.models import Site
 from django.core.mail import EmailMessage
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
 from django.http import HttpResponse
+from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.contrib.sessions.models import Session
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
@@ -203,6 +206,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     user_guid = models.CharField(max_length=100, db_index=True, unique=True)
 
+    first_name = models.CharField(max_length=255, blank=True)
+    last_name = models.CharField(max_length=255, blank=True)
+
+
     USERNAME_FIELD = 'email'
     objects = CustomUserManager()
 
@@ -329,9 +336,104 @@ class User(AbstractBaseUser, PermissionsMixin):
                 message_infos.append(m)
         return message_infos
 
+    def full_name(self, default=""):
+        """
+        Returns the user's full name based off of first_name and last_name
+        from the user model.
+
+        Inputs:
+        :default:   Can add a default if the user doesn't have a first_name
+                    or last_name.
+        """
+        if self.first_name and self.last_name:
+            return "%s %s" % (self.first_name, self.last_name)
+        else:
+            return default
+
+    def add_primary_name(self, update=False, f_name="", l_name=""):
+        """
+        Primary function that adds the primary user's ProfileUnit.Name object
+        first and last name to the user model, if Name object exists.
+
+        Inputs:
+        :update:    Update is a flag that should be used to determine if to use
+                    this function as an update (must provide f_name and l_name
+                    if that is the case) or if the function needs to be called
+                    to set the user's first_name and last_name in the model.
+
+        :f_name:    If the update flag is set to true this needs to have the
+                    given_name value from the updating Name object.
+
+        :l_name:    If the update flag is set to true this needs to have the
+                    family_name value from the updating Name object.
+        """
+        if update:
+            self.first_name = f_name
+            self.last_name = l_name
+            self.save()
+        else:
+            try:
+                name_obj = self.profileunits_set.filter(
+                    content_type__name="name").get(name__primary=True)
+            except:
+                name_obj = False
+            if name_obj:
+                self.first_name = name_obj.name.given_name
+                self.last_name = name_obj.name.family_name
+                self.save()
+            else:
+                self.first_name = ""
+                self.last_name = ""
+                self.save()
+
 
 class EmailLog(models.Model):
     email = models.EmailField(max_length=254)
     event = models.CharField(max_length=11)
     received = models.DateField()
     processed = models.BooleanField(default=False, blank=True)
+
+
+class CustomHomepage(Site):
+    logo_url = models.URLField('Logo Image URL', max_length=200, null=True,
+                               blank=True)
+
+
+class Ticket(models.Model):
+    class Meta:
+        unique_together = ['ticket', 'user']
+
+    ticket = models.CharField(max_length=255)
+    user = models.ForeignKey('User')
+
+class Related_Sessions(models.Model):
+    mj_session = models.ManyToManyField(Session, blank=True, null=True,
+                                        related_name='mj_session_set')
+    ms_session = models.ManyToManyField(Session, blank=True, null=True,
+                                        related_name='ms_session_set')
+    user = models.ForeignKey('User')
+
+
+def save_related_session(sender, user, request, **kwargs):
+    if user and user.is_authenticated():
+        session, _ = Related_Sessions.objects.get_or_create(user=user)
+        session.mj_session.add(request.session._session_key)
+        session.save()
+
+
+def delete_related_session(sender, user, request, **kwargs):
+    if user and user.is_authenticated():
+        try:
+            sessions = Related_Sessions.objects.get(user=user)
+        except Related_Sessions.DoesNotExist:
+            return
+        ms_sessions = sessions.ms_session.all()
+        for session in ms_sessions:
+            try:
+                session.delete()
+            except Session.DoesNotExist:
+                pass
+        sessions.delete()
+
+user_logged_in.connect(save_related_session)
+user_logged_out.connect(delete_related_session)
