@@ -130,10 +130,24 @@
 
                                                     {% endif %}
                                                 {% endif %}
+                                                
+                                                {% is_a_group_member user "Employer" as group_member %}
+                                                {% get_company_name user as company_name %}
+                                                {% if group_member and company_name|length >= 1 %}
+                                                    {% if company_name %}
+                                                        {% if company_name|length == 1 %}
+                                                            <li><a id="candidates-link" href="{% url 'dashboard' %}?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
+                                                        {% else %}
+                                                            {% for company in company_name %}
+                                                            <li><a id="candidates-link" href="{% url 'dashboard' %}?company={{ company.id }}">{{ company }}</a></li>
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                    {% endif %} 
+                                                {% endif %} 
 
                                                 <li><a id="account-link" href="{% url 'edit_account' %}">{% trans "Account Settings" %}</a></li>
-                                                <li><a id="settings-link">{% trans "Settings" %}</a></li>
-
+                                                <li><a id="settings-link">{% trans "Settings" %}</a></li>                                                
+                                                
                                             {% endif %}
 
                                             <li><a id="logout-link" href="{% url 'auth_logout' %}">Log Out</a></li>
