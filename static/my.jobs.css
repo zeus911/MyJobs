@@ -1788,11 +1788,7 @@ td .gravatar-blank,
         border: none;
         background-color: transparent;
     }
-    
-    #date-selection {
-            
-    }
-    
+        
     #date-selection input[type="submit"].btn {
         display: inline !important;
         margin-right: 5px;
