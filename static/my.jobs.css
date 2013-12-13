@@ -205,13 +205,14 @@ table#row-link-table {
 #date_activity {
     float: right;    
     margin-right: 60px;
-    margin-top: -80px;
-    
+    margin-top: -80px;    
 }
+
 #date_activity a {
     display: block;
     text-decoration: none;    
 }
+
 .arrow-down {
     float: right;
 	width: 0; 
@@ -1784,6 +1785,11 @@ td .gravatar-blank,
         margin-top: 10px;
     }
     
+    #date_activity {    
+        margin-top: -40px;    
+        margin-right: 40px;
+    }
+    
     #date_activity a {
         border: none;
         background-color: transparent;
@@ -1796,11 +1802,11 @@ td .gravatar-blank,
     
     .date_range {
         margin-top: -246px;
-        margin-left: 75px;
+        margin-left: 105px;
     }
     
     .arrow-down {
-        margin-top: -46px;   
+        margin-top: -49px;   
     }
     
     .formBox h4 {
