@@ -406,28 +406,34 @@ class Ticket(models.Model):
     ticket = models.CharField(max_length=255)
     user = models.ForeignKey('User')
 
-class Sessions(models.Model):
-    mj_session_id = models.CharField(max_length=255, blank=True, null=True)
-    ms_session_id = models.CharField(max_length=255, blank=True, null=True)
+class Related_Sessions(models.Model):
+    mj_session = models.ManyToManyField(Session, blank=True, null=True,
+                                        related_name='mj_session_set')
+    ms_session = models.ManyToManyField(Session, blank=True, null=True,
+                                        related_name='ms_session_set')
     user = models.ForeignKey('User')
 
 
 def save_related_session(sender, user, request, **kwargs):
     if user and user.is_authenticated():
-        session, _ = Sessions.objects.get_or_create(user=user)
-        session.mj_session_id = request.session._session_key
-        session.user = user
+        session, _ = Related_Sessions.objects.get_or_create(user=user)
+        session.mj_session.add(request.session._session_key)
         session.save()
 
 
 def delete_related_session(sender, user, request, **kwargs):
     if user and user.is_authenticated():
-        session = Sessions.objects.get(user=user)
-        if session.ms_session_id:
+        try:
+            sessions = Related_Sessions.objects.get(user=user)
+        except Related_Sessions.DoesNotExist:
+            return
+        ms_sessions = sessions.ms_session.all()
+        for session in ms_sessions:
             try:
-                Session.objects.get(session_key=session.ms_session_id).delete()
+                session.delete()
             except Session.DoesNotExist:
                 pass
+        sessions.delete()
 
 user_logged_in.connect(save_related_session)
 user_logged_out.connect(delete_related_session)
