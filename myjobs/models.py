@@ -417,7 +417,10 @@ class Related_Sessions(models.Model):
 def save_related_session(sender, user, request, **kwargs):
     if user and user.is_authenticated():
         session, _ = Related_Sessions.objects.get_or_create(user=user)
-        session.mj_session.add(request.session._session_key)
+        try:
+            session.mj_session.add(request.session._session_key)
+        except:
+            pass
         session.save()
 
 
