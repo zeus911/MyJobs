@@ -17,26 +17,27 @@ class CommonTagsTests(TestCase):
 
     def test_get_name_obj_no_name(self):
         template = Template(
-                    '{% load common_tags %}'
-                    '{{ user|get_name_obj }}'
-                 )
+            '{{ user.full_name }}'
+        )
         out = template.render(self.context)
         self.assertEqual(out, '')
 
     def test_get_name_obj_with_name(self):
         template = Template(
-                    '{% load common_tags %}'
-                    '{{ user|get_name_obj }}'
-                 )
+            '{{ user.full_name }}'
+        )
         name = PrimaryNameFactory(user=self.user)
         out = template.render(self.context)
         self.assertEqual(out, name.get_full_name())
 
     def test_get_name_obj_with_default(self):
         template = Template(
-                    '{% load common_tags %}'
-                    '{{ user|get_name_obj:"Default value" }}'
-                 )
+            '{% if not user.full_name %}'
+            'Default value'
+            '{% else %}'
+            '{{ user.full_name }}'
+            '{% endif %}'
+        )
         out = template.render(self.context)
         self.assertEqual(out, 'Default value')
 

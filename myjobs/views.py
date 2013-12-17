@@ -33,7 +33,6 @@ from myjobs.decorators import user_is_allowed
 from myjobs.models import User, EmailLog, Ticket, CustomHomepage
 from myjobs.forms import *
 from myjobs.helpers import *
-from myjobs.templatetags.common_tags import get_name_obj
 from myprofile.models import ProfileUnits
 from registration.forms import *
 
@@ -462,7 +461,7 @@ def check_name_obj(user):
     :initial_dict: Dictionary object with updated name information
     """
     initial_dict = model_to_dict(user)
-    name = get_name_obj(user)
+    name = user.full_name()
     if name:
         initial_dict.update(model_to_dict(name))
     return initial_dict
