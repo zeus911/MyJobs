@@ -34,9 +34,13 @@
                         {% else %}
                         
                         {% with short_email=user.email|truncatechars:"23" %}
-                                {% with name_obj=user|get_name_obj:short_email %}
-                        <h3><small>Welcome</small> {{name_obj}}</h3>
-                            {% endwith %}
+
+                        {% with name_obj=user.full_name %}
+
+                        <h3><small>Welcome</small> {% if not name_obj %}{{ short_email }}{% else %}{{name_obj}}{% endif %}</h3>
+
+                        {% endwith %}
+
                         {% endwith %}
                     
                         <p>

@@ -1,8 +1,7 @@
 {% extends "base.html" %}
-{% load common_tags %}
 {% load widget_manager %}
 {% block site-title %}
-    {% with name_obj=user|get_name_obj %}
+    {% with name_obj=user.full_name %}
         <title>{{ company_name }} Activity Information on My.jobs</title>
         <meta name="title" content="{{ company_name }} Activity Information on My.jobs">
     {% endwith %}

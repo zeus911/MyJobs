@@ -492,10 +492,8 @@ def toolbar(request):
                 "employer": ""}
     else:
         try:
-            name_obj = user.profileunits_set.get(content_type__name="name",
-                                         name__primary=True).name
-            name = name_obj.get_full_name()
-            if not name_obj.get_full_name():
+            name = user.full_name()
+            if not name:
                 name = user.email
         except ProfileUnits.DoesNotExist:
             name = user.email
