@@ -212,3 +212,17 @@ def _build_select_list(select_dict,selected,input_name,html_id,class_name="",
             html_str = "%s<option %s>%s</option>" % (html_str,option_attr,item["name"])
     html_str = "%s</select>" % html_str    
     return html_str
+
+@register.filter
+def default_country(field):
+    """
+    Determines what the default country should be when populating country
+    select tags.
+
+    Inputs:
+    :field: Django form field
+
+    Returns:
+    :value: The value stored by :field: if it exists, or USA otherwise
+    """
+    return field.value() or "USA"
