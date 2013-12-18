@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.contrib.auth.models import Group
+from django.contrib.sites.models import Site
 
 from myjobs.models import User, CustomHomepage
 from registration.models import ActivationProfile
@@ -14,3 +14,4 @@ class UserAdmin(admin.ModelAdmin):
 admin.site.register(User, UserAdmin)
 admin.site.register(ActivationProfile)
 admin.site.register(CustomHomepage)
+admin.site.unregister(Site)
