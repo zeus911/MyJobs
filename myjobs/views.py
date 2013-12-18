@@ -461,7 +461,10 @@ def check_name_obj(user):
     :initial_dict: Dictionary object with updated name information
     """
     initial_dict = model_to_dict(user)
-    name = user.full_name()
+    try:
+        name = Name.objects.get(user=user, primary=True)
+    except Name.DoesNotExist:
+        name = None
     if name:
         initial_dict.update(model_to_dict(name))
     return initial_dict
