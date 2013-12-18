@@ -41,6 +41,7 @@ def register(request):
     return HttpResponse(json.dumps({'errors': form.errors.items()}))
 
 
+@user_is_allowed()
 def resend_activation(request):
     activation = ActivationProfile.objects.get_or_create(user=request.user,
                                                          email=request.user.email)[0]
