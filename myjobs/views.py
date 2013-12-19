@@ -545,9 +545,10 @@ def cas(request):
             ticket.save()
         except Exception:
             return cas(request)
-        response = redirect("https://secure.my.jobs/?next=%s" % (redirect_url,
-                                                                 ticket.ticket,
-                                                                 ticket.user.user_guid))
+        
+        response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
+                                                     ticket.ticket,
+                                                     ticket.user.user_guid))
     caller = urlparse(redirect_url)
     try:
         page = CustomHomepage.objects.get(domain=caller.netloc.split(":")[0])
