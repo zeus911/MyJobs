@@ -5,6 +5,7 @@ from django.utils import simplejson as json
 
 register = template.Library()
 
+
 @register.simple_tag
 def degree_select(selected="ba", html_id="",input_name="degree",inc_struc=True):
     """
@@ -39,7 +40,8 @@ def degree_select(selected="ba", html_id="",input_name="degree",inc_struc=True):
         html_str = sel_tag
         
     return html_str   
-    
+
+
 @register.simple_tag
 def country_region_select(selected="can", html_id="", input_name="country",
                           region_html_id="region_selection"):
@@ -67,7 +69,8 @@ def country_region_select(selected="can", html_id="", input_name="country",
 
     html = country_tag+region_tag
     return html
-    
+
+
 @register.simple_tag
 def country_select(selected="usa", html_id="", input_name="country",
                    inc_struc=True,region_html_id=""):
@@ -110,6 +113,7 @@ def country_select(selected="usa", html_id="", input_name="country",
         
     return html_str   
 
+
 @register.simple_tag
 def region_select(country="usa",selected="az",html_id="",input_name="region",
                   inc_struc=True):
@@ -126,7 +130,6 @@ def region_select(country="usa",selected="az",html_id="",input_name="region",
     :html_str:      HTML <select> block or error message
     
     """
-    
     #there is a single file per country, else it returns null.
     country = country.lower()
     selected = selected.lower()
@@ -153,7 +156,23 @@ def region_select(country="usa",selected="az",html_id="",input_name="region",
     else:
         html_str = _build_select_list(region_list,selected,input_name,html_id)
         
-    return html_str 
+    return html_str
+
+
+@register.filter
+def default_country(field):
+    """
+    Determines what the default country should be when populating country
+    select tags.
+
+    Inputs:
+    :field: Django form field
+
+    Returns:
+    :value: The value stored by :field: if it exists, or USA otherwise
+    """
+    return field.value() or "USA"
+
 
 # utility function below here
 def _load_json_data(json_url):
@@ -174,7 +193,8 @@ def _load_json_data(json_url):
     except (urllib2.HTTPError,ValueError):
         return {"code":"error","error":"There was an error loading the file."}   
     return json_data
-    
+
+
 def _build_select_list(select_dict,selected,input_name,html_id,class_name="",
                        child_list_id=""):
     """

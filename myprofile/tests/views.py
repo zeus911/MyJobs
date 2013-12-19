@@ -148,3 +148,24 @@ class MyProfileViewsTests(TestCase):
                                 HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(json.loads(resp.content),
                          {u'email': [u'This email is already registered.']})
+
+    def test_default_country_changes(self):
+        """
+        The displayed country when editing an address should update to reflect
+        the chosen country.
+        """
+        resp = self.client.get(reverse('handle_form'),
+                               data={'module': 'Address'})
+        content = BeautifulSoup(resp.content)
+
+        selected = content.find('option', attrs={'selected': True})
+        self.assertEqual(selected.attrs['value'], 'USA')
+
+        address = AddressFactory(user=self.user, country_code='AFG')
+
+        resp = self.client.get(reverse('handle_form'),
+                               data={'module': 'Address',
+                                     'id': address.id})
+        content = BeautifulSoup(resp.content)
+        selected = content.find('option', attrs={'selected': True})
+        self.assertEqual(selected.attrs['value'], 'AFG')
