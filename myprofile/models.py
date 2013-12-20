@@ -151,7 +151,7 @@ class Name(ProfileUnits):
             self.user.add_primary_name(update=True, f_name=self.given_name,
                                        l_name=self.family_name)
         else:
-            if self.user.full_name() == self.get_full_name():
+            if self.user.get_full_name() == self.get_full_name():
                 self.user.add_primary_name(update=True, f_name="", l_name="")
             else:
                 self.user.add_primary_name()
