@@ -8,6 +8,7 @@ import urllib2
 import uuid
 from urlparse import urlparse
 
+from django.db import IntegrityError
 from django.contrib.auth import authenticate, logout
 from django.contrib.sessions.models import Session
 from django.contrib.auth.decorators import user_passes_test
@@ -543,12 +544,20 @@ def cas(request):
             ticket.session_id = request.session.session_key
             ticket.user = request.user
             ticket.save()
-        except Exception:
+        except IntegrityError:
             return cas(request)
-        
-        response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
-                                                     ticket.ticket,
-                                                     ticket.user.user_guid))
+        except:
+            # This is here to catch an error most likely related to an invalid
+            # session key caused by logging out via either the myjobs or
+            # microsites admin. I haven't been able to replicate this error
+            # in any testing environments, so I don't know what the actual
+            # error is, but this should be replaced with a more
+            # specific exception once it's been identified - Ashley 12/20/13
+            response = redirect("https://secure.my.jobs/?next=" % redirect_url)
+        else:
+            response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
+                                                         ticket.ticket,
+                                                         ticket.user.user_guid))
     caller = urlparse(redirect_url)
     try:
         page = CustomHomepage.objects.get(domain=caller.netloc.split(":")[0])
