@@ -13,7 +13,7 @@
                     <span class="gravatar pull-left">{% get_gravatar candidate.user '55' %}</span>                        
                 </td>
                 <td>
-                    <div class="candidate-name">{{candidate.user|get_name_obj}}</div>
+                    <div class="candidate-name">{{candidate.user.full_name}}</div>
                     <a name="{{ candidate.user.id }}{% if candidate.label %}{{candidate.label}}{% else %}Unlabeled{% endif %}"></a>
                     <a href="{% url 'candidate_information' %}?company={{ company_id }}&user={{ candidate.user.id }}&anchor={{ candidate.user.id }}{% if candidate.label %}{{candidate.label}}{% else %}Unlabeled{% endif %}&page={{ candidates_page }}&before={{ before|date:'m/d/Y' }}&after={{ after|date:'m/d/Y' }}">{{candidate.user}}</a>
                     <div class="progress activity-progress">
@@ -31,7 +31,7 @@
                     <span class="gravatar pull-left">{% get_gravatar candidate.user '45' %}</span> 
                 </td>
                 <td>
-                    <div class="candidate-name pull-left">{{candidate.user|get_name_obj}}</div>
+                    <div class="candidate-name pull-left">{{candidate.user.full_name}}</div>
                     <a href="{% url 'candidate_information' %}?company={{ company_id }}&user={{ candidate.user.id }}&before={{ before|date:'m/d/Y' }}&after={{ after|date:'m/d/Y' }}" class="candidate-activity-mobile pull-left">{{candidate.user}}</a>
                     <br>
                     <div class="progress activity-progress">
