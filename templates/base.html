@@ -104,9 +104,21 @@
                                                 <b>
 
                                                     {% with short_email=user.email|truncatechars:"20" %}
-                                                    {% with name_obj=user|get_name_obj:short_email %}
+
+                                                    {% with name_obj=user.full_name %}
+
+                                                    {% if not name_obj %}
+
+                                                    {{ short_email }}
+
+                                                    {% else %}
+
                                                     {{ name_obj }}
+
+                                                    {% endif %}
+
                                                     {% endwith %}
+
                                                     {% endwith %}
 
                                                 </b>

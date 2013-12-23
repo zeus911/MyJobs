@@ -33,7 +33,6 @@ from myjobs.decorators import user_is_allowed
 from myjobs.models import User, EmailLog, Ticket, CustomHomepage
 from myjobs.forms import *
 from myjobs.helpers import *
-from myjobs.templatetags.common_tags import get_name_obj
 from myprofile.models import ProfileUnits
 from registration.forms import *
 
@@ -462,7 +461,10 @@ def check_name_obj(user):
     :initial_dict: Dictionary object with updated name information
     """
     initial_dict = model_to_dict(user)
-    name = get_name_obj(user)
+    try:
+        name = Name.objects.get(user=user, primary=True)
+    except Name.DoesNotExist:
+        name = None
     if name:
         initial_dict.update(model_to_dict(name))
     return initial_dict
@@ -492,10 +494,8 @@ def toolbar(request):
                 "employer": ""}
     else:
         try:
-            name_obj = user.profileunits_set.get(content_type__name="name",
-                                         name__primary=True).name
-            name = name_obj.get_full_name()
-            if not name_obj.get_full_name():
+            name = user.full_name()
+            if not name:
                 name = user.email
         except ProfileUnits.DoesNotExist:
             name = user.email

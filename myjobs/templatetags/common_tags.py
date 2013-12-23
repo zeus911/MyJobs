@@ -51,27 +51,6 @@ def get_description(module):
         return ""
 
 
-@register.filter
-def get_name_obj(user, default=""):
-    """
-    Retrieve the given user's primary name (if one exists) or a default value
-
-    Inputs:
-    :user: User instance
-    :default: Return this if no name exists
-
-    Outputs:
-    :name: Name instance or :default:
-    """
-    try:
-        name = user.profileunits_set.get(content_type__name="name",
-                                         name__primary=True).name
-        if not name.get_full_name():
-            name = default
-    except ProfileUnits.DoesNotExist:
-        name = default
-    return name
-
 @register.assignment_tag
 def is_a_group_member(user, group):
     """ 
