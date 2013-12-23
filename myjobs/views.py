@@ -494,7 +494,7 @@ def toolbar(request):
                 "employer": ""}
     else:
         try:
-            name = user.full_name()
+            name = user.get_full_name()
             if not name:
                 name = user.email
         except ProfileUnits.DoesNotExist:

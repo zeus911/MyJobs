@@ -336,7 +336,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                 message_infos.append(m)
         return message_infos
 
-    def full_name(self, default=""):
+    def get_full_name(self, default=""):
         """
         Returns the user's full name based off of first_name and last_name
         from the user model.

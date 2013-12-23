@@ -17,14 +17,14 @@ class CommonTagsTests(TestCase):
 
     def test_get_name_obj_no_name(self):
         template = Template(
-            '{{ user.full_name }}'
+            '{{ user.get_full_name }}'
         )
         out = template.render(self.context)
         self.assertEqual(out, '')
 
     def test_get_name_obj_with_name(self):
         template = Template(
-            '{{ user.full_name }}'
+            '{{ user.get_full_name }}'
         )
         name = PrimaryNameFactory(user=self.user)
         out = template.render(self.context)
@@ -32,10 +32,10 @@ class CommonTagsTests(TestCase):
 
     def test_get_name_obj_with_default(self):
         template = Template(
-            '{% if not user.full_name %}'
+            '{% if not user.get_full_name %}'
             'Default value'
             '{% else %}'
-            '{{ user.full_name }}'
+            '{{ user.get_full_name }}'
             '{% endif %}'
         )
         out = template.render(self.context)
