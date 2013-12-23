@@ -105,7 +105,7 @@
 
                                                     {% with short_email=user.email|truncatechars:"20" %}
 
-                                                    {% with name_obj=user.full_name %}
+                                                    {% with name_obj=user.get_full_name %}
 
                                                     {% if not name_obj %}
 

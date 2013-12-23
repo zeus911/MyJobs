@@ -19,7 +19,7 @@ done.html -- presents user_view_profile.
                   <td>{{ user.email|default:"Not provided" }}</td></tr>
                 <tr><td class="table-field"><b>{% trans "Name" %}</b></td>
                   <td>
-                    {% with name_obj=user.full_name %}
+                    {% with name_obj=user.get_full_name %}
 
                     {% if not name_obj %}
 
