@@ -534,8 +534,7 @@ def cas(request):
         except User.DoesNotExist:
             pass
     if not user or user.is_anonymous():
-        response = redirect("%s?ticket=%s&uid=%s" % (redirect_url, 'none',
-                                                     'none'))
+        response = redirect("https://secure.my.jobs/?next=%s" % redirect_url)
     else:
         ticket = Ticket()
         try:
