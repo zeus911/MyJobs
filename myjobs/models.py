@@ -13,7 +13,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
 from django.http import HttpResponse
 from django.contrib.auth.signals import user_logged_in, user_logged_out
-from django.contrib.sessions.models import Session
+from django.contrib.sessions.backends.cache import SessionStore
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
@@ -406,17 +406,22 @@ class Ticket(models.Model):
     ticket = models.CharField(max_length=255)
     user = models.ForeignKey('User')
 
-class Related_Sessions(models.Model):
-    mj_session = models.ManyToManyField(Session, blank=True, null=True,
+
+class Shared_Sessions(models.Model):
+    mj_session = models.ManyToManyField('Session', blank=True, null=True,
                                         related_name='mj_session_set')
-    ms_session = models.ManyToManyField(Session, blank=True, null=True,
+    ms_session = models.ManyToManyField('Session', blank=True, null=True,
                                         related_name='ms_session_set')
-    user = models.ForeignKey('User')
+    user = models.ForeignKey('User', unique=True)
+
+
+class Session(models.Model):
+    session_key = models.CharField(max_length=255, null=False)
 
 
 def save_related_session(sender, user, request, **kwargs):
     if user and user.is_authenticated():
-        session, _ = Related_Sessions.objects.get_or_create(user=user)
+        session, _ = Shared_Sessions.objects.get_or_create(user=user)
         try:
             session.mj_session.add(request.session._session_key)
         except:
@@ -427,14 +432,15 @@ def save_related_session(sender, user, request, **kwargs):
 def delete_related_session(sender, user, request, **kwargs):
     if user and user.is_authenticated():
         try:
-            sessions = Related_Sessions.objects.get(user=user)
-        except Related_Sessions.DoesNotExist:
+            sessions = Shared_Sessions.objects.get(user=user)
+        except Shared_Sessions.DoesNotExist:
             return
         ms_sessions = sessions.ms_session.all()
-        for session in ms_sessions:
+        for ms_session in ms_sessions:
             try:
-                session.delete()
-            except Session.DoesNotExist:
+                SessionStore(ms_session.session_key).delete()
+                ms_session.delete()
+            except:
                 pass
         sessions.delete()
 
