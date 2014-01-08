@@ -8,15 +8,6 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting model 'Related_Sessions'
-        db.delete_table(u'myjobs_related_sessions')
-
-        # Removing M2M table for field ms_session on 'Related_Sessions'
-        db.delete_table('myjobs_related_sessions_ms_session')
-
-        # Removing M2M table for field mj_session on 'Related_Sessions'
-        db.delete_table('myjobs_related_sessions_mj_session')
-
         # Adding model 'Shared_Sessions'
         db.create_table(u'myjobs_shared_sessions', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -28,29 +19,6 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        # Adding model 'Related_Sessions'
-        db.create_table(u'myjobs_related_sessions', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'])),
-        ))
-        db.send_create_signal(u'myjobs', ['Related_Sessions'])
-
-        # Adding M2M table for field ms_session on 'Related_Sessions'
-        db.create_table(u'myjobs_related_sessions_ms_session', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('related_sessions', models.ForeignKey(orm[u'myjobs.related_sessions'], null=False)),
-            ('session', models.ForeignKey(orm[u'sessions.session'], null=False))
-        ))
-        db.create_unique(u'myjobs_related_sessions_ms_session', ['related_sessions_id', 'session_id'])
-
-        # Adding M2M table for field mj_session on 'Related_Sessions'
-        db.create_table(u'myjobs_related_sessions_mj_session', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('related_sessions', models.ForeignKey(orm[u'myjobs.related_sessions'], null=False)),
-            ('session', models.ForeignKey(orm[u'sessions.session'], null=False))
-        ))
-        db.create_unique(u'myjobs_related_sessions_mj_session', ['related_sessions_id', 'session_id'])
-
         # Deleting model 'Shared_Sessions'
         db.delete_table(u'myjobs_shared_sessions')
 
@@ -89,6 +57,13 @@ class Migration(SchemaMigration):
             'processed': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'received': ('django.db.models.fields.DateField', [], {})
         },
+        u'myjobs.related_sessions': {
+            'Meta': {'object_name': 'Related_Sessions'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'mj_session': ('django.db.models.fields.related.ManyToManyField', [], {'blank': 'True', 'related_name': "'mj_session_set'", 'null': 'True', 'symmetrical': 'False', 'to': u"orm['sessions.Session']"}),
+            'ms_session': ('django.db.models.fields.related.ManyToManyField', [], {'blank': 'True', 'related_name': "'ms_session_set'", 'null': 'True', 'symmetrical': 'False', 'to': u"orm['sessions.Session']"}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})
+        },
         u'myjobs.shared_sessions': {
             'Meta': {'object_name': 'Shared_Sessions'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -124,6 +99,12 @@ class Migration(SchemaMigration):
             'profile_completion': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'user_guid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'})
+        },
+        u'sessions.session': {
+            'Meta': {'object_name': 'Session', 'db_table': "'django_session'"},
+            'expire_date': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True'}),
+            'session_data': ('django.db.models.fields.TextField', [], {}),
+            'session_key': ('django.db.models.fields.CharField', [], {'max_length': '40', 'primary_key': 'True'})
         },
         u'sites.site': {
             'Meta': {'ordering': "('domain',)", 'object_name': 'Site', 'db_table': "'django_site'"},

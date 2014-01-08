@@ -14,6 +14,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.contrib.sessions.backends.cache import SessionStore
+from django.contrib.sessions.models import Session
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
@@ -404,6 +405,16 @@ class Ticket(models.Model):
         unique_together = ['ticket', 'user']
 
     ticket = models.CharField(max_length=255)
+    user = models.ForeignKey('User')
+
+class Related_Sessions(models.Model):
+    class Meta:
+        db_table = 'myjobs_related_sessions'
+
+    mj_session = models.ManyToManyField(Session, blank=True, null=True,
+                                        related_name='mj_session_set')
+    ms_session = models.ManyToManyField(Session, blank=True, null=True,
+                                        related_name='ms_session_set')
     user = models.ForeignKey('User')
 
 
