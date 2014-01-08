@@ -5,13 +5,12 @@ DEBUG = True
 
 DATABASES = {
     'default': {
-        'NAME': 'myjobs1',
+        'NAME': 'dseo_mj',
         'ENGINE': 'django.db.backends.mysql',
-        'USER': 'db_mjuser',
-        #'USER': 'def_mj_root',
+        'USER': 'dseo_mj',
         'PASSWORD': PROD_DB_PASSWD,
-        'HOST': 'myjobs-staging.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
-        'PORT': '3306'
+        'HOST': 'db-dseomjstaging.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
+        'PORT': '3306',
     },
 }
 
