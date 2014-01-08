@@ -408,22 +408,18 @@ class Ticket(models.Model):
 
 
 class Shared_Sessions(models.Model):
-    mj_session = models.ManyToManyField('Session', blank=True, null=True,
-                                        related_name='mj_session_set')
-    ms_session = models.ManyToManyField('Session', blank=True, null=True,
-                                        related_name='ms_session_set')
+    mj_session = models.TextField(blank=True, null=True)
+    ms_session = models.TextField(blank=True, null=True)
     user = models.ForeignKey('User', unique=True)
-
-
-class Session(models.Model):
-    session_key = models.CharField(max_length=255, null=False)
 
 
 def save_related_session(sender, user, request, **kwargs):
     if user and user.is_authenticated():
         session, _ = Shared_Sessions.objects.get_or_create(user=user)
+        current = session.mj_session.split(",") if session.mj_session else ''
         try:
-            session.mj_session.add(request.session._session_key)
+            current.add(request.session._session_key)
+            session.mj_session = ",".join(current)
         except:
             pass
         session.save()
@@ -435,11 +431,12 @@ def delete_related_session(sender, user, request, **kwargs):
             sessions = Shared_Sessions.objects.get(user=user)
         except Shared_Sessions.DoesNotExist:
             return
-        ms_sessions = sessions.ms_session.all()
+
+        ms_sessions = sessions.ms_session.split(",") if \
+            sessions.ms_session else []
         for ms_session in ms_sessions:
             try:
-                SessionStore(ms_session.session_key).delete()
-                ms_session.delete()
+                SessionStore(ms_session).delete()
             except:
                 pass
         sessions.delete()

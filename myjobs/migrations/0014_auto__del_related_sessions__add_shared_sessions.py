@@ -20,32 +20,11 @@ class Migration(SchemaMigration):
         # Adding model 'Shared_Sessions'
         db.create_table(u'myjobs_shared_sessions', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('mj_session', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
+            ('ms_session', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
             ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'], unique=True)),
         ))
         db.send_create_signal(u'myjobs', ['Shared_Sessions'])
-
-        # Adding M2M table for field mj_session on 'Shared_Sessions'
-        db.create_table(u'myjobs_shared_sessions_mj_session', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('shared_sessions', models.ForeignKey(orm[u'myjobs.shared_sessions'], null=False)),
-            ('session', models.ForeignKey(orm[u'myjobs.session'], null=False))
-        ))
-        db.create_unique(u'myjobs_shared_sessions_mj_session', ['shared_sessions_id', 'session_id'])
-
-        # Adding M2M table for field ms_session on 'Shared_Sessions'
-        db.create_table(u'myjobs_shared_sessions_ms_session', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('shared_sessions', models.ForeignKey(orm[u'myjobs.shared_sessions'], null=False)),
-            ('session', models.ForeignKey(orm[u'myjobs.session'], null=False))
-        ))
-        db.create_unique(u'myjobs_shared_sessions_ms_session', ['shared_sessions_id', 'session_id'])
-
-        # Adding model 'Session'
-        db.create_table(u'myjobs_session', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('session_key', self.gf('django.db.models.fields.CharField')(max_length=255)),
-        ))
-        db.send_create_signal(u'myjobs', ['Session'])
 
 
     def backwards(self, orm):
@@ -74,15 +53,6 @@ class Migration(SchemaMigration):
 
         # Deleting model 'Shared_Sessions'
         db.delete_table(u'myjobs_shared_sessions')
-
-        # Removing M2M table for field mj_session on 'Shared_Sessions'
-        db.delete_table('myjobs_shared_sessions_mj_session')
-
-        # Removing M2M table for field ms_session on 'Shared_Sessions'
-        db.delete_table('myjobs_shared_sessions_ms_session')
-
-        # Deleting model 'Session'
-        db.delete_table(u'myjobs_session')
 
 
     models = {
@@ -119,16 +89,11 @@ class Migration(SchemaMigration):
             'processed': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'received': ('django.db.models.fields.DateField', [], {})
         },
-        u'myjobs.session': {
-            'Meta': {'object_name': 'Session'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'session_key': ('django.db.models.fields.CharField', [], {'max_length': '255'})
-        },
         u'myjobs.shared_sessions': {
             'Meta': {'object_name': 'Shared_Sessions'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'mj_session': ('django.db.models.fields.related.ManyToManyField', [], {'blank': 'True', 'related_name': "'mj_session_set'", 'null': 'True', 'symmetrical': 'False', 'to': u"orm['myjobs.Session']"}),
-            'ms_session': ('django.db.models.fields.related.ManyToManyField', [], {'blank': 'True', 'related_name': "'ms_session_set'", 'null': 'True', 'symmetrical': 'False', 'to': u"orm['myjobs.Session']"}),
+            'mj_session': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'ms_session': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'unique': 'True'})
         },
         u'myjobs.ticket': {
