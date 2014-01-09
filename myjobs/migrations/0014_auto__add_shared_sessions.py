@@ -11,8 +11,8 @@ class Migration(SchemaMigration):
         # Adding model 'Shared_Sessions'
         db.create_table(u'myjobs_shared_sessions', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('mj_session', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
-            ('ms_session', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
+            ('mj_session', self.gf('django.db.models.fields.TextField')(blank=True)),
+            ('ms_session', self.gf('django.db.models.fields.TextField')(blank=True)),
             ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'], unique=True)),
         ))
         db.send_create_signal(u'myjobs', ['Shared_Sessions'])
@@ -67,8 +67,8 @@ class Migration(SchemaMigration):
         u'myjobs.shared_sessions': {
             'Meta': {'object_name': 'Shared_Sessions'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'mj_session': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'ms_session': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'mj_session': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'ms_session': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'unique': 'True'})
         },
         u'myjobs.ticket': {
