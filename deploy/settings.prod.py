@@ -24,3 +24,14 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Browsers should only send the user's session cookie over https
 SESSION_COOKIE_SECURE = True
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'VERSION': str(datetime.date.fromtimestamp(os.path.getmtime('.'))),
+        'LOCATION': [
+            'dseomj-mc-cluster.qksjst.0001.use1.cache.amazonaws.com:11211',
+            'dseomj-mc-cluster.qksjst.0002.use1.cache.amazonaws.com:11211',
+        ]
+    }
+}

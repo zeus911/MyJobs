@@ -16,3 +16,4 @@ DATABASES = {
 }
 
 ALLOWED_HOSTS = ['my.jobs', 'localhost']
+
