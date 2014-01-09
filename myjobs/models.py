@@ -419,8 +419,10 @@ class Related_Sessions(models.Model):
 
 
 class Shared_Sessions(models.Model):
-    mj_session = models.TextField(blank=True, null=True)
-    ms_session = models.TextField(blank=True, null=True)
+    # mj_session and ms_session are comma seperated list stored as a string
+    # of session keys
+    mj_session = models.TextField(blank=True)
+    ms_session = models.TextField(blank=True)
     user = models.ForeignKey('User', unique=True)
 
 
