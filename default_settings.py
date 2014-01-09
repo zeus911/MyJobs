@@ -260,3 +260,6 @@ PROFILE_COMPLETION_MODULES = (
     'employmenthistory',
     'summary'
 )
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+
