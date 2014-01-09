@@ -16,3 +16,14 @@ DATABASES = {
 
 ALLOWED_HOSTS = ['my.jobs', 'localhost']
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'VERSION': str(datetime.date.fromtimestamp(os.path.getmtime('.'))),
+        'LOCATION': [
+            'staging-mc-cluster.qksjst.0001.use1.cache.amazonaws.com:11211'
+        ]
+    }
+}
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'

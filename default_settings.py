@@ -261,5 +261,3 @@ PROFILE_COMPLETION_MODULES = (
     'summary'
 )
 
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-
