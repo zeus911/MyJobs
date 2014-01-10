@@ -545,14 +545,9 @@ def cas(request):
             ticket.save()
         except IntegrityError:
             return cas(request)
-        except:
-            # This is here to catch an error most likely related to an invalid
-            # session key caused by logging out via either the myjobs or
-            # microsites admin. I haven't been able to replicate this error
-            # in any testing environments, so I don't know what the actual
-            # error is, but this should be replaced with a more
-            # specific exception once it's been identified - Ashley 12/20/13
-            response = redirect("https://secure.my.jobs/?next=" % redirect_url)
+        except Exception, e:
+            logger.error("cas: %s" % e)
+            response = redirect("https://secure.my.jobs/?next=%s" % redirect_url)
         else:
             response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
                                                          ticket.ticket,
