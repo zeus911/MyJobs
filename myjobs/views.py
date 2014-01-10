@@ -552,7 +552,7 @@ def cas(request):
             # in any testing environments, so I don't know what the actual
             # error is, but this should be replaced with a more
             # specific exception once it's been identified - Ashley 12/20/13
-            response = redirect("https://secure.my.jobs/?next=" % redirect_url)
+            response = redirect("https://secure.my.jobs/?next=%s" % redirect_url)
         else:
             response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
                                                          ticket.ticket,
