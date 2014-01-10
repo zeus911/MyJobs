@@ -90,7 +90,7 @@ def home(request):
     nexturl = request.GET.get('next')
     if nexturl:
         nexturl = urllib2.unquote(nexturl)
-        nexturl = urllib2.quote(nexturl)
+        nexturl = urllib2.quote(nexturl.encode('utf8'))
 
     last_ms = request.COOKIES.get('lastmicrosite')
     logo_url = ''
@@ -535,7 +535,8 @@ def cas(request):
         except User.DoesNotExist:
             pass
     if not user or user.is_anonymous():
-        response = redirect("https://secure.my.jobs/?next=%s" % redirect_url)
+        response = redirect("https://secure.my.jobs/?next=%s" %
+                            redirect_url)
     else:
         ticket = Ticket()
         try:
@@ -546,12 +547,18 @@ def cas(request):
         except IntegrityError:
             return cas(request)
         except Exception, e:
-            logger.error("cas: %s" % e)
-            response = redirect("https://secure.my.jobs/?next=%s" % redirect_url)
+            logging.error("cas: %s" % e)
+            response = redirect("https://secure.my.jobs/?next=%s" %
+                                redirect_url)
         else:
-            response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
-                                                         ticket.ticket,
-                                                         ticket.user.user_guid))
+            if '?' in redirect_url:
+                response = redirect("%s&ticket=%s&uid=%s" % (redirect_url,
+                                                             ticket.ticket,
+                                                             ticket.user.user_guid))
+            else:
+                response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
+                                                             ticket.ticket,
+                                                             ticket.user.user_guid))
     caller = urlparse(redirect_url)
     try:
         page = CustomHomepage.objects.get(domain=caller.netloc.split(":")[0])
