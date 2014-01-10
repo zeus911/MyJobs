@@ -39,7 +39,6 @@ CACHES = {
     },
     'sessions': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'VERSION': str(datetime.date.fromtimestamp(os.path.getmtime('.'))),
         'LOCATION': [
             'dseomj-mc-cluster.qksjst.0001.use1.cache.amazonaws.com:11211',
             'dseomj-mc-cluster.qksjst.0002.use1.cache.amazonaws.com:11211',
