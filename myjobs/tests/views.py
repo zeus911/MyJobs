@@ -588,3 +588,15 @@ class MyJobsViewsTests(TestCase):
         response = self.client.get(reverse('home'))
         self.assertIn(last_site, response.content)
         self.assertIn(last_name, response.content)
+
+    def test_cas_logged_in(self):
+        response = self.client.get(reverse('cas'), follow=True)
+        self.assertEqual(response.redirect_chain[-1][0].split("?")[0],
+                             'http://www.my.jobs/')
+
+    def test_cas_not_logged_in(self):
+        self.client.post(reverse('auth_logout'))
+        response = self.client.get(reverse('cas'), follow=True)
+        self.assertEqual(response.redirect_chain[-1][0],
+                         'https://secure.my.jobs/?next=http://www.my.jobs/')
+

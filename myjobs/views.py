@@ -8,6 +8,7 @@ import urllib2
 import uuid
 from urlparse import urlparse
 
+from django.db import IntegrityError
 from django.contrib.auth import authenticate, logout
 from django.contrib.sessions.models import Session
 from django.contrib.auth.decorators import user_passes_test
@@ -33,7 +34,6 @@ from myjobs.decorators import user_is_allowed
 from myjobs.models import User, EmailLog, Ticket, CustomHomepage
 from myjobs.forms import *
 from myjobs.helpers import *
-from myjobs.templatetags.common_tags import get_name_obj
 from myprofile.models import ProfileUnits
 from registration.forms import *
 
@@ -462,7 +462,10 @@ def check_name_obj(user):
     :initial_dict: Dictionary object with updated name information
     """
     initial_dict = model_to_dict(user)
-    name = get_name_obj(user)
+    try:
+        name = Name.objects.get(user=user, primary=True)
+    except Name.DoesNotExist:
+        name = None
     if name:
         initial_dict.update(model_to_dict(name))
     return initial_dict
@@ -492,10 +495,8 @@ def toolbar(request):
                 "employer": ""}
     else:
         try:
-            name_obj = user.profileunits_set.get(content_type__name="name",
-                                         name__primary=True).name
-            name = name_obj.get_full_name()
-            if not name_obj.get_full_name():
+            name = user.get_full_name()
+            if not name:
                 name = user.email
         except ProfileUnits.DoesNotExist:
             name = user.email
@@ -534,8 +535,7 @@ def cas(request):
         except User.DoesNotExist:
             pass
     if not user or user.is_anonymous():
-        response = redirect("%s?ticket=%s&uid=%s" % (redirect_url, 'none',
-                                                     'none'))
+        response = redirect("https://secure.my.jobs/?next=%s" % redirect_url)
     else:
         ticket = Ticket()
         try:
@@ -543,12 +543,20 @@ def cas(request):
             ticket.session_id = request.session.session_key
             ticket.user = request.user
             ticket.save()
-        except Exception:
+        except IntegrityError:
             return cas(request)
-        
-        response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
-                                                     ticket.ticket,
-                                                     ticket.user.user_guid))
+        except:
+            # This is here to catch an error most likely related to an invalid
+            # session key caused by logging out via either the myjobs or
+            # microsites admin. I haven't been able to replicate this error
+            # in any testing environments, so I don't know what the actual
+            # error is, but this should be replaced with a more
+            # specific exception once it's been identified - Ashley 12/20/13
+            response = redirect("https://secure.my.jobs/?next=" % redirect_url)
+        else:
+            response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
+                                                         ticket.ticket,
+                                                         ticket.user.user_guid))
     caller = urlparse(redirect_url)
     try:
         page = CustomHomepage.objects.get(domain=caller.netloc.split(":")[0])

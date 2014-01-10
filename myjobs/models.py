@@ -14,6 +14,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.contrib.sessions.models import Session
+from django.utils.importlib import import_module
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
@@ -336,7 +337,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                 message_infos.append(m)
         return message_infos
 
-    def full_name(self, default=""):
+    def get_full_name(self, default=""):
         """
         Returns the user's full name based off of first_name and last_name
         from the user model.
@@ -407,6 +408,9 @@ class Ticket(models.Model):
     user = models.ForeignKey('User')
 
 class Related_Sessions(models.Model):
+    class Meta:
+        db_table = 'myjobs_related_sessions'
+
     mj_session = models.ManyToManyField(Session, blank=True, null=True,
                                         related_name='mj_session_set')
     ms_session = models.ManyToManyField(Session, blank=True, null=True,
@@ -414,27 +418,46 @@ class Related_Sessions(models.Model):
     user = models.ForeignKey('User')
 
 
+class Shared_Sessions(models.Model):
+    # mj_session and ms_session are comma seperated list stored as a string
+    # of session keys
+    mj_session = models.TextField(blank=True)
+    ms_session = models.TextField(blank=True)
+    user = models.ForeignKey('User', unique=True)
+
+
 def save_related_session(sender, user, request, **kwargs):
     if user and user.is_authenticated():
-        session, _ = Related_Sessions.objects.get_or_create(user=user)
+        session, _ = Shared_Sessions.objects.get_or_create(user=user)
+        current = session.mj_session.split(",") if session.mj_session else []
         try:
-            session.mj_session.add(request.session._session_key)
+            current.append(request.session.session_key)
+            session.mj_session = ",".join(current)
         except:
             pass
         session.save()
 
 
 def delete_related_session(sender, user, request, **kwargs):
+    """
+    Deletes all microsites sessions for user on logout.
+
+    """
+
     if user and user.is_authenticated():
         try:
-            sessions = Related_Sessions.objects.get(user=user)
-        except Related_Sessions.DoesNotExist:
+            sessions = Shared_Sessions.objects.get(user=user)
+        except Shared_Sessions.DoesNotExist:
             return
-        ms_sessions = sessions.ms_session.all()
-        for session in ms_sessions:
+
+        ms_sessions = sessions.ms_session.split(",") if \
+            sessions.ms_session else []
+        engine = import_module(settings.SESSION_ENGINE)
+        for ms_session in ms_sessions:
             try:
-                session.delete()
-            except Session.DoesNotExist:
+                s = engine.SessionStore(ms_session)
+                s.delete()
+            except:
                 pass
         sessions.delete()
 

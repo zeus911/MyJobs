@@ -62,7 +62,7 @@ a:hover {
     height: 30%;
     margin: 5px auto 0 auto;
     padding: 20px 0 20px 0;
-    border: 5px solid #000000;
+    border: 1px solid #333333;
     border-radius: 5px;
     text-align: center;
 }

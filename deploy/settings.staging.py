@@ -1,18 +1,38 @@
 from secrets import PROD_DB_PASSWD
 from default_settings import *
+import datetime
+import os
 
 DEBUG = True
 
 DATABASES = {
     'default': {
-        'NAME': 'myjobs1',
+        'NAME': 'dseo_mj',
         'ENGINE': 'django.db.backends.mysql',
-        'USER': 'db_mjuser',
-        #'USER': 'def_mj_root',
+        'USER': 'dseo_mj',
         'PASSWORD': PROD_DB_PASSWD,
-        'HOST': 'myjobs-staging.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
-        'PORT': '3306'
+        'HOST': 'db-dseomjstaging.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
+        'PORT': '3306',
     },
 }
 
 ALLOWED_HOSTS = ['my.jobs', 'localhost']
+
+SESSION_CACHE_ALIAS = 'sessions'
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'VERSION': str(datetime.date.fromtimestamp(os.path.getmtime('.'))),
+        'LOCATION': [
+            'staging-mc-cluster.qksjst.0001.use1.cache.amazonaws.com:11211'
+        ]
+    },
+    'sessions': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': [
+            'staging-mc-cluster.qksjst.0001.use1.cache.amazonaws.com:11211'
+        ]
+    },
+}
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'

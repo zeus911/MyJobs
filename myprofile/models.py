@@ -151,7 +151,7 @@ class Name(ProfileUnits):
             self.user.add_primary_name(update=True, f_name=self.given_name,
                                        l_name=self.family_name)
         else:
-            if self.user.full_name() == self.get_full_name():
+            if self.user.get_full_name() == self.get_full_name():
                 self.user.add_primary_name(update=True, f_name="", l_name="")
             else:
                 self.user.add_primary_name()
@@ -172,8 +172,9 @@ def save_primary(sender, instance, created, **kwargs):
 
 
 def delete_primary(sender, instance, **kwargs):
-    user = instance.user
-    user.add_primary_name(update=True, f_name="", l_name="")
+    if instance.user:
+        user = instance.user
+        user.add_primary_name(update=True, f_name="", l_name="")
 
 post_save.connect(save_primary, sender=Name, dispatch_uid="save_primary")
 post_delete.connect(delete_primary, sender=Name, dispatch_uid="delete_primary")

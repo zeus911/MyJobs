@@ -1,5 +1,4 @@
 {% load user_ops %}
-{% load common_tags %}
         <div class="formBox" id="company-information">
 
                 <h3 class="hide-mobile">Company Information</h3><h3 class="candidate-activity-mobile">Microsites</h3>
@@ -11,15 +10,15 @@
                     	</div>
                 		<div id="user-list-details-table" class="accordion-body collapse">
                            <ul class="link-list">
-                                {% with user_name=admin_you|get_name_obj:admin_you.email %}
+                                {% with user_name=admin_you.get_full_name %}
                                 <li>
-                                    {{ user_name }} (You)
+                                    {% if not user_name %}{{ admin_you.email }}{% else %}{{ user_name }}{% endif %} (You)
                                 </li>
                                 {% endwith %}
                                 {% for admin in company_admins %}
-                                    {% with user_name=admin.user|get_name_obj:admin.user.email %}
+                                    {% with user_name=admin.user.get_full_name %}
                                     <li>
-                                        {{ user_name }}
+                                        {% if not user_name %}{{ admin.user.email }}{% else %}{{ user_name }}{% endif %}
                                     </li>
                                     {% endwith %}
                                 {% endfor %} 
