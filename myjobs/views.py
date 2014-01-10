@@ -553,12 +553,12 @@ def cas(request):
         else:
             if '?' in redirect_url:
                 response = redirect("%s&ticket=%s&uid=%s" % (redirect_url,
-                                                            ticket.ticket,
-                                                            ticket.user.user_guid))
+                                                             ticket.ticket,
+                                                             ticket.user.user_guid))
             else:
                 response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
-                                                            ticket.ticket,
-                                                            ticket.user.user_guid))
+                                                             ticket.ticket,
+                                                             ticket.user.user_guid))
     caller = urlparse(redirect_url)
     try:
         page = CustomHomepage.objects.get(domain=caller.netloc.split(":")[0])
