@@ -17,6 +17,17 @@ from registration.models import ActivationProfile
 logger = logging.getLogger(__name__)
 
 
+@task(name='tasks.send_search_digest', ignore_result=True)
+def send_search_digest(search):
+    try:
+        search.send_email()
+    except Exception, e:
+        log_text = '{exception} - user: {user_id}, {object_type}: {object_id}'
+        logger.error(log_text.format(exception=e,
+                                     user_id=search.user.id,
+                                     object_type=search._meta.object_name,
+                                     object_id=search.id))
+
 @task(name='tasks.send_search_digests')
 def send_search_digests():
     """
@@ -45,32 +56,18 @@ def send_search_digests():
         monthly = qs.filter(frequency='M', day_of_month=today.day)
         return chain(daily, weekly, monthly)
 
-
-    log_text = '{exception} - user: {user_id}, {object_type}: {object_id}'
-
-    digest = SavedSearchDigest.objects.filter(is_active=True)
-    digest = filter_by_time(digest)
-    for obj in digest:
-        try:
-            obj.send_email()
-        except Exception, e:
-            logger.error(log_text.format(exception=e,
-                                         user_id=obj.user.id,
-                                         object_type='saved search digest',
-                                         object_id=obj.id))
+    digests = SavedSearchDigest.objects.filter(is_active=True)
+    digests = filter_by_time(digests)
+    for obj in digests:
+        send_search_digest.s(obj).apply_async()
 
     not_digest = SavedSearchDigest.objects.filter(is_active=False)
     for item in not_digest:
         saved_searches = item.user.savedsearch_set.filter(is_active=True)
         saved_searches = filter_by_time(saved_searches)
         for search_obj in saved_searches:
-            try:
-                search_obj.send_email()
-            except Exception, e:
-                logger.error(log_text.format(exception=e,
-                                             user_id=search_obj.user.id,
-                                             object_type='saved search',
-                                             object_id=search_obj.id))
+            send_search_digest.s(search_obj).apply_async()
+
 
 @task(name='task.delete_inactive_activations')
 def delete_inactive_activations():
