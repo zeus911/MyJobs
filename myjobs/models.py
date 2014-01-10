@@ -13,8 +13,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
 from django.http import HttpResponse
 from django.contrib.auth.signals import user_logged_in, user_logged_out
-from django.contrib.sessions.backends.cache import SessionStore
 from django.contrib.sessions.models import Session
+from django.utils.importlib import import_module
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
@@ -429,9 +429,9 @@ class Shared_Sessions(models.Model):
 def save_related_session(sender, user, request, **kwargs):
     if user and user.is_authenticated():
         session, _ = Shared_Sessions.objects.get_or_create(user=user)
-        current = session.mj_session.split(",") if session.mj_session else ''
+        current = session.mj_session.split(",") if session.mj_session else []
         try:
-            current.add(request.session._session_key)
+            current.append(request.session.session_key)
             session.mj_session = ",".join(current)
         except:
             pass
@@ -439,6 +439,11 @@ def save_related_session(sender, user, request, **kwargs):
 
 
 def delete_related_session(sender, user, request, **kwargs):
+    """
+    Deletes all microsites sessions for user on logout.
+
+    """
+
     if user and user.is_authenticated():
         try:
             sessions = Shared_Sessions.objects.get(user=user)
@@ -447,9 +452,11 @@ def delete_related_session(sender, user, request, **kwargs):
 
         ms_sessions = sessions.ms_session.split(",") if \
             sessions.ms_session else []
+        engine = import_module(settings.SESSION_ENGINE)
         for ms_session in ms_sessions:
             try:
-                SessionStore(ms_session).delete()
+                s = engine.SessionStore(ms_session)
+                s.delete()
             except:
                 pass
         sessions.delete()

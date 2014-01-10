@@ -1,5 +1,7 @@
 from secrets import PROD_DB_PASSWD
 from default_settings import *
+import datetime
+import os
 
 DEBUG = True
 
@@ -16,6 +18,7 @@ DATABASES = {
 
 ALLOWED_HOSTS = ['my.jobs', 'localhost']
 
+SESSION_CACHE_ALIAS = 'sessions'
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
@@ -23,7 +26,13 @@ CACHES = {
         'LOCATION': [
             'staging-mc-cluster.qksjst.0001.use1.cache.amazonaws.com:11211'
         ]
-    }
+    },
+    'sessions': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': [
+            'staging-mc-cluster.qksjst.0001.use1.cache.amazonaws.com:11211'
+        ]
+    },
 }
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
