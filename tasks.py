@@ -19,6 +19,15 @@ logger = logging.getLogger(__name__)
 
 @task(name='tasks.send_search_digest', ignore_result=True)
 def send_search_digest(search):
+    """
+    Task used by send_send_search_digests to send individual digest or search
+    emails.
+
+    Catches and logs any exceptions that occur while sending emails.
+
+    Inputs:
+    :search: SavedSearch or SavedSearchDigest instance to be mailed
+    """
     try:
         search.send_email()
     except Exception, e:
@@ -34,8 +43,6 @@ def send_search_digests():
     Daily task to send saved searches. If user opted in for a digest, they
     receive it daily and do not get individual saved search emails. Otherwise,
     each active saved search is sent individually.
-
-    Catches and logs any exceptions that occur while sending emails.
     """
 
     def filter_by_time(qs):

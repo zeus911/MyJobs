@@ -30,7 +30,7 @@ class SavedSearchModelsTests(TestCase):
         self.assertTrue(email.to[0] in email.body)
 
     def test_send_search_digest_email(self):
-        digest = SavedSearchDigestFactory(user=self.user)
+        SavedSearchDigestFactory(user=self.user)
         send_search_digests()
         self.assertEqual(len(mail.outbox), 0)
 
@@ -46,7 +46,7 @@ class SavedSearchModelsTests(TestCase):
         self.assertTrue(email.to[0] in email.body)
 
     def test_send_search_digest_send_if_none(self):
-        digest = SavedSearchDigestFactory(user=self.user, send_if_none=True)
+        SavedSearchDigestFactory(user=self.user, send_if_none=True)
         send_search_digests()
         self.assertEqual(len(mail.outbox), 0)
 
