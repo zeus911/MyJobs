@@ -11,6 +11,14 @@ from mysearches.models import SavedSearch
 
 
 def add_to_solr(sender, instance, **kwargs):
+    """
+    Converts an object instance into a dictionary and adds it to solr.
+
+    inputs:
+    :sender: the model of the object being added to solr
+    :instance: the object being added to solr
+
+    """
     solr_dict = object_to_dict(sender, instance)
 
     solr = pysolr.Solr('http://127.0.0.1:8983/solr/collection2/')
@@ -18,12 +26,39 @@ def add_to_solr(sender, instance, **kwargs):
 
 
 def delete_from_solr(sender, instance, **kwargs):
+    """
+    Removes and object instance from solr.
+
+    inputs:
+    :sender: the model of the object being removed from solr
+    :instance: the object being removed from solr
+
+    """
     content_type_id = ContentType.objects.get_for_model(sender).pk
     object_id = instance.pk
     uid = "%s::%s" % (content_type_id, object_id)
 
     solr = pysolr.Solr('http://127.0.0.1:8983/solr/collection2/')
     solr.delete(q='uid:%s' % uid)
+
+
+def object_to_dict(model, obj):
+    """
+    Turns an object into a solr compatible dictionary.
+    inputs:
+    :model: the model for the object
+    :object: object being converted into a solr dictionary
+
+    """
+    content_type_id = ContentType.objects.get_for_model(model).pk
+    object_id = obj.pk
+    solr_dict = {'uid': "%s::%s" % (content_type_id, object_id)}
+
+    for field in model._meta._fields():
+        if field.get_internal_type() != 'OneToOneField':
+            field_name = "%s_%s" % (model.__name__, field.attname)
+            solr_dict[field_name] = getattr(obj, field.attname)
+    return solr_dict
 
 post_save.connect(add_to_solr, sender=User, dispatch_uid="user")
 post_delete.connect(delete_from_solr, sender=User, dispatch_uid='user')
@@ -68,15 +103,3 @@ post_delete.connect(delete_from_solr, sender=VolunteerHistory,
 post_save.connect(add_to_solr, sender=SavedSearch, dispatch_uid='savedsearch')
 post_delete.connect(delete_from_solr, sender=SavedSearch,
                     dispatch_uid='savedsearch')
-
-
-def object_to_dict(model, obj):
-    content_type_id = ContentType.objects.get_for_model(model).pk
-    object_id = obj.pk
-    solr_dict = {'uid': "%s::%s" % (content_type_id, object_id)}
-
-    for field in model._meta._fields():
-        if field.get_internal_type() != 'OneToOneField':
-            field_name = "%s_%s" % (model.__name__, field.attname)
-            solr_dict[field_name] = getattr(obj, field.attname)
-    return solr_dict

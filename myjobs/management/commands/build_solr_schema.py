@@ -48,6 +48,8 @@ class Command(BaseCommand):
                 try:
                     field_data['type'] = type_mapping[field_type]
                 except KeyError:
+                    # If there's no field in the type_mapping then the
+                    # default text_en should work.
                     pass
 
                 if field_type == "ManyToMany":
@@ -56,7 +58,6 @@ class Command(BaseCommand):
                 schema_fields.append(field_data)
 
         context = Context({
-            # Defaults
             'default_field_name': DEFAULT_FIELD_NAME,
             'unique_field_name': DEFAULT_FIELD_NAME,
             'default_operator': DEFAULT_OPERATOR,
