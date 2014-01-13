@@ -8,7 +8,7 @@ from MyJobs.mysearches.models import SavedSearch
 DEFAULT_FIELD_NAME = 'uid'
 DEFAULT_OPERATOR = 'AND'
 
-# Django model field types that map to non-text-en fields
+# Django model field types that map to non-text_en fields
 type_mapping = {
     'AutoField': 'long',
     'BooleanField': 'boolean',
@@ -32,7 +32,7 @@ class Command(BaseCommand):
             for field in model._meta.fields:
                 field_type = field.get_internal_type()
 
-                # The OneToOneField fields is useless is every single case
+                # The OneToOneField fields is useless in every single case
                 # so far.
                 if type == 'OneToOneField':
                     continue
