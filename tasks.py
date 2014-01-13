@@ -23,19 +23,10 @@ def send_search_digest(search):
     Task used by send_send_search_digests to send individual digest or search
     emails.
 
-    Catches and logs any exceptions that occur while sending emails.
-
     Inputs:
     :search: SavedSearch or SavedSearchDigest instance to be mailed
     """
-    try:
-        search.send_email()
-    except Exception, e:
-        log_text = '{exception} - user: {user_id}, {object_type}: {object_id}'
-        logger.error(log_text.format(exception=e,
-                                     user_id=search.user.id,
-                                     object_type=search._meta.object_name,
-                                     object_id=search.id))
+    search.send_email()
 
 @task(name='tasks.send_search_digests')
 def send_search_digests():
