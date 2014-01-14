@@ -20,7 +20,8 @@ type_mapping = {
     'IntegerField': 'long',
     'ManyToMany': 'long',
 }
-# Endings for dynamic fields
+
+# Field name endings for dynamic fields
 dynamic_type_mapping = {
     'boolean': '_b',
     'date': '_dt',
@@ -34,19 +35,21 @@ dynamic_type_mapping = {
     'text_en': '_t',
 }
 
+
 class Command(BaseCommand):
     help = 'Builds solr schema from models'
 
     options = (
+        # Default option. Builds schema using static field names.
         make_option("-s", "--static",
                     action='store_true', default=True, dest='static',
                     help='create schema using static fields (default)'),
+        # Builds schema using only dynamic field types.
         make_option("-d", "--dynamic",
                     action='store_false', dest='static',
                     help='create schema using dynamic fields'),
     )
     option_list = BaseCommand.option_list + options
-
 
     def handle(self, *args, **options):
         models = ProfileUnits.__subclasses__()

@@ -1,6 +1,7 @@
 from datetime import date, timedelta, datetime
 from itertools import chain
 import logging
+import solr_signals
 
 from celery import task
 from celery.schedules import crontab
@@ -136,3 +137,19 @@ def process_batch_events():
     for user in stop_sending:
         user.opt_in_myjobs = False
         user.save()
+
+@task(name="tasks.add_to_solr")
+def add_to_solr_task(sender, instance):
+    """
+    Post-save signal used to add an object to solr.
+
+    """
+    solr_signals.add_to_solr(sender, instance)
+
+@task(name="tasks.delete_from_solr")
+def delete_from_solr_task(sender, instance):
+    """
+    Post-save signal used to delete an object from solr.
+
+    """
+    solr_signals.delete_from_solr(sender, instance)
