@@ -3,11 +3,8 @@ from django.db.models.signals import post_save, post_delete
 
 from MyJobs.myjobs.models import User
 from MyJobs.solr.management.commands.build_solr_schema import (type_mapping,
-                                                                 dynamic_type_mapping)
-from MyJobs.myprofile.models import (Name, Education, Address, Telephone,
-                                     EmploymentHistory, MilitaryService,
-                                     Website, License, Summary,
-                                     VolunteerHistory)
+                                                               dynamic_type_mapping)
+from MyJobs.myprofile.models import ProfileUnits
 from MyJobs.mysearches.models import SavedSearch
 from MyJobs.solr.models import Update
 
@@ -101,55 +98,10 @@ post_save.connect(prepare_add_to_solr, sender=User,
 post_delete.connect(prepare_delete_from_solr, sender=User,
                     dispatch_uid='user')
 
-post_save.connect(prepare_add_to_solr, sender=Name,
-                  dispatch_uid='name')
-post_delete.connect(prepare_delete_from_solr, sender=Name,
-                    dispatch_uid='name')
-
-post_save.connect(prepare_add_to_solr, sender=Education,
-                  dispatch_uid='education')
-post_delete.connect(prepare_delete_from_solr, sender=Education,
-                    dispatch_uid='education')
-
-post_save.connect(prepare_add_to_solr, sender=Address,
-                  dispatch_uid='address')
-post_delete.connect(prepare_delete_from_solr, sender=Address,
-                    dispatch_uid='address')
-
-post_save.connect(prepare_add_to_solr, sender=Telephone,
-                  dispatch_uid='telephone')
-post_delete.connect(prepare_delete_from_solr, sender=Telephone,
-                    dispatch_uid='telephone')
-
-post_save.connect(prepare_add_to_solr, sender=EmploymentHistory,
-                  dispatch_uid='employmenthistory')
-post_delete.connect(prepare_delete_from_solr, sender=EmploymentHistory,
-                    dispatch_uid='employmenthistory')
-
-post_save.connect(prepare_add_to_solr, sender=MilitaryService,
-                  dispatch_uid='militaryservice')
-post_delete.connect(prepare_delete_from_solr, sender=MilitaryService,
-                    dispatch_uid='militaryservice')
-
-post_save.connect(prepare_add_to_solr, sender=Website,
-                  dispatch_uid='website')
-post_delete.connect(prepare_delete_from_solr, sender=Website,
-                    dispatch_uid='website')
-
-post_save.connect(prepare_add_to_solr, sender=License,
-                  dispatch_uid='license')
-post_delete.connect(prepare_delete_from_solr, sender=License,
-                    dispatch_uid='license')
-
-post_save.connect(prepare_add_to_solr, sender=Summary,
-                  dispatch_uid='summary')
-post_delete.connect(prepare_delete_from_solr, sender=Summary,
-                    dispatch_uid='summary')
-
-post_save.connect(prepare_add_to_solr, sender=VolunteerHistory,
-                  dispatch_uid='volunteerhistory')
-post_delete.connect(prepare_delete_from_solr, sender=VolunteerHistory,
-                    dispatch_uid='volunteerhistory')
+post_save.connect(prepare_add_to_solr, sender=ProfileUnits,
+                  dispatch_uid="profileunits")
+post_delete.connect(prepare_delete_from_solr, sender=ProfileUnits,
+                    dispatch_uid='profileunits')
 
 post_save.connect(prepare_add_to_solr, sender=SavedSearch,
                   dispatch_uid='savedsearch')
