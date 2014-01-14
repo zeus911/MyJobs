@@ -1,3 +1,5 @@
+from optparse import make_option
+
 from django.core.management.base import BaseCommand
 from django.template import loader, Context
 
@@ -18,9 +20,33 @@ type_mapping = {
     'IntegerField': 'long',
     'ManyToMany': 'long',
 }
+# Endings for dynamic fields
+dynamic_type_mapping = {
+    'boolean': '_b',
+    'date': '_dt',
+    'double': '_d',
+    'float': '_f',
+    'int': '_i',
+    'location': '_p',
+    'long': '_l',
+    'string': '_s',
+    'tdouble': '_coordinate',
+    'text_en': '_t',
+}
 
 class Command(BaseCommand):
     help = 'Builds solr schema from models'
+
+    options = (
+        make_option("-s", "--static",
+                    action='store_true', default=True, dest='static',
+                    help='create schema using static fields (default)'),
+        make_option("-d", "--dynamic",
+                    action='store_false', dest='static',
+                    help='create schema using dynamic fields'),
+    )
+    option_list = BaseCommand.option_list + options
+
 
     def handle(self, *args, **options):
         models = ProfileUnits.__subclasses__()
@@ -28,34 +54,35 @@ class Command(BaseCommand):
         models.append(SavedSearch)
         schema_fields = []
 
-        for model in models:
-            for field in model._meta.fields:
-                field_type = field.get_internal_type()
+        if options['static']:
+            for model in models:
+                for field in model._meta.fields:
+                    field_type = field.get_internal_type()
 
-                # The OneToOneField fields is useless in every single case
-                # so far.
-                if type == 'OneToOneField':
-                    continue
+                    # The OneToOneField fields is useless in every single case
+                    # so far.
+                    if type == 'OneToOneField':
+                        continue
 
-                field_data = {
-                    'field_name': "%s_%s" % (model.__name__, field.attname),
-                    'type': 'text_en',
-                    'indexed': 'true',
-                    'stored': 'true',
-                    'multiValued': 'false',
-                }
+                    field_data = {
+                        'field_name': "%s_%s" % (model.__name__, field.attname),
+                        'type': 'text_en',
+                        'indexed': 'true',
+                        'stored': 'true',
+                        'multiValued': 'false',
+                    }
 
-                try:
-                    field_data['type'] = type_mapping[field_type]
-                except KeyError:
-                    # If there's no field in the type_mapping then the
-                    # default text_en should work.
-                    pass
+                    try:
+                        field_data['type'] = type_mapping[field_type]
+                    except KeyError:
+                        # If there's no field in the type_mapping then the
+                        # default text_en should work.
+                        pass
 
-                if field_type == "ManyToMany":
-                    field_data['multiValued'] = 'true'
+                    if field_type == "ManyToMany":
+                        field_data['multiValued'] = 'true'
 
-                schema_fields.append(field_data)
+                    schema_fields.append(field_data)
 
         context = Context({
             'default_field_name': DEFAULT_FIELD_NAME,

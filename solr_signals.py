@@ -1,9 +1,11 @@
 import pysolr
 
-from myjobs.models import User
+
 from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save, post_delete
 
+from myjobs.models import User
+from myjobs.management.commands.build_solr_schema import type_mapping
 from myprofile.models import (Name, Education, Address, Telephone,
                               EmploymentHistory, MilitaryService, Website,
                               License, Summary, VolunteerHistory)
@@ -57,6 +59,36 @@ def object_to_dict(model, obj):
     for field in model._meta._fields():
         if field.get_internal_type() != 'OneToOneField':
             field_name = "%s_%s" % (model.__name__, field.attname)
+            solr_dict[field_name] = getattr(obj, field.attname)
+    return solr_dict
+
+def object_to_dict_with_dynamic_fields(model, obj):
+    dynamic_type_mapping = {
+        'boolean': '_b',
+        'date': '_dt',
+        'double': '_d',
+        'float': '_f',
+        'int': '_i',
+        'location': '_p',
+        'long': '_l',
+        'string': '_s',
+        'tdouble': '_coordinate',
+        'text_en': '_t',
+    }
+
+    content_type_id = ContentType.objects.get_for_model(model).pk
+    object_id = obj.pk
+    solr_dict = {'uid': "%s::%s" % (content_type_id, object_id)}
+
+    for field in model._meta._fields():
+        field_type = field.get_internal_type()
+        if field_type != 'OneToOneField':
+            try:
+                mapped_field = dynamic_type_mapping[type_mapping[field_type]]
+            except KeyError:
+                mapped_field = '_t'
+
+            field_name = "%s_%s%s" % (model.__name__, field.attname, mapped_field)
             solr_dict[field_name] = getattr(obj, field.attname)
     return solr_dict
 
