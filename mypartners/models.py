@@ -22,6 +22,8 @@ class PartnerContact(models.Model):
     given_name = models.CharField(max_length=255)
     family_name = models.CharField(max_length=255)
     email = models.EmailField(max_length=255, verbose_name='Email')
+
+    # Optional Fields
     phone = models.CharField(max_length=30, verbose_name='Phone',
                              blank=True)
     address = models.CharField(max_length=255, verbose_name='Address',
@@ -33,3 +35,4 @@ class PartnerContact(models.Model):
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
+
