@@ -81,7 +81,7 @@ def object_to_dict_with_dynamic_fields(model, obj):
 
     for field in model._meta._fields():
         field_type = field.get_internal_type()
-        if field_type != 'OneToOneField':
+        if field_type != 'OneToOneField' and 'password' not in field_type:
             try:
                 mapped_field = dynamic_type_mapping[type_mapping[field_type]]
             except KeyError:

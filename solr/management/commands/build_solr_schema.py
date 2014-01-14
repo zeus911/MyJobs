@@ -64,7 +64,7 @@ class Command(BaseCommand):
 
                     # The OneToOneField fields is useless in every single case
                     # so far.
-                    if type == 'OneToOneField':
+                    if field_type == 'OneToOneField' or 'password' in field_type:
                         continue
 
                     field_data = {
