@@ -1,1 +1,1 @@
-import MyJobs.solr_signals
+import MyJobs.solr.signals

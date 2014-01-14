@@ -123,6 +123,14 @@ CELERYBEAT_SCHEDULE = {
         'task': 'tasks.process_batch_events',
         'schedule': crontab(minute=0, hour=0),
     },
+    'regular-solr-add': {
+        'task': 'tasks.add_to_solr',
+        'schedule': crontab(minute='*/5'),
+    },
+    'regular-solr-delete': {
+        'task': 'tasks.delete_from_solr',
+        'schedule': crontab(minute='*/5'),
+    }
 }
 
 
@@ -157,7 +165,8 @@ INSTALLED_APPS = (
     'django_nose',
     'tastypie',
     'captcha',
-    'endless_pagination'
+    'endless_pagination',
+    'solr',
 )
 
 # Captcha SSL

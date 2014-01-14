@@ -1,7 +1,7 @@
 from datetime import date, timedelta, datetime
 from itertools import chain
 import logging
-import solr_signals
+import pysolr
 
 from celery import task
 from celery.schedules import crontab
@@ -14,6 +14,8 @@ from myjobs.models import EmailLog, User
 from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch, SavedSearchDigest
 from registration.models import ActivationProfile
+from solr import signals as solr_signals
+from solr.models import Update
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +117,6 @@ def process_batch_events():
             user.save()
         log.processed = True
         log.save()
-
     # These users have not responded in a month. Send them an email if they
     # own any saved searches
     inactive = User.objects.select_related('savedsearch_set')
@@ -141,15 +142,25 @@ def process_batch_events():
 @task(name="tasks.add_to_solr")
 def add_to_solr_task(sender, instance):
     """
-    Post-save signal used to add an object to solr.
+    Adds all new or changed objects to solr.
 
     """
-    solr_signals.add_to_solr(sender, instance)
+    objs = Update.objects.filter(delete=False).values_list('solr_dict',
+                                                           flat=True)
+    solr = pysolr.Solr('http://127.0.0.1:8983/solr/collection2/')
+    solr.add(objs)
+    objs.delete()
+
 
 @task(name="tasks.delete_from_solr")
 def delete_from_solr_task(sender, instance):
     """
-    Post-save signal used to delete an object from solr.
+    Removes all deleted objects from solr.
 
     """
-    solr_signals.delete_from_solr(sender, instance)
+    objs = Update.objects.filter(delete=True)
+    solr = pysolr.Solr('http://127.0.0.1:8983/solr/collection2/')
+    for obj in objs:
+        solr.delete(q=obj.solr_dict)
+    objs.delete()
+
