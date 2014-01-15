@@ -30,7 +30,7 @@ class Migration(SchemaMigration):
         db.create_table(u'mypartners_partner', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('uri', self.gf('django.db.models.fields.URLField')(max_length=200)),
+            ('uri', self.gf('django.db.models.fields.URLField')(max_length=200, blank=True)),
             ('partner_of', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'])),
             ('primary_contact', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.Contact'], null=True, on_delete=models.SET_NULL)),
         ))
@@ -123,7 +123,7 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'partner_of': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"}),
             'primary_contact': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Contact']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
-            'uri': ('django.db.models.fields.URLField', [], {'max_length': '200'})
+            'uri': ('django.db.models.fields.URLField', [], {'max_length': '200', 'blank': 'True'})
         }
     }
 
