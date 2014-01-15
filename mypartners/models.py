@@ -4,9 +4,6 @@ from myjobs.models import User
 
 
 class Contact(models.Model):
-    """
-
-    """
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     name = models.CharField(max_length=255, verbose_name='Full Name',
                             blank=True)
@@ -29,15 +26,46 @@ class Contact(models.Model):
                                    blank=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
 
+    class Meta:
+        verbose_name_plural = 'contacts'
+
+    def __unicode__(self):
+        if self.name:
+            return self.name
+        if self.email:
+            return self.email
+        return 'Contact object'
+
+    def save(self, *args, **kwargs):
+        """
+        Checks to see if there is a User that is using self.email add said User
+        to self.user
+        """
+        if not self.user:
+            if self.email:
+                try:
+                    user = User.objects.get(email=self.email)
+                except User.DoesNotExist:
+                    pass
+                else:
+                    self.user = user
+        super(Contact, self).save(*args, **kwargs)
+
 
 class Partner(models.Model):
     """
-
+    Object that this whole app is built around.
     """
     name = models.CharField(max_length=255,
                             verbose_name='Partner Organization')
     uri = models.URLField(verbose_name='Partner URL')
     partner_of = models.ForeignKey(User)
-    contacts = models.ManyToManyField(Contact, related_name="contacts")
+    contacts = models.ManyToManyField(Contact, related_name="partners_set")
     primary_contact = models.ForeignKey(Contact, null=True,
                                         on_delete=models.SET_NULL)
+
+    def __unicode__(self):
+        return self.name
+
+    def add_contact(self, contact):
+        self.contacts.add(contact)
