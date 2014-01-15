@@ -7,8 +7,9 @@ class Contact(models.Model):
     """
 
     """
-    given_name = models.CharField(max_length=255)
-    family_name = models.CharField(max_length=255, verbose_name='')
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    name = models.CharField(max_length=255, verbose_name='Full Name',
+                            blank=True)
     email = models.EmailField(max_length=255, verbose_name='Email', blank=True)
     phone = models.CharField(max_length=30, verbose_name='Phone', blank=True)
     label = models.CharField(max_length=60, verbose_name='Address Label',
@@ -37,12 +38,6 @@ class Partner(models.Model):
                             verbose_name='Partner Organization')
     uri = models.URLField(verbose_name='Partner URL')
     partner_of = models.ForeignKey(User)
-    contacts = models.ManyToManyField(Contact, through='PartnerContact')
-
-
-class PartnerContact(models.Model):
-    """
-
-    """
-    contact = models.ForeignKey(Contact)
-    partner = models.ForeignKey(Partner)
+    contacts = models.ManyToManyField(Contact, related_name="contacts")
+    primary_contact = models.ForeignKey(Contact, null=True,
+                                        on_delete=models.SET_NULL)
