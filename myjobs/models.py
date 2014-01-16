@@ -407,16 +407,6 @@ class Ticket(models.Model):
     ticket = models.CharField(max_length=255)
     user = models.ForeignKey('User')
 
-class Related_Sessions(models.Model):
-    class Meta:
-        db_table = 'myjobs_related_sessions'
-
-    mj_session = models.ManyToManyField(Session, blank=True, null=True,
-                                        related_name='mj_session_set')
-    ms_session = models.ManyToManyField(Session, blank=True, null=True,
-                                        related_name='ms_session_set')
-    user = models.ForeignKey('User')
-
 
 class Shared_Sessions(models.Model):
     # mj_session and ms_session are comma seperated list stored as a string
