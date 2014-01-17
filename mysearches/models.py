@@ -30,11 +30,11 @@ class SavedSearch(models.Model):
 
     user = models.ForeignKey('myjobs.User', editable=False)
     created_on = models.DateTimeField(auto_now_add=True)
+    label = models.CharField(max_length=60, verbose_name=_("Search Name:"))
     url = models.URLField(max_length=300,
                           verbose_name=_("URL of Search Results:"))
     sort_by = models.CharField(max_length=9, choices=SORT_CHOICES,
                                default='Relevance', verbose_name=_("Sort by:"))
-    label = models.CharField(max_length=60, verbose_name=_("Search Name:"))
     feed = models.URLField(max_length=300)
     is_active = models.BooleanField(default=True,
                                     verbose_name=_("Is this agent active?"))
