@@ -1,6 +1,7 @@
 from django.db import models
 
 from myjobs.models import User
+from mydashboard.models import Company
 
 
 class Contact(models.Model):
@@ -59,10 +60,11 @@ class Partner(models.Model):
     name = models.CharField(max_length=255,
                             verbose_name='Partner Organization')
     uri = models.URLField(verbose_name='Partner URL', blank=True)
-    partner_of = models.ForeignKey(User)
     contacts = models.ManyToManyField(Contact, related_name="partners_set")
     primary_contact = models.ForeignKey(Contact, null=True,
                                         on_delete=models.SET_NULL)
+    # owner is the Company that owns this partner.
+    owner = models.ForeignKey(Company)
 
     def __unicode__(self):
         return self.name

@@ -1,7 +1,7 @@
 import factory
 
 from mypartners.models import Partner, Contact
-from myjobs.tests.models import UserFactory
+from mydashboard.tests.factories import CompanyFactory
 
 
 class PartnerFactory(factory.Factory):
@@ -9,7 +9,7 @@ class PartnerFactory(factory.Factory):
 
     name = 'Company'
     uri = 'www.my.jobs'
-    partner_of = factory.SubFactory(UserFactory)
+    owner = factory.SubFactory(CompanyFactory)
 
 
 class ContactFactory(factory.Factory):

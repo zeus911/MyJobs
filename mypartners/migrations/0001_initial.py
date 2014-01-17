@@ -31,7 +31,7 @@ class Migration(SchemaMigration):
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('uri', self.gf('django.db.models.fields.URLField')(max_length=200, blank=True)),
-            ('partner_of', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'])),
+            ('owner', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mydashboard.Company'])),
             ('primary_contact', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.Contact'], null=True, on_delete=models.SET_NULL)),
         ))
         db.send_create_signal(u'mypartners', ['Partner'])
@@ -77,6 +77,19 @@ class Migration(SchemaMigration):
             'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
+        u'mydashboard.company': {
+            'Meta': {'object_name': 'Company'},
+            'admins': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myjobs.User']", 'through': u"orm['mydashboard.CompanyUser']", 'symmetrical': 'False'}),
+            'id': ('django.db.models.fields.IntegerField', [], {'unique': 'True', 'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'})
+        },
+        u'mydashboard.companyuser': {
+            'Meta': {'unique_together': "(('user', 'company'),)", 'object_name': 'CompanyUser'},
+            'company': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
+            'date_added': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})
+        },
         u'myjobs.user': {
             'Meta': {'object_name': 'User'},
             'date_joined': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
@@ -121,7 +134,7 @@ class Migration(SchemaMigration):
             'contacts': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'partners_set'", 'symmetrical': 'False', 'to': u"orm['mypartners.Contact']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'partner_of': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"}),
+            'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
             'primary_contact': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Contact']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'uri': ('django.db.models.fields.URLField', [], {'max_length': '200', 'blank': 'True'})
         }

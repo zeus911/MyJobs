@@ -2,16 +2,17 @@ from django.test import TestCase
 
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
+from mydashboard.tests.factories import CompanyFactory
 from mypartners.tests.factories import PartnerFactory, ContactFactory
 from mypartners.models import Partner, Contact
 
 
 class MyPartnerTests(TestCase):
     def setUp(self):
-        self.employer = UserFactory(email='employer@fake.com')
-        self.employer.save()
+        self.company = CompanyFactory()
+        self.company.save()
 
-        self.partner = PartnerFactory(partner_of=self.employer)
+        self.partner = PartnerFactory(owner=self.company)
         self.contact = ContactFactory()
         self.partner.save()
         self.contact.save()
