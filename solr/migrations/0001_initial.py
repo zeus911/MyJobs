@@ -12,7 +12,6 @@ class Migration(SchemaMigration):
         db.create_table(u'solr_update', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('uid', self.gf('django.db.models.fields.CharField')(unique=True, max_length=20, db_index=True)),
-            ('solr_dict', self.gf('django.db.models.fields.TextField')()),
             ('delete', self.gf('django.db.models.fields.BooleanField')(default=False)),
         ))
         db.send_create_signal(u'solr', ['Update'])
@@ -28,7 +27,6 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Update'},
             'delete': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'solr_dict': ('django.db.models.fields.TextField', [], {}),
             'uid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '20', 'db_index': 'True'})
         }
     }

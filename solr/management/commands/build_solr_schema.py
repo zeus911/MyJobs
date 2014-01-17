@@ -64,7 +64,7 @@ class Command(BaseCommand):
 
                     # The OneToOneField fields is useless in every single case
                     # so far.
-                    if field_type == 'OneToOneField' or 'password' in field_type:
+                    if field_type == 'OneToOneField' or 'password' in field.attname:
                         continue
 
                     field_data = {
@@ -81,9 +81,6 @@ class Command(BaseCommand):
                         # If there's no field in the type_mapping then the
                         # default text_en should work.
                         pass
-
-                    if field_type == "ManyToMany":
-                        field_data['multiValued'] = 'true'
 
                     schema_fields.append(field_data)
 

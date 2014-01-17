@@ -59,7 +59,8 @@ def object_to_dict(model, obj):
     solr_dict = {'uid': "%s#%s" % (content_type_id, object_id)}
 
     for field in model._meta._fields():
-        if field.get_internal_type() != 'OneToOneField':
+        field_type = field.get_internal_type()
+        if field_type != 'OneToOneField' and 'password' not in field.attname:
             field_name = "%s_%s" % (model.__name__, field.attname)
             solr_dict[field_name] = getattr(obj, field.attname)
     return solr_dict
@@ -81,7 +82,7 @@ def object_to_dict_with_dynamic_fields(model, obj):
 
     for field in model._meta._fields():
         field_type = field.get_internal_type()
-        if field_type != 'OneToOneField' and 'password' not in field_type:
+        if field_type != 'OneToOneField' and 'password' not in field.attname:
             try:
                 mapped_field = dynamic_type_mapping[type_mapping[field_type]]
             except KeyError:

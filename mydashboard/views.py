@@ -20,6 +20,7 @@ from myjobs.models import User
 from myprofile.models import (PrimaryNameProfileUnitManager,
                               ProfileUnits, Name)
 from mysearches.models import SavedSearch
+from solr.helpers import Solr, format_date
 
 from endless_pagination.decorators import page_template
 from xhtml2pdf import pisa
@@ -42,6 +43,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     Returns:
     :render_to_response:    renders template with context dict
     """
+
+    solr = Solr()
 
     company_id = request.REQUEST.get('company')
     if company_id is None:
@@ -88,62 +91,59 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     microsite_urls = [microsite.url for microsite in active_microsites]
     if not site_name:
         site_name = microsite_urls[0]
-
-    q_list = [Q(url__contains=ms) for ms in microsite_urls]
-    
-    # All searches saved on the employer's company microsites       
-    candidate_searches = SavedSearch.objects.select_related('user')
     
     date_display = False
 
+    date_start = datetime.now()
     # Pre-set Date ranges
     if 'today' in request.REQUEST:
-        after = datetime.now() - timedelta(days=1)
-        before = datetime.now()
+        solr = solr.filter_by_time_period('SavedSearch_created_on',
+                                          total_days=1)
+        date_end = date_start - timedelta(days=1)
         requested_date_button = 'today'
         date_display = 'Today'
     elif 'seven_days' in request.REQUEST:
-        after = datetime.now() - timedelta(days=7)
-        before = datetime.now()
+        solr = solr.filter_by_time_period('SavedSearch_created_on',
+                                          total_days=7)
+        date_end = date_start - timedelta(days=7)
         requested_date_button = 'seven_days'
         date_display = '7'
     elif 'thirty_days' in request.REQUEST:
-        after = datetime.now() - timedelta(days=30)
-        before = datetime.now()
+        solr = solr.filter_by_time_period('SavedSearch_created_on',
+                                          total_days=30)
+        date_end = date_start - timedelta(days=30)
         requested_date_button = 'thirty_days'
         date_display = '30'
     else:
         if requested_after_date:            
-            after = datetime.strptime(requested_after_date, '%m/%d/%Y')            
+            date_start = datetime.strptime(requested_after_date, '%m/%d/%Y')
         else:
-            after = request.REQUEST.get('after')
-            if after:
-                after = datetime.strptime(after, '%m/%d/%Y')
+            date_start = request.REQUEST.get('after')
+            if date_start:
+                date_start = datetime.strptime(date_start, '%m/%d/%Y')
             else:
                 # Defaults to 30 days ago
-                after = datetime.now() - timedelta(days=30)                
+                date_start = datetime.now() - timedelta(days=30)
                 
         if requested_before_date:
-            before = datetime.strptime(requested_before_date, '%m/%d/%Y')            
+            date_end = datetime.strptime(requested_before_date, '%m/%d/%Y')
         else:        
-            before = request.REQUEST.get('before')
-            if before:
-                before = datetime.strptime(before, '%m/%d/%Y')
+            date_end = request.REQUEST.get('before')
+            if date_end:
+                date_end = datetime.strptime(date_end, '%m/%d/%Y')
             else:
                 # Defaults to the date and time that the page is accessed
-                before = datetime.now()
-                
-    if date_display != 'Today':
-        date_display = before - after
-    
-    # Specific microsite searches saved between two dates
-    try:
-        candidate_searches = candidate_searches.filter(reduce(
-            operator.or_, q_list)).filter(
-                created_on__range=[after, before]).exclude(
-                    user__opt_in_employers=False).order_by('-created_on')
-    except:
-        raise Http404
+                date_end = datetime.now()
+
+        solr = solr.filter_by_date_range(field='SavedSearch_created_on',
+                                         date_start=format_date(date_start),
+                                         date_end=format_date(date_end))
+
+
+    solr = solr.add_query('{!join from=User_id to=SavedSearch_user_id}User_opt_in_employers:True')
+    solr = solr.sort('SavedSearch_created_on')
+    print solr.params
+    print solr.search().docs
     
     admin_you = request.user
 
@@ -154,9 +154,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                'company_microsites': authorized_microsites,
                'company_admins': admins,
                'company_id': company.id,
-               'after': after,
-               'before': before,                 
-               'candidates': candidate_searches,                
+               'after': date_start,
+               'before': date_end,
+               'candidates': [],
                'admin_you': admin_you,
                'site_name': site_name,
                'view_name': 'Company Dashboard',
