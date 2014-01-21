@@ -261,3 +261,4 @@ PROFILE_COMPLETION_MODULES = (
     'summary'
 )
 
+TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
