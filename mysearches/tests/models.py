@@ -11,12 +11,7 @@ from tasks import send_search_digests
 
 class SavedSearchModelsTests(TestCase):
     def setUp(self):
-        self.replacer = Replacer()
-        self.replacer.replace('celerysettings.CELERY_ALWAYS_EAGER', True)
         self.user = UserFactory()
-
-    def tearDown(self):
-        self.replacer.restore()
 
     def test_send_search_email(self):
         SavedSearchDigestFactory(user=self.user,
