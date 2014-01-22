@@ -7,6 +7,7 @@ from celery import task
 from celery.schedules import crontab
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.template.loader import render_to_string
 from django.db.models import Q
 
@@ -16,6 +17,7 @@ from mysearches.models import SavedSearch, SavedSearchDigest
 from registration.models import ActivationProfile
 from solr import signals as solr_signals
 from solr.models import Update
+from solr.signals import object_to_dict, profileunits_to_dict
 
 logger = logging.getLogger(__name__)
 
@@ -145,10 +147,19 @@ def add_to_solr_task(sender, instance):
     Adds all new or changed objects to solr.
 
     """
-    objs = Update.objects.filter(delete=False).values_list('solr_dict',
-                                                           flat=True)
+    objs = Update.objects.filter(delete=False)
     solr = pysolr.Solr('http://127.0.0.1:8983/solr/collection2/')
-    solr.add(objs)
+    update_list = []
+
+    for obj in objs:
+        content_type, key = obj.uid.split("#")
+        model = ContentType.object.get(pk=content_type).model_class()
+        if model == SavedSearch:
+            update_list.append(profileunits_to_dict(key))
+        else:
+            update_list.append(object_to_dict(model, model.objects.get(pk=key)))
+
+    solr.add(update_list)
     objs.delete()
 
 
@@ -158,9 +169,9 @@ def delete_from_solr_task(sender, instance):
     Removes all deleted objects from solr.
 
     """
-    objs = Update.objects.filter(delete=True)
+    objs = Update.objects.filter(delete=True).values_list('uid', flat=True)
+    uid_list = " OR ".join(objs)
     solr = pysolr.Solr('http://127.0.0.1:8983/solr/collection2/')
-    for obj in objs:
-        solr.delete(q=obj.solr_dict)
+    solr.delete(q="uid:(%s)" % uid_list)
     objs.delete()
 

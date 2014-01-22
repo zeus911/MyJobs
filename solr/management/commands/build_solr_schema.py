@@ -58,6 +58,13 @@ class Command(BaseCommand):
         schema_fields = []
 
         if options['static']:
+            schema_fields.append({
+                'field_name': 'ProfileUnits_user_id',
+                'type': 'long',
+                'indexed': 'true',
+                'stored': 'true',
+                'multiValued': 'false',
+            })
             for model in models:
                 for field in model._meta.fields:
                     field_type = field.get_internal_type()
@@ -69,7 +76,7 @@ class Command(BaseCommand):
 
                     field_data = {
                         'field_name': "%s_%s" % (model.__name__, field.attname),
-                        'type': 'text_en',
+                        'type': 'string',
                         'indexed': 'true',
                         'stored': 'true',
                         'multiValued': 'false',
@@ -81,6 +88,12 @@ class Command(BaseCommand):
                         # If there's no field in the type_mapping then the
                         # default text_en should work.
                         pass
+
+                    if field_data['field_name'] == 'SavedSearch_feed':
+                        field_data['type'] = 'text_en'
+
+                    if model in ProfileUnits.__subclasses__():
+                        field_data['multiValued'] = 'true'
 
                     schema_fields.append(field_data)
 

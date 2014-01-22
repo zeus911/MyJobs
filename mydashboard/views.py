@@ -140,10 +140,10 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                                          date_end=format_date(date_end))
 
 
-    solr = solr.add_query('{!join from=User_id to=SavedSearch_user_id}User_opt_in_employers:True')
+    solr = solr.add_query('{!join to=User_id from=SavedSearch_user_id}User_opt_in_employers:True')
     solr = solr.sort('SavedSearch_created_on')
-    print solr.params
-    print solr.search().docs
+    users = solr.search()['results']
+    print users
     
     admin_you = request.user
 
@@ -156,7 +156,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                'company_id': company.id,
                'after': date_start,
                'before': date_end,
-               'candidates': [],
+               'candidates': users,
                'admin_you': admin_you,
                'site_name': site_name,
                'view_name': 'Company Dashboard',

@@ -140,7 +140,14 @@ class Solr(object):
         return solr
 
     def search(self):
-        return self.solr.search(q=self.q, **self.params)
+        results = self.solr.search(q=self.q, **self.params)
+        d = {
+            'hits': results.hits,
+            'results': [],
+        }
+        for x in results.docs:
+            d['results'].append(type('SearchResult', (object, ), x))
+        return d
 
     def delete(self):
         """

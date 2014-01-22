@@ -2,8 +2,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save, post_delete
 
 from MyJobs.myjobs.models import User
-from MyJobs.solr.management.commands.build_solr_schema import (type_mapping,
-                                                               dynamic_type_mapping)
 from MyJobs.myprofile.models import ProfileUnits
 from MyJobs.mysearches.models import SavedSearch
 from MyJobs.solr.models import Update
@@ -18,10 +16,15 @@ def prepare_add_to_solr(sender, instance, **kwargs):
     :instance: the object being added to solr
 
     """
-    solr_dict = object_to_dict(sender, instance)
+    if sender in ProfileUnits.__subclasses__():
+        content_type_id = ContentType.objects.get_for_model(ProfileUnits).pk
+        object_id = instance.user_id
+    else:
+        content_type_id = ContentType.objects.get_for_model(sender).pk
+        object_id = instance.pk
+    uid = "%s#%s" % (content_type_id, object_id)
 
-    obj, _ = Update.objects.get_or_create(uid=solr_dict['uid'])
-    obj.solr_dict = solr_dict
+    obj, _ = Update.objects.get_or_create(uid=uid)
     obj.delete = False
     obj.save()
 
@@ -35,14 +38,66 @@ def prepare_delete_from_solr(sender, instance, **kwargs):
     :instance: the object being removed from solr
 
     """
-    content_type_id = ContentType.objects.get_for_model(sender).pk
-    object_id = instance.pk
-    solr_dict = {'uid': "%s#%s" % (content_type_id, object_id)}
+    if sender in ProfileUnits.__subclasses__():
+        content_type_id = ContentType.objects.get_for_model(ProfileUnits).pk
+        object_id = instance.user_id
+    else:
+        content_type_id = ContentType.objects.get_for_model(sender).pk
+        object_id = instance.pk
+    uid = "%s#%s" % (content_type_id, object_id)
 
-    obj, _ = Update.get_or_create(uid=solr_dict['uid'])
-    obj.solr_dict = solr_dict
+    obj, _ = Update.get_or_create(uid=uid)
     obj.delete = True
     obj.save()
+
+
+def profileunits_to_dict(user_id):
+    """
+    Creates a dictionary of profile units for a user.
+
+    inputs:
+    :user_id: the id of the user the dictionary is being created for
+
+    """
+    content_type_id = ContentType.objects.get_for_model(ProfileUnits).pk
+    solr_dict = {
+        'uid': "%s#%s" % (content_type_id, user_id),
+        'ProfileUnits_user_id': user_id,
+    }
+    models = {}
+
+    units = ProfileUnits.objects.filter(user_id=user_id).select_related('name',
+                                                                        'education',
+                                                                        'website',
+                                                                        'telephone',
+                                                                        'address',
+                                                                        'secondaryemail',
+                                                                        'militaryservice',
+                                                                        'license',
+                                                                        'summary',
+                                                                        'employmenthistory',
+                                                                        'volunteerhistory',
+                                                                        'content_type')
+    try:
+        for unit in units:
+            unit = getattr(unit, unit.get_model_name())
+            models.setdefault(unit.__class__.__name__, []).append(unit)
+
+        for model_name, objs in models.items():
+            if not objs:
+                continue
+
+            for field in objs[0]._meta._fields():
+                obj_list = [getattr(obj, field.attname) for obj in objs]
+                field_type = field.get_internal_type()
+                if field_type != 'OneToOneField' and 'password' not in field.attname:
+                    field_name = "%s_%s" % (model_name, field.attname)
+                    solr_dict[field_name] = filter(None, list(obj_list))
+    except Exception, e:
+        print user_id
+        print e
+
+    return solr_dict
 
 
 def object_to_dict(model, obj):
@@ -56,40 +111,17 @@ def object_to_dict(model, obj):
     """
     content_type_id = ContentType.objects.get_for_model(model).pk
     object_id = obj.pk
-    solr_dict = {'uid': "%s#%s" % (content_type_id, object_id)}
+    solr_dict = {
+        'uid': "%s#%s" % (content_type_id, object_id),
+    }
+
+    if model == SavedSearch:
+        solr_dict['User_opt_in_employers'] = obj.user.opt_in_employers
 
     for field in model._meta._fields():
         field_type = field.get_internal_type()
         if field_type != 'OneToOneField' and 'password' not in field.attname:
             field_name = "%s_%s" % (model.__name__, field.attname)
-            solr_dict[field_name] = getattr(obj, field.attname)
-    return solr_dict
-
-
-def object_to_dict_with_dynamic_fields(model, obj):
-    """
-    Turns an object into a solr compatible dictionary, taking advantage of
-    dynamicFields.
-
-    inputs:
-    :model: the model for the object
-    :object: object being converted into a solr dictionary
-
-    """
-    content_type_id = ContentType.objects.get_for_model(model).pk
-    object_id = obj.pk
-    solr_dict = {'uid': "%s#%s" % (content_type_id, object_id)}
-
-    for field in model._meta._fields():
-        field_type = field.get_internal_type()
-        if field_type != 'OneToOneField' and 'password' not in field.attname:
-            try:
-                mapped_field = dynamic_type_mapping[type_mapping[field_type]]
-            except KeyError:
-                mapped_field = '_t'
-
-            field_name = "%s_%s%s" % (model.__name__, field.attname,
-                                      mapped_field)
             solr_dict[field_name] = getattr(obj, field.attname)
     return solr_dict
 

@@ -109,7 +109,10 @@ def get_gravatar(user, size=20):
     Gets the img or div tag for the gravatar or initials block.
     """
     
-    return user.get_gravatar_url(size)
+    try:
+        return user.get_gravatar_url(size)
+    except:
+        return ''
 
 @register.filter(name='get_messages')
 def get_messages(user):
