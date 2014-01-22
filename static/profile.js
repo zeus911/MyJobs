@@ -215,6 +215,9 @@ $(function() {
             }
             serialized_data += get_data;
 
+            console.log(serialized_data);
+            console.log(error);
+
             $.ajax({
                 type: 'POST',
                 url: '/profile/view/edit',

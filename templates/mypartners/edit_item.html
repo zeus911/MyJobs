@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load common_tags %}
+{% block site-title %}
+    <title>{{ company.name }} {% if not contact %}Add Contact{% else %}Edit Contact{% endif %}</title>
+    <meta name="title" content="{{ company.name }} {% if not contact %}Add Contact{% else %}Edit Contact{% endif %}">
+{% endblock %}
+{% load i18n %}
+{% block meta-extra %}
+<script src="{{ STATIC_URL }}prm.js{% cache_buster %}"></script>
+{% endblock %}
+
+{% block content %}
+    <h1>{{ company.name }}</h1>
+    <div class="row">
+        <div class="span12 prm-header">
+            {# partner checks due to Add partner page not having a partner to refer to. #}
+            <span>{% if not partner %}Add Partner{% else %}Add Contact{% endif %}</span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span8">
+            <form method="post" action="" id="{% if not partner %}partner-form{% else %}contact-form{% endif %}">
+                {% include "includes/form-error-highlight.html" %}
+                {% csrf_token %}
+                <input type="hidden" name="company_id" value="{{ company.id }}">
+                <input type="hidden" name="partner_id" value="{{ partner.id }}">
+            <button type="submit" class="btn primary pull-right" id="{% if not partner %}init-partner-save{% else %}item-save{% endif %}">{% trans 'Save' %}</button>
+            </form>
+        </div>
+        <div class="span4">
+            <div class="tip-box">
+                <h4>Tips</h4>
+                <div class="tip-content">
+                    {% if not partner %}
+                    After creating a Partner, you can add additional contacts from the
+                    Partner Page. This is helpful if you have more than one location
+                    or contact for this partner.
+                    {% else %}
+                    You can filter partner reports based on a contac's city,
+                    but you need to be sure the following fields are completed:
+                    <ul>
+                        <li>- City</li>
+                        <li>- State/Region</li>
+                        <li>- Country</li>
+                    </ul>
+                    {% endif %}
+                </div>
+                <div class="tip-footer">
+                    {% if not partner %}
+                    <a class="btn-link" href="{% url 'prm' %}?company={{ company.id }}">Back to Partner Outreach</a>
+                    {% else %}
+                    <a class="btn-link" href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Partner Page</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
