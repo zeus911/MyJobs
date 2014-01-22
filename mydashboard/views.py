@@ -282,18 +282,60 @@ def export_candidates(request):
     export_type = request.GET['ex-t']
     try:
         if export_type == 'csv':
-            candidates = filter_candidates(request)
+            candidates = filter_by_microsite(request)
             response = export_csv(request, candidates)
         elif export_type == 'pdf':
-            candidates = filter_candidates(request)
+            candidates = filter_by_microsite(request)
             response = export_pdf(request, candidates)
         elif export_type == 'xml' or export_type == 'json':
-            candidates = filter_candidates(request)
+            candidates = filter_by_microsite(request)
             response = export_hr(request, candidates, export_type)
     except:
         raise Http404
     return response
 
+def filter_candidates(request):
+    """
+    Some default filtering for company/microsite. This function will
+    be changing with solr docs update and filtering addition.
+    """
+    candidates = []
+    company_id = request.REQUEST.get('company')
+    try:
+        company = Company.objects.get(id=company_id)
+    except Company.DoesNotExist:
+        raise Http404
+    requested_microsite = request.REQUEST.get('microsite', company.name)
+    authorized_microsites = Microsite.objects.filter(company=company.id)
+    # the url value for 'All' in the select box is company name
+    # which then gets replaced with all microsite urls for that company
+    site_name = ''
+    if requested_microsite != company.name:
+        if requested_microsite.find('//') == -1:
+            requested_microsite = '//' + requested_microsite
+        active_microsites = authorized_microsites.filter(
+            url__contains=requested_microsite)
+
+    else:
+        active_microsites = authorized_microsites
+        site_name = company.name
+
+    microsite_urls = [microsite.url for microsite in active_microsites]
+    if not site_name:
+        site_name = microsite_urls[0]
+
+    q_list = [Q(url__contains=ms) for ms in microsite_urls]
+
+    # All searches saved on the employer's company microsites
+    candidate_searches = SavedSearch.objects.select_related('user')
+
+    # Specific microsite searches saved between two dates
+    candidate_searches = candidate_searches.filter(reduce(
+        operator.or_, q_list)).exclude(
+            user__opt_in_employers=False).order_by('-created_on')
+    for search in candidate_searches:
+        candidates.append(search.user)
+    return list(set(candidates))
 
 def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
     """
