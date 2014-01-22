@@ -1,6 +1,7 @@
-import operator
 import csv
 import json
+import operator
+
 import cStringIO as StringIO
 
 from datetime import datetime, timedelta
@@ -143,7 +144,11 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     # List of dashboard widgets to display.
     dashboard_widgets = ["candidates"]
-    
+
+    candidate_list = []
+    for x in groupby(candidates, lambda y: y.User_id):
+        candidate_list.append(list(x[1])[0])
+
     context = {
         'company_name': company.name,
         'company_microsites': authorized_microsites,
@@ -151,8 +156,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         'company_id': company.id,
         'after': date_start,
         'before': date_end,
-        'candidates': candidates,
-        'total_candidates': len(set([x.User_id for x in candidates])),
+        'candidates': candidate_list,
+        'total_candidates': len(candidate_list),
         'admin_you': admin_you,
         'site_name': site_name,
         'view_name': 'Company Dashboard',
@@ -252,8 +257,8 @@ def microsite_activity(request, template="mydashboard/microsite_activity.html",
         created_on__range=[after, before]).filter(
             url__contains=requested_microsite).order_by('-created_on')
     
-    saved_search_count = candidate_searches.count()      
-    
+    saved_search_count = candidate_searches.count()
+
     context = {'microsite_url': requested_microsite,
                'after': after,
                'before': before,
