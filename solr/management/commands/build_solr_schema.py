@@ -89,9 +89,6 @@ class Command(BaseCommand):
                         # default text_en should work.
                         pass
 
-                    if field_data['field_name'] == 'SavedSearch_feed':
-                        field_data['type'] = 'text_en'
-
                     if model in ProfileUnits.__subclasses__():
                         field_data['multiValued'] = 'true'
 

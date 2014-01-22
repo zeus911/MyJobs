@@ -53,11 +53,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         except Company.DoesNotExist:
             raise Http404
 
-    context = {
-        'candidates': SavedSearch.objects.all().exclude(
-            user__opt_in_employers=False),
-    }
-
     if not company:
         try:
             company = Company.objects.get(admins=request.user, id=company_id)
@@ -89,14 +84,14 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         site_name = company.name
 
     urls = " OR ".join([site.url.replace("http://", "") for site in active_microsites])
-    solr = solr.add_filter_query("SavedSearch_feed:(%s)" % urls)
+    solr = solr.add_filter_query("SavedSearch_url:(*%s*)" % urls)
         
     microsite_urls = [microsite.url for microsite in active_microsites]
     if not site_name:
         site_name = microsite_urls[0]
 
     date_end = datetime.now()
-    # Pre-set Date ranges
+    # Set date range based on buttons
     if 'today' in request.REQUEST:
         solr = solr.filter_by_time_period('SavedSearch_created_on',
                                           total_days=1)
@@ -112,6 +107,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                                           total_days=30)
         date_start = date_end - timedelta(days=30)
         requested_date_button = 'thirty_days'
+    # Set date range based on date selection fields.
     else:
         if requested_after_date:            
             date_start = datetime.strptime(requested_after_date, '%m/%d/%Y')
@@ -120,7 +116,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
             if date_start:
                 date_start = datetime.strptime(date_start, '%m/%d/%Y')
             else:
-                # Defaults to 30 days ago
+                # Default range is 30 days.
                 date_start = datetime.now() - timedelta(days=30)
                 
         if requested_before_date:
@@ -130,9 +126,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
             if date_end:
                 date_end = datetime.strptime(date_end, '%m/%d/%Y')
             else:
-                # Defaults to the date and time that the page is accessed
+                # Default start date is today.
                 date_end = datetime.now()
-
         solr = solr.filter_by_date_range(field='SavedSearch_created_on',
                                          date_start=format_date(date_start),
                                          date_end=format_date(date_end))
@@ -140,12 +135,11 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     date_display = (date_end - date_start).days
 
     solr = solr.add_filter_query('User_opt_in_employers:true')
-    solr = solr.add_filter_query('SavedSearch_feed:*')
     solr = solr.sort('SavedSearch_created_on')
-    solr_results = solr.search()
-    print solr.params
-    users = dict_to_object(solr_results.docs)
-    
+    solr = solr.add_facet_field('User_id')
+    solr_results = solr.result_rows_to_fetch(solr.search().hits).search()
+    candidates = dict_to_object(solr_results.docs)
+    print len(solr_results.facets['facet_fields']['User_id'])
     admin_you = request.user
 
     # List of dashboard widgets to display.
@@ -158,8 +152,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         'company_id': company.id,
         'after': date_start,
         'before': date_end,
-        'candidates': users,
-        'total_candidates': solr_results.hits,
+        'candidates': candidates,
+        'total_candidates': len(set([x.User_id for x in candidates])),
         'admin_you': admin_you,
         'site_name': site_name,
         'view_name': 'Company Dashboard',

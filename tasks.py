@@ -137,29 +137,36 @@ def process_batch_events():
         user.save()
 
 @task(name="tasks.add_to_solr")
-def add_to_solr_task(sender, instance):
+def add_to_solr_task():
     """
     Adds all new or changed objects to solr.
 
     """
     objs = Update.objects.filter(delete=False)
     solr = pysolr.Solr('http://127.0.0.1:8983/solr/collection2/')
-    update_list = []
+    updates = []
 
     for obj in objs:
         content_type, key = obj.uid.split("#")
         model = ContentType.object.get(pk=content_type).model_class()
         if model == SavedSearch:
-            update_list.append(profileunits_to_dict(key))
+            updates.append(object_to_dict(model, model.objects.get(pk=key)))
+        # If the user is being updated, because the user is stored on the
+        # SavedSearch document, every SavedSearch belonging to that user
+        # also has to be updated.
+        if model == User:
+            searches = SavedSearch.objects.get(user_id=key)
+            [updates.append(object_to_dict(SavedSearch, s)) for s in searches]
+            updates.append(object_to_dict(model, model.objects.get(pk=key)))
         else:
-            update_list.append(object_to_dict(model, model.objects.get(pk=key)))
+            updates.append(profileunits_to_dict(key))
 
-    solr.add(update_list)
+    solr.add(updates)
     objs.delete()
 
 
 @task(name="tasks.delete_from_solr")
-def delete_from_solr_task(sender, instance):
+def delete_from_solr_task():
     """
     Removes all deleted objects from solr.
 

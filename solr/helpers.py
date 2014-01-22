@@ -5,7 +5,7 @@ from django.conf import settings
 
 
 class Solr(object):
-    def __init__(self, solr_location=settings.SOLR_LOCATION):
+    def __init__(self, solr_location=settings.SOLR['default']):
         self.solr = pysolr.Solr(solr_location)
         self.q = '*:*'
         self.params = {
