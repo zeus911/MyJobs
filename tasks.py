@@ -143,19 +143,19 @@ def add_to_solr_task():
 
     """
     objs = Update.objects.filter(delete=False)
-    solr = pysolr.Solr('http://127.0.0.1:8983/solr/collection2/')
+    solr = pysolr.Solr(settings.SOLR['default'])
     updates = []
 
     for obj in objs:
         content_type, key = obj.uid.split("#")
-        model = ContentType.object.get(pk=content_type).model_class()
+        model = ContentType.objects.get(pk=content_type).model_class()
         if model == SavedSearch:
             updates.append(object_to_dict(model, model.objects.get(pk=key)))
         # If the user is being updated, because the user is stored on the
         # SavedSearch document, every SavedSearch belonging to that user
         # also has to be updated.
         if model == User:
-            searches = SavedSearch.objects.get(user_id=key)
+            searches = SavedSearch.objects.filter(user_id=key)
             [updates.append(object_to_dict(SavedSearch, s)) for s in searches]
             updates.append(object_to_dict(model, model.objects.get(pk=key)))
         else:
@@ -173,7 +173,7 @@ def delete_from_solr_task():
     """
     objs = Update.objects.filter(delete=True).values_list('uid', flat=True)
     uid_list = " OR ".join(objs)
-    solr = pysolr.Solr('http://127.0.0.1:8983/solr/collection2/')
+    solr = pysolr.Solr(settings.SOLR['default'])
     solr.delete(q="uid:(%s)" % uid_list)
     objs.delete()
 
