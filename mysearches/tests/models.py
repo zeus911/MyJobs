@@ -7,15 +7,19 @@ from testfixtures import Replacer
 from myjobs.tests.factories import UserFactory
 from mysearches import models
 from mysearches.tests.factories import SavedSearchFactory, SavedSearchDigestFactory
+from tasks import send_search_digests
 
 class SavedSearchModelsTests(TestCase):
     def setUp(self):
+        settings.CELERY_ALWAYS_EAGER = True
         self.user = UserFactory()
 
     def test_send_search_email(self):
-        search = SavedSearchFactory(user=self.user, is_active=False,
+        SavedSearchDigestFactory(user=self.user,
+                                 is_active=False)
+        search = SavedSearchFactory(user=self.user, is_active=True,
                                     url='www.my.jobs/search?q=new+search')
-        search.send_email()
+        send_search_digests()
         self.assertEqual(len(mail.outbox), 1)
 
         email = mail.outbox.pop()
@@ -26,12 +30,12 @@ class SavedSearchModelsTests(TestCase):
         self.assertTrue(email.to[0] in email.body)
 
     def test_send_search_digest_email(self):
-        digest = SavedSearchDigestFactory(user=self.user)
-        digest.send_email()
+        SavedSearchDigestFactory(user=self.user)
+        send_search_digests()
         self.assertEqual(len(mail.outbox), 0)
 
         SavedSearchFactory(user=self.user)
-        digest.send_email()
+        send_search_digests()
         self.assertEqual(len(mail.outbox), 1)
 
         email = mail.outbox.pop()
@@ -42,12 +46,12 @@ class SavedSearchModelsTests(TestCase):
         self.assertTrue(email.to[0] in email.body)
 
     def test_send_search_digest_send_if_none(self):
-        digest = SavedSearchDigestFactory(user=self.user, send_if_none=True)
-        digest.send_email()
+        SavedSearchDigestFactory(user=self.user, send_if_none=True)
+        send_search_digests()
         self.assertEqual(len(mail.outbox), 0)
 
         SavedSearchFactory(user=self.user)
-        digest.send_email()
+        send_search_digests()
         self.assertEqual(len(mail.outbox), 1)
     
     def test_send_initial_email(self):
