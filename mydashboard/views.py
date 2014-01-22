@@ -139,7 +139,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     solr = solr.add_facet_field('User_id')
     solr_results = solr.result_rows_to_fetch(solr.search().hits).search()
     candidates = dict_to_object(solr_results.docs)
-    print len(solr_results.facets['facet_fields']['User_id'])
     admin_you = request.user
 
     # List of dashboard widgets to display.
