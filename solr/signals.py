@@ -109,6 +109,10 @@ def object_to_dict(model, obj):
     :object: object being converted into a solr dictionary
 
     """
+    from myjobs.models import User
+    from django.contrib.contenttypes.models import ContentType
+    from mysearches.models import SavedSearch
+
     content_type_id = ContentType.objects.get_for_model(model).pk
     object_id = obj.pk
     solr_dict = {
@@ -116,7 +120,12 @@ def object_to_dict(model, obj):
     }
 
     if model == SavedSearch:
-        solr_dict['User_opt_in_employers'] = obj.user.opt_in_employers
+        for field in User._meta._fields():
+            field_type = field.get_internal_type()
+            if field_type != 'OneToOneField' and 'password' not in field.attname:
+                field_name = "User_%s" % field.attname
+                solr_dict[field_name] = getattr(obj.user, field.attname)
+
 
     for field in model._meta._fields():
         field_type = field.get_internal_type()

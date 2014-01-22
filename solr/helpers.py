@@ -140,14 +140,7 @@ class Solr(object):
         return solr
 
     def search(self):
-        results = self.solr.search(q=self.q, **self.params)
-        d = {
-            'hits': results.hits,
-            'results': [],
-        }
-        for x in results.docs:
-            d['results'].append(type('SearchResult', (object, ), x))
-        return d
+        return self.solr.search(q=self.q, **self.params)
 
     def delete(self):
         """
@@ -194,15 +187,6 @@ class Solr(object):
         return solr
 
 
-def dict_to_object(results):
-    """
-    Converts a pysolr .docs result to a list of objects.
-
-    inputs:
-    :results: A
-    """
-
-
 def format_date(date):
     """
     Switches dates to the solr format, ignoring time zones because the pysolr
@@ -216,3 +200,9 @@ def format_date(date):
     """
     date_format = "%Y-%m-%dT%H:%M:%SZ"
     return date.strftime(date_format)
+
+def dict_to_object(results):
+    objs = []
+    for x in results:
+        objs.append(type('SearchResult', (object, ), x))
+    return objs

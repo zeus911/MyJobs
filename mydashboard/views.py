@@ -20,7 +20,7 @@ from myjobs.models import User
 from myprofile.models import (PrimaryNameProfileUnitManager,
                               ProfileUnits, Name)
 from mysearches.models import SavedSearch
-from solr.helpers import Solr, format_date
+from solr.helpers import Solr, format_date, dict_to_object
 
 from endless_pagination.decorators import page_template
 from xhtml2pdf import pisa
@@ -87,6 +87,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     else:
         active_microsites = authorized_microsites
         site_name = company.name
+
+    urls = " OR ".join([site.url.replace("http://", "") for site in active_microsites])
+    solr = solr.add_filter_query("SavedSearch_feed:(%s)" % urls)
         
     microsite_urls = [microsite.url for microsite in active_microsites]
     if not site_name:
@@ -140,31 +143,35 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                                          date_end=format_date(date_end))
 
 
-    solr = solr.add_query('{!join to=User_id from=SavedSearch_user_id}User_opt_in_employers:True')
+    solr = solr.add_filter_query('User_opt_in_employers:true')
+    solr = solr.add_filter_query('SavedSearch_feed:*')
     solr = solr.sort('SavedSearch_created_on')
-    users = solr.search()['results']
-    print users
+    solr_results = solr.search()
+    print solr_results.docs
+    users = dict_to_object(solr_results.docs)
     
     admin_you = request.user
 
     # List of dashboard widgets to display.
     dashboard_widgets = ["candidates"]
     
-    context = {'company_name': company.name,
-               'company_microsites': authorized_microsites,
-               'company_admins': admins,
-               'company_id': company.id,
-               'after': date_start,
-               'before': date_end,
-               'candidates': users,
-               'admin_you': admin_you,
-               'site_name': site_name,
-               'view_name': 'Company Dashboard',
-               'date_button': requested_date_button,
-               'candidates_page': candidates_page,
-               'dashboard_widgets': dashboard_widgets,
-               'date_display': date_display,
-               }
+    context = {
+        'company_name': company.name,
+        'company_microsites': authorized_microsites,
+        'company_admins': admins,
+        'company_id': company.id,
+        'after': date_start,
+        'before': date_end,
+        'candidates': users,
+        'total_candidates': solr_results.hits,
+        'admin_you': admin_you,
+        'site_name': site_name,
+        'view_name': 'Company Dashboard',
+        'date_button': requested_date_button,
+        'candidates_page': candidates_page,
+        'dashboard_widgets': dashboard_widgets,
+        'date_display': date_display,
+    }
     
     if extra_context is not None:
         context.update(extra_context)

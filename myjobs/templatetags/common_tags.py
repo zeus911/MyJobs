@@ -114,6 +114,13 @@ def get_gravatar(user, size=20):
     except:
         return ''
 
+@register.simple_tag
+def get_gravatar_by_id(user_id, size=20):
+    try:
+        return User.objects.get(id=user_id).get_gravatar_url(size)
+    except:
+        return ''
+
 @register.filter(name='get_messages')
 def get_messages(user):
     """
