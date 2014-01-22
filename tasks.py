@@ -8,6 +8,7 @@ from celery.schedules import crontab
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
+from django.core import mail
 from django.template.loader import render_to_string
 from django.db.models import Q
 
@@ -137,13 +138,13 @@ def process_batch_events():
         user.save()
 
 @task(name="tasks.add_to_solr")
-def add_to_solr_task(solr_location=None):
+def add_to_solr_task(solr_location=settings.SOLR['default']):
     """
     Adds all new or changed objects to solr.
 
     """
-    if not solr_location:
-        solr_location = settings.SOLR['default']
+    if hasattr(mail, 'outbox'):
+        solr_location = 'http://127.0.0.1:8983/solr/myjobs_test/'
 
     objs = Update.objects.filter(delete=False)
     solr = pysolr.Solr(solr_location)
@@ -157,7 +158,7 @@ def add_to_solr_task(solr_location=None):
         # If the user is being updated, because the user is stored on the
         # SavedSearch document, every SavedSearch belonging to that user
         # also has to be updated.
-        if model == User:
+        elif model == User:
             searches = SavedSearch.objects.filter(user_id=key)
             [updates.append(object_to_dict(SavedSearch, s)) for s in searches]
             updates.append(object_to_dict(model, model.objects.get(pk=key)))
@@ -174,8 +175,8 @@ def delete_from_solr_task(solr_location=None):
     Removes all deleted objects from solr.
 
     """
-    if not solr_location:
-        solr_location = settings.SOLR['default']
+    if hasattr(mail, 'outbox'):
+        solr_location = 'http://127.0.0.1:8983/solr/myjobs_test/'
     objs = Update.objects.filter(delete=True).values_list('uid', flat=True)
     uid_list = " OR ".join(objs)
     solr = pysolr.Solr(solr_location)

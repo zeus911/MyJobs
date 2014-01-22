@@ -134,12 +134,15 @@ post_save.connect(prepare_add_to_solr, sender=User,
 post_delete.connect(prepare_delete_from_solr, sender=User,
                     dispatch_uid='user')
 
-post_save.connect(prepare_add_to_solr, sender=ProfileUnits,
-                  dispatch_uid="profileunits")
-post_delete.connect(prepare_delete_from_solr, sender=ProfileUnits,
-                    dispatch_uid='profileunits')
-
 post_save.connect(prepare_add_to_solr, sender=SavedSearch,
                   dispatch_uid='savedsearch')
 post_delete.connect(prepare_delete_from_solr, sender=SavedSearch,
                     dispatch_uid='savedsearch')
+
+for model_class in ProfileUnits.__subclasses__():
+    post_save.connect(prepare_add_to_solr,
+                      sender=model_class,
+                      dispatch_uid="att_post_save_"+model_class.__name__)
+    post_delete.connect(prepare_delete_from_solr,
+                      sender=model_class,
+                      dispatch_uid="att_post_save_"+model_class.__name__)

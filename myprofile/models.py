@@ -172,9 +172,11 @@ def save_primary(sender, instance, created, **kwargs):
 
 
 def delete_primary(sender, instance, **kwargs):
-    if instance.user:
+    try:
         user = instance.user
         user.add_primary_name(update=True, f_name="", l_name="")
+    except User.DoesNotExist:
+        pass
 
 post_save.connect(save_primary, sender=Name, dispatch_uid="save_primary")
 post_delete.connect(delete_primary, sender=Name, dispatch_uid="delete_primary")

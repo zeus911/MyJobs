@@ -151,7 +151,7 @@ class Solr(object):
         Deletes all documents matching the current search.
 
         """
-        self.solr.delete(self.params)
+        self.solr.delete(q=self.q)
 
     def filter_by_time_period(self, field, date_end=datetime.now(),
                               total_days=1):
