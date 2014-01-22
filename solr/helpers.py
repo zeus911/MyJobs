@@ -164,7 +164,7 @@ class Solr(object):
         query = "{field}:[{date_end}-{total_days}DAYS TO {date_end}]"
         time_filter = query.format(field=field, total_days=total_days,
                                    date_end=format_date(date_end))
-        #solr.add_filter_query(time_filter)
+        solr.add_filter_query(time_filter)
         return solr
 
     def filter_by_date_range(self, field,
@@ -183,7 +183,7 @@ class Solr(object):
         query = "{field}:[{date_start} TO {date_end}]"
         time_filter = query.format(field=field, date_start=date_start,
                                    date_end=date_end)
-        #solr.add_filter_query(time_filter)
+        solr.add_filter_query(time_filter)
         return solr
 
 

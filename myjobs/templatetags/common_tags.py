@@ -1,3 +1,5 @@
+from time import strptime, strftime
+
 from django import template
 
 from myjobs import version
@@ -27,7 +29,7 @@ def completion_level(level):
     outputs:
     A string containing the bootstrap bar type
     """
-    
+
     return get_completion(level)
 
 
@@ -151,3 +153,13 @@ def get_ms_url(context):
     if cookie:
         return cookie
     return 'http://www.my.jobs'
+
+
+@register.simple_tag
+def str_to_date(string):
+    return strftime("%b. %d %Y", strptime(string, "%Y-%m-%dT%H:%M:%SZ"))
+
+
+@register.simple_tag
+def to_string(value):
+    return str(value)

@@ -94,29 +94,24 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     microsite_urls = [microsite.url for microsite in active_microsites]
     if not site_name:
         site_name = microsite_urls[0]
-    
-    date_display = False
 
-    date_start = datetime.now()
+    date_end = datetime.now()
     # Pre-set Date ranges
     if 'today' in request.REQUEST:
         solr = solr.filter_by_time_period('SavedSearch_created_on',
                                           total_days=1)
-        date_end = date_start - timedelta(days=1)
+        date_start = date_end - timedelta(days=1)
         requested_date_button = 'today'
-        date_display = 'Today'
     elif 'seven_days' in request.REQUEST:
         solr = solr.filter_by_time_period('SavedSearch_created_on',
                                           total_days=7)
-        date_end = date_start - timedelta(days=7)
+        date_start = date_end - timedelta(days=7)
         requested_date_button = 'seven_days'
-        date_display = '7'
     elif 'thirty_days' in request.REQUEST:
         solr = solr.filter_by_time_period('SavedSearch_created_on',
                                           total_days=30)
-        date_end = date_start - timedelta(days=30)
+        date_start = date_end - timedelta(days=30)
         requested_date_button = 'thirty_days'
-        date_display = '30'
     else:
         if requested_after_date:            
             date_start = datetime.strptime(requested_after_date, '%m/%d/%Y')
@@ -142,12 +137,13 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                                          date_start=format_date(date_start),
                                          date_end=format_date(date_end))
 
+    date_display = (date_end - date_start).days
 
     solr = solr.add_filter_query('User_opt_in_employers:true')
     solr = solr.add_filter_query('SavedSearch_feed:*')
     solr = solr.sort('SavedSearch_created_on')
     solr_results = solr.search()
-    print solr_results.docs
+    print solr.params
     users = dict_to_object(solr_results.docs)
     
     admin_you = request.user

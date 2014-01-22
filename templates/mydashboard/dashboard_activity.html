@@ -8,7 +8,7 @@
                        
         <table id="row-link-table">
             {% for candidate in candidates %}                    
-            <tr class="hide-mobile" onclick="document.location = '{% url 'candidate_information' %}?company={{ company_id }}&user={{ candidate.user.id }}&anchor={{ forloop.counter }}&page={{ candidates_page }}&before={{ before|date:'m/d/Y' }}&after={{ after|date:'m/d/Y' }}';">
+            <tr class="hide-mobile" onclick="document.location = '{% url 'candidate_information' %}?company={{ company_id }}&user={% to_string candidate.User_id %}&anchor={{ forloop.counter }}&page={{ candidates_page }}&before={{ before|date:'m/d/Y' }}&after={{ after|date:'m/d/Y' }}';">
                 <td>
                     <span class="gravatar pull-left">{% get_gravatar_by_id candidate.User_id '55' %}</span>
                 </td>
@@ -19,15 +19,15 @@
                         <div class="candidate-name">{{candidate.User_email }}</div>
                     {% endif %}
                     <a name="{{ candidate.User_id }}{% if candidate.SavedSearch_label %}{{candidate.SavedSearch_label}}{% else %}Unlabeled{% endif %}"></a>
-                    <a href="{% url 'candidate_information' %}?company={{ company_id }}&user={{ candidate.User_id }}&anchor={{ candidate.User_id }}{% if candidate.SavedSearch_label %}{{candidate.SavedSearch_label}}{% else %}Unlabeled{% endif %}&page={{ candidates_page }}&before={{ before|date:'m/d/Y' }}&after={{ after|date:'m/d/Y' }}">{{candidate.user}}</a>
+                    <a href="{% url 'candidate_information' %}?company={{ company_id }}&user={% to_string candidate.User_id %}&anchor={{ candidate.User_id }}{% if candidate.SavedSearch_label %}{{candidate.SavedSearch_label}}{% else %}Unlabeled{% endif %}&page={{ candidates_page }}&before={{ before|date:'m/d/Y' }}&after={{ after|date:'m/d/Y' }}">{{ candidate.user }}</a>
                     <div class="progress activity-progress">
-                        <div class="bar bar-{% completion_level candidate.User_profile_completion %}" style="width: {{ candidate.user.profile_completion }}%"></div>
+                        <div class="bar bar-{% completion_level candidate.User_profile_completion %}" style="width: {{ candidate.User_profile_completion }}%"></div>
                     </div>
                 </td>
                 <td>
                     <strong>{% if candidate.SavedSearch_label %}{{candidate.SavedSearch_label}}{% else %}Unlabeled{% endif %}</strong><br>
-                    {{candidate.SavedSearch_url|url_domain}}<br>
-                    {{candidate.SavedSearch_created_on}}
+                    {{ candidate.SavedSearch_url|url_domain }}<br>
+                    {% str_to_date candidate.SavedSearch_created_on %}
                 </td>
              </tr>
              <tr class="candidate-activity-mobile">
@@ -38,12 +38,12 @@
                     {% if candidate.User_first_name and candidate.User_last_name %}
                         <div class="candidate-name pull-left">{{ candidate.User_first_name }} {{ candidate.User_last_name }}</div>
                     {% else %}
-                        <div class="candidate-name pull-left">{{ candidate.User_first_name }} {{ candidate.User_last_name }}</div>
+                        <div class="candidate-name pull-left">{{ candidate.User_email }}</div>
                     {% endif %}
-                    <a href="{% url 'candidate_information' %}?company={{ company_id }}&user={{ candidate.User_id }}&before={{ before|date:'m/d/Y' }}&after={{ after|date:'m/d/Y' }}" class="candidate-activity-mobile pull-left">{{candidate.user}}</a>
+                    <a href="{% url 'candidate_information' %}?company={{ company_id }}&user={% to_string candidate.User_id %}&before={{ before|date:'m/d/Y' }}&after={{ after|date:'m/d/Y' }}" class="candidate-activity-mobile pull-left">{{ candidate.user }}</a>
                     <br>
                     <div class="progress activity-progress">
-                        <div class="bar bar-{% completion_level candidate.User_profile_completion %}" style="width: {{ candidate.user.profile_completion }}%"></div>
+                        <div class="bar bar-{% completion_level candidate.User_profile_completion %}" style="width: {{ candidate.User_profile_completion }}%"></div>
                     </div>
                 </td>
              </tr>
