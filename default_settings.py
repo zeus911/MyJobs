@@ -179,6 +179,8 @@ PROJECT_APPS = ('myjobs','myprofile','mysearches','registration',
 
 INSTALLED_APPS += PROJECT_APPS
 
+TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
+
 JENKINS_TASKS = (
     'django_jenkins.tasks.with_coverage',
     'django_jenkins.tasks.run_pep8',
@@ -269,4 +271,3 @@ PROFILE_COMPLETION_MODULES = (
     'employmenthistory',
     'summary'
 )
-

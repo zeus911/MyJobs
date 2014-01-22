@@ -11,13 +11,13 @@ from tasks import send_search_digests
 
 class SavedSearchModelsTests(TestCase):
     def setUp(self):
-        settings.CELERY_ALWAYS_EAGER = True
         self.user = UserFactory()
 
     def test_send_search_email(self):
         SavedSearchDigestFactory(user=self.user,
                                  is_active=False)
         search = SavedSearchFactory(user=self.user, is_active=True,
+                                    frequency='D',
                                     url='www.my.jobs/search?q=new+search')
         send_search_digests()
         self.assertEqual(len(mail.outbox), 1)
