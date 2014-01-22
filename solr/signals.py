@@ -93,9 +93,8 @@ def profileunits_to_dict(user_id):
                 if field_type != 'OneToOneField' and 'password' not in field.attname:
                     field_name = "%s_%s" % (model_name, field.attname)
                     solr_dict[field_name] = filter(None, list(obj_list))
-    except Exception, e:
-        print user_id
-        print e
+    except Exception:
+        pass
 
     return solr_dict
 

@@ -87,8 +87,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     solr, date_start, date_end, date_display = filter_by_date(request, solr)
     solr = filter_by_microsite(active_microsites, solr)
-    solr = solr.add_filter_query('User_opt_in_employers:true')
-    solr = solr.sort('SavedSearch_created_on')
     solr_results = solr.result_rows_to_fetch(solr.search().hits).search()
     candidates = dict_to_object(solr_results.docs)
 
@@ -183,8 +181,6 @@ def microsite_activity(request, template="mydashboard/microsite_activity.html",
 
     solr, date_start, date_end, date_display = filter_by_date(request, solr)
     solr = filter_by_microsite(requested_microsite, solr)
-    solr = solr.add_filter_query('User_opt_in_employers:true')
-    solr = solr.sort('SavedSearch_created_on')
     solr_results = solr.result_rows_to_fetch(solr.search().hits).search()
     candidates = dict_to_object(solr_results.docs)
 
@@ -282,13 +278,13 @@ def export_candidates(request):
     export_type = request.GET['ex-t']
     try:
         if export_type == 'csv':
-            candidates = filter_by_microsite(request)
+            candidates = filter_candidates(request)
             response = export_csv(request, candidates)
         elif export_type == 'pdf':
-            candidates = filter_by_microsite(request)
+            candidates = filter_candidates(request)
             response = export_pdf(request, candidates)
         elif export_type == 'xml' or export_type == 'json':
-            candidates = filter_by_microsite(request)
+            candidates = filter_candidates(request)
             response = export_hr(request, candidates, export_type)
     except:
         raise Http404

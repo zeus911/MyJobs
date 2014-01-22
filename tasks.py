@@ -137,13 +137,16 @@ def process_batch_events():
         user.save()
 
 @task(name="tasks.add_to_solr")
-def add_to_solr_task():
+def add_to_solr_task(solr_location=None):
     """
     Adds all new or changed objects to solr.
 
     """
+    if not solr_location:
+        solr_location = settings.SOLR['default']
+
     objs = Update.objects.filter(delete=False)
-    solr = pysolr.Solr(settings.SOLR['default'])
+    solr = pysolr.Solr(solr_location)
     updates = []
 
     for obj in objs:
@@ -166,14 +169,16 @@ def add_to_solr_task():
 
 
 @task(name="tasks.delete_from_solr")
-def delete_from_solr_task():
+def delete_from_solr_task(solr_location=None):
     """
     Removes all deleted objects from solr.
 
     """
+    if not solr_location:
+        solr_location = settings.SOLR['default']
     objs = Update.objects.filter(delete=True).values_list('uid', flat=True)
     uid_list = " OR ".join(objs)
-    solr = pysolr.Solr(settings.SOLR['default'])
+    solr = pysolr.Solr(solr_location)
     solr.delete(q="uid:(%s)" % uid_list)
-    objs.delete()
+    Update.objects.filter(delete=True).delete()
 

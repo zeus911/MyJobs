@@ -157,8 +157,10 @@ def get_ms_url(context):
 
 @register.simple_tag
 def str_to_date(string):
-    return strftime("%b. %d %Y", strptime(string, "%Y-%m-%dT%H:%M:%SZ"))
-
+    try:
+        return strftime("%b. %d %Y", strptime(string, "%Y-%m-%dT%H:%M:%SZ"))
+    except:
+        return strftime("%b. %d %Y", strptime(string, "%Y-%m-%dT%H:%M:%S.%fZ"))
 
 @register.simple_tag
 def to_string(value):

@@ -2,11 +2,15 @@ import pysolr
 
 from datetime import datetime, timedelta
 from django.conf import settings
+from django.core import mail
 
 
 class Solr(object):
     def __init__(self, solr_location=settings.SOLR['default']):
-        self.solr = pysolr.Solr(solr_location)
+        if hasattr(mail, 'outbox'):
+            solr_location = 'http://127.0.0.1:8983/solr/myjobs_test/'
+        self.location = solr_location
+        self.solr = pysolr.Solr(self.location)
         self.q = '*:*'
         self.params = {
             'fq': [],
@@ -21,7 +25,7 @@ class Solr(object):
         }
 
     def _clone(self):
-        clone = Solr()
+        clone = Solr(self.location)
         clone.q = self.q
         clone.params = self.params
         return clone
@@ -187,7 +191,7 @@ class Solr(object):
         return solr
 
 
-def format_date(date):
+def format_date(date, time_format="23:59:59Z"):
     """
     Switches dates to the solr format, ignoring time zones because the pysolr
     upload does the same.
@@ -198,7 +202,7 @@ def format_date(date):
     outputs:
     A date formated YYYY-mm-ddThh:mm:ssZ, e.g. 2013-08-14T20:03:12Z
     """
-    date_format = "%Y-%m-%dT%H:%M:%SZ"
+    date_format = "%Y-%m-%dT{time}".format(time=time_format)
     return date.strftime(date_format)
 
 def dict_to_object(results):

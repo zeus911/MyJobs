@@ -115,7 +115,8 @@ def filter_by_date(request, solr=None):
                 # Default start date is today.
                 date_end = datetime.now()
         solr = solr.filter_by_date_range(field='SavedSearch_created_on',
-                                         date_start=format_date(date_start),
+                                         date_start=format_date(date_start,
+                                                                time_format="00:00:00Z"),
                                          date_end=format_date(date_end))
 
     date_delta = (date_end - date_start).days

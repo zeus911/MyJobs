@@ -13,6 +13,7 @@ from myprofile.tests.factories import PrimaryNameFactory, SecondaryEmailFactory,
 from myprofile.tests.factories import AddressFactory, TelephoneFactory, EmploymentHistoryFactory
 from mysearches.models import SavedSearch
 from mysearches.tests.factories import SavedSearchFactory
+from tasks import add_to_solr_task, delete_from_solr_task
 
 SEARCH_OPTS = ['django', 'python', 'programming']
 
@@ -49,14 +50,15 @@ class MyDashboardViewsTests(TestCase):
                 SavedSearchFactory(user=user,
                                    url='http://test.jobs/search?q=%s' % search,
                                    label='%s Jobs' % search)
+        add_to_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
 
     def test_number_of_searches_and_users_is_correct(self):
         response = self.client.post(
             reverse('dashboard')+'?company='+str(self.company.id),
             {'microsite': 'test.jobs'})
         soup = BeautifulSoup(response.content)
-        # 10 searches total, two rows per search
-        self.assertEqual(len(soup.select('#row-link-table tr')), 20)
+        # 6 users total, two rows per search
+        self.assertEqual(len(soup.select('#row-link-table tr')), 12)
 
         old_search = SavedSearch.objects.all()[0]
         old_search.created_on -= timedelta(days=31)
@@ -66,7 +68,7 @@ class MyDashboardViewsTests(TestCase):
             reverse('dashboard')+'?company='+str(self.company.id),
             {'microsite': 'test.jobs'})
         soup = BeautifulSoup(response.content)
-        self.assertEqual(len(soup.select('#row-link-table tr')), 20)
+        self.assertEqual(len(soup.select('#row-link-table tr')), 12)
 
     # Tests to see if redirect from /candidates/ goes to candidates/view/
     def test_redirect_to_candidates_views_default_page(self):
