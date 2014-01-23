@@ -28,5 +28,4 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     url(r'^authorize/', include('MyJobs.mysignon.urls')),
     url(r'^message/', include('MyJobs.mymessages.urls')),
-    url(r'^partners/', include('MyJobs.mypartners.urls')),
 )
