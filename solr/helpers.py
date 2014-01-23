@@ -143,12 +143,23 @@ class Solr(object):
         }
         return solr
 
-    def search(self):
-        return self.solr.search(q=self.q, **self.params)
+    def search(self, **kwargs):
+        """
+        Searches solr with given q and kwargs.
+
+        """
+        clone = self._clone()
+
+        if 'q' in kwargs:
+            clone.q = kwargs['q']
+            del kwargs['q']
+        clone.params.update(kwargs)
+
+        return clone.solr.search(q=clone.q, **clone.params)
 
     def delete(self):
         """
-        Deletes all documents matching the current search.
+        Deletes all documents matching the current q.
 
         """
         self.solr.delete(q=self.q)
