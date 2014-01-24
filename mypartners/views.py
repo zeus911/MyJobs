@@ -21,10 +21,17 @@ def prm(request):
     Partner Relationship Manager
     """
     company_id = request.REQUEST.get('company')
-    try:
-        company = Company.objects.get(id=company_id)
-    except Company.DoesNotExist:
-        raise Http404
+
+    if company_id is None:
+        try:
+            company = Company.objects.filter(admins=request.user)[0]
+        except Company.DoesNotExist:
+            raise Http404
+    else:
+        try:
+            company = Company.objects.get(id=company_id)
+        except Company.DoesNotExist:
+            raise Http404
 
     user = request.user
     if not user in company.admins.all():
