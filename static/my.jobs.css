@@ -1410,6 +1410,10 @@ td .gravatar-blank,
 }
 
 @media screen and (max-width: 1024px) {
+    input[type=checkbox] {
+        -moz-appearance: none;
+    }
+
     .site-progress {
         margin-top: 20px;
     }
@@ -1563,6 +1567,10 @@ td .gravatar-blank,
 
     #saved-search-list .buttons {
         width: 175px;
+    }
+
+    #saved-search-form label[for$=is_active] {
+        margin-top: 7px;
     }
 }
 
@@ -1969,21 +1977,35 @@ td .gravatar-blank,
 
     /* Mobile Forms */
 
-    #saved-search-form label[for$=is_active],
     #profile-unit-form label[for=id_name-primary],
     #profile-unit-form label[for=id_employmenthistory-current_indicator] {
-        margin-top:10px;
+        margin-top: 10px;
         float: left;
     }
 
     #profile-unit-form input[type=checkbox],
     #saved-search-form input[type=checkbox] {
         display:inline-block;
-        margin-left: 35px;
     }
 
     #saved-search-form #validated {
         margin-top: 0;
+    }
+
+    #saved-search-form #mobile-url-container {
+        width: 290px;
+        background-color: #ccc;
+        border: 1px solid #bbb;
+        box-sizing: border-box;
+    }
+
+    #saved-search-form .url-label-alignment {
+        padding-top: 2px;
+    }
+
+    #saved-search-form .flush-bottom {
+        margin-bottom: 0;
+        padding-bottom: 0;
     }
 
     div.actions .btn {
@@ -2006,7 +2028,7 @@ td .gravatar-blank,
     }
     
     #saved-search-form label[for^='id_edit_sort_by'] {
-        margin: 0px;    
+        margin: 0px;
     }
     
     #saved-search-form div[class*=id_edit_sort_by] {
