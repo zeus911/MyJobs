@@ -159,8 +159,7 @@ def save_init_partner_form(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def save_item(request):
-    import ipdb; ipdb.set_trace()
-    company_id = request.REQUEST.get('company_id')
+    company_id = request.REQUEST.get('company')
     try:
         company = Company.objects.filter(id=company_id)\
             .select_related('partner_set')[0]

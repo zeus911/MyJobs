@@ -73,11 +73,12 @@ $(function() {
             // interrupts default functionality of the button with code below
             e.preventDefault();
 
-            if ($('#contact-form').length == 0) {
-                var form = $('#partner-form');
+            var is_c_form_there = $('#contact-form').length;
+            if (is_c_form_there > 0) {
+                var form = $('#contact-form');
             }
             else {
-                var form = $('#contact-form');
+                var form = $('#partner-form');
             }
 
             var serialized_data = form.serialize();

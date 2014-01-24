@@ -9,7 +9,7 @@ from mypartners.models import Contact, Partner
 class PartnerForm(BaseUserForm):
     def __init__(self, *args, **kwargs):
         super(PartnerForm, self).__init__(*args, **kwargs)
-        choices = [contact.name for contact in kwargs['instance'].contacts.all()]
+        choices = [(contact, contact.name) for contact in kwargs['instance'].contacts.all()]
         self.fields['primary_contact'] = forms.ChoiceField(
             label="Primary Contact", required=False, choices=choices)
 
