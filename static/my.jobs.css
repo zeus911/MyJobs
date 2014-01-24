@@ -31,6 +31,26 @@ a:hover {
     color: #4B5661;
 }
 
+h1 > a {
+    color: #900;
+    cursor: pointer;
+}
+
+h1 > a:hover {
+    text-decoration: none;
+    color: #900;
+}
+
+h1 > small > a {
+    color: #999;
+    cursor: pointer;
+}
+
+h1 > small > a:hover {
+    text-decoration: none;
+    color: #999;
+}
+
 .activity-progress {
     height: 6px;
     width: 100px;
@@ -93,8 +113,12 @@ a:hover {
 
 /* Partner Relationship Manager Styles */
 .blanket{
-    opacity: .15;
-    margin-top: 30px;
+    opacity: .25;
+    -webkit-filter: blur(1px);
+    -moz-filter: blur(1px);
+    -o-filter: blur(1px);
+    -ms-filter: blur(1px);
+    filter: blur(1px);
 }
 
 .prm-header{
@@ -111,6 +135,10 @@ a:hover {
 
 .small-cell{
     width: 60px;
+}
+
+#fake-partner-table {
+    margin-top: 30px;
 }
 
 .prm-init-formbox{
@@ -149,6 +177,10 @@ a:hover {
 
 #manage-contacts{
     margin-top: 20px;
+}
+
+#manage-contacts table > tbody > tr > td{
+    border-left: 0;
 }
 
 .tip-box{

@@ -202,7 +202,7 @@ function contactForm(){
         dataType: 'json',
         success: function(data) {
             if(data.validation == 'success'){
-                $('#contact-form').hide('slide', {direction: 'left'}, 250);
+                $('#contact-us-form').hide('slide', {direction: 'left'}, 250);
                 setTimeout(function(){
                     $('#success-info').show('slide', {direction: 'right'}, 250);
                     $('.formBox').show('slide', {direction: 'right'}, 250);

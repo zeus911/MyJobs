@@ -32,13 +32,13 @@ $(function() {
 
             $.ajax({
                 type: 'POST',
-                url: '/partners/view/save',
+                url: '/prm/view/save',
                 data: serialized_data,
                 success: function(data, status) {
 
                     if (data == ''){
                         if (status != 'prevent-redirect') {
-                            window.location = '/partners/view?company=' + company_id;
+                            window.location = '/prm/view?company=' + company_id;
                         }
                     } else {
                         // form was a json-encoded list of errors and error messages
@@ -94,13 +94,13 @@ $(function() {
 
             $.ajax({
                 type: 'POST',
-                url: '/partners/view/details/save',
+                url: '/prm/view/details/save',
                 data: serialized_data,
                 success: function(data, status) {
 
                     if (data == ''){
                         if (status != 'prevent-redirect') {
-                            window.location = '/partners/view/details?company=' + company_id + '&partner=' + partner_id;
+                            window.location = '/prm/view/details?company=' + company_id + '&partner=' + partner_id;
                         }
                     } else {
                         // form was a json-encoded list of errors and error messages
@@ -134,8 +134,3 @@ $(function() {
 
     var App = new AppView;
 });
-
-function add_model_name() {
-    $('[id$="_partnername"]').attr('id', 'id_partner-partnername');
-    $('[id$="_partnerurl"]').attr('id', 'id_partner-partnerurl');
-}

@@ -2,15 +2,16 @@ import json
 
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.core.urlresolvers import reverse
 
 from myjobs.models import User
 from mydashboard.models import Company
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm)
-from mypartners.models import Partner
+from mypartners.models import Partner, Contact
 from mypartners.helpers import get_partner
 
 
@@ -104,7 +105,7 @@ def edit_item(request):
     if not user in company.admins.all():
         raise Http404
 
-    if request.path != "/partners/view/edit":
+    if request.path != "/prm/view/edit":
         try:
             partner_id = int(request.REQUEST.get('partner'))
         except TypeError:
@@ -137,7 +138,8 @@ def edit_item(request):
     ctx = {'form': form,
            'partner': partner,
            'company': company,
-           'contact': item_id}
+           'contact': item_id,
+           'content_id': content_id}
 
     return render_to_response('mypartners/edit_item.html', ctx,
                               RequestContext(request))
@@ -210,3 +212,36 @@ def save_item(request):
             return HttpResponse(status=200)
         else:
             return HttpResponse(json.dumps(form.errors))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def delete_item(request):
+    company_id = request.REQUEST.get('company')
+    try:
+        company = Company.objects.filter(id=company_id)\
+            .select_related('partner_set')[0]
+    except Company.DoesNotExist:
+        raise Http404
+
+    partner_id = request.REQUEST.get('partner')
+    if partner_id:
+        partner_id = int(partner_id)
+    contact_id = request.REQUEST.get('id')
+    if contact_id:
+        contact_id = int(contact_id)
+    content_id = request.REQUEST.get('ct')
+    if content_id:
+        content_id = int(content_id)
+
+    if content_id == ContentType.objects.get(name='contact').id:
+        contact = get_object_or_404(Contact, id=contact_id)
+        contact.delete()
+        return HttpResponseRedirect(reverse('partner_details')+'?company=' +
+                                    str(company_id)+'&partner=' +
+                                    str(partner_id))
+    if content_id == ContentType.objects.get(name='partner').id:
+        partner = get_object_or_404(Partner, id=partner_id, owner=company)
+        partner.contacts.all().delete()
+        partner.delete()
+        return HttpResponseRedirect(reverse('prm')+'?company='+str(company_id))
+

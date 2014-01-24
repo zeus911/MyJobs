@@ -9,7 +9,14 @@ from mypartners.models import Contact, Partner
 class PartnerForm(BaseUserForm):
     def __init__(self, *args, **kwargs):
         super(PartnerForm, self).__init__(*args, **kwargs)
-        choices = [(contact, contact.name) for contact in kwargs['instance'].contacts.all()]
+        choices = [(contact.id, contact.name) for contact in
+                   kwargs['instance'].contacts.all()]
+        if kwargs['instance'].primary_contact:
+            for choice in choices:
+                if choice[0] == kwargs['instance'].primary_contact_id:
+                    choices.insert(0, choices.pop(choices.index(choice)))
+        else:
+            choices.insert(0, ('', "No Primary Contact"))
         self.fields['primary_contact'] = forms.ChoiceField(
             label="Primary Contact", required=False, choices=choices)
 
@@ -18,6 +25,12 @@ class PartnerForm(BaseUserForm):
         model = Partner
         fields = ['name', 'uri']
         widgets = generate_custom_widgets(model)
+
+    def save(self, commit=True):
+        if self.data['primary_contact']:
+            self.instance.primary_contact_id = self.data['primary_contact']
+        self.instance.save()
+        return
 
 
 class ContactForm(forms.ModelForm):
@@ -45,6 +58,7 @@ class ContactForm(forms.ModelForm):
         partner.add_contact(contact)
         partner.save()
         return
+
 
 class NewPartnerForm(BaseUserForm):
     def __init__(self, *args, **kwargs):
@@ -105,7 +119,7 @@ class NewPartnerForm(BaseUserForm):
         if has_data:
             self.instance.save()
         else:
-            return None
+            return
 
     def remove_partner_data(self, dictionary, keys):
         new_dictionary = dict(dictionary)
@@ -154,3 +168,27 @@ class PartnerInitialForm(BaseUserForm):
             self.instance.add_contact(contact)
 
         self.instance.save()
+
+
+class ContactInitialForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(ContactInitialForm, self).__init__(*args, **kwargs)
+        self.fields['name'] = forms.CharField(
+            label="Name", max_length=255, required=True,
+            widget=forms.TextInput(attrs={'placeholder': 'Name',
+                                          'id': 'id_contact-name'}))
+
+    class Meta:
+        form_name = "Contact Information"
+        model = Contact
+        fields = ['name', 'email']
+        widgets = generate_custom_widgets(model)
+
+    def save(self, commit=True):
+        partner = Partner.objects.get(id=self.data['partner'])
+        contact = self.instance
+        contact.save()
+
+        partner.add_contact(contact)
+        partner.save()
+        return

@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-    <h1>{{ company.name }}</h1>
+    <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> <small>{{ partner.name }}</small></h1>
     <div class="row">
         <div class="span12 prm-header">
             <span>Partner Details</span>
@@ -22,10 +22,36 @@
                 {% include "includes/form-error-highlight.html" %}
                 {% csrf_token %}
                 <input type="hidden" name="company_id" value="{{ company.id }}">
+                <input type="hidden" name="partner_id" value="{{ partner.id }}">
                 <input type="hidden" name="ct" value="{{ partner_ct }}">
-            <button type="submit" class="btn primary pull-right" id="item-save">{% trans 'Save' %}</button>
+
+                <div class="pull-right">
+                    <button type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>
+                    <button type="submit" class="btn primary" id="item-save">{% trans 'Save' %}</button>
+                </div>
+                <div class="clear"></div>
             </form>
         </div>
+        <div id="delete-confirm" class="modal hide fade row">
+            <div class="modal-header">
+                {% trans 'Really Delete?' %}
+            </div>
+            <div class="modal-body">
+
+                {% blocktrans %}
+
+                Are you sure you want to delete <b>{{ partner }}</b>?
+
+                {% endblocktrans %}
+
+            </div>
+            <div class="modal-footer">
+                <div class="actions">
+                    <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
+                    <a class="btn" href="{% url 'delete_item' %}?company={{ company.id }}&partner={{ partner.id }}&ct={{ partner_ct }}">{% trans 'Delete' %}</a>
+                </div>
+            </div>
+        </div>{# /delete-confirm #}
         <div class="span4">
             <div class="tip-box">
                 <h4>Tips</h4>
@@ -40,30 +66,26 @@
         </div>
     </div>
 
-    {% if contacts %}
-
     <div class="row">
         <div class="span8">
             <div class="formBox" id="manage-contacts">
                 <h4>Manage Contacts</h4>
+                {% if contacts %}
                 <table class="table table-striped table-bordered">
                     <tbody>
                     {% for contact in contacts %}
                         <tr>
                             <td>{{ contact.name }}</td>
-                            {% if contact.email %}<td>{{ contact.email }}</td>{% endif %}
-                            <td><a class="btn-link" href="{% url 'edit_contact' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ contact.id }}&ct={{ contact_ct }}">Edit</a></td>
+                            <td>{% if contact.email %}{{ contact.email }}{% endif %}</td>
+                            <td><a class="btn-link pull-right" href="{% url 'edit_contact' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ contact.id }}&ct={{ contact_ct }}">Edit</a></td>
                         </tr>
                     {% endfor %}
                     </tbody>
                 </table>
+                {% endif %}
                 <a class="pull-right btn" href="{% url 'edit_contact' %}?company={{ company.id }}&partner={{ partner.id }}&ct={{ contact_ct }}">New Contact</a>
                 <div class="clear"></div>
             </div>
         </div>
     </div>
-    {% else %}
-
-    <a class="btn" href="{% url 'edit_contact' %}?company={{ company.id }}&partner={{ partner.id }}&ct={{ contact_ct }}">New Contact</a>
-    {% endif %}
 {% endblock %}

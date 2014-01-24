@@ -10,4 +10,5 @@ urlpatterns = patterns('MyJobs.mypartners.views',
     url(r'^view/edit$', 'edit_item', name='edit_partner'),
     url(r'^view/details/edit$', 'edit_item', name='edit_contact'),
     url(r'^view/details/save$', 'save_item', name='save_item'),
+    url(r'^view/details/delete$', 'delete_item', name='delete_item'),
 )
