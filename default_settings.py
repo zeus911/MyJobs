@@ -165,10 +165,12 @@ RECAPTCHA_USE_SSL = True
 
 # Add all MyJobs apps here. This separation ensures that automated Jenkins tests
 # only run on these apps
-PROJECT_APPS = ('myjobs','myprofile','mysearches','registration',
-                'mydashboard', 'mysignon', 'mymessages')
+PROJECT_APPS = ('myjobs', 'myprofile', 'mysearches', 'registration',
+                'mydashboard', 'mysignon', 'mymessages', 'mypartners')
 
 INSTALLED_APPS += PROJECT_APPS
+
+TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 
 JENKINS_TASKS = (
     'django_jenkins.tasks.with_coverage',
@@ -260,4 +262,3 @@ PROFILE_COMPLETION_MODULES = (
     'employmenthistory',
     'summary'
 )
-
