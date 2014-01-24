@@ -211,7 +211,8 @@ class UserAdminForm(ModelForm):
 
     def save(self, commit=True):
         instance = super(UserAdminForm, self).save(commit)
-        if (self.data['gravatar'] != instance.gravatar) and (self.data['gravatar'] == 'none' or self.data['gravatar'] == ''):
+        if (self.data['gravatar'] != instance.gravatar) and \
+           (self.data['gravatar'] == 'none' or self.data['gravatar'] == ''):
             instance.gravatar = self.data['gravatar']
             instance.save()
         if not instance.user_guid:
