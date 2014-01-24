@@ -24,7 +24,7 @@ class MyPartnerViewsTests(TestCase):
         self.admin = CompanyUserFactory(user=self.staff_user,
                                         company=self.company)
         self.client = TestClient()
-        self.client.login_user(self.user)
+        self.client.login_user(self.staff_user)
 
         self.partner = PartnerFactory(owner=self.company)
         self.contact = ContactFactory()
