@@ -242,9 +242,9 @@ def contact(request):
                 project = jira.project('MJA')
                 components = []
                 component_ids = {'My.jobs Error': {'id': '12903'},
-                                 'Job Seeker': {'id': '12901'},
+                                 'Job Seeker': {'id': '12902'},
                                  'Employer': {'id': '12900'},
-                                 'Partner': {'id': '12902'}, }
+                                 'Partner': {'id': '12901'}, }
                 if component_ids.get(reason):
                     components.append(component_ids.get(reason))
                 components.append(component_ids.get(contact_type))
