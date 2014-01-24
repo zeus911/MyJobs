@@ -48,10 +48,9 @@
                 <table class="table table-bordered table-striped">
                 {% if user.is_authenticated %}
                     {% if searches|length %}
-                        {% url 'delete_saved_search' search_id=search_id as delete_url %}
                         <tr class="profile-section">
                             <td>
-                                <a href="{{delete_url}}">
+                                <a href="{%url 'delete_saved_search'%}?id={{search_id}}&verify-email={{email_user.email}}">
                                     {% blocktrans count counter=count %}
                                     Delete it instead
                                     {% plural %}
