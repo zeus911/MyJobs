@@ -87,6 +87,12 @@ def profileunits_to_dict(user_id):
             if not objs:
                 continue
 
+            if model_name == 'Address':
+                solr_dict['Address_full_location'] = ["%s#%s#%s" %
+                                                      (getattr(obj, 'city_name'),
+                                                       getattr(obj, 'country_sub_division_code'),
+                                                       getattr(obj, 'country_code'))
+                                                      for obj in objs]
             for field in objs[0]._meta._fields():
                 obj_list = [getattr(obj, field.attname) for obj in objs]
                 field_type = field.get_internal_type()

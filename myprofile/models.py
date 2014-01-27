@@ -182,8 +182,7 @@ post_save.connect(save_primary, sender=Name, dispatch_uid="save_primary")
 post_delete.connect(delete_primary, sender=Name, dispatch_uid="delete_primary")
 
 
-class Education(ProfileUnits):
-    EDUCATION_LEVEL_CHOICES = (
+EDUCATION_LEVEL_CHOICES = (
         ('', _('Education Level')),
         (3, _('High School')),
         (4, _('Non-Degree Education')),
@@ -191,7 +190,10 @@ class Education(ProfileUnits):
         (6, _('Bachelor')),
         (7, _('Master')),
         (8, _('Doctoral')),
-    )
+)
+
+
+class Education(ProfileUnits):
     organization_name = models.CharField(max_length=255,
                                          verbose_name=_('institution'))
     degree_date = models.DateField(verbose_name=_('completion date'))

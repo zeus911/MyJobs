@@ -16,7 +16,8 @@ from django.template.loader import get_template
 from django.shortcuts import render_to_response
 
 from mydashboard.helpers import (saved_searches, filter_by_microsite,
-                                 filter_by_date)
+                                 filter_by_date, apply_facets_and_filters,
+                                 parse_facets)
 from mydashboard.models import *
 from myjobs.models import User
 from myprofile.models import (PrimaryNameProfileUnitManager,
@@ -44,9 +45,15 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     Returns:
     :render_to_response:    renders template with context dict
-    """
 
-    solr = Solr()
+    """
+    user_solr = Solr()
+    facet_solr = Solr()
+    user_solr = user_solr.add_join(from_field='ProfileUnits_user_id',
+                                   to_field='User_id')
+    facet_solr = facet_solr.add_join(from_field='User_id',
+                                     to_field='ProfileUnits_user_id')
+    facet_solr = facet_solr.rows_to_fetch(0)
 
     company_id = request.REQUEST.get('company')
     if company_id is None:
@@ -85,15 +92,22 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     if not site_name:
         site_name = microsite_urls[0]
 
-    solr, date_start, date_end, date_display = filter_by_date(request, solr)
-    solr = filter_by_microsite(active_microsites, solr)
-    solr_results = solr.result_rows_to_fetch(solr.search().hits).search()
+    range, date_start, date_end, date_display = filter_by_date(request)
+    user_solr = user_solr.add_filter_query(range)
+    facet_solr = facet_solr.add_query(range)
+
+    user_solr, facet_solr = filter_by_microsite(active_microsites, user_solr,
+                                                facet_solr)
+
+    user_solr, facet_solr, filters = apply_facets_and_filters(request,
+                                                              user_solr,
+                                                              facet_solr)
+
+    solr_results = user_solr.rows_to_fetch(user_solr.search().hits).search()
     candidates = dict_to_object(solr_results.docs)
 
-    admin_you = request.user
-
     # List of dashboard widgets to display.
-    dashboard_widgets = ["candidates"]
+    dashboard_widgets = ["candidates", "applied_filters", "filters"]
 
     # Filter out duplicate entries for a user.
     candidate_list = []
@@ -109,21 +123,23 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         requested_date_button = 'thirty_days'
 
     context = {
-        'company_name': company.name,
-        'company_microsites': authorized_microsites,
-        'company_admins': admins,
-        'company_id': company.id,
+        'admin_you': request.user,
         'after': date_start,
+        'applied_filters': filters,
         'before': date_end,
         'candidates': candidate_list,
-        'total_candidates': len(candidate_list),
-        'admin_you': admin_you,
-        'site_name': site_name,
-        'view_name': 'Company Dashboard',
-        'date_button': requested_date_button,
         'candidates_page': candidates_page,
+        'company_admins': admins,
+        'company_id': company.id,
+        'company_microsites': authorized_microsites,
+        'company_name': company.name,
         'dashboard_widgets': dashboard_widgets,
+        'date_button': requested_date_button,
         'date_display': date_display,
+        'facets': parse_facets(facet_solr.search(), request.build_absolute_uri()),
+        'site_name': site_name,
+        'total_candidates': len(candidate_list),
+        'view_name': 'Company Dashboard',
     }
     
     if extra_context is not None:

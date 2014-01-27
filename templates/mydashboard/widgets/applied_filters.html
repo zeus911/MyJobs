@@ -1,0 +1,8 @@
+{% load i18n %}
+
+<div class="applied-filters">
+    {% for term, url in applied_filters.items %}
+        <a href="{{ url }}">&#10006; {{ term }}</a><br>
+    {% endfor %}
+</div>
+<br>

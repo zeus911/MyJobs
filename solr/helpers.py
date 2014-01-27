@@ -1,6 +1,5 @@
 import pysolr
 
-from datetime import datetime, timedelta
 from django.conf import settings
 from django.core import mail
 
@@ -22,6 +21,8 @@ class Solr(object):
             'facet': 'false',
             'facet.field': [],
             'facet.query': [],
+            'facet.mincount': 1,
+            'facet.limit': -1,
         }
 
     def _clone(self):
@@ -29,6 +30,27 @@ class Solr(object):
         clone.q = self.q
         clone.params = self.params
         return clone
+
+    def add_join(self, from_field, to_field, search_terms='*:*'):
+        """
+        Adds a join to the query. Because the join needs to come first in the
+        query, this overwrites any existing part of the query.
+
+        inputs:
+        :from_field: The field that is being joined from. Any additional
+            search terms for these documents must be applied to the 'q'
+            parameter.
+        :to_field: The field that is being joined to. Any search terms for
+            these documents must come from the 'fq' parameter. The resulting
+            documents and any facets will come from the documents selected
+            by this field.
+        :search terms: Any initial search terms to apply to the query.
+
+        """
+        solr = self._clone()
+        solr.q = "{!join from=%s to=%s}%s" % (from_field, to_field,
+                                              search_terms)
+        return solr
 
     def add_query(self, query_string, bool_operator='AND'):
         """
@@ -88,7 +110,7 @@ class Solr(object):
         solr.params['start'] = start
         return solr
 
-    def result_rows_to_fetch(self, rows):
+    def rows_to_fetch(self, rows):
         """
         Sets the total number of rows to fetch. Default is 10.
 
@@ -163,43 +185,6 @@ class Solr(object):
 
         """
         self.solr.delete(q=self.q)
-
-    def filter_by_time_period(self, field, date_end=datetime.now(),
-                              total_days=1):
-        """
-        Adds a filter spanning one or more days, ending on date_end.
-
-        inputs:
-        :field: The field that contains the time period being filtered on.
-        :date_end: The latest date included in the search.
-        :total_days: The total number of days the search should span.
-
-        """
-        solr = self._clone()
-        query = "{field}:[{date_end}-{total_days}DAYS TO {date_end}]"
-        time_filter = query.format(field=field, total_days=total_days,
-                                   date_end=format_date(date_end))
-        solr.add_filter_query(time_filter)
-        return solr
-
-    def filter_by_date_range(self, field,
-                             date_start=datetime.now()-timedelta(days=1),
-                             date_end=datetime.now()):
-        """
-        Adds a filter spanning one or more days, ending on date_end.
-
-        inputs:
-        :field: The field that contains the date range being filtered on.
-        :date_end: The latest date included in the search.
-        :total_days: The total number of days the search should span.
-
-        """
-        solr = self._clone()
-        query = "{field}:[{date_start} TO {date_end}]"
-        time_filter = query.format(field=field, date_start=date_start,
-                                   date_end=date_end)
-        solr.add_filter_query(time_filter)
-        return solr
 
 
 def format_date(date, time_format="23:59:59Z"):

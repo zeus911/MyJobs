@@ -58,12 +58,20 @@ class Command(BaseCommand):
         schema_fields = []
 
         if options['static']:
+            # One-off fields
             schema_fields.append({
                 'field_name': 'ProfileUnits_user_id',
                 'type': 'long',
                 'indexed': 'true',
                 'stored': 'true',
                 'multiValued': 'false',
+            })
+            schema_fields.append({
+                'field_name': 'Address_full_location',
+                'type': 'string',
+                'indexed': 'true',
+                'stored': 'true',
+                'multiValued': 'true',
             })
             for model in models:
                 for field in model._meta.fields:
