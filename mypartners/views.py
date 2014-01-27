@@ -12,7 +12,6 @@ from mydashboard.models import Company
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm)
 from mypartners.models import Partner, Contact
-from mypartners.helpers import get_partner
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
@@ -77,7 +76,7 @@ def partner_details(request):
         raise Http404
 
     partner_id = int(request.REQUEST.get('partner'))
-    partner = get_partner(company, partner_id)
+    partner = get_object_or_404(company.partner_set.all(), id=partner_id)
 
     form = PartnerForm(instance=partner, auto_id=False)
 
@@ -117,7 +116,7 @@ def edit_item(request):
             partner_id = int(request.REQUEST.get('partner'))
         except TypeError:
             raise Http404
-        partner = get_partner(company, partner_id)
+        partner = get_object_or_404(company.partner_set.all(), id=partner_id)
     else:
         partner = None
 
@@ -185,7 +184,8 @@ def save_item(request):
             except TypeError:
                 raise Http404
 
-            partner = get_partner(company, partner_id)
+            partner = get_object_or_404(company.partner_set.all(),
+                                        id=partner_id)
 
             try:
                 item = partner.contacts.get(pk=item_id)
