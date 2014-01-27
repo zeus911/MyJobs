@@ -242,12 +242,6 @@ label[for^='id_edit_sort_by'] {
     background-color: #FFF;   
 }
 
-.hasRegions {
-    position: relative;
-    margin-left: 200px;
-    margin-top: -27px;
-}
-
 #profileTitleRow{
     margin-bottom: 20px;
 }
@@ -257,10 +251,6 @@ label[for^='id_edit_sort_by'] {
 }
 #profileTitleBar{
     border-bottom: 2px solid #873f3d;
-}
-
-.profile-form-input input[type!=checkbox] {
-    width: 40%;
 }
 
 .profile-action-form {
@@ -509,10 +499,6 @@ table#row-link-table {
 /*New Account initial form*/
 #newAccountData .initial {
     display: none;   
-}
-
-#newAccountData .profile-form-input input[type!=checkbox] {
-    width: 95%;   
 }
 
 #newAccountData .input-prepend {
@@ -872,12 +858,6 @@ fieldset textarea,
 
 #titleRow input {
     width: 100%;
-}
-
-.loginBox input[type!=checkbox],
-.initial-profileBox input[type=checkbox] {
-    float: left;
-    width: auto;
 }
 
 #account-page-2 .loginBox input,
@@ -1897,6 +1877,23 @@ td .gravatar-blank,
         float: none;
     }
 
+    fieldset textarea,
+    .profile-form-input input[type="text"],
+    .profile-form-input input[type="password"] {
+        width: 96%;
+    }
+
+    form select {
+        width: 100%;
+    }
+
+    .profile-form-input input[type="text"] > span.refresh {
+        width: -webkit-calc(96% - 28px);
+        width: -moz-calc(96% - 28px);
+        width: -o-calc(96% - 28px);
+        width: calc(96% - 28px);
+    }
+
     /* Contact Form Styles */
     #success-table tr td{
         min-width: 0;
@@ -2018,21 +2015,10 @@ td .gravatar-blank,
         padding: 30px 10px 10px 10px;
         left: 25%;
         width: 300px;        
-    }   
-    
-    .hasRegions {        
-        float: left;
-        margin-left: -9px;
-        margin-top: 1px;
-        margin-bottom: 0px;
     }
 
     .checkbox-margin {
         padding-top: 14px;    
-    }
-
-    .profile-form-input input[type!=checkbox] {
-        width: 65%;
     }
     
     .inbox-alert {

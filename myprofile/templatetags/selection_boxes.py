@@ -24,7 +24,7 @@ def degree_select(selected="ba", html_id="",input_name="degree",inc_struc=True):
     """
     data_url = 'https://d2e48ltfsb5exy.cloudfront.net/myjobs/data/degree_list.json'
     data_list = _load_json_data(data_url)
-    degree_list = data_list["degrees"];
+    degree_list = data_list["degrees"]
     try:
         label = data_list["friendly_label"]
     except KeyError:
@@ -54,18 +54,20 @@ def country_region_select(selected="can", html_id="", input_name="country",
     
     """
     selected = selected.lower()
-    country_tag = country_select(selected,html_id,input_name,True,region_html_id)
+    country_tag = country_select(selected, html_id, input_name, True,
+                                 region_html_id)
     if country_tag[0] != "<":
         region_tag = ""
     else:
-        if selected=="usa":
-            default_region="az"
-        elif selected=="can":
-            default_region="ab"
+        if selected == "usa":
+            default_region = "az"
+        elif selected == "can":
+            default_region = "ab"
         else:
-            default_region=""
+            default_region = ""
         
-        region_tag= region_select(selected,default_region,region_html_id,"region")
+        region_tag = region_select(selected, default_region, region_html_id,
+                                   "region")
 
     html = country_tag+region_tag
     return html
@@ -93,21 +95,22 @@ def country_select(selected="usa", html_id="", input_name="country",
     selected = selected.lower()
     data_url = 'https://d2e48ltfsb5exy.cloudfront.net/myjobs/data/countries.json'
     data_list = _load_json_data(data_url)
-    country_list = data_list["countries"];
+    country_list = data_list["countries"]
     try:
         label = data_list["friendly_label"]
     except KeyError:
         label = "Country"        
     
     if region_html_id:
-        sel_tag = _build_select_list(country_list,selected,input_name,html_id,
-                                     "hasRegions",region_html_id)
+        sel_tag = _build_select_list(country_list,selected,input_name, html_id,
+                                     "hasRegions", region_html_id)
     else:
-        sel_tag = _build_select_list(country_list,selected,input_name,html_id)
+        sel_tag = _build_select_list(country_list,selected,input_name, html_id)
     if inc_struc:
-        html_str="<div>"
-        html_str="%s<label for='%s'>%s</label></div>" % (html_str,html_id,label)
-        html_str="%s%s<div class='clear'></div>" % (html_str,sel_tag)
+        html_str = "<div>"
+        html_str = "%s<label for='%s'>%s</label></div>" % (html_str, html_id,
+                                                           label)
+        html_str = "%s%s<div class='clear'></div>" % (html_str, sel_tag)
     else:
         html_str = sel_tag
         
@@ -115,8 +118,8 @@ def country_select(selected="usa", html_id="", input_name="country",
 
 
 @register.simple_tag
-def region_select(country="usa",selected="az",html_id="",input_name="region",
-                  inc_struc=True):
+def region_select(country="usa", selected="az", html_id="",
+                  input_name="region", inc_struc=True):
     """
     Builds an html select list of regions.
     Inputs:

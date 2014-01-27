@@ -22,7 +22,7 @@ $(function() {
             'input input[id$="url"]': 'validate',
             'keypress input[id$="url"]': 'validate',
             'cut input[id$="url"]': 'validate',
-            'paste input[id$="url"]': 'validate',
+            'paste input[id$="url"]': 'validate'
         },
 
 
@@ -110,7 +110,7 @@ $(function() {
                     }
                 }
             }
-        },
+        }
     });
 
     var EditSearch = new EditSearchView;
@@ -118,8 +118,15 @@ $(function() {
 });
 
 function add_refresh_btn() {
-    $('[id$="url"]').parent().addClass('input-append');
-    $('[id$="url"]').after('<span class="btn add-on refresh"><i class="icon icon-refresh">');
+    var field = $('[id$="url"]');
+    field.parent().addClass('input-append');
+
+    if($(window).width() <= 501){
+        var field_width = field.width() - 28;
+        field.css("width", String(field_width)+"px");
+    }
+
+    field.after('<span class="btn add-on refresh"><i class="icon icon-refresh">');
 }
 
 function add_valid_label() {
