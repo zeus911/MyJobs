@@ -11,6 +11,7 @@ $(function() {
                 disable_fields();
                 add_refresh_btn();
                 reorder_elements();
+                $('[id$=notes]').placeholder();
             });
         },
 
@@ -186,6 +187,7 @@ function reorder_elements() {
         $('[id$=_url] + .refresh').after($('#validated'));
         $('label[for$=is_active]').parent().after($('[id$=is_active]').parent());
         $('label[for$=label]').parent().show();
+        $('label[for$=notes]').parent().show();
     } else {
         if (!url_container.length) {
             $('[id$=_url]').parent().after('<div id="mobile-url-container"></div>');
@@ -198,5 +200,6 @@ function reorder_elements() {
         $('label[for$=_url]').append($('#validated'));
         $('label[for$=is_active]').parent().before($('[id$=is_active]').parent());
         $('label[for$=label]').parent().hide();
+        $('label[for$=notes]').parent().hide();
     }
 }
