@@ -191,6 +191,7 @@ class UserAdminForm(ModelForm):
     class Meta:
         model = User
 
+    # Used to update/change a password.
     new_password = CharField(label='New password', required=False)
 
     def __init__(self, *args, **kwargs):
@@ -211,6 +212,9 @@ class UserAdminForm(ModelForm):
 
     def save(self, commit=True):
         instance = super(UserAdminForm, self).save(commit)
+        # A blank string and 'none' are both valid gravatar options that
+        # don't pass form validation, so gravatar needs to be saved here
+        # if the gravatar was set to either.
         if (self.data['gravatar'] != instance.gravatar) and \
            (self.data['gravatar'] == 'none' or self.data['gravatar'] == ''):
             instance.gravatar = self.data['gravatar']
