@@ -222,7 +222,7 @@ def save_item(request):
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
-def delete_item(request):
+def delete_prm_item(request):
     company_id = request.REQUEST.get('company')
     try:
         company = Company.objects.filter(id=company_id)\

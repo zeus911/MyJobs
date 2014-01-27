@@ -108,8 +108,8 @@ $(document).ready(function(){
         $("#savedsearch-link").removeClass("no-show");
         $("#candidate-link").removeClass("no-show");
         $("#candidate-link-one").removeClass("no-show");
-        $("#partner-link").addClass("no-show");
-        $("#partner-link-one").addClass("no-show");
+        $("#partner-link").removeClass("no-show");
+        $("#partner-link-one").removeClass("no-show");
         $("#settings-link").removeClass("no-show"); 
     });
 

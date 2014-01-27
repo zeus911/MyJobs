@@ -1889,6 +1889,14 @@ td .gravatar-blank,
         margin: -12px 0 0 5px;
     }
 
+    .actions{
+        float: none;
+    }
+
+    .mobile-btn {
+        float: none;
+    }
+
     /* Contact Form Styles */
     #success-table tr td{
         min-width: 0;
@@ -1980,7 +1988,17 @@ td .gravatar-blank,
     #date-range {
         position: absolute;
         margin-top: -115px;
-    }    
+    }
+
+    /* Partner Relationship Manager */
+    #partner-form,
+    #contact-form {
+        margin-left: 0;
+    }
+
+    .tip-box .tip-footer .btn-link {
+        padding: 6px 25px 7px 25px;
+    }
     
     /* Microsite Activity Page*/
     #candidate-activity-details-table {
@@ -2105,7 +2123,8 @@ td .gravatar-blank,
         padding-right: 0;
     }
     
-    .refresh {
+    .refresh,
+    .calendar {
         display: inline-block !important;
     }
     

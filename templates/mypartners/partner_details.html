@@ -25,7 +25,8 @@
                 <input type="hidden" name="partner_id" value="{{ partner.id }}">
                 <input type="hidden" name="ct" value="{{ partner_ct }}">
 
-                <div class="pull-right">
+                <div class="form-label pull-left">&nbsp;</div>
+                <div class="actions pull-right">
                     <button type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>
                     <button type="submit" class="btn primary" id="item-save">{% trans 'Save' %}</button>
                 </div>
@@ -48,7 +49,7 @@
             <div class="modal-footer">
                 <div class="actions">
                     <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
-                    <a class="btn" href="{% url 'delete_item' %}?company={{ company.id }}&partner={{ partner.id }}&ct={{ partner_ct }}">{% trans 'Delete' %}</a>
+                    <a class="btn" href="{% url 'delete_prm_item' %}?company={{ company.id }}&partner={{ partner.id }}&ct={{ partner_ct }}">{% trans 'Delete' %}</a>
                 </div>
             </div>
         </div>{# /delete-confirm #}
@@ -83,7 +84,7 @@
                     </tbody>
                 </table>
                 {% endif %}
-                <a class="pull-right btn" href="{% url 'edit_contact' %}?company={{ company.id }}&partner={{ partner.id }}&ct={{ contact_ct }}">New Contact</a>
+                <a class="pull-right btn mobile-btn" href="{% url 'edit_contact' %}?company={{ company.id }}&partner={{ partner.id }}&ct={{ contact_ct }}">New Contact</a>
                 <div class="clear"></div>
             </div>
         </div>

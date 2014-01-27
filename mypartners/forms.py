@@ -38,7 +38,7 @@ class ContactForm(forms.ModelForm):
         super(ContactForm, self).__init__(*args, **kwargs)
         self.fields['name'] = forms.CharField(
             label="Name", max_length=255, required=True,
-            widget=forms.TextInput(attrs={'placeholder': 'Name',
+            widget=forms.TextInput(attrs={'placeholder': 'Full Name',
                                           'id': 'id_contact-name'}))
 
     class Meta:

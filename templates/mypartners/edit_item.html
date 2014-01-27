@@ -25,8 +25,9 @@
                 <input type="hidden" name="company_id" value="{{ company.id }}">
                 <input type="hidden" name="partner_id" value="{{ partner.id }}">
                 <input type="hidden" name="ct" value="{{ content_id }}">
-            <div class="pull-right">
-                {% if contact %}<a class="btn" href="{% url 'delete_item' %}?company={{ company.id }}&partner={{ partner.id }}&ct={{ content_id }}&id={{ contact }}">{% trans 'Delete' %}</a>{% endif %}
+            <div class="form-label pull-left">&nbsp;</div>
+            <div class="actions pull-right">
+                {% if contact %}<a class="btn" href="{% url 'delete_prm_item' %}?company={{ company.id }}&partner={{ partner.id }}&ct={{ content_id }}&id={{ contact }}">{% trans 'Delete' %}</a>{% endif %}
                 <a class="btn" href="{% if partner %}{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}{% else %}{% url 'prm' %}?company={{ company.id }}{% endif %}">{% trans 'Cancel' %}</a>
                 <button type="submit" class="btn primary" id="{% if not partner %}init-partner-save{% else %}item-save{% endif %}">{% trans 'Save' %}</button>
             </div>
