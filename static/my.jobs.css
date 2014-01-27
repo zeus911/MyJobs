@@ -168,7 +168,7 @@ h1 > small > a:hover {
 
 #partner-form,
 #contact-form{
-    margin-left: 138px;
+    margin-left: 78px;
 }
 
 .formBox > #partner-form{
@@ -584,7 +584,7 @@ table#row-link-table {
 .form-label {
     text-align: right;
     margin-right: 20px;
-    width: 180px;
+    width: 240px;
 }
 
 .form-label label {
@@ -977,7 +977,6 @@ fieldset textarea,
 }
 
 .profile-form-input textarea {
-    width: 248px;
     height: 100px;
 }
 
@@ -1313,8 +1312,8 @@ em.pendingText {
 input [type='text'] + .help-block,
 div + .help-block,
 div > .help-block{
-    max-width: 250px;
-    margin: -12px 0 5px 225px;
+    max-width: 96%;
+    margin: -12px 0 5px 5px;
     color: #555;
     font-size: .85em;
     font-style: italic;

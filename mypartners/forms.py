@@ -67,6 +67,8 @@ class NewPartnerForm(BaseUserForm):
         'append' to the new fields because new fields need to be first.
         """
         super(NewPartnerForm, self).__init__(*args, **kwargs)
+        for field in self.fields.itervalues():
+            field.label = "Primary Contact " + field.label
         model_fields = OrderedDict(self.fields)
 
         new_fields = {
