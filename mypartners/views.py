@@ -252,3 +252,29 @@ def delete_prm_item(request):
         partner.delete()
         return HttpResponseRedirect(reverse('prm')+'?company='+str(company_id))
 
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def prm_overview(request):
+    company_id = request.REQUEST.get('company')
+    company = get_object_or_404(Company, id=company_id)
+
+    user = request.user
+    if not user in company.admins.all():
+        raise Http404
+
+    partner_id = int(request.REQUEST.get('partner'))
+    partner = get_object_or_404(company.partner_set.all(), id=partner_id)
+
+    most_recent_activity = []
+    most_recent_communication = []
+    most_recent_saved_searches = []
+
+    ctx = {'partner': partner,
+           'company': company,
+           'recent_activity': most_recent_activity,
+           'recent_communication': most_recent_communication,
+           'recent_ss': most_recent_saved_searches}
+
+    return render_to_response('mypartners/overview.html', ctx,
+                              RequestContext(request))
+

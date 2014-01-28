@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load common_tags %}
+{% block site-title %}
+    {% with name_obj=user.full_name %}
+        <title>PRM Overview - {{ company.name }}</title>
+        <meta name="title" content="PRM Overview - {{ company.name }}">
+    {% endwith %}
+{% endblock %}
+{% load i18n %}
+
+{% block content %}
+    <h1>{{ company.name }}</h1>
+    <div class="row">
+        <div class="span12 prm-header">
+            <span>Partner Details</span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span8">
+            <div class="formBox">
+                <h4>Most Recent Activity</h4>
+                <div class="formBox-content">
+                    {% if recent_activity %}
+
+
+                    {% else %}
+
+                    No Recent Activity
+
+                    {% endif %}
+                </div>
+                {% if recent_activity %}
+
+                {% else %}
+
+                <span class="left-arrow"></span>
+                <button class="button" disabled><span class="right-arrow"></span></button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
