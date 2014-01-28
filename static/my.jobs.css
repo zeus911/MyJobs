@@ -227,6 +227,24 @@ h1 > small > a:hover {
     padding: 0 10px;
 }
 
+.info-box {
+    width: 100%;
+    padding: 5px 10px;
+    border: 1px solid #d5d4d0;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    box-sizing: border-box;
+}
+
+.info-box .btn{
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.info-box + .info-box {
+    margin-top: 20px;
+}
+
 #prm-arrow-left{
     width: 0;
 	height: 0;
@@ -773,24 +791,6 @@ fieldset textarea,
     border-radius: 5px;    
 }
 
-.formBox-content {
-    background-color: #ddd;
-    min-height: 50px;
-    padding: 5px 10px;
-}
-
-.formBox-footer {
-    padding: 5px 10px;
-}
-
-.no-padding {
-    padding: 0;
-}
-
-.formBox.no-padding h4{
-    margin: 0;
-}
-
 .loginBox {
     background-color: #f2f2f2;
     padding: 10px 10px 30px 10px;
@@ -825,6 +825,44 @@ fieldset textarea,
 
 .formBox table {
     width: 100%;    
+}
+
+.formBox > table > thead > tr > td {
+    font-weight: bold;
+}
+
+.formBox-content {
+    background-color: #ddd;
+    min-height: 50px;
+    padding: 5px 10px;
+}
+
+.formBox-footer {
+    padding: 5px 10px;
+}
+
+.no-padding {
+    padding: 0;
+}
+
+.formBox.no-padding h4{
+    margin: 0;
+    padding: 5px 10px;
+}
+
+.formBox.no-padding > table > tbody > tr > td {
+    padding: 5px 10px;
+}
+
+.formBox.no-padding .table-bordered {
+    border: 0;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+}
+
+.formBox.no-padding .table {
+    margin-bottom: 0;
 }
 
 #titleRow .loginBox, #titleRow .profileBox {
@@ -2050,7 +2088,7 @@ td .gravatar-blank,
 
     .btn-size {
         width: 87%;    
-    }    
+    }
     
     /*Ajax Indicator*/
     #ajax-busy {

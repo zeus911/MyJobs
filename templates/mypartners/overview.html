@@ -39,6 +39,65 @@
                 </div>
                 {% endif %}
             </div>
+
+            <div class="formBox no-padding">
+                <h4>Most Recent Communication Records</h4>
+                <table>
+                    {% if recent_communication %}
+                    {% else %}
+                    <tr>
+                        <td>No Recent Communication Records</td>
+                    </tr>
+                    {% endif %}
+                </table>
+                <div class="formBox-footer">
+                    <div class="pull-right">
+                        <a class="btn" href="">Communication Records</a>
+                    </div>
+                    <div class="clear"></div>
+                </div>
+            </div>
+
+            <div class="formBox no-padding">
+                <h4>Most Recent Saved Searches</h4>
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <td>Label</td>
+                            <td>Search URL</td>
+                            <td>Status</td>
+                        </tr>
+                    </thead>
+                    {% if recent_ss %}
+                    {% else %}
+                    <tbody>
+                        <tr>
+                            <td>No Recent Saved Searches</td>
+                            <td></td><td></td>
+                        </tr>
+                    </tbody>
+                    {% endif %}
+                </table>
+                <div class="formBox-footer">
+                    <div class="pull-right">
+                        <a class="btn" href="">Saved Searches</a>
+                    </div>
+                    <div class="clear"></div>
+                </div>
+            </div>
+        </div>
+        <div class="span4">
+            <div class="info-box" id="communication-reports">
+                <a class="btn" href="">Reports</a>
+            </div>
+            <div class="info-box" id="partner-details">
+                <b>{{ partner.name }}</b>
+                <br>
+                {% if partner.primary_contact %}
+                <b>{{ partner.primary_contact.name }}</b> <i>Primary Contact</i>
+                {% endif %}
+                <a class="btn" href="">Edit partner Details</a>
+            </div>
         </div>
     </div>
 {% endblock %}
