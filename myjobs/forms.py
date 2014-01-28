@@ -185,3 +185,44 @@ class ChangePasswordForm(Form):
     def save(self):
         self.user.set_password(self.cleaned_data["new_password1"])
         self.user.save()
+
+
+class UserAdminForm(ModelForm):
+    class Meta:
+        model = User
+
+    # Used to update/change a password.
+    new_password = CharField(label='New password', required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(UserAdminForm, self).__init__(*args, **kwargs)
+
+    def full_clean(self):
+        """
+        Removes ValidationErrors from gravatars that are actually correct.
+
+        """
+        super(UserAdminForm, self).full_clean()
+        if 'gravatar' in self._errors:
+            # If the gravatar is none (the default value) or blank, force
+            # the ValidationError to be ignored.
+            gravatar_val = self.data['gravatar']
+            if gravatar_val == '' or gravatar_val == 'none':
+                del self._errors['gravatar']
+
+    def save(self, commit=True):
+        instance = super(UserAdminForm, self).save(commit)
+        # A blank string and 'none' are both valid gravatar options that
+        # don't pass form validation, so gravatar needs to be saved here
+        # if the gravatar was set to either.
+        if (self.data['gravatar'] != instance.gravatar) and \
+           (self.data['gravatar'] == 'none' or self.data['gravatar'] == ''):
+            instance.gravatar = self.data['gravatar']
+            instance.save()
+        if not instance.user_guid:
+            instance.make_guid()
+        if 'new_password' in self.cleaned_data:
+            if self.cleaned_data['new_password'] != '':
+                instance.set_password(self.cleaned_data['new_password'])
+                instance.save()
+        return instance

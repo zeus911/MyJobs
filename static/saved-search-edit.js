@@ -1,12 +1,17 @@
 $(function() {
+    $(window).resize(function() {
+        reorder_elements();
+    });
+
     var EditSearchView = Backbone.View.extend({
         el: 'body',
 
         initialize: function() {
             this.once('renderEvent', function() {
                 disable_fields();
-                add_valid_label();
                 add_refresh_btn();
+                reorder_elements();
+                $('[id$=notes]').placeholder();
             });
         },
 
@@ -94,20 +99,21 @@ $(function() {
                     var label_text;
 
                     if (status == 'valid') {
-                        label_text = 'label label-success';
+                        label_text = 'label-success';
                     } else {
-                        label_text = 'label label-important';
+                        label_text = 'label-important';
                     }
                     if ($('#validated').length) {
-                        $('#validated').removeAttr('class');
+                        $('#validated').removeClass('label-success');
+                        $('#validated').removeClass('label-important');
                         $('#validated').addClass(label_text);
                         $('#validated').text(status);
                     } else {
-                        $('#label_validated').after('<div id="'+
-                                                    'validated" class="'+
-                                                    label_text+'">'+status+
-                                                    '</div>');
+                        $('[class~=refresh]').after(
+                            '<div id="validated" class="label '+
+                            label_text+'">'+status+'</div>');
                     }
+                    reorder_elements();
                 }
             }
         }
@@ -127,12 +133,6 @@ function add_refresh_btn() {
     }
 
     field.after('<span class="btn add-on refresh"><i class="icon icon-refresh">');
-}
-
-function add_valid_label() {
-    $('[id$="url"]').after('<div id="label_validated" class="span3 form-label pull-left id_label"><div class="form-label pull-left">&nbsp;</div>');
-    $('[id$="label_validated"]').after('<div id="validated">&nbsp;</div>');
-    $('[id$="url"]').after('<div class="clear"></div>');
 }
 
 function disable_fields() {
@@ -179,4 +179,34 @@ function enable_fields() {
     $('label[for$="day_of_week"]').show();
     $('label[for$="day_of_month"]').show();
     $('.save').show();
+}
+
+function reorder_elements() {
+    var width = $(document).width();
+    var url_container = $('#mobile-url-container');
+    if (width > 500) {
+        if (url_container.length) {
+            url_container.after(url_container.children());
+            url_container.remove();
+        }
+        $('[id$=_url]').parent().removeClass('flush-bottom');
+        $('label[for$=_url]').parent().removeClass('url-label-alignment');
+        $('[id$=_url] + .refresh').after($('#validated'));
+        $('label[for$=is_active]').parent().after($('[id$=is_active]').parent());
+        $('label[for$=label]').parent().show();
+        $('label[for$=notes]').parent().show();
+    } else {
+        if (!url_container.length) {
+            $('[id$=_url]').parent().after('<div id="mobile-url-container"></div>');
+            url_container = $('#mobile-url-container');
+        }
+        $('#mobile-url-container').append($('label[for$=_url]').parent());
+        $('#mobile-url-container').append($('[id$=_url]').parent());
+        $('[id$=_url]').parent().addClass('flush-bottom')
+        $('label[for$=_url]').parent().addClass('url-label-alignment');
+        $('label[for$=_url]').append($('#validated'));
+        $('label[for$=is_active]').parent().before($('[id$=is_active]').parent());
+        $('label[for$=label]').parent().hide();
+        $('label[for$=notes]').parent().hide();
+    }
 }
