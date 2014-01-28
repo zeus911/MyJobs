@@ -696,10 +696,6 @@ form select {
     width: 262px;
 }
 
-fieldset select {
-    width: 264px;
-}
-
 fieldset textarea,
 .profile-form-input input[type="text"],
 .profile-form-input input[type="password"] {
