@@ -191,6 +191,13 @@ function clearForm(form) {
     });
 }
 
+function moveCountrySelection() {
+    var country_label = $("label[for$='-country_code']");
+    country_label.unwrap();
+    country_label.insertBefore(country_label.parent());
+    country_label.wrap("<div class='span3 form-label pull-left'></div>");
+}
+
 // Validation for contact form
 function contactForm(){
     var form = $('#captcha-form');
