@@ -121,6 +121,10 @@ h1 > small > a:hover {
     filter: blur(1px);
 }
 
+#prm-mobile-btn {
+    display: none;
+}
+
 .prm-header{
     font-weight: bold;
     padding: 5px 0;
@@ -2006,6 +2010,18 @@ td .gravatar-blank,
     }
 
     /* Partner Relationship Manager */
+    .blanket {
+        display: none;
+    }
+
+    #prm-mobile-btn {
+        display: block;
+    }
+
+    .prm-init-formbox {
+        display: none;
+    }
+
     #partner-form,
     #contact-form {
         margin-left: 0;
