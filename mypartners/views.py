@@ -27,10 +27,7 @@ def prm(request):
         except Company.DoesNotExist:
             raise Http404
     else:
-        try:
-            company = Company.objects.get(id=company_id)
-        except Company.DoesNotExist:
-            raise Http404
+        company = get_object_or_404(Company, id=company_id)
 
     user = request.user
     if not user in company.admins.all():
@@ -50,7 +47,7 @@ def prm(request):
         has_partners = True
         partner_form = None
 
-    partner_ct_id = ContentType.objects.get(name="partner").id
+    partner_ct_id = ContentType.objects.get_for_model(Partner).id
 
     ctx = {'has_partners': has_partners,
            'partners': partners,
@@ -65,11 +62,8 @@ def prm(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_details(request):
     company_id = request.REQUEST.get('company')
-    try:
-        company = Company.objects.filter(id=company_id)\
-            .select_related('partner_set')[0]
-    except Company.DoesNotExist:
-        raise Http404
+
+    company = get_object_or_404(Company, id=company_id)
 
     user = request.user
     if not user in company.admins.all():
@@ -81,8 +75,8 @@ def partner_details(request):
     form = PartnerForm(instance=partner, auto_id=False)
 
     contacts = partner.contacts.all()
-    contact_ct_id = ContentType.objects.get(name="contact").id
-    partner_ct_id = ContentType.objects.get(name="partner").id
+    contact_ct_id = ContentType.objects.get_for_model(Contact).id
+    partner_ct_id = ContentType.objects.get_for_model(Partner).id
 
     ctx = {'company': company,
            'form': form,
@@ -101,17 +95,15 @@ def edit_item(request):
     """
     company_id = request.REQUEST.get('company')
 
-    try:
-        company = Company.objects.filter(id=company_id)\
-            .select_related('partner_set')[0]
-    except Company.DoesNotExist:
-        raise Http404
+    company = get_object_or_404(Company, id=company_id)
 
     user = request.user
     if not user in company.admins.all():
         raise Http404
 
-    if request.path != "/prm/view/edit":
+    # If the user is trying to create a new Partner they won't have a
+    # partner_id. A Contact however does, it also comes from a different URL.
+    if request.path != reverse('create_partner'):
         try:
             partner_id = int(request.REQUEST.get('partner'))
         except TypeError:
@@ -126,10 +118,10 @@ def edit_item(request):
         raise Http404
     item_id = request.REQUEST.get('id') or None
 
-    if content_id == ContentType.objects.get(name='partner').id:
+    if content_id == ContentType.objects.get_for_model(Partner).id:
         if not item_id:
             form = NewPartnerForm()
-    elif content_id == ContentType.objects.get(name='contact').id:
+    elif content_id == ContentType.objects.get_for_model(Contact).id:
         if not item_id:
             form = ContactForm()
         else:
@@ -168,15 +160,12 @@ def save_init_partner_form(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def save_item(request):
     company_id = request.REQUEST.get('company')
-    try:
-        company = Company.objects.filter(id=company_id)\
-            .select_related('partner_set')[0]
-    except Company.DoesNotExist:
-        raise Http404
+
+    company = get_object_or_404(Company, id=company_id)
 
     content_id = int(request.REQUEST.get('ct'))
 
-    if content_id == ContentType.objects.get(name='contact').id:
+    if content_id == ContentType.objects.get_for_model(Contact).id:
         item_id = request.REQUEST.get('id') or None
         if item_id:
             try:
@@ -206,13 +195,13 @@ def save_item(request):
         else:
             return HttpResponse(json.dumps(form.errors))
 
-    if content_id == ContentType.objects.get(name='partner').id:
+    if content_id == ContentType.objects.get_for_model(Partner).id:
         try:
             partner_id = int(request.REQUEST.get('partner'))
         except TypeError:
             raise Http404
 
-        partner = get_partner(company, partner_id)
+        partner = get_object_or_404(company.partner_set.all(), id=partner_id)
         form = PartnerForm(instance=partner, auto_id=False, data=request.POST)
         if form.is_valid():
             form.save()
@@ -224,11 +213,8 @@ def save_item(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def delete_prm_item(request):
     company_id = request.REQUEST.get('company')
-    try:
-        company = Company.objects.filter(id=company_id)\
-            .select_related('partner_set')[0]
-    except Company.DoesNotExist:
-        raise Http404
+
+    company = get_object_or_404(Company, id=company_id)
 
     partner_id = request.REQUEST.get('partner')
     if partner_id:
@@ -240,19 +226,19 @@ def delete_prm_item(request):
     if content_id:
         content_id = int(content_id)
 
-    if content_id == ContentType.objects.get(name='contact').id:
+    if content_id == ContentType.objects.get_for_model(Contact).id:
         contact = get_object_or_404(Contact, id=contact_id)
         contact.delete()
         return HttpResponseRedirect(reverse('partner_details')+'?company=' +
                                     str(company_id)+'&partner=' +
                                     str(partner_id))
-    if content_id == ContentType.objects.get(name='partner').id:
+    if content_id == ContentType.objects.get_for_model(Partner).id:
         partner = get_object_or_404(Partner, id=partner_id, owner=company)
         partner.contacts.all().delete()
         partner.delete()
         return HttpResponseRedirect(reverse('prm')+'?company='+str(company_id))
-
-
+    
+    
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_overview(request):
     company_id = request.REQUEST.get('company')
@@ -277,4 +263,3 @@ def prm_overview(request):
 
     return render_to_response('mypartners/overview.html', ctx,
                               RequestContext(request))
-
