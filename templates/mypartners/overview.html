@@ -12,17 +12,15 @@
     <h1>{{ company.name }}</h1>
     <div class="row">
         <div class="span12 prm-header">
-            <span>Partner Details</span>
+            <span>Overview</span>
         </div>
     </div>
     <div class="row">
         <div class="span8">
-            <div class="formBox">
+            <div class="formBox no-padding">
                 <h4>Most Recent Activity</h4>
                 <div class="formBox-content">
                     {% if recent_activity %}
-
-
                     {% else %}
 
                     No Recent Activity
@@ -32,9 +30,13 @@
                 {% if recent_activity %}
 
                 {% else %}
-
-                <span class="left-arrow"></span>
-                <button class="button" disabled><span class="right-arrow"></span></button>
+                <div class="formBox-footer">
+                    <div class="pull-right">
+                        <button class="btn" disabled><span id="prm-arrow-left"></span></button>
+                        <button class="btn" disabled><span id="prm-arrow-right"></span></button>
+                    </div>
+                    <div class="clear"></div>
+                </div>
                 {% endif %}
             </div>
         </div>
