@@ -2,7 +2,7 @@
 
 <div class="applied-filters">
     {% for term, url in applied_filters.items %}
-        <a href="{{ url }}">&#10006; {{ term }}</a><br>
+        <a class="applied-filter" href="{{ url }}"><span>&#10006;</span> {{ term }}</a><br>
     {% endfor %}
 </div>
 <br>

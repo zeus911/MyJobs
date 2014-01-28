@@ -49,8 +49,11 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     """
     user_solr = Solr()
     facet_solr = Solr()
-    user_solr = user_solr.add_join(from_field='ProfileUnits_user_id',
-                                   to_field='User_id')
+    # Add join only if we're filtering.
+    if ('company' in request.GET and len(request.GET) > 1) or \
+            (len(request.GET) == 0):
+        user_solr = user_solr.add_join(from_field='ProfileUnits_user_id',
+                                       to_field='User_id')
     facet_solr = facet_solr.add_join(from_field='User_id',
                                      to_field='ProfileUnits_user_id')
     facet_solr = facet_solr.rows_to_fetch(0)

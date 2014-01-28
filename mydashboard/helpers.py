@@ -1,5 +1,6 @@
 import urllib
 
+from copy import copy
 from datetime import datetime, timedelta
 from django.http import Http404
 from urlparse import urlparse, urlunparse, parse_qsl
@@ -146,14 +147,14 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None):
     if not 'location' in request.GET:
         facet_solr = facet_solr.add_facet_field('Address_full_location')
     else:
-        parts = url_parts
+        parts = copy(url_parts)
         term = urllib.unquote(request.GET.get('location'))
-        query = dict(parse_qsl(url_parts[4]))
+        query = dict(parse_qsl(parts[4]))
         del query['location']
         parts[4] = urllib.urlencode(query)
-        filters[term] = urlunparse(url_parts)
+        filters[term] = urlunparse(parts)
 
-        q = 'Address_full_location:%s' % \
+        q = 'Address_full_location:"%s"' % \
             urllib.unquote(request.GET.get('location'))
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
@@ -161,14 +162,14 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None):
     if not 'education' in request.GET:
         facet_solr = facet_solr.add_facet_field('Education_education_level_code')
     else:
-        parts = url_parts
+        parts = copy(url_parts)
         term = urllib.unquote(request.GET.get('education'))
-        query = dict(parse_qsl(url_parts[4]))
+        query = dict(parse_qsl(parts[4]))
         del query['education']
         parts[4] = urllib.urlencode(query)
-        filters[education_codes.get(int(term))] = urlunparse(url_parts)
+        filters[education_codes.get(int(term))] = urlunparse(parts)
 
-        q = 'Education_education_level_code:%s' % \
+        q = 'Education_education_level_code:"%s"' % \
             urllib.unquote(request.GET.get('education'))
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
@@ -176,14 +177,14 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None):
     if not 'license' in request.GET:
         facet_solr = facet_solr.add_facet_field('License_license_name')
     else:
-        parts = url_parts
+        parts = copy(url_parts)
         term = urllib.unquote(request.GET.get('license'))
-        query = dict(parse_qsl(url_parts[4]))
+        query = dict(parse_qsl(parts[4]))
         del query['license']
         parts[4] = urllib.urlencode(query)
-        filters[term] = urlunparse(url_parts)
+        filters[term] = urlunparse(parts)
 
-        q = 'License_license_name:%s' % \
+        q = 'License_license_name:"%s"' % \
             urllib.unquote(request.GET.get('license'))
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)

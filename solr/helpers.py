@@ -1,5 +1,6 @@
 import pysolr
 
+from copy import copy
 from django.conf import settings
 from django.core import mail
 
@@ -27,8 +28,8 @@ class Solr(object):
 
     def _clone(self):
         clone = Solr(self.location)
-        clone.q = self.q
-        clone.params = self.params
+        clone.q = copy(self.q)
+        clone.params = copy(self.params)
         return clone
 
     def add_join(self, from_field, to_field, search_terms='*:*'):
