@@ -5,6 +5,13 @@ from mydashboard.models import Company
 
 
 class Contact(models.Model):
+    """
+    Everything here is self explanatory except for one part. With the Contact object there is
+    Contact.partner_set and .partners_set
+
+    .partner_set = Foreign Key, Partner's Primary Contact
+    .partners_set = m2m, all the partners this contact has associated to it
+    """
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     name = models.CharField(max_length=255, verbose_name='Full Name',
                             blank=True)

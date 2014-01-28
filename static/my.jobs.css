@@ -31,6 +31,26 @@ a:hover {
     color: #4B5661;
 }
 
+h1 > a {
+    color: #900;
+    cursor: pointer;
+}
+
+h1 > a:hover {
+    text-decoration: none;
+    color: #900;
+}
+
+h1 > small > a {
+    color: #999;
+    cursor: pointer;
+}
+
+h1 > small > a:hover {
+    text-decoration: none;
+    color: #999;
+}
+
 .activity-progress {
     height: 6px;
     width: 100px;
@@ -89,6 +109,122 @@ a:hover {
 }
 #export_minus {
     display: none;
+}
+
+/* Partner Relationship Manager Styles */
+.blanket{
+    opacity: .25;
+    -webkit-filter: blur(1px);
+    -moz-filter: blur(1px);
+    -o-filter: blur(1px);
+    -ms-filter: blur(1px);
+    filter: blur(1px);
+}
+
+.prm-header{
+    font-weight: bold;
+    padding: 5px 0;
+    background-color: #f2f2f2;
+    margin-bottom: 20px;
+    border: 1px solid #d5d4d0;
+}
+
+.prm-header > span{
+    padding-left: 10px;
+}
+
+.small-cell{
+    width: 60px;
+}
+
+#fake-partner-table {
+    margin-top: 30px;
+}
+
+.prm-init-formbox{
+    width: 302px;
+    z-index: 9999;
+    position:absolute;
+    margin-left: 319px;
+    margin-top: 75px;
+}
+
+.prm-init-formbox .form-label{
+    display: none;
+}
+
+.prm-init-formbox .profile-form-input{
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.prm-init-formbox button{
+    margin-right: 20px;
+}
+
+.prm-init-formbox fieldset :nth-child(2) > input[placeholder]{
+    font-weight: bold;
+}
+
+#partner-form,
+#contact-form{
+    margin-left: 138px;
+}
+
+.formBox > #partner-form{
+    margin-left: 0;
+}
+
+#manage-contacts{
+    margin-top: 20px;
+}
+
+#manage-contacts table > tbody > tr > td{
+    border-left: 0;
+}
+
+.tip-box{
+    margin: 0;
+    padding: 0;
+    border-left: 1px solid #e6e6e6;
+    border-right: 1px solid #e6e6e6;
+    border-bottom: 1px solid #e6e6e6;
+    border-radius: 5px;
+    background-color: #FFF;
+}
+
+.tip-box h2,
+.tip-box h3,
+.tip-box h4,
+.tip-box h5,
+.tip-box h6{
+    margin: 0;
+    padding: 5px 10px;
+    border-bottom: 1px solid #d5d4d0;
+    border-top: 1px solid #d5d4d0;
+    border-top-right-radius: 5px;
+    border-top-left-radius: 5px;
+}
+
+.tip-box .tip-content{
+    background-color: #f2f2f2;
+    padding: 5px 10px;
+    color: #000;
+}
+
+.tip-box .tip-content ul{
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.tip-box .tip-footer{
+    border-top: 1px solid #e6e6e6;
+    padding: 5px 0;
+}
+
+.tip-box .tip-footer .btn-link{
+    padding: 0 10px;
 }
 
 /* Sort by field in saved search save/edit */
@@ -178,7 +314,8 @@ a:hover {
     font-weight: bold;
 }
     
-.reset-form-input input[type="text"], .reset-form-input input[type="password"] {
+.reset-form-input input[type="text"],
+.reset-form-input input[type="password"] {
     width: 100%;
 }
 
@@ -522,7 +659,7 @@ ul.ui-autocomplete {
 }
 
 .span2v-1-8{
-    width: 100px;
+    width: 80px;
 }
 
 .topbar-inner {
@@ -1136,6 +1273,8 @@ em.pendingText {
     #savedsearch-link,
     #candidate-link,
     #candidate-link-one,
+    #partner-link,
+    #partner-link-one,
     #settings-link {
         display: none !important;
     }
@@ -1786,6 +1925,14 @@ td .gravatar-blank,
         margin: -12px 0 0 5px;
     }
 
+    .actions{
+        float: none;
+    }
+
+    .mobile-btn {
+        float: none;
+    }
+
     /* Contact Form Styles */
     #success-table tr td{
         min-width: 0;
@@ -1877,7 +2024,17 @@ td .gravatar-blank,
     #date-range {
         position: absolute;
         margin-top: -115px;
-    }    
+    }
+
+    /* Partner Relationship Manager */
+    #partner-form,
+    #contact-form {
+        margin-left: 0;
+    }
+
+    .tip-box .tip-footer .btn-link {
+        padding: 6px 25px 7px 25px;
+    }
     
     /* Microsite Activity Page*/
     #candidate-activity-details-table {
@@ -1977,6 +2134,8 @@ td .gravatar-blank,
 
     /* Mobile Forms */
 
+    #saved-search-form label[for=id_is_active],
+    #saved-search-form label[for=id_edit_is_active],
     #profile-unit-form label[for=id_name-primary],
     #profile-unit-form label[for=id_employmenthistory-current_indicator] {
         margin-top: 10px;
@@ -2019,7 +2178,8 @@ td .gravatar-blank,
         padding-right: 0;
     }
     
-    .refresh {
+    .refresh,
+    .calendar {
         display: inline-block !important;
     }
     
@@ -2062,6 +2222,10 @@ td .gravatar-blank,
 
     .list_width {
         width: 80%;
+    }
+
+    #validated_label {
+        display: none;
     }
 
     #id_label {
@@ -2372,6 +2536,11 @@ table td, table th {
     overflow: hidden;
 }
 
+#validated {
+    display: inline;
+    padding: 7px;
+}
+
 #saved-search-form #id_day_of_month,
 #saved-search-form #id_day_of_week,
 #saved-search-form #id_edit_day_of_month,
@@ -2522,25 +2691,31 @@ body.modal-open {
 .no-show {
     display: none !important;
 }
+
 .show {
     background: #a95051 !important;
 }
-#company-menu {
+
+#company-menu,
+#partner-menu {
     margin: 0;
     position: absolute;
 }
-#company-menu a {
+
+#company-menu a,
+#partner-menu a{
     display: block;
     padding: 4px;
     background: #666 !important;
     border-width: 1px 0 0 0 !important;
 }
-#company-menu a:hover {
+
+#company-menu a:hover,
+#partner-menu a:hover {
     background: #444 !important;
 }
-#candidate-tab {
-    width: 78px;
-}
-#company-item {
+
+#company-item
+#partner-item {
     width: 250px;
 }

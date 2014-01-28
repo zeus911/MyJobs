@@ -39,7 +39,12 @@
         <div class="topbar-inner">
             <div class="wrapper">
                 <div class="row">
+                    {% is_a_group_member user "Employer" as group_member %}
+                    {% if group_member and company_name|length >= 1 %}
+                    <div class="span4" id="logo-block">
+                    {% else %}
                     <div class="span6v-1-8" id="logo-block">
+                    {% endif %}
                         <a href="http://www.my.jobs/">
                             <h3 id="topbar-logo" class="pull-left">my.jobs</h3>
                         </a>
@@ -62,10 +67,14 @@
 
                         {% if user.is_authenticated %}
 
+                        {% if group_member and company_name|length >= 1 %}
+                        <div class="span7">
+                        {% else %}
                         <div class="span6">
+                        {% endif %}
                             <ul class="nav nav-tabs pull-right menu-tabs">
 
-                                {% is_a_group_member user "Employer" as group_member %}
+
                                 {% get_company_name user as company_name %}
                                 <li class="{% active_tab 'My Profile' %}"><a href="{% url 'view_profile' %}">{% trans "Profile" %}</a></li>
                                 {% if user.is_active %}
@@ -84,13 +93,29 @@
                                     {% endif %}
                                     {# /company-menu #}
                                 </li>
+                                <li class="{% active_tab 'PRM' %}" id="partner-dropdown">
+                                    {% if company_name|length == 1 %}
+                                    <a id="partner-tab" href="{% url 'prm' %}?company={{ company_name.0.id }}">{% trans "Partners" %}</a>
+                                    {% else %}
+                                    <a id="partner-tab">{% trans "Partners" %}</a>
+                                    <ul id="partner-menu" class="no-show">
+                                        {% for company in company_name %}
+                                        <li><a id="partner-item" href="{% url 'prm' %}?company={{ company.id }}">{{ company }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                    {% endif %}
+                                </li>
                                 {% endif %}
                                 {% endif %}
                                 <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
                             </ul>{# /nav nav-tabs pull-right menu-tabs #}
                         </div>{# /span6 #}
 
+                        {% if group_member and company_name|length >= 1 %}
+                        <div class="span1">
+                        {% else %}
                         <div class="span2v-1-8">
+                        {% endif %}
                             <div class="menu-bar pagination-right pull-right">
                                 <ul id="nav" class="pull-right">
                                     <li>
@@ -136,9 +161,13 @@
 
                                                         <li><a id="candidate-link-one" href="{% url 'dashboard' %}?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
 
+                                                        <li><a id="partner-link-one" href="{% url 'prm' %}?company={{ company_name.0.id }}">{% trans "Patners" %}</a></li>
+
                                                     {% elif group_member and user.is_active and company_name|length >= 2 %}
 
                                                         <li><a id="candidate-link">{% trans "Candidates" %}</a></li>
+
+                                                        <li><a id="partner-link">{% trans "Partners" %}</a></li>
 
                                                     {% endif %}
                                                 {% endif %}                                                
@@ -154,6 +183,8 @@
                                             {% for company in company_name %}
 
                                                 <li><a class="company-nav-item sub-nav-item no-show" href="{% url 'dashboard' %}?company={{ company.id }}">{{ company|truncatechars:"20" }}</a></li>
+
+                                                <li><a class="partner-nav-item sub-nav-item no-show" href="{% url 'prm' %}?company={{ company.id }}">{{ company|truncatechars:"20" }}</a></li>
 
                                             {% endfor %}
 
