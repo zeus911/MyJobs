@@ -89,7 +89,7 @@
                             {% endif %}
 
                             </td>
-                            <td class="small-cell"><a class="btn-link" href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">open</a></td>
+                            <td class="small-cell"><a class="btn-link" href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">open</a></td>
                         </tr>
 
                         {% endfor %}

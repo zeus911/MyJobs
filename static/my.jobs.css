@@ -234,11 +234,15 @@ h1 > small > a:hover {
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
     box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
 }
 
 .info-box .btn{
     width: 100%;
     box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
 }
 
 .info-box + .info-box {

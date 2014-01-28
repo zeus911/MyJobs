@@ -9,7 +9,7 @@
 {% load i18n %}
 
 {% block content %}
-    <h1>{{ company.name }}</h1>
+    <h1>{{ company.name }} <small>{{ partner.name }}</small></h1>
     <div class="row">
         <div class="span12 prm-header">
             <span>Overview</span>
@@ -42,11 +42,19 @@
 
             <div class="formBox no-padding">
                 <h4>Most Recent Communication Records</h4>
-                <table>
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <td>Date/Time</td>
+                            <td>Contact</td>
+                            <td>Communication</td>
+                        </tr>
+                    </thead>
                     {% if recent_communication %}
                     {% else %}
                     <tr>
                         <td>No Recent Communication Records</td>
+                        <td></td><td></td>
                     </tr>
                     {% endif %}
                 </table>
@@ -92,11 +100,54 @@
             </div>
             <div class="info-box" id="partner-details">
                 <b>{{ partner.name }}</b>
-                <br>
-                {% if partner.primary_contact %}
-                <b>{{ partner.primary_contact.name }}</b> <i>Primary Contact</i>
+                <br><br>
+                {% with partner.primary_contact as contact %}
+                {% if contact %}
+                <b>{{ contact.name }}</b> <i>Primary Contact</i> <br>
+                {% if contact.email %}
+                <u>{{ contact.email }}</u> <br>
                 {% endif %}
-                <a class="btn" href="">Edit partner Details</a>
+                {% if contact.address_line_one %}
+                {{ contact.address_line_one }}
+                    {% if contact.address_line_two %}
+                    {{ contact.address_line_two }} <br>
+                    {% else %}
+                    <br>
+                    {% endif %}
+                {% endif %}
+                {% if contact.city %}
+                {{ contact.city }},
+                    {% if contact.state %}
+                    {{ contact.state }}
+                        {% if contact.postal_code %}
+                        {{ contact.postal_code }} <br>
+                        {% else %}
+                            <br>
+                        {% endif %}
+                    {% else %}
+                        <br>
+                    {% endif %}
+                {% else %}
+                    {% if contact.state %}
+                    {{ contact.state }}
+                        {% if contact.postal_code %}
+                        {{ contact.postal_code }} <br>
+                        {% else %}
+                            <br>
+                        {% endif %}
+                    {% else %}
+                        {% if contact.postal_code %}
+                        {{ contact.postal_code }} <br>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+                {% if contact.phone %}
+                {{ contact.phone }} <br>
+                {% endif %}
+                {% endif %}
+                    <br>
+                {% endwith %}
+                <a class="btn" href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">Edit partner Details</a>
             </div>
         </div>
     </div>
