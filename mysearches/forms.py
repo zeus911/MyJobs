@@ -25,6 +25,10 @@ class SavedSearchForm(BaseUserForm):
                                            initial=choices[0][0])
 
     feed = URLField(widget=HiddenInput())
+    notes = CharField(label=_("Notes and Comments"),
+                           widget=Textarea(
+                               attrs={'placeholder': 'Comments'}),
+                           required=False)
 
     # day_of_week and day_of_month are not required in the database.
     # These clean functions ensure that it is required only when
