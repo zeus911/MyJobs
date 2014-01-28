@@ -265,8 +265,15 @@ somewhere in it's ID.
 and puts up css for backposition. Called glyphicons.
 */
 function add_date_button() {
-    $('[class="hasDatepicker"]').parent().addClass('input-append');
-    $('[class="hasDatepicker"]').after('<span class="btn add-on calendar"><i class="icon-search icon-calendar"></i></span>');
+    var field = $('[class="hasDatepicker"]');
+    field.parent().addClass('input-append');
+
+    if($(window).width() <= 501){
+        var field_width = field.width() - 28;
+        field.css("width", String(field_width)+"px");
+    }
+
+    field.after('<span class="btn add-on calendar"><i class="icon-search icon-calendar"></i></span>');
 }
 
 $(document).ready(function() {

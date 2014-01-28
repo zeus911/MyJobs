@@ -168,7 +168,7 @@ h1 > small > a:hover {
 
 #partner-form,
 #contact-form{
-    margin-left: 138px;
+    margin-left: 78px;
 }
 
 .formBox > #partner-form{
@@ -245,31 +245,12 @@ h1 > small > a:hover {
     margin-top: 5px;
 }
 
-#saved-search-form input[type=text],
-#saved-search-form textarea {
-    width: 275px;
-}
-
-#saved-search-form input[type=text][id$=_url] {
-    width: 248px;
-}
-
-#saved-search-form select {
-    width: 290px;
-}
-
 .profile-unit h4 {
     color: #000;    
 }
 
 .action th {
     background-color: #FFF;   
-}
-
-.hasRegions {
-    position: relative;
-    margin-left: 200px;
-    margin-top: -27px;
 }
 
 #profileTitleRow{
@@ -281,10 +262,6 @@ h1 > small > a:hover {
 }
 #profileTitleBar{
     border-bottom: 2px solid #873f3d;
-}
-
-.profile-form-input input[type!=checkbox] {
-    width: 40%;
 }
 
 .profile-action-form {
@@ -535,10 +512,6 @@ table#row-link-table {
     display: none;   
 }
 
-#newAccountData .profile-form-input input[type!=checkbox] {
-    width: 95%;   
-}
-
 #newAccountData .input-prepend {
     width: 95%;  
 }
@@ -622,7 +595,7 @@ table#row-link-table {
 .form-label {
     text-align: right;
     margin-right: 20px;
-    width: 180px;
+    width: 240px;
 }
 
 .form-label label {
@@ -721,10 +694,6 @@ ul.ui-autocomplete {
 
 form select {
     width: 262px;
-}
-
-fieldset select {
-    width: 264px;
 }
 
 fieldset textarea,
@@ -902,12 +871,6 @@ fieldset textarea,
     width: 100%;
 }
 
-.loginBox input[type!=checkbox],
-.initial-profileBox input[type=checkbox] {
-    float: left;
-    width: auto;
-}
-
 #account-page-2 .loginBox input,
 #account-page-2 .initial-profileBox input[type=text] {
     width: 100%;
@@ -1025,7 +988,6 @@ fieldset textarea,
 }
 
 .profile-form-input textarea {
-    width: 248px;
     height: 100px;
 }
 
@@ -1361,8 +1323,8 @@ em.pendingText {
 input [type='text'] + .help-block,
 div + .help-block,
 div > .help-block{
-    max-width: 250px;
-    margin: -12px 0 5px 225px;
+    max-width: 96%;
+    margin: -12px 0 5px 5px;
     color: #555;
     font-size: .85em;
     font-style: italic;
@@ -1933,6 +1895,23 @@ td .gravatar-blank,
         float: none;
     }
 
+    fieldset textarea,
+    .profile-form-input input[type="text"],
+    .profile-form-input input[type="password"] {
+        width: 96%;
+    }
+
+    form select {
+        width: 100%;
+    }
+
+    .profile-form-input input[type="text"] > span.refresh {
+        width: -webkit-calc(96% - 28px);
+        width: -moz-calc(96% - 28px);
+        width: -o-calc(96% - 28px);
+        width: calc(96% - 28px);
+    }
+
     /* Contact Form Styles */
     #success-table tr td{
         min-width: 0;
@@ -2054,21 +2033,10 @@ td .gravatar-blank,
         padding: 30px 10px 10px 10px;
         left: 25%;
         width: 300px;        
-    }   
-    
-    .hasRegions {        
-        float: left;
-        margin-left: -9px;
-        margin-top: 1px;
-        margin-bottom: 0px;
     }
 
     .checkbox-margin {
         padding-top: 14px;    
-    }
-
-    .profile-form-input input[type!=checkbox] {
-        width: 65%;
     }
     
     .inbox-alert {
@@ -2152,7 +2120,6 @@ td .gravatar-blank,
     }
 
     #saved-search-form #mobile-url-container {
-        width: 290px;
         background-color: #ccc;
         border: 1px solid #bbb;
         box-sizing: border-box;
