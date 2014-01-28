@@ -2039,7 +2039,6 @@ td .gravatar-blank,
     #saved-search-form label[for=id_edit_url] {
         width: 100%;
         padding-left: 3%;
-        /*border: 1px solid #bbb;*/
     }
 
     #saved-search-form [id$=url],
