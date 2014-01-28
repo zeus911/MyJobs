@@ -2517,3 +2517,14 @@ body.modal-open {
      border-radius: 15px;
      padding: 0 2px;
 }
+#facet-link {
+    list-style-type: none;
+    margin-left: 0;
+    margin-bottom: 0;
+    margin-top: 0;
+    padding: 0;
+}
+.facets.accordion-body.in.collapse {
+    overflow: auto;
+    max-height: 200px !important;
+}
