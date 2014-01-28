@@ -113,7 +113,7 @@ class NewPartnerForm(BaseUserForm):
         for value in self.data.itervalues():
             if value != ['']:
                 if value == ['USA']:
-                    pass
+                    continue
                 has_data = True
 
         if has_data:
