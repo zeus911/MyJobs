@@ -245,19 +245,6 @@ h1 > small > a:hover {
     margin-top: 5px;
 }
 
-#saved-search-form input[type=text],
-#saved-search-form textarea {
-    width: 275px;
-}
-
-#saved-search-form input[type=text][id$=_url] {
-    width: 248px;
-}
-
-#saved-search-form select {
-    width: 290px;
-}
-
 .profile-unit h4 {
     color: #000;    
 }
@@ -2137,7 +2124,6 @@ td .gravatar-blank,
     }
 
     #saved-search-form #mobile-url-container {
-        width: 290px;
         background-color: #ccc;
         border: 1px solid #bbb;
         box-sizing: border-box;
