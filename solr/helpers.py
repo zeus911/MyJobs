@@ -1,6 +1,6 @@
 import pysolr
 
-from copy import copy
+from copy import deepcopy
 from django.conf import settings
 from django.core import mail
 
@@ -28,8 +28,8 @@ class Solr(object):
 
     def _clone(self):
         clone = Solr(self.location)
-        clone.q = copy(self.q)
-        clone.params = copy(self.params)
+        clone.q = deepcopy(self.q)
+        clone.params = deepcopy(self.params)
         return clone
 
     def add_join(self, from_field, to_field, search_terms='*:*'):
@@ -101,7 +101,7 @@ class Solr(object):
 
     def result_start_row(self, start):
         """
-        Sets the starting row for result retrieval. Default is 0.
+        Sets the starting row for result retrieval.
 
         """
         solr = self._clone()
@@ -110,7 +110,7 @@ class Solr(object):
 
     def rows_to_fetch(self, rows):
         """
-        Sets the total number of rows to fetch. Default is 10.
+        Sets the total number of rows to fetch.
 
         """
         solr = self._clone()
@@ -137,12 +137,21 @@ class Solr(object):
         solr.params['facet.field'].append(query_string)
         return solr
 
+    def add_facet_prefix(self, prefix):
+        """
+        Adds a facet prefix. This applies to all facets, so it should only be
+        set when only one field is being faceted on.
+
+        """
+        solr = self._clone()
+        solr.params['facet.prefix'] = prefix
+        return solr
+
     def sort(self, sort_field, order='desc'):
         solr = self._clone()
         query = '{sort_field} {order}'
         solr.params['sort'] = query.format(sort_field=sort_field, order=order)
         return solr
-
 
     def reset(self):
         """

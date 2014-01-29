@@ -88,10 +88,14 @@ def profileunits_to_dict(user_id):
                 continue
 
             if model_name == 'Address':
+                solr_dict['Address_region'] = ["%s#%s" %
+                                               (getattr(obj, 'country_code', 'None'),
+                                                getattr(obj, 'country_sub_division_code', 'None'))
+                                               for obj in objs]
                 solr_dict['Address_full_location'] = ["%s#%s#%s" %
-                                                      (getattr(obj, 'city_name'),
-                                                       getattr(obj, 'country_sub_division_code'),
-                                                       getattr(obj, 'country_code'))
+                                                      (getattr(obj, 'country_code', 'None'),
+                                                       getattr(obj, 'country_sub_division_code', 'None'),
+                                                       getattr(obj, 'city_name', 'None'))
                                                       for obj in objs]
             for field in objs[0]._meta._fields():
                 obj_list = [getattr(obj, field.attname) for obj in objs]

@@ -18,7 +18,7 @@ from django.shortcuts import render_to_response
 from mydashboard.helpers import (saved_searches, filter_by_microsite,
                                  filter_by_date, apply_facets_and_filters,
                                  parse_facets)
-from mydashboard.models import *
+from mydashboard.models import Company, Microsite, CompanyUser
 from myjobs.models import User
 from myprofile.models import (PrimaryNameProfileUnitManager,
                               ProfileUnits, Name)
@@ -95,16 +95,18 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     if not site_name:
         site_name = microsite_urls[0]
 
-    range, date_start, date_end, date_display = filter_by_date(request)
-    user_solr = user_solr.add_filter_query(range)
-    facet_solr = facet_solr.add_query(range)
+    rng, date_start, date_end, date_display = filter_by_date(request)
+    user_solr = user_solr.add_filter_query(rng)
+    facet_solr = facet_solr.add_query(rng)
 
-    user_solr, facet_solr = filter_by_microsite(active_microsites, user_solr,
-                                                facet_solr)
-
-    user_solr, facet_solr, filters = apply_facets_and_filters(request,
-                                                              user_solr,
-                                                              facet_solr)
+    user_solr, facet_solr = filter_by_microsite(active_microsites,
+                                                          user_solr,
+                                                          facet_solr)
+    loc_solr = facet_solr._clone()
+    user_solr, facet_solr, loc_solr, filters = apply_facets_and_filters(request,
+                                                                        user_solr,
+                                                                        facet_solr,
+                                                                        loc_solr)
 
     solr_results = user_solr.rows_to_fetch(user_solr.search().hits).search()
     candidates = dict_to_object(solr_results.docs)
@@ -125,6 +127,11 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     elif 'thirty_days' in request.REQUEST:
         requested_date_button = 'thirty_days'
 
+    url = request.build_absolute_uri()
+    facets = parse_facets(facet_solr.search(), url)
+    loc_facets = parse_facets(loc_solr.search(), url)
+    all_facets = dict(facets.items() + loc_facets.items())
+
     context = {
         'admin_you': request.user,
         'after': date_start,
@@ -139,7 +146,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         'dashboard_widgets': dashboard_widgets,
         'date_button': requested_date_button,
         'date_display': date_display,
-        'facets': parse_facets(facet_solr.search(), request.build_absolute_uri()),
+        'facets': all_facets,
         'site_name': site_name,
         'total_candidates': len(candidate_list),
         'view_name': 'Company Dashboard',

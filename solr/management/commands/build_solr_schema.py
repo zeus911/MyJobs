@@ -73,6 +73,13 @@ class Command(BaseCommand):
                 'stored': 'true',
                 'multiValued': 'true',
             })
+            schema_fields.append({
+                'field_name': 'Address_region',
+                'type': 'string',
+                'indexed': 'true',
+                'stored': 'true',
+                'multiValued': 'true',
+            })
             for model in models:
                 for field in model._meta.fields:
                     field_type = field.get_internal_type()

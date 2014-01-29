@@ -131,7 +131,8 @@ def filter_by_date(request):
     return range, date_start, date_end, date_delta
 
 
-def apply_facets_and_filters(request, user_solr=None, facet_solr=None):
+def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
+                             loc_solr=None):
     """
     Applies facets to solr based on filters currently applied and creates
     a dictionary of removable terms and the resulting url with the term removed.
@@ -143,21 +144,49 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None):
     filters = {}
     user_solr = Solr() if not user_solr else user_solr
     facet_solr = Solr() if not facet_solr else facet_solr
+    loc_solr = Solr() if not loc_solr else loc_solr
 
+    # The location parameter should be "Country-Region-City". Faceting
+    # is determined on what is already in the location parameter.
+    # No location facets on country, country parameter facets on state, and
+    # country-state facets on city.
     if not 'location' in request.GET:
-        facet_solr = facet_solr.add_facet_field('Address_full_location')
+        loc_solr = loc_solr.add_facet_field('Address_country_code')
     else:
-        parts = copy(url_parts)
         term = urllib.unquote(request.GET.get('location'))
-        query = dict(parse_qsl(parts[4]))
-        del query['location']
-        parts[4] = urllib.urlencode(query)
-        filters[term] = urlunparse(parts)
-
-        q = 'Address_full_location:"%s"' % \
-            urllib.unquote(request.GET.get('location'))
+        if len(term.split("-")) == 3:
+            q = 'Address_full_location:%s' % term.replace("-", "#")
+        else:
+            q = 'Address_full_location:%s*' % term.replace("-", "#")
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
+
+        parts = copy(url_parts)
+        query = dict(parse_qsl(parts[4]))
+
+        term_list = term.split("-")
+        term_len = len(term_list)
+        if term_len == 3:
+            # Country, Region, City included. No reason to facet on location.
+            query['location'] = "%s-%s" % (term_list[0], term_list[1])
+            parts[4] = urllib.urlencode(query)
+            remove_term = "%s" % (term_list[2])
+            filters[remove_term] = urlunparse(parts)
+        elif term_len == 2:
+            # Country, Region included.
+            query['location'] = term_list[0]
+            parts[4] = urllib.urlencode(query)
+            remove_term = "%s" % (term_list[1])
+            filters[remove_term] = urlunparse(parts)
+            loc_solr = loc_solr.add_facet_field('Address_full_location')
+            loc_solr = loc_solr.add_facet_prefix('%s#' % term.replace("-", "#"))
+        elif term_len == 1:
+            # Country included.
+            del query['location']
+            parts[4] = urllib.urlencode(query)
+            filters[term_list[0]] = urlunparse(parts)
+            loc_solr = loc_solr.add_facet_field('Address_region')
+            loc_solr = loc_solr.add_facet_prefix('%s#' % term.replace("-", "#"))
 
     if not 'education' in request.GET:
         facet_solr = facet_solr.add_facet_field('Education_education_level_code')
@@ -169,8 +198,7 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None):
         parts[4] = urllib.urlencode(query)
         filters[education_codes.get(int(term))] = urlunparse(parts)
 
-        q = 'Education_education_level_code:"%s"' % \
-            urllib.unquote(request.GET.get('education'))
+        q = 'Education_education_level_code:"%s"' % term
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
 
@@ -184,12 +212,11 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None):
         parts[4] = urllib.urlencode(query)
         filters[term] = urlunparse(parts)
 
-        q = 'License_license_name:"%s"' % \
-            urllib.unquote(request.GET.get('license'))
+        q = 'License_license_name:"%s"' % term
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
 
-    return user_solr, facet_solr, filters
+    return user_solr, facet_solr, loc_solr, filters
 
 
 def parse_facets(solr_results, current_url, add_unmapped_fields=False):
@@ -204,13 +231,23 @@ def parse_facets(solr_results, current_url, add_unmapped_fields=False):
     """
     facet_mapping = {
         'License_license_name': 'License',
-        'Address_full_location': 'Location',
+        'Address_country_code': 'Country',
+        'Address_region': 'Region',
+        'Address_full_location': 'City',
         'Education_education_level_code': 'Education',
     }
 
     facets = {}
-    solr_facets = dict(solr_results.facets['facet_fields'].items() +
-                       solr_results.facets['facet_queries'].items())
+    facet_fields = solr_results.facets.get('facet_fields', None)
+    facet_queries = solr_results.facets.get('facet_queries', None)
+    if facet_fields and facet_queries:
+        solr_facets = dict(facet_fields.items() + facet_queries.items())
+    elif facet_fields:
+        solr_facets = facet_fields
+    elif facet_queries:
+        solr_facets = facet_queries
+    else:
+        return {}
 
     for solr_val, facet_val in facet_mapping.items():
         if solr_val in solr_facets:
@@ -220,6 +257,8 @@ def parse_facets(solr_results, current_url, add_unmapped_fields=False):
                                              key=lambda x: x[1], reverse=True),
                                              facet_val,
                                              current_url)
+                if facet_val == 'Region' or facet_val == 'City':
+                    facets[facet_val] = update_location(facets[facet_val])
                 if facet_val == 'Education':
                     facets[facet_val] = update_education_codes(facets[facet_val])
                 del solr_facets[solr_val]
@@ -230,23 +269,53 @@ def parse_facets(solr_results, current_url, add_unmapped_fields=False):
     return facets
 
 
+def update_location(facet_tups):
+    """
+    Updates the displayed location being searched on, displaying the lowest
+    location searched for.
+
+    """
+    facets = []
+    for tup in facet_tups:
+        new_tup = (tup[0].split("#")[-1], tup[1], tup[2])
+        facets.append(new_tup)
+    return facets
+
+
 def update_education_codes(facet_tups):
+    """
+    Updates the education level displayed from the level code to the string
+    matching that code.
+
+    """
     facets = []
     for tup in facet_tups:
         new_tup = (education_codes.get(int(tup[0]), 'None'), tup[1], tup[2])
         facets.append(new_tup)
-
     return facets
 
 
 def get_urls(facet_tups, param, current_url):
+    """
+    Creates urls for facets of search with facet applied as a filter..
+
+    """
     facets = []
+
+    if param in ['Country', 'Region', 'City']:
+        param = 'location'
 
     for tup in facet_tups:
         url_parts = list(urlparse(current_url))
-        params = {param.lower(): urllib.quote(tup[0].encode('utf8'))}
         query = dict(parse_qsl(url_parts[4]))
-        query.update(params)
+        term = urllib.quote(tup[0].encode('utf8'))
+        if param == 'location' and 'location' in query:
+
+            query['location'] = "%s-%s" % (query['location'],
+                                           tup[0].split("#")[-1])
+        else:
+            params = {param.lower(): term}
+            query.update(params)
         url_parts[4] = urllib.urlencode(query)
         facets.append(tup + (urlunparse(url_parts), ))
 
