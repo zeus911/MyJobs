@@ -11,7 +11,7 @@ class Solr(object):
             solr_location = 'http://127.0.0.1:8983/solr/myjobs_test/'
         self.location = solr_location
         self.solr = pysolr.Solr(self.location)
-        self.q = '*:*'
+        self.q = '(*:*)'
         self.params = {
             'fq': [],
             'fl': [],
@@ -65,10 +65,7 @@ class Solr(object):
 
         """
         solr = self._clone()
-        if solr.q == '*:*':
-            solr.q = "(%s)" % query_string
-        else:
-            solr.q = "%s %s (%s)" % (solr.q, bool_operator, query_string)
+        solr.q = "%s %s (%s)" % (solr.q, bool_operator, query_string)
         return solr
 
     def add_filter_query(self, query_string):
