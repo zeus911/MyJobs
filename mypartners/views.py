@@ -12,6 +12,7 @@ from mydashboard.models import Company
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm)
 from mypartners.models import Partner, Contact
+from mypartners.helpers import prm_worthy
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
@@ -61,27 +62,18 @@ def prm(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_details(request):
-    company_id = request.REQUEST.get('company')
+    cred = prm_worthy(request)
 
-    company = get_object_or_404(Company, id=company_id)
+    form = PartnerForm(instance=cred['partner'], auto_id=False)
 
-    user = request.user
-    if not user in company.admins.all():
-        raise Http404
-
-    partner_id = int(request.REQUEST.get('partner'))
-    partner = get_object_or_404(company.partner_set.all(), id=partner_id)
-
-    form = PartnerForm(instance=partner, auto_id=False)
-
-    contacts = partner.contacts.all()
+    contacts = cred['partner'].contacts.all()
     contact_ct_id = ContentType.objects.get_for_model(Contact).id
     partner_ct_id = ContentType.objects.get_for_model(Partner).id
 
-    ctx = {'company': company,
+    ctx = {'company': cred['company'],
            'form': form,
            'contacts': contacts,
-           'partner': partner,
+           'partner': cred['partner'],
            'contact_ct': contact_ct_id,
            'partner_ct': partner_ct_id}
     return render_to_response('mypartners/partner_details.html', ctx,
@@ -241,25 +233,24 @@ def delete_prm_item(request):
     
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_overview(request):
-    company_id = request.REQUEST.get('company')
-    company = get_object_or_404(Company, id=company_id)
-
-    user = request.user
-    if not user in company.admins.all():
-        raise Http404
-
-    partner_id = int(request.REQUEST.get('partner'))
-    partner = get_object_or_404(company.partner_set.all(), id=partner_id)
+    cred = prm_worthy(request)
 
     most_recent_activity = []
     most_recent_communication = []
     most_recent_saved_searches = []
 
-    ctx = {'partner': partner,
-           'company': company,
+    ctx = {'partner': cred['partner'],
+           'company': cred['company'],
            'recent_activity': most_recent_activity,
            'recent_communication': most_recent_communication,
            'recent_ss': most_recent_saved_searches}
 
     return render_to_response('mypartners/overview.html', ctx,
                               RequestContext(request))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def prm_saved_searches(request):
+    cred = prm_worthy(request)
+    contacts = cred['partner'].contact_set.all()
+    return

@@ -251,23 +251,23 @@ h1 > small > a:hover {
 
 #prm-arrow-left{
     width: 0;
-	height: 0;
+    height: 0;
     border-bottom: 10px solid transparent;
     border-top: 10px solid transparent;
     border-right: 15px solid #2f2f2f;
-	font-size: 0;
-	line-height: 0;
+    font-size: 0;
+    line-height: 0;
     display: block;
 }
 
 #prm-arrow-right{
     width: 0;
-	height: 0;
+    height: 0;
     border-bottom: 10px solid transparent;
     border-top: 10px solid transparent;
     border-left: 15px solid #2f2f2f;
-	font-size: 0;
-	line-height: 0;
+    font-size: 0;
+    line-height: 0;
     display: block;
 }
 
