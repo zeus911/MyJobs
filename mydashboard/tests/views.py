@@ -1,3 +1,5 @@
+import pysolr
+
 from bs4 import BeautifulSoup
 from datetime import timedelta
 
@@ -9,8 +11,11 @@ from mydashboard.models import CompanyUser
 from mydashboard.tests.factories import CompanyFactory, CompanyUserFactory, MicrositeFactory
 from myjobs.tests.views import TestClient
 from myjobs.tests.factories import UserFactory
-from myprofile.tests.factories import PrimaryNameFactory, SecondaryEmailFactory, EducationFactory
-from myprofile.tests.factories import AddressFactory, TelephoneFactory, EmploymentHistoryFactory
+from myprofile.tests.factories import (PrimaryNameFactory,
+                                       SecondaryEmailFactory,
+                                       EducationFactory, LicenseFactory,
+                                       AddressFactory, TelephoneFactory,
+                                       EmploymentHistoryFactory)
 from mysearches.models import SavedSearch
 from mysearches.tests.factories import SavedSearchFactory
 from tasks import add_to_solr_task, delete_from_solr_task
@@ -52,6 +57,10 @@ class MyDashboardViewsTests(TestCase):
                                    label='%s Jobs' % search)
         add_to_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
 
+    def tearDown(self):
+        solr = pysolr.Solr('http://127.0.0.1:8983/solr/myjobs_test/')
+        solr.delete(q='*:*')
+
     def test_number_of_searches_and_users_is_correct(self):
         response = self.client.post(
             reverse('dashboard')+'?company='+str(self.company.id),
@@ -69,6 +78,80 @@ class MyDashboardViewsTests(TestCase):
             {'microsite': 'test.jobs'})
         soup = BeautifulSoup(response.content)
         self.assertEqual(len(soup.select('#row-link-table tr')), 12)
+
+    def test_facets(self):
+        self.education = EducationFactory(user=self.candidate_user)
+        self.adr = AddressFactory(user=self.candidate_user)
+        self.employment = EmploymentHistoryFactory(user=self.candidate_user)
+        self.license = LicenseFactory(user=self.candidate_user)
+        self.candidate_user.save()
+        add_to_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+
+        country_str = '<li><a href="http://testserver/candidates/view?company=1&amp;location={country}">(1) {country}</a></li>'
+        edu_str = '<li><a href="http://testserver/candidates/view?company=1&amp;education={education}">(1)'
+        license_str = '<li><a href="http://testserver/candidates/view?company=1&amp;license=Name">(1) {license_name}</a></li>'
+
+        country_str = country_str.format(country=self.adr.country_code)
+        edu_str = edu_str.format(education=self.education.education_level_code)
+        license_str = license_str.format(license_name=self.license.license_name)
+
+        q = '?company={company}'
+        q = q.format(company=str(self.company.id))
+        response = self.client.post(reverse('dashboard')+q)
+
+        self.assertIn(country_str, response.content)
+        self.assertIn(edu_str, response.content)
+        self.assertIn(license_str, response.content)
+
+    def test_filters(self):
+        adr = AddressFactory(user=self.candidate_user)
+        self.candidate_user.save()
+        add_to_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+
+        country_str = '<li><a href="http://testserver/candidates/view?company=1&amp;location={country}">(1) {country}</a></li>'
+        country_filter_str = '<a class="applied-filter" href="http://testserver/candidates/view?company=1"><span>&#10006;</span> {country}</a><br>'
+        region_str = '<li><a href="http://testserver/candidates/view?company=1&amp;location={country}-{region}">(1) {region}</a></li>'
+        region_filter_str = '<a class="applied-filter" href="http://testserver/candidates/view?company=1&amp;location={country}"><span>&#10006;</span> {region}</a><br>'
+        city_str = '<li><a href="http://testserver/candidates/view?company=1&amp;location={country}-{region}-{city}">(1) {city}</a></li>'
+        city_filter_str = '<a class="applied-filter" href="http://testserver/candidates/view?company=1&amp;location={country}-{region}"><span>&#10006;</span> {city}</a><br>'
+
+        country_str = country_str.format(country=adr.country_code)
+        country_filter_str = country_filter_str.format(country=adr.country_code)
+        region_str = region_str.format(country=adr.country_code,
+                                       region=adr.country_sub_division_code)
+        region_filter_str = region_filter_str.format(region=adr.country_sub_division_code,
+                                                     country=adr.country_code)
+        city_str = city_str.format(country=adr.country_code,
+                                   region=adr.country_sub_division_code,
+                                   city=adr.city_name)
+        city_filter_str = city_filter_str.format(country=adr.country_code,
+                                                 region=adr.country_sub_division_code,
+                                                 city=adr.city_name)
+
+        q = '?company={company}'
+        q = q.format(company=str(self.company.id))
+        response = self.client.post(reverse('dashboard')+q)
+        self.assertIn(country_str, response.content)
+
+        q = '?company={company}&location={country}'
+        q = q.format(company=str(self.company.id), country=adr.country_code)
+        response = self.client.post(reverse('dashboard')+q)
+        self.assertIn(country_filter_str, response.content)
+        self.assertIn(region_str, response.content)
+
+        q = '?company={company}&location={country}-{region}'
+        q = q.format(company=str(self.company.id), country=adr.country_code,
+                     region=adr.country_sub_division_code)
+        response = self.client.post(reverse('dashboard')+q)
+        self.assertIn(region_filter_str, response.content)
+        self.assertIn(city_str, response.content)
+
+        q = '?company={company}&location={country}-{region}-{city}'
+        q = q.format(company=str(self.company.id), country=adr.country_code,
+                     region=adr.country_sub_division_code,
+                     city=adr.city_name)
+        response = self.client.post(reverse('dashboard')+q)
+        self.assertIn(city_filter_str, response.content)
 
     # Tests to see if redirect from /candidates/ goes to candidates/view/
     def test_redirect_to_candidates_views_default_page(self):

@@ -60,7 +60,8 @@ class AddressFactory(factory.Factory):
     address_line_one = "1234 Thing Road"
     address_line_two = "Apt. 8"
     city_name = "Indianapolis"
-    country_code = "IN"
+    country_code = "USA"
+    country_sub_division_code = "IN"
     postal_code = "12345"
     user = factory.SubFactory(UserFactory)
 
