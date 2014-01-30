@@ -59,7 +59,6 @@ def filter_by_microsite(microsites, user_solr=None, facet_solr=None):
     urls = " OR ".join([site.url.replace("http://", "") for site in
                         microsites])
 
-
     user_solr = user_solr.add_filter_query("SavedSearch_url:(*%s*)" % urls)
     user_solr = user_solr.add_filter_query('User_opt_in_employers:true')
     user_solr = user_solr.sort('SavedSearch_created_on')
@@ -154,10 +153,11 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
         loc_solr = loc_solr.add_facet_field('Address_country_code')
     else:
         term = urllib.unquote(request.GET.get('location'))
+        search_term = term.replace("-", "#").replace(" ", "\ ")
         if len(term.split("-")) == 3:
-            q = 'Address_full_location:%s' % term.replace("-", "#")
+            q = 'Address_full_location:%s' % search_term
         else:
-            q = 'Address_full_location:%s*' % term.replace("-", "#")
+            q = 'Address_full_location:%s*' % search_term
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
 

@@ -80,10 +80,9 @@ class MyDashboardViewsTests(TestCase):
         self.assertEqual(len(soup.select('#row-link-table tr')), 12)
 
     def test_facets(self):
-        self.education = EducationFactory(user=self.candidate_user)
-        self.adr = AddressFactory(user=self.candidate_user)
-        self.employment = EmploymentHistoryFactory(user=self.candidate_user)
-        self.license = LicenseFactory(user=self.candidate_user)
+        education = EducationFactory(user=self.candidate_user)
+        adr = AddressFactory(user=self.candidate_user)
+        license = LicenseFactory(user=self.candidate_user)
         self.candidate_user.save()
         add_to_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
 
@@ -91,9 +90,9 @@ class MyDashboardViewsTests(TestCase):
         edu_str = '<li><a href="http://testserver/candidates/view?company=1&amp;education={education}">(1)'
         license_str = '<li><a href="http://testserver/candidates/view?company=1&amp;license=Name">(1) {license_name}</a></li>'
 
-        country_str = country_str.format(country=self.adr.country_code)
-        edu_str = edu_str.format(education=self.education.education_level_code)
-        license_str = license_str.format(license_name=self.license.license_name)
+        country_str = country_str.format(country=adr.country_code)
+        edu_str = edu_str.format(education=education.education_level_code)
+        license_str = license_str.format(license_name=license.license_name)
 
         q = '?company={company}'
         q = q.format(company=str(self.company.id))
