@@ -10,7 +10,7 @@ from myprofile.models import EDUCATION_LEVEL_CHOICES
 from solr.helpers import format_date, Solr
 
 
-education_codes = {x: y for x, y in EDUCATION_LEVEL_CHOICES}
+education_codes = dict([(x, y) for x, y in EDUCATION_LEVEL_CHOICES])
 
 
 def saved_searches(employer, company, candidate):
