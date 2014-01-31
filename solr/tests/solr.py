@@ -8,7 +8,7 @@ from mysearches.tests.factories import SavedSearchFactory
 from MyJobs.solr.models import Update
 from MyJobs.solr.helpers import Solr
 from MyJobs.solr.signals import profileunits_to_dict, object_to_dict
-from tasks import add_to_solr_task, delete_from_solr_task
+from tasks import update_solr_task
 
 
 class SolrTests(TestCase):
@@ -37,13 +37,13 @@ class SolrTests(TestCase):
                                    label='%s Jobs' % search)
         # 6 Users + 15 SavedSearches + 1 ProfileUnit = 22
         self.assertEqual(Update.objects.all().count(), 22)
-        add_to_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
         self.assertEqual(Solr().search().hits, 22)
         SavedSearch.objects.all().delete()
-        delete_from_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
         self.assertEqual(Solr().search().hits, 7)
         User.objects.all().delete()
-        delete_from_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
         self.assertEqual(Solr().search().hits, 0)
 
     def test_profileunit_to_dict(self):

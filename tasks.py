@@ -137,14 +137,23 @@ def process_batch_events():
         user.opt_in_myjobs = False
         user.save()
 
-@task(name="tasks.add_to_solr")
-def add_to_solr_task(solr_location=settings.SOLR['default']):
+@task(name="tasks.update_solr")
+def update_solr_task(solr_location=settings.SOLR['default']):
     """
-    Adds all new or changed objects to solr.
+    Deletes all items scheduled for deletion, and then adds all items
+    scheduled to be added to solr.
 
     """
+
     if hasattr(mail, 'outbox'):
         solr_location = 'http://127.0.0.1:8983/solr/myjobs_test/'
+    objs = Update.objects.filter(delete=True).values_list('uid', flat=True)
+
+    if objs:
+        uid_list = " OR ".join(objs)
+        solr = pysolr.Solr(solr_location)
+        solr.delete(q="uid:(%s)" % uid_list)
+        Update.objects.filter(delete=True).delete()
 
     objs = Update.objects.filter(delete=False)
     solr = pysolr.Solr(solr_location)
@@ -167,19 +176,3 @@ def add_to_solr_task(solr_location=settings.SOLR['default']):
 
     solr.add(updates)
     objs.delete()
-
-
-@task(name="tasks.delete_from_solr")
-def delete_from_solr_task(solr_location=None):
-    """
-    Removes all deleted objects from solr.
-
-    """
-    if hasattr(mail, 'outbox'):
-        solr_location = 'http://127.0.0.1:8983/solr/myjobs_test/'
-    objs = Update.objects.filter(delete=True).values_list('uid', flat=True)
-    uid_list = " OR ".join(objs)
-    solr = pysolr.Solr(solr_location)
-    solr.delete(q="uid:(%s)" % uid_list)
-    Update.objects.filter(delete=True).delete()
-

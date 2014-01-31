@@ -18,7 +18,7 @@ from myprofile.tests.factories import (PrimaryNameFactory,
                                        EmploymentHistoryFactory)
 from mysearches.models import SavedSearch
 from mysearches.tests.factories import SavedSearchFactory
-from tasks import add_to_solr_task, delete_from_solr_task
+from tasks import update_solr_task
 
 SEARCH_OPTS = ['django', 'python', 'programming']
 
@@ -55,7 +55,7 @@ class MyDashboardViewsTests(TestCase):
                 SavedSearchFactory(user=user,
                                    url='http://test.jobs/search?q=%s' % search,
                                    label='%s Jobs' % search)
-        add_to_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
 
     def tearDown(self):
         solr = pysolr.Solr('http://127.0.0.1:8983/solr/myjobs_test/')
@@ -84,7 +84,7 @@ class MyDashboardViewsTests(TestCase):
         adr = AddressFactory(user=self.candidate_user)
         license = LicenseFactory(user=self.candidate_user)
         self.candidate_user.save()
-        add_to_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
 
         country_str = '<li><a href="http://testserver/candidates/view?company=1&amp;location={country}">(1) {country}</a></li>'
         edu_str = '<li><a href="http://testserver/candidates/view?company=1&amp;education={education}">(1)'
@@ -105,7 +105,7 @@ class MyDashboardViewsTests(TestCase):
     def test_filters(self):
         adr = AddressFactory(user=self.candidate_user)
         self.candidate_user.save()
-        add_to_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
 
         country_str = '<li><a href="http://testserver/candidates/view?company=1&amp;location={country}">(1) {country}</a></li>'
         country_filter_str = '<a class="applied-filter" href="http://testserver/candidates/view?company=1"><span>&#10006;</span> {country}</a><br>'

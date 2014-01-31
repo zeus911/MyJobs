@@ -123,14 +123,10 @@ CELERYBEAT_SCHEDULE = {
         'task': 'tasks.process_batch_events',
         'schedule': crontab(minute=0, hour=0),
     },
-    'regular-solr-add': {
-        'task': 'tasks.add_to_solr',
+    'regular-solr-update': {
+        'task': 'tasks.update_solr',
         'schedule': crontab(minute='*/5'),
     },
-    'regular-solr-delete': {
-        'task': 'tasks.delete_from_solr',
-        'schedule': crontab(minute='*/5'),
-    }
 }
 
 
