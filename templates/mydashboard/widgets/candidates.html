@@ -4,10 +4,8 @@
 <div>    
     <div id="count-box">
         <span id="count-text">
-            {% if candidates  %}
-                {% with candidates|count_candidates as count %}
-                    {{ count }}
-                {% endwith %}
+            {% if total_candidates and candidates  %}
+                {{ total_candidates }}
             {% else %}
                 0
             {% endif %}

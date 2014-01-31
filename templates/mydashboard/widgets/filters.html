@@ -1,0 +1,18 @@
+{% load i18n %}
+
+<div class="accordion" id="details-{{ facet_field }}-collapse">
+    {% for facet_field, facet_list in facets.items %}
+        <div class="accordion-group">
+            <div class="accordion-heading details-heading"><a class="accordion-toggle" data-toggle="collapse" data-parent="#details-{{ facet_field }}-collapse" href="#{{ facet_field }}-details-table">{{ facet_field }}<span class="pull-right"><i class="icon icon-minus"></i></span></a></div>
+                <div id="{{ facet_field }}-details-table" class="facets accordion-body in collapse">
+                <div class="accordion-inner">
+                        <ul id="facet-link">
+                            {% for facet in facet_list %}
+                                <li><a href="{{ facet.2 }}">({{ facet.1 }}) {{ facet.0 }}</a></li>
+                            {% endfor %}
+                        </ul>
+                </div>{# /accordion-inner #}
+            </div>{# /-details-table #}
+        </div>{# /accordion-group #}
+    {% endfor %}
+</div>{# /accordion #}

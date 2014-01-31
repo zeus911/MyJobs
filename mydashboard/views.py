@@ -1,6 +1,7 @@
-import operator
 import csv
 import json
+import operator
+
 import cStringIO as StringIO
 
 from datetime import datetime, timedelta
@@ -14,12 +15,15 @@ from django.template import RequestContext, Context
 from django.template.loader import get_template
 from django.shortcuts import render_to_response
 
-from mydashboard.helpers import saved_searches
-from mydashboard.models import *
+from mydashboard.helpers import (saved_searches, filter_by_microsite,
+                                 filter_by_date, apply_facets_and_filters,
+                                 parse_facets)
+from mydashboard.models import Company, Microsite, CompanyUser
 from myjobs.models import User
 from myprofile.models import (PrimaryNameProfileUnitManager,
                               ProfileUnits, Name)
 from mysearches.models import SavedSearch
+from solr.helpers import Solr, format_date, dict_to_object
 
 from endless_pagination.decorators import page_template
 from xhtml2pdf import pisa
@@ -41,7 +45,18 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     Returns:
     :render_to_response:    renders template with context dict
+
     """
+    user_solr = Solr()
+    facet_solr = Solr()
+    # Add join only if we're filtering.
+    if ('company' in request.GET and len(request.GET) > 1) or \
+            (len(request.GET) == 0):
+        user_solr = user_solr.add_join(from_field='ProfileUnits_user_id',
+                                       to_field='User_id')
+    facet_solr = facet_solr.add_join(from_field='User_id',
+                                     to_field='ProfileUnits_user_id')
+    facet_solr = facet_solr.rows_to_fetch(0)
 
     company_id = request.REQUEST.get('company')
     if company_id is None:
@@ -49,12 +64,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
             company = Company.objects.filter(admins=request.user)[0]
         except Company.DoesNotExist:
             raise Http404
-
-    context = {
-        'candidates': SavedSearch.objects.all().exclude(
-            user__opt_in_employers=False),
-    }
-
     if not company:
         try:
             company = Company.objects.get(admins=request.user, id=company_id)
@@ -67,8 +76,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     # Removes main user from admin list to display other admins
     admins = admins.exclude(user=request.user)
     requested_microsite = request.REQUEST.get('microsite', company.name)
-    requested_after_date = request.REQUEST.get('after', False)
-    requested_before_date = request.REQUEST.get('before', False)
     requested_date_button = request.REQUEST.get('date_button', False)    
     candidates_page = request.REQUEST.get('page', 1)    
           
@@ -80,7 +87,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
             requested_microsite = '//' + requested_microsite
         active_microsites = authorized_microsites.filter(
             url__contains=requested_microsite)
-        
     else:
         active_microsites = authorized_microsites
         site_name = company.name
@@ -89,82 +95,62 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     if not site_name:
         site_name = microsite_urls[0]
 
-    q_list = [Q(url__contains=ms) for ms in microsite_urls]
-    
-    # All searches saved on the employer's company microsites       
-    candidate_searches = SavedSearch.objects.select_related('user')
-    
-    date_display = False
+    rng, date_start, date_end, date_display = filter_by_date(request)
+    user_solr = user_solr.add_filter_query(rng)
+    facet_solr = facet_solr.add_query(rng)
 
-    # Pre-set Date ranges
-    if 'today' in request.REQUEST:
-        after = datetime.now() - timedelta(days=1)
-        before = datetime.now()
-        requested_date_button = 'today'
-        date_display = 'Today'
-    elif 'seven_days' in request.REQUEST:
-        after = datetime.now() - timedelta(days=7)
-        before = datetime.now()
-        requested_date_button = 'seven_days'
-        date_display = '7'
-    elif 'thirty_days' in request.REQUEST:
-        after = datetime.now() - timedelta(days=30)
-        before = datetime.now()
-        requested_date_button = 'thirty_days'
-        date_display = '30'
-    else:
-        if requested_after_date:            
-            after = datetime.strptime(requested_after_date, '%m/%d/%Y')            
-        else:
-            after = request.REQUEST.get('after')
-            if after:
-                after = datetime.strptime(after, '%m/%d/%Y')
-            else:
-                # Defaults to 30 days ago
-                after = datetime.now() - timedelta(days=30)                
-                
-        if requested_before_date:
-            before = datetime.strptime(requested_before_date, '%m/%d/%Y')            
-        else:        
-            before = request.REQUEST.get('before')
-            if before:
-                before = datetime.strptime(before, '%m/%d/%Y')
-            else:
-                # Defaults to the date and time that the page is accessed
-                before = datetime.now()
-                
-    if date_display != 'Today':
-        date_display = before - after
-    
-    # Specific microsite searches saved between two dates
-    try:
-        candidate_searches = candidate_searches.filter(reduce(
-            operator.or_, q_list)).filter(
-                created_on__range=[after, before]).exclude(
-                    user__opt_in_employers=False).order_by('-created_on')
-    except:
-        raise Http404
-    
-    admin_you = request.user
+    user_solr, facet_solr = filter_by_microsite(active_microsites,
+                                                          user_solr,
+                                                          facet_solr)
+    loc_solr = facet_solr._clone()
+    user_solr, facet_solr, loc_solr, filters = apply_facets_and_filters(request,
+                                                                        user_solr,
+                                                                        facet_solr,
+                                                                        loc_solr)
+
+    solr_results = user_solr.rows_to_fetch(user_solr.search().hits).search()
+    candidates = dict_to_object(solr_results.docs)
 
     # List of dashboard widgets to display.
-    dashboard_widgets = ["candidates"]
-    
-    context = {'company_name': company.name,
-               'company_microsites': authorized_microsites,
-               'company_admins': admins,
-               'company_id': company.id,
-               'after': after,
-               'before': before,                 
-               'candidates': candidate_searches,                
-               'admin_you': admin_you,
-               'site_name': site_name,
-               'view_name': 'Company Dashboard',
-               'date_button': requested_date_button,
-               'candidates_page': candidates_page,
-               'dashboard_widgets': dashboard_widgets,
-               'date_display': date_display,
-               }
+    dashboard_widgets = ["candidates", "applied_filters", "filters"]
+
+    # Filter out duplicate entries for a user.
+    candidate_list = []
+    for x in groupby(candidates, lambda y: y.User_id):
+        candidate_list.append(list(x[1])[0])
+
+    # Date button highlighting
+    if 'today' in request.REQUEST:
+        requested_date_button = 'today'
+    elif 'seven_days' in request.REQUEST:
+        requested_date_button = 'seven_days'
+    elif 'thirty_days' in request.REQUEST:
+        requested_date_button = 'thirty_days'
+
+    url = request.build_absolute_uri()
+    facets = parse_facets(facet_solr.search(), url)
+    loc_facets = parse_facets(loc_solr.search(), url)
+    all_facets = dict(facets.items() + loc_facets.items())
+
+    context = {
+        'admin_you': request.user,
+        'after': date_start,
+        'applied_filters': filters,
+        'before': date_end,
+        'candidates': candidate_list,
+        'candidates_page': candidates_page,
+        'company_admins': admins,
+        'company_id': company.id,
+        'company_microsites': authorized_microsites,
+        'company_name': company.name,
+        'dashboard_widgets': dashboard_widgets,
+        'date_button': requested_date_button,
+        'date_display': date_display,
+        'facets': all_facets,
+        'site_name': site_name,
+        'total_candidates': len(candidate_list),
+        'view_name': 'Company Dashboard',
+    }
     
     if extra_context is not None:
         context.update(extra_context)
@@ -187,10 +173,7 @@ def microsite_activity(request, template="mydashboard/microsite_activity.html",
     Returns:
     :render_to_response:    renders template with context dict
     """
-    context = {
-        'candidates': SavedSearch.objects.all().exclude(
-            user__opt_in_employers=False),
-    }
+    solr = Solr()
 
     company_id = request.REQUEST.get('company')
     if company_id is None:
@@ -198,7 +181,6 @@ def microsite_activity(request, template="mydashboard/microsite_activity.html",
             company = Company.objects.filter(admins=request.user)[0]
         except Company.DoesNotExist:
             raise Http404
-
     if not company:
         try:
             company = Company.objects.get(admins=request.user, id=company_id)
@@ -207,8 +189,6 @@ def microsite_activity(request, template="mydashboard/microsite_activity.html",
     
     requested_microsite = request.REQUEST.get('url', False)
     requested_date_button = request.REQUEST.get('date_button', False)
-    requested_after_date = request.REQUEST.get('after', False)
-    requested_before_date = request.REQUEST.get('before', False)
     candidates_page = request.REQUEST.get('page', 1)
     
     if not requested_microsite:
@@ -217,57 +197,36 @@ def microsite_activity(request, template="mydashboard/microsite_activity.html",
     if requested_microsite.find('//') == -1:
             requested_microsite = '//' + requested_microsite
             
-    # Pre-set Date ranges
+    # Date button highlighting
     if 'today' in request.REQUEST:
-        after = datetime.now() - timedelta(days=1)
-        before = datetime.now()
         requested_date_button = 'today'
     elif 'seven_days' in request.REQUEST:
-        after = datetime.now() - timedelta(days=7)
-        before = datetime.now()
         requested_date_button = 'seven_days'
     elif 'thirty_days' in request.REQUEST:
-        after = datetime.now() - timedelta(days=30)
-        before = datetime.now()
         requested_date_button = 'thirty_days'
-    else:
-        if requested_after_date:            
-            after = datetime.strptime(requested_after_date, '%m/%d/%Y')            
-        else:
-            after = request.REQUEST.get('after')
-            if after:
-                after = datetime.strptime(after, '%m/%d/%Y')
-            else:
-                # Defaults to 30 days ago
-                after = datetime.now() - timedelta(days=30)                
-                
-        if requested_before_date:
-            before = datetime.strptime(requested_before_date, '%m/%d/%Y')            
-        else:        
-            before = request.REQUEST.get('before')
-            if before:
-                before = datetime.strptime(before, '%m/%d/%Y')
-            else:
-                # Defaults to the date and time that the page is accessed
-                before = datetime.now()
-        
-    # Specific microsite searches saved between two dates
-    candidate_searches = SavedSearch.objects.filter(
-        created_on__range=[after, before]).filter(
-            url__contains=requested_microsite).order_by('-created_on')
-    
-    saved_search_count = candidate_searches.count()      
-    
-    context = {'microsite_url': requested_microsite,
-               'after': after,
-               'before': before,
-               'candidates': candidate_searches,
-               'view_name': 'Company Dashboard',
-               'company_name': company.name,
-               'company_id': company.id,
-               'date_button': requested_date_button,
-               'candidates_page': candidates_page,
-               'saved_search_count': saved_search_count}
+
+    solr, date_start, date_end, date_display = filter_by_date(request, solr)
+    solr = filter_by_microsite(requested_microsite, solr)
+    solr_results = solr.result_rows_to_fetch(solr.search().hits).search()
+    candidates = dict_to_object(solr_results.docs)
+
+    # Filter out duplicate entries for a user.
+    candidate_list = []
+    for x in groupby(candidates, lambda y: y.User_id):
+        candidate_list.append(list(x[1])[0])
+
+    context = {
+        'microsite_url': requested_microsite,
+        'after': date_start,
+        'before': date_end,
+        'candidates': candidate_list,
+        'view_name': 'Company Dashboard',
+        'company_name': company.name,
+        'company_id': company.id,
+        'date_button': requested_date_button,
+        'candidates_page': candidates_page,
+        'saved_search_count': len(candidate_list),
+    }
     
     if extra_context is not None:
         context.update(extra_context)
@@ -336,6 +295,27 @@ def candidate_information(request):
                               data_dict, RequestContext(request))
 
 
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def export_candidates(request):
+    """
+    This function will be handling which export type to execute.
+    Only function accessible through url.
+    """
+    export_type = request.GET['ex-t']
+    try:
+        if export_type == 'csv':
+            candidates = filter_candidates(request)
+            response = export_csv(request, candidates)
+        elif export_type == 'pdf':
+            candidates = filter_candidates(request)
+            response = export_pdf(request, candidates)
+        elif export_type == 'xml' or export_type == 'json':
+            candidates = filter_candidates(request)
+            response = export_hr(request, candidates, export_type)
+    except:
+        raise Http404
+    return response
+
 def filter_candidates(request):
     """
     Some default filtering for company/microsite. This function will
@@ -378,29 +358,6 @@ def filter_candidates(request):
     for search in candidate_searches:
         candidates.append(search.user)
     return list(set(candidates))
-
-
-@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
-def export_candidates(request):
-    """
-    This function will be handling which export type to execute.
-    Only function accessible through url.
-    """
-    export_type = request.GET['ex-t']
-    try:
-        if export_type == 'csv':
-            candidates = filter_candidates(request)
-            response = export_csv(request, candidates)
-        elif export_type == 'pdf':
-            candidates = filter_candidates(request)
-            response = export_pdf(request, candidates)
-        elif export_type == 'xml' or export_type == 'json':
-            candidates = filter_candidates(request)
-            response = export_hr(request, candidates, export_type)
-    except:
-        raise Http404
-    return response
-
 
 def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
     """

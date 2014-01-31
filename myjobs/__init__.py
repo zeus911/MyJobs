@@ -1,6 +1,9 @@
 """
 myjobs
 """
+
+import MyJobs.solr.signals
+
 __version_info__ = {
     'major': 0,
     'minor': 0,

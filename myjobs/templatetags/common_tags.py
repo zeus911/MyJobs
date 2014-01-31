@@ -1,3 +1,5 @@
+from time import strptime, strftime
+
 from django import template
 
 from myjobs import version
@@ -27,7 +29,7 @@ def completion_level(level):
     outputs:
     A string containing the bootstrap bar type
     """
-    
+
     return get_completion(level)
 
 
@@ -109,7 +111,17 @@ def get_gravatar(user, size=20):
     Gets the img or div tag for the gravatar or initials block.
     """
     
-    return user.get_gravatar_url(size)
+    try:
+        return user.get_gravatar_url(size)
+    except:
+        return ''
+
+@register.simple_tag
+def get_gravatar_by_id(user_id, size=20):
+    try:
+        return User.objects.get(id=user_id).get_gravatar_url(size)
+    except:
+        return ''
 
 @register.filter(name='get_messages')
 def get_messages(user):
@@ -141,3 +153,15 @@ def get_ms_url(context):
     if cookie:
         return cookie
     return 'http://www.my.jobs'
+
+
+@register.simple_tag
+def str_to_date(string):
+    try:
+        return strftime("%b. %d %Y", strptime(string, "%Y-%m-%dT%H:%M:%SZ"))
+    except:
+        return strftime("%b. %d %Y", strptime(string, "%Y-%m-%dT%H:%M:%S.%fZ"))
+
+@register.simple_tag
+def to_string(value):
+    return str(value)

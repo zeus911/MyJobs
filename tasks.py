@@ -1,11 +1,14 @@
 from datetime import date, timedelta, datetime
 from itertools import chain
 import logging
+import pysolr
 
 from celery import task
 from celery.schedules import crontab
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from django.core import mail
 from django.template.loader import render_to_string
 from django.db.models import Q
 
@@ -13,6 +16,9 @@ from myjobs.models import EmailLog, User
 from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch, SavedSearchDigest
 from registration.models import ActivationProfile
+from solr import signals as solr_signals
+from solr.models import Update
+from solr.signals import object_to_dict, profileunits_to_dict
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +115,6 @@ def process_batch_events():
             user.save()
         log.processed = True
         log.save()
-
     # These users have not responded in a month. Send them an email if they
     # own any saved searches
     inactive = User.objects.select_related('savedsearch_set')
@@ -131,3 +136,43 @@ def process_batch_events():
     for user in stop_sending:
         user.opt_in_myjobs = False
         user.save()
+
+@task(name="tasks.update_solr")
+def update_solr_task(solr_location=settings.SOLR['default']):
+    """
+    Deletes all items scheduled for deletion, and then adds all items
+    scheduled to be added to solr.
+
+    """
+
+    if hasattr(mail, 'outbox'):
+        solr_location = 'http://127.0.0.1:8983/solr/myjobs_test/'
+    objs = Update.objects.filter(delete=True).values_list('uid', flat=True)
+
+    if objs:
+        uid_list = " OR ".join(objs)
+        solr = pysolr.Solr(solr_location)
+        solr.delete(q="uid:(%s)" % uid_list)
+        Update.objects.filter(delete=True).delete()
+
+    objs = Update.objects.filter(delete=False)
+    solr = pysolr.Solr(solr_location)
+    updates = []
+
+    for obj in objs:
+        content_type, key = obj.uid.split("#")
+        model = ContentType.objects.get(pk=content_type).model_class()
+        if model == SavedSearch:
+            updates.append(object_to_dict(model, model.objects.get(pk=key)))
+        # If the user is being updated, because the user is stored on the
+        # SavedSearch document, every SavedSearch belonging to that user
+        # also has to be updated.
+        elif model == User:
+            searches = SavedSearch.objects.filter(user_id=key)
+            [updates.append(object_to_dict(SavedSearch, s)) for s in searches]
+            updates.append(object_to_dict(model, model.objects.get(pk=key)))
+        else:
+            updates.append(profileunits_to_dict(key))
+
+    solr.add(updates)
+    objs.delete()
