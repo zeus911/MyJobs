@@ -39,8 +39,10 @@ def prepare_delete_from_solr(sender, instance, **kwargs):
 
     """
     if sender in ProfileUnits.__subclasses__():
-        content_type_id = ContentType.objects.get_for_model(ProfileUnits).pk
-        object_id = instance.user_id
+        # If it's a ProfileUnit, don't delete the whole instance,
+        # because there may be other ProfileUnits for that user.
+        prepare_add_to_solr(sender, instance, **kwargs)
+        return
     else:
         content_type_id = ContentType.objects.get_for_model(sender).pk
         object_id = instance.pk

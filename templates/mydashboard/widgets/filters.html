@@ -8,7 +8,7 @@
                 <div class="accordion-inner">
                         <ul id="facet-link">
                             {% for facet in facet_list %}
-                                <li><a href="{{ facet.2 }}">({{ facet.1 }}) {{ facet.0 }}</a></li>
+                                <li id="facet"><a href="{{ facet.2 }}">({{ facet.1 }}) {{ facet.0 }}</a></li>
                             {% endfor %}
                         </ul>
                 </div>{# /accordion-inner #}

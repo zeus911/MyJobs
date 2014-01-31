@@ -80,6 +80,13 @@ class Command(BaseCommand):
                 'stored': 'true',
                 'multiValued': 'true',
             })
+            schema_fields.append({
+                'field_name': 'text',
+                'type': 'text-en',
+                'indexed': 'true',
+                'stored': 'true',
+                'multiValued': 'false',
+            })
             for model in models:
                 for field in model._meta.fields:
                     field_type = field.get_internal_type()

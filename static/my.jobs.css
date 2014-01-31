@@ -2702,6 +2702,7 @@ body.modal-open {
 #partner-item {
     width: 250px;
 }
+/* Candidate filters/facets */
 .applied-filter {
      background-color: #ddd;
      padding: 3px 10px;
@@ -2727,4 +2728,12 @@ body.modal-open {
 .facets.accordion-body.in.collapse {
     overflow: auto;
     max-height: 200px !important;
+}
+#facet a{
+    display: inline-block;
+    width: 100%;
+    text-decoration: none;
+}
+#facet a:hover{
+    background-color: #d2cfc7;
 }
