@@ -1,9 +1,15 @@
 from django.contrib import admin
 from django.contrib.sites.models import Site
 
-from myjobs.models import User, CustomHomepage
+from myjobs.models import User, CustomHomepage, EmailLog
 from myjobs.forms import UserAdminForm
 from registration.models import ActivationProfile
+
+
+class EmailLogAdmin(admin.ModelAdmin):
+    list_display = ['email', 'event', 'received', 'processed']
+    search_fields = ['email']
+    list_filter = ['event','processed']
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -35,4 +41,5 @@ class UserAdmin(admin.ModelAdmin):
 admin.site.register(User, UserAdmin)
 admin.site.register(ActivationProfile)
 admin.site.register(CustomHomepage)
+admin.site.register(EmailLog, EmailLogAdmin)
 admin.site.unregister(Site)
