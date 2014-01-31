@@ -141,6 +141,9 @@ class NewPartnerForm(BaseUserForm):
 
         if has_data:
             self.instance.save()
+            partner.add_contact(self.instance)
+            partner.primary_contact_id = self.instance.id
+            partner.save()
         else:
             return
 
