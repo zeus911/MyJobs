@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load common_tags %}
+{% block site-title %}
+    {% with name_obj=user.full_name %}
+        <title>{{ company.name }} Partner Relationship Manager</title>
+        <meta name="title" content="{{ company.name }} Partner Relationship Manager">
+    {% endwith %}
+{% endblock %}
+{% load i18n %}
+
+{% block meta-extra %}
+<script src="{{ STATIC_URL }}prm.js{% cache_buster %}"></script>
+{% endblock %}
+
+{% block content %}
+    <h1>Partner Relationship Manager <small>{{ company.name }}</small></h1>
+
+    {% if form %}
+        <div class="formBox prm-init-formbox">
+            <h5>Welcome to PRM <small>Add a partner to get started</small></h5>
+            <form method="post" action="" id="partner-form">
+                {% include "includes/form-error-highlight.html" %}
+                {% csrf_token %}
+                <input type="hidden" name="company_id" value="{{ company.id }}">
+            <button type="submit" class="btn primary pull-right" id="init-partner-save">{% trans 'Save' %}</button>
+            </form>
+            <div class="clear"></div>
+        </div>
+        <div class="row">
+            <div class="span12">
+                <div class="blanket" id="fake-partner-table">
+                    <table class="table table-striped table-bordered prm-table">
+                        <thead>
+                            <tr><th>Partner</th><th>Primary Contact</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                        {% for i in "nein!rows" %}
+                            <tr height="30px">
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <button class="btn pull-right" value="New Partner" disabled>{% trans 'New Partner' %}</button>
+                </div>
+                <a class="btn primary" id="prm-mobile-btn" href="{% url 'create_partner' %}?company={{ company.id }}&ct={{ partner_ct }}">Get started with PRM today!</a>
+            </div>
+        </div>
+
+    {% else %}
+
+        <div class="row">
+            <div class="span12">
+                <table class="table table-striped table-bordered prm-table">
+                    <thead>
+                        <tr>
+                            <th>Partner</th>
+                            <th>Primary Contact</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        {% for partner in partners %}
+
+                        <tr>
+                            <td>
+
+                            <b>{{ partner.name }}</b>
+
+                            {% if partner.uri %}
+                            <br>
+                            {{ partner.uri }}
+                            {% endif %}
+                            </td>
+                            <td>
+
+                            {% if partner.primary_contact %}
+
+                            <b>{{ partner.primary_contact.name }}</b>
+
+                            {% if partner.primary_contact.email %}
+                            <br>
+                            {{ partner.primary_contact.email }}
+                            {% endif %}
+                            {% else %}
+                            No Primary Contact
+                            {% endif %}
+
+                            </td>
+                            <td class="small-cell"><a class="btn-link" href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">open</a></td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row">
+            {# Recent Activity div #}
+            <div class="span8"></div>
+            <div class="span4">
+                <a class="btn pull-right" href="{% url 'create_partner' %}?company={{ company.id }}&ct={{ partner_ct }}">New Partner</a>
+            </div>
+        </div>
+
+    {% endif %}
+
+{% endblock %}

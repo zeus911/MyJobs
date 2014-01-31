@@ -59,9 +59,26 @@ $(document).ready(function(){
         $("#profile-link").addClass("no-show");
         $("#savedsearch-link").addClass("no-show");
         $("#candidate-link").addClass("no-show");
-        $("#candidate-link-one").addClass("no-show"); 
+        $("#candidate-link-one").addClass("no-show");
+        $("#partner-link").addClass("no-show");
+        $("#partner-link-one").addClass("no-show");
         $("#account-link").addClass("no-show");
         $("#logout-link").addClass("no-show"); 
+    });
+    $('#partner-link').click(function(e) {
+        $(".partner-nav-item").removeClass("no-show");
+        $("#back-btn-li").removeClass("no-show");
+
+        $("#settings-link").addClass("no-show");
+        $("#logged-in-li").addClass("no-show");
+        $("#profile-link").addClass("no-show");
+        $("#savedsearch-link").addClass("no-show");
+        $("#candidate-link").addClass("no-show");
+        $("#candidate-link-one").addClass("no-show");
+        $("#partner-link").addClass("no-show");
+        $("#partner-link-one").addClass("no-show");
+        $("#account-link").addClass("no-show");
+        $("#logout-link").addClass("no-show");
     });
     $('#settings-link').click(function(e) {
         $(".settings-nav-item").removeClass("no-show");
@@ -72,7 +89,9 @@ $(document).ready(function(){
         $("#profile-link").addClass("no-show");
         $("#savedsearch-link").addClass("no-show");
         $("#candidate-link").addClass("no-show");
-        $("#candidate-link-one").addClass("no-show"); 
+        $("#candidate-link-one").addClass("no-show");
+        $("#partner-link").addClass("no-show");
+        $("#partner-link-one").addClass("no-show");
         $("#account-link").addClass("no-show");
         $("#logout-link").addClass("no-show"); 
     });    
@@ -80,6 +99,7 @@ $(document).ready(function(){
         e.preventDefault();
         
         $(".company-nav-item").addClass("no-show");
+        $(".partner-nav-item").addClass("no-show");
         $(".settings-nav-item").addClass("no-show");
         $("#back-btn-li").addClass("no-show");
         
@@ -88,11 +108,13 @@ $(document).ready(function(){
         $("#savedsearch-link").removeClass("no-show");
         $("#candidate-link").removeClass("no-show");
         $("#candidate-link-one").removeClass("no-show");
+        $("#partner-link").removeClass("no-show");
+        $("#partner-link-one").removeClass("no-show");
         $("#settings-link").removeClass("no-show"); 
     });
 
-    // Displays/hides and highlights/unhighlights candidate dropdown 
-    // depending on hover.
+    // Displays/hides and highlights/unhighlights candidate and partner
+    // dropdown depending on hover.
     $("#company-dropdown").mouseover(function(){
         $("#company-menu").removeClass("no-show");
         $("#candidate-tab").addClass("show");
@@ -100,6 +122,14 @@ $(document).ready(function(){
     $("#company-dropdown").mouseleave(function(){
         $("#company-menu").addClass("no-show");
         $("#candidate-tab").removeClass("show");
+    });
+    $("#partner-dropdown").mouseover(function(){
+        $("#partner-menu").removeClass("no-show");
+        $("#partner-tab").addClass("show");
+    });
+    $("#partner-dropdown").mouseleave(function(){
+        $("#partner-menu").addClass("no-show");
+        $("#partner-tab").removeClass("show");
     });
     
     $('#disable-account').click(function(){
@@ -161,6 +191,13 @@ function clearForm(form) {
     });
 }
 
+function moveCountrySelection() {
+    var country_label = $("label[for$='-country_code']");
+    country_label.unwrap();
+    country_label.insertBefore(country_label.parent());
+    country_label.wrap("<div class='span3 form-label pull-left'></div>");
+}
+
 // Validation for contact form
 function contactForm(){
     var form = $('#captcha-form');
@@ -172,7 +209,7 @@ function contactForm(){
         dataType: 'json',
         success: function(data) {
             if(data.validation == 'success'){
-                $('#contact-form').hide('slide', {direction: 'left'}, 250);
+                $('#contact-us-form').hide('slide', {direction: 'left'}, 250);
                 setTimeout(function(){
                     $('#success-info').show('slide', {direction: 'right'}, 250);
                     $('.formBox').show('slide', {direction: 'right'}, 250);
