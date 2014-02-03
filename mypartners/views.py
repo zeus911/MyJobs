@@ -9,6 +9,8 @@ from django.core.urlresolvers import reverse
 
 from myjobs.models import User
 from mydashboard.models import Company
+from mysearches.models import PartnerSavedSearch
+from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm)
 from mypartners.models import Partner, Contact
@@ -252,5 +254,55 @@ def prm_overview(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_saved_searches(request):
     cred = prm_worthy(request)
-    contacts = cred['partner'].contact_set.all()
-    return
+    saved_searches = PartnerSavedSearch.objects.filter(provider=
+                                                       cred['company'].id)
+    ctx = {'searches': saved_searches,
+           'company': cred['company'],
+           'partner': cred['partner']}
+    return render_to_response('mypartners/partner_searches.html', ctx,
+                              RequestContext(request))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def prm_new_saved_search(request):
+    cred = prm_worthy(request)
+    form = PartnerSavedSearchForm(instance=cred['partner'])
+    ctx = {'company': cred['company'],
+           'partner': cred['partner'],
+           'form': form}
+    return render_to_response('mypartners/partner_new_search.html', ctx,
+                              RequestContext(request))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def verify_contact(request):
+    """
+    Checks to see if a contact has a My.jobs account. Checks to see if they are
+    active as well.
+    """
+    if request.REQUEST.get('action') != 'validate':
+        raise Http404
+    email = request.REQUEST.get('email')
+    if email == 'None':
+        return HttpResponse(json.dumps(
+            {'status': 'None',
+             'message': 'If a contact does not have an email they will not '
+                        'show up on this list.'}))
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return HttpResponse(json.dumps(
+            {'status': 'unverified',
+             'message': 'A My.jobs account will be created for this contact, '
+                        'which will include a personal greeting.'}))
+    else:
+        # Check to see if user is active
+        if user.is_active:
+            return HttpResponse(json.dumps(
+                {'status': 'verified',
+                 'message': ''}))
+        else:
+            return HttpResponse(json.dumps(
+                {'status': 'unverified',
+                 'message': 'This contact has an account on My.jobs already '
+                            'but has yet to activate their account.'}))

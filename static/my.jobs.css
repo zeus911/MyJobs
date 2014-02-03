@@ -167,7 +167,8 @@ h1 > small > a:hover {
 }
 
 #partner-form,
-#contact-form{
+#contact-form,
+#partner-saved-search-form {
     margin-left: 78px;
 }
 
@@ -245,7 +246,8 @@ h1 > small > a:hover {
     -webkit-box-sizing: border-box;
 }
 
-.info-box + .info-box {
+.info-box + .info-box,
+.tip-box + .formBox {
     margin-top: 20px;
 }
 
@@ -269,6 +271,12 @@ h1 > small > a:hover {
     font-size: 0;
     line-height: 0;
     display: block;
+}
+
+.prm-valid {
+    padding: 5px 7px !important;
+    display: inline-block !important;
+    margin-bottom: 5px;
 }
 
 /* Sort by field in saved search save/edit */
@@ -1406,7 +1414,7 @@ input [type='text'] + .help-block,
 div + .help-block,
 div > .help-block{
     max-width: 96%;
-    margin: -12px 0 5px 5px;
+    margin: -12px 0 5px 280px;
     color: #555;
     font-size: .85em;
     font-style: italic;
@@ -2089,7 +2097,8 @@ td .gravatar-blank,
 
     /* Partner Relationship Manager */
     #partner-form,
-    #contact-form {
+    #contact-form,
+    #partner-saved-search-form {
         margin-left: 0;
     }
 

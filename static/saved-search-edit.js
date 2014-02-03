@@ -127,10 +127,8 @@ function add_refresh_btn() {
     var field = $('[id$="url"]');
     field.parent().addClass('input-append');
 
-    if($(window).width() <= 501){
-        var field_width = field.width() - 28;
-        field.css("width", String(field_width)+"px");
-    }
+    var field_width = field.width() - 28;
+    field.css("width", String(field_width)+"px");
 
     field.after('<span class="btn add-on refresh"><i class="icon icon-refresh">');
 }
@@ -141,11 +139,13 @@ function disable_fields() {
         $('[id^="id_edit_sort_by_"]').hide();
         $('label[for^="id_edit_sort_by_"]').hide();
         $('[id$="label"]').hide();
-        $('label[for$="label"]').hide()
+        $('label[for$="label"]').hide();
         $('[id$="is_active"]').hide();
         $('label[for$="is_active"]').hide();
         $('[id$="email"]').hide();
         $('label[for$="email"]').hide();
+        $('[id$="account_activation_message"]').hide();
+        $('label[for$="account_activation_message"]').hide();
         $('[id$="frequency"]').hide();
         $('label[for$="frequency"]').hide();
         $('[id$="notes"]').hide();

@@ -4,7 +4,9 @@ from django.utils.safestring import mark_safe
 
 from myjobs.forms import BaseUserForm, make_choices
 from mysearches.helpers import *
-from mysearches.models import SavedSearch, SavedSearchDigest
+from mysearches.models import (SavedSearch, SavedSearchDigest,
+                               PartnerSavedSearch)
+from mypartners.forms import PartnerEmailChoices
 
 
 class HorizontalRadioRenderer(RadioSelect.renderer):
@@ -104,3 +106,30 @@ class DigestForm(BaseUserForm):
 
     class Meta:
         model = SavedSearchDigest
+
+
+class PartnerSavedSearchForm(BaseUserForm):
+    def __init__(self, *args, **kwargs):
+        super(PartnerSavedSearchForm, self).__init__(*args, **kwargs)
+        choices = PartnerEmailChoices(kwargs['instance'])
+        self.fields["email"] = ChoiceField(widget=Select(), choices=choices,
+                                           initial=choices[0][0],
+                                           label="Send Results to",
+                                           help_text="If a contact does not "
+                                                     "have an email they will "
+                                                     "not show up on this "
+                                                     "list.")
+        self.fields["notes"].label = "Notes and Comments"
+        self.fields["partner_message"].label = "Message for Contact"
+        self.fields["url_extras"].label = "URL Extras"
+
+    class Meta:
+        model = PartnerSavedSearch
+        fields = ('label', 'url', 'url_extras', 'is_active', 'email',
+                  'account_activation_message', 'frequency', 'day_of_month',
+                  'day_of_week', 'partner_message', 'notes')
+        exclude = ['provider', 'sort_by', 'feed']
+        widgets = {
+            'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
+            'url_extras': TextInput(attrs={'placeholder': 'src=1234'})
+        }

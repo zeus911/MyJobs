@@ -180,3 +180,14 @@ class PartnerForm(BaseUserForm):
         self.instance.save()
         return
 
+
+def PartnerEmailChoices(partner):
+    choices = [(None, '----------')]
+    contacts = partner.contacts.all()
+    for contact in contacts:
+        if contact.user:
+            choices.append((contact.user.email, contact.name))
+        else:
+            if contact.email:
+                choices.append((contact.email, contact.name))
+    return choices
