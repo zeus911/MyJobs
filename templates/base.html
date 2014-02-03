@@ -161,7 +161,7 @@
 
                                                         <li><a id="candidate-link-one" href="{% url 'dashboard' %}?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
 
-                                                        <li><a id="partner-link-one" href="{% url 'prm' %}?company={{ company_name.0.id }}">{% trans "Patners" %}</a></li>
+                                                        <li><a id="partner-link-one" href="{% url 'prm' %}?company={{ company_name.0.id }}">{% trans "Partners" %}</a></li>
 
                                                     {% elif group_member and user.is_active and company_name|length >= 2 %}
 
