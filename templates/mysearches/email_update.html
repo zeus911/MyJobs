@@ -9,6 +9,9 @@
     {% with saved_search=saved_searches.0.0 %}
 
     <div style="margin-left:auto;margin-right:auto; width:95%;">
+        {% if custom_msg %}
+            <p>{{ custom_msg }}</p>
+        {% endif %}
         <p>{{message}}</p>
 
         <table style="width: 100%; border-spacing:0; display: table;">

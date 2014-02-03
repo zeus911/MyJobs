@@ -4,6 +4,9 @@
 {% load form_tags %}
 
 {% block content %}
+    {% if custom_msg %}
+            <p>{{ custom_msg }}</p>
+    {% endif %}
     {% for saved_search in saved_searches %}
         {% include 'mysearches/email_table_include.html' with saved_search=saved_search %}
     {% endfor %}
