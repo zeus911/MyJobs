@@ -99,14 +99,16 @@ class ActivationProfile(models.Model):
         self.sent = datetime_now()
         self.save()
 
-    def send_activation_email(self, primary=True, password=None):
+    def send_activation_email(self, primary=True, password=None,
+                              custom_msg=None):
         if self.activation_key_expired():
             self.reset_activation()
         ctx_dict = {'activation_key': self.activation_key,
                     'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
                     'password': password,
                     'primary': primary,
-                    'user': self.user}
+                    'user': self.user,
+                    'custom_msg': custom_msg}
         subject = render_to_string('registration/activation_email_subject.txt',
                                    ctx_dict)
         subject = ''.join(subject.splitlines())
@@ -114,10 +116,10 @@ class ActivationProfile(models.Model):
         message = render_to_string('registration/activation_email.html',
                                    ctx_dict)
         msg = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL, [self.email])
-        msg.content_subtype='html'
+        msg.content_subtype = 'html'
         msg.send()
 
     def save(self, *args, **kwargs):
         if not self.pk:
             self.activation_key = self.generate_key()
-        super(ActivationProfile,self).save(*args,**kwargs)
+        super(ActivationProfile, self).save(*args, **kwargs)

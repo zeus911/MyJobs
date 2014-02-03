@@ -18,17 +18,21 @@ following context:
 
 {% endcomment %}
 <p>
-{% if primary %}
-{% blocktrans %}
-You have created an account for My Jobs, which has to
-be activated. To do this, please follow the following link:
-{% endblocktrans %}
+{% if custom_msg %}
+    {{ custom_msg }}
 {% else %}
-{% blocktrans %}
-You have added a secondary email address to your My Jobs
-account, which has to be activated. To do this, please follow
-the following link:
-{% endblocktrans %}
+    {% if primary %}
+        {% blocktrans %}
+        You have created an account for My Jobs, which has to
+        be activated. To do this, please follow the following link:
+        {% endblocktrans %}
+    {% else %}
+        {% blocktrans %}
+        You have added a secondary email address to your My Jobs
+        account, which has to be activated. To do this, please follow
+        the following link:
+        {% endblocktrans %}
+    {% endif %}
 {% endif %}
 </p>
 {% url 'registration_activate' activation_key as url %}
