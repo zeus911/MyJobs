@@ -86,9 +86,9 @@ class MyDashboardViewsTests(TestCase):
         self.candidate_user.save()
         update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
 
-        country_str = '<a href="http://testserver/candidates/view?company=1&amp;location={country}">(1) {country}</a>'
-        edu_str = '<a href="http://testserver/candidates/view?company=1&amp;education={education}">(1)'
-        license_str = '<a href="http://testserver/candidates/view?company=1&amp;license=Name">(1) {license_name}</a>'
+        country_str = 'http://testserver/candidates/view?company=1&amp;location={country}'
+        edu_str = 'http://testserver/candidates/view?company=1&amp;education={education}'
+        license_str = 'http://testserver/candidates/view?company=1&amp;license=Name">'
 
         country_str = country_str.format(country=adr.country_code)
         edu_str = edu_str.format(education=education.education_level_code)
@@ -107,11 +107,11 @@ class MyDashboardViewsTests(TestCase):
         self.candidate_user.save()
         update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
 
-        country_str = '<a href="http://testserver/candidates/view?company=1&amp;location={country}">(1) {country}</a>'
+        country_str = 'http://testserver/candidates/view?company=1&amp;location={country}'
         country_filter_str = '<a class="applied-filter" href="http://testserver/candidates/view?company=1"><span>&#10006;</span> {country}</a><br>'
-        region_str = '<a href="http://testserver/candidates/view?company=1&amp;location={country}-{region}">(1) {region}</a></li>'
+        region_str = 'http://testserver/candidates/view?company=1&amp;location={country}-{region}'
         region_filter_str = '<a class="applied-filter" href="http://testserver/candidates/view?company=1&amp;location={country}"><span>&#10006;</span> {region}</a>'
-        city_str = '<a href="http://testserver/candidates/view?company=1&amp;location={country}-{region}-{city}">(1) {city}</a>'
+        city_str = 'http://testserver/candidates/view?company=1&amp;location={country}-{region}-{city}'
         city_filter_str = '<a class="applied-filter" href="http://testserver/candidates/view?company=1&amp;location={country}-{region}"><span>&#10006;</span> {city}</a>'
 
         country_str = country_str.format(country=adr.country_code)
