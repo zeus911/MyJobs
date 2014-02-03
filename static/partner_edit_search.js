@@ -201,8 +201,8 @@ $(function() {
             var form = $('#partner-saved-search-form');
             var serialized_data = form.serialize();
 
-            var company_id = $('[name=company_id]').val();
-            var partner_id = $('[name=partner_id]').val();
+            var company_id = $('[name=company]').val();
+            var partner_id = $('[name=partner]').val();
 
             $.ajax({
                 type: 'POST',

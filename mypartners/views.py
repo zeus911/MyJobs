@@ -271,7 +271,7 @@ def prm_saved_searches(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_new_saved_search(request):
     cred = prm_worthy(request)
-    form = PartnerSavedSearchForm(instance=cred['partner'])
+    form = PartnerSavedSearchForm(partner=cred['partner'])
     ctx = {'company': cred['company'],
            'partner': cred['partner'],
            'form': form}
@@ -327,13 +327,15 @@ def partner_savedsearch_save(request):
     if item_id:
         item = get_object_or_404(PartnerSavedSearch, id=item_id,
                                  provider=cred['company'].id)
-        form = ContactForm(instance=item, auto_id=False, data=request.POST)
+        form = PartnerSavedSearchForm(instance=item, auto_id=False,
+                                      data=request.POST,
+                                      partner=cred['partner'])
         if form.is_valid():
             form.save()
             return HttpResponse(status=200)
         else:
             return HttpResponse(json.dumps(form.errors))
-    form = PartnerSavedSearchForm(request.POST)
+    form = PartnerSavedSearchForm(request.POST, partner=cred['partner'])
     if form.is_valid():
         form.save()
         return HttpResponse(status=200)

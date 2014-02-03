@@ -110,8 +110,8 @@ class DigestForm(BaseUserForm):
 
 class PartnerSavedSearchForm(BaseUserForm):
     def __init__(self, *args, **kwargs):
+        choices = PartnerEmailChoices(kwargs.pop('partner', None))
         super(PartnerSavedSearchForm, self).__init__(*args, **kwargs)
-        choices = PartnerEmailChoices(kwargs['instance'])
         self.fields["email"] = ChoiceField(widget=Select(), choices=choices,
                                            initial=choices[0][0],
                                            label="Send Results to",
@@ -133,3 +133,6 @@ class PartnerSavedSearchForm(BaseUserForm):
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
             'url_extras': TextInput(attrs={'placeholder': 'src=1234'})
         }
+
+    def save(self, commit=True):
+        return
