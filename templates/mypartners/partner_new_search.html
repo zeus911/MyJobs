@@ -28,7 +28,7 @@
             <div class="actions pull-right">
                 {% if id %}<a class="btn" href="">{% trans 'Delete' %}</a>{% endif %}
                 <a class="btn" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">{% trans 'Cancel' %}</a>
-                <button type="submit" class="btn primary" id="">{% trans 'Save' %}</button>
+                <button type="submit" class="btn primary" id="partner_ss_save">{% trans 'Save' %}</button>
             </div>
             <div class="clear"></div>
             </form>

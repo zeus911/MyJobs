@@ -86,6 +86,7 @@ def partner_details(request):
 def edit_item(request):
     """
     Form page that is what makes new and edits partners/contacts.
+
     """
     company_id = request.REQUEST.get('company')
 
@@ -153,6 +154,10 @@ def save_init_partner_form(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def save_item(request):
+    """
+    Generic save for Partner and Contact Forms.
+
+    """
     company_id = request.REQUEST.get('company')
 
     company = get_object_or_404(Company, id=company_id)
@@ -279,6 +284,7 @@ def verify_contact(request):
     """
     Checks to see if a contact has a My.jobs account. Checks to see if they are
     active as well.
+
     """
     if request.REQUEST.get('action') != 'validate':
         raise Http404
@@ -306,3 +312,30 @@ def verify_contact(request):
                 {'status': 'unverified',
                  'message': 'This contact has an account on My.jobs already '
                             'but has yet to activate their account.'}))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def partner_savedsearch_save(request):
+    """
+    Handles saving the PartnerSavedSearchForm and creating the inactive user
+    if it is needed.
+
+    """
+    cred = prm_worthy(request)
+    item_id = request.REQUEST.get('id')
+
+    if item_id:
+        item = get_object_or_404(PartnerSavedSearch, id=item_id,
+                                 provider=cred['company'].id)
+        form = ContactForm(instance=item, auto_id=False, data=request.POST)
+        if form.is_valid():
+            form.save()
+            return HttpResponse(status=200)
+        else:
+            return HttpResponse(json.dumps(form.errors))
+    form = PartnerSavedSearchForm(request.POST)
+    if form.is_valid():
+        form.save()
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse(json.dumps(form.errors))

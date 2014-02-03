@@ -21,7 +21,8 @@ $(function() {
             'keypress input[id$="url"]': 'validate',
             'cut input[id$="url"]': 'validate',
             'paste input[id$="url"]': 'validate',
-            'change [id$="email"]': 'validate_contact'
+            'change [id$="email"]': 'validate_contact',
+            'click [id$="partner_ss_save"]': 'save_partner_ss_form'
         },
 
 
@@ -162,13 +163,23 @@ $(function() {
                     email_div.css('width', calc_select_width(vc.outerWidth()))
                 }
                 if(status == "None") {
-                    email_div.css('width', 262);
+                    if ($(document).width() > 500) {
+                        email_div.css('width', 262);
+                    } else {
+                        email_div.css('width', '100%');
+                    }
                     vc.remove();
                 }
             }
 
             function calc_select_width(label_width) {
-                return 262 - label_width - 5;
+                var email_div = $('[id$="email"]');
+                if ($(document).width() > 500) {
+                    return 262 - label_width - 5;
+                } else {
+                    email_div.css('width', '100%');
+                    return email_div.width() - label_width - 5;
+                }
             }
 
             function show_hide_content(status) {
@@ -180,6 +191,55 @@ $(function() {
                     $('label[for$="account_activation_message"]').show();
                 }
             }
+        },
+
+        save_partner_ss_form: function(e) {
+
+            // interrupts default functionality of the button with code below
+            e.preventDefault();
+
+            var form = $('#partner-saved-search-form');
+            var serialized_data = form.serialize();
+
+            var company_id = $('[name=company_id]').val();
+            var partner_id = $('[name=partner_id]').val();
+
+            $.ajax({
+                type: 'POST',
+                url: '/prm/view/searches/save',
+                data: serialized_data,
+                success: function(data, status) {
+                    if(data == '') {
+                        if(status != 'prevent-redirect') {
+                            window.location = '/prm/view/searches?company=' + company_id + '&partner=' + partner_id;
+                        }
+                    } else {
+                        // form was a json-encoded list of errors and error messages
+                        var json = jQuery.parseJSON(data);
+
+                        // remove color from labels of current errors
+                        $('[class*=required]').parent().prev().removeClass('error-text');
+
+                        // remove current errors
+                        $('[class*=required]').children().unwrap();
+
+                        if($.browser.msie){
+                            $('[class*=msieError]').remove()
+                        }
+
+                        for (var index in json) {
+                            var $error = $('[id$="-'+index+'"]');
+                            var $labelOfError = $error.parent().prev();
+
+                            // insert new errors after the relevant inputs
+                            $error.wrap('<div class="required" />');
+                            $error.attr("placeholder",json[index][0]);
+                            $error.val('')
+                            $labelOfError.addClass('error-text');
+                        }
+                    }
+                }
+            });
         }
     });
 
@@ -201,9 +261,8 @@ $(document).ready(function() {
     $('[id$="frequency"]').on('change', function() {
         show_dates();
     });
-    $('[id$="email"]').on('change', function() {
-        account_activation_check();
-    })
+    $('[id$="account_activation_message"]').hide();
+    $('label[for$="account_activation_message"]').hide();
 });
 
 function show_dates() {

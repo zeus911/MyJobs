@@ -1938,6 +1938,13 @@ td .gravatar-blank,
         width: auto;
     }
 
+    input [type='text'] + .help-block,
+    div + .help-block,
+    div > .help-block{
+        margin: -10px 0 5px 0;
+        font-size: 1em;
+    }
+
     .btn {
         display: block !important;
     }
