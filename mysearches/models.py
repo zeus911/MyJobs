@@ -7,6 +7,8 @@ from django.core.mail import EmailMessage
 from django.utils.translation import ugettext_lazy as _
 from django.template.loader import render_to_string
 from mysearches.helpers import parse_rss, url_sort_options
+from mydashboard.models import Company
+from myjobs.models import User
 
 
 FREQUENCY_CHOICES = (
@@ -23,12 +25,14 @@ DOW_CHOICES = (('1', _('Monday')),
                ('6', _('Saturday')),
                ('7', _('Sunday')))
 
+
 class SavedSearch(models.Model):
 
     SORT_CHOICES = (('Relevance', _('Relevance')),
                     ('Date', _('Date')))
 
     user = models.ForeignKey('myjobs.User', editable=False)
+    
     created_on = models.DateTimeField(auto_now_add=True)
     label = models.CharField(max_length=60, verbose_name=_("Search Name"))
     url = models.URLField(max_length=300,
@@ -93,7 +97,7 @@ class SavedSearch(models.Model):
             msg.content_subtype = 'html'
             msg.send()
     
-    def send_update_email(self,msg):
+    def send_update_email(self, msg):
         """
         This function is meant to be called from the shell. It sends a notice to
         the user that their saved search has been updated by the system or an 
@@ -187,3 +191,19 @@ class SavedSearchDigest(models.Model):
                                [self.email])
             msg.content_subtype = 'html'
             msg.send()
+
+
+class PartnerSavedSearch(SavedSearch):
+    provider = models.ForeignKey(Company, null=True,
+                                 on_delete=models.SET_NULL)
+    url_extras = models.CharField(max_length=255, blank=True,
+                                  help_text="Anything you put here will be "
+                                            "added as query string parameters "
+                                            "to each of links in the saved "
+                                            "search.")
+    partner_message = models.TextField(
+        blank=True, help_text="Use this field to provide a customized "
+                              "greeting that will be sent with each copy "
+                              "of this saved search.")
+    account_activation_message = models.TextField(blank=True)
+    created_by = models.ForeignKey(User, editable=False)
