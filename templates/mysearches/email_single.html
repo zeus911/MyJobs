@@ -3,6 +3,9 @@
 {% load i18n %}
 
 {% block content %}
+    {% if custom_msg %}
+            <p>{{ custom_msg }}</p>
+    {% endif %}
     {% include 'mysearches/email_table_include.html' with saved_search=saved_searches.0 %}
 {% endblock %}
 

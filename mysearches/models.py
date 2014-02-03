@@ -71,10 +71,11 @@ class SavedSearch(models.Model):
         url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency)
         return parse_rss(url_of_feed, self.frequency, num_items=num_items)
 
-    def send_email(self):
+    def send_email(self, custom_msg=None):
         search = (self, self.get_feed_items())
         if self.user.opt_in_myjobs and search[1]:
-            context_dict = {'saved_searches': [search]}
+            context_dict = {'saved_searches': [search],
+                            'custom_msg': custom_msg}
             subject = self.label.strip()
             message = render_to_string('mysearches/email_single.html',
                                        context_dict)
@@ -85,9 +86,10 @@ class SavedSearch(models.Model):
             self.last_sent = datetime.now()
             self.save()
 
-    def send_initial_email(self):
+    def send_initial_email(self, custom_msg=None):
         if self.user.opt_in_myjobs:
-            context_dict = {'saved_searches': [(self,)]}
+            context_dict = {'saved_searches': [(self,)],
+                            'custom_msg': custom_msg}
             subject = "My.jobs New Saved Search - %s" % self.label.strip()
             message = render_to_string("mysearches/email_initial.html",
                                        context_dict)
@@ -97,7 +99,7 @@ class SavedSearch(models.Model):
             msg.content_subtype = 'html'
             msg.send()
     
-    def send_update_email(self, msg):
+    def send_update_email(self, msg, custom_msg=None):
         """
         This function is meant to be called from the shell. It sends a notice to
         the user that their saved search has been updated by the system or an 
@@ -113,7 +115,8 @@ class SavedSearch(models.Model):
         """
         context_dict = {
             'saved_searches': [(self,)],
-            'message': msg
+            'message': msg,
+            'custom_msg': custom_msg,
         }
         subject = "My.jobs Saved Search Updated - %s" % self.label.strip()
         message = render_to_string("mysearches/email_update.html",
@@ -175,7 +178,7 @@ class SavedSearchDigest(models.Model):
                                                       " no results"),
                                        editable=False)
 
-    def send_email(self):
+    def send_email(self, custom_msg=None):
         saved_searches = self.user.savedsearch_set.filter(is_active=True)
         saved_searches = [(search, search.get_feed_items())
                           for search in saved_searches]
@@ -184,7 +187,10 @@ class SavedSearchDigest(models.Model):
                           if items]
         if self.user.opt_in_myjobs and saved_searches:
             subject = _('Your Daily Saved Search Digest')
-            context_dict = {'saved_searches': saved_searches, 'digest': self}
+            context_dict = {'saved_searches': saved_searches,
+                            'digest': self,
+                            'custom_msg': custom_msg,
+            }
             message = render_to_string('mysearches/email_digest.html',
                                        context_dict)
             msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
