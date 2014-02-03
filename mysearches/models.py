@@ -213,3 +213,9 @@ class PartnerSavedSearch(SavedSearch):
                               "of this saved search.")
     account_activation_message = models.TextField(blank=True)
     created_by = models.ForeignKey(User, editable=False)
+
+    def __unicode__(self):
+        if not self.user:
+            return "Saved Search %s for %s" % (self.url, self.email)
+        else:
+            return "Saved Search %s for %s" % (self.url, self.user.email)

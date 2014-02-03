@@ -112,13 +112,11 @@ class PartnerSavedSearchForm(BaseUserForm):
     def __init__(self, *args, **kwargs):
         choices = PartnerEmailChoices(kwargs.pop('partner', None))
         super(PartnerSavedSearchForm, self).__init__(*args, **kwargs)
-        self.fields["email"] = ChoiceField(widget=Select(), choices=choices,
-                                           initial=choices[0][0],
-                                           label="Send Results to",
-                                           help_text="If a contact does not "
-                                                     "have an email they will "
-                                                     "not show up on this "
-                                                     "list.")
+        self.fields["email"] = ChoiceField(
+            widget=Select(), choices=choices,
+            initial=choices[0][0], label="Send Results to",
+            help_text="If a contact does not have an email they will "
+                      "not show up on this list.")
         self.fields["notes"].label = "Notes and Comments"
         self.fields["partner_message"].label = "Message for Contact"
         self.fields["url_extras"].label = "URL Extras"
@@ -134,5 +132,18 @@ class PartnerSavedSearchForm(BaseUserForm):
             'url_extras': TextInput(attrs={'placeholder': 'src=1234'})
         }
 
+    def clean_day_of_week(self):
+        if self.cleaned_data.get('frequency', None) == 'W':
+            if not self.cleaned_data['day_of_week']:
+                raise ValidationError(_("This field is required."))
+        return self.cleaned_data['day_of_week']
+
+    def clean_day_of_month(self):
+        if self.cleaned_data.get('frequency', None) == 'M':
+            if not self.cleaned_data['day_of_month']:
+                raise ValidationError(_("This field is required."))
+        return self.cleaned_data['day_of_month']
+
     def save(self, commit=True):
+
         return
