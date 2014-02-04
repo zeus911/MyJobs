@@ -54,7 +54,7 @@ def get_completion(level):
     outputs:
     A string containing the bootstrap bar type.
     """
-    
+
     if level <= 20:
         return "danger"
     elif level <= 40:

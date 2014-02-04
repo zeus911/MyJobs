@@ -47,3 +47,7 @@ CACHES = {
 }
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+
+SOLR = {
+    'default': 'http://ec2-54-234-221-198.compute-1.amazonaws.com:8080/solr/profiles/',
+}

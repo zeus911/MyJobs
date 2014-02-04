@@ -2710,3 +2710,68 @@ body.modal-open {
 #partner-item {
     width: 250px;
 }
+/* Candidate filters/facets */
+.applied-filter {
+     background-color: #ddd;
+     padding: 3px 10px;
+     border-radius: 15px;
+     font-weight: bold;
+     line-height: 25px;
+ }
+
+ .applied-filter:hover{
+     text-decoration: none;
+ }
+
+ .applied-filter span {
+     background-color: #f2f2f2;
+     border-radius: 15px;
+     padding: 0 2px;
+}
+
+#facet-link {
+    list-style-type: none;
+    margin-left: 0;
+    margin-bottom: 0;
+    margin-top: 0;
+    padding: 0;
+}
+
+.facets.accordion-body.in.collapse {
+    overflow: auto;
+    max-height: 200px !important;
+}
+
+#facet {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+    line-height: 15px;
+    padding-top: 3px;
+}
+
+#facet a{
+    display: inline-block;
+    text-decoration: none;
+}
+
+#facet:hover{
+    background-color: #d2cfc7;
+}
+
+#facet-count {
+    display: table-cell;
+    width: 30px;
+    vertical-align: top;
+    text-align: right;
+}
+
+#facet-buffer {
+    display: table-cell;
+    padding-right: 10px;
+}
+
+#facet-term{
+    display:table-cell;
+    vertical-align: top;
+}

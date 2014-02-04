@@ -36,3 +36,7 @@ CACHES = {
 }
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+
+SOLR = {
+    'default': 'http://127.0.0.1:8983/solr/myjobs/',
+}
