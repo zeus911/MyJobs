@@ -254,7 +254,7 @@ class MyJobsViewsTests(TestCase):
         Posting data created recently should result in one EmailLog instance
         being created per message and no emails being sent
 
-        This test if for sendgrid APIs prior to version 3.
+        This test is for sendgrid APIs prior to version 3.
 
         """
 
@@ -286,7 +286,7 @@ class MyJobsViewsTests(TestCase):
         Posting data created recently should result in one EmailLog instance
         being created per message and no emails being sent
 
-        This test is for version 3 of the sendgrif API.
+        This test is for version 3 of the sendgrid API.
 
         """
 
