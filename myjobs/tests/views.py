@@ -75,12 +75,21 @@ class MyJobsViewsTests(TestCase):
         self.email_user = UserFactory(email='accounts@my.jobs')
 
     def make_messages(self, when, apiversion=2):
-        #if apiversion<3:
+        """
+        Creates test api messages for sendgrid tests.
+
+        Inputs:
+        :self:  the calling object
+        :when:  timestamp
+        :apiversion: the version of the API to mimick
+
+        Returns:
+        JSON-esque object if apiversion<3
+        JSON object is apiversion >=3
+
+        """
         message = '{{"email":"alice@example.com","timestamp":"{0}",' \
             '"event":"{1}"}}'
-        #else:
-        #    message = '{"email":"alice@example.com","timestamp":"{0}",' \
-        #        '"event":"{1}"}'
         messages = []
         for event in self.events:
             messages.append(message.format(time.mktime(when.timetuple()),
