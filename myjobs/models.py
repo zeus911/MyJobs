@@ -4,7 +4,8 @@ import hashlib
 import uuid
 
 from django.utils.safestring import mark_safe
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, _user_has_perm, Group, PermissionsMixin
+from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
+                                        _user_has_perm, Group, PermissionsMixin)
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMessage
 from django.db import models
@@ -398,6 +399,7 @@ class EmailLog(models.Model):
 class CustomHomepage(Site):
     logo_url = models.URLField('Logo Image URL', max_length=200, null=True,
                                blank=True)
+    show_signup_form = models.BooleanField(default=True)
 
 
 class Ticket(models.Model):

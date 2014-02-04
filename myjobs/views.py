@@ -93,11 +93,17 @@ def home(request):
         nexturl = urllib2.quote(nexturl.encode('utf8'))
 
     last_ms = request.COOKIES.get('lastmicrosite')
+    site_name = ''
     logo_url = ''
+    show_registration = True
     if last_ms:
         try:
             last_ms = urlparse(last_ms).netloc
-            logo_url = CustomHomepage.objects.get(domain=last_ms).logo_url
+            custom_page = CustomHomepage.objects.get(domain=last_ms)
+            logo_url = custom_page.logo_url
+            show_registration = custom_page.show_signup_form
+            site_name = custom_page.name
+
         except CustomHomepage.DoesNotExist:
             pass
 
@@ -111,6 +117,8 @@ def home(request):
                  'education_form': education_form,
                  'nexturl': nexturl,
                  'logo_url': logo_url,
+                 'show_registration': show_registration,
+                 'site_name': site_name,
                  }
 
     if request.method == "POST":
