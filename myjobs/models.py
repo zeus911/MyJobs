@@ -76,16 +76,21 @@ class CustomUserManager(BaseUserManager):
             user.add_default_group()
             user.make_guid()
             created = True
-            custom_signals.email_created.send(sender=self,user=user,
+            custom_signals.email_created.send(sender=self, user=user,
                                               email=email)
             if send_email:
+                custom_msg = kwargs.get("custom_msg", None)
                 if auto_generated:
-                    custom_signals.send_activation.send(sender=self,user=user,
+                    custom_signals.send_activation.send(sender=self,
+                                                        user=user,
                                                         email=email,
-                                                        password=password)
+                                                        password=password,
+                                                        custom_msg=custom_msg)
                 else:
-                    custom_signals.send_activation.send(sender=self,user=user,
-                                                        email=email)
+                    custom_signals.send_activation.send(sender=self,
+                                                        user=user,
+                                                        email=email,
+                                                        custom_msg=custom_msg)
         return user, created
 
     def create_user(self, **kwargs):
