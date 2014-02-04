@@ -133,6 +133,7 @@ class SavedSearch(models.Model):
         validation if it's a duplicate.
         """
 
+
         duplicates = SavedSearch.objects.filter(user=self.user, url=self.url)
 
         if duplicates:
@@ -215,7 +216,7 @@ class PartnerSavedSearch(SavedSearch):
     created_by = models.ForeignKey(User, editable=False)
 
     def __unicode__(self):
-        if not self.user:
+        if not hasattr(self, 'user'):
             return "Saved Search %s for %s" % (self.url, self.email)
         else:
             return "Saved Search %s for %s" % (self.url, self.user.email)

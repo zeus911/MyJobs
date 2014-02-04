@@ -337,6 +337,16 @@ def partner_savedsearch_save(request):
             return HttpResponse(json.dumps(form.errors))
     form = PartnerSavedSearchForm(request.POST, partner=cred['partner'])
     if form.is_valid():
+        form.instance.feed = form.data['feed']
+        try:
+            form.instance.user = User.objects.get(email=form.instance.email)
+        except User.DoesNotExist:
+            user = User(email=form.instance.email, password='foo')
+            user.is_active = True
+            user.save()
+            form.instance.user = user
+        form.instance.provider = cred['company']
+        form.instance.save()
         form.save()
         return HttpResponse(status=200)
     else:

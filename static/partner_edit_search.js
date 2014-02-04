@@ -78,6 +78,9 @@ $(function() {
                             if ($('[id$="label"]').val().length == 0) {
                                 $('[id$="label"]').val(json.feed_title);
                             }
+                            if ($('[id$="feed"]').val() != json.rss_url) {
+                                $('[id$="feed"]').val(json.rss_url);
+                            }
                             enable_fields();
                             show_dates();
                         }

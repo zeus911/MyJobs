@@ -2,6 +2,7 @@ from django.forms import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
+from myjobs.models import User
 from myjobs.forms import BaseUserForm, make_choices
 from mysearches.helpers import *
 from mysearches.models import (SavedSearch, SavedSearchDigest,
@@ -121,12 +122,14 @@ class PartnerSavedSearchForm(BaseUserForm):
         self.fields["partner_message"].label = "Message for Contact"
         self.fields["url_extras"].label = "URL Extras"
 
+    feed = URLField(widget=HiddenInput())
+
     class Meta:
         model = PartnerSavedSearch
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
                   'account_activation_message', 'frequency', 'day_of_month',
                   'day_of_week', 'partner_message', 'notes')
-        exclude = ['provider', 'sort_by', 'feed']
+        exclude = ['provider', 'sort_by']
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
             'url_extras': TextInput(attrs={'placeholder': 'src=1234'})
@@ -143,7 +146,3 @@ class PartnerSavedSearchForm(BaseUserForm):
             if not self.cleaned_data['day_of_month']:
                 raise ValidationError(_("This field is required."))
         return self.cleaned_data['day_of_month']
-
-    def save(self, commit=True):
-
-        return
