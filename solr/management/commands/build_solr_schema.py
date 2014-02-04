@@ -82,7 +82,7 @@ class Command(BaseCommand):
             })
             schema_fields.append({
                 'field_name': 'text',
-                'type': 'text-en',
+                'type': 'text_en',
                 'indexed': 'true',
                 'stored': 'true',
                 'multiValued': 'false',
