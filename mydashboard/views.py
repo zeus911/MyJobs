@@ -109,15 +109,19 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                                                                         loc_solr)
 
     solr_results = user_solr.rows_to_fetch(user_solr.search().hits).search()
-    candidates = dict_to_object(solr_results.docs)
 
     # List of dashboard widgets to display.
     dashboard_widgets = ["candidates", "applied_filters", "filters"]
 
     # Filter out duplicate entries for a user.
+    candidates = sorted(dict_to_object(solr_results.docs),
+                        key=lambda y: y.User_id)
     candidate_list = []
-    for x in groupby(candidates, lambda y: y.User_id):
+    for x in groupby(candidates, key=lambda y: y.User_id):
         candidate_list.append(list(x[1])[0])
+    candidate_list = sorted(candidate_list,
+                            key=lambda y: y.SavedSearch_created_on,
+                            reverse=True)
 
     # Date button highlighting
     if 'today' in request.REQUEST:
