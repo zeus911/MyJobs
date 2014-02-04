@@ -74,14 +74,22 @@ class MyJobsViewsTests(TestCase):
 
         self.email_user = UserFactory(email='accounts@my.jobs')
 
-    def make_messages(self, when):
+    def make_messages(self, when, apiversion=2):
+        #if apiversion<3:
         message = '{{"email":"alice@example.com","timestamp":"{0}",' \
             '"event":"{1}"}}'
+        #else:
+        #    message = '{"email":"alice@example.com","timestamp":"{0}",' \
+        #        '"event":"{1}"}'
         messages = []
         for event in self.events:
             messages.append(message.format(time.mktime(when.timetuple()),
                                            event))
-        return '\r\n'.join(messages)
+        if apiversion<3:
+            return '\r\n'.join(messages)
+        else:
+            return_json = ','.join(messages)
+            return '['+return_json+']'
 
     def test_edit_account_success(self):
         resp = self.client.post(reverse('edit_account'),
@@ -236,6 +244,9 @@ class MyJobsViewsTests(TestCase):
         """
         Posting data created recently should result in one EmailLog instance
         being created per message and no emails being sent
+
+        This test if for sendgrid APIs prior to version 3.
+
         """
 
         # Create activation profile for user; Used when disabling an account
@@ -246,7 +257,39 @@ class MyJobsViewsTests(TestCase):
         now = date.today()
 
         # Submit a batch of three events created recently
-        messages = self.make_messages(now)
+        messages = self.make_messages(now, 2)
+        response = self.client.post(reverse('batch_message_digest'),
+                                    data=messages,
+                                    content_type="text/json",
+                                    HTTP_AUTHORIZATION='BASIC %s' %
+                                        base64.b64encode(
+                                            'accounts%40my.jobs:secret'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(EmailLog.objects.count(), 3)
+        process_batch_events()
+        self.assertEqual(len(mail.outbox), 0)
+
+        for log in EmailLog.objects.all():
+            self.assertTrue(log.event in self.events)
+
+    def test_batch_recent_message_digest_api_version_3(self):
+        """
+        Posting data created recently should result in one EmailLog instance
+        being created per message and no emails being sent
+
+        This test is for version 3 of the sendgrif API.
+
+        """
+
+        # Create activation profile for user; Used when disabling an account
+        custom_signals.create_activation_profile(sender=self,
+                                                 user=self.user,
+                                                 email=self.user.email)
+
+        now = date.today()
+
+        # Submit a batch of three events created recently
+        messages = self.make_messages(now, 3)
         response = self.client.post(reverse('batch_message_digest'),
                                     data=messages,
                                     content_type="text/json",
