@@ -153,7 +153,7 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
         loc_solr = loc_solr.add_facet_field('Address_country_code')
     else:
         term = urllib.unquote(request.GET.get('location'))
-        search_term = term.replace("-", "#").replace(" ", "\ ")
+        search_term = term.replace("-", "##").replace(" ", "\ ")
         if len(term.split("-")) == 3:
             q = 'Address_full_location:%s' % search_term
         else:
@@ -179,14 +179,14 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
             remove_term = "%s" % (term_list[1])
             filters[remove_term] = urlunparse(parts)
             loc_solr = loc_solr.add_facet_field('Address_full_location')
-            loc_solr = loc_solr.add_facet_prefix('%s#' % term.replace("-", "#"))
+            loc_solr = loc_solr.add_facet_prefix('%s#' % term.replace("-", "##"))
         elif term_len == 1:
             # Country included.
             del query['location']
             parts[4] = urllib.urlencode(query)
             filters[term_list[0]] = urlunparse(parts)
             loc_solr = loc_solr.add_facet_field('Address_region')
-            loc_solr = loc_solr.add_facet_prefix('%s#' % term.replace("-", "#"))
+            loc_solr = loc_solr.add_facet_prefix('%s#' % term.replace("-", "##"))
 
     if not 'education' in request.GET:
         facet_solr = facet_solr.add_facet_field('Education_education_level_code')
@@ -277,7 +277,7 @@ def update_location(facet_tups):
     """
     facets = []
     for tup in facet_tups:
-        new_tup = (tup[0].split("#")[-1], tup[1], tup[2])
+        new_tup = (tup[0].split("##")[-1], tup[1], tup[2])
         facets.append(new_tup)
     return facets
 
@@ -312,7 +312,7 @@ def get_urls(facet_tups, param, current_url):
         if param == 'location' and 'location' in query:
 
             query['location'] = "%s-%s" % (query['location'],
-                                           tup[0].split("#")[-1])
+                                           tup[0].split("##")[-1])
         else:
             params = {param.lower(): term}
             query.update(params)
