@@ -1,10 +1,10 @@
 from registration import models 
 from django.dispatch import Signal, receiver
 
-email_created = Signal(providing_args=["user","email"])
+email_created = Signal(providing_args=["user", "email"])
 
 @receiver(email_created)
-def create_activation_profile(sender,**kwargs):
+def create_activation_profile(sender, **kwargs):
     """
     Signalled when any email is created (whether as the primary user email or
     a secondary email)
@@ -15,10 +15,11 @@ def create_activation_profile(sender,**kwargs):
     activation = models.ActivationProfile.objects.get_or_create(user=user,
                                                                 email=email)
 
-send_activation = Signal(providing_args=["user","email","password"])
+send_activation = Signal(providing_args=["user", "email", "password",
+                                         "custom_msg"])
 
 @receiver(send_activation)
-def send_activation_email(sender,**kwargs):
+def send_activation_email(sender, **kwargs):
     """
     Triggers an email that has the activation link automatically when a user
     creates an account or a secondary email.
@@ -30,12 +31,13 @@ def send_activation_email(sender,**kwargs):
     activation = models.ActivationProfile.objects.get(user=user,
                                                       email__iexact=email)
     primary = user.email == email
-    activation.send_activation_email(primary, password)
+    custom_msg = kwargs.get("custom_msg", None)
+    activation.send_activation_email(primary, password, custom_msg=custom_msg)
 
-user_disabled = Signal(providing_args=["user","email"])
+user_disabled = Signal(providing_args=["user", "email"])
 
 @receiver(user_disabled)
-def reset_activation_profile(sender,**kwargs):
+def reset_activation_profile(sender, **kwargs):
     """
     Regenerate the activation key when user is disabled.
     """
