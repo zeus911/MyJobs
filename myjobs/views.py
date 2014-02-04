@@ -93,11 +93,17 @@ def home(request):
         nexturl = urllib2.quote(nexturl.encode('utf8'))
 
     last_ms = request.COOKIES.get('lastmicrosite')
+    site_name = ''
     logo_url = ''
+    show_registration = True
     if last_ms:
         try:
             last_ms = urlparse(last_ms).netloc
-            logo_url = CustomHomepage.objects.get(domain=last_ms).logo_url
+            custom_page = CustomHomepage.objects.get(domain=last_ms)
+            logo_url = custom_page.logo_url
+            show_registration = custom_page.show_signup_form
+            site_name = custom_page.name
+
         except CustomHomepage.DoesNotExist:
             pass
 
@@ -111,6 +117,8 @@ def home(request):
                  'education_form': education_form,
                  'nexturl': nexturl,
                  'logo_url': logo_url,
+                 'show_registration': show_registration,
+                 'site_name': site_name,
                  }
 
     if request.method == "POST":
@@ -403,7 +411,9 @@ def batch_message_digest(request):
     Used by SendGrid to POST batch events.
 
     Accepts a POST request containing a batch of events from SendGrid. A batch
-    of events is a series of JSON strings separated by new lines.
+    of events is a series of JSON strings separated by new lines (Version 1 and
+    2) or as well formed JSON (Version 3)
+
     """
     if 'HTTP_AUTHORIZATION' in request.META:
         method, details = request.META['HTTP_AUTHORIZATION'].split()
@@ -418,16 +428,19 @@ def batch_message_digest(request):
                 target_user = User.objects.get(email='accounts@my.jobs')
                 if user is not None and user == target_user:
                     events = request.raw_post_data
-                    event_list = []
-                    try:
-                        # Handles both a lack of submitted data and
-                        # the submission of invalid data
+                    try: #first see if it JSON from the Sendgrid V3 API
+                        event_list = json.loads(events)
+                    except ValueError, e: #nope, it's V1 or V2
+                        event_list = []
                         events = events.splitlines()
                         for event_str in events:
                             if event_str == '':
                                 continue
-                            event_list.append(json.loads(event_str))
-                    except:
+                            try: #nested try :/ -need to catch json exceptions
+                                event_list.append(json.loads(event_str))
+                            except ValueError, e: #return 404 is bad json
+                                return HttpResponse(status=400)
+                    except Exception:
                         return HttpResponse(status=400)
                     for event in event_list:
                         EmailLog(email=event['email'], event=event['event'],

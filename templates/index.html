@@ -16,7 +16,7 @@
             <h1>{% trans 'My.jobs' %}</h1>
             <h2>The Right Place for You.</h2>
             {% else %}
-            <img src="{{ logo_url }}" />
+            <h1 style="background-image:url({{ logo_url }}) !important">{{ site_name }}</h1>
             {% endif %}
         </div>
         <div class="span4">
@@ -33,7 +33,7 @@
 
                         {% else %}
                         
-                        {% with short_email=user.email|truncatechars:"23" %}
+                        {% with short_email=user.email|truncatechars:"20" %}
 
                         {% with name_obj=user.full_name %}
 
@@ -61,9 +61,10 @@
                     </div>
                 
                 {% else %}
-
-                    <h3>Sign Up</h3>
-                    {% include "includes/widget-user-registration.html" with form=registrationform%}
+                    {% if show_registration %}
+                        <h3>Sign Up</h3>
+                        {% include "includes/widget-user-registration.html" with form=registrationform%}
+                    {% endif %}
                     <div class="clear"></div>                                                
                     <h3 class="non-top">Sign In</h3>
                     <input type="hidden" name="next" value="{{ nexturl }}">

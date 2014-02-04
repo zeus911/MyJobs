@@ -160,7 +160,7 @@ def update_solr_task(solr_location=settings.SOLR['default']):
     updates = []
 
     for obj in objs:
-        content_type, key = obj.uid.split("#")
+        content_type, key = obj.uid.split("##")
         model = ContentType.objects.get(pk=content_type).model_class()
         if model == SavedSearch:
             updates.append(object_to_dict(model, model.objects.get(pk=key)))

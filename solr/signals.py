@@ -22,7 +22,7 @@ def prepare_add_to_solr(sender, instance, **kwargs):
     else:
         content_type_id = ContentType.objects.get_for_model(sender).pk
         object_id = instance.pk
-    uid = "%s#%s" % (content_type_id, object_id)
+    uid = "%s##%s" % (content_type_id, object_id)
 
     obj, _ = Update.objects.get_or_create(uid=uid)
     obj.delete = False
@@ -39,12 +39,14 @@ def prepare_delete_from_solr(sender, instance, **kwargs):
 
     """
     if sender in ProfileUnits.__subclasses__():
-        content_type_id = ContentType.objects.get_for_model(ProfileUnits).pk
-        object_id = instance.user_id
+        # If it's a ProfileUnit, don't delete the whole instance,
+        # because there may be other ProfileUnits for that user.
+        prepare_add_to_solr(sender, instance, **kwargs)
+        return
     else:
         content_type_id = ContentType.objects.get_for_model(sender).pk
         object_id = instance.pk
-    uid = "%s#%s" % (content_type_id, object_id)
+    uid = "%s##%s" % (content_type_id, object_id)
 
     obj, _ = Update.objects.get_or_create(uid=uid)
     obj.delete = True
@@ -61,7 +63,7 @@ def profileunits_to_dict(user_id):
     """
     content_type_id = ContentType.objects.get_for_model(ProfileUnits).pk
     solr_dict = {
-        'uid': "%s#%s" % (content_type_id, user_id),
+        'uid': "%s##%s" % (content_type_id, user_id),
         'ProfileUnits_user_id': user_id,
     }
     models = {}
@@ -88,11 +90,11 @@ def profileunits_to_dict(user_id):
                 continue
 
             if model_name == 'Address':
-                solr_dict['Address_region'] = ["%s#%s" %
+                solr_dict['Address_region'] = ["%s##%s" %
                                                (getattr(obj, 'country_code', 'None'),
                                                 getattr(obj, 'country_sub_division_code', 'None'))
                                                for obj in objs]
-                solr_dict['Address_full_location'] = ["%s#%s#%s" %
+                solr_dict['Address_full_location'] = ["%s##%s##%s" %
                                                       (getattr(obj, 'country_code', 'None'),
                                                        getattr(obj, 'country_sub_division_code', 'None'),
                                                        getattr(obj, 'city_name', 'None'))

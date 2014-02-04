@@ -44,7 +44,9 @@ class SolrTests(TestCase):
         self.assertEqual(Solr().search().hits, 7)
         User.objects.all().delete()
         update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
-        self.assertEqual(Solr().search().hits, 0)
+        # A shell ProfileUnit will with nothing other than a userid
+        # will be hanging around.
+        self.assertEqual(Solr().search().hits, 1)
 
     def test_profileunit_to_dict(self):
         """
