@@ -17,7 +17,7 @@ $(function() {
         events: {
             "click [id^='account-']": "showSection",
             "submit form": "saveForm",
-            "click [id^='show-captcha-modal']": "captchaModal",
+            "click [id^='show-captcha-modal']": "captchaModal"
         },
         
         showSection: function(e) {

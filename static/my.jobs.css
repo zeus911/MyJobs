@@ -2484,6 +2484,14 @@ td .gravatar-blank,
     text-decoration: none;
 }
 
+#form-basic > fieldset > .form-label {
+    width: 180px;
+}
+
+#form-basic > fieldset > div > select {
+    width: 375px;
+}
+
 .account-settings input[type="text"],
 .account-settings input[type="password"] {
     width: 361px;
