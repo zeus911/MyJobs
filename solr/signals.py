@@ -123,7 +123,7 @@ def object_to_dict(model, obj):
     content_type_id = ContentType.objects.get_for_model(model).pk
     object_id = obj.pk
     solr_dict = {
-        'uid': "%s#%s" % (content_type_id, object_id),
+        'uid': "%s##%s" % (content_type_id, object_id),
     }
 
     if model == SavedSearch:
