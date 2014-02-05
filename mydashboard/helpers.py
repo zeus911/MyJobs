@@ -179,14 +179,14 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
             remove_term = "%s" % (term_list[1])
             filters[remove_term] = urlunparse(parts)
             loc_solr = loc_solr.add_facet_field('Address_full_location')
-            loc_solr = loc_solr.add_facet_prefix('%s#' % term.replace("-", "##"))
+            loc_solr = loc_solr.add_facet_prefix('%s##' % term.replace("-", "##"))
         elif term_len == 1:
             # Country included.
             del query['location']
             parts[4] = urllib.urlencode(query)
             filters[term_list[0]] = urlunparse(parts)
             loc_solr = loc_solr.add_facet_field('Address_region')
-            loc_solr = loc_solr.add_facet_prefix('%s#' % term.replace("-", "##"))
+            loc_solr = loc_solr.add_facet_prefix('%s##' % term.replace("-", "##"))
 
     if not 'education' in request.GET:
         facet_solr = facet_solr.add_facet_field('Education_education_level_code')
