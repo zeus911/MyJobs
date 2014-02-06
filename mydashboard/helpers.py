@@ -8,10 +8,11 @@ from urlparse import urlparse, urlunparse, parse_qsl
 from mydashboard.models import Microsite
 from myprofile.models import EDUCATION_LEVEL_CHOICES
 from solr.helpers import format_date, Solr
+from countries import COUNTRIES
 
 
 edu_codes = dict([(x, y) for x, y in EDUCATION_LEVEL_CHOICES])
-
+country_codes = dict((x, y) for x, y in COUNTRIES)
 
 def saved_searches(employer, company, candidate):
     """
@@ -150,7 +151,6 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
     {'the applied filter': 'resulting url if the filter were removed'}
     """
     url = request.build_absolute_uri()
-    url_parts = list(urlparse(url))
 
     filters = {}
     user_solr = Solr() if not user_solr else user_solr
@@ -173,35 +173,28 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
 
-        parts = copy(url_parts)
-        query = dict(parse_qsl(parts[4]))
-
         term_list = term.split("-")
         term_len = len(term_list)
         if term_len == 3:
             # Country, Region, City included. No reason to facet on location.
-            query['location'] = "%s-%s" % (term_list[0], term_list[1])
-            parts[4] = urllib.urlencode(query)
             city = term_list[2] if term_list[2] else 'None'
             region = term_list[1] if term_list[1] else 'None'
-            country = term_list[0]
+            country = country_codes.get(term_list[0], term_list[0])
             remove_term = "%s, %s, %s" % (city, region, country)
-            filters[remove_term] = urlunparse(parts)
+            new_val = "%s-%s" % (term_list[0], term_list[1])
+            filters[remove_term] = update_url_param(url, 'location', new_val)
         elif term_len == 2:
             # Country, Region included.
-            query['location'] = term_list[0]
-            parts[4] = urllib.urlencode(query)
             region = term_list[1] if term_list[1] else 'None'
-            country = term_list[0]
+            country = country_codes.get(term_list[0], term_list[0])
             remove_term = "%s, %s" % (region, country)
-            filters[remove_term] = urlunparse(parts)
+            filters[remove_term] = update_url_param(url, 'location', term_list[0])
             loc_solr = loc_solr.add_facet_field('Address_full_location')
             loc_solr = loc_solr.add_facet_prefix('%s##' % term.replace("-", "##"))
         elif term_len == 1:
             # Country included.
-            del query['location']
-            parts[4] = urllib.urlencode(query)
-            filters[term_list[0]] = urlunparse(parts)
+            country = country_codes.get(term_list[0], term_list[0])
+            filters[country] = remove_param_from_url(url, 'location')
             loc_solr = loc_solr.add_facet_field('Address_region')
             loc_solr = loc_solr.add_facet_prefix('%s##' % term.replace("-", "##"))
 
@@ -231,16 +224,36 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
     return user_solr, facet_solr, loc_solr, filters
 
 
-def remove_param_from_url(url, param):
+def update_url_param(url, param, new_val):
     """
-    Removes a specified field from a querystring
+    Changes the value for a parameter in a query string. If the parameter
+    wasn't already in the query string, it adds it.
 
     inputs:
-    :url: The url containing the query string to be updated
-    :param: The param to be removed from the url
+    :url: The url containing the query string to be updated.
+    :param: The param to be changed.
+    :new_val: The value to update the param with.
 
     outputs:
-    None if the param wasn't in the url, otherwise the new url.
+    The new url.
+    """
+    url_parts = list(urlparse(url))
+    parts = copy(url_parts)
+    query = dict(parse_qsl(parts[4]))
+    query[param] = new_val
+    parts[4] = urllib.urlencode(query)
+    return urlunparse(parts)
+
+def remove_param_from_url(url, param):
+    """
+    Removes a specified field from a query string
+
+    inputs:
+    :url: The url containing the query string to be updated.
+    :param: The param to be removed from the url.
+
+    outputs:
+    The new url.
 
     """
     url_parts = list(urlparse(url))
@@ -249,7 +262,7 @@ def remove_param_from_url(url, param):
     try:
         del query[param]
     except KeyError:
-        return None
+        return url
     parts[4] = urllib.urlencode(query)
     return urlunparse(parts)
 
@@ -291,6 +304,8 @@ def parse_facets(solr_results, current_url, add_unmapped_fields=False):
                                              key=lambda x: x[1], reverse=True),
                                              facet_val,
                                              current_url)
+                if facet_val == 'Country':
+                    facets[facet_val] = update_country(facets[facet_val])
                 if facet_val == 'Region' or facet_val == 'City':
                     facets[facet_val] = update_location(facets[facet_val])
                 if facet_val == 'Education':
@@ -300,6 +315,19 @@ def parse_facets(solr_results, current_url, add_unmapped_fields=False):
     if add_unmapped_fields:
         facets.update(solr_facets)
 
+    return facets
+
+
+def update_country(facet_tups):
+    """
+    Updates the education level displayed from the level code to the string
+    matching that code.
+
+    """
+    facets = []
+    for tup in facet_tups:
+        new_tup = (country_codes.get(tup[0], 'None'), tup[1], tup[2])
+        facets.append(new_tup)
     return facets
 
 

@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save, post_delete, pre_save
 
@@ -6,17 +8,28 @@ from MyJobs.myprofile.models import ProfileUnits
 from MyJobs.mysearches.models import SavedSearch
 from MyJobs.solr.models import Update
 
+logging.basicConfig()
+logger = logging.getLogger(__name__)
 
 def presave_solr(sender, instance, *args, **kwargs):
-    ignore_fields = ['last_response', 'last_sent', 'date_updated']
+    """
+    Flag an instance for being uploaded to solr in the post-save if anything
+    we actually care about has been changed.
+
+    """
+    ignore_fields = ['last_response', 'last_sent', 'date_updated', 'last_login']
+    setattr(instance, 'solr_update', False)
     if instance.pk:
         obj = sender.objects.get(pk=instance.pk)
         for field in obj._meta.fields:
             current_val = getattr(obj, field.attname)
-            new_val = getattr(obj, field.attname)
-            if current_val != new_val and field.attname not in ignore_fields:
+            new_val = getattr(instance, field.attname)
+            try:
+                if field.attname not in ignore_fields and current_val != new_val:
+                    setattr(instance, 'solr_update', True)
+            except TypeError, e:
+                logger.error("%s for field %s" % (e, field.attname))
                 setattr(instance, 'solr_update', True)
-                print "setting"
     else:
         setattr(instance, 'solr_update', True)
 
@@ -24,10 +37,6 @@ def presave_solr(sender, instance, *args, **kwargs):
 def prepare_add_to_solr(sender, instance, **kwargs):
     """
     Converts an object instance into a dictionary and adds it to solr.
-
-    inputs:
-    :sender: the model of the object being added to solr
-    :instance: the object being added to solr
 
     """
     if getattr(instance, 'solr_update', None):
@@ -47,10 +56,6 @@ def prepare_add_to_solr(sender, instance, **kwargs):
 def prepare_delete_from_solr(sender, instance, **kwargs):
     """
     Removes and object instance from solr.
-
-    inputs:
-    :sender: the model of the object being removed from solr
-    :instance: the object being removed from solr
 
     """
     if sender in ProfileUnits.__subclasses__():

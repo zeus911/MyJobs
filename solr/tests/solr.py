@@ -1,3 +1,6 @@
+import datetime
+import pytz
+
 from django.test import TestCase
 
 from MyJobs.myjobs.models import User
@@ -173,3 +176,18 @@ class SolrTests(TestCase):
                          result['Address_region'])
         self.assertEqual(expected['Address_full_location'],
                          result['Address_full_location'])
+
+    def test_presave_ignore(self):
+        user = UserFactory(email="test@test.test")
+        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+
+        user.last_login = datetime.datetime(2011, 8, 15, 8, 15, 12, 0, pytz.UTC)
+        user.save()
+
+        self.assertEqual(Update.objects.all().count(), 0)
+
+        user.last_login = datetime.datetime(2013, 8, 15, 8, 15, 12, 0, pytz.UTC)
+        user.email = "test1@test1.test1"
+        user.save()
+
+        self.assertEqual(Update.objects.all().count(), 1)
