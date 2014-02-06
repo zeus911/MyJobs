@@ -163,6 +163,7 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
     # country-state facets on city.
     if not 'location' in request.GET:
         loc_solr = loc_solr.add_facet_field('Address_country_code')
+        loc_solr = loc_solr.add_facet_field('Address_region')
     else:
         term = urllib.unquote(request.GET.get('location'))
         search_term = term.replace("-", "##").replace(" ", "\ ")
@@ -179,14 +180,14 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
             # Country, Region, City included. No reason to facet on location.
             city = term_list[2] if term_list[2] else 'None'
             region = term_list[1] if term_list[1] else 'None'
-            country = country_codes.get(term_list[0], term_list[0])
+            country = term_list[0]
             remove_term = "%s, %s, %s" % (city, region, country)
             new_val = "%s-%s" % (term_list[0], term_list[1])
             filters[remove_term] = update_url_param(url, 'location', new_val)
         elif term_len == 2:
             # Country, Region included.
             region = term_list[1] if term_list[1] else 'None'
-            country = country_codes.get(term_list[0], term_list[0])
+            country = term_list[0]
             remove_term = "%s, %s" % (region, country)
             filters[remove_term] = update_url_param(url, 'location', term_list[0])
             loc_solr = loc_solr.add_facet_field('Address_full_location')
@@ -333,13 +334,13 @@ def update_country(facet_tups):
 
 def update_location(facet_tups):
     """
-    Updates the displayed location being searched on, displaying the lowest
-    location searched for.
+    Updates the displayed location being searched on to be human readable.
 
     """
     facets = []
     for tup in facet_tups:
-        location = tup[0].split("##")[-1]
+        location = [x if x else "None" for x in reversed(tup[0].split("##"))]
+        location = ", ".join(location)
         location = location if location else 'None'
         new_tup = (location, tup[1], tup[2])
         facets.append(new_tup)
