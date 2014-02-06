@@ -1,5 +1,5 @@
 from datetime import date, timedelta, datetime
-from itertools import chain
+from itertools import chain, izip_longest
 import logging
 import pysolr
 
@@ -150,10 +150,13 @@ def update_solr_task(solr_location=settings.SOLR['default']):
     objs = Update.objects.filter(delete=True).values_list('uid', flat=True)
 
     if objs:
-        uid_list = " OR ".join(objs)
-        solr = pysolr.Solr(solr_location)
-        solr.delete(q="uid:(%s)" % uid_list)
-        Update.objects.filter(delete=True).delete()
+        objs = split_list(objs, 1000)
+        for obj_list in objs:
+            obj_list = filter(None, list(obj_list))
+            uid_list = " OR ".join(obj_list)
+            solr = pysolr.Solr(solr_location)
+            solr.delete(q="uid:(%s)" % uid_list)
+            Update.objects.filter(delete=True).delete()
 
     objs = Update.objects.filter(delete=False)
     solr = pysolr.Solr(solr_location)
@@ -174,5 +177,26 @@ def update_solr_task(solr_location=settings.SOLR['default']):
         else:
             updates.append(profileunits_to_dict(key))
 
-    solr.add(updates)
+    updates = split_list(updates, 1000)
+    for update_subset in updates:
+        update_subset = filter(None, list(update_subset))
+        solr.add(list(update_subset))
     objs.delete()
+
+
+def split_list(l, list_len, fill_val=None):
+    """
+    Splits a list into sublists.
+test=
+    inputs:
+    :l: The list to be split.
+    :list_len: The length of the resulting lists.
+    :fill_val: The value that is inserted when there are less items in the
+        final list than list_len.
+
+    outputs:
+    A generator of tuples size list_len.
+
+    """
+    args = [iter(l)] * list_len
+    return izip_longest(fillvalue=fill_val, *args)

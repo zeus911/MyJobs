@@ -49,6 +49,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     """
     user_solr = Solr()
     facet_solr = Solr()
+
     # Add join only if we're filtering.
     if ('company' in request.GET and len(request.GET) > 1) or \
             (len(request.GET) == 0):
@@ -102,6 +103,10 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     user_solr, facet_solr = filter_by_microsite(active_microsites,
                                                           user_solr,
                                                           facet_solr)
+    # Because location faceting requires facet.prefix to work properly, and
+    # facet prefixes apply to all facets, a seperate solr result set has to be
+    # obtained specifically for locations. Because we're still faceting,
+    # minus the facet prefix it is identical to facet_solr.
     loc_solr = facet_solr._clone()
     user_solr, facet_solr, loc_solr, filters = apply_facets_and_filters(request,
                                                                         user_solr,

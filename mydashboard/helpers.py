@@ -10,7 +10,7 @@ from myprofile.models import EDUCATION_LEVEL_CHOICES
 from solr.helpers import format_date, Solr
 
 
-education_codes = dict([(x, y) for x, y in EDUCATION_LEVEL_CHOICES])
+edu_codes = dict([(x, y) for x, y in EDUCATION_LEVEL_CHOICES])
 
 
 def saved_searches(employer, company, candidate):
@@ -41,15 +41,17 @@ def saved_searches(employer, company, candidate):
 
 def filter_by_microsite(microsites, user_solr=None, facet_solr=None):
     """
-    Applies basic solr filters based on company/microsite.
+    Applies solr filters based on company/microsite.
 
     inputs:
-    :microsites: the microsites to filter the SavedSearches on
-    :solr: an existing Solr instance
+    :microsites: A list of the microsites to filter the SavedSearches on.
+    :user_solr: A Solr instance used for retrieving SavedSearch documents
+        from solr.
+    :facet_solr: A Solr instance used for retrieving facets based on
+        ProfileUnits data.
 
     outputs:
-    A solr instance filtered by applicable microsites, sorted by the
-        date a SavedSearch was created on.
+    user_solr and facet_solr filtered by applicable microsites.
 
     """
 
@@ -61,7 +63,6 @@ def filter_by_microsite(microsites, user_solr=None, facet_solr=None):
 
     user_solr = user_solr.add_filter_query("SavedSearch_url:(*%s*)" % urls)
     user_solr = user_solr.add_filter_query('User_opt_in_employers:true')
-    user_solr = user_solr.sort('SavedSearch_created_on')
 
     facet_solr = facet_solr.add_query("SavedSearch_url:(*%s*)" % urls)
     facet_solr = facet_solr.add_query('User_opt_in_employers:true')
@@ -73,13 +74,12 @@ def filter_by_date(request):
     Applies date filtering.
 
     inputs:
-    :request: a request object including fields from the date_range form
-        in mydashboard.html
-    :solr: an existing Solr instance
+    :request: A. request object including fields from the date_range form
+        in mydashboard.html.
 
     outputs:
-    The solr instance, the start and end dates for the search, and the
-        number of days the search covers
+    The start and end dates for the search, and the number of days the
+    search covers.
 
     """
     requested_after_date = request.REQUEST.get('after', False)
@@ -88,16 +88,16 @@ def filter_by_date(request):
     date_end = datetime.now()
     # Set date range based on buttons
     if 'today' in request.REQUEST:
-        range = filter_by_time_period('SavedSearch_created_on',
-                                          total_days=1)
+        date_range = filter_by_time_period('SavedSearch_created_on',
+                                           total_days=1)
         date_start = date_end - timedelta(days=1)
     elif 'seven_days' in request.REQUEST:
-        range = filter_by_time_period('SavedSearch_created_on',
-                                          total_days=7)
+        date_range = filter_by_time_period('SavedSearch_created_on',
+                                           total_days=7)
         date_start = date_end - timedelta(days=7)
     elif 'thirty_days' in request.REQUEST:
-        range = filter_by_time_period('SavedSearch_created_on',
-                                          total_days=30)
+        date_range = filter_by_time_period('SavedSearch_created_on',
+                                           total_days=30)
         date_start = date_end - timedelta(days=30)
     # Set date range based on date selection fields.
     else:
@@ -120,14 +120,14 @@ def filter_by_date(request):
             else:
                 # Default start date is today.
                 date_end = datetime.now()
-        range = filter_by_date_range(field='SavedSearch_created_on',
-                                     date_start=format_date(date_start,
-                                                            time_format="00:00:00Z"),
-                                     date_end=format_date(date_end))
+        date_range = filter_by_date_range(field='SavedSearch_created_on',
+                                          date_start=format_date(date_start,
+                                                                 time_format="00:00:00Z"),
+                                          date_end=format_date(date_end))
 
-    date_delta = (date_end - date_start).days
+    days_delta = (date_end - date_start).days
 
-    return range, date_start, date_end, date_delta
+    return date_range, date_start, date_end, days_delta
 
 
 def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
@@ -136,6 +136,18 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
     Applies facets to solr based on filters currently applied and creates
     a dictionary of removable terms and the resulting url with the term removed.
 
+    inputs:
+    :user_solr: A Solr instance used for retrieving SavedSearch documents
+        from solr.
+    :facet_solr: A Solr instance used for retrieving facets based on
+        ProfileUnits data.
+    :loc_solr: A solr instance used for retrieving facets based on
+        location slabs.
+
+    outputs:
+    user_solr, facet_solr, and loc_solr appropriately filtered as well as a
+    dictionary of
+    {'the applied filter': 'resulting url if the filter were removed'}
     """
     url = request.build_absolute_uri()
     url_parts = list(urlparse(url))
@@ -157,7 +169,7 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
         if len(term.split("-")) == 3:
             q = 'Address_full_location:%s' % search_term
         else:
-            q = 'Address_full_location:%s*' % search_term
+            q = 'Address_full_location:%s##*' % search_term
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
 
@@ -170,13 +182,18 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
             # Country, Region, City included. No reason to facet on location.
             query['location'] = "%s-%s" % (term_list[0], term_list[1])
             parts[4] = urllib.urlencode(query)
-            remove_term = "%s" % (term_list[2])
+            city = term_list[2] if term_list[2] else 'None'
+            region = term_list[1] if term_list[1] else 'None'
+            country = term_list[0]
+            remove_term = "%s, %s, %s" % (city, region, country)
             filters[remove_term] = urlunparse(parts)
         elif term_len == 2:
             # Country, Region included.
             query['location'] = term_list[0]
             parts[4] = urllib.urlencode(query)
-            remove_term = "%s" % (term_list[1])
+            region = term_list[1] if term_list[1] else 'None'
+            country = term_list[0]
+            remove_term = "%s, %s" % (region, country)
             filters[remove_term] = urlunparse(parts)
             loc_solr = loc_solr.add_facet_field('Address_full_location')
             loc_solr = loc_solr.add_facet_prefix('%s##' % term.replace("-", "##"))
@@ -191,33 +208,50 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
     if not 'education' in request.GET:
         facet_solr = facet_solr.add_facet_field('Education_education_level_code')
     else:
-        parts = copy(url_parts)
         term = urllib.unquote(request.GET.get('education'))
-        query = dict(parse_qsl(parts[4]))
-        del query['education']
-        parts[4] = urllib.urlencode(query)
-        filters[education_codes.get(int(term))] = urlunparse(parts)
+        term = edu_codes.get(int(term))
+        filters[term] = remove_param_from_url(url, 'education')
 
         q = 'Education_education_level_code:"%s"' % term
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
+        loc_solr = loc_solr.add_filter_query(q)
 
     if not 'license' in request.GET:
         facet_solr = facet_solr.add_facet_field('License_license_name')
     else:
-        parts = copy(url_parts)
         term = urllib.unquote(request.GET.get('license'))
-        query = dict(parse_qsl(parts[4]))
-        del query['license']
-        parts[4] = urllib.urlencode(query)
-        filters[term] = urlunparse(parts)
+        filters[term] = remove_param_from_url(url, 'license')
 
         q = 'License_license_name:"%s"' % term
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
+        loc_solr = loc_solr.add_filter_query(q)
 
     return user_solr, facet_solr, loc_solr, filters
 
+
+def remove_param_from_url(url, param):
+    """
+    Removes a specified field from a querystring
+
+    inputs:
+    :url: The url containing the query string to be updated
+    :param: The param to be removed from the url
+
+    outputs:
+    None if the param wasn't in the url, otherwise the new url.
+
+    """
+    url_parts = list(urlparse(url))
+    parts = copy(url_parts)
+    query = dict(parse_qsl(parts[4]))
+    try:
+        del query[param]
+    except KeyError:
+        return None
+    parts[4] = urllib.urlencode(query)
+    return urlunparse(parts)
 
 def parse_facets(solr_results, current_url, add_unmapped_fields=False):
     """
@@ -277,7 +311,9 @@ def update_location(facet_tups):
     """
     facets = []
     for tup in facet_tups:
-        new_tup = (tup[0].split("##")[-1], tup[1], tup[2])
+        location = tup[0].split("##")[-1]
+        location = location if location else 'None'
+        new_tup = (location, tup[1], tup[2])
         facets.append(new_tup)
     return facets
 
@@ -290,7 +326,7 @@ def update_education_codes(facet_tups):
     """
     facets = []
     for tup in facet_tups:
-        new_tup = (education_codes.get(int(tup[0]), 'None'), tup[1], tup[2])
+        new_tup = (edu_codes.get(int(tup[0]), 'None'), tup[1], tup[2])
         facets.append(new_tup)
     return facets
 

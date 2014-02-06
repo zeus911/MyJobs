@@ -110,9 +110,9 @@ class MyDashboardViewsTests(TestCase):
         country_str = 'http://testserver/candidates/view?company=1&amp;location={country}'
         country_filter_str = '<a class="applied-filter" href="http://testserver/candidates/view?company=1"><span>&#10006;</span> {country}</a><br>'
         region_str = 'http://testserver/candidates/view?company=1&amp;location={country}-{region}'
-        region_filter_str = '<a class="applied-filter" href="http://testserver/candidates/view?company=1&amp;location={country}"><span>&#10006;</span> {region}</a>'
+        region_filter_str = '<a class="applied-filter" href="http://testserver/candidates/view?company=1&amp;location={country}"><span>&#10006;</span> {region}, {country}</a>'
         city_str = 'http://testserver/candidates/view?company=1&amp;location={country}-{region}-{city}'
-        city_filter_str = '<a class="applied-filter" href="http://testserver/candidates/view?company=1&amp;location={country}-{region}"><span>&#10006;</span> {city}</a>'
+        city_filter_str = '<a class="applied-filter" href="http://testserver/candidates/view?company=1&amp;location={country}-{region}"><span>&#10006;</span> {city}, {region}, {country}</a>'
 
         country_str = country_str.format(country=adr.country_code)
         country_filter_str = country_filter_str.format(country=adr.country_code)

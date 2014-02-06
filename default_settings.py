@@ -162,7 +162,6 @@ INSTALLED_APPS = (
     'tastypie',
     'captcha',
     'endless_pagination',
-    'solr',
 )
 
 # Captcha SSL
@@ -171,7 +170,8 @@ RECAPTCHA_USE_SSL = True
 # Add all MyJobs apps here. This separation ensures that automated Jenkins tests
 # only run on these apps
 PROJECT_APPS = ('myjobs', 'myprofile', 'mysearches', 'registration',
-                'mydashboard', 'mysignon', 'mymessages', 'mypartners')
+                'mydashboard', 'mysignon', 'mymessages', 'mypartners',
+                'solr', )
 
 INSTALLED_APPS += PROJECT_APPS
 
