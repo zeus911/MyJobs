@@ -187,7 +187,7 @@ def update_solr_task(solr_location=settings.SOLR['default']):
 def split_list(l, list_len, fill_val=None):
     """
     Splits a list into sublists.
-test=
+
     inputs:
     :l: The list to be split.
     :list_len: The length of the resulting lists.
