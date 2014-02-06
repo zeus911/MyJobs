@@ -415,41 +415,6 @@ def batch_message_digest(request):
     2) or as well formed JSON (Version 3)
 
     """
-    #if 'HTTP_AUTHORIZATION' in request.META:
-    #    method, details = request.META['HTTP_AUTHORIZATION'].split()
-    #    if method.lower() == 'basic':
-            # login_info is intended to be a base64-encoded string in the
-            # format "email:password" where email is a urlquoted string
-    #        login_info = base64.b64decode(details).split(':')
-    #        if len(login_info) == 2:
-    #            login_info[0] = urllib2.unquote(login_info[0])
-    #            user = authenticate(email=login_info[0],
-    #                                password=login_info[1])
-    #            target_user = User.objects.get(email='accounts@my.jobs')
-    #            if user is not None and user == target_user:
-    #                events = request.raw_post_data
-    #                print events
-    #                try: #first see if it JSON from the Sendgrid V3 API
-    #                    event_list = json.loads(events)
-    #                except ValueError, e: #nope, it's V1 or V2
-    #                    event_list = []
-    #                    events = events.splitlines()
-    #                    for event_str in events:
-    #                        if event_str == '':
-    #                            continue
-    #                        try: #nested try :/ -need to catch json exceptions
-    #                            event_list.append(json.loads(event_str))
-    #                        except ValueError, e: #return 404 is bad json
-    #                            return HttpResponse(status=400)
-    #                except Exception:
-    #                    return HttpResponse(status=400)
-    #                for event in event_list:
-    #                    EmailLog(email=event['email'], event=event['event'],
-    #                             received=datetime.date.fromtimestamp(
-    #                                 float(event['timestamp'])
-    #                             )).save()
-    #                return HttpResponse(status=200)
-    #return HttpResponse(status=403)
     if 'HTTP_AUTHORIZATION' in request.META:
         method, details = request.META['HTTP_AUTHORIZATION'].split()
         if method.lower() == 'basic':
@@ -463,17 +428,27 @@ def batch_message_digest(request):
                 target_user = User.objects.get(email='accounts@my.jobs')
                 if user is not None and user == target_user:
                     events = request.raw_post_data
-                    event_list = []
                     try:
-                        # Handles both a lack of submitted data and
-                        # the submission of invalid data
+                        # try parsing post data as json
+                        event_list = json.loads(events)
+                    except ValueError, e: #nope, it's V1 or V2
+                        event_list = []
                         events = events.splitlines()
                         for event_str in events:
                             if event_str == '':
                                 continue
-                            event_list.append(json.loads(event_str))
-                    except:
+                            try: #nested try :/ -need to catch json exceptions
+                                event_list.append(json.loads(event_str))
+                            except ValueError, e: #return 404 is bad json
+                                return HttpResponse(status=400)
+                    except Exception:
                         return HttpResponse(status=400)
+                    else:
+                        # If only one event was posted, this could be any
+                        # version of the api; event_list will be a list of
+                        # dicts if using V3 but will be a dict for V1 and V2.
+                        if type(event_list) != list:
+                            event_list = [event_list]
                     for event in event_list:
                         EmailLog(email=event['email'], event=event['event'],
                                  received=datetime.date.fromtimestamp(
