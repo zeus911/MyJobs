@@ -210,13 +210,11 @@ def task_reindex_solr(solr_location=settings.SOLR['default']):
     """
     solr = pysolr.Solr(solr_location)
     l = []
+
     u = User.objects.all().values_list('id', flat=True)
     for x in u:
         l.append(profileunits_to_dict(x))
 
-    solr.add(l)
-
-    l = []
     s = SavedSearch.objects.all()
     for x in s:
         l.append(object_to_dict(SavedSearch, x))
@@ -225,4 +223,7 @@ def task_reindex_solr(solr_location=settings.SOLR['default']):
     for x in u:
         l.append(object_to_dict(User, x))
 
-    solr.add(l)
+    l = split_list(l, 1000)
+    for x in l:
+        x = filter(None, list(x))
+        solr.add(x)
