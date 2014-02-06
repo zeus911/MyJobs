@@ -200,3 +200,29 @@ def split_list(l, list_len, fill_val=None):
     """
     args = [iter(l)] * list_len
     return izip_longest(fillvalue=fill_val, *args)
+
+
+@task(name="tasks.reindex_solr")
+def task_reindex_solr(solr_location=settings.SOLR['default']):
+    """
+    Adds all ProfileUnits, Users, and SavedSearches to solr.
+
+    """
+    solr = pysolr.Solr(solr_location)
+    l = []
+    u = User.objects.all().values_list('id', flat=True)
+    for x in u:
+        l.append(profileunits_to_dict(x))
+
+    solr.add(l)
+
+    l = []
+    s = SavedSearch.objects.all()
+    for x in s:
+        l.append(object_to_dict(SavedSearch, x))
+
+    u = User.objects.all()
+    for x in u:
+        l.append(object_to_dict(User, x))
+
+    solr.add(l)
