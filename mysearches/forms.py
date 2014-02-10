@@ -112,6 +112,7 @@ class DigestForm(BaseUserForm):
 
 class PartnerSavedSearchForm(BaseUserForm):
     def __init__(self, *args, **kwargs):
+
         choices = PartnerEmailChoices(kwargs.pop('partner', None))
         super(PartnerSavedSearchForm, self).__init__(*args, **kwargs)
         self.fields["email"] = ChoiceField(

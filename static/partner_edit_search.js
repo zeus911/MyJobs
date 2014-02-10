@@ -4,7 +4,9 @@ $(function() {
 
         initialize: function() {
             this.once('renderEvent', function() {
-                disable_fields();
+                if($('[id$="url"]').val() == ""){
+                    disable_fields();
+                }
                 add_refresh_btn();
                 $('[id$=notes]').placeholder();
             });

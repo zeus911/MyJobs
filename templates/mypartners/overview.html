@@ -7,6 +7,7 @@
     {% endwith %}
 {% endblock %}
 {% load i18n %}
+{% load label_tags %}
 
 {% block content %}
     <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> <small>{{ partner.name }}</small></h1>
@@ -77,6 +78,13 @@
                         </tr>
                     </thead>
                     {% if recent_ss %}
+                    {% for ss in recent_ss %}
+                        <tr>
+                            <td>{{ ss.label }}</td>
+                            <td><a href="{{ ss.url }}" target="_blank">{{ ss.url }}</a></td>
+                            <td>{% make_label ss.is_active "pull-right" %}</td>
+                        </tr>
+                    {% endfor %}
                     {% else %}
                     <tbody>
                         <tr>
@@ -95,9 +103,11 @@
             </div>
         </div>
         <div class="span4">
+            {% if reports %}
             <div class="info-box" id="communication-reports">
                 <a class="btn" href="">Reports</a>
             </div>
+            {% endif %}
 
             <div class="info-box" id="partner-details">
                 <b>{{ partner.name }}</b>

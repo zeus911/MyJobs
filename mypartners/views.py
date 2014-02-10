@@ -246,7 +246,9 @@ def prm_overview(request):
 
     most_recent_activity = []
     most_recent_communication = []
-    most_recent_saved_searches = []
+    saved_searches = PartnerSavedSearch.objects.filter(
+        provider=company).order_by('-created_on')
+    most_recent_saved_searches = saved_searches[:3]
 
     ctx = {'partner': partner,
            'company': company,
@@ -275,8 +277,7 @@ def prm_new_saved_search(request):
     item_id = request.REQUEST.get('id')
     if item_id:
         instance = get_object_or_404(PartnerSavedSearch, id=item_id)
-        form = PartnerSavedSearchForm(partner=partner, instance=instance,
-                                      auto_id=False)
+        form = PartnerSavedSearchForm(partner=partner, instance=instance)
     else:
         form = PartnerSavedSearchForm(partner=partner)
     ctx = {'company': company,
