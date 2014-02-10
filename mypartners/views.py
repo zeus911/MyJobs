@@ -213,6 +213,10 @@ def save_item(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def delete_prm_item(request):
+    """
+    Deletes Partners and Contacts
+
+    """
     company_id = request.REQUEST.get('company')
 
     company = get_object_or_404(Company, id=company_id)
@@ -242,6 +246,10 @@ def delete_prm_item(request):
     
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_overview(request):
+    """
+    View that is the "Overview" of one's Partner Activity.
+
+    """
     company, partner, user = prm_worthy(request)
 
     most_recent_activity = []
@@ -262,6 +270,10 @@ def prm_overview(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_saved_searches(request):
+    """
+    View that lists the Partner's Saved Searches
+
+    """
     company, partner, user = prm_worthy(request)
     saved_searches = PartnerSavedSearch.objects.filter(provider=company.id)
     ctx = {'searches': saved_searches,
@@ -272,7 +284,7 @@ def prm_saved_searches(request):
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
-def prm_new_saved_search(request):
+def prm_edit_saved_search(request):
     company, partner, user = prm_worthy(request)
     item_id = request.REQUEST.get('id')
     if item_id:
@@ -282,8 +294,9 @@ def prm_new_saved_search(request):
         form = PartnerSavedSearchForm(partner=partner)
     ctx = {'company': company,
            'partner': partner,
+           'item_id': item_id,
            'form': form}
-    return render_to_response('mypartners/partner_new_search.html', ctx,
+    return render_to_response('mypartners/partner_edit_search.html', ctx,
                               RequestContext(request))
 
 
@@ -369,6 +382,10 @@ def partner_savedsearch_save(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_view_full_feed(request):
+    """
+    PSSs' feed
+
+    """
     company, partner, user = prm_worthy(request)
     search_id = request.REQUEST.get('id')
     saved_search = SavedSearch.objects.get(id=search_id)

@@ -86,6 +86,7 @@ class NewPartnerForm(BaseUserForm):
 
         Had to change self.fields into an OrderDict to preserve order then
         'append' to the new fields because new fields need to be first.
+
         """
         super(NewPartnerForm, self).__init__(*args, **kwargs)
         for field in self.fields.itervalues():
@@ -154,6 +155,7 @@ class NewPartnerForm(BaseUserForm):
 class PartnerForm(BaseUserForm):
     """
     This form is used only to edit the partner form. (see prm/view/details)
+
     """
     def __init__(self, *args, **kwargs):
         super(PartnerForm, self).__init__(*args, **kwargs)

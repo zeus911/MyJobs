@@ -206,6 +206,14 @@ class SavedSearchDigest(models.Model):
 
 
 class PartnerSavedSearch(SavedSearch):
+    """
+    Partner Saved Search (PSS) is a subclass of SavedSearch. PSSs' emails are
+    sent out as if it is a SavedSearch. When a PSS is created a SavedSearch
+    is also created and is attached to the User. Then the PSS is connected via
+    a OneToOne relationship to the SavedSearch. Only way to access a PSS from a
+    User is SavedSearch.partnersavedsearch.
+
+    """
     provider = models.ForeignKey(Company, null=True,
                                  on_delete=models.SET_NULL)
     url_extras = models.CharField(max_length=255, blank=True,
