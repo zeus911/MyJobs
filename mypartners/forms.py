@@ -163,10 +163,15 @@ class PartnerForm(BaseUserForm):
             for choice in choices:
                 if choice[0] == kwargs['instance'].primary_contact_id:
                     choices.insert(0, choices.pop(choices.index(choice)))
+            if not kwargs['instance'].primary_contact:
+                choices.insert(0, ('', "No Primary Contact"))
+            else:
+                choices.append(('', "No Primary Contact"))
         else:
             choices.insert(0, ('', "No Primary Contact"))
         self.fields['primary_contact'] = forms.ChoiceField(
-            label="Primary Contact", required=False, choices=choices)
+            label="Primary Contact", required=False, initial=choices[0][0],
+            choices=choices)
 
     class Meta:
         form_name = "Partner Information"
@@ -175,8 +180,7 @@ class PartnerForm(BaseUserForm):
         widgets = generate_custom_widgets(model)
 
     def save(self, commit=True):
-        if self.data['primary_contact']:
-            self.instance.primary_contact_id = self.data['primary_contact']
+        self.instance.primary_contact_id = self.data['primary_contact']
         self.instance.save()
         return
 

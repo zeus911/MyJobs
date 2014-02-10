@@ -9,18 +9,20 @@ from django.core.urlresolvers import reverse
 
 from myjobs.models import User
 from mydashboard.models import Company
-from mysearches.models import PartnerSavedSearch
+from mysearches.models import SavedSearch, PartnerSavedSearch
+from mysearches.helpers import url_sort_options, parse_rss
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm)
 from mypartners.models import Partner, Contact
-from mypartners.helpers import prm_worthy
+from mypartners.helpers import prm_worthy, url_extra_params
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm(request):
     """
     Partner Relationship Manager
+
     """
     company_id = request.REQUEST.get('company')
 
@@ -64,18 +66,18 @@ def prm(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_details(request):
-    cred = prm_worthy(request)
+    company, partner, user = prm_worthy(request)
 
-    form = PartnerForm(instance=cred['partner'], auto_id=False)
+    form = PartnerForm(instance=partner, auto_id=False)
 
-    contacts = cred['partner'].contacts.all()
+    contacts = partner.contacts.all()
     contact_ct_id = ContentType.objects.get_for_model(Contact).id
     partner_ct_id = ContentType.objects.get_for_model(Partner).id
 
-    ctx = {'company': cred['company'],
+    ctx = {'company': company,
            'form': form,
            'contacts': contacts,
-           'partner': cred['partner'],
+           'partner': partner,
            'contact_ct': contact_ct_id,
            'partner_ct': partner_ct_id}
     return render_to_response('mypartners/partner_details.html', ctx,
@@ -240,14 +242,14 @@ def delete_prm_item(request):
     
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_overview(request):
-    cred = prm_worthy(request)
+    company, partner, user = prm_worthy(request)
 
     most_recent_activity = []
     most_recent_communication = []
     most_recent_saved_searches = []
 
-    ctx = {'partner': cred['partner'],
-           'company': cred['company'],
+    ctx = {'partner': partner,
+           'company': company,
            'recent_activity': most_recent_activity,
            'recent_communication': most_recent_communication,
            'recent_ss': most_recent_saved_searches}
@@ -258,22 +260,27 @@ def prm_overview(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_saved_searches(request):
-    cred = prm_worthy(request)
-    saved_searches = PartnerSavedSearch.objects.filter(provider=
-                                                       cred['company'].id)
+    company, partner, user = prm_worthy(request)
+    saved_searches = PartnerSavedSearch.objects.filter(provider=company.id)
     ctx = {'searches': saved_searches,
-           'company': cred['company'],
-           'partner': cred['partner']}
+           'company': company,
+           'partner': partner}
     return render_to_response('mypartners/partner_searches.html', ctx,
                               RequestContext(request))
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_new_saved_search(request):
-    cred = prm_worthy(request)
-    form = PartnerSavedSearchForm(partner=cred['partner'])
-    ctx = {'company': cred['company'],
-           'partner': cred['partner'],
+    company, partner, user = prm_worthy(request)
+    item_id = request.REQUEST.get('id')
+    if item_id:
+        instance = get_object_or_404(PartnerSavedSearch, id=item_id)
+        form = PartnerSavedSearchForm(partner=partner, instance=instance,
+                                      auto_id=False)
+    else:
+        form = PartnerSavedSearchForm(partner=partner)
+    ctx = {'company': company,
+           'partner': partner,
            'form': form}
     return render_to_response('mypartners/partner_new_search.html', ctx,
                               RequestContext(request))
@@ -321,33 +328,65 @@ def partner_savedsearch_save(request):
     if it is needed.
 
     """
-    cred = prm_worthy(request)
+    company, partner, user = prm_worthy(request)
     item_id = request.REQUEST.get('id')
 
     if item_id:
         item = get_object_or_404(PartnerSavedSearch, id=item_id,
-                                 provider=cred['company'].id)
+                                 provider=company.id)
         form = PartnerSavedSearchForm(instance=item, auto_id=False,
                                       data=request.POST,
-                                      partner=cred['partner'])
+                                      partner=partner)
         if form.is_valid():
             form.save()
             return HttpResponse(status=200)
         else:
             return HttpResponse(json.dumps(form.errors))
-    form = PartnerSavedSearchForm(request.POST, partner=cred['partner'])
+    form = PartnerSavedSearchForm(request.POST, partner=partner)
     if form.is_valid():
-        form.instance.feed = form.data['feed']
+        instance = form.instance
         try:
-            form.instance.user = User.objects.get(email=form.instance.email)
+            instance.user = User.objects.get(email=instance.email)
         except User.DoesNotExist:
-            user = User(email=form.instance.email, password='foo')
-            user.is_active = True
-            user.save()
-            form.instance.user = user
-        form.instance.provider = cred['company']
-        form.instance.save()
+            user = User.objects.create_inactive_user(
+                email=instance.email,
+                custom_msg=instance.account_activation_message)
+            instance.user = user[0]
+        instance.feed = form.data['feed']
+        if instance.url_extras:
+            instance.url, instance.feed = url_extra_params(instance.url,
+                                                           instance.url_extras)
+        instance.provider = company
+        instance.created_by = request.user
+        instance.custom_message = instance.partner_message
+        instance.save()
         form.save()
         return HttpResponse(status=200)
     else:
         return HttpResponse(json.dumps(form.errors))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def partner_view_full_feed(request):
+    company, partner, user = prm_worthy(request)
+    search_id = request.REQUEST.get('id')
+    saved_search = SavedSearch.objects.get(id=search_id)
+    if hasattr(saved_search, 'partnersavedsearch'):
+        is_pss = True
+        if company == saved_search.partnersavedsearch.provider:
+            url_of_feed = url_sort_options(saved_search.feed,
+                                           saved_search.sort_by,
+                                           saved_search.frequency)
+            items = parse_rss(url_of_feed, saved_search.frequency)
+        else:
+            return HttpResponseRedirect(reverse('prm_saved_searches'))
+    else:
+        return HttpResponseRedirect(reverse('prm_saved_searches'))
+    return render_to_response('mysearches/view_full_feed.html',
+                              {'search': saved_search,
+                               'items': items,
+                               'view_name': 'Saved Searches',
+                               'is_pss': is_pss,
+                               'partner': partner.id,
+                               'company': company.id},
+                              RequestContext(request))

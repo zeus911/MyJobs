@@ -35,9 +35,9 @@
 
         <div id="saved-search-list">
 
-            {% if saved_searches %}
+            {% if saved_searches or partner_saved_searches %}
 
-            {% include 'mysearches/saved_search_table.html'  with saved_searches=saved_searches %}
+            {% include 'mysearches/saved_search_table.html' %}
 
             {% else %}
 

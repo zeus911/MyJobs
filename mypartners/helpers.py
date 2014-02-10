@@ -1,5 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django.http import Http404
+from urlparse import urlparse, parse_qsl, urlunparse
+from urllib import urlencode
 
 from mydashboard.models import Company
 
@@ -8,7 +10,6 @@ def prm_worthy(request):
     """
     Makes sure the User is worthy enough to use PRM.
 
-    Do you have enough cred?
     """
     company_id = request.REQUEST.get('company')
     company = get_object_or_404(Company, id=company_id)
@@ -20,10 +21,18 @@ def prm_worthy(request):
     partner_id = int(request.REQUEST.get('partner'))
     partner = get_object_or_404(company.partner_set.all(), id=partner_id)
 
-    cred = {'comany_id': company_id,
-            'company': company,
-            'user': user,
-            'partner_id': partner_id,
-            'partner': partner}
+    return company, partner, user
 
-    return cred
+
+def url_extra_params(url, extra_urls):
+    (scheme, netloc, path, params, query, fragment) = urlparse(url)
+    query = dict(parse_qsl(query, keep_blank_values=True))
+    new_queries = dict(parse_qsl(extra_urls, keep_blank_values=True))
+    query.update(new_queries)
+    http_url = urlunparse((scheme, netloc, path, params, urlencode(query),
+                           fragment))
+    path += 'feed/rss'
+    feed = urlunparse((scheme, netloc, path, params, urlencode(query),
+                       fragment))
+
+    return http_url, feed

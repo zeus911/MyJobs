@@ -415,8 +415,6 @@ table#row-link-table {
 	margin-right: -38px;
 }
 
-
-
 .date_range {
     display: none;    
     position: absolute;
@@ -547,16 +545,21 @@ table#row-link-table {
 }    
 
 .table-striped tbody tr:nth-child(even) td {
-    background-color: #cbcbcb !important;
+    background-color: #cbcbcb;
 }
 
 .table-striped tbody tr:nth-child(odd) td {
-    background-color: #ddd !important;
+    background-color: #ddd;
 }
 
 .table-bordered th,
 .table-bordered td{
     border-left: 1px solid #E5E5E5;
+}
+
+.inner-table-label {
+    background-color: #FFF !important;
+    padding: 4px 8px !important;
 }
 
 /*New Account initial form*/

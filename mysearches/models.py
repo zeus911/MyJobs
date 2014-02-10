@@ -57,6 +57,9 @@ class SavedSearch(models.Model):
                              verbose_name=_("Comments"))
     last_sent = models.DateTimeField(blank=True, null=True, editable=False)
 
+    # Custom messages were created for PartnerSavedSearches
+    custom_message = models.TextField(max_length=300, blank=True, null=True)
+
     def get_verbose_frequency(self):
         for choice in FREQUENCY_CHOICES:
             if choice[0] == self.frequency:
@@ -73,6 +76,8 @@ class SavedSearch(models.Model):
 
     def send_email(self, custom_msg=None):
         search = (self, self.get_feed_items())
+        if self.custom_message and not custom_msg:
+            custom_msg = self.custom_message
         if self.user.opt_in_myjobs and search[1]:
             context_dict = {'saved_searches': [search],
                             'custom_msg': custom_msg}

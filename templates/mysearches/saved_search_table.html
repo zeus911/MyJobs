@@ -1,6 +1,6 @@
 {% load i18n %}
 
-{% if saved_searches %}
+{% if saved_searches or partner_saved_searches %}
 <table class="table table-striped table-bordered">
   <thead>
     <th class="list_width">{% trans "Search Name" %}</th>
@@ -12,6 +12,14 @@
     {% for search in saved_searches %}
         {% include 'mysearches/saved_search_row.html' with search=search %}
     {% endfor %}
+    {% if partner_saved_searches %}
+    <tr>
+        <td class="inner-table-label" colspan=4>Your Partner Saved Searches</td>
+    </tr>
+    {% for search in partner_saved_searches %}
+        {% include 'mysearches/saved_search_row.html' with search=search %}
+    {% endfor %}
+    {% endif %}
   </tbody>
 </table>
 {% endif %}

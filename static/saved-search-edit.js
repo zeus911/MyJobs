@@ -53,7 +53,6 @@ $(function() {
             });
         },
 
-
         validate: function(e) {
             if (e.target == $('[id$="url"]').get(0)) {
                 if (this.timer) {
@@ -210,3 +209,8 @@ function reorder_elements() {
         $('label[for$=notes]').parent().hide();
     }
 }
+
+$(document).ready(function(){
+    $('label[for$="sort_by_0"]').css('display', 'inline-block');
+    $('label[for$="sort_by_1"]').css('display', 'inline-block');
+});

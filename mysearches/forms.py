@@ -77,6 +77,7 @@ class SavedSearchForm(BaseUserForm):
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
             'sort_by': RadioSelect(renderer=HorizontalRadioRenderer)
         }
+        exclude = ['custom_message']
 
 
 class DigestForm(BaseUserForm):
@@ -132,7 +133,8 @@ class PartnerSavedSearchForm(BaseUserForm):
         exclude = ['provider', 'sort_by']
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
-            'url_extras': TextInput(attrs={'placeholder': 'src=1234'})
+            'url_extras': TextInput(attrs={
+                'placeholder': 'src=1234&q=manager'})
         }
 
     def clean_day_of_week(self):
@@ -146,3 +148,23 @@ class PartnerSavedSearchForm(BaseUserForm):
             if not self.cleaned_data['day_of_month']:
                 raise ValidationError(_("This field is required."))
         return self.cleaned_data['day_of_month']
+
+
+class PartnerSubSavedSearchForm(BaseUserForm):
+    def __init__(self, *args, **kwargs):
+        super(PartnerSubSavedSearchForm, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = PartnerSavedSearch
+        fields = ('sort_by', 'frequency', 'day_of_month', 'day_of_week')
+        exclude = ['provider', 'url_extras', 'partner_message',
+                   'account_activation_message', 'created_by', 'user',
+                   'created_on', 'label', 'url', 'feed', 'email', 'notes',
+                   'custom_message']
+        widgets = {
+            'sort_by': RadioSelect(renderer=HorizontalRadioRenderer,
+                                   attrs={'id': 'sort_by'}),
+            'frequency': Select(attrs={'id': 'frequency'}),
+            'day_of_month': Select(attrs={'id': 'day_of_month'}),
+            'day_of_week': Select(attrs={'id': 'day_of_week'})
+        }
