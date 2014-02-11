@@ -7,6 +7,8 @@ from django.core.mail import EmailMessage
 from django.utils.translation import ugettext_lazy as _
 from django.template.loader import render_to_string
 from mysearches.helpers import parse_rss, url_sort_options
+from mydashboard.models import Company
+from myjobs.models import User
 
 
 FREQUENCY_CHOICES = (
@@ -23,12 +25,14 @@ DOW_CHOICES = (('1', _('Monday')),
                ('6', _('Saturday')),
                ('7', _('Sunday')))
 
+
 class SavedSearch(models.Model):
 
     SORT_CHOICES = (('Relevance', _('Relevance')),
                     ('Date', _('Date')))
 
     user = models.ForeignKey('myjobs.User', editable=False)
+    
     created_on = models.DateTimeField(auto_now_add=True)
     label = models.CharField(max_length=60, verbose_name=_("Search Name"))
     url = models.URLField(max_length=300,
@@ -53,6 +57,9 @@ class SavedSearch(models.Model):
                              verbose_name=_("Comments"))
     last_sent = models.DateTimeField(blank=True, null=True, editable=False)
 
+    # Custom messages were created for PartnerSavedSearches
+    custom_message = models.TextField(max_length=300, blank=True, null=True)
+
     def get_verbose_frequency(self):
         for choice in FREQUENCY_CHOICES:
             if choice[0] == self.frequency:
@@ -67,10 +74,13 @@ class SavedSearch(models.Model):
         url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency)
         return parse_rss(url_of_feed, self.frequency, num_items=num_items)
 
-    def send_email(self):
+    def send_email(self, custom_msg=None):
         search = (self, self.get_feed_items())
+        if self.custom_message and not custom_msg:
+            custom_msg = self.custom_message
         if self.user.opt_in_myjobs and search[1]:
-            context_dict = {'saved_searches': [search]}
+            context_dict = {'saved_searches': [search],
+                            'custom_msg': custom_msg}
             subject = self.label.strip()
             message = render_to_string('mysearches/email_single.html',
                                        context_dict)
@@ -81,9 +91,10 @@ class SavedSearch(models.Model):
             self.last_sent = datetime.now()
             self.save()
 
-    def send_initial_email(self):
+    def send_initial_email(self, custom_msg=None):
         if self.user.opt_in_myjobs:
-            context_dict = {'saved_searches': [(self,)]}
+            context_dict = {'saved_searches': [(self,)],
+                            'custom_msg': custom_msg}
             subject = "My.jobs New Saved Search - %s" % self.label.strip()
             message = render_to_string("mysearches/email_initial.html",
                                        context_dict)
@@ -93,7 +104,7 @@ class SavedSearch(models.Model):
             msg.content_subtype = 'html'
             msg.send()
     
-    def send_update_email(self,msg):
+    def send_update_email(self, msg, custom_msg=None):
         """
         This function is meant to be called from the shell. It sends a notice to
         the user that their saved search has been updated by the system or an 
@@ -109,7 +120,8 @@ class SavedSearch(models.Model):
         """
         context_dict = {
             'saved_searches': [(self,)],
-            'message': msg
+            'message': msg,
+            'custom_msg': custom_msg,
         }
         subject = "My.jobs Saved Search Updated - %s" % self.label.strip()
         message = render_to_string("mysearches/email_update.html",
@@ -125,6 +137,7 @@ class SavedSearch(models.Model):
         On creation, check if that same URL exists for the user and raise
         validation if it's a duplicate.
         """
+
 
         duplicates = SavedSearch.objects.filter(user=self.user, url=self.url)
 
@@ -171,7 +184,7 @@ class SavedSearchDigest(models.Model):
                                                       " no results"),
                                        editable=False)
 
-    def send_email(self):
+    def send_email(self, custom_msg=None):
         saved_searches = self.user.savedsearch_set.filter(is_active=True)
         saved_searches = [(search, search.get_feed_items())
                           for search in saved_searches]
@@ -180,10 +193,43 @@ class SavedSearchDigest(models.Model):
                           if items]
         if self.user.opt_in_myjobs and saved_searches:
             subject = _('Your Daily Saved Search Digest')
-            context_dict = {'saved_searches': saved_searches, 'digest': self}
+            context_dict = {'saved_searches': saved_searches,
+                            'digest': self,
+                            'custom_msg': custom_msg,
+            }
             message = render_to_string('mysearches/email_digest.html',
                                        context_dict)
             msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
                                [self.email])
             msg.content_subtype = 'html'
             msg.send()
+
+
+class PartnerSavedSearch(SavedSearch):
+    """
+    Partner Saved Search (PSS) is a subclass of SavedSearch. PSSs' emails are
+    sent out as if it is a SavedSearch. When a PSS is created a SavedSearch
+    is also created and is attached to the User. Then the PSS is connected via
+    a OneToOne relationship to the SavedSearch. Only way to access a PSS from a
+    User is SavedSearch.partnersavedsearch.
+
+    """
+    provider = models.ForeignKey(Company, null=True,
+                                 on_delete=models.SET_NULL)
+    url_extras = models.CharField(max_length=255, blank=True,
+                                  help_text="Anything you put here will be "
+                                            "added as query string parameters "
+                                            "to each of links in the saved "
+                                            "search.")
+    partner_message = models.TextField(
+        blank=True, help_text="Use this field to provide a customized "
+                              "greeting that will be sent with each copy "
+                              "of this saved search.")
+    account_activation_message = models.TextField(blank=True)
+    created_by = models.ForeignKey(User, editable=False)
+
+    def __unicode__(self):
+        if not hasattr(self, 'user'):
+            return "Saved Search %s for %s" % (self.url, self.email)
+        else:
+            return "Saved Search %s for %s" % (self.url, self.user.email)

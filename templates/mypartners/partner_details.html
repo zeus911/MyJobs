@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load common_tags %}
 {% block site-title %}
-    <title>{{ company.name }} Partner Details</title>
-    <meta name="title" content="{{ company.name }} Partner Details">
+    <title>Partner Details {{ company.name }}</title>
+    <meta name="title" content="Partner Details {{ company.name }}">
 {% endblock %}
 {% load i18n %}
 {% block meta-extra %}
@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-    <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> <small>{{ partner.name }}</small></h1>
+    <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> <small><a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small></h1>
     <div class="row">
         <div class="span12 prm-header">
             <span>Partner Details</span>
@@ -61,7 +61,7 @@
                     it any time.
                 </div>
                 <div class="tip-footer">
-                    <a class="btn-link" href="{% url 'prm' %}?company={{ company.id }}">Back to Partner Outreach</a>
+                    <a class="btn-link" href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
                 </div>
             </div>
         </div>
