@@ -133,6 +133,11 @@ h1 > small > a:hover {
     padding-left: 10px;
 }
 
+.prm-header > a {
+    font-weight: normal;
+    font-size: .8em;
+}
+
 .small-cell{
     width: 60px;
 }
