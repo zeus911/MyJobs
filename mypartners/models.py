@@ -78,3 +78,35 @@ class Partner(models.Model):
 
     def add_contact(self, contact):
         self.contacts.add(contact)
+
+
+class ContactRecord(models.Model):
+    """
+    Object for Communication Records
+    """
+    CONTACT_TYPE_CHOICES = (('email', 'Email'),
+                            ('phone', 'Phone'),
+                            ('facetoface', 'Face to Face'))
+    contact_type = models.CharField(choices=CONTACT_TYPE_CHOICES,
+                                    max_length=12,
+                                    verbose_name="Contact Type")
+    contacts = models.ManyToManyField(Contact)
+
+    # contact type fields, fields required depending on contact_type. Enforced
+    # on the form level.
+    contact_email = models.CharField(verbose_name="Contact Email", blank=True)
+    contact_phone = models.CharField(verbose_name="Contact Phone Number",
+                                     max_length=30, blank=True)
+    location = models.CharField(verbose_name="Meeting Location", max_length=255,
+                                blank=True)
+    length = models.TimeField(verbose_name="Meeting Length", blank=True)
+
+    subject = models.CharField(verbose_name="Subject or Topic")
+    date_time = models.DateTimeField(verbose_name="Date & Time")
+    notes = models.TextField(max_length=1000,
+                             verbose_name='Details, Notes or Transcripts',
+                             blank=True)
+    attachment = models.FileField()
+
+    def __unicode__(self):
+        return "%s Contact Record - %s" % (self.contact_type, self.subject)
