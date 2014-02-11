@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load common_tags %}
 {% block site-title %}
-    <title>{{ company.name }} {% if not contact %}Add Contact{% else %}Edit Contact{% endif %}</title>
-    <meta name="title" content="{{ company.name }} {% if not contact %}Add Contact{% else %}Edit Contact{% endif %}">
+    <title>{% if not contact %}Add Contact{% else %}Edit Contact{% endif %} {{ company.name }}</title>
+    <meta name="title" content="{% if not contact %}Add Contact{% else %}Edit Contact{% endif %} {{ company.name }}">
 {% endblock %}
 {% load i18n %}
 {% block meta-extra %}
