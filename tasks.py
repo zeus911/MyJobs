@@ -2,7 +2,9 @@ from datetime import date, timedelta, datetime
 from itertools import chain, izip_longest
 import logging
 import pysolr
+import urlparse
 
+import boto
 from celery import task
 from celery.schedules import crontab
 
@@ -227,3 +229,34 @@ def task_reindex_solr(solr_location=settings.SOLR['default']):
     for x in l:
         x = filter(None, list(x))
         solr.add(x)
+
+
+@task(name="tasks.read_new_logs")
+def read_new_logs():
+    """
+    Reads new logs and stores their contents in solr
+    """
+    def parse_log(key):
+        update = []
+        contents = key.get_contents_as_string().splitlines()
+        for line in contents:
+            line = line.split()
+            content_dict = {'datetime': line[0],
+                            'aguid': line[7],
+                            'myguid': line[8],
+                            'url': line[9]}
+            qs = urlparse.parse_qs(line[4])
+            content_dict['url'] = qs.get('url', '')
+            update.append(content_dict)
+        return update
+
+    conn = boto.connect_s3(aws_access_key_id=settings.S3_ACCESS_KEY,
+                           aws_secret_access_key=settings.S3_SECRET_KEY)
+    # https://github.com/boto/boto/issues/2078
+    # validate=True costs 13.5x validate=False; Skip validation if we are
+    # reasonably certain that the bucket exists.
+    log_bucket = conn.get_bucket('my-jobs-logs', validate=False)
+    keys = log_bucket.list()
+    to_solr = []
+    for key in keys:
+        to_solr += parse_log(key)

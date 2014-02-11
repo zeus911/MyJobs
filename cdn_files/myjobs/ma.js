@@ -1467,7 +1467,7 @@ if (typeof Piwik !== 'object') {
             }
 
             /**
-             * Returns the URL to call piwik.php,
+             * Returns the URL to call pixel.gif,
              * with the standard parameters (plugins, resolution, url, referrer, etc.).
              * Sends the pageview and browser settings with every request in case of race conditions.
              */
@@ -1657,6 +1657,64 @@ if (typeof Piwik !== 'object') {
                 }
                 return request;
             }
+
+            /*
+             * Log apply, share, and new saved search button clicks
+             */
+            function logSpecialClick(customTitle, customData) {
+                var now = new Date(),
+                    request = getRequest('action_name=' + encodeWrapper(titleFixup(customTitle || configTitle)), customData, 'log');
+                request += '&url=' + documentAlias.URL;
+
+                var apply = [documentAlias.getElementsById('direct_applyButton'),
+                             documentAlias.getElementsById('direct_applyButtonBottom')];
+                for (var i = 0; i < apply.length; i++) {
+                    var apply_btn = apply[i];
+                    apply_btn.onclick = function() {
+                        apply_request = request;
+                        apply_request += '&action=apply';
+                        console.log(apply_request);
+                        sendRequest(apply_request, configTrackerPause);
+                    }
+                }
+
+                var share = documentAlias.getElementsByClassName('at16nc');
+                for (var i = 0; i < share.length; i++) {
+                    var share_btn = share[i];
+                    share_btn.onclick = function() {
+                        var text = this.innerHTML.replace(/^\s+|\s+$/g, '');
+                        var share_request = request;
+                        share_request += '&action=share';
+                        if (text.indexOf('More...') == 0) {
+                            share_request += '&share=Other';
+                        } else if (text.indexOf('Settings...') == 0) {
+                            return;
+                        } else {
+                            share_request += '&share=' + text;
+                        }
+                        console.log(share_request);
+                        sendRequest(share_request, configTrackerPause);
+                    }
+                }
+
+                var share_extra = documentAlias.getElementsByClassName('at15nc');
+                for (var i = 0; i < share_extra.length; i++) {
+                    var share_btn = share_extra[i];
+                    share_btn.onclick =  function() {
+                        var text = this.children[0];
+                        var share_request = request;
+                        if (text !== undefined ) {
+                            text = text.innerHTML.replace(/^\s+|\s+$/g, '');
+                            if (text !== null && text.indexOf('Share on ') == 0) {
+                                share_request += '&action=share';
+                                share_request += '&share=' + text.substr(9);
+                                console.log(share_request);
+                                sendRequest(share_request, configTrackerPause);
+                            }
+                        }
+                    }
+                }
+            },
 
             /*
              * Log the page view / visit
@@ -2080,7 +2138,7 @@ if (typeof Piwik !== 'object') {
                 },
 
                 /**
-                 * Appends the specified query string to the piwik.php?... Tracking API URL
+                 * Appends the specified query string to the pixel.gif?... Tracking API URL
                  *
                  * @param string queryString eg. 'lat=140&long=100'
                  */
@@ -2506,6 +2564,18 @@ if (typeof Piwik !== 'object') {
                 trackLink: function (sourceUrl, linkType, customData) {
                     trackCallback(function () {
                         logLink(sourceUrl, linkType, customData);
+                    });
+                },
+
+                /**
+                 * Log special clicks on this page
+                 *
+                 * @param string customTitle
+                 * @param mixed customData
+                 */
+                trackSpecialClick: function (customTitle, customData) {
+                    trackCallback(function () {
+                        logSpecialClick(customTitle, customData);
                     });
                 },
 
