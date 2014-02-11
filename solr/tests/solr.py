@@ -1,14 +1,17 @@
+import datetime
+import pytz
+
 from django.test import TestCase
 
-from myjobs.models import User
-from myjobs.tests.factories import UserFactory
-from myprofile.tests.factories import PrimaryNameFactory
-from mysearches.models import SavedSearch
-from mysearches.tests.factories import SavedSearchFactory
+from MyJobs.myjobs.models import User
+from MyJobs.myjobs.tests.factories import UserFactory
+from MyJobs.myprofile.tests.factories import PrimaryNameFactory, AddressFactory
+from MyJobs.mysearches.models import SavedSearch
+from MyJobs.mysearches.tests.factories import SavedSearchFactory
 from MyJobs.solr.models import Update
 from MyJobs.solr.helpers import Solr
 from MyJobs.solr.signals import profileunits_to_dict, object_to_dict
-from tasks import update_solr_task
+from MyJobs.tasks import update_solr_task
 
 
 class SolrTests(TestCase):
@@ -44,9 +47,7 @@ class SolrTests(TestCase):
         self.assertEqual(Solr().search().hits, 7)
         User.objects.all().delete()
         update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
-        # A shell ProfileUnit will with nothing other than a userid
-        # will be hanging around.
-        self.assertEqual(Solr().search().hits, 1)
+        self.assertEqual(Solr().search().hits, 0)
 
     def test_profileunit_to_dict(self):
         """
@@ -57,7 +58,7 @@ class SolrTests(TestCase):
         expected = {
             "Name_content_type_id": [25],
             "Name_given_name": ["Alice"],
-            "uid": "24#1",
+            "uid": "23##1",
             "ProfileUnits_user_id": 1,
             "Name_user_id": [1],
             "Name_id": [1],
@@ -82,7 +83,7 @@ class SolrTests(TestCase):
         expected = {
             'User_is_superuser': False,
             u'User_id': 1,
-            'uid': '19#1',
+            'uid': '18##1',
             'User_is_active': True,
             'User_user_guid': 'c1cf679c-86f8-4bce-bf1a-ade8341cd3c1',
             'User_is_staff': False, 'User_first_name': u'',
@@ -110,7 +111,7 @@ class SolrTests(TestCase):
 
         """
         expected = {'User_is_superuser': False,
-                    'uid': '36#1',
+                    'uid': '35##1',
                     'User_is_staff': False,
                     'SavedSearch_day_of_month': None,
                     'User_is_disabled': False,
@@ -146,3 +147,47 @@ class SolrTests(TestCase):
         self.assertEqual(expected['uid'], result['uid'])
         self.assertEqual(expected['User_email'], result['User_email'])
         self.assertEqual(expected['SavedSearch_url'], result['SavedSearch_url'])
+
+    def test_address_slabs(self):
+        expected = {
+            'Address_content_type_id': [26],
+            'Address_address_line_two': [u'Apt. 8'],
+            u'Address_id': [1],
+            'uid': '23##1',
+            'ProfileUnits_user_id': 1,
+            'Address_country_code': [u'USA'],
+            'Address_region': [u'USA##IN'],
+            'Address_country_sub_division_code': [u'IN'],
+            'Address_postal_code': [u'12345'],
+            'Address_address_line_one': [u'1234 Thing Road'],
+            'Address_user_id': [1],
+            'Address_label': [u'Home'],
+            'Address_full_location': [u'USA##IN##Indianapolis'],
+            'Address_city_name': [u'Indianapolis']
+        }
+
+        user = UserFactory(email="example@example.com")
+        AddressFactory(user=user)
+        result = profileunits_to_dict(user.id)
+
+        self.assertEqual(expected['Address_country_code'],
+                         result['Address_country_code'])
+        self.assertEqual(expected['Address_region'],
+                         result['Address_region'])
+        self.assertEqual(expected['Address_full_location'],
+                         result['Address_full_location'])
+
+    def test_presave_ignore(self):
+        user = UserFactory(email="test@test.test")
+        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+
+        user.last_login = datetime.datetime(2011, 8, 15, 8, 15, 12, 0, pytz.UTC)
+        user.save()
+
+        self.assertEqual(Update.objects.all().count(), 0)
+
+        user.last_login = datetime.datetime(2013, 8, 15, 8, 15, 12, 0, pytz.UTC)
+        user.email = "test1@test1.test1"
+        user.save()
+
+        self.assertEqual(Update.objects.all().count(), 1)
