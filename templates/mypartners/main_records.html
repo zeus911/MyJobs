@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load common_tags %}
+{% block site-title %}
+    {% with name_obj=user.full_name %}
+        <title>PRM Overview - {{ company.name }}</title>
+        <meta name="title" content="PRM Overview - {{ company.name }}">
+    {% endwith %}
+{% endblock %}
+{% load i18n %}
+
+{% block content %}
+    <a class="btn" href="{% url "partner_edit_record" %}?company={{ company.id }}&partner={{ partner.id }}">New Record</a>
+{% endblock %}

@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 from myprofile.forms import generate_custom_widgets
 from myjobs.forms import BaseUserForm
-from mypartners.models import Contact, Partner
+from mypartners.models import Contact, Partner, ContactRecord
 
 
 class ContactForm(forms.ModelForm):
@@ -200,3 +200,10 @@ def PartnerEmailChoices(partner):
             if contact.email:
                 choices.append((contact.email, contact.name))
     return choices
+
+
+class ContactRecordForm(forms.ModelForm):
+    class Meta:
+        form_name = "Contact Record"
+        model = ContactRecord
+

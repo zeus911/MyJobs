@@ -13,7 +13,7 @@ from mysearches.models import SavedSearch, PartnerSavedSearch
 from mysearches.helpers import url_sort_options, parse_rss
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
-                              NewPartnerForm)
+                              NewPartnerForm, ContactRecordForm)
 from mypartners.models import Partner, Contact
 from mypartners.helpers import prm_worthy, url_extra_params
 
@@ -408,4 +408,24 @@ def partner_view_full_feed(request):
                                'is_pss': is_pss,
                                'partner': partner.id,
                                'company': company.id},
+                              RequestContext(request))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def prm_records(request):
+    company, partner, user = prm_worthy(request)
+    ctx = {'company': company,
+           'partner': partner}
+    return render_to_response('mypartners/main_records.html', ctx,
+                              RequestContext(request))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def prm_edit_records(request):
+    company, partner, user = prm_worthy(request)
+    form = ContactRecordForm()
+    ctx = {'company': company,
+           'partner': partner,
+           'form': form}
+    return render_to_response('mypartners/edit_record.html', ctx,
                               RequestContext(request))
