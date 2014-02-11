@@ -560,6 +560,7 @@ table#row-link-table {
 .inner-table-label {
     background-color: #FFF !important;
     padding: 4px 8px !important;
+    font-weight: bold;
 }
 
 /*New Account initial form*/
