@@ -369,6 +369,7 @@ def partner_savedsearch_save(request):
         instance.feed = form.data['feed']
         if instance.url_extras:
             instance.url, instance.feed = url_extra_params(instance.url,
+                                                           instance.feed,
                                                            instance.url_extras)
         instance.provider = company
         instance.created_by = request.user
