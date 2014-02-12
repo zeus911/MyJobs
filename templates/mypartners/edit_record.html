@@ -9,7 +9,7 @@
 {% block content %}
     <div class="row">
         <div class="span8">
-            <form method="post" action="" id="partner-saved-search-form">
+            <form method="post" action="" id="partner-saved-search-form" enctype="multipart/form-data">
                 {% include "includes/form-error-highlight.html" %}
                 {% csrf_token %}
                 <input type="hidden" name="company" value="{{ company.id }}">

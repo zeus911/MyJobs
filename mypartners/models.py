@@ -109,7 +109,7 @@ class ContactRecord(models.Model):
     notes = models.TextField(max_length=1000,
                              verbose_name='Details, Notes or Transcripts',
                              blank=True)
-    attachment = models.FileField(upload_to="/mypartners/record-attachments/")
+    attachment = models.FileField(upload_to="mypartners/record-attachments/")
 
     def __unicode__(self):
         return "%s Contact Record - %s" % (self.contact_type, self.subject)
