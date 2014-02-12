@@ -49,6 +49,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     """
     user_solr = Solr()
     facet_solr = Solr()
+
     # Add join only if we're filtering.
     if ('company' in request.GET and len(request.GET) > 1) or \
             (len(request.GET) == 0):
@@ -102,6 +103,10 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     user_solr, facet_solr = filter_by_microsite(active_microsites,
                                                           user_solr,
                                                           facet_solr)
+    # Because location faceting requires facet.prefix to work properly, and
+    # facet prefixes apply to all facets, a seperate solr result set has to be
+    # obtained specifically for locations. Because we're still faceting,
+    # minus the facet prefix it is identical to facet_solr.
     loc_solr = facet_solr._clone()
     user_solr, facet_solr, loc_solr, filters = apply_facets_and_filters(request,
                                                                         user_solr,
@@ -109,15 +114,19 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                                                                         loc_solr)
 
     solr_results = user_solr.rows_to_fetch(user_solr.search().hits).search()
-    candidates = dict_to_object(solr_results.docs)
 
     # List of dashboard widgets to display.
     dashboard_widgets = ["candidates", "applied_filters", "filters"]
 
     # Filter out duplicate entries for a user.
+    candidates = sorted(dict_to_object(solr_results.docs),
+                        key=lambda y: y.User_id)
     candidate_list = []
-    for x in groupby(candidates, lambda y: y.User_id):
+    for x in groupby(candidates, key=lambda y: y.User_id):
         candidate_list.append(list(x[1])[0])
+    candidate_list = sorted(candidate_list,
+                            key=lambda y: y.SavedSearch_created_on,
+                            reverse=True)
 
     # Date button highlighting
     if 'today' in request.REQUEST:

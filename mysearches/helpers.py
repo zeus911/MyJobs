@@ -11,6 +11,7 @@ from django.utils.encoding import smart_str, smart_unicode
 
 from myprofile.models import SecondaryEmail
 
+
 def validate_dotjobs_url(search_url):
     """
     Validate (but not parse) a .jobs URL. Nothing is returned if the URL has no
@@ -51,6 +52,7 @@ def validate_dotjobs_url(search_url):
     else:
         return None, None
 
+
 def get_rss_soup(rss_url):
     """
     Turn a URL into a BeatifulSoup object
@@ -64,6 +66,7 @@ def get_rss_soup(rss_url):
 
     rss_feed = urllib2.urlopen(rss_url).read()
     return BeautifulSoup(rss_feed, "html.parser")
+
 
 def parse_rss(feed_url, frequency='W', num_items=20, offset=0):
     """
@@ -110,8 +113,10 @@ def parse_rss(feed_url, frequency='W', num_items=20, offset=0):
 
     return item_list
 
+
 def date_in_range(start, end, x):
     return start <= x <= end
+
 
 def url_sort_options(feed_url, sort_by, frequency=None):
     """
@@ -147,8 +152,10 @@ def url_sort_options(feed_url, sort_by, frequency=None):
 
     return feed_url
 
+
 def get_interval_from_frequency(frequency):
     intervals = {'D': -1,
                  'W': -7,
                  'M': -30}
     return intervals.get(frequency, -1)
+

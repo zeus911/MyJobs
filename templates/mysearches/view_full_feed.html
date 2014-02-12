@@ -74,7 +74,16 @@
             </div>
 
             <div class="pull-right">
+                {% if not is_pss %}
                 <a href="{% url 'edit_search' %}?id={{ search.id }}" class="btn edit">Edit</a>
+                {% else %}
+                {# This check is coming from PRM, view: partner_view_full_feed #}
+                {% if not partner %}
+                <a href="{% url 'edit_search' %}?id={{ search.id }}&pss=True" class="btn edit">Edit</a>
+                {% else %}
+                <a href="{% url 'partner_edit_search' %}?company={{ company }}&partner={{ partner }}&id={{ search.partnersavedsearch.id }}" class="btn edit">Edit</a>
+                {% endif %}
+                {% endif %}
                 <a onclick="history.go(-1); return true;" class="btn">Back</a>
             </div>
             <div class="clear"></div>

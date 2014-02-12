@@ -313,7 +313,30 @@ class MyJobsViewsTests(TestCase):
         for log in EmailLog.objects.all():
             self.assertTrue(log.event in self.events)
 
-    def test_batch_month_old_message_digest_with_searhes(self):
+    def test_batch_with_one_event(self):
+        """
+        Version 1 and Version 2 posts that contain a single event are valid
+        JSON and do not play well with our batch digest method.
+
+        This tests both forms of post to ensure they work.
+        """
+        now = date.today()
+
+        # make_messages makes len(self.events) messages. We only want one
+        self.events = ['open']
+        for api_ver in [2, 3]:
+            messages = self.make_messages(now, api_ver)
+            response = self.client.post(reverse('batch_message_digest'),
+                                        data=messages,
+                                        content_type='text/json',
+                                        HTTP_AUTHORIZATION='BASIC %s' %
+                                            base64.b64encode(
+                                                'accounts%40my.jobs:secret'))
+            self.assertEqual(response.status_code, 200)
+        process_batch_events()
+        self.assertEqual(EmailLog.objects.count(), 2)
+
+    def test_batch_month_old_message_digest_with_searches(self):
         """
         Posting data created a month ago should result in one EmailLog instance
         being created per message and one email being sent per user
