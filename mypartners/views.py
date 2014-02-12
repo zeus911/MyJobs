@@ -286,7 +286,7 @@ def prm_saved_searches(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_edit_saved_search(request):
     company, partner, user = prm_worthy(request)
-    item_id = request.REQUEST.get('id')
+    item_id = request.GET.get('id')
     if item_id:
         instance = get_object_or_404(PartnerSavedSearch, id=item_id)
         form = PartnerSavedSearchForm(partner=partner, instance=instance)
@@ -343,7 +343,7 @@ def partner_savedsearch_save(request):
 
     """
     company, partner, user = prm_worthy(request)
-    item_id = request.REQUEST.get('id')
+    item_id = request.REQUEST.get('id', None)
 
     if item_id:
         item = get_object_or_404(PartnerSavedSearch, id=item_id,
@@ -351,12 +351,18 @@ def partner_savedsearch_save(request):
         form = PartnerSavedSearchForm(instance=item, auto_id=False,
                                       data=request.POST,
                                       partner=partner)
+        print form.errors
         if form.is_valid():
             form.save()
             return HttpResponse(status=200)
         else:
             return HttpResponse(json.dumps(form.errors))
     form = PartnerSavedSearchForm(request.POST, partner=partner)
+
+    # Since the feed is created below, this will always be invalid.
+    if 'feed' in form.errors:
+        del form.errors['feed']
+
     if form.is_valid():
         instance = form.instance
         try:
