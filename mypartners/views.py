@@ -351,7 +351,6 @@ def partner_savedsearch_save(request):
         form = PartnerSavedSearchForm(instance=item, auto_id=False,
                                       data=request.POST,
                                       partner=partner)
-        print form.errors
         if form.is_valid():
             form.save()
             return HttpResponse(status=200)
