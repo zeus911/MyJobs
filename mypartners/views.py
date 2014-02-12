@@ -286,7 +286,7 @@ def prm_saved_searches(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_edit_saved_search(request):
     company, partner, user = prm_worthy(request)
-    item_id = request.GET.get('id')
+    item_id = request.REQUEST.get('id')
     if item_id:
         instance = get_object_or_404(PartnerSavedSearch, id=item_id)
         form = PartnerSavedSearchForm(partner=partner, instance=instance)
