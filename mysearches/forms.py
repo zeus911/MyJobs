@@ -163,7 +163,7 @@ class PartnerSavedSearchForm(ModelForm):
         return cleaned_data
 
 
-class PartnerSubSavedSearchForm(Form):
+class PartnerSubSavedSearchForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(PartnerSubSavedSearchForm, self).__init__(*args, **kwargs)
 
