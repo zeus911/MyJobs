@@ -343,7 +343,7 @@ def partner_savedsearch_save(request):
 
     """
     company, partner, user = prm_worthy(request)
-    item_id = request.REQUEST.get('id')
+    item_id = request.REQUEST.get('id', None)
 
     if item_id:
         item = get_object_or_404(PartnerSavedSearch, id=item_id,
@@ -357,6 +357,11 @@ def partner_savedsearch_save(request):
         else:
             return HttpResponse(json.dumps(form.errors))
     form = PartnerSavedSearchForm(request.POST, partner=partner)
+
+    # Since the feed is created below, this will always be invalid.
+    if 'feed' in form.errors:
+        del form.errors['feed']
+
     if form.is_valid():
         instance = form.instance
         try:
