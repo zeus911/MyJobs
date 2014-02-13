@@ -169,7 +169,7 @@ class PartnerSavedSearchForm(ModelForm):
         is_new = False if self.instance.pk else True
         instance = super(PartnerSavedSearchForm, self).save(commit)
         contact = Contact.objects.get(user=instance.user)
-        partner = contact.partner_set.all()[0]
+        partner = contact.partners_set.all()[0]
         if is_new:
             log_change(instance, self, instance.created_by, partner,
                        contact.email, action_type=ADDITION)
