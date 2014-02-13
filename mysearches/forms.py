@@ -110,9 +110,8 @@ class DigestForm(BaseUserForm):
         model = SavedSearchDigest
 
 
-class PartnerSavedSearchForm(BaseUserForm):
+class PartnerSavedSearchForm(ModelForm):
     def __init__(self, *args, **kwargs):
-
         choices = PartnerEmailChoices(kwargs.pop('partner', None))
         super(PartnerSavedSearchForm, self).__init__(*args, **kwargs)
         self.fields["email"] = ChoiceField(
@@ -125,6 +124,7 @@ class PartnerSavedSearchForm(BaseUserForm):
         self.fields["url_extras"].label = "URL Extras"
 
     feed = URLField(widget=HiddenInput())
+
 
     class Meta:
         model = PartnerSavedSearch
@@ -150,8 +150,20 @@ class PartnerSavedSearchForm(BaseUserForm):
                 raise ValidationError(_("This field is required."))
         return self.cleaned_data['day_of_month']
 
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        url = cleaned_data.get('url')
+        feed = cleaned_data.get('feed')
 
-class PartnerSubSavedSearchForm(BaseUserForm):
+        if not feed:
+            new_feed = validate_dotjobs_url(url)[1]
+            if new_feed:
+                cleaned_data['feed'] = new_feed
+                del self._errors['feed']
+        return cleaned_data
+
+
+class PartnerSubSavedSearchForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(PartnerSubSavedSearchForm, self).__init__(*args, **kwargs)
 
