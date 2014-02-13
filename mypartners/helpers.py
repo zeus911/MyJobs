@@ -1,9 +1,17 @@
+from django.contrib.admin.models import CHANGE
+from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
 from django.http import Http404
+from django.utils.encoding import force_text
+from django.utils.text import get_text_list
+from django.utils.translation import ugettext
+
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
 from mydashboard.models import Company
+from mypartners.models import ContactLogEntry
+from mysearches.models import PartnerSavedSearch
 
 
 def prm_worthy(request):
@@ -38,3 +46,42 @@ def url_extra_params(url, feed, extra_urls):
                        rss_fragment))
 
     return http_url, feed
+
+
+def log_change(obj, form, user, partner, contact_identifier,
+               action_type=CHANGE):
+    change_msg = get_change_message(form) if action_type == CHANGE else ''
+
+    ContactLogEntry.objects.create(
+        action_flag=action_type,
+        change_message=change_msg,
+        contact_identifier=contact_identifier,
+        content_type=ContentType.objects.get_for_model(obj),
+        object_id=obj.pk,
+        object_repr=force_text(obj)[:200],
+        partner=partner,
+        user=user,
+    )
+
+
+def get_change_message(form):
+    change_message = []
+    if form.changed_data:
+        change_message = (ugettext('Changed %s.') %
+                          get_text_list(form.changed_data, ugettext('and')))
+    return change_message or ugettext('No fields changed.')
+
+
+def get_searches_for_partner(partner):
+    company = partner.owner
+    partner_contacts = [p.user for p in partner.contacts.all()]
+    saved_searches = PartnerSavedSearch.objects.filter(
+        provider=company, user__in=partner_contacts).order_by('-created_on')
+    return saved_searches
+
+
+def get_logs_for_partner(partner, content_type_id=None, num_items=10):
+    logs = ContactLogEntry.objects.filter(partner=partner)
+    if content_type_id:
+        logs = logs.filter(content_type_id=content_type_id)
+    return logs.order_by('-action_time')[:num_items]

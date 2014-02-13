@@ -1,4 +1,7 @@
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
+
+from durationfield.db.models.fields.duration import DurationField
 
 from myjobs.models import User
 from mydashboard.models import Company
@@ -90,8 +93,6 @@ class ContactRecord(models.Model):
     contact_type = models.CharField(choices=CONTACT_TYPE_CHOICES,
                                     max_length=12,
                                     verbose_name="Contact Type")
-    contacts = models.ManyToManyField(Contact)
-
     # contact type fields, fields required depending on contact_type. Enforced
     # on the form level.
     contact_email = models.CharField(max_length=255,
@@ -101,9 +102,7 @@ class ContactRecord(models.Model):
                                      max_length=30, blank=True)
     location = models.CharField(verbose_name="Meeting Location", max_length=255,
                                 blank=True)
-    length = models.TimeField(verbose_name="Meeting Length", blank=True,
-                              max_length=255)
-
+    length = models.TimeField(verbose_name="Meeting Length", blank=True)
     subject = models.CharField(verbose_name="Subject or Topic", max_length=255)
     date_time = models.DateTimeField(verbose_name="Date & Time")
     notes = models.TextField(max_length=1000,
@@ -113,3 +112,26 @@ class ContactRecord(models.Model):
 
     def __unicode__(self):
         return "%s Contact Record - %s" % (self.contact_type, self.subject)
+
+
+class ContactLogEntry(models.Model):
+    action_flag = models.PositiveSmallIntegerField('action flag')
+    action_time = models.DateTimeField('action time', auto_now=True)
+    change_message = models.TextField('change message', blank=True)
+    # A value that can meaningfully (email, name) identify the contact.
+    contact_identifier = models.CharField(max_length=255)
+    content_type = models.ForeignKey(ContentType, blank=True, null=True)
+    object_id = models.TextField('object id', blank=True, null=True)
+    object_repr = models.CharField('object repr', max_length=200)
+    partner = models.ForeignKey(Partner, null=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
+    def get_edited_object(self):
+        """
+        Returns the edited object represented by this log entry
+
+        """
+        try:
+            return self.content_type.get_object_for_this_type(pk=self.object_id)
+        except self.content_type.model_class.DoesNotExist:
+            return None

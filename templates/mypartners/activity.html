@@ -1,0 +1,10 @@
+<div class="activity-feed-item">
+    {{ activity.action_time }}<br/>
+        {% if action_type == 'deleted' %}
+            {% if content_type == 'partner saved search' %}
+            {{ user_name }} {{ action_type }} a saved search for {{ activity.contact_identifier }}
+        {% endif %}
+    {% elif activity_object %}
+        {{ user_name }} {{ action_type }} something for {{ activity.contact_identifier }}
+    {% endif %}
+</div>

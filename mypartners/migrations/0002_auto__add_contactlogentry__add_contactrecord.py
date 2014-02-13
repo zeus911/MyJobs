@@ -8,6 +8,21 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding model 'ContactLogEntry'
+        db.create_table(u'mypartners_contactlogentry', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('action_flag', self.gf('django.db.models.fields.PositiveSmallIntegerField')()),
+            ('action_time', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
+            ('change_message', self.gf('django.db.models.fields.TextField')(blank=True)),
+            ('contact_identifier', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('content_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['contenttypes.ContentType'], null=True, blank=True)),
+            ('object_id', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
+            ('object_repr', self.gf('django.db.models.fields.CharField')(max_length=200)),
+            ('partner', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.Partner'], null=True, on_delete=models.SET_NULL)),
+            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'], null=True, on_delete=models.SET_NULL)),
+        ))
+        db.send_create_signal(u'mypartners', ['ContactLogEntry'])
+
         # Adding model 'ContactRecord'
         db.create_table(u'mypartners_contactrecord', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -15,7 +30,7 @@ class Migration(SchemaMigration):
             ('contact_email', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('contact_phone', self.gf('django.db.models.fields.CharField')(max_length=30, blank=True)),
             ('location', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('length', self.gf('django.db.models.fields.TimeField')(max_length=255, blank=True)),
+            ('length', self.gf('django.db.models.fields.TimeField')(blank=True)),
             ('subject', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('date_time', self.gf('django.db.models.fields.DateTimeField')()),
             ('notes', self.gf('django.db.models.fields.TextField')(max_length=1000, blank=True)),
@@ -23,21 +38,13 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'mypartners', ['ContactRecord'])
 
-        # Adding M2M table for field contacts on 'ContactRecord'
-        db.create_table(u'mypartners_contactrecord_contacts', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('contactrecord', models.ForeignKey(orm[u'mypartners.contactrecord'], null=False)),
-            ('contact', models.ForeignKey(orm[u'mypartners.contact'], null=False))
-        ))
-        db.create_unique(u'mypartners_contactrecord_contacts', ['contactrecord_id', 'contact_id'])
-
 
     def backwards(self, orm):
+        # Deleting model 'ContactLogEntry'
+        db.delete_table(u'mypartners_contactlogentry')
+
         # Deleting model 'ContactRecord'
         db.delete_table(u'mypartners_contactrecord')
-
-        # Removing M2M table for field contacts on 'ContactRecord'
-        db.delete_table('mypartners_contactrecord_contacts')
 
 
     models = {
@@ -113,16 +120,28 @@ class Migration(SchemaMigration):
             'state': ('django.db.models.fields.CharField', [], {'max_length': '5', 'blank': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'null': 'True', 'on_delete': 'models.SET_NULL'})
         },
+        u'mypartners.contactlogentry': {
+            'Meta': {'object_name': 'ContactLogEntry'},
+            'action_flag': ('django.db.models.fields.PositiveSmallIntegerField', [], {}),
+            'action_time': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'change_message': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'contact_identifier': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']", 'null': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'object_id': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'object_repr': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'partner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Partner']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'null': 'True', 'on_delete': 'models.SET_NULL'})
+        },
         u'mypartners.contactrecord': {
             'Meta': {'object_name': 'ContactRecord'},
             'attachment': ('django.db.models.fields.files.FileField', [], {'max_length': '100'}),
             'contact_email': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'contact_phone': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'contact_type': ('django.db.models.fields.CharField', [], {'max_length': '12'}),
-            'contacts': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['mypartners.Contact']", 'symmetrical': 'False'}),
             'date_time': ('django.db.models.fields.DateTimeField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'length': ('django.db.models.fields.TimeField', [], {'max_length': '255', 'blank': 'True'}),
+            'length': ('django.db.models.fields.TimeField', [], {'blank': 'True'}),
             'location': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'notes': ('django.db.models.fields.TextField', [], {'max_length': '1000', 'blank': 'True'}),
             'subject': ('django.db.models.fields.CharField', [], {'max_length': '255'})

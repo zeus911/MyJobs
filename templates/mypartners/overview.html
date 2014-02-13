@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load common_tags %}
+{% load activity_tags %}
 {% block site-title %}
     {% with name_obj=user.full_name %}
         <title>PRM Overview - {{ company.name }}</title>
@@ -22,6 +23,9 @@
                 <h4>Most Recent Activity</h4>
                 <div class="formBox-content">
                     {% if recent_activity %}
+                        {% for activity in recent_activity %}
+                            {% get_activity_block activity %}
+                        {% endfor %}
                     {% else %}
 
                     No Recent Activity

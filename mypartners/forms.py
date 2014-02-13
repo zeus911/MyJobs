@@ -1,4 +1,5 @@
 from django import forms
+
 from collections import OrderedDict
 
 from myprofile.forms import generate_custom_widgets
@@ -201,9 +202,36 @@ def PartnerEmailChoices(partner):
                 choices.append((contact.email, contact.name))
     return choices
 
+def PartnerChoices(partner):
+    choices = [(None, '----------')]
+    contacts = partner.contacts.all()
+    for contact in contacts:
+        if contact.user:
+            choices.append((contact.user.email, contact.name))
+        else:
+            if contact.email:
+                choices.append((contact.email, contact.name))
+    return choices
+
 
 class ContactRecordForm(forms.ModelForm):
+    contact = forms.ChoiceField()
+
     class Meta:
         form_name = "Contact Record"
+        fields = ('contact_type', 'contact',
+                  'contact_email', 'contact_phone', 'location',
+                  'length', 'subject', 'date_time', 'notes',
+                  'attachment')
         model = ContactRecord
+
+    def __init__(self, *args, **kwargs):
+        partner = kwargs.pop('partner')
+        choices = [(None, '----------')]
+        [choices.append((c.id, c.name)) for c in partner.contacts.all()]
+        super(ContactRecordForm, self).__init__(*args, **kwargs)
+        self.fields["contact"] = forms.ChoiceField(
+            widget=forms.Select(), choices=choices,
+            initial=choices[0][0], label="Contacts")
+        self.fields['date_time'].widget = forms.SplitDateTimeWidget()
 

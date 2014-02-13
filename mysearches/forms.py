@@ -1,3 +1,4 @@
+from django.contrib.admin.models import ADDITION
 from django.forms import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
@@ -8,6 +9,8 @@ from mysearches.helpers import *
 from mysearches.models import (SavedSearch, SavedSearchDigest,
                                PartnerSavedSearch)
 from mypartners.forms import PartnerEmailChoices
+from mypartners.models import Contact
+from mypartners.helpers import log_change
 
 
 class HorizontalRadioRenderer(RadioSelect.renderer):
@@ -161,6 +164,20 @@ class PartnerSavedSearchForm(ModelForm):
                 cleaned_data['feed'] = new_feed
                 del self._errors['feed']
         return cleaned_data
+
+    def save(self, commit=True):
+        is_new = False if self.instance.pk else True
+        instance = super(PartnerSavedSearchForm, self).save(commit)
+        contact = Contact.objects.get(user=instance.user)
+        partner = contact.partner_set.all()[0]
+        if is_new:
+            log_change(instance, self, instance.created_by, partner,
+                       contact.email, action_type=ADDITION)
+        else:
+            log_change(instance, self, instance.created_by, partner,
+                       contact.email)
+
+        return instance
 
 
 class PartnerSubSavedSearchForm(ModelForm):
