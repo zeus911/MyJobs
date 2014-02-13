@@ -202,17 +202,6 @@ def PartnerEmailChoices(partner):
                 choices.append((contact.email, contact.name))
     return choices
 
-def PartnerChoices(partner):
-    choices = [(None, '----------')]
-    contacts = partner.contacts.all()
-    for contact in contacts:
-        if contact.user:
-            choices.append((contact.user.email, contact.name))
-        else:
-            if contact.email:
-                choices.append((contact.email, contact.name))
-    return choices
-
 
 class ContactRecordForm(forms.ModelForm):
     contact = forms.ChoiceField()

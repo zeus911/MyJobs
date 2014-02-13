@@ -1,8 +1,6 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
-from durationfield.db.models.fields.duration import DurationField
-
 from myjobs.models import User
 from mydashboard.models import Company
 
