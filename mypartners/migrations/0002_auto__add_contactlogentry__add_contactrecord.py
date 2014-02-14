@@ -26,6 +26,7 @@ class Migration(SchemaMigration):
         # Adding model 'ContactRecord'
         db.create_table(u'mypartners_contactrecord', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('partner', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.Partner'])),
             ('contact_type', self.gf('django.db.models.fields.CharField')(max_length=12)),
             ('contact_email', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('contact_phone', self.gf('django.db.models.fields.CharField')(max_length=30, blank=True)),
@@ -144,6 +145,7 @@ class Migration(SchemaMigration):
             'length': ('django.db.models.fields.TimeField', [], {'blank': 'True'}),
             'location': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'notes': ('django.db.models.fields.TextField', [], {'max_length': '1000', 'blank': 'True'}),
+            'partner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Partner']"}),
             'subject': ('django.db.models.fields.CharField', [], {'max_length': '255'})
         },
         u'mypartners.partner': {

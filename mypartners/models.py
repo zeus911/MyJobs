@@ -88,6 +88,7 @@ class ContactRecord(models.Model):
     CONTACT_TYPE_CHOICES = (('email', 'Email'),
                             ('phone', 'Phone'),
                             ('facetoface', 'Face to Face'))
+    partner = models.ForeignKey(Partner)
     contact_type = models.CharField(choices=CONTACT_TYPE_CHOICES,
                                     max_length=12,
                                     verbose_name="Contact Type")

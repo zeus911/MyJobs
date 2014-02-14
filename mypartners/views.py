@@ -447,3 +447,25 @@ def prm_edit_records(request):
 
     return render_to_response('mypartners/edit_record.html', ctx,
                               RequestContext(request))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def get_contact_information(request):
+    company, partner, user = prm_worthy(request)
+    request.REQUEST.get('id')
+    try:
+        contact = Contact.objects.get(pk=id)
+    except Contact.DoesNotExist:
+        data = {'error': 'contact does not exist'}
+        return HttpResponse(json.dumps(data))
+
+    if partner not in contact.partners_set.all():
+        data = {'error': 'permission denied'}
+        return HttpResponse(json.dumps(data))
+
+    data = {
+        'email': contact.email,
+        'telephone': contact.telephone,
+    }
+
+    return HttpResponse(json.dumps(data))
