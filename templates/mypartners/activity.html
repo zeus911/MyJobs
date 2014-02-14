@@ -5,6 +5,8 @@
             {{ user_name }} {{ action_type }} a saved search for {{ activity.contact_identifier }}
         {% endif %}
     {% elif activity_object %}
-        {{ user_name }} {{ action_type }} something for {{ activity.contact_identifier }}
+        {{ user_name }} {{ action_type }} {{ content_type }} for {{ activity.contact_identifier }}
+    {% else %}
+        {{ user_name}} {{ action_type }} {{ activity.object_repr }}
     {% endif %}
 </div>

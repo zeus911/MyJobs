@@ -211,7 +211,7 @@ class ContactRecordForm(forms.ModelForm):
         fields = ('contact_type', 'contact',
                   'contact_email', 'contact_phone', 'location',
                   'length', 'subject', 'date_time', 'notes',
-                  'attachment')
+                  'attachment', 'partner')
         model = ContactRecord
 
     def __init__(self, *args, **kwargs):
@@ -223,4 +223,7 @@ class ContactRecordForm(forms.ModelForm):
             widget=forms.Select(), choices=choices,
             initial=choices[0][0], label="Contacts")
         self.fields['date_time'].widget = forms.SplitDateTimeWidget()
+        self.fields['partner'] = forms.CharField(initial=partner,
+                                                 widget=forms.HiddenInput(),
+                                                 label="partner")
 

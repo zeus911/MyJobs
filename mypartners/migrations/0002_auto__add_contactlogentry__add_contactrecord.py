@@ -35,7 +35,7 @@ class Migration(SchemaMigration):
             ('subject', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('date_time', self.gf('django.db.models.fields.DateTimeField')()),
             ('notes', self.gf('django.db.models.fields.TextField')(max_length=1000, blank=True)),
-            ('attachment', self.gf('django.db.models.fields.files.FileField')(max_length=100)),
+            ('attachment', self.gf('django.db.models.fields.files.FileField')(max_length=100, null=True, blank=True)),
         ))
         db.send_create_signal(u'mypartners', ['ContactRecord'])
 
@@ -136,7 +136,7 @@ class Migration(SchemaMigration):
         },
         u'mypartners.contactrecord': {
             'Meta': {'object_name': 'ContactRecord'},
-            'attachment': ('django.db.models.fields.files.FileField', [], {'max_length': '100'}),
+            'attachment': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'contact_email': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'contact_phone': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'contact_type': ('django.db.models.fields.CharField', [], {'max_length': '12'}),
