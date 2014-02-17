@@ -9,5 +9,63 @@
 {% load i18n %}
 
 {% block content %}
-    <a class="btn" href="{% url "partner_edit_record" %}?company={{ company.id }}&partner={{ partner.id }}">New Record</a>
+    <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
+    <div class="row">
+        <div class="span12 prm-header">
+            <span>Communication Records</span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span8">
+            <a class="btn" href="{% url "partner_edit_record" %}?company={{ company.id }}&partner={{ partner.id }}" style="margin-bottom: 20px;">New Record</a>
+            <div class="formBox no-padding">
+                <h4>View Records</h4>
+                <div class="formBox-content">
+                    Contact: <br>
+                    Record Type:
+                </div>
+                <table class="table table-bordered table-striped">
+                    {% if records %}
+                    <thead>
+                        <tr>
+                            <td>Date/Time</td>
+                            <td>Type</td>
+                            <td>Details</td>
+                        </tr>
+                    </thead>
+                    {% endif %}
+                    <tbody>
+                        {% if records %}
+                        {% for record in records %}
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan=3>No records available.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="span4">
+            <div class="tip-box">
+                <h4>Most Recent Activity</h4>
+                <div class="tip-content">
+
+                </div>
+                <div class="tip-footer">
+
+                </div>
+            </div>
+            <div class="tip-box">
+                <h4>Tips</h4>
+                <div class="tip-content">
+                    Tips go here.
+                </div>
+                <div class="tip-footer">
+                    <a class="btn-link" href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview Page</a>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

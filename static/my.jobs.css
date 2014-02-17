@@ -256,7 +256,8 @@ h1 > small > a:hover {
 }
 
 .info-box + .info-box,
-.tip-box + .formBox {
+.tip-box + .formBox,
+.tip-box + .tip-box {
     margin-top: 20px;
 }
 
