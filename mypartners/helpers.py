@@ -10,7 +10,7 @@ from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
 from mydashboard.models import Company
-from mypartners.models import ContactLogEntry
+from mypartners.models import ContactLogEntry, ContactRecord
 from mysearches.models import PartnerSavedSearch
 
 
@@ -85,3 +85,8 @@ def get_logs_for_partner(partner, content_type_id=None, num_items=10):
     if content_type_id:
         logs = logs.filter(content_type_id=content_type_id)
     return logs.order_by('-action_time')[:num_items]
+
+
+def get_contact_records_for_partner(partner, contact=None, record_type=None):
+    records = ContactRecord.objects.filter(partner=partner)
+    return records

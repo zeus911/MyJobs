@@ -1,10 +1,14 @@
 from django import forms
+from django.contrib.admin.models import ADDITION
+from django.forms.util import ErrorList
 
 from collections import OrderedDict
 
 from myprofile.forms import generate_custom_widgets
 from myjobs.forms import BaseUserForm
 from mypartners.models import Contact, Partner, ContactRecord
+from mypartners.helpers import log_change
+from mypartners.widgets import SplitDateTimeDropDownField, TimeDropDownField
 
 
 class ContactForm(forms.ModelForm):
@@ -204,14 +208,15 @@ def PartnerEmailChoices(partner):
 
 
 class ContactRecordForm(forms.ModelForm):
-    contact = forms.ChoiceField()
+    date_time = SplitDateTimeDropDownField()
+    length = TimeDropDownField()
 
     class Meta:
         form_name = "Contact Record"
         fields = ('contact_type', 'contact',
                   'contact_email', 'contact_phone', 'location',
                   'length', 'subject', 'date_time', 'notes',
-                  'attachment', 'partner')
+                  'attachment')
         model = ContactRecord
 
     def __init__(self, *args, **kwargs):
@@ -219,11 +224,40 @@ class ContactRecordForm(forms.ModelForm):
         choices = [(None, '----------')]
         [choices.append((c.id, c.name)) for c in partner.contacts.all()]
         super(ContactRecordForm, self).__init__(*args, **kwargs)
-        self.fields["contact"] = forms.ChoiceField(
+        self.fields["contact_name"] = forms.ChoiceField(
             widget=forms.Select(), choices=choices,
             initial=choices[0][0], label="Contacts")
-        self.fields['date_time'].widget = forms.SplitDateTimeWidget()
-        self.fields['partner'] = forms.CharField(initial=partner,
-                                                 widget=forms.HiddenInput(),
-                                                 label="partner")
+
+    def clean(self):
+        contact_type = self.cleaned_data.get('contact_type', None)
+        if contact_type == 'email' and not self.cleaned_data['contact_email']:
+            self._errors['contact_email'] = ErrorList([""])
+        elif contact_type == 'phone' and not self.cleaned_data['contact_phone']:
+            self._errors['contact_phone'] = ErrorList([""])
+        elif contact_type == 'facetoface' and not self.cleaned_data['location']:
+            self._errors['location'] = ErrorList([""])
+        return self.cleaned_data
+
+    def save(self, user, partner, commit=True):
+        is_new = False if self.instance.pk else True
+        self.instance.partner = partner
+        instance = super(ContactRecordForm, self).save(commit)
+        try:
+            identifier = instance.contact_email if instance.contact_email \
+                else instance.contact_phone if instance.contact_phone \
+                else Contact.objects.get(pk=self.cleaned_data['contact'],
+                                         partners_set=partner).name
+        except Contact.DoesNotExist:
+            # This should only happen if the user is editing the ids in the drop
+            # down list of contacts. Since it's too late for a validation error
+            # the user can deal with the logging issues they created.
+            identifier = "unknown contact"
+
+        if is_new:
+            log_change(instance, self, user, partner, identifier,
+                       action_type=ADDITION)
+        else:
+            log_change(instance, self, user, partner, identifier)
+        return instance
+
 
