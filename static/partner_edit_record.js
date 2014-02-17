@@ -70,8 +70,8 @@ $(function() {
                 type: 'POST',
                 url: '/prm/view/records/contact_info',
                 success: function(data) {
-                    console.log(data);
-                    if (data != "") {
+                    json = $(data).parseJSON();
+                    if (json.hasOwnProperty('error')) {
                     } else {
 
                     }
