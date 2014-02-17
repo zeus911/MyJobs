@@ -26,8 +26,10 @@ class Migration(SchemaMigration):
         # Adding model 'ContactRecord'
         db.create_table(u'mypartners_contactrecord', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('created_on', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('partner', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.Partner'])),
             ('contact_type', self.gf('django.db.models.fields.CharField')(max_length=12)),
+            ('contact_name', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('contact_email', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('contact_phone', self.gf('django.db.models.fields.CharField')(max_length=30, blank=True)),
             ('location', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
@@ -138,8 +140,10 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'ContactRecord'},
             'attachment': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'contact_email': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'contact_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'contact_phone': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'contact_type': ('django.db.models.fields.CharField', [], {'max_length': '12'}),
+            'created_on': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'date_time': ('django.db.models.fields.DateTimeField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'length': ('django.db.models.fields.TimeField', [], {'null': 'True', 'blank': 'True'}),

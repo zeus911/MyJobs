@@ -440,16 +440,25 @@ def prm_edit_records(request):
     }
 
     if request.method == 'POST':
-        form = ContactRecordForm(request.POST, request.FILES, partner=partner)
+        if record_id:
+            try:
+                instance = ContactRecord.objects.get(pk=record_id)
+            except ContactRecord.DoesNotExist:
+                instance = None
+        form = ContactRecordForm(request.POST, request.FILES, partner=partner,
+                                 instance=instance)
         if form.is_valid():
             form.save(user, partner)
-            return redirect('/prm/view/records?company=%s&partner=%s' % (company.pk,
-                                                                     partner.pk))
+            return redirect('/prm/view/records?company=%s&partner=%s' %
+                            (company.pk, partner.pk))
         else:
             ctx['form'] = form
     else:
         if record_id:
-            instance = ContactRecord.objects.get_or_create(pk=record_id)
+            try:
+                instance = ContactRecord.objects.get(pk=record_id)
+            except ContactRecord.DoesNotExist:
+                instance = None
             form = ContactRecordForm(partner=partner, instance=instance)
         else:
             form = ContactRecordForm(partner=partner)

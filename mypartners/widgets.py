@@ -23,9 +23,9 @@ class SplitDateTimeDropDownWidget(MultiWidget):
     def decompress(self, value):
         if value:
             date = datetime.strftime(value, '%d-%b-%Y')
-            hour = datetime.stftime(value, '%I')
+            hour = datetime.strftime(value, '%I')
             minutes = datetime.strftime(value, '%M')
-            am_pm = datetime.stftime(value, '%p')
+            am_pm = datetime.strftime(value, '%p')
             return [date, hour, minutes, am_pm]
         return [None, None, None, None]
 

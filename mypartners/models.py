@@ -88,10 +88,13 @@ class ContactRecord(models.Model):
     CONTACT_TYPE_CHOICES = (('email', 'Email'),
                             ('phone', 'Phone'),
                             ('facetoface', 'Face to Face'))
+    created_on = models.DateTimeField(auto_now=True)
     partner = models.ForeignKey(Partner)
     contact_type = models.CharField(choices=CONTACT_TYPE_CHOICES,
                                     max_length=12,
                                     verbose_name="Contact Type")
+    contact_name = models.CharField(max_length=255, verbose_name='Contact',
+                                    blank=True)
     # contact type fields, fields required depending on contact_type. Enforced
     # on the form level.
     contact_email = models.CharField(max_length=255,
