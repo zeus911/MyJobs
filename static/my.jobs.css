@@ -494,6 +494,10 @@ table#row-link-table {
     color: #FFF !important;  
 }
 
+.btn {
+    border-color: #c5c5c5 !important;
+}
+
 .accordion-body {
     background-color: rgb(250, 250, 250);   
 }
@@ -2882,4 +2886,21 @@ body.modal-open {
 #facet-term{
     display:table-cell;
     vertical-align: top;
+}
+
+/* PRM contact form */
+#id_length_0, #id_length_1 {
+    width: 55px;
+}
+
+#id_date_time_0 {
+    width: 85px;
+}
+
+#id_date_time_1, #id_date_time_2 {
+    width: 53px;
+}
+
+#id_date_time_3 {
+    width: 57px;
 }

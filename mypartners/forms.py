@@ -32,14 +32,21 @@ class ContactForm(forms.ModelForm):
             attrs={'rows': 5, 'cols': 24,
                    'placeholder': 'Notes About This Contact'})
 
-    def save(self, commit=True):
+    def save(self, user, commit=True):
+        is_new = False if self.instance.pk else True
         partner = Partner.objects.get(id=self.data['partner'])
         contact = self.instance
         contact.save()
 
         partner.add_contact(contact)
         partner.save()
+        if is_new:
+            log_change(contact, self, user, partner, contact.name,
+                       action_type=ADDITION)
+        else:
+            log_change(contact, self, user, partner, contact.name)
         return
+
 
 
 class PartnerInitialForm(BaseUserForm):
@@ -64,7 +71,8 @@ class PartnerInitialForm(BaseUserForm):
         fields = ['name', 'uri']
         widgets = generate_custom_widgets(model)
 
-    def save(self, commit=True):
+    def save(self, user, commit=True):
+        is_new = False if self.instance.pk else True
         company_id = self.data['company_id']
         self.instance.owner_id = company_id
 
@@ -81,6 +89,14 @@ class PartnerInitialForm(BaseUserForm):
             self.instance.primary_contact = contact
             self.instance.save()
             self.instance.add_contact(contact)
+
+        if is_new:
+            log_change(self.instance, self, user, self.instance,
+                       self.instance.name, action_type=ADDITION)
+
+        else:
+            log_change(self.instance, self, user, self.instance,
+                       self.instance.name)
 
         self.instance.save()
 
@@ -124,7 +140,8 @@ class NewPartnerForm(BaseUserForm):
             attrs={'rows': 5, 'cols': 24,
                    'placeholder': 'Notes About This Contact'})
 
-    def save(self, commit=True):
+    def save(self, user, commit=True):
+        is_new = False if self.instance.pk else True
         company_id = self.data['company_id']
         owner_id = company_id
         if self.data['partnerurl']:
@@ -151,8 +168,16 @@ class NewPartnerForm(BaseUserForm):
             partner.add_contact(self.instance)
             partner.primary_contact_id = self.instance.id
             partner.save()
-        else:
-            return
+
+            if is_new:
+                log_change(self.instance, self, user, partner,
+                           self.instance.name, action_type=ADDITION)
+
+            else:
+                log_change(self.instance, self, user, partner,
+                           self.instance.name)
+
+
 
     def remove_partner_data(self, dictionary, keys):
         new_dictionary = dict(dictionary)
@@ -190,9 +215,17 @@ class PartnerForm(BaseUserForm):
         fields = ['name', 'uri']
         widgets = generate_custom_widgets(model)
 
-    def save(self, commit=True):
+    def save(self, user, commit=True):
+        is_new = False if self.instance.pk else True
         self.instance.primary_contact_id = self.data['primary_contact']
         self.instance.save()
+        if is_new:
+            log_change(self.instance, self, user, self.instance,
+                       self.instance.name, action_type=ADDITION)
+
+        else:
+            log_change(self.instance, self, user, self.instance,
+                       self.instance.name)
         return
 
 
