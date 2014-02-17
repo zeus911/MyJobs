@@ -2,7 +2,7 @@ import json
 
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -420,10 +420,12 @@ def partner_view_full_feed(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_records(request):
     company, partner, user = prm_worthy(request)
-    contact_records = []
-    ctx = {'company': company,
-           'partner': partner,
-           'contact_records': get_contact_records_for_partner(partner)}
+    contact_records = get_contact_records_for_partner(partner)
+    ctx = {
+        'company': company,
+        'partner': partner,
+        'records': contact_records,
+    }
     return render_to_response('mypartners/main_records.html', ctx,
                               RequestContext(request))
 
@@ -441,8 +443,8 @@ def prm_edit_records(request):
         form = ContactRecordForm(request.POST, request.FILES, partner=partner)
         if form.is_valid():
             form.save(user, partner)
-            return render_to_response('mypartners/main_records.html', ctx,
-                                      RequestContext(request))
+            return redirect('/prm/view/records?company=%s&partner=%s' % (company.pk,
+                                                                     partner.pk))
         else:
             ctx['form'] = form
     else:

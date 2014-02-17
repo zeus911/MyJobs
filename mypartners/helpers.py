@@ -87,5 +87,6 @@ def get_logs_for_partner(partner, content_type_id=None, num_items=10):
     return logs.order_by('-action_time')[:num_items]
 
 
-def get_contact_records_for_partner(partner):
-    return ContactRecord.objects.filter(partner=partner)
+def get_contact_records_for_partner(partner, num_items=10):
+    records = ContactRecord.objects.filter(partner=partner)
+    return records[:num_items]

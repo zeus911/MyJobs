@@ -114,6 +114,27 @@ class ContactRecord(models.Model):
     def __unicode__(self):
         return "%s Contact Record - %s" % (self.contact_type, self.subject)
 
+    def get_record_description(self):
+        """
+        Generates a human readable description of the contact
+        record.
+
+        """
+
+        user = ContactLogEntry.objects.filter(object_id=self.pk)
+        user = user.order_by('-action_time')[:1][0].user
+        if user:
+            user = user.get_full_name()
+        else:
+            user = "An employee"
+
+        if self.contact_type == 'facetoface':
+            return "%s had a meeting at %s" % (user, self.location)
+        elif self.contact_type == 'phone':
+            return "%s called %s" % (user, self.contact_phone)
+        else:
+            return "%s emailed %s" % (user, self.contact_email)
+
 
 class ContactLogEntry(models.Model):
     action_flag = models.PositiveSmallIntegerField('action flag')
@@ -132,7 +153,8 @@ class ContactLogEntry(models.Model):
         Returns the edited object represented by this log entry
 
         """
+        print self.content_type
         try:
             return self.content_type.get_object_for_this_type(pk=self.object_id)
-        except self.content_type.model_class.DoesNotExist:
+        except self.content_type.model_class().DoesNotExist:
             return None

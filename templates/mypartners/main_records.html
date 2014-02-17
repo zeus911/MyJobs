@@ -31,12 +31,23 @@
                             <td>Date/Time</td>
                             <td>Type</td>
                             <td>Details</td>
+                            <td></td>
                         </tr>
                     </thead>
                     {% endif %}
                     <tbody>
                         {% if records %}
                         {% for record in records %}
+                            <tr>
+                                <td>{{ record.date_time }}</td>
+                                <td>{{ record.get_record_description }}</td>
+                                <td>
+                                    Subject: {{ record.subject }}<br/>
+                                    {{ record.notes }}
+                                </td>
+                                <td>
+                                <a href="/prm/view/records/edit?company={{ company.id }}&partner={{ partner.id }}&id={{ record.id }}">Edit</a>
+                            </tr>
                         {% endfor %}
                         {% else %}
                         <tr>
