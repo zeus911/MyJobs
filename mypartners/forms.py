@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.admin.models import ADDITION
+from django.core.exceptions import ValidationError
 from django.forms.util import ErrorList
 
 from collections import OrderedDict
@@ -213,7 +214,7 @@ class ContactRecordForm(forms.ModelForm):
 
     class Meta:
         form_name = "Contact Record"
-        fields = ('contact_type', 'contact',
+        fields = ('contact_type', 'contact_name',
                   'contact_email', 'contact_phone', 'location',
                   'length', 'subject', 'date_time', 'notes',
                   'attachment')
@@ -238,6 +239,15 @@ class ContactRecordForm(forms.ModelForm):
             self._errors['location'] = ErrorList([""])
         return self.cleaned_data
 
+    def clean_contact_name(self):
+        contact_id = self.cleaned_data['contact_name']
+        if contact_id == 'None' or not contact_id:
+            raise ValidationError('required')
+        try:
+            return Contact.objects.get(id=int(contact_id))
+        except Contact.DoesNotExist:
+            raise ValidationError("Contact does not exist")
+
     def save(self, user, partner, commit=True):
         is_new = False if self.instance.pk else True
         self.instance.partner = partner
@@ -245,8 +255,7 @@ class ContactRecordForm(forms.ModelForm):
         try:
             identifier = instance.contact_email if instance.contact_email \
                 else instance.contact_phone if instance.contact_phone \
-                else Contact.objects.get(pk=self.cleaned_data['contact'],
-                                         partners_set=partner).name
+                else instance.contact_name
         except Contact.DoesNotExist:
             # This should only happen if the user is editing the ids in the drop
             # down list of contacts. Since it's too late for a validation error
