@@ -221,7 +221,6 @@ $(function() {
                     } else {
                         // form was a json-encoded list of errors and error messages
                         var json = jQuery.parseJSON(data);
-                        console.log(json);
 
                         // remove color from labels of current errors
                         $('[class*=required]').parent().prev().removeClass('error-text');

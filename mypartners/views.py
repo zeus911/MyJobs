@@ -420,6 +420,7 @@ def partner_view_full_feed(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_records(request):
     company, partner, user = prm_worthy(request)
+    contact_records = []
     ctx = {'company': company,
            'partner': partner,
            'contact_records': get_contact_records_for_partner(partner)}
@@ -459,9 +460,9 @@ def prm_edit_records(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def get_contact_information(request):
     company, partner, user = prm_worthy(request)
-    request.REQUEST.get('id')
+    contact_id = request.REQUEST.get('contact')
     try:
-        contact = Contact.objects.get(pk=id)
+        contact = Contact.objects.get(pk=contact_id)
     except Contact.DoesNotExist:
         data = {'error': 'contact does not exist'}
         return HttpResponse(json.dumps(data))
@@ -470,9 +471,16 @@ def get_contact_information(request):
         data = {'error': 'permission denied'}
         return HttpResponse(json.dumps(data))
 
-    data = {
-        'email': contact.email,
-        'telephone': contact.telephone,
-    }
+    if hasattr(contact, 'email'):
+        if hasattr(contact, 'telephone'):
+            data = {'email': contact.email,
+                    'telephone': contact.telephone}
+        else:
+            data = {'email': contact.email}
+    else:
+        if hasattr(contact, 'telephone'):
+            data = {'telephone': contact.telephone}
+        else:
+            data = {}
 
     return HttpResponse(json.dumps(data))
