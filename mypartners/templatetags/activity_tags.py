@@ -5,16 +5,15 @@ from django.utils.encoding import force_text
 register = Library()
 
 
-@register.inclusion_tag('mypartners/activity.html', takes_context=True)
-def get_activity_block(context, activity):
+@register.inclusion_tag('mypartners/activity.html')
+def get_activity_block(activity):
     activity_types = {
         1: 'added',
         2: 'updated',
         3: 'deleted',
     }
 
-    user_name = 'You' if context['request'].user == activity.user else \
-        activity.user.get_full_name()
+    user_name = activity.user.get_full_name()
     return {
         'activity': activity,
         'action_type': activity_types[activity.action_flag],

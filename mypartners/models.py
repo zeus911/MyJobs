@@ -156,7 +156,6 @@ class ContactLogEntry(models.Model):
         Returns the edited object represented by this log entry
 
         """
-        print self.content_type
         try:
             return self.content_type.get_object_for_this_type(pk=self.object_id)
         except self.content_type.model_class().DoesNotExist:

@@ -1,5 +1,6 @@
 import json
 
+from django.contrib.admin.models import DELETION
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import render_to_response, get_object_or_404, redirect
@@ -15,7 +16,7 @@ from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm, ContactRecordForm)
 from mypartners.models import Partner, Contact, ContactRecord
-from mypartners.helpers import (prm_worthy, url_extra_params,
+from mypartners.helpers import (prm_worthy, url_extra_params, log_change,
                                 get_searches_for_partner, get_logs_for_partner,
                                 get_contact_records_for_partner)
 
@@ -149,7 +150,7 @@ def save_init_partner_form(request):
     else:
         form = PartnerInitialForm(user=request.user, data=request.POST)
     if form.is_valid():
-        form.save()
+        form.save(request.user)
         return HttpResponse(status=200)
     else:
         return HttpResponse(json.dumps(form.errors))
@@ -186,13 +187,13 @@ def save_item(request):
                 form = ContactForm(instance=item, auto_id=False,
                                    data=request.POST)
                 if form.is_valid():
-                    form.save()
+                    form.save(request.user)
                     return HttpResponse(status=200)
                 else:
                     return HttpResponse(json.dumps(form.errors))
         form = ContactForm(request.POST)
         if form.is_valid():
-            form.save()
+            form.save(request.user)
             return HttpResponse(status=200)
         else:
             return HttpResponse(json.dumps(form.errors))
@@ -206,7 +207,7 @@ def save_item(request):
         partner = get_object_or_404(company.partner_set.all(), id=partner_id)
         form = PartnerForm(instance=partner, auto_id=False, data=request.POST)
         if form.is_valid():
-            form.save()
+            form.save(request.user)
             return HttpResponse(status=200)
         else:
             return HttpResponse(json.dumps(form.errors))
@@ -233,7 +234,10 @@ def delete_prm_item(request):
         content_id = int(content_id)
 
     if content_id == ContentType.objects.get_for_model(Contact).id:
+        partner = get_object_or_404(Partner, id=partner_id, owner=company)
         contact = get_object_or_404(Contact, id=contact_id)
+        log_change(contact, None, request.user, partner, contact.name,
+                   action_type=DELETION)
         contact.delete()
         return HttpResponseRedirect(reverse('partner_details')+'?company=' +
                                     str(company_id)+'&partner=' +
@@ -241,6 +245,8 @@ def delete_prm_item(request):
     if content_id == ContentType.objects.get_for_model(Partner).id:
         partner = get_object_or_404(Partner, id=partner_id, owner=company)
         partner.contacts.all().delete()
+        log_change(partner, None, request.user, partner, partner.name,
+                   action_type=DELETION)
         partner.delete()
         return HttpResponseRedirect(reverse('prm')+'?company='+str(company_id))
     
@@ -254,7 +260,8 @@ def prm_overview(request):
     company, partner, user = prm_worthy(request)
 
     most_recent_activity = get_logs_for_partner(partner)
-    most_recent_communication = get_contact_records_for_partner(partner)
+    most_recent_communication = get_contact_records_for_partner(partner,
+                                                                num_records=3)
     saved_searches = get_searches_for_partner(partner)
     most_recent_saved_searches = saved_searches[:3]
 
@@ -421,10 +428,12 @@ def partner_view_full_feed(request):
 def prm_records(request):
     company, partner, user = prm_worthy(request)
     contact_records = get_contact_records_for_partner(partner)
+    most_recent_activity = get_logs_for_partner(partner, num_items=1)
     ctx = {
         'company': company,
         'partner': partner,
         'records': contact_records,
+        'most_recent_activity': most_recent_activity,
     }
     return render_to_response('mypartners/main_records.html', ctx,
                               RequestContext(request))

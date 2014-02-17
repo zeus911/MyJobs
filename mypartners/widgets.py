@@ -38,6 +38,11 @@ class TimeDropDownWidget(MultiWidget):
         )
         super(TimeDropDownWidget, self).__init__(widgets, attrs)
 
+    def format_output(self, rendered_widgets):
+        return ''.join([rendered_widgets[0],
+                        '<b> hours</b>', '&nbsp;&nbsp;&nbsp;',
+                        rendered_widgets[1], '<b> minutes</b>'])
+
     def decompress(self, value):
         if value:
             return [value.hour, value.minute]

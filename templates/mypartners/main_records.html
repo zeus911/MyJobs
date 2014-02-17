@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load common_tags %}
+{% load activity_tags %}
 {% block site-title %}
     {% with name_obj=user.full_name %}
         <title>PRM Overview - {{ company.name }}</title>
@@ -20,12 +21,7 @@
             <a class="btn" href="{% url "partner_edit_record" %}?company={{ company.id }}&partner={{ partner.id }}" style="margin-bottom: 20px;">New Record</a>
             <div class="formBox no-padding">
                 <h4>View Records</h4>
-                {% if records %}
-                <div class="formBox-content">
-                    Contact: <br>
-                    Record Type:
-                </div>
-                {% endif %}
+
                 <table class="table table-bordered table-striped">
                     {% if records %}
                     <thead>
@@ -48,7 +44,8 @@
                                     {{ record.notes }}
                                 </td>
                                 <td>
-                                <a href="/prm/view/records/edit?company={{ company.id }}&partner={{ partner.id }}&id={{ record.id }}">Edit</a>
+                                    <a href="/prm/view/records/edit?company={{ company.id }}&partner={{ partner.id }}&id={{ record.id }}">Edit</a>
+                                </td>
                             </tr>
                         {% endfor %}
                         {% else %}
@@ -62,10 +59,12 @@
         </div>
         <div class="span4">
             <div class="tip-box">
-                <h4>Most Recent Activity</h4>
-                <div class="tip-content">
-
-                </div>
+                {% if most_recent_activity %}
+                    <h4>Most Recent Activity</h4>
+                    <div class="tip-content">
+                        {% get_activity_block most_recent_activity.0 %}
+                    </div>
+                {% endif %}
                 <div class="tip-footer">
 
                 </div>
