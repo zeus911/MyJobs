@@ -125,14 +125,14 @@ class ContactRecord(models.Model):
         """
 
         user = ContactLogEntry.objects.filter(object_id=self.pk)
-        user = user.order_by('-action_time')[:1][0].user
+        user = user.order_by('-action_time')[:1]
         if user:
-            user = user.get_full_name()
+            user = user[0].user.get_full_name()
         else:
             user = "An employee"
 
         if self.contact_type == 'facetoface':
-            return "%s had a meeting at %s" % (user, self.location)
+            return "%s had a meeting with %s" % (user, self.contact_name)
         elif self.contact_type == 'phone':
             return "%s called %s" % (user, self.contact_phone)
         else:
