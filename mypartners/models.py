@@ -101,7 +101,8 @@ class ContactRecord(models.Model):
                                      max_length=30, blank=True)
     location = models.CharField(verbose_name="Meeting Location", max_length=255,
                                 blank=True)
-    length = models.TimeField(verbose_name="Meeting Length", blank=True)
+    length = models.TimeField(verbose_name="Meeting Length", blank=True,
+                              null=True)
     subject = models.CharField(verbose_name="Subject or Topic", max_length=255)
     date_time = models.DateTimeField(verbose_name="Date & Time")
     notes = models.TextField(max_length=1000,
