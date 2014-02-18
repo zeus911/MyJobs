@@ -87,6 +87,49 @@ class Command(BaseCommand):
                 'stored': 'true',
                 'multiValued': 'false',
             })
+            schema_fields.append({
+                'field_name': 'view_date',
+                'type': 'date',
+                'indexed': 'true',
+                'stored': 'true',
+                'multiValued': 'false',
+            })
+            # Analytics
+            for field in ['page_category', 'domain', 'special_commitment',
+                    'job_view_guid', 'job_view_title', 'job_view_company',
+                    'job_view_location', 'job_view_canonical_domain']:
+                schema_fields.append({
+                    'field_name': field,
+                    'type': 'text_en',
+                    'indexed': 'true',
+                    'stored': 'true',
+                    'multiValued': 'false',
+                })
+            for field in ['site_tag', 'aguid']:
+                # myguid is the same as User_user_guid and will be kept there
+                schema_fields.append({
+                    'field_name': field,
+                    'type': 'string',
+                    'indexed': 'true',
+                    'stored': 'true',
+                    'multiValued': 'false',
+                })
+            for field in ['view_source', 'job_view_buid']:
+                schema_fields.append({
+                    'field_name': field,
+                    'type': 'long',
+                    'indexed': 'true',
+                    'stored': 'true',
+                    'multiValued': 'false',
+                })
+            for field in ['search_keywords', 'facets']:
+                schema_fields.append({
+                    'field_name': field,
+                    'type': 'string',
+                    'indexed': 'true',
+                    'stored': 'true',
+                    'multiValued': 'true',
+                })
             for model in models:
                 for field in model._meta.fields:
                     field_type = field.get_internal_type()
