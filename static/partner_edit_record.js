@@ -5,6 +5,7 @@ $(function() {
         initialize: function() {
             this.once('renderEvent', function() {
                 show_fields();
+                add_datepicker();
                 $('[id$=notes]').placeholder();
             });
         },
@@ -118,4 +119,18 @@ function show_fields(){
         $('label[for$="location"]').show();
         display_length_widget("show");
     }
+}
+
+function add_datepicker(){
+    var date = $("input[id$='date_time_0']");
+    date.datepicker({dateFormat: window.dateFormat, constrainInput: false});
+    if($(window).width() <= 501){
+        var window_width = $(window).width();
+        var field_width = window_width - 81;
+        date.css({"width": String(field_width)+"px", "display": "inline-block", "margin-right": "5px"});
+        $('[id*="id_date_time_"]').slice(1).each(function() {
+            $(this).css("width", field_width/3+"px");
+        });
+    }
+    date.after('<span class="btn add-on calendar"><i class="icon-search icon-calendar"></i></span>');
 }

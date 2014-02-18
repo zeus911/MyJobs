@@ -20,23 +20,26 @@
     <div class="row">
         <div class="span8">
             <div class="formBox no-padding">
-                <h4>Most Recent Activity</h4>
-                <div class="formBox-no-padding">
-                    {% if recent_activity %}
-                        <table class="table table-bordered table-striped">
-                        {% for activity in recent_activity %}
-                            {% get_activity_block activity %}
-                        {% endfor %}
-                        </table>
-                    {% else %}
-
-                    No Recent Activity
-
-                    {% endif %}
-                </div>
+                <h4>Most Recent Activity <small id="activity-num" class="pull-right"></small></h4>
                 {% if recent_activity %}
 
+                <table id="activity-table" class="table table-bordered table-striped">
+                    {% for activity in recent_activity %}
+                        {% get_activity_block activity %}
+                    {% endfor %}
+                </table>
+                <div class="formBox-footer">
+                    <div class="pull-right">
+                        <button class="btn"><span id="prm-arrow-left"></span></button>
+                        <button class="btn"><span id="prm-arrow-right"></span></button>
+                    </div>
+                    <div class="clear"></div>
+                </div>
+
                 {% else %}
+
+                No Recent Activity
+
                 <div class="formBox-footer">
                     <div class="pull-right">
                         <button class="btn" disabled><span id="prm-arrow-left"></span></button>
@@ -44,6 +47,7 @@
                     </div>
                     <div class="clear"></div>
                 </div>
+
                 {% endif %}
             </div>
 
