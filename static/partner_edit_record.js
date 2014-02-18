@@ -16,7 +16,7 @@ $(function() {
         events: {
             'click [id$="_search"]': 'save_form',
             'change [id$="_contact_type"]': 'show_fields',
-            'change [id$="id_contact"]': 'fill_contact_info'
+            'change [id$="id_contact_name"]': 'fill_contact_info'
         },
 
 
@@ -62,21 +62,33 @@ $(function() {
         },
 
         fill_contact_info: function() {
+            if($('[id$="id_contact_name"]').val() != 'None'){
             var form = $('#contact-record-form');
 
             var data = form.serialize();
-            $.ajax({
-                data: data,
-                type: 'POST',
-                url: '/prm/view/records/contact_info',
-                success: function(data) {
-                    json = $(data).parseJSON();
-                    if (json.hasOwnProperty('error')) {
-                    } else {
+                $.ajax({
+                    data: data,
+                    type: 'POST',
+                    url: '/prm/view/records/contact_info',
+                    success: function(data) {
+                        json = jQuery.parseJSON(data);
+                        if (json.hasOwnProperty('error')) {
+                            $('.form-status').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">&times;</button>'+json['error']+'.</div>');
+                        } else {
+                            if($('.form-status').html() != ''){
+                                $('.form-status').html('');
+                            }
+                            for(var key in json) {
+                                $('[id$="_'+key+'"]').val(json[key]);
+                            }
 
+                        }
                     }
-                }
-            })
+                })
+            } else {
+                $('[id$="_email"]').val('');
+                $('[id$="_phone"]').val('');
+            }
         }
     });
 

@@ -481,26 +481,26 @@ def prm_edit_records(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def get_contact_information(request):
     company, partner, user = prm_worthy(request)
-    contact_id = request.REQUEST.get('contact')
+    contact_id = request.REQUEST.get('contact_name')
     try:
         contact = Contact.objects.get(pk=contact_id)
     except Contact.DoesNotExist:
-        data = {'error': 'contact does not exist'}
+        data = {'error': 'Contact does not exist'}
         return HttpResponse(json.dumps(data))
 
     if partner not in contact.partners_set.all():
-        data = {'error': 'permission denied'}
+        data = {'error': 'Permission denied'}
         return HttpResponse(json.dumps(data))
 
     if hasattr(contact, 'email'):
-        if hasattr(contact, 'telephone'):
+        if hasattr(contact, 'phone'):
             data = {'email': contact.email,
-                    'telephone': contact.telephone}
+                    'phone': contact.phone}
         else:
             data = {'email': contact.email}
     else:
-        if hasattr(contact, 'telephone'):
-            data = {'telephone': contact.telephone}
+        if hasattr(contact, 'phone'):
+            data = {'phone': contact.phone}
         else:
             data = {}
 

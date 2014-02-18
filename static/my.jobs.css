@@ -177,7 +177,8 @@ h1 > small > a:hover {
 
 #partner-form,
 #contact-form,
-#partner-saved-search-form {
+#partner-saved-search-form,
+#contact-record-form {
     margin-left: 78px;
 }
 
@@ -2135,7 +2136,8 @@ td .gravatar-blank,
 
     #partner-form,
     #contact-form,
-    #partner-saved-search-form {
+    #partner-saved-search-form,
+    #contact-record-form {
         margin-left: 0;
     }
 
