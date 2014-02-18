@@ -763,7 +763,8 @@ ul.ui-autocomplete {
     width: 221px;
 }
 
-form select {
+form select,
+input#id_attachment {
     width: 262px;
 }
 
@@ -2017,7 +2018,8 @@ td .gravatar-blank,
         width: 96%;
     }
 
-    form select {
+    form select,
+    input#id_attachment {
         width: 100%;
     }
 

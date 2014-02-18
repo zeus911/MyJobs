@@ -4,7 +4,7 @@ $(function() {
 
         initialize: function() {
             this.once('renderEvent', function() {
-                disable_fields();
+                show_fields();
                 $('[id$=notes]').placeholder();
             });
         },
@@ -15,7 +15,7 @@ $(function() {
 
         events: {
             'click [id$="_search"]': 'save_form',
-            'change [id$="_contact_type"]': 'show_fields',
+            'change [id$="_contact_type"]': 'showing_fields',
             'change [id$="id_contact_name"]': 'fill_contact_info'
         },
 
@@ -42,23 +42,8 @@ $(function() {
             });
         },
 
-        show_fields: function(){
-            disable_fields();
-            var contact_type = $('[id$="contact_type"]').val();
-            if(contact_type == 'email'){
-                $('[id$="contact_email"]').show();
-                $('label[for$="contact_email"]').show();
-            } else if(contact_type == 'phone') {
-                $('[id$="contact_phone"]').show();
-                $('label[for$="contact_phone"]').show();
-                $('[id$="length"]').show();
-                $('label[for$="length"]').show();
-            } else if(contact_type == 'facetoface') {
-                $('[id$="location"]').show();
-                $('label[for$="location"]').show();
-                $('[id$="length"]').show();
-                $('label[for$="length"]').show();
-            }
+        showing_fields: function(){
+            show_fields();
         },
 
         fill_contact_info: function() {
@@ -103,6 +88,34 @@ function disable_fields(){
     $('label[for$="contact_phone"]').hide();
     $('[id$="location"]').hide();
     $('label[for$="location"]').hide();
-    $('[id$="length"]').hide();
-    $('label[for$="length"]').hide();
+    display_length_widget('hide');
+}
+
+function display_length_widget(display){
+    if (display == "show"){
+        $('[id*="length"]').parent().show();
+        $('label[for*="length"]').show();
+    }
+    if (display == "hide"){
+        $('[id*="length"]').parent().hide();
+        $('label[for*="length"]').hide();
+    }
+}
+
+function show_fields(){
+    disable_fields();
+    var contact_type = $('[id$="contact_type"]').val();
+    if(contact_type == 'email'){
+        $('[id$="contact_email"]').show();
+        $('label[for$="contact_email"]').show();
+    } else if(contact_type == 'phone') {
+        $('[id$="contact_phone"]').show();
+        $('label[for$="contact_phone"]').show();
+        $('[id$="length"]').show();
+        $('label[for$="length"]').show();
+    } else if(contact_type == 'facetoface') {
+        $('[id$="location"]').show();
+        $('label[for$="location"]').show();
+        display_length_widget("show");
+    }
 }
