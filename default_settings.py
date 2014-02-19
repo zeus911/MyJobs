@@ -124,8 +124,12 @@ CELERYBEAT_SCHEDULE = {
         'schedule': crontab(minute=0, hour=0),
     },
     'regular-solr-update': {
-        'task': 'tasks.update_solr',
+        'task': 'tasks.update_solr_from_model',
         'schedule': crontab(minute='*/5'),
+    },
+    'analytics-solr-update': {
+        'task': 'tasks.update_solr_from_log',
+        'schedule': crontab(hour='*/1'),
     },
 }
 

@@ -87,13 +87,6 @@ class Command(BaseCommand):
                 'stored': 'true',
                 'multiValued': 'false',
             })
-            schema_fields.append({
-                'field_name': 'view_date',
-                'type': 'date',
-                'indexed': 'true',
-                'stored': 'true',
-                'multiValued': 'false',
-            })
             # Analytics
             for field in ['page_category', 'domain', 'special_commitment',
                     'job_view_guid', 'job_view_title', 'job_view_company',
@@ -130,6 +123,13 @@ class Command(BaseCommand):
                     'stored': 'true',
                     'multiValued': 'true',
                 })
+            schema_fields.append({
+                'field_name': 'view_date',
+                'type': 'date',
+                'indexed': 'true',
+                'stored': 'true',
+                'multiValued': 'false',
+            })
             for model in models:
                 for field in model._meta.fields:
                     field_type = field.get_internal_type()
