@@ -120,7 +120,8 @@ class ContactRecord(models.Model):
 
     CONTACT_TYPE_CHOICES = (('email', 'Email'),
                             ('phone', 'Phone'),
-                            ('facetoface', 'Face to Face'))
+                            ('facetoface', 'Face to Face'),
+                            ('job', 'Job Followup'))
     created_on = models.DateTimeField(auto_now=True)
     partner = models.ForeignKey(Partner)
     contact_type = models.CharField(choices=CONTACT_TYPE_CHOICES,
@@ -139,11 +140,22 @@ class ContactRecord(models.Model):
                                 blank=True)
     length = models.TimeField(verbose_name="Meeting Length", blank=True,
                               null=True)
-    subject = models.CharField(verbose_name="Subject or Topic", max_length=255)
-    date_time = models.DateTimeField(verbose_name="Date & Time")
+    subject = models.CharField(verbose_name="Subject or Topic", max_length=255,
+                               blank=True)
+    date_time = models.DateTimeField(verbose_name="Date & Time", blank=True)
     notes = models.TextField(max_length=1000,
                              verbose_name='Details, Notes or Transcripts',
                              blank=True)
+    job_id = models.CharField(max_length=40, verbose_name='Job Number/ID',
+                             blank=True)
+    job_applications = models.CharField(max_length=6,
+                                        verbose_name="Number of Applications",
+                                        blank=True)
+    job_interviews = models.CharField(max_length=6,
+                                      verbose_name="Number of Interviews",
+                                      blank=True)
+    job_hires = models.CharField(max_length=6, verbose_name="Number of Hires",
+                                 blank=True)
     attachment = models.FileField(upload_to=get_file_name,
                                   blank=True, null=True)
 

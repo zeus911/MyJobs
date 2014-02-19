@@ -34,9 +34,13 @@ class Migration(SchemaMigration):
             ('contact_phone', self.gf('django.db.models.fields.CharField')(max_length=30, blank=True)),
             ('location', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('length', self.gf('django.db.models.fields.TimeField')(null=True, blank=True)),
-            ('subject', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('date_time', self.gf('django.db.models.fields.DateTimeField')()),
+            ('subject', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('date_time', self.gf('django.db.models.fields.DateTimeField')(blank=True)),
             ('notes', self.gf('django.db.models.fields.TextField')(max_length=1000, blank=True)),
+            ('job_id', self.gf('django.db.models.fields.CharField')(max_length=40, blank=True)),
+            ('job_applications', self.gf('django.db.models.fields.CharField')(max_length=6, blank=True)),
+            ('job_interviews', self.gf('django.db.models.fields.CharField')(max_length=6, blank=True)),
+            ('job_hires', self.gf('django.db.models.fields.CharField')(max_length=6, blank=True)),
             ('attachment', self.gf('django.db.models.fields.files.FileField')(max_length=100, null=True, blank=True)),
         ))
         db.send_create_signal(u'mypartners', ['ContactRecord'])
@@ -144,13 +148,17 @@ class Migration(SchemaMigration):
             'contact_phone': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'contact_type': ('django.db.models.fields.CharField', [], {'max_length': '12'}),
             'created_on': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'date_time': ('django.db.models.fields.DateTimeField', [], {}),
+            'date_time': ('django.db.models.fields.DateTimeField', [], {'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'job_applications': ('django.db.models.fields.CharField', [], {'max_length': '6', 'blank': 'True'}),
+            'job_hires': ('django.db.models.fields.CharField', [], {'max_length': '6', 'blank': 'True'}),
+            'job_id': ('django.db.models.fields.CharField', [], {'max_length': '40', 'blank': 'True'}),
+            'job_interviews': ('django.db.models.fields.CharField', [], {'max_length': '6', 'blank': 'True'}),
             'length': ('django.db.models.fields.TimeField', [], {'null': 'True', 'blank': 'True'}),
             'location': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'notes': ('django.db.models.fields.TextField', [], {'max_length': '1000', 'blank': 'True'}),
             'partner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Partner']"}),
-            'subject': ('django.db.models.fields.CharField', [], {'max_length': '255'})
+            'subject': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'})
         },
         u'mypartners.partner': {
             'Meta': {'object_name': 'Partner'},

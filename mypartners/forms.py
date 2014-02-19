@@ -249,8 +249,9 @@ class ContactRecordForm(forms.ModelForm):
         form_name = "Contact Record"
         fields = ('contact_type', 'contact_name',
                   'contact_email', 'contact_phone', 'location',
-                  'length', 'subject', 'date_time', 'notes',
-                  'attachment')
+                  'length', 'subject', 'date_time', 'job_id',
+                  'job_applications', 'job_interviews', 'job_hires',
+                  'notes', 'attachment')
         model = ContactRecord
 
     def __init__(self, *args, **kwargs):
