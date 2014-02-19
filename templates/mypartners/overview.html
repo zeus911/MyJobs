@@ -28,7 +28,7 @@
                 <h4>Most Recent Activity <small id="activity-num" class="pull-right"></small></h4>
                 {% if recent_activity %}
 
-                <table id="activity-table" class="table table-bordered table-striped">
+                <table id="activity-table" class="table table-striped">
                     {% for activity in recent_activity %}
                         {% get_activity_block activity %}
                     {% endfor %}

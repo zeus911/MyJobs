@@ -870,7 +870,8 @@ fieldset textarea,
     padding: 5px 10px;
 }
 
-.no-padding {
+.no-padding,
+.tip-content.no-padding {
     padding: 0;
 }
 
@@ -890,7 +891,8 @@ fieldset textarea,
     -moz-border-radius: 0;
 }
 
-.formBox.no-padding .table {
+.formBox.no-padding .table,
+.tip-content.no-padding .table {
     margin-bottom: 0;
 }
 

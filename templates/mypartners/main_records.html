@@ -62,19 +62,17 @@
             </div>
         </div>
         <div class="span4">
+            {% if most_recent_activity %}
             <div class="tip-box">
-                {% if most_recent_activity %}
-                    <h4>Most Recent Activity <small id="activity-num" class="pull-right"></small></h4>
-                    <div class="tip-content">
-                        {% if most_recent_activity %}
-                        <table id="activity-table" class="table table-bordered table-striped">
-                            {% for activity in most_recent_activity %}
-                                {% get_activity_block activity %}
-                            {% endfor %}
-                        </table>
-                        {% endif %}
-                    </div>
-                {% endif %}
+                <h4>Most Recent Activity <small id="activity-num" class="pull-right"></small></h4>
+                <div class="tip-content no-padding">
+                    <table id="activity-table" class="table table-striped">
+                        {% for activity in most_recent_activity %}
+                            {% get_activity_block activity %}
+                        {% endfor %}
+                    </table>
+                </div>
+
                 <div class="tip-footer">
                     <div class="pull-right">
                         <button id="previous" class="btn"><span id="prm-arrow-left"></span></button>
@@ -83,6 +81,7 @@
                     <div class="clearfix"></div>
                 </div>
             </div>
+            {% endif %}
             <div class="tip-box">
                 <h4>Tips</h4>
                 <div class="tip-content">
