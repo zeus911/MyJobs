@@ -1,4 +1,5 @@
 from django.contrib.contenttypes.models import ContentType
+from django.core.files.storage import default_storage
 from django.db import models
 
 from myjobs.models import User
@@ -85,6 +86,38 @@ class ContactRecord(models.Model):
     """
     Object for Communication Records
     """
+    def get_file_name(self, filename):
+        """
+        Ensures that a file name is unique before uploading.
+
+        inputs:
+        :f: A file to be uploaded to default_storage.
+        :path_addon: By default files are stored in /mypartners/ on S3. If
+            path_addon is specified they will be uploaded to
+            /mypartners/path_addon.
+        :special_identifier: Any other special information that should be
+            added to the file name.
+
+        outputs:
+        A string containing a filename that would be unique in default_storage.
+
+        """
+        path_addon = "mypartners/%s/%s" % (self.partner.owner,
+                                           self.partner.name)
+        file_ext = filename.split(".")[-1]
+        name = filename.replace(".%s" % file_ext, "")
+        name = "%s/%s" % (path_addon, name)
+
+        file_counter = 1
+        while default_storage.exists("%s.%s" % (name, file_ext)):
+            name = "%s_%s" % (name, file_counter)
+            file_counter += 1
+
+        name = "%s.%s" % (name, file_ext)
+        return name
+
+
+
     CONTACT_TYPE_CHOICES = (('email', 'Email'),
                             ('phone', 'Phone'),
                             ('facetoface', 'Face to Face'))
@@ -111,7 +144,7 @@ class ContactRecord(models.Model):
     notes = models.TextField(max_length=1000,
                              verbose_name='Details, Notes or Transcripts',
                              blank=True)
-    attachment = models.FileField(upload_to="mypartners/record-attachments/",
+    attachment = models.FileField(upload_to=get_file_name,
                                   blank=True, null=True)
 
     def __unicode__(self):
@@ -137,6 +170,19 @@ class ContactRecord(models.Model):
             return "%s called %s" % (user, self.contact_phone)
         else:
             return "%s emailed %s" % (user, self.contact_email)
+
+        attachment = self.cleaned_data['attachment']
+        if attachment:
+            path_addon = "%s/%s" % (self.partner.owner, self.partner.name)
+            attachment.name = get_file_name(attachment, path_addon)
+            self.cleaned_data['attachment'] = attachment
+
+        print self.cleaned_data['attachment'].name
+
+    def save(self, *args, **kwargs):
+        super(ContactRecord, self).save(*args, **kwargs)
+        
+
 
 
 class ContactLogEntry(models.Model):

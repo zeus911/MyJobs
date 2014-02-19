@@ -90,6 +90,10 @@ def get_logs_for_partner(partner, content_type_id=None, num_items=10):
 def get_contact_records_for_partner(partner, contact=None, record_type=None,
                                     num_records=None):
     records = ContactRecord.objects.filter(partner=partner)
+    if contact:
+        records = records.filter(contact_name=contact.name)
+    if record_type:
+        records = records.filter(contact_type=record_type)
     if num_records:
         records = records[:num_records]
     return records
