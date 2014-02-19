@@ -259,8 +259,7 @@ class ContactRecordForm(forms.ModelForm):
         [choices.append((c.id, c.name)) for c in partner.contacts.all()]
         super(ContactRecordForm, self).__init__(*args, **kwargs)
         self.fields["contact_name"] = forms.ChoiceField(
-            widget=forms.Select(), choices=choices,
-            initial=choices[0][0], label="Contacts")
+            widget=forms.Select(), choices=choices, label="Contacts")
 
     def clean(self):
         contact_type = self.cleaned_data.get('contact_type', None)
