@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
-from django.forms import (DateInput, MultiValueField, MultiWidget, Select,
-                          fields)
+from django.forms import (DateInput, FileField, FileInput, MultiValueField,
+                          MultiWidget, Select, fields)
 
 from datetime import datetime, time
 
@@ -8,6 +8,18 @@ hour_choices = [(str(x).zfill(2), str(x).zfill(2)) for x in range(1, 13)]
 length_hour_choices = [(str(x).zfill(2), str(x).zfill(2)) for x in range(0, 24)]
 minute_choices = [(str(x).zfill(2), str(x).zfill(2)) for x in range(0, 60)]
 time_choices = [('AM', 'AM'), ('PM', 'PM')]
+
+
+class MultipleFileWidget(FileInput):
+    def render(self, name, value, attrs={}):
+        attrs['multiple'] = 'multiple'
+        return super(MultipleFileWidget, self).render(name, None, attrs=attrs)
+
+    def value_from_datadict(self, data, files, name):
+        if hasattr(files, 'getlist'):
+            return files.getlist(name)
+        else:
+            return [files.get(name)]
 
 
 class SplitDateTimeDropDownWidget(MultiWidget):
@@ -97,3 +109,23 @@ class TimeDropDownField(MultiValueField):
         minutes = int(data_list[1])
         return time(hours, minutes)
 
+
+class MultipleFileField(FileField):
+    widget = MultipleFileWidget
+
+    def __init__(self, *args, **kwargs):
+        self.max_num = kwargs.pop('max_num', None)
+        self.maximum_file_size = kwargs.pop('maximum_file_size', 4194304)
+        super(MultipleFileField, self).__init__(*args, **kwargs)
+
+    def to_python(self, data):
+        ret = []
+        for item in data:
+            ret.append(super(MultipleFileField, self).to_python(item))
+        return ret
+
+    def validate(self, data):
+        super(MultipleFileField, self).validate(data)
+        for uploaded_file in data:
+            if uploaded_file.size > self.maximum_file_size:
+                raise ValidationError('')
