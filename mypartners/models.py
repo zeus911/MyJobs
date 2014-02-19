@@ -1,9 +1,56 @@
+from uuid import uuid4
+
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
 from django.db import models
 
 from myjobs.models import User
 from mydashboard.models import Company
+
+
+class PRMAttachment(models.Model):
+    MAX_FILE_MB = 4
+
+    def get_file_name(self, filename):
+        """
+        Ensures that a file name is unique before uploading.
+
+        """
+        uid = uuid4()
+        path_addon = "mypartners/%s/%s/%s" % (self.partner.owner,
+                                              self.partner.name, uid)
+        name = "%s/%s" % (path_addon, filename)
+
+        # Make sure that in the unlikely event that a filepath/uid/filename
+        # combination isn't actually unique a new unique id
+        # is generated.
+        while default_storage.exists(name):
+            uid = uuid4()
+            path_addon = "mypartners/%s/%s/%s" % (self.partner.owner,
+                                                  self.partner.name, uid)
+            name = "%s/%s" % (path_addon, filename)
+
+        return name
+
+    attachment = models.FileField(upload_to=get_file_name, blank=True,
+                                  null=True)
+
+    def save(self, *args, **kwargs):
+        instance = super(PRMAttachment, self).save(*args, **kwargs)
+
+        # Confirm that we're not trying to change public/private status of
+        # actual files during local testing.
+        if default_storage.connection.__repr__() == 'S3Connection:s3.amazonaws.com':
+            from boto import connect_s3, s3
+            conn = connect_s3(settings.AWS_ACCESS_KEY_ID,
+                              settings.AWS_SECRET_KEY)
+            bucket = conn.create_bucket(settings.AWS_STORAGE_BUCKET_NAME)
+            key = s3.key.Key(bucket)
+            key.key = "mypartners/" + self.attachment.name
+            key.set_acl('private')
+
+        return instance
 
 
 class Contact(models.Model):
@@ -156,8 +203,8 @@ class ContactRecord(models.Model):
                                       blank=True)
     job_hires = models.CharField(max_length=6, verbose_name="Number of Hires",
                                  blank=True)
-    attachment = models.FileField(upload_to=get_file_name,
-                                  blank=True, null=True)
+    attachment = models.ForeignKey(PRMAttachment, null=True,
+                                   on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return "%s Contact Record - %s" % (self.contact_type, self.subject)
@@ -193,7 +240,7 @@ class ContactRecord(models.Model):
 
     def save(self, *args, **kwargs):
         super(ContactRecord, self).save(*args, **kwargs)
-        
+
 
 
 

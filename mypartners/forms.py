@@ -9,7 +9,8 @@ from myprofile.forms import generate_custom_widgets
 from myjobs.forms import BaseUserForm
 from mypartners.models import Contact, Partner, ContactRecord
 from mypartners.helpers import log_change
-from mypartners.widgets import SplitDateTimeDropDownField, TimeDropDownField
+from mypartners.widgets import (MultipleFileField, SplitDateTimeDropDownField,
+                                TimeDropDownField)
 
 
 class ContactForm(forms.ModelForm):
@@ -244,6 +245,7 @@ def PartnerEmailChoices(partner):
 class ContactRecordForm(forms.ModelForm):
     date_time = SplitDateTimeDropDownField()
     length = TimeDropDownField()
+    attachment = MultipleFileField()
 
     class Meta:
         form_name = "Contact Record"
