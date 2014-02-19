@@ -15,7 +15,7 @@ $(function() {
         },
 
         events: {
-            'click [id$="_search"]': 'save_form',
+            'click [id$="_record_save"]': 'save_form',
             'change [id$="_contact_type"]': 'showing_fields',
             'change [id$="id_contact_name"]': 'fill_contact_info'
         },
@@ -26,18 +26,58 @@ $(function() {
 
             var form = $('#contact-record-form');
 
+            var company_id = $('[name=company]').val();
+            var partner_id = $('[name=partner]').val();
+
             var data = form.serialize();
             data = data.replace('=on','=True').replace('=off','=False');
             data = data.replace('undefined', 'None');
             $.ajax({
                 data: data,
                 type: 'POST',
-                url: '/saved-search/view/save/',
+                url: '/prm/view/records/edit',
                 success: function(data) {
                     if (data == '') {
-                        window.location = '/saved-search/view/';
+                        window.location = '/prm/view/records?company='+company_id+'&partner='+partner_id;
                     } else {
-                        add_errors(data);
+                        console.log(data);
+                        var json = jQuery.parseJSON(data);
+
+                        // remove color from labels of current errors
+                        $('[class*=required]').parent().prev().removeClass('error-text');
+
+                        // remove current errors
+                        $('[class*=required]').children().unwrap();
+
+                        if($.browser.msie){
+                            $('[class*=msieError]').remove()
+                        }
+
+                        for (var index in json) {
+                            var $error = $('[id$="_'+index+'"]');
+                            if(!$error[0]){
+                                $error = $('[id*="_'+index+'"]');
+                            }
+                            if($error.length > 1){
+                                for(var i=0; i < $error.length; i++){
+                                    if(i==0){
+                                        var $labelOfError = $error.parent().prev();
+                                        $labelOfError.addClass('error-text');
+                                    }
+                                    $($error[i]).wrap('<div class="required" />');
+                                    $($error[i]).attr("placeholder",json[index][0]);
+                                    $($error[i]).val('')
+                                }
+                            }else{
+                                var $labelOfError = $error.parent().prev();
+
+                                // insert new errors after the relevant inputs
+                                $error.wrap('<div class="required" />');
+                                $error.attr("placeholder",json[index][0]);
+                                $error.val('')
+                                $labelOfError.addClass('error-text');
+                            }
+                        }
                     }
                 }
             });
@@ -131,6 +171,6 @@ function add_datepicker(){
         $('[id*="id_date_time_"]').slice(1).each(function() {
             $(this).css("width", field_width/3+"px");
         });
+        date.after('<span class="btn add-on calendar"><i class="icon-search icon-calendar"></i></span>');
     }
-    date.after('<span class="btn add-on calendar"><i class="icon-search icon-calendar"></i></span>');
 }

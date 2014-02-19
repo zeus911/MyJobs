@@ -459,10 +459,9 @@ def prm_edit_records(request):
                                  partner=partner, instance=instance)
         if form.is_valid():
             form.save(user, partner)
-            return redirect('/prm/view/records?company=%s&partner=%s' %
-                            (company.pk, partner.pk))
+            return HttpResponse(status=200)
         else:
-            ctx['form'] = form
+            return HttpResponse(json.dumps(form.errors))
     else:
         if record_id:
             try:
