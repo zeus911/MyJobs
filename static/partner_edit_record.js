@@ -130,6 +130,14 @@ function disable_fields(){
     $('[id$="location"]').hide();
     $('label[for$="location"]').hide();
     display_length_widget('hide');
+    $('[id$="job_id"]').hide();
+    $('label[for$="job_id"]').hide();
+    $('[id$="job_applications"]').hide();
+    $('label[for$="job_applications"]').hide();
+    $('[id$="job_interviews"]').hide();
+    $('label[for$="job_interviews"]').hide();
+    $('[id$="job_hires"]').hide();
+    $('label[for$="job_hires"]').hide();
 }
 
 function display_length_widget(display){
@@ -158,6 +166,23 @@ function show_fields(){
         $('[id$="location"]').show();
         $('label[for$="location"]').show();
         display_length_widget("show");
+    } else if(contact_type == 'job'){
+        $('[id$="contact_email"]').show();
+        $('label[for$="contact_email"]').show();
+        $('[id$="job_id"]').show();
+        $('label[for$="job_id"]').show();
+        $('[id$="job_applications"]').show();
+        $('label[for$="job_applications"]').show();
+        $('[id$="job_interviews"]').show();
+        $('label[for$="job_interviews"]').show();
+        $('[id$="job_hires"]').show();
+        $('label[for$="job_hires"]').show();
+
+        // Hiding fields
+        $('[id$="subject"]').hide();
+        $('label[for$="subject"]').hide();
+        $('[id*="date_time_"]').hide();
+        $('label[for*="date_time_"]').hide();
     }
 }
 
