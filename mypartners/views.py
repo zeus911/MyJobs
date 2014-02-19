@@ -261,7 +261,7 @@ def prm_overview(request):
 
     most_recent_activity = get_logs_for_partner(partner)
     most_recent_communication = get_contact_records_for_partner(partner,
-                                                                num_records=3)
+                                                                num_records=10)
     saved_searches = get_searches_for_partner(partner)
     most_recent_saved_searches = saved_searches[:3]
 
@@ -428,7 +428,7 @@ def partner_view_full_feed(request):
 def prm_records(request):
     company, partner, user = prm_worthy(request)
     contact_records = get_contact_records_for_partner(partner)
-    most_recent_activity = get_logs_for_partner(partner, num_items=1)
+    most_recent_activity = get_logs_for_partner(partner, num_items=10)
     ctx = {
         'company': company,
         'partner': partner,
@@ -459,9 +459,10 @@ def prm_edit_records(request):
                                  partner=partner, instance=instance)
         if form.is_valid():
             form.save(user, partner)
-            return HttpResponse(status=200)
+            return HttpResponseRedirect(reverse('partner_edit_record') +
+                '?company=%d&partner=%d' % (company.id, partner.id))
         else:
-            return HttpResponse(json.dumps(form.errors))
+            ctx['form'] = form
     else:
         if record_id:
             try:

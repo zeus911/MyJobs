@@ -9,6 +9,10 @@
 {% endblock %}
 {% load i18n %}
 
+{% block meta-extra %}
+<script src="{{ STATIC_URL }}partner-overview.js{% cache_buster %}"></script>
+{% endblock %}
+
 {% block content %}
     <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
     <div class="row">
@@ -60,13 +64,23 @@
         <div class="span4">
             <div class="tip-box">
                 {% if most_recent_activity %}
-                    <h4>Most Recent Activity</h4>
+                    <h4>Most Recent Activity <small id="activity-num" class="pull-right"></small></h4>
                     <div class="tip-content">
-                        {% get_activity_block most_recent_activity.0 %}
+                        {% if most_recent_activity %}
+                        <table id="activity-table" class="table table-bordered table-striped">
+                            {% for activity in most_recent_activity %}
+                                {% get_activity_block activity %}
+                            {% endfor %}
+                        </table>
+                        {% endif %}
                     </div>
                 {% endif %}
                 <div class="tip-footer">
-
+                    <div class="pull-right">
+                        <button id="previous" class="btn"><span id="prm-arrow-left"></span></button>
+                        <button id="next" class="btn"><span id="prm-arrow-right"></span></button>
+                    </div>
+                    <div class="clearfix"></div>
                 </div>
             </div>
             <div class="tip-box">

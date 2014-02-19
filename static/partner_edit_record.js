@@ -15,72 +15,8 @@ $(function() {
         },
 
         events: {
-            'click [id$="_record_save"]': 'save_form',
             'change [id$="_contact_type"]': 'showing_fields',
             'change [id$="id_contact_name"]': 'fill_contact_info'
-        },
-
-
-        save_form: function(e, options) {
-            e.preventDefault();
-
-            var form = $('#contact-record-form');
-
-            var company_id = $('[name=company]').val();
-            var partner_id = $('[name=partner]').val();
-
-            var data = form.serialize();
-            data = data.replace('=on','=True').replace('=off','=False');
-            data = data.replace('undefined', 'None');
-            $.ajax({
-                data: data,
-                type: 'POST',
-                url: '/prm/view/records/edit',
-                success: function(data) {
-                    if (data == '') {
-                        window.location = '/prm/view/records?company='+company_id+'&partner='+partner_id;
-                    } else {
-                        console.log(data);
-                        var json = jQuery.parseJSON(data);
-
-                        // remove color from labels of current errors
-                        $('[class*=required]').parent().prev().removeClass('error-text');
-
-                        // remove current errors
-                        $('[class*=required]').children().unwrap();
-
-                        if($.browser.msie){
-                            $('[class*=msieError]').remove()
-                        }
-
-                        for (var index in json) {
-                            var $error = $('[id$="_'+index+'"]');
-                            if(!$error[0]){
-                                $error = $('[id*="_'+index+'"]');
-                            }
-                            if($error.length > 1){
-                                for(var i=0; i < $error.length; i++){
-                                    if(i==0){
-                                        var $labelOfError = $error.parent().prev();
-                                        $labelOfError.addClass('error-text');
-                                    }
-                                    $($error[i]).wrap('<div class="required" />');
-                                    $($error[i]).attr("placeholder",json[index][0]);
-                                    $($error[i]).val('')
-                                }
-                            }else{
-                                var $labelOfError = $error.parent().prev();
-
-                                // insert new errors after the relevant inputs
-                                $error.wrap('<div class="required" />');
-                                $error.attr("placeholder",json[index][0]);
-                                $error.val('')
-                                $labelOfError.addClass('error-text');
-                            }
-                        }
-                    }
-                }
-            });
         },
 
         showing_fields: function(){
