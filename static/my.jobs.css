@@ -2777,12 +2777,17 @@ body.modal-open {
 }
 
 .required input[type=text],
-.required select {
+.required select,
+.required-block {
     border: 1px solid #900;
 }
 
 .required {
     display: inline-block;
+}
+
+.required-block {
+    display: block;
 }
 
 .required-label,
