@@ -26,7 +26,7 @@
 
             {% endif %}
 
-            <small>{% trans "Saved Search" %}</small>
+            <small>{% if not is_pss %}{% trans "Saved Search" %}{% else %}{% trans "Partner Saved Search" %}{% endif %}</small>
         </h1>
     </div>
 </div>
@@ -43,7 +43,7 @@
                 <div class="form-label pull-left">&nbsp;</div>
 
                 {% if search_id and search_id != 'None' %}
-
+                {% if not is_pss %}
                 <button type="button" data-toggle="modal" data-target="#delete-confirm" class="btn ">{% trans 'Delete' %}</button>
                 <div id="delete-confirm" class="modal hide fade">
                     <div class="modal-header">
@@ -66,6 +66,7 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
 
                 {% endif %}
 

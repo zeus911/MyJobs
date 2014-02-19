@@ -12,7 +12,8 @@ from django.shortcuts import render_to_response, get_object_or_404
 from myjobs.decorators import user_is_allowed
 from myjobs.models import User
 from mysearches.models import SavedSearch, SavedSearchDigest
-from mysearches.forms import SavedSearchForm, DigestForm
+from mysearches.forms import (SavedSearchForm, DigestForm,
+                              PartnerSubSavedSearchForm)
 from mysearches.helpers import *
 
 
@@ -47,11 +48,18 @@ def saved_search_main(request):
     except:
         digest_obj = None
     updated = request.REQUEST.get('d')
-    saved_searches = SavedSearch.objects.filter(user=request.user)
+    saved_searches = list(SavedSearch.objects.filter(user=request.user))
+    partner_saved_searches = []
+    # Check to see if any searches are PartnerSavedSearches
+    for saved_search in saved_searches:
+        if hasattr(saved_search, 'partnersavedsearch'):
+            partner_saved_searches.append(
+                saved_searches.pop(saved_searches.index(saved_search)))
     form = DigestForm(user=request.user, instance=digest_obj)
     add_form = SavedSearchForm(user=request.user)
     return render_to_response('mysearches/saved_search_main.html',
                               {'saved_searches': saved_searches,
+                               'partner_saved_searches': partner_saved_searches,
                                'form': form,
                                'add_form': add_form,
                                'updated': updated,
@@ -65,6 +73,10 @@ def saved_search_main(request):
 def view_full_feed(request):
     search_id = request.REQUEST.get('id')
     saved_search = SavedSearch.objects.get(id=search_id)
+    if hasattr(saved_search, 'partnersavedsearch'):
+        is_pss = True
+    else:
+        is_pss = False
     if request.user == saved_search.user:
         url_of_feed = url_sort_options(saved_search.feed,
                                        saved_search.sort_by,
@@ -75,7 +87,8 @@ def view_full_feed(request):
         return render_to_response('mysearches/view_full_feed.html',
                                   {'search': saved_search,
                                    'items': items,
-                                   'view_name': 'Saved Searches'},
+                                   'view_name': 'Saved Searches',
+                                   'is_pss': is_pss},
                                   RequestContext(request))
     else:
         return HttpResponseRedirect(reverse('saved_search_main'))
@@ -147,9 +160,14 @@ def save_search_form(request):
         search_id = int(search_id)
         original = SavedSearch.objects.get(id=search_id,
                                            user=request.user)
-        form = SavedSearchForm(user=request.user,
-                               data=request.POST,
-                               instance=original)
+        if hasattr(original, 'partnersavedsearch'):
+            form = PartnerSubSavedSearchForm(user=request.user,
+                                             data=request.POST,
+                                             instance=original)
+        else:
+            form = SavedSearchForm(user=request.user,
+                                   data=request.POST,
+                                   instance=original)
     except:
         form = SavedSearchForm(user=request.user, data=request.POST)
 
@@ -174,20 +192,37 @@ def save_search_form(request):
 @user_passes_test(User.objects.not_disabled)
 def edit_search(request):
     search_id = request.REQUEST.get('id')
-    if search_id:
-        try:
-            saved_search = SavedSearch.objects.get(id=search_id,
-                                                   user=request.user)
-        except SavedSearch.DoesNotExist:
-            raise Http404
-    else:
-        saved_search = None
+    partner_saved_search = request.REQUEST.get('pss')
+    if not partner_saved_search:
+        if search_id:
+            saved_search = get_object_or_404(SavedSearch, id=search_id,
+                                             user=request.user)
+            if hasattr(saved_search, 'partnersavedsearch'):
+                raise Http404
+        else:
+            saved_search = None
 
-    form = SavedSearchForm(user=request.user, instance=saved_search,
-                           auto_id='id_edit_%s')
+        is_pss = False
+        form = SavedSearchForm(user=request.user, instance=saved_search,
+                               auto_id='id_edit_%s')
+    else:
+        if search_id:
+            saved_search = get_object_or_404(SavedSearch, id=search_id,
+                                             user=request.user)
+            if hasattr(saved_search, 'partnersavedsearch'):
+                is_pss = True
+                form = PartnerSubSavedSearchForm(
+                    user=request.user,
+                    instance=saved_search.partnersavedsearch,
+                    auto_id=False)
+        else:
+            raise Http404
+
     return render_to_response('mysearches/saved_search_edit.html',
                               {'form': form, 'search_id': search_id,
                                'view_name': 'Saved Searches',
+                               'search': saved_search,
+                               'is_pss': is_pss,
                                'label': form.instance.label},
                               RequestContext(request))
 
