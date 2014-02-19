@@ -1,9 +1,15 @@
 from django import forms
+from django.contrib.admin.models import ADDITION
+from django.core.exceptions import ValidationError
+from django.forms.util import ErrorList
+
 from collections import OrderedDict
 
 from myprofile.forms import generate_custom_widgets
 from myjobs.forms import BaseUserForm
-from mypartners.models import Contact, Partner
+from mypartners.models import Contact, Partner, ContactRecord
+from mypartners.helpers import log_change
+from mypartners.widgets import SplitDateTimeDropDownField, TimeDropDownField
 
 
 class ContactForm(forms.ModelForm):
@@ -26,14 +32,21 @@ class ContactForm(forms.ModelForm):
             attrs={'rows': 5, 'cols': 24,
                    'placeholder': 'Notes About This Contact'})
 
-    def save(self, commit=True):
+    def save(self, user, commit=True):
+        is_new = False if self.instance.pk else True
         partner = Partner.objects.get(id=self.data['partner'])
         contact = self.instance
         contact.save()
 
         partner.add_contact(contact)
         partner.save()
+        if is_new:
+            log_change(contact, self, user, partner, contact.name,
+                       action_type=ADDITION)
+        else:
+            log_change(contact, self, user, partner, contact.name)
         return
+
 
 
 class PartnerInitialForm(BaseUserForm):
@@ -58,7 +71,8 @@ class PartnerInitialForm(BaseUserForm):
         fields = ['name', 'uri']
         widgets = generate_custom_widgets(model)
 
-    def save(self, commit=True):
+    def save(self, user, commit=True):
+        is_new = False if self.instance.pk else True
         company_id = self.data['company_id']
         self.instance.owner_id = company_id
 
@@ -75,6 +89,14 @@ class PartnerInitialForm(BaseUserForm):
             self.instance.primary_contact = contact
             self.instance.save()
             self.instance.add_contact(contact)
+
+        if is_new:
+            log_change(self.instance, self, user, self.instance,
+                       self.instance.name, action_type=ADDITION)
+
+        else:
+            log_change(self.instance, self, user, self.instance,
+                       self.instance.name)
 
         self.instance.save()
 
@@ -118,7 +140,8 @@ class NewPartnerForm(BaseUserForm):
             attrs={'rows': 5, 'cols': 24,
                    'placeholder': 'Notes About This Contact'})
 
-    def save(self, commit=True):
+    def save(self, user, commit=True):
+        is_new = False if self.instance.pk else True
         company_id = self.data['company_id']
         owner_id = company_id
         if self.data['partnerurl']:
@@ -145,8 +168,16 @@ class NewPartnerForm(BaseUserForm):
             partner.add_contact(self.instance)
             partner.primary_contact_id = self.instance.id
             partner.save()
-        else:
-            return
+
+            if is_new:
+                log_change(self.instance, self, user, partner,
+                           self.instance.name, action_type=ADDITION)
+
+            else:
+                log_change(self.instance, self, user, partner,
+                           self.instance.name)
+
+
 
     def remove_partner_data(self, dictionary, keys):
         new_dictionary = dict(dictionary)
@@ -184,9 +215,17 @@ class PartnerForm(BaseUserForm):
         fields = ['name', 'uri']
         widgets = generate_custom_widgets(model)
 
-    def save(self, commit=True):
+    def save(self, user, commit=True):
+        is_new = False if self.instance.pk else True
         self.instance.primary_contact_id = self.data['primary_contact']
         self.instance.save()
+        if is_new:
+            log_change(self.instance, self, user, self.instance,
+                       self.instance.name, action_type=ADDITION)
+
+        else:
+            log_change(self.instance, self, user, self.instance,
+                       self.instance.name)
         return
 
 
@@ -200,3 +239,67 @@ def PartnerEmailChoices(partner):
             if contact.email:
                 choices.append((contact.email, contact.name))
     return choices
+
+
+class ContactRecordForm(forms.ModelForm):
+    date_time = SplitDateTimeDropDownField()
+    length = TimeDropDownField()
+
+    class Meta:
+        form_name = "Contact Record"
+        fields = ('contact_type', 'contact_name',
+                  'contact_email', 'contact_phone', 'location',
+                  'length', 'subject', 'date_time', 'notes',
+                  'attachment')
+        model = ContactRecord
+
+    def __init__(self, *args, **kwargs):
+        partner = kwargs.pop('partner')
+        choices = [(None, '----------')]
+        [choices.append((c.id, c.name)) for c in partner.contacts.all()]
+        super(ContactRecordForm, self).__init__(*args, **kwargs)
+        self.fields["contact_name"] = forms.ChoiceField(
+            widget=forms.Select(), choices=choices,
+            initial=choices[0][0], label="Contacts")
+
+    def clean(self):
+        contact_type = self.cleaned_data.get('contact_type', None)
+        if contact_type == 'email' and not self.cleaned_data['contact_email']:
+            self._errors['contact_email'] = ErrorList([""])
+        elif contact_type == 'phone' and not self.cleaned_data['contact_phone']:
+            self._errors['contact_phone'] = ErrorList([""])
+        elif contact_type == 'facetoface' and not self.cleaned_data['location']:
+            self._errors['location'] = ErrorList([""])
+        return self.cleaned_data
+
+    def clean_contact_name(self):
+        contact_id = self.cleaned_data['contact_name']
+        if contact_id == 'None' or not contact_id:
+            raise ValidationError('required')
+        try:
+            return Contact.objects.get(id=int(contact_id))
+        except Contact.DoesNotExist:
+            raise ValidationError("Contact does not exist")
+
+    def save(self, user, partner, commit=True):
+        is_new = False if self.instance.pk else True
+        self.instance.partner = partner
+        instance = super(ContactRecordForm, self).save(commit)
+        try:
+            identifier = instance.contact_email if instance.contact_email \
+                else instance.contact_phone if instance.contact_phone \
+                else instance.contact_name
+        except Contact.DoesNotExist:
+            # This should only happen if the user is editing the ids in the drop
+            # down list of contacts. Since it's too late for a validation error
+            # the user can deal with the logging issues they created.
+            identifier = "unknown contact"
+
+        if is_new:
+            log_change(instance, self, user, partner, identifier,
+                       action_type=ADDITION)
+        else:
+            log_change(instance, self, user, partner, identifier)
+        return instance
+
+

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load common_tags %}
+{% block site-title %}
+    <title>PRM New Saved Searches {{ company.name }}</title>
+    <meta name="title" content="PRM New Contact Record {{ company.name }}">
+{% endblock %}
+{% load i18n %}
+{% block meta-extra %}
+<script src="{{ STATIC_URL }}partner_edit_record.js{% cache_buster %}"></script>
+{% endblock %}
+
+{% block content %}
+    <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
+    <div class="row">
+        <div class="span12 prm-header">
+            <span>{% if item_id %}Edit{% else %}New{% endif %} Contact Record</span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <div class="form-status"></div>
+        </div>
+        <div class="span8">
+            <form method="post" action="" id="contact-record-form" enctype="multipart/form-data">
+                {% include "includes/form-error-highlight.html" %}
+                {% csrf_token %}
+                <input type="hidden" name="company" value="{{ company.id }}">
+                <input type="hidden" name="partner" value="{{ partner.id }}">
+            <div class="form-label pull-left">&nbsp;</div>
+            <div class="actions pull-right">
+                {% if id %}<a class="btn" href="">{% trans 'Delete' %}</a>{% endif %}
+                <a class="btn" href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}">{% trans 'Cancel' %}</a>
+                <button type="submit" class="btn primary" id="partner_record_save">{% trans 'Save' %}</button>
+            </div>
+            <div class="clear"></div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

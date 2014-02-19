@@ -177,7 +177,8 @@ h1 > small > a:hover {
 
 #partner-form,
 #contact-form,
-#partner-saved-search-form {
+#partner-saved-search-form,
+#contact-record-form {
     margin-left: 78px;
 }
 
@@ -256,7 +257,8 @@ h1 > small > a:hover {
 }
 
 .info-box + .info-box,
-.tip-box + .formBox {
+.tip-box + .formBox,
+.tip-box + .tip-box {
     margin-top: 20px;
 }
 
@@ -491,6 +493,10 @@ table#row-link-table {
 
 .btn + .btn-success {
     color: #FFF !important;  
+}
+
+.btn {
+    border-color: #c5c5c5 !important;
 }
 
 .accordion-body {
@@ -757,7 +763,8 @@ ul.ui-autocomplete {
     width: 221px;
 }
 
-form select {
+form select,
+input#id_attachment {
     width: 262px;
 }
 
@@ -2011,7 +2018,8 @@ td .gravatar-blank,
         width: 96%;
     }
 
-    form select {
+    form select,
+    input#id_attachment {
         width: 100%;
     }
 
@@ -2130,7 +2138,8 @@ td .gravatar-blank,
 
     #partner-form,
     #contact-form,
-    #partner-saved-search-form {
+    #partner-saved-search-form,
+    #contact-record-form {
         margin-left: 0;
     }
 
@@ -2881,4 +2890,21 @@ body.modal-open {
 #facet-term{
     display:table-cell;
     vertical-align: top;
+}
+
+/* PRM contact form */
+#id_length_0, #id_length_1 {
+    width: 55px;
+}
+
+#id_date_time_0 {
+    width: 85px;
+}
+
+#id_date_time_1, #id_date_time_2 {
+    width: 53px;
+}
+
+#id_date_time_3 {
+    width: 57px;
 }

@@ -1,3 +1,4 @@
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from myjobs.models import User
@@ -78,3 +79,84 @@ class Partner(models.Model):
 
     def add_contact(self, contact):
         self.contacts.add(contact)
+
+
+class ContactRecord(models.Model):
+    """
+    Object for Communication Records
+    """
+    CONTACT_TYPE_CHOICES = (('email', 'Email'),
+                            ('phone', 'Phone'),
+                            ('facetoface', 'Face to Face'))
+    created_on = models.DateTimeField(auto_now=True)
+    partner = models.ForeignKey(Partner)
+    contact_type = models.CharField(choices=CONTACT_TYPE_CHOICES,
+                                    max_length=12,
+                                    verbose_name="Contact Type")
+    contact_name = models.CharField(max_length=255, verbose_name='Contact',
+                                    blank=True)
+    # contact type fields, fields required depending on contact_type. Enforced
+    # on the form level.
+    contact_email = models.CharField(max_length=255,
+                                     verbose_name="Contact Email",
+                                     blank=True)
+    contact_phone = models.CharField(verbose_name="Contact Phone Number",
+                                     max_length=30, blank=True)
+    location = models.CharField(verbose_name="Meeting Location", max_length=255,
+                                blank=True)
+    length = models.TimeField(verbose_name="Meeting Length", blank=True,
+                              null=True)
+    subject = models.CharField(verbose_name="Subject or Topic", max_length=255)
+    date_time = models.DateTimeField(verbose_name="Date & Time")
+    notes = models.TextField(max_length=1000,
+                             verbose_name='Details, Notes or Transcripts',
+                             blank=True)
+    attachment = models.FileField(upload_to="mypartners/record-attachments/",
+                                  blank=True, null=True)
+
+    def __unicode__(self):
+        return "%s Contact Record - %s" % (self.contact_type, self.subject)
+
+    def get_record_description(self):
+        """
+        Generates a human readable description of the contact
+        record.
+
+        """
+
+        user = ContactLogEntry.objects.filter(object_id=self.pk)
+        user = user.order_by('-action_time')[:1]
+        if user:
+            user = user[0].user.get_full_name()
+        else:
+            user = "An employee"
+
+        if self.contact_type == 'facetoface':
+            return "%s had a meeting with %s" % (user, self.contact_name)
+        elif self.contact_type == 'phone':
+            return "%s called %s" % (user, self.contact_phone)
+        else:
+            return "%s emailed %s" % (user, self.contact_email)
+
+
+class ContactLogEntry(models.Model):
+    action_flag = models.PositiveSmallIntegerField('action flag')
+    action_time = models.DateTimeField('action time', auto_now=True)
+    change_message = models.TextField('change message', blank=True)
+    # A value that can meaningfully (email, name) identify the contact.
+    contact_identifier = models.CharField(max_length=255)
+    content_type = models.ForeignKey(ContentType, blank=True, null=True)
+    object_id = models.TextField('object id', blank=True, null=True)
+    object_repr = models.CharField('object repr', max_length=200)
+    partner = models.ForeignKey(Partner, null=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
+    def get_edited_object(self):
+        """
+        Returns the edited object represented by this log entry
+
+        """
+        try:
+            return self.content_type.get_object_for_this_type(pk=self.object_id)
+        except self.content_type.model_class().DoesNotExist:
+            return None
