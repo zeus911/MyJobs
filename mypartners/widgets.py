@@ -16,10 +16,10 @@ class MultipleFileWidget(FileInput):
         return super(MultipleFileWidget, self).render(name, None, attrs=attrs)
 
     def value_from_datadict(self, data, files, name):
-        if hasattr(files, 'getlist'):
-            return files.getlist(name)
+        if files:
+            return list(files.get(name))
         else:
-            return [files.get(name)]
+            return None
 
 
 class SplitDateTimeDropDownWidget(MultiWidget):
@@ -114,18 +114,21 @@ class MultipleFileField(FileField):
     widget = MultipleFileWidget
 
     def __init__(self, *args, **kwargs):
-        self.max_num = kwargs.pop('max_num', None)
         self.maximum_file_size = kwargs.pop('maximum_file_size', 4194304)
         super(MultipleFileField, self).__init__(*args, **kwargs)
 
     def to_python(self, data):
-        ret = []
+        if not data:
+            return None
+        file_fields = []
         for item in data:
-            ret.append(super(MultipleFileField, self).to_python(item))
-        return ret
+            file_fields.append(super(MultipleFileField, self).to_python(item))
+        return file_fields
 
     def validate(self, data):
+        if not data:
+            return None
         super(MultipleFileField, self).validate(data)
         for uploaded_file in data:
             if uploaded_file.size > self.maximum_file_size:
-                raise ValidationError('')
+                raise ValidationError('File %s too large.' % uploaded_file.name)

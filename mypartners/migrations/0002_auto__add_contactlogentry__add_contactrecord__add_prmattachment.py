@@ -41,7 +41,6 @@ class Migration(SchemaMigration):
             ('job_applications', self.gf('django.db.models.fields.CharField')(max_length=6, blank=True)),
             ('job_interviews', self.gf('django.db.models.fields.CharField')(max_length=6, blank=True)),
             ('job_hires', self.gf('django.db.models.fields.CharField')(max_length=6, blank=True)),
-            ('attachment', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.PRMAttachment'], null=True, on_delete=models.SET_NULL)),
         ))
         db.send_create_signal(u'mypartners', ['ContactRecord'])
 
@@ -49,6 +48,7 @@ class Migration(SchemaMigration):
         db.create_table(u'mypartners_prmattachment', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('attachment', self.gf('django.db.models.fields.files.FileField')(max_length=100, null=True, blank=True)),
+            ('contact_record', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.ContactRecord'], null=True, on_delete=models.SET_NULL)),
         ))
         db.send_create_signal(u'mypartners', ['PRMAttachment'])
 
@@ -152,7 +152,6 @@ class Migration(SchemaMigration):
         },
         u'mypartners.contactrecord': {
             'Meta': {'object_name': 'ContactRecord'},
-            'attachment': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.PRMAttachment']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'contact_email': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'contact_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'contact_phone': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
@@ -182,6 +181,7 @@ class Migration(SchemaMigration):
         u'mypartners.prmattachment': {
             'Meta': {'object_name': 'PRMAttachment'},
             'attachment': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
+            'contact_record': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.ContactRecord']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         }
     }

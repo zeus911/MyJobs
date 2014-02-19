@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 from myprofile.forms import generate_custom_widgets
 from myjobs.forms import BaseUserForm
-from mypartners.models import Contact, Partner, ContactRecord
+from mypartners.models import Contact, Partner, ContactRecord, PRMAttachment
 from mypartners.helpers import log_change
 from mypartners.widgets import (MultipleFileField, SplitDateTimeDropDownField,
                                 TimeDropDownField)
@@ -274,6 +274,7 @@ class ContactRecordForm(forms.ModelForm):
             self._errors['location'] = ErrorList([""])
         return self.cleaned_data
 
+
     def clean_contact_name(self):
         contact_id = self.cleaned_data['contact_name']
         if contact_id == 'None' or not contact_id:
@@ -287,6 +288,16 @@ class ContactRecordForm(forms.ModelForm):
         is_new = False if self.instance.pk else True
         self.instance.partner = partner
         instance = super(ContactRecordForm, self).save(commit)
+
+        attachments = self.cleaned_data['attachment']
+        if attachments:
+            for attachment in attachments:
+                prm_attachment = PRMAttachment()
+                prm_attachment.attachment = attachment
+                prm_attachment.contact_record = self.instance
+                setattr(prm_attachment, 'partner', self.instance.partner)
+                prm_attachment.save()
+
         try:
             identifier = instance.contact_email if instance.contact_email \
                 else instance.contact_phone if instance.contact_phone \

@@ -459,7 +459,7 @@ def prm_edit_records(request):
                                  partner=partner, instance=instance)
         if form.is_valid():
             form.save(user, partner)
-            return HttpResponseRedirect(reverse('partner_edit_record') +
+            return HttpResponseRedirect(reverse('partner_records') +
                 '?company=%d&partner=%d' % (company.id, partner.id))
         else:
             ctx['form'] = form
