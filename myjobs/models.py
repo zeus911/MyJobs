@@ -318,9 +318,6 @@ class User(AbstractBaseUser, PermissionsMixin):
             if User.objects.filter(user_guid=self.user_guid):
                 self.make_guid()
             self.save()
-        elif '-' in self.user_guid:
-            self.user_guid.replace('-', '')
-            self.save()
 
     def messages_unread(self):
         """
