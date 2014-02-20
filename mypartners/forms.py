@@ -2,14 +2,16 @@ from django import forms
 from django.contrib.admin.models import ADDITION
 from django.core.exceptions import ValidationError
 from django.forms.util import ErrorList
+from django.utils.safestring import mark_safe
 
 from collections import OrderedDict
 
 from myprofile.forms import generate_custom_widgets
 from myjobs.forms import BaseUserForm
-from mypartners.models import Contact, Partner, ContactRecord, PRMAttachment
+from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
+                               MAX_ATTACHMENT_MB)
 from mypartners.helpers import log_change
-from mypartners.widgets import (MultipleFileField, SplitDateTimeDropDownField,
+from mypartners.widgets import (SplitDateTimeDropDownField,
                                 TimeDropDownField)
 
 
@@ -245,7 +247,8 @@ def PartnerEmailChoices(partner):
 class ContactRecordForm(forms.ModelForm):
     date_time = SplitDateTimeDropDownField()
     length = TimeDropDownField()
-    attachment = MultipleFileField()
+    attachment = forms.FileField(required=False, help_text="Max file size %sMB"
+                                                           % MAX_ATTACHMENT_MB)
 
     class Meta:
         form_name = "Contact Record"
@@ -258,11 +261,26 @@ class ContactRecordForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         partner = kwargs.pop('partner')
-        choices = [(None, '----------')]
-        [choices.append((c.id, c.name)) for c in partner.contacts.all()]
+        instance = kwargs.get('instance')
+        choices = [(c.id, c.name) for c in partner.contacts.all()]
+        if not instance:
+            choices.insert(0, (None, '----------'))
+        else:
+            index = [x[1] for x in choices].index(instance.contact_name)
+            tup = choices[index]
+            choices.pop(index)
+            choices.insert(0, tup)
         super(ContactRecordForm, self).__init__(*args, **kwargs)
         self.fields["contact_name"] = forms.ChoiceField(
             widget=forms.Select(), choices=choices, label="Contacts")
+        if instance:
+            attachments = PRMAttachment.objects.filter(contact_record=instance)
+            if attachments:
+                choices = [(a.pk, get_attachment_link(partner.owner.id, partner.id, a.id, a.attachment.name.split("/")[-1]))
+                           for a in attachments]
+                self.fields["attach_delete"] = forms.MultipleChoiceField(
+                    required=False, choices=choices, label="Delete Files",
+                    widget=forms.CheckboxSelectMultiple)
 
     def clean(self):
         contact_type = self.cleaned_data.get('contact_type', None)
@@ -272,8 +290,9 @@ class ContactRecordForm(forms.ModelForm):
             self._errors['contact_phone'] = ErrorList([""])
         elif contact_type == 'facetoface' and not self.cleaned_data['location']:
             self._errors['location'] = ErrorList([""])
+        elif contact_type == 'job' and not self.cleaned_data['job_id']:
+            self._errors['job_id'] = ErrorList([""])
         return self.cleaned_data
-
 
     def clean_contact_name(self):
         contact_id = self.cleaned_data['contact_name']
@@ -284,19 +303,28 @@ class ContactRecordForm(forms.ModelForm):
         except Contact.DoesNotExist:
             raise ValidationError("Contact does not exist")
 
+    def clean_attachment(self):
+        if self.cleaned_data['attachment'].size > MAX_ATTACHMENT_MB * 1048576:
+            raise ValidationError('File too large')
+        return self.cleaned_data['attachment']
+
     def save(self, user, partner, commit=True):
         is_new = False if self.instance.pk else True
         self.instance.partner = partner
         instance = super(ContactRecordForm, self).save(commit)
 
-        attachments = self.cleaned_data['attachment']
-        if attachments:
-            for attachment in attachments:
-                prm_attachment = PRMAttachment()
-                prm_attachment.attachment = attachment
-                prm_attachment.contact_record = self.instance
-                setattr(prm_attachment, 'partner', self.instance.partner)
-                prm_attachment.save()
+        attachment = self.cleaned_data['attachment']
+        if attachment:
+            prm_attachment = PRMAttachment()
+            prm_attachment.attachment = attachment
+            prm_attachment.contact_record = self.instance
+            setattr(prm_attachment, 'partner', self.instance.partner)
+            prm_attachment.save()
+
+        attach_delete = self.cleaned_data.get('attach_delete', None)
+        if attach_delete:
+            for attachment in attach_delete:
+                PRMAttachment.objects.get(pk=attachment).delete()
 
         try:
             identifier = instance.contact_email if instance.contact_email \
@@ -315,4 +343,12 @@ class ContactRecordForm(forms.ModelForm):
             log_change(instance, self, user, partner, identifier)
         return instance
 
+
+def get_attachment_link(company_id, partner_id, attachment_id, attachment_name):
+    url = '/prm/download?company=%s&partner=%s&id=%s' % (company_id,
+                                                         partner_id,
+                                                         attachment_id)
+
+    html = "<a href='{url}' target='_blank'>{attachment_name}</a>"
+    return mark_safe(html.format(url=url, attachment_name=attachment_name))
 

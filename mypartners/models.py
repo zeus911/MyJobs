@@ -9,6 +9,9 @@ from myjobs.models import User
 from mydashboard.models import Company
 
 
+MAX_ATTACHMENT_MB = 4
+
+
 class Contact(models.Model):
     """
     Everything here is self explanatory except for one part. With the Contact object there is
@@ -194,7 +197,6 @@ class ContactRecord(models.Model):
 
 
 class PRMAttachment(models.Model):
-    MAX_FILE_MB = 4
 
     def get_file_name(self, filename):
         """
@@ -217,7 +219,6 @@ class PRMAttachment(models.Model):
             path_addon = "mypartners/%s/%s/%s" % (self.partner.owner,
                                                   self.partner.name, uid)
             name = "%s/%s" % (path_addon, filename)
-
         return name
 
     attachment = models.FileField(upload_to=get_file_name, blank=True,

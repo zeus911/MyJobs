@@ -766,6 +766,13 @@ ul.ui-autocomplete {
 form select,
 input#id_attachment {
     width: 262px;
+    margin-bottom: 10px;
+}
+
+#contact-record-form ul {
+    list-style-type: none;
+    display: block;
+    float: left;
 }
 
 fieldset textarea,
@@ -2915,3 +2922,4 @@ body.modal-open {
 #id_date_time_3 {
     width: 57px;
 }
+

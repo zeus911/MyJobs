@@ -10,18 +10,6 @@ minute_choices = [(str(x).zfill(2), str(x).zfill(2)) for x in range(0, 60)]
 time_choices = [('AM', 'AM'), ('PM', 'PM')]
 
 
-class MultipleFileWidget(FileInput):
-    def render(self, name, value, attrs={}):
-        attrs['multiple'] = 'multiple'
-        return super(MultipleFileWidget, self).render(name, None, attrs=attrs)
-
-    def value_from_datadict(self, data, files, name):
-        if files:
-            return list(files.get(name))
-        else:
-            return None
-
-
 class SplitDateTimeDropDownWidget(MultiWidget):
     def __init__(self, attrs=None):
         widgets = (
@@ -108,27 +96,3 @@ class TimeDropDownField(MultiValueField):
         hours = int(data_list[0])
         minutes = int(data_list[1])
         return time(hours, minutes)
-
-
-class MultipleFileField(FileField):
-    widget = MultipleFileWidget
-
-    def __init__(self, *args, **kwargs):
-        self.maximum_file_size = kwargs.pop('maximum_file_size', 4194304)
-        super(MultipleFileField, self).__init__(*args, **kwargs)
-
-    def to_python(self, data):
-        if not data:
-            return None
-        file_fields = []
-        for item in data:
-            file_fields.append(super(MultipleFileField, self).to_python(item))
-        return file_fields
-
-    def validate(self, data):
-        if not data:
-            return None
-        super(MultipleFileField, self).validate(data)
-        for uploaded_file in data:
-            if uploaded_file.size > self.maximum_file_size:
-                raise ValidationError('File %s too large.' % uploaded_file.name)

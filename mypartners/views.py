@@ -1,5 +1,6 @@
 import json
 
+from django.conf import settings
 from django.contrib.admin.models import DELETION
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
@@ -15,7 +16,7 @@ from mysearches.helpers import url_sort_options, parse_rss
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm, ContactRecordForm)
-from mypartners.models import Partner, Contact, ContactRecord
+from mypartners.models import Partner, Contact, ContactRecord, PRMAttachment
 from mypartners.helpers import (prm_worthy, url_extra_params, log_change,
                                 get_searches_for_partner, get_logs_for_partner,
                                 get_contact_records_for_partner)
@@ -505,3 +506,20 @@ def get_contact_information(request):
             data = {}
 
     return HttpResponse(json.dumps(data))
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def get_uploaded_file(request):
+    from boto.s3.connection import S3Connection
+
+    company, partner, user = prm_worthy(request)
+    file_id = request.GET.get('id', None)
+    attachment = get_object_or_404(PRMAttachment, pk=file_id,
+                                   contact_record__partner=partner)
+
+    s3 = S3Connection(settings.AWS_ACCESS_KEY_ID,
+                      settings.AWS_SECRET_KEY, is_secure=True)
+    path = s3.generate_url(60, 'GET', bucket=settings.AWS_STORAGE_BUCKET_NAME,
+                           key=attachment.attachment.name, force_http=True)
+
+    return HttpResponseRedirect(path)
+
