@@ -2896,7 +2896,7 @@ body.modal-open {
     padding-right: 10px;
 }
 
-#facet-term{
+#facet-term {
     display:table-cell;
     vertical-align: top;
 }
@@ -2906,15 +2906,20 @@ body.modal-open {
     width: 55px;
 }
 
-#id_date_time_0 {
-    width: 85px;
+#contact-record-form #id_date_time_3,
+#contact-record-form #id_date_time_4,
+#contact-record-form #id_date_time_5,
+#contact-record-form #id_date_time_0,
+#contact-record-form #id_date_time_1 {
+    margin-right: 10px;
+    width: 65px;
 }
 
-#id_date_time_1, #id_date_time_2 {
-    width: 53px;
+#contact-record-form #id_date_time_2 {
+    width: 75px;
 }
 
-#id_date_time_3 {
-    width: 57px;
+#contact-record-form .date-time {
+    display: block;
+    float: left;
 }
-

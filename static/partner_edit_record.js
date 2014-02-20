@@ -5,7 +5,6 @@ $(function() {
         initialize: function() {
             this.once('renderEvent', function() {
                 show_fields();
-                add_datepicker();
                 $('[id$=notes]').placeholder();
             });
         },
@@ -93,14 +92,20 @@ function show_fields(){
     if(contact_type == 'email'){
         $('[id$="contact_email"]').show();
         $('label[for$="contact_email"]').show();
+        $('[id*="date_time_"]').show();
+        $('label[for*="date_time_"]').show();
     } else if(contact_type == 'phone') {
         $('[id$="contact_phone"]').show();
         $('label[for$="contact_phone"]').show();
         $('[id$="length"]').show();
         $('label[for$="length"]').show();
+        $('[id*="date_time_"]').show();
+        $('label[for*="date_time_"]').show();
     } else if(contact_type == 'facetoface') {
         $('[id$="location"]').show();
         $('label[for$="location"]').show();
+        $('[id*="date_time_"]').show();
+        $('label[for*="date_time_"]').show();
         display_length_widget("show");
     } else if(contact_type == 'job'){
         $('[id$="contact_email"]').show();
@@ -119,19 +124,5 @@ function show_fields(){
         $('label[for$="subject"]').hide();
         $('[id*="date_time_"]').hide();
         $('label[for*="date_time_"]').hide();
-    }
-}
-
-function add_datepicker(){
-    var date = $("input[id$='date_time_0']");
-    date.datepicker({dateFormat: window.dateFormat, constrainInput: false});
-    if($(window).width() <= 501){
-        var window_width = $(window).width();
-        var field_width = window_width - 81;
-        date.css({"width": String(field_width)+"px", "display": "inline-block", "margin-right": "5px"});
-        $('[id*="id_date_time_"]').slice(1).each(function() {
-            $(this).css("width", field_width/3+"px");
-        });
-        date.after('<span class="btn add-on calendar"><i class="icon-search icon-calendar"></i></span>');
     }
 }

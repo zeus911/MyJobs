@@ -1,6 +1,5 @@
 from django.core.exceptions import ValidationError
-from django.forms import (DateInput, FileField, FileInput, MultiValueField,
-                          MultiWidget, Select, fields)
+from django.forms import MultiValueField, MultiWidget, Select, fields
 
 from datetime import datetime, time
 
@@ -8,12 +7,30 @@ hour_choices = [(str(x).zfill(2), str(x).zfill(2)) for x in range(1, 13)]
 length_hour_choices = [(str(x).zfill(2), str(x).zfill(2)) for x in range(0, 24)]
 minute_choices = [(str(x).zfill(2), str(x).zfill(2)) for x in range(0, 60)]
 time_choices = [('AM', 'AM'), ('PM', 'PM')]
+month_choices = [
+    ('Jan', 'Jan'),
+    ('Feb', 'Feb'),
+    ('Mar', 'Mar'),
+    ('Apr', 'Apr'),
+    ('May', 'May'),
+    ('Jun', 'Jun'),
+    ('Jul', 'Jul'),
+    ('Aug', 'Aug'),
+    ('Sep', 'Sep'),
+    ('Oct', 'Oct'),
+    ('Nov', 'Nov'),
+    ('Dec', 'Dec'),
+]
+day_choices = [(str(x).zfill(2), str(x).zfill(2)) for x in range(1, 32)]
+year_choices = [(str(x), str(x)) for x in range(2005, 2050)]
 
 
 class SplitDateTimeDropDownWidget(MultiWidget):
     def __init__(self, attrs=None):
         widgets = (
-            DateInput(attrs=attrs, format=None),
+            Select(attrs=attrs, choices=month_choices),
+            Select(attrs=attrs, choices=day_choices),
+            Select(attrs=attrs, choices=year_choices),
             Select(attrs=attrs, choices=hour_choices),
             Select(attrs=attrs, choices=minute_choices),
             Select(attrs=attrs, choices=time_choices)
@@ -22,12 +39,23 @@ class SplitDateTimeDropDownWidget(MultiWidget):
 
     def decompress(self, value):
         if value:
-            date = datetime.strftime(value, '%d-%b-%Y')
+            month = datetime.strftime(value, '%b')
+            day = datetime.strftime(value, '%d')
+            year = datetime.strftime(value, '%Y')
             hour = datetime.strftime(value, '%I')
             minutes = datetime.strftime(value, '%M')
             am_pm = datetime.strftime(value, '%p')
-            return [date, hour, minutes, am_pm]
-        return [None, None, None, None]
+            return [month, day, year, hour, minutes, am_pm]
+        return [None, None, None, None, None, None]
+
+    def format_output(self, rendered_widgets):
+        return ''.join([
+            '<div class="date-time">',
+            rendered_widgets[0], rendered_widgets[1], rendered_widgets[2],
+            '<br/>',
+            rendered_widgets[3], rendered_widgets[4], rendered_widgets[5],
+            '</div>'
+        ])
 
 
 class TimeDropDownWidget(MultiWidget):
@@ -54,7 +82,9 @@ class SplitDateTimeDropDownField(MultiValueField):
 
     def __init__(self, *args, **kwargs):
         list_fields = (
-            fields.CharField(max_length=255, required=True),
+            fields.ChoiceField(choices=month_choices),
+            fields.ChoiceField(choices=day_choices),
+            fields.ChoiceField(choices=year_choices),
             fields.ChoiceField(choices=hour_choices),
             fields.ChoiceField(choices=minute_choices),
             fields.ChoiceField(choices=time_choices),
@@ -65,13 +95,15 @@ class SplitDateTimeDropDownField(MultiValueField):
         )
 
     def compress(self, data_list):
-        date = data_list[0]
-        hour = data_list[1]
-        minutes = data_list[2]
-        am_pm = data_list[3]
-        date_string = " ".join([date, hour, minutes, am_pm])
+        month = data_list[0]
+        day = data_list[1]
+        year = data_list[2]
+        hour = data_list[3]
+        minutes = data_list[4]
+        am_pm = data_list[5]
+        date_string = " ".join([month, day, year, hour, minutes, am_pm])
         try:
-            date_time = datetime.strptime(date_string, "%d-%b-%Y %I %M %p")
+            date_time = datetime.strptime(date_string, "%b %d %Y %I %M %p")
         except ValueError:
             raise ValidationError('Invalid date format.')
         return date_time
