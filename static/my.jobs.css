@@ -2786,17 +2786,12 @@ body.modal-open {
 }
 
 .required input[type=text],
-.required select,
-.required-block {
+.required select {
     border: 1px solid #900;
 }
 
 .required {
-    display: inline-block;
-}
-
-.required-block {
-    display: block;
+    display: inline;
 }
 
 .required-label,
