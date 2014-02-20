@@ -222,7 +222,7 @@ class PRMAttachment(models.Model):
         return name
 
     attachment = models.FileField(upload_to=get_file_name, blank=True,
-                                  null=True)
+                                  null=True, max_length=767)
     contact_record = models.ForeignKey(ContactRecord, null=True,
                                        on_delete=models.SET_NULL)
 

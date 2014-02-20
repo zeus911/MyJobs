@@ -521,7 +521,7 @@ def get_uploaded_file(request):
 
             s3 = S3Connection(settings.AWS_ACCESS_KEY_ID,
                               settings.AWS_SECRET_KEY, is_secure=True)
-            path = s3.generate_url(60, 'GET', bucket=settings.AWS_STORAGE_BUCKET_NAME,
+            path = s3.generate_url(600, 'GET', bucket=settings.AWS_STORAGE_BUCKET_NAME,
                                    key=attachment.attachment.name, force_http=True)
     except AttributeError:
         path = "%s/%s" % (settings.MEDIA_ROOT, attachment.attachment.name)

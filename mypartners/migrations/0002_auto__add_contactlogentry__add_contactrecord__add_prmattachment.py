@@ -47,7 +47,7 @@ class Migration(SchemaMigration):
         # Adding model 'PRMAttachment'
         db.create_table(u'mypartners_prmattachment', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('attachment', self.gf('django.db.models.fields.files.FileField')(max_length=100, null=True, blank=True)),
+            ('attachment', self.gf('django.db.models.fields.files.FileField')(max_length=767, null=True, blank=True)),
             ('contact_record', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.ContactRecord'], null=True, on_delete=models.SET_NULL)),
         ))
         db.send_create_signal(u'mypartners', ['PRMAttachment'])
@@ -180,7 +180,7 @@ class Migration(SchemaMigration):
         },
         u'mypartners.prmattachment': {
             'Meta': {'object_name': 'PRMAttachment'},
-            'attachment': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
+            'attachment': ('django.db.models.fields.files.FileField', [], {'max_length': '767', 'null': 'True', 'blank': 'True'}),
             'contact_record': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.ContactRecord']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         }
