@@ -11,7 +11,7 @@ from myjobs.forms import BaseUserForm
 from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
                                MAX_ATTACHMENT_MB)
 from mypartners.helpers import log_change
-from mypartners.widgets import (SplitDateTimeDropDownField,
+from mypartners.widgets import (MultipleFileField, SplitDateTimeDropDownField,
                                 TimeDropDownField)
 
 
@@ -247,8 +247,7 @@ def PartnerEmailChoices(partner):
 class ContactRecordForm(forms.ModelForm):
     date_time = SplitDateTimeDropDownField()
     length = TimeDropDownField()
-    attachment = forms.FileField(required=False, help_text="Max file size %sMB"
-                                                           % MAX_ATTACHMENT_MB)
+    attachment = MultipleFileField(required=False, help_text="Max file size %sMB" % MAX_ATTACHMENT_MB)
 
     class Meta:
         form_name = "Contact Record"
@@ -276,7 +275,9 @@ class ContactRecordForm(forms.ModelForm):
         if instance:
             attachments = PRMAttachment.objects.filter(contact_record=instance)
             if attachments:
-                choices = [(a.pk, get_attachment_link(partner.owner.id, partner.id, a.id, a.attachment.name.split("/")[-1]))
+                choices = [(a.pk, get_attachment_link(partner.owner.id,
+                                                      partner.id, a.id,
+                                                      a.attachment.name.split("/")[-1]))
                            for a in attachments]
                 self.fields["attach_delete"] = forms.MultipleChoiceField(
                     required=False, choices=choices, label="Delete Files",
@@ -304,10 +305,12 @@ class ContactRecordForm(forms.ModelForm):
             raise ValidationError("Contact does not exist")
 
     def clean_attachment(self):
-        if (self.cleaned_data['attachment'] and
-                    self.cleaned_data['attachment'].size >
-                    MAX_ATTACHMENT_MB * 1048576):
-            raise ValidationError('File too large')
+        attachments = self.cleaned_data.get('attachment', None)
+        if not attachments:
+            return None
+        for attachment in attachments:
+            if attachment.size > MAX_ATTACHMENT_MB * 1048576:
+                raise ValidationError('File too large')
         return self.cleaned_data['attachment']
 
     def save(self, user, partner, commit=True):
@@ -315,13 +318,14 @@ class ContactRecordForm(forms.ModelForm):
         self.instance.partner = partner
         instance = super(ContactRecordForm, self).save(commit)
 
-        attachment = self.cleaned_data['attachment']
-        if attachment:
-            prm_attachment = PRMAttachment()
-            prm_attachment.attachment = attachment
-            prm_attachment.contact_record = self.instance
-            setattr(prm_attachment, 'partner', self.instance.partner)
-            prm_attachment.save()
+        attachments = self.cleaned_data.get('attachment', None)
+        if attachments:
+            for attachment in attachments:
+                prm_attachment = PRMAttachment()
+                prm_attachment.attachment = attachment
+                prm_attachment.contact_record = self.instance
+                setattr(prm_attachment, 'partner', self.instance.partner)
+                prm_attachment.save()
 
         attach_delete = self.cleaned_data.get('attach_delete', None)
         if attach_delete:

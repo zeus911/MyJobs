@@ -1,5 +1,7 @@
 from django.core.exceptions import ValidationError
-from django.forms import MultiValueField, MultiWidget, Select, fields
+from django.forms import (FileField, FileInput, MultiValueField, MultiWidget,
+                          Select,
+                          fields)
 
 from datetime import datetime, time
 
@@ -23,6 +25,17 @@ month_choices = [
 ]
 day_choices = [(str(x).zfill(2), str(x).zfill(2)) for x in range(1, 32)]
 year_choices = [(str(x), str(x)) for x in range(2005, 2050)]
+
+
+class MultipleFileInputWidget(FileInput):
+    def render(self, name, value, attrs={}):
+        attrs['multiple'] = 'multiple'
+        return super(MultipleFileInputWidget, self).render(name, value, attrs)
+
+    def value_from_datadict(self, data, files, name):
+        if hasattr(files, 'getlist'):
+            return files.getlist(name)
+        return [files.get(name, None)]
 
 
 class SplitDateTimeDropDownWidget(MultiWidget):
@@ -128,3 +141,17 @@ class TimeDropDownField(MultiValueField):
         hours = int(data_list[0])
         minutes = int(data_list[1])
         return time(hours, minutes)
+
+
+class MultipleFileField(FileField):
+    widget = MultipleFileInputWidget
+
+    def to_python(self, data):
+        if not data:
+            return None
+
+        datalist = []
+        for f in data:
+            datalist.append(super(MultipleFileField, self).to_python(f))
+
+        return datalist
