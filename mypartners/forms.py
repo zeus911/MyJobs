@@ -304,7 +304,9 @@ class ContactRecordForm(forms.ModelForm):
             raise ValidationError("Contact does not exist")
 
     def clean_attachment(self):
-        if self.cleaned_data['attachment'].size > MAX_ATTACHMENT_MB * 1048576:
+        if (self.cleaned_data['attachment'] and
+                    self.cleaned_data['attachment'].size >
+                    MAX_ATTACHMENT_MB * 1048576):
             raise ValidationError('File too large')
         return self.cleaned_data['attachment']
 
