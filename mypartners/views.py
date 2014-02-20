@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.admin.models import DELETION
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
+from django.core.files.storage import default_storage
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
@@ -507,19 +508,23 @@ def get_contact_information(request):
 
     return HttpResponse(json.dumps(data))
 
+
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def get_uploaded_file(request):
-    from boto.s3.connection import S3Connection
-
     company, partner, user = prm_worthy(request)
     file_id = request.GET.get('id', None)
     attachment = get_object_or_404(PRMAttachment, pk=file_id,
                                    contact_record__partner=partner)
+    try:
+        if default_storage.connection.__repr__() == 'S3Connection:s3.amazonaws.com':
+            from boto.s3.connection import S3Connection
 
-    s3 = S3Connection(settings.AWS_ACCESS_KEY_ID,
-                      settings.AWS_SECRET_KEY, is_secure=True)
-    path = s3.generate_url(60, 'GET', bucket=settings.AWS_STORAGE_BUCKET_NAME,
-                           key=attachment.attachment.name, force_http=True)
+            s3 = S3Connection(settings.AWS_ACCESS_KEY_ID,
+                              settings.AWS_SECRET_KEY, is_secure=True)
+            path = s3.generate_url(60, 'GET', bucket=settings.AWS_STORAGE_BUCKET_NAME,
+                                   key=attachment.attachment.name, force_http=True)
+    except AttributeError:
+        path = "%s/%s" % (settings.MEDIA_ROOT, attachment.attachment.name)
 
     return HttpResponseRedirect(path)
 

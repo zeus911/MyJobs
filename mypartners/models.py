@@ -231,14 +231,17 @@ class PRMAttachment(models.Model):
 
         # Confirm that we're not trying to change public/private status of
         # actual files during local testing.
-        if default_storage.connection.__repr__() == 'S3Connection:s3.amazonaws.com':
-            from boto import connect_s3, s3
-            conn = connect_s3(settings.AWS_ACCESS_KEY_ID,
-                              settings.AWS_SECRET_KEY)
-            bucket = conn.create_bucket(settings.AWS_STORAGE_BUCKET_NAME)
-            key = s3.key.Key(bucket)
-            key.key = self.attachment.name
-            key.set_acl('private')
+        try:
+            if default_storage.connection.__repr__() == 'S3Connection:s3.amazonaws.com':
+                from boto import connect_s3, s3
+                conn = connect_s3(settings.AWS_ACCESS_KEY_ID,
+                                  settings.AWS_SECRET_KEY)
+                bucket = conn.create_bucket(settings.AWS_STORAGE_BUCKET_NAME)
+                key = s3.key.Key(bucket)
+                key.key = self.attachment.name
+                key.set_acl('private')
+        except AttributeError:
+            pass
 
         return instance
 
