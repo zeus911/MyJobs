@@ -203,10 +203,10 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
         facet_solr = facet_solr.add_facet_field('Education_education_level_code')
     else:
         term = urllib.unquote(request.GET.get('education'))
-        term = edu_codes.get(int(term))
-        filters[term] = remove_param_from_url(url, 'education')
+        term_name = edu_codes.get(int(term))
+        filters[term_name] = remove_param_from_url(url, 'education')
 
-        q = 'Education_education_level_code:"%s"' % term
+        q = 'Education_education_level_code:%s' % term
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
         loc_solr = loc_solr.add_filter_query(q)
