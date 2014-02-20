@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 from django.forms import (FileField, FileInput, MultiValueField, MultiWidget,
                           Select,
                           fields)
+from django.utils.safestring import mark_safe
 
 from datetime import datetime, time
 
@@ -30,7 +31,9 @@ year_choices = [(str(x), str(x)) for x in range(2005, 2050)]
 class MultipleFileInputWidget(FileInput):
     def render(self, name, value, attrs={}):
         attrs['multiple'] = 'multiple'
-        return super(MultipleFileInputWidget, self).render(name, value, attrs)
+        render = super(MultipleFileInputWidget, self).render(name, value, attrs)
+        render = "<div class='attachment'><span id='span_attachment'>%s</span></div>" % render
+        return mark_safe(render)
 
     def value_from_datadict(self, data, files, name):
         if hasattr(files, 'getlist'):

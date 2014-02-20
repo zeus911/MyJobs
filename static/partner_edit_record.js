@@ -15,7 +15,7 @@ $(function() {
 
         events: {
             'change [id$="_contact_type"]': 'showing_fields',
-            'change [id$="id_contact_name"]': 'fill_contact_info'
+            'change [id$="id_contact_name"]': 'fill_contact_info',
         },
 
         showing_fields: function(){
@@ -55,6 +55,11 @@ $(function() {
 
     var EditRecord = new EditRecordView;
     EditRecord.render();
+
+    $(document).on("change", '[id^=id_attachment]', function(){
+        add_additional_input(this);
+    });
+
 });
 
 function disable_fields(){
@@ -125,4 +130,25 @@ function show_fields(){
         $('[id*="date_time_"]').hide();
         $('label[for*="date_time_"]').hide();
     }
+}
+
+function add_additional_input(field) {
+    if($(field).val() != '') {
+        $('[id^=span_attachment]:first').before('<span id="span_attachment_' + $("[id^=id_attachment]").length + '"><input id="id_attachment_' + $("[id^=id_attachment]").length + '" multiple="multiple" name="attachment" type="file"></span>');
+    }
+    else if(number_of_blank_and_visible_file_inputs() > 1){
+        $(field).hide();
+    }
+}
+
+function number_of_blank_and_visible_file_inputs() {
+    var number_that_are_blank_and_visible = 0;
+    console.log($("[id^=id_attachment]").length);
+    $("[id^=id_attachment]").each(function() {
+        if(($(this).val() == "" || $(this).val() == 0) && $(this).is(":visible")) {
+            number_that_are_blank_and_visible += 1;
+        }
+    });
+    console.log(number_that_are_blank_and_visible);
+    return number_that_are_blank_and_visible;
 }

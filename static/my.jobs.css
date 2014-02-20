@@ -2155,6 +2155,10 @@ td .gravatar-blank,
     .tip-box .tip-footer .btn-link {
         padding: 6px 25px 7px 25px;
     }
+
+    #contact-record-form .attachment span {
+        margin-left: 0px !important;
+    }
     
     /* Microsite Activity Page*/
     #candidate-activity-details-table {
@@ -2923,3 +2927,9 @@ body.modal-open {
     display: block;
     float: left;
 }
+
+#contact-record-form .attachment span {
+    display: block;
+    margin-left: 280px;
+}
+

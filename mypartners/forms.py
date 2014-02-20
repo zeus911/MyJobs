@@ -11,8 +11,8 @@ from myjobs.forms import BaseUserForm
 from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
                                MAX_ATTACHMENT_MB)
 from mypartners.helpers import log_change
-from mypartners.widgets import (MultipleFileField, SplitDateTimeDropDownField,
-                                TimeDropDownField)
+from mypartners.widgets import (MultipleFileField, MultipleFileInputWidget,
+                                SplitDateTimeDropDownField, TimeDropDownField)
 
 
 class ContactForm(forms.ModelForm):
@@ -247,7 +247,9 @@ def PartnerEmailChoices(partner):
 class ContactRecordForm(forms.ModelForm):
     date_time = SplitDateTimeDropDownField()
     length = TimeDropDownField()
-    attachment = MultipleFileField(required=False, help_text="Max file size %sMB" % MAX_ATTACHMENT_MB)
+    attachment = MultipleFileField(required=False,
+                                   help_text="Max file size %sMB" %
+                                             MAX_ATTACHMENT_MB)
 
     class Meta:
         form_name = "Contact Record"
@@ -306,10 +308,8 @@ class ContactRecordForm(forms.ModelForm):
 
     def clean_attachment(self):
         attachments = self.cleaned_data.get('attachment', None)
-        if not attachments:
-            return None
         for attachment in attachments:
-            if attachment.size > MAX_ATTACHMENT_MB * 1048576:
+            if attachment and attachment.size > MAX_ATTACHMENT_MB * 1048576:
                 raise ValidationError('File too large')
         return self.cleaned_data['attachment']
 
@@ -319,8 +319,8 @@ class ContactRecordForm(forms.ModelForm):
         instance = super(ContactRecordForm, self).save(commit)
 
         attachments = self.cleaned_data.get('attachment', None)
-        if attachments:
-            for attachment in attachments:
+        for attachment in attachments:
+            if attachment:
                 prm_attachment = PRMAttachment()
                 prm_attachment.attachment = attachment
                 prm_attachment.contact_record = self.instance
