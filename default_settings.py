@@ -53,8 +53,8 @@ DATE_INPUT_FORMATS += (FORM_DATE_FORMAT,)
 USE_I18N = True
 USE_L10N = True
 
-MEDIA_ROOT = ''
-MEDIA_URL = '//d2e48ltfsb5exy.cloudfront.net/'
+MEDIA_ROOT = os.path.join(_PATH, 'files', 'media')
+MEDIA_URL = '/files/media'
 
 STATICFILES_DIRS = (
     os.path.join(PROJ_ROOT, 'static'),
