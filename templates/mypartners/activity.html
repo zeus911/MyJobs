@@ -6,7 +6,7 @@
             Search URL: {{ activity_object.url }}
         {% elif content_type == 'contact record' %}
             {{ activity_object.get_record_description }} <br/>
-            Subject:  {{ activity_object.subject }} <br/>
+            {% if activity_object.subject %}Subject:  {{ activity_object.subject }} <br/>{% endif %}
             {{ activity_object.notes }}
         {% else %}
             {{ user_name }} {{ action_type }} a {{ content_type }} for {{ activity.contact_identifier }}
