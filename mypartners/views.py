@@ -524,8 +524,10 @@ def get_uploaded_file(request):
             path = s3.generate_url(600, 'GET', bucket=settings.AWS_STORAGE_BUCKET_NAME,
                                    key=attachment.attachment.name,
                                    force_http=True)
+        else:
+            path = "%s%s" % (settings.MEDIA_URL, attachment.attachment.name)
     except AttributeError:
-        path = "%s/%s" % (settings.MEDIA_ROOT, attachment.attachment.name)
+        path = "%s%s" % (settings.MEDIA_URL, attachment.attachment.name)
 
     return HttpResponseRedirect(path)
 
