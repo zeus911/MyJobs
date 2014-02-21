@@ -22,6 +22,14 @@
             <span>Overview</span>
         </div>
     </div>
+    <div class="row desktop_hide" id="prm-mobile-row-buttons">
+        <div class="span12">
+            <a class="btn" href="{% url "partner_records" %}?company={{ company.id }}&partner={{ partner.id }}">Communication Records</a>
+            <a class="btn" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">Saved Searches</a>
+            <a class="btn" href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">Edit partner Details</a>
+            <a class="btn">Reports</a>
+        </div>
+    </div>
     <div class="row">
         <div class="span8">
             <div class="formBox no-padding">
@@ -34,10 +42,8 @@
                     {% endfor %}
                 </table>
                 <div class="formBox-footer">
-                    <div class="pull-right">
-                        <button id="previous" class="btn"><span id="prm-arrow-left"></span></button>
-                        <button id="next" class="btn"><span id="prm-arrow-right"></span></button>
-                    </div>
+                    <button id="next" class="btn pull-right"><span id="prm-arrow-right"></span></button>
+                    <button id="previous" class="btn pull-right"><span id="prm-arrow-left"></span></button>
                     <div class="clear"></div>
                 </div>
 
@@ -46,17 +52,15 @@
                 No Recent Activity
 
                 <div class="formBox-footer">
-                    <div class="pull-right">
-                        <button class="btn" disabled><span id="prm-arrow-left"></span></button>
-                        <button class="btn" disabled><span id="prm-arrow-right"></span></button>
-                    </div>
+                    <button class="btn pull-right" disabled><span id="prm-arrow-right"></span></button>
+                    <button class="btn pull-right" disabled><span id="prm-arrow-left"></span></button>
                     <div class="clear"></div>
                 </div>
 
                 {% endif %}
             </div>
 
-            <div class="formBox no-padding">
+            <div class="formBox no-padding mobile_hide">
                 <h4>Most Recent Communication Records</h4>
                 <table class="table table-bordered table-striped">
                     <thead>
@@ -85,14 +89,12 @@
                     {% endif %}
                 </table>
                 <div class="formBox-footer">
-                    <div class="pull-right">
-                        <a class="btn" href="{% url "partner_records" %}?company={{ company.id }}&partner={{ partner.id }}">Communication Records</a>
-                    </div>
+                    <a class="btn pull-right" href="{% url "partner_records" %}?company={{ company.id }}&partner={{ partner.id }}">Communication Records</a>
                     <div class="clear"></div>
                 </div>
             </div>
 
-            <div class="formBox no-padding">
+            <div class="formBox no-padding mobile_hide">
                 <h4>Most Recent Saved Searches</h4>
                 <table class="table table-bordered table-striped">
                     <thead>
@@ -120,14 +122,12 @@
                     {% endif %}
                 </table>
                 <div class="formBox-footer">
-                    <div class="pull-right">
-                        <a class="btn" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">Saved Searches</a>
-                    </div>
+                    <a class="btn pull-right" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">Saved Searches</a>
                     <div class="clear"></div>
                 </div>
             </div>
         </div>
-        <div class="span4">
+        <div class="span4 mobile_hide">
             {% if reports %}
             <div class="info-box" id="communication-reports">
                 <a class="btn" href="">Reports</a>

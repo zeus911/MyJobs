@@ -60,6 +60,10 @@ h1 > small > a:hover {
     margin-bottom: 0;
 }
 
+.desktop_hide {
+    display: none;
+}
+
 /*Candidate Activity mobile desktop hide*/
 .candidate-activity-mobile {
     display: none;
@@ -1983,6 +1987,11 @@ td .gravatar-blank,
         margin-top: 5px;
     }
 
+    #next,
+    #previous {
+        margin-top: 0;
+    }
+
     .btn-link{
         display: block !important;
         background-color: #cccccc;
@@ -2054,6 +2063,10 @@ td .gravatar-blank,
     /*Employer Dashboard*/    
     #details-user-list-collapse {
         display: none;
+    }
+
+    .desktop_hide {
+        display: block;
     }
 
     .candidate-activity-mobile {
@@ -2158,6 +2171,10 @@ td .gravatar-blank,
 
     #contact-record-form .attachment span {
         margin-left: 0px !important;
+    }
+
+    #prm-mobile-row-buttons {
+        margin-bottom: 40px;
     }
     
     /* Microsite Activity Page*/
