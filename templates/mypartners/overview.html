@@ -103,11 +103,35 @@
             </div>
         </div>
         <div class="span4">
-            {% if reports %}
-            <div class="info-box" id="communication-reports">
-                <a class="btn" href="">Reports</a>
-            </div>
-            {% endif %}
+        <div class="info-box">
+            <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+            <script type="text/javascript">
+              google.load("visualization", "1", {packages:["corechart"]});
+              google.setOnLoadCallback(drawChart);
+              function drawChart() {
+                var data = google.visualization.arrayToDataTable([
+                  ['Records', 'All Records'],
+                  ['Email',     5],
+                  ['Phone Calls',      2],
+                  ['Face to Face',  2]
+                ]);
+
+                var options = {
+                    legend: 'none',
+                    pieHole: 0.65,
+                    pieSliceText: 'none',
+                    height: 180,
+                    width: 180,
+                    chartArea: {top:10, left:10, width: 155, height: 155}
+                };
+
+                var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
+                chart.draw(data, options);
+              }
+            </script>
+            <div id="donutchart"></div>
+            <a class="btn">Reports</a>
+        </div>
 
             <div class="info-box" id="partner-details">
                 <b>{{ partner.name }}</b>
