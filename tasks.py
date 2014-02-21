@@ -3,7 +3,6 @@ from itertools import chain, izip_longest
 import logging
 import os
 import pysolr
-import time
 import urlparse
 import uuid
 
@@ -361,7 +360,6 @@ def read_new_logs(solr_location=settings.SOLR['default']):
             logs_by_host.setdefault(key_parts[0], []).append(log)
 
     logs_to_process = []
-    start = time.time()
     for key in logs_by_host.keys():
         # Files are named by date and time; the last log for each host is the
         # last log uploaded by that host
@@ -372,7 +370,5 @@ def read_new_logs(solr_location=settings.SOLR['default']):
     unprocessed = [log for log in logs_to_process if log.key not in processed]
 
     parse_log(unprocessed, solr_location)
-    end = time.time()
-    print end - start
 
     settings.PROCESSED_LOGS = set([log.key for log in logs_to_process])
