@@ -290,9 +290,9 @@ def parse_log(logs, solr_location):
                     # if any are added to redirect logs, they can be unindented
                     update_dict['domain'] = qs.get('d', '')
                     update_dict['facets'] = qs.get('f', '')
-                    update_dict['job_view_title'] = qs.get('jvt', '')
-                    update_dict['job_view_company'] = qs.get('jvc', '')
-                    update_dict['job_view_location'] = qs.get('jvl', '')
+                    update_dict['job_view_title_exact'] = qs.get('jvt', '')
+                    update_dict['job_view_company_exact'] = qs.get('jvc', '')
+                    update_dict['job_view_location_exact'] = qs.get('jvl', '')
                     update_dict['job_view_canonical_domain'] = qs.get('jvcd', '')
                     update_dict['search_keywords'] = qs.get('sk', '')
                     update_dict['site_tag'] = qs.get('st', '')
