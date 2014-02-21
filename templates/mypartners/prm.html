@@ -57,7 +57,7 @@
                     <thead>
                         <tr>
                             <th>Partner</th>
-                            <th>Primary Contact</th>
+                            <th class="mobile_hide">Primary Contact</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -75,7 +75,7 @@
                             {{ partner.uri }}
                             {% endif %}
                             </td>
-                            <td>
+                            <td class="mobile_hide">
 
                             {% if partner.primary_contact %}
 
@@ -103,7 +103,7 @@
             {# Recent Activity div #}
             <div class="span8"></div>
             <div class="span4">
-                <a class="btn pull-right" href="{% url 'create_partner' %}?company={{ company.id }}&ct={{ partner_ct }}">New Partner</a>
+                <a id="new-prm-btn" class="btn pull-right" href="{% url 'create_partner' %}?company={{ company.id }}&ct={{ partner_ct }}">New Partner</a>
             </div>
         </div>
 

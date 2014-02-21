@@ -1964,7 +1964,8 @@ td .gravatar-blank,
     }
     
     .add-module-btn,
-    .profile-mobile a.btn{
+    .profile-mobile a.btn,
+    .profile-mobile a.btn-link {
         display: block;
         float: none;
         margin: 5px 0;
@@ -1985,6 +1986,10 @@ td .gravatar-blank,
     .btn + .btn{
         margin-left: 0;
         margin-top: 5px;
+    }
+
+    #new-prm-btn {
+        float:none;
     }
 
     #next,
