@@ -11,6 +11,11 @@ from mydashboard.models import Company
 
 MAX_ATTACHMENT_MB = 4
 
+CONTACT_TYPE_CHOICES = (('email', 'Email'),
+                        ('phone', 'Phone'),
+                        ('facetoface', 'Face to Face'),
+                        ('job', 'Job Followup'))
+
 
 class Contact(models.Model):
     """
@@ -122,12 +127,6 @@ class ContactRecord(models.Model):
         name = "%s.%s" % (name, file_ext)
         return name
 
-
-
-    CONTACT_TYPE_CHOICES = (('email', 'Email'),
-                            ('phone', 'Phone'),
-                            ('facetoface', 'Face to Face'),
-                            ('job', 'Job Followup'))
     created_on = models.DateTimeField(auto_now=True)
     partner = models.ForeignKey(Partner)
     contact_type = models.CharField(choices=CONTACT_TYPE_CHOICES,
@@ -173,10 +172,12 @@ class ContactRecord(models.Model):
 
         """
 
-        user = ContactLogEntry.objects.filter(object_id=self.pk)
-        user = user.order_by('-action_time')[:1]
-        if user:
-            user = user[0].user.get_full_name()
+        logs = ContactLogEntry.objects.filter(object_id=self.pk)
+        logs = logs.order_by('-action_time')[:1]
+        if logs:
+            user = logs[0].user.get_full_name()
+            if user == '':
+                user = logs[0].user.email
         else:
             user = "An employee"
 
@@ -184,16 +185,14 @@ class ContactRecord(models.Model):
             return "%s had a meeting with %s" % (user, self.contact_name)
         elif self.contact_type == 'phone':
             return "%s called %s" % (user, self.contact_phone)
-        else:
+        elif self.contact_type == 'job':
+            return "%s followed up with %s about job %s" % (user,
+                                                            self.contact_name,
+                                                            self.job_id)
+        elif self.contact_type == 'email':
             return "%s emailed %s" % (user, self.contact_email)
-
-        attachment = self.cleaned_data['attachment']
-        if attachment:
-            path_addon = "%s/%s" % (self.partner.owner, self.partner.name)
-            attachment.name = get_file_name(attachment, path_addon)
-            self.cleaned_data['attachment'] = attachment
-
-        print self.cleaned_data['attachment'].name
+        else:
+            return "%s created a contact record" % user
 
 
 class PRMAttachment(models.Model):
