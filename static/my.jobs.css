@@ -179,6 +179,10 @@ h1 > small > a:hover {
     font-weight: bold;
 }
 
+.prm-buttons {
+    width: 135px;
+}
+
 #partner-form,
 #contact-form,
 #partner-saved-search-form,
