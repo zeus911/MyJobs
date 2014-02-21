@@ -273,7 +273,7 @@ class ContactRecordForm(forms.ModelForm):
             choices.insert(0, tup)
         super(ContactRecordForm, self).__init__(*args, **kwargs)
         self.fields["contact_name"] = forms.ChoiceField(
-            widget=forms.Select(), choices=choices, label="Contacts")
+            widget=forms.Select(), choices=choices, label="Contact")
         if instance:
             attachments = PRMAttachment.objects.filter(contact_record=instance)
             if attachments:

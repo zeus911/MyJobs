@@ -18,6 +18,7 @@
     <div class="row">
         <div class="span12 prm-header">
             <span>Communication Records</span>
+            <a href="{% url "partner_overview" %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
         </div>
     </div>
     <div class="row">
@@ -82,15 +83,6 @@
                 </div>
             </div>
             {% endif %}
-            <div class="tip-box">
-                <h4>Tips</h4>
-                <div class="tip-content">
-                    Tips go here.
-                </div>
-                <div class="tip-footer">
-                    <a class="btn-link" href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview Page</a>
-                </div>
-            </div>
         </div>
     </div>
 {% endblock %}
