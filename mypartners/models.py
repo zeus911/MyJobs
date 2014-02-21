@@ -133,7 +133,7 @@ class ContactRecord(models.Model):
     contact_type = models.CharField(choices=CONTACT_TYPE_CHOICES,
                                     max_length=12,
                                     verbose_name="Contact Type")
-    contact_name = models.CharField(max_length=255, verbose_name='Contact',
+    contact_name = models.CharField(max_length=255, verbose_name='Contacts',
                                     blank=True)
     # contact type fields, fields required depending on contact_type. Enforced
     # on the form level.

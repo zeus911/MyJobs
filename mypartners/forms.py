@@ -245,7 +245,7 @@ def PartnerEmailChoices(partner):
 
 
 class ContactRecordForm(forms.ModelForm):
-    date_time = SplitDateTimeDropDownField()
+    date_time = SplitDateTimeDropDownField(label='Date & Time')
     length = TimeDropDownField()
     attachment = MultipleFileField(required=False,
                                    help_text="Max file size %sMB" %
