@@ -177,7 +177,8 @@ h1 > small > a:hover {
 
 #partner-form,
 #contact-form,
-#partner-saved-search-form {
+#partner-saved-search-form,
+#contact-record-form {
     margin-left: 78px;
 }
 
@@ -256,7 +257,8 @@ h1 > small > a:hover {
 }
 
 .info-box + .info-box,
-.tip-box + .formBox {
+.tip-box + .formBox,
+.tip-box + .tip-box {
     margin-top: 20px;
 }
 
@@ -491,6 +493,10 @@ table#row-link-table {
 
 .btn + .btn-success {
     color: #FFF !important;  
+}
+
+.btn {
+    border-color: #c5c5c5 !important;
 }
 
 .accordion-body {
@@ -757,8 +763,16 @@ ul.ui-autocomplete {
     width: 221px;
 }
 
-form select {
+form select,
+input#id_attachment {
     width: 262px;
+    margin-bottom: 10px;
+}
+
+#contact-record-form ul {
+    list-style-type: none;
+    display: block;
+    float: left;
 }
 
 fieldset textarea,
@@ -863,7 +877,8 @@ fieldset textarea,
     padding: 5px 10px;
 }
 
-.no-padding {
+.no-padding,
+.tip-content.no-padding {
     padding: 0;
 }
 
@@ -883,7 +898,8 @@ fieldset textarea,
     -moz-border-radius: 0;
 }
 
-.formBox.no-padding .table {
+.formBox.no-padding .table,
+.tip-content.no-padding .table {
     margin-bottom: 0;
 }
 
@@ -2011,7 +2027,8 @@ td .gravatar-blank,
         width: 96%;
     }
 
-    form select {
+    form select,
+    input#id_attachment {
         width: 100%;
     }
 
@@ -2130,12 +2147,17 @@ td .gravatar-blank,
 
     #partner-form,
     #contact-form,
-    #partner-saved-search-form {
+    #partner-saved-search-form,
+    #contact-record-form {
         margin-left: 0;
     }
 
     .tip-box .tip-footer .btn-link {
         padding: 6px 25px 7px 25px;
+    }
+
+    #contact-record-form .attachment span {
+        margin-left: 0px !important;
     }
     
     /* Microsite Activity Page*/
@@ -2773,7 +2795,7 @@ body.modal-open {
 }
 
 .required {
-    display: inline-block;
+    display: inline;
 }
 
 .required-label,
@@ -2878,7 +2900,36 @@ body.modal-open {
     padding-right: 10px;
 }
 
-#facet-term{
+#facet-term {
     display:table-cell;
     vertical-align: top;
 }
+
+/* PRM contact form */
+#id_length_0, #id_length_1 {
+    width: 55px;
+}
+
+#contact-record-form #id_date_time_3,
+#contact-record-form #id_date_time_4,
+#contact-record-form #id_date_time_5,
+#contact-record-form #id_date_time_0,
+#contact-record-form #id_date_time_1 {
+    margin-right: 10px;
+    width: 65px;
+}
+
+#contact-record-form #id_date_time_2 {
+    width: 75px;
+}
+
+#contact-record-form .date-time {
+    display: block;
+    float: left;
+}
+
+#contact-record-form .attachment span {
+    display: block;
+    margin-left: 280px;
+}
+
