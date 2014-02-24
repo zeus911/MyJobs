@@ -21,6 +21,7 @@ from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch, SavedSearchDigest
 from registration.models import ActivationProfile
 from solr import signals as solr_signals
+from solr import helpers
 from solr.models import Update
 from solr.signals import object_to_dict, profileunits_to_dict
 
@@ -253,70 +254,79 @@ def parse_log(logs, solr_location):
             for line in f:
                 if line[0] == '#':
                     continue
+
+                # line in f does not strip newlines if they exist
+                if line[-1] == '\n':
+                    line = line[:-1]
                 line = line.split(' ')
 
                 # reconstruct date and time
                 line[0] = datetime.strptime('%s %s' % (line[0], line[1]),
-                                                     '%Y-%m-%d %H:%M:%S')
+                                            '%Y-%m-%d %H:%M:%S')
                 del line[1]
 
-                update_dict = {
-                    'view_date': line[0],
-                }
+                # reconstruct user agent
+                line[10] = ' '.join(line[10:])
+                del line[11:]
 
-                # query strings in redirect logs are manually constructed and do
-                # not contain question marks; analytics logs do, which mess with
-                # parsing
-                if line[4][0] == '?':
-                    line[4] = line[4][1:]
+                if not helpers.is_bot(line[10]):
+                    update_dict = {
+                        'view_date': line[0],
+                    }
 
-                # Make sure the value for a given key is only a list if there
-                # are multiple elements
-                qs = dict((k, v if len(v) > 1 else v[0])
-                          for k, v in urlparse.parse_qs(line[4]).iteritems())
+                    # query strings in redirect logs are manually constructed and do
+                    # not contain question marks; analytics logs do, which mess with
+                    # parsing
+                    if line[4][0] == '?':
+                        line[4] = line[4][1:]
 
-                if 'redirect' in log.key:
-                    aguid = qs.get('jcnlx.aguid', '')
-                    myguid = qs.get('jcnlx.myguid', '')
-                    update_dict['view_source'] = qs.get('jcnlx.vsid', 0)
-                    update_dict['job_view_buid'] = qs.get('jcnlx.buid', 0)
-                    update_dict['job_view_guid'] = line[3][1:]
-                    update_dict['page_category'] = 'redirect'
-                else:
-                    aguid, myguid = line[8:10]
-                    update_dict['view_source'] = qs.get('jvs', 0)
-                    update_dict['job_view_buid'] = qs.get('jvb', 0)
-                    update_dict['job_view_guid'] = qs.get('jvg', '')
-                    update_dict['page_category'] = qs.get('pc', '')
+                    # Make sure the value for a given key is only a list if there
+                    # are multiple elements
+                    qs = dict((k, v if len(v) > 1 else v[0])
+                              for k, v in urlparse.parse_qs(line[4]).iteritems())
 
-                    # These fields are only set in analytics logs at the moment;
-                    # if any are added to redirect logs, they can be unindented
-                    update_dict['domain'] = qs.get('d', '')
-                    update_dict['facets'] = qs.get('f', '')
-                    update_dict['job_view_title_exact'] = qs.get('jvt', '')
-                    update_dict['job_view_company_exact'] = qs.get('jvc', '')
-                    update_dict['job_view_location_exact'] = qs.get('jvl', '')
-                    update_dict['job_view_canonical_domain'] = qs.get('jvcd', '')
-                    update_dict['search_keywords'] = qs.get('sk', '')
-                    update_dict['site_tag'] = qs.get('st', '')
-                    update_dict['special_commitment'] = qs.get('sc', '')
+                    if 'redirect' in log.key:
+                        aguid = qs.get('jcnlx.aguid', '')
+                        myguid = qs.get('jcnlx.myguid', '')
+                        update_dict['view_source'] = qs.get('jcnlx.vsid', 0)
+                        update_dict['job_view_buid'] = qs.get('jcnlx.buid', 0)
+                        update_dict['job_view_guid'] = line[3][1:]
+                        update_dict['page_category'] = 'redirect'
+                    else:
+                        aguid, myguid = line[8:10]
+                        update_dict['view_source'] = qs.get('jvs', 0)
+                        update_dict['job_view_buid'] = qs.get('jvb', 0)
+                        update_dict['job_view_guid'] = qs.get('jvg', '')
+                        update_dict['page_category'] = qs.get('pc', '')
 
-                # Handle logs containing the old aguid/myguid formats
-                aguid = aguid.replace('{', '').replace('}', '').replace('-', '')
-                update_dict['aguid'] = aguid
+                        # These fields are only set in analytics logs at the moment;
+                        # if any are added to redirect logs, they can be unindented
+                        update_dict['domain'] = qs.get('d', '')
+                        update_dict['facets'] = qs.get('f', '')
+                        update_dict['job_view_title_exact'] = qs.get('jvt', '')
+                        update_dict['job_view_company_exact'] = qs.get('jvc', '')
+                        update_dict['job_view_location_exact'] = qs.get('jvl', '')
+                        update_dict['job_view_canonical_domain'] = qs.get('jvcd', '')
+                        update_dict['search_keywords'] = qs.get('sk', '')
+                        update_dict['site_tag'] = qs.get('st', '')
+                        update_dict['special_commitment'] = qs.get('sc', '')
 
-                myguid = myguid.replace('-', '')
+                    # Handle logs containing the old aguid/myguid formats
+                    aguid = aguid.replace('{', '').replace('}', '').replace('-', '')
+                    update_dict['aguid'] = aguid
 
-                try:
-                    user = User.objects.get(user_guid=myguid)
-                except User.DoesNotExist:
-                    update_dict['User_user_guid'] = ''
-                else:
-                    update_dict.update(object_to_dict(User, user))
+                    myguid = myguid.replace('-', '')
 
-                update_dict['uid'] = 'analytics##%s#%s' % \
-                    (update_dict['view_date'], aguid)
-                to_solr.append(update_dict)
+                    try:
+                        user = User.objects.get(user_guid=myguid)
+                    except User.DoesNotExist:
+                        update_dict['User_user_guid'] = ''
+                    else:
+                        update_dict.update(object_to_dict(User, user))
+
+                    update_dict['uid'] = 'analytics##%s#%s' % \
+                        (update_dict['view_date'], aguid)
+                    to_solr.append(update_dict)
 
             # Closing is probably unnecessary as the file is closed when
             # we leave the enclosing with, but we should remove the file from

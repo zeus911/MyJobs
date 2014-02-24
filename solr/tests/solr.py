@@ -203,6 +203,10 @@ class SolrTests(TestCase):
 
         solr = Solr()
         results = solr.search(q='uid:analytics*')
+        
+        # fakelog contains two lines - one human and one bot hit
+        # If it is getting processed correctly, there should be only one
+        # hit recorded
         self.assertEqual(results.hits, 1)
         multi_fields = ['facets', 'search_keywords']
         for field in multi_fields:
