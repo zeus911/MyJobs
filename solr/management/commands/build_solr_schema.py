@@ -84,8 +84,8 @@ class Command(BaseCommand):
                 'field_name': 'text',
                 'type': 'text_en',
                 'indexed': 'true',
-                'stored': 'true',
-                'multiValued': 'false',
+                'stored': 'false',
+                'multiValued': 'true',
             })
             for model in models:
                 for field in model._meta.fields:

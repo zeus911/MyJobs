@@ -100,6 +100,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     user_solr = user_solr.add_filter_query(rng)
     facet_solr = facet_solr.add_query(rng)
 
+    if request.GET.get('search', False):
+        user_solr = user_solr.add_filter_query("text:*%s*" % request.GET['search'])
+
     user_solr, facet_solr = filter_by_microsite(active_microsites,
                                                           user_solr,
                                                           facet_solr)
@@ -116,7 +119,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     solr_results = user_solr.rows_to_fetch(user_solr.search().hits).search()
 
     # List of dashboard widgets to display.
-    dashboard_widgets = ["candidates", "applied_filters", "filters"]
+    dashboard_widgets = ["candidates", "search", "applied_filters", "filters"]
 
     # Filter out duplicate entries for a user.
     candidates = sorted(dict_to_object(solr_results.docs),
