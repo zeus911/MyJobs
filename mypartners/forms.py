@@ -321,16 +321,14 @@ class ContactRecordForm(forms.ModelForm):
         attachments = self.cleaned_data.get('attachment', None)
         for attachment in attachments:
             if attachment:
-                prm_attachment = PRMAttachment()
-                prm_attachment.attachment = attachment
-                prm_attachment.contact_record = self.instance
+                prm_attachment = PRMAttachment(attachment=attachment,
+                                               contact_record=self.instance)
                 setattr(prm_attachment, 'partner', self.instance.partner)
                 prm_attachment.save()
 
-        attach_delete = self.cleaned_data.get('attach_delete', None)
-        if attach_delete:
-            for attachment in attach_delete:
-                PRMAttachment.objects.get(pk=attachment).delete()
+        attach_delete = self.cleaned_data.get('attach_delete', [])
+        for attachment in attach_delete:
+            PRMAttachment.objects.get(pk=attachment).delete()
 
         try:
             identifier = instance.contact_email if instance.contact_email \
