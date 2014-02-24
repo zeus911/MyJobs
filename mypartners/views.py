@@ -431,7 +431,7 @@ def partner_view_full_feed(request):
 def prm_records(request):
     company, partner, user = prm_worthy(request)
     contact_records = get_contact_records_for_partner(partner)
-    most_recent_activity = get_logs_for_partner(partner, num_items=10)
+    most_recent_activity = get_logs_for_partner(partner)
 
     contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
     contacts = ContactRecord.objects.values('contact_name').distinct()
@@ -494,21 +494,73 @@ def prm_edit_records(request):
 def prm_view_records(request):
     company, partner, user = prm_worthy(request)
     record_id = request.GET.get('id', None)
+    offset = request.GET.get('offset', 0)
+    record_type = request.GET.get('type', None)
+    name = request.GET.get('name', None)
+
     try:
         record_id = int(record_id)
+        offset = int(offset)
     except (TypeError, ValueError):
         return HttpResponseRedirect(reverse('partner_records') +
                 '?company=%d&partner=%d' % (company.id, partner.id))
 
-    record = ContactRecord.objects.get(pk=record_id)
+    prev_offset = (offset - 1) if offset > 1 else 0
+    records = get_contact_records_for_partner(partner, record_type=record_type,
+                                              contact_name=name,
+                                              offset=prev_offset,
+                                              limit=prev_offset + 3)
+
+    # Since we always retrieve 3, if the record is at the beginning of the
+    # list we might have 3 results but no previous.
+    if len(records) == 3 and records[0].pk == record_id:
+        prev_id = None
+        record = records[0]
+        next_id = records[1].pk
+    elif len(records) == 3:
+        prev_id = records[0].pk
+        record = records[1]
+        next_id = records[2].pk
+    # If there are only 2 results, it means there is either no next or
+    # no previous, so we need to compare record ids to figure out which
+    # is which.
+    elif len(records) == 2 and records[0].pk == record_id:
+        prev_id = None
+        record = records[0]
+        next_id = records[1].pk
+    elif len(records) == 2:
+        prev_id = records[0].pk
+        record = records[1]
+        next_id = None
+    else:
+        prev_id = None
+        record = records[0]
+        next_id = None
+
+    # Double check our results and drop the next and previous options if
+    # the results were wrong
+    if record_id != record.pk:
+        prev_id = None
+        record = get_object_or_404(ContactRecord, pk=record_id)
+        next_id = None
+
     attachments = PRMAttachment.objects.filter(contact_record=record)
     logs = ContactLogEntry.objects.filter(object_id=record_id)
+    record_history = ContactLogEntry.objects.filter(object_id=record_id)
     ctx = {
         'record': record,
         'partner': partner,
         'company': company,
         'activity': logs,
         'attachments': attachments,
+        'record_history': record_history,
+        'next_id': next_id,
+        'next_offset': offset + 1,
+        'prev_id': prev_id,
+        'prev_offset': prev_offset,
+        'contact_type': record_type,
+        'contact_name': name,
+
     }
 
     return render_to_response('mypartners/view_record.html', ctx,
@@ -558,6 +610,8 @@ def get_records(request):
                                                    record_type=contact_type),
         'company': company,
         'partner': partner,
+        'contact_type': contact_type,
+        'contact_name': contact,
     }
     return render_to_response('mypartners/records.html', ctx,
                               RequestContext(request))

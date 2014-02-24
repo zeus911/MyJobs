@@ -13,6 +13,14 @@
         <div class="span12 prm-header">
             <span>{% if record.subject %}{{ record.subject }} - {% endif %}{{ record.date_time|date:'M d, Y' }} </span>
             <a href="{% url "record_view" %}?company={{ company.id }}&partner={{ partner.id }}">Back to Communication Records</a>
+            <span class="pull-right">
+                {% if prev_id %}
+                    <a href="{% url 'record_view' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ prev_id }}&offset={{ prev_offset }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}">Previous</a>&nbsp;&nbsp;
+                {% endif %}
+                {% if next_id %}
+                    <a href="{% url 'record_view' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ next_id }}&offset={{ next_offset }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}">Next</a>&nbsp;&nbsp;
+                {% endif %}
+            </span>
         </div>
     </div>
 
@@ -37,7 +45,13 @@
             <div class="tip-box">
             <h5>Contact Type</h5>
                 <div class="tip-content">
-                    {{ record.contact_type|capfirst }}
+                    {% get_contact_type record %}
+                </div>
+            </div>
+            <div class="tip-box">
+            <h5>Date & Time of Contact</h5>
+                <div class="tip-content">
+                    {{ record.date_time }}
                 </div>
             </div>
             {% if attachments %}
@@ -71,6 +85,9 @@
                     {% if not record_history %}
                     No history for this record could be found.
                     {% else %}
+                        {% for activity in record_history %}
+                            {% get_action_type activity %} - {{ activity.action_time|date:'M d, Y' }}<br/>
+                        {% endfor %}
                     {% endif %}
                 </div>
             </div>
