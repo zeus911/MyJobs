@@ -264,7 +264,7 @@ def prm_overview(request):
 
     most_recent_activity = get_logs_for_partner(partner)
     most_recent_communication = get_contact_records_for_partner(partner,
-                                                                num_records=10)
+                                                                limit=10)
     saved_searches = get_searches_for_partner(partner)
     most_recent_saved_searches = saved_searches[:3]
 

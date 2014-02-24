@@ -5,6 +5,9 @@ jQuery(document).ready(function($) {
 });
 
 $(function() {
+    $("#record_contact").val('all');
+    $("#record_contact_type").val('all');
+
     $(document).on("change", '#record_contact', function(){
         update_records(this);
     });
