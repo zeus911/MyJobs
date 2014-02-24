@@ -17,7 +17,8 @@ from mysearches.helpers import url_sort_options, parse_rss
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm, ContactRecordForm)
-from mypartners.models import Partner, Contact, ContactRecord, PRMAttachment
+from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
+                               ContactLogEntry, CONTACT_TYPE_CHOICES)
 from mypartners.helpers import (prm_worthy, url_extra_params, log_change,
                                 get_searches_for_partner, get_logs_for_partner,
                                 get_contact_records_for_partner)
@@ -431,11 +432,20 @@ def prm_records(request):
     company, partner, user = prm_worthy(request)
     contact_records = get_contact_records_for_partner(partner)
     most_recent_activity = get_logs_for_partner(partner, num_items=10)
+
+    contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
+    contacts = ContactRecord.objects.values('contact_name').distinct()
+    contact_choices = [('all', 'All')]
+    [contact_choices.append((c['contact_name'], c['contact_name']))
+     for c in contacts]
+
     ctx = {
         'company': company,
         'partner': partner,
         'records': contact_records,
         'most_recent_activity': most_recent_activity,
+        'contact_choices': contact_choices,
+        'contact_type_choices': contact_type_choices,
     }
     return render_to_response('mypartners/main_records.html', ctx,
                               RequestContext(request))
@@ -481,6 +491,31 @@ def prm_edit_records(request):
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def prm_view_records(request):
+    company, partner, user = prm_worthy(request)
+    record_id = request.GET.get('id', None)
+    try:
+        record_id = int(record_id)
+    except (TypeError, ValueError):
+        return HttpResponseRedirect(reverse('partner_records') +
+                '?company=%d&partner=%d' % (company.id, partner.id))
+
+    record = ContactRecord.objects.get(pk=record_id)
+    attachments = PRMAttachment.objects.filter(contact_record=record)
+    logs = ContactLogEntry.objects.filter(object_id=record_id)
+    ctx = {
+        'record': record,
+        'partner': partner,
+        'company': company,
+        'activity': logs,
+        'attachments': attachments,
+    }
+
+    return render_to_response('mypartners/view_record.html', ctx,
+                              RequestContext(request))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def get_contact_information(request):
     company, partner, user = prm_worthy(request)
     contact_id = request.REQUEST.get('contact_name')
@@ -507,6 +542,25 @@ def get_contact_information(request):
             data = {}
 
     return HttpResponse(json.dumps(data))
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def get_records(request):
+    company, partner, user = prm_worthy(request)
+    contact = request.REQUEST.get('contact')
+    contact_type = request.REQUEST.get('contact_type')
+
+    contact = None if contact == 'all' else contact
+    contact_type = None if contact_type == 'all' else contact_type
+
+    ctx = {
+        'records': get_contact_records_for_partner(partner,
+                                                   contact_name=contact,
+                                                   record_type=contact_type),
+        'company': company,
+        'partner': partner,
+    }
+    return render_to_response('mypartners/records.html', ctx,
+                              RequestContext(request))
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))

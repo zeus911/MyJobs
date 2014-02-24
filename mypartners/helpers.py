@@ -3,6 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from django.utils.encoding import force_text
+from django.utils.safestring import mark_safe
 from django.utils.text import get_text_list
 from django.utils.translation import ugettext
 
@@ -87,13 +88,22 @@ def get_logs_for_partner(partner, content_type_id=None, num_items=10):
     return logs.order_by('-action_time')[:num_items]
 
 
-def get_contact_records_for_partner(partner, contact=None, record_type=None,
+def get_contact_records_for_partner(partner, contact_name=None, record_type=None,
                                     num_records=None):
     records = ContactRecord.objects.filter(partner=partner)
-    if contact:
-        records = records.filter(contact_name=contact.name)
+    if contact_name:
+        records = records.filter(contact_name=contact_name)
     if record_type:
         records = records.filter(contact_type=record_type)
     if num_records:
         records = records[:num_records]
     return records
+
+
+def get_attachment_link(company_id, partner_id, attachment_id, attachment_name):
+    url = '/prm/download?company=%s&partner=%s&id=%s' % (company_id,
+                                                         partner_id,
+                                                         attachment_id)
+
+    html = "<a href='{url}' target='_blank'>{attachment_name}</a>"
+    return mark_safe(html.format(url=url, attachment_name=attachment_name))

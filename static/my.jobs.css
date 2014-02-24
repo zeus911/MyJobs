@@ -2933,3 +2933,13 @@ body.modal-open {
     margin-left: 280px;
 }
 
+.contact-record-tr:hover td {
+    background-color: rgb(230, 230, 230) !important;
+    cursor: pointer;
+}
+
+.one-hundred-percent-button-border-boxed {
+    box-sizing: border-box;
+    width: 100%;
+    margin-bottom: 20px;
+}
