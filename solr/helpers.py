@@ -215,15 +215,6 @@ def dict_to_object(results):
     return objs
 
 
-BOTS = ['agent', 'archive', 'ask', 'auto', 'bot', 'check', 'crawl',
-        'facebookexternalhit', 'flipdog', 'grub', 'harvest', 'heritrix',
-        'index', 'indy+library', 'infoseek', 'jakarta', 'java', 'job',
-        'keynote', 'larbin', 'libwww', 'mechani', 'nutch', 'panscient', 'perl',
-        'proximic', 'python', 'scan', 'scooter', 'scoutjet', 'search', 'slurp',
-        'spider', 'url+control', 'urllib', 'validator', 'watchfire',
-        'whizbang', 'wget', 'xenu', 'yahoo-fetch', 'yahooseeker']
-
-
 def is_bot(ua):
     """
     Determines if the provided user agent is likely to be a bot
@@ -236,7 +227,7 @@ def is_bot(ua):
     """
     ua = ua.lower()
     bot = False
-    for bot_ua in BOTS:
+    for bot_ua in settings.BOTS:
         if bot_ua in ua or ua in ['', '-']:
             bot = True
             break

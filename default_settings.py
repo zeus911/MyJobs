@@ -271,3 +271,11 @@ PROFILE_COMPLETION_MODULES = (
     'employmenthistory',
     'summary'
 )
+
+BOTS = ['agent', 'archive', 'ask', 'auto', 'bot', 'check', 'crawl',
+        'facebookexternalhit', 'flipdog', 'grub', 'harvest', 'heritrix',
+        'index', 'indy+library', 'infoseek', 'jakarta', 'java', 'job',
+        'keynote', 'larbin', 'libwww', 'mechani', 'nutch', 'panscient', 'perl',
+        'proximic', 'python', 'scan', 'scooter', 'scoutjet', 'search', 'slurp',
+        'spider', 'url+control', 'urllib', 'validator', 'watchfire',
+        'whizbang', 'wget', 'xenu', 'yahoo-fetch', 'yahooseeker']
