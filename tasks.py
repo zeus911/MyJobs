@@ -269,6 +269,9 @@ def parse_log(logs, solr_location):
                 # parsing
                 if line[4][0] == '?':
                     line[4] = line[4][1:]
+
+                # Make sure the value for a given key is only a list if there
+                # are multiple elements
                 qs = dict((k, v if len(v) > 1 else v[0])
                           for k, v in urlparse.parse_qs(line[4]).iteritems())
 
