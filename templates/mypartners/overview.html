@@ -110,10 +110,9 @@
         <div class="info-box">
             <script type="text/javascript" src="https://www.google.com/jsapi"></script>
             <script type="text/javascript">
-              google.load("visualization", "1", {packages:["corechart"]});
-              google.setOnLoadCallback(create_piehole);
+                google.load("visualization", "1", {packages:["corechart"]});
+                google.setOnLoadCallback(drawChart);
             </script>
-            <script>create_piehole();</script>
             <div id="donutchart"></div>
             <a class="btn">Reports</a>
         </div>

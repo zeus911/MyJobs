@@ -1,11 +1,10 @@
 
-
-function create_piehole(){
+function drawChart() {
     var data = google.visualization.arrayToDataTable([
-    ['Records', 'All Records'],
-    ['Email',     5],
-    ['Phone Calls',      2],
-    ['Face to Face',  2]
+        ['Records', 'All Records'],
+        ['Email',     5],
+        ['Phone Calls',      2],
+        ['Face to Face',  2]
     ]);
 
     var options = {
