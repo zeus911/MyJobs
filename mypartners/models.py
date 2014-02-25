@@ -1,3 +1,5 @@
+from os import path
+from re import sub
 from uuid import uuid4
 
 from django.conf import settings
@@ -97,35 +99,6 @@ class ContactRecord(models.Model):
     """
     Object for Communication Records
     """
-    def get_file_name(self, filename):
-        """
-        Ensures that a file name is unique before uploading.
-
-        inputs:
-        :f: A file to be uploaded to default_storage.
-        :path_addon: By default files are stored in /mypartners/ on S3. If
-            path_addon is specified they will be uploaded to
-            /mypartners/path_addon.
-        :special_identifier: Any other special information that should be
-            added to the file name.
-
-        outputs:
-        A string containing a filename that would be unique in default_storage.
-
-        """
-        path_addon = "mypartners/%s/%s" % (self.partner.owner,
-                                           self.partner.name)
-        file_ext = filename.split(".")[-1]
-        name = filename.replace(".%s" % file_ext, "")
-        name = "%s/%s" % (path_addon, name)
-
-        file_counter = 1
-        while default_storage.exists("%s.%s" % (name, file_ext)):
-            name = "%s_%s" % (name, file_counter)
-            file_counter += 1
-
-        name = "%s.%s" % (name, file_ext)
-        return name
 
     created_on = models.DateTimeField(auto_now=True)
     partner = models.ForeignKey(Partner)
@@ -205,9 +178,12 @@ class PRMAttachment(models.Model):
         file name.
 
         """
+        filename, extension = path.splitext(filename)
+        filename = '.'.join([sub(r'[\W]', '', filename),
+                             sub(r'[\W]', '', extension)])
         uid = uuid4()
-        path_addon = "mypartners/%s/%s/%s" % (self.partner.owner,
-                                              self.partner.name, uid)
+        path_addon = "mypartners/%s/%s/%s" % (self.partner.owner.pk,
+                                              self.partner.pk, uid)
         name = "%s/%s" % (path_addon, filename)
 
         # Make sure that in the unlikely event that a filepath/uid/filename

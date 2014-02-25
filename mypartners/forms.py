@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.admin.models import ADDITION
+from django.contrib.admin.models import ADDITION, CHANGE
 from django.core.exceptions import ValidationError
 from django.forms.util import ErrorList
 from django.utils.safestring import mark_safe
@@ -36,19 +36,18 @@ class ContactForm(forms.ModelForm):
                    'placeholder': 'Notes About This Contact'})
 
     def save(self, user, commit=True):
-        is_new = False if self.instance.pk else True
+        new_or_change = CHANGE if self.instance.pk else ADDITION
         partner = Partner.objects.get(id=self.data['partner'])
         contact = self.instance
         contact.save()
 
         partner.add_contact(contact)
         partner.save()
-        if is_new:
-            log_change(contact, self, user, partner, contact.name,
-                       action_type=ADDITION)
-        else:
-            log_change(contact, self, user, partner, contact.name)
-        return
+
+        log_change(contact, self, user, partner, contact.name,
+                   action_type=new_or_change)
+
+        return contact
 
 
 
@@ -75,7 +74,7 @@ class PartnerInitialForm(BaseUserForm):
         widgets = generate_custom_widgets(model)
 
     def save(self, user, commit=True):
-        is_new = False if self.instance.pk else True
+        new_or_change = CHANGE if self.instance.pk else ADDITION
         company_id = self.data['company_id']
         self.instance.owner_id = company_id
 
@@ -93,15 +92,11 @@ class PartnerInitialForm(BaseUserForm):
             self.instance.save()
             self.instance.add_contact(contact)
 
-        if is_new:
-            log_change(self.instance, self, user, self.instance,
-                       self.instance.name, action_type=ADDITION)
-
-        else:
-            log_change(self.instance, self, user, self.instance,
-                       self.instance.name)
+        log_change(self.instance, self, user, self.instance,
+                   self.instance.name, action_type=new_or_change)
 
         self.instance.save()
+        return self.instance
 
 
 class NewPartnerForm(BaseUserForm):
@@ -144,7 +139,7 @@ class NewPartnerForm(BaseUserForm):
                    'placeholder': 'Notes About This Contact'})
 
     def save(self, user, commit=True):
-        is_new = False if self.instance.pk else True
+        new_or_change = CHANGE if self.instance.pk else ADDITION
         company_id = self.data['company_id']
         owner_id = company_id
         if self.data['partnerurl']:
@@ -172,13 +167,11 @@ class NewPartnerForm(BaseUserForm):
             partner.primary_contact_id = self.instance.id
             partner.save()
 
-            if is_new:
-                log_change(self.instance, self, user, partner,
-                           self.instance.name, action_type=ADDITION)
+            log_change(self.instance, self, user, partner,
+                       self.instance.name, action_type=new_or_change)
 
-            else:
-                log_change(self.instance, self, user, partner,
-                           self.instance.name)
+
+            return self.instance
 
 
 
@@ -219,17 +212,14 @@ class PartnerForm(BaseUserForm):
         widgets = generate_custom_widgets(model)
 
     def save(self, user, commit=True):
-        is_new = False if self.instance.pk else True
+        new_or_change = CHANGE if self.instance.pk else ADDITION
         self.instance.primary_contact_id = self.data['primary_contact']
         self.instance.save()
-        if is_new:
-            log_change(self.instance, self, user, self.instance,
-                       self.instance.name, action_type=ADDITION)
 
-        else:
-            log_change(self.instance, self, user, self.instance,
-                       self.instance.name)
-        return
+        log_change(self.instance, self, user, self.instance,
+                   self.instance.name, action_type=new_or_change)
+
+        return self.instance
 
 
 def PartnerEmailChoices(partner):
@@ -309,28 +299,26 @@ class ContactRecordForm(forms.ModelForm):
     def clean_attachment(self):
         attachments = self.cleaned_data.get('attachment', None)
         for attachment in attachments:
-            if attachment and attachment.size > MAX_ATTACHMENT_MB * 1048576:
+            if attachment and attachment.size > (MAX_ATTACHMENT_MB << 20):
                 raise ValidationError('File too large')
         return self.cleaned_data['attachment']
 
     def save(self, user, partner, commit=True):
-        is_new = False if self.instance.pk else True
+        new_or_change = CHANGE if self.instance.pk else ADDITION
         self.instance.partner = partner
         instance = super(ContactRecordForm, self).save(commit)
 
         attachments = self.cleaned_data.get('attachment', None)
         for attachment in attachments:
             if attachment:
-                prm_attachment = PRMAttachment()
-                prm_attachment.attachment = attachment
-                prm_attachment.contact_record = self.instance
+                prm_attachment = PRMAttachment(attachment=attachment,
+                                               contact_record=self.instance)
                 setattr(prm_attachment, 'partner', self.instance.partner)
                 prm_attachment.save()
 
-        attach_delete = self.cleaned_data.get('attach_delete', None)
-        if attach_delete:
-            for attachment in attach_delete:
-                PRMAttachment.objects.get(pk=attachment).delete()
+        attach_delete = self.cleaned_data.get('attach_delete', [])
+        for attachment in attach_delete:
+            PRMAttachment.objects.get(pk=attachment).delete()
 
         try:
             identifier = instance.contact_email if instance.contact_email \
@@ -342,11 +330,9 @@ class ContactRecordForm(forms.ModelForm):
             # the user can deal with the logging issues they created.
             identifier = "unknown contact"
 
-        if is_new:
-            log_change(instance, self, user, partner, identifier,
-                       action_type=ADDITION)
-        else:
-            log_change(instance, self, user, partner, identifier)
+        log_change(instance, self, user, partner, identifier,
+                   action_type=new_or_change)
+
         return instance
 
 
