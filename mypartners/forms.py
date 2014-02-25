@@ -36,7 +36,7 @@ class ContactForm(forms.ModelForm):
                    'placeholder': 'Notes About This Contact'})
 
     def save(self, user, commit=True):
-        is_new = CHANGE if self.instance.pk else ADDITION
+        new_or_change = CHANGE if self.instance.pk else ADDITION
         partner = Partner.objects.get(id=self.data['partner'])
         contact = self.instance
         contact.save()
@@ -45,7 +45,7 @@ class ContactForm(forms.ModelForm):
         partner.save()
 
         log_change(contact, self, user, partner, contact.name,
-                   action_type=is_new)
+                   action_type=new_or_change)
 
         return contact
 
@@ -74,7 +74,7 @@ class PartnerInitialForm(BaseUserForm):
         widgets = generate_custom_widgets(model)
 
     def save(self, user, commit=True):
-        is_new = CHANGE if self.instance.pk else ADDITION
+        new_or_change = CHANGE if self.instance.pk else ADDITION
         company_id = self.data['company_id']
         self.instance.owner_id = company_id
 
@@ -93,7 +93,7 @@ class PartnerInitialForm(BaseUserForm):
             self.instance.add_contact(contact)
 
         log_change(self.instance, self, user, self.instance,
-                   self.instance.name, action_type=is_new)
+                   self.instance.name, action_type=new_or_change)
 
         self.instance.save()
         return self.instance
@@ -139,7 +139,7 @@ class NewPartnerForm(BaseUserForm):
                    'placeholder': 'Notes About This Contact'})
 
     def save(self, user, commit=True):
-        is_new = CHANGE if self.instance.pk else ADDITION
+        new_or_change = CHANGE if self.instance.pk else ADDITION
         company_id = self.data['company_id']
         owner_id = company_id
         if self.data['partnerurl']:
@@ -168,7 +168,7 @@ class NewPartnerForm(BaseUserForm):
             partner.save()
 
             log_change(self.instance, self, user, partner,
-                       self.instance.name, action_type=is_new)
+                       self.instance.name, action_type=new_or_change)
 
 
             return self.instance
@@ -212,12 +212,12 @@ class PartnerForm(BaseUserForm):
         widgets = generate_custom_widgets(model)
 
     def save(self, user, commit=True):
-        is_new = CHANGE if self.instance.pk else ADDITION
+        new_or_change = CHANGE if self.instance.pk else ADDITION
         self.instance.primary_contact_id = self.data['primary_contact']
         self.instance.save()
 
         log_change(self.instance, self, user, self.instance,
-                   self.instance.name, action_type=is_new)
+                   self.instance.name, action_type=new_or_change)
 
         return self.instance
 
@@ -304,7 +304,7 @@ class ContactRecordForm(forms.ModelForm):
         return self.cleaned_data['attachment']
 
     def save(self, user, partner, commit=True):
-        is_new = CHANGE if self.instance.pk else ADDITION
+        new_or_change = CHANGE if self.instance.pk else ADDITION
         self.instance.partner = partner
         instance = super(ContactRecordForm, self).save(commit)
 
@@ -331,7 +331,7 @@ class ContactRecordForm(forms.ModelForm):
             identifier = "unknown contact"
 
         log_change(instance, self, user, partner, identifier,
-                   action_type=is_new)
+                   action_type=new_or_change)
 
         return instance
 
