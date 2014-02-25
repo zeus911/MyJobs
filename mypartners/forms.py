@@ -299,7 +299,7 @@ class ContactRecordForm(forms.ModelForm):
     def clean_attachment(self):
         attachments = self.cleaned_data.get('attachment', None)
         for attachment in attachments:
-            if attachment and attachment.size > MAX_ATTACHMENT_MB * 1048576:
+            if attachment and attachment.size > (MAX_ATTACHMENT_MB << 20):
                 raise ValidationError('File too large')
         return self.cleaned_data['attachment']
 
