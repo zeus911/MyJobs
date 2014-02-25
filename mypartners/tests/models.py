@@ -1,10 +1,13 @@
+from os import path
+
+from django.core.files import File
 from django.test import TestCase
 
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
 from mydashboard.tests.factories import CompanyFactory
 from mypartners.tests.factories import PartnerFactory, ContactFactory
-from mypartners.models import Partner, Contact
+from mypartners.models import Partner, Contact, PRMAttachment
 
 
 class MyPartnerTests(TestCase):
@@ -56,3 +59,18 @@ class MyPartnerTests(TestCase):
 
         contact = Contact.objects.get(name=self.contact.name)
         self.assertIsNone(contact.user)
+
+    def test_bad_filename(self):
+        """
+        Confirms that non-alphanumeric or underscore characters are being
+        stripped from file names.
+
+        """
+        filename = path.join(path.abspath(path.dirname(__file__)), 'data',
+                             'zz\\x80\\xff*file(copy)na.me.htm)_-)l')
+        expected_filename = 'zzx80xfffilecopyname.htm_l'
+        f = File(open(filename))
+        prm_attachment = PRMAttachment(attachment=f)
+        setattr(prm_attachment, 'partner', self.partner)
+        prm_attachment.save()
+        PRMAttachment.objects.get(attachment__contains=expected_filename)

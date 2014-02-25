@@ -75,7 +75,7 @@ def get_change_message(form):
 
 def get_searches_for_partner(partner):
     company = partner.owner
-    partner_contacts = [p.user for p in partner.contacts.all()]
+    partner_contacts = partner.contacts.all().values_list('user__id', flat=True)
     saved_searches = PartnerSavedSearch.objects.filter(
         provider=company, user__in=partner_contacts).order_by('-created_on')
     return saved_searches

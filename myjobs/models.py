@@ -314,7 +314,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         are no duplicates. If no duplicates, save the GUID.
         """
         if not self.user_guid:
-            self.user_guid = uuid.uuid4()
+            self.user_guid = uuid.uuid4().hex
             if User.objects.filter(user_guid=self.user_guid):
                 self.make_guid()
             self.save()
