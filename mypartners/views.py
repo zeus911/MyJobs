@@ -10,7 +10,7 @@ from django.core.urlresolvers import reverse
 from myjobs.models import User
 from mydashboard.models import Company
 from mysearches.models import SavedSearch, PartnerSavedSearch
-from mysearches.helpers import url_sort_options, parse_rss
+from mysearches.helpers import url_sort_options, parse_feed
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm)
@@ -401,7 +401,7 @@ def partner_view_full_feed(request):
             url_of_feed = url_sort_options(saved_search.feed,
                                            saved_search.sort_by,
                                            saved_search.frequency)
-            items = parse_rss(url_of_feed, saved_search.frequency)
+            items = parse_feed(url_of_feed, saved_search.frequency)
         else:
             return HttpResponseRedirect(reverse('prm_saved_searches'))
     else:

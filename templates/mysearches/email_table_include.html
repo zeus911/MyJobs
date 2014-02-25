@@ -2,18 +2,22 @@
 
 <table style="width: 98%; margin: 5px; border-top-left-radius: 5px; border-top-right-radius: 5px; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px; border: 1px solid #ddd; border-collapse: separate; border-spacing: 0; display: table; font-size: 10px; line-height: 20px;">
     <tr>
-        <th style="text-align: left;"><b style="font-size: 14px;"><a href="https://secure.my.jobs{% url 'edit_search' %}?id={{ saved_search.0.id }}" style="text-decoration: none; color: #333;">{{saved_search.0.label}}</a></b></th>
-        <th style="text-align: right;"><p style="font-size: 10px; color: 555;">Frequency: {% if digest %}{{ digest.frequency|make_verbose_frequency }} (Digest){% else %}{{ saved_search.0.frequency|make_verbose_frequency }} (Individual){% endif %}</p></th>
+        <th style="text-align: left;"><b style="font-size: 14px; padding-left: 10px;"><a href="https://secure.my.jobs{% url 'edit_search' %}?id={{ saved_search.0.id }}" style="text-decoration: none; color: #333;">{{saved_search.0.label}}</a></b></th>
+        <th rowspan="2" style="width: 50%; text-align: right;"><p style="font-size: 10px; color: 555; padding-right: 10px;">Frequency: {% if digest %}{{ digest.frequency|make_verbose_frequency }} (Digest){% else %}{{ saved_search.0.frequency|make_verbose_frequency }} (Individual){% endif %}</p></th>
+    </tr>
+    <tr>
+        <th style="text-align: left;"><b style="padding-left: 10px;">Put num jobs here</b></th>
     </tr>
 
-    {% with odd="background-color: #ddd;" even="background-color: #cbcbcb;" %}
+    {% with odd="background-color: #fff;" even="background-color: #ddd;" %}
         {% if saved_search.1 %}
             {% for item in saved_search.1 %}
             
             <tr>
                 <td colspan=2 style="border-left: 1px solid #e5e5e5; padding: 8px; line-height: 20px; border-top: 1px solid #e5e5e5; {% if forloop.counter|divisibleby:2 %}{{even}}{% else %}{{odd}}{% endif %}">
                     <a href="{{item.link}}" style="text-decoration: none; color: #333;">
-                        <b>{{item.title}}</b><br>
+                        <b style="font-size: 1.3em;">{{item.title}}</b><br>
+                        <i style="font-size:1.2em;">{{item.company}}</i><br>
                         {{item.description|truncatechars:200}}<br>
                         <i>Acquired: {{item.pubdate}}</i>
                     </a>

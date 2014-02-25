@@ -68,12 +68,27 @@ def get_rss_soup(rss_url):
     return BeautifulSoup(rss_feed, "html.parser")
 
 
-def parse_rss(feed_url, frequency='W', num_items=20, offset=0):
+def get_json(json_url):
+    """
+    Turn a remote json file into a Python dictionary
+
+    Inputs:
+    :json_url:    URL of a json file
+
+    Outputs:
+                    List of one or more Python dictionaries
+    """
+    json_feed = urllib2.urlopen(json_url).read()
+    return json.loads(json_feed)
+
+
+
+def parse_feed(feed_url, frequency='W', num_items=20, offset=0):
     """
     Parses job data from an RSS feed and returns it as a list of dictionaries.
     The data returned is limited based on the corresponding data range (daily,
     weekly, or monthly).
-    
+
     Inputs:
     :feed_url:      URL of an RSS feed
     :frequency:     String 'D', 'W', or 'M'.
@@ -85,31 +100,52 @@ def parse_rss(feed_url, frequency='W', num_items=20, offset=0):
                     the job title, description, link to the .jobs page, and
                     publish date.
     """
-
     if feed_url.find('?') > -1:
         separator = '&'
     else:
         separator = '?'
-    rss_soup = get_rss_soup(feed_url+separator+'num_items='+str(num_items)+'&offset='+str(offset))
-    item_list = []
-    items = rss_soup.find_all("item")
+    feed_url = feed_url.replace('feed/rss', 'feed/json')
 
     interval = get_interval_from_frequency(frequency)
 
     end = datetime.date.today()
     start = end + datetime.timedelta(days=interval)
 
-    for item in items:
-        item_dict = {}
-        item_dict['title'] = item.findChild('title').text
-        item_dict['link'] = item.findChild('link').text
-        item_dict['pubdate'] = dateparser.parse(item.findChild('pubdate').text)
-        item_dict['description'] = item.findChild('description').text
+    feed_url += '%snum_items=%s&offset=%s' % (
+        separator, str(num_items), str(offset))
 
-        if date_in_range(start,end,item_dict['pubdate'].date()):
-            item_list.append(item_dict)
-        else:
-            break
+    if 'feed/json' in feed_url:
+        json_feed = get_json(feed_url)
+
+        item_list = []
+
+        for item in json_feed:
+            item['link'] = item['url']
+            del item['url']
+
+            item['pubdate'] = dateparser.parse(item['date_new'])
+            del item['date_new']
+
+            if date_in_range(start, end, item['pubdate'].date()):
+                item_list.append(item)
+            else:
+                break
+    else:
+        rss_soup = get_rss_soup(feed_url)
+        item_list = []
+        items = rss_soup.find_all("item")
+
+        for item in items:
+            item_dict = {}
+            item_dict['title'] = item.findChild('title').text
+            item_dict['link'] = item.findChild('link').text
+            item_dict['pubdate'] = dateparser.parse(item.findChild('pubdate').text)
+            item_dict['description'] = item.findChild('description').text
+
+            if date_in_range(start,end,item_dict['pubdate'].date()):
+                item_list.append(item_dict)
+            else:
+                break
 
     return item_list
 

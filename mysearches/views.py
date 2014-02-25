@@ -81,7 +81,7 @@ def view_full_feed(request):
         url_of_feed = url_sort_options(saved_search.feed,
                                        saved_search.sort_by,
                                        saved_search.frequency)
-        items = parse_rss(url_of_feed, saved_search.frequency)
+        items = parse_feed(url_of_feed, saved_search.frequency)
         date = datetime.date.today()
         label = saved_search.label
         return render_to_response('mysearches/view_full_feed.html',
@@ -103,7 +103,7 @@ def more_feed_results(request):
         url_of_feed = url_sort_options(request.GET['feed'],
                                        request.GET['sort_by'],
                                        request.GET['frequency'])
-        items = parse_rss(url_of_feed, request.GET['frequency'],
+        items = parse_feed(url_of_feed, request.GET['frequency'],
                           offset=request.GET['offset'])
         return render_to_response('mysearches/feed_page.html',
                                   {'items': items}, RequestContext(request))
