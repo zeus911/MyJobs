@@ -13,6 +13,12 @@
 {% block meta-extra %}
 <script src="{{ STATIC_URL }}partner-reports.js{% cache_buster %}"></script>
 <script src="{{ STATIC_URL }}partner-overview.js{% cache_buster %}"></script>
+
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+    google.load("visualization", "1", {packages:["corechart"]});
+    google.setOnLoadCallback(drawChart);
+</script>
 {% endblock %}
 
 {% block content %}
@@ -129,11 +135,6 @@
         </div>
         <div class="span4 mobile_hide">
             <div class="info-box">
-                <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-                <script type="text/javascript">
-                    google.load("visualization", "1", {packages:["corechart"]});
-                    google.setOnLoadCallback(drawChart);
-                </script>
                 <div id="donutchart"></div>
                 <a class="btn">Reports</a>
             </div>
