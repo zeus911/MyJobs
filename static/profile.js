@@ -279,7 +279,8 @@ function add_date_button() {
 $(document).ready(function() {
     $('#id_militaryservice-country_code').trigger('change');
     $('#summary_items').children('.add-module-btn').hide();
-    $( "input[id$='date']" ).datepicker({dateFormat: window.dateFormat,
+    $( "input[id$='date']" ).datepicker({yearRange: getYear('past')+":"+getYear('future'),
+        changeMonth: true, changeYear: true, dateFormat: window.dateFormat,
                                                      constrainInput: false});
     if($(window).width() >= 501) {
         // This function will be executed when the user scrolls the page.
@@ -319,3 +320,13 @@ $(document).ready(function() {
         });
     }
 });
+
+function getYear(when){
+    if(when == "past"){
+        return String(new Date().getFullYear()-70);
+    } else if(when == "future"){
+        return String(new Date().getFullYear()+10);
+    } else {
+        return String(new Date().getFullYear());
+    }
+}

@@ -54,7 +54,7 @@ USE_I18N = True
 USE_L10N = True
 
 MEDIA_ROOT = os.path.join(_PATH, 'files', 'media')
-MEDIA_URL = '//d2e48ltfsb5exy.cloudfront.net/myjobs/admin/'
+MEDIA_URL = '/files/media/'
 
 STATICFILES_DIRS = (
     os.path.join(PROJ_ROOT, 'static'),
@@ -166,6 +166,7 @@ INSTALLED_APPS = (
     'tastypie',
     'captcha',
     'endless_pagination',
+    'storages',
 )
 
 # Captcha SSL
