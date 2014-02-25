@@ -1,3 +1,4 @@
+from S3 import CallingFormat
 from secrets import PROD_DB_PASSWD
 from default_settings import *
 import datetime
@@ -51,3 +52,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SOLR = {
     'default': 'http://ec2-54-234-221-198.compute-1.amazonaws.com:8080/solr/profiles/',
 }
+
+AWS_STORAGE_BUCKET_NAME = 'my-jobs'
+AWS_CALLING_FORMAT = CallingFormat.SUBDOMAIN
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'

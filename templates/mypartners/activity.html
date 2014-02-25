@@ -1,0 +1,27 @@
+<tr><td>
+    {{ activity.action_time }}<br/>
+    {% if activity_object %}
+        {% if content_type == 'partner saved search' %}
+            {{ user_name }} {{ action_type }} a saved search for {{ activity.contact_identifier }}<br/>
+            Search URL: {{ activity_object.url }}
+        {% elif content_type == 'contact record' and action_type == 'updated' %}
+            {{ user_name }} {{ action_type }} a contact record. <br/>
+            {% if activity_object.subject %}Subject:  {{ activity_object.subject }} <br/>{% endif %}
+            {{ activity_object.notes }}
+        {% elif content_type == 'contact record' %}
+            {{ activity_object.get_record_description }} <br/>
+            {% if activity_object.subject %}Subject:  {{ activity_object.subject }} <br/>{% endif %}
+            {{ activity_object.notes }}
+        {% else %}
+            {{ user_name }} {{ action_type }} a {{ content_type }} for {{ activity.contact_identifier }}
+        {% endif %}
+    {% else %}
+        {% if content_type == 'partner saved search' %}
+            {{ user_name }} {{ action_type }} a saved search for {{ activity.contact_identifier }}
+        {% elif content_type == 'contact record' %}
+            {{ user_name }} {{ action_type }} a contact record for {{ activity.contact_identifier }}
+        {% else %}
+            {{ user_name }} {{ action_type }} a {{ content_type }} for {{ activity.contact_identifier }}
+        {% endif %}
+    {% endif %}
+</td></tr>
