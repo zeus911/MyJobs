@@ -430,13 +430,13 @@ table#row-link-table {
     display: none;    
     position: absolute;
 	height: 200px;
-	width: 250px;
+	width: 270px;
 	background: #f2f2f2;
 	box-shadow: 0 0 4px #888888;	
 	padding: 8px;
 	z-index: 1000;
-	margin-top: -40px;
-	margin-left: 32px;
+	margin-top: 60px;
+	margin-left: 695px;
 	
 }
 
