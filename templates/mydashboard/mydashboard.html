@@ -22,6 +22,11 @@
 <script>
 $(document).ready(function()
 {
+    var field = $('#search-field');
+    var addon = field.next();
+
+    var field_width = field.outerWidth() - addon.outerWidth();
+    field.css("width", String(field_width)+"px");
     
    $("#date_activity a").click(function () {
       $(".date_range").toggle();
