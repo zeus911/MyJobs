@@ -110,14 +110,18 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0):
 
     end = datetime.date.today()
     start = end + datetime.timedelta(days=interval)
+    item_list = []
 
     feed_url += '%snum_items=%s&offset=%s' % (
         separator, str(num_items), str(offset))
 
     if 'feed/json' in feed_url:
-        json_feed = get_json(feed_url)
+        try:
+            json_feed = get_json(feed_url)
+        except ValueError:
+            json_feed = []
 
-        item_list = []
+        count = len(json_feed)
 
         for item in json_feed:
             item['link'] = item['url']
@@ -130,10 +134,13 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0):
                 item_list.append(item)
             else:
                 break
+
+            if len(item_list) == 5:
+                break
     else:
         rss_soup = get_rss_soup(feed_url)
-        item_list = []
         items = rss_soup.find_all("item")
+        count = len(items)
 
         for item in items:
             item_dict = {}
@@ -147,7 +154,10 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0):
             else:
                 break
 
-    return item_list
+            if len(item_list) == 5:
+                break
+
+    return item_list, count
 
 
 def date_in_range(start, end, x):

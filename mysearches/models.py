@@ -76,7 +76,8 @@ class SavedSearch(models.Model):
         return items
 
     def send_email(self, custom_msg=None):
-        search = (self, self.get_feed_items())
+        results = self.get_feed_items(num_items=100)
+        search = (self, results[0], results[1])
         if self.custom_message and not custom_msg:
             custom_msg = self.custom_message
         if self.user.opt_in_myjobs and search[1]:
@@ -187,11 +188,12 @@ class SavedSearchDigest(models.Model):
 
     def send_email(self, custom_msg=None):
         saved_searches = self.user.savedsearch_set.filter(is_active=True)
-        saved_searches = [(search, search.get_feed_items())
+        #import ipdb; ipdb.set_trace()
+        saved_searches = [(search, search.get_feed_items(num_items=100))
                           for search in saved_searches]
-        saved_searches = [(search, items)
+        saved_searches = [(search, items[0], items[1])
                           for search, items in saved_searches
-                          if items]
+                          if items[0]]
         if self.user.opt_in_myjobs and saved_searches:
             subject = _('Your Daily Saved Search Digest')
             context_dict = {'saved_searches': saved_searches,
