@@ -97,14 +97,7 @@ def get_contact_records_for_partner(partner, contact_name=None,
         records = records.filter(contact_name=contact_name)
     if record_type:
         records = records.filter(contact_type=record_type)
-    if offset and limit:
-        records = records[offset:limit]
-    elif offset:
-        records = records[offset:]
-    elif limit:
-        records = records[:limit]
-
-    return records
+    return records[offset:limit]
 
 
 def get_attachment_link(company_id, partner_id, attachment_id, attachment_name):
