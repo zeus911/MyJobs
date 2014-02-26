@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load common_tags %}
 {% load activity_tags %}
+
 {% block site-title %}
     {% with name_obj=user.full_name %}
         <title>PRM Overview - {{ company.name }}</title>
@@ -11,6 +12,11 @@
 
 {% block meta-extra %}
 <script src="{{ STATIC_URL }}partner-overview.js{% cache_buster %}"></script>
+<script src="{{ STATIC_URL }}record_overview.js{% cache_buster %}"></script>
+<script>
+    var company = {{ company.id }};
+    var partner = {{ partner.id }};
+</script>
 {% endblock %}
 
 {% block content %}
@@ -19,6 +25,7 @@
         <div class="span12 prm-header">
             <span>Communication Records</span>
             <a href="{% url "partner_overview" %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
+
         </div>
     </div>
     <div class="row">
@@ -26,7 +33,30 @@
             <a class="btn" href="{% url "partner_edit_record" %}?company={{ company.id }}&partner={{ partner.id }}" style="margin-bottom: 20px;">New Record</a>
             <div class="formBox no-padding profile-mobile">
                 <h4>View Records</h4>
-
+                {% if records %}
+                <div class="formBox-content">
+                    <div class="span3 form-label pull-left initial">
+                        <label for="record_contact" class="">Contact</label>
+                    </div>
+                    <div>
+                        <select id="record_contact" name="record_contact">
+                            {% for contact in contact_choices %}
+                                <option value="{{ contact.0 }}">{{ contact.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="span3 form-label pull-left initial">
+                        <label for="record_contact_type" class="">Contact Type</label>
+                    </div>
+                    <div>
+                        <select id="record_contact_type" name="record_contact_type">
+                            {% for contact_type in contact_type_choices %}
+                                <option value="{{ contact_type.0 }}">{{ contact_type.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
                 <table class="table table-bordered table-striped">
                     {% if records %}
                     <thead>
@@ -34,31 +64,10 @@
                             <td>Date/Time</td>
                             <td>Type</td>
                             <td>Details</td>
-                            <td></td>
                         </tr>
                     </thead>
                     {% endif %}
-                    <tbody>
-                        {% if records %}
-                        {% for record in records %}
-                            <tr>
-                                <td>{{ record.date_time }}</td>
-                                <td>{{ record.get_record_description }}</td>
-                                <td>
-                                    Subject: {{ record.subject }}<br/>
-                                    {{ record.notes }}
-                                </td>
-                                <td>
-                                    <a href="/prm/view/records/edit?company={{ company.id }}&partner={{ partner.id }}&id={{ record.id }}">Edit</a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        {% else %}
-                        <tr>
-                            <td colspan=3>No records available.</td>
-                        </tr>
-                        {% endif %}
-                    </tbody>
+                    {% get_record_block records company partner %}
                 </table>
             </div>
         </div>
