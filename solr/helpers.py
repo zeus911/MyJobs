@@ -213,3 +213,22 @@ def dict_to_object(results):
     for x in results:
         objs.append(type('SearchResult', (object, ), x))
     return objs
+
+
+def is_bot(ua):
+    """
+    Determines if the provided user agent is likely to be a bot
+
+    Inputs:
+    :ua: User Agent string
+
+    Outputs:
+    :bot: Is :ua: likely to be a bot
+    """
+    ua = ua.lower()
+    bot = False
+    for bot_ua in settings.BOTS:
+        if bot_ua in ua or ua in ['', '-']:
+            bot = True
+            break
+    return bot
