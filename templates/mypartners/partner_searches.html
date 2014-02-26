@@ -24,8 +24,8 @@
                     <tr>
                         <td>Search Name</td>
                         <td>Search URL</td>
-                        <td>Frequency</td>
-                        <td></td>
+                        <td class="mobile_hide">Frequency</td>
+                        <td class="mobile_hide"></td>
                     </tr>
                 </thead>
                 <tbody>
@@ -53,7 +53,7 @@
                             {% endif %}
 
                         </td>
-                        <td class="buttons">
+                        <td class="prm-buttons">
                             <a href="{% url 'partner_view_full_feed' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ search.id }}" class="btn-link mobile_hide">{% trans 'View' %}</a>
                             <a href="{% url 'partner_edit_search' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ search.id }}" class="btn-link edit">{% trans 'Edit' %}</a>
                         </td>
