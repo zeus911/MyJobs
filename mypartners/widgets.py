@@ -111,7 +111,7 @@ class SplitDateTimeDropDownField(MultiValueField):
         )
 
     def compress(self, decompressed_date_time):
-        date_string = " ".join([decompressed_date_time])
+        date_string = " ".join(decompressed_date_time)
         try:
             date_time = datetime.strptime(date_string, "%b %d %Y %I %M %p")
         except ValueError:
