@@ -273,8 +273,7 @@ def prm_overview(request):
            'company': company,
            'recent_activity': most_recent_activity,
            'recent_communication': most_recent_communication,
-           'recent_ss': most_recent_saved_searches,
-           'total_records': len(communication)}
+           'recent_ss': most_recent_saved_searches}
 
     return render_to_response('mypartners/overview.html', ctx,
                               RequestContext(request))
@@ -645,7 +644,8 @@ def partner_get_records(request):
     company, partner, user = prm_worthy(request)
     retrieve_type = request.GET.get('type')
     if retrieve_type == 'sample':
-        records = get_contact_records_for_partner(partner, filter_day=30)
+        records = get_contact_records_for_partner(partner, filter_day=30)\
+            .exclude(contact_type='job')
         email = records.filter(contact_type='email').count()
         phone = records.filter(contact_type='phone').count()
         facetoface = records.filter(contact_type='facetoface').count()
