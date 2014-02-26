@@ -1,5 +1,6 @@
 import datetime
 import pytz
+import uuid
 
 from django.test import TestCase
 
@@ -11,7 +12,8 @@ from MyJobs.mysearches.tests.factories import SavedSearchFactory
 from MyJobs.solr.models import Update
 from MyJobs.solr.helpers import Solr
 from MyJobs.solr.signals import profileunits_to_dict, object_to_dict
-from MyJobs.tasks import update_solr_task
+from MyJobs.solr.tests.helpers import MockLog
+from MyJobs.tasks import update_solr_task, parse_log
 
 
 class SolrTests(TestCase):
@@ -191,3 +193,37 @@ class SolrTests(TestCase):
         user.save()
 
         self.assertEqual(Update.objects.all().count(), 1)
+
+    def test_apache_log_parsing(self):
+        """
+        Ensure that analytics logs are parsed and stored in solr correctly
+        """
+        log = MockLog()
+        parse_log([log], 'http://127.0.0.1:8983/solr/myjobs_test/')
+
+        solr = Solr()
+        results = solr.search(q='uid:analytics*')
+        
+        # fakelog contains two lines - one human and one bot hit
+        # If it is getting processed correctly, there should be only one
+        # hit recorded
+        self.assertEqual(results.hits, 1)
+        multi_fields = ['facets', 'search_keywords']
+        for field in multi_fields:
+            self.assertEqual(len(results.docs[0][field]), 2)
+        for field in results.docs[0].keys():
+            if field not in multi_fields:
+                self.assertTrue(type(results.docs[0][field] != list))
+        uuid.UUID(results.docs[0]['aguid'])
+        with self.assertRaises(KeyError):
+            results.docs[0]['User_user_guid']
+
+
+        solr.delete()
+        user = UserFactory()
+        user.user_guid = '1e5f7e122156483f98727366afe06e0b'
+        user.save()
+        parse_log([log], 'http://127.0.0.1:8983/solr/myjobs_test/')
+        results = solr.search(q='uid:analytics*')
+        for guid in ['aguid', 'User_user_guid']:
+            uuid.UUID(results.docs[0][guid])
