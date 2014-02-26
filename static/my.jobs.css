@@ -298,7 +298,7 @@ h1 > small > a:hover {
     margin-bottom: 5px;
 }
 
-.inner-piehole {
+.piehole {
     position: absolute;
     top: 30%;
     left: 25%;
@@ -307,20 +307,20 @@ h1 > small > a:hover {
     text-align: center;
 }
 
-.inner-piehole > .piehole-big {
+.piehole > .piehole-big {
     font-weight: bold;
     font-size: 2em;
     margin-bottom: 5px;
 }
 
-.inner-piehole > .piehole-topic {
+.piehole > .piehole-topic {
     font-weight: bold;
     font-size: 0.9em;
     line-height: 13px;
     margin-bottom: 5px;
 }
 
-.inner-piehole > .piehole-filter {
+.piehole > .piehole-filter {
     font-weight: bold;
     font-size: 0.9em;
     line-height: 13px;
@@ -329,7 +329,10 @@ h1 > small > a:hover {
 
 .chart-box {
     position: absolute;
-    border: 3px solid #0e90d2;
+    border: 3px solid #5eb95e;
+    border-radius: 5px;
+    background-color: #5eb95e;
+    color: #FFF;
     width: 45px;
     height: 40px;
     margin-left: 218px;
@@ -341,12 +344,14 @@ h1 > small > a:hover {
     margin-top: 61px;
     height: 41px;
     border-color: #4bb1cf;
+    background-color: #4bb1cf;
 }
 
 .chart-box + .chart-box + .chart-box {
     margin-top: 122px;
     height: 40px;
-    border-color: #5eb95e;
+    border-color: #faa732;
+    background-color: #faa732;
 }
 
 .chart-box > .big-num {
