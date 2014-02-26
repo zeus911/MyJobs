@@ -12,8 +12,15 @@
 
 {% block meta-extra %}
 <script src="{{ STATIC_URL }}partner-overview.js{% cache_buster %}"></script>
-{% endblock %}
+<script src="{{ STATIC_URL }}partner-reports.js{% cache_buster %}"></script>
 
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+    google.load("visualization", "1", {packages:["corechart"]});
+    google.setOnLoadCallback(drawChart);
+</script>
+
+{% endblock %}
 
 {% block content %}
     <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> <small>{{ partner.name }}</small></h1>
@@ -89,7 +96,7 @@
                     {% endif %}
                 </table>
                 <div class="formBox-footer">
-                    <a class="btn pull-right" href="{% url "partner_records" %}?company={{ company.id }}&partner={{ partner.id }}">Communication Records</a>
+                    <a class="btn pull-right" href="{% url "partner_records" %}?company={{ company.id }}&partner={{ partner.id }}">Manage Records</a>
                     <div class="clear"></div>
                 </div>
             </div>
@@ -122,17 +129,16 @@
                     {% endif %}
                 </table>
                 <div class="formBox-footer">
-                    <a class="btn pull-right" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">Saved Searches</a>
+                    <a class="btn pull-right" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">Manage Searches</a>
                     <div class="clear"></div>
                 </div>
             </div>
         </div>
         <div class="span4 mobile_hide">
-            {% if reports %}
-            <div class="info-box" id="communication-reports">
-                <a class="btn" href="">Reports</a>
+            <div class="info-box">
+                <div id="donutchart"></div>
+                <a class="btn">View Reports</a>
             </div>
-            {% endif %}
 
             <div class="info-box" id="partner-details">
                 <b>{{ partner.name }}</b>
@@ -188,4 +194,7 @@
 
         </div>
     </div>
+    <input id="totalr" type="hidden" value="{{ total_records }}">
+    <input id="company" type="hidden" value="{{ company.id }}">
+    <input id="partner" type="hidden" value="{{ partner.id }}">
 {% endblock %}

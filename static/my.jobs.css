@@ -308,6 +308,74 @@ h1 > small > a:hover {
     margin-bottom: 5px;
 }
 
+.piehole {
+    position: absolute;
+    top: 30%;
+    left: 25%;
+    width: 50%;
+    height: 40%;
+    text-align: center;
+}
+
+.piehole > .piehole-big {
+    font-weight: bold;
+    font-size: 2em;
+    margin-bottom: 5px;
+}
+
+.piehole > .piehole-topic {
+    font-weight: bold;
+    font-size: 0.9em;
+    line-height: 13px;
+    margin-bottom: 5px;
+}
+
+.piehole > .piehole-filter {
+    font-weight: bold;
+    font-size: 0.9em;
+    line-height: 13px;
+    color: #8c96a1;
+}
+
+.chart-box {
+    position: absolute;
+    border: 3px solid #5eb95e;
+    border-radius: 5px;
+    background-color: #5eb95e;
+    color: #FFF;
+    width: 45px;
+    height: 40px;
+    margin-left: 218px;
+    text-align: center;
+    padding: 5px;
+}
+
+.chart-box + .chart-box {
+    margin-top: 61px;
+    height: 41px;
+    border-color: #4bb1cf;
+    background-color: #4bb1cf;
+}
+
+.chart-box + .chart-box + .chart-box {
+    margin-top: 122px;
+    height: 40px;
+    border-color: #faa732;
+    background-color: #faa732;
+}
+
+.chart-box > .big-num {
+    font-weight: bold;
+    font-size: 1.3em;
+    margin-bottom: 5px;
+}
+
+.chart-box > .reports-record-type {
+    font-weight: bold;
+    font-size: 0.7em;
+    line-height: 10px;
+}
+
 /* Sort by field in saved search save/edit */
 #saved-search-form label[for^='id_sort_by'],
 #saved-search-form label[for^='id_edit_sort_by'] {
@@ -1344,8 +1412,6 @@ em.pendingText {
 .sub-nav-item {
     margin-left: 40px;
 }
-
-
 
 #ui-datepicker-div {
     position: relative;
