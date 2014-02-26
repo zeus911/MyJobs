@@ -83,8 +83,8 @@ def filter_by_date(request):
     search covers.
 
     """
-    requested_after_date = request.REQUEST.get('after', False)
-    requested_before_date = request.REQUEST.get('before', False)
+    requested_after_date = request.REQUEST.get('date_start', False)
+    requested_before_date = request.REQUEST.get('date_end', False)
 
     date_end = datetime.now()
     # Set date range based on buttons
@@ -105,7 +105,7 @@ def filter_by_date(request):
         if requested_after_date:
             date_start = datetime.strptime(requested_after_date, '%m/%d/%Y')
         else:
-            date_start = request.REQUEST.get('after')
+            date_start = request.REQUEST.get('date_start')
             if date_start:
                 date_start = datetime.strptime(date_start, '%m/%d/%Y')
             else:
@@ -115,7 +115,7 @@ def filter_by_date(request):
         if requested_before_date:
             date_end = datetime.strptime(requested_before_date, '%m/%d/%Y')
         else:
-            date_end = request.REQUEST.get('before')
+            date_end = request.REQUEST.get('date_end')
             if date_end:
                 date_end = datetime.strptime(date_end, '%m/%d/%Y')
             else:

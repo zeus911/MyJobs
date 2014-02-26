@@ -143,9 +143,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     context = {
         'admin_you': request.user,
-        'after': date_start,
+        'date_start': date_start,
         'applied_filters': filters,
-        'before': date_end,
+        'date_end': date_end,
         'candidates': candidate_list,
         'candidates_page': candidates_page,
         'company_admins': admins,
@@ -226,8 +226,8 @@ def microsite_activity(request, template="mydashboard/microsite_activity.html",
 
     context = {
         'microsite_url': requested_microsite,
-        'after': date_start,
-        'before': date_end,
+        'date_start': date_start,
+        'date_end': date_end,
         'candidates': candidate_list,
         'view_name': 'Company Dashboard',
         'company_name': company.name,
@@ -255,8 +255,8 @@ def candidate_information(request):
     user_id = request.REQUEST.get('user')
     company_id = request.REQUEST.get('company')
     anchor_id = request.REQUEST.get('anchor', False)
-    after = request.REQUEST.get('after', False)
-    before = request.REQUEST.get('before', False)    
+    date_start = request.REQUEST.get('date_start', False)
+    date_end = request.REQUEST.get('date_end', False)
     candidates_page = request.REQUEST.get('page', False)
     
     # user gets pulled out from id
@@ -294,9 +294,9 @@ def candidate_information(request):
                  'primary_name': primary_name,
                  'the_user': user,
                  'searches': searches,
-                 'after': after,
+                 'date_start': date_start,
                  'anchor': anchor_id,
-                 'before': before,                 
+                 'date_end': date_end,
                  'candidates_page': candidates_page,
                  'coming_from': coming_from}
 

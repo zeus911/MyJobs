@@ -437,7 +437,10 @@ table#row-link-table {
 	z-index: 1000;
 	margin-top: 60px;
 	margin-left: 695px;
-	
+}
+
+.date_range_display {
+    display: block;
 }
 
 .link-list {     
@@ -2093,10 +2096,19 @@ td .gravatar-blank,
         display: inline !important;
         margin-right: 5px;
     }
+
+    .endless_loading {
+        display: none !important;
+    }
     
     .date_range {
-        top: 202px;
-        margin-left: 105px;
+        position: inherit;
+    }
+    .date_range_display {
+        display: inline;
+    }
+    .date_range form {
+        margin: -20px 0 0 20px;
     }
     
     .arrow-down {
