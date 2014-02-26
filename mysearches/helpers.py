@@ -83,7 +83,7 @@ def get_json(json_url):
 
 
 
-def parse_feed(feed_url, frequency='W', num_items=20, offset=0):
+def parse_feed(feed_url, frequency='W', num_items=20, offset=0, return_items=None):
     """
     Parses job data from an RSS feed and returns it as a list of dictionaries.
     The data returned is limited based on the corresponding data range (daily,
@@ -92,18 +92,21 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0):
     Inputs:
     :feed_url:      URL of an RSS feed
     :frequency:     String 'D', 'W', or 'M'.
-    :num_items:     Maximum number of items to be returned.
+    :num_items:     Maximum number of items to be retrieved.
     :offset:        The page on which the RSS feed is on.
+    :return_items: The number of items to be returned; if not provided,
+        equals :num_items:
 
     Outputs:
-    :item_list:     List of dictionaries of job data. Each dictionary contains
-                    the job title, description, link to the .jobs page, and
-                    publish date.
+    :tuple:         
     """
+    if return_items is None:
+        return_items = num_items
     if feed_url.find('?') > -1:
         separator = '&'
     else:
         separator = '?'
+
     feed_url = feed_url.replace('feed/rss', 'feed/json')
 
     interval = get_interval_from_frequency(frequency)
@@ -115,47 +118,37 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0):
     feed_url += '%snum_items=%s&offset=%s' % (
         separator, str(num_items), str(offset))
 
-    if 'feed/json' in feed_url:
+    is_json = 'feed/json' in feed_url
+    if is_json:
         try:
-            json_feed = get_json(feed_url)
+            items = get_json(feed_url)
         except ValueError:
-            json_feed = []
-
-        count = len(json_feed)
-
-        for item in json_feed:
-            item['link'] = item['url']
-            del item['url']
-
-            item['pubdate'] = dateparser.parse(item['date_new'])
-            del item['date_new']
-
-            if date_in_range(start, end, item['pubdate'].date()):
-                item_list.append(item)
-            else:
-                break
-
-            if len(item_list) == 5:
-                break
+            items = []
     else:
         rss_soup = get_rss_soup(feed_url)
-        items = rss_soup.find_all("item")
-        count = len(items)
+        items = rss_soup.find_all('item')
+    count = len(items)
 
-        for item in items:
+    for item in items:
+        if is_json:
+            item['link'] = item.pop('url')
+            item['pubdate'] = dateparser.parse(item.pop('date_new'))
+            item_dict = item
+        else:
             item_dict = {}
             item_dict['title'] = item.findChild('title').text
             item_dict['link'] = item.findChild('link').text
-            item_dict['pubdate'] = dateparser.parse(item.findChild('pubdate').text)
+            item_dict['pubdate'] = dateparser.parse(
+                item.findchild('pubdate').text)
             item_dict['description'] = item.findChild('description').text
 
-            if date_in_range(start,end,item_dict['pubdate'].date()):
-                item_list.append(item_dict)
-            else:
-                break
+        if date_in_range(start, end, item['pubdate'].date()):
+            item_list.append(item)
+        else:
+            break
 
-            if len(item_list) == 5:
-                break
+        if len(item_list) == return_items:
+            break
 
     return item_list, count
 

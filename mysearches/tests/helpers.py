@@ -64,9 +64,12 @@ class SavedSearchHelperTests(TestCase):
     def test_parse_feed(self):
         feed_url = 'http://www.my.jobs/feed/rss'
         items = parse_feed(feed_url)
-        self.assertEqual(len(items), 1)
+        
+        # The second value in the items list is the total count from a feed,
+        # which may not equal the number of items returned
+        self.assertEqual(items[1], 1)
 
-        item = items[0]
+        item = items[0][0]
         for element in ['pubdate', 'title', 'description', 'link']:
             self.assertTrue(item[element])
 

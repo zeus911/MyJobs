@@ -70,13 +70,14 @@ class SavedSearch(models.Model):
             if choice[0] == self.day_of_week:
                 return choice[1]
 
-    def get_feed_items(self, num_items=5):
+    def get_feed_items(self, num_items=100):
         url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency)
-        items = parse_feed(url_of_feed, self.frequency, num_items=num_items)
+        items = parse_feed(url_of_feed, self.frequency,
+                           num_items=num_items, return_items=5)
         return items
 
     def send_email(self, custom_msg=None):
-        results = self.get_feed_items(num_items=100)
+        results = self.get_feed_items()
         search = (self, results[0], results[1])
         if self.custom_message and not custom_msg:
             custom_msg = self.custom_message
@@ -188,8 +189,7 @@ class SavedSearchDigest(models.Model):
 
     def send_email(self, custom_msg=None):
         saved_searches = self.user.savedsearch_set.filter(is_active=True)
-        #import ipdb; ipdb.set_trace()
-        saved_searches = [(search, search.get_feed_items(num_items=100))
+        saved_searches = [(search, search.get_feed_items())
                           for search in saved_searches]
         saved_searches = [(search, items[0], items[1])
                           for search, items in saved_searches
