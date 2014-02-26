@@ -7,7 +7,8 @@ from MyJobs.myprofile.models import ProfileUnits
 from MyJobs.myjobs.models import User
 from MyJobs.mysearches.models import SavedSearch
 
-DEFAULT_FIELD_NAME = 'uid'
+DEFAULT_FIELD_NAME = 'text'
+UNIQUE_FIELD_NAME = 'uid'
 DEFAULT_OPERATOR = 'AND'
 
 # Django model field types that map to non-text_en fields
@@ -85,8 +86,8 @@ class Command(BaseCommand):
                 'field_name': 'text',
                 'type': 'text_en',
                 'indexed': 'true',
-                'stored': 'true',
-                'multiValued': 'false',
+                'stored': 'false',
+                'multiValued': 'true',
             })
             # Analytics
             for field in ['page_category', 'special_commitment']:
@@ -177,7 +178,7 @@ class Command(BaseCommand):
 
         context = Context({
             'default_field_name': DEFAULT_FIELD_NAME,
-            'unique_field_name': DEFAULT_FIELD_NAME,
+            'unique_field_name': UNIQUE_FIELD_NAME,
             'default_operator': DEFAULT_OPERATOR,
             'fields': schema_fields,
             'copy_fields': copy_fields

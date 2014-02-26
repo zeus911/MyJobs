@@ -2,7 +2,6 @@ from django import forms
 from django.contrib.admin.models import ADDITION, CHANGE
 from django.core.exceptions import ValidationError
 from django.forms.util import ErrorList
-from django.utils.safestring import mark_safe
 
 from collections import OrderedDict
 
@@ -10,7 +9,7 @@ from myprofile.forms import generate_custom_widgets
 from myjobs.forms import BaseUserForm
 from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
                                MAX_ATTACHMENT_MB)
-from mypartners.helpers import log_change
+from mypartners.helpers import log_change, get_attachment_link
 from mypartners.widgets import (MultipleFileField, MultipleFileInputWidget,
                                 SplitDateTimeDropDownField, TimeDropDownField)
 
@@ -334,13 +333,4 @@ class ContactRecordForm(forms.ModelForm):
                    action_type=new_or_change)
 
         return instance
-
-
-def get_attachment_link(company_id, partner_id, attachment_id, attachment_name):
-    url = '/prm/download?company=%s&partner=%s&id=%s' % (company_id,
-                                                         partner_id,
-                                                         attachment_id)
-
-    html = "<a href='{url}' target='_blank'>{attachment_name}</a>"
-    return mark_safe(html.format(url=url, attachment_name=attachment_name))
 

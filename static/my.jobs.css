@@ -82,25 +82,35 @@ h1 > small > a:hover {
 
 /*Employer Dashboard Widgets */
 #count-box{
-    width: 30%;
     height: 30%;
     margin: 5px auto 0 auto;
     padding: 20px 0 20px 0;
-    border: 1px solid #333333;
+    border: 1px solid #d5d4d0;
     border-radius: 5px;
     text-align: center;
+    background-color:#fff;
 }
 #count-text{
     font-size: 1.7em;
     font-weight: bolder;
     margin: auto;
 }
+
+#search-btn {
+    display: inline-block !important;
+}
+
+#search-box input {
+    box-sizing: border-box;
+    height: 30px;
+    width: 100%;
+}
+
 .fake-url{
     color: #5a6d81;
     text-decoration: underline;
     cursor: pointer;
 }
-
 .fake-url:hover{
     color: #4B5661;
 }
@@ -2981,3 +2991,13 @@ body.modal-open {
     margin-left: 280px;
 }
 
+.contact-record-tr:hover td {
+    background-color: rgb(230, 230, 230) !important;
+    cursor: pointer;
+}
+
+.one-hundred-percent-button-border-boxed {
+    box-sizing: border-box;
+    width: 100%;
+    margin-bottom: 20px;
+}
