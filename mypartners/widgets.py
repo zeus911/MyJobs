@@ -110,14 +110,8 @@ class SplitDateTimeDropDownField(MultiValueField):
             *args, **kwargs
         )
 
-    def compress(self, data_list):
-        month = data_list[0]
-        day = data_list[1]
-        year = data_list[2]
-        hour = data_list[3]
-        minutes = data_list[4]
-        am_pm = data_list[5]
-        date_string = " ".join([month, day, year, hour, minutes, am_pm])
+    def compress(self, decompressed_date_time):
+        date_string = " ".join(decompressed_date_time)
         try:
             date_time = datetime.strptime(date_string, "%b %d %Y %I %M %p")
         except ValueError:
@@ -140,10 +134,8 @@ class TimeDropDownField(MultiValueField):
             *args, **kwargs
         )
 
-    def compress(self, data_list):
-        hours = int(data_list[0])
-        minutes = int(data_list[1])
-        return time(hours, minutes)
+    def compress(self, decompressed_time):
+        return time(int(decompressed_time[0]), int(decompressed_time[1]))
 
 
 class MultipleFileField(FileField):
@@ -152,9 +144,7 @@ class MultipleFileField(FileField):
     def to_python(self, data):
         if not data:
             return None
-
-        datalist = []
+        file_list = []
         for f in data:
-            datalist.append(super(MultipleFileField, self).to_python(f))
-
-        return datalist
+            file_list.append(super(MultipleFileField, self).to_python(f))
+        return file_list

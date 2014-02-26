@@ -7,7 +7,8 @@ from MyJobs.myprofile.models import ProfileUnits
 from MyJobs.myjobs.models import User
 from MyJobs.mysearches.models import SavedSearch
 
-DEFAULT_FIELD_NAME = 'uid'
+DEFAULT_FIELD_NAME = 'text'
+UNIQUE_FIELD_NAME = 'uid'
 DEFAULT_OPERATOR = 'AND'
 
 # Django model field types that map to non-text_en fields
@@ -56,6 +57,7 @@ class Command(BaseCommand):
         models.append(User)
         models.append(SavedSearch)
         schema_fields = []
+        copy_fields = []
 
         if options['static']:
             # One-off fields
@@ -83,6 +85,64 @@ class Command(BaseCommand):
             schema_fields.append({
                 'field_name': 'text',
                 'type': 'text_en',
+                'indexed': 'true',
+                'stored': 'false',
+                'multiValued': 'true',
+            })
+            # Analytics
+            for field in ['page_category', 'special_commitment']:
+                schema_fields.append({
+                    'field_name': field,
+                    'type': 'text_en',
+                    'indexed': 'true',
+                    'stored': 'true',
+                    'multiValued': 'false',
+                })
+            for field in ['job_view_title', 'job_view_company',
+                          'job_view_location']:
+                exact_field = field + '_exact'
+                field_data = {
+                    'field_name': field,
+                    'type': 'text_en',
+                    'indexed': 'true',
+                    'stored': 'true',
+                    'multiValued': 'false',
+                }
+                schema_fields.append(field_data.copy())
+                field_data['field_name'] = exact_field
+                field_data['type'] = 'string'
+                schema_fields.append(field_data)
+                copy_fields.append({'source': exact_field, 'dest': field})
+            for field in ['site_tag', 'aguid', 'domain',
+                          'job_view_canonical_domain',
+                          'job_view_guid']:
+                # myguid is the same as User_user_guid and will be kept there
+                schema_fields.append({
+                    'field_name': field,
+                    'type': 'string',
+                    'indexed': 'true',
+                    'stored': 'true',
+                    'multiValued': 'false',
+                })
+            for field in ['view_source', 'job_view_buid']:
+                schema_fields.append({
+                    'field_name': field,
+                    'type': 'long',
+                    'indexed': 'true',
+                    'stored': 'true',
+                    'multiValued': 'false',
+                })
+            for field in ['search_keywords', 'facets']:
+                schema_fields.append({
+                    'field_name': field,
+                    'type': 'string',
+                    'indexed': 'true',
+                    'stored': 'true',
+                    'multiValued': 'true',
+                })
+            schema_fields.append({
+                'field_name': 'view_date',
+                'type': 'date',
                 'indexed': 'true',
                 'stored': 'true',
                 'multiValued': 'false',
@@ -118,9 +178,10 @@ class Command(BaseCommand):
 
         context = Context({
             'default_field_name': DEFAULT_FIELD_NAME,
-            'unique_field_name': DEFAULT_FIELD_NAME,
+            'unique_field_name': UNIQUE_FIELD_NAME,
             'default_operator': DEFAULT_OPERATOR,
             'fields': schema_fields,
+            'copy_fields': copy_fields
         })
 
         print loader.get_template('solr_schema_base.xml').render(context)
