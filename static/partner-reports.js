@@ -1,22 +1,56 @@
-
 function drawChart() {
-    var data = google.visualization.arrayToDataTable([
-        ['Records', 'All Records'],
-        ['Email',     5],
-        ['Phone Calls',      2],
-        ['Face to Face',  2]
-    ]);
+    var company_id = $('#company').val();
+    var partner_id = $('#partner').val();
+    $.ajax({
+        type: "GET",
+        data: {company: company_id,
+               partner: partner_id,
+               type: 'sample'},
+        url: "/prm/view/records/retrieve_records",
+        success: function(dump){
+            var nums = jQuery.parseJSON(dump);
+            var data = google.visualization.arrayToDataTable([
+                            ['Records',         'All Records'],
+                            ['Email',           nums.email],
+                            ['Phone Calls',     nums.phone],
+                            ['Face to Face',    nums.facetoface]
+                        ]);
+            var options = {
+                            legend: 'none',
+                            pieHole: 0.6,
+                            pieSliceText: 'none',
+                            height: 190,
+                            width: 190,
+                            chartArea: {top:7, left:7, width: 175, height: 175},
+                            slices: {0: {color: '#0e90d2'}, 1: {color: '#4bb1cf'}, 2: {color: '#5eb95e'}}
+                          };
+            var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
+            chart.draw(data, options);
+            fill_piehole(nums.totalrecs);
+            visual_boxes(nums.email, nums.phone, nums.facetoface);
+        }
+    });
+}
 
-    var options = {
-        legend: 'none',
-        pieHole: 0.6,
-        pieSliceText: 'none',
-        height: 180,
-        width: 180,
-        chartArea: {top:10, left:10, width: 155, height: 155},
-        slices: {0: {color: '#48DD00'}, 1: {color: '#FF5C00'}, 2: {color: '#B90091'}}
-    };
+function fill_piehole(totalrecs){
+    var doughnut = $("#donutchart");
+    var piediv = doughnut.children(":first-child").children(":first-child");
+    piediv.prepend('<div class="inner-piehole"><div class="piehole-big">'+String(totalrecs)+'</div><div class="piehole-topic">Contact Records</div><div class="piehole-filter">30 Days</div></div>');
+}
 
-    var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
-    chart.draw(data, options);
+function visual_boxes(email, phone, facetoface){
+    record_types = new Array(email, phone, facetoface);
+    var doughnut = $("#donutchart");
+    for(var i=0; i<=record_types.length; i++){
+        if(i == 0){
+            doughnut.prepend('<div class="chart-box"><div class="big-num">'+String(email)+'</div><div class="reports-record-type">Face to Face</div></div>');
+        }
+        if(i == 1){
+            doughnut.prepend('<div class="chart-box"><div class="big-num">'+String(phone)+'</div><div class="reports-record-type">Phone Calls</div></div>');
+        }
+        if(i == 2){
+            doughnut.prepend('<div class="chart-box"><div class="big-num">'+String(facetoface)+'</div><div class="reports-record-type">Emails</div></div>');
+        }
+    }
+
 }

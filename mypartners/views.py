@@ -262,8 +262,8 @@ def prm_overview(request):
     company, partner, user = prm_worthy(request)
 
     most_recent_activity = get_logs_for_partner(partner)
-    most_recent_communication = get_contact_records_for_partner(partner,
-                                                                num_records=10)
+    communication = get_contact_records_for_partner(partner)
+    most_recent_communication = communication[:3]
     saved_searches = get_searches_for_partner(partner)
     most_recent_saved_searches = saved_searches[:3]
 
@@ -272,7 +272,8 @@ def prm_overview(request):
            'company': company,
            'recent_activity': most_recent_activity,
            'recent_communication': most_recent_communication,
-           'recent_ss': most_recent_saved_searches}
+           'recent_ss': most_recent_saved_searches,
+           'total_records': len(communication)}
 
     return render_to_response('mypartners/overview.html', ctx,
                               RequestContext(request))
@@ -531,3 +532,17 @@ def get_uploaded_file(request):
 
     return HttpResponseRedirect(path)
 
+
+def partner_get_records(request):
+    company, partner, user = prm_worthy(request)
+    retrieve_type = request.GET.get('type')
+    if retrieve_type == 'sample':
+        records = get_contact_records_for_partner(partner, filter_day=30)
+        email = records.filter(contact_type='email').count()
+        phone = records.filter(contact_type='phone').count()
+        facetoface = records.filter(contact_type='facetoface').count()
+        data = {'totalrecs': records.count(),
+                'email': email,
+                'phone': phone,
+                'facetoface': facetoface}
+        return HttpResponse(json.dumps(data))

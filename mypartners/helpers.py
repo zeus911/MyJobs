@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib.admin.models import CHANGE
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
@@ -88,12 +90,17 @@ def get_logs_for_partner(partner, content_type_id=None, num_items=10):
 
 
 def get_contact_records_for_partner(partner, contact=None, record_type=None,
-                                    num_records=None):
+                                    num_records=None, filter_day=None):
     records = ContactRecord.objects.filter(partner=partner)
     if contact:
         records = records.filter(contact_name=contact.name)
     if record_type:
         records = records.filter(contact_type=record_type)
+    if filter_day:
+        now = datetime.datetime.now()
+        records = records.filter(
+            created_on__range=[now-datetime.timedelta(days=filter_day),
+                               now])
     if num_records:
         records = records[:num_records]
     return records
