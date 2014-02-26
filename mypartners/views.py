@@ -273,8 +273,7 @@ def prm_overview(request):
            'company': company,
            'recent_activity': most_recent_activity,
            'recent_communication': most_recent_communication,
-           'recent_ss': most_recent_saved_searches,
-           'total_records': len(communication)}
+           'recent_ss': most_recent_saved_searches}
 
     return render_to_response('mypartners/overview.html', ctx,
                               RequestContext(request))
