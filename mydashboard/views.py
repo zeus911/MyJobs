@@ -144,9 +144,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     context = {
         'admin_you': request.user,
-        'date_start': date_start,
         'applied_filters': filters,
-        'date_end': date_end,
         'candidates': candidate_list,
         'candidates_page': candidates_page,
         'company_admins': admins,
@@ -156,6 +154,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         'dashboard_widgets': dashboard_widgets,
         'date_button': requested_date_button,
         'date_display': date_display,
+        'date_end': date_end,
+        'date_start': date_start,
+        'date_submit_url': url,
         'facets': all_facets,
         'site_name': site_name,
         'total_candidates': len(candidate_list),
@@ -236,6 +237,7 @@ def microsite_activity(request, template="mydashboard/microsite_activity.html",
         'date_button': requested_date_button,
         'candidates_page': candidates_page,
         'saved_search_count': len(candidate_list),
+        'date_submit_url': request.build_absolute_uri(),
     }
     
     if extra_context is not None:

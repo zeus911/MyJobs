@@ -419,11 +419,11 @@ table#row-link-table {
     float: right;
 	width: 0; 
 	height: 0; 
-	border-left: 15px solid transparent;
-	border-right: 15px solid transparent;	
-	border-top: 15px solid #444;
-	margin-top: -34px;
-	margin-right: -38px;
+	border-left: 7px solid transparent;
+	border-right: 7px solid transparent;
+	border-top: 7px solid #444;
+	margin-top: -12px;
+	margin-right: -25px;
 }
 
 .date_range {
@@ -441,6 +441,11 @@ table#row-link-table {
 
 .date_range_display {
     display: block;
+}
+
+#date_range_dropdown {
+    margin-top: 35px;
+    color: #444;
 }
 
 .link-list {     

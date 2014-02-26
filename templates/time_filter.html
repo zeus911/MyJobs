@@ -1,14 +1,14 @@
 <div id="date_activity">
-{% if date_display = "Today" %}
-<a href="#"><h1>{{ date_display }}</h1></a>
-{% else %}
-<a href="#"><h1>{{ date_display }} Days</h1></a>
-{% endif %}
-<a href="#"><div class="arrow-down"></div></a>
+        {% if date_display = "Today" %}
+            <a id="date_range_dropdown" href="#">{ date_display }}</a>
+        {% else %}
+            <a id="date_range_dropdown" href="#">{{ date_display }} Days</a>
+        {% endif %}
+    <a href="#"><div class="arrow-down"></div></a>
 </div>
 
 <div class="date_range">
-    <form action='{% url "dashboard" %}?company={{ company_id }}' method='POST'>
+    <form action='{{ date_submit_url }}' method='POST'>
         {% csrf_token %}
         <div id="date-selection">
             <input class="btn btn-success" type="hidden" name="first-hide" id="first-hide">
