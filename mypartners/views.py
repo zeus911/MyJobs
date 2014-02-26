@@ -645,7 +645,8 @@ def partner_get_records(request):
     company, partner, user = prm_worthy(request)
     retrieve_type = request.GET.get('type')
     if retrieve_type == 'sample':
-        records = get_contact_records_for_partner(partner, filter_day=30)
+        records = get_contact_records_for_partner(partner, filter_day=30)\
+            .exclude(contact_type='job')
         email = records.filter(contact_type='email').count()
         phone = records.filter(contact_type='phone').count()
         facetoface = records.filter(contact_type='facetoface').count()
