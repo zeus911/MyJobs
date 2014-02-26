@@ -17,7 +17,7 @@ from django.shortcuts import render_to_response
 
 from mydashboard.helpers import (saved_searches, filter_by_microsite,
                                  filter_by_date, apply_facets_and_filters,
-                                 parse_facets)
+                                 parse_facets, remove_param_from_url)
 from mydashboard.models import Company, Microsite, CompanyUser
 from myjobs.models import User
 from myprofile.models import (PrimaryNameProfileUnitManager,
@@ -26,6 +26,7 @@ from mysearches.models import SavedSearch
 from solr.helpers import Solr, format_date, dict_to_object
 
 from endless_pagination.decorators import page_template
+from urlparse import urlparse
 from xhtml2pdf import pisa
 from lxml import etree
 
@@ -289,16 +290,22 @@ def candidate_information(request):
 
     searches = user.savedsearch_set.filter(url__in=urls)
 
-    data_dict = {'user_info': models,
-                 'company_id': company_id,
-                 'primary_name': primary_name,
-                 'the_user': user,
-                 'searches': searches,
-                 'date_start': date_start,
-                 'anchor': anchor_id,
-                 'date_end': date_end,
-                 'candidates_page': candidates_page,
-                 'coming_from': coming_from}
+    modified_url = remove_param_from_url(request.build_absolute_uri(), 'user')
+    query_string = "?%s" % urlparse(modified_url).query
+
+    data_dict = {
+        'user_info': models,
+        'company_id': company_id,
+        'primary_name': primary_name,
+        'the_user': user,
+        'searches': searches,
+        'date_start': date_start,
+        'anchor': anchor_id,
+        'date_end': date_end,
+        'candidates_page': candidates_page,
+        'coming_from': coming_from,
+        'query_string': query_string,
+    }
 
     return render_to_response('mydashboard/candidate_information.html',
                               data_dict, RequestContext(request))
