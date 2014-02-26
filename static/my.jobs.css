@@ -443,8 +443,13 @@ table#row-link-table {
 	box-shadow: 0 0 4px #888888;	
 	padding: 8px;
 	z-index: 1000;
-	margin-top: 60px;
-	margin-left: 695px;
+}
+#dashboard_time_filter .date_range {
+	margin-top: -15px;
+	margin-left: -195px;
+}
+#contact_record_time_filter {
+
 }
 
 .date_range_display {
