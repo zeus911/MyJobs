@@ -91,8 +91,9 @@ def activate(request, activation_key):
 @user_passes_test(User.objects.not_disabled)
 def merge_accounts(request, activation_key):
     AP = ActivationProfile
-    
+
     ctx = {'merged': False}
+
     # Check if activation key exists
     if not AP.objects.filter(activation_key=activation_key).exists():
         return render_to_response('registration/merge_request.html', ctx,
@@ -110,7 +111,7 @@ def merge_accounts(request, activation_key):
 
 
     # Create a secondary email
-    email = SecondaryEmail(user=existing_user, label='Merged Email',
+    SecondaryEmail.objects.create(user=existing_user, label='Merged Email',
                            email=activation_profile.email)
 
     # Update the contacts
