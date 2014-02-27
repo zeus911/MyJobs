@@ -79,8 +79,10 @@ def get_json(json_url):
                     List of one or more Python dictionaries
     """
     json_feed = urllib2.urlopen(json_url).read()
-    return json.loads(json_feed)
-
+    try:
+        return json.loads(json_feed)
+    except ValueError:
+        return []
 
 
 def parse_feed(feed_url, frequency='W', num_items=20, offset=0, return_items=None):
@@ -99,7 +101,7 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0, return_items=Non
 
     Outputs:
     :tuple:         First index is a list of :return_items: jobs
-                     Second index is the total job count
+                    Second index is the total job count
     """
     if return_items is None:
         return_items = num_items
@@ -121,10 +123,7 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0, return_items=Non
 
     is_json = 'feed/json' in feed_url
     if is_json:
-        try:
-            items = get_json(feed_url)
-        except ValueError:
-            items = []
+        items = get_json(feed_url)
     else:
         rss_soup = get_rss_soup(feed_url)
         items = rss_soup.find_all('item')
