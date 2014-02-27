@@ -14,6 +14,7 @@ from countries import COUNTRIES
 edu_codes = dict([(x, y) for x, y in EDUCATION_LEVEL_CHOICES])
 country_codes = dict((x, y) for x, y in COUNTRIES)
 
+
 def saved_searches(employer, company, candidate):
     """
     Function that gets employer's companies and those companies microsites.
@@ -39,6 +40,7 @@ def saved_searches(employer, company, candidate):
     candidate_urls = candidate.savedsearch_set.values_list('url', flat=True)
     return [url for url in candidate_urls
             if urlparse(url).netloc in employer_domains]
+
 
 def filter_by_microsite(microsites, user_solr=None, facet_solr=None):
     """
@@ -69,6 +71,7 @@ def filter_by_microsite(microsites, user_solr=None, facet_solr=None):
     facet_solr = facet_solr.add_query('User_opt_in_employers:true')
 
     return user_solr, facet_solr
+
 
 def filter_by_date(request):
     """
@@ -151,6 +154,14 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
     {'the applied filter': 'resulting url if the filter were removed'}
     """
     url = request.build_absolute_uri()
+    date_start = request.REQUEST.get('date_start', None)
+    date_end = request.REQUEST.get('date_end', None)
+    if date_start:
+        url = update_url_param(url, 'date_start',
+                               request.REQUEST.get('date_start'))
+    if date_end:
+        url = update_url_param(url, 'date_end',
+                               request.REQUEST.get('date_end'))
 
     filters = {}
     user_solr = Solr() if not user_solr else user_solr
@@ -267,7 +278,8 @@ def remove_param_from_url(url, param):
     parts[4] = urllib.urlencode(query)
     return urlunparse(parts)
 
-def parse_facets(solr_results, current_url, add_unmapped_fields=False):
+
+def parse_facets(solr_results, request, add_unmapped_fields=False):
     """
     Turns solr facet results into dictionary of tuples that is compatible
     with the filter widget.
@@ -304,7 +316,7 @@ def parse_facets(solr_results, current_url, add_unmapped_fields=False):
                 facets[facet_val] = get_urls(sorted(zip(l[::2], l[1::2]),
                                              key=lambda x: x[1], reverse=True),
                                              facet_val,
-                                             current_url)
+                                             request)
                 if facet_val == 'Country':
                     facets[facet_val] = update_country(facets[facet_val])
                 if facet_val == 'Region' or facet_val == 'City':
@@ -360,18 +372,28 @@ def update_education_codes(facet_tups):
     return facets
 
 
-def get_urls(facet_tups, param, current_url):
+def get_urls(facet_tups, param, request):
     """
     Creates urls for facets of search with facet applied as a filter..
 
     """
+    url = request.build_absolute_uri()
+    date_start = request.REQUEST.get('date_start', None)
+    date_end = request.REQUEST.get('date_end', None)
+    if date_start:
+        url = update_url_param(url, 'date_start',
+                               request.REQUEST.get('date_start'))
+    if date_end:
+        url = update_url_param(url, 'date_end',
+                               request.REQUEST.get('date_end'))
+
     facets = []
 
     if param in ['Country', 'Region', 'City']:
         param = 'location'
 
     for tup in facet_tups:
-        url_parts = list(urlparse(current_url))
+        url_parts = list(urlparse(url))
         query = dict(parse_qsl(url_parts[4]))
         term = urllib.quote(tup[0].encode('utf8'))
         if param == 'location' and 'location' in query:

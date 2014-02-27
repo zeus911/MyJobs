@@ -4,6 +4,12 @@ $(function() {
 });
 
 $(document).ready(function() {
+    var field = $('#search-field');
+    var addon = field.next();
+
+    var field_width = field.outerWidth() - addon.outerWidth();
+    field.css("width", String(field_width)+"px");
+
     $('[class*=details-heading]').click(function(){
         var icon = $(this).children('a').children('span').children('i');
         var item = $(this).next();

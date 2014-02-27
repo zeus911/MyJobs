@@ -1,13 +1,13 @@
-<div id="date_activity">
+<div class="date-activity">
         {% if date_display = "Today" %}
-            <a id="date_range_dropdown" href="#">{ date_display }}</a>
+            <a class="date-range" href="#">{ date_display }}</a>
         {% else %}
-            <a id="date_range_dropdown" href="#">{{ date_display }} Days</a>
+            <a class="date-range" href="#">{{ date_display }} Days</a>
         {% endif %}
-    <a href="#"><div class="arrow-down"></div></a>
+    <a class="arrow-down-a" href="#"><div class="arrow-down"></div></a>
 </div>
 
-<div class="date_range">
+<div class="date-range-select-form">
     <form action='{{ date_submit_url }}' method='POST'>
         {% csrf_token %}
         <div id="date-selection">
@@ -21,6 +21,6 @@
             <input name="date_start" type="text" placeholder="{{ date_start|date:'m/d/Y' }}" class="datepicker"> <strong>to</strong><br>
             <input name="date_end" type="text" placeholder="{{ date_end|date:'m/d/Y' }}" class="datepicker">
         </div>
-        <div class="span2 pull-right primary-btn-padding"><input type="submit" class="btn primary" value="View Activity"></div>
+        <div class="span2 pull-right primary-btn-padding"><input type="submit" class="btn primary" value="Update Results"></div>
     </form>
 </div>

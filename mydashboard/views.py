@@ -141,8 +141,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         requested_date_button = 'thirty_days'
 
     url = request.build_absolute_uri()
-    facets = parse_facets(facet_solr.search(), url)
-    loc_facets = parse_facets(loc_solr.search(), url)
+    facets = parse_facets(facet_solr.search(), request)
+    loc_facets = parse_facets(loc_solr.search(), request)
     all_facets = dict(facets.items() + loc_facets.items())
 
     context = {

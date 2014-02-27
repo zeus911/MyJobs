@@ -4,8 +4,14 @@ $(document).ready(function(){
     var date_start = $('input[name=date_start]').attr('placeholder');
     var date_end = $('input[name=date_end]').attr('placeholder');
 
-    $("#date_activity").click(function () {
-        $(".date_range").toggleClass('date_range_display');
+    $(".date-activity").click(function () {
+        $(".date-range-select-form").toggleClass('date-range-select-form-visible');
+    });
+
+    addBtn();
+
+    $(window).resize(function() {
+        addBtn();
     });
 
     $(this).ajaxStart(function () {
@@ -265,6 +271,15 @@ function contactForm(){
             }
         }
     });
+}
+
+function addBtn() {
+    if ($(window).width() < 500) {
+        $('.date-range').addClass('btn');
+    }
+    else {
+        $('.date-range').removeClass('btn');
+    }
 }
 
 window.dateFormat = 'dd-M-yy';
