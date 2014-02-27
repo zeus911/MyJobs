@@ -4,8 +4,8 @@ $(document).ready(function() {
         if ($(window).scrollTop() == $(document).height() - $(window).height())
         {
             offset += 20;
-            $.ajax({
-                url: "/saved-search/view/more-results",
+            $.get({
+                url: "/saved-search/view/more-results/",
                 data: { 'offset': offset,
                         'frequency': frequency,
                         'feed': feed,
