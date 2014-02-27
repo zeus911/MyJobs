@@ -374,9 +374,8 @@ def partner_savedsearch_save(request):
 
     if form.is_valid():
         instance = form.instance
-        try:
-            instance.user = User.objects.get(email=instance.email)
-        except User.DoesNotExist:
+        instance.user = User.objects.get_email_owner(email=instance.email)
+        if instance.user == None:
             user = User.objects.create_inactive_user(
                 email=instance.email,
                 custom_msg=instance.account_activation_message)
