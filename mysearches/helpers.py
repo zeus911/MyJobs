@@ -98,7 +98,8 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0, return_items=Non
         equals :num_items:
 
     Outputs:
-    :tuple:         
+    :tuple:         First index is a list of :return_items: jobs
+                     Second index is the total job count
     """
     if return_items is None:
         return_items = num_items
