@@ -6,15 +6,15 @@
         	<table style="width: 100%;">
         		<tr>
         			<th style="text-align: left;">
-			        	<b style="font-size: 14px; padding-left: 10px;">
+			        	<b style="display: block; font-size: 14px; padding-left: 10px;">
 			        		<a href="https://secure.my.jobs{% url 'edit_search' %}?id={{ saved_search.0.id }}" style="text-decoration: none; color: #333;">{{saved_search.0.label}}</a>
 			        	</b>
-			        	<div>
+			        	<div style="padding-left: 10px;">
 			        	{% url 'view_full_feed' as more_url %}
 				    	{% if saved_search.1 %}
-				        <b style="padding-left: 10px;">Showing {{ saved_search.1|length }} of {% if saved_search.2 == 100 %}more than{% endif %} {{ saved_search.2 }} total jobs</b> - <a href="https://secure.my.jobs{{more_url}}?id={{saved_search.0.id}}">View All Jobs</a>
+				        <b>Showing {{ saved_search.1|length }} of {% if saved_search.2 == 100 %}more than{% endif %} {{ saved_search.2 }} total jobs</b> - <a href="https://secure.my.jobs{{more_url}}?id={{saved_search.0.id}}">View All Jobs</a>
 				        {% else %}
-				        <b style="padding-left: 10px;">No jobs for the selected time</b> - <a href="https://secure.my.jobs{{more_url}}?id={{saved_search.url}}">View your search anyway</a>
+				        <b>No jobs for the selected time</b> - <a href="https://secure.my.jobs{{more_url}}?id={{saved_search.url}}">View your search anyway</a>
 				        {% endif %}
 				        </div>
         			</th>
