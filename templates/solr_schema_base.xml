@@ -148,7 +148,11 @@
     <dynamicField name="*_p" type="location" indexed="true" stored="true"/>
     <dynamicField name="*_coordinate"  type="tdouble" indexed="true"  stored="false"/>
 
+    <copyField source="*" dest="text" />
+
 {% for field in fields %}    <field name="{{ field.field_name }}" type="{{ field.type }}" indexed="{{ field.indexed }}" stored="{{ field.stored }}" multiValued="{{ field.multiValued }}" />
+{% endfor %}
+{% for field in copy_fields %}    <copyField source="{{ field.source }}" dest="{{ field.dest }}"/>
 {% endfor %}  </fields>
 
   <!-- field to use to determine and enforce document uniqueness. -->

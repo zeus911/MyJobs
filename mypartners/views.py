@@ -17,7 +17,8 @@ from mysearches.helpers import url_sort_options, parse_feed
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm, ContactRecordForm)
-from mypartners.models import Partner, Contact, ContactRecord, PRMAttachment
+from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
+                               ContactLogEntry, CONTACT_TYPE_CHOICES)
 from mypartners.helpers import (prm_worthy, url_extra_params, log_change,
                                 get_searches_for_partner, get_logs_for_partner,
                                 get_contact_records_for_partner)
@@ -262,8 +263,8 @@ def prm_overview(request):
     company, partner, user = prm_worthy(request)
 
     most_recent_activity = get_logs_for_partner(partner)
-    most_recent_communication = get_contact_records_for_partner(partner,
-                                                                num_records=10)
+    communication = get_contact_records_for_partner(partner)
+    most_recent_communication = communication[:3]
     saved_searches = get_searches_for_partner(partner)
     most_recent_saved_searches = saved_searches[:3]
 
@@ -430,12 +431,21 @@ def partner_view_full_feed(request):
 def prm_records(request):
     company, partner, user = prm_worthy(request)
     contact_records = get_contact_records_for_partner(partner)
-    most_recent_activity = get_logs_for_partner(partner, num_items=10)
+    most_recent_activity = get_logs_for_partner(partner)
+
+    contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
+    contacts = ContactRecord.objects.values('contact_name').distinct()
+    contact_choices = [('all', 'All')]
+    [contact_choices.append((c['contact_name'], c['contact_name']))
+     for c in contacts]
+
     ctx = {
         'company': company,
         'partner': partner,
         'records': contact_records,
         'most_recent_activity': most_recent_activity,
+        'contact_choices': contact_choices,
+        'contact_type_choices': contact_type_choices,
     }
     return render_to_response('mypartners/main_records.html', ctx,
                               RequestContext(request))
@@ -481,6 +491,83 @@ def prm_edit_records(request):
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def prm_view_records(request):
+    company, partner, user = prm_worthy(request)
+    record_id = request.GET.get('id', None)
+    offset = request.GET.get('offset', 0)
+    record_type = request.GET.get('type', None)
+    name = request.GET.get('name', None)
+
+    try:
+        record_id = int(record_id)
+        offset = int(offset)
+    except (TypeError, ValueError):
+        return HttpResponseRedirect(reverse('partner_records') +
+                '?company=%d&partner=%d' % (company.id, partner.id))
+
+    prev_offset = (offset - 1) if offset > 1 else 0
+    records = get_contact_records_for_partner(partner, record_type=record_type,
+                                              contact_name=name,
+                                              offset=prev_offset,
+                                              limit=prev_offset + 3)
+
+    # Since we always retrieve 3, if the record is at the beginning of the
+    # list we might have 3 results but no previous.
+    if len(records) == 3 and records[0].pk == record_id:
+        prev_id = None
+        record = records[0]
+        next_id = records[1].pk
+    elif len(records) == 3:
+        prev_id = records[0].pk
+        record = records[1]
+        next_id = records[2].pk
+    # If there are only 2 results, it means there is either no next or
+    # no previous, so we need to compare record ids to figure out which
+    # is which.
+    elif len(records) == 2 and records[0].pk == record_id:
+        prev_id = None
+        record = records[0]
+        next_id = records[1].pk
+    elif len(records) == 2:
+        prev_id = records[0].pk
+        record = records[1]
+        next_id = None
+    else:
+        prev_id = None
+        record = records[0]
+        next_id = None
+
+    # Double check our results and drop the next and previous options if
+    # the results were wrong
+    if record_id != record.pk:
+        prev_id = None
+        record = get_object_or_404(ContactRecord, pk=record_id)
+        next_id = None
+
+    attachments = PRMAttachment.objects.filter(contact_record=record)
+    logs = ContactLogEntry.objects.filter(object_id=record_id)
+    record_history = ContactLogEntry.objects.filter(object_id=record_id)
+    ctx = {
+        'record': record,
+        'partner': partner,
+        'company': company,
+        'activity': logs,
+        'attachments': attachments,
+        'record_history': record_history,
+        'next_id': next_id,
+        'next_offset': offset + 1,
+        'prev_id': prev_id,
+        'prev_offset': prev_offset,
+        'contact_type': record_type,
+        'contact_name': name,
+
+    }
+
+    return render_to_response('mypartners/view_record.html', ctx,
+                              RequestContext(request))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def get_contact_information(request):
     company, partner, user = prm_worthy(request)
     contact_id = request.REQUEST.get('contact_name')
@@ -508,6 +595,27 @@ def get_contact_information(request):
 
     return HttpResponse(json.dumps(data))
 
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def get_records(request):
+    company, partner, user = prm_worthy(request)
+    contact = request.REQUEST.get('contact')
+    contact_type = request.REQUEST.get('contact_type')
+
+    contact = None if contact == 'all' else contact
+    contact_type = None if contact_type == 'all' else contact_type
+
+    ctx = {
+        'records': get_contact_records_for_partner(partner,
+                                                   contact_name=contact,
+                                                   record_type=contact_type),
+        'company': company,
+        'partner': partner,
+        'contact_type': contact_type,
+        'contact_name': contact,
+    }
+    return render_to_response('mypartners/records.html', ctx,
+                              RequestContext(request))
+
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def get_uploaded_file(request):
@@ -531,3 +639,18 @@ def get_uploaded_file(request):
 
     return HttpResponseRedirect(path)
 
+
+def partner_get_records(request):
+    company, partner, user = prm_worthy(request)
+    retrieve_type = request.GET.get('type')
+    if retrieve_type == 'sample':
+        records = get_contact_records_for_partner(partner, filter_day=30)\
+            .exclude(contact_type='job')
+        email = records.filter(contact_type='email').count()
+        phone = records.filter(contact_type='phone').count()
+        facetoface = records.filter(contact_type='facetoface').count()
+        data = {'totalrecs': records.count(),
+                'email': email,
+                'phone': phone,
+                'facetoface': facetoface}
+        return HttpResponse(json.dumps(data))
