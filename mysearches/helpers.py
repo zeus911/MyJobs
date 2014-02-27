@@ -142,8 +142,8 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0, return_items=Non
                 item.findchild('pubdate').text)
             item_dict['description'] = item.findChild('description').text
 
-        if date_in_range(start, end, item['pubdate'].date()):
-            item_list.append(item)
+        if date_in_range(start, end, item_dict['pubdate'].date()):
+            item_list.append(item_dict)
         else:
             break
 
