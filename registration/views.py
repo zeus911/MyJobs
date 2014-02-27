@@ -2,8 +2,9 @@ import json
 
 from django.contrib.auth import authenticate
 from django.contrib.auth import logout as log_out
+from django.contrib.auth.decorators import user_passes_test
 from django.http import HttpResponseRedirect, HttpResponse
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.views.generic import TemplateView
 
@@ -12,6 +13,7 @@ from myjobs.helpers import expire_login
 from myjobs.models import *
 from registration.models import ActivationProfile
 from registration.forms import RegistrationForm, CustomAuthForm
+from myprofile.models import SecondaryEmail
 from myprofile.forms import (InitialNameForm, InitialAddressForm,
                              InitialPhoneForm, InitialEducationForm,
                              InitialWorkForm)
@@ -84,6 +86,49 @@ def activate(request, activation_key):
            'num_modules': len(settings.PROFILE_COMPLETION_MODULES)}
     return render_to_response('registration/activate.html',
                               ctx, context_instance=RequestContext(request))
+
+
+@user_passes_test(User.objects.not_disabled)
+def merge_accounts(request, activation_key):
+    AP = ActivationProfile
+    
+    ctx = {'merged': False}
+    # Check if activation key exists
+    if not AP.objects.filter(activation_key=activation_key).exists():
+        return render_to_response('registration/merge_request.html', ctx,
+                              context_instance=RequestContext(request))
+
+    # Get activation key and associated user
+    activation_profile = AP.objects.get(activation_key=activation_key)
+    existing_user = request.user
+    new_user = activation_profile.user
+
+    # Check if the activation request is expired
+    if activation_profile.activation_key_expired():
+        return render_to_response('registration/merge_request.html', ctx,
+                              context_instance=RequestContext(request))
+
+
+    # Create a secondary email
+    email = SecondaryEmail(user=existing_user, label='Merged Email',
+                           email=activation_profile.email)
+
+    # Update the contacts
+    for contact in new_user.contact_set.all():
+        contact.user = existing_user
+        contact.save()
+
+    # Update the saved searches
+    for search in new_user.savedsearch_set.all():
+        search.user = existing_user
+        search.save()
+
+    # Remove the new user and activation profile
+    activation_profile.delete()
+    new_user.delete()
+    ctx['merged'] = True
+    return render_to_response('registration/merge_request.html', ctx,
+                              context_instance=RequestContext(request))
 
 
 def logout(request):
