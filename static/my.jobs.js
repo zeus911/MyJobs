@@ -8,12 +8,6 @@ $(document).ready(function(){
         $(".date-range-select-form").toggleClass('date-range-select-form-visible');
     });
 
-    addBtn();
-
-    $(window).resize(function() {
-        addBtn();
-    });
-
     $(this).ajaxStart(function () {
         // Disable errant clicks when an ajax request is active
         // Does not prevent the user from closing the modal
@@ -271,15 +265,6 @@ function contactForm(){
             }
         }
     });
-}
-
-function addBtn() {
-    if ($(window).width() < 500) {
-        $('.date-range').addClass('btn');
-    }
-    else {
-        $('.date-range').removeClass('btn');
-    }
 }
 
 window.dateFormat = 'dd-M-yy';
