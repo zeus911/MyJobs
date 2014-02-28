@@ -6,7 +6,7 @@
 {% endblock %}
 {% load i18n %}
 {% block meta-extra %}
-<script src="{{ STATIC_URL }}partner_reports.js{% cache_buster %}"></script>
+<script src="{{ STATIC_URL }}partner-reports.js{% cache_buster %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -32,7 +32,9 @@
         <div class="span6"></div>
     </div>
     <div class="row">
-        <div class="span6"></div>
+        <div class="span6">
+            {% for %}
+        </div>
         <div class="span6"></div>
     </div>
 {% endblock %}

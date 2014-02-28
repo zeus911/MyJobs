@@ -15,7 +15,7 @@ function drawChart() {
                             ['Phone Calls',     nums.phone],
                             ['Face to Face',    nums.facetoface]
                         ]);
-            var options = donut_options(190, 190, 175, 175, 0.6);
+            var options = donut_options(200, 200, 12, 12, 175, 175, 0.6);
             var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
             chart.draw(data, options);
             fill_piehole(nums.totalrecs);
@@ -24,14 +24,14 @@ function drawChart() {
     });
 }
 
-function donut_options(height, width, chartArea_height, chartArea_width, piehole_radius){
+function donut_options(height, width, chartArea_top, chartArea_left, chartArea_height, chartArea_width, piehole_radius){
     var options = {
                     legend: 'none',
                     pieHole: piehole_radius,
                     pieSliceText: 'none',
                     height: height,
                     width: width,
-                    chartArea: {top:7, left:7, height: chartArea_height, width: chartArea_width},
+                    chartArea: {top:chartArea_top, left:chartArea_left, height: chartArea_height, width: chartArea_width},
                     slices: {0: {color: '#5eb95e'}, 1: {color: '#4bb1cf'}, 2: {color: '#faa732'}}
                   };
     return options

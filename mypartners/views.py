@@ -673,6 +673,7 @@ def partner_main_reports(request):
     referral = records.filter(contact_type='job').count()
     ctx = {'partner': partner,
            'company': company,
+           'contacts': partner.contacts.all(),
            'total_records': total_records_wo_followup,
            'record_types': record_types,
            'referral': referral}
