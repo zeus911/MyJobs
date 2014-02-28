@@ -15,10 +15,13 @@ def return_file(url, *args, **kwargs):
     Outputs:
     :file: File-like object
     """
-    rss = False
+    feed = False
     if 'feed/rss' in url:
         file_ = 'rss.rss'
-        rss = True
+        feed = True
+    elif 'feed/json' in url:
+        file_ = 'json.json'
+        feed = True
     elif 'mcdonalds/careers/' in url or \
        url.endswith('?location=chicago&q=nurse'):
         file_ = 'careers.html'
@@ -30,7 +33,7 @@ def return_file(url, *args, **kwargs):
     target = 'mysearches/tests/local/'
     target += file_
 
-    if rss:
+    if feed:
         contents = open(target).read() % \
             {'date': datetime.strftime(datetime.now(), "%c -0300")}
         stream = StringIO(contents)
