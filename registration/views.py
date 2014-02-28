@@ -112,7 +112,8 @@ def merge_accounts(request, activation_key):
 
     # Create a secondary email
     SecondaryEmail.objects.create(user=existing_user, label='Merged Email',
-                           email=activation_profile.email)
+                           email=activation_profile.email, verified=True,
+                           verified_data=datetime.datetime.now())
 
     # Update the contacts
     for contact in new_user.contact_set.all():
