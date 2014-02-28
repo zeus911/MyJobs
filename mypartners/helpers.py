@@ -48,6 +48,10 @@ def add_extra_params(url, extra_urls):
     """
     extra_urls = extra_urls.lstrip('?&')
     new_queries = dict(parse_qsl(extra_urls, keep_blank_values=True))
+
+    # By default, extra parameters besides vs are discarded by the redirect
+    # server. We can get around this by adding &z=1 to the url, which enables
+    # custom query parameter overrides.
     new_queries['z'] = '1'
 
     parts = list(urlparse(url))
