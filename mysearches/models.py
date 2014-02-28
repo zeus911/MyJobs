@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.utils.translation import ugettext_lazy as _
 from django.template.loader import render_to_string
-from mysearches.helpers import parse_rss, url_sort_options
+from mysearches.helpers import parse_feed, url_sort_options
 from mydashboard.models import Company
 from myjobs.models import User
 
@@ -70,12 +70,15 @@ class SavedSearch(models.Model):
             if choice[0] == self.day_of_week:
                 return choice[1]
 
-    def get_feed_items(self, num_items=5):
+    def get_feed_items(self, num_items=100):
         url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency)
-        return parse_rss(url_of_feed, self.frequency, num_items=num_items)
+        items = parse_feed(url_of_feed, self.frequency,
+                           num_items=num_items, return_items=5)
+        return items
 
     def send_email(self, custom_msg=None):
-        search = (self, self.get_feed_items())
+        results = self.get_feed_items()
+        search = (self, results[0], results[1])
         if self.custom_message and not custom_msg:
             custom_msg = self.custom_message
         if self.user.opt_in_myjobs and search[1]:
@@ -188,9 +191,9 @@ class SavedSearchDigest(models.Model):
         saved_searches = self.user.savedsearch_set.filter(is_active=True)
         saved_searches = [(search, search.get_feed_items())
                           for search in saved_searches]
-        saved_searches = [(search, items)
+        saved_searches = [(search, items[0], items[1])
                           for search, items in saved_searches
-                          if items]
+                          if items[0]]
         if self.user.opt_in_myjobs and saved_searches:
             subject = _('Your Daily Saved Search Digest')
             context_dict = {'saved_searches': saved_searches,
