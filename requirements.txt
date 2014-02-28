@@ -18,7 +18,6 @@ testfixtures==3.0.0
 django-recaptcha==0.0.6
 git+http://degit.directemployers.org/jira/jira-tools.git@57cfb93a7676ca739ce7c839038b8142a0e8a7de
 git+git://github.com/frankban/django-endless-pagination.git@725bde91db6da2be0663652b0df4501ba72306e7
-xhtml2pdf==0.0.5
 lxml == 3.2.4
 django-memcached==0.1.2
 python-memcached==1.48
