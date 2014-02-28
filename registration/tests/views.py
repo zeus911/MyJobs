@@ -110,6 +110,7 @@ class RegistrationViewTests(TestCase):
         self.client.get(reverse('resend_activation'))
         self.assertEqual(len(mail.outbox), 4)
 
+
 class MergeUserTests(TestCase):
 
     def setUp(self):
@@ -129,7 +130,6 @@ class MergeUserTests(TestCase):
         for _ in range(0, 10):
             Contact.objects.create(user=self.new_user)
             SavedSearch.objects.create(user=self.new_user)
-
 
     def test_expired_key_doesnt_merge(self):
         expired_request = self.activation_profile
@@ -162,7 +162,6 @@ class MergeUserTests(TestCase):
     def test_invalid_key_doesnt_merge(self):
         self.client.login_user(self.existing)
 
-
         key = self.key.replace('5', 'b')
         merge_url = reverse('merge_accounts', kwargs={'activation_key': key})
         response = self.client.get(merge_url)
@@ -188,7 +187,6 @@ class MergeUserTests(TestCase):
         self.client.login_user(self.existing)
 
         # Access the merge URL
-
         merge_url = reverse('merge_accounts',
                             kwargs={'activation_key': self.key})
         response = self.client.get(merge_url)
@@ -219,7 +217,6 @@ class MergeUserTests(TestCase):
                 email=self.activation_profile.email).exists(),
                 msg="A secondary email should have been added "\
                 "for the deleted user account")
-
 
         # Assert the contacts associated with the new user now point to the
         # existing user
