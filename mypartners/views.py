@@ -19,7 +19,8 @@ from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm, ContactRecordForm)
 from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
                                ContactLogEntry, CONTACT_TYPE_CHOICES)
-from mypartners.helpers import (prm_worthy, url_extra_params, log_change,
+from mypartners.helpers import (prm_worthy, add_extra_params,
+                                add_extra_params_to_jobs, log_change,
                                 get_searches_for_partner, get_logs_for_partner,
                                 get_contact_records_for_partner)
 
@@ -384,10 +385,6 @@ def partner_savedsearch_save(request):
             instance.user = user[0]
             Contact.objects.filter(email=instance.email).update(user=instance.user)
         instance.feed = form.data['feed']
-        if instance.url_extras:
-            instance.url, instance.feed = url_extra_params(instance.url,
-                                                           instance.feed,
-                                                           instance.url_extras)
         instance.provider = company
         instance.created_by = request.user
         instance.custom_message = instance.partner_message
@@ -406,6 +403,7 @@ def partner_view_full_feed(request):
     company, partner, user = prm_worthy(request)
     search_id = request.REQUEST.get('id')
     saved_search = SavedSearch.objects.get(id=search_id)
+
     if hasattr(saved_search, 'partnersavedsearch'):
         is_pss = True
         if company == saved_search.partnersavedsearch.provider:
@@ -413,6 +411,10 @@ def partner_view_full_feed(request):
                                            saved_search.sort_by,
                                            saved_search.frequency)
             items = parse_rss(url_of_feed, saved_search.frequency)
+            extras = saved_search.partnersavedsearch.url_extras
+            if extras:
+                add_extra_params_to_jobs(items, extras)
+                saved_search.url = add_extra_params(saved_search.url, extras)
         else:
             return HttpResponseRedirect(reverse('prm_saved_searches'))
     else:

@@ -6,7 +6,9 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.utils.translation import ugettext_lazy as _
 from django.template.loader import render_to_string
+
 from mysearches.helpers import parse_rss, url_sort_options
+import mypartners.helpers
 from mydashboard.models import Company
 from myjobs.models import User
 
@@ -75,11 +77,16 @@ class SavedSearch(models.Model):
         return parse_rss(url_of_feed, self.frequency, num_items=num_items)
 
     def send_email(self, custom_msg=None):
-        search = (self, self.get_feed_items())
+        items = self.get_feed_items()
+        if hasattr(self, 'partnersavedsearch'):
+            extras = self.partnersavedsearch.url_extras
+            if extras:
+                mypartners.helpers.add_extra_params_to_jobs(items, extras)
+                self.url = mypartners.helpers.add_extra_params(self.url, extras)
         if self.custom_message and not custom_msg:
             custom_msg = self.custom_message
-        if self.user.opt_in_myjobs and search[1]:
-            context_dict = {'saved_searches': [search],
+        if self.user.opt_in_myjobs and items:
+            context_dict = {'saved_searches': [(self, items)],
                             'custom_msg': custom_msg}
             subject = self.label.strip()
             message = render_to_string('mysearches/email_single.html',
@@ -186,10 +193,18 @@ class SavedSearchDigest(models.Model):
 
     def send_email(self, custom_msg=None):
         saved_searches = self.user.savedsearch_set.filter(is_active=True)
-        saved_searches = [(search, search.get_feed_items())
-                          for search in saved_searches]
+        search_list = []
+        for search in saved_searches:
+            items = search.get_feed_items()
+            if hasattr(search, 'partnersavedsearch'):
+                extras = search.partnersavedsearch.url_extras
+                if extras:
+                    mypartners.helpers.add_extra_params_to_jobs(items, extras)
+                    search.url = mypartners.helpers.add_extra_params(
+                        search.url, extras)
+            search_list.append((search, items))
         saved_searches = [(search, items)
-                          for search, items in saved_searches
+                          for search, items in search_list
                           if items]
         if self.user.opt_in_myjobs and saved_searches:
             subject = _('Your Daily Saved Search Digest')

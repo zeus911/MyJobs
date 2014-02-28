@@ -35,20 +35,29 @@ def prm_worthy(request):
     return company, partner, user
 
 
-def url_extra_params(url, feed, extra_urls):
-    (scheme, netloc, path, params, query, fragment) = urlparse(url)
-    query = dict(parse_qsl(query, keep_blank_values=True))
+def add_extra_params(url, extra_urls):
+    extra_urls = extra_urls.lstrip('?&')
     new_queries = dict(parse_qsl(extra_urls, keep_blank_values=True))
+    new_queries['z'] = '1'
+
+    parts = list(urlparse(url))
+    query = dict(parse_qsl(parts[4], keep_blank_values=True))
     query.update(new_queries)
-    http_url = urlunparse((scheme, netloc, path, params, urlencode(query),
-                           fragment))
+    parts[4] = urlencode(query)
+    return urlunparse(parts)
 
-    (rss_scheme, rss_netloc, rss_path, rss_params, rss_query,
-     rss_fragment) = urlparse(feed)
-    feed = urlunparse((rss_scheme, rss_netloc, rss_path, rss_params, urlencode(query),
-                       rss_fragment))
 
-    return http_url, feed
+def add_extra_params_to_jobs(items, extra_urls):
+    extra_urls = extra_urls.lstrip('?&')
+    new_queries = dict(parse_qsl(extra_urls, keep_blank_values=True))
+    new_queries['z'] = '1'
+    for item in items:
+        item['link'] = add_extra_params(item['link'], extra_urls)
+        parts = list(urlparse(item['link']))
+        query = dict(parse_qsl(parts[4], keep_blank_values=True))
+        query.update(new_queries)
+        parts[4] = urlencode(query)
+        item['link'] = urlunparse(parts)
 
 
 def log_change(obj, form, user, partner, contact_identifier,
