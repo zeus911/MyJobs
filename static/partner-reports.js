@@ -15,21 +15,26 @@ function drawChart() {
                             ['Phone Calls',     nums.phone],
                             ['Face to Face',    nums.facetoface]
                         ]);
-            var options = {
-                            legend: 'none',
-                            pieHole: 0.6,
-                            pieSliceText: 'none',
-                            height: 190,
-                            width: 190,
-                            chartArea: {top:7, left:7, width: 175, height: 175},
-                            slices: {0: {color: '#5eb95e'}, 1: {color: '#4bb1cf'}, 2: {color: '#faa732'}}
-                          };
+            var options = donut_options(190, 190, 175, 175, 0.6);
             var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
             chart.draw(data, options);
             fill_piehole(nums.totalrecs);
             visual_boxes(nums.email, nums.phone, nums.facetoface);
         }
     });
+}
+
+function donut_options(height, width, chartArea_height, chartArea_width, piehole_radius){
+    var options = {
+                    legend: 'none',
+                    pieHole: piehole_radius,
+                    pieSliceText: 'none',
+                    height: height,
+                    width: width,
+                    chartArea: {top:7, left:7, height: chartArea_height, width: chartArea_width},
+                    slices: {0: {color: '#5eb95e'}, 1: {color: '#4bb1cf'}, 2: {color: '#faa732'}}
+                  };
+    return options
 }
 
 function fill_piehole(totalrecs){
@@ -41,9 +46,12 @@ function fill_piehole(totalrecs){
 function visual_boxes(email, phone, facetoface){
     var record_types = new Array(facetoface, phone, email);
     var readable_phone; var readable_email;
-    if(phone <= 1){readable_phone = 'Phone Call'} else {readable_phone = 'Phone Calls'}
-    if(email <= 1){readable_email = 'Email'} else {readable_phone = 'Emails'}
+
+    // Pluralization
+    if(phone === 1){readable_phone = 'Phone Call'} else {readable_phone = 'Phone Calls'}
+    if(email === 1){readable_email = 'Email'} else {readable_phone = 'Emails'}
     var readable_types = new Array('Face to Face', readable_phone, readable_email);
+
     var doughnut = $("#donutchart");
     for(var i in readable_types){
         doughnut.prepend('<div class="chart-box"><div class="big-num">'+String(record_types[i])+'</div><div class="reports-record-type">'+readable_types[i]+'</div></div>');

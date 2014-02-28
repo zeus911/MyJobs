@@ -640,17 +640,41 @@ def get_uploaded_file(request):
     return HttpResponseRedirect(path)
 
 
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_get_records(request):
+    if request.method == 'GET':
+        company, partner, user = prm_worthy(request)
+        retrieve_type = request.GET.get('type')
+        if retrieve_type == 'sample':
+            records = get_contact_records_for_partner(partner, filter_day=30)\
+                .exclude(contact_type='job')
+            email = records.filter(contact_type='email').count()
+            phone = records.filter(contact_type='phone').count()
+            facetoface = records.filter(contact_type='facetoface').count()
+            data = {'totalrecs': records.count(),
+                    'email': email,
+                    'phone': phone,
+                    'facetoface': facetoface}
+            return HttpResponse(json.dumps(data))
+    else:
+        raise Http404
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def partner_main_reports(request):
     company, partner, user = prm_worthy(request)
-    retrieve_type = request.GET.get('type')
-    if retrieve_type == 'sample':
-        records = get_contact_records_for_partner(partner, filter_day=30)\
-            .exclude(contact_type='job')
-        email = records.filter(contact_type='email').count()
-        phone = records.filter(contact_type='phone').count()
-        facetoface = records.filter(contact_type='facetoface').count()
-        data = {'totalrecs': records.count(),
-                'email': email,
-                'phone': phone,
-                'facetoface': facetoface}
-        return HttpResponse(json.dumps(data))
+    records = get_contact_records_for_partner(partner, filter_day=30)
+    total_records_wo_followup = records.exclude(contact_type='job').count()
+    email = records.filter(contact_type='email')
+    phone = records.filter(contact_type='phone')
+    facetoface = records.filter(contact_type='facetoface')
+    record_types = [('Emails', email), ('Phone Calls', phone),
+                    ('Face to face', facetoface)]
+    referral = records.filter(contact_type='job').count()
+    ctx = {'partner': partner,
+           'company': company,
+           'total_records': total_records_wo_followup,
+           'record_types': record_types,
+           'referral': referral}
+    return render_to_response('mypartners/partner_reports.html', ctx,
+                              RequestContext(request))

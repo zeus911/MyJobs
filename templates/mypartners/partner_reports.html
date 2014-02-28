@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load common_tags %}
+{% block site-title %}
+    <title>Partner Reports {{ company.name }}</title>
+    <meta name="title" content="Partner Reports {{ company.name }}">
+{% endblock %}
+{% load i18n %}
+{% block meta-extra %}
+<script src="{{ STATIC_URL }}partner_reports.js{% cache_buster %}"></script>
+{% endblock %}
+
+{% block content %}
+    <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> <small><a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small></h1>
+    <div class="row">
+        <div class="span12 prm-header">
+            <span>Reports</span>
+            <a href="{% url "partner_overview" %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span6">
+            <div class="big-donutchart">
+                {% for record_type in record_types %}
+                <div class="chart-box">
+                    <div class="big-num">{{ record_type.1.count }}</div>
+                    <div class="reports-record-type">{{ record_type.0 }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+        <div class="span6"></div>
+    </div>
+    <div class="row">
+        <div class="span6"></div>
+        <div class="span6"></div>
+    </div>
+{% endblock %}

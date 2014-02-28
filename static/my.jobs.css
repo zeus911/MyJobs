@@ -338,40 +338,64 @@ h1 > small > a:hover {
 }
 
 .chart-box {
-    position: absolute;
-    border: 3px solid #5eb95e;
-    border-radius: 5px;
-    background-color: #5eb95e;
-    color: #FFF;
-    width: 45px;
-    height: 40px;
-    margin-left: 218px;
     text-align: center;
+    border: 3px solid #5eb95e;
+    background-color: #5eb95e;
+    border-radius: 5px;
+    color: #FFF;
+    width: 90px;
+    height: 90px;
     padding: 5px;
+    margin-bottom: 10px;
 }
 
 .chart-box + .chart-box {
-    margin-top: 61px;
-    height: 41px;
     border-color: #4bb1cf;
     background-color: #4bb1cf;
 }
 
 .chart-box + .chart-box + .chart-box {
-    margin-top: 122px;
-    height: 40px;
     border-color: #faa732;
     background-color: #faa732;
 }
 
 .chart-box > .big-num {
     font-weight: bold;
-    font-size: 1.3em;
-    margin-bottom: 5px;
+    font-size: 3em;
+    line-height: 40px;
+    margin-bottom: 10px;
 }
 
 .chart-box > .reports-record-type {
+    font-size: 1.2em;
     font-weight: bold;
+}
+
+#donutchart > .chart-box {
+    position: absolute;
+    width: 45px;
+    height: 40px;
+    margin-bottom: 0;
+    margin-left: 218px;
+}
+
+#donutchart > .chart-box + .chart-box {
+    margin-top: 61px;
+    height: 41px;
+}
+
+#donutchart > .chart-box + .chart-box + .chart-box {
+    margin-top: 122px;
+    height: 40px;
+}
+
+#donutchart > .chart-box > .big-num {
+    font-size: 1.3em;
+    margin-bottom: 5px;
+    line-height: normal;
+}
+
+#donutchart > .chart-box > .reports-record-type {
     font-size: 0.7em;
     line-height: 10px;
 }

@@ -34,7 +34,7 @@
             <a class="btn" href="{% url "partner_records" %}?company={{ company.id }}&partner={{ partner.id }}">Communication Records</a>
             <a class="btn" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">Saved Searches</a>
             <a class="btn" href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">Edit Partner Details</a>
-            <a class="btn">Reports</a>
+            <a class="btn" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">Reports</a>
         </div>
     </div>
     <div class="row">
@@ -137,59 +137,11 @@
         <div class="span4 mobile_hide">
             <div class="info-box">
                 <div id="donutchart"></div>
-                <a class="btn">View Reports</a>
+                <a class="btn" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">View Reports</a>
             </div>
 
             <div class="info-box" id="partner-details">
-                <b>{{ partner.name }}</b>
-                <br><br>
-                {% with partner.primary_contact as contact %}
-                {% if contact %}
-                <b>{{ contact.name }}</b> <i>Primary Contact</i> <br>
-                {% if contact.email %}
-                <u>{{ contact.email }}</u> <br>
-                {% endif %}
-                {% if contact.address_line_one %}
-                {{ contact.address_line_one }}
-                    {% if contact.address_line_two %}
-                    {{ contact.address_line_two }} <br>
-                    {% else %}
-                    <br>
-                    {% endif %}
-                {% endif %}
-                {% if contact.city %}
-                {{ contact.city }},
-                    {% if contact.state %}
-                    {{ contact.state }}
-                        {% if contact.postal_code %}
-                        {{ contact.postal_code }} <br>
-                        {% else %}
-                            <br>
-                        {% endif %}
-                    {% else %}
-                        <br>
-                    {% endif %}
-                {% else %}
-                    {% if contact.state %}
-                    {{ contact.state }}
-                        {% if contact.postal_code %}
-                        {{ contact.postal_code }} <br>
-                        {% else %}
-                            <br>
-                        {% endif %}
-                    {% else %}
-                        {% if contact.postal_code %}
-                        {{ contact.postal_code }} <br>
-                        {% endif %}
-                    {% endif %}
-                {% endif %}
-                {% if contact.phone %}
-                {{ contact.phone }} <br>
-                {% endif %}
-                {% endif %}
-                    <br>
-                {% endwith %}
-                <a class="btn" href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">Edit partner Details</a>
+                {% include "mypartners/partner_details_widget.html" %}
             </div>
 
         </div>
