@@ -102,6 +102,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     if request.GET.get('search', False):
         user_solr = user_solr.add_query("%s" % request.GET['search'])
+        facet_solr = facet_solr.add_query("%s" % request.GET['search'])
 
     user_solr, facet_solr = filter_by_microsite(active_microsites,
                                                           user_solr,
