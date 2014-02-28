@@ -149,7 +149,6 @@ def edit_item(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def save_init_partner_form(request):
-    company_id = request.REQUEST.get('company_id')
     if 'partnername' in request.POST:
         form = NewPartnerForm(user=request.user, data=request.POST)
     else:
@@ -455,7 +454,9 @@ def partner_view_full_feed(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_records(request):
     company, partner, user = prm_worthy(request)
-    contact_records = get_contact_records_for_partner(partner)
+    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
+    contact_records = get_contact_records_for_partner(partner,
+                                                      date_time_range=dt_range)
     most_recent_activity = get_logs_for_partner(partner)
 
     contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
