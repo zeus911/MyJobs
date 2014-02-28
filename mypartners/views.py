@@ -253,6 +253,8 @@ def delete_prm_item(request):
         log_change(partner, None, request.user, partner, partner.name,
                    action_type=DELETION)
         partner.delete()
+        return HttpResponseRedirect(reverse('prm') + '?company=' +
+                                    str(company_id))
     elif content_id == ContentType.objects.get_for_model(ContactRecord).id:
         contact_record = get_object_or_404(ContactRecord, partner=partner_id,
                                            id=item_id)
