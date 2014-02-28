@@ -68,9 +68,6 @@ def add_extra_params_to_jobs(items, extra_urls):
     Modifies:
     :items: List is mutable and is modified in-place
     """
-    extra_urls = extra_urls.lstrip('?&')
-    new_queries = dict(parse_qsl(extra_urls, keep_blank_values=True))
-    new_queries['z'] = '1'
     for item in items:
         item['link'] = add_extra_params(item['link'], extra_urls)
 
