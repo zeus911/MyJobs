@@ -1900,6 +1900,10 @@ td .gravatar-blank,
         width: 100%;
     }
 
+    #candidate-time-filter {
+        margin-top: 15px;
+    }
+
     .date-range {
         margin-bottom: 10px;
     }

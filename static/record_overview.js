@@ -11,10 +11,10 @@ $(function() {
     $("#record_contact_type").val('all');
 
     $(document).on("change", '#record_contact', function(){
-        update_records(False);
+        update_records(false);
     });
     $(document).on("change", '#record_contact_type', function(){
-        update_records(False);
+        update_records(false);
     });
 
     $('input[name="date_range_form_submit"]').click(function(e) {
