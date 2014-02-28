@@ -33,8 +33,37 @@
     </div>
     <div class="row">
         <div class="span6">
-            {% for %}
+            <div class="formBox no-padding">
+                <h4>All Contacts</h4>
+                <table class="table table-striped">
+                    {% for contact in contacts%}
+                    <tr>
+                        <td>
+                            {{ contact.name }}
+                            <br>
+                            {{ contact.email }}
+                        </td>
+                        <td>
+                            <div>
+                                1
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                10
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
         </div>
-        <div class="span6"></div>
+        <div class="span6">
+            <h4>Top 3 Contacts</h4>
+            <div class="chart-box inline-box"></div>
+            <div class="chart-box inline-box"></div>
+            <div class="chart-box inline-box"></div>
+            <div class="chart-box inline-box"></div>
+        </div>
     </div>
 {% endblock %}
