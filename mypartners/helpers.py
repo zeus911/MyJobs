@@ -36,6 +36,16 @@ def prm_worthy(request):
 
 
 def add_extra_params(url, extra_urls):
+    """
+    Adds extra parameters to a url
+
+    Inputs:
+    :url: Url that parameters will be added to
+    :extra_urls: Extra parameters to be added
+
+    Outputs:
+    :url: Input url with parameters added
+    """
     extra_urls = extra_urls.lstrip('?&')
     new_queries = dict(parse_qsl(extra_urls, keep_blank_values=True))
     new_queries['z'] = '1'
@@ -48,6 +58,16 @@ def add_extra_params(url, extra_urls):
 
 
 def add_extra_params_to_jobs(items, extra_urls):
+    """
+    Adds extra parameters to all jobs in a list
+
+    Inputs:
+    :items: List of jobs to which extra parameters should be added
+    :extra_urls: Extra parameters to be added
+
+    Modifies:
+    :items: List is mutable and is modified in-place
+    """
     extra_urls = extra_urls.lstrip('?&')
     new_queries = dict(parse_qsl(extra_urls, keep_blank_values=True))
     new_queries['z'] = '1'
