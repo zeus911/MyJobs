@@ -275,11 +275,15 @@ def parse_log(logs, solr_location):
                 del line[1]
 
                 # reconstruct user agent
-                line[10] = ' '.join(line[10:])
-                # remove any left-over pieces of the user agent
-                del line[11:]
+                # and remove it from the line
+                if 'redirect' in log.key:
+                    ua = ' '.join(line[9:-7])
+                    del line[9:-7]
+                else:
+                    ua = ' '.join(line[10:])
+                    del line[10:]
 
-                if not helpers.is_bot(line[10]):
+                if not helpers.is_bot(ua):
                     # Only track hits that come from actual users
                     update_dict = {
                         'view_date': line[0],
@@ -328,12 +332,13 @@ def parse_log(logs, solr_location):
 
                     myguid = myguid.replace('-', '')
 
-                    try:
-                        user = User.objects.get(user_guid=myguid)
-                    except User.DoesNotExist:
-                        update_dict['User_user_guid'] = ''
-                    else:
-                        update_dict.update(object_to_dict(User, user))
+                    if myguid:
+                        try:
+                            user = User.objects.get(user_guid=myguid)
+                        except User.DoesNotExist:
+                            update_dict['User_user_guid'] = ''
+                        else:
+                            update_dict.update(object_to_dict(User, user))
 
                     update_dict['uid'] = 'analytics##%s#%s' % \
                         (update_dict['view_date'], aguid)
