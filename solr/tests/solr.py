@@ -17,6 +17,9 @@ from MyJobs.tasks import update_solr_task, parse_log
 
 
 class SolrTests(TestCase):
+    def setUp(self):
+        self.test_solr = 'http://127.0.0.1:8983/solr/myjobs_test/'
+
     def tearDown(self):
         Solr().delete()
 
@@ -42,13 +45,13 @@ class SolrTests(TestCase):
                                    label='%s Jobs' % search)
         # 6 Users + 15 SavedSearches + 1 ProfileUnit = 22
         self.assertEqual(Update.objects.all().count(), 22)
-        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task(self.test_solr)
         self.assertEqual(Solr().search().hits, 22)
         SavedSearch.objects.all().delete()
-        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task(self.test_solr)
         self.assertEqual(Solr().search().hits, 7)
         User.objects.all().delete()
-        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task(self.test_solr)
         self.assertEqual(Solr().search().hits, 0)
 
     def test_profileunit_to_dict(self):
@@ -181,7 +184,7 @@ class SolrTests(TestCase):
 
     def test_presave_ignore(self):
         user = UserFactory(email="test@test.test")
-        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task(self.test_solr)
 
         user.last_login = datetime.datetime(2011, 8, 15, 8, 15, 12, 0, pytz.UTC)
         user.save()
@@ -194,36 +197,43 @@ class SolrTests(TestCase):
 
         self.assertEqual(Update.objects.all().count(), 1)
 
-    def test_apache_log_parsing(self):
+    def test_analytics_log_parsing(self):
         """
         Ensure that analytics logs are parsed and stored in solr correctly
         """
-        log = MockLog()
-        parse_log([log], 'http://127.0.0.1:8983/solr/myjobs_test/')
+        for log_type in ['analytics', 'redirect']:
+            log = MockLog(log_type=log_type)
+            parse_log([log], self.test_solr)
 
-        solr = Solr()
-        results = solr.search(q='uid:analytics*')
-        
-        # fakelog contains two lines - one human and one bot hit
-        # If it is getting processed correctly, there should be only one
-        # hit recorded
-        self.assertEqual(results.hits, 1)
-        multi_fields = ['facets', 'search_keywords']
-        for field in multi_fields:
-            self.assertEqual(len(results.docs[0][field]), 2)
-        for field in results.docs[0].keys():
-            if field not in multi_fields:
-                self.assertTrue(type(results.docs[0][field] != list))
-        uuid.UUID(results.docs[0]['aguid'])
-        with self.assertRaises(KeyError):
-            results.docs[0]['User_user_guid']
+            solr = Solr()
+            results = solr.search(q='uid:analytics*')
 
+            # fake logs contain two lines - one human and one bot hit
+            # If it is getting processed correctly, there should be only one
+            # hit recorded
+            self.assertEqual(results.hits, 1)
+            multi_fields = ['facets', 'search_keywords']
+            for field in multi_fields:
+                if log_type == 'redirect':
+                    with self.assertRaises(KeyError):
+                        results.docs[0][field]
+                else:
+                    self.assertEqual(len(results.docs[0][field]), 2)
+            for field in results.docs[0].keys():
+                if field not in multi_fields:
+                    self.assertTrue(type(results.docs[0][field] != list))
+            uuid.UUID(results.docs[0]['aguid'])
+            with self.assertRaises(KeyError):
+                results.docs[0]['User_user_guid']
 
-        solr.delete()
-        user = UserFactory()
-        user.user_guid = '1e5f7e122156483f98727366afe06e0b'
-        user.save()
-        parse_log([log], 'http://127.0.0.1:8983/solr/myjobs_test/')
-        results = solr.search(q='uid:analytics*')
-        for guid in ['aguid', 'User_user_guid']:
-            uuid.UUID(results.docs[0][guid])
+            solr.delete()
+            user = UserFactory()
+            user.user_guid = '1e5f7e122156483f98727366afe06e0b'
+            user.save()
+            parse_log([log], self.test_solr)
+            results = solr.search(q='uid:analytics*')
+            for guid in ['aguid', 'User_user_guid']:
+                uuid.UUID(results.docs[0][guid])
+
+            solr.delete()
+            user.delete()
