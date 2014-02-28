@@ -53,11 +53,6 @@ def add_extra_params_to_jobs(items, extra_urls):
     new_queries['z'] = '1'
     for item in items:
         item['link'] = add_extra_params(item['link'], extra_urls)
-        parts = list(urlparse(item['link']))
-        query = dict(parse_qsl(parts[4], keep_blank_values=True))
-        query.update(new_queries)
-        parts[4] = urlencode(query)
-        item['link'] = urlunparse(parts)
 
 
 def log_change(obj, form, user, partner, contact_identifier,
