@@ -231,9 +231,9 @@ def delete_prm_item(request):
     partner_id = request.REQUEST.get('partner')
     if partner_id:
         partner_id = int(partner_id)
-    contact_id = request.REQUEST.get('id')
-    if contact_id:
-        contact_id = int(contact_id)
+    item_id = request.REQUEST.get('id')
+    if item_id:
+        contact_id = int(item_id)
     content_id = request.REQUEST.get('ct')
     if content_id:
         content_id = int(content_id)
@@ -247,13 +247,31 @@ def delete_prm_item(request):
         return HttpResponseRedirect(reverse('partner_details')+'?company=' +
                                     str(company_id)+'&partner=' +
                                     str(partner_id))
-    if content_id == ContentType.objects.get_for_model(Partner).id:
+    elif content_id == ContentType.objects.get_for_model(Partner).id:
         partner = get_object_or_404(Partner, id=partner_id, owner=company)
         partner.contacts.all().delete()
         log_change(partner, None, request.user, partner, partner.name,
                    action_type=DELETION)
         partner.delete()
-        return HttpResponseRedirect(reverse('prm')+'?company='+str(company_id))
+    elif content_id == ContentType.objects.get_for_model(ContactRecord).id:
+        contact_record = get_object_or_404(ContactRecord, partner=partner_id,
+                                           id=item_id)
+        partner = get_object_or_404(Partner, id=partner_id, owner=company)
+        log_change(contact_record, None, request.user, partner,
+                   contact_record.contact_name, action_type=DELETION)
+        contact_record.delete()
+        return HttpResponseRedirect(reverse('partner_records')+'?company=' +
+                                    str(company_id)+'&partner=' +
+                                    str(partner_id))
+    elif content_id == ContentType.objects.get_for_model(PartnerSavedSearch).id:
+        saved_search = get_object_or_404(PartnerSavedSearch, id=item_id)
+        partner = get_object_or_404(Partner, id=partner_id, owner=company)
+        log_change(saved_search, None, request.user, partner,
+                   saved_search.email, action_type=DELETION)
+        saved_search.delete()
+        return HttpResponseRedirect(reverse('partner_searches')+'?company=' +
+                                    str(company_id)+'&partner=' +
+                                    str(partner_id))
     
     
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
@@ -305,10 +323,13 @@ def prm_edit_saved_search(request):
         form = PartnerSavedSearchForm(partner=partner, instance=instance)
     else:
         form = PartnerSavedSearchForm(partner=partner)
-    ctx = {'company': company,
-           'partner': partner,
-           'item_id': item_id,
-           'form': form}
+    ctx = {
+        'company': company,
+        'partner': partner,
+        'item_id': item_id,
+        'form': form,
+        'content_type': ContentType.objects.get_for_model(PartnerSavedSearch).id,
+    }
     return render_to_response('mypartners/partner_edit_search.html', ctx,
                               RequestContext(request))
 
@@ -466,6 +487,8 @@ def prm_edit_records(request):
     ctx = {
         'company': company,
         'partner': partner,
+        'content_type': ContentType.objects.get_for_model(ContactRecord).id,
+        'object_id': record_id,
     }
 
     if request.method == 'POST':

@@ -2999,6 +2999,22 @@ body.modal-open {
     cursor: pointer;
 }
 
+.activity-record-tr:hover td {
+    cursor: pointer;
+}
+
+#activity-table tr {
+    height: 75px;
+    max-height: 75px;
+    overflow: hidden;
+}
+
+.tip-content #activity-table tr {
+    height: 100px;
+    max-height: 100px;
+    overflow: hidden;
+}
+
 .one-hundred-percent-button-border-boxed {
     box-sizing: border-box;
     width: 100%;
