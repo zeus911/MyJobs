@@ -1658,6 +1658,15 @@ td .gravatar-blank,
     margin-top: -20px;
 }
 
+#candidate-time-filter {
+    margin-right: 30px;
+}
+
+#candidate-time-filter .date-range-select-form {
+    margin-left: -215px;
+    margin-top: 7px;
+}
+
 @media screen and (max-width: 1024px) {
     .arrow-down-a {
         border-style: none !important;

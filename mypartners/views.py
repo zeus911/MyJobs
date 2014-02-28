@@ -1,9 +1,11 @@
+from datetime import datetime, timedelta
 import json
 
 from django.conf import settings
 from django.contrib.admin.models import DELETION
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
@@ -434,7 +436,8 @@ def prm_records(request):
     most_recent_activity = get_logs_for_partner(partner)
 
     contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
-    contacts = ContactRecord.objects.values('contact_name').distinct()
+    contacts = ContactRecord.objects.filter(partner=partner)
+    contacts = contacts.values('contact_name').distinct()
     contact_choices = [('all', 'All')]
     [contact_choices.append((c['contact_name'], c['contact_name']))
      for c in contacts]
@@ -446,6 +449,11 @@ def prm_records(request):
         'most_recent_activity': most_recent_activity,
         'contact_choices': contact_choices,
         'contact_type_choices': contact_type_choices,
+        # This page will always load with the default range of
+        # 30 days.
+        'date_display': '30',
+        'date_start': datetime.now() + timedelta(-30),
+        'date_end': datetime.now(),
     }
     return render_to_response('mypartners/main_records.html', ctx,
                               RequestContext(request))
@@ -598,23 +606,58 @@ def get_contact_information(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def get_records(request):
     company, partner, user = prm_worthy(request)
+
     contact = request.REQUEST.get('contact')
     contact_type = request.REQUEST.get('contact_type')
-
     contact = None if contact == 'all' else contact
     contact_type = None if contact_type == 'all' else contact_type
+    records = get_contact_records_for_partner(partner, contact_name=contact,
+                                              record_type=contact_type)
+
+    date_range = request.REQUEST.get('date')
+    if date_range:
+        date_str_results = {
+            'today': datetime.now() + timedelta(-1),
+            'seven_days': datetime.now() + timedelta(-7),
+            'thirty_days': datetime.now() + timedelta(-30),
+        }
+        range_end = datetime.now()
+        range_start = date_str_results.get(date_range)
+    else:
+        range_start = request.REQUEST.get('date_start')
+        range_end = request.REQUEST.get('date_end')
+        try:
+            range_start = datetime.strptime(range_start, "%m/%d/%Y")
+            range_end = datetime.strptime(range_end, "%m/%d/%Y")
+        except AttributeError:
+            range_start = None
+            range_end = None
+    date_str = 'Filter by time range'
+    if range_start and range_end:
+        try:
+            date_str = (range_end - range_start).days
+            date_str = (("%s Days" % date_str) if date_str != 1
+                        else ("%s Day" % date_str))
+            records = records.filter(date_time__range=[range_start, range_end])
+        except (ValidationError, TypeError):
+            pass
 
     ctx = {
-        'records': get_contact_records_for_partner(partner,
-                                                   contact_name=contact,
-                                                   record_type=contact_type),
+        'records': records,
         'company': company,
         'partner': partner,
         'contact_type': contact_type,
         'contact_name': contact,
     }
-    return render_to_response('mypartners/records.html', ctx,
-                              RequestContext(request))
+
+    data = {
+        'date_end': range_end.strftime('%m/%d/%Y'),
+        'date_start': range_start.strftime('%m/%d/%Y'),
+        'date_str': date_str,
+        'html': render_to_response('mypartners/records.html', ctx,
+                                   RequestContext(request)).content,
+    }
+    return HttpResponse(json.dumps(data))
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
