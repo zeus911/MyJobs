@@ -27,7 +27,6 @@ from solr.helpers import Solr, format_date, dict_to_object
 
 from endless_pagination.decorators import page_template
 from urlparse import urlparse
-from xhtml2pdf import pisa
 from lxml import etree
 
 
@@ -327,9 +326,6 @@ def export_candidates(request):
         if export_type == 'csv':
             candidates = filter_candidates(request)
             response = export_csv(request, candidates)
-        elif export_type == 'pdf':
-            candidates = filter_candidates(request)
-            response = export_pdf(request, candidates)
         elif export_type == 'xml' or export_type == 'json':
             candidates = filter_candidates(request)
             response = export_hr(request, candidates, export_type)
@@ -513,40 +509,6 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
         writer.writerow(user_fields)
 
     return response
-
-
-def export_pdf(request, candidates):
-    """
-    Generates an HTML page which then gets converted to pdf.
-    """
-    result = StringIO.StringIO()
-    company_id = request.REQUEST.get('company')
-    try:
-        company = Company.objects.get(id=company_id)
-    except Company.DoesNotExist:
-        raise Http404
-
-    candidate_info = {}
-    names = Name.objects.filter(user__in=candidates,
-                                primary=True).select_related('user',
-                                                             'user__id',
-                                                             'content_type',
-                                                             'name')
-    cand_count = len(candidates)
-    for name in names:
-        user = name.user
-        candidate_info[user] = name.get_full_name()
-        del_user_num = candidates.index(user)
-        del(candidates[del_user_num])
-    data_dict = {'company': company,
-                 'candidates': candidate_info,
-                 'no_name_cand': candidates,
-                 'count': cand_count}
-    template = get_template('mydashboard/export/candidate_listing.html')
-    html = template.render(Context(data_dict))
-
-    pisa_status = pisa.CreatePDF(html, dest=result)
-    return HttpResponse(result.getvalue(), mimetype='application/pdf')
 
 
 def export_hr(request, candidates, export_type, models_excluded=[]):
