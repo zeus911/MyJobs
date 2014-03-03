@@ -460,18 +460,22 @@ def prm_records(request):
     most_recent_activity = get_logs_for_partner(partner)
 
     contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
-    contacts = ContactRecord.objects.values('contact_name').distinct()
+    contacts = ContactRecord.objects.filter(partner=partner)
+    contacts = contacts.values('contact_name').distinct()
     contact_choices = [('all', 'All')]
     [contact_choices.append((c['contact_name'], c['contact_name']))
      for c in contacts]
 
     ctx = {
         'company': company,
-        'partner': partner,
-        'records': contact_records,
-        'most_recent_activity': most_recent_activity,
         'contact_choices': contact_choices,
         'contact_type_choices': contact_type_choices,
+        'date_display': '30',
+        'date_start': dt_range[0],
+        'date_end': dt_range[1],
+        'most_recent_activity': most_recent_activity,
+        'partner': partner,
+        'records': contact_records,
     }
     return render_to_response('mypartners/main_records.html', ctx,
                               RequestContext(request))
