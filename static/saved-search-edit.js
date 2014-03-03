@@ -162,7 +162,7 @@ function disable_fields() {
 
 function enable_fields() {
     $('[id^="id_edit_sort_by_"]').show();
-    $('label[for^="id_edit_sort_by_"]').show();
+    $('label[for^="id_edit_sort_by_"]').css('display', 'inline-block');
     $('[id$="label"]').show();
     $('label[for$="label"]').show();
     $('[id$="is_active"]').show();
@@ -209,8 +209,3 @@ function reorder_elements() {
         $('label[for$=notes]').parent().hide();
     }
 }
-
-$(document).ready(function(){
-    $('label[for$="sort_by_0"]').css('display', 'inline-block');
-    $('label[for$="sort_by_1"]').css('display', 'inline-block');
-});
