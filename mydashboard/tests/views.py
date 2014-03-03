@@ -20,7 +20,6 @@ from myprofile.tests.factories import (PrimaryNameFactory,
                                        EmploymentHistoryFactory)
 from mysearches.models import SavedSearch
 from mysearches.tests.factories import SavedSearchFactory
-from myjobs.models import User
 from tasks import update_solr_task
 
 SEARCH_OPTS = ['django', 'python', 'programming']
@@ -158,7 +157,6 @@ class MyDashboardViewsTests(TestCase):
         response = self.client.post(reverse('dashboard')+q)
         self.assertIn(city_filter_str, response.content)
 
-    # Tests to see if redirect from /candidates/ goes to candidates/view/
     def test_search_field(self):
         # Build url
         def build_url(search):
@@ -233,6 +231,7 @@ class MyDashboardViewsTests(TestCase):
         soup = BeautifulSoup(response.content)
         self.assertEqual(int(soup.select(country_tag)[0].text), 1)
 
+    # Tests to see if redirect from /candidates/ goes to candidates/view/
     def test_redirect_to_candidates_views_default_page(self):
         response = self.client.post('/candidates/')
 
