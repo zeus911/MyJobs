@@ -1256,6 +1256,10 @@ em.pendingText {
     text-align: left;
 }
 
+#nav {
+    z-index: 1;
+}
+
 #nav:hover {
     background: #222;
 	color: #000;
@@ -2947,6 +2951,7 @@ body.modal-open {
 #partner-menu {
     margin: 0;
     position: absolute;
+    z-index: 1;
 }
 
 #company-menu a,
