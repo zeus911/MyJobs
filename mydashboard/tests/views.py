@@ -164,12 +164,10 @@ class MyDashboardViewsTests(TestCase):
             q = q.format(company=str(self.company.id), search=search)
             return reverse('dashboard') + q
 
-
         # assert it finds all 5 searches.
         response = self.client.post(build_url('python'))
         soup = BeautifulSoup(response.content)
         self.assertEqual(len(soup.select('#row-link-table tr')), 10)
-
 
         # 6 users total, two rows per search
         response = self.client.post(build_url('example'))
@@ -214,7 +212,6 @@ class MyDashboardViewsTests(TestCase):
         user.save()
 
         update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
-
 
         # Assert there are two users with country codes
         country_tag = '#Country-details-table #facet-count'
