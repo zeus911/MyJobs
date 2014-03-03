@@ -1,4 +1,4 @@
-<tr><td>
+<tr {% if activity_object %} class="activity-record-tr" onclick="window.document.location='{{ activity.get_object_url }}'" {% endif %}><td>
     {{ activity.action_time }}<br/>
     {% if activity_object %}
         {% if content_type == 'partner saved search' %}

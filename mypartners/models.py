@@ -1,10 +1,12 @@
 from os import path
 from re import sub
+from urllib import urlencode
 from uuid import uuid4
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
+from django.core.urlresolvers import reverse
 from django.db import models
 
 from myjobs.models import User
@@ -247,3 +249,22 @@ class ContactLogEntry(models.Model):
             return self.content_type.get_object_for_this_type(pk=self.object_id)
         except self.content_type.model_class().DoesNotExist:
             return None
+
+    def get_object_url(self):
+        obj = self.get_edited_object()
+        if not obj or not self.partner:
+            return None
+        base_urls = {
+            'contact': reverse('edit_contact'),
+            'contact record': reverse('record_view'),
+            'partner saved search': reverse('partner_edit_search'),
+            'partner': reverse('create_partner'),
+        }
+        params = {
+            'partner': self.partner.pk,
+            'company': self.partner.owner.pk,
+            'id': obj.pk,
+            'ct': self.content_type.pk,
+        }
+        query_string = urlencode(params)
+        return "%s?%s" % (base_urls[self.content_type.name], query_string)

@@ -83,7 +83,7 @@
                             <td>{{ record.date_time }}</td>
                             <td>{{ record.get_record_description }}</td>
                             <td>
-                                Subject: {{ record.subject }}<br/>
+                                {% if record.subject %}Subject: {{ record.subject }}<br/>{% endif %}
                                 {{ record.notes }}
                             </td>
                         </tr>
