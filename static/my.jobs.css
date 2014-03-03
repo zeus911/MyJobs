@@ -391,7 +391,6 @@ h1 > small > a:hover {
     position: absolute;
     display: inline;
     margin-left: 10px;
-    margin-top: 5px;
 }
 
 .profile-unit h4 {
@@ -1941,6 +1940,11 @@ td .gravatar-blank,
     #gravatar {
         padding-left: 100px;
     }
+
+    #validated {
+        padding: 7px;
+        margin-top: 3px;
+    }
 }
 
 @media screen and (max-width: 500px) {
@@ -2376,6 +2380,7 @@ td .gravatar-blank,
 
     #saved-search-form #validated {
         margin-top: 0;
+        padding: 3px;
     }
 
     #saved-search-form #mobile-url-container {
@@ -2772,7 +2777,6 @@ table td, table th {
 
 #validated {
     display: inline;
-    padding: 7px;
 }
 
 #saved-search-form #id_day_of_month,
