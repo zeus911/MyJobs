@@ -109,7 +109,6 @@ def merge_accounts(request, activation_key):
         return render_to_response('registration/merge_request.html', ctx,
                               context_instance=RequestContext(request))
 
-
     # Create a secondary email
     SecondaryEmail.objects.create(user=existing_user, label='Merged Email',
                            email=activation_profile.email, verified=True,
@@ -131,7 +130,6 @@ def merge_accounts(request, activation_key):
     ctx['merged'] = True
     return render_to_response('registration/merge_request.html', ctx,
                               context_instance=RequestContext(request))
-
 
 def logout(request):
     log_out(request)
