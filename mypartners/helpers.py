@@ -33,20 +33,45 @@ def prm_worthy(request):
     return company, partner, user
 
 
-def url_extra_params(url, feed, extra_urls):
-    (scheme, netloc, path, params, query, fragment) = urlparse(url)
-    query = dict(parse_qsl(query, keep_blank_values=True))
+def add_extra_params(url, extra_urls):
+    """
+    Adds extra parameters to a url
+
+    Inputs:
+    :url: Url that parameters will be added to
+    :extra_urls: Extra parameters to be added
+
+    Outputs:
+    :url: Input url with parameters added
+    """
+    extra_urls = extra_urls.lstrip('?&')
     new_queries = dict(parse_qsl(extra_urls, keep_blank_values=True))
+
+    # By default, extra parameters besides vs are discarded by the redirect
+    # server. We can get around this by adding &z=1 to the url, which enables
+    # custom query parameter overrides.
+    new_queries['z'] = '1'
+
+    parts = list(urlparse(url))
+    query = dict(parse_qsl(parts[4], keep_blank_values=True))
     query.update(new_queries)
-    http_url = urlunparse((scheme, netloc, path, params, urlencode(query),
-                           fragment))
+    parts[4] = urlencode(query)
+    return urlunparse(parts)
 
-    (rss_scheme, rss_netloc, rss_path, rss_params, rss_query,
-     rss_fragment) = urlparse(feed)
-    feed = urlunparse((rss_scheme, rss_netloc, rss_path, rss_params, urlencode(query),
-                       rss_fragment))
 
-    return http_url, feed
+def add_extra_params_to_jobs(items, extra_urls):
+    """
+    Adds extra parameters to all jobs in a list
+
+    Inputs:
+    :items: List of jobs to which extra parameters should be added
+    :extra_urls: Extra parameters to be added
+
+    Modifies:
+    :items: List is mutable and is modified in-place
+    """
+    for item in items:
+        item['link'] = add_extra_params(item['link'], extra_urls)
 
 
 def log_change(obj, form, user, partner, contact_identifier,
