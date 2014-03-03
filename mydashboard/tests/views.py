@@ -1,4 +1,5 @@
 import pysolr
+import unittest
 
 from bs4 import BeautifulSoup
 from datetime import timedelta
@@ -19,6 +20,7 @@ from myprofile.tests.factories import (PrimaryNameFactory,
                                        EmploymentHistoryFactory)
 from mysearches.models import SavedSearch
 from mysearches.tests.factories import SavedSearchFactory
+from myjobs.models import User
 from tasks import update_solr_task
 
 SEARCH_OPTS = ['django', 'python', 'programming']
@@ -50,7 +52,7 @@ class MyDashboardViewsTests(TestCase):
 
         for i in range(5):
             # Create 5 new users
-            user = UserFactory(email='example%s@example.com' % i)
+            user = UserFactory(email='example-%s@example.com' % i)
             for search in SEARCH_OPTS:
                 # Create 15 new searches and assign three per user
                 SavedSearchFactory(user=user,
@@ -157,6 +159,80 @@ class MyDashboardViewsTests(TestCase):
         self.assertIn(city_filter_str, response.content)
 
     # Tests to see if redirect from /candidates/ goes to candidates/view/
+    def test_search_field(self):
+        # Build url
+        def build_url(search):
+            q = '?company={company}&search={search}'
+            q = q.format(company=str(self.company.id), search=search)
+            return reverse('dashboard') + q
+
+
+        # assert it finds all 5 searches.
+        response = self.client.post(build_url('python'))
+        soup = BeautifulSoup(response.content)
+        self.assertEqual(len(soup.select('#row-link-table tr')), 10)
+
+
+        # 6 users total, two rows per search
+        response = self.client.post(build_url('example'))
+        soup = BeautifulSoup(response.content)
+        self.assertEqual(len(soup.select('#row-link-table tr')), 12)
+
+    # This test doesn't work due to our solr config.  Documenting to test when
+    # we can update our solr config.
+    @unittest.expectedFailure
+    def test_search_email(self):
+        """We should be able to search for domains."""
+        user = UserFactory(email="test@shouldWork.com")
+        SavedSearchFactory(user=user,
+                           url='http://test.jobs/search?q=python',
+                           label='Python Jobs')
+        user.save()
+        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+
+        q = '?company={company}&search={search}'
+        q = q.format(company=str(self.company.id), search='shouldWork')
+        url = reverse('dashboard') + q
+
+        response = self.client.post(url)
+        soup = BeautifulSoup(response.content)
+        self.assertEqual(len(soup.select('#row-link-table tr')), 2)
+
+    def test_search_updates_facet_counts(self):
+        # Add ProfileData to the candidate_user
+        education = EducationFactory(user=self.candidate_user)
+        adr = AddressFactory(user=self.candidate_user)
+        license = LicenseFactory(user=self.candidate_user)
+        self.candidate_user.save()
+
+        # Create a new user with ProfileData
+        user = UserFactory(email="find@testuser.com")
+        SavedSearchFactory(user=user,
+                           url='http://test.jobs/search?q=python',
+                           label='Python Jobs')
+        EducationFactory(user=user)
+        AddressFactory(user=user)
+        LicenseFactory(user=user)
+        user.save()
+
+        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+
+
+        # Assert there are two users with country codes
+        country_tag = '#Country-details-table #facet-count'
+        q = '?company={company}'
+        q = q.format(company=str(self.company.id))
+        response = self.client.post(reverse('dashboard') + q)
+        soup = BeautifulSoup(response.content)
+        self.assertEqual(int(soup.select(country_tag)[0].text), 2)
+
+        # When we search, the facet count updates.
+        q = '?company={company}&search={search}'
+        q = q.format(company=str(self.company.id), search='find')
+        response = self.client.post(reverse('dashboard') + q)
+        soup = BeautifulSoup(response.content)
+        self.assertEqual(int(soup.select(country_tag)[0].text), 1)
+
     def test_redirect_to_candidates_views_default_page(self):
         response = self.client.post('/candidates/')
 

@@ -50,9 +50,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     user_solr = Solr()
     facet_solr = Solr()
 
-    # Add join only if we're filtering.
-    if ('company' in request.GET and len(request.GET) > 1) or \
-            (len(request.GET) == 0):
+    # Add join only if we're using facets, not if we're simply searching.
+    query_params = set(['search', 'company'])
+    if not query_params.issuperset(set(request.GET.keys())):
         user_solr = user_solr.add_join(from_field='ProfileUnits_user_id',
                                        to_field='User_id')
     facet_solr = facet_solr.add_join(from_field='User_id',
@@ -117,6 +117,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                                                                         facet_solr,
                                                                         loc_solr)
 
+    # This should be refactored so it's not two queries.  Maybe decide how many
+    # initial results we want and set a arbitrary limit?
     solr_results = user_solr.rows_to_fetch(user_solr.search().hits).search()
 
     # List of dashboard widgets to display.
