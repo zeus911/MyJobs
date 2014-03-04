@@ -174,11 +174,8 @@ class MyDashboardViewsTests(TestCase):
         soup = BeautifulSoup(response.content)
         self.assertEqual(len(soup.select('#row-link-table tr')), 12)
 
-    # This test doesn't work due to our solr config.  Documenting to test when
-    # we can update our solr config.
-    @unittest.expectedFailure
     def test_search_email(self):
-        """We should be able to search for domains."""
+        """We should be able to search for an exact email."""
         user = UserFactory(email="test@shouldWork.com")
         SavedSearchFactory(user=user,
                            url='http://test.jobs/search?q=python',
@@ -187,12 +184,30 @@ class MyDashboardViewsTests(TestCase):
         update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
 
         q = '?company={company}&search={search}'
-        q = q.format(company=str(self.company.id), search='shouldWork')
+        q = q.format(company=str(self.company.id), search='test@shouldWork.com')
         url = reverse('dashboard') + q
 
         response = self.client.post(url)
         soup = BeautifulSoup(response.content)
         self.assertEqual(len(soup.select('#row-link-table tr')), 2)
+
+    def test_search_domain(self):
+        """We should be able to search for domain."""
+        user = UserFactory(email="test@shouldWork.com")
+        SavedSearchFactory(user=user,
+                           url='http://test.jobs/search?q=python',
+                           label='Python Jobs')
+        user.save()
+        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+
+        q = '?company={company}&search={search}'
+        q = q.format(company=str(self.company.id), search='shouldWork.com')
+        url = reverse('dashboard') + q
+
+        response = self.client.post(url)
+        soup = BeautifulSoup(response.content)
+        self.assertEqual(len(soup.select('#row-link-table tr')), 2)
+
 
     def test_search_updates_facet_counts(self):
         # Add ProfileData to the candidate_user
