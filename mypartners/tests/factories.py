@@ -30,6 +30,7 @@ class ContactRecordFactory(factory.Factory):
     contact_name = 'example-contact'
     contact_email = 'example@email.com'
     subject = 'Test Subject'
+    notes = 'Some notes go here.'
     date_time = datetime.now()
 
 

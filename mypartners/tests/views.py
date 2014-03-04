@@ -11,6 +11,8 @@ from mypartners.tests.factories import (PartnerFactory, ContactFactory,
                                         ContactLogEntryFactory,
                                         ContactRecordFactory)
 from mysearches.tests.factories import PartnerSavedSearchFactory
+from django.contrib.localflavor import be
+from datetime import datetime
 
 
 class MyPartnerViewsTests(TestCase):
@@ -137,10 +139,10 @@ class PartnerOverviewTests(TestCase):
         self.client = TestClient()
         self.client.login_user(self.staff_user)
 
-    def get_url(self, url='partner_overview', **kwargs):
+    def get_url(self, **kwargs):
         args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
         args = '&'.join(args)
-        return reverse(url) + '?' + args
+        return reverse('partner_overview') + '?' + args
 
     def test_organization_details(self):
         url = self.get_url(company=self.company.id,
@@ -295,3 +297,94 @@ class PartnerOverviewTests(TestCase):
         soup = BeautifulSoup(response.content)
         container = soup.find(id='recent-saved-searches')
         self.assertEqual(len(container('tr')), 4)
+
+
+class RecordViewTests(TestCase):
+    def setUp(self):
+        super(RecordViewTests, self).setUp()
+
+        # Create a user to login as
+        self.staff_user = UserFactory()
+        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
+        self.staff_user.groups.add(group)
+        self.staff_user.save()
+
+        # Create a company
+        self.company = CompanyFactory()
+        self.company.save()
+        self.admin = CompanyUserFactory(user=self.staff_user,
+                                        company=self.company)
+
+        # Create a partner
+        self.partner = PartnerFactory(owner=self.company)
+        self.primary_contact = ContactFactory(name="Example Name")
+        self.primary_contact.save()
+        self.partner.primary_contact = self.primary_contact
+        self.partner.save()
+
+        # Create a contact
+        self.contact = ContactFactory()
+        self.contact.user = UserFactory(email="test@test.com")
+        self.contact.save()
+
+        # Create a ContactRecord
+        self.contact_record = ContactRecordFactory(partner=self.partner)
+        self.dt = datetime(year=2014, month=3, day=4)
+        self.contact_log_entery = ContactLogEntryFactory(partner=self.partner,
+                                     user=self.contact.user,
+                                     action_time=self.dt,
+                                     object_id=self.contact_record.id)
+
+        # Create a TestClient
+        self.client = TestClient()
+        self.client.login_user(self.staff_user)
+
+    def get_url(self, **kwargs):
+        args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
+        args = '&'.join(args)
+        return reverse('record_view') + '?' + args
+
+    def test_contact_details(self):
+        url = self.get_url(partner=self.partner.id,
+                           company=self.company.id,
+                           id=self.contact_record.id)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        # Assert details of content on page
+        soup = BeautifulSoup(response.content)
+        details = soup.find(id="details")
+        self.assertIn('example-contact', details.get_text())
+        self.assertIn('example@email.com', details.get_text())
+        self.assertIn('Test Subject', soup.find(id="subject").get_text())
+        self.assertIn('Email', soup.find(id="type").get_text())
+        self.assertIn('Some notes go here.', soup.find(id="notes").get_text())
+        self.assertIn('Added - Mar 04, 2014',
+                      soup.find(id="record-history").get_text())
+
+
+
+
+    def test_record_history(self):
+        url = self.get_url(partner=self.partner.id,
+                           company=self.company.id,
+                           id=self.contact_record.id)
+        response = self.client.get(url)
+        soup = BeautifulSoup(response.content)
+        self.assertIn('Added - Mar 04, 2014',
+                      soup.find(id="record-history").get_text())
+
+        # Add more events
+        for i in range(2, 4):
+            ContactLogEntryFactory(partner=self.partner, action_flag=i,
+                                     user=self.contact.user,
+                                     action_time=self.dt,
+                                     object_id=self.contact_record.id)
+        response = self.client.get(url)
+        soup = BeautifulSoup(response.content)
+
+        history = soup.find(id='record-history').get_text()
+        for text in ['Added - Mar 04, 2014',
+                  'Updated - Mar 04, 2014',
+                  'Deleted - Mar 04, 2014']:
+            self.assertIn(text, history)
