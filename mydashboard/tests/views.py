@@ -208,7 +208,6 @@ class MyDashboardViewsTests(TestCase):
         soup = BeautifulSoup(response.content)
         self.assertEqual(len(soup.select('#row-link-table tr')), 2)
 
-
     def test_search_updates_facet_counts(self):
         # Add ProfileData to the candidate_user
         education = EducationFactory(user=self.candidate_user)
