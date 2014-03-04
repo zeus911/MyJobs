@@ -292,8 +292,7 @@ def parse_log(logs, solr_location):
                     # query strings in redirect logs are manually constructed and do
                     # not contain question marks; analytics logs do, which mess with
                     # parsing
-                    if line[4][0] == '?':
-                        line[4] = line[4][1:]
+                    line[4] = line[4].lstrip('?')
 
                     # Make sure the value for a given key is only a list if there
                     # are multiple elements
