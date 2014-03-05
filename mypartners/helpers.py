@@ -2,11 +2,11 @@ from django.contrib.admin.models import CHANGE
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
 from django.http import Http404
-from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
-from django.utils.text import get_text_list
+from django.utils.text import get_text_list, force_unicode, force_text
 from django.utils.translation import ugettext
 
+from datetime import datetime, time
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
@@ -133,3 +133,14 @@ def get_attachment_link(company_id, partner_id, attachment_id, attachment_name):
 
     html = "<a href='{url}' target='_blank'>{attachment_name}</a>"
     return mark_safe(html.format(url=url, attachment_name=attachment_name))
+
+def retrieve_fields(model):
+    fields = [field for field in model._meta.get_all_field_names()
+              if unicode(field) not in [u'id', u'prmattachment']]
+    return fields
+
+
+def contact_record_val_to_str(value):
+    return (value.strftime('%b %d, %Y %I:%M %p') if type(value)
+            is datetime else value.strftime('%H hours %M minutes')
+            if type(value) is time else force_unicode(value))

@@ -1,5 +1,7 @@
+import csv
 from datetime import datetime, timedelta
 import json
+from lxml import etree
 
 from django.conf import settings
 from django.contrib.admin.models import DELETION
@@ -24,7 +26,8 @@ from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
 from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
                                 get_searches_for_partner, get_logs_for_partner,
-                                get_contact_records_for_partner)
+                                get_contact_records_for_partner,
+                                contact_record_val_to_str, retrieve_fields)
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm(request):
@@ -455,11 +458,25 @@ def partner_view_full_feed(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_records(request):
+    ctx = get_record_context(request)
+    partner = request.REQUEST.get('partner')
+    most_recent_activity = get_logs_for_partner(partner)
+    ctx['most_recent_activity'] = most_recent_activity
+    return render_to_response('mypartners/main_records.html', ctx,
+                              RequestContext(request))
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def prm_report_records(request):
+    ctx = get_record_context(request)
+    return render_to_response('mypartners/report_record_view.html', ctx,
+                              RequestContext(request))
+
+
+def get_record_context(request):
     company, partner, user = prm_worthy(request)
     dt_range = [datetime.now() + timedelta(-30), datetime.now()]
     contact_records = get_contact_records_for_partner(partner,
                                                       date_time_range=dt_range)
-    most_recent_activity = get_logs_for_partner(partner)
 
     contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
     contacts = ContactRecord.objects.filter(partner=partner)
@@ -475,12 +492,10 @@ def prm_records(request):
         'date_display': '30',
         'date_start': dt_range[0],
         'date_end': dt_range[1],
-        'most_recent_activity': most_recent_activity,
         'partner': partner,
         'records': contact_records,
     }
-    return render_to_response('mypartners/main_records.html', ctx,
-                              RequestContext(request))
+    return ctx
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
@@ -725,3 +740,44 @@ def partner_get_records(request):
                 'phone': phone,
                 'facetoface': facetoface}
         return HttpResponse(json.dumps(data))
+
+
+def prm_export(request):
+    company, partner, user = prm_worthy(request)
+    records = get_contact_records_for_partner(partner)
+
+    file_format = request.REQUEST.get('file_format', 'csv')
+    fields = retrieve_fields(ContactRecord)
+
+    if file_format == 'xml':
+        root = etree.Element("contact_records")
+        for record in records:
+            xml_record = etree.SubElement(root, "record")
+            for field in fields:
+                xml = etree.SubElement(xml_record, field)
+                xml.text = contact_record_val_to_str(getattr(record, field, ""))
+        response = HttpResponse(etree.tostring(root, pretty_print=True),
+                                mimetype='application/force-download')
+    elif file_format == 'pdf':
+        ctx = {
+            'fields': fields,
+            'partner': partner,
+            'records': records,
+        }
+        return render_to_response('mypartners/pdf.html', ctx,
+                                  RequestContext(request))
+    # CSV
+    else:
+        response = HttpResponse(content_type='text/csv')
+        writer = csv.writer(response)
+        writer.writerow(fields)
+        for record in records:
+            values = [getattr(record, field, '') for field in fields]
+            values = [contact_record_val_to_str(v) for v in values]
+            writer.writerow(values)
+
+    response['Content-Disposition'] = 'attachment; ' \
+                                      'filename="company_record_report".%s' \
+                                      % file_format
+
+    return response
