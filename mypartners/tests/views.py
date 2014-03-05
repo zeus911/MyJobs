@@ -12,10 +12,12 @@ from mypartners.tests.factories import (PartnerFactory, ContactFactory,
                                         ContactRecordFactory)
 from mysearches.tests.factories import PartnerSavedSearchFactory
 from django.contrib.localflavor import be
-from datetime import datetime
+from datetime import datetime, timedelta
+from mypartners.models import ContactLogEntry
 
 
 class MyPartnerViewsTests(TestCase):
+    """Tests for the /prm/view/ page"""
     def setUp(self):
         super(MyPartnerViewsTests, self).setUp()
         self.staff_user = UserFactory()
@@ -109,6 +111,7 @@ class MyPartnerViewsTests(TestCase):
 
 
 class PartnerOverviewTests(TestCase):
+    """Tests related to the partner overview page, /prm/view/overview/"""
     def setUp(self):
         super(PartnerOverviewTests, self).setUp()
 
@@ -299,9 +302,75 @@ class PartnerOverviewTests(TestCase):
         self.assertEqual(len(container('tr')), 4)
 
 
-class RecordViewTests(TestCase):
+class RecordsOverviewTests(TestCase):
+    """Tests related to the records overview page, /prm/view/records/"""
+
     def setUp(self):
-        super(RecordViewTests, self).setUp()
+        super(RecordsOverviewTests, self).setUp()
+
+        # Create a user to login as
+        self.staff_user = UserFactory()
+        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
+        self.staff_user.groups.add(group)
+        self.staff_user.save()
+
+        # Create a company
+        self.company = CompanyFactory()
+        self.company.save()
+        self.admin = CompanyUserFactory(user=self.staff_user,
+                                        company=self.company)
+
+        # Create a partner
+        self.partner = PartnerFactory(owner=self.company)
+        self.primary_contact = ContactFactory(name="Example Name")
+        self.primary_contact.save()
+        self.partner.primary_contact = self.primary_contact
+        self.partner.save()
+
+        # Create a TestClient
+        self.client = TestClient()
+        self.client.login_user(self.staff_user)
+
+    def get_url(self, **kwargs):
+        args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
+        args = '&'.join(args)
+        return reverse('partner_records') + '?' + args
+
+    def test_no_contact_records(self):
+        url = self.get_url(company=self.company.id,
+                           partner=self.partner.id)
+        response = self.client.get(url)
+        soup = BeautifulSoup(response.content)
+        soup = soup.find(id='view-records')
+        self.assertIn('No records available.', soup.get_text())
+
+    def test_records_counts(self):
+        for _ in range(5):
+            ContactRecordFactory(partner=self.partner)
+
+        url = self.get_url(company=self.company.id,
+                           partner=self.partner.id)
+        response = self.client.get(url)
+        soup = BeautifulSoup(response.content)
+        records = soup.find(id='view-records')
+        self.assertEqual(len(records('tr')), 6)
+
+        # Ensure old records don't show
+        ContactRecordFactory(partner=self.partner,
+                             date_time=datetime.now() - timedelta(days=31))
+        response = self.client.get(url)
+        soup = BeautifulSoup(response.content)
+        records = soup.find(id='view-records')
+        self.assertEqual(len(records('tr')), 6)
+
+    def test_most_recent_activity(self):
+        raise NotImplementedError()
+
+
+class RecordsDetailsTests(TestCase):
+    """Tests related to the records detail page, /prm/view/records/view/"""
+    def setUp(self):
+        super(RecordsDetailsTests, self).setUp()
 
         # Create a user to login as
         self.staff_user = UserFactory()
@@ -329,11 +398,10 @@ class RecordViewTests(TestCase):
 
         # Create a ContactRecord
         self.contact_record = ContactRecordFactory(partner=self.partner)
-        self.dt = datetime(year=2014, month=3, day=4)
-        self.contact_log_entery = ContactLogEntryFactory(partner=self.partner,
+        self.contact_log_entry = ContactLogEntryFactory(partner=self.partner,
                                      user=self.contact.user,
-                                     action_time=self.dt,
                                      object_id=self.contact_record.id)
+        self.contact_log_entry.save()
 
         # Create a TestClient
         self.client = TestClient()
@@ -359,11 +427,8 @@ class RecordViewTests(TestCase):
         self.assertIn('Test Subject', soup.find(id="subject").get_text())
         self.assertIn('Email', soup.find(id="type").get_text())
         self.assertIn('Some notes go here.', soup.find(id="notes").get_text())
-        self.assertIn('Added - Mar 04, 2014',
-                      soup.find(id="record-history").get_text())
-
-
-
+        self.assertEqual(len(soup.find(id="record-history")('br')), 1,
+                         msg=soup.find(id="record-history"))
 
     def test_record_history(self):
         url = self.get_url(partner=self.partner.id,
@@ -371,20 +436,73 @@ class RecordViewTests(TestCase):
                            id=self.contact_record.id)
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
-        self.assertIn('Added - Mar 04, 2014',
-                      soup.find(id="record-history").get_text())
+        self.assertEqual(len(soup.find(id="record-history")('br')), 1,
+                         msg=soup.find(id="record-history"))
 
         # Add more events
         for i in range(2, 4):
             ContactLogEntryFactory(partner=self.partner, action_flag=i,
                                      user=self.contact.user,
-                                     action_time=self.dt,
                                      object_id=self.contact_record.id)
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
 
-        history = soup.find(id='record-history').get_text()
-        for text in ['Added - Mar 04, 2014',
-                  'Updated - Mar 04, 2014',
-                  'Deleted - Mar 04, 2014']:
-            self.assertIn(text, history)
+        self.assertEqual(len(soup.find(id='record-history')('br')), 3)
+
+
+class RecordsEditTests(TestCase):
+    """Tests related to the record edit page, /prm/view/records/edit"""
+
+    def test_render_new_form(self):
+        raise NotImplementedError()
+
+    def test_render_existing_data(self):
+        raise NotImplementedError()
+
+    def test_render_error_conditions(self):
+        raise NotImplementedError()
+
+    def test_create_new_contact_record(self):
+        raise NotImplementedError()
+
+    def test_update_existing_contact_record(self):
+        raise NotImplementedError()
+
+
+class SearchesOverviewTests(TestCase):
+    """Tests related to the search overview page, /prm/view/searches"""
+
+    def test_no_searches(self):
+        raise NotImplementedError()
+
+    def test_render_search_list(self):
+        raise NotImplementedError()
+
+
+class SearchFeedTests(TestCase):
+    """Tests relating to the search feed page, /prm/view/searches/feed"""
+
+    def test_details(self):
+        raise NotImplementedError()
+
+    def test_feed_results(self):
+        raise NotImplementedError()
+
+
+class SearchEditTests(TestCase):
+    """Tests relating to the edit search page /prm/view/searches/edit"""
+
+    def test_render_new_form(self):
+        raise NotImplementedError()
+
+    def test_render_existing_data(self):
+        raise NotImplementedError()
+
+    def test_render_error_conditions(self):
+        raise NotImplementedError()
+
+    def test_create_new_contact_record(self):
+        raise NotImplementedError()
+
+    def test_update_existing_contact_record(self):
+        raise NotImplementedError()
