@@ -333,10 +333,13 @@ def prm_edit_saved_search(request):
         form = PartnerSavedSearchForm(partner=partner, instance=instance)
     else:
         form = PartnerSavedSearchForm(partner=partner)
-    ctx = {'company': company,
-           'partner': partner,
-           'item_id': item_id,
-           'form': form}
+    ctx = {
+        'company': company,
+        'partner': partner,
+        'item_id': item_id,
+        'form': form,
+        'content_type': ContentType.objects.get_for_model(PartnerSavedSearch).id,
+    }
     return render_to_response('mypartners/partner_edit_search.html', ctx,
                               RequestContext(request))
 
@@ -603,10 +606,12 @@ def prm_view_records(request):
         prev_id = records[0].pk
         record = records[1]
         next_id = None
-    else:
+    elif len(records) == 1:
         prev_id = None
         record = records[0]
         next_id = None
+    else:
+        raise Http404
 
     # Double check our results and drop the next and previous options if
     # the results were wrong
@@ -678,6 +683,8 @@ def get_records(request):
     date_range, date_str, records = get_records_from_request(request)
 
     ctx = {
+        'date_end': date_range[1],
+        'date_start': date_range[0],
         'records': records,
         'company': company,
         'partner': partner,
