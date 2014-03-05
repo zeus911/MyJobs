@@ -557,6 +557,14 @@ def prm_view_records(request):
     offset = request.GET.get('offset', 0)
     record_type = request.GET.get('type', None)
     name = request.GET.get('name', None)
+    range_start = request.REQUEST.get('date_start')
+    range_end = request.REQUEST.get('date_end')
+    try:
+        range_start = datetime.strptime(range_start, "%m/%d/%Y")
+        range_end = datetime.strptime(range_end, "%m/%d/%Y")
+    except (AttributeError, TypeError):
+        range_start = None
+        range_end = None
 
     try:
         record_id = int(record_id)
@@ -568,11 +576,14 @@ def prm_view_records(request):
     prev_offset = (offset - 1) if offset > 1 else 0
     records = get_contact_records_for_partner(partner, record_type=record_type,
                                               contact_name=name,
+                                              date_time_range=[range_start,
+                                                               range_end],
                                               offset=prev_offset,
                                               limit=prev_offset + 3)
 
     # Since we always retrieve 3, if the record is at the beginning of the
     # list we might have 3 results but no previous.
+    print records.values_list('id', flat=True)
     if len(records) == 3 and records[0].pk == record_id:
         prev_id = None
         record = records[0]
@@ -608,6 +619,8 @@ def prm_view_records(request):
     logs = ContactLogEntry.objects.filter(object_id=record_id)
     record_history = ContactLogEntry.objects.filter(object_id=record_id)
     ctx = {
+        'date_start': range_start,
+        'date_end': range_end,
         'record': record,
         'partner': partner,
         'company': company,
@@ -842,7 +855,7 @@ def prm_export(request):
     company, partner, user = prm_worthy(request)
     file_format = request.REQUEST.get('file_format', 'csv')
     fields = retrieve_fields(ContactRecord)
-    records = ''
+    _, _, records = get_records_from_request(request)
 
     if file_format == 'xml':
         root = etree.Element("contact_records")

@@ -24,9 +24,19 @@ def get_activity_block(activity):
         'user_name': user_name,
     }
 
-@register.inclusion_tag('mypartners/records.html')
-def get_record_block(records, company, partner):
+@register.inclusion_tag('mypartners/records.html', takes_context=True)
+def get_record_block(context, records, company, partner):
+    date_start = context.get('date_start')
+    date_end = context.get('date_end')
+
+    if date_start:
+        pass
+    if date_end:
+        pass
+
     return {
+        'date_start': date_start,
+        'date_end': date_end,
         'records': records,
         'company': company,
         'partner': partner,
