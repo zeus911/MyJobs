@@ -371,7 +371,6 @@ h1 > small > a:hover {
     text-align: center;
     background-color: #5eb95e;
     border-radius: 5px;
-    background-color: #5eb95e;
     color: #FFF;
     width: 90px;
     height: 80px;
@@ -387,15 +386,11 @@ h1 > small > a:hover {
 }
 
 .chart-box + .chart-box {
-    margin-top: 61px;
-    height: 41px;
     border-color: #4bb1cf;
     background-color: #4bb1cf;
 }
 
 .chart-box + .chart-box + .chart-box {
-    margin-top: 122px;
-    height: 40px;
     border-color: #faa732;
     background-color: #faa732;
 }
@@ -487,11 +482,6 @@ h1 > small > a:hover {
 
 .all-contacts-table .chart-box + .chart-box {
     margin-right: 0;
-}
-
-.rounded-gravatar {
-    border: 1px solid #000;
-    border-radius: 5px;
 }
 
 
