@@ -585,7 +585,6 @@ class RecordsEditTests(TestCase):
                 'company': self.company.id,
                 'partner': self.partner.id}
         response = self.client.post(url, data=data)
-        soup = BeautifulSoup(response.content)
         self.assertEqual(response.status_code, 302)
 
         record = ContactRecord.objects.get(contact_email='test@email.com')
@@ -621,7 +620,6 @@ class RecordsEditTests(TestCase):
                 'company': self.company.id,
                 'partner': self.partner.id}
         response = self.client.post(url, data=data)
-        soup = BeautifulSoup(response.content)
         self.assertEqual(response.status_code, 302)
 
         # Get an updated copy of the ContactRecord
@@ -634,22 +632,125 @@ class RecordsEditTests(TestCase):
 
 class SearchesOverviewTests(TestCase):
     """Tests related to the search overview page, /prm/view/searches"""
+    def setUp(self):
+        super(SearchesOverviewTests, self).setUp()
+
+        # Create a user to login as
+        self.staff_user = UserFactory()
+        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
+        self.staff_user.groups.add(group)
+        self.staff_user.save()
+
+        # Create a company
+        self.company = CompanyFactory()
+        self.company.save()
+        self.admin = CompanyUserFactory(user=self.staff_user,
+                                        company=self.company)
+
+        # Create a contact
+        self.contact = ContactFactory()
+        self.contact.user = UserFactory(email="test@test.com")
+        self.contact.save()
+
+        # Create a partner
+        self.partner = PartnerFactory(owner=self.company)
+        self.partner.add_contact(self.contact)
+        self.partner.save()
+
+        # Create a TestClient
+        self.client = TestClient()
+        self.client.login_user(self.staff_user)
+
+    def get_url(self, **kwargs):
+        args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
+        args = '&'.join(args)
+        return reverse('partner_searches') + '?' + args
 
     def test_no_searches(self):
-        raise NotImplementedError()
+        url = self.get_url(company=self.company.id,
+                     partner=self.partner.id)
+        response = self.client.get(url)
+        soup = BeautifulSoup(response.content)
+        self.assertIn("Currently %s has no Saved Searches" % self.partner.name,
+                      soup.get_text())
 
     def test_render_search_list(self):
-        raise NotImplementedError()
+        for _ in range(10):
+            PartnerSavedSearchFactory(user=self.contact.user,
+                                      provider=self.company,
+                                      created_by=self.staff_user)
+
+        # Get the page
+        url = self.get_url(company=self.company.id,
+                           partner=self.partner.id)
+        response = self.client.get(url)
+        soup = BeautifulSoup(response.content)
+        searches = soup.find(id='searches')
+
+        self.assertEqual(len(searches('tr')), 11)
 
 
 class SearchFeedTests(TestCase):
     """Tests relating to the search feed page, /prm/view/searches/feed"""
+    def setUp(self):
+        super(SearchFeedTests, self).setUp()
+
+        # Create a user to login as
+        self.staff_user = UserFactory()
+        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
+        self.staff_user.groups.add(group)
+        self.staff_user.save()
+
+        # Create a company
+        self.company = CompanyFactory()
+        self.company.save()
+        self.admin = CompanyUserFactory(user=self.staff_user,
+                                        company=self.company)
+
+        # Create a contact
+        self.contact = ContactFactory()
+        self.contact.user = UserFactory(email="test@test.com")
+        self.contact.save()
+
+        # Create a partner
+        self.partner = PartnerFactory(owner=self.company)
+        self.partner.add_contact(self.contact)
+        self.partner.save()
+
+        self.search = PartnerSavedSearchFactory(provider=self.company,
+                                                created_by=self.staff_user,
+                                                user=self.contact.user)
+
+        # Create a TestClient
+        self.client = TestClient()
+        self.client.login_user(self.staff_user)
+
+    def get_url(self, **kwargs):
+        args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
+        args = '&'.join(args)
+        return reverse('partner_view_full_feed') + '?' + args
 
     def test_details(self):
-        raise NotImplementedError()
+        url = self.get_url(company=self.company.id,
+                           partner=self.partner.id,
+                           id=self.search.id)
 
-    def test_feed_results(self):
-        raise NotImplementedError()
+        response = self.client.get(url)
+        soup = BeautifulSoup(response.content)
+
+        self.assertEqual(response.status_code, 200)
+        details = soup.find(id="saved-search-listing-details")
+
+        self.assertIn('Active', details.find('h2').get_text())
+        texts = ['http://www.my.jobs/jobs',
+                 'Weekly on Monday',
+                 'Relevance',
+                 'Never',
+                 'alice@example.com',
+                 'All jobs from www.my.jobs']
+        details = details('div', recursive=False)
+        for i, text in enumerate(texts):
+            self.assertIn(text, details[i].get_text())
 
 
 class SearchEditTests(TestCase):
