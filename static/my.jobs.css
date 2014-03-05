@@ -302,6 +302,23 @@ h1 > small > a:hover {
     display: block;
 }
 
+#donut-box {
+    width: 278px;
+    height: 200px;
+}
+
+/* img == ajax spinner */
+#donut-box img{
+    margin-top: 25%;
+    margin-left: 37%;
+}
+
+/* img == ajax spinner */
+.big-chart img {
+    margin-top: 35%;
+    margin-left: 60%;
+}
+
 .prm-valid {
     padding: 5px 7px !important;
     display: inline-block !important;
@@ -337,6 +354,19 @@ h1 > small > a:hover {
     color: #8c96a1;
 }
 
+.big-chart {
+    float: left;
+    display: inline-block;
+    width: 360px;
+    height: auto;
+}
+
+.chart-box-holder {
+    width: 100px;
+    display: inline-block;
+    float: left;
+}
+
 .chart-box {
     text-align: center;
     background-color: #5eb95e;
@@ -350,6 +380,9 @@ h1 > small > a:hover {
 
 .chart-box.inline-box {
     display: inline-block;
+    margin-right: 20px;
+    margin-bottom: 0;
+    float: left;
 }
 
 .chart-box + .chart-box {
@@ -372,11 +405,12 @@ h1 > small > a:hover {
     font-size: 3em;
     line-height: 30px;
     margin-top: 20px;
+    margin-bottom: 5px;
 }
 
 .chart-box > .reports-record-type {
     font-weight: bold;
-    font-size: 0.9em;
+    line-height: 14px;
 }
 
 #donutchart > .chart-box {
@@ -388,25 +422,73 @@ h1 > small > a:hover {
 }
 
 #donutchart > .chart-box + .chart-box {
-    margin-top: 61px;
+    margin-top: 66px;
     height: 46px;
 }
 
 #donutchart > .chart-box + .chart-box + .chart-box {
-    margin-top: 122px;
+    margin-top: 132px;
     height: 45px;
 }
 
-#donutchart > .chart-box > .big-num {
+#donutchart > .chart-box > .big-num,
+.small-chart-box > .big-num {
     font-size: 1.3em;
     line-height: normal;
     margin-top: 5px;
+    margin-bottom: 0;
 }
 
-#donutchart > .chart-box > .reports-record-type {
+#donutchart > .chart-box > .reports-record-type,
+.small-chart-box > .reports-record-type {
     font-size: 0.7em;
     line-height: 10px;
 }
+
+.big-trans-box {
+    height: 360px;
+}
+
+.small-chart-box {
+    width: 50px;
+    height: 45px;
+}
+
+.all-contacts-table {
+    width: 100%;
+    border: 1px solid #d5d4d0;
+}
+
+.all-contacts-table + .all-contacts-table {
+    margin-top: 20px;
+}
+
+.all-contacts-table tr {
+    background-color: rgb(250, 250, 250);
+}
+
+.all-contacts-table tr > td {
+    width: 56px;
+    padding: 10px 5px;
+}
+
+.all-contacts-table tr > td + td {
+    width: 248px;
+}
+
+.all-contacts-table tr > td + td + td {
+    width: 150px;
+}
+
+.all-contacts-table .chart-box + .chart-box {
+    margin-right: 0;
+}
+
+.rounded-gravatar {
+    border: 1px solid #000;
+    border-radius: 5px;
+}
+
 
 /* Sort by field in saved search save/edit */
 #saved-search-form label[for^='id_sort_by'],
@@ -423,15 +505,14 @@ h1 > small > a:hover {
     position: absolute;
     display: inline;
     margin-left: 10px;
-    margin-top: 5px;
 }
 
 .profile-unit h4 {
-    color: #000;    
+    color: #000;
 }
 
 .action th {
-    background-color: #FFF;   
+    background-color: #FFF;
 }
 
 #profileTitleRow{
@@ -457,7 +538,7 @@ h1 > small > a:hover {
 #profile-completion {
     font-weight: bold;
     line-height: 25px;
-    padding: 6px !important; 
+    padding: 6px !important;
 }
 
 #highlight {
@@ -471,22 +552,22 @@ h1 > small > a:hover {
 .add-module-btn span{
     font-weight: bold;
 }
-    
+
 .reset-form-input input[type="text"],
 .reset-form-input input[type="password"] {
     width: 100%;
 }
 
-#moduleBank {    
-    z-index:99;  
+#moduleBank {
+    z-index:99;
 }
 
 table#row-link-table {
-    border-collapse: collapse;   
+    border-collapse: collapse;
 }
 
 #row-link-table tr {
-    background-color: rgb(250, 250, 250);    
+    background-color: rgb(250, 250, 250);
 }
 
 #row-link-table tr:hover {
@@ -509,11 +590,11 @@ table#row-link-table {
 
 #row-link-table td {
     padding: 5px;
-    width: 40%;    
+    width: 40%;
     border-bottom: 1px solid #eae6de;
 }
 
-#row-link-table td:first-child {    
+#row-link-table td:first-child {
     width: 10%;
 }
 
@@ -522,54 +603,18 @@ table#row-link-table {
     margin-left: -10px;
 }
 
-#date_activity {
-    float: right;    
-    margin-right: 60px;
-    margin-top: -80px;    
-}
-
-#date_activity a {
-    display: block;
-    text-decoration: none;    
-}
-
-.arrow-down {
-    float: right;
-	width: 0; 
-	height: 0; 
-	border-left: 15px solid transparent;
-	border-right: 15px solid transparent;	
-	border-top: 15px solid #444;
-	margin-top: -34px;
-	margin-right: -38px;
-}
-
-.date_range {
-    display: none;    
-    position: absolute;
-	height: 200px;
-	width: 250px;
-	background: #f2f2f2;
-	box-shadow: 0 0 4px #888888;	
-	padding: 8px;
-	z-index: 1000;
-	margin-top: -40px;
-	margin-left: 32px;
-	
-}
-
-.link-list {     
-    list-style-type: none; 
+.link-list {
+    list-style-type: none;
     background-color: rgb(250, 250, 250);
     margin: 0;
-    padding: 0;    
+    padding: 0;
 }
 
 .link-list li {
     display: block;
     background-color: rgb(250, 250, 250);
     border-bottom: 1px solid #eae6de;
-    padding: 5px;      
+    padding: 5px;
 }
 
 .link-list li:last-child {
@@ -585,15 +630,15 @@ table#row-link-table {
 }
 
 .text-middle {
-    vertical-align: middle;   
+    vertical-align: middle;
 }
 
 .candidate-name {
-    font-size: 1.5em;   
+    font-size: 1.5em;
 }
 
 .candidate-name-bold {
-    font-weight: bold;   
+    font-weight: bold;
 }
 
 .microsite-name {
@@ -603,14 +648,14 @@ table#row-link-table {
     font-family: inherit;
 }
 
-#no-activity {    
+#no-activity {
     background-color: #FFF;
-    width: 95%;    
+    width: 95%;
     padding: 10px;
 }
 
 .btn + .btn-success {
-    color: #FFF !important;  
+    color: #FFF !important;
 }
 
 .btn {
@@ -618,7 +663,7 @@ table#row-link-table {
 }
 
 .accordion-body {
-    background-color: rgb(250, 250, 250);   
+    background-color: rgb(250, 250, 250);
 }
 
 .centered {
@@ -639,12 +684,12 @@ table#row-link-table {
 
 /*Microsite Activity*/
 #header-inline h1, #header-inline h4 {
-    display: inline;      
+    display: inline;
 }
 
 .margin-left {
     padding-left: 18px;
-    padding-right: 5px;    
+    padding-right: 5px;
 }
 
 .activity-table td {
@@ -658,7 +703,7 @@ table#row-link-table {
 
 /*Ajax Indicator*/
 #ajax-busy {
-    display: none;    
+    display: none;
     position: fixed;
     left: 31%;
     top: 30%;
@@ -669,13 +714,13 @@ table#row-link-table {
     opacity: .75;
     border: 1px solid #000;
     z-index: 9999;
-}   
-    
+}
+
 /* bootstrap .table-striped class */
 .table-striped thead th {
     background-color: #FFF;
     color: #000;
-}    
+}
 
 .table-striped tbody tr:nth-child(even) td {
     background-color: #cbcbcb;
@@ -698,15 +743,15 @@ table#row-link-table {
 
 /*New Account initial form*/
 #newAccountData .initial {
-    display: none;   
+    display: none;
 }
 
 #newAccountData .input-prepend {
-    width: 95%;  
+    width: 95%;
 }
 
 #newAccountData .hasRegions {
-    margin-left: -20px;  
+    margin-left: -20px;
 }
 
 #newAccountData li {
@@ -718,7 +763,7 @@ table#row-link-table {
     display: none;
 }
 
-#newAccountData li input, 
+#newAccountData li input,
 #newAccountData li select {
     width: 100%;
 }
@@ -845,7 +890,7 @@ ul.ui-autocomplete {
     width: 200px;
 }
 
-.topbar .btn {        
+.topbar .btn {
     padding-bottom: 2px;
 }
 
@@ -909,7 +954,7 @@ fieldset textarea,
 }
 
 #title h1 {
-    text-indent: -9000px;    
+    text-indent: -9000px;
     display: block;
     height: 149px;
     margin-top: 40px;
@@ -942,7 +987,7 @@ fieldset textarea,
     border-left: 1px solid #e6e6e6;
     border-right: 1px solid #e6e6e6;
     border-bottom: 1px solid #e6e6e6;
-    border-radius: 5px;    
+    border-radius: 5px;
 }
 
 .loginBox {
@@ -951,10 +996,10 @@ fieldset textarea,
     border-radius: 5px;
 }
 
-.formBox h2, 
-.formBox h3, 
-.formBox h4, 
-.formBox h5, 
+.formBox h2,
+.formBox h3,
+.formBox h4,
+.formBox h5,
 .formBox h6 {
     margin-left: -5px;
     margin-right: -5px;
@@ -978,7 +1023,7 @@ fieldset textarea,
 }
 
 .formBox table {
-    width: 100%;    
+    width: 100%;
 }
 
 .formBox > table > thead > tr > td {
@@ -1022,7 +1067,7 @@ fieldset textarea,
 }
 
 #titleRow .loginBox, #titleRow .profileBox {
-    margin-top: 105px;   
+    margin-top: 105px;
 }
 
 .formBox + .formBox {
@@ -1033,17 +1078,17 @@ fieldset textarea,
     background-color: #FFF;
     padding: 10px 10px 30px 10px;
     border-radius: 5px;
-    margin-top: 105px;   
+    margin-top: 105px;
 }
 
 .formBox,
 .account-box h3 {
-    color: #FFF;    
+    color: #FFF;
 }
 
 .formBox,
 .account-box h3 {
-    color: #000;    
+    color: #000;
 }
 
 .loginBox a {
@@ -1075,7 +1120,7 @@ fieldset textarea,
 }
 
 .profileBox p {
-    color: #000;    
+    color: #000;
 }
 
 .loginBox p {
@@ -1127,7 +1172,7 @@ fieldset textarea,
 .loginBox .select-label label,
 .loginBox .add-on label {
     display: inline;
-    text-align: left;    
+    text-align: left;
 }
 
 .loginBox label[for=id_remember_me] {
@@ -1149,7 +1194,7 @@ fieldset textarea,
 }
 
 .loginBox .help-block {
-    display: block;   
+    display: block;
     font-size: 1em;
     padding-right: 10px;
     text-align: right;
@@ -1165,7 +1210,7 @@ fieldset textarea,
 }
 
 #newAccountInfo {
-    height: 100%:    
+    height: 100%:
 }
 
 #newAccountData {
@@ -1317,11 +1362,15 @@ em.pendingText {
 .alert-message.block-message.error label {
     /*text-shadow: 1px 1px 1px #000;*/
 }
-    
+
 /* Topbar Dropdown Styles*/
 .topbar ul {
     list-style: none;
     text-align: left;
+}
+
+#nav {
+    z-index: 1;
 }
 
 #nav:hover {
@@ -1330,7 +1379,7 @@ em.pendingText {
 }
 
 #nav > li {
-    padding: 6px 2px 4px 2px;    
+    padding: 6px 2px 4px 2px;
 }
 
 #nav a {
@@ -1475,7 +1524,7 @@ em.pendingText {
     #settings-link {
         display: none !important;
     }
-    
+
     #account-link, #logout-link {
         display: block;
     }
@@ -1675,7 +1724,7 @@ form input[type='checkbox'] {
 }
 
 .gravatar {
-    padding: 4px;   
+    padding: 4px;
 }
 
 .info-row {
@@ -1745,7 +1794,72 @@ td .gravatar-blank,
     margin-top: 14px;
 }
 
+
+/* Time filter styling */
+.arrow-down {
+    float: right;
+	width: 0;
+	height: 0;
+	border-left: 7px solid transparent;
+	border-right: 7px solid transparent;
+	border-top: 7px solid #444;
+	margin-top: -12px;
+	margin-right: -25px;
+}
+
+.date-range {
+    color: #444;
+}
+
+.date-range:hover {
+    text-decoration: none;
+}
+
+#date-selection .btn {
+    display: inline !important;
+}
+
+.date-range-select-form {
+    display: none;
+    position: absolute;
+    height: 200px;
+    width: 270px;
+    margin-left: -207px;
+    background: #f2f2f2;
+    border-radius: 4px;
+    box-shadow: 0 0 4px #888;
+    padding: 10px 20px 5px 10px;
+    z-index: 1000;
+}
+
+.date-range-select-form-visible {
+    display: block;
+}
+
+#dashboard-time-filter {
+    margin-right: 30px;
+    margin-top: -20px;
+}
+
+#candidate-time-filter {
+    margin-right: 30px;
+}
+
+#candidate-time-filter .date-range-select-form {
+    margin-left: -215px;
+    margin-top: 7px;
+}
+
 @media screen and (max-width: 1024px) {
+    .arrow-down-a {
+        border-style: none !important;
+        display: none !important;
+    }
+
+    .date-range-select-form {
+        margin-left: -195px;
+    }
+
     input[type=checkbox] {
         -moz-appearance: none;
     }
@@ -1756,7 +1870,7 @@ td .gravatar-blank,
 
     .topbar-inner {
         background: #444;
-        height: 50px;        
+        height: 50px;
         border-bottom: 20px solid #a95051;
     }
 
@@ -1765,13 +1879,13 @@ td .gravatar-blank,
         font-size: 2em;
         height: 25px;
         line-height: 20px;
-        padding: 10px !important;        
+        padding: 10px !important;
     }
-    
+
     #logout-link, #account-link {
         display: none !important;
     }
-    
+
     #pop-menu {
         height: 100%;
     }
@@ -1868,7 +1982,7 @@ td .gravatar-blank,
         border-right: 0;
         font-size: 2em;
         height: 25px;
-        padding: 10px;        
+        padding: 10px;
     }
 
     .loginBox a {
@@ -1953,9 +2067,35 @@ td .gravatar-blank,
     #gravatar {
         padding-left: 100px;
     }
+
+    #validated {
+        padding: 7px;
+        margin-top: 3px;
+    }
 }
 
 @media screen and (max-width: 500px) {
+    .date-range-select-form {
+        background: inherit;
+        box-shadow: inherit;
+        position: inherit;
+        margin-left: 0px;
+    }
+
+    #dashboard-time-filter {
+        margin-right: 0px;
+        margin-top: 0px;
+        width: 100%;
+    }
+
+    #candidate-time-filter {
+        margin-top: 15px;
+    }
+
+    .date-range {
+        margin-bottom: 10px;
+    }
+
     .site-progress {
         margin-top: 0;
     }
@@ -1963,14 +2103,14 @@ td .gravatar-blank,
     #profile-completion {
         display: none;
     }
-    
-    .profile-mobile table, 
-    .profile-mobile thead, 
-    .profile-mobile tbody, 
-    .profile-mobile th, 
-    .profile-mobile td, 
-    .profile-mobile tr { 
-        display: block; 
+
+    .profile-mobile table,
+    .profile-mobile thead,
+    .profile-mobile tbody,
+    .profile-mobile th,
+    .profile-mobile td,
+    .profile-mobile tr {
+        display: block;
     }
     #profileTitleRow .span2{
         float: left;
@@ -1980,49 +2120,49 @@ td .gravatar-blank,
         float: left;
         width: auto;
     }
-    
+
     #profileTitleBar {
         border: 0;
     }
-    
+
     #profileTitleBar h1{
         font-size: 1.5em;
         line-height: auto;
-        margin: 0;        
+        margin: 0;
     }
-    
+
     #profileTitleBar h3{
         font-size: .8em;
         line-height: auto;
         margin: 0;
     }
-    
+
     #profileSubtitleBar {
         display: block;
         float: none;
         width: auto;
     }
-    
+
     #profileSubtitleBar a {
         display: block;
         margin: 5px 0
     }
-    
-    .profile-mobile thead tr { 
+
+    .profile-mobile thead tr {
         position: absolute;
         top: -9999px;
         left: -9999px;
     }
 
-    .profile-mobile tr { 
-        border: 1px solid #ccc; 
+    .profile-mobile tr {
+        border: 1px solid #ccc;
     }
 
     .profile-mobile thead + tbody > tr > td {
         border: none;
-        border-bottom: 1px solid #eee; 
+        border-bottom: 1px solid #eee;
         position: relative;
-        padding-left: 50%; 
+        padding-left: 50%;
         white-space: normal;
         text-align:left;
     }
@@ -2039,13 +2179,13 @@ td .gravatar-blank,
         position: absolute;
         top: 6px;
         left: 6px;
-        width: 45%; 
-        padding-right: 10px; 
+        width: 45%;
+        padding-right: 10px;
         white-space: nowrap;
         text-align:left;
         font-weight: bold;
      }
-  
+
     .table-striped tbody tr:nth-child(even) td {
         background-color: #FFF !important;
     }
@@ -2053,28 +2193,28 @@ td .gravatar-blank,
     .table-striped tbody tr:nth-child(odd) td {
         background-color: #FFF !important;
     }
-      
+
     .profile-mobile td:before {
         content: attr(data-title);
     }
-    
+
     .form-label {
         text-align: left;
-        margin-left: 0px;        
+        margin-left: 0px;
     }
-    
+
     .account-box select {
-        width: 100%;    
+        width: 100%;
     }
-    
+
     .formBox select {
-        width: 100%;    
+        width: 100%;
     }
-    
+
     #moduleColumn td.action {
         width: auto;
     }
-    
+
     .add-module-btn,
     .profile-mobile a.btn,
     .profile-mobile a.btn-link {
@@ -2129,7 +2269,7 @@ td .gravatar-blank,
     .sum-edit{
         float: none;
     }
-    
+
     #moduleBank {
         margin-top: 20px;
     }
@@ -2176,8 +2316,8 @@ td .gravatar-blank,
         margin-left: auto;
         margin-right: auto;
     }
-    
-    /*Employer Dashboard*/    
+
+    /*Employer Dashboard*/
     #details-user-list-collapse {
         display: none;
     }
@@ -2197,55 +2337,35 @@ td .gravatar-blank,
         text-decoration: none;
     }
 
-    #row-link-table td {        
+    #row-link-table td {
         width: 80%;
     }
 
-    #row-link-table td:first-child {    
+    #row-link-table td:first-child {
         width: 20%;
     }
 
     #company-information {
         margin-top: 10px;
     }
-    
-    #date_activity {    
-        margin-top: -40px;    
-        margin-right: 40px;
+
+    .endless_loading {
+        display: none !important;
     }
-    
-    #date_activity a {
-        border: none;
-        background-color: transparent;
-    }
-        
-    #date-selection input[type="submit"].btn {
-        display: inline !important;
-        margin-right: 5px;
-    }
-    
-    .date_range {
-        top: 202px;
-        margin-left: 105px;
-    }
-    
-    .arrow-down {
-        margin-top: -49px;   
-    }
-    
+
     .formBox h4 {
         border: none;
         background-color: transparent;
     }
 
     .margin-left {
-        padding-left: 10px;                
+        padding-left: 10px;
     }
 
     .activity-mobile {
         margin-left: -10px;
         padding-top: 10px;
-        margin-bottom: -30px;                
+        margin-bottom: -30px;
     }
 
     .activity-mobile input {
@@ -2255,11 +2375,6 @@ td .gravatar-blank,
 
     .move-left {
         margin-left: 0;
-    }
-
-    #date-range {
-        position: absolute;
-        margin-top: -115px;
     }
 
     /* Partner Relationship Manager */
@@ -2293,35 +2408,35 @@ td .gravatar-blank,
     #prm-mobile-row-buttons {
         margin-bottom: 40px;
     }
-    
+
     /* Microsite Activity Page*/
     #candidate-activity-details-table {
     overflow-y: auto;
     height: auto;
     max-height: 520px;
-    overflow-x: hidden;    
+    overflow-x: hidden;
     }
 
     .btn-size {
-        width: 87%;    
+        width: 87%;
     }
-    
+
     /*Ajax Indicator*/
     #ajax-busy {
         margin: 0 0 0 -65px; /* left margin is half width of the div, to center it */
         padding: 30px 10px 10px 10px;
         left: 25%;
-        width: 300px;        
+        width: 300px;
     }
 
     .checkbox-margin {
-        padding-top: 14px;    
+        padding-top: 14px;
     }
-    
+
     .inbox-alert {
-        display: none;        
+        display: none;
     }
-    
+
     #titleRow {
         margin-top: 0;
     }
@@ -2332,13 +2447,13 @@ td .gravatar-blank,
 
     #titleRow {
          background-image: none;
-         min-height: 100px; 
+         min-height: 100px;
     }
 
     #titleRow .loginBox {
          margin-top: 5px;
          margin-bottom: 5px;
-    }    
+    }
 
     .topbar #topbar-login ul {
         margin-top: -30px;
@@ -2362,7 +2477,7 @@ td .gravatar-blank,
 
     .form-label {
         width: 96%;
-    }    
+    }
 
     input[type=checkbox] {
         float: left;
@@ -2396,6 +2511,7 @@ td .gravatar-blank,
 
     #saved-search-form #validated {
         margin-top: 0;
+        padding: 3px;
     }
 
     #saved-search-form #mobile-url-container {
@@ -2423,20 +2539,20 @@ td .gravatar-blank,
         padding-left: 0;
         padding-right: 0;
     }
-    
+
     .refresh,
     .calendar {
         display: inline-block !important;
     }
-    
+
     .profile-form-input {
-        padding-bottom: 5px;    
+        padding-bottom: 5px;
     }
-    
+
     #saved-search-form label[for^='id_edit_sort_by'] {
         margin: 0px;
     }
-    
+
     #saved-search-form div[class*=id_edit_sort_by] {
         display: inline;
     }
@@ -2792,7 +2908,6 @@ table td, table th {
 
 #validated {
     display: inline;
-    padding: 7px;
 }
 
 #saved-search-form #id_day_of_month,
@@ -2954,6 +3069,7 @@ body.modal-open {
 #partner-menu {
     margin: 0;
     position: absolute;
+    z-index: 1;
 }
 
 #company-menu a,
@@ -3070,6 +3186,22 @@ body.modal-open {
 .contact-record-tr:hover td {
     background-color: rgb(230, 230, 230) !important;
     cursor: pointer;
+}
+
+.activity-record-tr:hover td {
+    cursor: pointer;
+}
+
+#activity-table tr {
+    height: 75px;
+    max-height: 75px;
+    overflow: hidden;
+}
+
+.tip-content #activity-table tr {
+    height: 100px;
+    max-height: 100px;
+    overflow: hidden;
 }
 
 .one-hundred-percent-button-border-boxed {

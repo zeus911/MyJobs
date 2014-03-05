@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load common_tags %}
+
 {% block site-title %}
     <title>Partner Reports {{ company.name }}</title>
     <meta name="title" content="Partner Reports {{ company.name }}">
@@ -7,6 +8,11 @@
 {% load i18n %}
 {% block meta-extra %}
 <script src="{{ STATIC_URL }}partner-reports.js{% cache_buster %}"></script>
+
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+    google.load("visualization", "1", {packages:["corechart"]});
+</script>
 {% endblock %}
 
 {% block content %}
@@ -17,53 +23,81 @@
             <a href="{% url "partner_overview" %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
         </div>
     </div>
+    {% if total_records or referral %}
+    <div class="row">
+        {% if total_records %}
+        <div class="span6">
+            <div class="big-chart big-trans-box" id="ajax-loading-donut">
+                <img src="{{ STATIC_URL }}images/ajax-loader.gif">
+            </div>
+            <div class="big-chart" id="donutchart" style="display:none"></div>
+            <div class="chart-box-holder" style="display:none"></div>
+        </div>
+        {% endif %}
+        {% if referral %}
+        <div class="span6">
+            <div class="big-chart big-trans-box" id="ajax-loading-bar">
+                <img src="{{ STATIC_URL }}images/ajax-loader.gif">
+            </div>
+            <div class="big-chart" id="barchart" style="display:none"></div>
+            <div class="chart-box-holder" style="display:none"></div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
     <div class="row">
         <div class="span6">
-            <div class="big-donutchart">
-                {% for record_type in record_types %}
-                <div class="chart-box">
-                    <div class="big-num">{{ record_type.1.count }}</div>
-                    <div class="reports-record-type">{{ record_type.0 }}</div>
+            <h4>All Contacts</h4>
+            {% for contact in contacts %}
+            <table class="all-contacts-table">
+                <tr>
+                    <td>
+                        <span>{% get_nonuser_gravatar contact.name '55' %}</span>
+                    </td>
+                    <td>
+                        {{ contact.name }}<br>
+                        {{ contact.email }}
+                    </td>
+                    <td>
+                        <div class="chart-box small-chart-box inline-box">
+                            <div class="big-num">{{ contact.ref_count }}</div>
+                            <div class="reports-record-type">Referral Records</div>
+                        </div>
+                        <div class="chart-box small-chart-box inline-box">
+                            <div class="big-num">{{ contact.cr_count }}</div>
+                            <div class="reports-record-type">Contact Records</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+            {% endfor %}
+        </div>
+        <div class="span6">
+            {% if top_contacts.count >= 3 %}
+            <h4>Top 3 Contacts</h4>
+            {% elif top_contacts.count == 2 %}
+            <h4>Top {{ top_contacts.count }} Contacts</h4>
+            {% else %}
+            <h4>Top Contact</h4>
+            {% endif %}
+            <div id="top-contacts">
+                {% for contact in top_contacts %}
+                <div class="chart-box inline-box">
+                    <div class="big-num">{{ contact.count }}</div>
+                    <div class="reports-record-type">{{ contact.contact_name|truncatechars:13 }}</div>
                 </div>
                 {% endfor %}
-            </div>
-
-        </div>
-        <div class="span6"></div>
-    </div>
-    <div class="row">
-        <div class="span6">
-            <div class="formBox no-padding">
-                <h4>All Contacts</h4>
-                <table class="table table-striped">
-                    {% for contact in contacts%}
-                    <tr>
-                        <td>
-                            {{ contact.name }}
-                            <br>
-                            {{ contact.email }}
-                        </td>
-                        <td>
-                            <div>
-                                1
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                10
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </table>
+                {% if others %}
+                <div class="chart-box inline-box" style="margin-right:0">
+                    <div class="big-num">{{ others }}</div>
+                    <div class="reports-record-type">All Others</div>
+                </div>
+                {% endif %}
             </div>
         </div>
-        <div class="span6">
-            <h4>Top 3 Contacts</h4>
-            <div class="chart-box inline-box"></div>
-            <div class="chart-box inline-box"></div>
-            <div class="chart-box inline-box"></div>
-            <div class="chart-box inline-box"></div>
-        </div>
     </div>
+    <input id="company" type="hidden" value="{{ company.id }}">
+    <input id="partner" type="hidden" value="{{ partner.id }}">
+    <input id="ref-count" type="hidden" value="{{ referral }}">
+    <input id="cr-count" type="hidden" value="{{ total_records }}">
 {% endblock %}

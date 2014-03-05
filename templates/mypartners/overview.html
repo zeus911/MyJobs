@@ -17,7 +17,6 @@
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
     google.load("visualization", "1", {packages:["corechart"]});
-    google.setOnLoadCallback(drawChart);
 </script>
 
 {% endblock %}
@@ -73,25 +72,15 @@
                     <thead>
                         <tr>
                             <td>Date/Time</td>
+                            <td>Type</td>
                             <td>Contact</td>
-                            <td>Communication</td>
                         </tr>
                     </thead>
                     {% if recent_communication %}
-                    {% for record in recent_communication %}
-                        <tr>
-                            <td>{{ record.date_time }}</td>
-                            <td>{{ record.get_record_description }}</td>
-                            <td>
-                                Subject: {{ record.subject }}<br/>
-                                {{ record.notes }}
-                            </td>
-                        </tr>
-                    {% endfor %}
+                        {% get_record_block recent_communication company partner %}
                     {% else %}
                     <tr>
-                        <td>No Recent Communication Records</td>
-                        <td></td><td></td>
+                        <td colspan=5>No Recent Communication Records.</td>
                     </tr>
                     {% endif %}
                 </table>
@@ -136,7 +125,10 @@
         </div>
         <div class="span4 mobile_hide">
             <div class="info-box">
-                <div id="donutchart"></div>
+                <div id="donut-box">
+                    <img src="{{ STATIC_URL }}images/ajax-loader.gif">
+                    <div id="donutchart" style="display:none"></div>
+                </div>
                 <a class="btn" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">View Reports</a>
             </div>
 
@@ -148,4 +140,5 @@
     </div>
     <input id="company" type="hidden" value="{{ company.id }}">
     <input id="partner" type="hidden" value="{{ partner.id }}">
+    <input id="cr-count" type="hidden" value="{{ count }}">
 {% endblock %}
