@@ -361,6 +361,18 @@ h1 > small > a:hover {
     height: auto;
 }
 
+.big-chart > div > div > .piehole > .piehole-big {
+    margin-top: 10px;
+    font-size: 3em;
+    margin-bottom: 20px;
+}
+
+.big-chart > div > div > .piehole > .piehole-topic {
+    font-size: 1.3em;
+    line-height: 20px;
+    margin-bottom: 10px;
+}
+
 .chart-box-holder {
     width: 100px;
     display: inline-block;

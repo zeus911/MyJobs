@@ -8,10 +8,17 @@
 {% load i18n %}
 {% block meta-extra %}
 <script src="{{ STATIC_URL }}partner-reports.js{% cache_buster %}"></script>
+<script src="{{ STATIC_URL }}record_overview.js{% cache_buster %}"></script>
 
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
     google.load("visualization", "1", {packages:["corechart"]});
+</script>
+<script>
+var total_records = {{ total_records }};
+var total_ref = {{ referral }};
+var company_id = {{ company.id }};
+var partner_id = {{ partner.id }};
 </script>
 {% endblock %}
 
@@ -21,6 +28,7 @@
         <div class="span12 prm-header">
             <span>Reports</span>
             <a href="{% url "partner_overview" %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
+            <span class="pull-right" id="candidate-time-filter">{% include "time_filter.html" %}</span>
         </div>
     </div>
     {% if total_records or referral %}
@@ -96,8 +104,4 @@
             </div>
         </div>
     </div>
-    <input id="company" type="hidden" value="{{ company.id }}">
-    <input id="partner" type="hidden" value="{{ partner.id }}">
-    <input id="ref-count" type="hidden" value="{{ referral }}">
-    <input id="cr-count" type="hidden" value="{{ total_records }}">
 {% endblock %}

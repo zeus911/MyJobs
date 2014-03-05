@@ -17,6 +17,9 @@
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
     google.load("visualization", "1", {packages:["corechart"]});
+    var company_id = {{ company.id }};
+    var partner_id = {{ partner.id }};
+    var total_records = {{ count }};
 </script>
 
 {% endblock %}
@@ -127,10 +130,12 @@
         </div>
         <div class="span4 mobile_hide">
             <div class="info-box">
+                {% if count %}
                 <div id="donut-box">
                     <img src="{{ STATIC_URL }}images/ajax-loader.gif">
                     <div id="donutchart" style="display:none"></div>
                 </div>
+                {% endif %}
                 <a class="btn" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">View Reports</a>
             </div>
 
@@ -140,7 +145,4 @@
 
         </div>
     </div>
-    <input id="company" type="hidden" value="{{ company.id }}">
-    <input id="partner" type="hidden" value="{{ partner.id }}">
-    <input id="cr-count" type="hidden" value="{{ count }}">
 {% endblock %}

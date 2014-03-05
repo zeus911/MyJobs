@@ -288,11 +288,12 @@ def prm_overview(request):
 
     """
     company, partner, user = prm_worthy(request)
+    most_recent_activity = get_logs_for_partner(partner)
     dt_range = [datetime.now() + timedelta(-30), datetime.now()]
     records = get_contact_records_for_partner(
-        partner, date_time_range=dt_range).count()
-    most_recent_activity = get_logs_for_partner(partner)
-    communication = get_contact_records_for_partner(partner)
+        partner, date_time_range=dt_range)
+    communication = records.order_by('-created_on')
+    records = records.exclude(contact_type='job').count()
     most_recent_communication = communication[:3]
     saved_searches = get_searches_for_partner(partner)
     most_recent_saved_searches = saved_searches[:3]
@@ -470,6 +471,7 @@ def prm_records(request):
     return render_to_response('mypartners/main_records.html', ctx,
                               RequestContext(request))
 
+
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_report_records(request):
     ctx = get_record_context(request)
@@ -501,9 +503,6 @@ def get_record_context(request):
         'most_recent_activity': most_recent_activity,
         'partner': partner,
         'records': contact_records,
-        'most_recent_activity': most_recent_activity,
-        'contact_choices': contact_choices,
-        'contact_type_choices': contact_type_choices,
     }
     return ctx
 
@@ -721,6 +720,109 @@ def get_uploaded_file(request):
     return HttpResponseRedirect(path)
 
 
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def partner_main_reports(request):
+    company, partner, user = prm_worthy(request)
+    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
+    records = get_contact_records_for_partner(partner,
+                                              date_time_range=dt_range)
+    total_records_wo_followup = records.exclude(contact_type='job').count()
+    referral = records.filter(contact_type='job').count()
+
+    # need to order_by -count to keep the "All Contacts" list in proper order
+    all_contacts = records.values('contact_name', 'contact_email')\
+        .annotate(count=Count('contact_name')).order_by('-count')
+
+    # Used for Top Contacts
+    contact_records = records\
+        .exclude(contact_type='job')\
+        .values('contact_name', 'contact_email')\
+        .annotate(count=Count('contact_name')).order_by('-count')
+
+    # Individual Referral Records count
+    referral_list = records.filter(contact_type='job')\
+        .values('contact_name', 'contact_email')\
+        .annotate(count=Count('contact_name'))
+
+    # Merge contact_records with referral_list and have all contacts
+    # A contact can have 0 contact records and 1 referral record and still show up
+    # vice versa with 1 contact record and 0 referrals
+    contacts = []
+    for contact_obj in all_contacts:
+        contact = {}
+        name = contact_obj['contact_name']
+        email = contact_obj['contact_email']
+        contact['name'] = name
+        contact['email'] = email
+        for cr in contact_records:
+            if cr['contact_name'] == name and cr['contact_email'] == email:
+                contact['cr_count'] = cr['count']
+        if not 'cr_count' in contact:
+            contact['cr_count'] = 0
+        for ref in referral_list:
+            if ref['contact_name'] == name and ref['contact_email'] == email:
+                contact['ref_count'] = ref['count']
+        if not 'ref_count' in contact:
+            contact['ref_count'] = 0
+        contacts.append(contact)
+
+    # calculate 'All Others' in Top Contacts (when more than 3)
+    total_others = 0
+    if contact_records.count() > 3:
+        others = contact_records[3:]
+        top_contacts_records = contact_records[:3]
+        for contact in others:
+            total_others += contact['count']
+
+    ctx = {'partner': partner,
+           'company': company,
+           'contacts': contacts,
+           'total_records': total_records_wo_followup,
+           'referral': referral,
+           'top_contacts': contact_records,
+           'others': total_others}
+    return render_to_response('mypartners/partner_reports.html', ctx,
+                              RequestContext(request))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def partner_get_records(request):
+    if request.method == 'GET':
+        company, partner, user = prm_worthy(request)
+        dt_range = [datetime.now() + timedelta(-30), datetime.now()]
+        records = get_contact_records_for_partner(
+            partner, date_time_range=dt_range).exclude(contact_type='job')
+        email = records.filter(contact_type='email').count()
+        phone = records.filter(contact_type='phone').count()
+        facetoface = records.filter(contact_type='facetoface').count()
+
+        # figure names
+        if email != 1:
+            email_name = 'Emails'
+        else:
+            email_name = 'Email'
+        if phone != 1:
+            phone_name = 'Phone Calls'
+        else:
+            phone_name = 'Phone Call'
+        if facetoface != 1:
+            facetoface_name = 'Face to Face'
+        else:
+            facetoface_name = 'Face to Face'
+
+        data = {'email': {"count": email, "name": email_name},
+                'phone': {"count": phone, "name": phone_name},
+                'facetoface': {"count": facetoface, "name": facetoface_name}}
+        data = OrderedDict(sorted(data.items(), key=lambda t: t[1]['count']))
+        data_items = data.items()
+        data_items.reverse()
+        data = OrderedDict(data_items)
+        return HttpResponse(json.dumps(data))
+    else:
+        raise Http404
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_get_referrals(request):
     if request.method == 'GET':
         company, partner, user = prm_worthy(request)
@@ -742,15 +844,15 @@ def partner_get_referrals(request):
 
         # figure names
         app_name, interview_name, hire_name = '', '', ''
-        if applications > 1:
+        if applications != 1:
             app_name = 'Applications'
         else:
             app_name = 'Application'
-        if interviews > 1:
+        if interviews != 1:
             interview_name = 'Interviews'
         else:
             interview_name = 'Interview'
-        if hires > 1:
+        if hires != 1:
             hire_name = 'Hires'
         else:
             hire_name = 'Hire'
@@ -759,95 +861,6 @@ def partner_get_referrals(request):
                 'interviews': {'count': interviews, 'name': interview_name},
                 'hires': {'count': hires, 'name': hire_name}}
 
-        return HttpResponse(json.dumps(data))
-    else:
-        raise Http404
-
-
-@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
-def partner_main_reports(request):
-    company, partner, user = prm_worthy(request)
-    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-    records = get_contact_records_for_partner(partner,
-                                              date_time_range=dt_range)
-    total_records_wo_followup = records.exclude(contact_type='job').count()
-    referral = records.filter(contact_type='job').count()
-
-    top_contacts_records = ContactRecord.objects.filter(partner=partner.id)\
-        .exclude(contact_type='job')\
-        .values('contact_name', 'contact_email')\
-        .annotate(count=Count('contact_name')).order_by('-count')
-
-    referral_list = ContactRecord.objects.filter(partner=partner.id)\
-        .filter(contact_type='job')\
-        .values('contact_name', 'contact_email')\
-        .annotate(count=Count('contact_name'))
-
-    # merge lists for 'All Contacts' section
-    contacts = []
-    for contact_obj in top_contacts_records:
-        contact = {}
-        name = contact_obj['contact_name']
-        contact['name'] = name
-        contact['email'] = contact_obj['contact_email']
-        contact['cr_count'] = contact_obj['count']
-        for ref in referral_list:
-            if ref['contact_name'] == name:
-                contact['ref_count'] = ref['count']
-        if not 'ref_count' in contact:
-            contact['ref_count'] = 0
-        contacts.append(contact)
-
-    # calculate 'All Others'
-    total_others = 0
-    if top_contacts_records.count() > 3:
-        others = top_contacts_records[3:]
-        top_contacts_records = top_contacts_records[:3]
-        for contact in others:
-            total_others += contact['count']
-
-    ctx = {'partner': partner,
-           'company': company,
-           'contacts': contacts,
-           'total_records': total_records_wo_followup,
-           'referral': referral,
-           'top_contacts': top_contacts_records,
-           'others': total_others}
-    return render_to_response('mypartners/partner_reports.html', ctx,
-                              RequestContext(request))
-
-@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
-def partner_get_records(request):
-    if request.method == 'GET':
-        company, partner, user = prm_worthy(request)
-        dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-        records = get_contact_records_for_partner(
-            partner, date_time_range=dt_range).exclude(contact_type='job')
-        email = records.filter(contact_type='email').count()
-        phone = records.filter(contact_type='phone').count()
-        facetoface = records.filter(contact_type='facetoface').count()
-
-        # figure names
-        if email > 1:
-            email_name = 'Emails'
-        else:
-            email_name = 'Email'
-        if phone > 1:
-            phone_name = 'Phone Calls'
-        else:
-            phone_name = 'Phone Call'
-        if facetoface > 1:
-            facetoface_name = 'Face to Face'
-        else:
-            facetoface_name = 'Face to Face'
-
-        data = {'email': {"count": email, "name": email_name},
-                'phone': {"count": phone, "name": phone_name},
-                'facetoface': {"count": facetoface, "name": facetoface_name}}
-        data = OrderedDict(sorted(data.items(), key=lambda t: t[1]['count']))
-        data_items = data.items()
-        data_items.reverse()
-        data = OrderedDict(data_items)
         return HttpResponse(json.dumps(data))
     else:
         raise Http404
