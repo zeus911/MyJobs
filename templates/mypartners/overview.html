@@ -17,6 +17,7 @@
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
     google.load("visualization", "1", {packages:["corechart"]});
+    google.setOnLoadCallback(drawChart);
 </script>
 
 {% endblock %}
@@ -74,6 +75,7 @@
                             <td>Date/Time</td>
                             <td>Type</td>
                             <td>Contact</td>
+                            <td>Communication</td>
                         </tr>
                     </thead>
                     {% if recent_communication %}

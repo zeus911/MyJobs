@@ -25,6 +25,7 @@
         <div class="span12 prm-header">
             <span>Communication Records</span>
             <a href="{% url "partner_overview" %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
+            <span class="pull-right" id="candidate-time-filter">{% include "time_filter.html" %}</span>
 
         </div>
     </div>

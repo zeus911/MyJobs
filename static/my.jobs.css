@@ -371,6 +371,7 @@ h1 > small > a:hover {
     text-align: center;
     background-color: #5eb95e;
     border-radius: 5px;
+    background-color: #5eb95e;
     color: #FFF;
     width: 90px;
     height: 80px;
@@ -386,11 +387,15 @@ h1 > small > a:hover {
 }
 
 .chart-box + .chart-box {
+    margin-top: 61px;
+    height: 41px;
     border-color: #4bb1cf;
     background-color: #4bb1cf;
 }
 
 .chart-box + .chart-box + .chart-box {
+    margin-top: 122px;
+    height: 40px;
     border-color: #faa732;
     background-color: #faa732;
 }
@@ -505,6 +510,7 @@ h1 > small > a:hover {
     position: absolute;
     display: inline;
     margin-left: 10px;
+    margin-top: 5px;
 }
 
 .profile-unit h4 {
@@ -603,8 +609,44 @@ table#row-link-table {
     margin-left: -10px;
 }
 
-.link-list {
-    list-style-type: none;
+#date_activity {
+    float: right;    
+    margin-right: 60px;
+    margin-top: -80px;    
+}
+
+#date_activity a {
+    display: block;
+    text-decoration: none;    
+}
+
+.arrow-down {
+    float: right;
+	width: 0; 
+	height: 0; 
+	border-left: 15px solid transparent;
+	border-right: 15px solid transparent;	
+	border-top: 15px solid #444;
+	margin-top: -34px;
+	margin-right: -38px;
+}
+
+.date_range {
+    display: none;    
+    position: absolute;
+	height: 200px;
+	width: 250px;
+	background: #f2f2f2;
+	box-shadow: 0 0 4px #888888;	
+	padding: 8px;
+	z-index: 1000;
+	margin-top: -40px;
+	margin-left: 32px;
+	
+}
+
+.link-list {     
+    list-style-type: none; 
     background-color: rgb(250, 250, 250);
     margin: 0;
     padding: 0;
@@ -743,15 +785,15 @@ table#row-link-table {
 
 /*New Account initial form*/
 #newAccountData .initial {
-    display: none;
+    display: none;   
 }
 
 #newAccountData .input-prepend {
-    width: 95%;
+    width: 95%;  
 }
 
 #newAccountData .hasRegions {
-    margin-left: -20px;
+    margin-left: -20px;  
 }
 
 #newAccountData li {
@@ -763,7 +805,7 @@ table#row-link-table {
     display: none;
 }
 
-#newAccountData li input,
+#newAccountData li input, 
 #newAccountData li select {
     width: 100%;
 }
@@ -890,7 +932,7 @@ ul.ui-autocomplete {
     width: 200px;
 }
 
-.topbar .btn {
+.topbar .btn {        
     padding-bottom: 2px;
 }
 
@@ -954,7 +996,7 @@ fieldset textarea,
 }
 
 #title h1 {
-    text-indent: -9000px;
+    text-indent: -9000px;    
     display: block;
     height: 149px;
     margin-top: 40px;
@@ -987,7 +1029,7 @@ fieldset textarea,
     border-left: 1px solid #e6e6e6;
     border-right: 1px solid #e6e6e6;
     border-bottom: 1px solid #e6e6e6;
-    border-radius: 5px;
+    border-radius: 5px;    
 }
 
 .loginBox {
@@ -996,10 +1038,10 @@ fieldset textarea,
     border-radius: 5px;
 }
 
-.formBox h2,
-.formBox h3,
-.formBox h4,
-.formBox h5,
+.formBox h2, 
+.formBox h3, 
+.formBox h4, 
+.formBox h5, 
 .formBox h6 {
     margin-left: -5px;
     margin-right: -5px;
@@ -1023,7 +1065,7 @@ fieldset textarea,
 }
 
 .formBox table {
-    width: 100%;
+    width: 100%;    
 }
 
 .formBox > table > thead > tr > td {
@@ -1067,7 +1109,7 @@ fieldset textarea,
 }
 
 #titleRow .loginBox, #titleRow .profileBox {
-    margin-top: 105px;
+    margin-top: 105px;   
 }
 
 .formBox + .formBox {
@@ -1078,17 +1120,17 @@ fieldset textarea,
     background-color: #FFF;
     padding: 10px 10px 30px 10px;
     border-radius: 5px;
-    margin-top: 105px;
+    margin-top: 105px;   
 }
 
 .formBox,
 .account-box h3 {
-    color: #FFF;
+    color: #FFF;    
 }
 
 .formBox,
 .account-box h3 {
-    color: #000;
+    color: #000;    
 }
 
 .loginBox a {
@@ -1120,7 +1162,7 @@ fieldset textarea,
 }
 
 .profileBox p {
-    color: #000;
+    color: #000;    
 }
 
 .loginBox p {
@@ -1172,7 +1214,7 @@ fieldset textarea,
 .loginBox .select-label label,
 .loginBox .add-on label {
     display: inline;
-    text-align: left;
+    text-align: left;    
 }
 
 .loginBox label[for=id_remember_me] {
@@ -1194,7 +1236,7 @@ fieldset textarea,
 }
 
 .loginBox .help-block {
-    display: block;
+    display: block;   
     font-size: 1em;
     padding-right: 10px;
     text-align: right;
@@ -1210,7 +1252,7 @@ fieldset textarea,
 }
 
 #newAccountInfo {
-    height: 100%:
+    height: 100%:    
 }
 
 #newAccountData {
@@ -1362,7 +1404,7 @@ em.pendingText {
 .alert-message.block-message.error label {
     /*text-shadow: 1px 1px 1px #000;*/
 }
-
+    
 /* Topbar Dropdown Styles*/
 .topbar ul {
     list-style: none;
@@ -1379,7 +1421,7 @@ em.pendingText {
 }
 
 #nav > li {
-    padding: 6px 2px 4px 2px;
+    padding: 6px 2px 4px 2px;    
 }
 
 #nav a {
@@ -1524,7 +1566,7 @@ em.pendingText {
     #settings-link {
         display: none !important;
     }
-
+    
     #account-link, #logout-link {
         display: block;
     }
@@ -1724,7 +1766,7 @@ form input[type='checkbox'] {
 }
 
 .gravatar {
-    padding: 4px;
+    padding: 4px;   
 }
 
 .info-row {
@@ -1870,7 +1912,7 @@ td .gravatar-blank,
 
     .topbar-inner {
         background: #444;
-        height: 50px;
+        height: 50px;        
         border-bottom: 20px solid #a95051;
     }
 
@@ -1879,13 +1921,13 @@ td .gravatar-blank,
         font-size: 2em;
         height: 25px;
         line-height: 20px;
-        padding: 10px !important;
+        padding: 10px !important;        
     }
-
+    
     #logout-link, #account-link {
         display: none !important;
     }
-
+    
     #pop-menu {
         height: 100%;
     }
@@ -1982,7 +2024,7 @@ td .gravatar-blank,
         border-right: 0;
         font-size: 2em;
         height: 25px;
-        padding: 10px;
+        padding: 10px;        
     }
 
     .loginBox a {
@@ -2124,45 +2166,45 @@ td .gravatar-blank,
     #profileTitleBar {
         border: 0;
     }
-
+    
     #profileTitleBar h1{
         font-size: 1.5em;
         line-height: auto;
-        margin: 0;
+        margin: 0;        
     }
-
+    
     #profileTitleBar h3{
         font-size: .8em;
         line-height: auto;
         margin: 0;
     }
-
+    
     #profileSubtitleBar {
         display: block;
         float: none;
         width: auto;
     }
-
+    
     #profileSubtitleBar a {
         display: block;
         margin: 5px 0
     }
-
-    .profile-mobile thead tr {
+    
+    .profile-mobile thead tr { 
         position: absolute;
         top: -9999px;
         left: -9999px;
     }
 
-    .profile-mobile tr {
-        border: 1px solid #ccc;
+    .profile-mobile tr { 
+        border: 1px solid #ccc; 
     }
 
     .profile-mobile thead + tbody > tr > td {
         border: none;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid #eee; 
         position: relative;
-        padding-left: 50%;
+        padding-left: 50%; 
         white-space: normal;
         text-align:left;
     }
@@ -2179,13 +2221,13 @@ td .gravatar-blank,
         position: absolute;
         top: 6px;
         left: 6px;
-        width: 45%;
-        padding-right: 10px;
+        width: 45%; 
+        padding-right: 10px; 
         white-space: nowrap;
         text-align:left;
         font-weight: bold;
      }
-
+  
     .table-striped tbody tr:nth-child(even) td {
         background-color: #FFF !important;
     }
@@ -2193,28 +2235,28 @@ td .gravatar-blank,
     .table-striped tbody tr:nth-child(odd) td {
         background-color: #FFF !important;
     }
-
+      
     .profile-mobile td:before {
         content: attr(data-title);
     }
-
+    
     .form-label {
         text-align: left;
-        margin-left: 0px;
+        margin-left: 0px;        
     }
-
+    
     .account-box select {
-        width: 100%;
+        width: 100%;    
     }
-
+    
     .formBox select {
-        width: 100%;
+        width: 100%;    
     }
-
+    
     #moduleColumn td.action {
         width: auto;
     }
-
+    
     .add-module-btn,
     .profile-mobile a.btn,
     .profile-mobile a.btn-link {
@@ -2269,7 +2311,7 @@ td .gravatar-blank,
     .sum-edit{
         float: none;
     }
-
+    
     #moduleBank {
         margin-top: 20px;
     }
@@ -2316,8 +2358,8 @@ td .gravatar-blank,
         margin-left: auto;
         margin-right: auto;
     }
-
-    /*Employer Dashboard*/
+    
+    /*Employer Dashboard*/    
     #details-user-list-collapse {
         display: none;
     }
@@ -2337,11 +2379,11 @@ td .gravatar-blank,
         text-decoration: none;
     }
 
-    #row-link-table td {
+    #row-link-table td {        
         width: 80%;
     }
 
-    #row-link-table td:first-child {
+    #row-link-table td:first-child {    
         width: 20%;
     }
 
@@ -2359,13 +2401,13 @@ td .gravatar-blank,
     }
 
     .margin-left {
-        padding-left: 10px;
+        padding-left: 10px;                
     }
 
     .activity-mobile {
         margin-left: -10px;
         padding-top: 10px;
-        margin-bottom: -30px;
+        margin-bottom: -30px;                
     }
 
     .activity-mobile input {
@@ -2375,6 +2417,11 @@ td .gravatar-blank,
 
     .move-left {
         margin-left: 0;
+    }
+
+    #date-range {
+        position: absolute;
+        margin-top: -115px;
     }
 
     /* Partner Relationship Manager */
@@ -2408,35 +2455,35 @@ td .gravatar-blank,
     #prm-mobile-row-buttons {
         margin-bottom: 40px;
     }
-
+    
     /* Microsite Activity Page*/
     #candidate-activity-details-table {
     overflow-y: auto;
     height: auto;
     max-height: 520px;
-    overflow-x: hidden;
+    overflow-x: hidden;    
     }
 
     .btn-size {
-        width: 87%;
+        width: 87%;    
     }
-
+    
     /*Ajax Indicator*/
     #ajax-busy {
         margin: 0 0 0 -65px; /* left margin is half width of the div, to center it */
         padding: 30px 10px 10px 10px;
         left: 25%;
-        width: 300px;
+        width: 300px;        
     }
 
     .checkbox-margin {
-        padding-top: 14px;
+        padding-top: 14px;    
     }
-
+    
     .inbox-alert {
-        display: none;
+        display: none;        
     }
-
+    
     #titleRow {
         margin-top: 0;
     }
@@ -2447,13 +2494,13 @@ td .gravatar-blank,
 
     #titleRow {
          background-image: none;
-         min-height: 100px;
+         min-height: 100px; 
     }
 
     #titleRow .loginBox {
          margin-top: 5px;
          margin-bottom: 5px;
-    }
+    }    
 
     .topbar #topbar-login ul {
         margin-top: -30px;
@@ -2477,7 +2524,7 @@ td .gravatar-blank,
 
     .form-label {
         width: 96%;
-    }
+    }    
 
     input[type=checkbox] {
         float: left;
@@ -2539,20 +2586,20 @@ td .gravatar-blank,
         padding-left: 0;
         padding-right: 0;
     }
-
+    
     .refresh,
     .calendar {
         display: inline-block !important;
     }
-
+    
     .profile-form-input {
-        padding-bottom: 5px;
+        padding-bottom: 5px;    
     }
-
+    
     #saved-search-form label[for^='id_edit_sort_by'] {
         margin: 0px;
     }
-
+    
     #saved-search-form div[class*=id_edit_sort_by] {
         display: inline;
     }
@@ -2908,6 +2955,7 @@ table td, table th {
 
 #validated {
     display: inline;
+    padding: 7px;
 }
 
 #saved-search-form #id_day_of_month,

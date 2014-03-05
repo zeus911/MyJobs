@@ -54,15 +54,15 @@ class SplitDateTimeDropDownWidget(MultiWidget):
         super(SplitDateTimeDropDownWidget, self).__init__(widgets, attrs)
 
     def decompress(self, value):
-        if value:
-            month = datetime.strftime(value, '%b')
-            day = datetime.strftime(value, '%d')
-            year = datetime.strftime(value, '%Y')
-            hour = datetime.strftime(value, '%I')
-            minutes = datetime.strftime(value, '%M')
-            am_pm = datetime.strftime(value, '%p')
-            return [month, day, year, hour, minutes, am_pm]
-        return [None, None, None, None, None, None]
+        if not value:
+            value = datetime.now()
+        month = datetime.strftime(value, '%b')
+        day = datetime.strftime(value, '%d')
+        year = datetime.strftime(value, '%Y')
+        hour = datetime.strftime(value, '%I')
+        minutes = datetime.strftime(value, '%M')
+        am_pm = datetime.strftime(value, '%p')
+        return [month, day, year, hour, minutes, am_pm]
 
     def format_output(self, rendered_widgets):
         return ''.join([

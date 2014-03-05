@@ -1,6 +1,13 @@
 $(document).ready(function(){
     var offset = 0;
 
+    var date_start = $('input[name=date_start]').attr('placeholder');
+    var date_end = $('input[name=date_end]').attr('placeholder');
+
+    $(".date-activity").click(function () {
+        $(".date-range-select-form").toggleClass('date-range-select-form-visible');
+    });
+
     $(this).ajaxStart(function () {
         // Disable errant clicks when an ajax request is active
         // Does not prevent the user from closing the modal

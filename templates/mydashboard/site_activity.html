@@ -8,14 +8,14 @@
                    
         <table id="row-link-table">                            
             {% for candidate in candidates %}                    
-            <tr class="hide-mobile" onclick="document.location = '{% url 'candidate_information' %}?company={{ company_id }}&url={{ microsite_url }}&user={{ candidate.user.id }}&anchor={{ forloop.counter }}&page={{ candidates_page }}&before={{ before|date:'m/d/Y' }}&after={{ after|date:'m/d/Y' }}';">
+            <tr class="hide-mobile" onclick="document.location = '{% url 'candidate_information' %}?company={{ company_id }}&url={{ microsite_url }}&user={{ candidate.user.id }}&anchor={{ forloop.counter }}&page={{ candidates_page }}&date_end={{ date_end|date:'m/d/Y' }}&date_start={{ date_start|date:'m/d/Y' }}';">
                 <td>
                     <span class="gravatar pull-left">{% get_gravatar candidate.user '65' %}</span> 
                 </td>
                 <td>
                     <div class="candidate-name-bold pull-left">{{candidate.user.get_full_name}}</div><br>
                     <a name="{{ candidate.user.id }}{% if candidate.label %}{{candidate.label}}{% else %}Unlabeled{% endif %}"></a>
-                    <a href="{% url 'candidate_information' %}?company={{ company_id }}&url={{ microsite_url }}&user={{ candidate.user.id }}&anchor={{ candidate.user.id }}{% if candidate.label %}{{candidate.label}}{% else %}Unlabeled{% endif %}&page={{ candidates_page }}&before={{ before|date:'m/d/Y' }}&after={{ after|date:'m/d/Y' }}" class="pull-left">{{candidate.user}}</a><br>
+                    <a href="{% url 'candidate_information' %}?company={{ company_id }}&url={{ microsite_url }}&user={{ candidate.user.id }}&anchor={{ candidate.user.id }}{% if candidate.label %}{{candidate.label}}{% else %}Unlabeled{% endif %}&page={{ candidates_page }}&date_end={{ date_end|date:'m/d/Y' }}&date_start={{ date_start|date:'m/d/Y' }}" class="pull-left">{{candidate.user}}</a><br>
                     <div class="progress activity-progress site-progress">
                         <div class="bar bar-{% completion_level candidate.user.profile_completion %}" id="initial-bar" style="width: {{ candidate.user.profile_completion}}%;"></div>
                     </div>
@@ -49,6 +49,6 @@
                 
 {% else %}
     <div id="no-activity">
-        <strong>There is no candidate activity between {{after.date}} and {{before.date}} for {{ site_name|cut:"http://" }}</strong>
+        <strong>There is no candidate activity between {{date_start.date}} and {{date_end.date}} for {{ site_name|cut:"http://" }}</strong>
     </div>
 {% endif %}   
