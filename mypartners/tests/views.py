@@ -13,7 +13,7 @@ from mypartners.tests.factories import (PartnerFactory, ContactFactory,
 from mysearches.tests.factories import PartnerSavedSearchFactory
 from django.contrib.localflavor import be
 from datetime import datetime, timedelta
-from mypartners.models import ContactLogEntry
+from mypartners.models import ContactRecord
 
 
 class MyPartnerViewsTests(TestCase):
@@ -452,21 +452,184 @@ class RecordsDetailsTests(TestCase):
 
 class RecordsEditTests(TestCase):
     """Tests related to the record edit page, /prm/view/records/edit"""
+    def setUp(self):
+        super(RecordsEditTests, self).setUp()
+
+        # Create a user to login as
+        self.staff_user = UserFactory()
+        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
+        self.staff_user.groups.add(group)
+        self.staff_user.save()
+
+        # Create a company
+        self.company = CompanyFactory()
+        self.company.save()
+        self.admin = CompanyUserFactory(user=self.staff_user,
+                                        company=self.company)
+
+        # Create a contact
+        self.primary_contact = ContactFactory(name="Example Name")
+        self.primary_contact.save()
+
+        self.contact = ContactFactory()
+        self.contact.user = UserFactory(email="test@test.com")
+        self.contact.save()
+
+        # Create a partner
+        self.partner = PartnerFactory(owner=self.company)
+        self.partner.primary_contact = self.primary_contact
+        self.partner.add_contact(self.contact)
+        self.partner.save()
+
+        # Create a ContactRecord
+        self.contact_record = ContactRecordFactory(partner=self.partner,
+                                   contact_name=self.contact.name)
+        self.contact_log_entry = ContactLogEntryFactory(partner=self.partner,
+                                     user=self.contact.user,
+                                     object_id=self.contact_record.id)
+        self.contact_log_entry.save()
+
+        # Create a TestClient
+        self.client = TestClient()
+        self.client.login_user(self.staff_user)
+
+    def get_url(self, **kwargs):
+        args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
+        args = '&'.join(args)
+        return reverse('partner_edit_record') + '?' + args
 
     def test_render_new_form(self):
-        raise NotImplementedError()
+        url = self.get_url(partner=self.partner.id,
+                           company=self.company.id)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        soup = BeautifulSoup(response.content)
+        form = soup.find('fieldset')
+
+        self.assertEqual(len(form(class_='profile-form-input')), 14)
+        self.assertEqual(len(form.find(id='id_contact_name')('option')), 2)
+
+        # Add contact
+        contact = ContactFactory()
+        contact.user = UserFactory(email="test-2@test.com")
+        contact.save()
+        self.partner.add_contact(contact)
+        self.partner.save()
+
+        # Test form is updated with new contact
+        response = self.client.get(url)
+        soup = BeautifulSoup(response.content)
+        form = soup.find(id='id_contact_name')
+        self.assertEqual(len(form('option')), 3)
 
     def test_render_existing_data(self):
-        raise NotImplementedError()
+        url = self.get_url(partner=self.partner.id,
+                           company=self.company.id,
+                           id=self.contact_record.id)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
 
-    def test_render_error_conditions(self):
-        raise NotImplementedError()
+        soup = BeautifulSoup(response.content)
+        form = soup.find('fieldset')
+
+        self.assertEqual(len(form(class_='profile-form-input')), 14)
+        self.assertEqual(len(form.find(id='id_contact_name')('option')), 1)
+
+        contact_type = form.find(id='id_contact_type')
+        contact_type = contact_type.find(selected='selected').get_text()
+        self.assertEqual(contact_type, 'Email')
+
+        self.assertIn(self.contact.name,
+                      form.find(id='id_contact_name').get_text())
+        self.assertIn('example@email.com',
+                      form.find(id='id_contact_email')['value'])
+        self.assertIn(self.contact_record.subject,
+                      form.find(id='id_subject')['value'])
+
+        # Test dates
+        self.assertIn("Jan", form.find(id='id_date_time_0').get_text())
+        self.assertIn("01", form.find(id='id_date_time_1').get_text())
+        self.assertIn("2014", form.find(id='id_date_time_2').get_text())
+        self.assertIn("05", form.find(id='id_date_time_3').get_text())
+        self.assertIn("00", form.find(id='id_date_time_4').get_text())
+        self.assertIn("AM", form.find(id='id_date_time_5').get_text())
+
+        self.assertIn(self.contact_record.notes,
+                      form.find(id='id_notes').get_text())
 
     def test_create_new_contact_record(self):
-        raise NotImplementedError()
+
+        url = self.get_url(partner=self.partner.id,
+                           company=self.company.id)
+
+        data = {'contact_type': 'email',
+                'contact_name': self.contact.id,
+                'contact_email': 'test@email.com',
+                'contact_phone': '',
+                'location': '',
+                'length_0': '00',
+                'length_1': '00',
+                'subject': '',
+                'date_time_0': 'Jan',
+                'date_time_1': '01',
+                'date_time_2': '2005',
+                'date_time_3': '01',
+                'date_time_4': '00',
+                'date_time_5': 'AM',
+                'job_id': '',
+                'job_applications': '',
+                'job_interviews': '',
+                'job_hires': '',
+                'notes': 'A few notes here',
+                'company': self.company.id,
+                'partner': self.partner.id}
+        response = self.client.post(url, data=data)
+        soup = BeautifulSoup(response.content)
+        self.assertEqual(response.status_code, 302)
+
+        record = ContactRecord.objects.get(contact_email='test@email.com')
+        self.assertEqual(record.partner, self.partner)
+        self.assertEqual(record.contact_type, 'email')
+        self.assertEqual(record.contact_email, data['contact_email'])
+        self.assertEqual(record.notes, data['notes'])
 
     def test_update_existing_contact_record(self):
-        raise NotImplementedError()
+        url = self.get_url(partner=self.partner.id,
+                           company=self.company.id,
+                           id=self.contact_record.id)
+
+        data = {'contact_type': 'email',
+                'contact_name': self.contact.id,
+                'contact_email': 'test@email.com',
+                'contact_phone': '',
+                'location': '',
+                'length_0': '00',
+                'length_1': '00',
+                'subject': '',
+                'date_time_0': 'Jan',
+                'date_time_1': '01',
+                'date_time_2': '2005',
+                'date_time_3': '01',
+                'date_time_4': '00',
+                'date_time_5': 'AM',
+                'job_id': '',
+                'job_applications': '',
+                'job_interviews': '',
+                'job_hires': '',
+                'notes': 'A few notes here',
+                'company': self.company.id,
+                'partner': self.partner.id}
+        response = self.client.post(url, data=data)
+        soup = BeautifulSoup(response.content)
+        self.assertEqual(response.status_code, 302)
+
+        # Get an updated copy of the ContactRecord
+        record = ContactRecord.objects.get(id=self.contact_record.id)
+        self.assertEqual(record.partner, self.partner)
+        self.assertEqual(record.contact_type, 'email')
+        self.assertEqual(record.contact_email, data['contact_email'])
+        self.assertEqual(record.notes, data['notes'])
 
 
 class SearchesOverviewTests(TestCase):
