@@ -169,6 +169,10 @@ class ContactRecord(models.Model):
         else:
             return "%s created a contact record" % user
 
+    def get_human_readable_contact_type(self):
+        contact_types = dict(CONTACT_TYPE_CHOICES)
+        return contact_types[self.contact_type].title()
+
 
 class PRMAttachment(models.Model):
 

@@ -3,6 +3,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.http import Http404
+from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.text import get_text_list, force_unicode, force_text
 from django.utils.translation import ugettext
@@ -212,3 +214,5 @@ def get_records_from_request(request):
             pass
 
     return (range_start, range_end), date_str, records
+
+
