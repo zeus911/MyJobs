@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+import json
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import Group
@@ -14,6 +15,7 @@ from mysearches.tests.factories import PartnerSavedSearchFactory
 from django.contrib.localflavor import be
 from datetime import datetime, timedelta
 from mypartners.models import ContactRecord
+from mysearches.models import PartnerSavedSearch
 
 
 class MyPartnerViewsTests(TestCase):
@@ -755,18 +757,161 @@ class SearchFeedTests(TestCase):
 
 class SearchEditTests(TestCase):
     """Tests relating to the edit search page /prm/view/searches/edit"""
+    def setUp(self):
+        super(SearchEditTests, self).setUp()
+
+        # Create a user to login as
+        self.staff_user = UserFactory()
+        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
+        self.staff_user.groups.add(group)
+        self.staff_user.save()
+
+        # Create a company
+        self.company = CompanyFactory()
+        self.company.save()
+        self.admin = CompanyUserFactory(user=self.staff_user,
+                                        company=self.company)
+
+        # Create a contact
+        self.contact = ContactFactory()
+        self.contact.user = UserFactory(email="test@test.com")
+        self.contact.save()
+
+        # Create a partner
+        self.partner = PartnerFactory(owner=self.company)
+        self.partner.add_contact(self.contact)
+        self.partner.save()
+
+        self.search = PartnerSavedSearchFactory(provider=self.company,
+                                                created_by=self.staff_user,
+                                                user=self.contact.user)
+
+        # Create a TestClient
+        self.client = TestClient()
+        self.client.login_user(self.staff_user)
+
+    def get_url(self, view='partner_edit_search', **kwargs):
+        args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
+        args = '&'.join(args)
+        return reverse(view) + '?' + args
 
     def test_render_new_form(self):
-        raise NotImplementedError()
+        url = self.get_url(company=self.company.id,
+                           partner=self.partner.id)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
 
     def test_render_existing_data(self):
-        raise NotImplementedError()
+        url = self.get_url(company=self.company.id,
+                           partner=self.partner.id,
+                           id=self.search.id)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
 
-    def test_render_error_conditions(self):
-        raise NotImplementedError()
+        soup = BeautifulSoup(response.content)
+        form = soup.find(id="partner-saved-search-form")
+
+        self.assertEqual(form.find(id='id_label')['value'], "All Jobs")
+        self.assertEqual(form.find(id='id_url')['value'],
+                         "http://www.my.jobs/jobs")
+        self.assertEqual(form.find(id='id_is_active')['checked'], 'checked')
+        self.assertIn(self.contact.name, form.find(id='id_email').get_text())
+        self.assertEqual(self.search.notes,
+                         form.find(id='id_notes').get_text().strip())
+
+    def test_generate_error_conditions(self):
+        self.search.delete()
+        url = self.get_url('partner_savedsearch_save',
+                          company=self.company.id,
+                          partner=self.partner.id)
+
+        data = {'label': 'Test',
+                'url': 'http://www.jobs.jobs/jobs',
+                'email': self.contact.user.email,
+                'frequency': 'W',
+                'day_of_week': '3'}
+
+        # Test removing a required key from day of week
+        for k in data.keys():
+            post = data.copy()
+            del post[k]
+            response = self.client.post(url, post)
+            self.assertEqual(response.status_code, 200)
+            errors = json.loads(response.content)
+            self.assertTrue("This field is required." in errors[k])
+
+        # Change to testing day of month
+        data.update({'frequency': 'M', 'day_of_month': '3'})
+        del data['day_of_week']
+
+        for k in data.keys():
+            post = data.copy()
+            del post[k]
+            response = self.client.post(url, post)
+            self.assertEqual(response.status_code, 200)
+            errors = json.loads(response.content)
+            self.assertTrue("This field is required." in errors[k])
+
 
     def test_create_new_contact_record(self):
-        raise NotImplementedError()
+        self.search.delete()
+        url = self.get_url('partner_savedsearch_save',
+                          company=self.company.id,
+                          partner=self.partner.id)
+
+        data = {'label': 'Test',
+                'url': 'http://www.jobs.jobs/jobs',
+                'url_extras': '',
+                'email': self.contact.user.email,
+                'account_activation_message': '',
+                'frequency': 'W',
+                'day_of_month': '',
+                'day_of_week': '3',
+                'partner_message': '',
+                'notes': ''}
+        post = data.copy()
+        post.update({'company': self.company.id,
+                     'partner': self.partner.id})
+
+        response = self.client.post(url, post)
+        self.assertEqual(response.status_code, 200)
+
+        # Set the translated values,
+        data.update({'day_of_month': None})
+        search = PartnerSavedSearch.objects.get()
+        for k, v in data.items():
+            self.assertEqual(v, getattr(search, k),
+                             msg="%s != %s for field %s" %
+                                 (v, getattr(search, k), k))
 
     def test_update_existing_contact_record(self):
-        raise NotImplementedError()
+        url = self.get_url('partner_savedsearch_save',
+                          company=self.company.id,
+                          partner=self.partner.id,
+                          id=self.search.id)
+
+        data = {'label': 'Test',
+                'url': 'http://www.jobs.jobs/jobs',
+                'url_extras': '',
+                'email': self.contact.user.email,
+                'account_activation_message': '',
+                'frequency': 'W',
+                'day_of_month': '',
+                'day_of_week': '3',
+                'partner_message': '',
+                'notes': ''}
+        post = data.copy()
+        post.update({'company': self.company.id,
+                     'partner': self.partner.id,
+                     'id': self.search.id})
+
+        response = self.client.post(url, post)
+        self.assertEqual(response.status_code, 200)
+
+        # Set the translated values,
+        data.update({'day_of_month': None})
+        search = PartnerSavedSearch.objects.get()
+        for k, v in data.items():
+            self.assertEqual(v, getattr(search, k),
+                             msg="%s != %s for field %s" %
+                                 (v, getattr(search, k), k))
