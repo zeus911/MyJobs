@@ -19,17 +19,13 @@ class MyPartnerViewsTests(TestCase):
         self.staff_user.save()
 
         self.company = CompanyFactory()
-        self.company.save()
         self.admin = CompanyUserFactory(user=self.staff_user,
                                         company=self.company)
         self.client = TestClient()
         self.client.login_user(self.staff_user)
 
         self.partner = PartnerFactory(owner=self.company)
-        self.contact = ContactFactory()
-        self.contact.save()
-        self.partner.add_contact(self.contact)
-        self.partner.save()
+        self.contact = ContactFactory(partner=self.partner)
 
     def test_prm_page_with_no_partners(self):
         """
@@ -90,11 +86,8 @@ class MyPartnerViewsTests(TestCase):
 
         x = 0
         while x < 9:
-            contact = ContactFactory()
-            contact.save()
-            self.partner.add_contact(contact)
+            ContactFactory(partner=self.partner)
             x += 1
-        self.partner.save()
 
         response = self.client.post(reverse('partner_details') +
                                     '?company='+str(self.company.id) +

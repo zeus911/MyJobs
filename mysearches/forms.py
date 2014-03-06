@@ -2,7 +2,6 @@ from django.forms import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
-from myjobs.models import User
 from myjobs.forms import BaseUserForm, make_choices
 from mysearches.helpers import *
 from mysearches.models import (SavedSearch, SavedSearchDigest,
@@ -134,7 +133,7 @@ class PartnerSavedSearchForm(ModelForm):
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
                   'account_activation_message', 'frequency', 'day_of_month',
                   'day_of_week', 'partner_message', 'notes')
-        exclude = ('provider', 'sort_by', )
+        exclude = ('provider', 'sort_by', 'partner', )
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
             'url_extras': TextInput(attrs={
@@ -169,8 +168,9 @@ class PartnerSavedSearchForm(ModelForm):
     def save(self, commit=True):
         is_new = False if self.instance.pk else True
         instance = super(PartnerSavedSearchForm, self).save(commit)
-        contact = Contact.objects.get(user=instance.user)
-        partner = contact.partners_set.all()[0]
+        partner = instance.partner
+        contact = Contact.objects.filter(partners_set__in=partner,
+                                         user=instance.user)[0]
         if is_new:
             log_change(instance, self, instance.created_by, partner,
                        contact.email, action_type=ADDITION)
@@ -191,7 +191,7 @@ class PartnerSubSavedSearchForm(ModelForm):
         exclude = ('provider', 'url_extras', 'partner_message',
                    'account_activation_message', 'created_by', 'user',
                    'created_on', 'label', 'url', 'feed', 'email', 'notes',
-                   'custom_message', )
+                   'custom_message', 'partner', )
         widgets = {
             'sort_by': RadioSelect(renderer=HorizontalRadioRenderer,
                                    attrs={'id': 'sort_by'}),

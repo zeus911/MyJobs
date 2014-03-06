@@ -125,18 +125,8 @@ def get_change_message(form):
 
 
 def get_searches_for_partner(partner):
-    """
-    Gets all the saved searches for all of the contacts of a partner.
-
-    Warning: If a company creates two saved search for the same contact
-    but on different partners, this function will get both of the saved
-    searches.
-
-    """
-    company = partner.owner
-    partner_contacts = partner.contacts.all().values_list('user__id', flat=True)
-    saved_searches = PartnerSavedSearch.objects.filter(
-        provider=company, user__in=partner_contacts).order_by('-created_on')
+    saved_searches = PartnerSavedSearch.objects.filter(partner=partner)
+    saved_searches = saved_searches.order_by('-created_on')
     return saved_searches
 
 

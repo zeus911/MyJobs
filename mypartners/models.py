@@ -13,12 +13,11 @@ from myjobs.models import User
 from mydashboard.models import Company
 
 
-MAX_ATTACHMENT_MB = 4
-
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
                         ('phone', 'Phone'),
                         ('facetoface', 'Face to Face'),
-                        ('job', 'Job Followup'))
+                        ('job', 'Job Followup'),
+                        ('pssemail', "Partner Saved Search Email"))
 
 
 class Contact(models.Model):
@@ -26,12 +25,10 @@ class Contact(models.Model):
     Everything here is self explanatory except for one part. With the Contact
     object there is Contact.partner_set and .partners_set
 
-    .partner_set = Foreign Key, Partner's Primary Contact
-    .partners_set = m2m, all the partners this contact has associated to it
     """
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    name = models.CharField(max_length=255, verbose_name='Full Name',
-                            blank=True)
+    partner = models.ForeignKey('Partner')
+    name = models.CharField(max_length=255, verbose_name='Full Name')
     email = models.EmailField(max_length=255, verbose_name='Email', blank=True)
     phone = models.CharField(max_length=30, verbose_name='Phone', blank=True)
     label = models.CharField(max_length=60, verbose_name='Address Label',
@@ -65,6 +62,7 @@ class Contact(models.Model):
         """
         Checks to see if there is a User that is using self.email add said User
         to self.user
+
         """
         if not self.user:
             if self.email:
@@ -74,27 +72,25 @@ class Contact(models.Model):
                     pass
                 else:
                     self.user = user
-        super(Contact, self).save(*args, **kwargs)
+        return super(Contact, self).save(*args, **kwargs)
 
 
 class Partner(models.Model):
     """
     Object that this whole app is built around.
+
     """
     name = models.CharField(max_length=255,
                             verbose_name='Partner Organization')
     uri = models.URLField(verbose_name='Partner URL', blank=True)
-    contacts = models.ManyToManyField(Contact, related_name="partners_set")
-    primary_contact = models.ForeignKey(Contact, null=True,
+    primary_contact = models.ForeignKey('Contact', null=True,
+                                        related_name='primary_contact',
                                         on_delete=models.SET_NULL)
     # owner is the Company that owns this partner.
     owner = models.ForeignKey(Company)
 
     def __unicode__(self):
         return self.name
-
-    def add_contact(self, contact):
-        self.contacts.add(contact)
 
 
 class ContactRecord(models.Model):
@@ -170,6 +166,9 @@ class ContactRecord(models.Model):
             return "%s created a contact record" % user
 
 
+MAX_ATTACHMENT_MB = 4
+
+
 class PRMAttachment(models.Model):
 
     def get_file_name(self, filename):
@@ -209,7 +208,7 @@ class PRMAttachment(models.Model):
         # Confirm that we're not trying to change public/private status of
         # actual files during local testing.
         try:
-            if default_storage.connection.__repr__() == 'S3Connection:s3.amazonaws.com':
+            if repr(default_storage.connection) == 'S3Connection:s3.amazonaws.com':
                 from boto import connect_s3, s3
                 conn = connect_s3(settings.AWS_ACCESS_KEY_ID,
                                   settings.AWS_SECRET_KEY)

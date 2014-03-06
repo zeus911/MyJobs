@@ -36,11 +36,8 @@ class ContactForm(forms.ModelForm):
     def save(self, user, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
         partner = Partner.objects.get(id=self.data['partner'])
-        contact = self.instance
-        contact.save()
-
-        partner.add_contact(contact)
-        partner.save()
+        self.instance.partner = partner
+        contact = super(ContactForm, self).save(commit)
 
         log_change(contact, self, user, partner, contact.name,
                    action_type=new_or_change)
@@ -48,11 +45,11 @@ class ContactForm(forms.ModelForm):
         return contact
 
 
-
 class PartnerInitialForm(BaseUserForm):
     """
     This form is used when an employer currently has no partner to create a
     partner (short and sweet version).
+
     """
     def __init__(self, *args, **kwargs):
         super(PartnerInitialForm, self).__init__(*args, **kwargs)
@@ -73,28 +70,25 @@ class PartnerInitialForm(BaseUserForm):
 
     def save(self, user, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
-        company_id = self.data['company_id']
-        self.instance.owner_id = company_id
+        self.instance.owner_id = self.data['company_id']
+        partner = super(PartnerInitialForm, self).save(commit)
 
-        if self.data['pc-contactname'] or self.data['pc-contactemail']:
-            if self.data['pc-contactname'] and self.data['pc-contactemail']:
-                contact = Contact(name=self.data['pc-contactname'],
-                                  email=self.data['pc-contactemail'])
-            elif self.data['pc-contactname']:
-                contact = Contact(name=self.data['pc-contactname'])
-            else:
-                contact = Contact(email=self.data['pc-contactemail'])
+        contact_name = self.data.get('pc-contactname')
+        contact_email = self.data.get('pc-contactemail', '')
+        if contact_name:
+            contact = Contact.objects.create(name=contact_name,
+                                             email=contact_email,
+                                             partner=partner)
             contact.save()
+            log_change(contact, self, user, partner, contact.name,
+                       action_type=ADDITION)
+            partner.primary_contact = contact
+            partner.save()
 
-            self.instance.primary_contact = contact
-            self.instance.save()
-            self.instance.add_contact(contact)
+        log_change(partner, self, user, partner, partner.name,
+                   action_type=new_or_change)
 
-        log_change(self.instance, self, user, self.instance,
-                   self.instance.name, action_type=new_or_change)
-
-        self.instance.save()
-        return self.instance
+        return partner
 
 
 class NewPartnerForm(BaseUserForm):
@@ -137,47 +131,43 @@ class NewPartnerForm(BaseUserForm):
                    'placeholder': 'Notes About This Contact'})
 
     def save(self, user, commit=True):
-        new_or_change = CHANGE if self.instance.pk else ADDITION
+        # self.instance is a Contact instance
         company_id = self.data['company_id']
-        owner_id = company_id
-        if self.data['partnerurl']:
-            partner = Partner(name=self.data['partnername'],
-                              uri=self.data['partnerurl'], owner_id=owner_id)
-            partner.save()
-        else:
-            partner = Partner(name=self.data['partnername'], owner_id=owner_id)
-            partner.save()
 
-        self.data = self.remove_partner_data(
-            self.data, ['partnername', 'partnerurl', 'csrfmiddlewaretoken',
-                        'company', 'company_id', 'ct'])
+        partner_url = self.data.get('partnerurl', '')
 
+        partner = Partner(name=self.data['partnername'],
+                          uri=partner_url, owner_id=company_id)
+
+        log_change(partner, self, user, partner, partner.name,
+                   action_type=ADDITION)
+
+        self.data = remove_partner_data(self.data,
+                                        ['partnername', 'partnerurl',
+                                         'csrfmiddlewaretoken', 'company',
+                                         'company_id', 'ct'])
         has_data = False
         for value in self.data.itervalues():
-            if value != ['']:
-                if value == ['USA']:
-                    continue
+            if value != [''] and value != ['USA']:
                 has_data = True
-
         if has_data:
-            self.instance.save()
-            partner.add_contact(self.instance)
-            partner.primary_contact_id = self.instance.id
-            partner.save()
+            self.instance.partner = partner
+            instance = super(NewPartnerForm, self).save(commit)
+            partner.primary_contact = instance
 
-            log_change(self.instance, self, user, partner,
-                       self.instance.name, action_type=new_or_change)
+            log_change(instance, self, user, partner, instance.name,
+                       action_type=ADDITION)
+
+            return instance
+        # No contact was created
+        return None
 
 
-            return self.instance
-
-
-
-    def remove_partner_data(self, dictionary, keys):
-        new_dictionary = dict(dictionary)
-        for key in keys:
-            del new_dictionary[key]
-        return new_dictionary
+def remove_partner_data(dictionary, keys):
+    new_dictionary = dict(dictionary)
+    for key in keys:
+        del new_dictionary[key]
+    return new_dictionary
 
 
 class PartnerForm(BaseUserForm):
@@ -187,8 +177,8 @@ class PartnerForm(BaseUserForm):
     """
     def __init__(self, *args, **kwargs):
         super(PartnerForm, self).__init__(*args, **kwargs)
-        choices = [(contact.id, contact.name) for contact in
-                   kwargs['instance'].contacts.all()]
+        contacts = Contact.objects.filter(partner=kwargs['instance'])
+        choices = [(contact.id, contact.name) for contact in contacts]
         if kwargs['instance'].primary_contact:
             for choice in choices:
                 if choice[0] == kwargs['instance'].primary_contact_id:
@@ -212,12 +202,12 @@ class PartnerForm(BaseUserForm):
     def save(self, user, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
         self.instance.primary_contact_id = self.data['primary_contact']
-        self.instance.save()
+        instance = super(PartnerForm, self).save(commit)
 
-        log_change(self.instance, self, user, self.instance,
-                   self.instance.name, action_type=new_or_change)
+        log_change(instance, self, user, instance, instance.name,
+                   action_type=new_or_change)
 
-        return self.instance
+        return instance
 
 
 def PartnerEmailChoices(partner):
