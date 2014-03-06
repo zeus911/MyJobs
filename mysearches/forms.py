@@ -1,4 +1,3 @@
-from django.contrib.admin.models import ADDITION
 from django.forms import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
@@ -9,7 +8,7 @@ from mysearches.helpers import *
 from mysearches.models import (SavedSearch, SavedSearchDigest,
                                PartnerSavedSearch)
 from mypartners.forms import PartnerEmailChoices
-from mypartners.models import Contact
+from mypartners.models import Contact, ADDITION
 from mypartners.helpers import log_change
 
 

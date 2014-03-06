@@ -1,5 +1,4 @@
 from django import forms
-from django.contrib.admin.models import ADDITION, CHANGE
 from django.core.exceptions import ValidationError
 from django.forms.util import ErrorList
 
@@ -8,7 +7,7 @@ from collections import OrderedDict
 from myprofile.forms import generate_custom_widgets
 from myjobs.forms import BaseUserForm
 from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
-                               MAX_ATTACHMENT_MB)
+                               ADDITION, CHANGE, MAX_ATTACHMENT_MB)
 from mypartners.helpers import log_change, get_attachment_link
 from mypartners.widgets import (MultipleFileField, MultipleFileInputWidget,
                                 SplitDateTimeDropDownField, TimeDropDownField)

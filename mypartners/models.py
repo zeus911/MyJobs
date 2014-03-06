@@ -23,8 +23,8 @@ CONTACT_TYPE_CHOICES = (('email', 'Email'),
 
 class Contact(models.Model):
     """
-    Everything here is self explanatory except for one part. With the Contact object there is
-    Contact.partner_set and .partners_set
+    Everything here is self explanatory except for one part. With the Contact
+    object there is Contact.partner_set and .partners_set
 
     .partner_set = Foreign Key, Partner's Primary Contact
     .partners_set = m2m, all the partners this contact has associated to it
@@ -228,6 +228,14 @@ class PRMAttachment(models.Model):
         default_storage.delete(filename)
 
 
+# Flags for ContactLogEntry action_flag. Based on django.contrib.admin.models
+# action flags.
+ADDITION = 1
+CHANGE = 2
+DELETION = 3
+EMAIL = 4
+
+
 class ContactLogEntry(models.Model):
     action_flag = models.PositiveSmallIntegerField('action flag')
     action_time = models.DateTimeField('action time', auto_now=True)
@@ -251,6 +259,10 @@ class ContactLogEntry(models.Model):
             return None
 
     def get_object_url(self):
+        """
+        Creates the link that leads to the view/edit view for that object.
+
+        """
         obj = self.get_edited_object()
         if not obj or not self.partner:
             return None

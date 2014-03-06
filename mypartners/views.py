@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 import json
 
 from django.conf import settings
-from django.contrib.admin.models import DELETION
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -20,7 +19,8 @@ from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm, ContactRecordForm)
 from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
-                               ContactLogEntry, CONTACT_TYPE_CHOICES)
+                               ContactLogEntry, CONTACT_TYPE_CHOICES,
+                               DELETION)
 from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
                                 get_searches_for_partner, get_logs_for_partner,
@@ -233,14 +233,14 @@ def delete_prm_item(request):
         partner_id = int(partner_id)
     item_id = request.REQUEST.get('id')
     if item_id:
-        contact_id = int(item_id)
+        item_id = int(item_id)
     content_id = request.REQUEST.get('ct')
     if content_id:
         content_id = int(content_id)
 
     if content_id == ContentType.objects.get_for_model(Contact).id:
         partner = get_object_or_404(Partner, id=partner_id, owner=company)
-        contact = get_object_or_404(Contact, id=contact_id)
+        contact = get_object_or_404(Contact, id=item_id)
         log_change(contact, None, request.user, partner, contact.name,
                    action_type=DELETION)
         contact.delete()
