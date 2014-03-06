@@ -7,7 +7,7 @@ from mysearches.helpers import *
 from mysearches.models import (SavedSearch, SavedSearchDigest,
                                PartnerSavedSearch)
 from mypartners.forms import PartnerEmailChoices
-from mypartners.models import Contact, ADDITION
+from mypartners.models import Contact, ADDITION, CHANGE
 from mypartners.helpers import log_change
 
 
@@ -53,13 +53,13 @@ class SavedSearchForm(BaseUserForm):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
         feed = cleaned_data.get('feed')
-        self.instance.feed = feed
 
         if not feed:
             new_feed = validate_dotjobs_url(url)[1]
             if new_feed:
                 cleaned_data['feed'] = new_feed
                 del self._errors['feed']
+        self.instance.feed = feed
         return cleaned_data
 
     def clean_url(self):
@@ -166,17 +166,13 @@ class PartnerSavedSearchForm(ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
-        is_new = False if self.instance.pk else True
+        is_new_or_change = CHANGE if self.instance.pk else ADDITION
         instance = super(PartnerSavedSearchForm, self).save(commit)
         partner = instance.partner
-        contact = Contact.objects.filter(partners_set__in=partner,
+        contact = Contact.objects.filter(partner=partner,
                                          user=instance.user)[0]
-        if is_new:
-            log_change(instance, self, instance.created_by, partner,
-                       contact.email, action_type=ADDITION)
-        else:
-            log_change(instance, self, instance.created_by, partner,
-                       contact.email)
+        log_change(instance, self, instance.created_by, partner,
+                   contact.email, action_type=is_new_or_change)
 
         return instance
 

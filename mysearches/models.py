@@ -252,6 +252,12 @@ class PartnerSavedSearch(SavedSearch):
         else:
             return "Saved Search %s for %s" % (self.url, self.user.email)
 
+    def save(self, *args, **kwargs):
+        created = False if self.pk else True
+        super(PartnerSavedSearch, self).save(*args, **kwargs)
+        if created:
+            self.send_initial_email()
+
     def send_email(self, custom_msg=None):
         super(PartnerSavedSearch, self).send_email(custom_msg)
         change_msg = "Automatic sending of partner saved search."
@@ -268,7 +274,7 @@ class PartnerSavedSearch(SavedSearch):
         self.create_record(change_msg)
 
     def create_record(self, change_msg=""):
-        contact = Contact.objects.filter(partners_set__in=self.partner,
+        contact = Contact.objects.filter(partner=self.partner,
                                          user=self.user)[0]
         record = ContactRecord.objects.create(
             partner=self.partner,

@@ -179,6 +179,7 @@ class PartnerForm(BaseUserForm):
         super(PartnerForm, self).__init__(*args, **kwargs)
         contacts = Contact.objects.filter(partner=kwargs['instance'])
         choices = [(contact.id, contact.name) for contact in contacts]
+
         if kwargs['instance'].primary_contact:
             for choice in choices:
                 if choice[0] == kwargs['instance'].primary_contact_id:
@@ -201,9 +202,15 @@ class PartnerForm(BaseUserForm):
 
     def save(self, user, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
-        self.instance.primary_contact_id = self.data['primary_contact']
-        instance = super(PartnerForm, self).save(commit)
 
+        instance = super(PartnerForm, self).save(commit)
+        # Explicity set the primary_contact for the partner and re-save.
+        try:
+            instance.primary_contact = Contact.objects.get(
+                pk=self.data['primary_contact'], partner=self.instance)
+        except (Contact.DoesNotExist, ValueError):
+            instance.primary_contact = None
+        instance.save()
         log_change(instance, self, user, instance, instance.name,
                    action_type=new_or_change)
 
@@ -212,7 +219,7 @@ class PartnerForm(BaseUserForm):
 
 def PartnerEmailChoices(partner):
     choices = [(None, '----------')]
-    contacts = partner.contacts.all()
+    contacts = Contact.objects.filter(partner=partner)
     for contact in contacts:
         if contact.user:
             choices.append((contact.user.email, contact.name))
@@ -241,24 +248,31 @@ class ContactRecordForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         partner = kwargs.pop('partner')
         instance = kwargs.get('instance')
-        choices = [(c.id, c.name) for c in partner.contacts.all()]
+        contacts = Contact.objects.filter(partner=partner)
+        choices = [(c.id, c.name) for c in contacts]
         if not instance:
-            choices.insert(0, (None, '----------'))
+            choices.insert(0, ('None', '----------'))
         else:
-            index = [x[1] for x in choices].index(instance.contact_name)
-            tup = choices[index]
-            choices.pop(index)
-            choices.insert(0, tup)
+            try:
+                index = [x[1] for x in choices].index(instance.contact_name)
+            except ValueError:
+                # This is a ContactRecord for a contact that has been
+                # deleleted.
+                tup = (instance.contact_name, instance.contact_name)
+                choices.insert(0, tup)
+            else:
+                tup = choices[index]
+                choices.pop(index)
+                choices.insert(0, tup)
         super(ContactRecordForm, self).__init__(*args, **kwargs)
         self.fields["contact_name"] = forms.ChoiceField(
             widget=forms.Select(), choices=choices, label="Contact")
         if instance:
             attachments = PRMAttachment.objects.filter(contact_record=instance)
             if attachments:
-                choices = [(a.pk, get_attachment_link(partner.owner.id,
-                                                      partner.id, a.id,
-                                                      a.attachment.name.split("/")[-1]))
-                           for a in attachments]
+                choices = [(a.pk, get_attachment_link(
+                    partner.owner.id, partner.id, a.id,
+                    a.attachment.name.split("/")[-1])) for a in attachments]
                 self.fields["attach_delete"] = forms.MultipleChoiceField(
                     required=False, choices=choices, label="Delete Files",
                     widget=forms.CheckboxSelectMultiple)
@@ -280,9 +294,10 @@ class ContactRecordForm(forms.ModelForm):
         if contact_id == 'None' or not contact_id:
             raise ValidationError('required')
         try:
-            return Contact.objects.get(id=int(contact_id))
-        except Contact.DoesNotExist:
-            raise ValidationError("Contact does not exist")
+            return Contact.objects.get(id=int(contact_id)).name
+        except (Contact.DoesNotExist, ValueError):
+            # Contact has been deleted. Preserve the contact name.
+            return self.cleaned_data['contact_name']
 
     def clean_attachment(self):
         attachments = self.cleaned_data.get('attachment', None)

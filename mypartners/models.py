@@ -20,6 +20,21 @@ CONTACT_TYPE_CHOICES = (('email', 'Email'),
                         ('pssemail', "Partner Saved Search Email"))
 
 
+# Flags for ContactLogEntry action_flag. Based on django.contrib.admin.models
+# action flags.
+ADDITION = 1
+CHANGE = 2
+DELETION = 3
+EMAIL = 4
+
+ACTIVITY_TYPES = {
+    1: 'added',
+    2: 'updated',
+    3: 'deleted',
+    4: 'sent',
+}
+
+
 class Contact(models.Model):
     """
     Everything here is self explanatory except for one part. With the Contact
@@ -142,29 +157,24 @@ class ContactRecord(models.Model):
         record.
 
         """
+        contact_type_choices = dict(CONTACT_TYPE_CHOICES)
 
-        logs = ContactLogEntry.objects.filter(object_id=self.pk)
-        logs = logs.order_by('-action_time')[:1]
-        if logs:
-            user = logs[0].user.get_full_name()
-            if user == '':
-                user = logs[0].user.email
-        else:
-            user = "An employee"
+        try:
+            logs = ContactLogEntry.objects.filter(object_id=self.pk)
+            log = logs.order_by('-action_time')[:1][0]
+        except IndexError:
+            return ""
 
-        if self.contact_type == 'facetoface':
-            return "%s had a meeting with %s" % (user, self.contact_name)
-        elif self.contact_type == 'phone':
-            return "%s called %s" % (user, self.contact_phone)
-        elif self.contact_type == 'job':
-            return "%s followed up with %s about job %s" % (user,
-                                                            self.contact_name,
-                                                            self.job_id)
-        elif self.contact_type == 'email':
-            return "%s emailed %s" % (user, self.contact_email)
-        else:
-            return "%s created a contact record" % user
+        contact_str = "A %s record for %s was %s" % \
+                      (contact_type_choices[self.contact_type].lower(),
+                       self.contact_name, ACTIVITY_TYPES[log.action_flag])
 
+        if log.user:
+            user = log.user.get_full_name() if log.user.get_full_name() else \
+                log.user.email
+            contact_str = "%s by %s" % (contact_str, user)
+
+        return contact_str
 
 MAX_ATTACHMENT_MB = 4
 
@@ -225,14 +235,6 @@ class PRMAttachment(models.Model):
         filename = self.attachment.name
         super(PRMAttachment, self).delete(*args, **kwargs)
         default_storage.delete(filename)
-
-
-# Flags for ContactLogEntry action_flag. Based on django.contrib.admin.models
-# action flags.
-ADDITION = 1
-CHANGE = 2
-DELETION = 3
-EMAIL = 4
 
 
 class ContactLogEntry(models.Model):

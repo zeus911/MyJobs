@@ -71,6 +71,10 @@ def prm(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_details(request):
+    """
+    Partner and contacts manage/edit page.
+
+    """
     company, partner, user = prm_worthy(request)
 
     form = PartnerForm(instance=partner, auto_id=False)
@@ -330,8 +334,6 @@ def verify_contact(request):
     active as well.
 
     """
-    prm_worthy(request)
-
     if request.REQUEST.get('action') != 'validate':
         raise Http404
     email = request.REQUEST.get('email')
@@ -606,7 +608,7 @@ def get_contact_information(request):
         data = {'error': 'Contact does not exist'}
         return HttpResponse(json.dumps(data))
 
-    if partner not in contact.partners_set.all():
+    if partner != contact.partner:
         data = {'error': 'Permission denied'}
         return HttpResponse(json.dumps(data))
 
@@ -669,8 +671,8 @@ def get_records(request):
 
     records = get_contact_records_for_partner(partner, contact_name=contact,
                                               record_type=contact_type,
-                                              date_range=[range_start,
-                                                          range_end])
+                                              date_time_range=[range_start,
+                                                               range_end])
     ctx = {
         'records': records,
         'company': company,
