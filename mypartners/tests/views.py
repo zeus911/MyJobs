@@ -17,27 +17,47 @@ from mypartners.models import ContactRecord
 from mysearches.models import PartnerSavedSearch
 
 
-class MyPartnerViewsTests(TestCase):
-    """Tests for the /prm/view/ page"""
+class MyPartnersTestCase(TestCase):
     def setUp(self):
-        super(MyPartnerViewsTests, self).setUp()
+        super(MyPartnersTestCase, self).setUp()
+
+        # Create a user to login as
         self.staff_user = UserFactory()
         group = Group.objects.get(name=CompanyUser.GROUP_NAME)
         self.staff_user.groups.add(group)
         self.staff_user.save()
 
+        # Create a company
         self.company = CompanyFactory()
         self.company.save()
         self.admin = CompanyUserFactory(user=self.staff_user,
                                         company=self.company)
+
+        # Create a contact
+        self.contact = ContactFactory()
+        self.contact.user = UserFactory(email="contact@user.com")
+        self.contact.save()
+
+        # Create a partner
+        self.partner = PartnerFactory(owner=self.company)
+        self.partner.add_contact(self.contact)
+        self.partner.save()
+
+        # Create a TestClient
         self.client = TestClient()
         self.client.login_user(self.staff_user)
 
-        self.partner = PartnerFactory(owner=self.company)
-        self.contact = ContactFactory()
-        self.contact.save()
-        self.partner.add_contact(self.contact)
-        self.partner.save()
+    def get_url(self, view=None, **kwargs):
+        if view == None:
+            view = self.default_view
+        args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
+        args = '&'.join(args)
+        return reverse(view) + '?' + args
+
+class MyPartnerViewsTests(MyPartnersTestCase):
+    """Tests for the /prm/view/ page"""
+    def setUp(self):
+        super(MyPartnerViewsTests, self).setUp()
 
     def test_prm_page_with_no_partners(self):
         """
@@ -111,42 +131,19 @@ class MyPartnerViewsTests(TestCase):
         self.assertEqual(len(soup.select('tr')), 10)
 
 
-class PartnerOverviewTests(TestCase):
+class PartnerOverviewTests(MyPartnersTestCase):
     """Tests related to the partner overview page, /prm/view/overview/"""
     def setUp(self):
         super(PartnerOverviewTests, self).setUp()
 
-        # Create a user to login as
-        self.staff_user = UserFactory()
-        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
-        self.staff_user.groups.add(group)
-        self.staff_user.save()
+        self.default_view = 'partner_overview'
 
-        # Create a company
-        self.company = CompanyFactory()
-        self.company.save()
-        self.admin = CompanyUserFactory(user=self.staff_user,
-                                        company=self.company)
-
-        # Create a partner
-        self.partner = PartnerFactory(owner=self.company)
+        # Create a primary contact
         self.primary_contact = ContactFactory(name="Example Name")
         self.primary_contact.save()
+
         self.partner.primary_contact = self.primary_contact
         self.partner.save()
-
-        # Create a contact
-        self.contact = ContactFactory()
-        self.contact.save()
-
-        # Create a TestClient
-        self.client = TestClient()
-        self.client.login_user(self.staff_user)
-
-    def get_url(self, **kwargs):
-        args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
-        args = '&'.join(args)
-        return reverse('partner_overview') + '?' + args
 
     def test_organization_details(self):
         url = self.get_url(company=self.company.id,
@@ -303,39 +300,13 @@ class PartnerOverviewTests(TestCase):
         self.assertEqual(len(container('tr')), 4)
 
 
-class RecordsOverviewTests(TestCase):
+class RecordsOverviewTests(MyPartnersTestCase):
     """Tests related to the records overview page, /prm/view/records/"""
 
     def setUp(self):
         super(RecordsOverviewTests, self).setUp()
 
-        # Create a user to login as
-        self.staff_user = UserFactory()
-        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
-        self.staff_user.groups.add(group)
-        self.staff_user.save()
-
-        # Create a company
-        self.company = CompanyFactory()
-        self.company.save()
-        self.admin = CompanyUserFactory(user=self.staff_user,
-                                        company=self.company)
-
-        # Create a partner
-        self.partner = PartnerFactory(owner=self.company)
-        self.primary_contact = ContactFactory(name="Example Name")
-        self.primary_contact.save()
-        self.partner.primary_contact = self.primary_contact
-        self.partner.save()
-
-        # Create a TestClient
-        self.client = TestClient()
-        self.client.login_user(self.staff_user)
-
-    def get_url(self, **kwargs):
-        args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
-        args = '&'.join(args)
-        return reverse('partner_records') + '?' + args
+        self.default_view = 'partner_records'
 
     def test_no_contact_records(self):
         url = self.get_url(company=self.company.id,
@@ -390,34 +361,12 @@ class RecordsOverviewTests(TestCase):
         self.assertEqual(len(activity('tr')), 10)
 
 
-class RecordsDetailsTests(TestCase):
+class RecordsDetailsTests(MyPartnersTestCase):
     """Tests related to the records detail page, /prm/view/records/view/"""
     def setUp(self):
         super(RecordsDetailsTests, self).setUp()
 
-        # Create a user to login as
-        self.staff_user = UserFactory()
-        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
-        self.staff_user.groups.add(group)
-        self.staff_user.save()
-
-        # Create a company
-        self.company = CompanyFactory()
-        self.company.save()
-        self.admin = CompanyUserFactory(user=self.staff_user,
-                                        company=self.company)
-
-        # Create a partner
-        self.partner = PartnerFactory(owner=self.company)
-        self.primary_contact = ContactFactory(name="Example Name")
-        self.primary_contact.save()
-        self.partner.primary_contact = self.primary_contact
-        self.partner.save()
-
-        # Create a contact
-        self.contact = ContactFactory()
-        self.contact.user = UserFactory(email="test@test.com")
-        self.contact.save()
+        self.default_view = 'record_view'
 
         # Create a ContactRecord
         self.contact_record = ContactRecordFactory(partner=self.partner)
@@ -425,15 +374,6 @@ class RecordsDetailsTests(TestCase):
                                      user=self.contact.user,
                                      object_id=self.contact_record.id)
         self.contact_log_entry.save()
-
-        # Create a TestClient
-        self.client = TestClient()
-        self.client.login_user(self.staff_user)
-
-    def get_url(self, **kwargs):
-        args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
-        args = '&'.join(args)
-        return reverse('record_view') + '?' + args
 
     def test_contact_details(self):
         url = self.get_url(partner=self.partner.id,
@@ -473,35 +413,18 @@ class RecordsDetailsTests(TestCase):
         self.assertEqual(len(soup.find(id='record-history')('br')), 3)
 
 
-class RecordsEditTests(TestCase):
+class RecordsEditTests(MyPartnersTestCase):
     """Tests related to the record edit page, /prm/view/records/edit"""
     def setUp(self):
         super(RecordsEditTests, self).setUp()
 
-        # Create a user to login as
-        self.staff_user = UserFactory()
-        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
-        self.staff_user.groups.add(group)
-        self.staff_user.save()
+        self.default_view = 'partner_edit_record'
 
-        # Create a company
-        self.company = CompanyFactory()
-        self.company.save()
-        self.admin = CompanyUserFactory(user=self.staff_user,
-                                        company=self.company)
-
-        # Create a contact
+        # Create a primary contact
         self.primary_contact = ContactFactory(name="Example Name")
         self.primary_contact.save()
 
-        self.contact = ContactFactory()
-        self.contact.user = UserFactory(email="test@test.com")
-        self.contact.save()
-
-        # Create a partner
-        self.partner = PartnerFactory(owner=self.company)
         self.partner.primary_contact = self.primary_contact
-        self.partner.add_contact(self.contact)
         self.partner.save()
 
         # Create a ContactRecord
@@ -511,15 +434,6 @@ class RecordsEditTests(TestCase):
                                      user=self.contact.user,
                                      object_id=self.contact_record.id)
         self.contact_log_entry.save()
-
-        # Create a TestClient
-        self.client = TestClient()
-        self.client.login_user(self.staff_user)
-
-    def get_url(self, **kwargs):
-        args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
-        args = '&'.join(args)
-        return reverse('partner_edit_record') + '?' + args
 
     def test_render_new_form(self):
         url = self.get_url(partner=self.partner.id,
@@ -653,41 +567,12 @@ class RecordsEditTests(TestCase):
         self.assertEqual(record.notes, data['notes'])
 
 
-class SearchesOverviewTests(TestCase):
+class SearchesOverviewTests(MyPartnersTestCase):
     """Tests related to the search overview page, /prm/view/searches"""
     def setUp(self):
         super(SearchesOverviewTests, self).setUp()
 
-        # Create a user to login as
-        self.staff_user = UserFactory()
-        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
-        self.staff_user.groups.add(group)
-        self.staff_user.save()
-
-        # Create a company
-        self.company = CompanyFactory()
-        self.company.save()
-        self.admin = CompanyUserFactory(user=self.staff_user,
-                                        company=self.company)
-
-        # Create a contact
-        self.contact = ContactFactory()
-        self.contact.user = UserFactory(email="test@test.com")
-        self.contact.save()
-
-        # Create a partner
-        self.partner = PartnerFactory(owner=self.company)
-        self.partner.add_contact(self.contact)
-        self.partner.save()
-
-        # Create a TestClient
-        self.client = TestClient()
-        self.client.login_user(self.staff_user)
-
-    def get_url(self, **kwargs):
-        args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
-        args = '&'.join(args)
-        return reverse('partner_searches') + '?' + args
+        self.default_view = 'partner_searches'
 
     def test_no_searches(self):
         url = self.get_url(company=self.company.id,
@@ -713,33 +598,12 @@ class SearchesOverviewTests(TestCase):
         self.assertEqual(len(searches('tr')), 11)
 
 
-class SearchFeedTests(TestCase):
+class SearchFeedTests(MyPartnersTestCase):
     """Tests relating to the search feed page, /prm/view/searches/feed"""
     def setUp(self):
         super(SearchFeedTests, self).setUp()
 
-        # Create a user to login as
-        self.staff_user = UserFactory()
-        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
-        self.staff_user.groups.add(group)
-        self.staff_user.save()
-
-        # Create a company
-        self.company = CompanyFactory()
-        self.company.save()
-        self.admin = CompanyUserFactory(user=self.staff_user,
-                                        company=self.company)
-
-        # Create a contact
-        self.contact = ContactFactory()
-        self.contact.user = UserFactory(email="test@test.com")
-        self.contact.save()
-
-        # Create a partner
-        self.partner = PartnerFactory(owner=self.company)
-        self.partner.add_contact(self.contact)
-        self.partner.save()
-
+        self.default_view = 'partner_view_full_feed'
         self.search = PartnerSavedSearchFactory(provider=self.company,
                                                 created_by=self.staff_user,
                                                 user=self.contact.user)
@@ -747,11 +611,6 @@ class SearchFeedTests(TestCase):
         # Create a TestClient
         self.client = TestClient()
         self.client.login_user(self.staff_user)
-
-    def get_url(self, **kwargs):
-        args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
-        args = '&'.join(args)
-        return reverse('partner_view_full_feed') + '?' + args
 
     def test_details(self):
         url = self.get_url(company=self.company.id,
@@ -776,45 +635,16 @@ class SearchFeedTests(TestCase):
             self.assertIn(text, details[i].get_text())
 
 
-class SearchEditTests(TestCase):
+class SearchEditTests(MyPartnersTestCase):
     """Tests relating to the edit search page /prm/view/searches/edit"""
     def setUp(self):
         super(SearchEditTests, self).setUp()
 
-        # Create a user to login as
-        self.staff_user = UserFactory()
-        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
-        self.staff_user.groups.add(group)
-        self.staff_user.save()
-
-        # Create a company
-        self.company = CompanyFactory()
-        self.company.save()
-        self.admin = CompanyUserFactory(user=self.staff_user,
-                                        company=self.company)
-
-        # Create a contact
-        self.contact = ContactFactory()
-        self.contact.user = UserFactory(email="test@test.com")
-        self.contact.save()
-
-        # Create a partner
-        self.partner = PartnerFactory(owner=self.company)
-        self.partner.add_contact(self.contact)
-        self.partner.save()
+        self.default_view = 'partner_edit_search'
 
         self.search = PartnerSavedSearchFactory(provider=self.company,
                                                 created_by=self.staff_user,
                                                 user=self.contact.user)
-
-        # Create a TestClient
-        self.client = TestClient()
-        self.client.login_user(self.staff_user)
-
-    def get_url(self, view='partner_edit_search', **kwargs):
-        args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
-        args = '&'.join(args)
-        return reverse(view) + '?' + args
 
     def test_render_new_form(self):
         url = self.get_url(company=self.company.id,
