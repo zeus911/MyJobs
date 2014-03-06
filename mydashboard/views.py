@@ -116,10 +116,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                                                                         user_solr,
                                                                         facet_solr,
                                                                         loc_solr)
-
-    # This should be refactored so it's not two queries.  Maybe decide how many
-    # initial results we want and set a arbitrary limit?
-    solr_results = user_solr.rows_to_fetch(user_solr.search().hits).search()
+    solr_results = user_solr.rows_to_fetch(100).search()
 
     # List of dashboard widgets to display.
     dashboard_widgets = ["candidates", "search", "applied_filters", "filters"]
