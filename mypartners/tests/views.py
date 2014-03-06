@@ -12,7 +12,6 @@ from mypartners.tests.factories import (PartnerFactory, ContactFactory,
                                         ContactLogEntryFactory,
                                         ContactRecordFactory)
 from mysearches.tests.factories import PartnerSavedSearchFactory
-from django.contrib.localflavor import be
 from datetime import datetime, timedelta
 from mypartners.models import ContactRecord
 from mysearches.models import PartnerSavedSearch
@@ -389,8 +388,6 @@ class RecordsOverviewTests(TestCase):
         activity = soup.find(id='recent-activity')
 
         self.assertEqual(len(activity('tr')), 10)
-
-
 
 
 class RecordsDetailsTests(TestCase):
@@ -876,14 +873,14 @@ class SearchEditTests(TestCase):
             errors = json.loads(response.content)
             self.assertTrue("This field is required." in errors[k])
 
-
     def test_create_new_contact_record(self):
         self.search.delete()
         url = self.get_url('partner_savedsearch_save',
                           company=self.company.id,
                           partner=self.partner.id)
 
-        data = {'label': 'Test',
+        data = {'feed': 'http://www.jobs.jobs/jobs/rss/jobs',
+                'label': 'Test',
                 'url': 'http://www.jobs.jobs/jobs',
                 'url_extras': '',
                 'email': self.contact.user.email,
@@ -914,7 +911,8 @@ class SearchEditTests(TestCase):
                           partner=self.partner.id,
                           id=self.search.id)
 
-        data = {'label': 'Test',
+        data = {'feed': 'http://www.jobs.jobs/jobs/rss/jobs',
+                'label': 'Test',
                 'url': 'http://www.jobs.jobs/jobs',
                 'url_extras': '',
                 'email': self.contact.user.email,

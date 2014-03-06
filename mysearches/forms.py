@@ -55,13 +55,13 @@ class SavedSearchForm(BaseUserForm):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
         feed = cleaned_data.get('feed')
-        self.instance.feed = feed
 
         if not feed:
             new_feed = validate_dotjobs_url(url)[1]
             if new_feed:
                 cleaned_data['feed'] = new_feed
                 del self._errors['feed']
+        self.instance.feed = cleaned_data.get('feed')
         return cleaned_data
 
     def clean_url(self):
@@ -158,13 +158,13 @@ class PartnerSavedSearchForm(ModelForm):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
         feed = cleaned_data.get('feed')
-        self.instance.feed = feed
 
         if not feed:
             new_feed = validate_dotjobs_url(url)[1]
             if new_feed:
                 cleaned_data['feed'] = new_feed
                 del self._errors['feed']
+        self.instance.feed = cleaned_data.get('feed')
         return cleaned_data
 
     def save(self, commit=True):
