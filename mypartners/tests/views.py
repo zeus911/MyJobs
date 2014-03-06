@@ -465,8 +465,8 @@ class RecordsDetailsTests(TestCase):
         # Add more events
         for i in range(2, 4):
             ContactLogEntryFactory(partner=self.partner, action_flag=i,
-                                     user=self.contact.user,
-                                     object_id=self.contact_record.id)
+                                   user=self.contact.user,
+                                   object_id=self.contact_record.id)
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
 
@@ -506,7 +506,7 @@ class RecordsEditTests(TestCase):
 
         # Create a ContactRecord
         self.contact_record = ContactRecordFactory(partner=self.partner,
-                                   contact_name=self.contact.name)
+                                     contact_name=self.contact.name)
         self.contact_log_entry = ContactLogEntryFactory(partner=self.partner,
                                      user=self.contact.user,
                                      object_id=self.contact_record.id)
