@@ -54,6 +54,7 @@ class MyPartnersTestCase(TestCase):
         args = '&'.join(args)
         return reverse(view) + '?' + args
 
+
 class MyPartnerViewsTests(MyPartnersTestCase):
     """Tests for the /prm/view/ page"""
     def setUp(self):
@@ -670,7 +671,7 @@ class SearchEditTests(MyPartnersTestCase):
         self.assertEqual(self.search.notes,
                          form.find(id='id_notes').get_text().strip())
 
-    def test_generate_error_conditions(self):
+    def test_required_fields(self):
         self.search.delete()
         url = self.get_url('partner_savedsearch_save',
                           company=self.company.id,
@@ -689,7 +690,8 @@ class SearchEditTests(MyPartnersTestCase):
             response = self.client.post(url, post)
             self.assertEqual(response.status_code, 200)
             errors = json.loads(response.content)
-            self.assertTrue("This field is required." in errors[k])
+            self.assertTrue("This field is required." in errors[k],
+                            msg="field %s did not have the expected error" % k)
 
         # Change to testing day of month
         data.update({'frequency': 'M', 'day_of_month': '3'})
@@ -702,6 +704,24 @@ class SearchEditTests(MyPartnersTestCase):
             self.assertEqual(response.status_code, 200)
             errors = json.loads(response.content)
             self.assertTrue("This field is required." in errors[k])
+
+    def test_invalid_urls(self):
+        self.search.delete()
+        url = self.get_url('partner_savedsearch_save',
+                          company=self.company.id,
+                          partner=self.partner.id)
+
+        data = {'label': 'Test',
+                'url': 'http://www.google.com',
+                'email': self.contact.user.email,
+                'frequency': 'W',
+                'day_of_week': '3'}
+
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 200)
+        errors = json.loads(response.content)
+        error_msg = 'That URL does not contain feed information'
+        self.assertIn(error_msg, errors['url'])
 
     def test_create_new_contact_record(self):
         self.search.delete()
@@ -728,7 +748,8 @@ class SearchEditTests(MyPartnersTestCase):
         self.assertEqual(response.status_code, 200)
 
         # Set the translated values,
-        data.update({'day_of_month': None})
+        data.update({'day_of_month': None,
+                    'feed': 'http://www.my.jobs/jobs/feed/rss'})
         search = PartnerSavedSearch.objects.get()
         for k, v in data.items():
             self.assertEqual(v, getattr(search, k),
@@ -761,7 +782,8 @@ class SearchEditTests(MyPartnersTestCase):
         self.assertEqual(response.status_code, 200)
 
         # Set the translated values,
-        data.update({'day_of_month': None})
+        data.update({'day_of_month': None,
+                    'feed': 'http://www.my.jobs/jobs/feed/rss'})
         search = PartnerSavedSearch.objects.get()
         for k, v in data.items():
             self.assertEqual(v, getattr(search, k),
