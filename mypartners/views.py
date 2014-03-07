@@ -67,7 +67,8 @@ def prm(request):
            'form': partner_form or form,
            'company': company,
            'user': user,
-           'partner_ct': partner_ct_id}
+           'partner_ct': partner_ct_id,
+           'view_name': 'PRM'}
 
     return render_to_response('mypartners/prm.html', ctx,
                               RequestContext(request))
@@ -87,7 +88,8 @@ def partner_details(request):
            'contacts': contacts,
            'partner': partner,
            'contact_ct': contact_ct_id,
-           'partner_ct': partner_ct_id}
+           'partner_ct': partner_ct_id,
+           'view_name': 'PRM'}
     return render_to_response('mypartners/partner_details.html', ctx,
                               RequestContext(request))
 
@@ -142,7 +144,8 @@ def edit_item(request):
            'partner': partner,
            'company': company,
            'contact': item_id,
-           'content_id': content_id}
+           'content_id': content_id,
+           'view_name': 'PRM'}
 
     return render_to_response('mypartners/edit_item.html', ctx,
                               RequestContext(request))
@@ -295,7 +298,8 @@ def prm_overview(request):
            'company': company,
            'recent_activity': most_recent_activity,
            'recent_communication': most_recent_communication,
-           'recent_ss': most_recent_saved_searches}
+           'recent_ss': most_recent_saved_searches,
+           'view_name': 'PRM'}
 
     return render_to_response('mypartners/overview.html', ctx,
                               RequestContext(request))
@@ -331,6 +335,7 @@ def prm_edit_saved_search(request):
         'item_id': item_id,
         'form': form,
         'content_type': ContentType.objects.get_for_model(PartnerSavedSearch).id,
+        'view_name': 'PRM',
     }
     return render_to_response('mypartners/partner_edit_search.html', ctx,
                               RequestContext(request))
@@ -449,7 +454,8 @@ def partner_view_full_feed(request):
                                'view_name': 'Saved Searches',
                                'is_pss': is_pss,
                                'partner': partner.id,
-                               'company': company.id},
+                               'company': company.id,
+                               'view_name': 'PRM'},
                               RequestContext(request))
 
 
@@ -478,6 +484,7 @@ def prm_records(request):
         'most_recent_activity': most_recent_activity,
         'partner': partner,
         'records': contact_records,
+       'view_name': 'PRM'
     }
     return render_to_response('mypartners/main_records.html', ctx,
                               RequestContext(request))
@@ -594,6 +601,7 @@ def prm_view_records(request):
         'prev_offset': prev_offset,
         'contact_type': record_type,
         'contact_name': name,
+        'view_name': 'PRM'
 
     }
 
@@ -674,6 +682,7 @@ def get_records(request):
         'partner': partner,
         'contact_type': contact_type,
         'contact_name': contact,
+        'view_name': 'PRM'
     }
 
     data = {
