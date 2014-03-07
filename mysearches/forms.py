@@ -1,4 +1,3 @@
-from django.contrib.admin.models import ADDITION
 from django.forms import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
@@ -62,7 +61,8 @@ class SavedSearchForm(BaseUserForm):
         else:
             error_msg = "That URL does not contain feed information"
             self._errors.setdefault('url', []).append(error_msg)
-        self.instance.feed = feed
+
+        self.cleaned_data['feed'] = feed
         return cleaned_data
 
     def clean_url(self):
@@ -75,6 +75,10 @@ class SavedSearchForm(BaseUserForm):
                                                                url=self.cleaned_data['url']):
             raise ValidationError(_('URL must be unique.'))
         return self.cleaned_data['url']
+
+    def save(self, commit=True):
+        self.instance.feed = self.cleaned_data['feed']
+        return super(SavedSearchForm, self).save(commit)
 
     class Meta:
         model = SavedSearch
@@ -136,7 +140,7 @@ class PartnerSavedSearchForm(ModelForm):
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
                   'account_activation_message', 'frequency', 'day_of_month',
                   'day_of_week', 'partner_message', 'notes')
-        exclude = ('provider', 'sort_by', 'partner', )
+        exclude = ('provider', 'sort_by', )
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
             'url_extras': TextInput(attrs={
@@ -159,6 +163,7 @@ class PartnerSavedSearchForm(ModelForm):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
         feed = validate_dotjobs_url(url)[1]
+
         if feed:
             cleaned_data['feed'] = feed
             self._errors.pop('feed', None)
@@ -166,10 +171,11 @@ class PartnerSavedSearchForm(ModelForm):
             error_msg = "That URL does not contain feed information"
             self._errors.setdefault('url', []).append(error_msg)
 
-        self.instance.feed = feed
+        self.cleaned_data['feed'] = feed
         return cleaned_data
 
     def save(self, commit=True):
+        self.instance.feed = self.cleaned_data.get('feed')
         is_new_or_change = CHANGE if self.instance.pk else ADDITION
         instance = super(PartnerSavedSearchForm, self).save(commit)
         partner = instance.partner
@@ -191,7 +197,7 @@ class PartnerSubSavedSearchForm(ModelForm):
         exclude = ('provider', 'url_extras', 'partner_message',
                    'account_activation_message', 'created_by', 'user',
                    'created_on', 'label', 'url', 'feed', 'email', 'notes',
-                   'custom_message', 'partner', )
+                   'custom_message', )
         widgets = {
             'sort_by': RadioSelect(renderer=HorizontalRadioRenderer,
                                    attrs={'id': 'sort_by'}),
