@@ -265,8 +265,21 @@ class ContactRecordForm(forms.ModelForm):
                 choices.pop(index)
                 choices.insert(0, tup)
         super(ContactRecordForm, self).__init__(*args, **kwargs)
+
+        if not instance or instance.contact_type != 'pssemail':
+            # Remove Partner Saved Search from the list of valid
+            # contact type choices.
+            contact_type_choices = self.fields["contact_type"].choices
+            index = [x[0] for x in contact_type_choices].index("pssemail")
+            contact_type_choices.pop(index)
+            self.fields["contact_type"] = forms.ChoiceField(
+                widget=forms.Select(), choices=contact_type_choices,
+                label="Contact Type")
+
         self.fields["contact_name"] = forms.ChoiceField(
             widget=forms.Select(), choices=choices, label="Contact")
+
+        # If there are attachments create a checkbox option to delete them.
         if instance:
             attachments = PRMAttachment.objects.filter(contact_record=instance)
             if attachments:

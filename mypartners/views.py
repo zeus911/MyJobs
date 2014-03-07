@@ -127,8 +127,8 @@ def edit_item(request):
             form = ContactForm()
         else:
             try:
-                item = partner.contacts.get(pk=item_id)
-            except:
+                item = Contact.objects.get(partner=partner, pk=item_id)
+            except Contact.DoesNotExist:
                 raise Http404
             form = ContactForm(instance=item, auto_id=False)
     else:
@@ -179,7 +179,7 @@ def save_item(request):
                                         id=partner_id)
 
             try:
-                item = partner.contacts.get(pk=item_id)
+                item = Contact.objects.get(pk=item_id, partner=partner)
             except:
                 raise Http404
             else:
@@ -243,7 +243,7 @@ def delete_prm_item(request):
                                     str(partner_id))
     elif content_id == ContentType.objects.get_for_model(Partner).id:
         partner = get_object_or_404(Partner, id=partner_id, owner=company)
-        partner.contacts.all().delete()
+        Contact.objects.all(partner=partner).delete()
         log_change(partner, None, request.user, partner, partner.name,
                    action_type=DELETION)
         partner.delete()
