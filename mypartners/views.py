@@ -417,7 +417,7 @@ def partner_savedsearch_save(request):
                 custom_msg=instance.account_activation_message)
             instance.user = user[0]
             Contact.objects.filter(email=instance.email).update(user=instance.user)
-        instance.feed = form.data['feed']
+        instance.feed = form.cleaned_data['feed']
         instance.provider = company
         instance.created_by = request.user
         instance.custom_message = instance.partner_message
