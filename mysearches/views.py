@@ -213,7 +213,6 @@ def edit_search(request):
             if hasattr(saved_search, 'partnersavedsearch'):
                 is_pss = True
                 form = PartnerSubSavedSearchForm(
-                    user=request.user,
                     instance=saved_search.partnersavedsearch,
                     auto_id=False)
         else:

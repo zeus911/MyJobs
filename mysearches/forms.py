@@ -1,4 +1,3 @@
-from django.contrib.admin.models import ADDITION
 from django.forms import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
@@ -9,7 +8,7 @@ from mysearches.helpers import *
 from mysearches.models import (SavedSearch, SavedSearchDigest,
                                PartnerSavedSearch)
 from mypartners.forms import PartnerEmailChoices
-from mypartners.models import Contact
+from mypartners.models import Contact, ADDITION, CHANGE
 from mypartners.helpers import log_change
 
 
@@ -62,7 +61,8 @@ class SavedSearchForm(BaseUserForm):
         else:
             error_msg = "That URL does not contain feed information"
             self._errors.setdefault('url', []).append(error_msg)
-        self.instance.feed = feed
+
+        self.cleaned_data['feed'] = feed
         return cleaned_data
 
     def clean_url(self):
@@ -75,6 +75,10 @@ class SavedSearchForm(BaseUserForm):
                                                                url=self.cleaned_data['url']):
             raise ValidationError(_('URL must be unique.'))
         return self.cleaned_data['url']
+
+    def save(self, commit=True):
+        self.instance.feed = self.cleaned_data['feed']
+        return super(SavedSearchForm, self).save(commit)
 
     class Meta:
         model = SavedSearch
@@ -159,6 +163,7 @@ class PartnerSavedSearchForm(ModelForm):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
         feed = validate_dotjobs_url(url)[1]
+
         if feed:
             cleaned_data['feed'] = feed
             self._errors.pop('feed', None)
@@ -166,20 +171,18 @@ class PartnerSavedSearchForm(ModelForm):
             error_msg = "That URL does not contain feed information"
             self._errors.setdefault('url', []).append(error_msg)
 
-        self.instance.feed = feed
+        self.cleaned_data['feed'] = feed
         return cleaned_data
 
     def save(self, commit=True):
-        is_new = False if self.instance.pk else True
+        self.instance.feed = self.cleaned_data.get('feed')
+        is_new_or_change = CHANGE if self.instance.pk else ADDITION
         instance = super(PartnerSavedSearchForm, self).save(commit)
-        contact = Contact.objects.get(user=instance.user)
-        partner = contact.partners_set.all()[0]
-        if is_new:
-            log_change(instance, self, instance.created_by, partner,
-                       contact.email, action_type=ADDITION)
-        else:
-            log_change(instance, self, instance.created_by, partner,
-                       contact.email)
+        partner = instance.partner
+        contact = Contact.objects.filter(partner=partner,
+                                         user=instance.user)[0]
+        log_change(instance, self, instance.created_by, partner,
+                   contact.email, action_type=is_new_or_change)
 
         return instance
 

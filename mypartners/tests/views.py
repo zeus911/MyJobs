@@ -32,16 +32,15 @@ class MyPartnersTestCase(TestCase):
         self.company.save()
         self.admin = CompanyUserFactory(user=self.staff_user,
                                         company=self.company)
-
-        # Create a contact
-        self.contact = ContactFactory()
-        self.contact.user = UserFactory(email="contact@user.com")
-        self.contact.save()
+        self.client = TestClient()
+        self.client.login_user(self.staff_user)
 
         # Create a partner
         self.partner = PartnerFactory(owner=self.company)
-        self.partner.add_contact(self.contact)
-        self.partner.save()
+
+        # Create a contact
+        self.contact = ContactFactory(partner=self.partner,
+                                      user=UserFactory(email="contact@user.com"))
 
         # Create a TestClient
         self.client = TestClient()
@@ -117,11 +116,8 @@ class MyPartnerViewsTests(MyPartnersTestCase):
 
         x = 0
         while x < 9:
-            contact = ContactFactory()
-            contact.save()
-            self.partner.add_contact(contact)
+            contact = ContactFactory(partner=self.partner)
             x += 1
-        self.partner.save()
 
         response = self.client.post(reverse('partner_details') +
                                     '?company=' + str(self.company.id) +
@@ -140,7 +136,8 @@ class PartnerOverviewTests(MyPartnersTestCase):
         self.default_view = 'partner_overview'
 
         # Create a primary contact
-        self.primary_contact = ContactFactory(name="Example Name")
+        self.primary_contact = ContactFactory(name="Example Name",
+                                              partner=self.partner)
         self.primary_contact.save()
 
         self.partner.primary_contact = self.primary_contact
@@ -227,7 +224,10 @@ class PartnerOverviewTests(MyPartnersTestCase):
 
     def test_recent_communication_records(self):
         for _ in range(2):
-            ContactRecordFactory(partner=self.partner)
+            contact_record = ContactRecordFactory(partner=self.partner)
+            ContactLogEntryFactory(partner=self.partner,
+                                   user=None,
+                                   object_id=contact_record.id)
 
         url = self.get_url(company=self.company.id,
                            partner=self.partner.id)
@@ -239,7 +239,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
         # Include 1 header row
         self.assertEqual(len(container('tr')), 3)
 
-        contact_msg = "An employee emailed example@email.com"
+        contact_msg = "An email record for example-contact was added"
         for row in container('tr')[1:]:
             self.assertIn(contact_msg, row.get_text())
             self.assertIn('Test Subject', row.get_text())
@@ -271,11 +271,11 @@ class PartnerOverviewTests(MyPartnersTestCase):
         self.contact.user = user
         self.contact.save()
 
-        self.partner.add_contact(self.contact)
         for _ in range(2):
             PartnerSavedSearchFactory(user=self.contact.user,
                                       provider=self.company,
-                                      created_by=self.staff_user)
+                                      created_by=self.staff_user,
+                                      partner=self.partner)
 
         url = self.get_url(company=self.company.id,
                            partner=self.partner.id)
@@ -293,7 +293,8 @@ class PartnerOverviewTests(MyPartnersTestCase):
         for _ in range(4):
             PartnerSavedSearchFactory(user=self.contact.user,
                                       provider=self.company,
-                                      created_by=self.staff_user)
+                                      created_by=self.staff_user,
+                                      partner=self.partner)
 
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
@@ -419,10 +420,12 @@ class RecordsEditTests(MyPartnersTestCase):
     def setUp(self):
         super(RecordsEditTests, self).setUp()
 
+
         self.default_view = 'partner_edit_record'
 
         # Create a primary contact
-        self.primary_contact = ContactFactory(name="Example Name")
+        self.primary_contact = ContactFactory(name="Example Name",
+                                              partner=self.partner)
         self.primary_contact.save()
 
         self.partner.primary_contact = self.primary_contact
@@ -446,20 +449,17 @@ class RecordsEditTests(MyPartnersTestCase):
         form = soup.find('fieldset')
 
         self.assertEqual(len(form(class_='profile-form-input')), 14)
-        self.assertEqual(len(form.find(id='id_contact_name')('option')), 2)
+        self.assertEqual(len(form.find(id='id_contact_name')('option')), 3)
 
         # Add contact
-        contact = ContactFactory()
-        contact.user = UserFactory(email="test-2@test.com")
-        contact.save()
-        self.partner.add_contact(contact)
-        self.partner.save()
+        ContactFactory(partner=self.partner,
+                       user=UserFactory(email="test-2@test.com"))
 
         # Test form is updated with new contact
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
         form = soup.find(id='id_contact_name')
-        self.assertEqual(len(form('option')), 3)
+        self.assertEqual(len(form('option')), 4)
 
     def test_render_existing_data(self):
         url = self.get_url(partner=self.partner.id,
@@ -472,7 +472,7 @@ class RecordsEditTests(MyPartnersTestCase):
         form = soup.find('fieldset')
 
         self.assertEqual(len(form(class_='profile-form-input')), 14)
-        self.assertEqual(len(form.find(id='id_contact_name')('option')), 1)
+        self.assertEqual(len(form.find(id='id_contact_name')('option')), 2)
 
         contact_type = form.find(id='id_contact_type')
         contact_type = contact_type.find(selected='selected').get_text()
@@ -587,7 +587,8 @@ class SearchesOverviewTests(MyPartnersTestCase):
         for _ in range(10):
             PartnerSavedSearchFactory(user=self.contact.user,
                                       provider=self.company,
-                                      created_by=self.staff_user)
+                                      created_by=self.staff_user,
+                                      partner=self.partner)
 
         # Get the page
         url = self.get_url(company=self.company.id,
@@ -607,7 +608,8 @@ class SearchFeedTests(MyPartnersTestCase):
         self.default_view = 'partner_view_full_feed'
         self.search = PartnerSavedSearchFactory(provider=self.company,
                                                 created_by=self.staff_user,
-                                                user=self.contact.user)
+                                                user=self.contact.user,
+                                                partner=self.partner)
 
         # Create a TestClient
         self.client = TestClient()
@@ -645,7 +647,8 @@ class SearchEditTests(MyPartnersTestCase):
 
         self.search = PartnerSavedSearchFactory(provider=self.company,
                                                 created_by=self.staff_user,
-                                                user=self.contact.user)
+                                                user=self.contact.user,
+                                                partner=self.partner)
 
     def test_render_new_form(self):
         url = self.get_url(company=self.company.id,
