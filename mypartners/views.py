@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import json
 
 from django.conf import settings
+from django.contrib.admin.models import DELETION
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -44,10 +45,13 @@ def prm(request):
     else:
         company = get_object_or_404(Company, id=company_id)
 
+    user = request.user
     if not user in company.admins.all():
         raise Http404
 
+    form = request.REQUEST.get('form')
     if not company.partner_set.all():
+        has_partners = False
         if not form:
             partner_form = PartnerInitialForm()
         partners = []
@@ -56,6 +60,7 @@ def prm(request):
             partners = Partner.objects.filter(owner=company.id)
         except Partner.DoesNotExist:
             raise Http404
+        has_partners = True
         partner_form = None
 
     ctx = {'has_partners': True if partners else False,
@@ -71,20 +76,20 @@ def prm(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_details(request):
-    """
-    Partner and contacts manage/edit page.
-
-    """
     company, partner, user = prm_worthy(request)
 
     form = PartnerForm(instance=partner, auto_id=False)
 
+    contacts = partner.contacts.all()
+    contact_ct_id = ContentType.objects.get_for_model(Contact).id
+    partner_ct_id = ContentType.objects.get_for_model(Partner).id
+
     ctx = {'company': company,
            'form': form,
-           'contacts': Contact.objects.filter(partner=partner),
+           'contacts': contacts,
            'partner': partner,
-           'contact_ct': ContentType.objects.get_for_model(Contact).id,
-           'partner_ct': ContentType.objects.get_for_model(Partner).id}
+           'contact_ct': contact_ct_id,
+           'partner_ct': partner_ct_id}
     return render_to_response('mypartners/partner_details.html', ctx,
                               RequestContext(request))
 
@@ -96,6 +101,7 @@ def edit_item(request):
 
     """
     company_id = request.REQUEST.get('company')
+
     company = get_object_or_404(Company, id=company_id)
 
     user = request.user
@@ -127,8 +133,8 @@ def edit_item(request):
             form = ContactForm()
         else:
             try:
-                item = Contact.objects.get(partner=partner, pk=item_id)
-            except Contact.DoesNotExist:
+                item = partner.contacts.get(pk=item_id)
+            except:
                 raise Http404
             form = ContactForm(instance=item, auto_id=False)
     else:
@@ -164,33 +170,37 @@ def save_item(request):
 
     """
     company_id = request.REQUEST.get('company')
+
     company = get_object_or_404(Company, id=company_id)
+
     content_id = int(request.REQUEST.get('ct'))
 
     if content_id == ContentType.objects.get_for_model(Contact).id:
         item_id = request.REQUEST.get('id') or None
-        try:
-            partner_id = int(request.REQUEST.get('partner'))
-        except TypeError:
-            raise Http404
-
-        partner = get_object_or_404(company.partner_set.all(), id=partner_id)
         if item_id:
             try:
-                item = Contact.objects.get(pk=item_id, partner=partner)
-            except Contact.DoesNotExist:
+                partner_id = int(request.REQUEST.get('partner'))
+            except TypeError:
+                raise Http404
+
+            partner = get_object_or_404(company.partner_set.all(),
+                                        id=partner_id)
+
+            try:
+                item = partner.contacts.get(pk=item_id)
+            except:
                 raise Http404
             else:
                 form = ContactForm(instance=item, auto_id=False,
                                    data=request.POST)
                 if form.is_valid():
-                    form.save(request.user, partner)
+                    form.save(request.user)
                     return HttpResponse(status=200)
                 else:
                     return HttpResponse(json.dumps(form.errors))
         form = ContactForm(request.POST)
         if form.is_valid():
-            form.save(request.user, partner)
+            form.save(request.user)
             return HttpResponse(status=200)
         else:
             return HttpResponse(json.dumps(form.errors))
@@ -225,14 +235,14 @@ def delete_prm_item(request):
         partner_id = int(partner_id)
     item_id = request.REQUEST.get('id')
     if item_id:
-        item_id = int(item_id)
+        contact_id = int(item_id)
     content_id = request.REQUEST.get('ct')
     if content_id:
         content_id = int(content_id)
 
     if content_id == ContentType.objects.get_for_model(Contact).id:
         partner = get_object_or_404(Partner, id=partner_id, owner=company)
-        contact = get_object_or_404(Contact, id=item_id)
+        contact = get_object_or_404(Contact, id=contact_id)
         log_change(contact, None, request.user, partner, contact.name,
                    action_type=DELETION)
         contact.delete()
@@ -241,7 +251,7 @@ def delete_prm_item(request):
                                     str(partner_id))
     elif content_id == ContentType.objects.get_for_model(Partner).id:
         partner = get_object_or_404(Partner, id=partner_id, owner=company)
-        Contact.objects.all(partner=partner).delete()
+        partner.contacts.all().delete()
         log_change(partner, None, request.user, partner, partner.name,
                    action_type=DELETION)
         partner.delete()
@@ -271,20 +281,23 @@ def delete_prm_item(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_overview(request):
     """
-    Overview of all partner activity.
+    View that is the "Overview" of one's Partner Activity.
 
     """
     company, partner, user = prm_worthy(request)
 
     most_recent_activity = get_logs_for_partner(partner)
     communication = get_contact_records_for_partner(partner)
+    most_recent_communication = communication[:3]
     saved_searches = get_searches_for_partner(partner)
+    most_recent_saved_searches = saved_searches[:3]
+
 
     ctx = {'partner': partner,
            'company': company,
            'recent_activity': most_recent_activity,
-           'recent_communication': communication[:3],
-           'recent_ss': saved_searches[:3]}
+           'recent_communication': most_recent_communication,
+           'recent_ss': most_recent_saved_searches}
 
     return render_to_response('mypartners/overview.html', ctx,
                               RequestContext(request))
@@ -293,7 +306,7 @@ def prm_overview(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_saved_searches(request):
     """
-    PartnerSavedSearch overview.
+    View that lists the Partner's Saved Searches
 
     """
     company, partner, user = prm_worthy(request)
@@ -488,6 +501,12 @@ def prm_edit_records(request):
         instance = None
 
     if request.method == 'POST':
+        instance = None
+        if record_id:
+            try:
+                instance = ContactRecord.objects.get(pk=record_id)
+            except ContactRecord.DoesNotExist:
+                instance = None
         form = ContactRecordForm(request.POST, request.FILES,
                                  partner=partner, instance=instance)
         if form.is_valid():
@@ -526,8 +545,7 @@ def prm_view_records(request):
         offset = int(offset)
     except (TypeError, ValueError):
         return HttpResponseRedirect(reverse('partner_records') +
-                                    '?company=%d&partner=%d' %
-                                    (company.id, partner.id))
+                '?company=%d&partner=%d' % (company.id, partner.id))
 
     prev_offset = (offset - 1) if offset > 1 else 0
     records = get_contact_records_for_partner(partner, record_type=record_type,
@@ -584,6 +602,7 @@ def prm_view_records(request):
         'prev_offset': prev_offset,
         'contact_type': record_type,
         'contact_name': name,
+        'view_name': 'PRM'
 
     }
 
@@ -639,6 +658,8 @@ def get_records(request):
     contact_type = request.REQUEST.get('contact_type')
     contact = None if contact == 'all' else contact
     contact_type = None if contact_type == 'all' else contact_type
+    records = get_contact_records_for_partner(partner, contact_name=contact,
+                                              record_type=contact_type)
 
     date_in_days = request.REQUEST.get('date')
     if date_in_days:
@@ -664,6 +685,7 @@ def get_records(request):
             date_str = (range_end - range_start).days
             date_str = (("%s Days" % date_str) if date_str != 1
                         else ("%s Day" % date_str))
+            records = records.filter(date_time__range=[range_start, range_end])
         except (ValidationError, TypeError):
             pass
 
@@ -678,6 +700,7 @@ def get_records(request):
         'contact_type': contact_type,
         'contact_name': contact,
     }
+
     data = {
         'date_end': range_end.strftime('%m/%d/%Y'),
         'date_start': range_start.strftime('%m/%d/%Y'),
