@@ -180,7 +180,7 @@ def save_item(request):
 
             try:
                 item = Contact.objects.get(pk=item_id, partner=partner)
-            except:
+            except Contact.DoesNotExist:
                 raise Http404
             else:
                 form = ContactForm(instance=item, auto_id=False,
