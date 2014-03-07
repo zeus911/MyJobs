@@ -26,7 +26,7 @@
 
     <div class="row">
         <div class="span3">
-            <div class="tip-box">
+            <div class="tip-box" id="details">
             <h5>Contact Details</h5>
                 <div class="tip-content">
                 {{ record.contact_name }} <br/>
@@ -35,27 +35,27 @@
                 </div>
             </div>
             {% if record.subject %}
-            <div class="tip-box">
+            <div class="tip-box" id="subject">
             <h5>Subject</h5>
                 <div class="tip-content">
                     {{ record.subject }}
                 </div>
             </div>
             {% endif %}
-            <div class="tip-box">
+            <div class="tip-box" id="type">
             <h5>Contact Type</h5>
                 <div class="tip-content">
                     {% get_contact_type record %}
                 </div>
             </div>
-            <div class="tip-box">
+            <div class="tip-box" id="time">
             <h5>Date & Time of Contact</h5>
                 <div class="tip-content">
                     {{ record.date_time }}
                 </div>
             </div>
             {% if attachments %}
-            <div class="tip-box">
+            <div class="tip-box" id="attachments">
             <h5>Attachments</h5>
                 <div class="tip-content">
                 {% for attachment in attachments %}
@@ -66,7 +66,7 @@
             {% endif %}
         </div>
         <div class="span6">
-            <div class="tip-box">
+            <div class="tip-box" id="notes">
             <h5>Details, Notes or Transcript</h5>
                 <div class="tip-content">
                     {% if record.notes %}
@@ -79,7 +79,7 @@
         </div>
         <div class="span3">
             <a class="btn one-hundred-percent-button-border-boxed" href="{% url 'partner_edit_record' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ record.id }}">Edit</a>
-            <div class="tip-box">
+            <div class="tip-box" id="record-history">
             <h5>Record History</h5>
                 <div class="tip-content">
                     {% if not record_history %}

@@ -32,7 +32,7 @@
     <div class="row">
         <div class="span8">
             <a class="btn" href="{% url "partner_edit_record" %}?company={{ company.id }}&partner={{ partner.id }}" style="margin-bottom: 20px;">New Record</a>
-            <div class="formBox no-padding profile-mobile">
+            <div class="formBox no-padding profile-mobile" id="view-records">
                 <h4>View Records</h4>
                 {% if records %}
                 <div class="formBox-content">
@@ -74,7 +74,7 @@
         </div>
         <div class="span4">
             {% if most_recent_activity %}
-            <div class="tip-box mobile_hide">
+            <div class="tip-box mobile_hide" id="recent-activity">
                 <h4>Most Recent Activity <small id="activity-num" class="pull-right"></small></h4>
                 <div class="tip-content no-padding">
                     <table id="activity-table" class="table table-striped">
