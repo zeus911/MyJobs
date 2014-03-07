@@ -454,7 +454,7 @@ def partner_view_full_feed(request):
         return HttpResponseRedirect(reverse('prm_saved_searches'))
     return render_to_response('mysearches/view_full_feed.html',
                               {'search': saved_search,
-                               'items': (items, count),
+                               'items': items,
                                'view_name': 'Saved Searches',
                                'is_pss': is_pss,
                                'partner': partner.id,

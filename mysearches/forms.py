@@ -55,6 +55,7 @@ class SavedSearchForm(BaseUserForm):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
         feed = cleaned_data.get('feed')
+        self.instance.feed = feed
 
         if not feed:
             new_feed = validate_dotjobs_url(url)[1]
@@ -73,7 +74,7 @@ class SavedSearchForm(BaseUserForm):
                                                                url=self.cleaned_data['url']):
             raise ValidationError(_('URL must be unique.'))
         return self.cleaned_data['url']
-        
+
     class Meta:
         model = SavedSearch
         widgets = {
@@ -134,7 +135,7 @@ class PartnerSavedSearchForm(ModelForm):
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
                   'account_activation_message', 'frequency', 'day_of_month',
                   'day_of_week', 'partner_message', 'notes')
-        exclude = ['provider', 'sort_by']
+        exclude = ('provider', 'sort_by', )
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
             'url_extras': TextInput(attrs={
@@ -157,6 +158,7 @@ class PartnerSavedSearchForm(ModelForm):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
         feed = cleaned_data.get('feed')
+        self.instance.feed = feed
 
         if not feed:
             new_feed = validate_dotjobs_url(url)[1]
@@ -187,10 +189,10 @@ class PartnerSubSavedSearchForm(ModelForm):
     class Meta:
         model = PartnerSavedSearch
         fields = ('sort_by', 'frequency', 'day_of_month', 'day_of_week')
-        exclude = ['provider', 'url_extras', 'partner_message',
+        exclude = ('provider', 'url_extras', 'partner_message',
                    'account_activation_message', 'created_by', 'user',
                    'created_on', 'label', 'url', 'feed', 'email', 'notes',
-                   'custom_message']
+                   'custom_message', )
         widgets = {
             'sort_by': RadioSelect(renderer=HorizontalRadioRenderer,
                                    attrs={'id': 'sort_by'}),
