@@ -156,6 +156,10 @@ h1 > small > a:hover {
     font-size: .8em;
 }
 
+.prm-header > span + span.pull-right {
+    margin-right: 10px;
+}
+
 .small-cell{
     width: 60px;
 }
@@ -513,6 +517,74 @@ h1 > small > a:hover {
 .all-contacts-table .chart-box + .chart-box {
     margin-right: 0;
 }
+
+ul.header-menu > li > .hover-element::after {
+    content: "";
+    position: absolute;
+    margin-left: 5px;
+    margin-top: 5px;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 7px solid #444;
+    background-color: inherit;
+}
+
+ul.header-menu {
+    padding: 0;
+    padding-right: 20px;
+    margin: 0;
+    list-style: none;
+    text-align: left;
+    border: 1px solid transparent;
+    border-bottom: 0;
+}
+
+ul.header-menu > li {
+    position: relative;
+    padding: 0 5px;
+}
+
+ul.header-menu > li > ul {
+    list-style: none;
+    margin-left: -6px;
+    padding: 0;
+    display: none;
+}
+
+ul.header-menu > li > ul > .inside-list-title,
+ul.header-menu > li > ul > .inside-list-title:hover {
+    background-color: #FFF;
+    cursor: default;
+}
+
+ul.header-menu > li > ul > li {
+    padding: 5px;
+    width: 200px;
+}
+
+ul.header-menu:hover {
+    background-color: #FFF;
+    border-color: #d5d4d0;
+}
+
+ul.header-menu:hover > li > ul {
+    position: fixed;
+    background-color: #f2f2f2;
+    border: 1px solid #d5d4d0;
+    display: block;
+}
+
+ul.header-menu > li > ul > li {
+    border-bottom: 1px solid #d5d4d0;
+}
+
+ul.header-menu > li > ul > li:hover {
+    background-color: #ddd;
+    cursor: pointer;
+}
+
 
 
 /* Sort by field in saved search save/edit */
