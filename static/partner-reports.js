@@ -38,7 +38,7 @@ $(function() {
                     var options;
                     if(size === 'small'){
                         options = donut_options(200, 200, 12, 12, 175, 175, 0.6);
-                        $('#donut-box').children(":first").hide();
+                        $('#donut-box').hide();
                     } else if(size === 'big'){
                         options = donut_options(330, 360, 12, 12, 300, 330, 0.6);
                         $('#ajax-loading-donut').hide();
@@ -126,7 +126,7 @@ function visual_boxes(chart_location,json, size){
         }
     } else {
         for(var j in json){
-
+            location.append('<div class="chart-box small"><div class="big-num">'+String(json[j].count)+'</div><div class="reports-record-type">'+json[j].name+'</div></div>');
         }
     }
 }

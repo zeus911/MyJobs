@@ -361,6 +361,13 @@ h1 > small > a:hover {
     height: auto;
 }
 
+.small-chart {
+    float: left;
+    display: inline-block;
+    width: 215px;
+    height: auto;
+}
+
 .big-chart > div > div > .piehole > .piehole-big {
     margin-top: 10px;
     font-size: 3em;
@@ -375,6 +382,13 @@ h1 > small > a:hover {
 
 .chart-box-holder {
     width: 100px;
+    display: inline-block;
+    float: left;
+}
+
+.small-chart-box-holder {
+    margin-top: 10px;
+    width: 60px;
     display: inline-block;
     float: left;
 }
@@ -425,25 +439,23 @@ h1 > small > a:hover {
     line-height: 14px;
 }
 
-#donutchart > .chart-box {
-    position: absolute;
+.chart-box.small {
     width: 50px;
     height: 45px;
     margin-bottom: 0;
-    margin-left: 218px;
 }
 
-#donutchart > .chart-box + .chart-box {
-    margin-top: 66px;
+.chart-box.small + .chart-box.small {
+    margin-top: 5px;
     height: 46px;
 }
 
-#donutchart > .chart-box + .chart-box + .chart-box {
-    margin-top: 132px;
+.chart-box.small + .chart-box.small + .chart-box.small {
+    margin-top: 5px;
     height: 45px;
 }
 
-#donutchart > .chart-box > .big-num,
+.chart-box.small > .big-num,
 .small-chart-box > .big-num {
     font-size: 1.3em;
     line-height: normal;
@@ -451,7 +463,7 @@ h1 > small > a:hover {
     margin-bottom: 0;
 }
 
-#donutchart > .chart-box > .reports-record-type,
+.chart-box.small > .reports-record-type,
 .small-chart-box > .reports-record-type {
     font-size: 0.7em;
     line-height: 10px;

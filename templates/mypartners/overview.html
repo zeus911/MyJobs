@@ -133,8 +133,9 @@
                 {% if count %}
                 <div id="donut-box">
                     <img src="{{ STATIC_URL }}images/ajax-loader.gif">
-                    <div id="donutchart" style="display:none"></div>
                 </div>
+                <div class="small-chart" id="donutchart" style="display:none"></div>
+                <div class="small-chart-box-holder" style="display:none"></div>
                 {% endif %}
                 <a class="btn" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">View Reports</a>
             </div>
