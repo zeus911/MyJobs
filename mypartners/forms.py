@@ -27,13 +27,13 @@ class ContactForm(forms.ModelForm):
     class Meta:
         form_name = "Contact Information"
         model = Contact
-        exclude = ['user']
+        exclude = ['user', 'partner']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
                    'placeholder': 'Notes About This Contact'})
 
-    def save(self, user, commit=True):
+    def save(self, user, partner, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
         partner = Partner.objects.get(id=self.data['partner'])
         self.instance.partner = partner
