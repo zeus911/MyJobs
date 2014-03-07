@@ -2,6 +2,16 @@ $(function() {
     var AppView = Backbone.View.extend({
         el: $("body"),
 
+        events: {
+            "click #email": "go_to_records",
+            "click #phone": "go_to_records",
+            "click #facetoface": "go_to_records"
+        },
+
+        go_to_records: function(e) {
+            window.location.href = "/prm/view/reports/details/records/?company="+String(company_id)+"&partner="+String(partner_id)+"&record_type="+ e.currentTarget.id;
+        },
+
         initialize: function() {
             _.bindAll(this, 'render');
             this.page = $('.prm-header').children(':first').html();
@@ -46,9 +56,9 @@ $(function() {
                     var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
                     chart.draw(data, options);
                     fill_piehole(total_records, size);
-
                     var donut = $('#donutchart');
                     visual_boxes(donut, info, size);
+                    add_links(donut, info, size);
                     donut.fadeIn("slow");
                     donut.next().fadeIn("slow");
                 }
@@ -112,7 +122,8 @@ function fill_piehole(totalrecs, size){
     var doughnut = $("#donutchart");
     var piediv = doughnut.children(":first-child").children(":first-child");
     if(size === 'big'){
-        piediv.prepend('<div class="piehole"><div class="piehole-big">'+String(totalrecs)+'</div><div class="piehole-topic">Contact Records</div><div class="piehole-filter"><a class="btn primary">View All</a></div></div>');
+        piediv.prepend('<div class="piehole"><div class="piehole-big">'+String(totalrecs)+'</div><div class="piehole-topic">Contact Records</div><div class="piehole-filter"><a class="btn primary" id="reports-view-all">View All</a></div></div>');
+
     } else {
         piediv.prepend('<div class="piehole"><div class="piehole-big">'+String(totalrecs)+'</div><div class="piehole-topic">Contact Records</div><div class="piehole-filter">30 Days</div></div>');
     }
@@ -122,11 +133,18 @@ function visual_boxes(chart_location,json, size){
     var location = $(chart_location).next();
     if(size != 'small'){
         for(var i in json){
-            location.append('<div class="chart-box"><div class="big-num">'+String(json[i].count)+'</div><div class="reports-record-type">'+json[i].name+'</div></div>');
+            location.append('<div class="chart-box" id="'+json[i].typename+'"><div class="big-num">'+String(json[i].count)+'</div><div class="reports-record-type">'+json[i].name+'</div></div>');
         }
     } else {
         for(var j in json){
             location.append('<div class="chart-box small"><div class="big-num">'+String(json[j].count)+'</div><div class="reports-record-type">'+json[j].name+'</div></div>');
         }
+    }
+}
+
+function add_links(chart, json, size){
+    if(size === 'big'){
+        var button = $('#reports-view-all');
+        button.attr('href', '/prm/view/reports/details/records/?company='+String(company_id)+'&partner='+String(partner_id));
     }
 }

@@ -8,12 +8,14 @@ from django.conf import settings
 from django.contrib.admin.models import DELETION
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.core.urlresolvers import reverse
 
 from myjobs.models import User
 from mydashboard.models import Company
@@ -72,7 +74,8 @@ def prm(request):
            'form': partner_form or form,
            'company': company,
            'user': user,
-           'partner_ct': partner_ct_id}
+           'partner_ct': partner_ct_id,
+           'view_name': 'PRM'}
 
     return render_to_response('mypartners/prm.html', ctx,
                               RequestContext(request))
@@ -92,7 +95,8 @@ def partner_details(request):
            'contacts': contacts,
            'partner': partner,
            'contact_ct': contact_ct_id,
-           'partner_ct': partner_ct_id}
+           'partner_ct': partner_ct_id,
+           'view_name': 'PRM'}
     return render_to_response('mypartners/partner_details.html', ctx,
                               RequestContext(request))
 
@@ -147,7 +151,8 @@ def edit_item(request):
            'partner': partner,
            'company': company,
            'contact': item_id,
-           'content_id': content_id}
+           'content_id': content_id,
+           'view_name': 'PRM'}
 
     return render_to_response('mypartners/edit_item.html', ctx,
                               RequestContext(request))
@@ -288,6 +293,7 @@ def prm_overview(request):
 
     """
     company, partner, user = prm_worthy(request)
+
     most_recent_activity = get_logs_for_partner(partner)
     dt_range = [datetime.now() + timedelta(-30), datetime.now()]
     records = get_contact_records_for_partner(
@@ -304,7 +310,8 @@ def prm_overview(request):
            'recent_activity': most_recent_activity,
            'recent_communication': most_recent_communication,
            'recent_ss': most_recent_saved_searches,
-           'count': records}
+           'count': records,
+           'view_name': 'PRM'}
 
     return render_to_response('mypartners/overview.html', ctx,
                               RequestContext(request))
@@ -340,6 +347,7 @@ def prm_edit_saved_search(request):
         'item_id': item_id,
         'form': form,
         'content_type': ContentType.objects.get_for_model(PartnerSavedSearch).id,
+        'view_name': 'PRM',
     }
     return render_to_response('mypartners/partner_edit_search.html', ctx,
                               RequestContext(request))
@@ -458,7 +466,8 @@ def partner_view_full_feed(request):
                                'view_name': 'Saved Searches',
                                'is_pss': is_pss,
                                'partner': partner.id,
-                               'company': company.id},
+                               'company': company.id,
+                               'view_name': 'PRM'},
                               RequestContext(request))
 
 
@@ -481,9 +490,10 @@ def prm_report_records(request):
 
 def get_record_context(request):
     company, partner, user = prm_worthy(request)
+    record_type = request.REQUEST.get('record_type')
     dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-    contact_records = get_contact_records_for_partner(partner,
-                                                      date_time_range=dt_range)
+    contact_records = get_contact_records_for_partner(
+        partner, record_type=record_type, date_time_range=dt_range)
     most_recent_activity = get_logs_for_partner(partner)
 
     contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
@@ -503,6 +513,8 @@ def get_record_context(request):
         'most_recent_activity': most_recent_activity,
         'partner': partner,
         'records': contact_records,
+        'record_type': record_type,
+        'view_name': 'PRM'
     }
     return ctx
 
@@ -581,7 +593,6 @@ def prm_view_records(request):
 
     # Since we always retrieve 3, if the record is at the beginning of the
     # list we might have 3 results but no previous.
-    print records.values_list('id', flat=True)
     if len(records) == 3 and records[0].pk == record_id:
         prev_id = None
         record = records[0]
@@ -633,6 +644,7 @@ def prm_view_records(request):
         'prev_offset': prev_offset,
         'contact_type': record_type,
         'contact_name': name,
+        'view_name': 'PRM'
 
     }
 
@@ -674,6 +686,10 @@ def get_records(request):
 
     contact = request.REQUEST.get('contact')
     contact_type = request.REQUEST.get('contact_type')
+    contact = None if contact == 'all' else contact
+    contact_type = None if contact_type == 'all' else contact_type
+    records = get_contact_records_for_partner(partner, contact_name=contact,
+                                              record_type=contact_type)
 
     date_range, date_str, records = get_records_from_request(request)
 
@@ -780,7 +796,8 @@ def partner_main_reports(request):
            'total_records': total_records_wo_followup,
            'referral': referral,
            'top_contacts': contact_records,
-           'others': total_others}
+           'others': total_others,
+           'view_name': 'PRM'}
     return render_to_response('mypartners/partner_reports.html', ctx,
                               RequestContext(request))
 
@@ -810,9 +827,10 @@ def partner_get_records(request):
         else:
             facetoface_name = 'Face to Face'
 
-        data = {'email': {"count": email, "name": email_name},
-                'phone': {"count": phone, "name": phone_name},
-                'facetoface': {"count": facetoface, "name": facetoface_name}}
+        data = {'email': {"count": email, "name": email_name, 'typename': 'email'},
+                'phone': {"count": phone, "name": phone_name, 'typename': 'phone'},
+                'facetoface': {"count": facetoface, "name": facetoface_name,
+                               "typename": "facetoface"}}
         data = OrderedDict(sorted(data.items(), key=lambda t: t[1]['count']))
         data_items = data.items()
         data_items.reverse()

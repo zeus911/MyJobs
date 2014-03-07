@@ -404,6 +404,12 @@ h1 > small > a:hover {
     margin-bottom: 20px;
 }
 
+.chart-box#email,
+.chart-box#phone,
+.chart-box#facetoface {
+    cursor: pointer;
+}
+
 .chart-box.inline-box {
     display: inline-block;
     margin-right: 20px;
