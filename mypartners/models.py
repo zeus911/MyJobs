@@ -157,11 +157,7 @@ class ContactRecord(models.Model):
         record.
 
         """
-        contact_type = dict(CONTACT_TYPE_CHOICES)[self.contact_type]
-        if contact_type == 'Email':
-            contact_type = 'n email'
-        else:
-            contact_type = ' %s' % contact_type
+        contact_type_choices = dict(CONTACT_TYPE_CHOICES)
 
         try:
             logs = ContactLogEntry.objects.filter(object_id=self.pk)
@@ -169,8 +165,8 @@ class ContactRecord(models.Model):
         except IndexError:
             return ""
 
-        contact_str = "A%s record for %s was %s" % \
-                      (contact_type.lower(),
+        contact_str = "A %s record for %s was %s" % \
+                      (contact_type_choices[self.contact_type].lower(),
                        self.contact_name, ACTIVITY_TYPES[log.action_flag])
 
         if log.user:

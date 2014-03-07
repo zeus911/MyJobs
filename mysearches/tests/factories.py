@@ -24,9 +24,3 @@ class SavedSearchDigestFactory(factory.Factory):
     email = "alice@example.com"
     is_active = "True"
     frequency = "D"
-
-
-class PartnerSavedSearchFactory(SavedSearchFactory):
-    FACTORY_FOR = PartnerSavedSearch
-
-    created_by = factory.SubFactory(UserFactory)

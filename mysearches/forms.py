@@ -2,7 +2,6 @@ from django.forms import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
-from myjobs.models import User
 from myjobs.forms import BaseUserForm, make_choices
 from mysearches.helpers import *
 from mysearches.models import (SavedSearch, SavedSearchDigest,
@@ -53,21 +52,14 @@ class SavedSearchForm(BaseUserForm):
     def clean(self):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
-
-        feed = validate_dotjobs_url(url)[1]
-        if feed:
-            cleaned_data['feed'] = feed
-            self._errors.pop('feed', None)
-        else:
-            error_msg = "That URL does not contain feed information"
-            self._errors.setdefault('url', []).append(error_msg)
-        self.instance.feed = feed
+        feed = cleaned_data.get('feed')
 
         if not feed:
             new_feed = validate_dotjobs_url(url)[1]
             if new_feed:
                 cleaned_data['feed'] = new_feed
                 del self._errors['feed']
+        self.instance.feed = feed
         return cleaned_data
 
     def clean_url(self):
@@ -163,14 +155,7 @@ class PartnerSavedSearchForm(ModelForm):
     def clean(self):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
-        feed = validate_dotjobs_url(url)[1]
-        if feed:
-            cleaned_data['feed'] = feed
-            self._errors.pop('feed', None)
-        else:
-            error_msg = "That URL does not contain feed information"
-            self._errors.setdefault('url', []).append(error_msg)
-
+        feed = cleaned_data.get('feed')
         self.instance.feed = feed
 
         if not feed:

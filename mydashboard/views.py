@@ -50,9 +50,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     user_solr = Solr()
     facet_solr = Solr()
 
-    # Add join only if we're using facets, not if we're simply searching.
-    query_params = set(['search', 'company'])
-    if not query_params.issuperset(set(request.GET.keys())):
+    # Add join only if we're filtering.
+    if ('company' in request.GET and len(request.GET) > 1) or \
+            (len(request.GET) == 0):
         user_solr = user_solr.add_join(from_field='ProfileUnits_user_id',
                                        to_field='User_id')
     facet_solr = facet_solr.add_join(from_field='User_id',
@@ -102,7 +102,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     if request.GET.get('search', False):
         user_solr = user_solr.add_query("%s" % request.GET['search'])
-        facet_solr = facet_solr.add_query("%s" % request.GET['search'])
 
     user_solr, facet_solr = filter_by_microsite(active_microsites,
                                                           user_solr,
@@ -116,7 +115,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                                                                         user_solr,
                                                                         facet_solr,
                                                                         loc_solr)
-    solr_results = user_solr.rows_to_fetch(100).search()
+
+    solr_results = user_solr.rows_to_fetch(user_solr.search().hits).search()
 
     # List of dashboard widgets to display.
     dashboard_widgets = ["candidates", "search", "applied_filters", "filters"]
