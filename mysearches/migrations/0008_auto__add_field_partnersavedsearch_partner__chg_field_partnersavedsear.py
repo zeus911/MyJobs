@@ -8,47 +8,22 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'ContactLogEntry'
-        db.create_table(u'mypartners_contactlogentry', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('action_flag', self.gf('django.db.models.fields.PositiveSmallIntegerField')()),
-            ('action_time', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('change_message', self.gf('django.db.models.fields.TextField')(blank=True)),
-            ('contact_identifier', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('content_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['contenttypes.ContentType'], null=True, blank=True)),
-            ('object_id', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
-            ('object_repr', self.gf('django.db.models.fields.CharField')(max_length=200)),
-            ('partner', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.Partner'], null=True, on_delete=models.SET_NULL)),
-            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'], null=True, on_delete=models.SET_NULL)),
-        ))
-        db.send_create_signal(u'mypartners', ['ContactLogEntry'])
+        # Adding field 'PartnerSavedSearch.partner'
+        db.add_column(u'mysearches_partnersavedsearch', 'partner',
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['mypartners.Partner']),
+                      keep_default=False)
 
-        # Adding model 'ContactRecord'
-        db.create_table(u'mypartners_contactrecord', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_on', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('partner', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.Partner'])),
-            ('contact_type', self.gf('django.db.models.fields.CharField')(max_length=12)),
-            ('contact_name', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('contact_email', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('contact_phone', self.gf('django.db.models.fields.CharField')(max_length=30, blank=True)),
-            ('location', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('length', self.gf('django.db.models.fields.TimeField')(null=True, blank=True)),
-            ('subject', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('date_time', self.gf('django.db.models.fields.DateTimeField')()),
-            ('notes', self.gf('django.db.models.fields.TextField')(max_length=1000, blank=True)),
-            ('attachment', self.gf('django.db.models.fields.files.FileField')(max_length=100, null=True, blank=True)),
-        ))
-        db.send_create_signal(u'mypartners', ['ContactRecord'])
 
+        # Changing field 'PartnerSavedSearch.provider'
+        db.alter_column(u'mysearches_partnersavedsearch', 'provider_id', self.gf('django.db.models.fields.related.ForeignKey')(default=999999, to=orm['mydashboard.Company']))
 
     def backwards(self, orm):
-        # Deleting model 'ContactLogEntry'
-        db.delete_table(u'mypartners_contactlogentry')
+        # Deleting field 'PartnerSavedSearch.partner'
+        db.delete_column(u'mysearches_partnersavedsearch', 'partner_id')
 
-        # Deleting model 'ContactRecord'
-        db.delete_table(u'mypartners_contactrecord')
 
+        # Changing field 'PartnerSavedSearch.provider'
+        db.alter_column(u'mysearches_partnersavedsearch', 'provider_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mydashboard.Company'], null=True, on_delete=models.SET_NULL))
 
     models = {
         u'auth.group': {
@@ -123,35 +98,6 @@ class Migration(SchemaMigration):
             'state': ('django.db.models.fields.CharField', [], {'max_length': '5', 'blank': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'null': 'True', 'on_delete': 'models.SET_NULL'})
         },
-        u'mypartners.contactlogentry': {
-            'Meta': {'object_name': 'ContactLogEntry'},
-            'action_flag': ('django.db.models.fields.PositiveSmallIntegerField', [], {}),
-            'action_time': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'change_message': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            'contact_identifier': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']", 'null': 'True', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'object_id': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'object_repr': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'partner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Partner']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
-            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'null': 'True', 'on_delete': 'models.SET_NULL'})
-        },
-        u'mypartners.contactrecord': {
-            'Meta': {'object_name': 'ContactRecord'},
-            'attachment': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
-            'contact_email': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'contact_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'contact_phone': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
-            'contact_type': ('django.db.models.fields.CharField', [], {'max_length': '12'}),
-            'created_on': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'date_time': ('django.db.models.fields.DateTimeField', [], {}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'length': ('django.db.models.fields.TimeField', [], {'null': 'True', 'blank': 'True'}),
-            'location': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'notes': ('django.db.models.fields.TextField', [], {'max_length': '1000', 'blank': 'True'}),
-            'partner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Partner']"}),
-            'subject': ('django.db.models.fields.CharField', [], {'max_length': '255'})
-        },
         u'mypartners.partner': {
             'Meta': {'object_name': 'Partner'},
             'contacts': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'partners_set'", 'symmetrical': 'False', 'to': u"orm['mypartners.Contact']"}),
@@ -160,7 +106,46 @@ class Migration(SchemaMigration):
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
             'primary_contact': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Contact']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'uri': ('django.db.models.fields.URLField', [], {'max_length': '200', 'blank': 'True'})
+        },
+        u'mysearches.partnersavedsearch': {
+            'Meta': {'object_name': 'PartnerSavedSearch', '_ormbases': [u'mysearches.SavedSearch']},
+            'account_activation_message': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'created_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"}),
+            'partner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Partner']"}),
+            'partner_message': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'provider': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
+            u'savedsearch_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['mysearches.SavedSearch']", 'unique': 'True', 'primary_key': 'True'}),
+            'url_extras': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'})
+        },
+        u'mysearches.savedsearch': {
+            'Meta': {'object_name': 'SavedSearch'},
+            'created_on': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'custom_message': ('django.db.models.fields.TextField', [], {'max_length': '300', 'null': 'True', 'blank': 'True'}),
+            'day_of_month': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
+            'day_of_week': ('django.db.models.fields.CharField', [], {'max_length': '2', 'null': 'True', 'blank': 'True'}),
+            'email': ('django.db.models.fields.EmailField', [], {'max_length': '255'}),
+            'feed': ('django.db.models.fields.URLField', [], {'max_length': '300'}),
+            'frequency': ('django.db.models.fields.CharField', [], {'default': "'W'", 'max_length': '2'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'label': ('django.db.models.fields.CharField', [], {'max_length': '60'}),
+            'last_sent': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            'notes': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'sort_by': ('django.db.models.fields.CharField', [], {'default': "'Relevance'", 'max_length': '9'}),
+            'url': ('django.db.models.fields.URLField', [], {'max_length': '300'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})
+        },
+        u'mysearches.savedsearchdigest': {
+            'Meta': {'object_name': 'SavedSearchDigest'},
+            'day_of_month': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
+            'day_of_week': ('django.db.models.fields.CharField', [], {'max_length': '2', 'null': 'True', 'blank': 'True'}),
+            'email': ('django.db.models.fields.EmailField', [], {'max_length': '255'}),
+            'frequency': ('django.db.models.fields.CharField', [], {'default': "'D'", 'max_length': '2'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'send_if_none': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'user': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myjobs.User']", 'unique': 'True'})
         }
     }
 
-    complete_apps = ['mypartners']
+    complete_apps = ['mysearches']

@@ -57,7 +57,8 @@ class BaseUserForm(ModelForm):
         instance = super(BaseUserForm, self).save(commit=False)
         if self.user and not self.user.is_anonymous():
             instance.user = self.user
-            return instance.save()
+            instance.save()
+        return instance
 
 
 class EditAccountForm(Form):

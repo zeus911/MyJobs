@@ -14,6 +14,7 @@ from countries import COUNTRIES
 edu_codes = dict([(x, y) for x, y in EDUCATION_LEVEL_CHOICES])
 country_codes = dict((x, y) for x, y in COUNTRIES)
 
+
 def saved_searches(employer, company, candidate):
     """
     Function that gets employer's companies and those companies microsites.
@@ -39,6 +40,7 @@ def saved_searches(employer, company, candidate):
     candidate_urls = candidate.savedsearch_set.values_list('url', flat=True)
     return [url for url in candidate_urls
             if urlparse(url).netloc in employer_domains]
+
 
 def filter_by_microsite(microsites, user_solr=None, facet_solr=None):
     """
@@ -70,6 +72,7 @@ def filter_by_microsite(microsites, user_solr=None, facet_solr=None):
 
     return user_solr, facet_solr
 
+
 def filter_by_date(request):
     """
     Applies date filtering.
@@ -83,8 +86,8 @@ def filter_by_date(request):
     search covers.
 
     """
-    requested_after_date = request.REQUEST.get('after', False)
-    requested_before_date = request.REQUEST.get('before', False)
+    requested_after_date = request.REQUEST.get('date_start', False)
+    requested_before_date = request.REQUEST.get('date_end', False)
 
     date_end = datetime.now()
     # Set date range based on buttons
@@ -105,7 +108,7 @@ def filter_by_date(request):
         if requested_after_date:
             date_start = datetime.strptime(requested_after_date, '%m/%d/%Y')
         else:
-            date_start = request.REQUEST.get('after')
+            date_start = request.REQUEST.get('date_start')
             if date_start:
                 date_start = datetime.strptime(date_start, '%m/%d/%Y')
             else:
@@ -115,7 +118,7 @@ def filter_by_date(request):
         if requested_before_date:
             date_end = datetime.strptime(requested_before_date, '%m/%d/%Y')
         else:
-            date_end = request.REQUEST.get('before')
+            date_end = request.REQUEST.get('date_end')
             if date_end:
                 date_end = datetime.strptime(date_end, '%m/%d/%Y')
             else:
@@ -151,6 +154,14 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
     {'the applied filter': 'resulting url if the filter were removed'}
     """
     url = request.build_absolute_uri()
+    date_start = request.REQUEST.get('date_start', None)
+    date_end = request.REQUEST.get('date_end', None)
+    if date_start:
+        url = update_url_param(url, 'date_start',
+                               request.REQUEST.get('date_start'))
+    if date_end:
+        url = update_url_param(url, 'date_end',
+                               request.REQUEST.get('date_end'))
 
     filters = {}
     user_solr = Solr() if not user_solr else user_solr
@@ -203,10 +214,10 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
         facet_solr = facet_solr.add_facet_field('Education_education_level_code')
     else:
         term = urllib.unquote(request.GET.get('education'))
-        term = edu_codes.get(int(term))
-        filters[term] = remove_param_from_url(url, 'education')
+        term_name = edu_codes.get(int(term))
+        filters[term_name] = remove_param_from_url(url, 'education')
 
-        q = 'Education_education_level_code:"%s"' % term
+        q = 'Education_education_level_code:%s' % term
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
         loc_solr = loc_solr.add_filter_query(q)
@@ -267,7 +278,8 @@ def remove_param_from_url(url, param):
     parts[4] = urllib.urlencode(query)
     return urlunparse(parts)
 
-def parse_facets(solr_results, current_url, add_unmapped_fields=False):
+
+def parse_facets(solr_results, request, add_unmapped_fields=False):
     """
     Turns solr facet results into dictionary of tuples that is compatible
     with the filter widget.
@@ -304,7 +316,7 @@ def parse_facets(solr_results, current_url, add_unmapped_fields=False):
                 facets[facet_val] = get_urls(sorted(zip(l[::2], l[1::2]),
                                              key=lambda x: x[1], reverse=True),
                                              facet_val,
-                                             current_url)
+                                             request)
                 if facet_val == 'Country':
                     facets[facet_val] = update_country(facets[facet_val])
                 if facet_val == 'Region' or facet_val == 'City':
@@ -360,18 +372,28 @@ def update_education_codes(facet_tups):
     return facets
 
 
-def get_urls(facet_tups, param, current_url):
+def get_urls(facet_tups, param, request):
     """
     Creates urls for facets of search with facet applied as a filter..
 
     """
+    url = request.build_absolute_uri()
+    date_start = request.REQUEST.get('date_start', None)
+    date_end = request.REQUEST.get('date_end', None)
+    if date_start:
+        url = update_url_param(url, 'date_start',
+                               request.REQUEST.get('date_start'))
+    if date_end:
+        url = update_url_param(url, 'date_end',
+                               request.REQUEST.get('date_end'))
+
     facets = []
 
     if param in ['Country', 'Region', 'City']:
         param = 'location'
 
     for tup in facet_tups:
-        url_parts = list(urlparse(current_url))
+        url_parts = list(urlparse(url))
         query = dict(parse_qsl(url_parts[4]))
         term = urllib.quote(tup[0].encode('utf8'))
         if param == 'location' and 'location' in query:

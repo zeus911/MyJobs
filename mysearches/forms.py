@@ -1,4 +1,3 @@
-from django.contrib.admin.models import ADDITION
 from django.forms import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
@@ -9,7 +8,7 @@ from mysearches.helpers import *
 from mysearches.models import (SavedSearch, SavedSearchDigest,
                                PartnerSavedSearch)
 from mypartners.forms import PartnerEmailChoices
-from mypartners.models import Contact
+from mypartners.models import Contact, ADDITION, CHANGE
 from mypartners.helpers import log_change
 
 
@@ -54,13 +53,16 @@ class SavedSearchForm(BaseUserForm):
     def clean(self):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
-        feed = cleaned_data.get('feed')
 
-        if not feed:
-            new_feed = validate_dotjobs_url(url)[1]
-            if new_feed:
-                cleaned_data['feed'] = new_feed
-                del self._errors['feed']
+        feed = validate_dotjobs_url(url)[1]
+        if feed:
+            cleaned_data['feed'] = feed
+            self._errors.pop('feed', None)
+        else:
+            error_msg = "That URL does not contain feed information"
+            self._errors.setdefault('url', []).append(error_msg)
+
+        self.cleaned_data['feed'] = feed
         return cleaned_data
 
     def clean_url(self):
@@ -73,7 +75,11 @@ class SavedSearchForm(BaseUserForm):
                                                                url=self.cleaned_data['url']):
             raise ValidationError(_('URL must be unique.'))
         return self.cleaned_data['url']
-        
+
+    def save(self, commit=True):
+        self.instance.feed = self.cleaned_data['feed']
+        return super(SavedSearchForm, self).save(commit)
+
     class Meta:
         model = SavedSearch
         widgets = {
@@ -134,7 +140,7 @@ class PartnerSavedSearchForm(ModelForm):
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
                   'account_activation_message', 'frequency', 'day_of_month',
                   'day_of_week', 'partner_message', 'notes')
-        exclude = ['provider', 'sort_by']
+        exclude = ('provider', 'sort_by', )
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
             'url_extras': TextInput(attrs={
@@ -156,26 +162,27 @@ class PartnerSavedSearchForm(ModelForm):
     def clean(self):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
-        feed = cleaned_data.get('feed')
+        feed = validate_dotjobs_url(url)[1]
 
-        if not feed:
-            new_feed = validate_dotjobs_url(url)[1]
-            if new_feed:
-                cleaned_data['feed'] = new_feed
-                del self._errors['feed']
+        if feed:
+            cleaned_data['feed'] = feed
+            self._errors.pop('feed', None)
+        else:
+            error_msg = "That URL does not contain feed information"
+            self._errors.setdefault('url', []).append(error_msg)
+
+        self.cleaned_data['feed'] = feed
         return cleaned_data
 
     def save(self, commit=True):
-        is_new = False if self.instance.pk else True
+        self.instance.feed = self.cleaned_data.get('feed')
+        is_new_or_change = CHANGE if self.instance.pk else ADDITION
         instance = super(PartnerSavedSearchForm, self).save(commit)
-        contact = Contact.objects.get(user=instance.user)
-        partner = contact.partners_set.all()[0]
-        if is_new:
-            log_change(instance, self, instance.created_by, partner,
-                       contact.email, action_type=ADDITION)
-        else:
-            log_change(instance, self, instance.created_by, partner,
-                       contact.email)
+        partner = instance.partner
+        contact = Contact.objects.filter(partner=partner,
+                                         user=instance.user)[0]
+        log_change(instance, self, instance.created_by, partner,
+                   contact.email, action_type=is_new_or_change)
 
         return instance
 
@@ -187,10 +194,10 @@ class PartnerSubSavedSearchForm(ModelForm):
     class Meta:
         model = PartnerSavedSearch
         fields = ('sort_by', 'frequency', 'day_of_month', 'day_of_week')
-        exclude = ['provider', 'url_extras', 'partner_message',
+        exclude = ('provider', 'url_extras', 'partner_message',
                    'account_activation_message', 'created_by', 'user',
                    'created_on', 'label', 'url', 'feed', 'email', 'notes',
-                   'custom_message']
+                   'custom_message', )
         widgets = {
             'sort_by': RadioSelect(renderer=HorizontalRadioRenderer,
                                    attrs={'id': 'sort_by'}),

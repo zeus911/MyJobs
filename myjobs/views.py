@@ -503,7 +503,8 @@ def unsubscribe_all(request, user=None):
 def toolbar(request):
     user = request.user
     if not user or user.is_anonymous():
-        guid = request.COOKIES.get('myguid')
+        # Ensure that old myguid cookies can be handled correctly
+        guid = request.COOKIES.get('myguid', '').replace('-','')
         try:
             user = User.objects.get(user_guid=guid)
         except User.DoesNotExist:

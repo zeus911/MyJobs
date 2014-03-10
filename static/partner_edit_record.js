@@ -5,7 +5,6 @@ $(function() {
         initialize: function() {
             this.once('renderEvent', function() {
                 show_fields();
-                add_datepicker();
                 $('[id$=notes]').placeholder();
             });
         },
@@ -15,32 +14,8 @@ $(function() {
         },
 
         events: {
-            'click [id$="_search"]': 'save_form',
             'change [id$="_contact_type"]': 'showing_fields',
-            'change [id$="id_contact_name"]': 'fill_contact_info'
-        },
-
-
-        save_form: function(e, options) {
-            e.preventDefault();
-
-            var form = $('#contact-record-form');
-
-            var data = form.serialize();
-            data = data.replace('=on','=True').replace('=off','=False');
-            data = data.replace('undefined', 'None');
-            $.ajax({
-                data: data,
-                type: 'POST',
-                url: '/saved-search/view/save/',
-                success: function(data) {
-                    if (data == '') {
-                        window.location = '/saved-search/view/';
-                    } else {
-                        add_errors(data);
-                    }
-                }
-            });
+            'change [id$="id_contact_name"]': 'fill_contact_info',
         },
 
         showing_fields: function(){
@@ -80,6 +55,11 @@ $(function() {
 
     var EditRecord = new EditRecordView;
     EditRecord.render();
+
+    $(document).on("change", '[id^=id_attachment]', function(){
+        add_additional_input(this);
+    });
+
 });
 
 function disable_fields(){
@@ -90,6 +70,14 @@ function disable_fields(){
     $('[id$="location"]').hide();
     $('label[for$="location"]').hide();
     display_length_widget('hide');
+    $('[id$="job_id"]').hide();
+    $('label[for$="job_id"]').hide();
+    $('[id$="job_applications"]').hide();
+    $('label[for$="job_applications"]').hide();
+    $('[id$="job_interviews"]').hide();
+    $('label[for$="job_interviews"]').hide();
+    $('[id$="job_hires"]').hide();
+    $('label[for$="job_hires"]').hide();
 }
 
 function display_length_widget(display){
@@ -109,28 +97,58 @@ function show_fields(){
     if(contact_type == 'email'){
         $('[id$="contact_email"]').show();
         $('label[for$="contact_email"]').show();
+        $('[id*="date_time_"]').show();
+        $('label[for*="date_time_"]').show();
     } else if(contact_type == 'phone') {
         $('[id$="contact_phone"]').show();
         $('label[for$="contact_phone"]').show();
         $('[id$="length"]').show();
         $('label[for$="length"]').show();
+        $('[id*="date_time_"]').show();
+        $('label[for*="date_time_"]').show();
     } else if(contact_type == 'facetoface') {
         $('[id$="location"]').show();
         $('label[for$="location"]').show();
+        $('[id*="date_time_"]').show();
+        $('label[for*="date_time_"]').show();
         display_length_widget("show");
+    } else if(contact_type == 'job'){
+        $('[id$="contact_email"]').show();
+        $('label[for$="contact_email"]').show();
+        $('[id$="job_id"]').show();
+        $('label[for$="job_id"]').show();
+        $('[id$="job_applications"]').show();
+        $('label[for$="job_applications"]').show();
+        $('[id$="job_interviews"]').show();
+        $('label[for$="job_interviews"]').show();
+        $('[id$="job_hires"]').show();
+        $('label[for$="job_hires"]').show();
+
+        // Hiding fields
+        $('[id$="subject"]').hide();
+        $('label[for$="subject"]').hide();
+        $('[id*="date_time_"]').hide();
+        $('label[for*="date_time_"]').hide();
     }
 }
 
-function add_datepicker(){
-    var date = $("input[id$='date_time_0']");
-    date.datepicker({dateFormat: window.dateFormat, constrainInput: false});
-    if($(window).width() <= 501){
-        var window_width = $(window).width();
-        var field_width = window_width - 81;
-        date.css({"width": String(field_width)+"px", "display": "inline-block", "margin-right": "5px"});
-        $('[id*="id_date_time_"]').slice(1).each(function() {
-            $(this).css("width", field_width/3+"px");
-        });
+function add_additional_input(field) {
+    if($(field).val() != '') {
+        $('[id^=span_attachment]:first').before('<span id="span_attachment_' + $("[id^=id_attachment]").length + '"><input id="id_attachment_' + $("[id^=id_attachment]").length + '" multiple="multiple" name="attachment" type="file"></span>');
     }
-    date.after('<span class="btn add-on calendar"><i class="icon-search icon-calendar"></i></span>');
+    else if(number_of_blank_and_visible_file_inputs() > 1){
+        $(field).hide();
+    }
+}
+
+function number_of_blank_and_visible_file_inputs() {
+    var number_that_are_blank_and_visible = 0;
+    console.log($("[id^=id_attachment]").length);
+    $("[id^=id_attachment]").each(function() {
+        if(($(this).val() == "" || $(this).val() == 0) && $(this).is(":visible")) {
+            number_that_are_blank_and_visible += 1;
+        }
+    });
+    console.log(number_that_are_blank_and_visible);
+    return number_that_are_blank_and_visible;
 }

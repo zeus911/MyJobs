@@ -1,5 +1,8 @@
 from django.conf.urls import *
 from django.contrib import admin
+from django.conf import settings
+from django.conf.urls.static import static
+from django.core.files.storage import default_storage
 
 from tastypie.api import Api
 
@@ -30,3 +33,13 @@ urlpatterns = patterns('',
     url(r'^message/', include('MyJobs.mymessages.urls')),
     url(r'^prm/', include('MyJobs.mypartners.urls')),
 )
+
+try:
+    if repr(default_storage.connection) == 'S3Connection:s3.amazonaws.com':
+        pass
+    else:
+        urlpatterns += static(settings.MEDIA_URL,
+                              document_root=settings.MEDIA_ROOT)
+except AttributeError:
+    urlpatterns += static(settings.MEDIA_URL,
+                          document_root=settings.MEDIA_ROOT)

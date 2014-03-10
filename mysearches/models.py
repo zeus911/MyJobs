@@ -6,9 +6,12 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.utils.translation import ugettext_lazy as _
 from django.template.loader import render_to_string
-from mysearches.helpers import parse_rss, url_sort_options
+
 from mydashboard.models import Company
 from myjobs.models import User
+from mypartners.models import Contact, ContactRecord, Partner, EMAIL
+from mysearches.helpers import parse_feed, url_sort_options
+import mypartners.helpers
 
 
 FREQUENCY_CHOICES = (
@@ -70,16 +73,23 @@ class SavedSearch(models.Model):
             if choice[0] == self.day_of_week:
                 return choice[1]
 
-    def get_feed_items(self, num_items=5):
+    def get_feed_items(self, num_items=100):
         url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency)
-        return parse_rss(url_of_feed, self.frequency, num_items=num_items)
+        items = parse_feed(url_of_feed, self.frequency,
+                           num_items=num_items, return_items=5)
+        return items
 
     def send_email(self, custom_msg=None):
-        search = (self, self.get_feed_items())
+        items, count = self.get_feed_items()
+        if hasattr(self, 'partnersavedsearch'):
+            extras = self.partnersavedsearch.url_extras
+            if extras:
+                mypartners.helpers.add_extra_params_to_jobs(items, extras)
+                self.url = mypartners.helpers.add_extra_params(self.url, extras)
         if self.custom_message and not custom_msg:
             custom_msg = self.custom_message
-        if self.user.opt_in_myjobs and search[1]:
-            context_dict = {'saved_searches': [search],
+        if self.user.opt_in_myjobs and items:
+            context_dict = {'saved_searches': [(self, items, count)],
                             'custom_msg': custom_msg}
             subject = self.label.strip()
             message = render_to_string('mysearches/email_single.html',
@@ -186,10 +196,18 @@ class SavedSearchDigest(models.Model):
 
     def send_email(self, custom_msg=None):
         saved_searches = self.user.savedsearch_set.filter(is_active=True)
-        saved_searches = [(search, search.get_feed_items())
-                          for search in saved_searches]
-        saved_searches = [(search, items)
-                          for search, items in saved_searches
+        search_list = []
+        for search in saved_searches:
+            items, count = search.get_feed_items()
+            if hasattr(search, 'partnersavedsearch'):
+                extras = search.partnersavedsearch.url_extras
+                if extras:
+                    mypartners.helpers.add_extra_params_to_jobs(items, extras)
+                    search.url = mypartners.helpers.add_extra_params(search.url,
+                                                                     extras)
+            search_list.append((search, items, count))
+        saved_searches = [(search, items, count)
+                          for search, items, count in search_list
                           if items]
         if self.user.opt_in_myjobs and saved_searches:
             subject = _('Your Daily Saved Search Digest')
@@ -214,8 +232,8 @@ class PartnerSavedSearch(SavedSearch):
     User is SavedSearch.partnersavedsearch.
 
     """
-    provider = models.ForeignKey(Company, null=True,
-                                 on_delete=models.SET_NULL)
+    provider = models.ForeignKey(Company)
+    partner = models.ForeignKey(Partner)
     url_extras = models.CharField(max_length=255, blank=True,
                                   help_text="Anything you put here will be "
                                             "added as query string parameters "
@@ -233,3 +251,40 @@ class PartnerSavedSearch(SavedSearch):
             return "Saved Search %s for %s" % (self.url, self.email)
         else:
             return "Saved Search %s for %s" % (self.url, self.user.email)
+
+    def save(self, *args, **kwargs):
+        created = False if self.pk else True
+        super(PartnerSavedSearch, self).save(*args, **kwargs)
+        if created:
+            self.send_initial_email()
+
+    def send_email(self, custom_msg=None):
+        super(PartnerSavedSearch, self).send_email(custom_msg)
+        change_msg = "Automatic sending of partner saved search."
+        self.create_record(change_msg)
+
+    def send_initial_email(self, custom_msg=None):
+        super(PartnerSavedSearch, self).send_initial_email(custom_msg)
+        change_msg = "Automatic sending of initial partner saved search."
+        self.create_record(change_msg)
+
+    def send_update_email(self, msg, custom_msg=None):
+        super(PartnerSavedSearch, self).send_update_email(msg, custom_msg)
+        change_msg = "Automatic sending of updated partner saved search."
+        self.create_record(change_msg)
+
+    def create_record(self, change_msg=""):
+        contact = Contact.objects.filter(partner=self.partner,
+                                         user=self.user)[0]
+        record = ContactRecord.objects.create(
+            partner=self.partner,
+            contact_type='pssemail',
+            contact_name=contact.name,
+            contact_email=self.user.email,
+            date_time=datetime.now(),
+            subject='My.Jobs Partner Saved Search',
+            notes=change_msg,
+        )
+        mypartners.helpers.log_change(record, None, None, self.partner,
+                                      self.user.email, action_type=EMAIL,
+                                      change_msg=change_msg)

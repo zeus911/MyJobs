@@ -54,7 +54,7 @@ USE_I18N = True
 USE_L10N = True
 
 MEDIA_ROOT = os.path.join(_PATH, 'files', 'media')
-MEDIA_URL = '//d2e48ltfsb5exy.cloudfront.net/myjobs/admin/'
+MEDIA_URL = '/files/media/'
 
 STATICFILES_DIRS = (
     os.path.join(PROJ_ROOT, 'static'),
@@ -124,8 +124,12 @@ CELERYBEAT_SCHEDULE = {
         'schedule': crontab(minute=0, hour=0),
     },
     'regular-solr-update': {
-        'task': 'tasks.update_solr',
+        'task': 'tasks.update_solr_from_model',
         'schedule': crontab(minute='*/5'),
+    },
+    'analytics-solr-update': {
+        'task': 'tasks.update_solr_from_log',
+        'schedule': crontab(hour='*/1'),
     },
 }
 
@@ -162,6 +166,7 @@ INSTALLED_APPS = (
     'tastypie',
     'captcha',
     'endless_pagination',
+    'storages',
 )
 
 # Captcha SSL
@@ -267,3 +272,11 @@ PROFILE_COMPLETION_MODULES = (
     'employmenthistory',
     'summary'
 )
+
+BOTS = ['agent', 'archive', 'ask', 'auto', 'bot', 'check', 'crawl',
+        'facebookexternalhit', 'flipdog', 'grub', 'harvest', 'heritrix',
+        'index', 'indy+library', 'infoseek', 'jakarta', 'java', 'job',
+        'keynote', 'larbin', 'libwww', 'mechani', 'nutch', 'panscient', 'perl',
+        'proximic', 'python', 'scan', 'scooter', 'scoutjet', 'search', 'slurp',
+        'spider', 'url+control', 'urllib', 'validator', 'watchfire',
+        'whizbang', 'wget', 'xenu', 'yahoo-fetch', 'yahooseeker']

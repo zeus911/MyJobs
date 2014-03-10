@@ -60,6 +60,10 @@ h1 > small > a:hover {
     margin-bottom: 0;
 }
 
+.desktop_hide {
+    display: none;
+}
+
 /*Candidate Activity mobile desktop hide*/
 .candidate-activity-mobile {
     display: none;
@@ -78,25 +82,35 @@ h1 > small > a:hover {
 
 /*Employer Dashboard Widgets */
 #count-box{
-    width: 30%;
     height: 30%;
     margin: 5px auto 0 auto;
     padding: 20px 0 20px 0;
-    border: 1px solid #333333;
+    border: 1px solid #d5d4d0;
     border-radius: 5px;
     text-align: center;
+    background-color:#fff;
 }
 #count-text{
     font-size: 1.7em;
     font-weight: bolder;
     margin: auto;
 }
+
+#search-btn {
+    display: inline-block !important;
+}
+
+#search-box input {
+    box-sizing: border-box;
+    height: 30px;
+    width: 100%;
+}
+
 .fake-url{
     color: #5a6d81;
     text-decoration: underline;
     cursor: pointer;
 }
-
 .fake-url:hover{
     color: #4B5661;
 }
@@ -173,6 +187,10 @@ h1 > small > a:hover {
 
 .prm-init-formbox fieldset :nth-child(2) > input[placeholder]{
     font-weight: bold;
+}
+
+.prm-buttons {
+    width: 135px;
 }
 
 #partner-form,
@@ -290,6 +308,74 @@ h1 > small > a:hover {
     margin-bottom: 5px;
 }
 
+.piehole {
+    position: absolute;
+    top: 30%;
+    left: 25%;
+    width: 50%;
+    height: 40%;
+    text-align: center;
+}
+
+.piehole > .piehole-big {
+    font-weight: bold;
+    font-size: 2em;
+    margin-bottom: 5px;
+}
+
+.piehole > .piehole-topic {
+    font-weight: bold;
+    font-size: 0.9em;
+    line-height: 13px;
+    margin-bottom: 5px;
+}
+
+.piehole > .piehole-filter {
+    font-weight: bold;
+    font-size: 0.9em;
+    line-height: 13px;
+    color: #8c96a1;
+}
+
+.chart-box {
+    position: absolute;
+    border: 3px solid #5eb95e;
+    border-radius: 5px;
+    background-color: #5eb95e;
+    color: #FFF;
+    width: 45px;
+    height: 40px;
+    margin-left: 218px;
+    text-align: center;
+    padding: 5px;
+}
+
+.chart-box + .chart-box {
+    margin-top: 61px;
+    height: 41px;
+    border-color: #4bb1cf;
+    background-color: #4bb1cf;
+}
+
+.chart-box + .chart-box + .chart-box {
+    margin-top: 122px;
+    height: 40px;
+    border-color: #faa732;
+    background-color: #faa732;
+}
+
+.chart-box > .big-num {
+    font-weight: bold;
+    font-size: 1.3em;
+    margin-bottom: 5px;
+}
+
+.chart-box > .reports-record-type {
+    font-weight: bold;
+    font-size: 0.7em;
+    line-height: 10px;
+}
+
 /* Sort by field in saved search save/edit */
 #saved-search-form label[for^='id_sort_by'],
 #saved-search-form label[for^='id_edit_sort_by'] {
@@ -305,7 +391,6 @@ h1 > small > a:hover {
     position: absolute;
     display: inline;
     margin-left: 10px;
-    margin-top: 5px;
 }
 
 .profile-unit h4 {
@@ -402,42 +487,6 @@ table#row-link-table {
 #row-link-table ul {
     list-style-type: none;
     margin-left: -10px;
-}
-
-#date_activity {
-    float: right;    
-    margin-right: 60px;
-    margin-top: -80px;    
-}
-
-#date_activity a {
-    display: block;
-    text-decoration: none;    
-}
-
-.arrow-down {
-    float: right;
-	width: 0; 
-	height: 0; 
-	border-left: 15px solid transparent;
-	border-right: 15px solid transparent;	
-	border-top: 15px solid #444;
-	margin-top: -34px;
-	margin-right: -38px;
-}
-
-.date_range {
-    display: none;    
-    position: absolute;
-	height: 200px;
-	width: 250px;
-	background: #f2f2f2;
-	box-shadow: 0 0 4px #888888;	
-	padding: 8px;
-	z-index: 1000;
-	margin-top: -40px;
-	margin-left: 32px;
-	
 }
 
 .link-list {     
@@ -766,6 +815,13 @@ ul.ui-autocomplete {
 form select,
 input#id_attachment {
     width: 262px;
+    margin-bottom: 10px;
+}
+
+#contact-record-form ul {
+    list-style-type: none;
+    display: block;
+    float: left;
 }
 
 fieldset textarea,
@@ -870,7 +926,8 @@ fieldset textarea,
     padding: 5px 10px;
 }
 
-.no-padding {
+.no-padding,
+.tip-content.no-padding {
     padding: 0;
 }
 
@@ -890,7 +947,8 @@ fieldset textarea,
     -moz-border-radius: 0;
 }
 
-.formBox.no-padding .table {
+.formBox.no-padding .table,
+.tip-content.no-padding .table {
     margin-bottom: 0;
 }
 
@@ -1197,6 +1255,10 @@ em.pendingText {
     text-align: left;
 }
 
+#nav {
+    z-index: 1;
+}
+
 #nav:hover {
     background: #222;
 	color: #000;
@@ -1317,8 +1379,6 @@ em.pendingText {
 .sub-nav-item {
     margin-left: 40px;
 }
-
-
 
 #ui-datepicker-div {
     position: relative;
@@ -1620,7 +1680,72 @@ td .gravatar-blank,
     margin-top: 14px;
 }
 
+
+/* Time filter styling */
+.arrow-down {
+    float: right;
+	width: 0;
+	height: 0;
+	border-left: 7px solid transparent;
+	border-right: 7px solid transparent;
+	border-top: 7px solid #444;
+	margin-top: -12px;
+	margin-right: -25px;
+}
+
+.date-range {
+    color: #444;
+}
+
+.date-range:hover {
+    text-decoration: none;
+}
+
+#date-selection .btn {
+    display: inline !important;
+}
+
+.date-range-select-form {
+    display: none;
+    position: absolute;
+    height: 200px;
+    width: 270px;
+    margin-left: -207px;
+    background: #f2f2f2;
+    border-radius: 4px;
+    box-shadow: 0 0 4px #888;
+    padding: 10px 20px 5px 10px;
+    z-index: 1000;
+}
+
+.date-range-select-form-visible {
+    display: block;
+}
+
+#dashboard-time-filter {
+    margin-right: 30px;
+    margin-top: -20px;
+}
+
+#candidate-time-filter {
+    margin-right: 30px;
+}
+
+#candidate-time-filter .date-range-select-form {
+    margin-left: -215px;
+    margin-top: 7px;
+}
+
 @media screen and (max-width: 1024px) {
+    .arrow-down-a {
+        border-style: none !important;
+        display: none !important;
+    }
+
+    .date-range-select-form {
+        margin-left: -195px;
+    }
+
     input[type=checkbox] {
         -moz-appearance: none;
     }
@@ -1828,9 +1953,35 @@ td .gravatar-blank,
     #gravatar {
         padding-left: 100px;
     }
+
+    #validated {
+        padding: 7px;
+        margin-top: 3px;
+    }
 }
 
 @media screen and (max-width: 500px) {
+    .date-range-select-form {
+        background: inherit;
+        box-shadow: inherit;
+        position: inherit;
+        margin-left: 0px;
+    }
+
+    #dashboard-time-filter {
+        margin-right: 0px;
+        margin-top: 0px;
+        width: 100%;
+    }
+
+    #candidate-time-filter {
+        margin-top: 15px;
+    }
+
+    .date-range {
+        margin-bottom: 10px;
+    }
+
     .site-progress {
         margin-top: 0;
     }
@@ -1951,7 +2102,8 @@ td .gravatar-blank,
     }
     
     .add-module-btn,
-    .profile-mobile a.btn{
+    .profile-mobile a.btn,
+    .profile-mobile a.btn-link {
         display: block;
         float: none;
         margin: 5px 0;
@@ -1972,6 +2124,15 @@ td .gravatar-blank,
     .btn + .btn{
         margin-left: 0;
         margin-top: 5px;
+    }
+
+    #new-prm-btn {
+        float:none;
+    }
+
+    #next,
+    #previous {
+        margin-top: 0;
     }
 
     .btn-link{
@@ -2047,6 +2208,10 @@ td .gravatar-blank,
         display: none;
     }
 
+    .desktop_hide {
+        display: block;
+    }
+
     .candidate-activity-mobile {
         display: block;
     }
@@ -2069,29 +2234,9 @@ td .gravatar-blank,
     #company-information {
         margin-top: 10px;
     }
-    
-    #date_activity {    
-        margin-top: -40px;    
-        margin-right: 40px;
-    }
-    
-    #date_activity a {
-        border: none;
-        background-color: transparent;
-    }
-        
-    #date-selection input[type="submit"].btn {
-        display: inline !important;
-        margin-right: 5px;
-    }
-    
-    .date_range {
-        top: 202px;
-        margin-left: 105px;
-    }
-    
-    .arrow-down {
-        margin-top: -49px;   
+
+    .endless_loading {
+        display: none !important;
     }
     
     .formBox h4 {
@@ -2118,11 +2263,6 @@ td .gravatar-blank,
         margin-left: 0;
     }
 
-    #date-range {
-        position: absolute;
-        margin-top: -115px;
-    }
-
     /* Partner Relationship Manager */
     .blanket {
         display: none;
@@ -2145,6 +2285,14 @@ td .gravatar-blank,
 
     .tip-box .tip-footer .btn-link {
         padding: 6px 25px 7px 25px;
+    }
+
+    #contact-record-form .attachment span {
+        margin-left: 0px !important;
+    }
+
+    #prm-mobile-row-buttons {
+        margin-bottom: 40px;
     }
     
     /* Microsite Activity Page*/
@@ -2249,6 +2397,7 @@ td .gravatar-blank,
 
     #saved-search-form #validated {
         margin-top: 0;
+        padding: 3px;
     }
 
     #saved-search-form #mobile-url-container {
@@ -2645,7 +2794,6 @@ table td, table th {
 
 #validated {
     display: inline;
-    padding: 7px;
 }
 
 #saved-search-form #id_day_of_month,
@@ -2782,7 +2930,7 @@ body.modal-open {
 }
 
 .required {
-    display: inline-block;
+    display: inline;
 }
 
 .required-label,
@@ -2807,6 +2955,7 @@ body.modal-open {
 #partner-menu {
     margin: 0;
     position: absolute;
+    z-index: 1;
 }
 
 #company-menu a,
@@ -2887,7 +3036,7 @@ body.modal-open {
     padding-right: 10px;
 }
 
-#facet-term{
+#facet-term {
     display:table-cell;
     vertical-align: top;
 }
@@ -2897,14 +3046,52 @@ body.modal-open {
     width: 55px;
 }
 
-#id_date_time_0 {
-    width: 85px;
+#contact-record-form #id_date_time_3,
+#contact-record-form #id_date_time_4,
+#contact-record-form #id_date_time_5,
+#contact-record-form #id_date_time_0,
+#contact-record-form #id_date_time_1 {
+    margin-right: 10px;
+    width: 65px;
 }
 
-#id_date_time_1, #id_date_time_2 {
-    width: 53px;
+#contact-record-form #id_date_time_2 {
+    width: 75px;
 }
 
-#id_date_time_3 {
-    width: 57px;
+#contact-record-form .date-time {
+    display: block;
+    float: left;
+}
+
+#contact-record-form .attachment span {
+    display: block;
+    margin-left: 280px;
+}
+
+.contact-record-tr:hover td {
+    background-color: rgb(230, 230, 230) !important;
+    cursor: pointer;
+}
+
+.activity-record-tr:hover td {
+    cursor: pointer;
+}
+
+#activity-table tr {
+    height: 75px;
+    max-height: 75px;
+    overflow: hidden;
+}
+
+.tip-content #activity-table tr {
+    height: 100px;
+    max-height: 100px;
+    overflow: hidden;
+}
+
+.one-hundred-percent-button-border-boxed {
+    box-sizing: border-box;
+    width: 100%;
+    margin-bottom: 20px;
 }

@@ -1,5 +1,4 @@
 from django import forms
-from django.contrib.admin.models import ADDITION
 from django.core.exceptions import ValidationError
 from django.forms.util import ErrorList
 
@@ -7,9 +6,11 @@ from collections import OrderedDict
 
 from myprofile.forms import generate_custom_widgets
 from myjobs.forms import BaseUserForm
-from mypartners.models import Contact, Partner, ContactRecord
-from mypartners.helpers import log_change
-from mypartners.widgets import SplitDateTimeDropDownField, TimeDropDownField
+from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
+                               ADDITION, CHANGE, MAX_ATTACHMENT_MB)
+from mypartners.helpers import log_change, get_attachment_link
+from mypartners.widgets import (MultipleFileField, MultipleFileInputWidget,
+                                SplitDateTimeDropDownField, TimeDropDownField)
 
 
 class ContactForm(forms.ModelForm):
@@ -26,33 +27,29 @@ class ContactForm(forms.ModelForm):
     class Meta:
         form_name = "Contact Information"
         model = Contact
-        exclude = ['user']
+        exclude = ['user', 'partner']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
                    'placeholder': 'Notes About This Contact'})
 
-    def save(self, user, commit=True):
-        is_new = False if self.instance.pk else True
+    def save(self, user, partner, commit=True):
+        new_or_change = CHANGE if self.instance.pk else ADDITION
         partner = Partner.objects.get(id=self.data['partner'])
-        contact = self.instance
-        contact.save()
+        self.instance.partner = partner
+        contact = super(ContactForm, self).save(commit)
 
-        partner.add_contact(contact)
-        partner.save()
-        if is_new:
-            log_change(contact, self, user, partner, contact.name,
-                       action_type=ADDITION)
-        else:
-            log_change(contact, self, user, partner, contact.name)
-        return
+        log_change(contact, self, user, partner, contact.name,
+                   action_type=new_or_change)
 
+        return contact
 
 
 class PartnerInitialForm(BaseUserForm):
     """
     This form is used when an employer currently has no partner to create a
     partner (short and sweet version).
+
     """
     def __init__(self, *args, **kwargs):
         super(PartnerInitialForm, self).__init__(*args, **kwargs)
@@ -72,33 +69,26 @@ class PartnerInitialForm(BaseUserForm):
         widgets = generate_custom_widgets(model)
 
     def save(self, user, commit=True):
-        is_new = False if self.instance.pk else True
-        company_id = self.data['company_id']
-        self.instance.owner_id = company_id
+        new_or_change = CHANGE if self.instance.pk else ADDITION
+        self.instance.owner_id = self.data['company_id']
+        partner = super(PartnerInitialForm, self).save(commit)
 
-        if self.data['pc-contactname'] or self.data['pc-contactemail']:
-            if self.data['pc-contactname'] and self.data['pc-contactemail']:
-                contact = Contact(name=self.data['pc-contactname'],
-                                  email=self.data['pc-contactemail'])
-            elif self.data['pc-contactname']:
-                contact = Contact(name=self.data['pc-contactname'])
-            else:
-                contact = Contact(email=self.data['pc-contactemail'])
+        contact_name = self.data.get('pc-contactname')
+        contact_email = self.data.get('pc-contactemail', '')
+        if contact_name:
+            contact = Contact.objects.create(name=contact_name,
+                                             email=contact_email,
+                                             partner=partner)
             contact.save()
+            log_change(contact, self, user, partner, contact.name,
+                       action_type=ADDITION)
+            partner.primary_contact = contact
+            partner.save()
 
-            self.instance.primary_contact = contact
-            self.instance.save()
-            self.instance.add_contact(contact)
+        log_change(partner, self, user, partner, partner.name,
+                   action_type=new_or_change)
 
-        if is_new:
-            log_change(self.instance, self, user, self.instance,
-                       self.instance.name, action_type=ADDITION)
-
-        else:
-            log_change(self.instance, self, user, self.instance,
-                       self.instance.name)
-
-        self.instance.save()
+        return partner
 
 
 class NewPartnerForm(BaseUserForm):
@@ -134,56 +124,50 @@ class NewPartnerForm(BaseUserForm):
     class Meta:
         form_name = "Partner Information"
         model = Contact
-        exclude = ['user']
+        exclude = ['user', 'partner']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
                    'placeholder': 'Notes About This Contact'})
 
     def save(self, user, commit=True):
-        is_new = False if self.instance.pk else True
+        # self.instance is a Contact instance
         company_id = self.data['company_id']
-        owner_id = company_id
-        if self.data['partnerurl']:
-            partner = Partner(name=self.data['partnername'],
-                              uri=self.data['partnerurl'], owner_id=owner_id)
-            partner.save()
-        else:
-            partner = Partner(name=self.data['partnername'], owner_id=owner_id)
-            partner.save()
 
-        self.data = self.remove_partner_data(
-            self.data, ['partnername', 'partnerurl', 'csrfmiddlewaretoken',
-                        'company', 'company_id', 'ct'])
+        partner_url = self.data.get('partnerurl', '')
 
+        partner = Partner.objects.create(name=self.data['partnername'],
+                                         uri=partner_url, owner_id=company_id)
+
+        log_change(partner, self, user, partner, partner.name,
+                   action_type=ADDITION)
+
+        self.data = remove_partner_data(self.data,
+                                        ['partnername', 'partnerurl',
+                                         'csrfmiddlewaretoken', 'company',
+                                         'company_id', 'ct'])
         has_data = False
         for value in self.data.itervalues():
-            if value != ['']:
-                if value == ['USA']:
-                    continue
+            if value != [''] and value != ['USA']:
                 has_data = True
-
         if has_data:
-            self.instance.save()
-            partner.add_contact(self.instance)
-            partner.primary_contact_id = self.instance.id
+            self.instance.partner = partner
+            instance = super(NewPartnerForm, self).save(commit)
+            partner.primary_contact = instance
             partner.save()
+            log_change(instance, self, user, partner, instance.name,
+                       action_type=ADDITION)
 
-            if is_new:
-                log_change(self.instance, self, user, partner,
-                           self.instance.name, action_type=ADDITION)
-
-            else:
-                log_change(self.instance, self, user, partner,
-                           self.instance.name)
+            return instance
+        # No contact was created
+        return None
 
 
-
-    def remove_partner_data(self, dictionary, keys):
-        new_dictionary = dict(dictionary)
-        for key in keys:
-            del new_dictionary[key]
-        return new_dictionary
+def remove_partner_data(dictionary, keys):
+    new_dictionary = dict(dictionary)
+    for key in keys:
+        del new_dictionary[key]
+    return new_dictionary
 
 
 class PartnerForm(BaseUserForm):
@@ -193,8 +177,9 @@ class PartnerForm(BaseUserForm):
     """
     def __init__(self, *args, **kwargs):
         super(PartnerForm, self).__init__(*args, **kwargs)
-        choices = [(contact.id, contact.name) for contact in
-                   kwargs['instance'].contacts.all()]
+        contacts = Contact.objects.filter(partner=kwargs['instance'])
+        choices = [(contact.id, contact.name) for contact in contacts]
+
         if kwargs['instance'].primary_contact:
             for choice in choices:
                 if choice[0] == kwargs['instance'].primary_contact_id:
@@ -216,22 +201,25 @@ class PartnerForm(BaseUserForm):
         widgets = generate_custom_widgets(model)
 
     def save(self, user, commit=True):
-        is_new = False if self.instance.pk else True
-        self.instance.primary_contact_id = self.data['primary_contact']
-        self.instance.save()
-        if is_new:
-            log_change(self.instance, self, user, self.instance,
-                       self.instance.name, action_type=ADDITION)
+        new_or_change = CHANGE if self.instance.pk else ADDITION
 
-        else:
-            log_change(self.instance, self, user, self.instance,
-                       self.instance.name)
-        return
+        instance = super(PartnerForm, self).save(commit)
+        # Explicity set the primary_contact for the partner and re-save.
+        try:
+            instance.primary_contact = Contact.objects.get(
+                pk=self.data['primary_contact'], partner=self.instance)
+        except (Contact.DoesNotExist, ValueError):
+            instance.primary_contact = None
+        instance.save()
+        log_change(instance, self, user, instance, instance.name,
+                   action_type=new_or_change)
+
+        return instance
 
 
 def PartnerEmailChoices(partner):
     choices = [(None, '----------')]
-    contacts = partner.contacts.all()
+    contacts = Contact.objects.filter(partner=partner)
     for contact in contacts:
         if contact.user:
             choices.append((contact.user.email, contact.name))
@@ -242,25 +230,65 @@ def PartnerEmailChoices(partner):
 
 
 class ContactRecordForm(forms.ModelForm):
-    date_time = SplitDateTimeDropDownField()
+    date_time = SplitDateTimeDropDownField(label='Date & Time')
     length = TimeDropDownField()
+    attachment = MultipleFileField(required=False,
+                                   help_text="Max file size %sMB" %
+                                             MAX_ATTACHMENT_MB)
 
     class Meta:
         form_name = "Contact Record"
         fields = ('contact_type', 'contact_name',
                   'contact_email', 'contact_phone', 'location',
-                  'length', 'subject', 'date_time', 'notes',
-                  'attachment')
+                  'length', 'subject', 'date_time', 'job_id',
+                  'job_applications', 'job_interviews', 'job_hires',
+                  'notes', 'attachment')
         model = ContactRecord
 
     def __init__(self, *args, **kwargs):
         partner = kwargs.pop('partner')
-        choices = [(None, '----------')]
-        [choices.append((c.id, c.name)) for c in partner.contacts.all()]
+        instance = kwargs.get('instance')
+        contacts = Contact.objects.filter(partner=partner)
+        choices = [(c.id, c.name) for c in contacts]
+        if not instance:
+            choices.insert(0, ('None', '----------'))
+        else:
+            try:
+                index = [x[1] for x in choices].index(instance.contact_name)
+            except ValueError:
+                # This is a ContactRecord for a contact that has been
+                # deleleted.
+                tup = (instance.contact_name, instance.contact_name)
+                choices.insert(0, tup)
+            else:
+                tup = choices[index]
+                choices.pop(index)
+                choices.insert(0, tup)
         super(ContactRecordForm, self).__init__(*args, **kwargs)
+
+        if not instance or instance.contact_type != 'pssemail':
+            # Remove Partner Saved Search from the list of valid
+            # contact type choices.
+            contact_type_choices = self.fields["contact_type"].choices
+            index = [x[0] for x in contact_type_choices].index("pssemail")
+            contact_type_choices.pop(index)
+            self.fields["contact_type"] = forms.ChoiceField(
+                widget=forms.Select(), choices=contact_type_choices,
+                label="Contact Type")
+
         self.fields["contact_name"] = forms.ChoiceField(
-            widget=forms.Select(), choices=choices,
-            initial=choices[0][0], label="Contacts")
+            widget=forms.Select(), choices=choices, label="Contact")
+
+        # If there are attachments create a checkbox option to delete them.
+        if instance:
+            attachments = PRMAttachment.objects.filter(contact_record=instance)
+            if attachments:
+                choices = [(a.pk, get_attachment_link(
+                    partner.owner.id, partner.id, a.id,
+                    a.attachment.name.split("/")[-1])) for a in attachments]
+                self.fields["attach_delete"] = forms.MultipleChoiceField(
+                    required=False, choices=choices, label="Delete Files",
+                    widget=forms.CheckboxSelectMultiple)
 
     def clean(self):
         contact_type = self.cleaned_data.get('contact_type', None)
@@ -270,6 +298,8 @@ class ContactRecordForm(forms.ModelForm):
             self._errors['contact_phone'] = ErrorList([""])
         elif contact_type == 'facetoface' and not self.cleaned_data['location']:
             self._errors['location'] = ErrorList([""])
+        elif contact_type == 'job' and not self.cleaned_data['job_id']:
+            self._errors['job_id'] = ErrorList([""])
         return self.cleaned_data
 
     def clean_contact_name(self):
@@ -277,14 +307,35 @@ class ContactRecordForm(forms.ModelForm):
         if contact_id == 'None' or not contact_id:
             raise ValidationError('required')
         try:
-            return Contact.objects.get(id=int(contact_id))
-        except Contact.DoesNotExist:
-            raise ValidationError("Contact does not exist")
+            return Contact.objects.get(id=int(contact_id)).name
+        except (Contact.DoesNotExist, ValueError):
+            # Contact has been deleted. Preserve the contact name.
+            return self.cleaned_data['contact_name']
+
+    def clean_attachment(self):
+        attachments = self.cleaned_data.get('attachment', None)
+        for attachment in attachments:
+            if attachment and attachment.size > (MAX_ATTACHMENT_MB << 20):
+                raise ValidationError('File too large')
+        return self.cleaned_data['attachment']
 
     def save(self, user, partner, commit=True):
-        is_new = False if self.instance.pk else True
+        new_or_change = CHANGE if self.instance.pk else ADDITION
         self.instance.partner = partner
         instance = super(ContactRecordForm, self).save(commit)
+
+        attachments = self.cleaned_data.get('attachment', None)
+        for attachment in attachments:
+            if attachment:
+                prm_attachment = PRMAttachment(attachment=attachment,
+                                               contact_record=self.instance)
+                setattr(prm_attachment, 'partner', self.instance.partner)
+                prm_attachment.save()
+
+        attach_delete = self.cleaned_data.get('attach_delete', [])
+        for attachment in attach_delete:
+            PRMAttachment.objects.get(pk=attachment).delete()
+
         try:
             identifier = instance.contact_email if instance.contact_email \
                 else instance.contact_phone if instance.contact_phone \
@@ -295,11 +346,8 @@ class ContactRecordForm(forms.ModelForm):
             # the user can deal with the logging issues they created.
             identifier = "unknown contact"
 
-        if is_new:
-            log_change(instance, self, user, partner, identifier,
-                       action_type=ADDITION)
-        else:
-            log_change(instance, self, user, partner, identifier)
-        return instance
+        log_change(instance, self, user, partner, identifier,
+                   action_type=new_or_change)
 
+        return instance
 

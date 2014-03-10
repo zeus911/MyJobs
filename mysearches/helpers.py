@@ -68,50 +68,89 @@ def get_rss_soup(rss_url):
     return BeautifulSoup(rss_feed, "html.parser")
 
 
-def parse_rss(feed_url, frequency='W', num_items=20, offset=0):
+def get_json(json_url):
+    """
+    Turn a remote json file into a Python dictionary
+
+    Inputs:
+    :json_url:    URL of a json file
+
+    Outputs:
+                    List of one or more Python dictionaries
+    """
+    json_feed = urllib2.urlopen(json_url).read()
+    try:
+        return json.loads(json_feed)
+    except ValueError:
+        return []
+
+
+def parse_feed(feed_url, frequency='W', num_items=20, offset=0, return_items=None):
     """
     Parses job data from an RSS feed and returns it as a list of dictionaries.
     The data returned is limited based on the corresponding data range (daily,
     weekly, or monthly).
-    
+
     Inputs:
     :feed_url:      URL of an RSS feed
     :frequency:     String 'D', 'W', or 'M'.
-    :num_items:     Maximum number of items to be returned.
+    :num_items:     Maximum number of items to be retrieved.
     :offset:        The page on which the RSS feed is on.
+    :return_items: The number of items to be returned; if not provided,
+        equals :num_items:
 
     Outputs:
-    :item_list:     List of dictionaries of job data. Each dictionary contains
-                    the job title, description, link to the .jobs page, and
-                    publish date.
+    :tuple:         First index is a list of :return_items: jobs
+                    Second index is the total job count
     """
-
+    if return_items is None:
+        return_items = num_items
     if feed_url.find('?') > -1:
         separator = '&'
     else:
         separator = '?'
-    rss_soup = get_rss_soup(feed_url+separator+'num_items='+str(num_items)+'&offset='+str(offset))
-    item_list = []
-    items = rss_soup.find_all("item")
+
+    feed_url = feed_url.replace('feed/rss', 'feed/json')
 
     interval = get_interval_from_frequency(frequency)
 
     end = datetime.date.today()
     start = end + datetime.timedelta(days=interval)
+    item_list = []
+
+    feed_url += '%snum_items=%s&offset=%s' % (
+        separator, str(num_items), str(offset))
+
+    is_json = 'feed/json' in feed_url
+    if is_json:
+        items = get_json(feed_url)
+    else:
+        rss_soup = get_rss_soup(feed_url)
+        items = rss_soup.find_all('item')
+    count = len(items)
 
     for item in items:
-        item_dict = {}
-        item_dict['title'] = item.findChild('title').text
-        item_dict['link'] = item.findChild('link').text
-        item_dict['pubdate'] = dateparser.parse(item.findChild('pubdate').text)
-        item_dict['description'] = item.findChild('description').text
+        if is_json:
+            item['link'] = item.pop('url')
+            item['pubdate'] = dateparser.parse(item.pop('date_new'))
+            item_dict = item
+        else:
+            item_dict = {}
+            item_dict['title'] = item.findChild('title').text
+            item_dict['link'] = item.findChild('link').text
+            item_dict['pubdate'] = dateparser.parse(
+                item.findchild('pubdate').text)
+            item_dict['description'] = item.findChild('description').text
 
-        if date_in_range(start,end,item_dict['pubdate'].date()):
+        if date_in_range(start, end, item_dict['pubdate'].date()):
             item_list.append(item_dict)
         else:
             break
 
-    return item_list
+        if len(item_list) == return_items:
+            break
+
+    return item_list, count
 
 
 def date_in_range(start, end, x):

@@ -1,9 +1,13 @@
+from datetime import datetime, timedelta
 import json
 
+from django.conf import settings
 from django.contrib.admin.models import DELETION
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import render_to_response, get_object_or_404, redirect
+from django.core.exceptions import ValidationError
+from django.core.files.storage import default_storage
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -11,12 +15,15 @@ from django.core.urlresolvers import reverse
 from myjobs.models import User
 from mydashboard.models import Company
 from mysearches.models import SavedSearch, PartnerSavedSearch
-from mysearches.helpers import url_sort_options, parse_rss
+from mysearches.helpers import url_sort_options, parse_feed
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm, ContactRecordForm)
-from mypartners.models import Partner, Contact, ContactRecord
-from mypartners.helpers import (prm_worthy, url_extra_params, log_change,
+from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
+                               ContactLogEntry, CONTACT_TYPE_CHOICES,
+                               DELETION)
+from mypartners.helpers import (prm_worthy, add_extra_params,
+                                add_extra_params_to_jobs, log_change,
                                 get_searches_for_partner, get_logs_for_partner,
                                 get_contact_records_for_partner)
 
@@ -27,6 +34,8 @@ def prm(request):
 
     """
     company_id = request.REQUEST.get('company')
+    form = request.REQUEST.get('form')
+    user = request.user
 
     if company_id is None:
         try:
@@ -54,17 +63,16 @@ def prm(request):
         has_partners = True
         partner_form = None
 
-    partner_ct_id = ContentType.objects.get_for_model(Partner).id
-
-    ctx = {'has_partners': has_partners,
+    ctx = {'has_partners': True if partners else False,
            'partners': partners,
            'form': partner_form or form,
            'company': company,
            'user': user,
-           'partner_ct': partner_ct_id}
+           'partner_ct': ContentType.objects.get_for_model(Partner).id}
 
     return render_to_response('mypartners/prm.html', ctx,
                               RequestContext(request))
+
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_details(request):
@@ -72,7 +80,7 @@ def partner_details(request):
 
     form = PartnerForm(instance=partner, auto_id=False)
 
-    contacts = partner.contacts.all()
+    contacts = Contact.objects.filter(partner=partner)
     contact_ct_id = ContentType.objects.get_for_model(Contact).id
     partner_ct_id = ContentType.objects.get_for_model(Partner).id
 
@@ -125,7 +133,7 @@ def edit_item(request):
             form = ContactForm()
         else:
             try:
-                item = partner.contacts.get(pk=item_id)
+                item = Contact.objects.get(partner=partner, pk=item_id)
             except:
                 raise Http404
             form = ContactForm(instance=item, auto_id=False)
@@ -144,7 +152,6 @@ def edit_item(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def save_init_partner_form(request):
-    company_id = request.REQUEST.get('company_id')
     if 'partnername' in request.POST:
         form = NewPartnerForm(user=request.user, data=request.POST)
     else:
@@ -170,17 +177,16 @@ def save_item(request):
 
     if content_id == ContentType.objects.get_for_model(Contact).id:
         item_id = request.REQUEST.get('id') or None
+        try:
+            partner_id = int(request.REQUEST.get('partner'))
+        except TypeError:
+            raise Http404
+
+        partner = get_object_or_404(company.partner_set.all(), id=partner_id)
+
         if item_id:
             try:
-                partner_id = int(request.REQUEST.get('partner'))
-            except TypeError:
-                raise Http404
-
-            partner = get_object_or_404(company.partner_set.all(),
-                                        id=partner_id)
-
-            try:
-                item = partner.contacts.get(pk=item_id)
+                item = Contact.objects.get(partner=partner, pk=item_id)
             except:
                 raise Http404
             else:
@@ -193,7 +199,7 @@ def save_item(request):
                     return HttpResponse(json.dumps(form.errors))
         form = ContactForm(request.POST)
         if form.is_valid():
-            form.save(request.user)
+            form.save(request.user, partner)
             return HttpResponse(status=200)
         else:
             return HttpResponse(json.dumps(form.errors))
@@ -226,9 +232,9 @@ def delete_prm_item(request):
     partner_id = request.REQUEST.get('partner')
     if partner_id:
         partner_id = int(partner_id)
-    contact_id = request.REQUEST.get('id')
-    if contact_id:
-        contact_id = int(contact_id)
+    item_id = request.REQUEST.get('id')
+    if item_id:
+        contact_id = int(item_id)
     content_id = request.REQUEST.get('ct')
     if content_id:
         content_id = int(content_id)
@@ -242,15 +248,35 @@ def delete_prm_item(request):
         return HttpResponseRedirect(reverse('partner_details')+'?company=' +
                                     str(company_id)+'&partner=' +
                                     str(partner_id))
-    if content_id == ContentType.objects.get_for_model(Partner).id:
+    elif content_id == ContentType.objects.get_for_model(Partner).id:
         partner = get_object_or_404(Partner, id=partner_id, owner=company)
-        partner.contacts.all().delete()
+        Contact.objects.filter(partner=partner).delete()
         log_change(partner, None, request.user, partner, partner.name,
                    action_type=DELETION)
         partner.delete()
-        return HttpResponseRedirect(reverse('prm')+'?company='+str(company_id))
-    
-    
+        return HttpResponseRedirect(reverse('prm') + '?company=' +
+                                    str(company_id))
+    elif content_id == ContentType.objects.get_for_model(ContactRecord).id:
+        contact_record = get_object_or_404(ContactRecord, partner=partner_id,
+                                           id=item_id)
+        partner = get_object_or_404(Partner, id=partner_id, owner=company)
+        log_change(contact_record, None, request.user, partner,
+                   contact_record.contact_name, action_type=DELETION)
+        contact_record.delete()
+        return HttpResponseRedirect(reverse('partner_records')+'?company=' +
+                                    str(company_id)+'&partner=' +
+                                    str(partner_id))
+    elif content_id == ContentType.objects.get_for_model(PartnerSavedSearch).id:
+        saved_search = get_object_or_404(PartnerSavedSearch, id=item_id)
+        partner = get_object_or_404(Partner, id=partner_id, owner=company)
+        log_change(saved_search, None, request.user, partner,
+                   saved_search.email, action_type=DELETION)
+        saved_search.delete()
+        return HttpResponseRedirect(reverse('partner_searches')+'?company=' +
+                                    str(company_id)+'&partner=' +
+                                    str(partner_id))
+
+
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_overview(request):
     """
@@ -260,8 +286,8 @@ def prm_overview(request):
     company, partner, user = prm_worthy(request)
 
     most_recent_activity = get_logs_for_partner(partner)
-    most_recent_communication = get_contact_records_for_partner(partner,
-                                                                num_records=3)
+    communication = get_contact_records_for_partner(partner)
+    most_recent_communication = communication[:3]
     saved_searches = get_searches_for_partner(partner)
     most_recent_saved_searches = saved_searches[:3]
 
@@ -300,10 +326,13 @@ def prm_edit_saved_search(request):
         form = PartnerSavedSearchForm(partner=partner, instance=instance)
     else:
         form = PartnerSavedSearchForm(partner=partner)
-    ctx = {'company': company,
-           'partner': partner,
-           'item_id': item_id,
-           'form': form}
+    ctx = {
+        'company': company,
+        'partner': partner,
+        'item_id': item_id,
+        'form': form,
+        'content_type': ContentType.objects.get_for_model(PartnerSavedSearch).id,
+    }
     return render_to_response('mypartners/partner_edit_search.html', ctx,
                               RequestContext(request))
 
@@ -381,11 +410,8 @@ def partner_savedsearch_save(request):
             instance.user = user[0]
             Contact.objects.filter(email=instance.email).update(user=instance.user)
         instance.feed = form.data['feed']
-        if instance.url_extras:
-            instance.url, instance.feed = url_extra_params(instance.url,
-                                                           instance.feed,
-                                                           instance.url_extras)
         instance.provider = company
+        instance.partner = partner
         instance.created_by = request.user
         instance.custom_message = instance.partner_message
         form.save()
@@ -397,43 +423,67 @@ def partner_savedsearch_save(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_view_full_feed(request):
     """
-    PSSs' feed
+    PartnerSavedSearch feed.
 
     """
     company, partner, user = prm_worthy(request)
     search_id = request.REQUEST.get('id')
-    saved_search = SavedSearch.objects.get(id=search_id)
-    if hasattr(saved_search, 'partnersavedsearch'):
-        is_pss = True
-        if company == saved_search.partnersavedsearch.provider:
-            url_of_feed = url_sort_options(saved_search.feed,
-                                           saved_search.sort_by,
-                                           saved_search.frequency)
-            items = parse_rss(url_of_feed, saved_search.frequency)
-        else:
-            return HttpResponseRedirect(reverse('prm_saved_searches'))
+    saved_search = get_object_or_404(PartnerSavedSearch, id=search_id)
+
+    if company == saved_search.partnersavedsearch.provider:
+        url_of_feed = url_sort_options(saved_search.feed,
+                                       saved_search.sort_by,
+                                       saved_search.frequency)
+        items, count = parse_feed(url_of_feed, saved_search.frequency)
+        extras = saved_search.partnersavedsearch.url_extras
+        if extras:
+            add_extra_params_to_jobs(items, extras)
+            saved_search.url = add_extra_params(saved_search.url, extras)
     else:
         return HttpResponseRedirect(reverse('prm_saved_searches'))
-    return render_to_response('mysearches/view_full_feed.html',
-                              {'search': saved_search,
-                               'items': items,
-                               'view_name': 'Saved Searches',
-                               'is_pss': is_pss,
-                               'partner': partner.id,
-                               'company': company.id},
+
+    ctx = {
+        'search': saved_search,
+        'items': items,
+        'view_name': 'Saved Searches',
+        'is_pss': True,
+        'partner': partner.id,
+        'company': company.id,
+    }
+
+    return render_to_response('mysearches/view_full_feed.html', ctx,
                               RequestContext(request))
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_records(request):
+    """
+    ContactRecord overview.
+
+    """
     company, partner, user = prm_worthy(request)
-    contact_records = get_contact_records_for_partner(partner)
-    most_recent_activity = get_logs_for_partner(partner, num_items=1)
+    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
+    contact_records = get_contact_records_for_partner(partner,
+                                                      date_time_range=dt_range)
+    most_recent_activity = get_logs_for_partner(partner)
+
+    contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
+    contacts = ContactRecord.objects.filter(partner=partner)
+    contacts = contacts.values('contact_name').distinct()
+    contact_choices = [('all', 'All')]
+    [contact_choices.append((c['contact_name'], c['contact_name']))
+     for c in contacts]
+
     ctx = {
         'company': company,
+        'contact_choices': contact_choices,
+        'contact_type_choices': contact_type_choices,
+        'date_display': '30',
+        'date_start': dt_range[0],
+        'date_end': dt_range[1],
+        'most_recent_activity': most_recent_activity,
         'partner': partner,
         'records': contact_records,
-        'most_recent_activity': most_recent_activity,
     }
     return render_to_response('mypartners/main_records.html', ctx,
                               RequestContext(request))
@@ -443,10 +493,11 @@ def prm_records(request):
 def prm_edit_records(request):
     company, partner, user = prm_worthy(request)
     record_id = request.GET.get('id', None)
-    ctx = {
-        'company': company,
-        'partner': partner,
-    }
+
+    try:
+        instance = ContactRecord.objects.get(pk=record_id)
+    except ContactRecord.DoesNotExist:
+        instance = None
 
     if request.method == 'POST':
         instance = None
@@ -459,27 +510,112 @@ def prm_edit_records(request):
                                  partner=partner, instance=instance)
         if form.is_valid():
             form.save(user, partner)
-            return redirect('/prm/view/records?company=%s&partner=%s' %
-                            (company.pk, partner.pk))
-        else:
-            ctx['form'] = form
+            return HttpResponseRedirect(reverse('partner_records') +
+                                        '?company=%d&partner=%d' %
+                                        (company.id, partner.id))
     else:
-        if record_id:
-            try:
-                instance = ContactRecord.objects.get(pk=record_id)
-            except ContactRecord.DoesNotExist:
-                instance = None
-            form = ContactRecordForm(partner=partner, instance=instance)
-        else:
-            form = ContactRecordForm(partner=partner)
-        ctx['form'] = form
+        form = ContactRecordForm(partner=partner, instance=instance)
 
+    ctx = {
+        'company': company,
+        'partner': partner,
+        'content_type': ContentType.objects.get_for_model(ContactRecord).id,
+        'object_id': record_id,
+        'form': form,
+    }
     return render_to_response('mypartners/edit_record.html', ctx,
                               RequestContext(request))
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def prm_view_records(request):
+    """
+    View an individual ContactRecord.
+
+    """
+    company, partner, user = prm_worthy(request)
+    record_id = request.GET.get('id')
+    offset = request.GET.get('offset', 0)
+    record_type = request.GET.get('type')
+    name = request.GET.get('name')
+
+    try:
+        record_id = int(record_id)
+        offset = int(offset)
+    except (TypeError, ValueError):
+        return HttpResponseRedirect(reverse('partner_records') +
+                '?company=%d&partner=%d' % (company.id, partner.id))
+
+    prev_offset = (offset - 1) if offset > 1 else 0
+    records = get_contact_records_for_partner(partner, record_type=record_type,
+                                              contact_name=name,
+                                              offset=prev_offset,
+                                              limit=prev_offset + 3)
+
+    # Since we always retrieve 3, if the record is at the beginning of the
+    # list we might have 3 results but no previous.
+    if len(records) == 3 and records[0].pk == record_id:
+        prev_id = None
+        record = records[0]
+        next_id = records[1].pk
+    elif len(records) == 3:
+        prev_id = records[0].pk
+        record = records[1]
+        next_id = records[2].pk
+    # If there are only 2 results, it means there is either no next or
+    # no previous, so we need to compare record ids to figure out which
+    # is which.
+    elif len(records) == 2 and records[0].pk == record_id:
+        prev_id = None
+        record = records[0]
+        next_id = records[1].pk
+    elif len(records) == 2:
+        prev_id = records[0].pk
+        record = records[1]
+        next_id = None
+    else:
+        prev_id = None
+        record = records[0]
+        next_id = None
+
+    # Double check our results and drop the next and previous options if
+    # the results were wrong
+    if record_id != record.pk:
+        prev_id = None
+        record = get_object_or_404(ContactRecord, pk=record_id)
+        next_id = None
+
+    attachments = PRMAttachment.objects.filter(contact_record=record)
+    logs = ContactLogEntry.objects.filter(object_id=record_id)
+    record_history = ContactLogEntry.objects.filter(object_id=record_id)
+    ctx = {
+        'record': record,
+        'partner': partner,
+        'company': company,
+        'activity': logs,
+        'attachments': attachments,
+        'record_history': record_history,
+        'next_id': next_id,
+        'next_offset': offset + 1,
+        'prev_id': prev_id,
+        'prev_offset': prev_offset,
+        'contact_type': record_type,
+        'contact_name': name,
+        'view_name': 'PRM'
+
+    }
+
+    return render_to_response('mypartners/view_record.html', ctx,
+                              RequestContext(request))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def get_contact_information(request):
+    """
+    Returns a json object containing a contact's email address and
+    phone number if they have one.
+
+    """
     company, partner, user = prm_worthy(request)
     contact_id = request.REQUEST.get('contact_name')
     try:
@@ -488,7 +624,7 @@ def get_contact_information(request):
         data = {'error': 'Contact does not exist'}
         return HttpResponse(json.dumps(data))
 
-    if partner not in contact.partners_set.all():
+    if partner != contact.partner:
         data = {'error': 'Permission denied'}
         return HttpResponse(json.dumps(data))
 
@@ -505,3 +641,125 @@ def get_contact_information(request):
             data = {}
 
     return HttpResponse(json.dumps(data))
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def get_records(request):
+    """
+    Returns a json object containing the records matching the search
+    criteria (contact, contact_type, and date_time range) rendered using
+    records.html and the date range and date string required to update
+    the time_filter.html template to match the search.
+
+    """
+    company, partner, user = prm_worthy(request)
+
+    contact = request.REQUEST.get('contact')
+    contact_type = request.REQUEST.get('contact_type')
+    contact = None if contact == 'all' else contact
+    contact_type = None if contact_type == 'all' else contact_type
+    records = get_contact_records_for_partner(partner, contact_name=contact,
+                                              record_type=contact_type)
+
+    date_in_days = request.REQUEST.get('date')
+    if date_in_days:
+        date_str_results = {
+            'today': datetime.now() + timedelta(-1),
+            'seven_days': datetime.now() + timedelta(-7),
+            'thirty_days': datetime.now() + timedelta(-30),
+        }
+        range_end = datetime.now()
+        range_start = date_str_results.get(date_in_days)
+    else:
+        range_start = request.REQUEST.get('date_start')
+        range_end = request.REQUEST.get('date_end')
+        try:
+            range_start = datetime.strptime(range_start, "%m/%d/%Y")
+            range_end = datetime.strptime(range_end, "%m/%d/%Y")
+        except AttributeError:
+            range_start = None
+            range_end = None
+    date_str = 'Filter by time range'
+    if range_start and range_end:
+        try:
+            date_str = (range_end - range_start).days
+            date_str = (("%s Days" % date_str) if date_str != 1
+                        else ("%s Day" % date_str))
+            records = records.filter(date_time__range=[range_start, range_end])
+        except (ValidationError, TypeError):
+            pass
+
+    records = get_contact_records_for_partner(partner, contact_name=contact,
+                                              record_type=contact_type,
+                                              date_time_range=[range_start,
+                                                               range_end])
+    ctx = {
+        'records': records,
+        'company': company,
+        'partner': partner,
+        'contact_type': contact_type,
+        'contact_name': contact,
+    }
+
+    data = {
+        'date_end': range_end.strftime('%m/%d/%Y'),
+        'date_start': range_start.strftime('%m/%d/%Y'),
+        'date_str': date_str,
+        'html': render_to_response('mypartners/records.html', ctx,
+                                   RequestContext(request)).content,
+    }
+    return HttpResponse(json.dumps(data))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def get_uploaded_file(request):
+    """
+    Determines the location of a PRMAttachment (either in S3 or in local
+    storage) and redirects to it.
+
+    PRMAttachments stored in S3 require a generated key and have a 10 minute
+    access window.
+
+    """
+    company, partner, user = prm_worthy(request)
+    file_id = request.GET.get('id', None)
+    attachment = get_object_or_404(PRMAttachment, pk=file_id,
+                                   contact_record__partner=partner)
+    try:
+        if repr(default_storage.connection) == 'S3Connection:s3.amazonaws.com':
+            from boto.s3.connection import S3Connection
+
+            s3 = S3Connection(settings.AWS_ACCESS_KEY_ID,
+                              settings.AWS_SECRET_KEY, is_secure=True)
+            path = s3.generate_url(600, 'GET',
+                                   bucket=settings.AWS_STORAGE_BUCKET_NAME,
+                                   key=attachment.attachment.name,
+                                   force_http=True)
+        else:
+            path = "%s%s" % (settings.MEDIA_URL, attachment.attachment.name)
+    except AttributeError:
+        path = "%s%s" % (settings.MEDIA_URL, attachment.attachment.name)
+
+    return HttpResponseRedirect(path)
+
+
+def partner_get_records(request):
+    """
+    Gets a json object of record counts for each contact type.
+
+    """
+    company, partner, user = prm_worthy(request)
+    retrieve_type = request.GET.get('type')
+    contact_type_choices = dict(CONTACT_TYPE_CHOICES)
+    if retrieve_type == 'sample':
+        dt_rng = [datetime.now() + timedelta(-30), datetime.now()]
+        records = get_contact_records_for_partner(partner,
+                                                  date_time_range=dt_rng)\
+            .exclude(contact_type='job')
+
+        data = {'totalrecs': records.count()}
+        for choice in contact_type_choices.keys():
+            data[choice] = records.filter(contact_type=choice).count()
+
+        return HttpResponse(json.dumps(data))
+
+    raise Http404
