@@ -1,10 +1,9 @@
-from datetime import timedelta
-
-from secrets import options, my_agent_auth
-from django.contrib import auth
 from jira.client import JIRA
 
-from myprofile.forms import *
+from django.contrib import auth
+from django.core.mail import EmailMessage
+
+from secrets import options, my_agent_auth, EMAIL_TO_ADMIN
 
 
 def instantiate_profile_forms(request, form_classes, settings, post=False):
@@ -69,34 +68,17 @@ def get_completion(level):
         return "success"
 
 
-def log_to_jira(subject, body, issue_dict):
+def log_to_jira(subject, body, issue_dict, from_email):
     try:
         jira = JIRA(options=options, basic_auth=my_agent_auth)
     except:
         jira = []
     to_jira = bool(jira)
     if not to_jira:
-        msg_subject = ('Contact My.jobs by a(n) %s' % contact_type)
-        message = """
-                          Name: %s
-                          Is a(n): %s
-                          Email: %s
-
-                          %s
-                          """ % (name, contact_type, from_email, comment)
-        to_email = [EMAIL_TO_ADMIN]
-        msg = EmailMessage(msg_subject, message, from_email, to_email)
+        msg = EmailMessage(subject, body, from_email, [EMAIL_TO_ADMIN])
         msg.send()
     else:
         project = jira.project('MJA')
-        components = []
-        component_ids = {'My.jobs Error': {'id': '12903'},
-                         'Job Seeker': {'id': '12902'},
-                         'Employer': {'id': '12900'},
-                         'Partner': {'id': '12901'}, }
-        if component_ids.get(reason):
-            components.append(component_ids.get(reason))
-        components.append(component_ids.get(contact_type))
 
         issue_dict['project'] = {'key': project.key},
         jira.create_issue(fields=issue_dict)

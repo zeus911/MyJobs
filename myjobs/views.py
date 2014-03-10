@@ -1,39 +1,23 @@
 import base64
-import datetime
-from hashlib import sha1
-import hmac
 import json
 import logging
 import urllib2
-import uuid
 from urlparse import urlparse
 
 from django.db import IntegrityError
-from django.contrib.auth import authenticate, logout
-from django.contrib.sessions.models import Session
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import user_passes_test
-from django.conf import settings
-from django.core.mail import EmailMessage
-from django.forms.models import model_to_dict
-from django.http import HttpResponse, Http404
 from django.template import RequestContext
 from django.shortcuts import render_to_response, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
-from jira.client import JIRA
-
 from captcha.fields import ReCaptchaField
 
-from secrets import RECAPTCHA_PUBLIC_KEY, RECAPTCHA_PRIVATE_KEY, EMAIL_TO_ADMIN
-from secrets import options, my_agent_auth
-
-from tastypie.models import ApiKey
-
 from myjobs.decorators import user_is_allowed
-from myjobs.models import User, EmailLog, Ticket, CustomHomepage
 from myjobs.forms import *
 from myjobs.helpers import *
+from myprofile.forms import *
 from myprofile.models import ProfileUnits
 from registration.forms import *
 
@@ -255,7 +239,7 @@ def contact(request):
                    %s
                    """ % (name, contact_type, from_email, comment)
 
-            to_jira = log_to_jira()
+            to_jira = log_to_jira(subject, body, issue_dict, from_email)
             if to_jira:
                 time = datetime.datetime.now().strftime('%A, %B %d, %Y %l:%M %p')
                 return HttpResponse(json.dumps({'validation': 'success',
