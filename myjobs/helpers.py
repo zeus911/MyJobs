@@ -1,6 +1,8 @@
 from datetime import timedelta
 
+from secrets import options, my_agent_auth
 from django.contrib import auth
+from jira.client import JIRA
 
 from myprofile.forms import *
 
@@ -30,6 +32,7 @@ def instantiate_profile_forms(request, form_classes, settings, post=False):
             profile_instances.append(form_class(**settings))
     return profile_instances
 
+
 def expire_login(request, *args, **kwargs):
     """
     Wrapper for django.contrib.auth.login that sets the session expiration
@@ -43,6 +46,7 @@ def expire_login(request, *args, **kwargs):
             # Session expires in 900 seconds (5 mins)
             request.session.set_expiry(900)
     return auth.login(request, *args, **kwargs)
+
 
 def get_completion(level):
     """
@@ -64,3 +68,36 @@ def get_completion(level):
     else:
         return "success"
 
+
+def log_to_jira(subject, body, issue_dict):
+    try:
+        jira = JIRA(options=options, basic_auth=my_agent_auth)
+    except:
+        jira = []
+    to_jira = bool(jira)
+    if not to_jira:
+        msg_subject = ('Contact My.jobs by a(n) %s' % contact_type)
+        message = """
+                          Name: %s
+                          Is a(n): %s
+                          Email: %s
+
+                          %s
+                          """ % (name, contact_type, from_email, comment)
+        to_email = [EMAIL_TO_ADMIN]
+        msg = EmailMessage(msg_subject, message, from_email, to_email)
+        msg.send()
+    else:
+        project = jira.project('MJA')
+        components = []
+        component_ids = {'My.jobs Error': {'id': '12903'},
+                         'Job Seeker': {'id': '12902'},
+                         'Employer': {'id': '12900'},
+                         'Partner': {'id': '12901'}, }
+        if component_ids.get(reason):
+            components.append(component_ids.get(reason))
+        components.append(component_ids.get(contact_type))
+
+        issue_dict['project'] = {'key': project.key},
+        jira.create_issue(fields=issue_dict)
+    return to_jira
