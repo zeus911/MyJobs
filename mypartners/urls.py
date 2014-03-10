@@ -31,5 +31,5 @@ urlpatterns = patterns('MyJobs.mypartners.views',
     url(r'^view/details/save$', 'save_item', name='save_item'),
     url(r'^view/details/delete$', 'delete_prm_item', name='delete_prm_item'),
     url(r'^download/', 'get_uploaded_file', name='get_uploaded_file'),
-    url(r'^email/', 'process_email', name='process_email'),
+    url(r'^email$', 'process_email', name='process_email'),
 )
