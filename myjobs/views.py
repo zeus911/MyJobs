@@ -1,25 +1,33 @@
 import base64
+import datetime
 import json
 import logging
 import urllib2
 from urlparse import urlparse
+import uuid
 
-from django.db import IntegrityError
-from django.contrib.auth import logout
+from django.conf import settings
+from django.contrib.auth import logout, authenticate
 from django.contrib.auth.decorators import user_passes_test
-from django.template import RequestContext
+from django.db import IntegrityError
+from django.forms import Form, model_to_dict
+from django.http import HttpResponse
 from django.shortcuts import render_to_response, redirect, render
+from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
 from captcha.fields import ReCaptchaField
 
 from myjobs.decorators import user_is_allowed
-from myjobs.forms import *
-from myjobs.helpers import *
-from myprofile.forms import *
-from myprofile.models import ProfileUnits
-from registration.forms import *
+from myjobs.forms import (ChangePasswordForm, EditAccountForm,
+    EditCommunicationForm)
+from myjobs.helpers import expire_login, log_to_jira
+from myjobs.models import EmailLog, Ticket, User
+from myprofile.forms import (InitialNameForm, InitialEducationForm,
+    InitialAddressForm, InitialPhoneForm, InitialWorkForm)
+from myprofile.models import ProfileUnits, Name
+from registration.forms import RegistrationForm, CustomAuthForm, CustomHomepage
 
 logger = logging.getLogger('__name__')
 

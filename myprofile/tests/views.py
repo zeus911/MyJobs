@@ -6,8 +6,9 @@ from django.test import TestCase
 
 from myjobs.tests.views import TestClient
 from myjobs.tests.factories import UserFactory
-from myprofile.models import *
-from myprofile.tests.factories import *
+from myprofile.tests.factories import (AddressFactory, PrimaryNameFactory,
+    SummaryFactory)
+from myprofile.models import Name
 
 
 class MyProfileViewsTests(TestCase):

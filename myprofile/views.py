@@ -9,8 +9,9 @@ from django.shortcuts import render_to_response, get_object_or_404
 
 from myjobs.decorators import user_is_allowed
 from myjobs.models import User
-from myjobs.helpers import *
 from myprofile.models import ProfileUnits, BaseProfileUnitManager
+from myprofile import forms
+from registration.models import ActivationProfile
 
 
 @user_is_allowed()
@@ -76,7 +77,7 @@ def handle_form(request):
     item_class = item.__class__
 
     try:
-        form = globals()[module + 'Form']
+        form = getattr(forms, module + 'Form')
     except KeyError:
         # Someone must have manipulated request data?
         raise Http404
