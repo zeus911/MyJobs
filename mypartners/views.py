@@ -179,15 +179,14 @@ def save_item(request):
 
     if content_id == ContentType.objects.get_for_model(Contact).id:
         item_id = request.REQUEST.get('id') or None
+        try:
+            partner_id = int(request.REQUEST.get('partner'))
+        except TypeError:
+            raise Http404
+
+        partner = get_object_or_404(company.partner_set.all(), id=partner_id)
+
         if item_id:
-            try:
-                partner_id = int(request.REQUEST.get('partner'))
-            except TypeError:
-                raise Http404
-
-            partner = get_object_or_404(company.partner_set.all(),
-                                        id=partner_id)
-
             try:
                 item = Contact.objects.get(partner=partner, pk=item_id)
             except:
@@ -202,7 +201,7 @@ def save_item(request):
                     return HttpResponse(json.dumps(form.errors))
         form = ContactForm(request.POST)
         if form.is_valid():
-            form.save(request.user)
+            form.save(request.user, partner)
             return HttpResponse(status=200)
         else:
             return HttpResponse(json.dumps(form.errors))
