@@ -445,13 +445,15 @@ def batch_message_digest(request):
                                    Type: %s
                                    Reason: %s
                                    Status: %s
-                                   """
+                                   """ % (event['email'], event['type'],
+                                          event['reason'], event['status'])
                             issue_dict = {
                                 'summary': 'Redirect email failure',
                                 'description': body,
                                 'issuetype': {'name': 'Bug'}
                             }
-                            log_to_jira(subject, body, issue_dict)
+                            log_to_jira(subject, body,
+                                        issue_dict, event['email'])
                     return HttpResponse(status=200)
     return HttpResponse(status=403)
 

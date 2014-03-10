@@ -1,6 +1,7 @@
 from jira.client import JIRA
 
 from django.contrib import auth
+from django.core import mail
 from django.core.mail import EmailMessage
 
 from secrets import options, my_agent_auth, EMAIL_TO_ADMIN
@@ -69,10 +70,13 @@ def get_completion(level):
 
 
 def log_to_jira(subject, body, issue_dict, from_email):
-    try:
-        jira = JIRA(options=options, basic_auth=my_agent_auth)
-    except:
+    if hasattr(mail, 'outbox'):
         jira = []
+    else:
+        try:
+            jira = JIRA(options=options, basic_auth=my_agent_auth)
+        except:
+            jira = []
     to_jira = bool(jira)
     if not to_jira:
         msg = EmailMessage(subject, body, from_email, [EMAIL_TO_ADMIN])

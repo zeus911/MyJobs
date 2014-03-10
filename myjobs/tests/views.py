@@ -14,10 +14,9 @@ from django.test.client import Client
 from django.test import TestCase
 from django.utils import simplejson as json
 
-from myjobs.forms import *
 from myjobs.models import User, EmailLog
-from myjobs.tests.factories import *
-
+from myjobs.tests.factories import UserFactory
+from myprofile.models import Name
 from mysearches.models import SavedSearch
 from registration.models import ActivationProfile
 from registration import signals as custom_signals
@@ -336,6 +335,29 @@ class MyJobsViewsTests(TestCase):
         process_batch_events()
         self.assertEqual(EmailLog.objects.count(), 2)
 
+    def test_batch_bounce_message_digest(self):
+        now = date.today()
+        message = '[{{"email":"alice@example.com","timestamp":"{0}",' \
+                  '"event":"bounce","category":"My.jobs email redirect",' \
+                  '"status":418,"reason":"I\'m a teapot!",' \
+                  '"type":"bounced"}}]'.format(
+            time.mktime(now.timetuple()))
+        response = self.client.post(reverse('batch_message_digest'),
+                                    data=message,
+                                    content_type='text/json',
+                                    HTTP_AUTHORIZATION='BASIC %s' %
+                                        base64.b64encode(
+                                            'accounts%40my.jobs:secret'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox.pop()
+        self.assertEqual(email.subject,
+                         'My.jobs email redirect failure')
+        self.assertEqual(email.from_email, self.user.email)
+        self.assertEqual(email.to, [settings.EMAIL_TO_ADMIN])
+        for text in ["I'm a teapot!", '418']:
+            self.assertTrue(text in email.body)
+
     def test_batch_month_old_message_digest_with_searches(self):
         """
         Posting data created a month ago should result in one EmailLog instance
@@ -456,7 +478,7 @@ class MyJobsViewsTests(TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_invalid_user(self):
-        now = datetime.datetime.now()
+        now = date.today()
         messages = self.make_messages(now)
 
         response = self.client.post(reverse('batch_message_digest'),
