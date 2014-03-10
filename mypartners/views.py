@@ -779,7 +779,7 @@ def process_email(request):
         possible_contacts = Contact.objects.filter(email=contact_email,
                                                    partner__in=partners)
         if not possible_contacts:
-            raise HttpResponse(status=200)
+            return HttpResponse(status=200)
 
         change_msg = "Email was sent by %s to %s" % (admin_email, contact_email)
         subject = request.REQUEST.get('subject')
@@ -812,5 +812,5 @@ def process_email(request):
             log_change(record, None, None, contact.partner,  contact.name,
                        action_type=ADDITION, change_msg=change_msg)
     else:
-        raise HttpResponse(status=200)
-    raise HttpResponse(status=200)
+        return HttpResponse(status=200)
+    return HttpResponse(status=200)
