@@ -124,7 +124,7 @@ class NewPartnerForm(BaseUserForm):
     class Meta:
         form_name = "Partner Information"
         model = Contact
-        exclude = ['user']
+        exclude = ['user', 'partner']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
@@ -136,8 +136,8 @@ class NewPartnerForm(BaseUserForm):
 
         partner_url = self.data.get('partnerurl', '')
 
-        partner = Partner(name=self.data['partnername'],
-                          uri=partner_url, owner_id=company_id)
+        partner = Partner.objects.create(name=self.data['partnername'],
+                                         uri=partner_url, owner_id=company_id)
 
         log_change(partner, self, user, partner, partner.name,
                    action_type=ADDITION)
@@ -154,7 +154,7 @@ class NewPartnerForm(BaseUserForm):
             self.instance.partner = partner
             instance = super(NewPartnerForm, self).save(commit)
             partner.primary_contact = instance
-
+            partner.save()
             log_change(instance, self, user, partner, instance.name,
                        action_type=ADDITION)
 
