@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from itertools import chain
 import json
 
 from django.conf import settings
@@ -7,10 +8,11 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+from django.core.urlresolvers import reverse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.utils.text import force_text
 
 from myjobs.models import User
 from mydashboard.models import Company
@@ -20,7 +22,7 @@ from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm, ContactRecordForm)
 from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
-                               ContactLogEntry, CONTACT_TYPE_CHOICES,
+                               ContactLogEntry, ADDITION, CONTACT_TYPE_CHOICES,
                                DELETION)
 from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
@@ -764,3 +766,51 @@ def partner_get_records(request):
         return HttpResponse(json.dumps(data))
 
     raise Http404
+
+
+def process_email(request):
+    if request.method == 'POST':
+        admin_email = request.REQUEST.get('from')
+        contact_email = request.REQUEST.get('to')
+
+        admin_user = User.objects.get_email_owner(admin_email)
+        partners = [company.partner_set.all()
+                    for company in admin_user.company_set.all()]
+        partners = list(chain(*partners))
+        possible_contacts = Contact.objects.filter(email=contact_email,
+                                                   partner__in=partners)
+        if not possible_contacts:
+            raise HttpResponse(status=200)
+
+        change_msg = "Email was sent by %s to %s" % (admin_email, contact_email)
+        subject = request.REQUEST.get('subject')
+        email_text = request.REQUEST.get('text')
+        email_html = request.REQUEST.get('html')
+        num_attachments = int(request.POST.get('attachments', 0))
+        attachments = []
+        for file_number in range(1, num_attachments+1):
+            try:
+                attachment = request.FILES['attachment%s' % file_number]
+            except KeyError:
+                return HttpResponse(status=200)
+            attachments.append(attachment)
+
+        notes = "%s %s" % (force_text(email_text), force_text(email_html))
+
+        for contact in possible_contacts:
+            record = ContactRecord.objects.create(partner=contact.partner,
+                                                  contact_name=contact.name,
+                                                  contact_email=contact_email,
+                                                  contact_phone=contact.phone,
+                                                  date_time=datetime.now(),
+                                                  subject=subject,
+                                                  notes=notes)
+            for attachment in attachments:
+                prm_attachment = PRMAttachment()
+                prm_attachment.attachment = attachment
+                setattr(prm_attachment, 'partner', contact.partner)
+                prm_attachment.save()
+            log_change(record, None, None, contact.partner,  contact.name,
+                       action_type=ADDITION, change_msg=change_msg)
+    else:
+        raise HttpResponse(status=200)
