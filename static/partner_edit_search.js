@@ -264,6 +264,7 @@ function add_refresh_btn() {
 
 $(document).ready(function() {
     show_dates();
+    disable_fields();
     $('[id$="frequency"]').on('change', function() {
         show_dates();
     });

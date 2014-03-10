@@ -72,6 +72,7 @@ class MySearchViewTests(TestCase):
                          ['frequency'])
 
     def test_get_edit_page(self):
+        self.assertTrue(self.new_form.is_valid())
         self.new_form.save()
         search_id = self.new_form.instance.id
         response = self.client.get(
@@ -88,6 +89,7 @@ class MySearchViewTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_save_edit_form(self):
+        self.assertTrue(self.new_form.is_valid())
         self.new_form.save()
         search_id = self.new_form.instance.id
 

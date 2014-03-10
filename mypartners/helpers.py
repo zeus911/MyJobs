@@ -1,4 +1,3 @@
-from django.contrib.admin.models import CHANGE
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
 from django.http import Http404
@@ -11,7 +10,7 @@ from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
 from mydashboard.models import Company
-from mypartners.models import ContactLogEntry, ContactRecord
+from mypartners.models import ContactLogEntry, ContactRecord, CHANGE
 from mysearches.models import PartnerSavedSearch
 
 
@@ -75,8 +74,29 @@ def add_extra_params_to_jobs(items, extra_urls):
 
 
 def log_change(obj, form, user, partner, contact_identifier,
-               action_type=CHANGE):
-    change_msg = get_change_message(form) if action_type == CHANGE else ''
+               action_type=CHANGE, change_msg=None):
+    """
+    Creates a ContactLogEntry for obj.
+
+    inputs:
+    :obj: The object a log entry is being created for
+    :form: The form the log entry is being created from. This is optional,
+        but without it a valuable change message can't be created, so either
+        one will need to be passed to the function or there won't be a change
+        message for this log entry.
+    :user: The user who caused the change. Can be null, but shouldn't be unless
+        in most cases.
+    :partner: The partner this object applies to. Should never be null.
+    :contact_identifier: Some meaningful piece of information (e.g. name,
+        email, phone number) that identifies the person being contacted.
+    :action_type: The action being taken. Available types are in
+        mypartners.models.
+    :change_msg: A short description of the changes made. If one isn't provided,
+        the change_msg will attempt to be created from the form.
+
+    """
+    if not change_msg:
+        change_msg = get_change_message(form) if action_type == CHANGE else ''
 
     ContactLogEntry.objects.create(
         action_flag=action_type,
@@ -91,7 +111,13 @@ def log_change(obj, form, user, partner, contact_identifier,
 
 
 def get_change_message(form):
+    """
+    Creates a list of changes made from a form.
+
+    """
     change_message = []
+    if not form:
+        return ''
     if form.changed_data:
         change_message = (ugettext('Changed %s.') %
                           get_text_list(form.changed_data, ugettext('and')))
@@ -99,10 +125,8 @@ def get_change_message(form):
 
 
 def get_searches_for_partner(partner):
-    company = partner.owner
-    partner_contacts = partner.contacts.all().values_list('user__id', flat=True)
-    saved_searches = PartnerSavedSearch.objects.filter(
-        provider=company, user__in=partner_contacts).order_by('-created_on')
+    saved_searches = PartnerSavedSearch.objects.filter(partner=partner)
+    saved_searches = saved_searches.order_by('-created_on')
     return saved_searches
 
 
@@ -127,6 +151,10 @@ def get_contact_records_for_partner(partner, contact_name=None,
 
 
 def get_attachment_link(company_id, partner_id, attachment_id, attachment_name):
+    """
+    Creates a link (html included) to a PRMAttachment.
+
+    """
     url = '/prm/download?company=%s&partner=%s&id=%s' % (company_id,
                                                          partner_id,
                                                          attachment_id)
