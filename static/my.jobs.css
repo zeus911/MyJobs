@@ -518,11 +518,11 @@ h1 > small > a:hover {
     margin-right: 0;
 }
 
-ul.header-menu > li > .hover-element::after {
+.hover-element::after {
     content: "";
     position: absolute;
     margin-left: 5px;
-    margin-top: 5px;
+    margin-top: 6px;
     width: 0;
     height: 0;
     border-left: 7px solid transparent;
@@ -532,8 +532,7 @@ ul.header-menu > li > .hover-element::after {
 }
 
 ul.header-menu {
-    padding: 0;
-    padding-right: 20px;
+    padding: 0 17px 0 0;
     margin: 0;
     list-style: none;
     text-align: left;
@@ -553,15 +552,21 @@ ul.header-menu > li > ul {
     display: none;
 }
 
+ul.header-menu > li > ul.menu-left {
+    margin-left: -120px;
+}
+
 ul.header-menu > li > ul > .inside-list-title,
 ul.header-menu > li > ul > .inside-list-title:hover {
     background-color: #FFF;
     cursor: default;
 }
 
-ul.header-menu > li > ul > li {
+ul.header-menu > li > ul > li,
+ul.header-menu > li > ul > a > li {
     padding: 5px;
     width: 200px;
+    border-bottom: 1px solid #d5d4d0;
 }
 
 ul.header-menu:hover {
@@ -576,13 +581,12 @@ ul.header-menu:hover > li > ul {
     display: block;
 }
 
-ul.header-menu > li > ul > li {
-    border-bottom: 1px solid #d5d4d0;
-}
-
-ul.header-menu > li > ul > li:hover {
+ul.header-menu > li > ul > li:hover ,
+ul.header-menu > li > ul > a:hover,
+ul.header-menu > li > ul > a > li:hover {
     background-color: #ddd;
     cursor: pointer;
+    text-decoration: none;
 }
 
 
