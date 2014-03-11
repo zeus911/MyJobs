@@ -2,20 +2,17 @@ from django.template import Library
 from django.utils.encoding import force_text
 
 from mypartners.helpers import get_attachment_link
-from mypartners.models import CONTACT_TYPE_CHOICES
+from mypartners.models import CONTACT_TYPE_CHOICES, ACTIVITY_TYPES
 
 register = Library()
 
 
-ACTIVITY_TYPES = {
-    1: 'added',
-    2: 'updated',
-    3: 'deleted',
-}
-
 @register.inclusion_tag('mypartners/activity.html')
 def get_activity_block(activity):
-    user_name = activity.user.get_full_name()
+    if activity.user:
+        user_name = activity.user.get_full_name()
+    else:
+        user_name = ''
     return {
         'activity': activity,
         'action_type': ACTIVITY_TYPES[activity.action_flag],
