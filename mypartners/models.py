@@ -180,6 +180,15 @@ class ContactRecord(models.Model):
 
         return contact_str
 
+    def get_record_url(self):
+        params = {
+            'partner': self.partner.pk,
+            'company': self.partner.owner.pk,
+            'id': self.pk,
+        }
+        query_string = urlencode(params)
+        return "%s?%s" % (reverse('record_view'), query_string)
+
 MAX_ATTACHMENT_MB = 4
 
 

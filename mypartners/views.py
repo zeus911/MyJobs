@@ -8,12 +8,10 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
-from django.core.mail import EmailMessage
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from django.template.loader import render_to_string
 from django.utils.text import force_text
 from django.views.decorators.csrf import csrf_exempt
 
@@ -30,7 +28,8 @@ from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
 from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
                                 get_searches_for_partner, get_logs_for_partner,
-                                get_contact_records_for_partner, clean_email)
+                                get_contact_records_for_partner, clean_email,
+                                send_contact_record_email_response)
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm(request):
@@ -778,7 +777,6 @@ def process_email(request):
     if request.method != 'POST':
         return HttpResponse(status=200)
 
-    error = None
     admin_email = request.REQUEST.get('from')
     unclean_contact_emails = request.REQUEST.get('to', '').split(",")
 
@@ -795,12 +793,19 @@ def process_email(request):
     possible_contacts, unmatched_contacts = [], []
     for contact in contact_emails:
         try:
-            possible_contacts.append(Contact.objects.filter(
-                email=contact, partner__in=partners))
-        except (Contact.DoesNotExist, ValueError):
+            matching_contacts = Contact.objects.filter(email=contact,
+                                                       partner__in=partners)
+            [possible_contacts.append(x) for x in matching_contacts]
+            if not matching_contacts:
+                unmatched_contacts.append(contact)
+        except ValueError:
             unmatched_contacts.append(contact)
 
     if not possible_contacts:
+        error = "We were unable to find contacts for any of the email " \
+                "recipients."
+        send_contact_record_email_response([], contact_emails, error,
+                                           admin_email)
         return HttpResponse(status=200)
 
     subject = request.REQUEST.get('subject')
@@ -811,6 +816,11 @@ def process_email(request):
         try:
             attachment = request.FILES['attachment%s' % file_number]
         except KeyError:
+            error = "There was an issue with the email attachments. The " \
+                    "contact records for the email will need to be created " \
+                    "manually."
+            send_contact_record_email_response([], contact_emails, error,
+                                               admin_email)
             return HttpResponse(status=200)
         attachments.append(attachment)
 
@@ -837,16 +847,6 @@ def process_email(request):
 
         created_records.append(record)
 
-    ctx = {
-        'created_records': created_records,
-        'unmatched_contacts': unmatched_contacts,
-        'error': error,
-    }
-    subject = 'Contact Record'
-    message = render_to_string('mypartners/email/email_response.html',
-                               ctx)
-    #msg = EmailMessage(subject, message, settings.PRM_EMAIL, [admin_email])
-    #msg.content_subtype = 'html'
-    #msg.send()
-
-    return HttpResponse(message, status=200)
+    send_contact_record_email_response(created_records, unmatched_contacts,
+                                       None, admin_email)
+    return HttpResponse(status=200)

@@ -1,10 +1,14 @@
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import get_object_or_404
+from django.core.mail import EmailMessage
 from django.http import Http404
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.text import get_text_list
 from django.utils.translation import ugettext
+
 
 import re
 from urlparse import urlparse, parse_qsl, urlunparse
@@ -169,3 +173,20 @@ def clean_email(email):
     if '<' in email and '>' in email:
         return pattern.findall(email)[0].strip()
     return email.strip()
+
+
+def send_contact_record_email_response(created_records, unmatched_contacts,
+                                       error, to_email):
+    ctx = {
+        'created_records': created_records,
+        'unmatched_contacts': unmatched_contacts,
+        'error': error,
+    }
+
+    subject = 'Partner Relationship Manager Contact Records'
+    message = render_to_string('mypartners/email/email_response.html',
+                               ctx)
+
+    msg = EmailMessage(subject, message, settings.PRM_EMAIL, [to_email])
+    msg.content_subtype = 'html'
+    msg.send()

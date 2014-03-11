@@ -1,22 +1,28 @@
-{% extends 'mysearches/email_base.html' %}
+{% extends 'mypartners/email/email_base.html' %}
 {% block content %}
     {% if error %}
-        {{ error }}
+        {{ error }}<br/>
+        {% if unmatched_contacts %}
+            <br/>Contact records were not created for the following email addresses:<br/>
+            {% for contact in unmatched_contacts %}
+            {{ contact }}<br/>
+        {% endfor %}
+        {% endif %}
     {% else %}
         {% if created_records %}
-            We have successfully created contact records for:
+            We have successfully created contact records for:<br/>
             {% for record in created_records %}
-                {{ record.contact_name }}
+                <a href="https://secure.my.jobs{{ record.get_record_url }}">{{ record.contact_name }}</a><br/>
             {% endfor %}
         {% endif %}
         {% if unmatched_contacts %}
-            We were unable to create contact records for the following contacts because there is no contact for them associated with your company:<br/>
-            {% for contact in unmatched contacts %}
-            {{ contact }}<br/>
+            <br/>No contact records were created for the following emails:<br/>
+            {% for contact in unmatched_contacts %}
+                {{ contact }}<br/>
             {% endfor %}
+            We were unable to find any of these email addresses in your My.jobs partner contacts.
         {% endif %}
     {% endif %}
-
 {% endblock %}
 
 {% block footer-right %}

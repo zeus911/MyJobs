@@ -1,8 +1,11 @@
 from bs4 import BeautifulSoup
 import json
+
 from django.test import TestCase
-from django.core.urlresolvers import reverse
+from django.conf import settings
 from django.contrib.auth.models import Group
+from django.core.urlresolvers import reverse
+from django.core import mail
 
 from myjobs.tests.views import TestClient
 from myjobs.tests.factories import UserFactory
@@ -13,7 +16,8 @@ from mypartners.tests.factories import (PartnerFactory, ContactFactory,
                                         ContactRecordFactory)
 from mysearches.tests.factories import PartnerSavedSearchFactory
 from datetime import datetime, timedelta
-from mypartners.models import ContactRecord
+from mypartners.models import ContactRecord, ContactLogEntry, ADDITION
+from mypartners.helpers import clean_email
 from mysearches.models import PartnerSavedSearch
 
 
@@ -40,7 +44,8 @@ class MyPartnersTestCase(TestCase):
 
         # Create a contact
         self.contact = ContactFactory(partner=self.partner,
-                                      user=UserFactory(email="contact@user.com"))
+                                      user=UserFactory(email="contact@user.com"),
+                                      email="contact@user.com")
 
         # Create a TestClient
         self.client = TestClient()
@@ -792,3 +797,63 @@ class SearchEditTests(MyPartnersTestCase):
             self.assertEqual(v, getattr(search, k),
                              msg="%s != %s for field %s" %
                                  (v, getattr(search, k), k))
+
+
+class EmailTests(MyPartnersTestCase):
+    def setUp(self):
+        super(EmailTests, self).setUp()
+        self.data = {
+            'from': self.admin.user.email,
+            'subject': 'Test Email Subject',
+            'text': 'Test email body'
+        }
+
+    def test_email_bad_contacts(self):
+        start_contact_record_num = ContactRecord.objects.all().count()
+        self.data['to'] = 'bademail@1.com, None, 6, bad@email.2'
+        response = self.client.post(reverse('process_email'), self.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ContactRecord.objects.all().count(),
+                         start_contact_record_num)
+        self.assertEqual(len(mail.outbox), 1)
+
+        email = mail.outbox.pop()
+        expected_str = "We were unable to find contacts for any of the email" \
+                       " recipients"
+        self.assertEqual(email.from_email, settings.PRM_EMAIL)
+        self.assertEqual(email.to, [self.admin.user.email])
+        self.assertTrue(expected_str in email.body)
+
+    def test_contact_record_and_log_creation(self):
+        self.data['to'] = self.contact.email
+        response = self.client.post(reverse('process_email'), self.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+
+        email = mail.outbox.pop()
+        expected_str = "We have successfully created contact records for:"
+        self.assertEqual(email.from_email, settings.PRM_EMAIL)
+        self.assertEqual(email.to, [self.admin.user.email])
+        self.assertTrue(expected_str in email.body)
+
+        record = ContactRecord.objects.get(contact_email=self.contact.email)
+        self.assertEqual(record.notes, self.data['text'])
+        self.assertEqual(self.data['subject'], self.data['subject'])
+
+        log_entry = ContactLogEntry.objects.get(object_id=record.pk)
+        self.assertEqual(log_entry.action_flag, ADDITION)
+        self.assertEqual(log_entry.user, self.admin.user)
+
+    def test_email_clean(self):
+        emails = [
+            ('this@shouldnt.change', 'this@shouldnt.change'),
+            ('None', 'None'),
+            ('6', '6'),
+            ('A Name <a@name.com>', 'a@name.com'),
+            ('Ba<d@. Format> <poorly@formatted.com>', 'poorly@formatted.com'),
+        ]
+        for email in emails:
+            result = clean_email(email[0])
+            self.assertEqual(result, email[1])
