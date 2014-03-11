@@ -645,7 +645,9 @@ def prm_view_records(request):
         record = records[0]
         next_id = None
     else:
-        raise Http404
+        prev_id = None
+        record = get_object_or_404(ContactRecord, pk=record_id)
+        next_id = None
 
     # Double check our results and drop the next and previous options if
     # the results were wrong
