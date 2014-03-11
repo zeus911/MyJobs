@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from itertools import chain
 import json
-import re
 
 from django.conf import settings
 from django.contrib.admin.models import DELETION
@@ -9,10 +8,12 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+from django.core.mail import EmailMessage
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
+from django.template.loader import render_to_string
 from django.utils.text import force_text
 from django.views.decorators.csrf import csrf_exempt
 
@@ -29,7 +30,7 @@ from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
 from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
                                 get_searches_for_partner, get_logs_for_partner,
-                                get_contact_records_for_partner)
+                                get_contact_records_for_partner, clean_email)
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm(request):
@@ -774,65 +775,78 @@ def process_email(request):
     Creates a contact record from an email received via POST.
 
     """
-    if request.method == 'POST':
-        admin_email = request.REQUEST.get('from')
-        unclean_contact_emails = request.REQUEST.get('to', '').split(",")
-
-        pattern = re.compile('.*<(.*@.*\..*)>')
-        if '<' in admin_email and '>' in admin_email:
-            admin_email = pattern.findall(admin_email)[0].strip()
-        contact_emails = []
-        for contact_email in unclean_contact_emails:
-            if '<' in contact_email and '>' in contact_email:
-                contact_email = pattern.findall(contact_email)[0]
-            contact_emails.append(contact_email)
-
-        admin_user = User.objects.get_email_owner(admin_email)
-        if admin_user is None:
-            return HttpResponse(status=200)
-        partners = [company.partner_set.all()
-                    for company in admin_user.company_set.all()]
-        partners = list(chain(*partners))
-
-        try:
-            possible_contacts = Contact.objects.filter(email__in=contact_emails,
-                                                       partner__in=partners)
-        except ValueError:
-            return HttpResponse(status=200)
-
-        if not possible_contacts:
-            return HttpResponse(status=200)
-
-        subject = request.REQUEST.get('subject')
-        email_text = request.REQUEST.get('text')
-        num_attachments = int(request.POST.get('attachments', 0))
-        attachments = []
-        for file_number in range(1, num_attachments+1):
-            try:
-                attachment = request.FILES['attachment%s' % file_number]
-            except KeyError:
-                return HttpResponse(status=200)
-            attachments.append(attachment)
-
-        for contact in possible_contacts:
-            change_msg = "Email was sent by %s to %s" % \
-                         (admin_user.get_full_name(), contact.name)
-            record = ContactRecord.objects.create(partner=contact.partner,
-                                                  contact_type='email',
-                                                  contact_name=contact.name,
-                                                  contact_email=contact.email,
-                                                  contact_phone=contact.phone,
-                                                  date_time=datetime.now(),
-                                                  subject=subject,
-                                                  notes=force_text(email_text))
-            for attachment in attachments:
-                prm_attachment = PRMAttachment()
-                prm_attachment.attachment = attachment
-                prm_attachment.contact_record = record
-                setattr(prm_attachment, 'partner', contact.partner)
-                prm_attachment.save()
-            log_change(record, None, admin_user, contact.partner,  contact.name,
-                       action_type=ADDITION, change_msg=change_msg)
-    else:
+    if request.method != 'POST':
         return HttpResponse(status=200)
-    return HttpResponse(status=200)
+
+    error = None
+    admin_email = request.REQUEST.get('from')
+    unclean_contact_emails = request.REQUEST.get('to', '').split(",")
+
+    admin_email = clean_email(admin_email)
+    contact_emails = [clean_email(email) for email in unclean_contact_emails]
+
+    admin_user = User.objects.get_email_owner(admin_email)
+    if admin_user is None:
+        return HttpResponse(status=200)
+
+    partners = list(chain(*[company.partner_set.all()
+                            for company in admin_user.company_set.all()]))
+
+    possible_contacts, unmatched_contacts = [], []
+    for contact in contact_emails:
+        try:
+            possible_contacts.append(Contact.objects.filter(
+                email=contact, partner__in=partners))
+        except (Contact.DoesNotExist, ValueError):
+            unmatched_contacts.append(contact)
+
+    if not possible_contacts:
+        return HttpResponse(status=200)
+
+    subject = request.REQUEST.get('subject')
+    email_text = request.REQUEST.get('text')
+    num_attachments = int(request.POST.get('attachments', 0))
+    attachments = []
+    for file_number in range(1, num_attachments+1):
+        try:
+            attachment = request.FILES['attachment%s' % file_number]
+        except KeyError:
+            return HttpResponse(status=200)
+        attachments.append(attachment)
+
+    created_records = []
+    for contact in possible_contacts:
+        change_msg = "Email was sent by %s to %s" % \
+                     (admin_user.get_full_name(), contact.name)
+        record = ContactRecord.objects.create(partner=contact.partner,
+                                              contact_type='email',
+                                              contact_name=contact.name,
+                                              contact_email=contact.email,
+                                              contact_phone=contact.phone,
+                                              date_time=datetime.now(),
+                                              subject=subject,
+                                              notes=force_text(email_text))
+        for attachment in attachments:
+            prm_attachment = PRMAttachment()
+            prm_attachment.attachment = attachment
+            prm_attachment.contact_record = record
+            setattr(prm_attachment, 'partner', contact.partner)
+            prm_attachment.save()
+        log_change(record, None, admin_user, contact.partner,  contact.name,
+                   action_type=ADDITION, change_msg=change_msg)
+
+        created_records.append(record)
+
+    ctx = {
+        'created_records': created_records,
+        'unmatched_contacts': unmatched_contacts,
+        'error': error,
+    }
+    subject = 'Contact Record'
+    message = render_to_string('mypartners/email/email_response.html',
+                               ctx)
+    #msg = EmailMessage(subject, message, settings.PRM_EMAIL, [admin_email])
+    #msg.content_subtype = 'html'
+    #msg.send()
+
+    return HttpResponse(message, status=200)

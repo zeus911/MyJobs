@@ -1,0 +1,24 @@
+{% extends 'mysearches/email_base.html' %}
+{% block content %}
+    {% if error %}
+        {{ error }}
+    {% else %}
+        {% if created_records %}
+            We have successfully created contact records for:
+            {% for record in created_records %}
+                {{ record.contact_name }}
+            {% endfor %}
+        {% endif %}
+        {% if unmatched_contacts %}
+            We were unable to create contact records for the following contacts because there is no contact for them associated with your company:<br/>
+            {% for contact in unmatched contacts %}
+            {{ contact }}<br/>
+            {% endfor %}
+        {% endif %}
+    {% endif %}
+
+{% endblock %}
+
+{% block footer-right %}
+
+{% endblock %}

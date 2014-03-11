@@ -6,6 +6,7 @@ from django.utils.safestring import mark_safe
 from django.utils.text import get_text_list
 from django.utils.translation import ugettext
 
+import re
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
@@ -161,3 +162,10 @@ def get_attachment_link(company_id, partner_id, attachment_id, attachment_name):
 
     html = "<a href='{url}' target='_blank'>{attachment_name}</a>"
     return mark_safe(html.format(url=url, attachment_name=attachment_name))
+
+
+def clean_email(email):
+    pattern = re.compile('.*<(.*@.*\..*)>')
+    if '<' in email and '>' in email:
+        return pattern.findall(email)[0].strip()
+    return email.strip()
