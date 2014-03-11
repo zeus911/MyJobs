@@ -5,7 +5,8 @@ $(function() {
         events: {
             "click #email": "go_to_records",
             "click #phone": "go_to_records",
-            "click #facetoface": "go_to_records"
+            "click #facetoface": "go_to_records",
+            "click .header-menu": "dropdown"
         },
 
         go_to_records: function(e) {
@@ -36,7 +37,7 @@ $(function() {
                        partner: partner_id},
                 global:false,
                 url: "/prm/view/records/retrieve_records",
-                success: function(dump){
+                success: function(dump) {
                     var info = jQuery.parseJSON(dump);
                     var data = google.visualization.arrayToDataTable([
                                     ['Records',             'All Records'],
@@ -46,10 +47,10 @@ $(function() {
                                 ]);
 
                     var options;
-                    if(size === 'small'){
+                    if(size === 'small') {
                         options = donut_options(200, 200, 12, 12, 175, 175, 0.6);
                         $('#donut-box').hide();
-                    } else if(size === 'big'){
+                    } else if(size === 'big') {
                         options = donut_options(330, 360, 12, 12, 300, 330, 0.6);
                         $('#ajax-loading-donut').hide();
                     }
@@ -99,6 +100,14 @@ $(function() {
                     bar.next().fadeIn("slow");
                 }
             });
+        },
+
+        dropdown: function(e) {
+            if(!$(e.currentTarget).hasClass('show-drop')){
+                $(e.currentTarget).addClass('show-drop');
+            } else {
+                $(e.currentTarget).removeClass('show-drop');
+            }
         }
 
     });

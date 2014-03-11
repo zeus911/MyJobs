@@ -12,6 +12,7 @@
 
 {% block meta-extra %}
 <script src="{{ STATIC_URL }}record_overview.js{% cache_buster %}"></script>
+    <script src="{{ STATIC_URL }}partner-reports.js{% cache_buster %}"></script>
 <script>
     var company = {{ company.id }};
     var partner = {{ partner.id }};
@@ -32,7 +33,16 @@
             <div class="formBox no-padding profile-mobile">
                 <h4>Records</h4>
                 <div class="formBox-content">
-                    <input id="record_contact" name="record_contact" type="hidden" value="all" />
+                    <div class="span3 form-label pull-left initial">
+                        <label for="record_contact" class="">Contact</label>
+                    </div>
+                    <div>
+                        <select id="record_contact" name="record_contact">
+                            {% for contact in contact_choices %}
+                                <option value="{{ contact.0 }}">{{ contact.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                     <div class="span3 form-label pull-left initial">
                         <label for="record_contact_type" class="">Contact Type</label>
                     </div>
