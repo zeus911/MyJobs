@@ -28,31 +28,36 @@ var partner_id = {{ partner.id }};
         <div class="span12 prm-header">
             <span>Reports</span>
             <a href="{% url "partner_overview" %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
-            <span class="pull-right" id="candidate-time-filter">{% include "time_filter.html" %}</span>
         </div>
     </div>
-    {% if total_records or referral %}
     <div class="row">
-        {% if total_records %}
         <div class="span6">
+            <h4>Communication Activity</h4>
+            {% if total_records %}
             <div class="big-chart big-trans-box" id="ajax-loading-donut">
                 <img src="{{ STATIC_URL }}images/ajax-loader.gif">
             </div>
             <div class="big-chart" id="donutchart" style="display:none"></div>
             <div class="chart-box-holder" style="display:none"></div>
+            {% else %}
+            No recent communication activity.
+            {% endif %}
         </div>
-        {% endif %}
-        {% if referral %}
+
         <div class="span6">
+            <h4>Referral Activity</h4>
+            {% if referral %}
             <div class="big-chart big-trans-box" id="ajax-loading-bar">
                 <img src="{{ STATIC_URL }}images/ajax-loader.gif">
             </div>
             <div class="big-chart" id="barchart" style="display:none"></div>
             <div class="chart-box-holder" style="display:none"></div>
+            {% else %}
+            No recent referral activity.
+            {% endif %}
         </div>
-        {% endif %}
     </div>
-    {% endif %}
+
     <div class="row">
         <div class="span6">
             <h4>All Contacts</h4>
