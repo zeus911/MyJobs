@@ -239,7 +239,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
         # Include 1 header row
         self.assertEqual(len(container('tr')), 3)
 
-        contact_msg = "An email record for example-contact was added"
+        contact_msg = "Email\nexample-contact\nTest Subject\nSome notes go here.\n"
         for row in container('tr')[1:]:
             self.assertIn(contact_msg, row.get_text())
             self.assertIn('Test Subject', row.get_text())
