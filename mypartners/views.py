@@ -779,9 +779,15 @@ def process_email(request):
 
     admin_email = request.REQUEST.get('from')
     unclean_contact_emails = request.REQUEST.get('to', '').split(",")
+    unclean_cc_emails = request.REQUEST.get('cc', '').split(",")
+    unclean_contact_emails = unclean_contact_emails + unclean_cc_emails
 
     admin_email = clean_email(admin_email)
     contact_emails = [clean_email(email) for email in unclean_contact_emails]
+    try:
+        contact_emails.remove(settings.PRM_EMAIL)
+    except ValueError:
+        pass
 
     admin_user = User.objects.get_email_owner(admin_email)
     if admin_user is None:

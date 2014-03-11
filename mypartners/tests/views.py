@@ -826,7 +826,11 @@ class EmailTests(MyPartnersTestCase):
         self.assertTrue(expected_str in email.body)
 
     def test_contact_record_and_log_creation(self):
+        new_contact = ContactFactory(partner=self.partner,
+                                     user=UserFactory(email="new@user.com"),
+                                     email="new@user.com")
         self.data['to'] = self.contact.email
+        self.data['cc'] = new_contact.email
         response = self.client.post(reverse('process_email'), self.data)
 
         self.assertEqual(response.status_code, 200)
@@ -834,14 +838,23 @@ class EmailTests(MyPartnersTestCase):
 
         email = mail.outbox.pop()
         expected_str = "We have successfully created contact records for:"
+        unexpected_str = "We were unable to find contacts for any of the " \
+                         "email recipients"
         self.assertEqual(email.from_email, settings.PRM_EMAIL)
         self.assertEqual(email.to, [self.admin.user.email])
         self.assertTrue(expected_str in email.body)
+        self.assertFalse(unexpected_str in email.body)
 
         record = ContactRecord.objects.get(contact_email=self.contact.email)
         self.assertEqual(record.notes, self.data['text'])
         self.assertEqual(self.data['subject'], self.data['subject'])
+        log_entry = ContactLogEntry.objects.get(object_id=record.pk)
+        self.assertEqual(log_entry.action_flag, ADDITION)
+        self.assertEqual(log_entry.user, self.admin.user)
 
+        record = ContactRecord.objects.get(contact_email=new_contact.email)
+        self.assertEqual(record.notes, self.data['text'])
+        self.assertEqual(self.data['subject'], self.data['subject'])
         log_entry = ContactLogEntry.objects.get(object_id=record.pk)
         self.assertEqual(log_entry.action_flag, ADDITION)
         self.assertEqual(log_entry.user, self.admin.user)
