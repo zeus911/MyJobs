@@ -24,6 +24,7 @@
     <div class="row">
         <div class="span12 prm-header">
             <span>Records</span>
+            <a href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Reports</a>
             <span class="pull-right" id="candidate-time-filter">{% include "time_filter.html" %}</span>
             <span class="pull-right" id="record-download">{% include "mypartners/includes/download_records.html" %}</span>
         </div>
