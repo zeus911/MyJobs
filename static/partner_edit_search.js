@@ -3,12 +3,17 @@ $(function() {
         el: 'body',
 
         initialize: function() {
+            _.bindAll(this);
             this.once('renderEvent', function() {
                 if($('[id$="url"]').val() == ""){
                     disable_fields();
+                } else {
+                    show_dates();
                 }
                 add_refresh_btn();
                 $('[id$=notes]').placeholder();
+                $('[id$="account_activation_message"]').hide();
+                $('label[for$="account_activation_message"]').hide();
             });
         },
 
@@ -24,7 +29,8 @@ $(function() {
             'cut input[id$="url"]': 'validate',
             'paste input[id$="url"]': 'validate',
             'change [id$="email"]': 'validate_contact',
-            'click [id$="partner_ss_save"]': 'save_partner_ss_form'
+            'click [id$="partner_ss_save"]': 'save_partner_ss_form',
+            'change [id$="frequency"]': 'dates'
         },
 
 
@@ -85,6 +91,7 @@ $(function() {
                             }
                             enable_fields();
                             show_dates();
+
                         }
                         else {
                             validation_status(json.url_status);
@@ -245,6 +252,10 @@ $(function() {
                     }
                 }
             });
+        },
+
+        dates: function(){
+            show_dates();
         }
     });
 
@@ -262,17 +273,7 @@ function add_refresh_btn() {
     field.after('<span class="btn add-on refresh"><i class="icon icon-refresh">');
 }
 
-$(document).ready(function() {
-    show_dates();
-    disable_fields();
-    $('[id$="frequency"]').on('change', function() {
-        show_dates();
-    });
-    $('[id$="account_activation_message"]').hide();
-    $('label[for$="account_activation_message"]').hide();
-});
-
-function show_dates() {
+function show_dates(){
     if ($('[id$="frequency"]').attr('value') == 'D') {
         $('label[for$="day_of_month"]').hide();
         $('label[for$="day_of_week"]').hide();
@@ -292,6 +293,8 @@ function show_dates() {
 }
 
 function disable_fields() {
+    $('[id$="label"]').hide();
+    $('label[for$="label"]').hide();
     $('[id$="url_extras"]').hide();
     $('label[for$="url_extras"]').hide();
     $('[id$="is_active"]').hide();
@@ -315,6 +318,8 @@ function disable_fields() {
 }
 
 function enable_fields() {
+    $('[id$="label"]').show();
+    $('label[for$="label"]').show();
     $('[id$="url_extras"]').show();
     $('label[for$="url_extras"]').show();
     $('[id$="is_active"]').show();
