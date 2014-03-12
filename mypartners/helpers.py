@@ -168,13 +168,6 @@ def get_attachment_link(company_id, partner_id, attachment_id, attachment_name):
     return mark_safe(html.format(url=url, attachment_name=attachment_name))
 
 
-def clean_email(email):
-    pattern = re.compile('.*<(.*@.*\..*)>')
-    if '<' in email and '>' in email:
-        return pattern.findall(email)[0].strip()
-    return email.strip()
-
-
 def send_contact_record_email_response(created_records, created_contacts,
                                        unmatched_contacts, error, to_email):
     ctx = {

@@ -17,7 +17,7 @@ from mypartners.tests.factories import (PartnerFactory, ContactFactory,
 from mysearches.tests.factories import PartnerSavedSearchFactory
 from datetime import datetime, timedelta
 from mypartners.models import Contact, ContactRecord, ContactLogEntry, ADDITION
-from mypartners.helpers import clean_email, find_partner_from_email
+from mypartners.helpers import find_partner_from_email
 from mysearches.models import PartnerSavedSearch
 
 
@@ -898,15 +898,3 @@ class EmailTests(MyPartnersTestCase):
         for email in emails:
             partner = find_partner_from_email(partners, email[0])
             self.assertEqual(email[1], partner)
-
-    def test_email_clean(self):
-        emails = [
-            ('this@shouldnt.change', 'this@shouldnt.change'),
-            ('None', 'None'),
-            ('6', '6'),
-            ('A Name <a@name.com>', 'a@name.com'),
-            ('Ba<d@. Format> <poorly@formatted.com>', 'poorly@formatted.com'),
-        ]
-        for email in emails:
-            result = clean_email(email[0])
-            self.assertEqual(result, email[1])

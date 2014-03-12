@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from email.parser import HeaderParser
-from email.utils import parsedate
+from email.utils import getaddresses, parsedate
 from itertools import chain
 import json
 from time import mktime
@@ -31,7 +31,7 @@ from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
 from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
                                 get_searches_for_partner, get_logs_for_partner,
-                                get_contact_records_for_partner, clean_email,
+                                get_contact_records_for_partner,
                                 send_contact_record_email_response,
                                 find_partner_from_email)
 
@@ -796,12 +796,11 @@ def process_email(request):
     else:
         date_time = datetime.now()
 
-    unclean_contact_emails = request.REQUEST.get('to', '').split(",")
-    unclean_cc_emails = request.REQUEST.get('cc', '').split(",")
-    unclean_contact_emails = unclean_contact_emails + unclean_cc_emails
-
-    admin_email = clean_email(admin_email)
-    contact_emails = [clean_email(email) for email in unclean_contact_emails]
+    to = request.REQUEST.get('to', '')
+    cc = request.REQUEST.get('cc', '')
+    recipient_emails_and_names = getaddresses(["%s, %s" % (to, cc)])
+    admin_email = getaddresses([admin_email])[0][1]
+    contact_emails = [email[1] for email in recipient_emails_and_names]
 
     try:
         contact_emails.remove(settings.PRM_EMAIL)
