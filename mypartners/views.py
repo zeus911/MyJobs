@@ -788,8 +788,11 @@ def process_email(request):
         headers = parser.parsestr(headers)
 
     if headers and 'Date' in headers:
-        date_time = mktime(parsedate(headers.get('Date')))
-        date_time = datetime.fromtimestamp(date_time)
+        try:
+            date_time = mktime(parsedate(headers.get('Date')))
+            date_time = datetime.fromtimestamp(date_time)
+        except Exception:
+            date_time = datetime.now()
     else:
         date_time = datetime.now()
 
