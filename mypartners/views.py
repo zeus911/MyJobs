@@ -326,12 +326,24 @@ def prm_edit_saved_search(request):
         form = PartnerSavedSearchForm(partner=partner, instance=instance)
     else:
         form = PartnerSavedSearchForm(partner=partner)
+    microsites = []
+    for microsite in company.microsite_set.all():
+        ms = {}
+        ms['url'] = microsite.url
+        readable_url = microsite.url.split('//')[1]
+        if readable_url[-1] == '/':
+            readable_url = readable_url[:-1]
+        ms['name'] = readable_url
+        microsites.append(ms)
+
     ctx = {
         'company': company,
         'partner': partner,
         'item_id': item_id,
         'form': form,
-        'content_type': ContentType.objects.get_for_model(PartnerSavedSearch).id,
+        'microsites': microsites,
+        'content_type': ContentType.objects.\
+            get_for_model(PartnerSavedSearch).id,
     }
     return render_to_response('mypartners/partner_edit_search.html', ctx,
                               RequestContext(request))

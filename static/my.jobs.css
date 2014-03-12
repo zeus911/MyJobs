@@ -27,6 +27,7 @@ body {
 a {
     color: #5a6d81;
 }
+
 a:hover {
     color: #4B5661;
 }
@@ -239,6 +240,7 @@ h1 > small > a:hover {
     background-color: #f2f2f2;
     padding: 5px 10px;
     color: #000;
+    overflow-wrap: break-word;
 }
 
 .tip-box .tip-content ul{
