@@ -1,10 +1,9 @@
 <div class="date-activity">
-        {% if date_display = "Today" %}
-            <a class="date-range" href="#">{ date_display }}</a>
+        {% if date_display == "Today" %}
+            <a class="date-range hover-element" href="#">{ date_display }}</a>
         {% else %}
-            <a class="date-range" href="#">{{ date_display }} Days</a>
+            <a class="date-range hover-element" href="#">{{ date_display }} Days</a>
         {% endif %}
-    <a class="arrow-down-a" href="#"><div class="arrow-down"></div></a>
 </div>
 
 <div class="date-range-select-form">

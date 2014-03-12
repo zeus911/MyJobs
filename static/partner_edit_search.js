@@ -252,6 +252,10 @@ $(function() {
                     }
                 }
             });
+        },
+
+        dates: function(){
+            show_dates();
         }
     });
 

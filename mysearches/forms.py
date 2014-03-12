@@ -130,7 +130,7 @@ class PartnerSavedSearchForm(ModelForm):
                       "not show up on this list.")
         self.fields["notes"].label = "Notes and Comments"
         self.fields["partner_message"].label = "Message for Contact"
-        self.fields["url_extras"].label = "URL Extras"
+        self.fields["url_extras"].label = "Source Codes & Campaigns"
 
     feed = URLField(widget=HiddenInput())
 

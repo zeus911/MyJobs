@@ -108,6 +108,9 @@ class Partner(models.Model):
         return self.name
 
 
+MAX_ATTACHMENT_MB = 4
+
+
 class ContactRecord(models.Model):
     """
     Object for Communication Records
@@ -180,7 +183,9 @@ class ContactRecord(models.Model):
 
         return contact_str
 
-MAX_ATTACHMENT_MB = 4
+    def get_human_readable_contact_type(self):
+        contact_types = dict(CONTACT_TYPE_CHOICES)
+        return contact_types[self.contact_type].title()
 
 
 class PRMAttachment(models.Model):

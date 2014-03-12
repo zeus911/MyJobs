@@ -1,12 +1,17 @@
+import csv
 from datetime import datetime, timedelta
 import json
+from lxml import etree
 
+from collections import OrderedDict
 from django.conf import settings
 from django.contrib.admin.models import DELETION
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+from django.core.urlresolvers import reverse
+from django.db.models import Count
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
@@ -25,7 +30,9 @@ from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
 from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
                                 get_searches_for_partner, get_logs_for_partner,
-                                get_contact_records_for_partner)
+                                get_contact_records_for_partner,
+                                contact_record_val_to_str, retrieve_fields,
+                                get_records_from_request)
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm(request):
@@ -68,7 +75,8 @@ def prm(request):
            'form': partner_form or form,
            'company': company,
            'user': user,
-           'partner_ct': ContentType.objects.get_for_model(Partner).id}
+           'partner_ct': ContentType.objects.get_for_model(Partner).id,
+           'view_name': 'PRM'}
 
     return render_to_response('mypartners/prm.html', ctx,
                               RequestContext(request))
@@ -89,7 +97,8 @@ def partner_details(request):
            'contacts': contacts,
            'partner': partner,
            'contact_ct': contact_ct_id,
-           'partner_ct': partner_ct_id}
+           'partner_ct': partner_ct_id,
+           'view_name': 'PRM'}
     return render_to_response('mypartners/partner_details.html', ctx,
                               RequestContext(request))
 
@@ -144,7 +153,8 @@ def edit_item(request):
            'partner': partner,
            'company': company,
            'contact': item_id,
-           'content_id': content_id}
+           'content_id': content_id,
+           'view_name': 'PRM'}
 
     return render_to_response('mypartners/edit_item.html', ctx,
                               RequestContext(request))
@@ -187,13 +197,13 @@ def save_item(request):
         if item_id:
             try:
                 item = Contact.objects.get(partner=partner, pk=item_id)
-            except:
+            except Contact.DoesNotExist:
                 raise Http404
             else:
                 form = ContactForm(instance=item, auto_id=False,
                                    data=request.POST)
                 if form.is_valid():
-                    form.save(request.user)
+                    form.save(request.user, partner)
                     return HttpResponse(status=200)
                 else:
                     return HttpResponse(json.dumps(form.errors))
@@ -286,7 +296,11 @@ def prm_overview(request):
     company, partner, user = prm_worthy(request)
 
     most_recent_activity = get_logs_for_partner(partner)
-    communication = get_contact_records_for_partner(partner)
+    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
+    records = get_contact_records_for_partner(
+        partner, date_time_range=dt_range)
+    communication = records.order_by('-created_on')
+    records = records.exclude(contact_type='job').count()
     most_recent_communication = communication[:3]
     saved_searches = get_searches_for_partner(partner)
     most_recent_saved_searches = saved_searches[:3]
@@ -296,7 +310,9 @@ def prm_overview(request):
            'company': company,
            'recent_activity': most_recent_activity,
            'recent_communication': most_recent_communication,
-           'recent_ss': most_recent_saved_searches}
+           'recent_ss': most_recent_saved_searches,
+           'count': records,
+           'view_name': 'PRM'}
 
     return render_to_response('mypartners/overview.html', ctx,
                               RequestContext(request))
@@ -344,6 +360,7 @@ def prm_edit_saved_search(request):
         'microsites': microsites,
         'content_type': ContentType.objects.\
             get_for_model(PartnerSavedSearch).id,
+        'view_name': 'PRM'
     }
     return render_to_response('mypartners/partner_edit_search.html', ctx,
                               RequestContext(request))
@@ -467,6 +484,45 @@ def partner_view_full_feed(request):
                               RequestContext(request))
 
 
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def prm_report_records(request):
+    ctx = get_record_context(request)
+    return render_to_response('mypartners/report_record_view.html', ctx,
+                              RequestContext(request))
+
+
+def get_record_context(request):
+    company, partner, user = prm_worthy(request)
+    record_type = request.REQUEST.get('record_type')
+    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
+    contact_records = get_contact_records_for_partner(
+        partner, record_type=record_type, date_time_range=dt_range)
+    most_recent_activity = get_logs_for_partner(partner)
+
+    contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
+    contacts = ContactRecord.objects.filter(partner=partner)
+    contacts = contacts.values('contact_name').distinct()
+    contact_choices = [('all', 'All')]
+    [contact_choices.append((c['contact_name'], c['contact_name']))
+     for c in contacts]
+
+    ctx = {
+        'company': company,
+        'contact_choices': contact_choices,
+        'contact_type_choices': contact_type_choices,
+        'date_display': '30',
+        'date_start': dt_range[0],
+        'date_end': dt_range[1],
+        'most_recent_activity': most_recent_activity,
+        'partner': partner,
+        'records': contact_records,
+        'record_type': record_type,
+        'view_name': 'PRM'
+    }
+    return ctx
+
+
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_records(request):
     """
@@ -496,6 +552,7 @@ def prm_records(request):
         'most_recent_activity': most_recent_activity,
         'partner': partner,
         'records': contact_records,
+        'view_name': 'PRM'
     }
     return render_to_response('mypartners/main_records.html', ctx,
                               RequestContext(request))
@@ -550,6 +607,14 @@ def prm_view_records(request):
     offset = request.GET.get('offset', 0)
     record_type = request.GET.get('type')
     name = request.GET.get('name')
+    range_start = request.REQUEST.get('date_start')
+    range_end = request.REQUEST.get('date_end')
+    try:
+        range_start = datetime.strptime(range_start, "%m/%d/%Y")
+        range_end = datetime.strptime(range_end, "%m/%d/%Y")
+    except (AttributeError, TypeError):
+        range_start = None
+        range_end = None
 
     try:
         record_id = int(record_id)
@@ -561,6 +626,8 @@ def prm_view_records(request):
     prev_offset = (offset - 1) if offset > 1 else 0
     records = get_contact_records_for_partner(partner, record_type=record_type,
                                               contact_name=name,
+                                              date_time_range=[range_start,
+                                                               range_end],
                                               offset=prev_offset,
                                               limit=prev_offset + 3)
 
@@ -585,9 +652,13 @@ def prm_view_records(request):
         prev_id = records[0].pk
         record = records[1]
         next_id = None
-    else:
+    elif len(records) == 1:
         prev_id = None
         record = records[0]
+        next_id = None
+    else:
+        prev_id = None
+        record = get_object_or_404(ContactRecord, pk=record_id)
         next_id = None
 
     # Double check our results and drop the next and previous options if
@@ -601,6 +672,8 @@ def prm_view_records(request):
     logs = ContactLogEntry.objects.filter(object_id=record_id)
     record_history = ContactLogEntry.objects.filter(object_id=record_id)
     ctx = {
+        'date_start': range_start,
+        'date_end': range_end,
         'record': record,
         'partner': partner,
         'company': company,
@@ -672,15 +745,15 @@ def get_records(request):
     records = get_contact_records_for_partner(partner, contact_name=contact,
                                               record_type=contact_type)
 
-    date_in_days = request.REQUEST.get('date')
-    if date_in_days:
+    date_range = request.REQUEST.get('date')
+    if date_range:
         date_str_results = {
             'today': datetime.now() + timedelta(-1),
             'seven_days': datetime.now() + timedelta(-7),
             'thirty_days': datetime.now() + timedelta(-30),
         }
         range_end = datetime.now()
-        range_start = date_str_results.get(date_in_days)
+        range_start = date_str_results.get(date_range)
     else:
         range_start = request.REQUEST.get('date_start')
         range_end = request.REQUEST.get('date_end')
@@ -708,8 +781,9 @@ def get_records(request):
         'records': records,
         'company': company,
         'partner': partner,
-        'contact_type': contact_type,
-        'contact_name': contact,
+        'contact_type': None if contact_type == 'all' else contact_type,
+        'contact_name': None if contact == 'all' else contact,
+        'view_name': 'PRM'
     }
 
     data = {
@@ -754,24 +828,191 @@ def get_uploaded_file(request):
     return HttpResponseRedirect(path)
 
 
-def partner_get_records(request):
-    """
-    Gets a json object of record counts for each contact type.
-
-    """
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def partner_main_reports(request):
     company, partner, user = prm_worthy(request)
-    retrieve_type = request.GET.get('type')
-    contact_type_choices = dict(CONTACT_TYPE_CHOICES)
-    if retrieve_type == 'sample':
-        dt_rng = [datetime.now() + timedelta(-30), datetime.now()]
-        records = get_contact_records_for_partner(partner,
-                                                  date_time_range=dt_rng)\
-            .exclude(contact_type='job')
+    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
+    records = get_contact_records_for_partner(partner,
+                                              date_time_range=dt_range)
+    total_records_wo_followup = records.exclude(contact_type='job').count()
+    referral = records.filter(contact_type='job').count()
 
-        data = {'totalrecs': records.count()}
-        for choice in contact_type_choices.keys():
-            data[choice] = records.filter(contact_type=choice).count()
+    # need to order_by -count to keep the "All Contacts" list in proper order
+    all_contacts = records.values('contact_name', 'contact_email')\
+        .annotate(count=Count('contact_name')).order_by('-count')
+
+    # Used for Top Contacts
+    contact_records = records\
+        .exclude(contact_type='job')\
+        .values('contact_name', 'contact_email')\
+        .annotate(count=Count('contact_name')).order_by('-count')
+
+    # Individual Referral Records count
+    referral_list = records.filter(contact_type='job')\
+        .values('contact_name', 'contact_email')\
+        .annotate(count=Count('contact_name'))
+
+    # Merge contact_records with referral_list and have all contacts
+    # A contact can have 0 contact records and 1 referral record and still show up
+    # vice versa with 1 contact record and 0 referrals
+    contacts = []
+    for contact_obj in all_contacts:
+        contact = {}
+        name = contact_obj['contact_name']
+        email = contact_obj['contact_email']
+        contact['name'] = name
+        contact['email'] = email
+        for cr in contact_records:
+            if cr['contact_name'] == name and cr['contact_email'] == email:
+                contact['cr_count'] = cr['count']
+        if not 'cr_count' in contact:
+            contact['cr_count'] = 0
+        for ref in referral_list:
+            if ref['contact_name'] == name and ref['contact_email'] == email:
+                contact['ref_count'] = ref['count']
+        if not 'ref_count' in contact:
+            contact['ref_count'] = 0
+        contacts.append(contact)
+
+    # calculate 'All Others' in Top Contacts (when more than 3)
+    total_others = 0
+    if contact_records.count() > 3:
+        others = contact_records[3:]
+        top_contacts_records = contact_records[:3]
+        for contact in others:
+            total_others += contact['count']
+
+    ctx = {'partner': partner,
+           'company': company,
+           'contacts': contacts,
+           'total_records': total_records_wo_followup,
+           'referral': referral,
+           'top_contacts': contact_records,
+           'others': total_others,
+           'view_name': 'PRM'}
+    return render_to_response('mypartners/partner_reports.html', ctx,
+                              RequestContext(request))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def partner_get_records(request):
+    if request.method == 'GET':
+        company, partner, user = prm_worthy(request)
+        dt_range = [datetime.now() + timedelta(-30), datetime.now()]
+        records = get_contact_records_for_partner(
+            partner, date_time_range=dt_range).exclude(contact_type='job')
+        email = records.filter(contact_type='email').count()
+        phone = records.filter(contact_type='phone').count()
+        facetoface = records.filter(contact_type='facetoface').count()
+
+        # figure names
+        if email != 1:
+            email_name = 'Emails'
+        else:
+            email_name = 'Email'
+        if phone != 1:
+            phone_name = 'Phone Calls'
+        else:
+            phone_name = 'Phone Call'
+        if facetoface != 1:
+            facetoface_name = 'Face to Face'
+        else:
+            facetoface_name = 'Face to Face'
+
+        data = {'email': {"count": email, "name": email_name, 'typename': 'email'},
+                'phone': {"count": phone, "name": phone_name, 'typename': 'phone'},
+                'facetoface': {"count": facetoface, "name": facetoface_name,
+                               "typename": "facetoface"}}
+        data = OrderedDict(sorted(data.items(), key=lambda t: t[1]['count']))
+        data_items = data.items()
+        data_items.reverse()
+        data = OrderedDict(data_items)
+        return HttpResponse(json.dumps(data))
+    else:
+        raise Http404
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def partner_get_referrals(request):
+    if request.method == 'GET':
+        company, partner, user = prm_worthy(request)
+        dt_range = [datetime.now() + timedelta(-30), datetime.now()]
+        records = get_contact_records_for_partner(partner,
+                                                  date_time_range=dt_range)
+        referrals = records.filter(contact_type='job')
+
+        # (job application, job interviews, job hires)
+        nums = referrals.values_list('job_applications', 'job_interviews',
+                                     'job_hires')
+
+        applications, interviews, hires = 0, 0, 0
+        # add numbers together
+        for num_set in nums:
+            applications += int(num_set[0])
+            interviews += int(num_set[1])
+            hires += int(num_set[2])
+
+        # figure names
+        app_name, interview_name, hire_name = '', '', ''
+        if applications != 1:
+            app_name = 'Applications'
+        else:
+            app_name = 'Application'
+        if interviews != 1:
+            interview_name = 'Interviews'
+        else:
+            interview_name = 'Interview'
+        if hires != 1:
+            hire_name = 'Hires'
+        else:
+            hire_name = 'Hire'
+
+        data = {'applications': {'count': applications, 'name': app_name, 'typename': 'job'},
+                'interviews': {'count': interviews, 'name': interview_name, 'typename': 'job'},
+                'hires': {'count': hires, 'name': hire_name, 'typename': 'job'}}
 
         return HttpResponse(json.dumps(data))
+    else:
+        raise Http404
 
-    raise Http404
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def prm_export(request):
+    company, partner, user = prm_worthy(request)
+    file_format = request.REQUEST.get('file_format', 'csv')
+    fields = retrieve_fields(ContactRecord)
+    _, _, records = get_records_from_request(request)
+
+    if file_format == 'xml':
+        root = etree.Element("contact_records")
+        for record in records:
+            xml_record = etree.SubElement(root, "record")
+            for field in fields:
+                xml = etree.SubElement(xml_record, field)
+                xml.text = contact_record_val_to_str(getattr(record, field, ""))
+        response = HttpResponse(etree.tostring(root, pretty_print=True),
+                                mimetype='application/force-download')
+    elif file_format == 'printer_friendly':
+        ctx = {
+            'company': company,
+            'fields': fields,
+            'partner': partner,
+            'records': records,
+        }
+        return render_to_response('mypartners/printer_friendly.html', ctx,
+                                  RequestContext(request))
+    # CSV
+    else:
+        response = HttpResponse(content_type='text/csv')
+        writer = csv.writer(response)
+        writer.writerow(fields)
+        for record in records:
+            values = [getattr(record, field, '') for field in fields]
+            values = [contact_record_val_to_str(v) for v in values]
+            writer.writerow(values)
+
+    response['Content-Disposition'] = 'attachment; ' \
+                                      'filename="company_record_report".%s' \
+                                      % file_format
+
+    return response
