@@ -55,7 +55,7 @@
                 </div>
                 <div class="tip-footer">
                     {% if not partner %}
-                    <a class="btn-link" href="{% url 'prm' %}?company={{ company.id }}">Back to Partner Outreach</a>
+                    <a class="btn-link" href="{% url 'prm' %}?company={{ company.id }}">Back to PRM</a>
                     {% else %}
                     <a class="btn-link" href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Partner Page</a>
                     {% endif %}
