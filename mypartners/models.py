@@ -89,6 +89,18 @@ class Contact(models.Model):
                     self.user = user
         return super(Contact, self).save(*args, **kwargs)
 
+    def get_contact_url(self):
+        base_urls = {
+            'contact': reverse('edit_contact'),
+        }
+        params = {
+            'partner': self.partner.pk,
+            'company': self.partner.owner.pk,
+            'id': self.pk,
+            'ct': ContentType.objects.get_for_model(Contact).pk
+        }
+        query_string = urlencode(params)
+        return "%s?%s" % (base_urls[self.content_type.name], query_string)
 
 class Partner(models.Model):
     """

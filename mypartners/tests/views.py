@@ -16,8 +16,8 @@ from mypartners.tests.factories import (PartnerFactory, ContactFactory,
                                         ContactRecordFactory)
 from mysearches.tests.factories import PartnerSavedSearchFactory
 from datetime import datetime, timedelta
-from mypartners.models import ContactRecord, ContactLogEntry, ADDITION
-from mypartners.helpers import clean_email
+from mypartners.models import Contact, ContactRecord, ContactLogEntry, ADDITION
+from mypartners.helpers import clean_email, find_partner_from_email
 from mysearches.models import PartnerSavedSearch
 
 
@@ -819,8 +819,8 @@ class EmailTests(MyPartnersTestCase):
         self.assertEqual(len(mail.outbox), 1)
 
         email = mail.outbox.pop()
-        expected_str = "We were unable to find contacts for any of the email" \
-                       " recipients"
+        expected_str = "No contacts or contact records could be created for " \
+                       "the following email addresses:"
         self.assertEqual(email.from_email, settings.PRM_EMAIL)
         self.assertEqual(email.to, [self.admin.user.email])
         self.assertTrue(expected_str in email.body)
@@ -838,8 +838,8 @@ class EmailTests(MyPartnersTestCase):
 
         email = mail.outbox.pop()
         expected_str = "We have successfully created contact records for:"
-        unexpected_str = "We were unable to find contacts for any of the " \
-                         "email recipients"
+        unexpected_str = "No contacts or contact records could be created " \
+                         "for the following email addresses:"
         self.assertEqual(email.from_email, settings.PRM_EMAIL)
         self.assertEqual(email.to, [self.admin.user.email])
         self.assertTrue(expected_str in email.body)
@@ -858,6 +858,46 @@ class EmailTests(MyPartnersTestCase):
         log_entry = ContactLogEntry.objects.get(object_id=record.pk)
         self.assertEqual(log_entry.action_flag, ADDITION)
         self.assertEqual(log_entry.user, self.admin.user)
+
+    def test_create_new_contact(self):
+        new_email = 'test@my.jobs'
+        self.data['to'] = new_email
+        response = self.client.post(reverse('process_email'), self.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+
+        contact = Contact.objects.get(email=new_email, partner=self.partner)
+        ContactLogEntry.objects.get(object_id=contact.pk, action_flag=ADDITION)
+
+        email = mail.outbox.pop()
+        expected_str = "Contacts have been created for the following email " \
+                       "addresses:"
+        self.assertEqual(email.from_email, settings.PRM_EMAIL)
+        self.assertEqual(email.to, [self.admin.user.email])
+        self.assertTrue(expected_str in email.body)
+
+    def test_partner_email_matching(self):
+        ten = PartnerFactory(owner=self.company, uri='ten.jobs', name='10',
+                             pk=10)
+        eleven = PartnerFactory(owner=self.company, uri='eleven.jobs',
+                                name='11', pk=11)
+        twelve = PartnerFactory(owner=self.company, uri='twelve.jobs',
+                                name='12', pk=12)
+        dup = PartnerFactory(owner=self.company, uri='my.jobs', name='dup',
+                             pk=13)
+        partners = [self.partner, ten, eleven, twelve, dup, ]
+        emails = [
+            ('match@ten.jobs', ten),
+            ('match@eleven.jobs', eleven),
+            ('match@twelve.jobs', twelve),
+            ('twomatches@my.jobs', self.partner),
+            ('nomatches@thirteen.jobs', None)
+        ]
+
+        for email in emails:
+            partner = find_partner_from_email(partners, email[0])
+            self.assertEqual(email[1], partner)
 
     def test_email_clean(self):
         emails = [

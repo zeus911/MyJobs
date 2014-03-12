@@ -175,12 +175,13 @@ def clean_email(email):
     return email.strip()
 
 
-def send_contact_record_email_response(created_records, unmatched_contacts,
-                                       error, to_email):
+def send_contact_record_email_response(created_records, created_contacts,
+                                       unmatched_contacts, error, to_email):
     ctx = {
         'created_records': created_records,
-        'unmatched_contacts': unmatched_contacts,
+        'created_contacts': created_contacts,
         'error': error,
+        'unmatched_contacts': unmatched_contacts,
     }
 
     subject = 'Partner Relationship Manager Contact Records'
@@ -190,3 +191,31 @@ def send_contact_record_email_response(created_records, unmatched_contacts,
     msg = EmailMessage(subject, message, settings.PRM_EMAIL, [to_email])
     msg.content_subtype = 'html'
     msg.send()
+
+
+def find_partner_from_email(partner_list, email):
+    """
+    Finds a possible partner based on the email domain.
+
+    inputs:
+    :partner_list: The partner list to compare the email against.
+    :email: The email address the domain is needed for.
+
+    outputs:
+    A matching partner if there is one, otherwise None.
+
+    """
+    if '@' not in email or not partner_list:
+        return None
+    email_domain = email.split('@')[-1]
+
+    pattern = re.compile('(http://|https://)?(www)?\.?(?P<url>.*)')
+    for partner in partner_list:
+        try:
+            url = pattern.search(partner.uri).groupdict()['url'].split("/")[0]
+        except (AttributeError, KeyError):
+            pass
+        if email_domain.lower() == url.lower():
+            return partner
+
+    return None

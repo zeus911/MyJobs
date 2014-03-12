@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from email.parser import HeaderParser
 from itertools import chain
 import json
 
@@ -29,7 +30,8 @@ from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
                                 get_searches_for_partner, get_logs_for_partner,
                                 get_contact_records_for_partner, clean_email,
-                                send_contact_record_email_response)
+                                send_contact_record_email_response,
+                                find_partner_from_email)
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm(request):
@@ -197,7 +199,7 @@ def save_item(request):
                 form = ContactForm(instance=item, auto_id=False,
                                    data=request.POST)
                 if form.is_valid():
-                    form.save(request.user)
+                    form.save(request.user, partner)
                     return HttpResponse(status=200)
                 else:
                     return HttpResponse(json.dumps(form.errors))
@@ -778,17 +780,31 @@ def process_email(request):
         return HttpResponse(status=200)
 
     admin_email = request.REQUEST.get('from')
-    unclean_contact_emails = request.REQUEST.get('to', '').split(",")
-    unclean_cc_emails = request.REQUEST.get('cc', '').split(",")
-    unclean_contact_emails = unclean_contact_emails + unclean_cc_emails
+    parser = HeaderParser()
+    headers = parser.parsestr(request.REQUEST.get('headers'))
+    if 'In-Reply-To' in headers:
+        unclean_contact_emails = headers.get('to', '').split(',')
+        unclean_cc_emails = headers.get('cc', '').split(',')
+        unclean_from_email = headers.get('from', '').split(',')
+        unclean_contact_emails = (unclean_cc_emails + unclean_from_email +
+                                  unclean_contact_emails)
+    else:
+        unclean_contact_emails = request.REQUEST.get('to', '').split(",")
+        unclean_cc_emails = request.REQUEST.get('cc', '').split(",")
+        unclean_contact_emails = unclean_contact_emails + unclean_cc_emails
 
     admin_email = clean_email(admin_email)
     contact_emails = [clean_email(email) for email in unclean_contact_emails]
+
     try:
         contact_emails.remove(settings.PRM_EMAIL)
     except ValueError:
         pass
-
+    try:
+        contact_emails.remove(admin_email)
+    except ValueError:
+        pass
+    
     admin_user = User.objects.get_email_owner(admin_email)
     if admin_user is None:
         return HttpResponse(status=200)
@@ -796,23 +812,27 @@ def process_email(request):
     partners = list(chain(*[company.partner_set.all()
                             for company in admin_user.company_set.all()]))
 
-    possible_contacts, unmatched_contacts = [], []
+    possible_contacts, created_contacts, unmatched_contacts = [], [], []
     for contact in contact_emails:
         try:
             matching_contacts = Contact.objects.filter(email=contact,
                                                        partner__in=partners)
             [possible_contacts.append(x) for x in matching_contacts]
             if not matching_contacts:
-                unmatched_contacts.append(contact)
+                possible_partner = find_partner_from_email(partners, contact)
+                if possible_partner:
+                    new_contact = Contact.objects.create(name=contact,
+                                                         email=contact,
+                                                         partner=possible_partner)
+                    change_msg = "Contact was created from email."
+                    log_change(new_contact, None, admin_user,
+                               new_contact.partner,   new_contact.name,
+                               action_type=ADDITION, change_msg=change_msg)
+                    created_contacts.append(new_contact)
+                else:
+                    unmatched_contacts.append(contact)
         except ValueError:
             unmatched_contacts.append(contact)
-
-    if not possible_contacts:
-        error = "We were unable to find contacts for any of the email " \
-                "recipients."
-        send_contact_record_email_response([], contact_emails, error,
-                                           admin_email)
-        return HttpResponse(status=200)
 
     subject = request.REQUEST.get('subject')
     email_text = request.REQUEST.get('text')
@@ -825,13 +845,13 @@ def process_email(request):
             error = "There was an issue with the email attachments. The " \
                     "contact records for the email will need to be created " \
                     "manually."
-            send_contact_record_email_response([], contact_emails, error,
+            send_contact_record_email_response([], [], contact_emails, error,
                                                admin_email)
             return HttpResponse(status=200)
         attachments.append(attachment)
 
     created_records = []
-    for contact in possible_contacts:
+    for contact in possible_contacts + created_contacts:
         change_msg = "Email was sent by %s to %s" % \
                      (admin_user.get_full_name(), contact.name)
         record = ContactRecord.objects.create(partner=contact.partner,
@@ -853,6 +873,6 @@ def process_email(request):
 
         created_records.append(record)
 
-    send_contact_record_email_response(created_records, unmatched_contacts,
-                                       None, admin_email)
+    send_contact_record_email_response(created_records, created_contacts,
+                                       unmatched_contacts, None, admin_email)
     return HttpResponse(status=200)
