@@ -7,7 +7,12 @@ $(function() {
                 var rows = find_rows();
                 add_data_attr(rows);
                 var max_num = get_max(rows);
-                var current_num = 1;
+                var current_num;
+                if(rows.length > 0) {
+                    current_num = 1;
+                } else {
+                    current_num = 0;
+                }
                 change_marker(current_num, max_num);
                 show_row(rows, current_num);
             });

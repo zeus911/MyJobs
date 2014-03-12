@@ -11,8 +11,8 @@
 {% load i18n %}
 
 {% block meta-extra %}
-<script src="{{ STATIC_URL }}partner-overview.js{% cache_buster %}"></script>
 <script src="{{ STATIC_URL }}record_overview.js{% cache_buster %}"></script>
+    <script src="{{ STATIC_URL }}partner-reports.js{% cache_buster %}"></script>
 <script>
     var company = {{ company.id }};
     var partner = {{ partner.id }};
@@ -23,17 +23,16 @@
     <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
     <div class="row">
         <div class="span12 prm-header">
-            <span>Communication Records</span>
-            <a href="{% url "partner_overview" %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
+            <span>Records</span>
+            <a href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Reports</a>
             <span class="pull-right" id="candidate-time-filter">{% include "time_filter.html" %}</span>
+            <span class="pull-right" id="record-download">{% include "mypartners/includes/download_records.html" %}</span>
         </div>
     </div>
     <div class="row">
-        <div class="span8">
-            <a class="btn" href="{% url "partner_edit_record" %}?company={{ company.id }}&partner={{ partner.id }}" style="margin-bottom: 20px;">New Record</a>
-            <div class="formBox no-padding profile-mobile" id="view-records">
-                <h4>View Records</h4>
-                {% if records %}
+        <div class="span12">
+            <div class="formBox no-padding profile-mobile">
+                <h4>Records</h4>
                 <div class="formBox-content">
                     <div class="span3 form-label pull-left initial">
                         <label for="record_contact" class="">Contact</label>
@@ -56,7 +55,6 @@
                         </select>
                     </div>
                 </div>
-                {% endif %}
                 <table class="table table-bordered table-striped">
                     {% if records %}
                     <thead>
@@ -72,26 +70,6 @@
                     {% get_record_block records company partner %}
                 </table>
             </div>
-        </div>
-        <div class="span4">
-            {% if most_recent_activity %}
-            <div class="tip-box mobile_hide" id="recent-activity">
-                <h4>Most Recent Activity <small id="activity-num" class="pull-right"></small></h4>
-                <div class="tip-content no-padding">
-                    <table id="activity-table" class="table table-striped">
-                        {% for activity in most_recent_activity %}
-                            {% get_activity_block activity %}
-                        {% endfor %}
-                    </table>
-                </div>
-
-                <div class="tip-footer">
-                    <button id="next" class="btn pull-right"><span id="prm-arrow-right"></span></button>
-                    <button id="previous" class="btn pull-right"><span id="prm-arrow-left"></span></button>
-                    <div class="clearfix"></div>
-                </div>
-            </div>
-            {% endif %}
         </div>
     </div>
 {% endblock %}
