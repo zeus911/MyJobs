@@ -19,7 +19,7 @@
     {% endif %}
 
     {% if unmatched_contacts %}
-        <br/>No contacts or contact records could be created for the following email addresses:<br/>
+        <br/>No contacts or contact records could be created for the following email addresses. You will need to log in and manually create contact records for these contacts:<br/>
         {% for contact in unmatched_contacts %}
             {{ contact }}<br/>
         {% endfor %}

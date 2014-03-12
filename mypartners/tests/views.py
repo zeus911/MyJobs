@@ -820,7 +820,7 @@ class EmailTests(MyPartnersTestCase):
 
         email = mail.outbox.pop()
         expected_str = "No contacts or contact records could be created for " \
-                       "the following email addresses:"
+                       "the following email addresses."
         self.assertEqual(email.from_email, settings.PRM_EMAIL)
         self.assertEqual(email.to, [self.admin.user.email])
         self.assertTrue(expected_str in email.body)
@@ -839,7 +839,7 @@ class EmailTests(MyPartnersTestCase):
         email = mail.outbox.pop()
         expected_str = "We have successfully created contact records for:"
         unexpected_str = "No contacts or contact records could be created " \
-                         "for the following email addresses:"
+                         "for the following email addresses."
         self.assertEqual(email.from_email, settings.PRM_EMAIL)
         self.assertEqual(email.to, [self.admin.user.email])
         self.assertTrue(expected_str in email.body)
