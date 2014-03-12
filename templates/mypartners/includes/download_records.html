@@ -6,13 +6,13 @@
                 Export Type
                 <span class="pull-right"><i class="icon icon-download"></i></span>
             </li>
-            <a href="#">
+            <a href="{% url 'prm_export' %}?company={{ company.id }}&partner={{ partner.id }}">
                 <li>CSV</li>
             </a>
-            <a>
+            <a href="{% url 'prm_export' %}?company={{ company.id }}&partner={{ partner.id }}&file_format=xml">
                 <li>XML</li>
             </a>
-            <a>
+            <a href="{% url 'prm_export' %}?company={{ company.id }}&partner={{ partner.id }}&file_format=printer_friendly">
                 <li>PDF</li>
             </a>
         </ul>

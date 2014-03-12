@@ -570,11 +570,15 @@ ul.header-menu > li > ul > a > li {
 }
 
 ul.header-menu:hover {
+    cursor: pointer;
+}
+
+ul.header-menu.show-drop {
     background-color: #FFF;
     border-color: #d5d4d0;
 }
 
-ul.header-menu:hover > li > ul {
+ul.header-menu.show-drop > li > ul {
     position: fixed;
     background-color: #f2f2f2;
     border: 1px solid #d5d4d0;
