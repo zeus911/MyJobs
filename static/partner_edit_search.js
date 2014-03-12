@@ -252,10 +252,6 @@ $(function() {
                     }
                 }
             });
-        },
-
-        show_dates: function(){
-
         }
     });
 
