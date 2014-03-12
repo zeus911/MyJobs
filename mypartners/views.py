@@ -347,8 +347,7 @@ def prm_edit_saved_search(request):
         ms = {}
         ms['url'] = microsite.url
         readable_url = microsite.url.split('//')[1]
-        if readable_url[-1] == '/':
-            readable_url = readable_url[:-1]
+        readable_url = readable_url.rstrip('/')
         ms['name'] = readable_url
         microsites.append(ms)
 
