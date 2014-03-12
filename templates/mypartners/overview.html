@@ -17,7 +17,9 @@
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
     google.load("visualization", "1", {packages:["corechart"]});
-    google.setOnLoadCallback(drawChart);
+    var company_id = {{ company.id }};
+    var partner_id = {{ partner.id }};
+    var total_records = {{ count }};
 </script>
 
 {% endblock %}
@@ -31,10 +33,10 @@
     </div>
     <div class="row desktop_hide" id="prm-mobile-row-buttons">
         <div class="span12">
-            <a class="btn" href="{% url "partner_records" %}?company={{ company.id }}&partner={{ partner.id }}">Communication Records</a>
+            <a class="btn" href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}">Communication Records</a>
             <a class="btn" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">Saved Searches</a>
             <a class="btn" href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">Edit Partner Details</a>
-            <a class="btn">Reports</a>
+            <a class="btn" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">Reports</a>
         </div>
     </div>
     <div class="row">
@@ -56,7 +58,9 @@
 
                 {% else %}
 
-                No Recent Activity
+                <div class="formBox-content">
+                    No Recent Activity
+                </div>
 
                 <div class="formBox-footer">
                     <button class="btn pull-right" disabled><span id="prm-arrow-right"></span></button>
@@ -73,25 +77,17 @@
                     <thead>
                         <tr>
                             <td>Date/Time</td>
+                            <td>Type</td>
                             <td>Contact</td>
-                            <td>Communication</td>
+                            <td>Subject</td>
+                            <td>Details</td>
                         </tr>
                     </thead>
                     {% if recent_communication %}
-                    {% for record in recent_communication %}
-                        <tr>
-                            <td>{{ record.date_time }}</td>
-                            <td>{{ record.get_record_description }}</td>
-                            <td>
-                                {% if record.subject %}Subject: {{ record.subject }}<br/>{% endif %}
-                                {{ record.notes }}
-                            </td>
-                        </tr>
-                    {% endfor %}
+                        {% get_record_block recent_communication company partner %}
                     {% else %}
                     <tr>
-                        <td>No Recent Communication Records</td>
-                        <td></td><td></td>
+                        <td colspan=5>No Recent Communication Records.</td>
                     </tr>
                     {% endif %}
                 </table>
@@ -135,65 +131,21 @@
             </div>
         </div>
         <div class="span4 mobile_hide">
+            {% if count %}
             <div class="info-box">
-                <div id="donutchart"></div>
-                <a class="btn">View Reports</a>
+                <div id="donut-box">
+                    <img src="{{ STATIC_URL }}images/ajax-loader.gif">
+                </div>
+                <div class="small-chart" id="donutchart" style="display:none"></div>
+                <div class="small-chart-box-holder" style="display:none"></div>
+                <a class="btn" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">View Reports</a>
             </div>
+            {% endif %}
 
             <div class="info-box" id="partner-details">
-                <b>{{ partner.name }}</b>
-                <br><br>
-                {% with partner.primary_contact as contact %}
-                {% if contact %}
-                <b>{{ contact.name }}</b> <i>Primary Contact</i> <br>
-                {% if contact.email %}
-                <u>{{ contact.email }}</u> <br>
-                {% endif %}
-                {% if contact.address_line_one %}
-                {{ contact.address_line_one }}
-                    {% if contact.address_line_two %}
-                    {{ contact.address_line_two }} <br>
-                    {% else %}
-                    <br>
-                    {% endif %}
-                {% endif %}
-                {% if contact.city %}
-                {{ contact.city }},
-                    {% if contact.state %}
-                    {{ contact.state }}
-                        {% if contact.postal_code %}
-                        {{ contact.postal_code }} <br>
-                        {% else %}
-                            <br>
-                        {% endif %}
-                    {% else %}
-                        <br>
-                    {% endif %}
-                {% else %}
-                    {% if contact.state %}
-                    {{ contact.state }}
-                        {% if contact.postal_code %}
-                        {{ contact.postal_code }} <br>
-                        {% else %}
-                            <br>
-                        {% endif %}
-                    {% else %}
-                        {% if contact.postal_code %}
-                        {{ contact.postal_code }} <br>
-                        {% endif %}
-                    {% endif %}
-                {% endif %}
-                {% if contact.phone %}
-                {{ contact.phone }} <br>
-                {% endif %}
-                {% endif %}
-                    <br>
-                {% endwith %}
-                <a class="btn" href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">Edit partner Details</a>
+                {% include "mypartners/partner_details_widget.html" %}
             </div>
 
         </div>
     </div>
-    <input id="company" type="hidden" value="{{ company.id }}">
-    <input id="partner" type="hidden" value="{{ partner.id }}">
 {% endblock %}

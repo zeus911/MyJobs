@@ -1,16 +1,21 @@
+from django.contrib.admin.models import CHANGE
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
-from django.utils.text import get_text_list
+from django.utils.text import get_text_list, force_unicode, force_text
 from django.utils.translation import ugettext
 
+from datetime import datetime, time, timedelta
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
 from mydashboard.models import Company
-from mypartners.models import ContactLogEntry, ContactRecord, CHANGE
+from mypartners.models import (ContactLogEntry, ContactRecord,
+                               CONTACT_TYPE_CHOICES)
 from mysearches.models import PartnerSavedSearch
 
 
@@ -161,3 +166,82 @@ def get_attachment_link(company_id, partner_id, attachment_id, attachment_name):
 
     html = "<a href='{url}' target='_blank'>{attachment_name}</a>"
     return mark_safe(html.format(url=url, attachment_name=attachment_name))
+
+
+def retrieve_fields(model):
+    fields = [field for field in model._meta.get_all_field_names()
+              if unicode(field) not in [u'id', u'prmattachment']]
+    return fields
+
+
+def contact_record_val_to_str(value):
+    """
+    Translates a field value from a contact record into a human-readable string.
+    Dates are formatted "ShortMonth Day, Year Hour:Minute AMorPM"
+    Times are formatted "XX Hours XX Minutes"
+    If the value matches a contact type choice it's translated to the
+    verbose form.
+    """
+
+    value = (value.strftime('%b %d, %Y %I:%M %p') if type(value)
+             is datetime else value.strftime('%H hours %M minutes')
+             if type(value) is time else force_unicode(value))
+
+    contact_types = dict(CONTACT_TYPE_CHOICES)
+    if value in contact_types:
+        value = contact_types[value]
+
+    return value
+
+
+def get_records_from_request(request):
+    """
+    Filters a list of records on partner, date_time, contact_name, and
+    contact_type based on the request
+
+    outputs:
+    The date range filtered on, A string "X Day(s)" representing the
+    date filtered on, and the filtered records.
+
+
+    """
+    company, partner, user = prm_worthy(request)
+
+    contact = request.REQUEST.get('contact')
+    contact_type = request.REQUEST.get('contact_type')
+    contact = None if contact == 'all' else contact
+    contact_type = None if contact_type == 'all' else contact_type
+    records = get_contact_records_for_partner(partner, contact_name=contact,
+                                              record_type=contact_type)
+
+    date_range = request.REQUEST.get('date')
+    if date_range:
+        date_str_results = {
+            'today': datetime.now() + timedelta(-1),
+            'seven_days': datetime.now() + timedelta(-7),
+            'thirty_days': datetime.now() + timedelta(-30),
+        }
+        range_end = datetime.now()
+        range_start = date_str_results.get(date_range)
+    else:
+        range_start = request.REQUEST.get('date_start')
+        range_end = request.REQUEST.get('date_end')
+        try:
+            range_start = datetime.strptime(range_start, "%m/%d/%Y")
+            range_end = datetime.strptime(range_end, "%m/%d/%Y")
+        except (AttributeError, TypeError):
+            range_start = None
+            range_end = None
+    date_str = 'Filter by time range'
+    if range_start and range_end:
+        try:
+            date_str = (range_end - range_start).days
+            date_str = (("%s Days" % date_str) if date_str != 1
+                        else ("%s Day" % date_str))
+            records = records.filter(date_time__range=[range_start, range_end])
+        except (ValidationError, TypeError):
+            pass
+
+    return (range_start, range_end), date_str, records
+
+

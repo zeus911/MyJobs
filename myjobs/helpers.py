@@ -3,6 +3,7 @@ from jira.client import JIRA
 from django.contrib import auth
 from django.core import mail
 from django.core.mail import EmailMessage
+from django.utils.safestring import mark_safe
 
 from secrets import options, my_agent_auth, EMAIL_TO_ADMIN
 
@@ -87,3 +88,15 @@ def log_to_jira(subject, body, issue_dict, from_email):
         issue_dict['project'] = {'key': project.key},
         jira.create_issue(fields=issue_dict)
     return to_jira
+
+
+def make_fake_gravatar(name, size):
+    font_size = int(size)
+    font_size = font_size * .65
+    gravatar_url = mark_safe("<div class='gravatar-blank gravatar-danger'"
+                    " style='height: %spx; width: %spx'>"
+                    "<span class='gravatar-text' style='font-size:"
+                    "%spx;'>%s</span></div>" %
+                    (size, size, font_size, name[0].upper()))
+
+    return gravatar_url
