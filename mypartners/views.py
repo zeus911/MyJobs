@@ -197,13 +197,13 @@ def save_item(request):
         if item_id:
             try:
                 item = Contact.objects.get(partner=partner, pk=item_id)
-            except:
+            except Contact.DoesNotExist:
                 raise Http404
             else:
                 form = ContactForm(instance=item, auto_id=False,
                                    data=request.POST)
                 if form.is_valid():
-                    form.save(request.user)
+                    form.save(request.user, partner)
                     return HttpResponse(status=200)
                 else:
                     return HttpResponse(json.dumps(form.errors))

@@ -72,14 +72,18 @@ var partner_id = {{ partner.id }};
                         {{ contact.email }}
                     </td>
                     <td>
-                        <div class="chart-box small-chart-box inline-box">
-                            <div class="big-num">{{ contact.ref_count }}</div>
-                            <div class="reports-record-type">Referral Records</div>
-                        </div>
-                        <div class="chart-box small-chart-box inline-box">
-                            <div class="big-num">{{ contact.cr_count }}</div>
-                            <div class="reports-record-type">Contact Records</div>
-                        </div>
+                        <a class="chart-box-link" href="{% url 'prm_report_records' %}?company={{ company.id }}&partner={{ partner.id }}&contact={{ contact.name }}&record_type=job">
+                            <div class="chart-box small-chart-box inline-box">
+                                <div class="big-num">{{ contact.ref_count }}</div>
+                                <div class="reports-record-type">Referral Records</div>
+                            </div>
+                        </a>
+                        <a class="chart-box-link" href="{% url 'prm_report_records' %}?company={{ company.id }}&partner={{ partner.id }}&contact={{ contact.name }}">
+                            <div class="chart-box small-chart-box inline-box">
+                                <div class="big-num">{{ contact.cr_count }}</div>
+                                <div class="reports-record-type">Contact Records</div>
+                            </div>
+                        </a>
                     </td>
                 </tr>
             </table>
@@ -95,17 +99,17 @@ var partner_id = {{ partner.id }};
             {% endif %}
             <div id="top-contacts">
                 {% for contact in top_contacts %}
-                <div class="chart-box inline-box">
-                    <div class="big-num">{{ contact.count }}</div>
-                    <div class="reports-record-type">{{ contact.contact_name|truncatechars:13 }}</div>
-                </div>
+                <a class="chart-box-link" href="{% url 'prm_report_records' %}?company={{ company.id }}&partner={{ partner.id }}&contact={{ contact.contact_name }}">
+                    <div class="chart-box inline-box">
+                        <div class="big-num">{{ contact.count }}</div>
+                        <div class="reports-record-type">{{ contact.contact_name|truncatechars:13 }}</div>
+                    </div>
+                </a>
                 {% endfor %}
-                {% if others %}
-                <div class="chart-box inline-box" style="margin-right:0">
+                <div class="chart-box inline-box" id="others" style="margin-right:0">
                     <div class="big-num">{{ others }}</div>
                     <div class="reports-record-type">All Others</div>
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>

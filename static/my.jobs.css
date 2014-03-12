@@ -421,17 +421,23 @@ h1 > small > a:hover {
     float: left;
 }
 
-.chart-box + .chart-box {
+.chart-box + .chart-box,
+.chart-box-link + .chart-box,
+.chart-box-link + .chart-box-link > .chart-box {
     border-color: #4bb1cf;
     background-color: #4bb1cf;
 }
 
-.chart-box + .chart-box + .chart-box {
+.chart-box + .chart-box + .chart-box,
+.chart-box-link + .chart-box-link + .chart-box,
+.chart-box-link + .chart-box-link + .chart-box-link > .chart-box{
     border-color: #faa732;
     background-color: #faa732;
 }
 
-.chart-box + .chart-box + .chart-box + .chart-box {
+.chart-box + .chart-box + .chart-box + .chart-box,
+.chart-box-link + .chart-box-link + .chart-box-link + .chart-box,
+.chart-box-link + .chart-box-link + .chart-box-link + .chart-box-link > .chart-box{
     border-color: #5f6c82;
     background-color: #5f6c82;
 }
@@ -514,7 +520,8 @@ h1 > small > a:hover {
     width: 150px;
 }
 
-.all-contacts-table .chart-box + .chart-box {
+.all-contacts-table .chart-box + .chart-box,
+.all-contacts-table .chart-box-link + .chart-box-link > div {
     margin-right: 0;
 }
 
