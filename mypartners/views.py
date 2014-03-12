@@ -955,9 +955,9 @@ def partner_get_referrals(request):
         else:
             hire_name = 'Hire'
 
-        data = {'applications': {'count': applications, 'name': app_name},
-                'interviews': {'count': interviews, 'name': interview_name},
-                'hires': {'count': hires, 'name': hire_name}}
+        data = {'applications': {'count': applications, 'name': app_name, 'typename': 'job'},
+                'interviews': {'count': interviews, 'name': interview_name, 'typename': 'job'},
+                'hires': {'count': hires, 'name': hire_name, 'typename': 'job'}}
 
         return HttpResponse(json.dumps(data))
     else:

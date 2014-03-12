@@ -6,6 +6,7 @@ $(function() {
             "click #email": "go_to_records",
             "click #phone": "go_to_records",
             "click #facetoface": "go_to_records",
+            "click #job": "go_to_records",
             "click .header-menu": "dropdown"
         },
 
