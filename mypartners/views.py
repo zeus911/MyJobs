@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from email.parser import HeaderParser
+from email.utils import parsedate
 from itertools import chain
 import json
 
@@ -782,16 +783,15 @@ def process_email(request):
     admin_email = request.REQUEST.get('from')
     parser = HeaderParser()
     headers = parser.parsestr(request.REQUEST.get('headers'))
-    if 'In-Reply-To' in headers:
-        unclean_contact_emails = headers.get('to', '').split(',')
-        unclean_cc_emails = headers.get('cc', '').split(',')
-        unclean_from_email = headers.get('from', '').split(',')
-        unclean_contact_emails = (unclean_cc_emails + unclean_from_email +
-                                  unclean_contact_emails)
+    date = headers.get('date')
+    if date:
+        date_time = parsedate(date)
     else:
-        unclean_contact_emails = request.REQUEST.get('to', '').split(",")
-        unclean_cc_emails = request.REQUEST.get('cc', '').split(",")
-        unclean_contact_emails = unclean_contact_emails + unclean_cc_emails
+        date_time = datetime.now()
+
+    unclean_contact_emails = request.REQUEST.get('to', '').split(",")
+    unclean_cc_emails = request.REQUEST.get('cc', '').split(",")
+    unclean_contact_emails = unclean_contact_emails + unclean_cc_emails
 
     admin_email = clean_email(admin_email)
     contact_emails = [clean_email(email) for email in unclean_contact_emails]
@@ -859,7 +859,7 @@ def process_email(request):
                                               contact_name=contact.name,
                                               contact_email=contact.email,
                                               contact_phone=contact.phone,
-                                              date_time=datetime.now(),
+                                              date_time=date_time,
                                               subject=subject,
                                               notes=force_text(email_text))
         for attachment in attachments:
