@@ -48,7 +48,8 @@ class UserResource(ModelResource):
 
         try:
             kwargs = {'email': email,
-                      'password1': request.GET.get('password', '')}
+                      'password1': request.GET.get('password', ''),
+                      'custom_msg': request.GET.get('custom_msg')}
             user, created = User.objects.create_inactive_user(**kwargs)
 
             data = {

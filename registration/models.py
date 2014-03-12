@@ -9,6 +9,7 @@ from django.db import models
 from django.db import transaction
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 try:
@@ -108,7 +109,7 @@ class ActivationProfile(models.Model):
                     'password': password,
                     'primary': primary,
                     'user': self.user,
-                    'custom_msg': custom_msg}
+                    'custom_msg': mark_safe(custom_msg)}
         subject = render_to_string('registration/activation_email_subject.txt',
                                    ctx_dict)
         subject = ''.join(subject.splitlines())
