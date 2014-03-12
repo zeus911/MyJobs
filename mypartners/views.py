@@ -3,6 +3,7 @@ from email.parser import HeaderParser
 from email.utils import parsedate
 from itertools import chain
 import json
+from time import mktime
 
 from django.conf import settings
 from django.contrib.admin.models import DELETION
@@ -781,11 +782,14 @@ def process_email(request):
         return HttpResponse(status=200)
 
     admin_email = request.REQUEST.get('from')
-    parser = HeaderParser()
-    headers = parser.parsestr(request.REQUEST.get('headers'))
-    date = headers.get('date')
-    if date:
-        date_time = parsedate(date)
+    headers = request.REQUEST.get('headers')
+    if headers:
+        parser = HeaderParser()
+        headers = parser.parsestr(headers)
+
+    if headers and 'Date' in headers:
+        date_time = mktime(parsedate(headers.get('Date')))
+        date_time = datetime.fromtimestamp(date_time)
     else:
         date_time = datetime.now()
 
