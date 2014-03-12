@@ -3365,3 +3365,14 @@ body.modal-open {
     width: 100%;
     margin-bottom: 20px;
 }
+
+.truncate { 
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    display:block;
+}
+
+.table-fixed {
+    table-layout: fixed;
+}
