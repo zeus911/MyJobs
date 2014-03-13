@@ -18,7 +18,6 @@ from mydashboard.models import Company
 from mypartners.models import (ContactLogEntry, CONTACT_TYPE_CHOICES, CHANGE)
 
 
-
 def prm_worthy(request):
     """
     Makes sure the User is worthy enough to use PRM.
