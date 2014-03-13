@@ -953,15 +953,15 @@ def partner_get_referrals(request):
         for num_set in nums:
             try:
                 applications += int(num_set[0])
-            except Exception:
+            except (ValueError, KeyError):
                 pass
             try:
                 interviews += int(num_set[1])
-            except Exception:
+            except (ValueError, KeyError):
                 pass
             try:
                 hires += int(num_set[2])
-            except Exception:
+            except (ValueError, KeyError):
                 pass
 
         # figure names
