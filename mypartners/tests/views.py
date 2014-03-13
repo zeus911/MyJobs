@@ -805,7 +805,8 @@ class EmailTests(MyPartnersTestCase):
         self.data = {
             'from': self.admin.user.email,
             'subject': 'Test Email Subject',
-            'text': 'Test email body'
+            'text': 'Test email body',
+            'key': settings.EMAIL_KEY,
         }
 
     def test_email_bad_contacts(self):
