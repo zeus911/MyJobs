@@ -192,6 +192,10 @@ class ContactRecord(models.Model):
 
         return contact_str
 
+    def get_human_readable_contact_type(self):
+        contact_types = dict(CONTACT_TYPE_CHOICES)
+        return contact_types[self.contact_type].title()
+
     def get_record_url(self):
         params = {
             'partner': self.partner.pk,
@@ -200,6 +204,7 @@ class ContactRecord(models.Model):
         }
         query_string = urlencode(params)
         return "%s?%s" % (reverse('record_view'), query_string)
+
 
 MAX_ATTACHMENT_MB = 4
 
