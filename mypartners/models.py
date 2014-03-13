@@ -89,6 +89,18 @@ class Contact(models.Model):
                     self.user = user
         return super(Contact, self).save(*args, **kwargs)
 
+    def get_contact_url(self):
+        base_urls = {
+            'contact': reverse('edit_contact'),
+        }
+        params = {
+            'partner': self.partner.pk,
+            'company': self.partner.owner.pk,
+            'id': self.pk,
+            'ct': ContentType.objects.get_for_model(Contact).pk
+        }
+        query_string = urlencode(params)
+        return "%s?%s" % (base_urls[self.content_type.name], query_string)
 
 class Partner(models.Model):
     """
@@ -106,9 +118,6 @@ class Partner(models.Model):
 
     def __unicode__(self):
         return self.name
-
-
-MAX_ATTACHMENT_MB = 4
 
 
 class ContactRecord(models.Model):
@@ -186,6 +195,18 @@ class ContactRecord(models.Model):
     def get_human_readable_contact_type(self):
         contact_types = dict(CONTACT_TYPE_CHOICES)
         return contact_types[self.contact_type].title()
+
+    def get_record_url(self):
+        params = {
+            'partner': self.partner.pk,
+            'company': self.partner.owner.pk,
+            'id': self.pk,
+        }
+        query_string = urlencode(params)
+        return "%s?%s" % (reverse('record_view'), query_string)
+
+
+MAX_ATTACHMENT_MB = 4
 
 
 class PRMAttachment(models.Model):
