@@ -12,17 +12,15 @@ from django.conf import settings
 from django.contrib.admin.models import DELETION
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
-frofrom django.http import Http404, HttpResponse, HttpResponseRedirectm django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
-from django.core.urlresolvers import reverse
 from django.db.models import Count
-from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.utils.text import force_text
-from djangoviews.decorators.csrf import csrf exempt
+from django.views.decorators.csrf import csrf_exempt
 
 from myjobs.models import User
 from mydashboard.models import Company
@@ -39,8 +37,10 @@ from mypartners.helpers import (prm_worthy, add_extra_params,
                                 get_searches_for_partner, get_logs_for_partner,
                                 get_contact_records_for_partner,
                                 contact_record_val_to_str, retrieve_fields,
-                                get_records_from_request, send_contact_record_email_response,
+                                get_records_from_request,
+                                send_contact_record_email_response,
                                 find_partner_from_email)
+
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm(request):
@@ -350,12 +350,24 @@ def prm_edit_saved_search(request):
         form = PartnerSavedSearchForm(partner=partner, instance=instance)
     else:
         form = PartnerSavedSearchForm(partner=partner)
+    microsites = []
+    for microsite in company.microsite_set.all():
+        ms = {}
+        ms['url'] = microsite.url
+        readable_url = microsite.url.split('//')[1]
+        readable_url = readable_url.rstrip('/')
+        ms['name'] = readable_url
+        microsites.append(ms)
+
     ctx = {
         'company': company,
         'partner': partner,
         'item_id': item_id,
         'form': form,
-        'content_type': ContentType.objects.get_for_model(PartnerSavedSearch).id,
+        'microsites': microsites,
+        'content_type': ContentType.objects.\
+            get_for_model(PartnerSavedSearch).id,
+        'view_name': 'PRM'
     }
     return render_to_response('mypartners/partner_edit_search.html', ctx,
                               RequestContext(request))
@@ -479,6 +491,45 @@ def partner_view_full_feed(request):
                               RequestContext(request))
 
 
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def prm_report_records(request):
+    ctx = get_record_context(request)
+    return render_to_response('mypartners/report_record_view.html', ctx,
+                              RequestContext(request))
+
+
+def get_record_context(request):
+    company, partner, user = prm_worthy(request)
+    record_type = request.REQUEST.get('record_type')
+    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
+    contact_records = get_contact_records_for_partner(
+        partner, record_type=record_type, date_time_range=dt_range)
+    most_recent_activity = get_logs_for_partner(partner)
+
+    contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
+    contacts = ContactRecord.objects.filter(partner=partner)
+    contacts = contacts.values('contact_name').distinct()
+    contact_choices = [('all', 'All')]
+    [contact_choices.append((c['contact_name'], c['contact_name']))
+     for c in contacts]
+
+    ctx = {
+        'company': company,
+        'contact_choices': contact_choices,
+        'contact_type_choices': contact_type_choices,
+        'date_display': '30',
+        'date_start': dt_range[0],
+        'date_end': dt_range[1],
+        'most_recent_activity': most_recent_activity,
+        'partner': partner,
+        'records': contact_records,
+        'record_type': record_type,
+        'view_name': 'PRM'
+    }
+    return ctx
+
+
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_records(request):
     """
@@ -508,6 +559,7 @@ def prm_records(request):
         'most_recent_activity': most_recent_activity,
         'partner': partner,
         'records': contact_records,
+        'view_name': 'PRM'
     }
     return render_to_response('mypartners/main_records.html', ctx,
                               RequestContext(request))

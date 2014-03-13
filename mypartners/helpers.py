@@ -2,16 +2,14 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
-from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from django.template.loader import render_to_string
-from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.text import get_text_list, force_unicode, force_text
 from django.utils.translation import ugettext
 
-
+from datetime import datetime, timedelta
 import re
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
