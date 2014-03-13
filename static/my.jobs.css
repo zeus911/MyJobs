@@ -484,7 +484,7 @@ h1 > small > a:hover {
 
 .chart-box.small > .reports-record-type,
 .small-chart-box > .reports-record-type {
-    font-size: 0.7em;
+    font-size: 0.8em;
     line-height: 10px;
 }
 
@@ -517,10 +517,15 @@ h1 > small > a:hover {
 
 .all-contacts-table tr > td + td {
     width: 248px;
+    max-width: 152px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .all-contacts-table tr > td + td + td {
     width: 150px;
+    white-space: normal;
 }
 
 .all-contacts-table .chart-box + .chart-box,
