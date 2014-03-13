@@ -15,9 +15,8 @@ from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
 from mydashboard.models import Company
-from mypartners.models import (ContactLogEntry, ContactRecord,
-                               CONTACT_TYPE_CHOICES, CHANGE)
-from mysearches.models import PartnerSavedSearch
+from mypartners.models import (ContactLogEntry, CONTACT_TYPE_CHOICES, CHANGE)
+
 
 
 def prm_worthy(request):
@@ -130,32 +129,6 @@ def get_change_message(form):
     return change_message or ugettext('No fields changed.')
 
 
-def get_searches_for_partner(partner):
-    saved_searches = PartnerSavedSearch.objects.filter(partner=partner)
-    saved_searches = saved_searches.order_by('-created_on')
-    return saved_searches
-
-
-def get_logs_for_partner(partner, content_type_id=None, num_items=10):
-    logs = ContactLogEntry.objects.filter(partner=partner)
-    if content_type_id:
-        logs = logs.filter(content_type_id=content_type_id)
-    return logs.order_by('-action_time')[:num_items]
-
-
-def get_contact_records_for_partner(partner, contact_name=None,
-                                    record_type=None, date_time_range=[],
-                                    offset=None, limit=None):
-    records = ContactRecord.objects.filter(partner=partner)
-    if contact_name:
-        records = records.filter(contact_name=contact_name)
-    if date_time_range:
-        records = records.filter(date_time__range=date_time_range)
-    if record_type:
-        records = records.filter(contact_type=record_type)
-    return records[offset:limit]
-
-
 def get_attachment_link(company_id, partner_id, attachment_id, attachment_name):
     """
     Creates a link (html included) to a PRMAttachment.
@@ -212,8 +185,8 @@ def get_records_from_request(request):
     contact_type = request.REQUEST.get('contact_type')
     contact = None if contact == 'all' else contact
     contact_type = None if contact_type == 'all' else contact_type
-    records = get_contact_records_for_partner(partner, contact_name=contact,
-                                              record_type=contact_type)
+    records = partner.get_contact_records(contact_name=contact,
+                                          record_type=contact_type)
 
     date_range = request.REQUEST.get('date')
     if date_range:

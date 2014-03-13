@@ -11,6 +11,7 @@ from django.db import models
 
 from myjobs.models import User
 from mydashboard.models import Company
+from mysearches.models import PartnerSavedSearch
 
 
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
@@ -118,6 +119,31 @@ class Partner(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    # get_searches_for_partner
+    def get_searches(self):
+        saved_searches = PartnerSavedSearch.objects.filter(partner=self)
+        saved_searches = saved_searches.order_by('-created_on')
+        return saved_searches
+
+    # get_logs_for_partner
+    def get_logs(self, content_type_id=None, num_items=10):
+        logs = ContactLogEntry.objects.filter(partner=self)
+        if content_type_id:
+            logs = logs.filter(content_type_id=content_type_id)
+        return logs.order_by('-action_time')[:num_items]
+
+    # get_contact_records_for_partner
+    def get_contact_records(self, contact_name=None, record_type=None,
+                            date_time_range=[], offset=None, limit=None):
+        records = ContactRecord.objects.filter(partner=self)
+        if contact_name:
+            records = records.filter(contact_name=contact_name)
+        if date_time_range:
+            records = records.filter(date_time__range=date_time_range)
+        if record_type:
+            records = records.filter(contact_type=record_type)
+        return records[offset:limit]
 
 
 class ContactRecord(models.Model):

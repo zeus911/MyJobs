@@ -34,8 +34,6 @@ from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
                                ADDITION, DELETION)
 from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
-                                get_searches_for_partner, get_logs_for_partner,
-                                get_contact_records_for_partner,
                                 contact_record_val_to_str, retrieve_fields,
                                 get_records_from_request,
                                 send_contact_record_email_response,
@@ -303,14 +301,13 @@ def prm_overview(request):
     """
     company, partner, user = prm_worthy(request)
 
-    most_recent_activity = get_logs_for_partner(partner)
+    most_recent_activity = partner.get_logs()
     dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-    records = get_contact_records_for_partner(
-        partner, date_time_range=dt_range)
+    records = partner.get_contact_records(date_time_range=dt_range)
     communication = records.order_by('-created_on')
     records = records.exclude(contact_type='job').count()
     most_recent_communication = communication[:3]
-    saved_searches = get_searches_for_partner(partner)
+    saved_searches = partner.get_searches()
     most_recent_saved_searches = saved_searches[:3]
 
 
@@ -333,7 +330,7 @@ def prm_saved_searches(request):
 
     """
     company, partner, user = prm_worthy(request)
-    saved_searches = get_searches_for_partner(partner)
+    saved_searches = partner.get_searches()
     ctx = {'searches': saved_searches,
            'company': company,
            'partner': partner}
@@ -503,9 +500,9 @@ def get_record_context(request):
     company, partner, user = prm_worthy(request)
     record_type = request.REQUEST.get('record_type')
     dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-    contact_records = get_contact_records_for_partner(
-        partner, record_type=record_type, date_time_range=dt_range)
-    most_recent_activity = get_logs_for_partner(partner)
+    contact_records = partner.get_contact_records(record_type=record_type,
+                                                  date_time_range=dt_range)
+    most_recent_activity = partner.get_logs()
 
     contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
     contacts = ContactRecord.objects.filter(partner=partner)
@@ -538,9 +535,8 @@ def prm_records(request):
     """
     company, partner, user = prm_worthy(request)
     dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-    contact_records = get_contact_records_for_partner(partner,
-                                                      date_time_range=dt_range)
-    most_recent_activity = get_logs_for_partner(partner)
+    contact_records = partner.get_contact_records(date_time_range=dt_range)
+    most_recent_activity = partner.get_logs()
 
     contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
     contacts = ContactRecord.objects.filter(partner=partner)
@@ -631,12 +627,12 @@ def prm_view_records(request):
                 '?company=%d&partner=%d' % (company.id, partner.id))
 
     prev_offset = (offset - 1) if offset > 1 else 0
-    records = get_contact_records_for_partner(partner, record_type=record_type,
-                                              contact_name=name,
-                                              date_time_range=[range_start,
-                                                               range_end],
-                                              offset=prev_offset,
-                                              limit=prev_offset + 3)
+    records = partner.get_contact_records(record_type=record_type,
+                                          contact_name=name,
+                                          date_time_range=[range_start,
+                                                           range_end],
+                                          offset=prev_offset,
+                                          limit=prev_offset + 3)
 
     # Since we always retrieve 3, if the record is at the beginning of the
     # list we might have 3 results but no previous.
@@ -749,8 +745,8 @@ def get_records(request):
     contact_type = request.REQUEST.get('contact_type')
     contact = None if contact == 'all' else contact
     contact_type = None if contact_type == 'all' else contact_type
-    records = get_contact_records_for_partner(partner, contact_name=contact,
-                                              record_type=contact_type)
+    records = partner.get_contact_records(contact_name=contact,
+                                          record_type=contact_type)
 
     date_range = request.REQUEST.get('date')
     if date_range:
@@ -780,10 +776,10 @@ def get_records(request):
         except (ValidationError, TypeError):
             pass
 
-    records = get_contact_records_for_partner(partner, contact_name=contact,
-                                              record_type=contact_type,
-                                              date_time_range=[range_start,
-                                                               range_end])
+    records = partner.get_contact_records(contact_name=contact,
+                                          record_type=contact_type,
+                                          date_time_range=[range_start,
+                                                           range_end])
     ctx = {
         'records': records,
         'company': company,
@@ -839,8 +835,7 @@ def get_uploaded_file(request):
 def partner_main_reports(request):
     company, partner, user = prm_worthy(request)
     dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-    records = get_contact_records_for_partner(partner,
-                                              date_time_range=dt_range)
+    records = partner.get_contact_records(date_time_range=dt_range)
     total_records_wo_followup = records.exclude(contact_type='job')\
         .exclude(contact_type='pssemail').count()
     referral = records.filter(contact_type='job').count()
@@ -909,9 +904,9 @@ def partner_get_records(request):
     if request.method == 'GET':
         company, partner, user = prm_worthy(request)
         dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-        records = get_contact_records_for_partner(
-            partner, date_time_range=dt_range).exclude(contact_type='job')\
-            .exclude(contact_type='pssemail')
+        records = partner.get_contact_records(date_time_range=dt_range)\
+                      .exclude(contact_type='job')\
+                      .exclude(contact_type='pssemail')
         email = records.filter(contact_type='email').count()
         phone = records.filter(contact_type='phone').count()
         facetoface = records.filter(contact_type='facetoface').count()
@@ -948,8 +943,7 @@ def partner_get_referrals(request):
     if request.method == 'GET':
         company, partner, user = prm_worthy(request)
         dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-        records = get_contact_records_for_partner(partner,
-                                                  date_time_range=dt_range)
+        records = partner.get_contact_records(date_time_range=dt_range)
         referrals = records.filter(contact_type='job')
 
         # (job application, job interviews, job hires)
