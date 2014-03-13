@@ -327,7 +327,7 @@ class ContactLogEntry(models.Model):
             'contact': reverse('edit_contact'),
             'contact record': reverse('record_view'),
             'partner saved search': reverse('partner_edit_search'),
-            'partner': reverse('create_partner'),
+            'partner': reverse('partner_details'),
         }
         params = {
             'partner': self.partner.pk,

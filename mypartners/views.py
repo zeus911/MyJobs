@@ -64,7 +64,6 @@ def prm(request):
 
     form = request.REQUEST.get('form')
     if not company.partner_set.all():
-        has_partners = False
         if not form:
             partner_form = PartnerInitialForm()
         partners = []
@@ -73,7 +72,6 @@ def prm(request):
             partners = Partner.objects.filter(owner=company.id)
         except Partner.DoesNotExist:
             raise Http404
-        has_partners = True
         partner_form = None
 
     ctx = {'has_partners': True if partners else False,
@@ -143,6 +141,9 @@ def edit_item(request):
     if content_id == ContentType.objects.get_for_model(Partner).id:
         if not item_id:
             form = NewPartnerForm()
+        else:
+            item = get_object_or_404(Partner, pk=item_id)
+            form = PartnerForm(instance=item)
     elif content_id == ContentType.objects.get_for_model(Contact).id:
         if not item_id:
             form = ContactForm()
