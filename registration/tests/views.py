@@ -10,6 +10,7 @@ from django.test import TestCase
 from myjobs.models import User
 from myjobs.tests.views import TestClient
 from mypartners.models import Contact
+from mypartners.tests.factories import PartnerFactory
 from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch
 from registration import forms
@@ -127,8 +128,9 @@ class MergeUserTests(TestCase):
         self.activation_profile.activation_key = self.key
         self.activation_profile.save()
 
+        self.partner = PartnerFactory()
         for _ in range(0, 10):
-            Contact.objects.create(user=self.new_user)
+            Contact.objects.create(user=self.new_user, partner=self.partner)
             SavedSearch.objects.create(user=self.new_user)
 
     def test_expired_key_doesnt_merge(self):
