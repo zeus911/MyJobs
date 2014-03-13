@@ -38,13 +38,6 @@ following context:
 {% url 'registration_activate' activation_key as url %}
 <a href="https://secure.my.jobs{{url}}?verify-email={{user.email}}">Activate my account.</a>
 
-{% blocktrans %}<p> If you already have an account, you may visit the following
-    link to merge this new account with your current one.
-{% endblocktrans %}
-{% url 'merge_accounts' activation_key as url %}
-<a href="https://secure.my.jobs{{ url }}">Merge my accounts</a>
- 
-
 {% if password %}
     {% blocktrans %}
 
