@@ -104,12 +104,15 @@ class ActivationProfile(models.Model):
                               custom_msg=None):
         if self.activation_key_expired():
             self.reset_activation()
+        if custom_msg:
+            custom_msg = custom_msg.replace('\n', '<br>')
+            custom_msg = mark_safe(custom_msg)
         ctx_dict = {'activation_key': self.activation_key,
                     'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
                     'password': password,
                     'primary': primary,
                     'user': self.user,
-                    'custom_msg': mark_safe(custom_msg)}
+                    'custom_msg': custom_msg}
         subject = render_to_string('registration/activation_email_subject.txt',
                                    ctx_dict)
         subject = ''.join(subject.splitlines())

@@ -18,7 +18,7 @@ following context:
 
 {% endcomment %}
 <p>
-{% if custom_msg %}
+{% if custom_msg|length %}
     {{ custom_msg }}
 {% else %}
     {% if primary %}
