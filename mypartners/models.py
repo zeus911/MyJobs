@@ -11,7 +11,6 @@ from django.db import models
 
 from myjobs.models import User
 from mydashboard.models import Company
-from mysearches.models import PartnerSavedSearch
 
 
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
@@ -103,6 +102,7 @@ class Contact(models.Model):
         query_string = urlencode(params)
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
 
+
 class Partner(models.Model):
     """
     Object that this whole app is built around.
@@ -122,7 +122,7 @@ class Partner(models.Model):
 
     # get_searches_for_partner
     def get_searches(self):
-        saved_searches = PartnerSavedSearch.objects.filter(partner=self)
+        saved_searches = self.partnersavedsearch_set.all()
         saved_searches = saved_searches.order_by('-created_on')
         return saved_searches
 
