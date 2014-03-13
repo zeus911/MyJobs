@@ -300,7 +300,9 @@ def prm_overview(request):
     records = get_contact_records_for_partner(
         partner, date_time_range=dt_range)
     communication = records.order_by('-created_on')
-    records = records.exclude(contact_type='job').count()
+    referrals = records.filter(contact_type='job').count()
+    records = records.exclude(contact_type='job')\
+        .exclude(contact_type='pssemail').count()
     most_recent_communication = communication[:3]
     saved_searches = get_searches_for_partner(partner)
     most_recent_saved_searches = saved_searches[:3]
@@ -312,6 +314,7 @@ def prm_overview(request):
            'recent_communication': most_recent_communication,
            'recent_ss': most_recent_saved_searches,
            'count': records,
+           'referrals': referrals,
            'view_name': 'PRM'}
 
     return render_to_response('mypartners/overview.html', ctx,
@@ -880,7 +883,7 @@ def partner_main_reports(request):
     total_others = 0
     if contact_records.count() > 3:
         others = contact_records[3:]
-        top_contacts_records = contact_records[:3]
+        contact_records = contact_records[:3]
         for contact in others:
             total_others += contact['count']
 
