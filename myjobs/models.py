@@ -372,24 +372,26 @@ class User(AbstractBaseUser, PermissionsMixin):
         :l_name:    If the update flag is set to true this needs to have the
                     family_name value from the updating Name object.
         """
-        if update:
+        if update and f_name != '' and l_name != '':
             self.first_name = f_name
             self.last_name = l_name
             self.save()
+            return
+
+        try:
+            name_obj = self.profileunits_set.filter(
+                content_type__name="name").get(name__primary=True)
+        except Exception:
+            name_obj = None
+
+        if name_obj:
+            self.first_name = name_obj.name.given_name
+            self.last_name = name_obj.name.family_name
+            self.save()
         else:
-            try:
-                name_obj = self.profileunits_set.filter(
-                    content_type__name="name").get(name__primary=True)
-            except:
-                name_obj = False
-            if name_obj:
-                self.first_name = name_obj.name.given_name
-                self.last_name = name_obj.name.family_name
-                self.save()
-            else:
-                self.first_name = ""
-                self.last_name = ""
-                self.save()
+            self.first_name = ""
+            self.last_name = ""
+            self.save()
 
 
 class EmailLog(models.Model):

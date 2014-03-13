@@ -17,7 +17,7 @@ from django.shortcuts import render_to_response
 
 from mydashboard.helpers import (saved_searches, filter_by_microsite,
                                  filter_by_date, apply_facets_and_filters,
-                                 parse_facets)
+                                 parse_facets, remove_param_from_url)
 from mydashboard.models import Company, Microsite, CompanyUser
 from myjobs.models import User
 from myprofile.models import (PrimaryNameProfileUnitManager,
@@ -26,7 +26,7 @@ from mysearches.models import SavedSearch
 from solr.helpers import Solr, format_date, dict_to_object
 
 from endless_pagination.decorators import page_template
-from xhtml2pdf import pisa
+from urlparse import urlparse
 from lxml import etree
 
 
@@ -50,9 +50,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     user_solr = Solr()
     facet_solr = Solr()
 
-    # Add join only if we're filtering.
-    if ('company' in request.GET and len(request.GET) > 1) or \
-            (len(request.GET) == 0):
+    # Add join only if we're using facets, not if we're simply searching.
+    query_params = set(['search', 'company'])
+    if not query_params.issuperset(set(request.GET.keys())):
         user_solr = user_solr.add_join(from_field='ProfileUnits_user_id',
                                        to_field='User_id')
     facet_solr = facet_solr.add_join(from_field='User_id',
@@ -100,6 +100,10 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     user_solr = user_solr.add_filter_query(rng)
     facet_solr = facet_solr.add_query(rng)
 
+    if request.GET.get('search', False):
+        user_solr = user_solr.add_query("%s" % request.GET['search'])
+        facet_solr = facet_solr.add_query("%s" % request.GET['search'])
+
     user_solr, facet_solr = filter_by_microsite(active_microsites,
                                                           user_solr,
                                                           facet_solr)
@@ -112,11 +116,10 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                                                                         user_solr,
                                                                         facet_solr,
                                                                         loc_solr)
-
-    solr_results = user_solr.rows_to_fetch(user_solr.search().hits).search()
+    solr_results = user_solr.rows_to_fetch(100).search()
 
     # List of dashboard widgets to display.
-    dashboard_widgets = ["candidates", "applied_filters", "filters"]
+    dashboard_widgets = ["candidates", "search", "applied_filters", "filters"]
 
     # Filter out duplicate entries for a user.
     candidates = sorted(dict_to_object(solr_results.docs),
@@ -137,15 +140,13 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         requested_date_button = 'thirty_days'
 
     url = request.build_absolute_uri()
-    facets = parse_facets(facet_solr.search(), url)
-    loc_facets = parse_facets(loc_solr.search(), url)
+    facets = parse_facets(facet_solr.search(), request)
+    loc_facets = parse_facets(loc_solr.search(), request)
     all_facets = dict(facets.items() + loc_facets.items())
 
     context = {
         'admin_you': request.user,
-        'after': date_start,
         'applied_filters': filters,
-        'before': date_end,
         'candidates': candidate_list,
         'candidates_page': candidates_page,
         'company_admins': admins,
@@ -155,6 +156,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         'dashboard_widgets': dashboard_widgets,
         'date_button': requested_date_button,
         'date_display': date_display,
+        'date_end': date_end,
+        'date_start': date_start,
+        'date_submit_url': url,
         'facets': all_facets,
         'site_name': site_name,
         'total_candidates': len(candidate_list),
@@ -226,8 +230,8 @@ def microsite_activity(request, template="mydashboard/microsite_activity.html",
 
     context = {
         'microsite_url': requested_microsite,
-        'after': date_start,
-        'before': date_end,
+        'date_start': date_start,
+        'date_end': date_end,
         'candidates': candidate_list,
         'view_name': 'Company Dashboard',
         'company_name': company.name,
@@ -235,6 +239,7 @@ def microsite_activity(request, template="mydashboard/microsite_activity.html",
         'date_button': requested_date_button,
         'candidates_page': candidates_page,
         'saved_search_count': len(candidate_list),
+        'date_submit_url': request.build_absolute_uri(),
     }
     
     if extra_context is not None:
@@ -255,8 +260,8 @@ def candidate_information(request):
     user_id = request.REQUEST.get('user')
     company_id = request.REQUEST.get('company')
     anchor_id = request.REQUEST.get('anchor', False)
-    after = request.REQUEST.get('after', False)
-    before = request.REQUEST.get('before', False)    
+    date_start = request.REQUEST.get('date_start', False)
+    date_end = request.REQUEST.get('date_end', False)
     candidates_page = request.REQUEST.get('page', False)
     
     # user gets pulled out from id
@@ -289,16 +294,22 @@ def candidate_information(request):
 
     searches = user.savedsearch_set.filter(url__in=urls)
 
-    data_dict = {'user_info': models,
-                 'company_id': company_id,
-                 'primary_name': primary_name,
-                 'the_user': user,
-                 'searches': searches,
-                 'after': after,
-                 'anchor': anchor_id,
-                 'before': before,                 
-                 'candidates_page': candidates_page,
-                 'coming_from': coming_from}
+    modified_url = remove_param_from_url(request.build_absolute_uri(), 'user')
+    query_string = "?%s" % urlparse(modified_url).query
+
+    data_dict = {
+        'user_info': models,
+        'company_id': company_id,
+        'primary_name': primary_name,
+        'the_user': user,
+        'searches': searches,
+        'date_start': date_start,
+        'anchor': anchor_id,
+        'date_end': date_end,
+        'candidates_page': candidates_page,
+        'coming_from': coming_from,
+        'query_string': query_string,
+    }
 
     return render_to_response('mydashboard/candidate_information.html',
                               data_dict, RequestContext(request))
@@ -315,9 +326,6 @@ def export_candidates(request):
         if export_type == 'csv':
             candidates = filter_candidates(request)
             response = export_csv(request, candidates)
-        elif export_type == 'pdf':
-            candidates = filter_candidates(request)
-            response = export_pdf(request, candidates)
         elif export_type == 'xml' or export_type == 'json':
             candidates = filter_candidates(request)
             response = export_hr(request, candidates, export_type)
@@ -501,40 +509,6 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
         writer.writerow(user_fields)
 
     return response
-
-
-def export_pdf(request, candidates):
-    """
-    Generates an HTML page which then gets converted to pdf.
-    """
-    result = StringIO.StringIO()
-    company_id = request.REQUEST.get('company')
-    try:
-        company = Company.objects.get(id=company_id)
-    except Company.DoesNotExist:
-        raise Http404
-
-    candidate_info = {}
-    names = Name.objects.filter(user__in=candidates,
-                                primary=True).select_related('user',
-                                                             'user__id',
-                                                             'content_type',
-                                                             'name')
-    cand_count = len(candidates)
-    for name in names:
-        user = name.user
-        candidate_info[user] = name.get_full_name()
-        del_user_num = candidates.index(user)
-        del(candidates[del_user_num])
-    data_dict = {'company': company,
-                 'candidates': candidate_info,
-                 'no_name_cand': candidates,
-                 'count': cand_count}
-    template = get_template('mydashboard/export/candidate_listing.html')
-    html = template.render(Context(data_dict))
-
-    pisa_status = pisa.CreatePDF(html, dest=result)
-    return HttpResponse(result.getvalue(), mimetype='application/pdf')
 
 
 def export_hr(request, candidates, export_type, models_excluded=[]):

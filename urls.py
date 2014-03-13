@@ -35,7 +35,7 @@ urlpatterns = patterns('',
 )
 
 try:
-    if default_storage.connection.__repr__() == 'S3Connection:s3.amazonaws.com':
+    if repr(default_storage.connection) == 'S3Connection:s3.amazonaws.com':
         pass
     else:
         urlpatterns += static(settings.MEDIA_URL,

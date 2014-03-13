@@ -12,8 +12,17 @@
 
 {% block meta-extra %}
 <script src="{{ STATIC_URL }}partner-overview.js{% cache_buster %}"></script>
-{% endblock %}
+<script src="{{ STATIC_URL }}partner-reports.js{% cache_buster %}"></script>
 
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+    google.load("visualization", "1", {packages:["corechart"]});
+    var company_id = {{ company.id }};
+    var partner_id = {{ partner.id }};
+    var total_records = {{ count }};
+</script>
+
+{% endblock %}
 
 {% block content %}
     <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> <small>{{ partner.name }}</small></h1>
@@ -24,15 +33,15 @@
     </div>
     <div class="row desktop_hide" id="prm-mobile-row-buttons">
         <div class="span12">
-            <a class="btn" href="{% url "partner_records" %}?company={{ company.id }}&partner={{ partner.id }}">Communication Records</a>
+            <a class="btn" href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}">Communication Records</a>
             <a class="btn" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">Saved Searches</a>
             <a class="btn" href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">Edit Partner Details</a>
-            <a class="btn">Reports</a>
+            <a class="btn" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">Reports</a>
         </div>
     </div>
     <div class="row">
         <div class="span8">
-            <div class="formBox no-padding">
+            <div id="recent-activity" class="formBox no-padding">
                 <h4>Most Recent Activity <small id="activity-num" class="pull-right"></small></h4>
                 {% if recent_activity %}
 
@@ -49,7 +58,9 @@
 
                 {% else %}
 
-                No Recent Activity
+                <div class="formBox-content">
+                    No Recent Activity
+                </div>
 
                 <div class="formBox-footer">
                     <button class="btn pull-right" disabled><span id="prm-arrow-right"></span></button>
@@ -60,41 +71,33 @@
                 {% endif %}
             </div>
 
-            <div class="formBox no-padding mobile_hide">
+            <div id="recent-communications-records" class="formBox no-padding mobile_hide">
                 <h4>Most Recent Communication Records</h4>
                 <table class="table table-bordered table-striped">
                     <thead>
                         <tr>
                             <td>Date/Time</td>
+                            <td>Type</td>
                             <td>Contact</td>
-                            <td>Communication</td>
+                            <td>Subject</td>
+                            <td>Details</td>
                         </tr>
                     </thead>
                     {% if recent_communication %}
-                    {% for record in recent_communication %}
-                        <tr>
-                            <td>{{ record.date_time }}</td>
-                            <td>{{ record.get_record_description }}</td>
-                            <td>
-                                Subject: {{ record.subject }}<br/>
-                                {{ record.notes }}
-                            </td>
-                        </tr>
-                    {% endfor %}
+                        {% get_record_block recent_communication company partner %}
                     {% else %}
                     <tr>
-                        <td>No Recent Communication Records</td>
-                        <td></td><td></td>
+                        <td colspan=5>No Recent Communication Records.</td>
                     </tr>
                     {% endif %}
                 </table>
                 <div class="formBox-footer">
-                    <a class="btn pull-right" href="{% url "partner_records" %}?company={{ company.id }}&partner={{ partner.id }}">Communication Records</a>
+                    <a class="btn pull-right" href="{% url "partner_records" %}?company={{ company.id }}&partner={{ partner.id }}">Manage Records</a>
                     <div class="clear"></div>
                 </div>
             </div>
 
-            <div class="formBox no-padding mobile_hide">
+            <div id="recent-saved-searches" class="formBox no-padding mobile_hide">
                 <h4>Most Recent Saved Searches</h4>
                 <table class="table table-bordered table-striped">
                     <thead>
@@ -122,68 +125,25 @@
                     {% endif %}
                 </table>
                 <div class="formBox-footer">
-                    <a class="btn pull-right" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">Saved Searches</a>
+                    <a class="btn pull-right" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">Manage Searches</a>
                     <div class="clear"></div>
                 </div>
             </div>
         </div>
         <div class="span4 mobile_hide">
-            {% if reports %}
-            <div class="info-box" id="communication-reports">
-                <a class="btn" href="">Reports</a>
+            {% if count %}
+            <div class="info-box">
+                <div id="donut-box">
+                    <img src="{{ STATIC_URL }}images/ajax-loader.gif">
+                </div>
+                <div class="small-chart" id="donutchart" style="display:none"></div>
+                <div class="small-chart-box-holder" style="display:none"></div>
+                <a class="btn" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">View Reports</a>
             </div>
             {% endif %}
 
             <div class="info-box" id="partner-details">
-                <b>{{ partner.name }}</b>
-                <br><br>
-                {% with partner.primary_contact as contact %}
-                {% if contact %}
-                <b>{{ contact.name }}</b> <i>Primary Contact</i> <br>
-                {% if contact.email %}
-                <u>{{ contact.email }}</u> <br>
-                {% endif %}
-                {% if contact.address_line_one %}
-                {{ contact.address_line_one }}
-                    {% if contact.address_line_two %}
-                    {{ contact.address_line_two }} <br>
-                    {% else %}
-                    <br>
-                    {% endif %}
-                {% endif %}
-                {% if contact.city %}
-                {{ contact.city }},
-                    {% if contact.state %}
-                    {{ contact.state }}
-                        {% if contact.postal_code %}
-                        {{ contact.postal_code }} <br>
-                        {% else %}
-                            <br>
-                        {% endif %}
-                    {% else %}
-                        <br>
-                    {% endif %}
-                {% else %}
-                    {% if contact.state %}
-                    {{ contact.state }}
-                        {% if contact.postal_code %}
-                        {{ contact.postal_code }} <br>
-                        {% else %}
-                            <br>
-                        {% endif %}
-                    {% else %}
-                        {% if contact.postal_code %}
-                        {{ contact.postal_code }} <br>
-                        {% endif %}
-                    {% endif %}
-                {% endif %}
-                {% if contact.phone %}
-                {{ contact.phone }} <br>
-                {% endif %}
-                {% endif %}
-                    <br>
-                {% endwith %}
-                <a class="btn" href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">Edit partner Details</a>
+                {% include "mypartners/partner_details_widget.html" %}
             </div>
 
         </div>

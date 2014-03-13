@@ -1,0 +1,17 @@
+<tbody id="record-results">
+    {% if records %}
+    {% for record in records %}
+        <tr class="contact-record-tr" onclick="window.document.location='{% url 'record_view' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ record.id }}&offset={{ forloop.counter0 }}{% if contact_type %}&type={{ contact_type }}{% endif %}{% if contact_name %}&name={{ contact_name }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}';">
+            <td>{{ record.date_time }}</td>
+            <td>{{ record.get_human_readable_contact_type }}</td>
+            <td>{{ record.contact_name }}</td>
+            <td>{{ record.subject }}</td>
+            <td>{{ record.notes }}</td>
+        </tr>
+    {% endfor %}
+    {% else %}
+    <tr>
+        <td colspan=5>No records available.</td>
+    </tr>
+    {% endif %}
+</tbody>

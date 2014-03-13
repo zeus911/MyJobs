@@ -5,7 +5,7 @@ from django import template
 from myjobs import version
 from myprofile.models import ProfileUnits
 from myjobs.models import User
-from myjobs.helpers import get_completion
+from myjobs.helpers import get_completion, make_fake_gravatar
 from mydashboard.models import CompanyUser
 from mymessages.models import Message
 
@@ -13,19 +13,21 @@ from django.db.models.loading import get_model
 
 register=template.Library()
 
+
 @register.simple_tag
 def cache_buster():
     cache_buster = "?v=%s" % version.cache_buster
     return cache_buster
 
+
 @register.simple_tag
 def completion_level(level):
     """
     Determines the color of progress bar that should display.
-    
+
     inputs:
     :level: The completion percentage of a user's profile.
-    
+
     outputs:
     A string containing the bootstrap bar type
     """
@@ -40,12 +42,12 @@ def get_description(module):
 
     inputs:
     :module: The module to get the description for.
-    
+
     outputs:
     The description for the module, or an empty string if the module or the
     description doesn't exist.
     """
-    
+
     try:
         model = get_model("myprofile", module)
         return model.module_description if model.module_description else ""
@@ -55,7 +57,7 @@ def get_description(module):
 
 @register.assignment_tag
 def is_a_group_member(user, group):
-    """ 
+    """
     Determines whether or not the user is a member of a group
 
     Inputs:
@@ -70,6 +72,7 @@ def is_a_group_member(user, group):
         return User.objects.is_group_member(user, group)
     except ValueError:
         return False
+
 
 @register.assignment_tag
 def get_company_name(user):
@@ -91,30 +94,32 @@ def get_company_name(user):
     except CompanyUser.DoesNotExist:
         return {}
 
+
 @register.simple_tag(takes_context=True)
 def active_tab(context, view_name):
     """
     Determines whether a tab should be highlighted as the active tab.
 
-    Inputs: 
-    :view_name: The name of the view, as a string, for the tab being evaluated. 
+    Inputs:
+    :view_name: The name of the view, as a string, for the tab being evaluated.
 
     Outputs:
     Either "active" if it's the active tab, or an empty string.
     """
-    
+
     return "active" if context.get('view_name', '') == view_name else ""
+
 
 @register.simple_tag
 def get_gravatar(user, size=20):
     """
     Gets the img or div tag for the gravatar or initials block.
     """
-    
     try:
         return user.get_gravatar_url(size)
     except:
         return ''
+
 
 @register.simple_tag
 def get_gravatar_by_id(user_id, size=20):
@@ -123,6 +128,15 @@ def get_gravatar_by_id(user_id, size=20):
     except:
         return ''
 
+
+@register.simple_tag
+def get_nonuser_gravatar(email, size=20):
+    try:
+        return make_fake_gravatar(email, size)
+    except:
+        return ''
+
+
 @register.filter(name='get_messages')
 def get_messages(user):
     """
@@ -130,6 +144,7 @@ def get_messages(user):
     """
 
     return user.messages_unread()
+
 
 @register.assignment_tag(takes_context=True)
 def get_ms_name(context):
@@ -141,6 +156,7 @@ def get_ms_name(context):
     if cookie and len(cookie) > 33:
         cookie = cookie[:30] + '...'
     return cookie
+
 
 @register.simple_tag(takes_context=True)
 def get_ms_url(context):
@@ -161,6 +177,7 @@ def str_to_date(string):
         return strftime("%b. %d %Y", strptime(string, "%Y-%m-%dT%H:%M:%SZ"))
     except:
         return strftime("%b. %d %Y", strptime(string, "%Y-%m-%dT%H:%M:%S.%fZ"))
+
 
 @register.simple_tag
 def to_string(value):

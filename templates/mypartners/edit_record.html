@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load common_tags %}
 {% block site-title %}
-    <title>PRM New Saved Searches {{ company.name }}</title>
+    <title>PRM New Contact Records {{ company.name }}</title>
     <meta name="title" content="PRM New Contact Record {{ company.name }}">
 {% endblock %}
 {% load i18n %}
@@ -30,6 +30,7 @@
             <div class="actions pull-right">
                 {% if id %}<a class="btn" href="">{% trans 'Delete' %}</a>{% endif %}
                 <a class="btn" href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}">{% trans 'Cancel' %}</a>
+                {% if object_id %}<a class="btn" href="{% url 'delete_prm_item' %}?company={{ company.id }}&partner={{ partner.id }}&ct={{ content_type }}&id={{ object_id }}">{% trans 'Delete' %}</a>{% endif %}
                 <button type="submit" class="btn primary" id="partner_record_save">{% trans 'Save' %}</button>
             </div>
             <div class="clear"></div>

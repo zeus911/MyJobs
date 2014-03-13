@@ -1,35 +1,49 @@
 from os import path
 from re import sub
+from urllib import urlencode
 from uuid import uuid4
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
+from django.core.urlresolvers import reverse
 from django.db import models
 
 from myjobs.models import User
 from mydashboard.models import Company
 
 
-MAX_ATTACHMENT_MB = 4
-
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
                         ('phone', 'Phone'),
                         ('facetoface', 'Face to Face'),
-                        ('job', 'Job Followup'))
+                        ('job', 'Job Followup'),
+                        ('pssemail', "Partner Saved Search Email"))
+
+
+# Flags for ContactLogEntry action_flag. Based on django.contrib.admin.models
+# action flags.
+ADDITION = 1
+CHANGE = 2
+DELETION = 3
+EMAIL = 4
+
+ACTIVITY_TYPES = {
+    1: 'added',
+    2: 'updated',
+    3: 'deleted',
+    4: 'sent',
+}
 
 
 class Contact(models.Model):
     """
-    Everything here is self explanatory except for one part. With the Contact object there is
-    Contact.partner_set and .partners_set
+    Everything here is self explanatory except for one part. With the Contact
+    object there is Contact.partner_set and .partners_set
 
-    .partner_set = Foreign Key, Partner's Primary Contact
-    .partners_set = m2m, all the partners this contact has associated to it
     """
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    name = models.CharField(max_length=255, verbose_name='Full Name',
-                            blank=True)
+    partner = models.ForeignKey('Partner')
+    name = models.CharField(max_length=255, verbose_name='Full Name')
     email = models.EmailField(max_length=255, verbose_name='Email', blank=True)
     phone = models.CharField(max_length=30, verbose_name='Phone', blank=True)
     label = models.CharField(max_length=60, verbose_name='Address Label',
@@ -63,6 +77,7 @@ class Contact(models.Model):
         """
         Checks to see if there is a User that is using self.email add said User
         to self.user
+
         """
         if not self.user:
             if self.email:
@@ -72,18 +87,19 @@ class Contact(models.Model):
                     pass
                 else:
                     self.user = user
-        super(Contact, self).save(*args, **kwargs)
+        return super(Contact, self).save(*args, **kwargs)
 
 
 class Partner(models.Model):
     """
     Object that this whole app is built around.
+
     """
     name = models.CharField(max_length=255,
                             verbose_name='Partner Organization')
     uri = models.URLField(verbose_name='Partner URL', blank=True)
-    contacts = models.ManyToManyField(Contact, related_name="partners_set")
-    primary_contact = models.ForeignKey(Contact, null=True,
+    primary_contact = models.ForeignKey('Contact', null=True,
+                                        related_name='primary_contact',
                                         on_delete=models.SET_NULL)
     # owner is the Company that owns this partner.
     owner = models.ForeignKey(Company)
@@ -91,8 +107,8 @@ class Partner(models.Model):
     def __unicode__(self):
         return self.name
 
-    def add_contact(self, contact):
-        self.contacts.add(contact)
+
+MAX_ATTACHMENT_MB = 4
 
 
 class ContactRecord(models.Model):
@@ -144,28 +160,32 @@ class ContactRecord(models.Model):
         record.
 
         """
-
-        logs = ContactLogEntry.objects.filter(object_id=self.pk)
-        logs = logs.order_by('-action_time')[:1]
-        if logs:
-            user = logs[0].user.get_full_name()
-            if user == '':
-                user = logs[0].user.email
+        contact_type = dict(CONTACT_TYPE_CHOICES)[self.contact_type]
+        if contact_type == 'Email':
+            contact_type = 'n email'
         else:
-            user = "An employee"
+            contact_type = ' %s' % contact_type
 
-        if self.contact_type == 'facetoface':
-            return "%s had a meeting with %s" % (user, self.contact_name)
-        elif self.contact_type == 'phone':
-            return "%s called %s" % (user, self.contact_phone)
-        elif self.contact_type == 'job':
-            return "%s followed up with %s about job %s" % (user,
-                                                            self.contact_name,
-                                                            self.job_id)
-        elif self.contact_type == 'email':
-            return "%s emailed %s" % (user, self.contact_email)
-        else:
-            return "%s created a contact record" % user
+        try:
+            logs = ContactLogEntry.objects.filter(object_id=self.pk)
+            log = logs.order_by('-action_time')[:1][0]
+        except IndexError:
+            return ""
+
+        contact_str = "A%s record for %s was %s" % \
+                      (contact_type.lower(),
+                       self.contact_name, ACTIVITY_TYPES[log.action_flag])
+
+        if log.user:
+            user = log.user.get_full_name() if log.user.get_full_name() else \
+                log.user.email
+            contact_str = "%s by %s" % (contact_str, user)
+
+        return contact_str
+
+    def get_human_readable_contact_type(self):
+        contact_types = dict(CONTACT_TYPE_CHOICES)
+        return contact_types[self.contact_type].title()
 
 
 class PRMAttachment(models.Model):
@@ -207,7 +227,7 @@ class PRMAttachment(models.Model):
         # Confirm that we're not trying to change public/private status of
         # actual files during local testing.
         try:
-            if default_storage.connection.__repr__() == 'S3Connection:s3.amazonaws.com':
+            if repr(default_storage.connection) == 'S3Connection:s3.amazonaws.com':
                 from boto import connect_s3, s3
                 conn = connect_s3(settings.AWS_ACCESS_KEY_ID,
                                   settings.AWS_SECRET_KEY)
@@ -247,3 +267,26 @@ class ContactLogEntry(models.Model):
             return self.content_type.get_object_for_this_type(pk=self.object_id)
         except self.content_type.model_class().DoesNotExist:
             return None
+
+    def get_object_url(self):
+        """
+        Creates the link that leads to the view/edit view for that object.
+
+        """
+        obj = self.get_edited_object()
+        if not obj or not self.partner:
+            return None
+        base_urls = {
+            'contact': reverse('edit_contact'),
+            'contact record': reverse('record_view'),
+            'partner saved search': reverse('partner_edit_search'),
+            'partner': reverse('create_partner'),
+        }
+        params = {
+            'partner': self.partner.pk,
+            'company': self.partner.owner.pk,
+            'id': obj.pk,
+            'ct': self.content_type.pk,
+        }
+        query_string = urlencode(params)
+        return "%s?%s" % (base_urls[self.content_type.name], query_string)
