@@ -833,16 +833,19 @@ def partner_main_reports(request):
     dt_range = [datetime.now() + timedelta(-30), datetime.now()]
     records = get_contact_records_for_partner(partner,
                                               date_time_range=dt_range)
-    total_records_wo_followup = records.exclude(contact_type='job').count()
+    total_records_wo_followup = records.exclude(contact_type='job')\
+        .exclude(contact_type='pssemail').count()
     referral = records.filter(contact_type='job').count()
 
     # need to order_by -count to keep the "All Contacts" list in proper order
-    all_contacts = records.values('contact_name', 'contact_email')\
+    all_contacts = records.exclude(contact_type='pssemail')\
+        .values('contact_name', 'contact_email')\
         .annotate(count=Count('contact_name')).order_by('-count')
 
     # Used for Top Contacts
     contact_records = records\
         .exclude(contact_type='job')\
+        .exclude(contact_type='pssemail')\
         .values('contact_name', 'contact_email')\
         .annotate(count=Count('contact_name')).order_by('-count')
 
@@ -899,7 +902,8 @@ def partner_get_records(request):
         company, partner, user = prm_worthy(request)
         dt_range = [datetime.now() + timedelta(-30), datetime.now()]
         records = get_contact_records_for_partner(
-            partner, date_time_range=dt_range).exclude(contact_type='job')
+            partner, date_time_range=dt_range).exclude(contact_type='job')\
+            .exclude(contact_type='pssemail')
         email = records.filter(contact_type='email').count()
         phone = records.filter(contact_type='phone').count()
         facetoface = records.filter(contact_type='facetoface').count()
@@ -947,9 +951,18 @@ def partner_get_referrals(request):
         applications, interviews, hires = 0, 0, 0
         # add numbers together
         for num_set in nums:
-            applications += int(num_set[0])
-            interviews += int(num_set[1])
-            hires += int(num_set[2])
+            try:
+                applications += int(num_set[0])
+            except Exception:
+                pass
+            try:
+                interviews += int(num_set[1])
+            except Exception:
+                pass
+            try:
+                hires += int(num_set[2])
+            except Exception:
+                pass
 
         # figure names
         app_name, interview_name, hire_name = '', '', ''
@@ -966,9 +979,12 @@ def partner_get_referrals(request):
         else:
             hire_name = 'Hire'
 
-        data = {'applications': {'count': applications, 'name': app_name, 'typename': 'job'},
-                'interviews': {'count': interviews, 'name': interview_name, 'typename': 'job'},
-                'hires': {'count': hires, 'name': hire_name, 'typename': 'job'}}
+        data = {'applications': {'count': applications, 'name': app_name,
+                                 'typename': 'job'},
+                'interviews': {'count': interviews, 'name': interview_name,
+                               'typename': 'job'},
+                'hires': {'count': hires, 'name': hire_name,
+                          'typename': 'job'}}
 
         return HttpResponse(json.dumps(data))
     else:
