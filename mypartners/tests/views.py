@@ -731,7 +731,7 @@ class SearchEditTests(MyPartnersTestCase):
         error_msg = 'That URL does not contain feed information'
         self.assertIn(error_msg, errors['url'])
 
-    def test_create_new_contact_record(self):
+    def test_create_new_saved_search(self):
         self.search.delete()
         url = self.get_url('partner_savedsearch_save',
                           company=self.company.id,
@@ -764,7 +764,7 @@ class SearchEditTests(MyPartnersTestCase):
                              msg="%s != %s for field %s" %
                                  (v, getattr(search, k), k))
 
-    def test_update_existing_contact_record(self):
+    def test_update_existing_saved_search(self):
         url = self.get_url('partner_savedsearch_save',
                           company=self.company.id,
                           partner=self.partner.id,
@@ -797,6 +797,41 @@ class SearchEditTests(MyPartnersTestCase):
             self.assertEqual(v, getattr(search, k),
                              msg="%s != %s for field %s" %
                                  (v, getattr(search, k), k))
+
+    def test__partner_search_for_new_contact_email(self):
+        """Confirms that an email is sent when a new user is created for a 
+        contact because a saved search was created on that contact's behalf.
+        """
+        self.search.delete()
+        mail.outbox = []
+        new_contact = ContactFactory(partner=self.partner,
+                                     email="does@not.exist")
+
+        url = self.get_url('partner_savedsearch_save',
+                          company=self.company.id,
+                          partner=self.partner.id)
+
+        data = {'feed': 'http://www.jobs.jobs/jobs/rss/jobs',
+                'label': 'Test',
+                'url': 'http://www.jobs.jobs/jobs',
+                'url_extras': '',
+                'email': new_contact.email,
+                'account_activation_message': '',
+                'frequency': 'W',
+                'day_of_month': '',
+                'day_of_week': '3',
+                'partner_message': '',
+                'notes': '',
+                'company': self.company.id,
+                 'partner': self.partner.id}
+
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 2)
+        for s in [self.staff_user.get_full_name(), str(self.company),
+                  'has created a job search for you']:
+            self.assertIn(s, mail.outbox[1].body)
+
 
 
 class EmailTests(MyPartnersTestCase):
