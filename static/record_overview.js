@@ -42,7 +42,7 @@ $(function() {
 function update_records(btn_val) {
     var contact = $('#record_contact').val();
     var contact_type = $('#record_contact_type').val();
-    var data = "contact=" + contact + "&contact_type=" + contact_type + "&company=" + company + "&partner=" + partner;
+    var data = "contact=" + contact + "&record_type=" + contact_type + "&company=" + company + "&partner=" + partner;
     if(!btn_val) {
         date_start = $('input[name="date_start"]').val();
         date_end = $('input[name="date_end"]').val();

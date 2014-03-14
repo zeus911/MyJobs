@@ -181,7 +181,7 @@ def get_records_from_request(request):
     company, partner, user = prm_worthy(request)
 
     contact = request.REQUEST.get('contact')
-    contact_type = request.REQUEST.get('contact_type')
+    contact_type = request.REQUEST.get('record_type')
     contact = None if contact == 'all' else contact
     contact_type = None if contact_type == 'all' else contact_type
     records = partner.get_contact_records(contact_name=contact,
@@ -214,6 +214,10 @@ def get_records_from_request(request):
             records = records.filter(date_time__range=[range_start, range_end])
         except (ValidationError, TypeError):
             pass
+
+    range_start = (datetime.now() + timedelta(-30) if not range_start else
+                   range_start)
+    range_end = datetime.now() if not range_end else range_end
 
     return (range_start, range_end), date_str, records
 

@@ -491,54 +491,15 @@ def partner_view_full_feed(request):
                               RequestContext(request))
 
 
-
-@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
-def prm_report_records(request):
-    ctx = get_record_context(request)
-    return render_to_response('mypartners/report_record_view.html', ctx,
-                              RequestContext(request))
-
-
-def get_record_context(request):
-    company, partner, user = prm_worthy(request)
-    record_type = request.REQUEST.get('record_type')
-    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-    contact_records = partner.get_contact_records(record_type=record_type,
-                                                  date_time_range=dt_range)
-    most_recent_activity = partner.get_logs()
-
-    contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
-    contacts = ContactRecord.objects.filter(partner=partner)
-    contacts = contacts.values('contact_name').distinct()
-    contact_choices = [('all', 'All')]
-    [contact_choices.append((c['contact_name'], c['contact_name']))
-     for c in contacts]
-
-    ctx = {
-        'company': company,
-        'contact_choices': contact_choices,
-        'contact_type_choices': contact_type_choices,
-        'date_display': '30',
-        'date_start': dt_range[0],
-        'date_end': dt_range[1],
-        'most_recent_activity': most_recent_activity,
-        'partner': partner,
-        'records': contact_records,
-        'record_type': record_type,
-        'view_name': 'PRM'
-    }
-    return ctx
-
-
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_records(request):
     """
-    ContactRecord overview.
+    ContactRecord overview and ContactRecord overview from PRM reports.
 
     """
+
     company, partner, user = prm_worthy(request)
-    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-    contact_records = partner.get_contact_records(date_time_range=dt_range)
+    dt_range, date_str, contact_records = get_records_from_request(request)
     most_recent_activity = partner.get_logs()
 
     contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
@@ -552,7 +513,7 @@ def prm_records(request):
         'company': company,
         'contact_choices': contact_choices,
         'contact_type_choices': contact_type_choices,
-        'date_display': '30',
+        'date_display': 'date_str',
         'date_start': dt_range[0],
         'date_end': dt_range[1],
         'most_recent_activity': most_recent_activity,
@@ -560,8 +521,13 @@ def prm_records(request):
         'records': contact_records,
         'view_name': 'PRM'
     }
-    return render_to_response('mypartners/main_records.html', ctx,
-                              RequestContext(request))
+
+    if request.path == reverse('prm_report_records'):
+        return render_to_response('mypartners/report_record_view.html', ctx,
+                                  RequestContext(request))
+    else:
+        return render_to_response('mypartners/main_records.html', ctx,
+                                  RequestContext(request))
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
@@ -745,11 +711,9 @@ def get_records(request):
     company, partner, user = prm_worthy(request)
 
     contact = request.REQUEST.get('contact')
-    contact_type = request.REQUEST.get('contact_type')
+    contact_type = request.REQUEST.get('record_type')
     contact = None if contact == 'all' else contact
     contact_type = None if contact_type == 'all' else contact_type
-    records = partner.get_contact_records(contact_name=contact,
-                                          record_type=contact_type)
 
     date_range = request.REQUEST.get('date')
     if date_range:
@@ -775,7 +739,6 @@ def get_records(request):
             date_str = (range_end - range_start).days
             date_str = (("%s Days" % date_str) if date_str != 1
                         else ("%s Day" % date_str))
-            records = records.filter(date_time__range=[range_start, range_end])
         except (ValidationError, TypeError):
             pass
 
@@ -837,8 +800,8 @@ def get_uploaded_file(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_main_reports(request):
     company, partner, user = prm_worthy(request)
-    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-    records = partner.get_contact_records(date_time_range=dt_range)
+    dt_range, date_str, records = get_records_from_request(request)
+
     total_records_wo_followup = records.exclude(contact_type='job')\
         .exclude(contact_type='pssemail').count()
     referral = records.filter(contact_type='job').count()
@@ -861,8 +824,8 @@ def partner_main_reports(request):
         .annotate(count=Count('contact_name'))
 
     # Merge contact_records with referral_list and have all contacts
-    # A contact can have 0 contact records and 1 referral record and still show up
-    # vice versa with 1 contact record and 0 referrals
+    # A contact can have 0 contact records and 1 referral record and still show
+    # up vice versa with 1 contact record and 0 referrals
     contacts = []
     for contact_obj in all_contacts:
         contact = {}
@@ -890,14 +853,19 @@ def partner_main_reports(request):
         for contact in others:
             total_others += contact['count']
 
-    ctx = {'partner': partner,
-           'company': company,
-           'contacts': contacts,
-           'total_records': total_records_wo_followup,
-           'referral': referral,
-           'top_contacts': contact_records,
-           'others': total_others,
-           'view_name': 'PRM'}
+    ctx = {
+        'partner': partner,
+        'company': company,
+        'contacts': contacts,
+        'total_records': total_records_wo_followup,
+        'referral': referral,
+        'top_contacts': contact_records,
+        'others': total_others,
+        'view_name': 'PRM',
+        'date_start': dt_range[0],
+        'date_end': dt_range[1],
+        'date_display': date_str,
+    }
     return render_to_response('mypartners/partner_reports.html', ctx,
                               RequestContext(request))
 
@@ -905,11 +873,9 @@ def partner_main_reports(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_get_records(request):
     if request.method == 'GET':
-        company, partner, user = prm_worthy(request)
-        dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-        records = partner.get_contact_records(date_time_range=dt_range)\
-                      .exclude(contact_type='job')\
-                      .exclude(contact_type='pssemail')
+        prm_worthy(request)
+        dt_range, date_str, records = get_records_from_request(request)
+        records = records.exclude(contact_type__in=['job', 'pssemail'])
         email = records.filter(contact_type='email').count()
         phone = records.filter(contact_type='phone').count()
         facetoface = records.filter(contact_type='facetoface').count()
@@ -928,10 +894,15 @@ def partner_get_records(request):
         else:
             facetoface_name = 'Face to Face'
 
-        data = {'email': {"count": email, "name": email_name, 'typename': 'email'},
-                'phone': {"count": phone, "name": phone_name, 'typename': 'phone'},
-                'facetoface': {"count": facetoface, "name": facetoface_name,
-                               "typename": "facetoface"}}
+        data = {
+            'email': {"count": email, "name": email_name, 'typename': 'email'},
+            'phone': {"count": phone, "name": phone_name, 'typename': 'phone'},
+            'facetoface': {"count": facetoface, "name": facetoface_name,
+                           "typename": "facetoface"},
+            'date_start': dt_range[0],
+            'date_end': dt_range[1],
+            'date_display': date_str,
+        }
         data = OrderedDict(sorted(data.items(), key=lambda t: t[1]['count']))
         data_items = data.items()
         data_items.reverse()
@@ -944,9 +915,8 @@ def partner_get_records(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_get_referrals(request):
     if request.method == 'GET':
-        company, partner, user = prm_worthy(request)
-        dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-        records = partner.get_contact_records(date_time_range=dt_range)
+        prm_worthy(request)
+        dt_range, date_str, records = get_records_from_request(request)
         referrals = records.filter(contact_type='job')
 
         # (job application, job interviews, job hires)
@@ -970,7 +940,6 @@ def partner_get_referrals(request):
                 pass
 
         # figure names
-        app_name, interview_name, hire_name = '', '', ''
         if applications != 1:
             app_name = 'Applications'
         else:
@@ -984,12 +953,17 @@ def partner_get_referrals(request):
         else:
             hire_name = 'Hire'
 
-        data = {'applications': {'count': applications, 'name': app_name,
-                                 'typename': 'job'},
-                'interviews': {'count': interviews, 'name': interview_name,
-                               'typename': 'job'},
-                'hires': {'count': hires, 'name': hire_name,
-                          'typename': 'job'}}
+        data = {
+            'applications': {'count': applications, 'name': app_name,
+                             'typename': 'job'},
+            'interviews': {'count': interviews, 'name': interview_name,
+                           'typename': 'job'},
+            'hires': {'count': hires, 'name': hire_name,
+                      'typename': 'job'},
+            'date_start': dt_range[0],
+            'date_end': dt_range[1],
+            'date_display': date_str,
+        }
 
         return HttpResponse(json.dumps(data))
     else:
