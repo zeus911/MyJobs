@@ -307,8 +307,7 @@ def prm_overview(request):
     records = partner.get_contact_records(date_time_range=dt_range)
     communication = records.order_by('-created_on')
     referrals = records.filter(contact_type='job').count()
-    records = records.exclude(contact_type='job')\
-        .exclude(contact_type='pssemail').count()
+    records = records.exclude(contact_type='job').count()
     most_recent_communication = communication[:3]
     saved_searches = partner.get_searches()
     most_recent_saved_searches = saved_searches[:3]
@@ -839,8 +838,7 @@ def partner_main_reports(request):
     company, partner, user = prm_worthy(request)
     dt_range = [datetime.now() + timedelta(-30), datetime.now()]
     records = partner.get_contact_records(date_time_range=dt_range)
-    total_records_wo_followup = records.exclude(contact_type='job')\
-        .exclude(contact_type='pssemail').count()
+    total_records_wo_followup = records.exclude(contact_type='job').count()
     referral = records.filter(contact_type='job').count()
 
     # need to order_by -count to keep the "All Contacts" list in proper order
@@ -851,7 +849,6 @@ def partner_main_reports(request):
     # Used for Top Contacts
     contact_records = records\
         .exclude(contact_type='job')\
-        .exclude(contact_type='pssemail')\
         .values('contact_name', 'contact_email')\
         .annotate(count=Count('contact_name')).order_by('-count')
 
@@ -908,9 +905,9 @@ def partner_get_records(request):
         company, partner, user = prm_worthy(request)
         dt_range = [datetime.now() + timedelta(-30), datetime.now()]
         records = partner.get_contact_records(date_time_range=dt_range)\
-                      .exclude(contact_type='job')\
-                      .exclude(contact_type='pssemail')
+                      .exclude(contact_type='job')
         email = records.filter(contact_type='email').count()
+        email += records.filter(contact_type='pssemail').count()
         phone = records.filter(contact_type='phone').count()
         facetoface = records.filter(contact_type='facetoface').count()
 
