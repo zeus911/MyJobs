@@ -1,9 +1,11 @@
-from datetime import timedelta
+from jira.client import JIRA
 
 from django.contrib import auth
+from django.core import mail
+from django.core.mail import EmailMessage
 from django.utils.safestring import mark_safe
 
-from myprofile.forms import *
+from secrets import options, my_agent_auth, EMAIL_TO_ADMIN
 
 
 def instantiate_profile_forms(request, form_classes, settings, post=False):
@@ -31,6 +33,7 @@ def instantiate_profile_forms(request, form_classes, settings, post=False):
             profile_instances.append(form_class(**settings))
     return profile_instances
 
+
 def expire_login(request, *args, **kwargs):
     """
     Wrapper for django.contrib.auth.login that sets the session expiration
@@ -44,6 +47,7 @@ def expire_login(request, *args, **kwargs):
             # Session expires in 900 seconds (5 mins)
             request.session.set_expiry(900)
     return auth.login(request, *args, **kwargs)
+
 
 def get_completion(level):
     """
@@ -64,6 +68,26 @@ def get_completion(level):
         return "info"
     else:
         return "success"
+
+
+def log_to_jira(subject, body, issue_dict, from_email):
+    if hasattr(mail, 'outbox'):
+        jira = []
+    else:
+        try:
+            jira = JIRA(options=options, basic_auth=my_agent_auth)
+        except:
+            jira = []
+    to_jira = bool(jira)
+    if not to_jira:
+        msg = EmailMessage(subject, body, from_email, [EMAIL_TO_ADMIN])
+        msg.send()
+    else:
+        project = jira.project('MJA')
+
+        issue_dict['project'] = {'key': project.key},
+        jira.create_issue(fields=issue_dict)
+    return to_jira
 
 
 def make_fake_gravatar(name, size):

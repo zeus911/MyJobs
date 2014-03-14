@@ -1,41 +1,33 @@
 import base64
 import datetime
-from hashlib import sha1
-import hmac
 import json
 import logging
 import urllib2
-import uuid
 from urlparse import urlparse
+import uuid
 
-from django.db import IntegrityError
-from django.contrib.auth import authenticate, logout
-from django.contrib.sessions.models import Session
-from django.contrib.auth.decorators import user_passes_test
 from django.conf import settings
-from django.core.mail import EmailMessage
-from django.forms.models import model_to_dict
-from django.http import HttpResponse, Http404
-from django.template import RequestContext
+from django.contrib.auth import logout, authenticate
+from django.contrib.auth.decorators import user_passes_test
+from django.db import IntegrityError
+from django.forms import Form, model_to_dict
+from django.http import HttpResponse
 from django.shortcuts import render_to_response, redirect, render
+from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
-from jira.client import JIRA
-
 from captcha.fields import ReCaptchaField
 
-from secrets import RECAPTCHA_PUBLIC_KEY, RECAPTCHA_PRIVATE_KEY, EMAIL_TO_ADMIN
-from secrets import options, my_agent_auth
-
-from tastypie.models import ApiKey
-
 from myjobs.decorators import user_is_allowed
-from myjobs.models import User, EmailLog, Ticket, CustomHomepage
-from myjobs.forms import *
-from myjobs.helpers import *
-from myprofile.models import ProfileUnits
-from registration.forms import *
+from myjobs.forms import (ChangePasswordForm, EditAccountForm,
+    EditCommunicationForm)
+from myjobs.helpers import expire_login, log_to_jira
+from myjobs.models import EmailLog, Ticket, User
+from myprofile.forms import (InitialNameForm, InitialEducationForm,
+    InitialAddressForm, InitialPhoneForm, InitialWorkForm)
+from myprofile.models import ProfileUnits, Name
+from registration.forms import RegistrationForm, CustomAuthForm, CustomHomepage
 
 logger = logging.getLogger('__name__')
 
@@ -229,45 +221,34 @@ def contact(request):
         comment = request.POST.get('comment')
         form = CaptchaForm(request.POST)
         if form.is_valid():
-            try:
-                jira = JIRA(options=options, basic_auth=my_agent_auth)
-            except:
-                jira = []
-            if not jira:
-                msg_subject = ('Contact My.jobs by a(n) %s' % contact_type)
-                message = """
-                          Name: %s
-                          Is a(n): %s
-                          Email: %s
+            components = []
+            component_ids = {'My.jobs Error': {'id': '12903'},
+                             'Job Seeker': {'id': '12902'},
+                             'Employer': {'id': '12900'},
+                             'Partner': {'id': '12901'}, }
+            if component_ids.get(reason):
+                components.append(component_ids.get(reason))
+            components.append(component_ids.get(contact_type))
+            issue_dict = {
+                'summary': '%s - %s' % (reason, from_email),
+                'description': '%s' % comment,
+                'issuetype': {'name': 'Task'},
+                'customfield_10400': str(name),
+                'customfield_10401': str(from_email),
+                'customfield_10402': str(phone_num),
+                'components': components}
 
-                          %s
-                          """ % (name, contact_type, from_email, comment)
-                to_email = [EMAIL_TO_ADMIN]
-                msg = EmailMessage(msg_subject, message, from_email, to_email)
-                msg.send()
-                return HttpResponse('success')
-            else:
-                project = jira.project('MJA')
-                components = []
-                component_ids = {'My.jobs Error': {'id': '12903'},
-                                 'Job Seeker': {'id': '12902'},
-                                 'Employer': {'id': '12900'},
-                                 'Partner': {'id': '12901'}, }
-                if component_ids.get(reason):
-                    components.append(component_ids.get(reason))
-                components.append(component_ids.get(contact_type))
+            subject = 'Contact My.jobs by a(n) %s' % contact_type
+            body = """
+                   Name: %s
+                   Is a(n): %s
+                   Email: %s
 
-                issue_dict = {
-                    'project': {'key': project.key},
-                    'summary': '%s - %s' % (reason, from_email),
-                    'description': '%s' % comment,
-                    'issuetype': {'name': 'Task'},
-                    'customfield_10400': str(name),
-                    'customfield_10401': str(from_email),
-                    'customfield_10402': str(phone_num), }
-                
-                issue_dict['components'] = components
-                jira.create_issue(fields=issue_dict)
+                   %s
+                   """ % (name, contact_type, from_email, comment)
+
+            to_jira = log_to_jira(subject, body, issue_dict, from_email)
+            if to_jira:
                 time = datetime.datetime.now().strftime('%A, %B %d, %Y %l:%M %p')
                 return HttpResponse(json.dumps({'validation': 'success',
                                                 'name': name,
@@ -277,6 +258,8 @@ def contact(request):
                                                 'phone': phone_num,
                                                 'comment': comment,
                                                 'c_time': time}))
+            else:
+                return HttpResponse('success')
         else:
             return HttpResponse(json.dumps({'validation': 'failed',
                                             'errors': form.errors.items()}))
@@ -454,6 +437,23 @@ def batch_message_digest(request):
                                  received=datetime.date.fromtimestamp(
                                      float(event['timestamp'])
                                  )).save()
+                        if event['event'] == 'bounce' and \
+                                event.get('category', '') == 'My.jobs email redirect':
+                            subject = 'My.jobs email redirect failure'
+                            body = """
+                                   Contact: %s
+                                   Type: %s
+                                   Reason: %s
+                                   Status: %s
+                                   """ % (event['email'], event['type'],
+                                          event['reason'], event['status'])
+                            issue_dict = {
+                                'summary': 'Redirect email failure',
+                                'description': body,
+                                'issuetype': {'name': 'Bug'}
+                            }
+                            log_to_jira(subject, body,
+                                        issue_dict, event['email'])
                     return HttpResponse(status=200)
     return HttpResponse(status=403)
 

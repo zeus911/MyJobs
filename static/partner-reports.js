@@ -7,7 +7,9 @@ $(function() {
             "click #phone": "go_to_records",
             "click #facetoface": "go_to_records",
             "click #job": "go_to_records",
-            "click .header-menu": "dropdown"
+            "click .header-menu": "dropdown",
+            "click #date-drop": "date_drop",
+            "click #custom-date-dropdown": "prevent_close"
         },
 
         go_to_records: function(e) {
@@ -29,6 +31,9 @@ $(function() {
                 this.draw_donut('big');
                 this.draw_chart();
             }
+            $('#date-range-list').css('margin-left', '-154px');
+            $('#admin-list').css('margin-left', '-44px');
+            $('#download-list').css('margin-left', '-36px');
         },
 
         draw_donut: function(size) {
@@ -104,11 +109,37 @@ $(function() {
         },
 
         dropdown: function(e) {
+            $('[class*=header-menu]').each(function() {
+                if($(this).attr('id') != $(e.currentTarget).attr('id')){
+                    if($(this).hasClass('show-drop')){
+                        $(this).removeClass('show-drop');
+                    }
+                }
+            });
             if(!$(e.currentTarget).hasClass('show-drop')){
                 $(e.currentTarget).addClass('show-drop');
             } else {
                 $(e.currentTarget).removeClass('show-drop');
             }
+        },
+
+        date_drop: function(e){
+            e.stopPropagation();
+            console.log('test');
+            var insidedrop = $('#custom-date-dropdown');
+            if(insidedrop.is(":visible")){
+                insidedrop.hide();
+                insidedrop.prev().removeClass('small-black-arrow-down');
+                insidedrop.prev().addClass('small-black-arrow-left');
+            } else {
+                insidedrop.show();
+                insidedrop.prev().removeClass('small-black-arrow-left');
+                insidedrop.prev().addClass('small-black-arrow-down');
+            }
+        },
+
+        prevent_close: function(e){
+            e.stopPropagation();
         }
 
     });

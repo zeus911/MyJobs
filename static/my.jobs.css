@@ -546,6 +546,24 @@ h1 > small > a:hover {
     background-color: inherit;
 }
 
+.small-black-arrow-left {
+    margin-top: 3px;
+    width: 0;
+    height: 0;
+    border-bottom: 7px solid transparent;
+    border-right: 7px solid #444;
+    border-top: 7px solid transparent;
+}
+
+.small-black-arrow-down {
+    margin-top: 6px;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 7px solid #444;
+}
+
 ul.header-menu {
     padding: 0 17px 0 0;
     margin: 0;
@@ -580,7 +598,7 @@ ul.header-menu > li > ul > .inside-list-title:hover {
 ul.header-menu > li > ul > li,
 ul.header-menu > li > ul > a > li {
     padding: 5px;
-    width: 200px;
+    width: 250px;
     border-bottom: 1px solid #d5d4d0;
 }
 
@@ -598,6 +616,7 @@ ul.header-menu.show-drop > li > ul {
     background-color: #f2f2f2;
     border: 1px solid #d5d4d0;
     display: block;
+    z-index: 1000;
 }
 
 ul.header-menu > li > ul > li:hover ,
@@ -606,6 +625,19 @@ ul.header-menu > li > ul > a > li:hover {
     background-color: #ddd;
     cursor: pointer;
     text-decoration: none;
+}
+
+#custom-date-dropdown {
+    margin: 0;
+}
+
+.date-time > select{
+    width: 70px;
+    margin-right: 10px;
+}
+
+.date-time > select:nth-child(3){
+    margin-right: 0;
 }
 
 
