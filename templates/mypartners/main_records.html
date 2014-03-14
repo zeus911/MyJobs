@@ -12,6 +12,7 @@
 
 {% block meta-extra %}
 <script src="{{ STATIC_URL }}partner-overview.js{% cache_buster %}"></script>
+<script src="{{ STATIC_URL }}partner-reports.js{% cache_buster %}"></script>
 <script src="{{ STATIC_URL }}record_overview.js{% cache_buster %}"></script>
 <script>
     var company = {{ company.id }};
@@ -25,7 +26,7 @@
         <div class="span12 prm-header">
             <span>Communication Records</span>
             <a href="{% url "partner_overview" %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
-            <span class="pull-right" id="candidate-time-filter">{% include "time_filter.html" %}</span>
+            <span class="pull-right" id="candidate-time-filter">{% include "mypartners/includes/date_range.html" %}</span>
         </div>
     </div>
     <div class="row">

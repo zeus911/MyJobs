@@ -307,8 +307,7 @@ def prm_overview(request):
     records = partner.get_contact_records(date_time_range=dt_range)
     communication = records.order_by('-created_on')
     referrals = records.filter(contact_type='job').count()
-    records = records.exclude(contact_type='job')\
-        .exclude(contact_type='pssemail').count()
+    records = records.exclude(contact_type='job').count()
     most_recent_communication = communication[:3]
     saved_searches = partner.get_searches()
     most_recent_saved_searches = saved_searches[:3]
@@ -497,7 +496,6 @@ def prm_records(request):
     ContactRecord overview and ContactRecord overview from PRM reports.
 
     """
-
     company, partner, user = prm_worthy(request)
     dt_range, date_str, contact_records = get_records_from_request(request)
     most_recent_activity = partner.get_logs()
@@ -714,6 +712,8 @@ def get_records(request):
     contact_type = request.REQUEST.get('record_type')
     contact = None if contact == 'all' else contact
     contact_type = None if contact_type == 'all' else contact_type
+    records = partner.get_contact_records(contact_name=contact,
+                                          record_type=contact_type)
 
     date_range = request.REQUEST.get('date')
     if date_range:
@@ -739,6 +739,7 @@ def get_records(request):
             date_str = (range_end - range_start).days
             date_str = (("%s Days" % date_str) if date_str != 1
                         else ("%s Day" % date_str))
+            records = records.filter(date_time__range=[range_start, range_end])
         except (ValidationError, TypeError):
             pass
 
@@ -800,10 +801,9 @@ def get_uploaded_file(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_main_reports(request):
     company, partner, user = prm_worthy(request)
-    dt_range, date_str, records = get_records_from_request(request)
-
-    total_records_wo_followup = records.exclude(contact_type='job')\
-        .exclude(contact_type='pssemail').count()
+    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
+    records = partner.get_contact_records(date_time_range=dt_range)
+    total_records_wo_followup = records.exclude(contact_type='job').count()
     referral = records.filter(contact_type='job').count()
 
     # need to order_by -count to keep the "All Contacts" list in proper order
@@ -824,8 +824,8 @@ def partner_main_reports(request):
         .annotate(count=Count('contact_name'))
 
     # Merge contact_records with referral_list and have all contacts
-    # A contact can have 0 contact records and 1 referral record and still show
-    # up vice versa with 1 contact record and 0 referrals
+    # A contact can have 0 contact records and 1 referral record and still show up
+    # vice versa with 1 contact record and 0 referrals
     contacts = []
     for contact_obj in all_contacts:
         contact = {}
@@ -873,10 +873,12 @@ def partner_main_reports(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_get_records(request):
     if request.method == 'GET':
-        prm_worthy(request)
-        dt_range, date_str, records = get_records_from_request(request)
-        records = records.exclude(contact_type__in=['job', 'pssemail'])
+        company, partner, user = prm_worthy(request)
+        dt_range = [datetime.now() + timedelta(-30), datetime.now()]
+        records = partner.get_contact_records(date_time_range=dt_range)\
+                      .exclude(contact_type='job')
         email = records.filter(contact_type='email').count()
+        email += records.filter(contact_type='pssemail').count()
         phone = records.filter(contact_type='phone').count()
         facetoface = records.filter(contact_type='facetoface').count()
 
