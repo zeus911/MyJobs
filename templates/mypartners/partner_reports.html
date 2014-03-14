@@ -28,6 +28,8 @@ var partner_id = {{ partner.id }};
         <div class="span12 prm-header">
             <span>Reports</span>
             <a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
+            <span class="pull-right" id="candidate-time-filter">{% include "mypartners/includes/date_range.html" %}</span>
+            <span class="pull-right" id="admin-filter">{% include "mypartners/includes/company_admins.html" %}</span>
         </div>
     </div>
     <div class="row">
@@ -90,6 +92,7 @@ var partner_id = {{ partner.id }};
             {% endfor %}
         </div>
         <div class="span6">
+            {% if top_contacts %}
             {% if top_contacts.count >= 3 %}
             <h4>Top 3 Contacts</h4>
             {% elif top_contacts.count == 2 %}
@@ -111,6 +114,7 @@ var partner_id = {{ partner.id }};
                     <div class="reports-record-type">All Others</div>
                 </div>
             </div>
+            {% endif %}
         </div>
     </div>
 {% endblock %}
