@@ -97,7 +97,12 @@
         </script>
         <table class="table table-striped table-bordered" id="saved-search-listing-table">
             <thead>
-                <tr><th><p>Results</p></th></tr>
+                <tr><th><p>Matching Jobs ({{ count }}) 
+                            <span style="font-size:66%; font-weight:normal;"> 
+                                {{start_date|date:"M j"}} - Present
+                            </span>
+                        </p>
+                </th></tr>
             </thead>
             <tbody>
                 {% if items %}
