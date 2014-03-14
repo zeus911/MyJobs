@@ -9,6 +9,7 @@ from django.db import models
 from django.db import transaction
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 try:
@@ -103,6 +104,9 @@ class ActivationProfile(models.Model):
                               custom_msg=None):
         if self.activation_key_expired():
             self.reset_activation()
+        if custom_msg:
+            custom_msg = custom_msg.replace('\n', '<br>')
+            custom_msg = mark_safe(custom_msg)
         ctx_dict = {'activation_key': self.activation_key,
                     'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
                     'password': password,
