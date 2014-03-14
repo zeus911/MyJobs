@@ -202,22 +202,20 @@ def get_records_from_request(request):
             range_start = datetime.strptime(range_start, "%m/%d/%Y")
             range_end = datetime.strptime(range_end, "%m/%d/%Y")
         except (AttributeError, TypeError, ValueError):
-            range_start = None
-            range_end = None
-    date_str = 'Filter by time range'
-    if range_start and range_end:
-        try:
-            date_str = (range_end - range_start).days + 1
-            date_str = (("%s Days" % date_str) if date_str != 1
-                        else ("%s Day" % date_str))
-            records = records.filter(date_time__range=[range_start, range_end])
-        except (ValidationError, TypeError):
-            pass
+            range_start = datetime.now() + timedelta(-30)
+            range_end = datetime.now()
 
-    range_start = (datetime.now() + timedelta(-30) if not range_start else
-                   range_start)
-    range_end = datetime.now() if not range_end else range_end
+    try:
+        date_str = (range_end - range_start).days + 1
+        date_str = (("%s Days" % date_str) if date_str != 1
+                    else ("%s Day" % date_str))
+    except (ValidationError, TypeError):
+        range_start = datetime.now() + timedelta(-30)
+        range_end = datetime.now()
+        date_str = "30 Days"
 
+    records = records.filter(date_time__range=[range_start, range_end])
+    
     return (range_start, range_end), date_str, records
 
 
