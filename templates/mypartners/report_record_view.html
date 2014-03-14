@@ -24,14 +24,14 @@
     <div class="row">
         <div class="span12 prm-header">
             <span>Records</span>
-            <a href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Reports</a>
-            <span class="pull-right" id="candidate-time-filter">{% include "mypartners/includes/date_range.html" %}</span>
+            <a class="mobile_hide" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Reports</a>
+            <span class="pull-right" id="date-filter">{% include "mypartners/includes/date_range.html" %}</span>
             <span class="pull-right" id="record-download">{% include "mypartners/includes/download_records.html" %}</span>
         </div>
     </div>
     <div class="row">
         <div class="span12">
-            <div class="formBox no-padding profile-mobile">
+            <div class="formBox no-padding">
                 <h4>Records</h4>
                 <div class="formBox-content">
                     <div class="span3 form-label pull-left initial">
@@ -60,10 +60,10 @@
                     <thead>
                         <tr>
                             <td>Date/Time</td>
-                            <td>Type</td>
-                            <td>Contact</td>
+                            <td class="mobile_hide">Type</td>
+                            <td class="mobile_hide">Contact</td>
                             <td>Subject</td>
-                            <td>Details</td>
+                            <td class="mobile_hide">Details</td>
                         </tr>
                     </thead>
                     {% endif %}
@@ -72,4 +72,5 @@
             </div>
         </div>
     </div>
+<div class="black-mask" style="display: none;"></div>
 {% endblock %}

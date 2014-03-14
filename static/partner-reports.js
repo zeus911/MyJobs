@@ -9,7 +9,8 @@ $(function() {
             "click #job": "go_to_records",
             "click .header-menu": "dropdown",
             "click #date-drop": "date_drop",
-            "click #custom-date-dropdown": "prevent_close"
+            "click #custom-date-dropdown": "prevent_close",
+            "click .black-mask": "close_drop_and_restore_scroll"
         },
 
         go_to_records: function(e) {
@@ -31,9 +32,15 @@ $(function() {
                 this.draw_donut('big');
                 this.draw_chart();
             }
-            $('#date-range-list').css('margin-left', '-154px');
-            $('#admin-list').css('margin-left', '-44px');
-            $('#download-list').css('margin-left', '-36px');
+            if($(window).width() < 500){
+                $('#date-range-list').addClass('mobile-filter-selectlike');
+                $('#admin-list').addClass('mobile-filter-selectlike');
+                $('#download-list').addClass('mobile-filter-selectlike');
+            } else {
+                $('#date-range-list').css('margin-left', '-184px');
+                $('#admin-list').css('margin-left', '-74px');
+                $('#download-list').css('margin-left', '-66px');
+            }
         },
 
         draw_donut: function(size) {
@@ -53,12 +60,17 @@ $(function() {
                                 ]);
 
                     var options;
-                    if(size === 'small') {
-                        options = donut_options(200, 200, 12, 12, 175, 175, 0.6);
-                        $('#donut-box').hide();
-                    } else if(size === 'big') {
-                        options = donut_options(330, 360, 12, 12, 300, 330, 0.6);
+                    if($(window).width() < 500){
+                        options = donut_options(250, 250, 12, 12, 225, 225, 0.6);
                         $('#ajax-loading-donut').hide();
+                    } else {
+                        if(size === 'small') {
+                            options = donut_options(200, 200, 12, 12, 175, 175, 0.6);
+                            $('#donut-box').hide();
+                        } else if(size === 'big') {
+                            options = donut_options(330, 360, 12, 12, 300, 330, 0.6);
+                            $('#ajax-loading-donut').hide();
+                        }
                     }
                     var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
                     chart.draw(data, options);
@@ -118,14 +130,20 @@ $(function() {
             });
             if(!$(e.currentTarget).hasClass('show-drop')){
                 $(e.currentTarget).addClass('show-drop');
+                if($(window).width() < 500){
+                    $('.black-mask').show();
+                    disable_scroll('true');
+                }
             } else {
                 $(e.currentTarget).removeClass('show-drop');
+                if($(window).width() < 500){
+                    $('.black-mask').hide();
+                }
             }
         },
 
         date_drop: function(e){
             e.stopPropagation();
-            console.log('test');
             var insidedrop = $('#custom-date-dropdown');
             if(insidedrop.is(":visible")){
                 insidedrop.hide();
@@ -138,6 +156,14 @@ $(function() {
             }
         },
 
+        close_drop_and_restore_scroll: function(e){
+            if($(window).width() < 500){
+                $('.black-mask').hide();
+                disable_scroll('false');
+                $('[class*=header-menu]').removeClass('show-drop');
+            }
+        },
+
         prevent_close: function(e){
             e.stopPropagation();
         }
@@ -145,6 +171,16 @@ $(function() {
     });
     var App = new AppView;
 });
+
+function disable_scroll(bool) {
+    if($(window).width() < 500){
+        if(bool == 'true'){
+            $('html, body').css({'overflow': 'hidden', 'height': '100%'});
+        } else if(bool == 'false') {
+            $('html, body').css({'overflow': 'auto', 'height': 'auto'});
+        }
+    }
+}
 
 function donut_options(height, width, chartArea_top, chartArea_left, chartArea_height, chartArea_width, piehole_radius){
     var options = {

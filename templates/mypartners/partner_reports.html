@@ -27,8 +27,8 @@ var partner_id = {{ partner.id }};
     <div class="row">
         <div class="span12 prm-header">
             <span>Reports</span>
-            <a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
-            <span class="pull-right" id="candidate-time-filter">{% include "mypartners/includes/date_range.html" %}</span>
+            <a class="mobile_hide" href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
+            <span class="pull-right" id="date-filter">{% include "mypartners/includes/date_range.html" %}</span>
             <span class="pull-right" id="admin-filter">{% include "mypartners/includes/company_admins.html" %}</span>
         </div>
     </div>
@@ -60,7 +60,7 @@ var partner_id = {{ partner.id }};
         </div>
     </div>
 
-    <div class="row">
+    <div class="row mobile_hide">
         <div class="span6">
             <h4>All Contacts</h4>
             {% for contact in contacts %}
@@ -117,4 +117,5 @@ var partner_id = {{ partner.id }};
             {% endif %}
         </div>
     </div>
+<div class="black-mask" style="display: none;"></div>
 {% endblock %}

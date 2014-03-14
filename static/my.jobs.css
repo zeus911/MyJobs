@@ -2602,6 +2602,43 @@ td .gravatar-blank,
     #prm-mobile-row-buttons {
         margin-bottom: 40px;
     }
+
+    .mobile-filter-selectlike {
+        position: absolute;
+        left: 10%;
+        width: 80%;
+    }
+
+    ul.header-menu > li > .mobile-filter-selectlike > li {
+        width: 100%;
+        box-sizing: border-box;
+        height: 50px;
+        vertical-align: middle;
+    }
+
+    .big-chart {
+        width: 250px;
+    }
+
+    .big-chart > div > div > .piehole > .piehole-big {
+        margin-top: 5px;
+        margin-bottom: 10px;
+    }
+
+    .big-chart > div > div > .piehole > .piehole-topic {
+        font-size: 1.2em;
+        line-height: 15px;
+        margin-bottom: 5px;
+    }
+
+    .black-mask {
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(33,33,33, 0.7);
+        position: absolute;
+        z-index: 500;
+    }
     
     /* Microsite Activity Page*/
     #candidate-activity-details-table {
