@@ -9,6 +9,7 @@ from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMessage
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
@@ -33,12 +34,9 @@ class CustomUserManager(BaseUserManager):
         :user: User object if one exists; None otherwise
         """
         try:
-            user = self.get(email__iexact=email)
-        except User.DoesNotExist:
-            try:
-                user = self.get(
-                    profileunits__secondaryemail__email__iexact=email)
-            except User.DoesNotExist:
+            user = self.get(Q(email__iexact=email) |
+                            Q(profileunits__secondaryemail__email__iexact=email))
+        except User.DoesNotExist, User.MultipleObjectsReturned:
                 user = None
         return user
 

@@ -1,17 +1,11 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load common_tags %}
-{% comment %}
-**registration/activate.html**
 
-Used to check if registration was successful. 
-{% endcomment %}
 {% block activation_message %}{% if activated %}{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block content %}
-    <div class="wrapper" id="page-1">
-
-    {% if activated %}
+{% if merged %}
 
     <div class="row">
         <div class="span12" id="profileTitleRow">
@@ -25,15 +19,9 @@ Used to check if registration was successful.
         <div class="span6" id="profileTitleBar">
             <h2 id="user_email">{{activated.email}}</h2>
             <p>
-            {% if logged_in %}
-            {% trans "Your account has been successfully activated, and you are now logged in."%}
-            {% else %}
-            {% trans "Your account has been successfully activated, but you need to login before you use it."%}
-            {% endif %}
+            {% trans "Your account has been successfully merged, and you are now logged in."%}
             </p>
         </div>
-
-        {% if logged_in %}
 
         <div class="span4">
             <div class="formBox" id="moduleBank">
@@ -51,33 +39,9 @@ Used to check if registration was successful.
                 </table>
             </div> {# /formBox #}
         </div> {# /span4 #}
-
-        {% else %}
-        <style>
-        .formBox input{
-            width: 100%;
-        }
-        </style>
-        <script>
-        $(document).ready(function(){
-            $('button#login').addClass('activation-login');
-            $('button#login').removeAttr('id');
-        });
-        var num_modules = {{ num_modules }};
-        </script>
-        <div class="span4" id="active-login">
-            <div class="loginBox formBox">
-                <h3>Sign In</h3>
-                {% include "includes/widget-login-username.html" with form=loginform %}
-            </div>
-        </div>
-        <input type="hidden" name="next" value="None">
-
-        {% endif %}
-
     </div> {# /.row#profileTitleRow #}
-    {% else %}
 
+{% else %}
     <div class="row">
         <div class="span12">
             <h1>{% trans "Activation failed" %}</h1>
@@ -86,11 +50,11 @@ Used to check if registration was successful.
     <div class="row">
         <div class="span8">
             <p>
-            {% trans "Something went wrong while activating your account. "%}
+            {% trans "Something went wrong while merging your account. "%}
             {% trans "This might mean that:"%}
                 <ul>
                     <li>{% trans "The activation code was wrong" %}</li>
-                    <li>{% trans "Your account has already been activated" %}</li>
+                    <li>{% trans "Your account has already been merged" %}</li>
                     <li>{% trans "You waited longer than 2 weeks to activate your account" %}</li>
                 </ul>
             </p>
@@ -100,17 +64,11 @@ Used to check if registration was successful.
                 <h2>What now:</h2>
                 <table class="table table-bordered tables-striped">
                     <tr class="profile-section">
-                        <td><a href="/">Try to login</a></td>
-                    </tr>
-                    <tr class="profile-section">
                         <td><a href="{% url 'contact' %}">Contact us</a></td>
                     </tr>
                 </table>
             </div>
         </div>
             
-    {% endif %}
-
-    </div>
-    {% include "includes/account-page-2.html" %}
-{% endblock %}
+{% endif %}
+{% endblock content %}

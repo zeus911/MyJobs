@@ -22,6 +22,8 @@ urlpatterns = patterns('',
         RegistrationComplete.as_view(), name='register_complete'),
     url(r'^activate/(?P<activation_key>(\S+))/$', activate,
         name='registration_activate'),
+    url(r'^merge/(?P<activation_key>(\S+))/$', merge_accounts,
+        name='merge_accounts'),
     url(r'^register/resend/$', resend_activation, name='resend_activation'),
     url(r'^logout/$', logout, name='auth_logout'),
 )
