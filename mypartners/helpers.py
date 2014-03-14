@@ -1,21 +1,22 @@
-from django.contrib.admin.models import CHANGE
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
+from django.core.mail import EmailMessage
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.http import Http404
-from django.utils.encoding import force_text
+from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.text import get_text_list, force_unicode, force_text
 from django.utils.translation import ugettext
 
 from datetime import datetime, time, timedelta
+import re
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
 from mydashboard.models import Company
 from mypartners.models import (ContactLogEntry, ContactRecord,
-                               CONTACT_TYPE_CHOICES)
+                               CONTACT_TYPE_CHOICES, CHANGE)
 from mysearches.models import PartnerSavedSearch
 
 
@@ -245,3 +246,47 @@ def get_records_from_request(request):
     return (range_start, range_end), date_str, records
 
 
+def send_contact_record_email_response(created_records, created_contacts,
+                                       unmatched_contacts, error, to_email):
+    ctx = {
+        'created_records': created_records,
+        'created_contacts': created_contacts,
+        'error': error,
+        'unmatched_contacts': unmatched_contacts,
+    }
+
+    subject = 'Partner Relationship Manager Contact Records'
+    message = render_to_string('mypartners/email/email_response.html',
+                               ctx)
+
+    msg = EmailMessage(subject, message, settings.PRM_EMAIL, [to_email])
+    msg.content_subtype = 'html'
+    msg.send()
+
+
+def find_partner_from_email(partner_list, email):
+    """
+    Finds a possible partner based on the email domain.
+
+    inputs:
+    :partner_list: The partner list to compare the email against.
+    :email: The email address the domain is needed for.
+
+    outputs:
+    A matching partner if there is one, otherwise None.
+
+    """
+    if '@' not in email or not partner_list:
+        return None
+    email_domain = email.split('@')[-1]
+
+    pattern = re.compile('(http://|https://)?(www)?\.?(?P<url>.*)')
+    for partner in partner_list:
+        try:
+            url = pattern.search(partner.uri).groupdict()['url'].split("/")[0]
+        except (AttributeError, KeyError):
+            pass
+        if email_domain.lower() == url.lower():
+            return partner
+
+    return None
