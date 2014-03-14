@@ -497,19 +497,35 @@ def prm_records(request):
 
     """
     company, partner, user = prm_worthy(request)
+    contact_type = request.REQUEST.get('record_type')
+    contact = request.REQUEST.get('contact')
+
     dt_range, date_str, contact_records = get_records_from_request(request)
     most_recent_activity = partner.get_logs()
 
-    contact_type_choices = [('all', 'All')] + list(CONTACT_TYPE_CHOICES)
+    contact_type_choices = list(CONTACT_TYPE_CHOICES)
+    try:
+        index = [x[0] for x in contact_type_choices].index(contact_type)
+        contact_type_choices.insert(0, contact_type_choices.pop(index))
+        contact_type_choices.append(('all', 'All'))
+    except ValueError:
+        contact_type_choices.insert(0, ('all', 'All'))
+
     contacts = ContactRecord.objects.filter(partner=partner)
     contacts = contacts.values('contact_name').distinct()
-    contact_choices = [('all', 'All')]
-    [contact_choices.append((c['contact_name'], c['contact_name']))
-     for c in contacts]
+    contact_choices = [(c['contact_name'], c['contact_name']) for c in contacts]
+    try:
+        index = [x[0] for x in contact_choices].index(contact)
+        contact_choices.insert(0, contact_choices.pop(index))
+        contact_choices.append(('all', 'All'))
+    except ValueError:
+        contact_choices.insert(0, ('all', 'All'))
 
     ctx = {
         'company': company,
+        'contact': contact,
         'contact_choices': contact_choices,
+        'contact_type': contact_type,
         'contact_type_choices': contact_type_choices,
         'date_display': 'date_str',
         'date_start': dt_range[0],
@@ -712,41 +728,8 @@ def get_records(request):
     contact_type = request.REQUEST.get('record_type')
     contact = None if contact == 'all' else contact
     contact_type = None if contact_type == 'all' else contact_type
-    records = partner.get_contact_records(contact_name=contact,
-                                          record_type=contact_type)
+    dt_range, date_str, records = get_records_from_request(request)
 
-    date_range = request.REQUEST.get('date')
-    if date_range:
-        date_str_results = {
-            'today': datetime.now() + timedelta(-1),
-            'seven_days': datetime.now() + timedelta(-7),
-            'thirty_days': datetime.now() + timedelta(-30),
-        }
-        range_end = datetime.now()
-        range_start = date_str_results.get(date_range)
-    else:
-        range_start = request.REQUEST.get('date_start')
-        range_end = request.REQUEST.get('date_end')
-        try:
-            range_start = datetime.strptime(range_start, "%m/%d/%Y")
-            range_end = datetime.strptime(range_end, "%m/%d/%Y")
-        except AttributeError:
-            range_start = None
-            range_end = None
-    date_str = 'Filter by time range'
-    if range_start and range_end:
-        try:
-            date_str = (range_end - range_start).days
-            date_str = (("%s Days" % date_str) if date_str != 1
-                        else ("%s Day" % date_str))
-            records = records.filter(date_time__range=[range_start, range_end])
-        except (ValidationError, TypeError):
-            pass
-
-    records = partner.get_contact_records(contact_name=contact,
-                                          record_type=contact_type,
-                                          date_time_range=[range_start,
-                                                           range_end])
     ctx = {
         'records': records,
         'company': company,
@@ -757,8 +740,12 @@ def get_records(request):
     }
 
     data = {
-        'date_end': range_end.strftime('%m/%d/%Y'),
-        'date_start': range_start.strftime('%m/%d/%Y'),
+        'month_end': dt_range[1].strftime('%m'),
+        'day_end': dt_range[1].strftime('%d'),
+        'year_end': dt_range[1].strftime('%Y'),
+        'month_start': dt_range[0].strftime('%m'),
+        'day_start': dt_range[0].strftime('%d'),
+        'year_start': dt_range[0].strftime('%Y'),
         'date_str': date_str,
         'html': render_to_response('mypartners/records.html', ctx,
                                    RequestContext(request)).content,
@@ -801,8 +788,7 @@ def get_uploaded_file(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_main_reports(request):
     company, partner, user = prm_worthy(request)
-    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-    records = partner.get_contact_records(date_time_range=dt_range)
+    dt_range, date_str, records = get_records_from_request(request)
     total_records_wo_followup = records.exclude(contact_type='job').count()
     referral = records.filter(contact_type='job').count()
 
@@ -873,10 +859,10 @@ def partner_main_reports(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def partner_get_records(request):
     if request.method == 'GET':
-        company, partner, user = prm_worthy(request)
-        dt_range = [datetime.now() + timedelta(-30), datetime.now()]
-        records = partner.get_contact_records(date_time_range=dt_range)\
-                      .exclude(contact_type='job')
+        prm_worthy(request)
+
+        dt_range, date_str, records = get_records_from_request(request)
+        records = records.exclude(contact_type='job')
         email = records.filter(contact_type='email').count()
         email += records.filter(contact_type='pssemail').count()
         phone = records.filter(contact_type='phone').count()
@@ -901,9 +887,6 @@ def partner_get_records(request):
             'phone': {"count": phone, "name": phone_name, 'typename': 'phone'},
             'facetoface': {"count": facetoface, "name": facetoface_name,
                            "typename": "facetoface"},
-            'date_start': dt_range[0],
-            'date_end': dt_range[1],
-            'date_display': date_str,
         }
         data = OrderedDict(sorted(data.items(), key=lambda t: t[1]['count']))
         data_items = data.items()
@@ -962,9 +945,6 @@ def partner_get_referrals(request):
                            'typename': 'job'},
             'hires': {'count': hires, 'name': hire_name,
                       'typename': 'job'},
-            'date_start': dt_range[0],
-            'date_end': dt_range[1],
-            'date_display': date_str,
         }
 
         return HttpResponse(json.dumps(data))

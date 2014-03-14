@@ -189,26 +189,25 @@ def get_records_from_request(request):
 
     date_range = request.REQUEST.get('date')
     if date_range:
-        date_str_results = {
-            'today': datetime.now() + timedelta(-1),
-            'seven_days': datetime.now() + timedelta(-7),
-            'thirty_days': datetime.now() + timedelta(-30),
-        }
+        try:
+            date_range = int(date_range)
+        except (TypeError, ValueError):
+            date_range = 30
         range_end = datetime.now()
-        range_start = date_str_results.get(date_range)
+        range_start = datetime.now() - timedelta(date_range)
     else:
         range_start = request.REQUEST.get('date_start')
         range_end = request.REQUEST.get('date_end')
         try:
             range_start = datetime.strptime(range_start, "%m/%d/%Y")
             range_end = datetime.strptime(range_end, "%m/%d/%Y")
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError, ValueError):
             range_start = None
             range_end = None
     date_str = 'Filter by time range'
     if range_start and range_end:
         try:
-            date_str = (range_end - range_start).days
+            date_str = (range_end - range_start).days + 1
             date_str = (("%s Days" % date_str) if date_str != 1
                         else ("%s Day" % date_str))
             records = records.filter(date_time__range=[range_start, range_end])

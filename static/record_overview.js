@@ -1,3 +1,5 @@
+var months = ["None", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 jQuery(document).ready(function($) {
       $(".clickableRow").click(function() {
             window.document.location = $(this).attr("href");
@@ -7,9 +9,6 @@ jQuery(document).ready(function($) {
 $(function() {
     $( ".datepicker" ).datepicker();
 
-    $("#record_contact").val('all');
-    $("#record_contact_type").val('all');
-
     $(document).on("change", '#record_contact', function(){
         update_records(false);
     });
@@ -17,25 +16,25 @@ $(function() {
         update_records(false);
     });
 
-    $('input[name="date_range_form_submit"]').click(function(e) {
+    $('.date-range-submit').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
         update_records(false);
     });
-    $('input[name="today"]').click(function(e) {
+    $('#today').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
-        update_records('today');
+        update_records('1');
     });
-    $('input[name="seven_days"]').click(function(e) {
+    $('#thirty-days').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
-        update_records('seven_days');
+        update_records('30');
     });
-    $('input[name="thirty_days"]').click(function(e) {
+    $('#ninety-days').click(function(e) {
         e.preventDefault();
         e.stopPropagation();
-        update_records('thirty_days');
+        update_records('90');
     });
 });
 
@@ -44,14 +43,16 @@ function update_records(btn_val) {
     var contact_type = $('#record_contact_type').val();
     var data = "contact=" + contact + "&record_type=" + contact_type + "&company=" + company + "&partner=" + partner;
     if(!btn_val) {
-        date_start = $('input[name="date_start"]').val();
-        date_end = $('input[name="date_end"]').val();
-        if(!date_end) {
-            date_end = $('input[name="date_end"]').attr('placeholder');
-        }
-        if(!date_start) {
-            date_start = $('input[name="date_start"]').attr('placeholder');
-        }
+        month_start = $('[name="date-start-chooser_0"]').val();
+        day_start = $('[name="date-start-chooser_1"]').val();
+        year_start = $('[name="date-start-chooser_2"]').val();
+        date_start =  months.indexOf(month_start) + "/" + day_start + "/" + year_start;
+
+        month_end = $('[name="date-end-chooser_0"]').val();
+        day_end = $('[name="date-end-chooser_1"]').val();
+        year_end = $('[name="date-end-chooser_2"]').val();
+        date_end = months.indexOf(month_end) + "/" + day_end + "/" + year_end;
+
         data += "&date_start=" + date_start + "&date_end=" + date_end;
     }
     else {
@@ -66,18 +67,40 @@ function update_records(btn_val) {
             json = jQuery.parseJSON(data);
             $('#record-results').replaceWith(json['html']);
             $(".date-range-select-form").removeClass('date-range-select-form-visible');
-            update_time(json['date_str'], json['date_start'], json['date_end']);
+            update_time(json);
+            update_url(contact, contact_type, date_start, date_end);
         }
     });
-
 }
 
-function update_time(date_str, date_start, date_end) {
-    $('.date-range').text(date_str);
-    if(date_start != 'None') {
-        $('input[name="date_start"]').val(date_start);
+function update_url(contact, contact_type, date_start, date_end) {
+    base_url = $(".records-csv-export-link").attr("href").split("?")[0];
+    var query_string = '?company=' + company + '&partner=' + partner + '&';
+    if(contact != 'all') {
+        query_string += 'contact=' + contact + '&';
     }
-    if(date_end != 'None') {
-        $('input[name="date_end"]').val(date_end);
+    if(contact_type != 'all') {
+        query_string += 'record_type=' + contact_type + '&';
+    }
+    query_string += 'date_start=' + date_start + '&date_end=' + date_end;
+
+    url = base_url + query_string;
+    console.log(url);
+    $(".records-csv-export-link").attr("href", url);
+    $(".records-xml-export-link").attr("href", url + "&file_format=xml");
+    $(".records-printer-friendly-export-link").attr("href", url + "&file_format=printer_friendly");
+}
+
+function update_time(data) {
+    $('.date-range-description').text(data['date_str']);
+    if(data['month_start'] != 'None' && data['day_start'] != 'None' && data['year_start'] != 'None') {
+        $('[name="date-start-chooser_0"]').val(months[parseInt(data['month_start'])]);
+        $('[name="date-start-chooser_1"]').val(data['day_start']);
+        $('[name="date-start-chooser_2"]').val(data['year_start']);
+    }
+    if(data['month_end'] != 'None' && data['day_end'] != 'None' && data['year_end'] != 'None') {
+        $('[name="date-end-chooser_0"]').val(months[parseInt(data['month_end'])]);
+        $('[name="date-end-chooser_1"]').val(data['day_end']);
+        $('[name="date-end-chooser_2"]').val(data['year_end']);
     }
 }
