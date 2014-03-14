@@ -33,6 +33,7 @@ $(function() {
             }
             $('#date-range-list').css('margin-left', '-154px');
             $('#admin-list').css('margin-left', '-44px');
+            $('#download-list').css('margin-left', '-36px');
         },
 
         draw_donut: function(size) {

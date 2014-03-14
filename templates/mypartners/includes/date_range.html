@@ -15,12 +15,14 @@
                 Custom Date
                 <span id="date-dropdown-display" class="pull-right small-black-arrow-left"></span>
                 <ul id="custom-date-dropdown" style="display: none;">
-                    {% with 'thing'|render_datepicker as date_filter %}
-                        From<br>
-                        {{ date_filter }}
-                        To<br>
-                        {{ date_filter }}
-                    {% endwith %}
+                        <div>From</div>
+                        <div id="from-date">
+                            {% render_datepicker %}
+                        </div>
+                        <div>To</div>
+                        <div id="to-date">
+                            {% render_datepicker %}
+                        </div>
                     <a class="btn primary pull-right">Submit</a>
                     <div class="clearfix"></div>
                 </ul>

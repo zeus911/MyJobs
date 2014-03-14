@@ -22,8 +22,8 @@ def get_admins(company):
     return admins
 
 
-@register.filter(name='render_datepicker')
-def render_datepicker(thing):
+@register.simple_tag
+def render_datepicker():
     render = SplitDateDropDownWidget().render('datechooser',
                                               datetime.datetime.now())
     return render
