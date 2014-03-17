@@ -81,5 +81,5 @@ def bleach_clean(string):
 
 @register.filter
 def strip_tags(string):
-    string = string.replace('\n', '<br>')
+    string = string.replace('\n', ' ')
     return mark_safe(bleach.clean(string, strip=True))
