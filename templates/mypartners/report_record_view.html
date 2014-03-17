@@ -25,8 +25,10 @@
         <div class="span12 prm-header">
             <span>Records</span>
             <a class="mobile_hide" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Reports</a>
-            <span class="pull-right" id="date-filter">{% include "mypartners/includes/date_range.html" %}</span>
-            <span class="pull-right" id="record-download">{% include "mypartners/includes/download_records.html" %}</span>
+            <span class="pull-right">
+                <span id="record-download">{% include "mypartners/includes/download_records.html" %}</span>
+                <span id="date-filter">{% include "mypartners/includes/date_range.html" %}</span>
+            </span>
         </div>
     </div>
     <div class="row">

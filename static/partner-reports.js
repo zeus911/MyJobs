@@ -38,8 +38,8 @@ $(function() {
                 $('#download-list').addClass('mobile-filter-selectlike');
             } else {
                 $('#date-range-list').css('margin-left', '-184px');
-                $('#admin-list').css('margin-left', '-74px');
-                $('#download-list').css('margin-left', '-66px');
+                $('#admin-list').css('margin-left', '-90px');
+                $('#download-list').css('margin-left', '-82px');
             }
         },
 
@@ -100,12 +100,18 @@ $(function() {
                                     ['Hires',         info.hires.count,          'color: #faa732'],
                                     ['Records',       total_ref,     'color: #5f6c82']
                                 ]);
-
-                    var options = {title: 'Referral Records',
-                                   width: 356,
-                                   height: 360,
-                                   legend: { position: "none" },
-                                   chartArea: {top: 22, left: 37, height: 270, width: 290}};
+                    if($(window).width() < 500){
+                        var options = {width: 250,
+                                       height: 250,
+                                       legend: { position: "none"},
+                                       chartArea: {top: 15, left: 30, height: 200, width: 210}};
+                    } else {
+                        var options = {title: 'Referral Records',
+                                       width: 356,
+                                       height: 360,
+                                       legend: { position: "none" },
+                                       chartArea: {top: 22, left: 37, height: 270, width: 290}};
+                    }
 
 
                     var chart = new google.visualization.ColumnChart(document.getElementById('barchart'));

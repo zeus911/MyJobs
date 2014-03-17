@@ -389,7 +389,6 @@ h1 > small > a:hover {
 .chart-box-holder {
     width: 100px;
     display: inline-block;
-    float: left;
 }
 
 .small-chart-box-holder {
@@ -571,6 +570,7 @@ ul.header-menu {
     text-align: left;
     border: 1px solid transparent;
     border-bottom: 0;
+    display: inline-block;
 }
 
 ul.header-menu > li {
@@ -2629,6 +2629,26 @@ td .gravatar-blank,
         font-size: 1.2em;
         line-height: 15px;
         margin-bottom: 5px;
+    }
+
+    #reports-view-all {
+        width: 55px;
+        margin-left: 20%;
+        padding: 5px 10px;
+    }
+
+    .prm-header {
+        padding: 0;
+    }
+
+    .hover-element::after {
+        content: ""
+        margin-left: 0;
+        margin-right: 0;
+        border-left: 0;
+        border-right: 0;
+        border-top: 0;
+        background-color: transparent;
     }
 
     .black-mask {
