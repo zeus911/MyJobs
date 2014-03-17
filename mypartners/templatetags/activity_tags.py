@@ -67,6 +67,7 @@ def bleach_clean(string):
     specified and marks it safe to display as html.
 
     """
+    string = string.replace('\n', '<br>')
     tags = ['br', 'a']
     attrs = {
         'a': ['href'],
@@ -80,4 +81,5 @@ def bleach_clean(string):
 
 @register.filter
 def strip_tags(string):
+    string = string.replace('\n', ' ')
     return mark_safe(bleach.clean(string, strip=True))
