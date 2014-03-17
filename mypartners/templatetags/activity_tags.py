@@ -62,10 +62,22 @@ def get_contact_type(record):
 
 @register.filter
 def bleach_clean(string):
-    tags = ['table', 'a', 'p', 'th', 'tr', 'td', 'b', 'i', 'div', 'br', 'span']
+    """
+    Cleans a string of all html tags, attributes, and sytles except those
+    specified and marks it safe to display as html.
+
+    """
+    tags = ['br', 'a']
     attrs = {
-        '*': ['style', 'class', 'id'],
         'a': ['href'],
     }
+    style = []
 
-    return mark_safe(bleach.clean(string, tags, attrs, [], strip=True))
+    # strip = True means the tags are stripped from the result
+    # rather than being included as escaped characters.
+    return mark_safe(bleach.clean(string, tags, attrs, style, strip=True))
+
+
+@register.filter
+def strip_tags(string):
+    return mark_safe(bleach.clean(string, strip=True))
