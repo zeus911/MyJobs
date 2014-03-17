@@ -432,7 +432,7 @@ h1 > small > a:hover {
 
 .chart-box + .chart-box + .chart-box,
 .chart-box-link + .chart-box-link + .chart-box,
-.chart-box-link + .chart-box-link + .chart-box-link > .chart-box{
+.chart-box-link + .chart-box-link + .chart-box-link > .chart-box {
     border-color: #faa732;
     background-color: #faa732;
 }
@@ -442,6 +442,42 @@ h1 > small > a:hover {
 .chart-box-link + .chart-box-link + .chart-box-link + .chart-box-link > .chart-box{
     border-color: #5f6c82;
     background-color: #5f6c82;
+}
+
+.chart-box:hover {
+    box-shadow: 0 0 15px #98EEB2;
+    -moz-box-shadow: 0 0 15px #98EEB2;
+    -webkit-box-shadow: 0 0 15px #98EEB2;
+}
+
+.chart-box + .chart-box:hover,
+.chart-box-link + .chart-box:hover,
+.chart-box-link + .chart-box-link > .chart-box:hover {
+    box-shadow: 0 0 15px #96D5E7;
+    -moz-box-shadow: 0 0 15px #96D5E7;
+    -webkit-box-shadow: 0 0 15px #96D5E7;
+}
+
+.chart-box + .chart-box + .chart-box:hover,
+.chart-box-link + .chart-box-link + .chart-box:hover,
+.chart-box-link + .chart-box-link + .chart-box-link > .chart-box:hover {
+    box-shadow: 0 0 15px #FDCE8D;
+    -moz-box-shadow: 0 0 15px #FDCE8D;
+    -webkit-box-shadow: 0 0 15px #FDCE8D;
+}
+
+.chart-box + .chart-box + .chart-box + .chart-box:hover,
+.chart-box-link + .chart-box-link + .chart-box-link + .chart-box:hover,
+.chart-box-link + .chart-box-link + .chart-box-link + .chart-box-link > .chart-box:hover {
+    box-shadow: 0 0 15px #A4AFC1;
+    -moz-box-shadow: 0 0 15px #A4AFC1;
+    -webkit-box-shadow: 0 0 15px #A4AFC1;
+}
+
+.small-chart-box-holder .chart-box.small:hover {
+    box-shadow: none;
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
 }
 
 .chart-box > .big-num {
@@ -573,6 +609,10 @@ ul.header-menu {
     display: inline-block;
 }
 
+.prm-header #candidate-time-filter {
+    margin-right: 0;
+}
+
 ul.header-menu > li {
     position: relative;
     padding: 0 5px;
@@ -625,6 +665,10 @@ ul.header-menu > li > ul > a > li:hover {
     background-color: #ddd;
     cursor: pointer;
     text-decoration: none;
+}
+
+#date-range-list > li:last-child:hover {
+    background-color: #f2f2f2;
 }
 
 #custom-date-dropdown {
@@ -2494,6 +2538,20 @@ td .gravatar-blank,
         width: calc(96% - 28px);
     }
 
+    #topbar-back {
+        float: right;
+        margin-right: 65px;
+        margin-top: -3px;
+        padding: 13px;
+        background-color: #a95051;
+        border: 2px solid #FFF;
+        border-radius: 5px;
+    }
+
+    #topbar-back > #prm-arrow-left {
+        border-right: 15px solid #FFF;
+    }
+
     /* Contact Form Styles */
     #success-table tr td{
         min-width: 0;
@@ -2609,11 +2667,37 @@ td .gravatar-blank,
         width: 80%;
     }
 
-    ul.header-menu > li > .mobile-filter-selectlike > li {
+    ul.header-menu > li > .mobile-filter-selectlike > li,
+    ul.header-menu > li > .mobile-filter-selectlike > a > li,
+    ul.header-menu > li > .mobile-filter-selectlike > a {
         width: 100%;
         box-sizing: border-box;
+        font-size: 1.3em;
         height: 50px;
+        line-height: 50px;
         vertical-align: middle;
+    }
+
+    ul.header-menu > li > .mobile-filter-selectlike > a {
+        border: none;
+        padding: 0;
+    }
+
+    #date-drop > .small-black-arrow-left,
+    #date-drop > .small-black-arrow-down {
+        margin-top: 18px;
+    }
+
+    #custom-date-dropdown {
+        line-height:35px;
+    }
+
+    #custom-date-dropdown > .btn.primary {
+        margin: 15px 0;
+    }
+
+    .date-time > select {
+        width: 105px;
     }
 
     .big-chart {
@@ -2637,18 +2721,13 @@ td .gravatar-blank,
         padding: 5px 10px;
     }
 
-    .prm-header {
-        padding: 0;
+    .hover-element {
+        font-size: 1.2em;
     }
 
-    .hover-element::after {
-        content: ""
-        margin-left: 0;
+    .prm-header #candidate-time-filter {
+        margin-top: 0;
         margin-right: 0;
-        border-left: 0;
-        border-right: 0;
-        border-top: 0;
-        background-color: transparent;
     }
 
     .black-mask {

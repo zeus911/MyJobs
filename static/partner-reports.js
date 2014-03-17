@@ -68,7 +68,7 @@ $(function() {
                             options = donut_options(200, 200, 12, 12, 175, 175, 0.6);
                             $('#donut-box').hide();
                         } else if(size === 'big') {
-                            options = donut_options(330, 360, 12, 12, 300, 330, 0.6);
+                            options = donut_options(330, 350, 12, 12, 300, 330, 0.6);
                             $('#ajax-loading-donut').hide();
                         }
                     }

@@ -25,7 +25,7 @@
     <div class="row">
         <div class="span12 prm-header">
             <span>Communication Records</span>
-            <a href="{% url "partner_overview" %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
+            <a class="mobile_hide" href="{% url "partner_overview" %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
             <span class="pull-right" id="candidate-time-filter">{% include "mypartners/includes/date_range.html" %}</span>
         </div>
     </div>
@@ -95,4 +95,5 @@
             {% endif %}
         </div>
     </div>
+    <div class="black-mask" style="display: none;"></div>
 {% endblock %}

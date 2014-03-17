@@ -166,7 +166,15 @@ $(document).ready(function(){
     $('[class*=mymessage-]').click(function(){
         readMessage(this);
     });
+
+    if($(window).width() < 500){
+        addBackButton();
+    }
 });
+
+function addBackButton(){
+    $('.topbar-inner').find('.span1').prepend('<a id="topbar-back" class="desktop_hide" href="#" onclick="javascript:window.history.back(-1);return false;"><span id="prm-arrow-left"></span></a>');
+}
 
 function readMessage(button){
     var message_box = $(button);
