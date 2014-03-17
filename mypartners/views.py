@@ -468,7 +468,7 @@ def partner_savedsearch_save(request):
                         'company': company}
             subject = "Saved search created on your behalf"
             message = render_to_string('mypartners/partner_search_new_user.html',
-            ctx_dict)
+                                       ctx_dict)
             msg = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL,
                                [search.user.email])
             msg.content_subtype = 'html'
