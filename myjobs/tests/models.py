@@ -9,6 +9,7 @@ from django.utils.http import urlquote
 from myjobs.models import *
 from myjobs.tests.views import TestClient
 from myjobs.tests.factories import UserFactory
+from myprofile.models import SecondaryEmail, Name, Telephone
 
 
 class UserManagerTests(TestCase):
@@ -144,3 +145,17 @@ class UserManagerTests(TestCase):
             self.assertTrue(User.objects.is_group_member(user, group.name))
 
             user.groups.all().delete()
+
+    def test_user_with_multiple_profileunits(self):
+        """
+        Confirms that the owner of an email is correctly being found.
+
+        """
+        user, _ = User.objects.create_inactive_user(**self.user_info)
+        SecondaryEmail.objects.create(user=user, email='secondary@email.test')
+        Telephone.objects.create(user=user)
+        Name.objects.create(user=user, given_name="Test", family_name="Name")
+        owner_user = User.objects.get_email_owner(user.email)
+        self.assertEqual(owner_user.pk, user.pk)
+        owner_user = User.objects.get_email_owner('secondary@email.test')
+        self.assertEqual(owner_user.pk, user.pk)

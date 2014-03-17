@@ -1,3 +1,4 @@
+{% load activity_tags %}
 <tr{% if activity_object %} class="activity-record-tr" onclick="window.document.location='{{ activity.get_object_url }}'" {% endif %}><td>
     {{ activity.action_time }}<br/>
     {% if activity_object %}
@@ -7,7 +8,7 @@
         {% elif content_type == 'contact record' %}
             {{ activity_object.get_record_description }}.<br/>
             {% if activity_object.subject %}Subject:  {{ activity_object.subject }} <br/>{% endif %}
-            {{ activity_object.notes }}
+            {{ activity_object.notes|strip_tags|truncatewords_html:'20' }}
         {% else %}
             {{ user_name }} {{ action_type }} a {{ content_type }} for {{ activity.contact_identifier }}.
         {% endif %}

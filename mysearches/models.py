@@ -274,6 +274,22 @@ class PartnerSavedSearch(SavedSearch):
         self.create_record(change_msg)
 
     def create_record(self, change_msg=""):
+        items, count = self.get_feed_items()
+
+        extras = self.partnersavedsearch.url_extras
+        if extras:
+            mypartners.helpers.add_extra_params_to_jobs(items, extras)
+            self.url = mypartners.helpers.add_extra_params(self.url, extras)
+
+        custom_msg = self.custom_message if self.custom_message else ''
+        context_dict = {
+            'saved_searches': [(self, items, count)],
+            'custom_msg': custom_msg
+        }
+        subject = self.label.strip()
+        message = render_to_string('mysearches/email_single.html',
+                                   context_dict)
+
         contact = Contact.objects.filter(partner=self.partner,
                                          user=self.user)[0]
         record = ContactRecord.objects.create(
@@ -282,8 +298,8 @@ class PartnerSavedSearch(SavedSearch):
             contact_name=contact.name,
             contact_email=self.user.email,
             date_time=datetime.now(),
-            subject='My.Jobs Partner Saved Search',
-            notes=change_msg,
+            subject=subject,
+            notes=message,
         )
         mypartners.helpers.log_change(record, None, None, self.partner,
                                       self.user.email, action_type=EMAIL,

@@ -34,9 +34,12 @@ class CustomUserManager(BaseUserManager):
         :user: User object if one exists; None otherwise
         """
         try:
-            user = self.get(Q(email__iexact=email) |
-                            Q(profileunits__secondaryemail__email__iexact=email))
-        except User.DoesNotExist, User.MultipleObjectsReturned:
+            user = self.get(email__iexact=email)
+        except User.DoesNotExist:
+            try:
+                user = self.get(
+                    profileunits__secondaryemail__email__iexact=email)
+            except User.DoesNotExist:
                 user = None
         return user
 

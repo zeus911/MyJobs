@@ -1,3 +1,4 @@
+{% load activity_tags %}
 <tbody id="record-results">
     {% if records %}
     {% for record in records %}
@@ -6,7 +7,7 @@
             <td>{{ record.get_human_readable_contact_type }}</td>
             <td>{{ record.contact_name }}</td>
             <td>{{ record.subject }}</td>
-            <td>{{ record.notes }}</td>
+            <td>{{ record.notes|strip_tags|truncatewords_html:'100' }}</td>
         </tr>
     {% endfor %}
     {% else %}
