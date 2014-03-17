@@ -2,28 +2,28 @@
 
 <ul id="time-range-menu" class="header-menu">
     <li>
-        <span class="hover-element">30 Days</span>
+        <span class="hover-element date-range-description">30 Days</span>
         <ul id="date-range-list">
             <li class="inside-list-title">
                 Select Time Range
                 <span class="pull-right"><i class="icon icon-time"></i></span>
             </li>
-            <li>1 Day</li>
-            <li>30 Days</li>
-            <li>90 Days</li>
+            <li id="today">1 Day</li>
+            <li id="thirty-days">30 Days</li>
+            <li id="ninety-days">90 Days</li>
             <li id="date-drop">
                 Custom Date
                 <span id="date-dropdown-display" class="pull-right small-black-arrow-left"></span>
                 <ul id="custom-date-dropdown" style="display: none;">
                         <div>From</div>
                         <div id="from-date">
-                            {% render_datepicker %}
+                            {% render_datepicker 'date-start-chooser' date_start %}
                         </div>
                         <div>To</div>
                         <div id="to-date">
-                            {% render_datepicker %}
+                            {% render_datepicker 'date-end-chooser' date_end %}
                         </div>
-                    <a class="btn primary pull-right">Submit</a>
+                    <a class="btn primary pull-right date-range-submit">Submit</a>
                     <div class="clearfix"></div>
                 </ul>
             </li>

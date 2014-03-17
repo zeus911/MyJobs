@@ -125,7 +125,6 @@ $(function() {
 
         date_drop: function(e){
             e.stopPropagation();
-            console.log('test');
             var insidedrop = $('#custom-date-dropdown');
             if(insidedrop.is(":visible")){
                 insidedrop.hide();
