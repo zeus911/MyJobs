@@ -10,7 +10,7 @@
             </li>
             {% with company|get_admins as admins %}
                 {% for admin in admins %}
-                    <li value={{ admin.id }}>{{ admin.name|truncatechars:19 }}</li>
+                    <a href="?company={{ company.id }}&partner={{ partner.id }}{% if date %}&date={{ date }}{% endif %}&admin={{ admin.id }}""><li>{{ admin.name|truncatechars:19 }}</li></a>
                 {% endfor %}
             {% endwith %}
         </ul>
