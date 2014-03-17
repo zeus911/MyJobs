@@ -9,7 +9,8 @@ $(function() {
             "click #job": "go_to_records",
             "click .header-menu": "dropdown",
             "click #date-drop": "date_drop",
-            "click #custom-date-dropdown": "prevent_close"
+            "click #custom-date-dropdown": "prevent_close",
+            "click .black-mask": "close_drop_and_restore_scroll"
         },
 
         go_to_records: function(e) {
@@ -31,9 +32,15 @@ $(function() {
                 this.draw_donut('big');
                 this.draw_chart();
             }
-            $('#date-range-list').css('margin-left', '-154px');
-            $('#admin-list').css('margin-left', '-44px');
-            $('#download-list').css('margin-left', '-36px');
+            if($(window).width() < 500){
+                $('#date-range-list').addClass('mobile-filter-selectlike');
+                $('#admin-list').addClass('mobile-filter-selectlike');
+                $('#download-list').addClass('mobile-filter-selectlike');
+            } else {
+                $('#date-range-list').css('margin-left', '-184px');
+                $('#admin-list').css('margin-left', '-90px');
+                $('#download-list').css('margin-left', '-82px');
+            }
         },
 
         draw_donut: function(size) {
@@ -53,12 +60,17 @@ $(function() {
                                 ]);
 
                     var options;
-                    if(size === 'small') {
-                        options = donut_options(200, 200, 12, 12, 175, 175, 0.6);
-                        $('#donut-box').hide();
-                    } else if(size === 'big') {
-                        options = donut_options(330, 360, 12, 12, 300, 330, 0.6);
+                    if($(window).width() < 500){
+                        options = donut_options(250, 250, 12, 12, 225, 225, 0.6);
                         $('#ajax-loading-donut').hide();
+                    } else {
+                        if(size === 'small') {
+                            options = donut_options(200, 200, 12, 12, 175, 175, 0.6);
+                            $('#donut-box').hide();
+                        } else if(size === 'big') {
+                            options = donut_options(330, 350, 12, 12, 300, 330, 0.6);
+                            $('#ajax-loading-donut').hide();
+                        }
                     }
                     var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
                     chart.draw(data, options);
@@ -88,12 +100,18 @@ $(function() {
                                     ['Hires',         info.hires.count,          'color: #faa732'],
                                     ['Records',       total_ref,     'color: #5f6c82']
                                 ]);
-
-                    var options = {title: 'Referral Records',
-                                   width: 356,
-                                   height: 360,
-                                   legend: { position: "none" },
-                                   chartArea: {top: 22, left: 37, height: 270, width: 290}};
+                    if($(window).width() < 500){
+                        var options = {width: 250,
+                                       height: 250,
+                                       legend: { position: "none"},
+                                       chartArea: {top: 15, left: 30, height: 200, width: 210}};
+                    } else {
+                        var options = {title: 'Referral Records',
+                                       width: 356,
+                                       height: 360,
+                                       legend: { position: "none" },
+                                       chartArea: {top: 22, left: 37, height: 270, width: 290}};
+                    }
 
 
                     var chart = new google.visualization.ColumnChart(document.getElementById('barchart'));
@@ -118,8 +136,15 @@ $(function() {
             });
             if(!$(e.currentTarget).hasClass('show-drop')){
                 $(e.currentTarget).addClass('show-drop');
+                if($(window).width() < 500){
+                    $('.black-mask').show();
+                    disable_scroll('true');
+                }
             } else {
                 $(e.currentTarget).removeClass('show-drop');
+                if($(window).width() < 500){
+                    $('.black-mask').hide();
+                }
             }
         },
 
@@ -137,6 +162,14 @@ $(function() {
             }
         },
 
+        close_drop_and_restore_scroll: function(e){
+            if($(window).width() < 500){
+                $('.black-mask').hide();
+                disable_scroll('false');
+                $('[class*=header-menu]').removeClass('show-drop');
+            }
+        },
+
         prevent_close: function(e){
             e.stopPropagation();
         }
@@ -144,6 +177,16 @@ $(function() {
     });
     var App = new AppView;
 });
+
+function disable_scroll(bool) {
+    if($(window).width() < 500){
+        if(bool == 'true'){
+            $('html, body').css({'overflow': 'hidden', 'height': '100%'});
+        } else if(bool == 'false') {
+            $('html, body').css({'overflow': 'auto', 'height': 'auto'});
+        }
+    }
+}
 
 function donut_options(height, width, chartArea_top, chartArea_left, chartArea_height, chartArea_width, piehole_radius){
     var options = {
