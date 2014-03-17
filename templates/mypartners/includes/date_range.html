@@ -8,9 +8,9 @@
                 Select Time Range
                 <span class="pull-right"><i class="icon icon-time"></i></span>
             </li>
-            <li id="today">1 Day</li>
-            <li id="thirty-days">30 Days</li>
-            <li id="ninety-days">90 Days</li>
+            <a href="?company={{ company.id }}&partner={{ partner.id }}{% if admin %}&admin={{ admin }}{% endif %}&date=1"><li id="today">1 Day</li></a>
+            <a href="?company={{ company.id }}&partner={{ partner.id }}{% if admin %}&admin={{ admin }}{% endif %}&date=30"><li id="thirty-days">30 Days</li></a>
+            <a href="?company={{ company.id }}&partner={{ partner.id }}{% if admin %}&admin={{ admin }}{% endif %}&date=90"><li id="ninety-days">90 Days</li></a>
             <li id="date-drop">
                 Custom Date
                 <span id="date-dropdown-display" class="pull-right small-black-arrow-left"></span>
