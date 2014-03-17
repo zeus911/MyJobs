@@ -231,6 +231,9 @@ class ContactRecord(models.Model):
         query_string = urlencode(params)
         return "%s?%s" % (reverse('record_view'), query_string)
 
+    def shorten_date_time(self):
+        return self.date_time.strftime('%b %e, %Y')
+
 
 MAX_ATTACHMENT_MB = 4
 
