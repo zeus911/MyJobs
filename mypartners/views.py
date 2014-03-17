@@ -14,9 +14,11 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+from django.core.mail import EmailMessage
 from django.db.models import Count
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
+from django.template.loader import render_to_string
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.utils.text import force_text
@@ -38,6 +40,7 @@ from mypartners.helpers import (prm_worthy, add_extra_params,
                                 get_records_from_request,
                                 send_contact_record_email_response,
                                 find_partner_from_email)
+from registration.models import ActivationProfile
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
@@ -436,20 +439,40 @@ def partner_savedsearch_save(request):
         del form.errors['feed']
 
     if form.is_valid():
+        created = False
         instance = form.instance
-        instance.user = User.objects.get_email_owner(email=instance.email)
-        if instance.user == None:
-            user = User.objects.create_inactive_user(
-                email=instance.email,
-                custom_msg=instance.account_activation_message)
-            instance.user = user[0]
+        user = User.objects.get_email_owner(email=instance.email)
+        if user == None:
+            # don't send a email here, as this is not a typical user creation.
+            user, created = User.objects.create_inactive_user(
+                                                        email=instance.email,
+                                                        send_email=False)
+            instance.user = user
             Contact.objects.filter(email=instance.email).update(user=instance.user)
+        else:
+            instance.user = user
         instance.feed = form.data['feed']
         instance.provider = company
         instance.partner = partner
         instance.created_by = request.user
         instance.custom_message = instance.partner_message
-        form.save()
+        search = form.save()
+        # If we created a user account, send a custom message
+        if created:
+            activation = ActivationProfile.objects.get(user=search.user)
+            employee_name = request.user.get_full_name(default="An employee")
+            ctx_dict = {'activation': activation,
+                        'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
+                        'search': search,
+                        'creator': employee_name,
+                        'company': company}
+            subject = "Saved search created on your behalf"
+            message = render_to_string('mypartners/partner_search_new_user.html',
+                                       ctx_dict)
+            msg = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL,
+                               [search.user.email])
+            msg.content_subtype = 'html'
+            msg.send()
         return HttpResponse(status=200)
     else:
         return HttpResponse(json.dumps(form.errors))
