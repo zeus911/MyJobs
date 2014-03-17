@@ -70,9 +70,9 @@
             <h5>Details, Notes or Transcript</h5>
                 <div class="tip-content">
                     {% if record.notes %}
-                    {{ record.notes }}
+                        {{ record.notes|bleach_clean }}
                     {% else %}
-                    There are no notes for this record.
+                        There are no notes for this record.
                     {% endif %}
                 </div>
             </div>
