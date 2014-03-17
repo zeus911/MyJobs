@@ -833,9 +833,10 @@ class SearchEditTests(MyPartnersTestCase):
             self.assertIn(s, mail.outbox[1].body)
 
 
-
 class EmailTests(MyPartnersTestCase):
     def setUp(self):
+        # Allows for comparing datetimes
+        settings.USE_TZ = False
         super(EmailTests, self).setUp()
         self.data = {
             'from': self.admin.user.email,
@@ -843,6 +844,9 @@ class EmailTests(MyPartnersTestCase):
             'text': 'Test email body',
             'key': settings.EMAIL_KEY,
         }
+
+    def tearDown(self):
+        settings.USE_TZ = True
 
     def test_email_bad_contacts(self):
         start_contact_record_num = ContactRecord.objects.all().count()
@@ -934,3 +938,27 @@ class EmailTests(MyPartnersTestCase):
         for email in emails:
             partner = find_partner_from_email(partners, email[0])
             self.assertEqual(email[1], partner)
+
+    def test_email_forward_parsing(self):
+        self.data['to'] = 'prm@my.jobs'
+        self.data['text'] = '\n---------- Forwarded message ----------\n'\
+                            '\n From: A third person <athird@person.test> \n'\
+                            'Sent: Wednesday, February 5, 2013 1:01 AM\n'\
+                            'To: A Fourth Person <afourth@person.test>\n'\
+                            'Subject: Original email\n' \
+                            'Original email text.' \
+                            'From: A Person <thisisa@person.text>\n' \
+                            'Date: Wed, Feb 5, 2014 at 9:58 AM\n' \
+                            'Subject: FWD: Forward Email\n' \
+                            'To: thisisnotprm@my.jobs\n'\
+                            'Cc: A Cc Person <acc@person.test>,'\
+                            'Another Cc Person <anothercc@person.test>\n ' \
+                            'Email 1 body'
+
+        self.client.post(reverse('process_email'), self.data)
+
+        record = ContactRecord.objects.get(contact_email='thisisnotprm@my.jobs')
+        expected_date_time = datetime(2014, 02, 05, 9, 58)
+        self.assertEqual(expected_date_time, record.date_time)
+        self.assertEqual(self.data['text'], record.notes)
+        self.assertEqual(Contact.objects.all().count(), 2)
