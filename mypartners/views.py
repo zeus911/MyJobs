@@ -550,12 +550,13 @@ def prm_records(request):
         contact_choices.insert(0, ('all', 'All'))
 
     ctx = {
+        'admin_id': request.REQUEST.get('admin'),
         'company': company,
         'contact': contact,
         'contact_choices': contact_choices,
         'contact_type': contact_type,
         'contact_type_choices': contact_type_choices,
-        'date_display': 'date_str',
+        'date_display': date_str,
         'date_start': dt_range[0],
         'date_end': dt_range[1],
         'most_recent_activity': most_recent_activity,

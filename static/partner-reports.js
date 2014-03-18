@@ -10,11 +10,51 @@ $(function() {
             "click .header-menu": "dropdown",
             "click #date-drop": "date_drop",
             "click #custom-date-dropdown": "prevent_close",
-            "click .black-mask": "close_drop_and_restore_scroll"
+            "click .black-mask": "close_drop_and_restore_scroll",
+            "click #today": "submit_date_range_from_li",
+            "click #thirty-days": "submit_date_range_from_li",
+            "click #ninety-days": "submit_date_range_from_li",
+            "click .date-range-submit": "submit_date_range"
         },
 
+        submit_date_range: function(e) {
+            var months = ["None", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            month_start = $('[name="date-start-chooser_0"]').val();
+            day_start = $('[name="date-start-chooser_1"]').val();
+            year_start = $('[name="date-start-chooser_2"]').val();
+            new_date_start =  months.indexOf(month_start) + "/" + day_start + "/" + year_start;
+
+            month_end = $('[name="date-end-chooser_0"]').val();
+            day_end = $('[name="date-end-chooser_1"]').val();
+            year_end = $('[name="date-end-chooser_2"]').val();
+            new_date_end = months.indexOf(month_end) + "/" + day_end + "/" + year_end;
+
+            params = update_query('date_start', new_date_start, window.location.search)
+            window.location = '/prm/view/reports/details' + update_query('date_start', new_date_start, params)
+        },
+
+        submit_date_range_from_li: function(e) {
+            days = e.currentTarget.id;
+            if(days == 'today') {
+                range = 1;
+            }
+            else if(days == 'thirty-days') {
+                range = 30;
+            }
+            else if(days == 'ninety-days') {
+                range = 90;
+            }
+            window.location = '/prm/view/reports/details' + update_query('date', range, window.location.search)
+        },
+
+
         go_to_records: function(e) {
-            window.location.href = "/prm/view/reports/details/records/?company="+String(company_id)+"&partner="+String(partner_id)+"&record_type="+ e.currentTarget.id;
+            url = "/prm/view/reports/details/records/?company="+String(company_id)+"&partner="+String(partner_id)+"&record_type="+ e.currentTarget.id;
+            if(admin_id != 'None') {
+                url += '&admin=' + admin_id;
+            }
+            url += '&date_start=' + String(date_start) + '&date_end=' + String(date_end);
+            window.location.href = url;
         },
 
         initialize: function() {
@@ -231,3 +271,9 @@ function add_links(chart, json, size){
         button.attr('href', '/prm/view/reports/details/records/?company='+String(company_id)+'&partner='+String(partner_id));
     }
 }
+
+function update_query(param, val, search) {
+    var re = new RegExp("([?;&])" + param + "[^&;]*[;&]?")
+    var query_string = search.replace(re, "$1").replace(/&$/, '');
+    return (query_string.length > 2 ? query_string + "&" : "?") + param + "=" + val;
+ }

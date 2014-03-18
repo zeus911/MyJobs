@@ -196,7 +196,7 @@ def get_records_from_request(request):
         except (TypeError, ValueError):
             date_range = 30
         range_end = datetime.now()
-        range_start = datetime.now() - timedelta(date_range)
+        range_start = datetime.now() - timedelta(date_range + 1)
     else:
         range_start = request.REQUEST.get('date_start')
         range_end = request.REQUEST.get('date_end')
@@ -204,11 +204,11 @@ def get_records_from_request(request):
             range_start = datetime.strptime(range_start, "%m/%d/%Y")
             range_end = datetime.strptime(range_end, "%m/%d/%Y")
         except (AttributeError, TypeError, ValueError):
-            range_start = datetime.now() + timedelta(-30)
+            range_start = datetime.now() - timedelta(30)
             range_end = datetime.now()
 
     try:
-        date_str = (range_end - range_start).days + 1
+        date_str = (range_end - range_start).days
         date_str = (("%s Days" % date_str) if date_str != 1
                     else ("%s Day" % date_str))
     except (ValidationError, TypeError):

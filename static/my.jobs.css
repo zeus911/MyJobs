@@ -3536,6 +3536,7 @@ body.modal-open {
     display: block;
 }
 
+.all-contacts-table:hover tr,
 #activity-table:hover td {
     cursor: pointer;
 }
