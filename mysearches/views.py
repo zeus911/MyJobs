@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from itertools import chain
 
 from django.contrib.auth import authenticate, login
@@ -82,14 +82,16 @@ def view_full_feed(request):
                                        saved_search.sort_by,
                                        saved_search.frequency)
         # We don't care about the count; discard it
-        items = parse_feed(url_of_feed, saved_search.frequency)[0]
-        date = datetime.date.today()
-        label = saved_search.label
+        items, count = parse_feed(url_of_feed, saved_search.frequency)
+        start_date = date.today() + timedelta(get_interval_from_frequency(
+                                                      saved_search.frequency))
         return render_to_response('mysearches/view_full_feed.html',
                                   {'search': saved_search,
                                    'items': items,
                                    'view_name': 'Saved Searches',
-                                   'is_pss': is_pss},
+                                   'is_pss': is_pss,
+                                   'start_date': start_date,
+                                   'count': count},
                                   RequestContext(request))
     else:
         return HttpResponseRedirect(reverse('saved_search_main'))

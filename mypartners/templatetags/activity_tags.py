@@ -1,4 +1,5 @@
 import bleach
+import re
 
 from django.template import Library
 from django.utils.encoding import force_text
@@ -67,7 +68,9 @@ def bleach_clean(string):
     specified and marks it safe to display as html.
 
     """
-    string = string.replace('\n', '<br>')
+    # Rough estimation of if it's html
+    if re.search('<br>', string) is None:
+        string = string.replace('\n', '<br>')
     tags = ['br', 'a']
     attrs = {
         'a': ['href'],
@@ -81,5 +84,7 @@ def bleach_clean(string):
 
 @register.filter
 def strip_tags(string):
-    string = string.replace('\n', ' ')
+    # Rough estimation of if it's html
+    if re.search('<br>', string) is None:
+        string = string.replace('\n', '<br>')
     return mark_safe(bleach.clean(string, strip=True))

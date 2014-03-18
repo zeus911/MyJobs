@@ -1,6 +1,6 @@
 from collections import OrderedDict
 import csv
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from email_parser import build_email_dicts
 from email.parser import HeaderParser
 from email.utils import getaddresses, parsedate
@@ -28,7 +28,8 @@ from django.views.decorators.csrf import csrf_exempt
 from myjobs.models import User
 from mydashboard.models import Company
 from mysearches.models import SavedSearch, PartnerSavedSearch
-from mysearches.helpers import url_sort_options, parse_feed
+from mysearches.helpers import (url_sort_options, parse_feed,
+                                get_interval_from_frequency)
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm, ContactRecordForm)
@@ -494,6 +495,8 @@ def partner_view_full_feed(request):
                                        saved_search.sort_by,
                                        saved_search.frequency)
         items, count = parse_feed(url_of_feed, saved_search.frequency)
+        start_date = date.today() + timedelta(get_interval_from_frequency(
+                                                    saved_search.frequency))
         extras = saved_search.partnersavedsearch.url_extras
         if extras:
             add_extra_params_to_jobs(items, extras)
@@ -508,6 +511,8 @@ def partner_view_full_feed(request):
         'is_pss': True,
         'partner': partner.id,
         'company': company.id,
+        'start_date': start_date,
+        'count': count
     }
 
     return render_to_response('mysearches/view_full_feed.html', ctx,
@@ -1030,8 +1035,6 @@ def process_email(request):
     admin_email = request.REQUEST.get('from')
     headers = request.REQUEST.get('headers')
     key = request.REQUEST.get('key')
-    subject = request.REQUEST.get('subject')
-    email_text = request.REQUEST.get('text')
     if key != settings.EMAIL_KEY:
         return HttpResponse(status=200)
     if headers:
