@@ -68,7 +68,9 @@ function update_records(btn_val) {
             $('#record-results').replaceWith(json['html']);
             $(".date-range-select-form").removeClass('date-range-select-form-visible');
             update_time(json);
-            update_url(contact, contact_type, date_start, date_end);
+            if($('#record-download').length) {
+                update_url(contact, contact_type, date_start, date_end);
+            }
         }
     });
 }
