@@ -12,6 +12,10 @@ def get_forward_headers(email_body):
 
 
 def parse_forward_header(header_str):
+    """
+    Turns a header_str into a dictionary.
+
+    """
     header_dict = {}
     header_bits = header_line.findall(header_str)
     for bit in header_bits:
@@ -24,6 +28,21 @@ def parse_forward_header(header_str):
 
 
 def get_forward_header_dict(header_str):
+    """
+    Turns a header_str into a parsed dictionary with the format:
+
+    from: The sender of the email.
+    to: Recipients that were in the "To" field of the header.
+    cc: Recipients that were in the "Cc/CC" field of the heeader.
+    recipients: All the recipients (to + cc) of the email.
+    date: A datetime object representing date the email was sent.
+    subject: The email subject.
+    header: The unchanged header_str.
+
+    from, to, cc, and recipient emails will all be formatted as
+    [(Name, Email), ...]
+
+    """
     header = parse_forward_header(header_str)
     date = header.get('Date') if 'Date' in header else header.get('Sent')
     sender = header.get('From')
@@ -61,6 +80,11 @@ def get_email_body_for_header(split_body, header_str):
 
 
 def build_email_dicts(email_body):
+    """
+    Takes an email body and builds a list of dictionaries representing
+    individual emails, sorted by date the email was sent.
+
+    """
     headers = get_forward_headers(email_body)
     headers = [get_forward_header_dict(header) for header in headers]
     split_body = split(header_block, email_body)
