@@ -293,8 +293,6 @@ function show_dates(){
 }
 
 function disable_fields() {
-    $('[id$="label"]').hide();
-    $('label[for$="label"]').hide();
     $('[id$="url_extras"]').hide();
     $('label[for$="url_extras"]').hide();
     $('[id$="is_active"]').hide();
@@ -317,9 +315,7 @@ function disable_fields() {
     $('.primary').hide();
 }
 
-function enable_fields() {
-    $('[id$="label"]').show();
-    $('label[for$="label"]').show();
+function enable_fields() {;
     $('[id$="url_extras"]').show();
     $('label[for$="url_extras"]').show();
     $('[id$="is_active"]').show();
