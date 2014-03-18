@@ -693,6 +693,7 @@ ul.header-menu > li > ul > a > li:hover {
     margin: 5px;
 }
 
+.profile-form-input label[for$=sort_by_0],
 #saved-search-form label[for$=_url] {
     display: inline;
 }
