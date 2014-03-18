@@ -42,6 +42,9 @@ function update_records(btn_val) {
     var contact = $('#record_contact').val();
     var contact_type = $('#record_contact_type').val();
     var data = "contact=" + contact + "&record_type=" + contact_type + "&company=" + company_id + "&partner=" + partner_id;
+    if(admin_id != 'None') {
+        data += '&admin=' + admin_id;
+    }
     if(!btn_val) {
         month_start = $('[name="date-start-chooser_0"]').val();
         day_start = $('[name="date-start-chooser_1"]').val();

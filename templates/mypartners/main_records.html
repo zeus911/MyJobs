@@ -17,6 +17,7 @@
 <script>
     var company_id = {{ company.id }};
     var partner_id = {{ partner.id }};
+    var admin_id = {% if admin_id %}{{ admin_id }}{% else %}'None'{% endif %};
 </script>
 {% endblock %}
 
