@@ -1171,6 +1171,15 @@ input#id_attachment {
     float: left;
 }
 
+#recent-communications-records table,
+#view-records table {
+    overflow-wrap: break-word;
+    text-overflow: ellipsis;
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+}
+
 fieldset textarea,
 .profile-form-input input[type="text"],
 .profile-form-input input[type="password"] {
@@ -3519,13 +3528,22 @@ body.modal-open {
     cursor: pointer;
 }
 
-.activity-record-tr:hover td {
+#activity-table td {
+    height: 140px;
+    max-height: 140px;
+    min-height: 140px;
+    overflow: hidden;
+    display: block;
+}
+
+#activity-table:hover td {
     cursor: pointer;
 }
 
 #activity-table tr {
-    height: 75px;
-    max-height: 75px;
+    height: 140px;
+    max-height: 140px;
+    min-height: 140px;
     overflow: hidden;
 }
 
