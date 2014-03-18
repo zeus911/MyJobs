@@ -315,7 +315,7 @@ function disable_fields() {
     $('.primary').hide();
 }
 
-function enable_fields() {;
+function enable_fields() {
     $('[id$="url_extras"]').show();
     $('label[for$="url_extras"]').show();
     $('[id$="is_active"]').show();
