@@ -103,7 +103,7 @@
                     <thead>
                         <tr>
                             <td>Label</td>
-                            <td>Search URL</td>
+                            <td>Contact</td>
                             <td>Status</td>
                         </tr>
                     </thead>
@@ -111,7 +111,7 @@
                     {% for ss in recent_ss %}
                         <tr>
                             <td>{{ ss.label }}</td>
-                            <td><a href="{{ ss.url }}" target="_blank">{{ ss.url }}</a></td>
+                            <td>{{ ss.email }}</td>
                             <td>{% make_label ss.is_active "pull-right" %}</td>
                         </tr>
                     {% endfor %}
