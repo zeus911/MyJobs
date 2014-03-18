@@ -1035,6 +1035,8 @@ def process_email(request):
     admin_email = request.REQUEST.get('from')
     headers = request.REQUEST.get('headers')
     key = request.REQUEST.get('key')
+    subject = request.REQUEST.get('subject')
+    email_text = request.REQUEST.get('text')
     if key != settings.EMAIL_KEY:
         return HttpResponse(status=200)
     if headers:
