@@ -3551,3 +3551,8 @@ body.modal-open {
 .table-fixed {
     table-layout: fixed;
 }
+
+.small-text {
+    font-size:66%; 
+    font-weight:normal
+}
