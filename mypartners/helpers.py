@@ -182,10 +182,12 @@ def get_records_from_request(request):
 
     contact = request.REQUEST.get('contact')
     contact_type = request.REQUEST.get('record_type')
+    admin = request.REQUEST.get('admin')
     contact = None if contact == 'all' else contact
     contact_type = None if contact_type == 'all' else contact_type
     records = partner.get_contact_records(contact_name=contact,
-                                          record_type=contact_type)
+                                          record_type=contact_type,
+                                          created_by=admin)
 
     date_range = request.REQUEST.get('date')
     if date_range:

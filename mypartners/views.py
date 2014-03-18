@@ -838,8 +838,8 @@ def partner_main_reports(request):
         .annotate(count=Count('contact_name'))
 
     # Merge contact_records with referral_list and have all contacts
-    # A contact can have 0 contact records and 1 referral record and still show up
-    # vice versa with 1 contact record and 0 referrals
+    # A contact can have 0 contact records and 1 referral record and still show
+    # up vice versa with 1 contact record and 0 referrals
     contacts = []
     for contact_obj in all_contacts:
         contact = {}
@@ -866,8 +866,8 @@ def partner_main_reports(request):
         contact_records = contact_records[:3]
         for contact in others:
             total_others += contact['count']
-
     ctx = {
+        'admin_id': request.REQUEST.get('admin'),
         'partner': partner,
         'company': company,
         'contacts': contacts,
