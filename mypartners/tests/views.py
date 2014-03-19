@@ -292,7 +292,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
         self.assertEqual(len(container('tr')), 3)
         for row in container('tr')[1:]:
             self.assertIn("All Jobs", row('td')[0].get_text())
-            self.assertIn("http://www.my.jobs/jobs", row('td')[1].get_text())
+            self.assertIn("alice@example.com", row('td')[1].get_text())
 
         # Test that only a maximum of 3 records are displayed.
         for _ in range(4):

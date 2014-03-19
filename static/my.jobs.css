@@ -693,6 +693,7 @@ ul.header-menu > li > ul > a > li:hover {
     margin: 5px;
 }
 
+.profile-form-input label[for$=sort_by_0],
 #saved-search-form label[for$=_url] {
     display: inline;
 }
@@ -1170,6 +1171,7 @@ input#id_attachment {
     display: block;
     float: left;
 }
+
 
 fieldset textarea,
 .profile-form-input input[type="text"],
@@ -3528,6 +3530,7 @@ body.modal-open {
 }
 
 .all-contacts-table:hover tr,
+.clickable-tr:hover,
 #activity-table:hover td {
     cursor: pointer;
 }

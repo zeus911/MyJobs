@@ -65,7 +65,7 @@
 
                         {% for partner in partners %}
 
-                        <tr>
+                        <tr class="clickable-tr" onclick="window.document.location='{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}';">
                             <td>
 
                             <b>{{ partner.name }}</b>
