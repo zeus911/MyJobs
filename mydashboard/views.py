@@ -71,6 +71,18 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         except:
             raise Http404
 
+    buids = company.job_source_ids.all().values_list('id', flat=True)
+    if buids:
+        buid_q = ' OR '.join([str(buid) for buid in buids])
+        buid_q = 'job_view_buid:(%s)' % (buid_q, )
+        analytics_solr = Solr().add_query('page_category:redirect')
+        analytics_solr = analytics_solr.rows_to_fetch(0)
+        analytics_solr.add_filter_query(buid_q)
+    else:
+        # Likelihood that a company doesn't have buids attached to it?
+        # Should never happen; catch it anyway.
+        analytics_solr = None
+
     admins = CompanyUser.objects.filter(company=company.id)
     authorized_microsites = Microsite.objects.filter(company=company.id)
     
@@ -100,6 +112,10 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     user_solr = user_solr.add_filter_query(rng)
     facet_solr = facet_solr.add_query(rng)
 
+    if analytics_solr is not None:
+        rng = filter_by_date(request, field='view_date')[0]
+        analytics_solr = analytics_solr.add_query(rng)
+
     if request.GET.get('search', False):
         user_solr = user_solr.add_query("%s" % request.GET['search'])
         facet_solr = facet_solr.add_query("%s" % request.GET['search'])
@@ -119,7 +135,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     solr_results = user_solr.rows_to_fetch(100).search()
 
     # List of dashboard widgets to display.
-    dashboard_widgets = ["candidates", "search", "applied_filters", "filters"]
+    dashboard_widgets = ["apply_click", "candidates", "search",
+                         "applied_filters", "filters"]
 
     # Filter out duplicate entries for a user.
     candidates = sorted(dict_to_object(solr_results.docs),
@@ -164,7 +181,12 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         'total_candidates': len(candidate_list),
         'view_name': 'Company Dashboard',
     }
-    
+
+    if analytics_solr is not None:
+        context['total_apply'] = analytics_solr.search().hits
+        analytics_solr = analytics_solr.add_filter_query('User_id:[* TO *]')
+        context['auth_apply'] = analytics_solr.search().hits
+
     if extra_context is not None:
         context.update(extra_context)
     return render_to_response(template, context,

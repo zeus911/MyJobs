@@ -73,7 +73,7 @@ def filter_by_microsite(microsites, user_solr=None, facet_solr=None):
     return user_solr, facet_solr
 
 
-def filter_by_date(request):
+def filter_by_date(request, field=None):
     """
     Applies date filtering.
 
@@ -88,19 +88,21 @@ def filter_by_date(request):
     """
     requested_after_date = request.REQUEST.get('date_start', False)
     requested_before_date = request.REQUEST.get('date_end', False)
+    if field is None:
+        field = 'SavedSearch_created_on'
 
     date_end = datetime.now()
     # Set date range based on buttons
     if 'today' in request.REQUEST:
-        date_range = filter_by_time_period('SavedSearch_created_on',
+        date_range = filter_by_time_period(field,
                                            total_days=1)
         date_start = date_end - timedelta(days=1)
     elif 'seven_days' in request.REQUEST:
-        date_range = filter_by_time_period('SavedSearch_created_on',
+        date_range = filter_by_time_period(field,
                                            total_days=7)
         date_start = date_end - timedelta(days=7)
     elif 'thirty_days' in request.REQUEST:
-        date_range = filter_by_time_period('SavedSearch_created_on',
+        date_range = filter_by_time_period(field,
                                            total_days=30)
         date_start = date_end - timedelta(days=30)
     # Set date range based on date selection fields.
@@ -124,7 +126,7 @@ def filter_by_date(request):
             else:
                 # Default start date is today.
                 date_end = datetime.now()
-        date_range = filter_by_date_range(field='SavedSearch_created_on',
+        date_range = filter_by_date_range(field=field,
                                           date_start=format_date(date_start,
                                                                  time_format="00:00:00Z"),
                                           date_end=format_date(date_end))

@@ -1,0 +1,27 @@
+<div>
+    <div class="count-box">
+        <span class="count-text">
+            {% if total_apply %}
+                {{ total_apply }}
+            {% else %}
+                0
+            {% endif %}
+        </span>
+        <span>Total Application Clicks
+    </div>
+</div>
+<br>
+
+<div>
+    <div class="count-box">
+        <span class="count-text">
+            {% if auth_apply %}
+                {{ auth_apply }}
+            {% else %}
+                0
+            {% endif %}
+        </span>
+        <span>Authenticated Application Clicks</span>
+    </div>
+</div>
+<br>
