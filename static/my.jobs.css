@@ -1172,14 +1172,6 @@ input#id_attachment {
     float: left;
 }
 
-#recent-communications-records table,
-#view-records table {
-    overflow-wrap: break-word;
-    text-overflow: ellipsis;
-    display: block;
-    max-width: 100%;
-    overflow: hidden;
-}
 
 fieldset textarea,
 .profile-form-input input[type="text"],
@@ -3537,6 +3529,7 @@ body.modal-open {
     display: block;
 }
 
+.all-contacts-table:hover tr,
 .clickable-tr:hover,
 #activity-table:hover td {
     cursor: pointer;

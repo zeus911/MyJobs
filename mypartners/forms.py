@@ -238,6 +238,7 @@ class ContactRecordForm(forms.ModelForm):
 
     class Meta:
         form_name = "Contact Record"
+        exclude = ('created_by', )
         fields = ('contact_type', 'contact_name',
                   'contact_email', 'contact_phone', 'location',
                   'length', 'subject', 'date_time', 'job_id',
@@ -322,6 +323,7 @@ class ContactRecordForm(forms.ModelForm):
     def save(self, user, partner, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
         self.instance.partner = partner
+        self.instance.created_by = user
         instance = super(ContactRecordForm, self).save(commit)
 
         attachments = self.cleaned_data.get('attachment', None)

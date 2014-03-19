@@ -14,8 +14,8 @@
 <script src="{{ STATIC_URL }}record_overview.js{% cache_buster %}"></script>
     <script src="{{ STATIC_URL }}partner-reports.js{% cache_buster %}"></script>
 <script>
-    var company = {{ company.id }};
-    var partner = {{ partner.id }};
+    var company_id = {{ company.id }};
+    var partner_id = {{ partner.id }};
 </script>
 {% endblock %}
 

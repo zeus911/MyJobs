@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import csv
 from datetime import date, datetime, timedelta
+from email_parser import build_email_dicts
 from email.parser import HeaderParser
 from email.utils import getaddresses, parsedate
 from itertools import chain
@@ -550,12 +551,13 @@ def prm_records(request):
         contact_choices.insert(0, ('all', 'All'))
 
     ctx = {
+        'admin_id': request.REQUEST.get('admin'),
         'company': company,
         'contact': contact,
         'contact_choices': contact_choices,
         'contact_type': contact_type,
         'contact_type_choices': contact_type_choices,
-        'date_display': 'date_str',
+        'date_display': date_str,
         'date_start': dt_range[0],
         'date_end': dt_range[1],
         'most_recent_activity': most_recent_activity,
@@ -838,8 +840,8 @@ def partner_main_reports(request):
         .annotate(count=Count('contact_name'))
 
     # Merge contact_records with referral_list and have all contacts
-    # A contact can have 0 contact records and 1 referral record and still show up
-    # vice versa with 1 contact record and 0 referrals
+    # A contact can have 0 contact records and 1 referral record and still show
+    # up vice versa with 1 contact record and 0 referrals
     contacts = []
     for contact_obj in all_contacts:
         contact = {}
@@ -866,8 +868,8 @@ def partner_main_reports(request):
         contact_records = contact_records[:3]
         for contact in others:
             total_others += contact['count']
-
     ctx = {
+        'admin_id': request.REQUEST.get('admin'),
         'partner': partner,
         'company': company,
         'contacts': contacts,
@@ -1034,6 +1036,8 @@ def process_email(request):
     admin_email = request.REQUEST.get('from')
     headers = request.REQUEST.get('headers')
     key = request.REQUEST.get('key')
+    subject = request.REQUEST.get('subject')
+    email_text = request.REQUEST.get('text')
     if key != settings.EMAIL_KEY:
         return HttpResponse(status=200)
     if headers:
@@ -1053,17 +1057,29 @@ def process_email(request):
     cc = request.REQUEST.get('cc', '')
     recipient_emails_and_names = getaddresses(["%s, %s" % (to, cc)])
     admin_email = getaddresses([admin_email])[0][1]
-    contact_emails = [email[1] for email in recipient_emails_and_names]
+    contact_emails = filter(None,
+                            [email[1] for email in recipient_emails_and_names])
+
+    if contact_emails == ['prm@my.jobs'] or contact_emails == []:
+        # If prm@my.jobs is the only contact, assume it's a forward.
+        fwd_headers = build_email_dicts(email_text)
+        try:
+            recipient_emails_and_names = fwd_headers[0]['recipients']
+            contact_emails = [recipient[1] for recipient
+                              in recipient_emails_and_names]
+            date_time = fwd_headers[0]['date']
+        except IndexError:
+            contact_emails = []
 
     try:
-        contact_emails.remove(settings.PRM_EMAIL)
+        contact_emails.remove('prm@my.jobs')
     except ValueError:
         pass
     try:
         contact_emails.remove(admin_email)
     except ValueError:
         pass
-    
+
     admin_user = User.objects.get_email_owner(admin_email)
     if admin_user is None:
         return HttpResponse(status=200)
@@ -1093,8 +1109,6 @@ def process_email(request):
         except ValueError:
             unmatched_contacts.append(contact)
 
-    subject = request.REQUEST.get('subject')
-    email_text = request.REQUEST.get('text')
     num_attachments = int(request.POST.get('attachments', 0))
     attachments = []
     for file_number in range(1, num_attachments+1):

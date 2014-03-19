@@ -10,7 +10,7 @@
             </li>
             {% with company|get_admins as admins %}
                 {% for admin in admins %}
-                    <li value={{ admin.id }}>{{ admin.name|truncatechars:19 }}</li>
+                    <li onclick="window.document.location='{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}&{% if contact %}contact={{ contact.name }}{% endif %}{% if contact_type %}record_type={{ contact_type }}{% endif %}&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}&admin={{admin.id}}';">{{ admin.name|truncatechars:19 }}</li>
                 {% endfor %}
             {% endwith %}
         </ul>
