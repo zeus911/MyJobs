@@ -73,11 +73,11 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     buids = company.job_source_ids.all().values_list('id', flat=True)
     if buids:
-        buid_q = ' OR '.join([str(buid) for buid in buids])
-        buid_q = 'job_view_buid:(%s)' % (buid_q, )
-        analytics_solr = Solr().add_query('page_category:redirect')
-        analytics_solr = analytics_solr.rows_to_fetch(0)
-        analytics_solr.add_filter_query(buid_q)
+        buid_q = ['(job_view_buid:%s)' % str(buid) for buid in buids]
+        buid_q = ' OR '.join(buid_q)
+        buid_q = '(%s)' % buid_q
+        analytics_solr = Solr().add_query('page_category:redirect')\
+            .add_filter_query(buid_q).rows_to_fetch(0)
     else:
         # Likelihood that a company doesn't have buids attached to it?
         # Should never happen; catch it anyway.
