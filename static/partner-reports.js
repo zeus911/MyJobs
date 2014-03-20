@@ -29,8 +29,9 @@ $(function() {
             year_end = $('[name="date-end-chooser_2"]').val();
             new_date_end = months.indexOf(month_end) + "/" + day_end + "/" + year_end;
 
-            params = update_query('date_start', new_date_start, window.location.search)
-            window.location = '/prm/view/reports/details' + update_query('date_start', new_date_start, params)
+            params = update_query('date', '', window.location.search);
+            params = update_query('date_end', new_date_end, params);
+            window.location = '/prm/view/reports/details' + update_query('date_start', new_date_start, params);
         },
 
         submit_date_range_from_li: function(e) {
@@ -44,7 +45,9 @@ $(function() {
             else if(days == 'ninety-days') {
                 range = 90;
             }
-            window.location = '/prm/view/reports/details' + update_query('date', range, window.location.search)
+            params = update_query('date_start', '', window.location.search);
+            params = update_query('date_end', '', params);
+            window.location = '/prm/view/reports/details' + update_query('date', range, params)
         },
 
 
@@ -272,8 +275,34 @@ function add_links(chart, json, size){
     }
 }
 
-function update_query(param, val, search) {
-    var re = new RegExp("([?;&])" + param + "[^&;]*[;&]?")
-    var query_string = search.replace(re, "$1").replace(/&$/, '');
-    return (query_string.length > 2 ? query_string + "&" : "?") + param + "=" + val;
- }
+
+// Shamelessly stolen from http://stackoverflow.com/a/11654596 because
+// I was failing at writing my own.
+function update_query(key, value, url) {
+    if (!url) url = window.location.href;
+    var re = new RegExp("([?&])" + key + "=.*?(&|#|$)(.*)", "gi");
+
+    if (re.test(url)) {
+        if (typeof value !== 'undefined' && value !== null)
+            return url.replace(re, '$1' + key + "=" + value + '$2$3');
+        else {
+            var hash = url.split('#');
+            url = hash[0].replace(re, '$1$3').replace(/(&|\?)$/, '');
+            if (typeof hash[1] !== 'undefined' && hash[1] !== null)
+                url += '#' + hash[1];
+            return url;
+        }
+    }
+    else {
+        if (typeof value !== 'undefined' && value !== null) {
+            var separator = url.indexOf('?') !== -1 ? '&' : '?',
+                hash = url.split('#');
+            url = hash[0] + separator + key + '=' + value;
+            if (typeof hash[1] !== 'undefined' && hash[1] !== null)
+                url += '#' + hash[1];
+            return url;
+        }
+        else
+            return url;
+    }
+}
