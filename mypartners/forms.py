@@ -23,6 +23,12 @@ class ContactForm(forms.ModelForm):
             label="Name", max_length=255, required=True,
             widget=forms.TextInput(attrs={'placeholder': 'Full Name',
                                           'id': 'id_contact-name'}))
+        if self.instance.user:
+            self.fields['email'].widget.attrs['readonly'] = True
+            self.fields['email'].help_text = 'This email address is ' \
+                                             'maintained by the owner ' \
+                                             'of the My.jobs email account ' \
+                                             'and cannot be changed.'
 
     class Meta:
         form_name = "Contact Information"
@@ -32,6 +38,11 @@ class ContactForm(forms.ModelForm):
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
                    'placeholder': 'Notes About This Contact'})
+
+    def clean_email(self):
+        if self.instance.user:
+            return self.instance.email
+        return self.cleaned_data['email']
 
     def save(self, user, partner, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION

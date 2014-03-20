@@ -52,8 +52,6 @@ def prm(request):
 
     """
     company_id = request.REQUEST.get('company')
-    form = request.REQUEST.get('form')
-    user = request.user
 
     if company_id is None:
         try:
