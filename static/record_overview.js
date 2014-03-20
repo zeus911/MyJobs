@@ -86,6 +86,7 @@ function update_url(contact, contact_type, date_start, date_end) {
 
     url = base_url + query_string;
     $(".records-csv-export-link").attr("href", url);
+    $(".records-excel-export-link").attr("href", url + "&file_format=xls");
     $(".records-xml-export-link").attr("href", url + "&file_format=xml");
     $(".records-printer-friendly-export-link").attr("href", url + "&file_format=printer_friendly");
 }
