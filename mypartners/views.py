@@ -1007,7 +1007,7 @@ def prm_export(request):
         }
         return render_to_response('mypartners/printer_friendly.html', ctx,
                                   RequestContext(request))
-    # CSV
+    # CSV/XLS
     else:
         response = HttpResponse(content_type='text/csv')
         writer = csv.writer(response)
