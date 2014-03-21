@@ -67,6 +67,7 @@ var admin_id = {% if admin_id %}{{ admin_id }}{% else %}'None'{% endif %};
     </div>
 
     <div class="row mobile_hide">
+        {% if contacts %}
         <div class="span6">
             <h4>All Contacts</h4>
             {% for contact in contacts %}
@@ -97,6 +98,7 @@ var admin_id = {% if admin_id %}{{ admin_id }}{% else %}'None'{% endif %};
             </table>
             {% endfor %}
         </div>
+        {% endif %}
         <div class="span6">
             {% if top_contacts %}
             {% if top_contacts.count >= 3 %}
