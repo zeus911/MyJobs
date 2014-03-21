@@ -537,6 +537,11 @@ def prm_records(request):
         contact_type_choices.append(('all', 'All'))
     except ValueError:
         contact_type_choices.insert(0, ('all', 'All'))
+    try:
+        index = [x[0] for x in contact_type_choices].index('pssemail')
+        contact_type_choices.pop(index)
+    except ValueError:
+        pass
 
     contacts = ContactRecord.objects.filter(partner=partner)
     contacts = contacts.values('contact_name').distinct()
