@@ -23,7 +23,7 @@
                 <thead>
                     <tr>
                         <td>Search Name</td>
-                        <td>Search URL</td>
+                        <td>Contact</td>
                         <td class="mobile_hide">Frequency</td>
                         <td class="mobile_hide"></td>
                     </tr>
@@ -33,7 +33,7 @@
                     {% for search in searches %}
                     <tr id="saved-search-{{search.id}}">
                         <td class="view_search"><div class="pull-left">{{ search.label }}</div>{% make_label search.is_active "pull-right" %}</td>
-                        <td class="url mobile_hide {% if not search.is_active %}muted{% endif %}"><a href="{{ search.url }}" target="_blank">{{ search.url }}</a></td>
+                        <td>{{ search.email }}</td>
                         <td class="frequency mobile_hide {% if not search.is_active %}muted{% endif %}">
 
                             {% if search.frequency == "W" %}
