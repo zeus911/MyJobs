@@ -308,7 +308,7 @@ def prm_overview(request):
     most_recent_activity = partner.get_logs()
     dt_range = [datetime.now() + timedelta(-30), datetime.now()]
     records = partner.get_contact_records(date_time_range=dt_range)
-    communication = records.order_by('-created_on')
+    communication = records.order_by('-date_time')
     referrals = records.filter(contact_type='job').count()
     records = records.exclude(contact_type='job').count()
     most_recent_communication = communication[:3]
@@ -560,7 +560,7 @@ def prm_records(request):
         'date_end': dt_range[1],
         'most_recent_activity': most_recent_activity,
         'partner': partner,
-        'records': contact_records,
+        'records': contact_records.order_by('-date_time'),
         'view_name': 'PRM'
     }
 
