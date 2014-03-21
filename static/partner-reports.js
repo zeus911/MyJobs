@@ -87,10 +87,14 @@ $(function() {
         },
 
         draw_donut: function(size) {
+            // Add GET from page.load to url if any.
+            var get_data = window.location.search;
+            if (get_data.length) {
+                get_data = get_data.substr(1);
+            }
             $.ajax({
                 type: "GET",
-                data: {company: company_id,
-                       partner: partner_id},
+                data: get_data,
                 global:false,
                 url: "/prm/view/records/retrieve_records",
                 success: function(dump) {
@@ -128,10 +132,14 @@ $(function() {
         },
 
         draw_chart: function() {
+            // Add GET from page.load to url if any.
+            var get_data = window.location.search;
+            if (get_data.length) {
+                get_data = get_data.substr(1);
+            }
             $.ajax({
                 type: "GET",
-                data: {company: company_id,
-                       partner: partner_id},
+                data: get_data,
                 global:false,
                 url: "/prm/view/records/retrieve_referrals",
                 success: function(dump){
@@ -141,7 +149,7 @@ $(function() {
                                     ['Applications',  info.applications.count,   'color: #5eb95e'],
                                     ['Interviews',    info.interviews.count,     'color:#4bb1cf'],
                                     ['Hires',         info.hires.count,          'color: #faa732'],
-                                    ['Records',       total_ref,     'color: #5f6c82']
+                                    ['Records',       total_ref,                 'color: #5f6c82']
                                 ]);
                     if($(window).width() < 500){
                         var options = {width: 250,
