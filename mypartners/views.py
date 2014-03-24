@@ -315,6 +315,9 @@ def prm_overview(request):
     saved_searches = partner.get_searches()
     most_recent_saved_searches = saved_searches[:3]
 
+    older_records = partner.get_contact_records()
+    older_records = older_records.exclude(date_time__gte=datetime.now() +
+                                                         timedelta(-30))
 
     ctx = {'partner': partner,
            'company': company,
@@ -323,7 +326,9 @@ def prm_overview(request):
            'recent_ss': most_recent_saved_searches,
            'count': records,
            'referrals': referrals,
-           'view_name': 'PRM'}
+           'view_name': 'PRM',
+           'num_older_records': older_records.count(),
+           'num_other_records': saved_searches.count() - 3, }
 
     return render_to_response('mypartners/overview.html', ctx,
                               RequestContext(request))

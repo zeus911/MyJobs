@@ -92,7 +92,11 @@
                     {% endif %}
                 </table>
                 <div class="formBox-footer">
-                    <a class="btn pull-right" href="{% url "partner_records" %}?company={{ company.id }}&partner={{ partner.id }}">Manage Records</a>
+                    <span class="pull-left">
+                        {% if num_other_records > 0 %}{{ num_other_records }} more record{{ num_other_records|pluralize }} from the past 30 days - <a href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}&date=30">View these records</a><br/>{% endif %}
+                        {% if num_older_records > 0 %}{{ num_older_records }} record{{ num_older_records|pluralize }} older than 30 days - <a href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}&date=0">View all records</a>{% endif %}
+                    </span>
+                    <a class="btn pull-right" href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}">Manage Records</a>
                     <div class="clear"></div>
                 </div>
             </div>
