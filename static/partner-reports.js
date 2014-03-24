@@ -10,11 +10,54 @@ $(function() {
             "click .header-menu": "dropdown",
             "click #date-drop": "date_drop",
             "click #custom-date-dropdown": "prevent_close",
-            "click .black-mask": "close_drop_and_restore_scroll"
+            "click .black-mask": "close_drop_and_restore_scroll",
+            "click #today": "submit_date_range_from_li",
+            "click #thirty-days": "submit_date_range_from_li",
+            "click #ninety-days": "submit_date_range_from_li",
+            "click .date-range-submit": "submit_date_range"
         },
 
+        submit_date_range: function(e) {
+            var months = ["None", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            month_start = $('[name="date-start-chooser_0"]').val();
+            day_start = $('[name="date-start-chooser_1"]').val();
+            year_start = $('[name="date-start-chooser_2"]').val();
+            new_date_start =  months.indexOf(month_start) + "/" + day_start + "/" + year_start;
+
+            month_end = $('[name="date-end-chooser_0"]').val();
+            day_end = $('[name="date-end-chooser_1"]').val();
+            year_end = $('[name="date-end-chooser_2"]').val();
+            new_date_end = months.indexOf(month_end) + "/" + day_end + "/" + year_end;
+
+            params = update_query('date', '', window.location.search);
+            params = update_query('date_end', new_date_end, params);
+            window.location = '/prm/view/reports/details' + update_query('date_start', new_date_start, params);
+        },
+
+        submit_date_range_from_li: function(e) {
+            days = e.currentTarget.id;
+            if(days == 'today') {
+                range = 1;
+            }
+            else if(days == 'thirty-days') {
+                range = 30;
+            }
+            else if(days == 'ninety-days') {
+                range = 90;
+            }
+            params = update_query('date_start', '', window.location.search);
+            params = update_query('date_end', '', params);
+            window.location = '/prm/view/reports/details' + update_query('date', range, params)
+        },
+
+
         go_to_records: function(e) {
-            window.location.href = "/prm/view/reports/details/records/?company="+String(company_id)+"&partner="+String(partner_id)+"&record_type="+ e.currentTarget.id;
+            url = "/prm/view/reports/details/records/?company="+String(company_id)+"&partner="+String(partner_id)+"&record_type="+ e.currentTarget.id;
+            if(admin_id != 'None') {
+                url += '&admin=' + admin_id;
+            }
+            url += '&date_start=' + String(date_start) + '&date_end=' + String(date_end);
+            window.location.href = url;
         },
 
         initialize: function() {
@@ -44,10 +87,14 @@ $(function() {
         },
 
         draw_donut: function(size) {
+            // Add GET from page.load to url if any.
+            var get_data = window.location.search;
+            if (get_data.length) {
+                get_data = get_data.substr(1);
+            }
             $.ajax({
                 type: "GET",
-                data: {company: company_id,
-                       partner: partner_id},
+                data: get_data,
                 global:false,
                 url: "/prm/view/records/retrieve_records",
                 success: function(dump) {
@@ -85,10 +132,14 @@ $(function() {
         },
 
         draw_chart: function() {
+            // Add GET from page.load to url if any.
+            var get_data = window.location.search;
+            if (get_data.length) {
+                get_data = get_data.substr(1);
+            }
             $.ajax({
                 type: "GET",
-                data: {company: company_id,
-                       partner: partner_id},
+                data: get_data,
                 global:false,
                 url: "/prm/view/records/retrieve_referrals",
                 success: function(dump){
@@ -98,7 +149,7 @@ $(function() {
                                     ['Applications',  info.applications.count,   'color: #5eb95e'],
                                     ['Interviews',    info.interviews.count,     'color:#4bb1cf'],
                                     ['Hires',         info.hires.count,          'color: #faa732'],
-                                    ['Records',       total_ref,     'color: #5f6c82']
+                                    ['Records',       total_ref,                 'color: #5f6c82']
                                 ]);
                     if($(window).width() < 500){
                         var options = {width: 250,
@@ -229,5 +280,37 @@ function add_links(chart, json, size){
     if(size === 'big'){
         var button = $('#reports-view-all');
         button.attr('href', '/prm/view/reports/details/records/?company='+String(company_id)+'&partner='+String(partner_id));
+    }
+}
+
+
+// Shamelessly stolen from http://stackoverflow.com/a/11654596 because
+// I was failing at writing my own.
+function update_query(key, value, url) {
+    if (!url) url = window.location.href;
+    var re = new RegExp("([?&])" + key + "=.*?(&|#|$)(.*)", "gi");
+
+    if (re.test(url)) {
+        if (typeof value !== 'undefined' && value !== null)
+            return url.replace(re, '$1' + key + "=" + value + '$2$3');
+        else {
+            var hash = url.split('#');
+            url = hash[0].replace(re, '$1$3').replace(/(&|\?)$/, '');
+            if (typeof hash[1] !== 'undefined' && hash[1] !== null)
+                url += '#' + hash[1];
+            return url;
+        }
+    }
+    else {
+        if (typeof value !== 'undefined' && value !== null) {
+            var separator = url.indexOf('?') !== -1 ? '&' : '?',
+                hash = url.split('#');
+            url = hash[0] + separator + key + '=' + value;
+            if (typeof hash[1] !== 'undefined' && hash[1] !== null)
+                url += '#' + hash[1];
+            return url;
+        }
+        else
+            return url;
     }
 }

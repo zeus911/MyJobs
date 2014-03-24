@@ -43,6 +43,8 @@ CACHES = {
         'LOCATION': [
             'dseomj-mc-cluster.qksjst.0001.use1.cache.amazonaws.com:11211',
             'dseomj-mc-cluster.qksjst.0002.use1.cache.amazonaws.com:11211',
+            'dseomj-mc-cluster.qksjst.0003.use1.cache.amazonaws.com:11211',
+            'dseomj-mc-cluster.qksjst.0004.use1.cache.amazonaws.com:11211',
         ]
     }
 }

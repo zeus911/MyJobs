@@ -16,3 +16,7 @@ def make_verbose_frequency(value):
 @register.filter(name='time_created')
 def time_created(savedsearch):
     return savedsearch.created_on.strftime('%A, %B %d, %Y %l:%M %p')
+
+@register.assignment_tag
+def has_attr(obj, attr):
+    return hasattr(obj, attr)

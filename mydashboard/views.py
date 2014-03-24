@@ -100,13 +100,16 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         if requested_microsite.find('//') == -1:
             requested_microsite = '//' + requested_microsite
         active_microsites = authorized_microsites.filter(
-            url__contains=requested_microsite)
+            domain__contains=requested_microsite)
     else:
         active_microsites = authorized_microsites
         site_name = company.name
     microsite_urls = [microsite.domain for microsite in active_microsites]
     if not site_name:
-        site_name = microsite_urls[0]
+        try:
+            site_name = microsite_urls[0]
+        except IndexError:
+            site_name = ''
 
     rng, date_start, date_end, date_display = filter_by_date(request)
     user_solr = user_solr.add_filter_query(rng)
@@ -377,7 +380,7 @@ def filter_candidates(request):
         if requested_microsite.find('//') == -1:
             requested_microsite = '//' + requested_microsite
         active_microsites = authorized_microsites.filter(
-            url__contains=requested_microsite)
+            domain__contains=requested_microsite)
 
     else:
         active_microsites = authorized_microsites
@@ -385,7 +388,10 @@ def filter_candidates(request):
 
     microsite_urls = [microsite.url for microsite in active_microsites]
     if not site_name:
-        site_name = microsite_urls[0]
+        try:
+            site_name = microsite_urls[0]
+        except IndexError:
+            site_name = ''
 
     q_list = [Q(url__contains=ms) for ms in microsite_urls]
 

@@ -78,14 +78,14 @@ def filter_by_microsite(microsites, user_solr=None, facet_solr=None):
 
     urls = ['(SavedSearch_url:*%s*)' % site.domain.replace('http://', '')
             for site in microsites]
-    urls = ' OR '.join(urls)
-    urls = '(%s)' % urls
-    print urls
+    if urls:
+        urls = ' OR '.join(urls)
+        urls = '(%s)' % urls
+        user_solr = user_solr.add_filter_query(urls)
+        facet_solr = facet_solr.add_query(urls)
 
-    user_solr = user_solr.add_filter_query("SavedSearch_url:(*%s*)" % urls)
     user_solr = user_solr.add_filter_query('User_opt_in_employers:true')
 
-    facet_solr = facet_solr.add_query("SavedSearch_url:(*%s*)" % urls)
     facet_solr = facet_solr.add_query('User_opt_in_employers:true')
 
     return user_solr, facet_solr

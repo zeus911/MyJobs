@@ -135,7 +135,8 @@ class Partner(models.Model):
 
     # get_contact_records_for_partner
     def get_contact_records(self, contact_name=None, record_type=None,
-                            date_time_range=[], offset=None, limit=None):
+                            created_by=None, date_time_range=[], offset=None,
+                            limit=None):
         records = ContactRecord.objects.filter(partner=self)
         if contact_name:
             records = records.filter(contact_name=contact_name)
@@ -143,6 +144,8 @@ class Partner(models.Model):
             records = records.filter(date_time__range=date_time_range)
         if record_type:
             records = records.filter(contact_type=record_type)
+        if created_by:
+            records = records.filter(created_by=created_by)
         return records[offset:limit]
 
 
@@ -152,6 +155,7 @@ class ContactRecord(models.Model):
     """
 
     created_on = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     partner = models.ForeignKey(Partner)
     contact_type = models.CharField(choices=CONTACT_TYPE_CHOICES,
                                     max_length=12,

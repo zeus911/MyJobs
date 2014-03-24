@@ -652,7 +652,7 @@ ul.header-menu.show-drop {
 }
 
 ul.header-menu.show-drop > li > ul {
-    position: fixed;
+    position: absolute;
     background-color: #f2f2f2;
     border: 1px solid #d5d4d0;
     display: block;
@@ -693,6 +693,7 @@ ul.header-menu > li > ul > a > li:hover {
     margin: 5px;
 }
 
+.profile-form-input label[for$=sort_by_0],
 #saved-search-form label[for$=_url] {
     display: inline;
 }
@@ -1170,6 +1171,7 @@ input#id_attachment {
     display: block;
     float: left;
 }
+
 
 fieldset textarea,
 .profile-form-input input[type="text"],
@@ -3519,13 +3521,24 @@ body.modal-open {
     cursor: pointer;
 }
 
-.activity-record-tr:hover td {
+#activity-table td {
+    height: 140px;
+    max-height: 140px;
+    min-height: 140px;
+    overflow: hidden;
+    display: block;
+}
+
+.all-contacts-table:hover tr,
+.clickable-tr:hover,
+#activity-table:hover td {
     cursor: pointer;
 }
 
 #activity-table tr {
-    height: 75px;
-    max-height: 75px;
+    height: 140px;
+    max-height: 140px;
+    min-height: 140px;
     overflow: hidden;
 }
 
@@ -3550,4 +3563,9 @@ body.modal-open {
 
 .table-fixed {
     table-layout: fixed;
+}
+
+.small-text {
+    font-size:66%; 
+    font-weight:normal
 }
