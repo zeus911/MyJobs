@@ -652,7 +652,7 @@ ul.header-menu.show-drop {
 }
 
 ul.header-menu.show-drop > li > ul {
-    position: fixed;
+    position: absolute;
     background-color: #f2f2f2;
     border: 1px solid #d5d4d0;
     display: block;
