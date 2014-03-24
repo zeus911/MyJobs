@@ -1,5 +1,5 @@
 <div>
-    <div class="count-box">
+    <div class="count-box" id="total-clicks">
         <span class="count-text">
             {% if total_apply %}
                 {{ total_apply }}
@@ -7,13 +7,13 @@
                 0
             {% endif %}
         </span>
-        <span>Total Application Clicks
+        <span>Total Application Click{{ total_apply|pluralize }}</span>
     </div>
 </div>
 <br>
 
 <div>
-    <div class="count-box">
+    <div class="count-box" id="auth-clicks">
         <span class="count-text">
             {% if auth_apply %}
                 {{ auth_apply }}
@@ -21,7 +21,7 @@
                 0
             {% endif %}
         </span>
-        <span>Authenticated Application Clicks</span>
+        <span>Authenticated Application Click{{ auth_apply|pluralize }}</span>
     </div>
 </div>
 <br>

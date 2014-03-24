@@ -25,6 +25,9 @@ class CompanyForm(forms.ModelForm):
     admins = forms.ModelMultipleChoiceField(
         queryset=User.objects.filter(groups__name=CompanyUser.GROUP_NAME), required=False,
         widget=admin.widgets.FilteredSelectMultiple('admins', False))
+    job_source_ids = forms.ModelMultipleChoiceField(
+        queryset=BusinessUnit.objects.all(), required=True,
+        widget=admin.widgets.FilteredSelectMultiple('job_source_ids', False))
 
     def save(self, commit=True):
         added_users = set()
@@ -55,6 +58,4 @@ class CompanyAdmin(admin.ModelAdmin):
     form = CompanyForm
     search_fields = ('name',)
 
-admin.site.register(BusinessUnit)
 admin.site.register(Company, CompanyAdmin)
-admin.site.register(SeoSite)
