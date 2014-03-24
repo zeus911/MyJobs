@@ -5,7 +5,10 @@ from mydashboard.models import (
     Company,
     DashboardModule,
     Microsite,
-    CompanyUser
+    CompanyUser,
+    ViewSource,
+    BusinessUnit,
+    SeoSite,
 )
 from myjobs.models import User
 
@@ -53,5 +56,3 @@ class CompanyAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 admin.site.register(Company, CompanyAdmin)
-
-admin.site.register(Microsite)

@@ -1,3 +1,4 @@
+from django.contrib.sites.models import Site
 from django.template.defaultfilters import slugify
 from django.contrib.auth.models import Group
 from django.db import models
@@ -15,18 +16,58 @@ class Company(models.Model):
     line.
 
     """
-    id = models.IntegerField(primary_key=True, unique=True)
-    name = models.CharField(max_length=255)
+    id = models.IntegerField(primary_key=True)
     admins = models.ManyToManyField(User, through='CompanyUser')
+    name = models.CharField('Name', max_length=200, unique=True)
+    job_source_ids = models.ManyToManyField('BusinessUnit')
+    member = models.BooleanField('DirectEmployers Association Member',
+                                 default=False)
 
     def __unicode__(self):
         return self.name
 
     class Meta:
+        db_table = 'seo_company'
         verbose_name_plural = 'companies'
 
     def slugified_name(self):
         return slugify(self.name)
+
+
+class SeoSite(Site):
+    business_units = models.ManyToManyField('BusinessUnit', null=True,
+                                            blank=True)
+    site_title = models.CharField('Site Title', max_length=200, blank=True,
+                                  default='')
+    view_sources = models.ForeignKey('ViewSource', null=True, blank=True)
+
+    class Meta:
+        db_table = 'seo_seosite'
+        verbose_name = 'seo site'
+        verbose_name_plural = 'seo sites'
+
+
+class ViewSource(models.Model):
+    name = models.CharField(max_length=200, default='')
+    view_source = models.IntegerField(max_length=20, default='')
+
+    def __unicode__(self):
+        return '%s (%s)' % (self.name, self.view_source)
+
+    class Meta:
+        db_table = 'seo_viewsource'
+
+
+class BusinessUnit(models.Model):
+    id = models.IntegerField('Business Unit Id', max_length=10,
+                             primary_key=True)
+    title = models.CharField(max_length=500, null=True, blank=True)
+
+    def __unicode__(self):
+        return '%s: %s' % (self.title, str(self.id))
+
+    class Meta:
+        db_table = 'seo_businessunit'
 
 
 class CandidateEvent(models.Model):

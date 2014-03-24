@@ -17,8 +17,9 @@ from django.shortcuts import render_to_response
 
 from mydashboard.helpers import (saved_searches, filter_by_microsite,
                                  filter_by_date, apply_facets_and_filters,
-                                 parse_facets, remove_param_from_url)
-from mydashboard.models import Company, Microsite, CompanyUser
+                                 parse_facets, remove_param_from_url,
+                                 get_company_microsites)
+from mydashboard.models import Company, Microsite, CompanyUser, SeoSite
 from myjobs.models import User
 from myprofile.models import (PrimaryNameProfileUnitManager,
                               ProfileUnits, Name)
@@ -71,7 +72,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         except:
             raise Http404
 
-    buids = company.job_source_ids.all().values_list('id', flat=True)
+    authorized_microsites, buids = get_company_microsites(company)
+
     if buids:
         buid_q = ['(job_view_buid:%s)' % str(buid) for buid in buids]
         buid_q = ' OR '.join(buid_q)
@@ -84,8 +86,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         analytics_solr = None
 
     admins = CompanyUser.objects.filter(company=company.id)
-    authorized_microsites = Microsite.objects.filter(company=company.id)
-    
+
     # Removes main user from admin list to display other admins
     admins = admins.exclude(user=request.user)
     requested_microsite = request.REQUEST.get('microsite', company.name)
@@ -103,8 +104,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     else:
         active_microsites = authorized_microsites
         site_name = company.name
-        
-    microsite_urls = [microsite.url for microsite in active_microsites]
+    microsite_urls = [microsite.domain for microsite in active_microsites]
     if not site_name:
         site_name = microsite_urls[0]
 
@@ -366,8 +366,10 @@ def filter_candidates(request):
         company = Company.objects.get(id=company_id)
     except Company.DoesNotExist:
         raise Http404
+
+    authorized_microsites, buids = get_company_microsites(company)
+
     requested_microsite = request.REQUEST.get('microsite', company.name)
-    authorized_microsites = Microsite.objects.filter(company=company.id)
     # the url value for 'All' in the select box is company name
     # which then gets replaced with all microsite urls for that company
     site_name = ''
