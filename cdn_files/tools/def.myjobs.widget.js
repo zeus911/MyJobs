@@ -12,7 +12,7 @@ function fill(html) {
 }
 
 function save_search() {
-    $('.saved-search-form').html('<<em class="loading">Saving this search</em>');
+    $('.saved-search-form').html('<em class="loading">Saving this search</em>');
     if (user_email != 'None') {
         create_saved_search();
     }
