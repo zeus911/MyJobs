@@ -22,8 +22,14 @@ function save_search() {
     }
 }
 
-function reload_default_widget() {
-    get_default_widget_html(true);
+function reload_default_widget(data) {
+    if(data.error) {
+        $('.saved-search-form').prepend('<em class="warning">Something went wrong!</em>');
+        get_default_widget_html(false);
+    }
+    else {
+        get_default_widget_html(true);
+    }
 }
 
 function get_default_widget_html(success) {
