@@ -47,16 +47,11 @@ def url_domain(value):
     return updated_url.netloc
 
 @register.simple_tag(takes_context=True)
-def get_candidate_query_string(context, company_id, user_id, anchor, page,
-                               date_end, date_start):
+def get_candidate_query_string(context, company_id, user_id):
     current_url = context['request'].build_absolute_uri()
     data = {
         'company': str(company_id),
         'user': str(user_id),
-        'anchor': anchor,
-        'page': page,
-        'date_end': date_end.strftime('%m/%d/%Y'),
-        'date_start': date_start.strftime('%m/%d/%Y'),
     }
     for key, value in data.items():
         current_url = update_url_param(current_url, key, value)

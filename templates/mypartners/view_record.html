@@ -48,6 +48,17 @@
                     {{ record.get_human_readable_contact_type }}
                 </div>
             </div>
+            {% if record.job_id %}
+            <div class="tip-box" id="job-information">
+            <h5>Job Information</h5>
+                <div class="tip-content">
+                    Job ID: {{ record.job_id }}<br/>
+                    {% if record.job_applications %}Applications: {{ record.job_applications }}<br/>{% endif %}
+                    {% if record.job_interviews %}Interviews: {{ record.job_interviews }}<br/>{% endif %}
+                    {% if record.job_hires %}Hires: {{ record.job_hires }}<br/>{% endif %}
+                </div>
+            </div>
+            {% endif %}
             <div class="tip-box" id="time">
             <h5>Date & Time of Contact</h5>
                 <div class="tip-content">

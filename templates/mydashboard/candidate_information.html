@@ -19,11 +19,6 @@
             </h1>
         </div>
     </div>
-    <div class="row default-heading-candidate-view">
-    	<span class="span6">
-    		<a class="btn primary" href="{% if coming_from.path == 'view' %}{% url 'dashboard' %}{% else %}{% url 'microsite_activity' %}{% endif %}{{ query_string }}">{% if coming_from.path == 'view' %}{% trans 'Back to Company Dashboard' %}{% else %}{% trans 'Back to Microsite Dashboard' %}{% endif %}</a>
-    	</span>    	
-    </div>
     <div class="span4 mobile-heading-candidate-view">
         <span class=pull-left>{% get_gravatar the_user '75' %}</span>
         <div id="mobile-name-heading">
@@ -35,8 +30,6 @@
 		<div class="bar bar-{% completion_level the_user.profile_completion %}" id="initial-bar" style="width: {{ the_user.profile_completion}}%;"></div>
 	    </div>
         </div>
-        <div class="clear"></div>
-        <a class="btn primary" href="{% url 'dashboard' %}">Back to Company Dashboard</a>
         <div class="clear"></div>
     </div>
     <div class="clear"></div>

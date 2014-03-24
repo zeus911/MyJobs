@@ -85,7 +85,7 @@ def log_to_jira(subject, body, issue_dict, from_email):
     else:
         project = jira.project('MJA')
 
-        issue_dict['project'] = {'key': project.key},
+        issue_dict['project'] = {'key': project.key}
         jira.create_issue(fields=issue_dict)
     return to_jira
 
