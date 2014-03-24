@@ -143,7 +143,10 @@ class Partner(models.Model):
         if date_time_range:
             records = records.filter(date_time__range=date_time_range)
         if record_type:
-            records = records.filter(contact_type=record_type)
+            if record_type == 'email':
+                records = records.filter(contact_type__in=['email', 'pssemail'])
+            else:
+                records = records.filter(contact_type=record_type)
         if created_by:
             records = records.filter(created_by=created_by)
         return records[offset:limit]
