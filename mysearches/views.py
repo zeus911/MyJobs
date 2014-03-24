@@ -285,3 +285,26 @@ def unsubscribe(request, user=None):
                                'searches': cache,
                                'email_user': user},
                               RequestContext(request))
+
+
+def saved_search_widget(request):
+    saved_search_url = request.REQUEST.get('url')
+    callback = request.REQUEST.get('callback')
+    user = request.user if request.user.is_authenticated() else None
+
+    if user:
+        try:
+            search = SavedSearch.objects.filter(user=user,
+                                                url=saved_search_url)[0]
+        except IndexError:
+            search = None
+    ctx = {
+        'user': user,
+        'search': search if user else None,
+        'success': request.REQUEST.get('success'),
+    }
+    html = render_to_response('mysearches/saved_search_widget.html', ctx,
+                              RequestContext(request))
+
+    return HttpResponse("%s(%s)" % (callback, json.dumps(html.content)),
+                        content_type='text/javascript')
