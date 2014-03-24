@@ -764,7 +764,7 @@ def get_records(request):
     dt_range, date_str, records = get_records_from_request(request)
 
     ctx = {
-        'records': records,
+        'records': records.order_by('-date_time'),
         'company': company,
         'partner': partner,
         'contact_type': None if contact_type == 'all' else contact_type,
