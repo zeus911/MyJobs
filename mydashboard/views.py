@@ -259,11 +259,7 @@ def candidate_information(request):
 
     user_id = request.REQUEST.get('user')
     company_id = request.REQUEST.get('company')
-    anchor_id = request.REQUEST.get('anchor', False)
-    date_start = request.REQUEST.get('date_start', False)
-    date_end = request.REQUEST.get('date_end', False)
-    candidates_page = request.REQUEST.get('page', False)
-    
+
     # user gets pulled out from id
     try:
         user = User.objects.get(id=user_id)
@@ -303,10 +299,6 @@ def candidate_information(request):
         'primary_name': primary_name,
         'the_user': user,
         'searches': searches,
-        'date_start': date_start,
-        'anchor': anchor_id,
-        'date_end': date_end,
-        'candidates_page': candidates_page,
         'coming_from': coming_from,
         'query_string': query_string,
     }
