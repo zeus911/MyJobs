@@ -15,7 +15,7 @@ from mydashboard.models import Company
 
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
                         ('phone', 'Phone'),
-                        ('facetoface', 'Face to Face'),
+                        ('meetingorevent', 'Meeting or Event'),
                         ('job', 'Job Followup'),
                         ('pssemail', "Partner Saved Search Email"))
 

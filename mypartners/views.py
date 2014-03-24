@@ -894,7 +894,7 @@ def partner_get_records(request):
         email = records.filter(contact_type='email').count()
         email += records.filter(contact_type='pssemail').count()
         phone = records.filter(contact_type='phone').count()
-        facetoface = records.filter(contact_type='facetoface').count()
+        meetingorevent = records.filter(contact_type='meetingorevent').count()
 
         # figure names
         if email != 1:
@@ -905,16 +905,16 @@ def partner_get_records(request):
             phone_name = 'Phone Calls'
         else:
             phone_name = 'Phone Call'
-        if facetoface != 1:
-            facetoface_name = 'Face to Face'
+        if meetingorevent != 1:
+            meetingorevent_name = 'Meeting or Event'
         else:
-            facetoface_name = 'Face to Face'
+            meetingorevent_name = 'Meetings & Events'
 
         data = {
             'email': {"count": email, "name": email_name, 'typename': 'email'},
             'phone': {"count": phone, "name": phone_name, 'typename': 'phone'},
-            'facetoface': {"count": facetoface, "name": facetoface_name,
-                           "typename": "facetoface"},
+            'meetingorevent': {"count": meetingorevent, "name": meetingorevent_name,
+                           "typename": "meetingorevent"},
         }
         data = OrderedDict(sorted(data.items(), key=lambda t: t[1]['count']))
         data_items = data.items()

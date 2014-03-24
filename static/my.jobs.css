@@ -411,7 +411,7 @@ h1 > small > a:hover {
 
 .chart-box#email,
 .chart-box#phone,
-.chart-box#facetoface,
+.chart-box#meetingorevent,
 .chart-box#job {
     cursor: pointer;
 }
