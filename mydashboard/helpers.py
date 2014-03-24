@@ -76,7 +76,7 @@ def filter_by_microsite(microsites, user_solr=None, facet_solr=None):
     user_solr = Solr() if not user_solr else user_solr
     facet_solr = Solr() if not facet_solr else facet_solr
 
-    urls = ['(SavedSearch_url:*%s*)' % site.domain.replace('http://', '')
+    urls = ['(SavedSearch_url:*%s*)' % site.replace('http://', '')
             for site in microsites]
     if urls:
         urls = ' OR '.join(urls)

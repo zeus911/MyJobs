@@ -9,7 +9,8 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 
 from mydashboard.models import CompanyUser
-from mydashboard.tests.factories import CompanyFactory, CompanyUserFactory, MicrositeFactory
+from mydashboard.tests.factories import (CompanyFactory, CompanyUserFactory,
+    SeoSiteFactory, BusinessUnitFactory)
 from mydashboard.helpers import country_codes
 from myjobs.tests.views import TestClient
 from myjobs.tests.factories import UserFactory
@@ -30,15 +31,15 @@ class MyDashboardViewsTests(TestCase):
         self.staff_user = UserFactory()
         group = Group.objects.get(name=CompanyUser.GROUP_NAME)
         self.staff_user.groups.add(group)
-        self.staff_user.save()
+
+        self.business_unit = BusinessUnitFactory()
 
         self.company = CompanyFactory()
-        self.company.save()
+        self.company.job_source_ids.add(self.business_unit)
         self.admin = CompanyUserFactory(user=self.staff_user,
                                         company=self.company)
-        self.admin.save()
-        self.microsite = MicrositeFactory(company=self.company)
-        self.microsite.save()
+        self.microsite = SeoSiteFactory()
+        self.microsite.business_units.add(self.business_unit)
 
         self.client = TestClient()
         self.client.login_user(self.staff_user)
@@ -47,7 +48,6 @@ class MyDashboardViewsTests(TestCase):
         SavedSearchFactory(user=self.candidate_user,
                            url='http://test.jobs/search?q=django',
                            label='test Jobs')
-        self.candidate_user.save()
 
         for i in range(5):
             # Create 5 new users

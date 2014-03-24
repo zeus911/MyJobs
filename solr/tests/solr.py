@@ -60,19 +60,19 @@ class SolrTests(TestCase):
         the profileunits_to_dict function.
 
         """
+        user = UserFactory(email="example@example.com")
+        name = PrimaryNameFactory(user=user)
+
         expected = {
             "Name_content_type_id": [25],
             "Name_given_name": ["Alice"],
-            "uid": "23##1",
+            "uid": "23##%s" % (user.pk, ),
             "ProfileUnits_user_id": 1,
             "Name_user_id": [1],
-            "Name_id": [1],
+            "Name_id": [name.pk],
             "Name_family_name": ["Smith"],
             "Name_primary": [True],
         }
-
-        user = UserFactory(email="example@example.com")
-        PrimaryNameFactory(user=user)
 
         result = profileunits_to_dict(user.id)
 

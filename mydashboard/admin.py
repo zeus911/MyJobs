@@ -55,4 +55,6 @@ class CompanyAdmin(admin.ModelAdmin):
     form = CompanyForm
     search_fields = ('name',)
 
+admin.site.register(BusinessUnit)
 admin.site.register(Company, CompanyAdmin)
+admin.site.register(SeoSite)

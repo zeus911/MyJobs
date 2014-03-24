@@ -8,11 +8,7 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        db.alter_column('mydashboard_candidateevent', 'whom_id', models.ForeignKey(to=orm['mydashboard.company']))
-        db.alter_column('mydashboard_companyuser', 'company_id', models.ForeignKey(to=orm['mydashboard.company']))
-        db.alter_column('mydashboard_dashboardmodule', 'company_id', models.ForeignKey(to=orm['mydashboard.company']))
-        db.alter_column('mydashboard_microsite', 'company_id', models.ForeignKey(to=orm['mydashboard.company']))
-        db.alter_column('seo_company_job_source_ids', 'company_id', models.ForeignKey(to=orm['mydashboard.company']))
+        db.alter_column('mysearches_partnersavedsearch', 'provider_id', models.ForeignKey(to=orm['mydashboard.company']))
 
     def backwards(self, orm):
         pass
@@ -43,15 +39,6 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.IntegerField', [], {'max_length': '10', 'primary_key': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '500', 'null': 'True', 'blank': 'True'})
         },
-        u'mydashboard.candidateevent': {
-            'Meta': {'object_name': 'CandidateEvent'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'what': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'when': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'where': ('django.db.models.fields.URLField', [], {'max_length': '300'}),
-            'who': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"}),
-            'whom': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"})
-        },
         u'mydashboard.company': {
             'Meta': {'object_name': 'Company', 'db_table': "'seo_company'"},
             'admins': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myjobs.User']", 'through': u"orm['mydashboard.CompanyUser']", 'symmetrical': 'False'}),
@@ -66,30 +53,6 @@ class Migration(SchemaMigration):
             'date_added': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})
-        },
-        u'mydashboard.dashboardmodule': {
-            'Meta': {'object_name': 'DashboardModule'},
-            'company': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
-        },
-        u'mydashboard.microsite': {
-            'Meta': {'object_name': 'Microsite'},
-            'company': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'url': ('django.db.models.fields.URLField', [], {'max_length': '300'})
-        },
-        u'mydashboard.seosite': {
-            'Meta': {'ordering': "('domain',)", 'object_name': 'SeoSite', 'db_table': "'seo_seosite'", '_ormbases': [u'sites.Site']},
-            'business_units': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['mydashboard.BusinessUnit']", 'null': 'True', 'blank': 'True'}),
-            u'site_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['sites.Site']", 'unique': 'True', 'primary_key': 'True'}),
-            'site_title': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '200', 'blank': 'True'}),
-            'view_sources': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.ViewSource']", 'null': 'True', 'blank': 'True'})
-        },
-        u'mydashboard.viewsource': {
-            'Meta': {'object_name': 'ViewSource', 'db_table': "'seo_viewsource'"},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '200'}),
-            'view_source': ('django.db.models.fields.IntegerField', [], {'default': "''", 'max_length': '20'})
         },
         u'myjobs.user': {
             'Meta': {'object_name': 'User'},
@@ -114,12 +77,70 @@ class Migration(SchemaMigration):
             'user_guid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'})
         },
-        u'sites.site': {
-            'Meta': {'ordering': "('domain',)", 'object_name': 'Site', 'db_table': "'django_site'"},
-            'domain': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+        u'mypartners.contact': {
+            'Meta': {'object_name': 'Contact'},
+            'address_line_one': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'address_line_two': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'country_code': ('django.db.models.fields.CharField', [], {'max_length': '3', 'blank': 'True'}),
+            'email': ('django.db.models.fields.EmailField', [], {'max_length': '255', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '50'})
+            'label': ('django.db.models.fields.CharField', [], {'max_length': '60', 'blank': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'notes': ('django.db.models.fields.TextField', [], {'max_length': '1000', 'blank': 'True'}),
+            'partner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Partner']"}),
+            'phone': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
+            'postal_code': ('django.db.models.fields.CharField', [], {'max_length': '12', 'blank': 'True'}),
+            'state': ('django.db.models.fields.CharField', [], {'max_length': '5', 'blank': 'True'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'null': 'True', 'on_delete': 'models.SET_NULL'})
+        },
+        u'mypartners.partner': {
+            'Meta': {'object_name': 'Partner'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
+            'primary_contact': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'primary_contact'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': u"orm['mypartners.Contact']"}),
+            'uri': ('django.db.models.fields.URLField', [], {'max_length': '200', 'blank': 'True'})
+        },
+        u'mysearches.partnersavedsearch': {
+            'Meta': {'object_name': 'PartnerSavedSearch', '_ormbases': [u'mysearches.SavedSearch']},
+            'account_activation_message': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'created_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"}),
+            'partner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Partner']"}),
+            'partner_message': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'provider': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
+            u'savedsearch_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['mysearches.SavedSearch']", 'unique': 'True', 'primary_key': 'True'}),
+            'url_extras': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'})
+        },
+        u'mysearches.savedsearch': {
+            'Meta': {'object_name': 'SavedSearch'},
+            'created_on': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'custom_message': ('django.db.models.fields.TextField', [], {'max_length': '300', 'null': 'True', 'blank': 'True'}),
+            'day_of_month': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
+            'day_of_week': ('django.db.models.fields.CharField', [], {'max_length': '2', 'null': 'True', 'blank': 'True'}),
+            'email': ('django.db.models.fields.EmailField', [], {'max_length': '255'}),
+            'feed': ('django.db.models.fields.URLField', [], {'max_length': '300'}),
+            'frequency': ('django.db.models.fields.CharField', [], {'default': "'W'", 'max_length': '2'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'label': ('django.db.models.fields.CharField', [], {'max_length': '60'}),
+            'last_sent': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            'notes': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'sort_by': ('django.db.models.fields.CharField', [], {'default': "'Relevance'", 'max_length': '9'}),
+            'url': ('django.db.models.fields.URLField', [], {'max_length': '300'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})
+        },
+        u'mysearches.savedsearchdigest': {
+            'Meta': {'object_name': 'SavedSearchDigest'},
+            'day_of_month': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
+            'day_of_week': ('django.db.models.fields.CharField', [], {'max_length': '2', 'null': 'True', 'blank': 'True'}),
+            'email': ('django.db.models.fields.EmailField', [], {'max_length': '255'}),
+            'frequency': ('django.db.models.fields.CharField', [], {'default': "'D'", 'max_length': '2'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'send_if_none': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'user': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myjobs.User']", 'unique': 'True'})
         }
     }
 
-    complete_apps = ['mydashboard']
+    complete_apps = ['mysearches']

@@ -104,10 +104,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     else:
         active_microsites = authorized_microsites
         site_name = company.name
-    microsite_urls = [microsite.domain for microsite in active_microsites]
     if not site_name:
         try:
-            site_name = microsite_urls[0]
+            site_name = active_microsites[0]
         except IndexError:
             site_name = ''
 
@@ -386,14 +385,13 @@ def filter_candidates(request):
         active_microsites = authorized_microsites
         site_name = company.name
 
-    microsite_urls = [microsite.url for microsite in active_microsites]
     if not site_name:
         try:
-            site_name = microsite_urls[0]
+            site_name = active_microsites[0]
         except IndexError:
             site_name = ''
 
-    q_list = [Q(url__contains=ms) for ms in microsite_urls]
+    q_list = [Q(url__contains=ms) for ms in active_microsites]
 
     # All searches saved on the employer's company microsites
     candidate_searches = SavedSearch.objects.select_related('user')
