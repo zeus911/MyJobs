@@ -9,6 +9,7 @@ from myjobs.tests.factories import UserFactory
 from myprofile.models import *
 from myprofile.tests.factories import *
 from registration.models import ActivationProfile
+from datetime import date
 
 
 class MyProfileTests(TestCase):
@@ -252,7 +253,7 @@ class MyProfileTests(TestCase):
         ms_object = ProfileUnits.objects.filter(
             content_type__name="military service").count()
         self.assertEqual(ms_object, 1)
-        
+
     def test_add_license(self):
         license_form = LicenseFactory(user=self.user)
         license_form.save()
@@ -284,3 +285,392 @@ class MyProfileTests(TestCase):
         ms_object = ProfileUnits.objects.filter(
             content_type__name="volunteer history").count()
         self.assertEqual(ms_object, 1)
+
+
+class ProfileSuggestionTests(TestCase):
+    user_info = {'password1': 'complicated_password',
+                 'email': 'alice@example.com'}
+
+    def setUp(self):
+        super(ProfileSuggestionTests, self).setUp()
+
+        self.maxDiff = None
+        self.user = UserFactory()
+
+    def test_suggestion_when_name_blank(self):
+        suggestions = Name.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'], "Please add your name.")
+        self.assertEqual(suggestion['priority'], 5)
+
+    def test_suggestion_when_name_provided(self):
+        Name.objects.create(user=self.user,
+                            given_name="First name",
+                            family_name="Last name")
+        suggestions = Name.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 0)
+
+    def test_suggestion_when_education_blank(self):
+        expected = [
+            {'priority': 4, 'msg': 'Would you like to provide information' +
+                                   ' about a high school education?'},
+            {'priority': 3, 'msg': 'Would you like to provide information' +
+                                   ' about a associate degree?'},
+            {'priority': 3, 'msg': 'Would you like to provide information' +
+                                   ' about a bachelor degree?'},
+            {'priority': 2, 'msg': 'Would you like to provide information' +
+                                   ' about a non-degree education program?'},
+            {'priority': 2, 'msg': 'Would you like to provide information' +
+                                   ' about a master degree?'},
+            {'priority': 1, 'msg': 'Would you like to provide information' +
+                                   ' about a doctoral program?'}]
+        actual = Education.suggestions(self.user)
+
+        # Sort lists to ensure indentical order
+        self.assertEqual(sorted(expected, key=lambda x: x['msg']),
+                         sorted(actual, key=lambda x: x['msg']))
+
+    def test_suggestion_when_high_school_entered(self):
+        Education.objects.create(organization_name="Org",
+                                 degree_date=date.today(),
+                                 education_level_code=3,
+                                 degree_major="Gen Ed",
+                                 user=self.user)
+        expected = [
+            {'priority': 3, 'msg': 'Would you like to provide information' +
+                                   ' about a associate degree?'},
+            {'priority': 3, 'msg': 'Would you like to provide information' +
+                                   ' about a bachelor degree?'},
+            {'priority': 2, 'msg': 'Would you like to provide information' +
+                                   ' about a non-degree education program?'},
+            {'priority': 2, 'msg': 'Would you like to provide information' +
+                                   ' about a master degree?'},
+            {'priority': 1, 'msg': 'Would you like to provide information' +
+                                   ' about a doctoral program?'}]
+        actual = Education.suggestions(self.user)
+
+        # Sort lists to ensure indentical order
+        self.assertEqual(sorted(expected, key=lambda x: x['msg']),
+                         sorted(actual, key=lambda x: x['msg']))
+
+    def test_suggestion_when_associate_degree_entered(self):
+        Education.objects.create(organization_name="Org",
+                                 degree_date=date.today(),
+                                 education_level_code=5,
+                                 degree_major="Gen Ed",
+                                 user=self.user)
+        expected = [
+            {'priority': 4, 'msg': 'Would you like to provide information' +
+                                   ' about a high school education?'},
+            {'priority': 3, 'msg': 'Would you like to provide information' +
+                                   ' about a bachelor degree?'},
+            {'priority': 2, 'msg': 'Would you like to provide information' +
+                                   ' about a non-degree education program?'},
+            {'priority': 2, 'msg': 'Would you like to provide information' +
+                                   ' about a master degree?'},
+            {'priority': 1, 'msg': 'Would you like to provide information' +
+                                   ' about a doctoral program?'}]
+        actual = Education.suggestions(self.user)
+
+        # Sort lists to ensure indentical order
+        self.assertEqual(sorted(expected, key=lambda x: x['msg']),
+                         sorted(actual, key=lambda x: x['msg']))
+
+    def test_suggestion_when_bachelor_degree_entered(self):
+        Education.objects.create(organization_name="Org",
+                                 degree_date=date.today(),
+                                 education_level_code=6,
+                                 degree_major="Gen Ed",
+                                 user=self.user)
+        expected = [
+            {'priority': 4, 'msg': 'Would you like to provide information' +
+                                   ' about a high school education?'},
+            {'priority': 3, 'msg': 'Would you like to provide information' +
+                                   ' about a associate degree?'},
+            {'priority': 2, 'msg': 'Would you like to provide information' +
+                                   ' about a non-degree education program?'},
+            {'priority': 2, 'msg': 'Would you like to provide information' +
+                                   ' about a master degree?'},
+            {'priority': 1, 'msg': 'Would you like to provide information' +
+                                   ' about a doctoral program?'}]
+        actual = Education.suggestions(self.user)
+
+        # Sort lists to ensure indentical order
+        self.assertEqual(sorted(expected, key=lambda x: x['msg']),
+                         sorted(actual, key=lambda x: x['msg']))
+
+    def test_suggestion_when_non_degree_program_entered(self):
+        Education.objects.create(organization_name="Org",
+                                 degree_date=date.today(),
+                                 education_level_code=4,
+                                 degree_major="Gen Ed",
+                                 user=self.user)
+        expected = [
+            {'priority': 4, 'msg': 'Would you like to provide information' +
+                                   ' about a high school education?'},
+            {'priority': 3, 'msg': 'Would you like to provide information' +
+                                   ' about a associate degree?'},
+            {'priority': 3, 'msg': 'Would you like to provide information' +
+                                   ' about a bachelor degree?'},
+            {'priority': 2, 'msg': 'Would you like to provide information' +
+                                   ' about a master degree?'},
+            {'priority': 1, 'msg': 'Would you like to provide information' +
+                                   ' about a doctoral program?'}]
+        actual = Education.suggestions(self.user)
+
+        # Sort lists to ensure indentical order
+        self.assertEqual(sorted(expected, key=lambda x: x['msg']),
+                         sorted(actual, key=lambda x: x['msg']))
+
+    def test_suggestion_when_master_degree_entered(self):
+        Education.objects.create(organization_name="Org",
+                                 degree_date=date.today(),
+                                 education_level_code=7,
+                                 degree_major="Gen Ed",
+                                 user=self.user)
+        expected = [
+            {'priority': 4, 'msg': 'Would you like to provide information' +
+                                   ' about a high school education?'},
+            {'priority': 3, 'msg': 'Would you like to provide information' +
+                                   ' about a associate degree?'},
+            {'priority': 3, 'msg': 'Would you like to provide information' +
+                                   ' about a bachelor degree?'},
+            {'priority': 2, 'msg': 'Would you like to provide information' +
+                                   ' about a non-degree education program?'},
+            {'priority': 1, 'msg': 'Would you like to provide information' +
+                                   ' about a doctoral program?'}]
+        actual = Education.suggestions(self.user)
+
+        # Sort lists to ensure indentical order
+        self.assertEqual(sorted(expected, key=lambda x: x['msg']),
+                         sorted(actual, key=lambda x: x['msg']))
+
+    def test_suggestion_when_doctoral_program_entered(self):
+        Education.objects.create(organization_name="Org",
+                                 degree_date=date.today(),
+                                 education_level_code=8,
+                                 degree_major="Gen Ed",
+                                 user=self.user)
+        expected = [
+            {'priority': 4, 'msg': 'Would you like to provide information' +
+                                   ' about a high school education?'},
+            {'priority': 3, 'msg': 'Would you like to provide information' +
+                                   ' about a associate degree?'},
+            {'priority': 3, 'msg': 'Would you like to provide information' +
+                                   ' about a bachelor degree?'},
+            {'priority': 2, 'msg': 'Would you like to provide information' +
+                                   ' about a non-degree education program?'},
+            {'priority': 2, 'msg': 'Would you like to provide information' +
+                                   ' about a master degree?'}]
+        actual = Education.suggestions(self.user)
+
+        # Sort lists to ensure indentical order
+        self.assertEqual(sorted(expected, key=lambda x: x['msg']),
+                         sorted(actual, key=lambda x: x['msg']))
+
+    def test_suggestion_when_address_blank(self):
+        suggestions = Address.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Would you like to provide your address?")
+        self.assertEqual(suggestion['priority'], 3)
+
+    def test_suggestion_when_address_provided(self):
+        Address.objects.create(user=self.user,
+                               address_line_one="12345 Test Ave")
+        suggestions = Address.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Do you need to update your address from 12345 Test" +
+                         " Ave?")
+        self.assertEqual(suggestion['priority'], 1)
+
+    def test_suggestion_when_phone_blank(self):
+        expected = [
+            {'priority': 3, 'msg': 'Would you like to add a home phone?'},
+            {'priority': 3, 'msg': 'Would you like to add a work phone?'},
+            {'priority': 3, 'msg': 'Would you like to add a mobile phone?'},
+            {'priority': 1, 'msg': 'Would you like to add a pager phone?'},
+            {'priority': 1, 'msg': 'Would you like to add a fax phone?'},
+            {'priority': 0, 'msg': 'Would you like to add a other phone?'}]
+        actual = Telephone.suggestions(self.user)
+
+        # Sort lists to ensure indentical order
+        self.assertEqual(sorted(expected, key=lambda x: x['msg']),
+                         sorted(actual, key=lambda x: x['msg']))
+
+    def test_suggestion_when_phone_entered(self):
+        phone_types = {
+            'Home': {'priority': 3,
+                     'msg': 'Would you like to add a home phone?'},
+            'Work': {'priority': 3,
+                     'msg': 'Would you like to add a work phone?'},
+            'Mobile': {'priority': 3,
+                       'msg': 'Would you like to add a mobile phone?'},
+            'Pager': {'priority': 1,
+                      'msg': 'Would you like to add a pager phone?'},
+            'Fax': {'priority': 1,
+                    'msg': 'Would you like to add a fax phone?'},
+            'Other': {'priority': 0,
+                      'msg': 'Would you like to add a other phone?'}}
+
+        phone = Telephone(user=self.user)
+        for k in phone_types.keys():
+            # Change to a phone of each type
+            phone.use_code = k
+            phone.save()
+
+            # Remove that type for the expected results
+            expected = phone_types.copy()
+            del expected[k]
+            expected = expected.values()
+
+            # Get the actual results
+            actual = Telephone.suggestions(self.user)
+            self.assertEqual(sorted(expected, key=lambda x: x['msg']),
+                             sorted(actual, key=lambda x: x['msg']))
+
+    def test_suggestion_when_never_employed(self):
+        suggestions = EmploymentHistory.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Would you like to add your employment history?")
+        self.assertEqual(suggestion['priority'], 3)
+
+    def test_suggestion_when_currently_employed(self):
+        EmploymentHistory.objects.create(user=self.user,
+                                         position_title="Title",
+                                         organization_name="Organization",
+                                         start_date=date.today(),
+                                         current_indicator=True)
+        suggestions = EmploymentHistory.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Are you still employed with Organization?")
+        self.assertEqual(suggestion['priority'], 0)
+
+    def test_suggestion_when_no_employer_is_marked_current(self):
+        EmploymentHistory.objects.create(user=self.user,
+                                         position_title="Title",
+                                         organization_name="Organization",
+                                         start_date=date.today())
+        suggestions = EmploymentHistory.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Have you worked anywhere since being employed" +
+                            " with Organization?")
+        self.assertEqual(suggestion['priority'], 1)
+
+    def test_suggestion_when_secondary_email_blank(self):
+        suggestions = SecondaryEmail.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Would you like to add an additional email?")
+        self.assertEqual(suggestion['priority'], 2)
+
+    def test_suggestion_when_secondary_email_provided(self):
+        SecondaryEmail.objects.create(user=self.user,
+                                      email="test@test.com")
+        suggestions = SecondaryEmail.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 0)
+
+    def test_suggestion_when_military_service_blank(self):
+        suggestions = MilitaryService.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Have you served in the armed forces?")
+        self.assertEqual(suggestion['priority'], 3)
+
+    def test_suggestion_when_military_service_provided(self):
+        MilitaryService.objects.create(user=self.user,
+                                       branch="Army")
+        suggestions = MilitaryService.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 0)
+
+    def test_suggestion_when_website_blank(self):
+        suggestions = Website.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Do you have a personal website or online portfolio?")
+        self.assertEqual(suggestion['priority'], 3)
+
+    def test_suggestion_when_website_provided(self):
+        Website.objects.create(user=self.user,
+                               uri='http://example.com')
+        suggestions = Website.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 0)
+
+    def test_suggestion_when_license_blank(self):
+        suggestions = License.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         'Would you like to add and professional licenses or' +
+                         ' certifications?')
+        self.assertEqual(suggestion['priority'], 3)
+
+    def test_suggestion_when_license_provided(self):
+        License.objects.create(user=self.user,
+                               license_name="Name",
+                               license_type="Type")
+        suggestions = License.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 0)
+
+    def test_suggestion_when_summary_blank(self):
+        suggestions = Summary.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Would you like to add a summary of your career?")
+        self.assertEqual(suggestion['priority'], 3)
+
+    def test_suggestion_when_summary_provided(self):
+        Summary.objects.create(user=self.user,
+                               headline="Headline")
+        suggestions = Summary.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 0)
+
+    def test_suggestion_when_volunteer_history_blank(self):
+        suggestions = VolunteerHistory.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Do you have any relevant volunteer experience you" +
+                          " would like to include?")
+        self.assertEqual(suggestion['priority'], 3)
+
+    def test_suggestion_when_volunteer_history_provided(self):
+        VolunteerHistory.objects.create(user=self.user,
+                                        position_title="Title",
+                                        organization_name="Organization",
+                                        start_date=date.today())
+        suggestions = VolunteerHistory.suggestions(self.user)
+
+        self.assertEqual(len(suggestions), 0)
