@@ -60,19 +60,19 @@ class SolrTests(TestCase):
         the profileunits_to_dict function.
 
         """
+        user = UserFactory(email="example@example.com")
+        name = PrimaryNameFactory(user=user)
+
         expected = {
             "Name_content_type_id": [25],
             "Name_given_name": ["Alice"],
-            "uid": "23##1",
+            "uid": "23##%s" % (user.pk, ),
             "ProfileUnits_user_id": 1,
             "Name_user_id": [1],
-            "Name_id": [1],
+            "Name_id": [name.pk],
             "Name_family_name": ["Smith"],
             "Name_primary": [True],
         }
-
-        user = UserFactory(email="example@example.com")
-        PrimaryNameFactory(user=user)
 
         result = profileunits_to_dict(user.id)
 
@@ -85,10 +85,11 @@ class SolrTests(TestCase):
         the object_to_dict function for Users.
 
         """
+        user = UserFactory(email="example@example.com")
         expected = {
             'User_is_superuser': False,
             u'User_id': 1,
-            'uid': '18##1',
+            'uid': '18##%s' % str(user.pk),
             'User_is_active': True,
             'User_user_guid': 'c1cf679c-86f8-4bce-bf1a-ade8341cd3c1',
             'User_is_staff': False, 'User_first_name': u'',
@@ -101,7 +102,6 @@ class SolrTests(TestCase):
             'User_email': 'example@example.com',
         }
 
-        user = UserFactory(email="example@example.com")
         result = object_to_dict(User, user)
 
         # Exact dictionary comparisons can't be made because of the datetime
@@ -115,8 +115,10 @@ class SolrTests(TestCase):
         the object_to_dict function for SavedSearch.
 
         """
+        user = UserFactory(email="example@example.com")
+        search = SavedSearchFactory(user=user)
         expected = {'User_is_superuser': False,
-                    'uid': '35##1',
+                    'uid': '35##%s' % str(search.pk),
                     'User_is_staff': False,
                     'SavedSearch_day_of_month': None,
                     'User_is_disabled': False,
@@ -143,8 +145,6 @@ class SolrTests(TestCase):
                     'SavedSearch_sort_by': 'Relevance'
         }
 
-        user = UserFactory(email="example@example.com")
-        search = SavedSearchFactory(user=user)
         result = object_to_dict(SavedSearch, search)
 
         # Exact dictionary comparisons can't be made because of the datetime

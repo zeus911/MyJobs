@@ -2,15 +2,17 @@ import pysolr
 import unittest
 
 from bs4 import BeautifulSoup
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
 from mydashboard.models import CompanyUser
-from mydashboard.tests.factories import CompanyFactory, CompanyUserFactory, MicrositeFactory
+from mydashboard.tests.factories import (CompanyFactory, CompanyUserFactory,
+    SeoSiteFactory, BusinessUnitFactory)
 from mydashboard.helpers import country_codes
+from myjobs.models import User
 from myjobs.tests.views import TestClient
 from myjobs.tests.factories import UserFactory
 from myprofile.tests.factories import (PrimaryNameFactory,
@@ -20,6 +22,7 @@ from myprofile.tests.factories import (PrimaryNameFactory,
                                        EmploymentHistoryFactory)
 from mysearches.models import SavedSearch
 from mysearches.tests.factories import SavedSearchFactory
+from solr.signals import object_to_dict
 from tasks import update_solr_task
 
 SEARCH_OPTS = ['django', 'python', 'programming']
@@ -30,15 +33,15 @@ class MyDashboardViewsTests(TestCase):
         self.staff_user = UserFactory()
         group = Group.objects.get(name=CompanyUser.GROUP_NAME)
         self.staff_user.groups.add(group)
-        self.staff_user.save()
+
+        self.business_unit = BusinessUnitFactory()
 
         self.company = CompanyFactory()
-        self.company.save()
+        self.company.job_source_ids.add(self.business_unit)
         self.admin = CompanyUserFactory(user=self.staff_user,
                                         company=self.company)
-        self.admin.save()
-        self.microsite = MicrositeFactory(company=self.company)
-        self.microsite.save()
+        self.microsite = SeoSiteFactory()
+        self.microsite.business_units.add(self.business_unit)
 
         self.client = TestClient()
         self.client.login_user(self.staff_user)
@@ -47,7 +50,6 @@ class MyDashboardViewsTests(TestCase):
         SavedSearchFactory(user=self.candidate_user,
                            url='http://test.jobs/search?q=django',
                            label='test Jobs')
-        self.candidate_user.save()
 
         for i in range(5):
             # Create 5 new users
@@ -354,3 +356,51 @@ class MyDashboardViewsTests(TestCase):
             str(self.company.id)+'&ex-t=json')
         self.assertTrue(response.content.index('candidates'))
         self.assertEqual(response.status_code, 200)
+
+    def test_apply_display_no_clicks(self):
+        response = self.client.post(
+            reverse('dashboard')+'?company='+str(self.company.id),
+            {'microsite': 'test.jobs'})
+
+        soup = BeautifulSoup(response.content)
+
+        total_clicks = soup.select('#total-clicks span')
+        self.assertEqual(int(total_clicks[0].text.strip()), 0)
+        self.assertEqual(total_clicks[1].text, 'Total Application Clicks')
+
+        auth_clicks = soup.select('#auth-clicks span')
+        self.assertEqual(int(auth_clicks[0].text.strip()), 0)
+        self.assertEqual(auth_clicks[1].text, 'Authenticated Application Clicks')
+
+    def test_apply_display_with_clicks(self):
+        analytics_dict = {
+            'job_view_guid': '1'*32,
+            'job_view_buid': self.business_unit.pk,
+            'page_category': 'redirect',
+            'view_date': datetime.now(),
+            'view_source': 1,
+            'aguid': '2' * 32,
+            }
+        auth_dict = analytics_dict.copy()
+        auth_dict.update(object_to_dict(User, self.candidate_user))
+        auth_dict['aguid'] = '3' * 32
+        analytics_dicts = [analytics_dict, auth_dict]
+        for item  in analytics_dicts:
+            item['uid'] = 'analytics##%s#%s' % (
+                item['view_date'], item['aguid'])
+        solr = pysolr.Solr('http://127.0.0.1:8983/solr/myjobs_test/')
+        solr.add(analytics_dicts)
+
+        response = self.client.post(
+            reverse('dashboard')+'?company='+str(self.company.id),
+            {'microsite': 'test.jobs'})
+
+        soup = BeautifulSoup(response.content)
+
+        total_clicks = soup.select('#total-clicks span')
+        self.assertEqual(int(total_clicks[0].text.strip()), 2)
+        self.assertEqual(total_clicks[1].text, 'Total Application Clicks')
+
+        auth_clicks = soup.select('#auth-clicks span')
+        self.assertEqual(int(auth_clicks[0].text.strip()), 1)
+        self.assertEqual(auth_clicks[1].text, 'Authenticated Application Click')

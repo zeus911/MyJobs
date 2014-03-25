@@ -17,8 +17,9 @@ from django.shortcuts import render_to_response
 
 from mydashboard.helpers import (saved_searches, filter_by_microsite,
                                  filter_by_date, apply_facets_and_filters,
-                                 parse_facets, remove_param_from_url)
-from mydashboard.models import Company, Microsite, CompanyUser
+                                 parse_facets, remove_param_from_url,
+                                 get_company_microsites)
+from mydashboard.models import Company, Microsite, CompanyUser, SeoSite
 from myjobs.models import User
 from myprofile.models import (PrimaryNameProfileUnitManager,
                               ProfileUnits, Name)
@@ -71,9 +72,21 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         except:
             raise Http404
 
+    authorized_microsites, buids = get_company_microsites(company)
+
+    if buids:
+        buid_q = ['(job_view_buid:%s)' % str(buid) for buid in buids]
+        buid_q = ' OR '.join(buid_q)
+        buid_q = '(%s)' % buid_q
+        analytics_solr = Solr().add_query('page_category:redirect')\
+            .add_filter_query(buid_q).rows_to_fetch(0)
+    else:
+        # Likelihood that a company doesn't have buids attached to it?
+        # Should never happen; catch it anyway.
+        analytics_solr = None
+
     admins = CompanyUser.objects.filter(company=company.id)
-    authorized_microsites = Microsite.objects.filter(company=company.id)
-    
+
     # Removes main user from admin list to display other admins
     admins = admins.exclude(user=request.user)
     requested_microsite = request.REQUEST.get('microsite', company.name)
@@ -87,18 +100,23 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         if requested_microsite.find('//') == -1:
             requested_microsite = '//' + requested_microsite
         active_microsites = authorized_microsites.filter(
-            url__contains=requested_microsite)
+            domain__contains=requested_microsite)
     else:
         active_microsites = authorized_microsites
         site_name = company.name
-        
-    microsite_urls = [microsite.url for microsite in active_microsites]
     if not site_name:
-        site_name = microsite_urls[0]
+        try:
+            site_name = active_microsites[0]
+        except IndexError:
+            site_name = ''
 
     rng, date_start, date_end, date_display = filter_by_date(request)
     user_solr = user_solr.add_filter_query(rng)
     facet_solr = facet_solr.add_query(rng)
+
+    if analytics_solr is not None:
+        rng = filter_by_date(request, field='view_date')[0]
+        analytics_solr = analytics_solr.add_query(rng)
 
     if request.GET.get('search', False):
         user_solr = user_solr.add_query("%s" % request.GET['search'])
@@ -119,7 +137,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     solr_results = user_solr.rows_to_fetch(100).search()
 
     # List of dashboard widgets to display.
-    dashboard_widgets = ["candidates", "search", "applied_filters", "filters"]
+    dashboard_widgets = ["apply_click", "candidates", "search",
+                         "applied_filters", "filters"]
 
     # Filter out duplicate entries for a user.
     candidates = sorted(dict_to_object(solr_results.docs),
@@ -164,7 +183,12 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         'total_candidates': len(candidate_list),
         'view_name': 'Company Dashboard',
     }
-    
+
+    if analytics_solr is not None:
+        context['total_apply'] = analytics_solr.search().hits
+        analytics_solr = analytics_solr.add_filter_query('User_id:[* TO *]')
+        context['auth_apply'] = analytics_solr.search().hits
+
     if extra_context is not None:
         context.update(extra_context)
     return render_to_response(template, context,
@@ -336,8 +360,10 @@ def filter_candidates(request):
         company = Company.objects.get(id=company_id)
     except Company.DoesNotExist:
         raise Http404
+
+    authorized_microsites, buids = get_company_microsites(company)
+
     requested_microsite = request.REQUEST.get('microsite', company.name)
-    authorized_microsites = Microsite.objects.filter(company=company.id)
     # the url value for 'All' in the select box is company name
     # which then gets replaced with all microsite urls for that company
     site_name = ''
@@ -345,17 +371,19 @@ def filter_candidates(request):
         if requested_microsite.find('//') == -1:
             requested_microsite = '//' + requested_microsite
         active_microsites = authorized_microsites.filter(
-            url__contains=requested_microsite)
+            domain__contains=requested_microsite)
 
     else:
         active_microsites = authorized_microsites
         site_name = company.name
 
-    microsite_urls = [microsite.url for microsite in active_microsites]
     if not site_name:
-        site_name = microsite_urls[0]
+        try:
+            site_name = active_microsites[0]
+        except IndexError:
+            site_name = ''
 
-    q_list = [Q(url__contains=ms) for ms in microsite_urls]
+    q_list = [Q(url__contains=ms) for ms in active_microsites]
 
     # All searches saved on the employer's company microsites
     candidate_searches = SavedSearch.objects.select_related('user')
