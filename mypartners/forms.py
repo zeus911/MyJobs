@@ -308,7 +308,7 @@ class ContactRecordForm(forms.ModelForm):
             self._errors['contact_email'] = ErrorList([""])
         elif contact_type == 'phone' and not self.cleaned_data['contact_phone']:
             self._errors['contact_phone'] = ErrorList([""])
-        elif contact_type == 'facetoface' and not self.cleaned_data['location']:
+        elif contact_type == 'meetingorevent' and not self.cleaned_data['location']:
             self._errors['location'] = ErrorList([""])
         elif contact_type == 'job' and not self.cleaned_data['job_id']:
             self._errors['job_id'] = ErrorList([""])

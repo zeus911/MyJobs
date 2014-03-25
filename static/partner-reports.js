@@ -5,7 +5,7 @@ $(function() {
         events: {
             "click #email": "go_to_records",
             "click #phone": "go_to_records",
-            "click #facetoface": "go_to_records",
+            "click #meetingorevent": "go_to_records",
             "click #job": "go_to_records",
             "click .header-menu": "dropdown",
             "click #date-drop": "date_drop",
@@ -103,7 +103,7 @@ $(function() {
                                     ['Records',             'All Records'],
                                     [info.email.name,       info.email.count],
                                     [info.phone.name,       info.phone.count],
-                                    [info.facetoface.name,  info.facetoface.count]
+                                    [info.meetingorevent.name,  info.meetingorevent.count]
                                 ]);
 
                     var options;
