@@ -14,7 +14,8 @@ $(function() {
             "click #today": "submit_date_range_from_li",
             "click #thirty-days": "submit_date_range_from_li",
             "click #ninety-days": "submit_date_range_from_li",
-            "click .date-range-submit": "submit_date_range"
+            "click #all-days": "submit_date_range_from_li",
+            "click .date-range-submit": "submit_date_range",
         },
 
         submit_date_range: function(e) {
@@ -44,6 +45,9 @@ $(function() {
             }
             else if(days == 'ninety-days') {
                 range = 90;
+            }
+            else if(days == 'all-days') {
+                range = 0;
             }
             params = update_query('date_start', '', window.location.search);
             params = update_query('date_end', '', params);

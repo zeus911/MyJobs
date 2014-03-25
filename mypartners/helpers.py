@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
+from django.db.models import Min, Max
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -195,8 +196,13 @@ def get_records_from_request(request):
             date_range = int(date_range)
         except (TypeError, ValueError):
             date_range = 30
-        range_end = datetime.now()
-        range_start = datetime.now() - timedelta(date_range + 1)
+        if date_range == 0:
+            # Date range 0 means we're not going to filter by date
+            range_end = None
+            range_start = None
+        else:
+            range_end = datetime.now()
+            range_start = datetime.now() - timedelta(date_range + 1)
     else:
         range_start = request.REQUEST.get('date_start')
         range_end = request.REQUEST.get('date_end')
@@ -207,17 +213,28 @@ def get_records_from_request(request):
             range_start = datetime.now() - timedelta(30)
             range_end = datetime.now()
 
-    try:
-        date_str = (range_end - range_start).days
-        date_str = (("%s Days" % date_str) if date_str != 1
-                    else ("%s Day" % date_str))
-    except (ValidationError, TypeError):
-        range_start = datetime.now() + timedelta(-30)
-        range_end = datetime.now()
-        date_str = "30 Days"
+    if date_range == 0:
+        date_str = "View All"
+        try:
+            range_start = records.aggregate(Min('date_time'))['date_time__min']
+        except KeyError:
+            range_start = datetime.now()
+        try:
+            range_end = records.aggregate(Max('date_time'))['date_time__max']
+        except KeyError:
+            range_end = datetime.now()
+    else:
+        try:
+            date_str = (range_end - range_start).days
+            date_str = (("%s Days" % date_str) if date_str != 1
+                        else ("%s Day" % date_str))
+        except (ValidationError, TypeError):
+            range_start = datetime.now() + timedelta(-30)
+            range_end = datetime.now()
+            date_str = "30 Days"
 
-    records = records.filter(date_time__range=[range_start, range_end])
-    
+        records = records.filter(date_time__range=[range_start, range_end])
+
     return (range_start, range_end), date_str, records
 
 
