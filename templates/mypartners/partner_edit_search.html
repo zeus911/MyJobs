@@ -26,7 +26,7 @@
                 <input type="hidden" name="id" value="{% if item_id %}{{item_id}}{% endif %}" />
             <div class="form-label pull-left">&nbsp;</div>
             <div class="actions pull-right">
-                {% if item_id %}<button type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
+                {% if item_id %}<button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
                 <a class="btn" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">{% trans 'Cancel' %}</a>
                 <button type="submit" class="btn primary" id="partner_ss_save">{% trans 'Save' %}</button>
             </div>

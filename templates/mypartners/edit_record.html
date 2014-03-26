@@ -28,7 +28,7 @@
                 <input type="hidden" name="partner" value="{{ partner.id }}">
             <div class="form-label pull-left">&nbsp;</div>
             <div class="actions pull-right">
-                {% if object_id %}<button type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
+                {% if object_id %}<button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
                 <a class="btn" href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}">{% trans 'Cancel' %}</a>
                 <button type="submit" class="btn primary" id="partner_record_save">{% trans 'Save' %}</button>
             </div>

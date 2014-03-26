@@ -44,7 +44,7 @@
 
                 {% if search_id and search_id != 'None' %}
                 {% if not is_pss %}
-                <button type="button" data-toggle="modal" data-target="#delete-confirm" class="btn ">{% trans 'Delete' %}</button>
+                <button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn ">{% trans 'Delete' %}</button>
                 <div id="delete-confirm" class="modal hide fade">
                     <div class="modal-header">
                         <button class="close" aria-hidden="true" data-dismiss="modal" type="button">&times;</button>
