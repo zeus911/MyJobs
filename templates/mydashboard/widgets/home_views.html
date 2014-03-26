@@ -1,0 +1,27 @@
+<div>
+    <div class="count-box" id="total-home">
+        <span class="count-text">
+            {% if total_home %}
+                {{ total_home }}
+            {% else %}
+                0
+            {% endif %}
+        </span>
+        <span>Total Home View{{ total_home|pluralize }}</span>
+    </div>
+</div>
+<br>
+
+<div>
+    <div class="count-box" id="auth-home">
+        <span class="count-text">
+            {% if auth_home %}
+                {{ auth_home }}
+            {% else %}
+                0
+            {% endif %}
+        </span>
+        <span>Authenticated Home View{{ auth_home|pluralize }}</span>
+    </div>
+</div>
+<br>

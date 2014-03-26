@@ -1,0 +1,27 @@
+<div>
+    <div class="count-box" id="total-job-views">
+        <span class="count-text">
+            {% if total_job_view %}
+                {{ total_job_view }}
+            {% else %}
+                0
+            {% endif %}
+        </span>
+        <span>Total Job View{{ total_job_view|pluralize }}</span>
+    </div>
+</div>
+<br>
+
+<div>
+    <div class="count-box" id="auth-job-views">
+        <span class="count-text">
+            {% if auth_job_view %}
+                {{ auth_job_view }}
+            {% else %}
+                0
+            {% endif %}
+        </span>
+        <span>Authenticated Job View{{ auth_job_view|pluralize }}</span>
+    </div>
+</div>
+<br>
