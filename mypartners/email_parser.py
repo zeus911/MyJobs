@@ -3,12 +3,12 @@ from email.utils import getaddresses, parsedate
 from re import compile, findall, split
 from time import mktime
 
-header_block = compile('((?:.{0,10}?(?:From|To|CC|Cc|Date|Sent|Subject): .*\n){4,})')
-header_line = compile('((?:.{0,10}?(From|To|CC|Cc|Date|Sent|Subject): (.*))\n)')
+header_block = compile('((?:.{0,10}?(?:From|To|CC|Cc|Date|Sent|Subject): .*(?:\r)?\n){4,})')
+header_line = compile('((?:.{0,10}?(From|To|CC|Cc|Date|Sent|Subject): (.*))(?:\r)?\n)')
 
 
 def get_forward_headers(email_body):
-    return findall(header_block, email_body)
+    return findall(header_block, email_body.decode('string_escape'))
 
 
 def parse_forward_header(header_str):
@@ -17,7 +17,7 @@ def parse_forward_header(header_str):
 
     """
     header_dict = {}
-    header_bits = header_line.findall(header_str)
+    header_bits = header_line.findall(header_str.decode('string_escape'))
     for bit in header_bits:
         try:
             header_dict[bit[1]] = bit[2]
@@ -54,7 +54,7 @@ def get_forward_header_dict(header_str):
     from_email = getaddresses([sender]) if sender else None
     to_addresses = getaddresses([header.get('To', '')]) if to else []
     cc_addresses = getaddresses([cc]) if cc else []
-    recipient_addresses = to_addresses + cc_addresses
+    recipient_addresses = to_addresses + cc_addresses + from_email
 
     return {
         'from': from_email,
