@@ -1068,7 +1068,8 @@ def process_email(request):
     contact_emails = filter(None,
                             [email[1] for email in recipient_emails_and_names])
 
-    if contact_emails == [] or contact_emails[0].lower() == 'prm@my.jobs':
+    if contact_emails == [] or (len(contact_emails) == 1 and
+                                contact_emails[0].lower() == 'prm@my.jobs'):
         # If prm@my.jobs is the only contact, assume it's a forward.
         fwd_headers = build_email_dicts(email_text)
         try:
