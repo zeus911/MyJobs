@@ -1,13 +1,18 @@
 import datetime
 from urlparse import urlparse, parse_qs
 
+from django.conf import settings
+from django.contrib.auth.models import Group
 from django.test import TestCase
 
 from testfixtures import Replacer
 
 from mysearches.models import SavedSearch, SavedSearchDigest
 from mysearches.helpers import (date_in_range, parse_feed,
-                                url_sort_options, validate_dotjobs_url)
+                                update_url_if_protected, url_sort_options,
+                                validate_dotjobs_url)
+
+from mydashboard.tests.factories import SeoSiteFactory
 from mysearches.tests.test_helpers import return_file
 from myjobs.tests.factories import UserFactory
 
@@ -111,3 +116,25 @@ class SavedSearchHelperTests(TestCase):
         del new['date_sort']
         del new['days_ago']
         self.assertEqual(new, old)
+
+    def test_feed_on_protected_site_no_access(self):
+        site_id = settings.PROTECTED_SITES.keys()[0]
+        site = SeoSiteFactory(pk=site_id, id=site_id)
+
+        url = "%s?q=query" % site.domain
+        result = update_url_if_protected(url, self.user)
+        self.assertEqual(result, url)
+
+    def test_feed_on_protected_site_with_access(self):
+        site_id = settings.PROTECTED_SITES.keys()[0]
+        site = SeoSiteFactory(pk=site_id, id=site_id)
+        group_id = settings.PROTECTED_SITES.values()[0][0]
+        Group.objects.create(pk=group_id, name='Test Group')
+
+        self.user.groups.add(group_id)
+        self.user.save()
+
+        url = "%s?q=query" % site.domain
+        expected_result = "%s&key=%s" % (url, settings.SEARCH_API_KEY)
+        result = update_url_if_protected(url, self.user)
+        self.assertEqual(result, expected_result)
