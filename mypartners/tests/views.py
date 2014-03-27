@@ -808,8 +808,8 @@ class SearchEditTests(MyPartnersTestCase):
                                      email="does@not.exist")
 
         url = self.get_url('partner_savedsearch_save',
-                          company=self.company.id,
-                          partner=self.partner.id)
+                           company=self.company.id,
+                           partner=self.partner.id)
 
         data = {'feed': 'http://www.jobs.jobs/jobs/rss/jobs',
                 'label': 'Test',
@@ -823,7 +823,7 @@ class SearchEditTests(MyPartnersTestCase):
                 'partner_message': '',
                 'notes': '',
                 'company': self.company.id,
-                 'partner': self.partner.id}
+                'partner': self.partner.id}
 
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 200)

@@ -6,13 +6,12 @@ from urllib import urlencode
 from dateutil import parser as dateparser
 import datetime
 
-from django.utils import simplejson
 from django.utils.encoding import smart_str, smart_unicode
 
 from myprofile.models import SecondaryEmail
 
 
-def validate_dotjobs_url(search_url):
+def validate_dotjobs_url(search_url, user):
     """
     Validate (but not parse) a .jobs URL. Nothing is returned if the URL has no
     no rss link is found. Only the title is returned if the rss url is invalid.
@@ -32,7 +31,7 @@ def validate_dotjobs_url(search_url):
 
     try:
         soup = BeautifulSoup(urllib2.urlopen(search_url).read(), "html.parser")
-    except:
+    except Exception:
         return None, None
     link = soup.find("link", {"type":"application/rss+xml"})
 

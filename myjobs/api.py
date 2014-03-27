@@ -110,7 +110,7 @@ class SavedSearchResource(ModelResource):
             return super(SavedSearchResource, self).create_response(request, data, response_class=HttpResponse,
                                                                     **response_kwargs)
         else:
-            label, feed = validate_dotjobs_url(url)
+            label, feed = validate_dotjobs_url(url, user)
             if not (label and feed):
                 data = {'url': 'This is not a valid .JOBS feed'}
                 return super(SavedSearchResource, self).create_response(request, data, response_class=HttpResponse,

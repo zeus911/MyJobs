@@ -17,6 +17,7 @@ from urllib import urlencode
 
 from mydashboard.models import Company
 from mypartners.models import (ContactLogEntry, CONTACT_TYPE_CHOICES, CHANGE)
+from registration.models import ActivationProfile
 
 
 def prm_worthy(request):
@@ -282,3 +283,22 @@ def find_partner_from_email(partner_list, email):
             return partner
 
     return None
+
+
+def send_custom_activation_email(search):
+    activation = ActivationProfile.objects.get(user=search.user)
+    employee_name = search.created_by.get_full_name(default="An employee")
+    ctx = {
+        'activation': activation,
+        'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
+        'search': search,
+        'creator': employee_name,
+        'company': search.provider
+    }
+    subject = "Saved search created on your behalf"
+    message = render_to_string('mypartners/partner_search_new_user.html',
+                               ctx)
+    msg = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL,
+                       [search.user.email])
+    msg.content_subtype = 'html'
+    msg.send()

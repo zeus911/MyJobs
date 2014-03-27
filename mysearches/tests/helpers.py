@@ -2,14 +2,15 @@ import datetime
 from urlparse import urlparse, parse_qs
 
 from django.test import TestCase
-from django.core import mail
 
 from testfixtures import Replacer
 
 from mysearches.models import SavedSearch, SavedSearchDigest
-from mysearches.helpers import *
+from mysearches.helpers import (date_in_range, parse_feed,
+                                url_sort_options, validate_dotjobs_url)
 from mysearches.tests.test_helpers import return_file
 from myjobs.tests.factories import UserFactory
+
 
 class SavedSearchHelperTests(TestCase):
     def setUp(self):
@@ -24,27 +25,27 @@ class SavedSearchHelperTests(TestCase):
         self.r.restore()
         
     def test_valid_dotjobs_url(self):
-        url, soup = validate_dotjobs_url(self.valid_url)
+        url, soup = validate_dotjobs_url(self.valid_url, self.user)
         self.assertIsNotNone(url)
         self.assertIsNotNone(soup)
 
         no_netloc = 'www.my.jobs/search?location=chicago&q=nurse'
-        title, url = validate_dotjobs_url(no_netloc)
+        title, url = validate_dotjobs_url(no_netloc, self.user)
         self.assertIsNotNone(title)
         self.assertIsNotNone(url)
         self.assertEquals(title, 'Jobs - nurse Jobs in Chicago')
 
         valid_filter_url = 'www.my.jobs/chicago/illinois/usa/jobs/mcdonalds/careers/'
-        title, url = validate_dotjobs_url(valid_filter_url)
+        title, url = validate_dotjobs_url(valid_filter_url, self.user)
         self.assertIsNotNone(title)
         self.assertIsNotNone(url)
 
     def test_invalid_dotjobs_url(self):
-        urls = [ 'http://google.com', # url does not contain a feed
-                 '', # url not provided
-                 'http://'] # invalid url provided
+        urls = ['http://google.com',  # url does not contain a feed
+                '',  # url not provided
+                'http://']  # invalid url provided
         for url in urls:
-            title, url = validate_dotjobs_url(url)
+            title, url = validate_dotjobs_url(url, self.user)
             self.assertIsNone(title)
             self.assertIsNone(url)
 
