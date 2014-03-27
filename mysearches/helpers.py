@@ -1,5 +1,4 @@
 import json
-from urlparse import urlparse
 import urllib2
 from bs4 import BeautifulSoup
 from urlparse import urlparse, urlunparse, parse_qs
@@ -14,12 +13,20 @@ from mydashboard.models import SeoSite
 from myprofile.models import SecondaryEmail
 
 
-def update_url_if_protected(search_url, user):
-    # Adds a key to the feed url if the site is protected and the user
-    # has access to the site so the feed can be accessed.
-    search_domain = urlparse(search_url).netloc
-    protected_domains = [SeoSite.objects.get(pk=key).domain for key in
-                         settings.PROTECTED_SITES.keys()]
+def update_url_if_protected(url, user):
+    """
+    Adds a key that bypasses authorization on protected sites
+    if the site is protected and the user has access to the site.
+
+    """
+    search_domain = urlparse(url).netloc
+    protected_domains = []
+    for key in settings.PROTECTED_SITES.keys():
+        try:
+            protected_domains.append(SeoSite.objects.get(pk=key).domain)
+        except SeoSite.DoesNotExist:
+            pass
+
     cleaned_protected_domains = [domain.replace('http://', '').
                                  replace('https://', '').strip('/')
                                  for domain in protected_domains]
@@ -28,12 +35,13 @@ def update_url_if_protected(search_url, user):
         indx = cleaned_protected_domains.index(search_domain)
         groups = settings.PROTECTED_SITES[settings.PROTECTED_SITES.keys()[indx]]
         if list(set(groups) & set(user.groups.values_list('id', flat=True))):
-            if '?' in search_url:
-                search_url = "%s&key=%s" % (search_url, settings.SEARCH_API_KEY)
+            if '?' in url:
+                url = "%s&key=%s" % (url, settings.SEARCH_API_KEY)
             else:
-                search_url = "%s?key=%s" % (search_url, settings.SEARCH_API_KEY)
+                url = "%s?key=%s" % (url, settings.SEARCH_API_KEY)
 
-    return search_url
+    return url
+
 
 def get_rss_soup(rss_url):
     """
