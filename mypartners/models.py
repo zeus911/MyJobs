@@ -161,7 +161,7 @@ class ContactRecord(models.Model):
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     partner = models.ForeignKey(Partner)
     contact_type = models.CharField(choices=CONTACT_TYPE_CHOICES,
-                                    max_length=12,
+                                    max_length=50,
                                     verbose_name="Contact Type")
     contact_name = models.CharField(max_length=255, verbose_name='Contacts',
                                     blank=True)
