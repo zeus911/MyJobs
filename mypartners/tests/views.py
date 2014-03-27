@@ -967,3 +967,16 @@ class EmailTests(MyPartnersTestCase):
 
             Contact.objects.get(email=record.contact_email).delete()
             record.delete()
+
+    def test_double_escape_forward(self):
+        self.data['to'] = 'prm@my.jobs'
+        self.data['text'] = '---------- Forwarded message ----------\\r\\n'\
+                            'From: A New Person <anewperson@my.jobs>\\r\\n'\
+                            'Date: Wed, Mar 26, 2014 at 11:18 AM\\r\\n'\
+                            'Subject: Fwd: Test number 2\\r\\n' \
+                            'To: prm@my.jobs\\r\\n\\r\\n\\r'\
+                            '\\n\\r\\n\\r\\n test message'
+
+        self.client.post(reverse('process_email'), self.data)
+
+        ContactRecord.objects.get(contact_email='anewperson@my.jobs')
