@@ -962,3 +962,16 @@ class EmailTests(MyPartnersTestCase):
         self.assertEqual(expected_date_time, record.date_time)
         self.assertEqual(self.data['text'], record.notes)
         self.assertEqual(Contact.objects.all().count(), 2)
+
+    def test_double_escape_forward(self):
+        self.data['to'] = 'prm@my.jobs'
+        self.data['text'] = '---------- Forwarded message ----------\\r\\n'\
+                            'From: A New Person <anewperson@my.jobs>\\r\\n'\
+                            'Date: Wed, Mar 26, 2014 at 11:18 AM\\r\\n'\
+                            'Subject: Fwd: Test number 2\\r\\n' \
+                            'To: prm@my.jobs\\r\\n\\r\\n\\r'\
+                            '\\n\\r\\n\\r\\n test message'
+
+        self.client.post(reverse('process_email'), self.data)
+
+        ContactRecord.objects.get(contact_email='anewperson@my.jobs')
