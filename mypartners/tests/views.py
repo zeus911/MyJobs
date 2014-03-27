@@ -954,7 +954,7 @@ class EmailTests(MyPartnersTestCase):
                             'Another Cc Person <anothercc@person.test>\n ' \
                             'Email 1 body'
 
-        for email in ['prm@my.jobs, PRM@my.jobs']:
+        for email in ['prm@my.jobs, PRM@MY.JOBS']:
             self.data['to'] = email
 
             self.client.post(reverse('process_email'), self.data)

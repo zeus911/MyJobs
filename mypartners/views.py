@@ -1079,13 +1079,11 @@ def process_email(request):
         except IndexError:
             contact_emails = []
 
-    try:
-        for element in contact_emails:
-            if element.lower() == 'prm@my.jobs':
-                contact_emails.remove(element)
-                break
-    except ValueError:
-        pass
+    for element in contact_emails:
+        if element.lower() == 'prm@my.jobs':
+            contact_emails.remove(element)
+            break
+
     try:
         contact_emails.remove(admin_email)
     except ValueError:
