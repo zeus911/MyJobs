@@ -1,5 +1,5 @@
 from collections import OrderedDict
-import csv
+import unicodecsv
 from datetime import date, datetime, timedelta
 from email_parser import build_email_dicts
 from email.parser import HeaderParser
@@ -1018,7 +1018,7 @@ def prm_export(request):
     # CSV/XLS
     else:
         response = HttpResponse(content_type='text/csv')
-        writer = csv.writer(response)
+        writer = unicodecsv.writer(response, encoding='utf-8')
         writer.writerow(fields)
         for record in records:
             values = [getattr(record, field, '') for field in fields]

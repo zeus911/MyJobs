@@ -420,6 +420,18 @@ class RecordsDetailsTests(MyPartnersTestCase):
 
         self.assertEqual(len(soup.find(id='record-history')('br')), 3)
 
+    def test_export_special_chars(self):
+        self.default_view = 'prm_export'
+
+        ContactRecordFactory(notes='\u2019', partner=self.partner)
+
+        url = self.get_url(partner=self.partner.id,
+                           company=self.company.id,
+                           id=self.contact_record.id,
+                           file_format='csv')
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
 
 class RecordsEditTests(MyPartnersTestCase):
     """Tests related to the record edit page, /prm/view/records/edit"""
