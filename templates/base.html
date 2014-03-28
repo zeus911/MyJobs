@@ -8,6 +8,10 @@
     <meta name="title" content="My.jobs">
     {% endblock %}
 
+    <script>
+        var static_url = "{{ STATIC_URL }}";
+    </script>
+
     {% block meta %}
     {% include "includes/meta.html" %}
     {% endblock %}
