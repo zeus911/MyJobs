@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import json
+import re
 
 from django.test import TestCase
 from django.conf import settings
@@ -823,7 +824,7 @@ class SearchEditTests(MyPartnersTestCase):
                 'partner_message': '',
                 'notes': '',
                 'company': self.company.id,
-                 'partner': self.partner.id}
+                'partner': self.partner.id}
 
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 200)
@@ -831,6 +832,13 @@ class SearchEditTests(MyPartnersTestCase):
         for s in [self.staff_user.get_full_name(), str(self.company),
                   'has created a job search for you']:
             self.assertIn(s, mail.outbox[1].body)
+
+        body = re.sub(r'\s+', ' ', mail.outbox[0].body)
+        for expected in ['%s created this saved search on your behalf:' % \
+                             (self.staff_user.email, ),
+                         'Saved Search Notification']:
+            self.assertTrue(expected in body)
+        self.assertFalse('delete this saved search' in body)
 
 
 class EmailTests(MyPartnersTestCase):
