@@ -6,13 +6,59 @@ from urllib import urlencode
 from dateutil import parser as dateparser
 import datetime
 
-from django.utils import simplejson
+from django.conf import settings
 from django.utils.encoding import smart_str, smart_unicode
 
+from mydashboard.models import SeoSite
 from myprofile.models import SecondaryEmail
 
 
-def validate_dotjobs_url(search_url):
+def update_url_if_protected(url, user):
+    """
+    Adds a key that bypasses authorization on protected sites
+    if the site is protected and the user has access to the site.
+
+    """
+    search_domain = urlparse(url).netloc
+    protected_domains = []
+    for key in settings.PROTECTED_SITES.keys():
+        try:
+            protected_domains.append(SeoSite.objects.get(pk=key).domain)
+        except SeoSite.DoesNotExist:
+            pass
+
+    cleaned_protected_domains = [domain.replace('http://', '').
+                                 replace('https://', '').strip('/')
+                                 for domain in protected_domains]
+
+    if search_domain in cleaned_protected_domains:
+        indx = cleaned_protected_domains.index(search_domain)
+        groups = settings.PROTECTED_SITES[settings.PROTECTED_SITES.keys()[indx]]
+        if list(set(groups) & set(user.groups.values_list('id', flat=True))):
+            if '?' in url:
+                url = "%s&key=%s" % (url, settings.SEARCH_API_KEY)
+            else:
+                url = "%s?key=%s" % (url, settings.SEARCH_API_KEY)
+
+    return url
+
+
+def get_rss_soup(rss_url):
+    """
+    Turn a URL into a BeatifulSoup object
+
+    Inputs:
+    :rss_url:      URL of an RSS feed
+
+    Outputs:
+                   BeautifulSoup object
+    """
+
+    rss_feed = urllib2.urlopen(rss_url).read()
+    return BeautifulSoup(rss_feed, "html.parser")
+
+
+def validate_dotjobs_url(search_url, user):
     """
     Validate (but not parse) a .jobs URL. Nothing is returned if the URL has no
     no rss link is found. Only the title is returned if the rss url is invalid.
@@ -30,11 +76,15 @@ def validate_dotjobs_url(search_url):
     if search_url.find('://') == -1:
         search_url = "http://" + search_url
 
+    search_url = update_url_if_protected(search_url, user)
+
     try:
         soup = BeautifulSoup(urllib2.urlopen(search_url).read(), "html.parser")
-    except:
+    except Exception, e:
+        print e
         return None, None
-    link = soup.find("link", {"type":"application/rss+xml"})
+
+    link = soup.find("link", {"type": "application/rss+xml"})
 
     if link:
         title = link.get('title')
@@ -45,27 +95,12 @@ def validate_dotjobs_url(search_url):
                 params += '?num_items=1'
             else:
                 params += '&num_items=1'
-            rss_soup = get_rss_soup(rss_url+params)
-        except:
+            get_rss_soup(rss_url+params)
+        except Exception:
             return title, None
         return title, rss_url
     else:
         return None, None
-
-
-def get_rss_soup(rss_url):
-    """
-    Turn a URL into a BeatifulSoup object
-    
-    Inputs:
-    :rss_url:      URL of an RSS feed
-
-    Outputs:
-                   BeautifulSoup object
-    """
-
-    rss_feed = urllib2.urlopen(rss_url).read()
-    return BeautifulSoup(rss_feed, "html.parser")
 
 
 def get_json(json_url):

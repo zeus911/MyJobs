@@ -280,3 +280,7 @@ BOTS = ['agent', 'archive', 'ask', 'auto', 'bot', 'check', 'crawl',
         'proximic', 'python', 'scan', 'scooter', 'scoutjet', 'search', 'slurp',
         'spider', 'url+control', 'urllib', 'validator', 'watchfire',
         'whizbang', 'wget', 'xenu', 'yahoo-fetch', 'yahooseeker']
+
+# A list of proected sites and the groups (by id) that are allowed
+# to access them. Copied from directseo.
+PROTECTED_SITES = {42751: [25803, ]}

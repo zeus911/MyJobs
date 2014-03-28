@@ -821,8 +821,8 @@ class SearchEditTests(MyPartnersTestCase):
                                      email="does@not.exist")
 
         url = self.get_url('partner_savedsearch_save',
-                          company=self.company.id,
-                          partner=self.partner.id)
+                           company=self.company.id,
+                           partner=self.partner.id)
 
         data = {'feed': 'http://www.jobs.jobs/jobs/rss/jobs',
                 'label': 'Test',
