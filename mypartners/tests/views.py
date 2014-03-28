@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import json
+import re
 
 from django.test import TestCase
 from django.conf import settings
@@ -419,6 +420,18 @@ class RecordsDetailsTests(MyPartnersTestCase):
 
         self.assertEqual(len(soup.find(id='record-history')('br')), 3)
 
+    def test_export_special_chars(self):
+        self.default_view = 'prm_export'
+
+        ContactRecordFactory(notes='\u2019', partner=self.partner)
+
+        url = self.get_url(partner=self.partner.id,
+                           company=self.company.id,
+                           id=self.contact_record.id,
+                           file_format='csv')
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
 
 class RecordsEditTests(MyPartnersTestCase):
     """Tests related to the record edit page, /prm/view/records/edit"""
@@ -823,7 +836,7 @@ class SearchEditTests(MyPartnersTestCase):
                 'partner_message': '',
                 'notes': '',
                 'company': self.company.id,
-                 'partner': self.partner.id}
+                'partner': self.partner.id}
 
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 200)
@@ -831,6 +844,13 @@ class SearchEditTests(MyPartnersTestCase):
         for s in [self.staff_user.get_full_name(), str(self.company),
                   'has created a job search for you']:
             self.assertIn(s, mail.outbox[1].body)
+
+        body = re.sub(r'\s+', ' ', mail.outbox[0].body)
+        for expected in ['%s created this saved search on your behalf:' % \
+                             (self.staff_user.email, ),
+                         'Saved Search Notification']:
+            self.assertTrue(expected in body)
+        self.assertFalse('delete this saved search' in body)
 
 
 class EmailTests(MyPartnersTestCase):
@@ -940,7 +960,6 @@ class EmailTests(MyPartnersTestCase):
             self.assertEqual(email[1], partner)
 
     def test_email_forward_parsing(self):
-        self.data['to'] = 'prm@my.jobs'
         self.data['text'] = '\n---------- Forwarded message ----------\n'\
                             '\n From: A third person <athird@person.test> \n'\
                             'Sent: Wednesday, February 5, 2013 1:01 AM\n'\
@@ -955,13 +974,19 @@ class EmailTests(MyPartnersTestCase):
                             'Another Cc Person <anothercc@person.test>\n ' \
                             'Email 1 body'
 
-        self.client.post(reverse('process_email'), self.data)
+        for email in ['prm@my.jobs', 'PRM@MY.JOBS']:
+            self.data['to'] = email
 
-        record = ContactRecord.objects.get(contact_email='thisisnotprm@my.jobs')
-        expected_date_time = datetime(2014, 02, 05, 9, 58)
-        self.assertEqual(expected_date_time, record.date_time)
-        self.assertEqual(self.data['text'], record.notes)
-        self.assertEqual(Contact.objects.all().count(), 2)
+            self.client.post(reverse('process_email'), self.data)
+
+            record = ContactRecord.objects.get(contact_email='thisisnotprm@my.jobs')
+            expected_date_time = datetime(2014, 02, 05, 9, 58)
+            self.assertEqual(expected_date_time, record.date_time)
+            self.assertEqual(self.data['text'], record.notes)
+            self.assertEqual(Contact.objects.all().count(), 2)
+
+            Contact.objects.get(email=record.contact_email).delete()
+            record.delete()
 
     def test_double_escape_forward(self):
         self.data['to'] = 'prm@my.jobs'
