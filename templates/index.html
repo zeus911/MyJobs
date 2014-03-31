@@ -2,10 +2,6 @@
 {% load i18n %}
 {% load common_tags %}
 {% block topbarlogin %}{% endblock topbarlogin %}
-{% block meta-extra %}
-<script> var num_modules = {{ num_modules }}; </script>
-<script type="text/javascript" src="{{STATIC_URL}}account-creation.js{% cache_buster %}"></script>
-{% endblock %}
 
 {% block title-content %}{% trans "My.jobs - Manage your job search." %}{% endblock title-content %}
 
@@ -72,9 +68,13 @@
 
                 {% endif %}
 
-            </div>				
+            </div>
         </div>
     </div>
     {% include "includes/account-page-2.html" %}
 {% endblock %}
 
+{% block extra-js %}
+<script> var num_modules = {{ num_modules }}; </script>
+<script type="text/javascript" src="{{STATIC_URL}}account-creation.js{% cache_buster %}"></script>
+{% endblock %}

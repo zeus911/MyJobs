@@ -6,9 +6,6 @@
     <title>Saved Search - My.jobs</title>
     <meta name="title" content="Saved Search - My.jobs">
 {% endblock %}
-{% block meta-extra %}
-<script src="{{ STATIC_URL }}saved-search-main.js{% cache_buster %}"></script>
-{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -72,3 +69,7 @@
     </form>
 </div>
 {% endblock content %}
+
+{% block extra-js %}
+<script src="{{ STATIC_URL }}saved-search-main.js{% cache_buster %}"></script>
+{% endblock %}

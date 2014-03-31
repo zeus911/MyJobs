@@ -8,9 +8,6 @@
     {% endwith %}
 {% endblock %}
 {% load i18n %}
-{% block meta-extra %}
-<script src="{{ STATIC_URL }}profile.js{% cache_buster %}"></script>
-{% endblock %}
 
 {% block content %}
 <div class="wrapper"> 
@@ -66,4 +63,8 @@
     </div>{# /row #}
 </div>{# /wrapper #}
 
+{% endblock %}
+
+{% block extra-js %}
+<script src="{{ STATIC_URL }}profile.js{% cache_buster %}"></script>
 {% endblock %}
