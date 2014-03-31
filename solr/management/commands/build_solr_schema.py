@@ -113,9 +113,8 @@ class Command(BaseCommand):
                 field_data['type'] = 'string'
                 schema_fields.append(field_data)
                 copy_fields.append({'source': exact_field, 'dest': field})
-            for field in ['aguid', 'domain',
-                          'job_view_canonical_domain',
-                          'job_view_guid']:
+            for field in ['aguid', 'domain', 'job_view_canonical_domain',
+                          'job_view_guid', 'search_location', 'search_query']:
                 # myguid is the same as User_user_guid and will be kept there
                 schema_fields.append({
                     'field_name': field,

@@ -7,11 +7,18 @@ from testfixtures import Replacer
 from myjobs.tests.factories import UserFactory
 from mysearches import models
 from mysearches.tests.factories import SavedSearchFactory, SavedSearchDigestFactory
+from mysearches.tests.test_helpers import return_file
 from tasks import send_search_digests
 
 class SavedSearchModelsTests(TestCase):
     def setUp(self):
         self.user = UserFactory()
+
+        self.r = Replacer()
+        self.r.replace('urllib2.urlopen', return_file)
+
+    def tearDown(self):
+        self.r.restore()
 
     def test_send_search_email(self):
         SavedSearchDigestFactory(user=self.user,
