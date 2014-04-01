@@ -26,5 +26,5 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 TEST_RUNNER = 'testrunner.SilentTestRunner'
 
 SOLR = {
-    'default': '127.0.0.1:8983/solr/myjobs-test/',
+    'default': 'http://ec2-23-20-67-65.compute-1.amazonaws.com:8983/solr/myjobs-test/',
 }
