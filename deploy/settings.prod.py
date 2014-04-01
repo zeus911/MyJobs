@@ -28,7 +28,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Browsers should only send the user's session cookie over https
 SESSION_COOKIE_SECURE = True
 
-STATIC_URL = "http://d2e48ltfsb5exy.cloudfront.net/content_mj/files/"
+STATIC_URL = "//d2e48ltfsb5exy.cloudfront.net/content_mj/files/"
 
 SESSION_CACHE_ALIAS = 'sessions'
 CACHES = {
