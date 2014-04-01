@@ -23,7 +23,9 @@ $(document).ready(function() {
     });
 
     var _href = $("a.endless_more").attr("href");
-    if (_href.length < 100) {
-        $("a.endless_more").attr("href", _href + '&date_end=' + date_end + '&date_start=' + date_start);
+    if(_href){
+        if (_href.length < 100) {
+            $("a.endless_more").attr("href", _href + '&date_end=' + date_end + '&date_start=' + date_start);
+        }
     }
 });
