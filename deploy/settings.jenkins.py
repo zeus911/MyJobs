@@ -30,3 +30,5 @@ SOLR = {
 }
 
 TEST_SOLR_INSTANCE = SOLR['default']
+
+CELERY_ALWAYS_EAGER = True
