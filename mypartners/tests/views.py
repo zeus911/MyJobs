@@ -41,7 +41,7 @@ class MyPartnersTestCase(TestCase):
         self.client.login_user(self.staff_user)
 
         # Create a partner
-        self.partner = PartnerFactory(owner=self.company)
+        self.partner = PartnerFactory(owner=self.company, pk=1)
 
         # Create a contact
         self.contact = ContactFactory(partner=self.partner,
