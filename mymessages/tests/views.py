@@ -18,7 +18,7 @@ class MessageViewTests(TestCase):
         for group in Group.objects.all():
             self.message.group.add(group.pk)
         self.message.save()
-        self.messageInfo = MessageInfo(user=User.objects.get(id=1),
+        self.messageInfo = MessageInfo(user=self.user,
                                        message=self.message)
         self.messageInfo.save()
         self.client = TestClient()
