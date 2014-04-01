@@ -188,7 +188,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
             # mysql only keeps to the second, which isn't accurate enough for
             # this test.  To handle this, we set the time off by i minutes. We
             # do it after to handle the fact that you cannot override auto_now.
-            cle.action_time = datetime.now - timedelta(minutes=i)
+            cle.action_time = datetime.now() - timedelta(minutes=i)
             cle.save()
 
         url = self.get_url(company=self.company.id,
