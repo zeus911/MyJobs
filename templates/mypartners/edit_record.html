@@ -5,9 +5,6 @@
     <meta name="title" content="PRM New Contact Record {{ company.name }}">
 {% endblock %}
 {% load i18n %}
-{% block meta-extra %}
-<script src="{{ STATIC_URL }}partner_edit_record.js{% cache_buster %}"></script>
-{% endblock %}
 
 {% block content %}
     <h1><a class="mobile_hide" href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
@@ -56,4 +53,8 @@
             </div>
         </div>{# /delete-confirm #}
     </div>
+{% endblock %}
+
+{% block extra-js %}
+<script src="{{ STATIC_URL }}partner_edit_record.151-01.js"></script>
 {% endblock %}
