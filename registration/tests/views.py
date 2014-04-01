@@ -119,9 +119,11 @@ class MergeUserTests(TestCase):
         self.client = TestClient()
         self.password = '12345'
         self.key = '56effea3df2bcdcfe377ca4bf30f2844be47d012'
-        self.existing = User.objects.create(email="test@email.com")
+        self.existing = User.objects.create(email="test@email.com",
+                                            user_guid="a")
         self.existing.set_password(self.password)
-        self.new_user = User.objects.create(email="new@email.com")
+        self.new_user = User.objects.create(email="new@email.com",
+                                            user_guid="b")
         self.activation_profile = ActivationProfile.objects.create(
                                       user=self.new_user,
                                       email="ap@email.com")
