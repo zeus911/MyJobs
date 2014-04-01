@@ -183,8 +183,13 @@ class PartnerOverviewTests(MyPartnersTestCase):
         # Add recent activity
         user = UserFactory(email="temp@user.com")
         for i in range(1, 4):
-            ContactLogEntryFactory(partner=self.partner, action_flag=i,
+            cle = ContactLogEntryFactory(partner=self.partner, action_flag=i,
                                    user=user)
+            # mysql only keeps to the second, which isn't accurate enough for
+            # this test.  To handle this, we set the time off by i minutes. We
+            # do it after to handle the fact that you cannot override auto_now.
+            cle.action_time = datetime.now - timedelta(minutes=i)
+            cle.save()
 
         url = self.get_url(company=self.company.id,
                            partner=self.partner.id)
