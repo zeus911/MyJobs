@@ -321,7 +321,8 @@ def parse_log(logs, solr_location):
                         update_dict['job_view_company_exact'] = qs.get('jvc', '')
                         update_dict['job_view_location_exact'] = qs.get('jvl', '')
                         update_dict['job_view_canonical_domain'] = qs.get('jvcd', '')
-                        update_dict['search_keywords'] = qs.get('sk', '')
+                        update_dict['search_location'] = qs.get('sl', '')
+                        update_dict['search_query'] = qs.get('sq', '')
                         update_dict['site_tag'] = qs.get('st', '')
                         update_dict['special_commitment'] = qs.get('sc', '')
 

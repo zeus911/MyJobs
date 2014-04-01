@@ -167,6 +167,7 @@ INSTALLED_APPS = (
     'captcha',
     'endless_pagination',
     'storages',
+    'django_extensions',
 )
 
 # Captcha SSL
@@ -286,3 +287,4 @@ BOTS = ['agent', 'archive', 'ask', 'auto', 'bot', 'check', 'crawl',
 PROTECTED_SITES = {42751: [25803, ]}
 
 TEST_SOLR_INSTANCE = 'http://127.0.0.1:8983/solr/myjobs_test/'
+

@@ -2,11 +2,6 @@
 {% load common_tags %}
 {% load i18n %}
 
-{% block meta-extra %}
-<script src="{{ STATIC_URL }}jquery.placeholder.min.js"></script>
-<script src="{{ STATIC_URL }}profile.js{% cache_buster %}"></script>
-{% endblock %}
-
 {% block content %}
 <div class="row">
     <div class="span12">
@@ -88,4 +83,9 @@
     </div>{# /span10 #}
 </div>{# /row #}
 
+{% endblock %}
+
+{% block extra-js %}
+<script src="{{ STATIC_URL }}jquery.placeholder.min.js"></script>
+<script src="{{ STATIC_URL }}profile.151-01.js"></script>
 {% endblock %}
