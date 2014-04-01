@@ -284,3 +284,5 @@ BOTS = ['agent', 'archive', 'ask', 'auto', 'bot', 'check', 'crawl',
 # A list of proected sites and the groups (by id) that are allowed
 # to access them. Copied from directseo.
 PROTECTED_SITES = {42751: [25803, ]}
+
+TEST_SOLR_INSTANCE = 'http://127.0.0.1:8983/solr/myjobs_test/'

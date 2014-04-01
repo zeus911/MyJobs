@@ -2,6 +2,7 @@ import datetime
 import pytz
 import uuid
 
+from django.conf import settings
 from django.test import TestCase
 
 from MyJobs.myjobs.models import User
@@ -18,7 +19,7 @@ from MyJobs.tasks import update_solr_task, parse_log
 
 class SolrTests(TestCase):
     def setUp(self):
-        self.test_solr = 'http://127.0.0.1:8983/solr/myjobs_test/'
+        self.test_solr = settings.TEST_SOLR_INSTANCE
 
     def tearDown(self):
         Solr().delete()

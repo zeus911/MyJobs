@@ -28,3 +28,5 @@ TEST_RUNNER = 'testrunner.SilentTestRunner'
 SOLR = {
     'default': 'http://ec2-23-20-67-65.compute-1.amazonaws.com:8983/solr/myjobs-test/',
 }
+
+TEST_SOLR_INSTANCE = SOLR['default']

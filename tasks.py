@@ -153,7 +153,7 @@ def update_solr_task(solr_location=settings.SOLR['default']):
     """
 
     if hasattr(mail, 'outbox'):
-        solr_location = 'http://127.0.0.1:8983/solr/myjobs_test/'
+        solr_location = settings.TEST_SOLR_INSTANCE
     objs = Update.objects.filter(delete=True).values_list('uid', flat=True)
 
     if objs:
@@ -368,7 +368,7 @@ def read_new_logs(solr_location=settings.SOLR['default']):
     """
     # If running tests, use test instance of local solr
     if hasattr(mail, 'outbox'):
-        solr_location = 'http://127.0.0.1:8983/solr/myjobs_test/'
+        solr_location = settings.TEST_SOLR_INSTANCE
 
     conn = boto.connect_s3(aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
                            aws_secret_access_key=settings.AWS_SECRET_KEY)
