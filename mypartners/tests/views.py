@@ -184,7 +184,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
         # Add recent activity
         user = UserFactory(email="temp@user.com")
         for i in range(1, 4):
-            cle = ContactLogEntryFactory(partner=self.partner, action_flag=i,
+            ContactLogEntryFactory(partner=self.partner, action_flag=i,
                                    user=user)
             sleep(1)
 
