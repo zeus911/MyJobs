@@ -186,6 +186,10 @@ $(document).ready(function(){
         });
         $(this).unbind('mouseenter mouseleave');
     });
+
+    if($('[id$="country_code"]').length){
+        moveCountrySelection();
+    }
 });
 
 function addBackButton(){
