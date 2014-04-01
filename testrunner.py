@@ -1,10 +1,10 @@
 import logging
 
-from django.test.simple import DjangoTestSuiteRunner
 from django.conf import settings
+from django_jenkins.runner import CITestSuiteRunner
 
 
-class SilentTestRunner(DjangoTestSuiteRunner):
+class SilentTestRunner(CITestSuiteRunner):
 
     def run_tests(self, test_labels=None, extra_tests=None, **kwargs):
         logging.disable(logging.CRITICAL)

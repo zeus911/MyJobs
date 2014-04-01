@@ -23,7 +23,7 @@ CACHES = {
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
-TEST_RUNNER = 'testrunner.SilentTestRunner'
+JENKINS_TEST_RUNNER = 'testrunner.SilentTestRunner'
 
 SOLR = {
     'default': 'http://ec2-23-20-67-65.compute-1.amazonaws.com:8983/solr/myjobs_test/',
