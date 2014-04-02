@@ -196,16 +196,15 @@ EDUCATION_LEVEL_CHOICES = (
 class Education(ProfileUnits):
     organization_name = models.CharField(max_length=255,
                                          verbose_name=_('institution'),
-                                         blank=True, null=True)
+                                         blank=True)
     degree_date = models.DateField(verbose_name=_('completion date'),
                                    blank=True, null=True)
-    city_name = models.CharField(max_length=255, blank=True, null=True,
+    city_name = models.CharField(max_length=255, blank=True,
                                  verbose_name=_('city'))
     # ISO 3166-2:2007
     country_sub_division_code = models.CharField(max_length=5, blank=True,
-                                                 verbose_name=_("State/Region"),
-                                                 null=True)
-    country_code = models.CharField(max_length=3, blank=True, null=True,
+                                                 verbose_name=_("State/Region"))
+    country_code = models.CharField(max_length=3, blank=True,
                                     verbose_name=_("country"))  # ISO 3166-1
     # ISCED-2011 Can be [0-8]
     education_level_code = models.IntegerField(choices=EDUCATION_LEVEL_CHOICES,
@@ -213,13 +212,13 @@ class Education(ProfileUnits):
                                                blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
-    education_score = models.CharField(max_length=255, blank=True, null=True,
+    education_score = models.CharField(max_length=255, blank=True,
                                        verbose_name=_("GPA"))
-    degree_name = models.CharField(max_length=255, blank=True, null=True,
+    degree_name = models.CharField(max_length=255, blank=True,
                                    verbose_name=_('degree type'))
     degree_major = models.CharField(max_length=255, verbose_name=_('major'),
-                                    blank=True, null=True)
-    degree_minor = models.CharField(max_length=255, blank=True, null=True,
+                                    blank=True)
+    degree_minor = models.CharField(max_length=255, blank=True,
                                     verbose_name=_('minor'))
 
 

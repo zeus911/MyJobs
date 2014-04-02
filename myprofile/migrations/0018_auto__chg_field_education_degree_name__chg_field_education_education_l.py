@@ -9,43 +9,43 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
 
+        # Changing field 'Education.degree_name'
+        db.alter_column(u'myprofile_education', 'degree_name', self.gf('django.db.models.fields.CharField')(default='', max_length=255))
+
         # Changing field 'Education.education_level_code'
         db.alter_column(u'myprofile_education', 'education_level_code', self.gf('django.db.models.fields.IntegerField')(null=True))
 
-        # Changing field 'Education.organization_name'
-        db.alter_column(u'myprofile_education', 'organization_name', self.gf('django.db.models.fields.CharField')(max_length=255, null=True))
+        # Changing field 'Education.education_score'
+        db.alter_column(u'myprofile_education', 'education_score', self.gf('django.db.models.fields.CharField')(default='', max_length=255))
 
         # Changing field 'Education.degree_date'
         db.alter_column(u'myprofile_education', 'degree_date', self.gf('django.db.models.fields.DateField')(null=True))
 
-        # Changing field 'Education.degree_major'
-        db.alter_column(u'myprofile_education', 'degree_major', self.gf('django.db.models.fields.CharField')(max_length=255, null=True))
+        # Changing field 'Education.city_name'
+        db.alter_column(u'myprofile_education', 'city_name', self.gf('django.db.models.fields.CharField')(default='', max_length=255))
 
-        # Changing field 'Education.country_sub_division_code'
-        db.alter_column(u'myprofile_education', 'country_sub_division_code', self.gf('django.db.models.fields.CharField')(max_length=5, null=True))
-
-        # Changing field 'Education.country_code'
-        db.alter_column(u'myprofile_education', 'country_code', self.gf('django.db.models.fields.CharField')(max_length=3, null=True))
+        # Changing field 'Education.degree_minor'
+        db.alter_column(u'myprofile_education', 'degree_minor', self.gf('django.db.models.fields.CharField')(default='', max_length=255))
 
     def backwards(self, orm):
+
+        # Changing field 'Education.degree_name'
+        db.alter_column(u'myprofile_education', 'degree_name', self.gf('django.db.models.fields.CharField')(max_length=255, null=True))
 
         # Changing field 'Education.education_level_code'
         db.alter_column(u'myprofile_education', 'education_level_code', self.gf('django.db.models.fields.IntegerField')(default=3))
 
-        # Changing field 'Education.organization_name'
-        db.alter_column(u'myprofile_education', 'organization_name', self.gf('django.db.models.fields.CharField')(default=None, max_length=255))
+        # Changing field 'Education.education_score'
+        db.alter_column(u'myprofile_education', 'education_score', self.gf('django.db.models.fields.CharField')(max_length=255, null=True))
 
         # Changing field 'Education.degree_date'
         db.alter_column(u'myprofile_education', 'degree_date', self.gf('django.db.models.fields.DateField')(default=datetime.datetime(1971, 1, 1, 0, 0)))
 
-        # Changing field 'Education.degree_major'
-        db.alter_column(u'myprofile_education', 'degree_major', self.gf('django.db.models.fields.CharField')(default=None, max_length=255))
+        # Changing field 'Education.city_name'
+        db.alter_column(u'myprofile_education', 'city_name', self.gf('django.db.models.fields.CharField')(max_length=255, null=True))
 
-        # Changing field 'Education.country_sub_division_code'
-        db.alter_column(u'myprofile_education', 'country_sub_division_code', self.gf('django.db.models.fields.CharField')(default='', max_length=5))
-
-        # Changing field 'Education.country_code'
-        db.alter_column(u'myprofile_education', 'country_code', self.gf('django.db.models.fields.CharField')(default='', max_length=3))
+        # Changing field 'Education.degree_minor'
+        db.alter_column(u'myprofile_education', 'degree_minor', self.gf('django.db.models.fields.CharField')(max_length=255, null=True))
 
     models = {
         u'auth.group': {
@@ -104,17 +104,17 @@ class Migration(SchemaMigration):
         },
         u'myprofile.education': {
             'Meta': {'object_name': 'Education', '_ormbases': [u'myprofile.ProfileUnits']},
-            'city_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'country_code': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'True', 'blank': 'True'}),
-            'country_sub_division_code': ('django.db.models.fields.CharField', [], {'max_length': '5', 'null': 'True', 'blank': 'True'}),
+            'city_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'country_code': ('django.db.models.fields.CharField', [], {'max_length': '3', 'blank': 'True'}),
+            'country_sub_division_code': ('django.db.models.fields.CharField', [], {'max_length': '5', 'blank': 'True'}),
             'degree_date': ('django.db.models.fields.DateField', [], {'null': 'True', 'blank': 'True'}),
-            'degree_major': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'degree_minor': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'degree_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
+            'degree_major': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'degree_minor': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'degree_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'education_level_code': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
-            'education_score': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
+            'education_score': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'end_date': ('django.db.models.fields.DateField', [], {'null': 'True', 'blank': 'True'}),
-            'organization_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
+            'organization_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             u'profileunits_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myprofile.ProfileUnits']", 'unique': 'True', 'primary_key': 'True'}),
             'start_date': ('django.db.models.fields.DateField', [], {'null': 'True', 'blank': 'True'})
         },
