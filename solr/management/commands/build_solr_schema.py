@@ -90,14 +90,13 @@ class Command(BaseCommand):
                 'multiValued': 'true',
             })
             # Analytics
-            for field in ['page_category', 'special_commitment']:
-                schema_fields.append({
-                    'field_name': field,
-                    'type': 'text_en',
-                    'indexed': 'true',
-                    'stored': 'true',
-                    'multiValued': 'false',
-                })
+            schema_fields.append({
+                'field_name': 'page_category',
+                'type': 'text_en',
+                'indexed': 'true',
+                'stored': 'true',
+                'multiValued': 'false',
+            })
             for field in ['job_view_title', 'job_view_company',
                           'job_view_location']:
                 exact_field = field + '_exact'
@@ -131,7 +130,8 @@ class Command(BaseCommand):
                     'stored': 'true',
                     'multiValued': 'false',
                 })
-            for field in ['search_keywords', 'facets', 'site_tag']:
+            for field in ['search_keywords', 'facets', 'site_tag',
+                          'special_commitment']:
                 schema_fields.append({
                     'field_name': field,
                     'type': 'string',
