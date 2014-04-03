@@ -656,7 +656,9 @@ def prm_view_records(request):
         next_id = None
 
     attachments = PRMAttachment.objects.filter(contact_record=record)
-    logs = ContactLogEntry.objects.filter(object_id=record_id)
+    ct = ContentType.objects.get_for_model(ContactRecord).pk
+    logs = ContactLogEntry.objects.filter(object_id=record_id,
+                                          content_type_id=ct)
     record_history = ContactLogEntry.objects.filter(object_id=record_id)
     ctx = {
         'date_start': range_start,
