@@ -7,11 +7,11 @@ import os
 DEBUG = False
 
 
-DATABASES = {'default': {'NAME': 'dseo_mj',
+DATABASES = {'default': {'NAME': 'redirect',
                          'ENGINE': 'django.db.backends.mysql',
-                         'USER': 'dseo_mj',
+                         'USER': 'db_deuser',
                          'PASSWORD': PROD_DB_PASSWD,
-                         'HOST': 'db-dseomjprod.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
+                         'HOST': 'db-redirect.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
                          'PORT': '3306', }
             }
 
