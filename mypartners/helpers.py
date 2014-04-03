@@ -302,3 +302,10 @@ def send_custom_activation_email(search):
                        [search.user.email])
     msg.content_subtype = 'html'
     msg.send()
+
+
+def get_int_or_none(string):
+    try:
+        return int(string)
+    except (ValueError, TypeError, UnicodeEncodeError):
+        return None

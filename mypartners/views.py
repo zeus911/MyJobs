@@ -1,16 +1,13 @@
 from collections import OrderedDict
 import unicodecsv
 from datetime import date, datetime, timedelta
-from email_parser import build_email_dicts
 from email.parser import HeaderParser
-from email.utils import getaddresses, parsedate
+from email.utils import getaddresses, mktime_tz, parsedate_tz
 from itertools import chain
 import json
 from lxml import etree
-from time import mktime
 
 from django.conf import settings
-from django.contrib.admin.models import DELETION
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
@@ -20,11 +17,13 @@ from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.utils.text import force_text
+from django.utils.timezone import utc
 from django.views.decorators.csrf import csrf_exempt
 
+from email_parser import build_email_dicts, get_datetime_from_str
 from myjobs.models import User
 from mydashboard.models import Company
-from mysearches.models import SavedSearch, PartnerSavedSearch
+from mysearches.models import PartnerSavedSearch
 from mysearches.helpers import (url_sort_options, parse_feed,
                                 get_interval_from_frequency)
 from mysearches.forms import PartnerSavedSearchForm
@@ -38,7 +37,7 @@ from mypartners.helpers import (prm_worthy, add_extra_params,
                                 contact_record_val_to_str, retrieve_fields,
                                 get_records_from_request,
                                 send_contact_record_email_response,
-                                find_partner_from_email)
+                                find_partner_from_email, get_int_or_none)
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
@@ -242,18 +241,14 @@ def delete_prm_item(request):
 
     """
     company_id = request.REQUEST.get('company')
-
     company = get_object_or_404(Company, id=company_id)
 
     partner_id = request.REQUEST.get('partner')
-    if partner_id:
-        partner_id = int(partner_id)
+    partner_id = get_int_or_none(partner_id)
     item_id = request.REQUEST.get('id')
-    if item_id:
-        contact_id = int(item_id)
+    contact_id = get_int_or_none(item_id)
     content_id = request.REQUEST.get('ct')
-    if content_id:
-        content_id = int(content_id)
+    content_id = get_int_or_none(content_id)
 
     if content_id == ContentType.objects.get_for_model(Contact).id:
         partner = get_object_or_404(Partner, id=partner_id, owner=company)
@@ -356,8 +351,7 @@ def prm_edit_saved_search(request):
         form = PartnerSavedSearchForm(partner=partner)
     microsites = []
     for microsite in company.microsite_set.all():
-        ms = {}
-        ms['url'] = microsite.url
+        ms = {'url': microsite.url}
         readable_url = microsite.url.split('//')[1]
         readable_url = readable_url.rstrip('/')
         ms['name'] = readable_url
@@ -369,8 +363,7 @@ def prm_edit_saved_search(request):
         'item_id': item_id,
         'form': form,
         'microsites': microsites,
-        'content_type': ContentType.objects.\
-            get_for_model(PartnerSavedSearch).id,
+        'content_type': ContentType.objects.get_for_model(PartnerSavedSearch).id,
         'view_name': 'PRM'
     }
     return render_to_response('mypartners/partner_edit_search.html', ctx,
@@ -468,7 +461,7 @@ def partner_view_full_feed(request):
                                        saved_search.frequency)
         items, count = parse_feed(url_of_feed, saved_search.frequency)
         start_date = date.today() + timedelta(get_interval_from_frequency(
-                                                    saved_search.frequency))
+            saved_search.frequency))
         extras = saved_search.partnersavedsearch.url_extras
         if extras:
             add_extra_params_to_jobs(items, extras)
@@ -614,7 +607,8 @@ def prm_view_records(request):
         offset = int(offset)
     except (TypeError, ValueError):
         return HttpResponseRedirect(reverse('partner_records') +
-                '?company=%d&partner=%d' % (company.id, partner.id))
+                                    '?company=%d&partner=%d' %
+                                    (company.id, partner.id))
 
     prev_offset = (offset - 1) if offset > 1 else 0
     records = partner.get_contact_records(record_type=record_type,
@@ -719,6 +713,7 @@ def get_contact_information(request):
             data = {}
 
     return HttpResponse(json.dumps(data))
+
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def get_records(request):
@@ -892,8 +887,9 @@ def partner_get_records(request):
         data = {
             'email': {"count": email, "name": email_name, 'typename': 'email'},
             'phone': {"count": phone, "name": phone_name, 'typename': 'phone'},
-            'meetingorevent': {"count": meetingorevent, "name": meetingorevent_name,
-                           "typename": "meetingorevent"},
+            'meetingorevent': {"count": meetingorevent,
+                               "name": meetingorevent_name,
+                               "typename": "meetingorevent"},
         }
         data = OrderedDict(sorted(data.items(), key=lambda t: t[1]['count']))
         data_items = data.items()
@@ -1023,8 +1019,7 @@ def process_email(request):
 
     if headers and 'Date' in headers:
         try:
-            date_time = mktime(parsedate(headers.get('Date')))
-            date_time = datetime.fromtimestamp(date_time)
+            date_time = get_datetime_from_str(headers.get('Date'))
         except Exception:
             date_time = datetime.now()
     else:
@@ -1073,11 +1068,11 @@ def process_email(request):
                                                        partner__in=partners)
             [possible_contacts.append(x) for x in matching_contacts]
             if not matching_contacts:
-                possible_partner = find_partner_from_email(partners, contact)
-                if possible_partner:
+                poss_partner = find_partner_from_email(partners, contact)
+                if poss_partner:
                     new_contact = Contact.objects.create(name=contact,
                                                          email=contact,
-                                                         partner=possible_partner)
+                                                         partner=poss_partner)
                     change_msg = "Contact was created from email."
                     log_change(new_contact, None, admin_user,
                                new_contact.partner,   new_contact.name,
@@ -1103,6 +1098,7 @@ def process_email(request):
         attachments.append(attachment)
 
     created_records = []
+    date_time = datetime.now() if not date_time else date_time
     for contact in possible_contacts + created_contacts:
         change_msg = "Email was sent by %s to %s" % \
                      (admin_user.get_full_name(), contact.name)
