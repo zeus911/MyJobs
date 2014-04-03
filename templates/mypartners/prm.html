@@ -8,10 +8,6 @@
 {% endblock %}
 {% load i18n %}
 
-{% block meta-extra %}
-<script src="{{ STATIC_URL }}prm.js{% cache_buster %}"></script>
-{% endblock %}
-
 {% block content %}
     <h1>Partner Relationship Manager <small>{{ company.name }}</small></h1>
 
@@ -109,4 +105,8 @@
 
     {% endif %}
 
+{% endblock %}
+
+{% block extra-js %}
+<script src="{{ STATIC_URL }}prm.151-01.js"></script>
 {% endblock %}

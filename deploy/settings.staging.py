@@ -19,6 +19,11 @@ DATABASES = {
 
 ALLOWED_HOSTS = ['my.jobs', 'localhost']
 
+_PATH = os.path.abspath(os.path.dirname(__file__))
+
+STATIC_ROOT = os.path.join(_PATH, 'files', 'static')
+STATIC_URL = '/files/'
+
 SESSION_CACHE_ALIAS = 'sessions'
 CACHES = {
     'default': {

@@ -595,4 +595,3 @@ def cas(request):
         pass
 
     return response
-

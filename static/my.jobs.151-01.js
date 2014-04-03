@@ -170,6 +170,26 @@ $(document).ready(function(){
     if($(window).width() < 500){
         addBackButton();
     }
+
+    $('#delete').hover(function(e){
+        $.ajax({
+            global: false,
+            url: static_url + "bootstrap/bootstrap-modalmanager.js",
+            dataType: "script",
+            cache: true
+        });
+        $.ajax({
+            global: false,
+            url: static_url + "bootstrap/bootstrap-modal.js",
+            dataType: "script",
+            cache: true
+        });
+        $(this).unbind('mouseenter mouseleave');
+    });
+
+    if($('[id$="country_code"]').length){
+        moveCountrySelection();
+    }
 });
 
 function addBackButton(){

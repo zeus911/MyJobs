@@ -36,6 +36,11 @@ $(function() {
         e.stopPropagation();
         update_records('90');
     });
+    $('#all-days').click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        update_records('0');
+    });
 });
 
 function update_records(btn_val) {

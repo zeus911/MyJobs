@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from django.http import Http404
 from urlparse import urlparse, urlunparse, parse_qsl
 
-from mydashboard.models import Microsite
+from mydashboard.models import Microsite, SeoSite
 from myprofile.models import EDUCATION_LEVEL_CHOICES
 from solr.helpers import format_date, Solr
 from countries import COUNTRIES
@@ -13,6 +13,24 @@ from countries import COUNTRIES
 
 edu_codes = dict([(x, y) for x, y in EDUCATION_LEVEL_CHOICES])
 country_codes = dict((x, y) for x, y in COUNTRIES)
+
+
+def get_company_microsites(company):
+    """
+    Retrieves a given company's microsites
+
+    Inputs:
+    :company: Company whose microsites are being retrieved
+
+    Outputs:
+    :microsites: List of microsites
+    :buids: List of buids associated with the company's microsites
+    """
+    job_source_ids = company.job_source_ids.all()
+    buids = job_source_ids.values_list('id', flat=True)
+    microsites = SeoSite.objects.filter(business_units__in=buids) \
+        .values_list('domain', flat=True)
+    return (microsites, buids)
 
 
 def saved_searches(employer, company, candidate):
@@ -30,12 +48,9 @@ def saved_searches(employer, company, candidate):
     outputs:
                 A list of candidate urls.
     """
-    if employer in company.admins.all():
-        employer_company = company
-    else:
+    if employer not in company.admins.all():
         raise Http404
-    employer_microsites = Microsite.objects.filter(
-        company=employer_company).values_list('url', flat=True)
+    employer_microsites = get_company_microsites(company)[0]
     employer_domains = [urlparse(url).netloc for url in employer_microsites]
     candidate_urls = candidate.savedsearch_set.values_list('url', flat=True)
     return [url for url in candidate_urls
@@ -61,19 +76,24 @@ def filter_by_microsite(microsites, user_solr=None, facet_solr=None):
     user_solr = Solr() if not user_solr else user_solr
     facet_solr = Solr() if not facet_solr else facet_solr
 
-    urls = " OR ".join([site.url.replace("http://", "") for site in
-                        microsites])
+    urls = ['(SavedSearch_url:*%s*)' % site.replace('http://', '')
+            for site in microsites]
 
-    user_solr = user_solr.add_filter_query("SavedSearch_url:(*%s*)" % urls)
+    if not urls:
+        urls = '(-SavedSearch_url:[* TO *])'
+    else:
+        urls = ' OR '.join(urls)
+        urls = '(%s)' % urls
+
+    user_solr = user_solr.add_filter_query(urls)
+    facet_solr = facet_solr.add_query(urls)
     user_solr = user_solr.add_filter_query('User_opt_in_employers:true')
-
-    facet_solr = facet_solr.add_query("SavedSearch_url:(*%s*)" % urls)
     facet_solr = facet_solr.add_query('User_opt_in_employers:true')
 
     return user_solr, facet_solr
 
 
-def filter_by_date(request):
+def filter_by_date(request, field=None):
     """
     Applies date filtering.
 
@@ -88,19 +108,21 @@ def filter_by_date(request):
     """
     requested_after_date = request.REQUEST.get('date_start', False)
     requested_before_date = request.REQUEST.get('date_end', False)
+    if field is None:
+        field = 'SavedSearch_created_on'
 
     date_end = datetime.now()
     # Set date range based on buttons
     if 'today' in request.REQUEST:
-        date_range = filter_by_time_period('SavedSearch_created_on',
+        date_range = filter_by_time_period(field,
                                            total_days=1)
         date_start = date_end - timedelta(days=1)
     elif 'seven_days' in request.REQUEST:
-        date_range = filter_by_time_period('SavedSearch_created_on',
+        date_range = filter_by_time_period(field,
                                            total_days=7)
         date_start = date_end - timedelta(days=7)
     elif 'thirty_days' in request.REQUEST:
-        date_range = filter_by_time_period('SavedSearch_created_on',
+        date_range = filter_by_time_period(field,
                                            total_days=30)
         date_start = date_end - timedelta(days=30)
     # Set date range based on date selection fields.
@@ -124,7 +146,7 @@ def filter_by_date(request):
             else:
                 # Default start date is today.
                 date_end = datetime.now()
-        date_range = filter_by_date_range(field='SavedSearch_created_on',
+        date_range = filter_by_date_range(field=field,
                                           date_start=format_date(date_start,
                                                                  time_format="00:00:00Z"),
                                           date_end=format_date(date_end))

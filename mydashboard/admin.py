@@ -1,57 +1,67 @@
 from django.contrib import admin
-from django import forms
 
-from mydashboard.models import (
-    Company,
-    DashboardModule,
-    Microsite,
-    CompanyUser
-)
-from myjobs.models import User
+from django_extensions.admin import ForeignKeyAutocompleteAdmin
+
+from mydashboard.models import CompanyUser
 
 
-class CompanyForm(forms.ModelForm): 
+def get_companyuser_pk(companyuser):
     """
-    Django needs help to do m2m relations in the admin interface.
+    Trivial functionality used to change column names
 
-    What this does is add a multiple choice box to allow the addition and
-    deletion of multiple CompanyUser instances at once. When the form is saved,
-    those instances are manually created/deleted and then they are removed from
-    the cleaned_data dict to make the form valid again.
+    Inputs:
+    :companyuser: CompanyUser instance whose PK is to be retrieved
+
+    Outputs:
+    :pk: PK of input object
     """
-    admins = forms.ModelMultipleChoiceField(
-        queryset=User.objects.filter(groups__name=CompanyUser.GROUP_NAME), required=False,
-        widget=admin.widgets.FilteredSelectMultiple('admins', False))
+    return companyuser.pk
+get_companyuser_pk.short_description = 'ID'
 
-    def save(self, commit=True):
-        added_users = set()
-        company = forms.ModelForm.save(self, commit)
-        for user in self.cleaned_data['admins']:
-            added_users.add(user)
 
-        del self.cleaned_data['admins']
-        super(CompanyForm, self).save()
+def get_company_cell(companyuser):
+    """
+    Inputs:
+    :companyuser: CompanyUser instance from which company name will be
+        retrieved
 
-        if company.pk:
-            old_users = company.admins.all()
-            add = [user for user in added_users if user not in old_users]
-            remove = [user for user in old_users if user not in added_users]
-            for user in add:
-                CompanyUser(user=user, company=company).save()
-            for user in remove:
-                CompanyUser.objects.get(user=user, company=company).delete()
-        else:
-            company.save()
-            company.admins = added_users
-        return company
-         
-    class Meta: 
-        model = Company
+    Outputs:
+    :name: Name of company
+    """
+    return companyuser.company.name
+get_company_cell.short_description = 'company'
 
-class CompanyAdmin(admin.ModelAdmin):
-    form = CompanyForm
-    search_fields = ('name',)
 
-admin.site.register(Company, CompanyAdmin)
+def get_user_cell(companyuser):
+    """
+    Inputs:
+    :companyuser: CompanyUser instance from which user information will
+        be retrieved
 
-admin.site.register(Microsite)
+    Outputs:
+    :tag: Anchor tag that opens user edit link in a new tab
+    """
+    user = companyuser.user
+    tag = '<a href="/admin/myjobs/user/%s/" target="_blank">%s</a>' % \
+          (user.pk, user.get_full_name(user.email))
+    return tag
+get_user_cell.short_description = 'user'
+get_user_cell.allow_tags = True
+
+
+class CompanyUserAdmin(ForeignKeyAutocompleteAdmin):
+    related_search_fields = {
+        'user': ('email', ),
+        'company': ('name', ),
+    }
+
+    search_fields = ['company__name', 'user__email']
+
+
+    list_display = [get_companyuser_pk, get_user_cell, get_company_cell]
+
+    class Meta:
+        model = CompanyUser
+
+
+admin.site.register(CompanyUser, CompanyUserAdmin)

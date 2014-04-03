@@ -2,15 +2,15 @@
 {% load i18n %}
 
 <div>    
-    <div id="count-box">
-        <span id="count-text">
+    <div class="count-box" id="matching-profiles">
+        <span class="count-text">
             {% if total_candidates and candidates  %}
                 {{ total_candidates }}
             {% else %}
                 0
             {% endif %}
         </span>
-        <span>Matching Profiles</span>
+        <span>Matching Profile{{ total_candidates|pluralize }}</span>
     </div>
 </div>
 <br>

@@ -1,7 +1,15 @@
 import factory
 
 from myjobs.tests.factories import UserFactory
-from mydashboard.models import *
+from mydashboard.models import (BusinessUnit, Company, CompanyUser,
+    SeoSite)
+
+
+class BusinessUnitFactory(factory.Factory):
+    FACTORY_FOR = BusinessUnit
+
+    id = 1
+    title = 'Test Company'
 
 
 class CompanyFactory(factory.Factory):
@@ -11,11 +19,12 @@ class CompanyFactory(factory.Factory):
     name = 'Test Company'
 
 
-class MicrositeFactory(factory.Factory):
-    FACTORY_FOR = Microsite
+class SeoSiteFactory(factory.Factory):
+    FACTORY_FOR = SeoSite
 
-    url = 'http://test.jobs'
-    company = factory.SubFactory(CompanyFactory)
+    id = 2
+    domain = 'http://test.jobs/'
+    name = 'Test Jobs'
 
 
 class CompanyUserFactory(factory.Factory):

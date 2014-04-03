@@ -2,11 +2,6 @@
 {% load common_tags %}
 {% load form_tags %}
 
-{% block meta-extra %}
-<script type="text/javascript" src="{{STATIC_URL}}account-creation.js{% cache_buster %}"></script>
-<script type="text/javascript" src="{{STATIC_URL}}authorization.js{% cache_buster %}"></script>
-{% endblock %}
-
 {% block content %}
 <div class="row">
     <div class="span12">
@@ -37,4 +32,9 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra-js %}
+<script type="text/javascript" src="{{STATIC_URL}}account-creation.151-01.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}authorization.151-01.js"></script>
 {% endblock %}

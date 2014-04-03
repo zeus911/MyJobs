@@ -5,9 +5,6 @@
     <meta name="title" content="{% if not contact %}Add Contact{% else %}Edit Contact{% endif %} {{ company.name }}">
 {% endblock %}
 {% load i18n %}
-{% block meta-extra %}
-<script src="{{ STATIC_URL }}prm.js{% cache_buster %}"></script>
-{% endblock %}
 
 {% block content %}
     <h1><a class="mobile_hide" href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
@@ -27,7 +24,7 @@
                 <input type="hidden" name="ct" value="{{ content_id }}">
             <div class="form-label pull-left">&nbsp;</div>
             <div class="actions pull-right">
-                {% if contact %}<button type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
+                {% if contact %}<button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
                 <a class="btn" href="{% if partner %}{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}{% else %}{% url 'prm' %}?company={{ company.id }}{% endif %}">{% trans 'Cancel' %}</a>
                 <button type="submit" class="btn primary" id="{% if not partner %}init-partner-save{% else %}item-save{% endif %}">{% trans 'Save' %}</button>
             </div>
@@ -83,4 +80,8 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block extra-js %}
+<script src="{{ STATIC_URL }}prm.151-01.js"></script>
 {% endblock %}

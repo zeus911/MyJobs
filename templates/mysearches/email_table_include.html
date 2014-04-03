@@ -19,7 +19,7 @@
 				        </div>
         			</th>
         			<th style="text-align: right;">
-						<p style="float: right; font-size: 10px; color: 555; padding-right: 10px;">Frequency: {% if digest %}{{ digest.frequency|make_verbose_frequency }} (Digest){% else %}{{ saved_search.0.frequency|make_verbose_frequency }} (Individual){% endif %}</p>
+						<p style="float: right; font-size: 10px; color: #555; padding-right: 10px;">Frequency: {% if digest %}{{ digest.frequency|make_verbose_frequency }} (Digest){% else %}{{ saved_search.0.frequency|make_verbose_frequency }} (Individual){% endif %}</p>
         			</th>
         		</tr>
         	</table>
@@ -30,11 +30,9 @@
         {% for item in saved_search.1 %}
         
         <tr>
-        	<td style="width: 110px; border-left: 1px solid #e5e5e5; border-top: 1px solid #e5e5e5;">
-        		<img src="http://png.nlx.org/100x50/logo.gif"
-    				style="float: left; {% if item.company %}background-image: url(http://png.nlx.org/100x50/seo/{{item.company|slugify}}.gif);{% endif %}">
-        	</td>
-            <td style="padding: 8px; line-height: 20px; border-top: 1px solid #e5e5e5;">
+            <td style="padding: 8px; line-height: 20px; border-left: 1px solid #e5e5e5; border-top: 1px solid #e5e5e5;">
+                <img src="http://png.nlx.org/100x50/logo.gif"
+                     style="float: left; {% if item.company %}background-image: url(http://png.nlx.org/100x50/seo/{{item.company|slugify}}.gif);{% endif %}">
                 <a href="{{item.link}}" style="text-decoration: none; color: #333;">
                     <b style="font-size: 1.3em;">{{item.title}}</b><br>
                     {% if item.company %}<i style="font-size:1.2em;">{{item.company}} - {{item.location}}</i><br>{% endif %}
@@ -48,7 +46,7 @@
     {% else %}
 
     <tr>
-        <td colspan=2 style="font-size: 12px;">
+        <td style="font-size: 12px;">
             There are no results for today! <br/>
             You are subscribed to receive this email {{saved_search.0.frequency|make_verbose_frequency|lower}}, even when there are no results. <a href="https://secure.my.jobs{% url 'saved_search_main' %}?verify-email={{saved_search.user.email}}">Click here</a> to change this setting.
         </td>

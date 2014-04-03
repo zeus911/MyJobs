@@ -1,5 +1,5 @@
 from collections import OrderedDict
-import csv
+import unicodecsv
 from datetime import date, datetime, timedelta
 from email_parser import build_email_dicts
 from email.parser import HeaderParser
@@ -13,13 +13,10 @@ from django.conf import settings
 from django.contrib.admin.models import DELETION
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
-from django.core.mail import EmailMessage
 from django.db.models import Count
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from django.template.loader import render_to_string
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.utils.text import force_text
@@ -42,7 +39,6 @@ from mypartners.helpers import (prm_worthy, add_extra_params,
                                 get_records_from_request,
                                 send_contact_record_email_response,
                                 find_partner_from_email)
-from registration.models import ActivationProfile
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
@@ -315,6 +311,9 @@ def prm_overview(request):
     saved_searches = partner.get_searches()
     most_recent_saved_searches = saved_searches[:3]
 
+    older_records = partner.get_contact_records()
+    older_records = older_records.exclude(date_time__gte=datetime.now() +
+                                                         timedelta(-30))
 
     ctx = {'partner': partner,
            'company': company,
@@ -323,7 +322,9 @@ def prm_overview(request):
            'recent_ss': most_recent_saved_searches,
            'count': records,
            'referrals': referrals,
-           'view_name': 'PRM'}
+           'view_name': 'PRM',
+           'num_older_records': older_records.count(),
+           'num_other_records': saved_searches.count() - 3, }
 
     return render_to_response('mypartners/overview.html', ctx,
                               RequestContext(request))
@@ -439,40 +440,13 @@ def partner_savedsearch_save(request):
         del form.errors['feed']
 
     if form.is_valid():
-        created = False
         instance = form.instance
-        user = User.objects.get_email_owner(email=instance.email)
-        if user == None:
-            # don't send a email here, as this is not a typical user creation.
-            user, created = User.objects.create_inactive_user(
-                                                        email=instance.email,
-                                                        send_email=False)
-            instance.user = user
-            Contact.objects.filter(email=instance.email).update(user=instance.user)
-        else:
-            instance.user = user
         instance.feed = form.data['feed']
         instance.provider = company
         instance.partner = partner
         instance.created_by = request.user
         instance.custom_message = instance.partner_message
-        search = form.save()
-        # If we created a user account, send a custom message
-        if created:
-            activation = ActivationProfile.objects.get(user=search.user)
-            employee_name = request.user.get_full_name(default="An employee")
-            ctx_dict = {'activation': activation,
-                        'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
-                        'search': search,
-                        'creator': employee_name,
-                        'company': company}
-            subject = "Saved search created on your behalf"
-            message = render_to_string('mypartners/partner_search_new_user.html',
-                                       ctx_dict)
-            msg = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL,
-                               [search.user.email])
-            msg.content_subtype = 'html'
-            msg.send()
+        form.save()
         return HttpResponse(status=200)
     else:
         return HttpResponse(json.dumps(form.errors))
@@ -764,7 +738,7 @@ def get_records(request):
     dt_range, date_str, records = get_records_from_request(request)
 
     ctx = {
-        'records': records,
+        'records': records.order_by('-date_time'),
         'company': company,
         'partner': partner,
         'contact_type': None if contact_type == 'all' else contact_type,
@@ -899,7 +873,7 @@ def partner_get_records(request):
         email = records.filter(contact_type='email').count()
         email += records.filter(contact_type='pssemail').count()
         phone = records.filter(contact_type='phone').count()
-        facetoface = records.filter(contact_type='facetoface').count()
+        meetingorevent = records.filter(contact_type='meetingorevent').count()
 
         # figure names
         if email != 1:
@@ -910,16 +884,16 @@ def partner_get_records(request):
             phone_name = 'Phone Calls'
         else:
             phone_name = 'Phone Call'
-        if facetoface != 1:
-            facetoface_name = 'Face to Face'
+        if meetingorevent != 1:
+            meetingorevent_name = 'Meeting or Event'
         else:
-            facetoface_name = 'Face to Face'
+            meetingorevent_name = 'Meetings & Events'
 
         data = {
             'email': {"count": email, "name": email_name, 'typename': 'email'},
             'phone': {"count": phone, "name": phone_name, 'typename': 'phone'},
-            'facetoface': {"count": facetoface, "name": facetoface_name,
-                           "typename": "facetoface"},
+            'meetingorevent': {"count": meetingorevent, "name": meetingorevent_name,
+                           "typename": "meetingorevent"},
         }
         data = OrderedDict(sorted(data.items(), key=lambda t: t[1]['count']))
         data_items = data.items()
@@ -1013,7 +987,7 @@ def prm_export(request):
     # CSV/XLS
     else:
         response = HttpResponse(content_type='text/csv')
-        writer = csv.writer(response)
+        writer = unicodecsv.writer(response, encoding='utf-8')
         writer.writerow(fields)
         for record in records:
             values = [getattr(record, field, '') for field in fields]
@@ -1063,7 +1037,8 @@ def process_email(request):
     contact_emails = filter(None,
                             [email[1] for email in recipient_emails_and_names])
 
-    if contact_emails == ['prm@my.jobs'] or contact_emails == []:
+    if contact_emails == [] or (len(contact_emails) == 1 and
+                                contact_emails[0].lower() == 'prm@my.jobs'):
         # If prm@my.jobs is the only contact, assume it's a forward.
         fwd_headers = build_email_dicts(email_text)
         try:
@@ -1074,10 +1049,11 @@ def process_email(request):
         except IndexError:
             contact_emails = []
 
-    try:
-        contact_emails.remove('prm@my.jobs')
-    except ValueError:
-        pass
+    for element in contact_emails:
+        if element.lower() == 'prm@my.jobs':
+            contact_emails.remove(element)
+            break
+
     try:
         contact_emails.remove(admin_email)
     except ValueError:

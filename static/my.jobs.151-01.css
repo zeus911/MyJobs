@@ -82,7 +82,7 @@ h1 > small > a:hover {
 }
 
 /*Employer Dashboard Widgets */
-#count-box{
+.count-box{
     height: 30%;
     margin: 5px auto 0 auto;
     padding: 20px 0 20px 0;
@@ -91,7 +91,7 @@ h1 > small > a:hover {
     text-align: center;
     background-color:#fff;
 }
-#count-text{
+.count-text{
     font-size: 1.7em;
     font-weight: bolder;
     margin: auto;
@@ -411,7 +411,7 @@ h1 > small > a:hover {
 
 .chart-box#email,
 .chart-box#phone,
-.chart-box#facetoface,
+.chart-box#meetingorevent,
 .chart-box#job {
     cursor: pointer;
 }
@@ -944,7 +944,7 @@ table#row-link-table {
     width: 400px;
     height: 150px;
     text-align: center;
-    background: #FFF url(images/ajax-loader.gif) no-repeat center center;
+    background: #FFF url(//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/ajax-loader.gif) no-repeat center center;
     opacity: .75;
     border: 1px solid #000;
     z-index: 9999;
@@ -2150,7 +2150,7 @@ td .gravatar-blank,
     }
 
     #nav .main-nav {
-        background: #a95051 url(/files/static/images/superbutton.png) no-repeat;
+        background: #a95051 url(//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/superbutton.png) no-repeat;
         position: absolute;
         right: 10px;
         top: 10px;
@@ -2991,12 +2991,12 @@ td .gravatar-blank,
     }
 
     h4.account-menu-header {
-        background: transparent url('/files/static/glyphicons_223_chevron-right.png') center right  no-repeat;
+        background: transparent url('//d2e48ltfsb5exy.cloudfront.net/content_mj/files/glyphicons_223_chevron-right.png') center right  no-repeat;
         width: 87%;
     }
 
     h4.account-menu-header:hover {
-        background: transparent url('/files/static/glyphicons_223_chevron-right.png') center right  no-repeat;
+        background: transparent url('//d2e48ltfsb5exy.cloudfront.net/content_mj/files/glyphicons_223_chevron-right.png') center right  no-repeat;
         width: 87%;
     }
 
@@ -3334,7 +3334,7 @@ table td, table th {
 }
 
 [class^="icon-"], [class*=" icon-"] {
-    background-image: url("/files/static/images/glyphicons-halflings.png");
+    background-image: url("//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/glyphicons-halflings.png");
 }
 
 body.modal-open {

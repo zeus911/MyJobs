@@ -17,4 +17,5 @@ urlpatterns = patterns('',
     url(r'^view/edit$', edit_search, name='edit_search'),
     url(r'^view/save/$', save_search_form, name='save_search_form'),
     url(r'^view/unsubscribe$', unsubscribe, name='unsubscribe'),
+    url(r'^widget/$', saved_search_widget, name='saved_search_widget'),
 )

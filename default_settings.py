@@ -167,6 +167,7 @@ INSTALLED_APPS = (
     'captcha',
     'endless_pagination',
     'storages',
+    'django_extensions',
 )
 
 # Captcha SSL
@@ -268,7 +269,7 @@ PROFILE_COMPLETION_MODULES = (
     'telephone',
     'education',
     'secondaryemail',
-    'name', 
+    'name',
     'employmenthistory',
     'summary'
 )
@@ -280,3 +281,9 @@ BOTS = ['agent', 'archive', 'ask', 'auto', 'bot', 'check', 'crawl',
         'proximic', 'python', 'scan', 'scooter', 'scoutjet', 'search', 'slurp',
         'spider', 'url+control', 'urllib', 'validator', 'watchfire',
         'whizbang', 'wget', 'xenu', 'yahoo-fetch', 'yahooseeker']
+
+# A list of proected sites and the groups (by id) that are allowed
+# to access them. Copied from directseo.
+PROTECTED_SITES = {42751: [25803, ]}
+
+TEST_SOLR_INSTANCE = 'http://127.0.0.1:8983/solr/myjobs_test/'

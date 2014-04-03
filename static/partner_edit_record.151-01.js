@@ -106,7 +106,7 @@ function show_fields(){
         $('label[for$="length"]').show();
         $('[id*="date_time_"]').show();
         $('label[for*="date_time_"]').show();
-    } else if(contact_type == 'facetoface') {
+    } else if(contact_type == 'meetingorevent') {
         $('[id$="location"]').show();
         $('label[for$="location"]').show();
         $('[id*="date_time_"]').show();
