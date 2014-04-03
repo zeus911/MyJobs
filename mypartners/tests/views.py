@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import json
 import re
+from time import sleep
 
 from django.test import TestCase
 from django.conf import settings
@@ -41,7 +42,7 @@ class MyPartnersTestCase(TestCase):
         self.client.login_user(self.staff_user)
 
         # Create a partner
-        self.partner = PartnerFactory(owner=self.company)
+        self.partner = PartnerFactory(owner=self.company, pk=1)
 
         # Create a contact
         self.contact = ContactFactory(partner=self.partner,
@@ -185,6 +186,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
         for i in range(1, 4):
             ContactLogEntryFactory(partner=self.partner, action_flag=i,
                                    user=user)
+            sleep(1)
 
         url = self.get_url(company=self.company.id,
                            partner=self.partner.id)
