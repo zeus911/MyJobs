@@ -351,7 +351,7 @@ def prm_edit_saved_search(request):
     else:
         form = PartnerSavedSearchForm(partner=partner)
 
-    microsites = [get_domain(site) for site in
+    microsites = [get_domain(site).lower() for site in
                   get_company_microsites(company)[0]]
 
     ctx = {
@@ -359,7 +359,7 @@ def prm_edit_saved_search(request):
         'partner': partner,
         'item_id': item_id,
         'form': form,
-        'microsites': microsites,
+        'microsites': set(microsites),
         'content_type': ContentType.objects.get_for_model(PartnerSavedSearch).id,
         'view_name': 'PRM'
     }
