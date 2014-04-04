@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 from django.http import Http404
 from urlparse import urlparse, urlunparse, parse_qsl
 
-from mydashboard.models import Microsite, SeoSite
+from global_helpers import get_domain
+from mydashboard.models import SeoSite
 from myprofile.models import EDUCATION_LEVEL_CHOICES
 from solr.helpers import format_date, Solr
 from countries import COUNTRIES
@@ -50,11 +51,16 @@ def saved_searches(employer, company, candidate):
     """
     if employer not in company.admins.all():
         raise Http404
+
     employer_microsites = get_company_microsites(company)[0]
-    employer_domains = [urlparse(url).netloc for url in employer_microsites]
-    candidate_urls = candidate.savedsearch_set.values_list('url', flat=True)
-    return [url for url in candidate_urls
-            if urlparse(url).netloc in employer_domains]
+    candidate_searches = candidate.savedsearch_set.values_list('url', flat=True)
+
+    # Switch all company's microsites and candidate's saved searches to just
+    # the domain so they can be easily compared.
+    employer_domains = [get_domain(url).lower() for url in employer_microsites]
+    candidate_domains = [get_domain(url).lower() for url in candidate_searches]
+
+    return [url for url in candidate_domains if url in employer_domains]
 
 
 def filter_by_microsite(microsites, user_solr=None, facet_solr=None):

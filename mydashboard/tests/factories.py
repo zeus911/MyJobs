@@ -2,7 +2,7 @@ import factory
 
 from myjobs.tests.factories import UserFactory
 from mydashboard.models import (BusinessUnit, Company, CompanyUser,
-    SeoSite)
+                                SeoSite)
 
 
 class BusinessUnitFactory(factory.Factory):

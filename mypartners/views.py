@@ -2,7 +2,7 @@ from collections import OrderedDict
 import unicodecsv
 from datetime import date, datetime, timedelta
 from email.parser import HeaderParser
-from email.utils import getaddresses, mktime_tz, parsedate_tz
+from email.utils import getaddresses
 from itertools import chain
 import json
 from lxml import etree
@@ -17,11 +17,12 @@ from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.utils.text import force_text
-from django.utils.timezone import utc
 from django.views.decorators.csrf import csrf_exempt
 
 from email_parser import build_email_dicts, get_datetime_from_str
+from global_helpers import get_domain, get_int_or_none
 from myjobs.models import User
+from mydashboard.helpers import get_company_microsites
 from mydashboard.models import Company
 from mysearches.models import PartnerSavedSearch
 from mysearches.helpers import (url_sort_options, parse_feed,
@@ -37,7 +38,7 @@ from mypartners.helpers import (prm_worthy, add_extra_params,
                                 contact_record_val_to_str, retrieve_fields,
                                 get_records_from_request,
                                 send_contact_record_email_response,
-                                find_partner_from_email, get_int_or_none)
+                                find_partner_from_email)
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
@@ -349,13 +350,9 @@ def prm_edit_saved_search(request):
         form = PartnerSavedSearchForm(partner=partner, instance=instance)
     else:
         form = PartnerSavedSearchForm(partner=partner)
-    microsites = []
-    for microsite in company.microsite_set.all():
-        ms = {'url': microsite.url}
-        readable_url = microsite.url.split('//')[1]
-        readable_url = readable_url.rstrip('/')
-        ms['name'] = readable_url
-        microsites.append(ms)
+
+    microsites = [get_domain(site) for site in
+                  get_company_microsites(company)[0]]
 
     ctx = {
         'company': company,

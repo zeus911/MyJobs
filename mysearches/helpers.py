@@ -10,7 +10,6 @@ from django.conf import settings
 from django.utils.encoding import smart_str, smart_unicode
 
 from mydashboard.models import SeoSite
-from myprofile.models import SecondaryEmail
 
 
 def update_url_if_protected(url, user):

@@ -11,10 +11,10 @@ from django.utils.text import get_text_list, force_unicode, force_text
 from django.utils.translation import ugettext
 
 from datetime import datetime, time, timedelta
-import re
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
+from global_helpers import get_domain
 from mydashboard.models import Company
 from mypartners.models import (ContactLogEntry, CONTACT_TYPE_CHOICES, CHANGE)
 from registration.models import ActivationProfile
@@ -273,12 +273,8 @@ def find_partner_from_email(partner_list, email):
         return None
     email_domain = email.split('@')[-1]
 
-    pattern = re.compile('(http://|https://)?(www)?\.?(?P<url>.*)')
     for partner in partner_list:
-        try:
-            url = pattern.search(partner.uri).groupdict()['url'].split("/")[0]
-        except (AttributeError, KeyError):
-            pass
+        url = get_domain(partner.uri)
         if email_domain.lower() == url.lower():
             return partner
 
@@ -302,10 +298,3 @@ def send_custom_activation_email(search):
                        [search.user.email])
     msg.content_subtype = 'html'
     msg.send()
-
-
-def get_int_or_none(string):
-    try:
-        return int(string)
-    except (ValueError, TypeError, UnicodeEncodeError):
-        return None
