@@ -11,7 +11,7 @@ from django.test import TestCase
 
 from mydashboard.models import CompanyUser
 from mydashboard.tests.factories import (CompanyFactory, CompanyUserFactory,
-    SeoSiteFactory, BusinessUnitFactory)
+                                         SeoSiteFactory, BusinessUnitFactory)
 from mydashboard.helpers import country_codes
 from myjobs.models import User
 from myjobs.tests.views import TestClient

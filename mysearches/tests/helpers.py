@@ -7,12 +7,11 @@ from django.test import TestCase
 
 from testfixtures import Replacer
 
-from mysearches.models import SavedSearch, SavedSearchDigest
+from mysearches.models import SavedSearch
 from mysearches.helpers import (date_in_range, parse_feed,
                                 update_url_if_protected, url_sort_options,
                                 validate_dotjobs_url)
 
-from mydashboard.tests.factories import SeoSiteFactory
 from mysearches.tests.test_helpers import return_file
 from myjobs.tests.factories import UserFactory
 
@@ -118,6 +117,7 @@ class SavedSearchHelperTests(TestCase):
         self.assertEqual(new, old)
 
     def test_feed_on_protected_site_no_access(self):
+        from mydashboard.tests.factories import SeoSiteFactory
         site_id = settings.PROTECTED_SITES.keys()[0]
         site = SeoSiteFactory(pk=site_id, id=site_id)
 
@@ -126,6 +126,7 @@ class SavedSearchHelperTests(TestCase):
         self.assertEqual(result, url)
 
     def test_feed_on_protected_site_with_access(self):
+        from mydashboard.tests.factories import SeoSiteFactory
         site_id = settings.PROTECTED_SITES.keys()[0]
         site = SeoSiteFactory(pk=site_id, id=site_id)
         group_id = settings.PROTECTED_SITES.values()[0][0]
