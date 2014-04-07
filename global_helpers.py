@@ -12,7 +12,7 @@ def get_domain(url):
     """
     Attempts to determine the domain from a url with unknown formatting.
 
-    Created because urlparse.urlparse doensn't handle urls with a
+    Created because urlparse.urlparse doesn't handle urls with a
     missing protocol very well. Unfortunately this doesn't handle
     anything except no protocol, http, or https at all.
 
