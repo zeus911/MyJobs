@@ -3,6 +3,8 @@
 *.db
 *.flv
 *.wmv
+static/*.gz
+static/*/*.gz
 
 # Misc
 files/
