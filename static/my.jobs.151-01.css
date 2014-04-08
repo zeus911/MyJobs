@@ -2656,7 +2656,7 @@ td .gravatar-blank,
     }
 
     #contact-record-form .attachment span {
-        margin-left: 0px !important;
+        margin-left: 0 !important;
     }
 
     #prm-mobile-row-buttons {
@@ -2664,7 +2664,7 @@ td .gravatar-blank,
     }
 
     .mobile-filter-selectlike {
-        position: absolute;
+        position: fixed;
         left: 10%;
         width: 80%;
     }
