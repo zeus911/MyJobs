@@ -275,7 +275,7 @@ def find_partner_from_email(partner_list, email):
 
     for partner in partner_list:
         url = get_domain(partner.uri)
-        if email.domain and email_domain.lower() == url.lower():
+        if email_domain and email_domain.lower() == url.lower():
             return partner
 
     return None
