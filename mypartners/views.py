@@ -794,7 +794,7 @@ def partner_main_reports(request):
     referral = records.filter(contact_type='job').count()
 
     # need to order_by -count to keep the "All Contacts" list in proper order
-    all_contacts = records.exclude(contact_type='pssemail')\
+    all_contacts_with_records = records.exclude(contact_type='pssemail')\
         .values('contact_name', 'contact_email')\
         .annotate(count=Count('contact_name')).order_by('-count')
 
@@ -814,7 +814,7 @@ def partner_main_reports(request):
     # A contact can have 0 contact records and 1 referral record and still show
     # up vice versa with 1 contact record and 0 referrals
     contacts = []
-    for contact_obj in all_contacts:
+    for contact_obj in all_contacts_with_records:
         contact = {}
         name = contact_obj['contact_name']
         email = contact_obj['contact_email']
@@ -832,6 +832,18 @@ def partner_main_reports(request):
             contact['ref_count'] = 0
         contacts.append(contact)
 
+    # Find all contacts that have no contact records
+    # Based off of contacts list
+    contacts_to_be_added = [contact for contact in partner.contact_set.all()
+                            if contact.email not in
+                               [record['email'] for record in contacts]]
+
+    # Add Contacts that have no contact records
+    for contact_obj in contacts_to_be_added:
+        contact = {'name': contact_obj.name, 'email': contact_obj.email,
+                   'cr_count': 0, 'ref_count': 0}
+        contacts.append(contact)
+
     # calculate 'All Others' in Top Contacts (when more than 3)
     total_others = 0
     if contact_records.count() > 3:
@@ -839,6 +851,7 @@ def partner_main_reports(request):
         contact_records = contact_records[:3]
         for contact in others:
             total_others += contact['count']
+
     ctx = {
         'admin_id': request.REQUEST.get('admin'),
         'partner': partner,
