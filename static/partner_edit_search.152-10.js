@@ -62,6 +62,9 @@ $(function() {
                     clearTimeout(this.timer);
                 }
                 var pause_interval = 1000;
+                if($(window).width() < 500){
+                    pause_interval = 3000;
+                }
                 this.timer = setTimeout(function() {
                     do_validate();
                 }, pause_interval);
