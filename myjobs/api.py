@@ -28,9 +28,11 @@ class UserResource(ModelResource):
         authentication = ApiKeyAuthentication()
         always_return_data = True
         serializer = Serializer(formats=['json', 'jsonp'],
-                                content_types={'json': 'application/json', 'jsonp': 'text/javascript'})
+                                content_types={'json': 'application/json',
+                                               'jsonp': 'text/javascript'})
 
-    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
+    def create_response(self, request, data, response_class=HttpResponse,
+                        **response_kwargs):
         """
         Intercepts the default create_reponse(). Checks for existing user
         and creates a new user if one matching the email doesn't exist.
@@ -43,8 +45,8 @@ class UserResource(ModelResource):
         email = request.GET.get('email', '')
         if not email:
             data = {'email': 'No email provided'}
-            return super(UserResource, self).create_response(request, data, response_class=HttpResponse,
-                                                             **response_kwargs)
+            return super(UserResource, self).create_response(
+                request, data, response_class=HttpResponse, **response_kwargs)
 
         try:
             kwargs = {'email': email,
@@ -59,7 +61,8 @@ class UserResource(ModelResource):
         except IntegrityError:
             data = {'email': 'That username already exists'}
 
-        return super(UserResource, self).create_response(request, data, response_class=HttpResponse, **response_kwargs)
+        return super(UserResource, self).create_response(
+            request, data, response_class=HttpResponse, **response_kwargs)
 
 
 class SavedSearchResource(ModelResource):
@@ -74,9 +77,11 @@ class SavedSearchResource(ModelResource):
         authentication = ApiKeyAuthentication()
         always_return_data = True
         serializer = Serializer(formats=['json', 'jsonp'],
-                                content_types={'json': 'application/json', 'jsonp': 'text/javascript'})
+                                content_types={'json': 'application/json',
+                                               'jsonp': 'text/javascript'})
 
-    def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
+    def create_response(self, request, data, response_class=HttpResponse,
+                        **response_kwargs):
         """
         Intercepts the default create_reponse(). Checks for existing saved
         search matching the user and url. If one doesn't exist, it creates
@@ -92,29 +97,31 @@ class SavedSearchResource(ModelResource):
         # Confirm email was provided, and that the user exists
         email = request.GET.get('email', '')        
         if not email:
-            data = {'email': 'No email provided'}
-            return super(SavedSearchResource, self).create_response(request, data, response_class=HttpResponse,
-                                                                    **response_kwargs)
+            data = {'error': 'No email provided'}
+            return super(SavedSearchResource, self).create_response(
+                request, data, response_class=HttpResponse, **response_kwargs)
         else:
             user = User.objects.get_email_owner(email=email)
             if not user:
-                data = {'email': 'No user with email %s exists' % email}
-                return super(SavedSearchResource, self).create_response(request, data, response_class=HttpResponse,
-                                                                        **response_kwargs)
+                data = {'error': 'No user with email %s exists' % email}
+                return super(SavedSearchResource, self).create_response(
+                    request, data, response_class=HttpResponse,
+                    **response_kwargs)
 
         # Confirm that url was provided, and that it's a valid .jobs search
         url = request.GET.get('url', '')
         url = unquote(url)
         if not url:
-            data = {'url': 'No .JOBS feed provided'}
-            return super(SavedSearchResource, self).create_response(request, data, response_class=HttpResponse,
-                                                                    **response_kwargs)
+            data = {'error': 'No .JOBS feed provided'}
+            return super(SavedSearchResource, self).create_response(
+                request, data, response_class=HttpResponse, **response_kwargs)
         else:
             label, feed = validate_dotjobs_url(url, user)
             if not (label and feed):
-                data = {'url': 'This is not a valid .JOBS feed'}
-                return super(SavedSearchResource, self).create_response(request, data, response_class=HttpResponse,
-                                                                        **response_kwargs)
+                data = {'error': 'This is not a valid .JOBS feed'}
+                return super(SavedSearchResource, self).create_response(
+                    request, data, response_class=HttpResponse,
+                    **response_kwargs)
 
         # Create notes field noting that it was created as current date/time
         now = datetime.datetime.now().strftime('%A, %B %d, %Y %l:%M %p')
@@ -133,13 +140,13 @@ class SavedSearchResource(ModelResource):
                        'day_of_week': None,
                        'day_of_month': None,
                        'notes': notes}
-        new_search = False
 
         # if there's no search for that email/user, create it
+        new_search = False
         try:
-            search = SavedSearch.objects.get(user=search_args['user'],
-                                             email__iexact=search_args['email'],
-                                             url=search_args['url'])
+            SavedSearch.objects.get(user=search_args['user'],
+                                    email__iexact=search_args['email'],
+                                    url=search_args['url'])
         except SavedSearch.DoesNotExist:
             search = SavedSearch(**search_args)
             search.save()
@@ -150,6 +157,6 @@ class SavedSearchResource(ModelResource):
                 'frequency': 'D',
                 'new_search': new_search}
 
-        return super(SavedSearchResource, self).create_response(request, data, response_class=HttpResponse,
-                                                                **response_kwargs)
+        return super(SavedSearchResource, self).create_response(
+            request, data, response_class=HttpResponse, **response_kwargs)
 
