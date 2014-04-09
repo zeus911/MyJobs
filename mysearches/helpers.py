@@ -81,12 +81,14 @@ def validate_dotjobs_url(search_url, user):
     # Re-encode parameters
     try:
         search_parts = list(urlparse(search_url))
+        search_parts[4] = parse_qs(search_parts[4])
+        search_parts[4] = urllib.urlencode(search_parts[4])
         search_parts[4] = urllib.quote(search_parts[4])
         search_url = urlunparse(tuple(search_parts))
     except Exception, e:
         print e
         return None, None
-
+    print search_url
     try:
         soup = BeautifulSoup(urllib2.urlopen(search_url).read(), "html.parser")
     except Exception, e:
@@ -94,7 +96,7 @@ def validate_dotjobs_url(search_url, user):
         return None, None
 
     link = soup.find("link", {"type": "application/rss+xml"})
-
+    print link
     if link:
         title = link.get('title')
         rss_url = link.get('href')
