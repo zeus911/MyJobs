@@ -44,6 +44,16 @@ class SavedSearchHelperTests(TestCase):
         self.assertIsNotNone(title)
         self.assertIsNotNone(url)
 
+    def test_validate_dotjobs_url_with_special_chars(self):
+        urls = [
+            'http://www.my.jobs/jobs/?q=query with spaces/',
+            'http://www.my.jobs/jobs/virtual-usa/asystentka-dzia%C5%82u/34215982/job/',
+        ]
+        for url in urls:
+            label, feed = validate_dotjobs_url(url, self.user)
+            self.assertIsNotNone(label)
+            self.assertIsNotNone(feed)
+
     def test_invalid_dotjobs_url(self):
         urls = ['http://google.com',  # url does not contain a feed
                 '',  # url not provided

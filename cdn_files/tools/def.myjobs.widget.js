@@ -9,29 +9,39 @@ $(document).ready(function(){
     get_default_widget_html(false);
 });
 
+function handle_error() {
+    fill(most_recent_html);
+    $('.saved-search-form').prepend('<em class="warning">Something went wrong!</em>');
+    $('.saved-search-form > form > b').html('<p>Your search could not successfully be created.</p>');
+    $('label[for="saved-search-email"]').html('<p>Your search could not successfully be created.</p>');
+    $('.saved-search-button').html('Try saving this search again');
+}
+
 function fill(html) {
     $('#de-myjobs-widget').html(html);
     most_recent_html = html;
 }
 
 function save_search() {
-    $('.saved-search-form').html('<em class="loading">Saving this search</em>');
-    if (user_email != 'None') {
+    if (user_email != 'None' && user_email != 'undefined' && user_email) {
+        $('.saved-search-form').html('<em class="loading">Saving this search</em>');
         create_saved_search();
     }
     else {
-        user_email = $('#saved-search-email').val();
-        create_user();
+        try {
+            user_email = $('#saved-search-email').val();
+            $('.saved-search-form').html('<em class="loading">Saving this search</em>');
+            create_user();
+        }
+        catch(err) {
+            handle_error();
+        }
     }
 }
 
 function reload_default_widget(data) {
     if(data.error) {
-        fill(most_recent_html);
-        $('.saved-search-form').prepend('<em class="warning">Something went wrong!</em>');
-        $('.saved-search-form > form > b').html('<p>Your search could not successfully be created.</p>');
-        $('label[for="saved-search-email"]').html('<p>Your search could not successfully be created.</p>');
-        $('.saved-search-button').html('Try saving this search again');
+        handle_error();
     }
     else {
         get_default_widget_html(true);
@@ -40,7 +50,7 @@ function reload_default_widget(data) {
 
 function get_default_widget_html(success) {
     if(success) {
-        ajax_url = base_url + 'saved-search/widget/?callback=fill&success=' + user_email + '&url=' + ss_url;
+        ajax_url = base_url + '/saved-search/widget/?callback=fill&success=' + user_email + '&url=' + ss_url;
     }
     else {
         ajax_url = base_url + '/saved-search/widget/?callback=fill&url=' + ss_url;

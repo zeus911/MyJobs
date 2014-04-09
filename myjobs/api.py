@@ -93,9 +93,9 @@ class SavedSearchResource(ModelResource):
         create_response(). 
 
         """
-
         # Confirm email was provided, and that the user exists
-        email = request.GET.get('email', '')        
+        email = request.GET.get('email', '')
+
         if not email:
             data = {'error': 'No email provided'}
             return super(SavedSearchResource, self).create_response(
@@ -111,6 +111,7 @@ class SavedSearchResource(ModelResource):
         # Confirm that url was provided, and that it's a valid .jobs search
         url = request.GET.get('url', '')
         url = unquote(url)
+
         if not url:
             data = {'error': 'No .JOBS feed provided'}
             return super(SavedSearchResource, self).create_response(

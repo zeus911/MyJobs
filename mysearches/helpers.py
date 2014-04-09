@@ -1,4 +1,5 @@
 import json
+import urllib
 import urllib2
 from bs4 import BeautifulSoup
 from urlparse import urlparse, urlunparse, parse_qs
@@ -76,6 +77,15 @@ def validate_dotjobs_url(search_url, user):
         search_url = "http://" + search_url
 
     search_url = update_url_if_protected(search_url, user)
+
+    # Re-encode parameters
+    try:
+        search_parts = list(urlparse(search_url))
+        search_parts[4] = urllib.quote(search_parts[4])
+        search_url = urlunparse(tuple(search_parts))
+    except Exception, e:
+        print e
+        return None, None
 
     try:
         soup = BeautifulSoup(urllib2.urlopen(search_url).read(), "html.parser")
