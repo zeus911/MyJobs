@@ -1,6 +1,5 @@
-from django.utils import simplejson as json
+import json
 
-from django.core.urlresolvers import reverse
 from django.test import TestCase
 
 from tastypie.models import create_api_key
@@ -12,6 +11,7 @@ from myjobs.tests.views import TestClient
 from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch
 from mysearches.tests.test_helpers import return_file
+
 
 class UserResourceTests(TestCase):
     def setUp(self):
@@ -53,6 +53,7 @@ class UserResourceTests(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertFalse(content['user_created'])
             self.assertEqual(content['email'].lower(), 'alice@example.com')
+
 
 class SavedSearchResourceTests(TestCase):
     def setUp(self):
@@ -116,7 +117,7 @@ class SavedSearchResourceTests(TestCase):
         self.assertEqual(SavedSearch.objects.count(), 0)
         self.assertEqual(User.objects.count(), 1)
         content = json.loads(response.content)
-        self.assertEqual(content['email'], 'No user with email %s exists' % \
+        self.assertEqual(content['error'], 'No user with email %s exists' % \
                                    self.data['email'])
         self.assertEqual(len(content), 1)
 
@@ -144,7 +145,7 @@ class SavedSearchResourceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         content = json.loads(response.content)
         self.assertEqual(len(content), 1)
-        self.assertEqual(content['url'], 'This is not a valid .JOBS feed')
+        self.assertEqual(content['error'], 'This is not a valid .JOBS feed')
         self.assertEqual(SavedSearch.objects.count(), 0)
 
     def test_new_search_no_url(self):
@@ -155,7 +156,7 @@ class SavedSearchResourceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         content = json.loads(response.content)
         self.assertEqual(len(content), 1)
-        self.assertEqual(content['url'], 'No .JOBS feed provided')
+        self.assertEqual(content['error'], 'No .JOBS feed provided')
         self.assertEqual(SavedSearch.objects.count(), 0)
 
     def test_no_email(self):
@@ -166,7 +167,7 @@ class SavedSearchResourceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         content = json.loads(response.content)
         self.assertEqual(len(content), 1)
-        self.assertEqual(content['email'], 'No email provided')
+        self.assertEqual(content['error'], 'No email provided')
         self.assertEqual(SavedSearch.objects.count(), 0)
 
     def test_no_auth(self):
@@ -195,7 +196,6 @@ class SavedSearchResourceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         content = json.loads(response.content)
         self.assertEqual(content['new_search'], True)
-
 
         for email in [self.user.email, self.user.email.upper()]:
             self.data['email'] = email
