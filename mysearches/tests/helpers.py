@@ -38,7 +38,8 @@ class SavedSearchHelperTests(TestCase):
         title, url = validate_dotjobs_url(no_netloc, self.user)
         self.assertIsNotNone(title)
         self.assertIsNotNone(url)
-        self.assertEquals(title, 'Jobs - nurse Jobs in Chicago')
+        self.assertEquals('http://www.my.jobs/jobs/feed/rss?q=nurse&amp;location=chicago',
+                          url)
 
         valid_filter_url = 'www.my.jobs/chicago/illinois/usa/jobs/mcdonalds/careers/'
         title, url = validate_dotjobs_url(valid_filter_url, self.user)

@@ -78,7 +78,7 @@ def validate_dotjobs_url(search_url, user):
 
     search_url = update_url_if_protected(search_url, user)
 
-    # Re-encode parameters
+    # Encode parameters
     try:
         search_parts = list(urlparse(search_url.rstrip('/')))
         search_parts[4] = parse_qsl(search_parts[4])

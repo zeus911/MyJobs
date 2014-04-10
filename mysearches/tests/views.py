@@ -120,8 +120,9 @@ class MySearchViewTests(TestCase):
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(response.status_code, 200)
         data = {'rss_url': 'http://www.my.jobs/jobs/feed/rss',
-                'feed_title': 'Jobs',
+                'feed_title': 'My.jobs',
                 'url_status': 'valid'}
+
         self.assertEqual(json.loads(response.content), data)
 
         response = self.client.post(reverse('validate_url'),
