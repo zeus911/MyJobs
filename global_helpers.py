@@ -21,5 +21,5 @@ def get_domain(url):
     pattern = re.compile(pattern)
     try:
         return pattern.search(url).groupdict()['domain'].split("/")[0]
-    except (AttributeError, KeyError):
+    except (AttributeError, KeyError, TypeError):
         return None
