@@ -259,8 +259,8 @@ def parse_log(logs, solr_location):
 
             for line in f:
                 if line[0] == '#':
-                    # Redirect logs contain a header that LogParser uses
-                    # to determine the log format; if we see this, ignore it
+                    # Logs contain a header that LogParser uses to determine
+                    # the log format; if we see this, ignore it
                     continue
 
                 # line in f does not strip newlines if they exist
@@ -280,19 +280,14 @@ def parse_log(logs, solr_location):
                     ua = ' '.join(line[9:-7])
                     del line[9:-7]
                 else:
-                    ua = ' '.join(line[10:])
-                    del line[10:]
+                    ua = line[8]
+                    del line[8]
 
                 if not helpers.is_bot(ua):
                     # Only track hits that come from actual users
                     update_dict = {
                         'view_date': line[0],
                     }
-
-                    # query strings in redirect logs are manually constructed and do
-                    # not contain question marks; analytics logs do, which mess with
-                    # parsing
-                    line[4] = line[4].lstrip('?')
 
                     # Make sure the value for a given key is only a list if there
                     # are multiple elements
@@ -304,10 +299,14 @@ def parse_log(logs, solr_location):
                         myguid = qs.get('jcnlx.myguid', '')
                         update_dict['view_source'] = qs.get('jcnlx.vsid', 0)
                         update_dict['job_view_buid'] = qs.get('jcnlx.buid', 0)
+
+                        # GUID is the path portion of this line, which starts
+                        # with a '/'; Remove it
                         update_dict['job_view_guid'] = line[3][1:]
                         update_dict['page_category'] = 'redirect'
                     else:
-                        aguid, myguid = line[8:10]
+                        aguid = qs.get('aguid', '')
+                        myguid = qs.get('myguid', '')
                         update_dict['view_source'] = qs.get('jvs', 0)
                         update_dict['job_view_buid'] = qs.get('jvb', 0)
                         update_dict['job_view_guid'] = qs.get('jvg', '')
