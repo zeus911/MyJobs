@@ -10,6 +10,11 @@ $(document).ready(function(){
 });
 
 function handle_error() {
+    // Fills with the most recent text and then overwrites applicable parts
+    // with the error message. Uses the most recent text to ensure formatting
+    // and variables supplied by myjobs are persistent, so the experience
+    // for logged in users continues to be the same.
+
     fill(most_recent_html);
     $('.saved-search-form').prepend('<em class="warning">Something went wrong!</em>');
     $('.saved-search-form > form > b').html('<p>Your search could not successfully be created.</p>');
@@ -23,6 +28,10 @@ function fill(html) {
 }
 
 function save_search() {
+    // If there is any hint that there isn't a well-defined user email
+    // provided, attempts to get a user from the input and create a new user.
+    // Otherwise, uses the currently provided user to create a saved search.
+
     if (user_email != 'None' && user_email != 'undefined' && user_email) {
         $('.saved-search-form').html('<em class="loading">Saving this search</em>');
         create_saved_search();
