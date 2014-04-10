@@ -59,6 +59,11 @@ $(function() {
                     clearTimeout(this.timer);
                 }
                 var pause_interval = 1000;
+                // Take a little longer due to mobile requiring a keyboard
+                // to come up onto screen, change keyboard views, ect.
+                if($(window).width() < 500){
+                    pause_interval = 3000;
+                }
                 this.timer = setTimeout(function() {
                     do_validate();
                 }, pause_interval);
