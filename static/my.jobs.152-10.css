@@ -2541,9 +2541,9 @@ td .gravatar-blank,
     }
 
     #topbar-back {
-        float: right;
-        margin-right: 65px;
-        margin-top: -3px;
+        position: absolute;
+        right: 70px;
+        top: 10px;
         padding: 13px;
         background-color: #a95051;
         border: 2px solid #FFF;
