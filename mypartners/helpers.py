@@ -269,13 +269,16 @@ def find_partner_from_email(partner_list, email):
     A matching partner if there is one, otherwise None.
 
     """
-    if '@' not in email or not partner_list:
+    if not email or '@' not in email or not partner_list:
         return None
     email_domain = email.split('@')[-1]
 
     for partner in partner_list:
         url = get_domain(partner.uri)
-        if email_domain and email_domain.lower() == url.lower():
+        # Pass through get_domain() to strip subdomains
+        email_domain = get_domain(email_domain)
+
+        if email_domain and url and email_domain.lower() == url.lower():
             return partner
 
     return None
