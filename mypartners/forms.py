@@ -342,7 +342,7 @@ class ContactRecordForm(forms.ModelForm):
             if attachment:
                 prm_attachment = PRMAttachment(attachment=attachment,
                                                contact_record=self.instance)
-                setattr(prm_attachment, 'partner', self.instance.partner)
+                prm_attachment.add_to_class('partner', self.instance.partner)
                 prm_attachment.save()
 
         attach_delete = self.cleaned_data.get('attach_delete', [])

@@ -258,6 +258,12 @@ class PRMAttachment(models.Model):
         filename, extension = path.splitext(filename)
         filename = '.'.join([sub(r'[\W]', '', filename),
                              sub(r'[\W]', '', extension)])
+
+        # If the uploaded file only contains invalid characters the end
+        # result will be a file named "."
+        if not filename or filename == '.':
+            filename = 'unnamed_file'
+
         uid = uuid4()
         path_addon = "mypartners/%s/%s/%s" % (self.partner.owner.pk,
                                               self.partner.pk, uid)
@@ -271,6 +277,7 @@ class PRMAttachment(models.Model):
             path_addon = "mypartners/%s/%s/%s" % (self.partner.owner,
                                                   self.partner.name, uid)
             name = "%s/%s" % (path_addon, filename)
+
         return name
 
     attachment = models.FileField(upload_to=get_file_name, blank=True,
