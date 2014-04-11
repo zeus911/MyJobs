@@ -284,6 +284,10 @@ h1 > small > a:hover {
     margin-top: 20px;
 }
 
+.contact-record-tr > td {
+    word-break: break-word;
+}
+
 #prm-arrow-left{
     width: 0;
     height: 0;
