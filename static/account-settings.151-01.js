@@ -23,11 +23,12 @@ $(function() {
         
         showSection: function(e) {
             e.preventDefault();
-            $('div.account-settings').html("");            
+            $('div.account-settings').html("");
+            var section_name;
             try {
-                var section_name = $(e.target).parents('a').attr('id').split('-')[1];
+                section_name = $(e.target).parents('a').attr('id').split('-')[1];
             } catch(err) {
-                var section_name = $(e.target).attr('id').split('-')[1];
+                section_name = $(e.target).attr('id').split('-')[1];
             }
             $.ajax({
                 url: "/account/edit/" + section_name,
@@ -146,14 +147,15 @@ $(function() {
     var App = new AppView;
 
     function removeRequiredChanges(){
+        var required = $('[class*=required]');
         // remove color from labels of current errors
-        $('[class*=required]').prev().css('color', '#000');
+        required.prev().css('color', '#000');
 
         // remove red border around past required fields
-        $('[class*=required]').children().css('border', '1px solid #CCC');
+        required.children().css('border', '1px solid #CCC');
 
         // remove current errors
-        $('[class*=required]').children().unwrap();
+        required.children().unwrap();
 
         if($.browser.msie){
             $('[class*=msieError]').remove();
