@@ -41,7 +41,7 @@
         </div>
         
         <div class="scroller_anchor"></div>
-        <div class="span4">
+        <div class="span4" id="rightColumn">
             <div class="formBox" id="profile-completion">
                 <div class="pull-right">Your profile is <span id="highlight">{{user.profile_completion}}% complete</span></div><br>
                 <div class="progress"><div class="bar bar-{% completion_level user.profile_completion%}"
@@ -66,5 +66,5 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}profile.151-01.js"></script>
+<script src="{{ STATIC_URL }}profile.153-15.js"></script>
 {% endblock %}

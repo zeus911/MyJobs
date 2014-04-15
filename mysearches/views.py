@@ -26,7 +26,7 @@ def delete_saved_search(request, user=None):
         # a single search is being deleted
         search = get_object_or_404(SavedSearch, id=search_id,
                                    user=user)
-        search_name = search.label.title()
+        search_name = search.label
         search.delete()
     except ValueError:
         # all searches are being deleted
