@@ -80,7 +80,7 @@ class MyPartnerTests(TestCase):
         for filename, expected_filename in filenames:
             f.name = filename
             prm_attachment = PRMAttachment(attachment=f)
-            prm_attachment.add_to_class('partner', self.partner)
+            setattr(prm_attachment, 'partner', self.partner)
             prm_attachment.save()
             result = PRMAttachment.objects.get(
                 attachment__contains=expected_filename)
