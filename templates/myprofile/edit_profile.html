@@ -8,9 +8,6 @@
     {% endwith %}
 {% endblock %}
 {% load i18n %}
-{% block meta-extra %}
-<script src="{{ STATIC_URL }}profile.js{% cache_buster %}"></script>
-{% endblock %}
 
 {% block content %}
 <div class="wrapper"> 
@@ -44,7 +41,7 @@
         </div>
         
         <div class="scroller_anchor"></div>
-        <div class="span4">
+        <div class="span4" id="rightColumn">
             <div class="formBox" id="profile-completion">
                 <div class="pull-right">Your profile is <span id="highlight">{{user.profile_completion}}% complete</span></div><br>
                 <div class="progress"><div class="bar bar-{% completion_level user.profile_completion%}"
@@ -66,4 +63,8 @@
     </div>{# /row #}
 </div>{# /wrapper #}
 
+{% endblock %}
+
+{% block extra-js %}
+<script src="{{ STATIC_URL }}profile.153-15.js"></script>
 {% endblock %}

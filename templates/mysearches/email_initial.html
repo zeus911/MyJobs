@@ -1,15 +1,17 @@
 {% extends 'mysearches/email_base.html' %}
 {% load email_tags %}
 
+
 {% block email-title %}
-<td style="text-align: left; vertical-align: middle;"><b>Saved Search Confirmation</b></td>
+    {% has_attr saved_searches.0.0 'partnersavedsearch' as is_partner_saved_search %}
+    <td style="text-align: left; vertical-align: middle;"><b>Saved Search {% if is_partner_saved_search %}Notification{% else %}Confirmation{% endif %}</b></td>
 {% endblock %}
 
 {% block content %}
     {% with saved_search=saved_searches.0.0 %}
 
-
     <div style="margin-left:auto;margin-right:auto; width:95%;">
+        {% has_attr saved_search 'partnersavedsearch' as is_partner_saved_search %}
         {% if saved_search.custom_message or custom_msg %}
             {% if saved_search.custom_message and not custom_msg %}
             <p>{{ saved_search.custom_message }}</p>
@@ -22,13 +24,23 @@
             <p>{{ saved_search.custom_message }}</p>
             {% endif %}
         {% endif %}
-        <p>On {{ saved_search|time_created }} (UTC), the following saved search was added to
-            your account:</p>
+        <p>On {{ saved_search|time_created }} (UTC),
+            {% if is_partner_saved_search %}
+                {% if saved_search.created_by.get_full_name %}
+                    {{ saved_search.created_by.get_full_name }}
+                {% else %}
+                    {{ saved_search.created_by.email }}
+                {% endif %}
+                 created this saved search on your behalf:
+            {% else %}
+                the following saved search was added to your account:
+            {% endif %}
+        </p>
 
         <table style="width: 100%; border-spacing:0; display: table;">
             <tr>
                 <td style="border: 1px solid #ddd; border-bottom:0; padding: 5px 7px; text-align: right;">Name:</td>
-                <td style="border: 1px solid #ddd; border-bottom:0; border-left: 0; padding: 5px 7px"><b>{{ saved_search.label.title }}</b></td>
+                <td style="border: 1px solid #ddd; border-bottom:0; border-left: 0; padding: 5px 7px"><b>{{ saved_search.label }}</b></td>
             </tr>
             <tr>
                 <td style="border: 1px solid #ddd; border-bottom:0; padding: 5px 7px; text-align: right;">Source:</td>
@@ -39,18 +51,19 @@
                 <td style="border: 1px solid #ddd; border-left: 0; padding: 5px 7px"><b>{{ saved_search.email }}</b></td>
             </tr>
         </table>
-        <p>If you created this saved search, then you can disregard this email. However, if this search was not
-            created by you then you may use the link below to delete this saved search.</p>
+        {% if not is_partner_saved_search %}
+            <p>If you created this saved search, then you can disregard this email. However, if this search was not
+                created by you then you may use the link below to delete this saved search.</p>
+        {% endif %}
         <div style="text-align: center">
-            {% has_attr saved_search 'partnersavedsearch' as is_partner_saved_search %}
             {% if not is_partner_saved_search %}
             <a href="https://secure.my.jobs{% url 'delete_saved_search' %}?id={{ saved_search.id }}&verify-email={{saved_search.user.email}}" style="line-height: 20px;vertical-align: middle;cursor: pointer;display:inline-block;padding: 4px 12px;border: 1px solid #bbb; border-radius: 5px; background-color: #5f6c82; background-image: -webkit-linear-gradient(#8c96a1,#5f6c82); background-image: linear-gradient(#8c96a1,#5f6c82);filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#8c96a1', endColorstr='#5f6c82', GradientType=0);margin-top: 2px;padding-left: 25px;padding-right: 25px;color: #fff !important;text-decoration: none !important; margin-left: auto !important; margin-right:auto !important; text-align: center; font-size: 1.1em; font-weight: bold;margin-bottom: 10px !important;">
-                Delete "{{ saved_search.label.title }}"
+                Delete "{{ saved_search.label }}"
             </a>
             <br>
             {% endif %}
-            <a href="https://secure.my.jobs{% url 'view_full_feed' %}?id={{ saved_search.id }}&verify-email={{saved_search.user.email}}" style="line-height: 20px;vertical-align: middle;cursor: pointer;display:inline-block;padding: 4px 12px;border: 1px solid #bbb; border-radius: 5px; background-color: #e6e6e6;background-image: -webkit-linear-gradient(#ffffff,#e6e6e6); background-image: linear-gradient(#ffffff,#e6e6e6);filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff', endColorstr='#ffe6e6e6', GradientType=0);margin-top: 2px;padding-left: 25px;padding-right: 25px;color: #333 !important;text-decoration: none !important; margin-left: auto !important; margin-right:auto !important; text-align: center; font-size: 1.1em;font-weight: bold; margin-bottom: 30px !important;">
-                View "{{ saved_search.label.title }}" on My.jobs
+            <a href="https://secure.my.jobs{% url 'view_full_feed' %}?id={{ saved_search.id }}&verify-email={{saved_search.user.email}}" style="line-height: 20px;vertical-align: middle;cursor: pointer;display:inline-block;padding: 4px 12px;border: 1px solid #bbb; border-radius: 5px; background-color: #e6e6e6;background-image: -webkit-linear-gradient(#ffffff,#e6e6e6); background-image: linear-gradient(#ffffff,#e6e6e6);filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff', endColorstr='#ffe6e6e6', GradientType=0);margin-top: 2px;padding-left: 25px;padding-right: 25px;color: #333 !important;text-decoration: none !important; margin-left: auto !important; margin-right:auto !important; text-align: center; font-size: 1.1em;font-weight: bold; margin-bottom: 30px !important; margin-top: 30px !important;">
+                View "{{ saved_search.label }}" on My.jobs
             </a>
             <br>
         </div>

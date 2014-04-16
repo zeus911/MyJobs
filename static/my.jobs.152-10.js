@@ -167,14 +167,26 @@ $(document).ready(function(){
         readMessage(this);
     });
 
-    if($(window).width() < 500){
-        addBackButton();
+    $('#delete').hover(function(e){
+        $.ajax({
+            global: false,
+            url: static_url + "bootstrap/bootstrap-modalmanager.js",
+            dataType: "script",
+            cache: true
+        });
+        $.ajax({
+            global: false,
+            url: static_url + "bootstrap/bootstrap-modal.js",
+            dataType: "script",
+            cache: true
+        });
+        $(this).unbind('mouseenter mouseleave');
+    });
+
+    if($('[id$="country_code"]').length){
+        moveCountrySelection();
     }
 });
-
-function addBackButton(){
-    $('.topbar-inner').find('.span1').prepend('<a id="topbar-back" class="desktop_hide" href="#" onclick="javascript:window.history.back(-1);return false;"><span id="prm-arrow-left"></span></a>');
-}
 
 function readMessage(button){
     var message_box = $(button);

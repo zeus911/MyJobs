@@ -1,10 +1,10 @@
 from django.test import TestCase
 
-from mydashboard.models import *
 from mydashboard.tests.factories import CompanyFactory
 from mydashboard.tests.test_forms import CompanyUserForm
-from myjobs.models import User
+
 from myjobs.tests.factories import UserFactory
+
 
 class CompanyUserTests(TestCase):
     def setUp(self):

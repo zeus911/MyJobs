@@ -1,12 +1,10 @@
 import json
-from datetime import datetime, date, timedelta
-from itertools import chain
+from datetime import date, timedelta
 
-from django.contrib.auth import authenticate, login
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import user_passes_test
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.template import RequestContext, loader
+from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
 
 from myjobs.decorators import user_is_allowed
@@ -14,7 +12,8 @@ from myjobs.models import User
 from mysearches.models import SavedSearch, SavedSearchDigest
 from mysearches.forms import (SavedSearchForm, DigestForm,
                               PartnerSubSavedSearchForm)
-from mysearches.helpers import *
+from mysearches.helpers import (get_interval_from_frequency, parse_feed,
+                                url_sort_options, validate_dotjobs_url)
 
 
 @user_is_allowed(SavedSearch, 'id', pass_user=True)
@@ -27,7 +26,7 @@ def delete_saved_search(request, user=None):
         # a single search is being deleted
         search = get_object_or_404(SavedSearch, id=search_id,
                                    user=user)
-        search_name = search.label.title()
+        search_name = search.label
         search.delete()
     except ValueError:
         # all searches are being deleted
@@ -45,7 +44,8 @@ def saved_search_main(request):
     # instantiate the form if the digest object exists
     try:
         digest_obj = SavedSearchDigest.objects.get(user=request.user)
-    except:
+    except (SavedSearchDigest.DoesNotExist,
+            SavedSearchDigest.MultipleObjectsReturned):
         digest_obj = None
     updated = request.REQUEST.get('d')
     saved_searches = list(SavedSearch.objects.filter(user=request.user))
@@ -84,7 +84,7 @@ def view_full_feed(request):
         # We don't care about the count; discard it
         items, count = parse_feed(url_of_feed, saved_search.frequency)
         start_date = date.today() + timedelta(get_interval_from_frequency(
-                                                      saved_search.frequency))
+            saved_search.frequency))
         return render_to_response('mysearches/view_full_feed.html',
                                   {'search': saved_search,
                                    'items': items,
@@ -107,7 +107,7 @@ def more_feed_results(request):
                                        request.GET['sort_by'],
                                        request.GET['frequency'])
         items = parse_feed(url_of_feed, request.GET['frequency'],
-                          offset=request.GET['offset'])[0]
+                           offset=request.GET['offset'])[0]
         return render_to_response('mysearches/feed_page.html',
                                   {'items': items}, RequestContext(request))
 
@@ -116,7 +116,8 @@ def more_feed_results(request):
 @user_passes_test(User.objects.not_disabled)
 def validate_url(request):
     if request.is_ajax():
-        feed_title, rss_url = validate_dotjobs_url(request.POST['url'])
+        feed_title, rss_url = validate_dotjobs_url(request.POST['url'],
+                                                   request.user)
         if rss_url:
             # returns the RSS url via AJAX to show if field is validated
             # id valid, the label field is auto populated with the feed_title
@@ -135,7 +136,8 @@ def save_digest_form(request):
     if request.method == 'POST':
         try:
             digest_obj = SavedSearchDigest.objects.get(user=request.user)
-        except:
+        except (SavedSearchDigest.DoesNotExist,
+                SavedSearchDigest.MultipleObjectsReturned):
             digest_obj = None
 
         form = DigestForm(user=request.user, data=request.POST,
@@ -171,7 +173,7 @@ def save_search_form(request):
             form = SavedSearchForm(user=request.user,
                                    data=request.POST,
                                    instance=original)
-    except:
+    except Exception:
         form = SavedSearchForm(user=request.user, data=request.POST)
 
     if form.is_valid():
@@ -221,7 +223,8 @@ def edit_search(request):
             raise Http404
 
     return render_to_response('mysearches/saved_search_edit.html',
-                              {'form': form, 'search_id': search_id,
+                              {'form': form,
+                               'search_id': search_id,
                                'view_name': 'Saved Searches',
                                'search': saved_search,
                                'is_pss': is_pss,

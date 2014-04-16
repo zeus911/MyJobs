@@ -47,12 +47,7 @@
          </table>
          
          {% show_more %}
-         
-         <script>
-         /*Add btn classes to the endless paging links*/
-         $(".endless_container a").addClass("btn");
-         $(".endless_container .endless_loading").addClass("btn");
-         </script>
+
 {% else %}
     <div id="no-activity">
         <strong>There is no candidate activity between {{date_start.date}} and {{date_end.date}} for {{ site_name|cut:"http://" }}</strong>

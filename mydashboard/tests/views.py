@@ -4,13 +4,14 @@ import unittest
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
 from mydashboard.models import CompanyUser
 from mydashboard.tests.factories import (CompanyFactory, CompanyUserFactory,
-    SeoSiteFactory, BusinessUnitFactory)
+                                         SeoSiteFactory, BusinessUnitFactory)
 from mydashboard.helpers import country_codes
 from myjobs.models import User
 from myjobs.tests.views import TestClient
@@ -59,10 +60,10 @@ class MyDashboardViewsTests(TestCase):
                 SavedSearchFactory(user=user,
                                    url='http://test.jobs/search?q=%s' % search,
                                    label='%s Jobs' % search)
-        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task(settings.TEST_SOLR_INSTANCE)
 
     def tearDown(self):
-        solr = pysolr.Solr('http://127.0.0.1:8983/solr/myjobs_test/')
+        solr = pysolr.Solr(settings.TEST_SOLR_INSTANCE)
         solr.delete(q='*:*')
 
     def test_number_of_searches_and_users_is_correct(self):
@@ -88,7 +89,7 @@ class MyDashboardViewsTests(TestCase):
         adr = AddressFactory(user=self.candidate_user)
         license = LicenseFactory(user=self.candidate_user)
         self.candidate_user.save()
-        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task(settings.TEST_SOLR_INSTANCE)
 
         country_str = 'http://testserver/candidates/view?company=1&amp;location={country}'
         edu_str = 'http://testserver/candidates/view?company=1&amp;education={education}'
@@ -109,7 +110,7 @@ class MyDashboardViewsTests(TestCase):
     def test_filters(self):
         adr = AddressFactory(user=self.candidate_user)
         self.candidate_user.save()
-        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task(settings.TEST_SOLR_INSTANCE)
 
         country_str = 'http://testserver/candidates/view?company=1&amp;location={country}'
         country_filter_str = '<a class="applied-filter" href="http://testserver/candidates/view?company=1"><span>&#10006;</span> {country_long}</a><br>'
@@ -183,7 +184,7 @@ class MyDashboardViewsTests(TestCase):
                            url='http://test.jobs/search?q=python',
                            label='Python Jobs')
         user.save()
-        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task(settings.TEST_SOLR_INSTANCE)
 
         q = '?company={company}&search={search}'
         q = q.format(company=str(self.company.id), search='test@shouldWork.com')
@@ -200,7 +201,7 @@ class MyDashboardViewsTests(TestCase):
                            url='http://test.jobs/search?q=python',
                            label='Python Jobs')
         user.save()
-        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task(settings.TEST_SOLR_INSTANCE)
 
         q = '?company={company}&search={search}'
         q = q.format(company=str(self.company.id), search='shouldWork.com')
@@ -227,7 +228,7 @@ class MyDashboardViewsTests(TestCase):
         LicenseFactory(user=user)
         user.save()
 
-        update_solr_task('http://127.0.0.1:8983/solr/myjobs_test/')
+        update_solr_task(settings.TEST_SOLR_INSTANCE)
 
         # Assert there are two users with country codes
         country_tag = '#Country-details-table #facet-count'
@@ -388,7 +389,7 @@ class MyDashboardViewsTests(TestCase):
         for item  in analytics_dicts:
             item['uid'] = 'analytics##%s#%s' % (
                 item['view_date'], item['aguid'])
-        solr = pysolr.Solr('http://127.0.0.1:8983/solr/myjobs_test/')
+        solr = pysolr.Solr(settings.TEST_SOLR_INSTANCE)
         solr.add(analytics_dicts)
 
         response = self.client.post(

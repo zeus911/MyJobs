@@ -2,6 +2,7 @@ import datetime
 import pytz
 import uuid
 
+from django.conf import settings
 from django.test import TestCase
 
 from MyJobs.myjobs.models import User
@@ -18,7 +19,7 @@ from MyJobs.tasks import update_solr_task, parse_log
 
 class SolrTests(TestCase):
     def setUp(self):
-        self.test_solr = 'http://127.0.0.1:8983/solr/myjobs_test/'
+        self.test_solr = settings.TEST_SOLR_INSTANCE
 
     def tearDown(self):
         Solr().delete()
@@ -212,15 +213,14 @@ class SolrTests(TestCase):
             # If it is getting processed correctly, there should be only one
             # hit recorded
             self.assertEqual(results.hits, 1)
-            multi_fields = ['facets', 'search_keywords']
-            for field in multi_fields:
-                if log_type == 'redirect':
-                    with self.assertRaises(KeyError):
-                        results.docs[0][field]
-                else:
-                    self.assertEqual(len(results.docs[0][field]), 2)
+            multi_field = 'facets'
+            if log_type == 'redirect':
+                with self.assertRaises(KeyError):
+                    results.docs[0][multi_field]
+            else:
+                self.assertEqual(len(results.docs[0][multi_field]), 2)
             for field in results.docs[0].keys():
-                if field not in multi_fields:
+                if field != multi_field:
                     self.assertTrue(type(results.docs[0][field] != list))
             uuid.UUID(results.docs[0]['aguid'])
             with self.assertRaises(KeyError):

@@ -7,11 +7,11 @@ import os
 DEBUG = False
 
 
-DATABASES = {'default': {'NAME': 'dseo_mj',
+DATABASES = {'default': {'NAME': 'redirect',
                          'ENGINE': 'django.db.backends.mysql',
-                         'USER': 'dseo_mj',
+                         'USER': 'db_deuser',
                          'PASSWORD': PROD_DB_PASSWD,
-                         'HOST': 'db-dseomjprod.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
+                         'HOST': 'db-redirect.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
                          'PORT': '3306', }
             }
 
@@ -27,6 +27,8 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Browsers should only send the user's session cookie over https
 SESSION_COOKIE_SECURE = True
+
+STATIC_URL = "//d2e48ltfsb5exy.cloudfront.net/content_mj/files/"
 
 SESSION_CACHE_ALIAS = 'sessions'
 CACHES = {

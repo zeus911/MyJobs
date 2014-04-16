@@ -2,29 +2,26 @@ import csv
 import json
 import operator
 
-import cStringIO as StringIO
-
-from datetime import datetime, timedelta
+from datetime import datetime
 from collections import Counter, OrderedDict
 from itertools import groupby
 
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Q
 from django.http import Http404, HttpResponse
-from django.template import RequestContext, Context
-from django.template.loader import get_template
+from django.template import RequestContext
 from django.shortcuts import render_to_response
 
+from global_helpers import get_domain, get_int_or_none
 from mydashboard.helpers import (saved_searches, filter_by_microsite,
                                  filter_by_date, apply_facets_and_filters,
                                  parse_facets, remove_param_from_url,
                                  get_company_microsites)
-from mydashboard.models import Company, Microsite, CompanyUser, SeoSite
+from mydashboard.models import Company, CompanyUser
 from myjobs.models import User
-from myprofile.models import (PrimaryNameProfileUnitManager,
-                              ProfileUnits, Name)
+from myprofile.models import PrimaryNameProfileUnitManager, ProfileUnits
 from mysearches.models import SavedSearch
-from solr.helpers import Solr, format_date, dict_to_object
+from solr.helpers import Solr, dict_to_object
 
 from endless_pagination.decorators import page_template
 from urlparse import urlparse
@@ -52,7 +49,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     facet_solr = Solr()
 
     # Add join only if we're using facets, not if we're simply searching.
-    query_params = set(['search', 'company'])
+    query_params = {'search', 'company'}
     if not query_params.issuperset(set(request.GET.keys())):
         user_solr = user_solr.add_join(from_field='ProfileUnits_user_id',
                                        to_field='User_id')
@@ -131,18 +128,15 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         user_solr = user_solr.add_query("%s" % request.GET['search'])
         facet_solr = facet_solr.add_query("%s" % request.GET['search'])
 
-    user_solr, facet_solr = filter_by_microsite(active_microsites,
-                                                          user_solr,
-                                                          facet_solr)
+    user_solr, facet_solr = filter_by_microsite(active_microsites, user_solr,
+                                                facet_solr)
     # Because location faceting requires facet.prefix to work properly, and
     # facet prefixes apply to all facets, a seperate solr result set has to be
     # obtained specifically for locations. Because we're still faceting,
     # minus the facet prefix it is identical to facet_solr.
     loc_solr = facet_solr._clone()
-    user_solr, facet_solr, loc_solr, filters = apply_facets_and_filters(request,
-                                                                        user_solr,
-                                                                        facet_solr,
-                                                                        loc_solr)
+    (user_solr, facet_solr, loc_solr, filters) = apply_facets_and_filters(
+        request, user_solr, facet_solr, loc_solr)
     solr_results = user_solr.rows_to_fetch(100).search()
 
     # List of dashboard widgets to display.
@@ -297,22 +291,25 @@ def candidate_information(request):
     Gathers the employer's (request.user) companies and microsites and puts
     the microsites' domains in a list for further checking and logic,
     see helpers.py.
-    """
 
-    user_id = request.REQUEST.get('user')
-    company_id = request.REQUEST.get('company')
+    """
+    user_id = get_int_or_none(request.REQUEST.get('user'))
+    company_id = get_int_or_none(request.REQUEST.get('company'))
+
+    if not user_id or not company_id:
+        raise Http404
 
     # user gets pulled out from id
     try:
-        user = User.objects.get(id=user_id)
+        candidate = User.objects.get(id=user_id)
         company = Company.objects.get(id=company_id)
-    except User.DoesNotExist or Company.DoesNotExist:
+    except (User.DoesNotExist, Company.DoesNotExist):
         raise Http404
 
-    if not user.opt_in_employers:
+    if not candidate.opt_in_employers:
         raise Http404
 
-    urls = saved_searches(request.user, company, user)
+    urls = saved_searches(request.user, company, candidate)
 
     if not urls:
         raise Http404
@@ -320,7 +317,7 @@ def candidate_information(request):
     manager = PrimaryNameProfileUnitManager(order=['employmenthistory',
                                                    'education',
                                                    'militaryservice'])
-    models = manager.displayed_units(user.profileunits_set.all())
+    models = manager.displayed_units(candidate.profileunits_set.all())
 
     primary_name = getattr(manager, 'primary_name', 'Name not given')
 
@@ -330,7 +327,9 @@ def candidate_information(request):
     else:
         coming_from = {'path': 'view'}
 
-    searches = user.savedsearch_set.filter(url__in=urls)
+    searches = candidate.savedsearch_set.all()
+    searches = [search for search in searches
+                if get_domain(search.url).lower() in urls]
 
     modified_url = remove_param_from_url(request.build_absolute_uri(), 'user')
     query_string = "?%s" % urlparse(modified_url).query
@@ -339,7 +338,7 @@ def candidate_information(request):
         'user_info': models,
         'company_id': company_id,
         'primary_name': primary_name,
-        'the_user': user,
+        'the_user': candidate,
         'searches': searches,
         'coming_from': coming_from,
         'query_string': query_string,

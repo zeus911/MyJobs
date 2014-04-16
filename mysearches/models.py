@@ -10,7 +10,8 @@ from django.template.loader import render_to_string
 from mydashboard.models import Company
 from myjobs.models import User
 from mypartners.models import Contact, ContactRecord, Partner, EMAIL
-from mysearches.helpers import parse_feed, url_sort_options
+from mysearches.helpers import (parse_feed, update_url_if_protected,
+                                url_sort_options)
 import mypartners.helpers
 
 
@@ -75,6 +76,7 @@ class SavedSearch(models.Model):
 
     def get_feed_items(self, num_items=100):
         url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency)
+        url_of_feed = update_url_if_protected(url_of_feed, self.user)
         items = parse_feed(url_of_feed, self.frequency,
                            num_items=num_items, return_items=5)
         return items

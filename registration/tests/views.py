@@ -111,6 +111,17 @@ class RegistrationViewTests(TestCase):
         self.client.get(reverse('resend_activation'))
         self.assertEqual(len(mail.outbox), 4)
 
+    def test_site_name_in_password_reset_email(self):
+        mail.outbox = []
+        self.client.post(reverse('auth_password_reset'),
+                         data={'email':self.user.email})
+        self.assertEqual(len(mail.outbox), 1,
+                         [msg.subject for msg in mail.outbox])
+        msg = mail.outbox[0]
+        self.assertEqual(msg.subject, "Password Reset on My.Jobs")
+        self.assertIn("The My.Jobs Team", msg.body)
+        self.assertIn("user account at My.Jobs.", msg.body)
+
 
 class MergeUserTests(TestCase):
 
@@ -119,9 +130,11 @@ class MergeUserTests(TestCase):
         self.client = TestClient()
         self.password = '12345'
         self.key = '56effea3df2bcdcfe377ca4bf30f2844be47d012'
-        self.existing = User.objects.create(email="test@email.com")
+        self.existing = User.objects.create(email="test@email.com",
+                                            user_guid="a")
         self.existing.set_password(self.password)
-        self.new_user = User.objects.create(email="new@email.com")
+        self.new_user = User.objects.create(email="new@email.com",
+                                            user_guid="b")
         self.activation_profile = ActivationProfile.objects.create(
                                       user=self.new_user,
                                       email="ap@email.com")

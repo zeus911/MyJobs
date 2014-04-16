@@ -1,33 +1,30 @@
 from collections import OrderedDict
-import csv
+import unicodecsv
 from datetime import date, datetime, timedelta
-from email_parser import build_email_dicts
 from email.parser import HeaderParser
-from email.utils import getaddresses, parsedate
+from email.utils import getaddresses
 from itertools import chain
 import json
 from lxml import etree
-from time import mktime
 
 from django.conf import settings
-from django.contrib.admin.models import DELETION
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
-from django.core.mail import EmailMessage
 from django.db.models import Count
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from django.template.loader import render_to_string
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.utils.text import force_text
 from django.views.decorators.csrf import csrf_exempt
 
+from email_parser import build_email_dicts, get_datetime_from_str
+from global_helpers import get_domain, get_int_or_none
 from myjobs.models import User
+from mydashboard.helpers import get_company_microsites
 from mydashboard.models import Company
-from mysearches.models import SavedSearch, PartnerSavedSearch
+from mysearches.models import PartnerSavedSearch
 from mysearches.helpers import (url_sort_options, parse_feed,
                                 get_interval_from_frequency)
 from mysearches.forms import PartnerSavedSearchForm
@@ -42,7 +39,6 @@ from mypartners.helpers import (prm_worthy, add_extra_params,
                                 get_records_from_request,
                                 send_contact_record_email_response,
                                 find_partner_from_email)
-from registration.models import ActivationProfile
 
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
@@ -246,18 +242,14 @@ def delete_prm_item(request):
 
     """
     company_id = request.REQUEST.get('company')
-
     company = get_object_or_404(Company, id=company_id)
 
     partner_id = request.REQUEST.get('partner')
-    if partner_id:
-        partner_id = int(partner_id)
+    partner_id = get_int_or_none(partner_id)
     item_id = request.REQUEST.get('id')
-    if item_id:
-        contact_id = int(item_id)
+    contact_id = get_int_or_none(item_id)
     content_id = request.REQUEST.get('ct')
-    if content_id:
-        content_id = int(content_id)
+    content_id = get_int_or_none(content_id)
 
     if content_id == ContentType.objects.get_for_model(Contact).id:
         partner = get_object_or_404(Partner, id=partner_id, owner=company)
@@ -358,23 +350,17 @@ def prm_edit_saved_search(request):
         form = PartnerSavedSearchForm(partner=partner, instance=instance)
     else:
         form = PartnerSavedSearchForm(partner=partner)
-    microsites = []
-    for microsite in company.microsite_set.all():
-        ms = {}
-        ms['url'] = microsite.url
-        readable_url = microsite.url.split('//')[1]
-        readable_url = readable_url.rstrip('/')
-        ms['name'] = readable_url
-        microsites.append(ms)
+
+    microsites = [get_domain(site).lower() for site in
+                  get_company_microsites(company)[0]]
 
     ctx = {
         'company': company,
         'partner': partner,
         'item_id': item_id,
         'form': form,
-        'microsites': microsites,
-        'content_type': ContentType.objects.\
-            get_for_model(PartnerSavedSearch).id,
+        'microsites': set(microsites),
+        'content_type': ContentType.objects.get_for_model(PartnerSavedSearch).id,
         'view_name': 'PRM'
     }
     return render_to_response('mypartners/partner_edit_search.html', ctx,
@@ -444,40 +430,13 @@ def partner_savedsearch_save(request):
         del form.errors['feed']
 
     if form.is_valid():
-        created = False
         instance = form.instance
-        user = User.objects.get_email_owner(email=instance.email)
-        if user == None:
-            # don't send a email here, as this is not a typical user creation.
-            user, created = User.objects.create_inactive_user(
-                                                        email=instance.email,
-                                                        send_email=False)
-            instance.user = user
-            Contact.objects.filter(email=instance.email).update(user=instance.user)
-        else:
-            instance.user = user
         instance.feed = form.data['feed']
         instance.provider = company
         instance.partner = partner
         instance.created_by = request.user
         instance.custom_message = instance.partner_message
-        search = form.save()
-        # If we created a user account, send a custom message
-        if created:
-            activation = ActivationProfile.objects.get(user=search.user)
-            employee_name = request.user.get_full_name(default="An employee")
-            ctx_dict = {'activation': activation,
-                        'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
-                        'search': search,
-                        'creator': employee_name,
-                        'company': company}
-            subject = "Saved search created on your behalf"
-            message = render_to_string('mypartners/partner_search_new_user.html',
-                                       ctx_dict)
-            msg = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL,
-                               [search.user.email])
-            msg.content_subtype = 'html'
-            msg.send()
+        form.save()
         return HttpResponse(status=200)
     else:
         return HttpResponse(json.dumps(form.errors))
@@ -499,7 +458,7 @@ def partner_view_full_feed(request):
                                        saved_search.frequency)
         items, count = parse_feed(url_of_feed, saved_search.frequency)
         start_date = date.today() + timedelta(get_interval_from_frequency(
-                                                    saved_search.frequency))
+            saved_search.frequency))
         extras = saved_search.partnersavedsearch.url_extras
         if extras:
             add_extra_params_to_jobs(items, extras)
@@ -645,7 +604,8 @@ def prm_view_records(request):
         offset = int(offset)
     except (TypeError, ValueError):
         return HttpResponseRedirect(reverse('partner_records') +
-                '?company=%d&partner=%d' % (company.id, partner.id))
+                                    '?company=%d&partner=%d' %
+                                    (company.id, partner.id))
 
     prev_offset = (offset - 1) if offset > 1 else 0
     records = partner.get_contact_records(record_type=record_type,
@@ -693,7 +653,9 @@ def prm_view_records(request):
         next_id = None
 
     attachments = PRMAttachment.objects.filter(contact_record=record)
-    logs = ContactLogEntry.objects.filter(object_id=record_id)
+    ct = ContentType.objects.get_for_model(ContactRecord).pk
+    logs = ContactLogEntry.objects.filter(object_id=record_id,
+                                          content_type_id=ct)
     record_history = ContactLogEntry.objects.filter(object_id=record_id)
     ctx = {
         'date_start': range_start,
@@ -750,6 +712,7 @@ def get_contact_information(request):
             data = {}
 
     return HttpResponse(json.dumps(data))
+
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def get_records(request):
@@ -831,14 +794,13 @@ def partner_main_reports(request):
     referral = records.filter(contact_type='job').count()
 
     # need to order_by -count to keep the "All Contacts" list in proper order
-    all_contacts = records.exclude(contact_type='pssemail')\
+    all_contacts_with_records = records\
         .values('contact_name', 'contact_email')\
         .annotate(count=Count('contact_name')).order_by('-count')
 
     # Used for Top Contacts
     contact_records = records\
         .exclude(contact_type='job')\
-        .exclude(contact_type='pssemail')\
         .values('contact_name', 'contact_email')\
         .annotate(count=Count('contact_name')).order_by('-count')
 
@@ -851,7 +813,7 @@ def partner_main_reports(request):
     # A contact can have 0 contact records and 1 referral record and still show
     # up vice versa with 1 contact record and 0 referrals
     contacts = []
-    for contact_obj in all_contacts:
+    for contact_obj in all_contacts_with_records:
         contact = {}
         name = contact_obj['contact_name']
         email = contact_obj['contact_email']
@@ -869,6 +831,18 @@ def partner_main_reports(request):
             contact['ref_count'] = 0
         contacts.append(contact)
 
+    # Find all contacts that have no contact records
+    # Based off of contacts list
+    contacts_to_be_added = [contact for contact in partner.contact_set.all()
+                            if contact.email not in
+                               [record['email'] for record in contacts]]
+
+    # Add Contacts that have no contact records
+    for contact_obj in contacts_to_be_added:
+        contact = {'name': contact_obj.name, 'email': contact_obj.email,
+                   'cr_count': 0, 'ref_count': 0}
+        contacts.append(contact)
+
     # calculate 'All Others' in Top Contacts (when more than 3)
     total_others = 0
     if contact_records.count() > 3:
@@ -876,6 +850,7 @@ def partner_main_reports(request):
         contact_records = contact_records[:3]
         for contact in others:
             total_others += contact['count']
+
     ctx = {
         'admin_id': request.REQUEST.get('admin'),
         'partner': partner,
@@ -923,8 +898,9 @@ def partner_get_records(request):
         data = {
             'email': {"count": email, "name": email_name, 'typename': 'email'},
             'phone': {"count": phone, "name": phone_name, 'typename': 'phone'},
-            'meetingorevent': {"count": meetingorevent, "name": meetingorevent_name,
-                           "typename": "meetingorevent"},
+            'meetingorevent': {"count": meetingorevent,
+                               "name": meetingorevent_name,
+                               "typename": "meetingorevent"},
         }
         data = OrderedDict(sorted(data.items(), key=lambda t: t[1]['count']))
         data_items = data.items()
@@ -1018,7 +994,7 @@ def prm_export(request):
     # CSV/XLS
     else:
         response = HttpResponse(content_type='text/csv')
-        writer = csv.writer(response)
+        writer = unicodecsv.writer(response, encoding='utf-8')
         writer.writerow(fields)
         for record in records:
             values = [getattr(record, field, '') for field in fields]
@@ -1054,8 +1030,7 @@ def process_email(request):
 
     if headers and 'Date' in headers:
         try:
-            date_time = mktime(parsedate(headers.get('Date')))
-            date_time = datetime.fromtimestamp(date_time)
+            date_time = get_datetime_from_str(headers.get('Date'))
         except Exception:
             date_time = datetime.now()
     else:
@@ -1068,7 +1043,8 @@ def process_email(request):
     contact_emails = filter(None,
                             [email[1] for email in recipient_emails_and_names])
 
-    if contact_emails == ['prm@my.jobs'] or contact_emails == []:
+    if contact_emails == [] or (len(contact_emails) == 1 and
+                                contact_emails[0].lower() == 'prm@my.jobs'):
         # If prm@my.jobs is the only contact, assume it's a forward.
         fwd_headers = build_email_dicts(email_text)
         try:
@@ -1079,10 +1055,11 @@ def process_email(request):
         except IndexError:
             contact_emails = []
 
-    try:
-        contact_emails.remove('prm@my.jobs')
-    except ValueError:
-        pass
+    for element in contact_emails:
+        if element.lower() == 'prm@my.jobs':
+            contact_emails.remove(element)
+            break
+
     try:
         contact_emails.remove(admin_email)
     except ValueError:
@@ -1102,11 +1079,11 @@ def process_email(request):
                                                        partner__in=partners)
             [possible_contacts.append(x) for x in matching_contacts]
             if not matching_contacts:
-                possible_partner = find_partner_from_email(partners, contact)
-                if possible_partner:
+                poss_partner = find_partner_from_email(partners, contact)
+                if poss_partner:
                     new_contact = Contact.objects.create(name=contact,
                                                          email=contact,
-                                                         partner=possible_partner)
+                                                         partner=poss_partner)
                     change_msg = "Contact was created from email."
                     log_change(new_contact, None, admin_user,
                                new_contact.partner,   new_contact.name,
@@ -1132,6 +1109,7 @@ def process_email(request):
         attachments.append(attachment)
 
     created_records = []
+    date_time = datetime.now() if not date_time else date_time
     for contact in possible_contacts + created_contacts:
         change_msg = "Email was sent by %s to %s" % \
                      (admin_user.get_full_name(), contact.name)

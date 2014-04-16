@@ -5,9 +5,6 @@
     <meta name="title" content="Partner Details {{ company.name }}">
 {% endblock %}
 {% load i18n %}
-{% block meta-extra %}
-<script src="{{ STATIC_URL }}prm.js{% cache_buster %}"></script>
-{% endblock %}
 
 {% block content %}
     <h1><a class="mobile_hide" href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> <small><a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small></h1>
@@ -27,7 +24,7 @@
 
                 <div class="form-label pull-left">&nbsp;</div>
                 <div class="actions pull-right">
-                    <button type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>
+                    <button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>
                     <button type="submit" class="btn primary" id="item-save">{% trans 'Save' %}</button>
                 </div>
                 <div class="clear"></div>
@@ -89,4 +86,8 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block extra-js %}
+<script src="{{ STATIC_URL }}prm.151-01.js"></script>
 {% endblock %}

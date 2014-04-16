@@ -1,11 +1,67 @@
 from django.contrib import admin
-from django import forms
 
-from mydashboard.models import (
-    DashboardModule,
-    CompanyUser,
-)
-from myjobs.models import User
+from django_extensions.admin import ForeignKeyAutocompleteAdmin
+
+from mydashboard.models import CompanyUser
 
 
-admin.site.register(CompanyUser)
+def get_companyuser_pk(companyuser):
+    """
+    Trivial functionality used to change column names
+
+    Inputs:
+    :companyuser: CompanyUser instance whose PK is to be retrieved
+
+    Outputs:
+    :pk: PK of input object
+    """
+    return companyuser.pk
+get_companyuser_pk.short_description = 'ID'
+
+
+def get_company_cell(companyuser):
+    """
+    Inputs:
+    :companyuser: CompanyUser instance from which company name will be
+        retrieved
+
+    Outputs:
+    :name: Name of company
+    """
+    return companyuser.company.name
+get_company_cell.short_description = 'company'
+
+
+def get_user_cell(companyuser):
+    """
+    Inputs:
+    :companyuser: CompanyUser instance from which user information will
+        be retrieved
+
+    Outputs:
+    :tag: Anchor tag that opens user edit link in a new tab
+    """
+    user = companyuser.user
+    tag = '<a href="/admin/myjobs/user/%s/" target="_blank">%s</a>' % \
+          (user.pk, user.get_full_name(user.email))
+    return tag
+get_user_cell.short_description = 'user'
+get_user_cell.allow_tags = True
+
+
+class CompanyUserAdmin(ForeignKeyAutocompleteAdmin):
+    related_search_fields = {
+        'user': ('email', ),
+        'company': ('name', ),
+    }
+
+    search_fields = ['company__name', 'user__email']
+
+
+    list_display = [get_companyuser_pk, get_user_cell, get_company_cell]
+
+    class Meta:
+        model = CompanyUser
+
+
+admin.site.register(CompanyUser, CompanyUserAdmin)

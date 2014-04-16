@@ -6,10 +6,6 @@
     <title>Saved Search - My.jobs</title>
     <meta name="title" content="Saved Search - My.jobs">
 {% endblock %}
-{% block meta-extra %}
-<script src="{{ STATIC_URL }}saved-search-main.js{% cache_buster %}"></script>
-<script src="{{ STATIC_URL }}saved-search-edit.js{% cache_buster %}"></script>
-{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -44,7 +40,7 @@
 
                 {% if search_id and search_id != 'None' %}
                 {% if not is_pss %}
-                <button type="button" data-toggle="modal" data-target="#delete-confirm" class="btn ">{% trans 'Delete' %}</button>
+                <button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn ">{% trans 'Delete' %}</button>
                 <div id="delete-confirm" class="modal hide fade">
                     <div class="modal-header">
                         <button class="close" aria-hidden="true" data-dismiss="modal" type="button">&times;</button>
@@ -77,4 +73,9 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra-js %}
+<script src="{{ STATIC_URL }}saved-search-main.151-01.js"></script>
+<script src="{{ STATIC_URL }}saved-search-edit.152-10.js"></script>
 {% endblock %}

@@ -4,12 +4,12 @@ from django.utils.safestring import mark_safe
 
 from myjobs.models import User
 from myjobs.forms import BaseUserForm, make_choices
-from mysearches.helpers import *
+from mysearches.helpers import validate_dotjobs_url
 from mysearches.models import (SavedSearch, SavedSearchDigest,
                                PartnerSavedSearch)
 from mypartners.forms import PartnerEmailChoices
 from mypartners.models import Contact, ADDITION, CHANGE
-from mypartners.helpers import log_change
+from mypartners.helpers import log_change, send_custom_activation_email
 
 
 class HorizontalRadioRenderer(RadioSelect.renderer):
@@ -31,9 +31,9 @@ class SavedSearchForm(BaseUserForm):
 
     feed = URLField(widget=HiddenInput())
     notes = CharField(label=_("Notes and Comments"),
-                           widget=Textarea(
-                               attrs={'placeholder': 'Comments'}),
-                           required=False)
+                      widget=Textarea(
+                          attrs={'placeholder': 'Comments'}),
+                      required=False)
 
     # day_of_week and day_of_month are not required in the database.
     # These clean functions ensure that it is required only when
@@ -54,7 +54,7 @@ class SavedSearchForm(BaseUserForm):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
 
-        feed = validate_dotjobs_url(url)[1]
+        feed = validate_dotjobs_url(url, self.user)[1]
         if feed:
             cleaned_data['feed'] = feed
             self._errors.pop('feed', None)
@@ -66,7 +66,7 @@ class SavedSearchForm(BaseUserForm):
         return cleaned_data
 
     def clean_url(self):
-        rss_url = validate_dotjobs_url(self.cleaned_data['url'])[1]
+        rss_url = validate_dotjobs_url(self.cleaned_data['url'], self.user)[1]
         if not rss_url:
             raise ValidationError(_('This URL is not valid.'))
 
@@ -134,7 +134,6 @@ class PartnerSavedSearchForm(ModelForm):
 
     feed = URLField(widget=HiddenInput())
 
-
     class Meta:
         model = PartnerSavedSearch
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
@@ -162,8 +161,26 @@ class PartnerSavedSearchForm(ModelForm):
     def clean(self):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
-        feed = validate_dotjobs_url(url)[1]
+        user_email = cleaned_data.get('email')
 
+        if not user_email:
+            raise ValidationError(_("This field is required."))
+
+        # Get or create the user since they might not exist yet
+        created = False
+        user = User.objects.get_email_owner(email=user_email)
+        if user is None:
+            # Don't send a email here, as this is not a typical user creation.
+            user, created = User.objects.create_inactive_user(email=user_email,
+                                                              send_email=False)
+            self.instance.user = user
+            Contact.objects.filter(email=user_email).update(user=user)
+        else:
+            self.instance.user = user
+
+        setattr(self, 'created', created)
+
+        feed = validate_dotjobs_url(url, user)[1]
         if feed:
             cleaned_data['feed'] = feed
             self._errors.pop('feed', None)
@@ -178,6 +195,8 @@ class PartnerSavedSearchForm(ModelForm):
         self.instance.feed = self.cleaned_data.get('feed')
         is_new_or_change = CHANGE if self.instance.pk else ADDITION
         instance = super(PartnerSavedSearchForm, self).save(commit)
+        if self.created:
+            send_custom_activation_email(instance)
         partner = instance.partner
         contact = Contact.objects.filter(partner=partner,
                                          user=instance.user)[0]

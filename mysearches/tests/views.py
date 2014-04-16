@@ -120,8 +120,9 @@ class MySearchViewTests(TestCase):
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(response.status_code, 200)
         data = {'rss_url': 'http://www.my.jobs/jobs/feed/rss',
-                'feed_title': 'Jobs',
+                'feed_title': 'My.jobs',
                 'url_status': 'valid'}
+
         self.assertEqual(json.loads(response.content), data)
 
         response = self.client.post(reverse('validate_url'),
@@ -227,7 +228,7 @@ class MySearchViewTests(TestCase):
         self.assertEqual(models.SavedSearch.objects.count(), 0)
         self.assertRedirects(response, reverse(
             'saved_search_main_query')+'?d='+str(urllib2.quote(
-                                                 search.label.title())))
+                                                 search.label)))
 
     def test_delete_unowned_search(self):
         """
@@ -288,4 +289,4 @@ class MySearchViewTests(TestCase):
         self.client.login_user(self.user)
         self.assertRedirects(response, reverse(
             'saved_search_main_query')+'?d='+str(urllib2.quote(
-                                                 search.label.title())))
+                                                 search.label)))

@@ -8,16 +8,21 @@ DEBUG = True
 
 DATABASES = {
     'default': {
-        'NAME': 'dseo_mj',
+        'NAME': 'redirect',
         'ENGINE': 'django.db.backends.mysql',
-        'USER': 'dseo_mj',
+        'USER': 'de_dbuser',
         'PASSWORD': PROD_DB_PASSWD,
-        'HOST': 'db-dseomjstaging.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
+        'HOST': 'db-redirectstaging.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
         'PORT': '3306',
     },
 }
 
 ALLOWED_HOSTS = ['my.jobs', 'localhost']
+
+_PATH = os.path.abspath(os.path.dirname(__file__))
+
+STATIC_ROOT = os.path.join(_PATH, 'files', 'static')
+STATIC_URL = '/files/'
 
 SESSION_CACHE_ALIAS = 'sessions'
 CACHES = {
