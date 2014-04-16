@@ -1,7 +1,9 @@
 from datetime import datetime
-from email.utils import getaddresses, parsedate
+from email.utils import getaddresses, mktime_tz, parsedate_tz
 from re import compile, findall, split
-from time import mktime
+
+from django.utils.timezone import utc
+
 
 header_block = compile('((?:.{0,10}?(?:From|To|CC|Cc|Date|Sent|Subject): .*(?:\r)?\n){4,})')
 header_line = compile('((?:.{0,10}?(From|To|CC|Cc|Date|Sent|Subject): (.*))(?:\r)?\n)')
@@ -27,6 +29,23 @@ def parse_forward_header(header_str):
     return header_dict
 
 
+def get_datetime_from_str(string):
+    """
+    Change a string into a datetime object in utc format.
+
+    """
+    if not string:
+        return None
+
+    date_time = (parsedate_tz(string.replace(" at", "")))
+    if date_time and date_time[9] is None:
+        date_time = list(date_time)
+        date_time[9] = 0
+        date_time = tuple(date_time)
+    date_time = mktime_tz(date_time)
+    return datetime.fromtimestamp(date_time, tz=utc)
+
+
 def get_forward_header_dict(header_str):
     """
     Turns a header_str into a parsed dictionary with the format:
@@ -48,9 +67,7 @@ def get_forward_header_dict(header_str):
     sender = header.get('From')
     to = header.get('To', '')
     cc = header.get('CC') if 'CC' in header else header.get('Cc', '')
-
-    date_time = (mktime(parsedate(date.replace(" at", "")))) if date else None
-    date_time = datetime.fromtimestamp(date_time) if date_time else None
+    date_time = get_datetime_from_str(date)
     from_email = getaddresses([sender]) if sender else None
     to_addresses = getaddresses([header.get('To', '')]) if to else []
     cc_addresses = getaddresses([cc]) if cc else []

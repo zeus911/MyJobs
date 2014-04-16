@@ -3,9 +3,12 @@
 *.db
 *.flv
 *.wmv
+static/*.gz
+static/*/*.gz
 
 # Misc
-files/*
+files/
+reports/
 static-files/100x50
 static-files/content_profile
 dev_*

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 from urlparse import urlparse, parse_qs
 
@@ -7,12 +8,11 @@ from django.test import TestCase
 
 from testfixtures import Replacer
 
-from mysearches.models import SavedSearch, SavedSearchDigest
+from mysearches.models import SavedSearch
 from mysearches.helpers import (date_in_range, parse_feed,
                                 update_url_if_protected, url_sort_options,
                                 validate_dotjobs_url)
 
-from mydashboard.tests.factories import SeoSiteFactory
 from mysearches.tests.test_helpers import return_file
 from myjobs.tests.factories import UserFactory
 
@@ -38,12 +38,25 @@ class SavedSearchHelperTests(TestCase):
         title, url = validate_dotjobs_url(no_netloc, self.user)
         self.assertIsNotNone(title)
         self.assertIsNotNone(url)
-        self.assertEquals(title, 'Jobs - nurse Jobs in Chicago')
+        self.assertEquals('http://www.my.jobs/jobs/feed/rss?q=nurse&amp;location=chicago',
+                          url)
 
         valid_filter_url = 'www.my.jobs/chicago/illinois/usa/jobs/mcdonalds/careers/'
         title, url = validate_dotjobs_url(valid_filter_url, self.user)
         self.assertIsNotNone(title)
         self.assertIsNotNone(url)
+
+    def test_validate_dotjobs_url_with_special_chars(self):
+        urls = [
+            ('http://www.my.jobs/jobs/?q=query with spaces/',
+             'http://www.my.jobs/jobs/feed/rss?q=query+with+spaces'),
+            ('http://www.my.jobs/jobs/?q=яы',
+             'http://www.my.jobs/jobs/feed/rss?q=%D1%8F%D1%8B')
+        ]
+        for url_set in urls:
+            label, feed = validate_dotjobs_url(url_set[0], self.user)
+            self.assertEqual(feed, url_set[1])
+            self.assertIsNotNone(label)
 
     def test_invalid_dotjobs_url(self):
         urls = ['http://google.com',  # url does not contain a feed
@@ -118,6 +131,7 @@ class SavedSearchHelperTests(TestCase):
         self.assertEqual(new, old)
 
     def test_feed_on_protected_site_no_access(self):
+        from mydashboard.tests.factories import SeoSiteFactory
         site_id = settings.PROTECTED_SITES.keys()[0]
         site = SeoSiteFactory(pk=site_id, id=site_id)
 
@@ -126,6 +140,7 @@ class SavedSearchHelperTests(TestCase):
         self.assertEqual(result, url)
 
     def test_feed_on_protected_site_with_access(self):
+        from mydashboard.tests.factories import SeoSiteFactory
         site_id = settings.PROTECTED_SITES.keys()[0]
         site = SeoSiteFactory(pk=site_id, id=site_id)
         group_id = settings.PROTECTED_SITES.values()[0][0]

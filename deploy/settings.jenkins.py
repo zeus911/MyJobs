@@ -8,11 +8,11 @@ DEBUG = True
 
 DATABASES = {
     'default': {
-        'NAME': 'dseo_mj',
+        'NAME': 'redirect',
         'ENGINE': 'django.db.backends.mysql',
-        'USER': 'dseo_mj',
+        'USER': 'de_dbuser',
         'PASSWORD': PROD_DB_PASSWD,
-        'HOST': 'db-dseomjstaging.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
+        'HOST': 'db-redirectstaging.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
         'PORT': '3306',
     },
 }

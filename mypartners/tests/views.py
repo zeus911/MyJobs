@@ -8,6 +8,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.core import mail
+from django.utils.timezone import utc
 
 from myjobs.tests.views import TestClient
 from myjobs.tests.factories import UserFactory
@@ -858,7 +859,6 @@ class SearchEditTests(MyPartnersTestCase):
 class EmailTests(MyPartnersTestCase):
     def setUp(self):
         # Allows for comparing datetimes
-        settings.USE_TZ = False
         super(EmailTests, self).setUp()
         self.data = {
             'from': self.admin.user.email,
@@ -866,9 +866,6 @@ class EmailTests(MyPartnersTestCase):
             'text': 'Test email body',
             'key': settings.EMAIL_KEY,
         }
-
-    def tearDown(self):
-        settings.USE_TZ = True
 
     def test_email_bad_contacts(self):
         start_contact_record_num = ContactRecord.objects.all().count()
@@ -982,7 +979,7 @@ class EmailTests(MyPartnersTestCase):
             self.client.post(reverse('process_email'), self.data)
 
             record = ContactRecord.objects.get(contact_email='thisisnotprm@my.jobs')
-            expected_date_time = datetime(2014, 02, 05, 9, 58)
+            expected_date_time = datetime(2014, 02, 05, 9, 58, tzinfo=utc)
             self.assertEqual(expected_date_time, record.date_time)
             self.assertEqual(self.data['text'], record.notes)
             self.assertEqual(Contact.objects.all().count(), 2)
@@ -1002,3 +999,22 @@ class EmailTests(MyPartnersTestCase):
         self.client.post(reverse('process_email'), self.data)
 
         ContactRecord.objects.get(contact_email='anewperson@my.jobs')
+
+    def test_timezone_awareness(self):
+        self.data['to'] = self.contact.email
+        dates = ['Wed, 2 Apr 2014 11:01:01 +0000',
+                 'Wed, 2 Apr 2014 10:01:01 -0100',
+                 'Wed, 2 Apr 2014 09:01:01 -0200',
+                 'Wed, 2 Apr 2014 08:01:01 -0300',
+                 'Wed, 2 Apr 2014 12:01:01 +0100', ]
+        expected_dt = datetime(2014, 4, 2, 11, 1, 0, 0, tzinfo=utc)
+
+        for date in dates:
+            self.data['headers'] = "Date: %s" % date
+            self.client.post(reverse('process_email'), self.data)
+            # Confirm that the ContactRecord was made with the expected
+            # datetime.
+
+            record = ContactRecord.objects.all().reverse()[0]
+            result_dt = record.date_time.replace(second=0, microsecond=0)
+            self.assertEqual(str(result_dt), str(expected_dt))

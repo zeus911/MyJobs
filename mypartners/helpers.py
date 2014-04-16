@@ -11,10 +11,10 @@ from django.utils.text import get_text_list, force_unicode, force_text
 from django.utils.translation import ugettext
 
 from datetime import datetime, time, timedelta
-import re
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
+from global_helpers import get_domain
 from mydashboard.models import Company
 from mypartners.models import (ContactLogEntry, CONTACT_TYPE_CHOICES, CHANGE)
 from registration.models import ActivationProfile
@@ -269,17 +269,16 @@ def find_partner_from_email(partner_list, email):
     A matching partner if there is one, otherwise None.
 
     """
-    if '@' not in email or not partner_list:
+    if not email or '@' not in email or not partner_list:
         return None
     email_domain = email.split('@')[-1]
 
-    pattern = re.compile('(http://|https://)?(www)?\.?(?P<url>.*)')
     for partner in partner_list:
-        try:
-            url = pattern.search(partner.uri).groupdict()['url'].split("/")[0]
-        except (AttributeError, KeyError):
-            pass
-        if email_domain.lower() == url.lower():
+        url = get_domain(partner.uri)
+        # Pass through get_domain() to strip subdomains
+        email_domain = get_domain(email_domain)
+
+        if email_domain and url and email_domain.lower() == url.lower():
             return partner
 
     return None

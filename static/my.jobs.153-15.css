@@ -1,5 +1,3 @@
-@import url(//d2e48ltfsb5exy.cloudfront.net/framework/v2/secure/css/def.ui.css);
-
 /*Main Styles*/
 body {
     background-color: #ddd;
@@ -284,6 +282,10 @@ h1 > small > a:hover {
 .tip-box + .formBox,
 .tip-box + .tip-box {
     margin-top: 20px;
+}
+
+.contact-record-tr > td {
+    word-break: break-word;
 }
 
 #prm-arrow-left{
@@ -1745,7 +1747,7 @@ em.pendingText {
     }
 }
 
-@media screen and (min-width: 1025px) {
+@media screen and (min-width: 993px) {
     #nav ul#pop-menu {
         right: 0;
     }
@@ -2085,7 +2087,8 @@ td .gravatar-blank,
     margin-top: 7px;
 }
 
-@media screen and (max-width: 1024px) {
+/* Tablets */
+@media screen and (max-width: 992px) {
     .arrow-down-a {
         border-style: none !important;
         display: none !important;
@@ -2541,9 +2544,9 @@ td .gravatar-blank,
     }
 
     #topbar-back {
-        float: right;
-        margin-right: 65px;
-        margin-top: -3px;
+        position: absolute;
+        right: 70px;
+        top: 10px;
         padding: 13px;
         background-color: #a95051;
         border: 2px solid #FFF;
@@ -2656,7 +2659,7 @@ td .gravatar-blank,
     }
 
     #contact-record-form .attachment span {
-        margin-left: 0px !important;
+        margin-left: 0 !important;
     }
 
     #prm-mobile-row-buttons {
@@ -2664,9 +2667,12 @@ td .gravatar-blank,
     }
 
     .mobile-filter-selectlike {
-        position: absolute;
+        position: fixed !important;
         left: 10%;
+        top: 5%;
         width: 80%;
+        max-height: 85%;
+        overflow-y: auto;
     }
 
     ul.header-menu > li > .mobile-filter-selectlike > li,
@@ -2699,7 +2705,7 @@ td .gravatar-blank,
     }
 
     .date-time > select {
-        width: 105px;
+        width: 30%;
     }
 
     .big-chart {

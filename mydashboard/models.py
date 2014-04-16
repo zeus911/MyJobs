@@ -86,12 +86,6 @@ class DashboardModule(models.Model):
     company = models.ForeignKey(Company)
 
 
-class Microsite(models.Model):
-    url = models.URLField(max_length=300)
-    company = models.ForeignKey(Company)
-
-    def __unicode__(self):
-        return 'Microsite %s for %s' % (self.url, self.company.name)
 
 
 class CompanyUser(models.Model):
