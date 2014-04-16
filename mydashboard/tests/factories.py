@@ -23,7 +23,7 @@ class SeoSiteFactory(factory.Factory):
     FACTORY_FOR = SeoSite
 
     id = 2
-    domain = 'http://test.jobs/'
+    domain = 'test.jobs'
     name = 'Test Jobs'
 
 

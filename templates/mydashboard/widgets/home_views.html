@@ -1,0 +1,12 @@
+{% if total_home %}
+    <div>
+        <div class="count-box" id="total-home"
+             data-original-title="<span class='count-text'>{{ auth_home }}</span> <span>Authenticated Home View{{auth_home|pluralize }}</span>">
+            <span class="count-text">
+                {{ total_home }}
+            </span>
+            <span>Total Home View{{ total_home|pluralize }}</span>
+        </div>
+    </div>
+    <br>
+{% endif %}
