@@ -150,6 +150,6 @@ class SavedSearchHelperTests(TestCase):
         self.user.save()
 
         url = "http://%s?q=query" % site.domain
-        expected_result = "http://%s&key=%s" % (url, settings.SEARCH_API_KEY)
+        expected_result = "%s&key=%s" % (url, settings.SEARCH_API_KEY)
         result = update_url_if_protected(url, self.user)
         self.assertEqual(result, expected_result)
