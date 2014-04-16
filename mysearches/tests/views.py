@@ -123,7 +123,9 @@ class MySearchViewTests(TestCase):
                 'feed_title': 'My.jobs',
                 'url_status': 'valid'}
 
-        self.assertEqual(json.loads(response.content), data)
+        response_data = json.loads(response.content)
+        self.assertEqual(response_data['rss_url'], data['rss_url'])
+        self.assertEqual(response_data['url_status'], data['url_status'])
 
         response = self.client.post(reverse('validate_url'),
                                     data={'url': 'google.com'},
