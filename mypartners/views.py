@@ -794,14 +794,13 @@ def partner_main_reports(request):
     referral = records.filter(contact_type='job').count()
 
     # need to order_by -count to keep the "All Contacts" list in proper order
-    all_contacts_with_records = records.exclude(contact_type='pssemail')\
+    all_contacts_with_records = records\
         .values('contact_name', 'contact_email')\
         .annotate(count=Count('contact_name')).order_by('-count')
 
     # Used for Top Contacts
     contact_records = records\
         .exclude(contact_type='job')\
-        .exclude(contact_type='pssemail')\
         .values('contact_name', 'contact_email')\
         .annotate(count=Count('contact_name')).order_by('-count')
 

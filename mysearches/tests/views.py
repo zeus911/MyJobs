@@ -228,7 +228,7 @@ class MySearchViewTests(TestCase):
         self.assertEqual(models.SavedSearch.objects.count(), 0)
         self.assertRedirects(response, reverse(
             'saved_search_main_query')+'?d='+str(urllib2.quote(
-                                                 search.label.title())))
+                                                 search.label)))
 
     def test_delete_unowned_search(self):
         """
@@ -289,4 +289,4 @@ class MySearchViewTests(TestCase):
         self.client.login_user(self.user)
         self.assertRedirects(response, reverse(
             'saved_search_main_query')+'?d='+str(urllib2.quote(
-                                                 search.label.title())))
+                                                 search.label)))
