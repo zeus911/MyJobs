@@ -27,8 +27,7 @@ def update_url_if_protected(url, user):
         except SeoSite.DoesNotExist:
             pass
 
-    cleaned_protected_domains = [domain.replace('http://', '').
-                                 replace('https://', '').strip('/')
+    cleaned_protected_domains = [domain.split('/')[0]
                                  for domain in protected_domains]
 
     if search_domain in cleaned_protected_domains:

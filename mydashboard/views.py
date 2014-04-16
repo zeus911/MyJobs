@@ -103,10 +103,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     # which then gets replaced with all microsite urls for that company
     site_name = ''
     if requested_microsite != company.name:
-        if requested_microsite.find('//') == -1:
-            requested_microsite = '//' + requested_microsite
         active_microsites = authorized_microsites.filter(
-            domain__contains=requested_microsite)
+            domain__startswith=requested_microsite)
     else:
         active_microsites = authorized_microsites
         site_name = company.name
