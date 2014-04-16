@@ -1,27 +1,12 @@
-<div>
-    <div class="count-box" id="total-search">
-        <span class="count-text">
-            {% if total_search %}
+{% if total_search %}
+    <div>
+        <div class="count-box" id="total-search"
+             data-original-title="<span class='count-text'>{{ auth_search }}</span> <span>Authenticated Search View{{auth_search|pluralize }}</span>">
+            <span class="count-text">
                 {{ total_search }}
-            {% else %}
-                0
-            {% endif %}
-        </span>
-        <span>Total Search View{{ total_search|pluralize }}</span>
+            </span>
+            <span>Total Search View{{ total_search|pluralize }}</span>
+        </div>
     </div>
-</div>
-<br>
-
-<div>
-    <div class="count-box" id="auth-search">
-        <span class="count-text">
-            {% if auth_search %}
-                {{ auth_search }}
-            {% else %}
-                0
-            {% endif %}
-        </span>
-        <span>Authenticated Search View{{ auth_search|pluralize }}</span>
-    </div>
-</div>
-<br>
+    <br>
+{% endif %}

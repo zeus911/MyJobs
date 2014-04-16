@@ -75,14 +75,17 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         buid_q = ['(job_view_buid:%s)' % str(buid) for buid in buids]
         buid_q = ' OR '.join(buid_q)
         buid_q = '(%s)' % buid_q
-        apply_solr = Solr().add_query('page_category:redirect')\
-            .add_filter_query(buid_q).rows_to_fetch(0)
-        job_view_solr = Solr().add_query('page_category:list') \
-            .add_filter_query(buid_q).rows_to_fetch(0)
-        home_solr = Solr().add_query('page_category:home') \
-            .add_filter_query(buid_q).rows_to_fetch(0)
-        search_solr = Solr().add_query('page_category:result') \
-            .add_filter_query(buid_q).rows_to_fetch(0)
+        apply_solr = Solr().add_filter_query(buid_q).rows_to_fetch(0)
+        job_view_solr = apply_solr.add_query('page_category:list')
+        apply_solr = apply_solr.add_query('page_category:redirect')
+
+        domain_q = ['(domain:%s)' % microsite
+                    for microsite in authorized_microsites]
+        domain_q = ' OR '.join(domain_q)
+        domain_q = '(%s)' % domain_q
+        home_solr = Solr().add_filter_query(domain_q).rows_to_fetch(0)
+        search_solr = home_solr.add_query('page_category:result')
+        home_solr = home_solr.add_query('page_category:home')
     else:
         # Likelihood that a company doesn't have buids attached to it?
         # Should never happen; catch it anyway.
@@ -141,7 +144,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     # List of dashboard widgets to display.
     dashboard_widgets = ["home_views", "search_views", "job_views",
-                         "apply_click", "candidates", "search",
+                         "apply_clicks", "candidates", "search",
                          "applied_filters", "filters"]
 
     # Filter out duplicate entries for a user.
