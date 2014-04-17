@@ -1,12 +1,1 @@
-{% if total_apply %}
-    <div>
-        <div class="count-box" id="total-clicks"
-             data-original-title="<span class='count-text'>{{ auth_apply }}</span> <span>Application Click{{auth_apply|pluralize }} From My.jobs Users</span>">
-            <span class="count-text">
-                {{ total_apply }}
-            </span>
-            <span>Total Application Click{{ total_apply|pluralize }}</span>
-        </div>
-    </div>
-    <br>
-{% endif %}
+{% include 'mydashboard/widgets/analytics_include.html' with total=total_apply auth=auth_apply type='Application Click' id='clicks' %}
