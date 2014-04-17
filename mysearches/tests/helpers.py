@@ -135,7 +135,7 @@ class SavedSearchHelperTests(TestCase):
         site_id = settings.PROTECTED_SITES.keys()[0]
         site = SeoSiteFactory(pk=site_id, id=site_id)
 
-        url = "%s?q=query" % site.domain
+        url = "http://%s?q=query" % site.domain
         result = update_url_if_protected(url, self.user)
         self.assertEqual(result, url)
 
@@ -149,7 +149,7 @@ class SavedSearchHelperTests(TestCase):
         self.user.groups.add(group_id)
         self.user.save()
 
-        url = "%s?q=query" % site.domain
+        url = "http://%s?q=query" % site.domain
         expected_result = "%s&key=%s" % (url, settings.SEARCH_API_KEY)
         result = update_url_if_protected(url, self.user)
         self.assertEqual(result, expected_result)
