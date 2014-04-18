@@ -1,12 +1,1 @@
-{% if total_job_view %}
-    <div>
-        <div class="count-box" id="total-job-views"
-             data-original-title="<span class='count-text'>{{ auth_job_view }}</span> <span>Authenticated Job View{{auth_job_view|pluralize }}</span>">
-            <span class="count-text">
-                {{ total_job_view }}
-            </span>
-            <span>Total Job View{{ total_job_view|pluralize }}</span>
-        </div>
-    </div>
-    <br>
-{% endif %}
+{% include 'mydashboard/widgets/analytics_include.html' with total=total_job_view auth=auth_job_view type='Job View' id='job-views' %}

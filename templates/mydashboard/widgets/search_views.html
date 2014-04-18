@@ -1,12 +1,1 @@
-{% if total_search %}
-    <div>
-        <div class="count-box" id="total-search"
-             data-original-title="<span class='count-text'>{{ auth_search }}</span> <span>Authenticated Search View{{auth_search|pluralize }}</span>">
-            <span class="count-text">
-                {{ total_search }}
-            </span>
-            <span>Total Search View{{ total_search|pluralize }}</span>
-        </div>
-    </div>
-    <br>
-{% endif %}
+{% include 'mydashboard/widgets/analytics_include.html' with total=total_search auth=auth_search type='Search View' id='search' %}
