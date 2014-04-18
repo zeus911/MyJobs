@@ -17,7 +17,6 @@ $(function() {
         events: {
             "click [id^='account-']": "showSection",
             "submit form": "saveForm",
-            "hover [id^='show-captcha-modal']": "load_captchModal_js",
             "click [id^='show-captcha-modal']": "captchaModal"
         },
         
@@ -119,29 +118,7 @@ $(function() {
                 }
             });
                   
-        },
-
-        load_captchModal_js: function(e) {
-            $.ajax({
-                global: false,
-                url: static_url + "bootstrap/bootstrap-modalmanager.js",
-                dataType: "script",
-                cache: true
-            });
-            $.ajax({
-                global: false,
-                url: static_url + "bootstrap/bootstrap-modal.js",
-                dataType: "script",
-                cache: true
-            });
-            $(e).unbind("mouseenter mouseleave");
-        },
-
-        captchaModal: function(e) {
-            e.preventDefault();
-            $("#captcha_modal").modal();
         }
-
     });
 
     var App = new AppView;
@@ -161,4 +138,21 @@ $(function() {
             $('[class*=msieError]').remove();
         }
     }
+});
+
+$(document).ready(function() {
+    $([id^='show-captcha-modal']).one("hover", function(e) {
+        $.ajax({
+            global: false,
+            url: static_url + "bootstrap/bootstrap-modalmanager.js",
+            dataType: "script",
+            cache: true
+        });
+        $.ajax({
+            global: false,
+            url: static_url + "bootstrap/bootstrap-modal.js",
+            dataType: "script",
+            cache: true
+        });
+    });
 });
