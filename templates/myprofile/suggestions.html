@@ -1,0 +1,15 @@
+<div class="span6">
+    <h3>Thanks for updating your {{ model_name }}</h3>
+    <p>Updating your {{ model_name }} will help employers locate you and increase your
+        chances at getting noticed.  You can continue to improve your profile 
+        with the options to the right.
+    </p>
+    <a class="btn primary" href="{% url 'view_profile' %}">Return to your profile</a>
+</div>
+<div class="span3" id="suggestions">
+    <ul>
+    {% for suggestion in suggestions %}
+        <li><a href="{{ suggestion.url }}">{{ suggestion.msg }}</a></li>
+    {% endfor %}
+    </ul>
+</div>

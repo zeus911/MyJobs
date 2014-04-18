@@ -1,7 +1,7 @@
 import datetime
 
 from django.core.validators import ValidationError
-
+from django.core.urlresolvers import reverse
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.signals import post_save, post_delete
@@ -75,8 +75,13 @@ class ProfileUnits(models.Model):
             conform to the following format.
             {
                 'msg': '...',
-                'priority': [0-9]
+                'priority': [0-9],
+                'url': '...'
             }
+
+        Note: this (and the similar method on the subclasses) are class methods
+        because for any given class the user may not have an instance that can
+        be used to access it.
         """
         classes = [Address, Education, EmploymentHistory, License,
                    MilitaryService, Name, SecondaryEmail, Summary, Telephone,
@@ -296,10 +301,15 @@ class Education(ProfileUnits):
             'Doctoral': 'program'
                     }
         suggestions = cls.missing_education(user)
-        return [{'msg': 'Would you like to provide information about a %s %s?' %
-                (i.lower(), noun[i]),
-                 'priority': importance[i]}
-                for i in suggestions]
+        results = []
+        for i in suggestions:
+            msg = 'Would you like to provide information about a %s %s?' % \
+                                                        (i.lower(), noun[i])
+            results.append({
+                'msg': msg,
+                 'priority': importance[i],
+                 'url': reverse('handle_form') + '?module=Education&id=new'})
+        return results
 
 
 class Address(ProfileUnits):
@@ -333,10 +343,13 @@ class Address(ProfileUnits):
         objects = cls.objects.filter(user=user).order_by('date_updated')
         if len(objects) == 0:
             return [{'msg': 'Would you like to provide your address?',
+                     'url': reverse('handle_form') + '?module=Address&id=new',
                      'priority': 3}]
         else:
             return [{'msg': 'Do you need to update your address from %s?' %
                             objects[0].address_line_one,
+                    'url': reverse('handle_form') + '?module=Address&id=%s' %
+                                                    objects[0].pk,
                      'priority': 1}]
 
 
@@ -389,6 +402,7 @@ class Telephone(ProfileUnits):
         suggestions = cls.missing_telephone(user)
         return [{'msg': 'Would you like to add a %s phone?' %
                             suggestion.lower(),
+                 'url': reverse('handle_form') + '?module=Telephone&id=new',
                  'priority': importance[suggestion]}
                 for suggestion in suggestions]
 
@@ -447,14 +461,20 @@ class EmploymentHistory(ProfileUnits):
         objects = cls.objects.filter(user=user).order_by('start_date')
         if len(objects) == 0:
             return [{'msg': "Would you like to add your employment history?",
+                     'url': reverse('handle_form') + \
+                            '?module=EmploymentHistory&id=new',
                      'priority': 3}]
         elif objects[0].current_indicator:
             return [{'msg': "Are you still employed with %s?" %
                                 objects[0].organization_name,
+                     'url': reverse('handle_form') + \
+                            '?module=EmploymentHistory&id=%s' % objects[0].pk,
                      'priority': 0}]
         else:
             return [{'msg': "Have you worked anywhere since being employed" +
                             " with %s?" % objects[0].organization_name,
+                     'url': reverse('handle_form') + \
+                            '?module=EmploymentHistory&id=%s' % objects[0].pk,
                      'priority': 1}]
 
 
@@ -519,6 +539,8 @@ class SecondaryEmail(ProfileUnits):
         """
         if not cls.objects.filter(user=user).exists():
             return [{'msg': "Would you like to add an additional email?",
+                     'url': reverse('handle_form') + \
+                            '?module=SecondaryEmail&id=new',
                      'priority': 2}]
         return []
 
@@ -560,6 +582,8 @@ class MilitaryService(ProfileUnits):
         """
         if not cls.objects.filter(user=user).exists():
             return [{'msg': "Have you served in the armed forces?",
+                     'url': reverse('handle_form') + \
+                     '?module=MilitaryService&id=new',
                     'priority': 3}]
         return []
 
@@ -598,6 +622,7 @@ class Website(ProfileUnits):
         if not cls.objects.filter(user=user):
             return [{
                 'msg': "Do you have a personal website or online portfolio?",
+                'url': reverse('handle_form') + '?module=Website&id=new',
                 'priority': 3}]
         return []
 
@@ -624,6 +649,7 @@ class License(ProfileUnits):
             msg = ('Would you like to add and professional licenses or ' +
                   'certifications?')
             return [{'msg': msg,
+                     'url': reverse('handle_form') + '?module=License&id=new',
                      'priority': 3}]
         return []
 
@@ -667,6 +693,7 @@ class Summary(ProfileUnits):
         """
         if not cls.objects.filter(user=user).exists():
             return [{'msg': "Would you like to add a summary of your career?",
+                     'url': reverse('handle_form') + '?module=Summary&id=new',
                      'priority': 3}]
         return []
 
@@ -706,6 +733,8 @@ class VolunteerHistory(ProfileUnits):
             msg = ("Do you have any relevant volunteer experience you would " +
                     "like to include?")
             return [{'msg': msg, 
+                     'url': reverse('handle_form') + \
+                            '?module=VolunteerHistory&id=new',
                      'priority':3}]
         return []
 

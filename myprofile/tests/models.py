@@ -316,17 +316,23 @@ class ProfileSuggestionTests(TestCase):
     def test_suggestion_when_education_blank(self):
         expected = [
             {'priority': 4, 'msg': 'Would you like to provide information' +
-                                   ' about a high school education?'},
+                                   ' about a high school education?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 3, 'msg': 'Would you like to provide information' +
-                                   ' about a associate degree?'},
+                                   ' about a associate degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 3, 'msg': 'Would you like to provide information' +
-                                   ' about a bachelor degree?'},
+                                   ' about a bachelor degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 2, 'msg': 'Would you like to provide information' +
-                                   ' about a non-degree education program?'},
+                                   ' about a non-degree education program?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 2, 'msg': 'Would you like to provide information' +
-                                   ' about a master degree?'},
+                                   ' about a master degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 1, 'msg': 'Would you like to provide information' +
-                                   ' about a doctoral program?'}]
+                                   ' about a doctoral program?',
+             'url': '/profile/view/edit?module=Education&id=new'}]
         actual = Education.suggestions(self.user)
 
         # Sort lists to ensure indentical order
@@ -341,15 +347,20 @@ class ProfileSuggestionTests(TestCase):
                                  user=self.user)
         expected = [
             {'priority': 3, 'msg': 'Would you like to provide information' +
-                                   ' about a associate degree?'},
+                                   ' about a associate degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 3, 'msg': 'Would you like to provide information' +
-                                   ' about a bachelor degree?'},
+                                   ' about a bachelor degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 2, 'msg': 'Would you like to provide information' +
-                                   ' about a non-degree education program?'},
+                                   ' about a non-degree education program?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 2, 'msg': 'Would you like to provide information' +
-                                   ' about a master degree?'},
+                                   ' about a master degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 1, 'msg': 'Would you like to provide information' +
-                                   ' about a doctoral program?'}]
+                                   ' about a doctoral program?',
+             'url': '/profile/view/edit?module=Education&id=new'}]
         actual = Education.suggestions(self.user)
 
         # Sort lists to ensure indentical order
@@ -364,15 +375,20 @@ class ProfileSuggestionTests(TestCase):
                                  user=self.user)
         expected = [
             {'priority': 4, 'msg': 'Would you like to provide information' +
-                                   ' about a high school education?'},
+                                   ' about a high school education?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 3, 'msg': 'Would you like to provide information' +
-                                   ' about a bachelor degree?'},
+                                   ' about a bachelor degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 2, 'msg': 'Would you like to provide information' +
-                                   ' about a non-degree education program?'},
+                                   ' about a non-degree education program?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 2, 'msg': 'Would you like to provide information' +
-                                   ' about a master degree?'},
+                                   ' about a master degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 1, 'msg': 'Would you like to provide information' +
-                                   ' about a doctoral program?'}]
+                                   ' about a doctoral program?',
+             'url': '/profile/view/edit?module=Education&id=new'}]
         actual = Education.suggestions(self.user)
 
         # Sort lists to ensure indentical order
@@ -387,15 +403,20 @@ class ProfileSuggestionTests(TestCase):
                                  user=self.user)
         expected = [
             {'priority': 4, 'msg': 'Would you like to provide information' +
-                                   ' about a high school education?'},
+                                   ' about a high school education?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 3, 'msg': 'Would you like to provide information' +
-                                   ' about a associate degree?'},
+                                   ' about a associate degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 2, 'msg': 'Would you like to provide information' +
-                                   ' about a non-degree education program?'},
+                                   ' about a non-degree education program?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 2, 'msg': 'Would you like to provide information' +
-                                   ' about a master degree?'},
+                                   ' about a master degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 1, 'msg': 'Would you like to provide information' +
-                                   ' about a doctoral program?'}]
+                                   ' about a doctoral program?',
+             'url': '/profile/view/edit?module=Education&id=new'}]
         actual = Education.suggestions(self.user)
 
         # Sort lists to ensure indentical order
@@ -410,15 +431,20 @@ class ProfileSuggestionTests(TestCase):
                                  user=self.user)
         expected = [
             {'priority': 4, 'msg': 'Would you like to provide information' +
-                                   ' about a high school education?'},
+                                   ' about a high school education?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 3, 'msg': 'Would you like to provide information' +
-                                   ' about a associate degree?'},
+                                   ' about a associate degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 3, 'msg': 'Would you like to provide information' +
-                                   ' about a bachelor degree?'},
+                                   ' about a bachelor degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 2, 'msg': 'Would you like to provide information' +
-                                   ' about a master degree?'},
+                                   ' about a master degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 1, 'msg': 'Would you like to provide information' +
-                                   ' about a doctoral program?'}]
+                                   ' about a doctoral program?',
+             'url': '/profile/view/edit?module=Education&id=new'}]
         actual = Education.suggestions(self.user)
 
         # Sort lists to ensure indentical order
@@ -433,15 +459,20 @@ class ProfileSuggestionTests(TestCase):
                                  user=self.user)
         expected = [
             {'priority': 4, 'msg': 'Would you like to provide information' +
-                                   ' about a high school education?'},
+                                   ' about a high school education?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 3, 'msg': 'Would you like to provide information' +
-                                   ' about a associate degree?'},
+                                   ' about a associate degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 3, 'msg': 'Would you like to provide information' +
-                                   ' about a bachelor degree?'},
+                                   ' about a bachelor degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 2, 'msg': 'Would you like to provide information' +
-                                   ' about a non-degree education program?'},
+                                   ' about a non-degree education program?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 1, 'msg': 'Would you like to provide information' +
-                                   ' about a doctoral program?'}]
+                                   ' about a doctoral program?',
+             'url': '/profile/view/edit?module=Education&id=new'}]
         actual = Education.suggestions(self.user)
 
         # Sort lists to ensure indentical order
@@ -456,15 +487,20 @@ class ProfileSuggestionTests(TestCase):
                                  user=self.user)
         expected = [
             {'priority': 4, 'msg': 'Would you like to provide information' +
-                                   ' about a high school education?'},
+                                   ' about a high school education?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 3, 'msg': 'Would you like to provide information' +
-                                   ' about a associate degree?'},
+                                   ' about a associate degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 3, 'msg': 'Would you like to provide information' +
-                                   ' about a bachelor degree?'},
+                                   ' about a bachelor degree?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 2, 'msg': 'Would you like to provide information' +
-                                   ' about a non-degree education program?'},
+                                   ' about a non-degree education program?',
+             'url': '/profile/view/edit?module=Education&id=new'},
             {'priority': 2, 'msg': 'Would you like to provide information' +
-                                   ' about a master degree?'}]
+                                   ' about a master degree?',
+             'url': '/profile/view/edit?module=Education&id=new'}]
         actual = Education.suggestions(self.user)
 
         # Sort lists to ensure indentical order
@@ -494,12 +530,18 @@ class ProfileSuggestionTests(TestCase):
 
     def test_suggestion_when_phone_blank(self):
         expected = [
-            {'priority': 3, 'msg': 'Would you like to add a home phone?'},
-            {'priority': 3, 'msg': 'Would you like to add a work phone?'},
-            {'priority': 3, 'msg': 'Would you like to add a mobile phone?'},
-            {'priority': 1, 'msg': 'Would you like to add a pager phone?'},
-            {'priority': 1, 'msg': 'Would you like to add a fax phone?'},
-            {'priority': 0, 'msg': 'Would you like to add a other phone?'}]
+            {'priority': 3, 'msg': 'Would you like to add a home phone?',
+             'url': '/profile/view/edit?module=Telephone&id=new'},
+            {'priority': 3, 'msg': 'Would you like to add a work phone?',
+             'url': '/profile/view/edit?module=Telephone&id=new'},
+            {'priority': 3, 'msg': 'Would you like to add a mobile phone?',
+             'url': '/profile/view/edit?module=Telephone&id=new'},
+            {'priority': 1, 'msg': 'Would you like to add a pager phone?',
+             'url': '/profile/view/edit?module=Telephone&id=new'},
+            {'priority': 1, 'msg': 'Would you like to add a fax phone?',
+             'url': '/profile/view/edit?module=Telephone&id=new'},
+            {'priority': 0, 'msg': 'Would you like to add a other phone?',
+             'url': '/profile/view/edit?module=Telephone&id=new'}]
         actual = Telephone.suggestions(self.user)
 
         # Sort lists to ensure indentical order
@@ -509,16 +551,22 @@ class ProfileSuggestionTests(TestCase):
     def test_suggestion_when_phone_entered(self):
         phone_types = {
             'Home': {'priority': 3,
+                     'url': '/profile/view/edit?module=Telephone&id=new',
                      'msg': 'Would you like to add a home phone?'},
             'Work': {'priority': 3,
+                     'url': '/profile/view/edit?module=Telephone&id=new',
                      'msg': 'Would you like to add a work phone?'},
             'Mobile': {'priority': 3,
+                       'url': '/profile/view/edit?module=Telephone&id=new',
                        'msg': 'Would you like to add a mobile phone?'},
             'Pager': {'priority': 1,
+                      'url': '/profile/view/edit?module=Telephone&id=new',
                       'msg': 'Would you like to add a pager phone?'},
             'Fax': {'priority': 1,
+                    'url': '/profile/view/edit?module=Telephone&id=new',
                     'msg': 'Would you like to add a fax phone?'},
             'Other': {'priority': 0,
+                      'url': '/profile/view/edit?module=Telephone&id=new',
                       'msg': 'Would you like to add a other phone?'}}
 
         phone = Telephone(user=self.user)
