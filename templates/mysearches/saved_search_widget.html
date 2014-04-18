@@ -3,28 +3,19 @@
 </script>
 <link rel="stylesheet" type="text/css" href="//d2e48ltfsb5exy.cloudfront.net/myjobs/tools/widget/def.myjobs.widget.css">
 <div id="direct-saved-search">
-    <a href="https://secure.my.jobs/"><h3>Save This Search</h3></a>
+    <div class="saved-search-form">
     {% if success %}
         <em class="success">Success</em>{% if not user %}<p>Your search was successfully saved. Results will be sent to {{ success }}.</p>{% endif %}
     {% endif %}
     {% if not search and not success %}
-        <div class="saved-search-form" style="display: block;">
-            <form onsubmit="return false;">
-                {% if user %}
-                    <b>Get new jobs sent directly to {{ user.email }}!</b>
-                {% else %}
-                    <label for="saved-search-email">Get new jobs sent directly to your inbox!</label>
-                    <input placeholder="Your email address" type="text" id="saved-search-email" name="saved-search-email">
-                {% endif %}
-                <button onclick="save_search();" class="saved-search-button">Save This Search</button>
-            </form>
-        </div>
+        <input placeholder="Your email address" type="text" id="saved-search-email" name="saved-search-email" {% if user.email %}value="{{ user.email }}"{% endif %}>
+        <div class="direct-action-btn" id="saved-search-btn"><a href="#" onclick="save_search();">Save Search to My.jobs</a></div>
         <em class="subtext">Cancel Anytime</em>
     {% elif search %}
-        <div class="saved-search-form" style="display: block;">
-                <p><b>This search is being sent to {{ search.email }}.</b></p>
-                <a href="https://secure.my.jobs/saved-search/view/edit?id={{ search.id }}" target="_blank"><button class="saved-search-button-button">Edit This Search</button></a>
-            </form>
-        </div>
+                {% if not success %}
+                    <p><b>This search is being sent to {{ search.email }}.</b></p>
+                {% endif %}
+                <div class="direct-action-btn" id="saved-search-edit-btn"><a href="https://secure.my.jobs/saved-search/view/edit?id={{ search.id }}" target="_blank">Edit Search on My.jobs</a></div>
     {% endif %}
+    </div>
 </div>
