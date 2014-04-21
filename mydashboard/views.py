@@ -75,12 +75,21 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         buid_q = ['(job_view_buid:%s)' % str(buid) for buid in buids]
         buid_q = ' OR '.join(buid_q)
         buid_q = '(%s)' % buid_q
-        analytics_solr = Solr().add_query('page_category:redirect')\
-            .add_filter_query(buid_q).rows_to_fetch(0)
+        apply_solr = Solr().add_filter_query(buid_q).rows_to_fetch(0)
+        job_view_solr = apply_solr.add_query('page_category:list')
+        apply_solr = apply_solr.add_query('page_category:redirect')
+
+        domain_q = ['(domain:%s)' % microsite
+                    for microsite in authorized_microsites]
+        domain_q = ' OR '.join(domain_q)
+        domain_q = '(%s)' % domain_q
+        home_solr = Solr().add_filter_query(domain_q).rows_to_fetch(0)
+        search_solr = home_solr.add_query('page_category:result')
+        home_solr = home_solr.add_query('page_category:home')
     else:
         # Likelihood that a company doesn't have buids attached to it?
         # Should never happen; catch it anyway.
-        analytics_solr = None
+        apply_solr = None
 
     admins = CompanyUser.objects.filter(company=company.id)
 
@@ -94,10 +103,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     # which then gets replaced with all microsite urls for that company
     site_name = ''
     if requested_microsite != company.name:
-        if requested_microsite.find('//') == -1:
-            requested_microsite = '//' + requested_microsite
         active_microsites = authorized_microsites.filter(
-            domain__contains=requested_microsite)
+            domain__startswith=requested_microsite)
     else:
         active_microsites = authorized_microsites
         site_name = company.name
@@ -111,9 +118,12 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     user_solr = user_solr.add_filter_query(rng)
     facet_solr = facet_solr.add_query(rng)
 
-    if analytics_solr is not None:
+    if apply_solr is not None:
         rng = filter_by_date(request, field='view_date')[0]
-        analytics_solr = analytics_solr.add_query(rng)
+        apply_solr = apply_solr.add_query(rng)
+        job_view_solr = job_view_solr.add_query(rng)
+        home_solr = home_solr.add_query(rng)
+        search_solr = search_solr.add_query(rng)
 
     if request.GET.get('search', False):
         user_solr = user_solr.add_query("%s" % request.GET['search'])
@@ -131,7 +141,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     solr_results = user_solr.rows_to_fetch(100).search()
 
     # List of dashboard widgets to display.
-    dashboard_widgets = ["apply_click", "candidates", "search",
+    dashboard_widgets = ["home_views", "search_views", "job_views",
+                         "apply_clicks", "candidates", "search",
                          "applied_filters", "filters"]
 
     # Filter out duplicate entries for a user.
@@ -178,10 +189,18 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         'view_name': 'Company Dashboard',
     }
 
-    if analytics_solr is not None:
-        context['total_apply'] = analytics_solr.search().hits
+    def add_to_context(context, analytics_solr, var_name):
+        context['total_%s' % var_name] = analytics_solr.search().hits
         analytics_solr = analytics_solr.add_filter_query('User_id:[* TO *]')
-        context['auth_apply'] = analytics_solr.search().hits
+        context['auth_%s' % var_name] = analytics_solr.search().hits
+        return context
+
+    if apply_solr is not None:
+        for analytics_solr, var_name in [(apply_solr, 'apply'),
+                (job_view_solr, 'job_view'),
+                (search_solr, 'search'),
+                (home_solr, 'home')]:
+            context = add_to_context(context, analytics_solr, var_name)
 
     if extra_context is not None:
         context.update(extra_context)

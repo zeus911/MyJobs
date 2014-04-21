@@ -301,7 +301,7 @@ class PartnerSavedSearch(SavedSearch):
             contact_email=self.user.email,
             date_time=datetime.now(),
             subject=subject,
-            notes=message,
+            notes=str(message),
         )
         mypartners.helpers.log_change(record, None, None, self.partner,
                                       self.user.email, action_type=EMAIL,

@@ -10,6 +10,7 @@ import datetime
 from django.conf import settings
 from django.utils.encoding import smart_str, smart_unicode
 
+from global_helpers import get_domain
 from mydashboard.models import SeoSite
 
 
@@ -27,8 +28,7 @@ def update_url_if_protected(url, user):
         except SeoSite.DoesNotExist:
             pass
 
-    cleaned_protected_domains = [domain.replace('http://', '').
-                                 replace('https://', '').strip('/')
+    cleaned_protected_domains = [get_domain(domain)
                                  for domain in protected_domains]
 
     if search_domain in cleaned_protected_domains:

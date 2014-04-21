@@ -1,16 +1,17 @@
 {% load user_ops %}
+{% load humanize_abbr %}
 {% load i18n %}
 
 <div>    
     <div class="count-box" id="matching-profiles">
-        <span class="count-text">
+        <span class="count-text count-box-left">
             {% if total_candidates and candidates  %}
-                {{ total_candidates }}
+                {{ total_candidates|intabbr }}
             {% else %}
                 0
             {% endif %}
         </span>
-        <span>Matching Profile{{ total_candidates|pluralize }}</span>
+        <span class="count-box-right">&nbsp;Matching Profile{{ total_candidates|pluralize }}</span>
     </div>
 </div>
 <br>

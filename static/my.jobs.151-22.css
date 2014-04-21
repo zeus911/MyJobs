@@ -80,19 +80,29 @@ h1 > small > a:hover {
 }
 
 /*Employer Dashboard Widgets */
-.count-box{
+.count-box {
     height: 30%;
     margin: 5px auto 0 auto;
     padding: 20px 0 20px 0;
     border: 1px solid #d5d4d0;
     border-radius: 5px;
-    text-align: center;
     background-color:#fff;
 }
-.count-text{
+
+.count-text {
     font-size: 1.7em;
     font-weight: bolder;
     margin: auto;
+}
+
+.count-box-left {
+    width: 40%;
+    text-align: right;
+    float: left;
+}
+
+.count-box-right {
+    text-align: left;
 }
 
 #search-btn {
