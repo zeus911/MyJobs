@@ -439,6 +439,22 @@ class RecordsDetailsTests(MyPartnersTestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
+    def test_bleaching(self):
+        """
+        Makes sure html tags are correctly being stripped from the notes
+        section.
+
+        """
+        notes = '<script>alert("test!");</script>'
+        record = ContactRecordFactory(notes=notes, partner=self.partner)
+        url = self.get_url(partner=self.partner.id,
+                           company=self.company.id,
+                           id=record.id)
+        response = self.client.get(url)
+        self.assertNotIn(notes, response.content)
+        self.assertIn('alert("test!");', response.content)
+
+
 class RecordsEditTests(MyPartnersTestCase):
     """Tests related to the record edit page, /prm/view/records/edit"""
     def setUp(self):
