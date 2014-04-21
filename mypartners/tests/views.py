@@ -6,6 +6,7 @@ from time import sleep
 from django.test import TestCase
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.core import mail
 from django.utils.timezone import utc
@@ -381,9 +382,10 @@ class RecordsDetailsTests(MyPartnersTestCase):
 
         # Create a ContactRecord
         self.contact_record = ContactRecordFactory(partner=self.partner)
-        self.contact_log_entry = ContactLogEntryFactory(partner=self.partner,
-                                     user=self.contact.user,
-                                     object_id=self.contact_record.id)
+        self.contact_log_entry = ContactLogEntryFactory(
+            partner=self.partner, user=self.contact.user,
+            object_id=self.contact_record.id,
+            content_type=ContentType.objects.get_for_model(ContactRecord))
         self.contact_log_entry.save()
 
     def test_contact_details(self):
@@ -415,9 +417,10 @@ class RecordsDetailsTests(MyPartnersTestCase):
 
         # Add more events
         for i in range(2, 4):
-            ContactLogEntryFactory(partner=self.partner, action_flag=i,
-                                   user=self.contact.user,
-                                   object_id=self.contact_record.id)
+            ContactLogEntryFactory(
+                partner=self.partner, action_flag=i, user=self.contact.user,
+                object_id=self.contact_record.id,
+                content_type=ContentType.objects.get_for_model(ContactRecord))
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
 
