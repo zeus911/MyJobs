@@ -185,9 +185,25 @@ $(function() {
                 url: '/profile/view/edit',
                 data: serialized_data,
                 success: function(data, status) {
+                    // Replace the content with the result of the AJAX call
                     container = $('#profile-unit-form').parent()
                     container.fadeOut(400, function () {
                         $(this).html(data).fadeIn(600);
+                        
+                        // Add the new bindings
+                        $('.suggestion').hover(function() {
+                            var text = $(this).data('msg');
+                            $('#description').stop(true, true);
+                            $('#description').hide().text(text).fadeIn();
+                            },
+                        function() {
+                            $('#description').stop(true, true)
+                            .fadeOut(function() {
+                                $(this).html('&nbsp;');
+                            }).fadeIn();
+                            
+                        });
+                        
                     });
                 },
                 error: function(jqXHR, textStatus, errorThrown) {

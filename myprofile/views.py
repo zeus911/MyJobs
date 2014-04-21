@@ -112,12 +112,13 @@ def handle_form(request):
         
         model_name = model._meta.verbose_name.lower()
         if form_instance.is_valid():
-            form_instance.save()
+            instance = form_instance.save()
             if request.is_ajax():
                 suggestions = ProfileUnits.suggestions(request.user)
                 return render_to_response('myprofile/suggestions.html',
                                           {'suggestions': suggestions[:3],
-                                           'model_name': model_name})
+                                           'model_name': model_name,
+                                           'module': {'item': instance}})
             else:
                 return HttpResponseRedirect(reverse('view_profile'))
         else:

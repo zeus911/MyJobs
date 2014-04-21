@@ -87,7 +87,7 @@ class ProfileUnits(models.Model):
                    MilitaryService, Name, SecondaryEmail, Summary, Telephone,
                    VolunteerHistory, Website]
 
-        suggestions = chain(*[klass.suggestions(user) for klass in classes])
+        suggestions = chain(*[klass.get_suggestion(user) for klass in classes])
         return sorted(suggestions, reverse=True, key=lambda x: x['priority'])
 
 
@@ -185,20 +185,22 @@ class Name(ProfileUnits):
                 self.user.add_primary_name()
 
     @classmethod
-    def suggestions(cls, user):
-        """Get a list of all suggestions for a user to improve their education
+    def get_suggestion(cls, user):
+        """Get a suggestion for a user to improve their education
         profile.
 
         :Inputs:
         user = User for which to get suggestions
 
         :Outputs:
-        suggestions - A list of dictionary objects.  Each dictionary should
-            conform to the format indicated in ProfileUnits.suggestions().
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
         """
         if not cls.objects.filter(user=user).exists():
             return [{'msg': "Please add your name.",
-                     'priority': 5}]
+                     'priority': 5,
+                     'url': reverse('handle_form') + '?module=Name&id=new',
+                     'module': 'Name'}]
         return []
 
 
@@ -267,15 +269,7 @@ class Education(ProfileUnits):
                                     verbose_name=_('minor'))
 
     @classmethod
-    def missing_education(cls, user):
-
-        objects = cls.objects.filter(user=user)
-        existing = objects.values_list('education_level_code', flat='true')
-        return [unicode(i[1]) for i in EDUCATION_LEVEL_CHOICES[1:]
-                if i[0] not in existing]
-
-    @classmethod
-    def suggestions(cls, user):
+    def get_suggestion(cls, user):
         """Get a list of all suggestions for a user to improve their education
         profile.
 
@@ -283,33 +277,18 @@ class Education(ProfileUnits):
         user = User for which to get suggestions
 
         :Outputs:
-        suggestions - A list of dictionary objects.  Each dictionary should
-            conform to the format indicated in ProfileUnits.suggestions().
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
         """
-        importance = {'High School': 4,
-                      'Associate': 3,
-                      'Bachelor': 3,
-                      'Non-Degree Education': 2,
-                      'Master': 2,
-                      'Doctoral': 1}
-        noun = {
-            'High School': 'education',
-            'Associate': 'degree',
-            'Bachelor': 'degree',
-            'Non-Degree Education': 'program',
-            'Master': 'degree',
-            'Doctoral': 'program'
-                    }
-        suggestions = cls.missing_education(user)
-        results = []
-        for i in suggestions:
-            msg = 'Would you like to provide information about a %s %s?' % \
-                                                        (i.lower(), noun[i])
-            results.append({
-                'msg': msg,
-                 'priority': importance[i],
-                 'url': reverse('handle_form') + '?module=Education&id=new'})
-        return results
+        if not cls.objects.filter(user=user).exists():
+            return {
+                'msg': ("Would you like to provdie information about "
+                        "your education?"),
+                 'priority': 5,
+                 'module': 'Education',
+                 'url': reverse('handle_form') + '?module=Education&id=new'}
+        else:
+            return []
 
 
 class Address(ProfileUnits):
@@ -329,7 +308,7 @@ class Address(ProfileUnits):
                                    verbose_name=_("Postal Code"))
     
     @classmethod
-    def suggestions(cls, user):
+    def get_suggestion(cls, user):
         """Get a list of all suggestions for a user to improve their address
         profile.
 
@@ -337,20 +316,22 @@ class Address(ProfileUnits):
         user = User for which to get suggestions
 
         :Outputs:
-        suggestions - A list of dictionary objects.  Each dictionary should
-            conform to the format indicated in ProfileUnits.suggestions().
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
         """
         objects = cls.objects.filter(user=user).order_by('date_updated')
         if len(objects) == 0:
             return [{'msg': 'Would you like to provide your address?',
                      'url': reverse('handle_form') + '?module=Address&id=new',
-                     'priority': 3}]
+                     'priority': 5,
+                     'module': 'Address'}]
         else:
             return [{'msg': 'Do you need to update your address from %s?' %
                             objects[0].address_line_one,
                     'url': reverse('handle_form') + '?module=Address&id=%s' %
                                                     objects[0].pk,
-                     'priority': 1}]
+                     'priority': 1,
+                     'module': 'Address'}]
 
 
 class Telephone(ProfileUnits):
@@ -375,14 +356,7 @@ class Telephone(ProfileUnits):
                                 blank=True, verbose_name=_("Phone Type"))
 
     @classmethod
-    def missing_telephone(cls, user):
-        objects = cls.objects.filter(user=user)
-        existing = objects.values_list('use_code', flat='true')
-        return [i[1] for i in cls.USE_CODE_CHOICES[1:]
-                if i[0] not in existing]
-
-    @classmethod
-    def suggestions(cls, user):
+    def get_suggestion(cls, user):
         """Get a list of all suggestions for a user to improve their telephone
         profile.
 
@@ -390,21 +364,17 @@ class Telephone(ProfileUnits):
         user = User for which to get suggestions
 
         :Outputs:
-        suggestions - A list of dictionary objects.  Each dictionary should
-            conform to the format indicated in ProfileUnits.suggestions().
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
         """
-        importance = {'Home':3,
-                      'Work':3,
-                      'Mobile':3,
-                      'Pager':1,
-                      'Fax':1,
-                      'Other':0}
-        suggestions = cls.missing_telephone(user)
-        return [{'msg': 'Would you like to add a %s phone?' %
-                            suggestion.lower(),
-                 'url': reverse('handle_form') + '?module=Telephone&id=new',
-                 'priority': importance[suggestion]}
-                for suggestion in suggestions]
+        if not cls.objects.filter(user=user).exists():
+            return [{'msg': 'Would you like to add a telephone?',
+                     'priority': 5,
+                     'module': 'Telephone',
+                     'url': reverse('handle_form') + '?module=Telephone&id=new'
+                     }]
+        else:
+            return []
 
     def save(self, *args, **kwargs):
         if self.use_code == "Home" or self.use_code == "Work" or self.use_code == "Other":
@@ -447,7 +417,7 @@ class EmploymentHistory(ProfileUnits):
                                  editable=False)
 
     @classmethod
-    def suggestions(cls, user):
+    def get_suggestion(cls, user):
         """Get a list of all suggestions for a user to improve their employment
         history on their profile.
 
@@ -455,27 +425,30 @@ class EmploymentHistory(ProfileUnits):
         user = User for which to get suggestions
 
         :Outputs:
-        suggestions - A list of dictionary objects.  Each dictionary should
-            conform to the format indicated in ProfileUnits.suggestions().
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
         """
         objects = cls.objects.filter(user=user).order_by('start_date')
         if len(objects) == 0:
             return [{'msg': "Would you like to add your employment history?",
                      'url': reverse('handle_form') + \
                             '?module=EmploymentHistory&id=new',
-                     'priority': 3}]
+                     'priority': 5,
+                     'module': 'Employment'}]
         elif objects[0].current_indicator:
             return [{'msg': "Are you still employed with %s?" %
                                 objects[0].organization_name,
                      'url': reverse('handle_form') + \
                             '?module=EmploymentHistory&id=%s' % objects[0].pk,
-                     'priority': 0}]
+                     'priority': 0,
+                     'module': 'Employment'}]
         else:
             return [{'msg': "Have you worked anywhere since being employed" +
                             " with %s?" % objects[0].organization_name,
                      'url': reverse('handle_form') + \
                             '?module=EmploymentHistory&id=%s' % objects[0].pk,
-                     'priority': 1}]
+                     'priority': 1,
+                     'module': 'Employment'}]
 
 
 class SecondaryEmail(ProfileUnits):
@@ -526,7 +499,7 @@ class SecondaryEmail(ProfileUnits):
             return False
 
     @classmethod
-    def suggestions(cls, user):
+    def get_suggestion(cls, user):
         """Get a list of all suggestions for a user to add secondary emails to 
         their profile.
 
@@ -534,14 +507,15 @@ class SecondaryEmail(ProfileUnits):
         user = User for which to get suggestions
 
         :Outputs:
-        suggestions - A list of dictionary objects.  Each dictionary should
-            conform to the format indicated in ProfileUnits.suggestions().
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
         """
         if not cls.objects.filter(user=user).exists():
             return [{'msg': "Would you like to add an additional email?",
                      'url': reverse('handle_form') + \
                             '?module=SecondaryEmail&id=new',
-                     'priority': 2}]
+                     'priority': 5,
+                     'module': 'Secondary Email'}]
         return []
 
 
@@ -569,7 +543,7 @@ class MilitaryService(ProfileUnits):
                              verbose_name="Honors")
 
     @classmethod
-    def suggestions(cls, user):
+    def get_suggestion(cls, user):
         """Get a list of suggestions for a user to add military service to 
         their profile.
 
@@ -577,14 +551,15 @@ class MilitaryService(ProfileUnits):
         user = User for which to get suggestions
 
         :Outputs:
-        suggestions - A list of dictionary objects.  Each dictionary should
-            conform to the format indicated in ProfileUnits.suggestions().
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
         """
         if not cls.objects.filter(user=user).exists():
             return [{'msg': "Have you served in the armed forces?",
                      'url': reverse('handle_form') + \
                      '?module=MilitaryService&id=new',
-                    'priority': 3}]
+                    'priority': 3,
+                     'module': 'Military Service'}]
         return []
 
 
@@ -609,21 +584,22 @@ class Website(ProfileUnits):
                                  blank=True, verbose_name='Type of Site')
 
     @classmethod
-    def suggestions(cls, user):
+    def get_suggestion(cls, user):
         """Get a list of suggestions for a user to add a website to their
 
         :Inputs:
         user = User for which to get suggestions
 
         :Outputs:
-        suggestions - A list of dictionary objects.  Each dictionary should
-            conform to the format indicated in ProfileUnits.suggestions().
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
         """
         if not cls.objects.filter(user=user):
             return [{
                 'msg': "Do you have a personal website or online portfolio?",
                 'url': reverse('handle_form') + '?module=Website&id=new',
-                'priority': 3}]
+                'priority': 3,
+                'module': 'Website'}]
         return []
 
 
@@ -634,7 +610,7 @@ class License(ProfileUnits):
                                    blank=True)
 
     @classmethod
-    def suggestions(cls, user):
+    def get_suggestion(cls, user):
         """Get a list of all suggestions for a user to add licenses or
         certifications to their profile.
 
@@ -642,15 +618,16 @@ class License(ProfileUnits):
         user = User for which to get suggestions
 
         :Outputs:
-        suggestions - A list of dictionary objects.  Each dictionary should
-            conform to the format indicated in ProfileUnits.suggestions().
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
         """
         if not cls.objects.filter(user=user).exists():
             msg = ('Would you like to add and professional licenses or ' +
                   'certifications?')
             return [{'msg': msg,
                      'url': reverse('handle_form') + '?module=License&id=new',
-                     'priority': 3}]
+                     'priority': 3,
+                     'module': 'License'}]
         return []
 
 
@@ -680,7 +657,7 @@ class Summary(ProfileUnits):
                 raise ValidationError("A summary already exists")
 
     @classmethod
-    def suggestions(cls, user):
+    def get_suggestion(cls, user):
         """Get a list of all suggestions for a user to add a summary to their
         profile.
 
@@ -688,13 +665,14 @@ class Summary(ProfileUnits):
         user = User for which to get suggestions
 
         :Outputs:
-        suggestions - A list of dictionary objects.  Each dictionary should
-            conform to the format indicated in ProfileUnits.suggestions().
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
         """
         if not cls.objects.filter(user=user).exists():
             return [{'msg': "Would you like to add a summary of your career?",
                      'url': reverse('handle_form') + '?module=Summary&id=new',
-                     'priority': 3}]
+                     'priority': 5,
+                     'module': 'Profile Summary'}]
         return []
 
 
@@ -718,7 +696,7 @@ class VolunteerHistory(ProfileUnits):
     description = models.TextField(blank=True)
 
     @classmethod
-    def suggestions(cls, user):
+    def get_suggestion(cls, user):
         """Get a list of suggestions for a user to improve their volunteer
         history profile.
 
@@ -726,16 +704,17 @@ class VolunteerHistory(ProfileUnits):
         user = User for which to get suggestions
 
         :Outputs:
-        suggestions - A list of dictionary objects.  Each dictionary should
-            conform to the format indicated in ProfileUnits.suggestions().
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
         """
         if not cls.objects.filter(user=user).exists():
             msg = ("Do you have any relevant volunteer experience you would " +
                     "like to include?")
-            return [{'msg': msg, 
+            return [{'msg': msg,
                      'url': reverse('handle_form') + \
                             '?module=VolunteerHistory&id=new',
-                     'priority':3}]
+                     'priority':3,
+                     'module': 'Volunteer History'}]
         return []
 
 

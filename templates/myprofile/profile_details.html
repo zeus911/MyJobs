@@ -11,27 +11,7 @@
 <div class="row">
     <div class="span8 offset2">
         <div class="formBox">
-            <table class="table table-bordered table-striped">
-
-                {% with module.item|process_field_types as fields %}
-
-                    {% for label, value, type in fields %}
-
-                        {% if value == None or value == "" %}
-                        {% else %}
-
-                        <tr class="row">
-                            <td class="span3">{{ label }}</td>
-                            <td class="span9">{{ value }}</td>
-                        </tr>
-
-                        {% endif %}
-
-                    {% endfor %}
-
-                {% endwith %}
-
-            </table>
+            {% include 'myprofile/details_tmpl.html' %}
             <div class="actions">
                 <a class="btn primary pull-right" href="{% url 'view_profile' %}">{% trans 'Back' %}</a>
                 <a class="btn pull-right" href="{% url 'handle_form' %}?id={{ module.item.id }}&module={{ module.item.get_verbose.title }}">

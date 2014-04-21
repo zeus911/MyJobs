@@ -1,15 +1,28 @@
+
 <div class="span6">
     <h3>Thanks for updating your {{ model_name }}</h3>
-    <p>Updating your {{ model_name }} will help employers locate you and increase your
+    <p>
+        Updating your {{ model_name }} will help employers locate you and increase your
         chances at getting noticed.  You can continue to improve your profile 
-        with the options to the right.
+        with the options to the below.
     </p>
-    <a class="btn primary" href="{% url 'view_profile' %}">Return to your profile</a>
+
+    {% for suggestion in suggestions %}
+        <a class="btn primary suggestion" 
+           href="{{ suggestion.url }}" 
+           data-msg="{{ suggestion.msg }}">{{ suggestion.module }}</a>
+    {% endfor %}
+
+    <div id="description" class="span6">&nbsp;</div>
+
+    <a class="btn-link" 
+       href="{% url 'view_profile' %}"
+       style="float:right;">No thanks, Take me to my Profile</a>
 </div>
 <div class="span3" id="suggestions">
-    <ul>
-    {% for suggestion in suggestions %}
-        <li><a href="{{ suggestion.url }}">{{ suggestion.msg }}</a></li>
-    {% endfor %}
-    </ul>
+    
+    <div class="formBox">
+        <h4>Updated {{model_name|title }}</h4>
+        {% include 'myprofile/details_tmpl.html' %}
+    </div>
 </div>
