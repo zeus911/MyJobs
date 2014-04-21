@@ -8,7 +8,48 @@ $(document).ready(function() {
     $("#newAccountData #id_name-primary").hide()
     $("#newAccountData label[for=id_name-primary]").hide()
     current_url = '/';
+    rotate_tagline();
 });
+
+function rotate_tagline(){
+    var tagline = $('#tagline a'),
+        phrases = ["Employers.",
+                   "Compliance.",
+                   "Searching Jobs."],
+        fadeDuration = 1000,
+        random_phrases = shuffle(phrases),
+        loop = function(index) {
+            if(index == random_phrases.length) return false;
+
+            tagline.fadeOut(fadeDuration/5, function() {
+                tagline.html(random_phrases[index]);
+            })
+                .fadeIn(fadeDuration, function() {
+                    loop(index + 1);
+                });
+        };
+
+    tagline.html(random_phrases[0]);
+    random_phrases.shift();
+    random_phrases[random_phrases.length] = "You.";
+    tagline.fadeIn('fast');
+    setTimeout(function() {
+        loop(0);
+    }, fadeDuration);
+}
+
+function shuffle(list) {
+    var i = list.length;
+    if (i == 0) return false;
+    while (--i){
+        var j = Math.floor( Math.random() * ( i + 1 )),
+            tempi = list[i],
+            tempj = list[j];
+        list[i] = tempj;
+        list[j] = tempi;
+    }
+    return list;
+}
 
 /* When register button is clicked, this triggers an AJAX POST that sends the
    csrf token, the collected email and password fields, and a custom field, 'action'
