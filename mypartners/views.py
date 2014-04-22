@@ -1,3 +1,4 @@
+import bleach
 from collections import OrderedDict
 import unicodecsv
 from datetime import date, datetime, timedelta
@@ -6,6 +7,7 @@ from email.utils import getaddresses
 from itertools import chain
 import json
 from lxml import etree
+import re
 
 from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
@@ -997,6 +999,10 @@ def prm_export(request):
         for record in records:
             values = [getattr(record, field, '') for field in fields]
             values = [contact_record_val_to_str(v) for v in values]
+            # Remove the HTML and reformat.
+            values = [bleach.clean(v, [], strip=True) for v in values]
+            values = [re.sub(' +', ' ', v) for v in values]
+            values = [re.sub('\s+\n\s+', '\n', v) for v in values]
             writer.writerow(values)
 
     response['Content-Disposition'] = 'attachment; ' \
