@@ -1,5 +1,4 @@
-
-<div class="span6">
+<div id="moduleColumn" class="span8">
     <h3>Thanks for updating your {{ model_name }}</h3>
     <p>
         Updating your {{ model_name }} will help employers locate you and increase your
@@ -8,9 +7,12 @@
     </p>
 
     {% for suggestion in suggestions %}
-        <a class="btn primary suggestion" 
+        <a class="btn primary suggestion add-module-btn" 
            href="{{ suggestion.url }}" 
-           data-msg="{{ suggestion.msg }}">{{ suggestion.module }}</a>
+           data-msg="{{ suggestion.msg }}">
+            Add
+            <span>{{ suggestion.module }}</span>
+        </a>
     {% endfor %}
 
     <div id="description" class="span6">&nbsp;</div>
@@ -19,7 +21,7 @@
        href="{% url 'view_profile' %}"
        style="float:right;">No thanks, Take me to my Profile</a>
 </div>
-<div class="span3" id="suggestions">
+<div class="span4" id="suggestions">
     
     <div class="formBox">
         <h4>Updated {{model_name|title }}</h4>

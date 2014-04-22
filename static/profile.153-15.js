@@ -186,7 +186,7 @@ $(function() {
                 data: serialized_data,
                 success: function(data, status) {
                     // Replace the content with the result of the AJAX call
-                    container = $('#profile-unit-form').parent()
+                    container = $('#profile-unit-form').parent().parent()
                     container.fadeOut(400, function () {
                         $(this).html(data).fadeIn(600);
                         
