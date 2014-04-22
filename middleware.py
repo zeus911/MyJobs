@@ -1,12 +1,11 @@
 import operator
-import re
-
-from django.conf import settings
-from django.utils.text import compress_string
-from django.utils.cache import patch_vary_headers
+import pytz
 
 from django import http
+from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.utils.timezone import activate
+
 
 if settings.NEW_RELIC_TRACKING:
     try:
@@ -75,8 +74,8 @@ class XsSharing(object):
         if response.has_header('Access-Control-Allow-Origin'):
             return response
 
-        response['Access-Control-Allow-Origin']  = XS_SHARING_ALLOWED_ORIGINS
-        response['Access-Control-Allow-Headers']  = XS_SHARING_ALLOWED_HEADERS
+        response['Access-Control-Allow-Origin'] = XS_SHARING_ALLOWED_ORIGINS
+        response['Access-Control-Allow-Headers'] = XS_SHARING_ALLOWED_HEADERS
         response['Access-Control-Allow-Methods'] = ",".join( XS_SHARING_ALLOWED_METHODS )
 
         return response 
@@ -100,6 +99,7 @@ class NewRelic(object):
         else:
             newrelic.agent.add_custom_parameter('user_id', 'anonymous')
 
+
 class CompactP3PMiddleware(object):
     """
     Adds a compact privacy policy to site headers
@@ -108,3 +108,13 @@ class CompactP3PMiddleware(object):
     def process_response(self, request, response):
         response['P3P'] = 'CP="ALL DSP COR CURa IND PHY UNR"'
         return response
+
+
+class TimezoneMiddleware(object):
+    """
+    Activates the user-selected timezone.
+
+    """
+    def process_request(self, request):
+        if hasattr(request, 'user') and not request.user.is_anonymous():
+            activate(pytz.timezone(request.user.timezone))

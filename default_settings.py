@@ -92,7 +92,8 @@ MIDDLEWARE_CLASSES = (
     'middleware.XsSharing',
     'django.middleware.locale.LocaleMiddleware',
     'middleware.CompactP3PMiddleware',
-    )
+    'middleware.TimezoneMiddleware',
+)
 
 AUTHENTICATION_BACKENDS = (
     'backends.CaseInsensitiveAuthBackend',

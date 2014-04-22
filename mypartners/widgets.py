@@ -3,6 +3,7 @@ from django.forms import (FileField, FileInput, MultiValueField, MultiWidget,
                           Select,
                           fields)
 from django.utils.safestring import mark_safe
+from django.utils.timezone import localtime, now
 
 from datetime import datetime, time
 
@@ -52,7 +53,7 @@ class SplitDateDropDownWidget(MultiWidget):
 
     def decompress(self, value):
         if not value:
-            value = datetime.now()
+            value = localtime(now())
         month = datetime.strftime(value, '%b')
         day = datetime.strftime(value, '%d')
         year = datetime.strftime(value, '%Y')
@@ -80,7 +81,7 @@ class SplitDateTimeDropDownWidget(MultiWidget):
 
     def decompress(self, value):
         if not value:
-            value = datetime.now()
+            value = localtime(now())
         month = datetime.strftime(value, '%b')
         day = datetime.strftime(value, '%d')
         year = datetime.strftime(value, '%Y')

@@ -216,7 +216,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
-
+    timezone = models.CharField(max_length=255, default=settings.TIME_ZONE)
 
     USERNAME_FIELD = 'email'
     objects = CustomUserManager()

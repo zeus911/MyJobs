@@ -1,5 +1,9 @@
 {% load export_tags %}
 {% load activity_tags %}
+{% load tz %}
+
+
+{% localtime on %}
 <html>
 <head>
     <title>Contact Records - {{ company.name }}</title>
@@ -47,3 +51,4 @@
     </div>
 </body>
 </html>
+{% endlocaltime %}

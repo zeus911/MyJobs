@@ -1,5 +1,7 @@
 {% load filter_tags %}
+{% load tz %}
 
+{% localtime on %}
 <ul id="time-range-menu" class="header-menu">
     <li>
         <span class="hover-element date-range-description">{% if date_display %}{{ date_display }}{% else %}30 Days{% endif %}</span>
@@ -31,3 +33,4 @@
         </ul>
     </li>
 </ul>
+{% endlocaltime %}
