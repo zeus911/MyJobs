@@ -134,6 +134,14 @@ h1 > small > a:hover {
     display: none;
 }
 
+#tagline > a {
+    color: inherit;
+}
+
+#tagline > a:hover {
+    text-decoration: none;
+}
+
 /* Partner Relationship Manager Styles */
 .blanket{
     opacity: .25;
