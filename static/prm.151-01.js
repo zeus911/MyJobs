@@ -55,7 +55,7 @@ $(function() {
                         }
 
                         for (var index in json) {
-                            var $error = $('[id$="-'+index+'"]');
+                            var $error = $('[name="'+index+'"]');
                             var $labelOfError = $error.parent().prev();
 
                             // insert new errors after the relevant inputs
