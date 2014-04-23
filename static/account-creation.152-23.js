@@ -12,12 +12,20 @@ $(document).ready(function() {
 });
 
 function rotate_tagline(){
+    /*
+    Rotates the tagline target audience keyword.
+    
+    Inputs: none
+    Returns: none (DOM manipulation)
+    */
     var tagline = $('#tagline a'),
-        phrases = ["Employers.",
-                   "Compliance.",
-                   "Searching Jobs."],
-        fadeDuration = 1000,
-        random_phrases = shuffle(phrases),
+        phrases = ["Compliance",
+                   "Jobs",
+                   "Employers",
+                   "Diversity",
+                   "Veterans"],
+        fadeDuration = 1500,
+        random_phrases = shuffle(phrases, 3),
         loop = function(index) {
             if(index == random_phrases.length) return false;
 
@@ -38,17 +46,43 @@ function rotate_tagline(){
     }, fadeDuration);
 }
 
-function shuffle(list) {
-    var i = list.length;
-    if (i == 0) return false;
-    while (--i){
-        var j = Math.floor( Math.random() * ( i + 1 )),
-            tempi = list[i],
-            tempj = list[j];
-        list[i] = tempj;
-        list[j] = tempi;
+function shuffle(list, num_to_include) {
+    /*
+    Takes a given list and returns the number of tems specified
+    
+    Inputs:
+    :list:              The source array
+    :num_to_include:    how many elements from list to return
+    
+    Returns:
+    :shuffled_list:     An array with {num_to_include} random items from list
+    
+    */
+    var shuffled_list = [];
+    for(i=0;i<num_to_include;i++){
+        random_unique_item = random_unique_list_item(list,shuffled_list);
+        shuffled_list.push(random_unique_item);
     }
-    return list;
+    return shuffled_list;
+}
+
+function random_unique_list_item(list,shuffled_list){
+    /*
+    Pulls a unique, random item from list that is also unique to shuffled_list
+    
+    Inputs:
+    :list:          The source list
+    :shuffled_list: A list of random values already copied from list
+    
+    Returns:
+    :item:  A random, unique value from list
+    
+    */
+    item = list[Math.floor(Math.random()*list.length)];  
+    while(shuffled_list.indexOf(item)!=-1){
+        item = list[Math.floor(Math.random()*list.length)];
+    }
+    return item;
 }
 
 /* When register button is clicked, this triggers an AJAX POST that sends the
