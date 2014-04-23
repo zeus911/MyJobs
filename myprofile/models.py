@@ -281,12 +281,12 @@ class Education(ProfileUnits):
                      indicated in ProfileUnits.suggestions().
         """
         if not cls.objects.filter(user=user).exists():
-            return {
-                'msg': ("Would you like to provdie information about "
+            return [{
+                'msg': ("Would you like to provide information about "
                         "your education?"),
                  'priority': 5,
                  'module': 'Education',
-                 'url': reverse('handle_form') + '?module=Education&id=new'}
+                 'url': reverse('handle_form') + '?module=Education&id=new'}]
         else:
             return []
 
