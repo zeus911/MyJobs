@@ -7,7 +7,6 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
 
-
 from myjobs.decorators import user_is_allowed
 from myjobs.models import User
 from myprofile.models import ProfileUnits, BaseProfileUnitManager
