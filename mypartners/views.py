@@ -744,16 +744,16 @@ def get_records(request):
 
     # Because javascript is going to use this, not a template,
     # convert from localtime to utc here.
-    dt_range[1] = dt_range[1].astimezone(pytz.utc)
-    dt_range[0] = dt_range[0].astimezone(pytz.utc)
+    date_end = dt_range[1].astimezone(pytz.utc)
+    date_start = dt_range[0].astimezone(pytz.utc)
 
     data = {
-        'month_end': dt_range[1].strftime('%m'),
-        'day_end': dt_range[1].strftime('%d'),
-        'year_end': dt_range[1].strftime('%Y'),
-        'month_start': dt_range[0].strftime('%m'),
-        'day_start': dt_range[0].strftime('%d'),
-        'year_start': dt_range[0].strftime('%Y'),
+        'month_end': date_end.strftime('%m'),
+        'day_end': date_end.strftime('%d'),
+        'year_end': date_end.strftime('%Y'),
+        'month_start': date_start.strftime('%m'),
+        'day_start': date_start.strftime('%d'),
+        'year_start': date_start.strftime('%Y'),
         'date_str': date_str,
         'html': render_to_response('mypartners/records.html', ctx,
                                    RequestContext(request)).content,
