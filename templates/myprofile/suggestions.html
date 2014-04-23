@@ -1,3 +1,5 @@
+{% load model_fields %}
+
 <div id="moduleColumn" class="span8">
     <h3>Thanks for updating your {{ model_name }}</h3>
     <p>
@@ -6,6 +8,7 @@
         with the options to the below.
     </p>
 
+    <h4>Add these modules to improve your profile</h4>
     {% for suggestion in suggestions %}
         <a class="btn primary suggestion add-module-btn" 
            href="{{ suggestion.url }}" 
@@ -15,16 +18,26 @@
         </a>
     {% endfor %}
 
-    <div id="description" class="span6">&nbsp;</div>
+    <div id="description" style="min-height:40px;">&nbsp;</div>
 
     <a class="btn-link" 
-       href="{% url 'view_profile' %}"
-       style="float:right;">No thanks, Take me to my Profile</a>
+       href="{% url 'view_profile' %}">No thanks, Take me to my Profile</a>
 </div>
-<div class="span4" id="suggestions">
+<div class="span4" id="suggestions" style="clear: right;">
     
     <div class="formBox">
         <h4>Updated {{model_name|title }}</h4>
-        {% include 'myprofile/details_tmpl.html' %}
+            {% with module.item|process_field_types as fields %}
+                {% for label, value, type in fields %}
+                    {% if value == None or value == "" %}
+                    {% else %}
+                    <div style="padding-bottom:10px;">
+                        <div><strong>{{ label }}</strong></div>
+                        <div>{{ value }}</div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            {% endwith %}
+        </table>
     </div>
 </div>
