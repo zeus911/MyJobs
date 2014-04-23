@@ -117,4 +117,7 @@ class TimezoneMiddleware(object):
     """
     def process_request(self, request):
         if hasattr(request, 'user') and not request.user.is_anonymous():
-            activate(pytz.timezone(request.user.timezone))
+            try:
+                activate(pytz.timezone(request.user.timezone))
+            except Exception:
+                activate(pytz.timezone('America/New_York'))
