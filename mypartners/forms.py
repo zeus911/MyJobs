@@ -1,8 +1,10 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms.util import ErrorList
+from django.utils.timezone import get_current_timezone_name
 
 from collections import OrderedDict
+import pytz
 
 from myprofile.forms import generate_custom_widgets
 from myjobs.forms import BaseUserForm
@@ -330,6 +332,16 @@ class ContactRecordForm(forms.ModelForm):
             if attachment and attachment.size > (MAX_ATTACHMENT_MB << 20):
                 raise ValidationError('File too large')
         return self.cleaned_data['attachment']
+
+    def clean_date_time(self):
+        """
+        Converts date_time field from localized time zone to utc.
+
+        """
+        date_time = self.cleaned_data['date_time']
+        user_tz = pytz.timezone(get_current_timezone_name())
+        date_time = user_tz.localize(date_time)
+        return date_time.astimezone(pytz.utc)
 
     def save(self, user, partner, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
