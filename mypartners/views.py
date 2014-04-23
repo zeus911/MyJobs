@@ -7,6 +7,7 @@ from email.utils import getaddresses
 from itertools import chain
 import json
 from lxml import etree
+import pytz
 import re
 
 from django.conf import settings
@@ -19,6 +20,7 @@ from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.utils.text import force_text
+from django.utils.timezone import now
 from django.views.decorators.csrf import csrf_exempt
 
 from email_parser import build_email_dicts, get_datetime_from_str
@@ -300,7 +302,7 @@ def prm_overview(request):
     company, partner, user = prm_worthy(request)
 
     most_recent_activity = partner.get_logs()
-    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
+    dt_range = [now() + timedelta(-30), now()]
     records = partner.get_contact_records(date_time_range=dt_range)
     communication = records.order_by('-date_time')
     referrals = records.filter(contact_type='job').count()
@@ -310,8 +312,7 @@ def prm_overview(request):
     most_recent_saved_searches = saved_searches[:3]
 
     older_records = partner.get_contact_records()
-    older_records = older_records.exclude(date_time__gte=datetime.now() +
-                                                         timedelta(-30))
+    older_records = older_records.exclude(date_time__gte=now() + timedelta(-30))
 
     ctx = {'partner': partner,
            'company': company,
@@ -727,6 +728,7 @@ def get_records(request):
 
     contact = request.REQUEST.get('contact')
     contact_type = request.REQUEST.get('record_type')
+
     contact = None if contact == 'all' else contact
     contact_type = None if contact_type == 'all' else contact_type
     dt_range, date_str, records = get_records_from_request(request)
@@ -739,6 +741,11 @@ def get_records(request):
         'contact_name': None if contact == 'all' else contact,
         'view_name': 'PRM'
     }
+
+    # Because javascript is going to use this, not a template,
+    # convert from localtime to utc here.
+    dt_range[1] = dt_range[1].astimezone(pytz.utc)
+    dt_range[0] = dt_range[0].astimezone(pytz.utc)
 
     data = {
         'month_end': dt_range[1].strftime('%m'),
@@ -1036,9 +1043,9 @@ def process_email(request):
         try:
             date_time = get_datetime_from_str(headers.get('Date'))
         except Exception:
-            date_time = datetime.now()
+            date_time = now()
     else:
-        date_time = datetime.now()
+        date_time = now()
 
     to = request.REQUEST.get('to', '')
     cc = request.REQUEST.get('cc', '')
@@ -1113,7 +1120,7 @@ def process_email(request):
         attachments.append(attachment)
 
     created_records = []
-    date_time = datetime.now() if not date_time else date_time
+    date_time = now() if not date_time else date_time
     for contact in possible_contacts + created_contacts:
         change_msg = "Email was sent by %s to %s" % \
                      (admin_user.get_full_name(), contact.name)
@@ -1129,7 +1136,7 @@ def process_email(request):
             prm_attachment = PRMAttachment()
             prm_attachment.attachment = attachment
             prm_attachment.contact_record = record
-            prm_attachment.add_to_class('partner', contact.partner)
+            setattr(prm_attachment, 'partner', contact.partner)
             prm_attachment.save()
         log_change(record, None, admin_user, contact.partner,  contact.name,
                    action_type=ADDITION, change_msg=change_msg)

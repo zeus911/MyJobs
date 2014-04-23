@@ -77,6 +77,7 @@ class CustomUserManager(BaseUserManager):
             user.save(using=self._db)
             user.add_default_group()
             user.make_guid()
+            user.timezone = settings.TIME_ZONE
             created = True
             custom_signals.email_created.send(sender=self, user=user,
                                               email=email)
@@ -124,6 +125,7 @@ class CustomUserManager(BaseUserManager):
         u.is_superuser = True
         u.gravatar = u.email
         u.set_password(password)
+        u.timezone = settings.TIME_ZONE
         u.save(using=self._db)
         u.add_default_group()
         u.make_guid()
@@ -216,7 +218,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
-
+    timezone = models.CharField(max_length=255, default=settings.TIME_ZONE)
 
     USERNAME_FIELD = 'email'
     objects = CustomUserManager()

@@ -1,4 +1,7 @@
 {% load activity_tags %}
+{% load tz %}
+
+{% localtime on %}
 <tbody id="record-results">
     {% if records %}
     {% for record in records %}
@@ -17,3 +20,4 @@
     </tr>
     {% endif %}
 </tbody>
+{% endlocaltime %}
