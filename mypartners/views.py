@@ -20,7 +20,7 @@ from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.utils.text import force_text
-from django.utils.timezone import now
+from django.utils.timezone import localtime, now
 from django.views.decorators.csrf import csrf_exempt
 
 from email_parser import build_email_dicts, get_datetime_from_str
@@ -743,9 +743,9 @@ def get_records(request):
     }
 
     # Because javascript is going to use this, not a template,
-    # convert from localtime to utc here.
-    date_end = dt_range[1].astimezone(pytz.utc)
-    date_start = dt_range[0].astimezone(pytz.utc)
+    # convert to localtime here
+    date_end = localtime(dt_range[1].replace(tzinfo=pytz.utc))
+    date_start = localtime(dt_range[0].replace(tzinfo=pytz.utc))
 
     data = {
         'month_end': date_end.strftime('%m'),
