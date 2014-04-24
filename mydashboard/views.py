@@ -73,7 +73,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     authorized_microsites, buids = get_company_microsites(company)
 
     if buids:
-        buid_q = ['(job_view_buid:%s)' % str(buid) for buid in buids]
+        unique_buids = set(buids)
+        unique_microsites = set(authorized_microsites)
+        buid_q = ['(job_view_buid:%s)' % str(buid) for buid in unique_buids]
         buid_q = ' OR '.join(buid_q)
         buid_q = '(%s)' % buid_q
         job_solr = Solr().add_filter_query(buid_q).add_query(
@@ -81,7 +83,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                 'page_category')
 
         domain_q = ['(domain:%s)' % microsite
-                    for microsite in authorized_microsites]
+                    for microsite in unique_microsites]
         domain_q = ' OR '.join(domain_q)
         domain_q = '(%s)' % domain_q
         non_job_solr = Solr().add_filter_query(domain_q).add_query(

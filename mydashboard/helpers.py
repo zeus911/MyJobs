@@ -25,15 +25,13 @@ def get_company_microsites(company):
     :company: Company whose microsites are being retrieved
 
     Outputs:
-    :microsites: Set of microsites
-    :buids: Set of buids associated with the company's microsites
+    :microsites: List of microsites
+    :buids: List of buids associated with the company's microsites
     """
     job_source_ids = company.job_source_ids.all()
     buids = job_source_ids.values_list('id', flat=True)
-    buids = set(buids)
     microsites = SeoSite.objects.filter(business_units__in=buids) \
         .values_list('domain', flat=True)
-    microsites = set(microsites)
     return (microsites, buids)
 
 
