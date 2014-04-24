@@ -182,3 +182,7 @@ def str_to_date(string):
 @register.simple_tag
 def to_string(value):
     return str(value)
+
+@register.filter
+def get_attr(obj, attr):
+    return obj.get(attr)
