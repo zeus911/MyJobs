@@ -9,6 +9,7 @@ from myjobs.tests.factories import UserFactory
 from myprofile.models import *
 from myprofile.tests.factories import *
 from registration.models import ActivationProfile
+from datetime import date
 
 
 class MyProfileTests(TestCase):
@@ -252,7 +253,7 @@ class MyProfileTests(TestCase):
         ms_object = ProfileUnits.objects.filter(
             content_type__name="military service").count()
         self.assertEqual(ms_object, 1)
-        
+
     def test_add_license(self):
         license_form = LicenseFactory(user=self.user)
         license_form.save()
@@ -284,3 +285,235 @@ class MyProfileTests(TestCase):
         ms_object = ProfileUnits.objects.filter(
             content_type__name="volunteer history").count()
         self.assertEqual(ms_object, 1)
+
+
+class ProfileSuggestionTests(TestCase):
+    user_info = {'password1': 'complicated_password',
+                 'email': 'alice@example.com'}
+
+    def setUp(self):
+        super(ProfileSuggestionTests, self).setUp()
+
+        self.maxDiff = None
+        self.user = UserFactory()
+
+    def test_suggestion_when_name_blank(self):
+        suggestions = Name.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'], "Please add your name.")
+        self.assertEqual(suggestion['priority'], 5)
+
+    def test_suggestion_when_name_provided(self):
+        Name.objects.create(user=self.user,
+                            given_name="First name",
+                            family_name="Last name")
+        suggestions = Name.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 0)
+
+    def test_suggestion_when_education_blank(self):
+        expected = [{
+                    'priority': 5,
+                    'msg': 'Would you like to provide information' +
+                                   ' about your education?',
+                    'url': reverse('handle_form') + '?module=Education&id=new',
+                    'module': 'Education'}]
+        actual = Education.get_suggestion(self.user)
+
+        # Sort lists to ensure indentical order
+        self.assertEqual(actual, expected)
+
+    def test_suggestion_when_education_entered(self):
+        Education.objects.create(organization_name="Org",
+                                 degree_date=date.today(),
+                                 education_level_code=3,
+                                 degree_major="Gen Ed",
+                                 user=self.user)
+        expected = []
+        actual = Education.get_suggestion(self.user)
+
+        self.assertEqual(actual, expected)
+
+    def test_suggestion_when_address_blank(self):
+
+        suggestions = Address.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Would you like to provide your address?")
+        self.assertEqual(suggestion['priority'], 5)
+
+    def test_suggestion_when_address_provided(self):
+        Address.objects.create(user=self.user,
+                               address_line_one="12345 Test Ave")
+        suggestions = Address.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Do you need to update your address from 12345 Test" +
+                         " Ave?")
+        self.assertEqual(suggestion['priority'], 1)
+
+    def test_suggestion_when_phone_blank(self):
+        expected = [{'msg': 'Would you like to add a telephone?',
+                    'priority': 5,
+                    'module': 'Telephone',
+                    'url': reverse('handle_form') + '?module=Telephone&id=new'
+                    }]
+
+        actual = Telephone.get_suggestion(self.user)
+
+        # Sort lists to ensure indentical order
+        self.assertEqual(actual, expected)
+
+    def test_suggestion_when_phone_entered(self):
+        phone = Telephone(user=self.user)
+        phone.use_code = 'mobile'
+        phone.save()
+
+        # Get the actual results
+        actual = Telephone.get_suggestion(self.user)
+
+        self.assertEqual(actual, [])
+
+    def test_suggestion_when_never_employed(self):
+        suggestions = EmploymentHistory.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Would you like to add your employment history?")
+        self.assertEqual(suggestion['priority'], 5)
+
+    def test_suggestion_when_currently_employed(self):
+        EmploymentHistory.objects.create(user=self.user,
+                                         position_title="Title",
+                                         organization_name="Organization",
+                                         start_date=date.today(),
+                                         current_indicator=True)
+        suggestions = EmploymentHistory.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Are you still employed with Organization?")
+        self.assertEqual(suggestion['priority'], 0)
+
+    def test_suggestion_when_no_employer_is_marked_current(self):
+        EmploymentHistory.objects.create(user=self.user,
+                                         position_title="Title",
+                                         organization_name="Organization",
+                                         start_date=date.today())
+        suggestions = EmploymentHistory.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Have you worked anywhere since being employed" +
+                            " with Organization?")
+        self.assertEqual(suggestion['priority'], 1)
+
+    def test_suggestion_when_secondary_email_blank(self):
+        suggestions = SecondaryEmail.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Would you like to add an additional email?")
+        self.assertEqual(suggestion['priority'], 5)
+
+    def test_suggestion_when_secondary_email_provided(self):
+        SecondaryEmail.objects.create(user=self.user,
+                                      email="test@test.com")
+        suggestions = SecondaryEmail.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 0)
+
+    def test_suggestion_when_military_service_blank(self):
+        suggestions = MilitaryService.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Have you served in the armed forces?")
+        self.assertEqual(suggestion['priority'], 3)
+
+    def test_suggestion_when_military_service_provided(self):
+        MilitaryService.objects.create(user=self.user,
+                                       branch="Army")
+        suggestions = MilitaryService.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 0)
+
+    def test_suggestion_when_website_blank(self):
+        suggestions = Website.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Do you have a personal website or online portfolio?")
+        self.assertEqual(suggestion['priority'], 3)
+
+    def test_suggestion_when_website_provided(self):
+        Website.objects.create(user=self.user,
+                               uri='http://example.com')
+        suggestions = Website.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 0)
+
+    def test_suggestion_when_license_blank(self):
+        suggestions = License.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         'Would you like to add and professional licenses or' +
+                         ' certifications?')
+        self.assertEqual(suggestion['priority'], 3)
+
+    def test_suggestion_when_license_provided(self):
+        License.objects.create(user=self.user,
+                               license_name="Name",
+                               license_type="Type")
+        suggestions = License.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 0)
+
+    def test_suggestion_when_summary_blank(self):
+        suggestions = Summary.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Would you like to add a summary of your career?")
+        self.assertEqual(suggestion['priority'], 5)
+
+    def test_suggestion_when_summary_provided(self):
+        Summary.objects.create(user=self.user,
+                               headline="Headline")
+        suggestions = Summary.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 0)
+
+    def test_suggestion_when_volunteer_history_blank(self):
+        suggestions = VolunteerHistory.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 1)
+        suggestion = suggestions[0]
+        self.assertEqual(suggestion['msg'],
+                         "Do you have any relevant volunteer experience you" +
+                          " would like to include?")
+        self.assertEqual(suggestion['priority'], 3)
+
+    def test_suggestion_when_volunteer_history_provided(self):
+        VolunteerHistory.objects.create(user=self.user,
+                                        position_title="Title",
+                                        organization_name="Organization",
+                                        start_date=date.today())
+        suggestions = VolunteerHistory.get_suggestion(self.user)
+
+        self.assertEqual(len(suggestions), 0)

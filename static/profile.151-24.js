@@ -185,34 +185,50 @@ $(function() {
                 url: '/profile/view/edit',
                 data: serialized_data,
                 success: function(data, status) {
-                    if (data == '') {
-                        if (status != 'prevent-redirect') {
-                            window.location = '/profile/view/';
-                        }
-                    } else {
-                        // form was a json-encoded list of errors and error messages
-                        var json = jQuery.parseJSON(data);
+                    // Replace the content with the result of the AJAX call
+                    container = $('#profile-unit-form').parent().parent()
+                    container.fadeOut(400, function () {
+                        $(this).html(data).fadeIn(600);
+                        
+                        // Add the new bindings
+                        $('.suggestion').hover(function() {
+                            var text = $(this).data('msg');
+                            $('#description').stop(true, true);
+                            $('#description').hide().text(text).fadeIn();
+                            },
+                        function() {
+                            $('#description').stop(true, true)
+                            .fadeOut(function() {
+                                $(this).html('&nbsp;');
+                            }).fadeIn();
+                            
+                        });
+                        
+                    });
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    // form was a json-encoded list of errors and error messages
+                    var json = jQuery.parseJSON(jqXHR.responseText);
 
-                        // remove color from labels of current errors
-                        $('[class*=required]').parent().prev().removeClass('error-text');
+                    // remove color from labels of current errors
+                    $('[class*=required]').parent().prev().removeClass('error-text');
 
-                        // remove current errors
-                        $('[class*=required]').children().unwrap();
+                    // remove current errors
+                    $('[class*=required]').children().unwrap();
 
-                        if($.browser.msie){
-                            $('[class*=msieError]').remove()
-                        }
+                    if($.browser.msie){
+                        $('[class*=msieError]').remove()
+                    }
 
-                        for (var index in json) {
-                            var $error = $('[id$="-'+index+'"]');
-                            var $labelOfError = $error.parent().prev();
+                    for (var index in json) {
+                        var $error = $('[id$="-'+index+'"]');
+                        var $labelOfError = $error.parent().prev();
 
-                            // insert new errors after the relevant inputs
-                            $error.wrap('<div class="required" />');
-                            $error.attr("placeholder",json[index][0]);
-                            $error.val('')
-                            $labelOfError.addClass('error-text');
-                        }
+                        // insert new errors after the relevant inputs
+                        $error.wrap('<div class="required" />');
+                        $error.attr("placeholder",json[index][0]);
+                        $error.val('')
+                        $labelOfError.addClass('error-text');
                     }
                 }
             });
