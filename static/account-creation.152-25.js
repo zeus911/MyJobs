@@ -25,7 +25,7 @@ function rotate_tagline(){
                    "Diversity",
                    "Veterans"],
         fadeDuration = 1500,
-        random_phrases = shuffle(phrases, 3),
+        random_phrases = shuffle(phrases),
         loop = function(index) {
             if(index == random_phrases.length) return false;
 
