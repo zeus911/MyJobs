@@ -46,43 +46,26 @@ function rotate_tagline(){
     }, fadeDuration);
 }
 
-function shuffle(list, num_to_include) {
+function shuffle(list) {
     /*
-    Takes a given list and returns the number of tems specified
-    
-    Inputs:
-    :list:              The source array
-    :num_to_include:    how many elements from list to return
-    
-    Returns:
-    :shuffled_list:     An array with {num_to_include} random items from list
-    
-    */
-    var shuffled_list = [];
-    for(i=0;i<num_to_include;i++){
-        random_unique_item = random_unique_list_item(list,shuffled_list);
-        shuffled_list.push(random_unique_item);
-    }
-    return shuffled_list;
-}
+    Fisher-Yates Shuffle
 
-function random_unique_list_item(list,shuffled_list){
-    /*
-    Pulls a unique, random item from list that is also unique to shuffled_list
-    
     Inputs:
-    :list:          The source list
-    :shuffled_list: A list of random values already copied from list
-    
+    :list:      The source array
+
     Returns:
-    :item:  A random, unique value from list
-    
-    */
-    item = list[Math.floor(Math.random()*list.length)];  
-    while(shuffled_list.indexOf(item)!=-1){
-        item = list[Math.floor(Math.random()*list.length)];
+    :list:      A randomized array
+     */
+    var i = list.length;
+    if(i == 0) return false;
+    while(--i) {
+        var j = Math.floor( Math.random() * (i + 1) ),
+            tempi = list[i],
+            tempj = list[j];
+        list[i] = tempj;
+        list[j] = tempi;
     }
-    return item;
+    return list;
 }
 
 /* When register button is clicked, this triggers an AJAX POST that sends the
