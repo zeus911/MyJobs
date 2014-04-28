@@ -13,7 +13,6 @@ from mydashboard.models import CompanyUser
 from mydashboard.tests.factories import (CompanyFactory, CompanyUserFactory,
                                          SeoSiteFactory, BusinessUnitFactory)
 from mydashboard.helpers import country_codes
-from myjobs.models import User
 from myjobs.tests.views import TestClient
 from myjobs.tests.factories import UserFactory
 from myprofile.tests.factories import (PrimaryNameFactory,
@@ -23,7 +22,6 @@ from myprofile.tests.factories import (PrimaryNameFactory,
                                        EmploymentHistoryFactory)
 from mysearches.models import SavedSearch
 from mysearches.tests.factories import SavedSearchFactory
-from solr.signals import object_to_dict
 from tasks import update_solr_task
 
 SEARCH_OPTS = ['django', 'python', 'programming']
@@ -66,7 +64,7 @@ class MyDashboardViewsTests(TestCase):
         solr = pysolr.Solr(settings.TEST_SOLR_INSTANCE)
         solr.delete(q='*:*')
 
-    def add_analytics_data(self):
+    def add_analytics_data(self, type_, num_to_add=2):
         """
         Adds testing analytics data to Solr.
 
@@ -94,15 +92,21 @@ class MyDashboardViewsTests(TestCase):
             'page_category': 'redirect'
         }
 
-        for analytics_dict in [home_dict, view_dict,
-                               search_dict, apply_dict]:
-            analytics_dict.update(base_dict)
-            dicts.append(analytics_dict.copy())
-            analytics_dict.update(object_to_dict(User, self.candidate_user))
+        if type_ == 'home':
+            analytics_dict = home_dict
+        elif type_ == 'listing':
+            analytics_dict = view_dict
+        elif type_ == 'results':
+            analytics_dict = search_dict
+        else:
+            analytics_dict = apply_dict
+
+        analytics_dict.update(base_dict)
+        for _ in range(num_to_add):
             dicts.append(analytics_dict.copy())
 
         for analytics_dict in dicts:
-            analytics_dict['aguid'] = uuid.uuid4()
+            analytics_dict['aguid'] = uuid.uuid4().hex
             analytics_dict['uid'] = 'analytics##%s#%s' % (
                 analytics_dict['view_date'],
                 analytics_dict['aguid']
@@ -420,7 +424,10 @@ class MyDashboardViewsTests(TestCase):
             self.assertEqual(container, [])
 
     def test_dashboard_analytics_with_data(self):
-        self.add_analytics_data()
+        for type_ in ['home', 'listing', 'results']:
+            self.add_analytics_data(type_)
+        num_clicks = 1234
+        self.add_analytics_data('redirect', num_to_add=num_clicks)
 
         response = self.client.post(
             reverse('dashboard')+'?company='+str(self.company.id),
@@ -437,12 +444,20 @@ class MyDashboardViewsTests(TestCase):
             # of this type
             container = soup.select(selector)[0]
 
-            # All hits, authenticated or not
+            # All hits, humanized
             all_hits = container.select('span')[0]
-            self.assertEqual(int(all_hits.text.strip()), 2)
+            if selector == '#total-clicks':
+                expected = '1.2k'
+            else:
+                expected = '2'
+            self.assertEqual(all_hits.text.strip(), expected)
 
-            # Authenticated hits
-            auth = container.attrs['data-original-title']
-            auth_soup = BeautifulSoup(auth)
-            auth_span = auth_soup.select('span')[0]
-            self.assertEqual(int(auth_span.text.strip()), 1)
+            # All hits, raw number
+            if selector == '#total-clicks':
+                full = container.attrs['data-original-title']
+                self.assertEqual(full.strip(),
+                                 '1,234')
+            else:
+                with self.assertRaises(KeyError):
+                    # This is marked as having no effect, which is intended
+                    container.attrs['data-original-title']
