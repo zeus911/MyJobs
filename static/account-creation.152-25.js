@@ -38,9 +38,9 @@ function rotate_tagline(){
         };
 
     tagline.html(random_phrases[0]);
+    tagline.fadeIn('fast');
     var selected_phrases = random_phrases.slice(0,3);
     selected_phrases[selected_phrases.length] = "You.";
-    tagline.fadeIn('fast');
     setTimeout(function() {
         loop(1, selected_phrases);
     }, fadeDuration);
