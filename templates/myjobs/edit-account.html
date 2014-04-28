@@ -9,8 +9,71 @@
 {% block content %}
 {% block modal %}
 {% endblock %}
+<div class="wrapper">
+    <div class="row">
+        <div class="form-status"></div>
+        <div class="span12">
+            <h1>{% trans "Account " %}<small>{% trans "Settings" %}</small></h1>
+        </div>
+        {% if not user.is_active %}
+            <div class="alert alert-error">
+                <p>{% trans "Your account doesn't have full access to MyJobs features! Please activate it using the activation link sent to your email. "%} <a href="{% url 'resend_activation' %}">{% trans "Resend my activation email." %}</a></p>
+            </div>
+        {% endif %}
+        {% if user.password_change %}
+            <div class="alert alert-error">
+                <p>Welcome to my.jobs. Before doing anything else, you need to change your password from the one we created for you.</p>
+                {{ change_pass }}
+            </div>
+        {% endif %}
+        {% if message_body %}
+            <div class="alert alert-{{ messagetype }}">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                {{ message_body }}
+            </div>
+        {% endif %}
+    </div>
+    <div class="row">
+        <div id="as-communication" class="span12">
+            <h4>Communication Settings</h4>
+            <hr />
+            <div class="as-content">
+                <form method="post" action="" id="as-communication-form">
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div id="as-password" class="span12">
+            <h4>Change Password</h4>
+            <hr />
+            <div class="as-content">
+
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div id="as-disable" class="span12">
+            <h4>Disable Account</h4>
+            <hr />
+            <div class="as-content">
+
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div id="as-delete" class="span12">
+            <h4>Delete Account</h4>
+            <hr />
+            <div class="as-content">
+
+            </div>
+        </div>
+    </div>
+</div>
+
 <section>
-    <div class="wrapper"> 
+    <div class="wrapper">
         <div class="row">
           <div class="form-status">
           </div>
@@ -39,7 +102,7 @@
                         <a href="{% url 'edit_disable' %}" class="account-menu-item {{user.password_change|display}}" id="account-disable"><li><h4 class="account-menu-header">{% trans "Disable Account" %}</h4></li></a>
                         <a href="{% url 'edit_delete' %}" class="account-menu-item {{user.password_change|display}}" id="account-delete"><li><h4 class="account-menu-header">{% trans "Delete Account" %}</h4></li></a>
                         </ul>
-                    </div>  
+                    </div>
 
                     <div class="span8 account-settings">
                         {% block edit-main %}
