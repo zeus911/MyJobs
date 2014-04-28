@@ -73,11 +73,11 @@ class CustomUserManager(BaseUserManager):
                 password = self.make_random_password(length=8)
             user.set_password(password)
             user.is_active = False
-            user.gravatar = 'none'
-            user.save(using=self._db)
-            user.add_default_group()
+            user.gravatar = ''
             user.make_guid()
             user.timezone = settings.TIME_ZONE
+            user.save(using=self._db)
+            user.add_default_group()
             created = True
             custom_signals.email_created.send(sender=self, user=user,
                                               email=email)
@@ -107,11 +107,11 @@ class CustomUserManager(BaseUserManager):
             raise ValueError('Email address required.')
         user = self.model(email=CustomUserManager.normalize_email(email))
         user.is_active = True
-        user.gravatar = 'none'
+        user.gravatar = ''
         user.set_password(password)
+        user.make_guid()
         user.save(using=self._db)
         user.add_default_group()
-        user.make_guid()
         return user
         
     def create_superuser(self, **kwargs):
@@ -179,8 +179,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                               max_length=255, unique=True, db_index=True)
     date_joined = models.DateTimeField(_('date joined'), auto_now_add=True)
     gravatar = models.EmailField(verbose_name=_("gravatar email"),
-                                 max_length=255, db_index=True, blank=True,
-                                 null=True)
+                                 max_length=255, db_index=True, blank=True)
 
     profile_completion = models.IntegerField(validators=[MaxValueValidator(100),
                                                          MinValueValidator(0)],
