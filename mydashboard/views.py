@@ -201,13 +201,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
             analytics_solr = analytics_solr.add_filter_query('User_id:[* TO *]')
 
             auth_results = analytics_solr.search()
-            analytics_facets = auth_results.facets.get('facet_fields', {}).get(
-                'page_category', [])
-            facet_dict = sequence_to_dict(analytics_facets)
-            for key in facet_dict.keys():
-                context_key = 'auth_%s' % facet_var_map.get(key, '')
-                context[context_key] = facet_dict[key]
-
             results += auth_results.docs
 
     # Filter out duplicate entries for a user.
