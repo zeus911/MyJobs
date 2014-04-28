@@ -3,7 +3,7 @@
 {% if total %}
     <div>
         <div class="count-box" id="total-{{ id }}" style="width:100%;"
-             {% if total > 100 %}data-original-title="{{ total|intcomma }}"{% endif %}>
+             {% if total > 999 %}data-original-title="{{ total|intcomma }}"{% endif %}>
             <span class="count-text count-box-left">
                 {{ total|intabbr }}
             </span>
