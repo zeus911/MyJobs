@@ -26,23 +26,23 @@ function rotate_tagline(){
                    "Veterans"],
         fadeDuration = 1500,
         random_phrases = shuffle(phrases),
-        loop = function(index) {
-            if(index == random_phrases.length) return false;
+        loop = function(index, list) {
+            if(index == list.length) return false;
 
             tagline.fadeOut(fadeDuration/5, function() {
-                tagline.html(random_phrases[index]);
+                tagline.html(list[index]);
             })
                 .fadeIn(fadeDuration, function() {
-                    loop(index + 1);
+                    loop(index + 1, list);
                 });
         };
 
     tagline.html(random_phrases[0]);
-    random_phrases.shift();
-    random_phrases[random_phrases.length] = "You.";
     tagline.fadeIn('fast');
+    var selected_phrases = random_phrases.slice(0,3);
+    selected_phrases[selected_phrases.length] = "You.";
     setTimeout(function() {
-        loop(0);
+        loop(1, selected_phrases);
     }, fadeDuration);
 }
 
