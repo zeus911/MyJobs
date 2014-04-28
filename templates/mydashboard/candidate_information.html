@@ -185,6 +185,38 @@
 
                     {% endif %}
 
+                    {% if actions %}
+                        <div class="accordion" id="details-actions-collapse">
+                            <div class="accordion-group">
+                                <div class="accordion-heading details-heading">
+                                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#details-actions-collapse"
+                                       href="#actions-details-table">Microsite Activity<span class="pull-right"><i class="icon icon-plus"></i></span></a>
+                                </div>
+                                <div id="actions-details-table" class="accordion-body collapse">
+                                    <div class="accordion-inner">
+                                        {% for key in actions %}
+                                            <div class="info-row">
+                                                <ul id="details-smallList">
+                                                    {% with actions|get_attr:key as value %}
+                                                        {{ value }}
+                                                        {% if key == 'redirect' %}
+                                                            Application Click{{ value|pluralize }}
+                                                        {% elif key == 'listing' %}
+                                                            Job View{{ value|pluralize }}
+                                                        {% elif key == 'results' %}
+                                                            Search View{{ value|pluralize }}
+                                                        {% else %}
+                                                            Home View{{ value|pluralize }}
+                                                        {% endif %}
+                                                {% endwith %}
+                                                </ul>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>{# /formBox #}
             </div>{# /span4 #}
         </div>{# /candidate-page-mobile-view #}
