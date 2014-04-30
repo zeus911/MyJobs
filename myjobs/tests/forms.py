@@ -76,23 +76,3 @@ class AccountFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors['family_name'][0],
                          "Both a first and last name required.")
-
-    def test_gravatar_email_list(self):
-        """
-        Dropdowns for selecting the user's preferred Gravatar email should be
-        the only dropdowns that include "Do not use Gravatar" as an option -
-        others should default to the user's primary email address.
-        """
-        self.client.login_user(self.user)
-        response = self.client.get(reverse('edit_communication'))
-        soup = BeautifulSoup(response.content)
-        options = soup.select('#id_digest_email option')
-        self.assertEqual(len(options), 1)
-        self.assertTrue(self.user.gravatar in options[0])
-
-        response = self.client.get(reverse('edit_basic'))
-        soup = BeautifulSoup(response.content)
-        options = soup.select('#id_gravatar option')
-        self.assertEqual(len(options), 2)
-        self.assertTrue('Do not use Gravatar' in options[0])
-        self.assertTrue(self.user.gravatar in options[1])
