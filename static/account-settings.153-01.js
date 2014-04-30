@@ -40,7 +40,7 @@ $(document).ready(function() {
     });
 
     $("#to-disable").on("click", function(){
-        $(this).parent("div")
+        $('#as-disable').children('h4').trigger("click");
     })
 });
 
