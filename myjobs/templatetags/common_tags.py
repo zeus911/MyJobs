@@ -186,3 +186,15 @@ def to_string(value):
 @register.filter
 def get_attr(obj, attr):
     return obj.get(attr)
+
+
+@register.simple_tag(takes_context=True)
+def gz(context):
+    request = context.get('request', None)
+    if request == None:
+        return ''
+    ae = request.META.get('HTTP_ACCEPT_ENCODING', '')
+    if 'gzip' in ae:
+        return '.gz'
+    else:
+        return ''

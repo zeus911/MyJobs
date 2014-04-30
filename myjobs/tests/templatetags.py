@@ -1,11 +1,11 @@
 from bs4 import BeautifulSoup
 
-from django.template import Template, Context, TemplateSyntaxError
+from django.template import Template, Context
 from django.test import TestCase
 
 from myjobs.forms import EditAccountForm
-from myjobs.models import User
 from myjobs.tests.factories import UserFactory
+from myjobs.templatetags.common_tags import gz
 from myprofile.tests.factories import PrimaryNameFactory
 
 
@@ -41,6 +41,7 @@ class CommonTagsTests(TestCase):
         out = template.render(self.context)
         self.assertEqual(out, 'Default value')
 
+
 class FormTagsTests(TestCase):
     def setUp(self):
         self.user = UserFactory()
@@ -64,9 +65,44 @@ class FormTagsTests(TestCase):
 
     def test_add_required_label_extra_classes(self):
         self.template = Template(
-                         '{% load form_tags %}'
-                         '{% add_required_label form.visible_fields.2 "extra-class" %}'
+                 '{% load form_tags %}'
+                 '{% add_required_label form.visible_fields.2 "extra-class" %}'
                       )
         out = self.template.render(self.context)
         soup = BeautifulSoup(out)
-        self.assertItemsEqual(soup.label['class'], [u'extra-class', u'label-required'])
+        self.assertItemsEqual(soup.label['class'], [u'extra-class',
+                                                    u'label-required'])
+
+
+class GZipTagTestCase(TestCase):
+    """Validate that the gzip tag works correctly."""
+
+    def test_gz_without_request(self):
+        """
+        Validate that when the request is not passed to the tag, we default to
+        no gzip compression.
+        """
+        context = {}
+        self.assertEqual(gz(context), '')
+
+    def test_gz_without_gzip_encoding_accepted(self):
+        """
+        Validate that when the request does not specify gzip is accepted, we
+        do not append .gz to links.
+        """
+        # Mock the context object, which should include a request.
+        request = lambda: None
+        request.META = {'HTTP_ACCEPT_ENCODING': ''}
+        context = {'request': request}
+        self.assertEqual(gz(context), '')
+
+    def test_gz_with_gzip_encoding_accepted(self):
+        """
+        Validate that when the request does not specify gzip is accepted, we
+        do not append .gz to links.
+        """
+        # Mock the context object, which should include a request.
+        request = lambda: None
+        request.META = {'HTTP_ACCEPT_ENCODING': 'gzip'}
+        context = {'request': request}
+        self.assertEqual(gz(context), '.gz')
