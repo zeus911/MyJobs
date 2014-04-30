@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% load disable_tags %}
+{% load common_tags %}
+{% load form_tags %}
 {% block site-title %}
     <title>Account Settings - My.jobs</title>
     <meta name="title" content="Account Settings - My.jobs">
@@ -11,128 +12,183 @@
 {% endblock %}
 <div class="wrapper">
     <div class="row">
-        <div class="form-status"></div>
         <div class="span12">
             <h1>{% trans "Account " %}<small>{% trans "Settings" %}</small></h1>
         </div>
-        {% if not user.is_active %}
+    </div>
+    <div class="row">
+        <div class="span12">
+            {% if not user.is_active %}
             <div class="alert alert-error">
                 <p>{% trans "Your account doesn't have full access to MyJobs features! Please activate it using the activation link sent to your email. "%} <a href="{% url 'resend_activation' %}">{% trans "Resend my activation email." %}</a></p>
             </div>
-        {% endif %}
-        {% if user.password_change %}
-            <div class="alert alert-error">
-                <p>Welcome to my.jobs. Before doing anything else, you need to change your password from the one we created for you.</p>
-                {{ change_pass }}
-            </div>
-        {% endif %}
-        {% if message_body %}
-            <div class="alert alert-{{ messagetype }}">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                {{ message_body }}
-            </div>
-        {% endif %}
+            {% endif %}
+            {% if user.password_change %}
+                <div class="alert alert-error">
+                    <p>Welcome to my.jobs. Before doing anything else, you need to change your password from the one we created for you.</p>
+                    {{ change_pass }}
+                </div>
+            {% endif %}
+            {% if message_body %}
+                <div class="alert alert-{{ messagetype }}">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    {{ message_body }}
+                </div>
+            {% endif %}
+        </div>
     </div>
     <div class="row">
-        <div id="as-communication" class="span12">
+        <div id="as-communication" class="span12 as-section">
             <h4>Communication Settings</h4>
             <hr />
             <div class="as-content">
-                <form method="post" action="" id="as-communication-form">
+                <form method="post" action="{% url 'edit_account' %}?communication#as-communication" id="as-communication-form">
+                    {% with communication_form as form %}
+                    {% include "includes/form-error-highlight.html" %}
+                    {% csrf_token %}
+                    {% endwith %}
+                    <div class="offset4 span4 actions">
+                        <button type="submit" class="btn primary pull-right" value="submit">{% trans "Save" %}</button>
+                        <div class="clear"></div>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
     <div class="row">
-        <div id="as-password" class="span12">
+        <div id="as-password" class="span12 as-section as-hide">
             <h4>Change Password</h4>
             <hr />
-            <div class="as-content">
-
+            <div id='as-password-content' class="as-content">
+                <form method="post" action="{% url 'edit_account' %}?password#as-password" id="as-communication-form">
+                    {% with password_form as form %}
+                    {% include "includes/form-error-highlight.html" %}
+                    {% csrf_token %}
+                    {% endwith %}
+                    <div class="offset4 span4 actions">
+                        <button type="submit" class="btn primary pull-right" value="submit">{% trans "Save" %}</button>
+                        <div class="clear"></div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
     <div class="row">
-        <div id="as-disable" class="span12">
+        <div id="as-disable" class="span12 as-section as-hide">
             <h4>Disable Account</h4>
             <hr />
             <div class="as-content">
-
+                <div class="span3 pull-left">
+                    <div class="gravatar-message">
+                        <div class="gravatar-message">
+                            {% get_gravatar user '150' %}<br>
+                            <img class="warning-badge" src="{{STATIC_URL}}images/caution-badge.png" />
+                        </div>
+                    </div>
+                </div>
+                <div class="span8 pull-right">
+                    <div class="row">
+                        <div class="span8">
+                            {% trans "This will do the following:" %}<br/>
+                            <ul>
+                                <li>{% trans "Deactivate all your job search tools" %}</li>
+                                <li>{% trans "Deactivate all your saved searches" %}</li>
+                                <li>{% trans "Disable all profile modules except your name and email" %}</li>
+                                <li>{% trans "Prevent my.jobs from sending you any email" %}</li>
+                            </ul>
+                            {% trans "You can activate your account at a later time, which will re-enable everything and let you pick up where you left off." %}
+                        </div>
+                    </div>
+                </div>
+                <div class="offset4 span6 actions">
+                    <button id="delete" type="button" data-toggle="modal" data-target="#disable-confirm" class="btn primary pull-right confirm-modal">{% trans 'Disable' %}</button>
+                    <div class="clear"></div>
+                </div>
+                <div class="clear"></div>
             </div>
         </div>
     </div>
+    <div id="disable-confirm" class="modal hide fade row">
+        <div class="modal-header">
+            {% trans 'Disable Account?' %}
+        </div>
+        <div class="modal-body">
+
+            {% blocktrans %}
+
+            Are you sure you want to disable your Account?
+
+            {% endblocktrans %}
+
+        </div>
+        <div class="modal-footer">
+            <div class="actions">
+                <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
+                <a href="{% url 'disable_account' %}" class="btn">Yes, disable my account</a>
+            </div>
+        </div>
+    </div>{# /delete-confirm #}
     <div class="row">
-        <div id="as-delete" class="span12">
+        <div id="as-delete" class="span12 as-section as-hide">
             <h4>Delete Account</h4>
             <hr />
             <div class="as-content">
-
-            </div>
-        </div>
-    </div>
-</div>
-
-<section>
-    <div class="wrapper">
-        <div class="row">
-          <div class="form-status">
-          </div>
-            {% if message_body %}
-            <div class="alert alert-{{messagetype}}">
-              <button type="button" class="close" data-dismiss="alert">&times;</button>
-              {{message_body}}
-            </div>
-            {% endif %}
-            <div class="span12">
-                <h1>{% trans "Account " %}<small>{% trans "Settings"%}</small></h1>
-                <div class="account-box">
-                    <div class="row">
-                    <div class="span4 pull-left settings-nav">
-                        <ul>
-                        <a href="" class="account-menu-item {{user.password_change|display}}" id="account-basic"><li><h4 class="account-menu-header">{% trans "Personal Information" %}</h4>
-                        </li></a>
-
-                        {% if user.is_active %}
-
-                            <a href="{% url 'edit_communication' %}" class="account-menu-item {{user.password_change|display}}" id="account-communication"><li><h4 class="account-menu-header">{% trans "Communication Settings" %}</h4></li></a>
-
-                        {% endif %}
-
-                        <a href="{% url 'edit_password' %}" class="account-menu-item" id="account-password"><li><h4 class="account-menu-header">{% trans "Change Password" %}</h4></li></a>
-                        <a href="{% url 'edit_disable' %}" class="account-menu-item {{user.password_change|display}}" id="account-disable"><li><h4 class="account-menu-header">{% trans "Disable Account" %}</h4></li></a>
-                        <a href="{% url 'edit_delete' %}" class="account-menu-item {{user.password_change|display}}" id="account-delete"><li><h4 class="account-menu-header">{% trans "Delete Account" %}</h4></li></a>
-                        </ul>
-                    </div>
-
-                    <div class="span8 account-settings">
-                        {% block edit-main %}
-                        {% if user.password_change %}
-                            <p>Welcome to my.jobs. Before doing anything else, you need to change your password from the one we created for you.</p>
-                            {{ change_pass }}
-                        {% endif %}
-                        <form action="" method="POST" id="form-{{section_name}}">
-                          {% include "includes/form-error-highlight.html" %}
-                          {% csrf_token %}
-                          <div class="actions">
-                            <a href="" class="btn pull-right">{% trans 'Cancel' %}</a>
-                            <button type="submit" class="btn primary pull-right" value="submit">{% trans "Save" %}</button>
-                            <div class="clear"></div>
-                          </div>
-                        </form>
-
-                        {% endblock%}
-                    </div>
+                <div class="span3 pull-left">
+                    <div class="gravatar-message">
+                        {% get_gravatar user '150' %}
+                        <br>
+                        <img class="warning-badge" src="{{STATIC_URL}}images/critical-badge.png" />
                     </div>
                 </div>
+                <div class="span8 pull-right">
+                    <div class="row">
+                        <div class="span8">
+                            {% trans "This will do the following:" %}<br/>
+                            <ul>
+                                <li>{% trans "Delete all your profile data" %}</li>
+                                <li>{% trans "Delete all your saved searches" %}</li>
+                                <li>{% trans "Delete your login information" %}</li>
+                            </ul>
+                            {% trans "This cannot be reversed." %}<br /> <br />
+                            {% trans "If you want to preserve your account for use later, then you should" %}
+                        <a id='to-disable' href="#">{% trans "disable your account" %}</a> {% trans "instead." %}
+                        </div>
+                    </div>
+                </div>
+                <div class="offset4 span6 actions">
+                    <button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn primary pull-right confirm-modal">{% trans 'Delete' %}</button>
+                    <div class="clear"></div>
+                </div>
+                <div class="clear"></div>
             </div>
         </div>
     </div>
-</section>
+    <div id="delete-confirm" class="modal hide fade row">
+        <div class="modal-header">
+            {% trans 'Delete Account?' %}
+        </div>
+        <div class="modal-body">
+
+            {% blocktrans %}
+
+            Are you sure you want to delete <b>{{ partner }}</b>?
+
+            {% endblocktrans %}
+
+        </div>
+        <div class="modal-footer">
+            <div class="actions">
+                <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
+                <a href="{% url 'delete_account' %}" class="btn">{% trans "Yes, delete my account" %}</a>
+            </div>
+        </div>
+    </div>{# /delete-confirm #}
+</div>
 {% endblock %}
 
 {% block extra-js %}
 <script type="text/javascript" src="//www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
-<script src="{{ STATIC_URL }}account-settings.151-01.js"></script>
+<script src="{{ STATIC_URL }}account-settings.153-01.js"></script>
 <script type="text/javascript">
     var auto_user = {% if user.password_change %}true{% else %}false{% endif %}
 </script>
