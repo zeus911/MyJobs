@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 from django.template import Template, Context, TemplateSyntaxError
 from django.test import TestCase
 
-from myjobs.forms import EditAccountForm
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
 from myprofile.tests.factories import PrimaryNameFactory
