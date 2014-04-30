@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
-from myjobs.forms import ChangePasswordForm, EditAccountForm
+from myjobs.forms import ChangePasswordForm
 from myjobs.tests.factories import UserFactory
 from myjobs.tests.views import TestClient
 from myprofile.tests.factories import PrimaryNameFactory
@@ -44,35 +44,3 @@ class AccountFormTests(TestCase):
         self.failUnless(form.is_valid())
         form.save()
         self.failUnless(self.user.check_password('anothersecret'))
-
-    def test_no_name_account_form(self):
-        """
-        Leaving both the first and last name fields blank produces a valid save.
-        It also deletes the primary name object from the Name model.
-        """
-        data = {"gravatar": "alice@example.com", "user": self.user}
-        form = EditAccountForm(data, **{'user':self.user})
-        self.assertTrue(form.is_valid())
-        form.save(self.user)
-        self.assertEqual(Name.objects.count(), 0) 
-
-    def test_both_names_account_form(self):
-        """
-        Filling out both name fields produces a valid save.
-        """
-        
-        data = {"given_name": "Alicia", "family_name": "Smith",
-                "gravatar": "alice@example.com"}
-        form = EditAccountForm(data, **{'user':self.user})
-        self.assertTrue(form.is_valid())
-
-    def test_partial_name_account_form(self):
-        """
-        Filling out only the first name or only the last name produces an error.
-        """
-        data = {"given_name": "Alicia", "gravatar": "alice@example.com",
-                "user": self.user}
-        form = EditAccountForm(data, **{'user':self.user})
-        self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors['family_name'][0],
-                         "Both a first and last name required.")

@@ -20,8 +20,7 @@ from django.views.generic import TemplateView
 from captcha.fields import ReCaptchaField
 
 from myjobs.decorators import user_is_allowed
-from myjobs.forms import (ChangePasswordForm, EditAccountForm,
-    EditCommunicationForm)
+from myjobs.forms import ChangePasswordForm, EditCommunicationForm
 from myjobs.helpers import expire_login, log_to_jira
 from myjobs.models import EmailLog, Ticket, User
 from myprofile.forms import (InitialNameForm, InitialEducationForm,
