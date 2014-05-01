@@ -60,66 +60,6 @@ class BaseUserForm(ModelForm):
             instance.save()
         return instance
 
-
-class EditAccountForm(Form):
-    given_name = CharField(label=_("First Name"),
-                           widget=TextInput(
-                               attrs={'placeholder': 'First Name'}),
-                           max_length=40, required=False)
-    family_name = CharField(label=_("Last Name"),
-                            widget=TextInput(
-                                attrs={'placeholder': 'Last Name'}),
-                            max_length=40, required=False)
-
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
-        self.choices = make_choices(self.user, 'none', 'Do not use Gravatar')
-        super(EditAccountForm, self).__init__(*args, **kwargs)
-        self.fields["gravatar"] = ChoiceField(
-            label=_("Gravatar Email"),
-            widget=Select(attrs={'id': 'id_gravatar'}),
-            choices=self.choices,
-            initial=self.choices[0][0])
-
-    def clean(self):
-        cleaned_data = super(EditAccountForm, self).clean()
-        first = cleaned_data.get("given_name")
-        last = cleaned_data.get("family_name")
-
-        # Exclusive or. These fields must either both exist or not at all
-        if bool(first) != bool(last):
-            error_msg = u"Both a first and last name required."
-            self._errors["given_name"] = self.error_class([error_msg])
-            self._errors["family_name"] = self.error_class([error_msg])
-
-            # These fields are no longer valid. Remove them from the
-            # cleaned data.
-            del cleaned_data["given_name"]
-            del cleaned_data["family_name"]
-
-        return cleaned_data
-
-    def save(self, u):
-        first = self.cleaned_data.get("given_name", None)
-        last = self.cleaned_data.get("family_name", None)
-
-        try:
-            obj = Name.objects.get(user=u, primary=True)
-            if not first and not last:
-                obj.delete()
-            else:
-                obj.given_name = first
-                obj.family_name = last
-                obj.save()
-        except Name.DoesNotExist:
-            obj = Name(user=u, primary=True, given_name=first,
-                       family_name=last)
-            obj.save()
-
-        u.gravatar = self.cleaned_data["gravatar"]
-        u.save()
-
-
 class EditCommunicationForm(BaseUserForm):
     def __init__(self, *args, **kwargs):
         super(EditCommunicationForm, self).__init__(*args, **kwargs)

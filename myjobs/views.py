@@ -12,7 +12,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.db import IntegrityError
 from django.forms import Form, model_to_dict
 from django.http import HttpResponse
-from django.shortcuts import render_to_response, redirect, render
+from django.shortcuts import render_to_response, redirect, render, Http404
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
@@ -20,8 +20,7 @@ from django.views.generic import TemplateView
 from captcha.fields import ReCaptchaField
 
 from myjobs.decorators import user_is_allowed
-from myjobs.forms import (ChangePasswordForm, EditAccountForm,
-    EditCommunicationForm)
+from myjobs.forms import ChangePasswordForm, EditCommunicationForm
 from myjobs.helpers import expire_login, log_to_jira
 from myjobs.models import EmailLog, Ticket, User
 from myprofile.forms import (InitialNameForm, InitialEducationForm,
@@ -273,98 +272,59 @@ def contact(request):
 @user_is_allowed()
 @user_passes_test(User.objects.not_disabled)
 def edit_account(request):
-    initial_dict = check_name_obj(request.user)
-    ctx = {'user': request.user,
-           'gravatar_100': request.user.get_gravatar_url(size=100)}
+    user = request.user
+    obj = User.objects.get(id=user.id)
+    change_password = False
+
+    communication_form = EditCommunicationForm(user=user, instance=obj)
+    password_form = ChangePasswordForm(user=user)
 
     if request.user.password_change:
-        ctx['form'] = ChangePasswordForm(user=request.user)
-        ctx['section_name'] = 'password'
-    else:
-        form = EditAccountForm(initial=initial_dict, user=request.user)
-        if request.method == "POST":
-            form = EditAccountForm(user=request.user, data=request.POST)
+        change_password = True
+
+    ctx = {'user': user,
+           'communication_form': communication_form,
+           'password_form': password_form,
+           'change_password': change_password}
+
+    if request.method == "POST":
+        obj = User.objects.get(id=request.user.id)
+        if request.REQUEST.has_key('communication'):
+            form = EditCommunicationForm(user=request.user, instance=obj,
+                                         data=request.POST)
             if form.is_valid():
-                form.save(request.user)
-                return HttpResponse('success')
-        ctx['form'] = form
-        ctx['section_name'] = 'basic'
+                form.save()
+                ctx['communication_form'] = form
+                ctx['message_body'] = ('Communication Settings have been '
+                                       'updated successfully.')
+                ctx['messagetype'] = 'success'
+                return render_to_response('myjobs/edit-account.html', ctx,
+                                          RequestContext(request))
+            else:
+                ctx['communication_form'] = form
+                return render_to_response('myjobs/edit-account.html', ctx,
+                                          RequestContext(request))
+
+        elif request.REQUEST.has_key('password'):
+            form = ChangePasswordForm(user=request.user, data=request.POST)
+            if form.is_valid():
+                request.user.password_change = False
+                request.user.save()
+                form.save()
+                ctx['password_form'] = form
+                ctx['message_body'] = ('Password Settings have been '
+                                       'updated successfully.')
+                ctx['messagetype'] = 'success'
+                return render_to_response('myjobs/edit-account.html', ctx,
+                                          RequestContext(request))
+            else:
+                ctx['password_form'] = form
+                return render_to_response('myjobs/edit-account.html', ctx,
+                                          RequestContext(request))
+        else:
+            return Http404
 
     return render_to_response('myjobs/edit-account.html', ctx,
-                              RequestContext(request))
-
-
-@user_passes_test(User.objects.not_disabled)
-def edit_basic(request):
-    initial_dict = check_name_obj(request.user)
-    form = EditAccountForm(initial=initial_dict, user=request.user)
-    if request.method == "POST":
-        form = EditAccountForm(user=request.user,
-                               data=request.POST,
-                               auto_id=False)
-        if form.is_valid():
-            form.save(request.user)
-            return HttpResponse('success')
-        else:
-            return HttpResponse(json.dumps({'errors': form.errors.items()}))
-
-    ctx = {'form': form,
-           'gravatar_100': request.user.get_gravatar_url(size=100),
-           'section_name': 'basic'}
-
-    return render_to_response('myjobs/edit-form-template.html', ctx,
-                              RequestContext(request))
-
-
-@user_passes_test(User.objects.not_disabled)
-def edit_communication(request):
-    obj = User.objects.get(id=request.user.id)
-
-    form = EditCommunicationForm(user=request.user, instance=obj)
-    if request.method == "POST":
-        form = EditCommunicationForm(user=request.user, instance=obj,
-                                     data=request.POST)
-        if form.is_valid():
-            form.save()
-            return HttpResponse('success')
-
-    ctx = {'form': form,
-           'section_name': 'communication'}
-
-    return render_to_response('myjobs/edit-form-template.html', ctx,
-                              RequestContext(request))
-
-
-@user_passes_test(User.objects.not_disabled)
-def edit_password(request):
-    form = ChangePasswordForm()
-    if request.method == "POST":
-        form = ChangePasswordForm(user=request.user, data=request.POST)
-        if form.is_valid():
-            request.user.password_change = False
-            request.user.save()
-            form.save()
-            return HttpResponse('success')
-        else:
-            return HttpResponse(json.dumps({'errors': form.errors.items()}))
-
-    ctx = {'form': form,
-           'section_name': 'password'}
-    return render_to_response('myjobs/edit-form-template.html', ctx,
-                              RequestContext(request))
-
-
-@user_passes_test(User.objects.not_disabled)
-def edit_delete(request):
-    ctx = {'gravatar_150': request.user.get_gravatar_url(size=150)}
-    return render_to_response('myjobs/edit-delete.html', ctx,
-                              RequestContext(request))
-
-
-@user_passes_test(User.objects.not_disabled)
-def edit_disable(request):
-    ctx = {'gravatar_150': request.user.get_gravatar_url(size=150)}
-    return render_to_response('myjobs/edit-disable.html', ctx,
                               RequestContext(request))
 
 
