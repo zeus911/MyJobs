@@ -51,8 +51,9 @@ $(document).ready(function() {
     setTimeout(add_date_button, 1);
 
 
-    $('#save').on("click", function(e) {
+    $('#profile-save').on("click", function(e) {
         e.preventDefault();
+        console.log('mmm?');
 
         var form = $('#profile-unit-form');
 
@@ -70,6 +71,7 @@ $(document).ready(function() {
             url: '/profile/view/edit',
             data: serialized_data,
             success: function(data, status) {
+                console.log('test');
                 // Replace the content with the result of the AJAX call
                 container = $('#profile-unit-form').parent().parent()
                 container.fadeOut(400, function () {
