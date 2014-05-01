@@ -117,7 +117,8 @@ def handle_form(request):
                 return render_to_response('myprofile/suggestions.html',
                                           {'suggestions': suggestions[:3],
                                            'model_name': model_name,
-                                           'module': {'item': instance}})
+                                           'module': {'item': instance}},
+                                          RequestContext(request))
             else:
                 return HttpResponseRedirect(reverse('view_profile'))
         else:
