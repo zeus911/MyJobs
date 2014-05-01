@@ -12,25 +12,17 @@
     <div class="span8 offset2">
         <div class="formBox">
             <table class="table table-bordered table-striped">
-
                 {% with module.item|process_field_types as fields %}
-
                     {% for label, value, type in fields %}
-
                         {% if value == None or value == "" %}
                         {% else %}
-
                         <tr class="row">
                             <td class="span3">{{ label }}</td>
                             <td class="span9">{{ value }}</td>
                         </tr>
-
                         {% endif %}
-
                     {% endfor %}
-
                 {% endwith %}
-
             </table>
             <div class="actions">
                 <a class="btn primary pull-right" href="{% url 'view_profile' %}">{% trans 'Back' %}</a>

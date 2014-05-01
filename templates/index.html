@@ -10,7 +10,7 @@
         <div class="span8"  id="title">
             {% if not logo_url %}
             <h1>{% trans 'My.jobs' %}</h1>
-            <h2>The Right Place for You.</h2>
+            <h2 id="tagline">The Right Place for <a></a><noscript> You.</noscript></h2>
             {% else %}
             <h1 style="background-image:url({{ logo_url }}) !important">{{ site_name }}</h1>
             {% endif %}
@@ -76,5 +76,5 @@
 
 {% block extra-js %}
 <script> var num_modules = {{ num_modules }}; </script>
-<script type="text/javascript" src="{{STATIC_URL}}account-creation.151-01.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}account-creation.152-25.js"></script>
 {% endblock %}

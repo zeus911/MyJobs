@@ -1,3 +1,4 @@
+from collections import Counter
 import urllib
 
 from copy import copy
@@ -34,6 +35,28 @@ def get_company_microsites(company):
     return (microsites, buids)
 
 
+def analytics(employer, company, candidate):
+    if employer not in company.admins.all():
+        raise Http404
+
+    authorized_microsites, buids = get_company_microsites(company)
+
+    if buids:
+        buid_q = ['(job_view_buid:%s)' % str(buid) for buid in buids]
+        buid_q = ' OR '.join(buid_q)
+        buid_q = '(%s)' % buid_q
+
+        domain_q = ['(domain:%s)' % microsite
+                    for microsite in authorized_microsites]
+        domain_q = ' OR '.join(domain_q)
+        domain_q = '(%s)' % domain_q
+
+        q = '(%s OR %s)' % (buid_q, domain_q)
+        solr = Solr().add_filter_query(q).add_query(
+            'User_id:%s' % candidate.pk)
+        return solr.search().docs
+
+
 def saved_searches(employer, company, candidate):
     """
     Function that gets employer's companies and those companies microsites.
@@ -61,6 +84,11 @@ def saved_searches(employer, company, candidate):
     candidate_domains = [get_domain(url).lower() for url in candidate_searches]
 
     return [url for url in candidate_domains if url in employer_domains]
+
+
+def get_analytics_counts(actions):
+    page_types = [entry.get('page_category', '') for entry in actions]
+    return Counter(page_types)
 
 
 def filter_by_microsite(microsites, user_solr=None, facet_solr=None):

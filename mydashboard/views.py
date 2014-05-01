@@ -12,11 +12,12 @@ from django.http import Http404, HttpResponse
 from django.template import RequestContext
 from django.shortcuts import render_to_response
 
-from global_helpers import get_domain, get_int_or_none
+from global_helpers import get_domain, get_int_or_none, sequence_to_dict
 from mydashboard.helpers import (saved_searches, filter_by_microsite,
                                  filter_by_date, apply_facets_and_filters,
                                  parse_facets, remove_param_from_url,
-                                 get_company_microsites)
+                                 get_company_microsites, analytics,
+                                 get_analytics_counts)
 from mydashboard.models import Company, CompanyUser
 from myjobs.models import User
 from myprofile.models import PrimaryNameProfileUnitManager, ProfileUnits
@@ -72,15 +73,26 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     authorized_microsites, buids = get_company_microsites(company)
 
     if buids:
-        buid_q = ['(job_view_buid:%s)' % str(buid) for buid in buids]
+        unique_buids = set(buids)
+        unique_microsites = set(authorized_microsites)
+        buid_q = ['(job_view_buid:%s)' % str(buid) for buid in unique_buids]
         buid_q = ' OR '.join(buid_q)
         buid_q = '(%s)' % buid_q
-        analytics_solr = Solr().add_query('page_category:redirect')\
-            .add_filter_query(buid_q).rows_to_fetch(0)
+        job_solr = Solr().add_filter_query(buid_q).add_query(
+            '((page_category:listing) OR (page_category:redirect))').add_facet_field(
+                'page_category')
+
+        domain_q = ['(domain:%s)' % microsite
+                    for microsite in unique_microsites]
+        domain_q = ' OR '.join(domain_q)
+        domain_q = '(%s)' % domain_q
+        non_job_solr = Solr().add_filter_query(domain_q).add_query(
+            '((page_category:results) OR (page_category:home))').add_facet_field(
+                'page_category')
     else:
         # Likelihood that a company doesn't have buids attached to it?
         # Should never happen; catch it anyway.
-        analytics_solr = None
+        job_solr = None
 
     admins = CompanyUser.objects.filter(company=company.id)
 
@@ -94,10 +106,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     # which then gets replaced with all microsite urls for that company
     site_name = ''
     if requested_microsite != company.name:
-        if requested_microsite.find('//') == -1:
-            requested_microsite = '//' + requested_microsite
         active_microsites = authorized_microsites.filter(
-            domain__contains=requested_microsite)
+            domain__startswith=requested_microsite)
     else:
         active_microsites = authorized_microsites
         site_name = company.name
@@ -111,9 +121,10 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     user_solr = user_solr.add_filter_query(rng)
     facet_solr = facet_solr.add_query(rng)
 
-    if analytics_solr is not None:
+    if job_solr is not None:
         rng = filter_by_date(request, field='view_date')[0]
-        analytics_solr = analytics_solr.add_query(rng)
+        job_solr = job_solr.add_filter_query(rng)
+        non_job_solr = non_job_solr.add_filter_query(rng)
 
     if request.GET.get('search', False):
         user_solr = user_solr.add_query("%s" % request.GET['search'])
@@ -131,18 +142,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     solr_results = user_solr.rows_to_fetch(100).search()
 
     # List of dashboard widgets to display.
-    dashboard_widgets = ["apply_click", "candidates", "search",
+    dashboard_widgets = ["home_views", "search_views", "job_views",
+                         "apply_clicks", "candidates", "search",
                          "applied_filters", "filters"]
-
-    # Filter out duplicate entries for a user.
-    candidates = sorted(dict_to_object(solr_results.docs),
-                        key=lambda y: y.User_id)
-    candidate_list = []
-    for x in groupby(candidates, key=lambda y: y.User_id):
-        candidate_list.append(list(x[1])[0])
-    candidate_list = sorted(candidate_list,
-                            key=lambda y: y.SavedSearch_created_on,
-                            reverse=True)
 
     # Date button highlighting
     if 'today' in request.REQUEST:
@@ -160,7 +162,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     context = {
         'admin_you': request.user,
         'applied_filters': filters,
-        'candidates': candidate_list,
         'candidates_page': candidates_page,
         'company_admins': admins,
         'company_id': company.id,
@@ -174,14 +175,49 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         'date_submit_url': url,
         'facets': all_facets,
         'site_name': site_name,
-        'total_candidates': len(candidate_list),
         'view_name': 'Company Dashboard',
     }
 
-    if analytics_solr is not None:
-        context['total_apply'] = analytics_solr.search().hits
-        analytics_solr = analytics_solr.add_filter_query('User_id:[* TO *]')
-        context['auth_apply'] = analytics_solr.search().hits
+    results = solr_results.docs
+
+    if job_solr is not None:
+        for analytics_solr in [job_solr, non_job_solr]:
+            # listing and results are tokenized to list and result
+            facet_var_map = {
+                'home': 'home',
+                'list': 'job_view',
+                'result': 'search',
+                'redirect': 'apply',
+            }
+
+            all_results = analytics_solr.rows_to_fetch(0).search()
+            analytics_facets = all_results.facets.get('facet_fields', {}).get(
+                'page_category', [])
+            facet_dict = sequence_to_dict(analytics_facets)
+            for key in facet_dict.keys():
+                context_key = 'total_%s' % facet_var_map.get(key, '')
+                context[context_key] = facet_dict[key]
+
+            analytics_solr = analytics_solr.add_filter_query('User_id:[* TO *]')
+
+            auth_results = analytics_solr.search()
+            results += auth_results.docs
+
+    # Filter out duplicate entries for a user.
+    candidates = sorted(dict_to_object(results),
+                        key=lambda y: y.User_id)
+    candidate_list = []
+    for x in groupby(candidates, key=lambda y: y.User_id):
+        candidate_list.append(list(x[1])[0])
+    candidate_list = sorted(candidate_list,
+                            key=lambda y: y.SavedSearch_created_on
+                            if hasattr(y, 'SavedSearch_created_on')
+                            else y.view_date,
+                            reverse=True)
+
+    context['candidates'] = candidate_list
+    context['total_candidates'] = len(candidate_list)
+
 
     if extra_context is not None:
         context.update(extra_context)
@@ -292,8 +328,10 @@ def candidate_information(request):
         raise Http404
 
     urls = saved_searches(request.user, company, candidate)
+    actions = analytics(request.user, company, candidate)
+    actions = get_analytics_counts(actions)
 
-    if not urls:
+    if not urls and not actions:
         raise Http404
 
     manager = PrimaryNameProfileUnitManager(order=['employmenthistory',
@@ -324,6 +362,7 @@ def candidate_information(request):
         'searches': searches,
         'coming_from': coming_from,
         'query_string': query_string,
+        'actions': actions,
     }
 
     return render_to_response('mydashboard/candidate_information.html',

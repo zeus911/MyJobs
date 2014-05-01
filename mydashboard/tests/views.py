@@ -1,8 +1,8 @@
-import pysolr
-import unittest
+from datetime import datetime, timedelta
+import uuid
 
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
+import pysolr
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -13,7 +13,6 @@ from mydashboard.models import CompanyUser
 from mydashboard.tests.factories import (CompanyFactory, CompanyUserFactory,
                                          SeoSiteFactory, BusinessUnitFactory)
 from mydashboard.helpers import country_codes
-from myjobs.models import User
 from myjobs.tests.views import TestClient
 from myjobs.tests.factories import UserFactory
 from myprofile.tests.factories import (PrimaryNameFactory,
@@ -23,7 +22,6 @@ from myprofile.tests.factories import (PrimaryNameFactory,
                                        EmploymentHistoryFactory)
 from mysearches.models import SavedSearch
 from mysearches.tests.factories import SavedSearchFactory
-from solr.signals import object_to_dict
 from tasks import update_solr_task
 
 SEARCH_OPTS = ['django', 'python', 'programming']
@@ -65,6 +63,57 @@ class MyDashboardViewsTests(TestCase):
     def tearDown(self):
         solr = pysolr.Solr(settings.TEST_SOLR_INSTANCE)
         solr.delete(q='*:*')
+
+    def add_analytics_data(self, type_, num_to_add=2):
+        """
+        Adds testing analytics data to Solr.
+
+        Adds two entries per page category, one for unauthenticated and one for
+        authenticated hits.
+        """
+        dicts = []
+        base_dict = {'domain': self.microsite.domain,
+                     'view_date': datetime.now()
+        }
+        home_dict = {
+            'page_category': 'home'
+        }
+        view_dict = {
+            'job_view_guid': '1'*32,
+            'job_view_buid': self.business_unit.pk,
+            'page_category': 'listing'
+        }
+        search_dict = {
+            'page_category': 'results'
+        }
+        apply_dict = {
+            'job_view_guid': '2'*32,
+            'job_view_buid': self.business_unit.pk,
+            'page_category': 'redirect'
+        }
+
+        if type_ == 'home':
+            analytics_dict = home_dict
+        elif type_ == 'listing':
+            analytics_dict = view_dict
+        elif type_ == 'results':
+            analytics_dict = search_dict
+        else:
+            analytics_dict = apply_dict
+
+        analytics_dict.update(base_dict)
+        for _ in range(num_to_add):
+            dicts.append(analytics_dict.copy())
+
+        for analytics_dict in dicts:
+            analytics_dict['aguid'] = uuid.uuid4().hex
+            analytics_dict['uid'] = 'analytics##%s#%s' % (
+                analytics_dict['view_date'],
+                analytics_dict['aguid']
+            )
+
+        solr = pysolr.Solr(settings.TEST_SOLR_INSTANCE)
+        solr.add(dicts)
 
     def test_number_of_searches_and_users_is_correct(self):
         response = self.client.post(
@@ -358,39 +407,27 @@ class MyDashboardViewsTests(TestCase):
         self.assertTrue(response.content.index('candidates'))
         self.assertEqual(response.status_code, 200)
 
-    def test_apply_display_no_clicks(self):
+    def test_dashboard_analytics_no_data(self):
         response = self.client.post(
             reverse('dashboard')+'?company='+str(self.company.id),
             {'microsite': 'test.jobs'})
 
         soup = BeautifulSoup(response.content)
 
-        total_clicks = soup.select('#total-clicks span')
-        self.assertEqual(int(total_clicks[0].text.strip()), 0)
-        self.assertEqual(total_clicks[1].text, 'Total Application Clicks')
+        for selector in ['#total-clicks',
+                         '#total-home',
+                         '#total-job-views',
+                         '#total-search']:
 
-        auth_clicks = soup.select('#auth-clicks span')
-        self.assertEqual(int(auth_clicks[0].text.strip()), 0)
-        self.assertEqual(auth_clicks[1].text, 'Authenticated Application Clicks')
+            container = soup.select(selector)
+            # Empty list means no elements were found.
+            self.assertEqual(container, [])
 
-    def test_apply_display_with_clicks(self):
-        analytics_dict = {
-            'job_view_guid': '1'*32,
-            'job_view_buid': self.business_unit.pk,
-            'page_category': 'redirect',
-            'view_date': datetime.now(),
-            'view_source': 1,
-            'aguid': '2' * 32,
-            }
-        auth_dict = analytics_dict.copy()
-        auth_dict.update(object_to_dict(User, self.candidate_user))
-        auth_dict['aguid'] = '3' * 32
-        analytics_dicts = [analytics_dict, auth_dict]
-        for item  in analytics_dicts:
-            item['uid'] = 'analytics##%s#%s' % (
-                item['view_date'], item['aguid'])
-        solr = pysolr.Solr(settings.TEST_SOLR_INSTANCE)
-        solr.add(analytics_dicts)
+    def test_dashboard_analytics_with_data(self):
+        for type_ in ['home', 'listing', 'results']:
+            self.add_analytics_data(type_)
+        num_clicks = 1234
+        self.add_analytics_data('redirect', num_to_add=num_clicks)
 
         response = self.client.post(
             reverse('dashboard')+'?company='+str(self.company.id),
@@ -398,10 +435,29 @@ class MyDashboardViewsTests(TestCase):
 
         soup = BeautifulSoup(response.content)
 
-        total_clicks = soup.select('#total-clicks span')
-        self.assertEqual(int(total_clicks[0].text.strip()), 2)
-        self.assertEqual(total_clicks[1].text, 'Total Application Clicks')
+        for selector in ['#total-clicks',
+                         '#total-home',
+                         '#total-job-views',
+                         '#total-search']:
 
-        auth_clicks = soup.select('#auth-clicks span')
-        self.assertEqual(int(auth_clicks[0].text.strip()), 1)
-        self.assertEqual(auth_clicks[1].text, 'Authenticated Application Click')
+            # This should be the parent container for all analytics data
+            # of this type
+            container = soup.select(selector)[0]
+
+            # All hits, humanized
+            all_hits = container.select('span')[0]
+            if selector == '#total-clicks':
+                expected = '1.2k'
+            else:
+                expected = '2'
+            self.assertEqual(all_hits.text.strip(), expected)
+
+            # All hits, raw number
+            if selector == '#total-clicks':
+                full = container.attrs['data-original-title']
+                self.assertEqual(full.strip(),
+                                 '1,234')
+            else:
+                with self.assertRaises(KeyError):
+                    # This is marked as having no effect, which is intended
+                    container.attrs['data-original-title']

@@ -37,8 +37,10 @@
                 </a>
             </td>
             <td style="border-top: 1px solid #e5e5e5; width: 1%;">
-                <img src="http://png.nlx.org/100x50/logo.gif"
-                     style="{% if item.company %}background-image: url(http://png.nlx.org/100x50/seo/{{item.company|slugify}}.gif); background-repeat: no-repeat;{% endif %} margin: 8px;">
+                <a href="{{item.link}}" style="text-decoration: none; color: #333;">
+                    <img src="http://png.nlx.org/100x50/logo.gif"
+                         style="{% if item.company %}background-image: url(http://png.nlx.org/100x50/seo/{{item.company|slugify}}.gif); background-repeat: no-repeat;{% endif %} margin: 8px;">
+                </a>
             </td>
         </tr>
         <tr>

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from os import path
 
 from django.core.files import File
@@ -62,11 +63,25 @@ class MyPartnerTests(TestCase):
         stripped from file names.
 
         """
-        filename = path.join(path.abspath(path.dirname(__file__)), 'data',
-                             'zz\\x80\\xff*file(copy)na.me.htm)_-)l')
-        expected_filename = 'zzx80xfffilecopyname.htm_l'
-        f = File(open(filename))
-        prm_attachment = PRMAttachment(attachment=f)
-        setattr(prm_attachment, 'partner', self.partner)
-        prm_attachment.save()
-        PRMAttachment.objects.get(attachment__contains=expected_filename)
+        actual_file = path.join(path.abspath(path.dirname(__file__)), 'data',
+                                'test.txt')
+        f = File(open(actual_file))
+        filenames = [
+            ('zz\\x80\\xff*file(copy)na.me.htm)_-)l',
+             'zzx80xfffilecopyname.htm_l'),
+            ('...', 'unnamed_file'),
+            ('..', 'unnamed_file'),
+            ('../../file.txt', 'file.txt'),
+            ('../..', 'unnamed_file'),
+            ('\.\./file.txt', 'file.txt'),
+            ('fiяыle.txt', 'file.txt')
+        ]
+
+        for filename, expected_filename in filenames:
+            f.name = filename
+            prm_attachment = PRMAttachment(attachment=f)
+            setattr(prm_attachment, 'partner', self.partner)
+            prm_attachment.save()
+            result = PRMAttachment.objects.get(
+                attachment__contains=expected_filename)
+            result.delete()

@@ -1,4 +1,9 @@
 {% load export_tags %}
+{% load activity_tags %}
+{% load tz %}
+
+
+{% localtime on %}
 <html>
 <head>
     <title>Contact Records - {{ company.name }}</title>
@@ -37,7 +42,7 @@
                     {% if value %}
                         <tr>
                             <td class="field">{% get_human_readable_field_name field %}</td>
-                            <td class="value">{{ value }}</td>
+                            <td class="value">{{ value|bleach_clean }}</td>
                         </tr>
                     {% endif %}
                 {% endfor %}
@@ -46,3 +51,4 @@
     </div>
 </body>
 </html>
+{% endlocaltime %}

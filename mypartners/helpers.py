@@ -8,9 +8,11 @@ from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.text import get_text_list, force_unicode, force_text
+from django.utils.timezone import get_current_timezone_name, now
 from django.utils.translation import ugettext
 
 from datetime import datetime, time, timedelta
+import pytz
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
@@ -202,36 +204,46 @@ def get_records_from_request(request):
             range_end = None
             range_start = None
         else:
-            range_end = datetime.now()
-            range_start = datetime.now() - timedelta(date_range + 1)
+            range_end = now()
+            range_start = now() - timedelta(date_range + 1)
     else:
         range_start = request.REQUEST.get('date_start')
         range_end = request.REQUEST.get('date_end')
         try:
             range_start = datetime.strptime(range_start, "%m/%d/%Y")
             range_end = datetime.strptime(range_end, "%m/%d/%Y")
+            # Make range from 12:01 AM on start date to 11:59 PM on end date.
+            range_start = datetime.combine(range_start, time.min)
+            range_end = datetime.combine(range_end, time.max)
+            # Assume that the date range is implying the user's time zone.
+            # Transfer from the user's time zone to utc.
+            user_tz = pytz.timezone(get_current_timezone_name())
+            range_start = user_tz.localize(range_start)
+            range_end = user_tz.localize(range_end)
+            range_start = range_start.astimezone(pytz.utc)
+            range_end = range_end.astimezone(pytz.utc)
         except (AttributeError, TypeError, ValueError):
-            range_start = datetime.now() - timedelta(30)
-            range_end = datetime.now()
+            range_start = now() - timedelta(30)
+            range_end = now()
 
     if date_range == 0:
         date_str = "View All"
         try:
             range_start = records.aggregate(Min('date_time'))['date_time__min']
         except KeyError:
-            range_start = datetime.now()
+            range_start = now()
         try:
             range_end = records.aggregate(Max('date_time'))['date_time__max']
         except KeyError:
-            range_end = datetime.now()
+            range_end = now()
     else:
         try:
             date_str = (range_end - range_start).days
             date_str = (("%s Days" % date_str) if date_str != 1
                         else ("%s Day" % date_str))
         except (ValidationError, TypeError):
-            range_start = datetime.now() + timedelta(-30)
-            range_end = datetime.now()
+            range_start = now() + timedelta(-30)
+            range_end = now()
             date_str = "30 Days"
 
         records = records.filter(date_time__range=[range_start, range_end])

@@ -85,6 +85,13 @@ form -- the rest of the form.
 
                 {% else %}
 
+                {% if field.errors %}
+
+                    <div class="span3 form-label pull-left initial form-spacer"></div>
+                    <div class="error-text">{{ field.errors.as_text }}</div>
+                    
+                {% endif %}
+
                 <div class="span3 form-label pull-left initial">
                     {% add_required_label field %}
                 </div>

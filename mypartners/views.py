@@ -1,3 +1,4 @@
+import bleach
 from collections import OrderedDict
 import unicodecsv
 from datetime import date, datetime, timedelta
@@ -6,6 +7,8 @@ from email.utils import getaddresses
 from itertools import chain
 import json
 from lxml import etree
+import pytz
+import re
 
 from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
@@ -17,6 +20,7 @@ from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.utils.text import force_text
+from django.utils.timezone import localtime, now
 from django.views.decorators.csrf import csrf_exempt
 
 from email_parser import build_email_dicts, get_datetime_from_str
@@ -298,7 +302,7 @@ def prm_overview(request):
     company, partner, user = prm_worthy(request)
 
     most_recent_activity = partner.get_logs()
-    dt_range = [datetime.now() + timedelta(-30), datetime.now()]
+    dt_range = [now() + timedelta(-30), now()]
     records = partner.get_contact_records(date_time_range=dt_range)
     communication = records.order_by('-date_time')
     referrals = records.filter(contact_type='job').count()
@@ -308,8 +312,7 @@ def prm_overview(request):
     most_recent_saved_searches = saved_searches[:3]
 
     older_records = partner.get_contact_records()
-    older_records = older_records.exclude(date_time__gte=datetime.now() +
-                                                         timedelta(-30))
+    older_records = older_records.exclude(date_time__gte=now() + timedelta(-30))
 
     ctx = {'partner': partner,
            'company': company,
@@ -654,16 +657,14 @@ def prm_view_records(request):
 
     attachments = PRMAttachment.objects.filter(contact_record=record)
     ct = ContentType.objects.get_for_model(ContactRecord).pk
-    logs = ContactLogEntry.objects.filter(object_id=record_id,
-                                          content_type_id=ct)
-    record_history = ContactLogEntry.objects.filter(object_id=record_id)
+    record_history = ContactLogEntry.objects.filter(object_id=record_id,
+                                                    content_type_id=ct)
     ctx = {
         'date_start': range_start,
         'date_end': range_end,
         'record': record,
         'partner': partner,
         'company': company,
-        'activity': logs,
         'attachments': attachments,
         'record_history': record_history,
         'next_id': next_id,
@@ -727,6 +728,7 @@ def get_records(request):
 
     contact = request.REQUEST.get('contact')
     contact_type = request.REQUEST.get('record_type')
+
     contact = None if contact == 'all' else contact
     contact_type = None if contact_type == 'all' else contact_type
     dt_range, date_str, records = get_records_from_request(request)
@@ -740,13 +742,18 @@ def get_records(request):
         'view_name': 'PRM'
     }
 
+    # Because javascript is going to use this, not a template,
+    # convert to localtime here
+    date_end = localtime(dt_range[1].replace(tzinfo=pytz.utc))
+    date_start = localtime(dt_range[0].replace(tzinfo=pytz.utc))
+
     data = {
-        'month_end': dt_range[1].strftime('%m'),
-        'day_end': dt_range[1].strftime('%d'),
-        'year_end': dt_range[1].strftime('%Y'),
-        'month_start': dt_range[0].strftime('%m'),
-        'day_start': dt_range[0].strftime('%d'),
-        'year_start': dt_range[0].strftime('%Y'),
+        'month_end': date_end.strftime('%m'),
+        'day_end': date_end.strftime('%d'),
+        'year_end': date_end.strftime('%Y'),
+        'month_start': date_start.strftime('%m'),
+        'day_start': date_start.strftime('%d'),
+        'year_start': date_start.strftime('%Y'),
         'date_str': date_str,
         'html': render_to_response('mypartners/records.html', ctx,
                                    RequestContext(request)).content,
@@ -999,6 +1006,10 @@ def prm_export(request):
         for record in records:
             values = [getattr(record, field, '') for field in fields]
             values = [contact_record_val_to_str(v) for v in values]
+            # Remove the HTML and reformat.
+            values = [bleach.clean(v, [], strip=True) for v in values]
+            values = [re.sub(' +', ' ', v) for v in values]
+            values = [re.sub('\s+\n\s+', '\n', v) for v in values]
             writer.writerow(values)
 
     response['Content-Disposition'] = 'attachment; ' \
@@ -1032,9 +1043,9 @@ def process_email(request):
         try:
             date_time = get_datetime_from_str(headers.get('Date'))
         except Exception:
-            date_time = datetime.now()
+            date_time = now()
     else:
-        date_time = datetime.now()
+        date_time = now()
 
     to = request.REQUEST.get('to', '')
     cc = request.REQUEST.get('cc', '')
@@ -1109,7 +1120,7 @@ def process_email(request):
         attachments.append(attachment)
 
     created_records = []
-    date_time = datetime.now() if not date_time else date_time
+    date_time = now() if not date_time else date_time
     for contact in possible_contacts + created_contacts:
         change_msg = "Email was sent by %s to %s" % \
                      (admin_user.get_full_name(), contact.name)

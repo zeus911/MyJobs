@@ -1,5 +1,8 @@
 {% load i18n %}
+{% load tz %}
 {% load common_tags %}
+
+{% localtime on %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +17,7 @@
 
     {% block meta-extra %}{% endblock %}
     <link href="{{ STATIC_URL }}def.ui.152-10.css" rel="stylesheet" type="text/css">
-    <link href="{{ STATIC_URL }}my.jobs.153-15.css" rel="stylesheet" type="text/css">
+    <link href="{{ STATIC_URL }}my.jobs.153-01.css" rel="stylesheet" type="text/css">
     <!--[if IE]>
     <link href="{{ STATIC_URL }}my.jobs.ie.151-01.css" rel="stylesheet" type="text/css">
     <![endif]-->
@@ -83,9 +86,9 @@
                                 </li>
                                 <li class="{% active_tab 'PRM' %}" id="partner-dropdown">
                                     {% if company_name|length == 1 %}
-                                    <a id="partner-tab" href="{% url 'prm' %}?company={{ company_name.0.id }}">{% trans "Partners" %}</a>
+                                    <a id="partner-tab" href="{% url 'prm' %}?company={{ company_name.0.id }}">{% trans "PRM" %}</a>
                                     {% else %}
-                                    <a id="partner-tab">{% trans "Partners" %}</a>
+                                    <a id="partner-tab">{% trans "PRM" %}</a>
                                     <ul id="partner-menu" class="no-show">
                                         {% for company in company_name %}
                                         <li><a id="partner-item" href="{% url 'prm' %}?company={{ company.id }}">{{ company }}</a></li>
@@ -150,13 +153,13 @@
 
                                                         <li><a id="candidate-link-one" href="{% url 'dashboard' %}?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
 
-                                                        <li><a id="partner-link-one" href="{% url 'prm' %}?company={{ company_name.0.id }}">{% trans "Partners" %}</a></li>
+                                                        <li><a id="partner-link-one" href="{% url 'prm' %}?company={{ company_name.0.id }}">{% trans "PRM" %}</a></li>
 
                                                     {% elif group_member and user.is_active and company_name|length >= 2 %}
 
                                                         <li><a id="candidate-link">{% trans "Candidates" %}</a></li>
 
-                                                        <li><a id="partner-link">{% trans "Partners" %}</a></li>
+                                                        <li><a id="partner-link">{% trans "PRM" %}</a></li>
 
                                                     {% endif %}
                                                 {% endif %}                                                
@@ -313,7 +316,7 @@
     <script src="{{ STATIC_URL }}jquery.placeholder.js"></script>
 
     {% block extra-js %}
-    <script src="{{ STATIC_URL }}account-creation.151-01.js" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}account-creation.152-25.js" type="text/javascript"></script>
     {% endblock %}
 
     <script type="text/javascript">
@@ -333,3 +336,4 @@
     </script>
 </body>
 </html>
+{% endlocaltime %}

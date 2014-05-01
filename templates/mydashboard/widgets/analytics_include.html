@@ -1,0 +1,14 @@
+{% load humanize %}
+{% load humanize_abbr %}
+{% if total %}
+    <div>
+        <div class="count-box" id="total-{{ id }}" style="width:100%;"
+             {% if total > 999 %}data-original-title="{{ total|intcomma }}"{% endif %}>
+            <span class="count-text count-box-left">
+                {{ total|intabbr }}
+            </span>
+            <span class="count-box-right">&nbsp;Total {{ type }}{{ total|pluralize }}</span>
+        </div>
+    </div>
+    <br>
+{% endif %}

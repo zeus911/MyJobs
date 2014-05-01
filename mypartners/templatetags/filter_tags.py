@@ -1,6 +1,7 @@
-import datetime
+import pytz
 
 from django.template import Library
+from django.utils.timezone import get_current_timezone_name, now
 
 from mypartners.widgets import SplitDateDropDownWidget
 
@@ -23,5 +24,7 @@ def get_admins(company):
 
 
 @register.simple_tag
-def render_datepicker(name='datechooser', date=datetime.datetime.now()):
+def render_datepicker(name='datechooser', date=now()):
+    user_tz = pytz.timezone(get_current_timezone_name())
+    date = date.astimezone(user_tz)
     return SplitDateDropDownWidget().render(name, date)

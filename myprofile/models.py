@@ -1,12 +1,13 @@
 import datetime
 
 from django.core.validators import ValidationError
-
+from django.core.urlresolvers import reverse
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.utils.translation import ugettext_lazy as _
 from collections import OrderedDict
+from itertools import chain
 
 from registration import signals as reg_signals
 from registration.models import ActivationProfile
@@ -61,6 +62,33 @@ class ProfileUnits(models.Model):
 
     def get_verbose(self):
         return self.content_type.name.title()
+
+    @classmethod
+    def suggestions(cls, user):
+        """Get a list of all suggestions for a user to improve their profile.
+
+        :Inputs:
+        user = User for which to get suggestions
+
+        :Outputs:
+        suggestions - A list of dictionary objects.  Each dictionary should
+            conform to the following format.
+            {
+                'msg': '...',
+                'priority': [0-9],
+                'url': '...'
+            }
+
+        Note: this (and the similar method on the subclasses) are class methods
+        because for any given class the user may not have an instance that can
+        be used to access it.
+        """
+        classes = [Address, Education, EmploymentHistory, License,
+                   MilitaryService, Name, SecondaryEmail, Summary, Telephone,
+                   VolunteerHistory, Website]
+
+        suggestions = chain(*[klass.get_suggestion(user) for klass in classes])
+        return sorted(suggestions, reverse=True, key=lambda x: x['priority'])
 
 
 class Name(ProfileUnits):
@@ -156,6 +184,25 @@ class Name(ProfileUnits):
             else:
                 self.user.add_primary_name()
 
+    @classmethod
+    def get_suggestion(cls, user):
+        """Get a suggestion for a user to improve their education
+        profile.
+
+        :Inputs:
+        user = User for which to get suggestions
+
+        :Outputs:
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
+        """
+        if not cls.objects.filter(user=user).exists():
+            return [{'msg': "Please add your name.",
+                     'priority': 5,
+                     'url': reverse('handle_form') + '?module=Name&id=new',
+                     'module': 'Name'}]
+        return []
+
 
 def save_primary(sender, instance, created, **kwargs):
     user = instance.user
@@ -221,6 +268,28 @@ class Education(ProfileUnits):
     degree_minor = models.CharField(max_length=255, blank=True,
                                     verbose_name=_('minor'))
 
+    @classmethod
+    def get_suggestion(cls, user):
+        """Get a list of all suggestions for a user to improve their education
+        profile.
+
+        :Inputs:
+        user = User for which to get suggestions
+
+        :Outputs:
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
+        """
+        if not cls.objects.filter(user=user).exists():
+            return [{
+                'msg': ("Would you like to provide information about "
+                        "your education?"),
+                 'priority': 5,
+                 'module': 'Education',
+                 'url': reverse('handle_form') + '?module=Education&id=new'}]
+        else:
+            return []
+
 
 class Address(ProfileUnits):
     label = models.CharField(max_length=60, blank=True,
@@ -237,6 +306,32 @@ class Address(ProfileUnits):
                                     verbose_name=_("Country"))
     postal_code = models.CharField(max_length=12, blank=True,
                                    verbose_name=_("Postal Code"))
+    
+    @classmethod
+    def get_suggestion(cls, user):
+        """Get a list of all suggestions for a user to improve their address
+        profile.
+
+        :Inputs:
+        user = User for which to get suggestions
+
+        :Outputs:
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
+        """
+        objects = cls.objects.filter(user=user).order_by('date_updated')
+        if len(objects) == 0:
+            return [{'msg': 'Would you like to provide your address?',
+                     'url': reverse('handle_form') + '?module=Address&id=new',
+                     'priority': 5,
+                     'module': 'Address'}]
+        else:
+            return [{'msg': 'Do you need to update your address from %s?' %
+                            objects[0].address_line_one,
+                    'url': reverse('handle_form') + '?module=Address&id=%s' %
+                                                    objects[0].pk,
+                     'priority': 1,
+                     'module': 'Address'}]
 
 
 class Telephone(ProfileUnits):
@@ -253,12 +348,33 @@ class Telephone(ProfileUnits):
     country_dialing = models.CharField(max_length=3, blank=True,
                                        verbose_name=_("Country Code"))
     area_dialing = models.CharField(max_length=5, blank=True,
-                                    verbose_name=_("Area Code")) 
+                                    verbose_name=_("Area Code"))
     number = models.CharField(max_length=10, blank=True,
                               verbose_name=_("Local Number"))
     extension = models.CharField(max_length=5, blank=True)
     use_code = models.CharField(max_length=30, choices=USE_CODE_CHOICES,
                                 blank=True, verbose_name=_("Phone Type"))
+
+    @classmethod
+    def get_suggestion(cls, user):
+        """Get a list of all suggestions for a user to improve their telephone
+        profile.
+
+        :Inputs:
+        user = User for which to get suggestions
+
+        :Outputs:
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
+        """
+        if not cls.objects.filter(user=user).exists():
+            return [{'msg': 'Would you like to add a telephone?',
+                     'priority': 5,
+                     'module': 'Telephone',
+                     'url': reverse('handle_form') + '?module=Telephone&id=new'
+                     }]
+        else:
+            return []
 
     def save(self, *args, **kwargs):
         if self.use_code == "Home" or self.use_code == "Work" or self.use_code == "Other":
@@ -300,6 +416,40 @@ class EmploymentHistory(ProfileUnits):
     onet_code = models.CharField(max_length=255, blank=True, null=True,
                                  editable=False)
 
+    @classmethod
+    def get_suggestion(cls, user):
+        """Get a list of all suggestions for a user to improve their employment
+        history on their profile.
+
+        :Inputs:
+        user = User for which to get suggestions
+
+        :Outputs:
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
+        """
+        objects = cls.objects.filter(user=user).order_by('start_date')
+        if len(objects) == 0:
+            return [{'msg': "Would you like to add your employment history?",
+                     'url': reverse('handle_form') + \
+                            '?module=EmploymentHistory&id=new',
+                     'priority': 5,
+                     'module': 'Employment'}]
+        elif objects[0].current_indicator:
+            return [{'msg': "Are you still employed with %s?" %
+                                objects[0].organization_name,
+                     'url': reverse('handle_form') + \
+                            '?module=EmploymentHistory&id=%s' % objects[0].pk,
+                     'priority': 0,
+                     'module': 'Employment'}]
+        else:
+            return [{'msg': "Have you worked anywhere since being employed" +
+                            " with %s?" % objects[0].organization_name,
+                     'url': reverse('handle_form') + \
+                            '?module=EmploymentHistory&id=%s' % objects[0].pk,
+                     'priority': 1,
+                     'module': 'Employment'}]
+
 
 class SecondaryEmail(ProfileUnits):
     email = models.EmailField(max_length=255, unique=True, error_messages={
@@ -324,7 +474,7 @@ class SecondaryEmail(ProfileUnits):
             reg_signals.send_activation.send(sender=self, user=self.user,
                                              email=self.email)
         super(SecondaryEmail, self).save(*args, **kwargs)
-            
+
     def set_as_primary(self):
         """
         Replaces the User email with this email object, saves the old primary
@@ -333,7 +483,7 @@ class SecondaryEmail(ProfileUnits):
         is only allowed if the email has been verified.
         Returns boolean if successful.
         """
-        
+
         if self.verified:
             user = self.user
             user.is_active, self.verified = self.verified, user.is_active
@@ -347,6 +497,26 @@ class SecondaryEmail(ProfileUnits):
             return True
         else:
             return False
+
+    @classmethod
+    def get_suggestion(cls, user):
+        """Get a list of all suggestions for a user to add secondary emails to 
+        their profile.
+
+        :Inputs:
+        user = User for which to get suggestions
+
+        :Outputs:
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
+        """
+        if not cls.objects.filter(user=user).exists():
+            return [{'msg': "Would you like to add an additional email?",
+                     'url': reverse('handle_form') + \
+                            '?module=SecondaryEmail&id=new',
+                     'priority': 5,
+                     'module': 'Secondary Email'}]
+        return []
 
 
 class MilitaryService(ProfileUnits):
@@ -372,6 +542,26 @@ class MilitaryService(ProfileUnits):
     honor = models.CharField(max_length=255, blank=True,
                              verbose_name="Honors")
 
+    @classmethod
+    def get_suggestion(cls, user):
+        """Get a list of suggestions for a user to add military service to 
+        their profile.
+
+        :Inputs:
+        user = User for which to get suggestions
+
+        :Outputs:
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
+        """
+        if not cls.objects.filter(user=user).exists():
+            return [{'msg': "Have you served in the armed forces?",
+                     'url': reverse('handle_form') + \
+                     '?module=MilitaryService&id=new',
+                    'priority': 3,
+                     'module': 'Military Service'}]
+        return []
+
 
 class Website(ProfileUnits):
     SITE_TYPE_CHOICES = (
@@ -393,12 +583,52 @@ class Website(ProfileUnits):
     site_type = models.CharField(max_length=50, choices=SITE_TYPE_CHOICES,
                                  blank=True, verbose_name='Type of Site')
 
+    @classmethod
+    def get_suggestion(cls, user):
+        """Get a list of suggestions for a user to add a website to their
+
+        :Inputs:
+        user = User for which to get suggestions
+
+        :Outputs:
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
+        """
+        if not cls.objects.filter(user=user):
+            return [{
+                'msg': "Do you have a personal website or online portfolio?",
+                'url': reverse('handle_form') + '?module=Website&id=new',
+                'priority': 3,
+                'module': 'Website'}]
+        return []
+
 
 class License(ProfileUnits):
     license_name = models.CharField(max_length=255, verbose_name="License Name")
     license_type = models.CharField(max_length=255, verbose_name="License Type")
     description = models.CharField(max_length=255, verbose_name="Description",
                                    blank=True)
+
+    @classmethod
+    def get_suggestion(cls, user):
+        """Get a list of all suggestions for a user to add licenses or
+        certifications to their profile.
+
+        :Inputs:
+        user = User for which to get suggestions
+
+        :Outputs:
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
+        """
+        if not cls.objects.filter(user=user).exists():
+            msg = ('Would you like to add and professional licenses or ' +
+                  'certifications?')
+            return [{'msg': msg,
+                     'url': reverse('handle_form') + '?module=License&id=new',
+                     'priority': 3,
+                     'module': 'License'}]
+        return []
 
 
 class Summary(ProfileUnits):
@@ -426,6 +656,25 @@ class Summary(ProfileUnits):
             else:
                 raise ValidationError("A summary already exists")
 
+    @classmethod
+    def get_suggestion(cls, user):
+        """Get a list of all suggestions for a user to add a summary to their
+        profile.
+
+        :Inputs:
+        user = User for which to get suggestions
+
+        :Outputs:
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
+        """
+        if not cls.objects.filter(user=user).exists():
+            return [{'msg': "Would you like to add a summary of your career?",
+                     'url': reverse('handle_form') + '?module=Summary&id=new',
+                     'priority': 5,
+                     'module': 'Profile Summary'}]
+        return []
+
 
 class VolunteerHistory(ProfileUnits):
     position_title = models.CharField(max_length=255,
@@ -445,6 +694,28 @@ class VolunteerHistory(ProfileUnits):
     country_code = models.CharField(max_length=3, blank=True,
                                     verbose_name=_("country"))
     description = models.TextField(blank=True)
+
+    @classmethod
+    def get_suggestion(cls, user):
+        """Get a list of suggestions for a user to improve their volunteer
+        history profile.
+
+        :Inputs:
+        user = User for which to get suggestions
+
+        :Outputs:
+        suggestion - A dictionary object which should conform to the format
+                     indicated in ProfileUnits.suggestions().
+        """
+        if not cls.objects.filter(user=user).exists():
+            msg = ("Do you have any relevant volunteer experience you would " +
+                    "like to include?")
+            return [{'msg': msg,
+                     'url': reverse('handle_form') + \
+                            '?module=VolunteerHistory&id=new',
+                     'priority':3,
+                     'module': 'Volunteer History'}]
+        return []
 
 
 def delete_secondary_activation(sender, **kwargs):

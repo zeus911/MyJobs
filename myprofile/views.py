@@ -60,6 +60,12 @@ def edit_profile(request):
 
 @user_passes_test(User.objects.not_disabled)
 def handle_form(request):
+    """
+    Handles the user submitting changes to their user profile.
+
+    The form expects a 'module' GET parameter and an optional 'item_id'.  It
+    then uses these to update the existing item or create a new instance
+    """
     item_id = request.REQUEST.get('id', 'new')
     module = request.REQUEST.get('module')
     module = module.replace(" ", "")
@@ -105,14 +111,18 @@ def handle_form(request):
         
         model_name = model._meta.verbose_name.lower()
         if form_instance.is_valid():
-            form_instance.save()
+            instance = form_instance.save()
             if request.is_ajax():
-                return HttpResponse(status=200)
+                suggestions = ProfileUnits.suggestions(request.user)
+                return render_to_response('myprofile/suggestions.html',
+                                          {'suggestions': suggestions[:3],
+                                           'model_name': model_name,
+                                           'module': {'item': instance}})
             else:
                 return HttpResponseRedirect(reverse('view_profile'))
         else:
             if request.is_ajax():
-                return HttpResponse(json.dumps(form_instance.errors))
+                return HttpResponse(json.dumps(form_instance.errors), status=400)
             else:
                 return render_to_response('myprofile/profile_form.html',
                                           data_dict,
