@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load common_tags %}
+{% gz as gz %}
 {% block site-title %}
     <title>Partner Details {{ company.name }}</title>
     <meta name="title" content="Partner Details {{ company.name }}">
@@ -89,5 +90,5 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}prm.151-24.js{% gz %}"></script>
+<script src="{{ STATIC_URL }}prm.151-24.js{{ gz }}"></script>
 {% endblock %}

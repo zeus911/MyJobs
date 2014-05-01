@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load common_tags %}
 {% load form_tags %}
+{% gz as gz %}
 
 {% block content %}
 <div class="row">
@@ -35,6 +36,6 @@
 {% endblock %}
 
 {% block extra-js %}
-<script type="text/javascript" src="{{STATIC_URL}}account-creation.152-25.js{% gz %}"></script>
-<script type="text/javascript" src="{{STATIC_URL}}authorization.151-01.js{% gz %}"></script>
+<script type="text/javascript" src="{{STATIC_URL}}account-creation.152-25.js{{ gz }}"></script>
+<script type="text/javascript" src="{{STATIC_URL}}authorization.151-01.js{{ gz }}"></script>
 {% endblock %}

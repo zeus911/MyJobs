@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load common_tags %}
+{% gz as gz %}
 {% block topbarlogin %}{% endblock topbarlogin %}
 
 {% block title-content %}{% trans "My.jobs - Manage your job search." %}{% endblock title-content %}
@@ -76,5 +77,5 @@
 
 {% block extra-js %}
 <script> var num_modules = {{ num_modules }}; </script>
-<script type="text/javascript" src="{{STATIC_URL}}account-creation.152-25.js{% gz %}"></script>
+<script type="text/javascript" src="{{STATIC_URL}}account-creation.152-25.js{{ gz }}"></script>
 {% endblock %}
