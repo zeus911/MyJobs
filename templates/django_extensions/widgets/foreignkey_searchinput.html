@@ -9,7 +9,7 @@
     };
     function lookup(query) {
         $.get('{{ search_path }}', {
-            'search_fields': '{{ search_fields }}',
+            'search_fields': '^{{ search_fields }}',
             'app_label': '{{ app_label }}',
             'model_name': '{{ model_name }}',
             'object_pk': query
@@ -36,7 +36,7 @@
     });
     $('#lookup_{{ name }}').autocomplete('{{ search_path }}', {
         extraParams: {
-            'search_fields': '{{ search_fields }}',
+            'search_fields': '^{{ search_fields }}',
             'app_label': '{{ app_label }}',
             'model_name': '{{ model_name }}'
         },

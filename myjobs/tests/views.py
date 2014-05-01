@@ -99,41 +99,26 @@ class MyJobsViewsTests(TestCase):
             return_json = ','.join(messages)
             return '['+return_json+']'
 
-    def test_edit_account_success(self):
-        resp = self.client.post(reverse('edit_account'),
-                                data={'given_name': 'Alice',
-                                      'family_name': 'Smith',
-                                      'gravatar': 'alice@example.com',
-                                      'opt_in_myjobs': True}, follow=True)
-        name = Name.objects.get(user=self.user)
-        self.assertEqual(name.given_name, 'Alice')
-        self.assertEqual(name.family_name, 'Smith')
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.content, 'success')
-
     def test_change_password_success(self):
-        resp = self.client.post(reverse('edit_password'),
+        resp = self.client.post(reverse('edit_account')+'?password',
                                 data={'password': 'secret',
                                       'new_password1': 'new',
                                       'new_password2': 'new'}, follow=True)
         user = User.objects.get(id=self.user.id)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.content, 'success')
         self.assertTrue(user.check_password('new'))
 
     def test_change_password_failure(self):
-        resp = self.client.post(reverse('edit_password'),
+        resp = self.client.post(reverse('edit_account')+'?password',
                                 data={'password': 'secret',
                                       'new_password1': 'new',
                                       'new_password2': 'notNew'}, follow=True)
+        
+        errors = {'new_password2': [u'The new password fields did not match.'],
+                  'new_password1': [u'The new password fields did not match.']}
 
-        errors = [[u'new_password1',
-                   [u'The new password fields did not match.']],
-                  [u'new_password2',
-                   [u'The new password fields did not match.']]]
-
-        content = json.loads(resp.content)
-        self.assertItemsEqual(content['errors'], errors)
+        response_errors = resp.context['password_form'].errors
+        self.assertItemsEqual(response_errors, errors)
 
     def test_partial_successful_profile_form(self):
         resp = self.client.post(reverse('home'),
@@ -552,7 +537,7 @@ class MyJobsViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        response = self.client.post(reverse('edit_password'),
+        response = self.client.post(reverse('edit_account')+'?password',
                                     data={'password': 'secret',
                                           'new_password1': 'secret2',
                                           'new_password2': 'secret2'})
