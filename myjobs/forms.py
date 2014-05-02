@@ -6,22 +6,16 @@ from myjobs.models import User
 from myprofile.models import Name, SecondaryEmail
 
 
-def make_choices(user, default_value='', default_text=''):
+def make_choices(user):
     """
     Turns the set of email addresses associated with a user into a list
     suitable for use in a ChoiceField
 
     Inputs:
     :user: User instance
-    :default_value: Optional; What will be stored in the database
-    :default_name: Optional; What will be displayed in place of :default_value:
-        on forms
     """
-    choices = []
-    if default_value and default_text:
-        choices.append((default_value, default_text))
+    choices = [(user.email, user.email)]
     if user.is_active:
-        choices.append((user.email, user.email))
         for email in SecondaryEmail.objects.filter(user=user, verified=True):
             choices.append((email.email, email.email))
     return choices
