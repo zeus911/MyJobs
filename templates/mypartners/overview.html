@@ -121,7 +121,6 @@
             </div>
         </div>
         <div class="span4 mobile_hide">
-            {% if count or referrals %}
             <div class="info-box">
                 {% if count %}
                 <div id="donut-box">
@@ -134,7 +133,6 @@
                 {% endif %}
                 <a class="btn" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">View Reports</a>
             </div>
-            {% endif %}
 
             <div class="info-box" id="partner-details">
                 {% include "mypartners/partner_details_widget.html" %}
@@ -145,8 +143,8 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}partner-overview.151-01.js"></script>
-<script src="{{ STATIC_URL }}partner-reports.151-01.js"></script>
+<script src="{{ STATIC_URL }}partner-overview.153-06.js"></script>
+<script src="{{ STATIC_URL }}partner-reports.153-06.js"></script>
 
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
