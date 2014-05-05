@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load common_tags %}
+{% gz as gz %}
 {% block site-title %}
     {% with name_obj=user.full_name %}
         <title>{{ company.name }} Partner Relationship Manager</title>
@@ -108,5 +109,5 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}prm.151-24.js"></script>
+<script src="{{ STATIC_URL }}prm.151-24.js{{ gz }}"></script>
 {% endblock %}

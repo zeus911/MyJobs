@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load common_tags %}
 {% load form_tags %}
+{% gz as gz %}
 {% block site-title %}
     <title>Account Settings - My.jobs</title>
     <meta name="title" content="Account Settings - My.jobs">
@@ -188,7 +189,7 @@
 
 {% block extra-js %}
 <script type="text/javascript" src="//www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
-<script src="{{ STATIC_URL }}account-settings.153-01.js"></script>
+<script src="{{ STATIC_URL }}account-settings.153-01.js{{ gz }}"></script>
 <script type="text/javascript">
     var auto_user = {% if user.password_change %}true{% else %}false{% endif %}
 </script>

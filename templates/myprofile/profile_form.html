@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load common_tags %}
 {% load i18n %}
+{% gz as gz %}
 
 {% block content %}
 <div class="row">
@@ -86,6 +87,6 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}jquery.placeholder.min.js"></script>
-<script src="{{ STATIC_URL }}profile.151-24.js"></script>
+<script src="{{ STATIC_URL }}jquery.placeholder.min.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}profile.151-24.js{{ gz }}"></script>
 {% endblock %}

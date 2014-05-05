@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load common_tags %}
+{% gz as gz %}
 {% block site-title %}
     <title>{% if not contact %}Add Contact{% else %}Edit Contact{% endif %} {{ company.name }}</title>
     <meta name="title" content="{% if not contact %}Add Contact{% else %}Edit Contact{% endif %} {{ company.name }}">
@@ -83,5 +84,5 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}prm.151-24.js"></script>
+<script src="{{ STATIC_URL }}prm.151-24.js{{ gz }}"></script>
 {% endblock %}

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load common_tags %}
 {% load i18n %}
+{% gz as gz %}
 
 {% block site-title %}
     <title>Saved Search - My.jobs</title>
@@ -71,5 +72,5 @@
 {% endblock content %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}saved-search-main.151-01.js"></script>
+<script src="{{ STATIC_URL }}saved-search-main.151-01.js{{ gz }}"></script>
 {% endblock %}
