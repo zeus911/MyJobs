@@ -1,17 +1,16 @@
 from time import strptime, strftime
 
 from django import template
+from django.conf import settings
 
 from myjobs import version
-from myprofile.models import ProfileUnits
 from myjobs.models import User
 from myjobs.helpers import get_completion, make_fake_gravatar
 from mydashboard.models import CompanyUser
-from mymessages.models import Message
 
 from django.db.models.loading import get_model
 
-register=template.Library()
+register = template.Library()
 
 
 @register.simple_tag
@@ -65,7 +64,8 @@ def is_a_group_member(user, group):
     :group: String of group being checked for
 
     Outputs:
-    Boolean value indicating whether or not the user is a member of the requested group
+    Boolean value indicating whether or not the user is a member of the
+    requested group
     """
 
     try:
@@ -183,6 +183,7 @@ def str_to_date(string):
 def to_string(value):
     return str(value)
 
+
 @register.filter
 def get_attr(obj, attr):
     return obj.get(attr)
@@ -191,7 +192,7 @@ def get_attr(obj, attr):
 @register.assignment_tag(takes_context=True)
 def gz(context):
     request = context.get('request', None)
-    if request == None:
+    if request == None or settings.DEBUG:
         return ''
     ae = request.META.get('HTTP_ACCEPT_ENCODING', '')
     if 'gzip' in ae:
