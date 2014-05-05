@@ -69,7 +69,7 @@ function get_default_widget_html(success) {
 
 
 function create_saved_search() {
-    jsonp_ajax_call(base_url + "/api/v1/savedsearch/?callback=reload_default_widget&email=" + user_email + "&url=" + ss_url + ss_api_str);
+    jsonp_ajax_call(base_url + "/api/v1/savedsearch/?callback=reload_default_widget&email=" + user_email + ss_api_str + "&url=" + ss_url);
 }
 
 function create_user() {
