@@ -33,13 +33,13 @@ function save_search() {
     // Otherwise, uses the currently provided user to create a saved search.
 
     if (user_email != 'None' && user_email != 'undefined' && user_email) {
-        $('.saved-search-form').html('<em class="loading">Saving this search</em>');
+        $('.saved-search-form').html('<em class="saved-search-widget-loading">Saving this search</em>');
         create_saved_search();
     }
     else {
         try {
             user_email = $('#saved-search-email').val();
-            $('.saved-search-form').html('<em class="loading">Saving this search</em>');
+            $('.saved-search-form').html('<em class="saved-search-widget-loading">Saving this search</em>');
             create_user();
         }
         catch(err) {
