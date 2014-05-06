@@ -37,7 +37,7 @@
     border-radius: 3px;
 }
 
-#direct-saved-search .loading{
+#direct-saved-search .saved-search-widget-loading{
     background: url('//d2e48ltfsb5exy.cloudfront.net/myjobs/tools/common/ui-anim_basic_16x16.gif') center left no-repeat;
     padding: 20px
 }

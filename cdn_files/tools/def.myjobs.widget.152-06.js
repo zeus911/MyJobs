@@ -2,7 +2,7 @@ var ss_username = "directseo@directemployersfoundation.org";
 var ss_api_key = "6fcd589a4efa72de876edfff7ebf508bedd0ba3e";
 var ss_api_str = "&username=" + ss_username  + "&api_key=" + ss_api_key;
 var base_url = 'https://secure.my.jobs';
-var ss_url = window.location.href;
+var ss_url = encodeURIComponent(window.location.href);
 var most_recent_html = '';
 
 $(document).ready(function(){
@@ -33,13 +33,13 @@ function save_search() {
     // Otherwise, uses the currently provided user to create a saved search.
 
     if (user_email != 'None' && user_email != 'undefined' && user_email) {
-        $('.saved-search-form').html('<em class="loading">Saving this search</em>');
+        $('.saved-search-form').html('<em class="saved-search-widget-loading">Saving this search</em>');
         create_saved_search();
     }
     else {
         try {
             user_email = $('#saved-search-email').val();
-            $('.saved-search-form').html('<em class="loading">Saving this search</em>');
+            $('.saved-search-form').html('<em class="saved-search-widget-loading">Saving this search</em>');
             create_user();
         }
         catch(err) {
