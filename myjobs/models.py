@@ -76,6 +76,7 @@ class CustomUserManager(BaseUserManager):
             user.gravatar = ''
             user.make_guid()
             user.timezone = settings.TIME_ZONE
+            user.full_clean()
             user.save(using=self._db)
             user.add_default_group()
             created = True
@@ -110,10 +111,11 @@ class CustomUserManager(BaseUserManager):
         user.gravatar = ''
         user.set_password(password)
         user.make_guid()
+        user.full_clean()
         user.save(using=self._db)
         user.add_default_group()
         return user
-        
+
     def create_superuser(self, **kwargs):
         email = kwargs['email']
         password = kwargs['password']
@@ -126,9 +128,10 @@ class CustomUserManager(BaseUserManager):
         u.gravatar = u.email
         u.set_password(password)
         u.timezone = settings.TIME_ZONE
+        u.make_guid()
+        u.full_clean()
         u.save(using=self._db)
         u.add_default_group()
-        u.make_guid()
         return u
 
     def not_disabled(self, user):
@@ -173,7 +176,7 @@ class CustomUserManager(BaseUserManager):
         return user.groups.filter(name=group).count() >= 1
 
 
-# New in Django 1.5. This is now the default auth user table. 
+# New in Django 1.5. This is now the default auth user table.
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(verbose_name=_("email address"),
                               max_length=255, unique=True, db_index=True)
@@ -316,10 +319,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         are no duplicates. If no duplicates, save the GUID.
         """
         if not self.user_guid:
-            self.user_guid = uuid.uuid4().hex
-            if User.objects.filter(user_guid=self.user_guid):
+            guid = uuid.uuid4().hex
+            if User.objects.filter(user_guid=guid):
                 self.make_guid()
-            self.save()
+            else:
+                self.user_guid = guid
 
     def messages_unread(self):
         """
