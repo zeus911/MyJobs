@@ -527,7 +527,7 @@ class MyJobsViewsTests(TestCase):
         response = self.client.get(reverse('saved_search_main'))
 
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('edit_account'))
+        self.assertRedirects(response, reverse('edit_account')+"#as-password")
 
         profile = ActivationProfile.objects.get_or_create(
             user=self.user,

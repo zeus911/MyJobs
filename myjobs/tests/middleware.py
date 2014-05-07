@@ -42,7 +42,7 @@ class RedirectMiddlewareTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.get('location'),
-                         reverse('edit_account'))
+                         reverse('edit_account')+"#as-password")
 
     def test_not_logged_in_returns_forbidden(self):
         """
