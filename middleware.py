@@ -37,7 +37,7 @@ class RedirectMiddleware:
                                   for url in urls])
 
             if (not url_matches and request.user.password_change):
-                return http.HttpResponseRedirect(reverse('edit_account'))
+                return http.HttpResponseRedirect(reverse('edit_account')+'#as-password')
 
         elif request.is_ajax() and bool(request.REQUEST.get('next')):
             return http.HttpResponse(status=403)
