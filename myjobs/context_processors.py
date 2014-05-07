@@ -19,8 +19,8 @@ def current_site_info(request):
             'domain': current_site.domain,
             'site_name': current_site.name,
             'description': 'My.jobs is a platform that was designed to make' \
-                        ' finding emplyoment easier. Job seekers can control their data,' \
-                        ' and then making it easy for them to connect to like minded and' \
+                        ' finding employment easier. Job seekers can control their data' \
+                        ' making it easy for them to connect to like minded and' \
                         ' interested employers.',
             'keywords': 'jobs,job,find job,my jobs,job search,employment,employers,saved search,search agent',
         }
