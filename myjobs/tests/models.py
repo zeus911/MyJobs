@@ -1,12 +1,13 @@
 import urllib
 from django.contrib.auth.models import Group
 from django.core import mail
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.test import TestCase
 from django.utils.http import urlquote
 
-from myjobs.models import *
+from myjobs.models import User
 from myjobs.tests.views import TestClient
 from myjobs.tests.factories import UserFactory
 from myprofile.models import SecondaryEmail, Name, Telephone
@@ -17,7 +18,7 @@ class UserManagerTests(TestCase):
                  'email': 'alice@example.com'}
 
     def test_inactive_user_creation(self):
-        new_user, created = User.objects.create_inactive_user(**self.user_info)
+        new_user, _ = User.objects.create_inactive_user(**self.user_info)
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(new_user.is_active, False)
         self.assertEqual(len(mail.outbox), 1)
@@ -25,6 +26,13 @@ class UserManagerTests(TestCase):
         self.failUnless(new_user.check_password('complicated_password'))
         self.failUnless(new_user.groups.filter(name='Job Seeker').count() == 1)
         self.assertIsNotNone(new_user.user_guid)
+
+    def test_inactive_user_validation(self):
+        user_info = {'password1': 'complicated_password',
+                     'email': 'Bad Email'}
+        with self.assertRaises(ValidationError):
+            _, _ = User.objects.create_inactive_user(**user_info)
+        self.assertEqual(User.objects.count(), 0)
 
     def test_active_user_creation(self):
         new_user = User.objects.create_user(**self.user_info)
@@ -53,7 +61,7 @@ class UserManagerTests(TestCase):
         Test that email is hashed correctly and returns a 200 response
         """
         user = UserFactory()
-        static_gravatar_url = "http://www.gravatar.com/avatar/c160f8cc69a4f0b" \
+        gravatar_url = "http://www.gravatar.com/avatar/c160f8cc69a4f0b" \
                               "f2b0362752353d060?s=20&d=mm"
         no_gravatar_url = ("<div class='gravatar-blank gravatar-danger' "
                                "style='height: 20px; width: 20px'>"
@@ -61,7 +69,7 @@ class UserManagerTests(TestCase):
                                "style='font-size:13.0px;'>A</span></div>")
         generated_gravatar_url = user.get_gravatar_url()
         self.assertEqual(no_gravatar_url, generated_gravatar_url)
-        status_code = urllib.urlopen(static_gravatar_url).getcode()
+        status_code = urllib.urlopen(gravatar_url).getcode()
         self.assertEqual(status_code, 200)
 
     def test_not_disabled(self):
@@ -77,7 +85,7 @@ class UserManagerTests(TestCase):
         #Anonymous user
         resp = client.get(reverse('view_profile'))
         path = resp.request.get('PATH_INFO')
-        self.assertRedirects(resp, reverse('home')+'?next='+path)
+        self.assertRedirects(resp, reverse('home') + '?next=' + path)
 
         # This is ugly, but it is an artifact of the way Django redirects
         # users who fail the `user_passes_test` decorator.
@@ -108,7 +116,6 @@ class UserManagerTests(TestCase):
         """
         client = TestClient()
         user = UserFactory()
-        quoted_email = urllib.quote(user.email)
 
         # Active user
         client.login_user(user)
@@ -119,14 +126,14 @@ class UserManagerTests(TestCase):
         user.is_active = False
         user.save()
         resp = client.get(reverse('saved_search_main'))
-        self.assertRedirects(resp, "http://testserver/?next=/saved-search/view/")
+        self.assertRedirects(resp,
+                             "http://testserver/?next=/saved-search/view/")
 
     def test_group_status(self):
         """
         Should return True if user.groups contains the group specified and
         False if it does not.
         """
-        client = TestClient()
         user = UserFactory()
 
         user.groups.all().delete()

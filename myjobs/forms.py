@@ -153,11 +153,9 @@ class UserAdminForm(ModelForm):
         if (self.data['gravatar'] != instance.gravatar) and \
            (self.data['gravatar'] == 'none' or self.data['gravatar'] == ''):
             instance.gravatar = self.data['gravatar']
-            instance.save()
         if not instance.user_guid:
             instance.make_guid()
         if 'new_password' in self.cleaned_data:
             if self.cleaned_data['new_password'] != '':
                 instance.set_password(self.cleaned_data['new_password'])
-                instance.save()
         return instance

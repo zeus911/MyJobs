@@ -1,10 +1,12 @@
 #direct-saved-search{
     min-height: 115px;
 }
+
 #direct-saved-search label{
     font-weight: bold;
     color: #000;
 }
+
 #direct-saved-search h3{
     background: url(//d2e48ltfsb5exy.cloudfront.net/myjobs/logos/myjobs_logo_white_small.png) #5a6d81 center center no-repeat;
     text-indent: -9000px;
@@ -17,41 +19,40 @@
     margin-top: -4px;
     margin-bottom: 5px;
 }
-#direct-saved-search input,
-#direct-saved-search button{
+
+#direct-saved-search input {
     display: block;
 }
+
 #direct-saved-search input{
     width: 100%;
     padding: 5px 0;
     text-indent: 5px;
+    height: 18px;
+    margin-bottom: 9px;
+    font-size: 13px;
+    line-height: 18px;
+    color: #555;
+    border: 1px solid #ccc;
+    border-radius: 3px;
 }
-#direct-saved-search button{
-    width: 100%;
-    padding: 10px;
-    border-radius: 4px;
-    background: #fff;
-    font-weight: bold;
-    border: 1px solid #5a6d81;
-    color: #5a6d81;
-}
-#direct-saved-search button:hover{
-    color: #fff;
-    background: #5a6d81;
-}
-#direct-saved-search .loading{
+
+#direct-saved-search .saved-search-widget-loading{
     background: url('//d2e48ltfsb5exy.cloudfront.net/myjobs/tools/common/ui-anim_basic_16x16.gif') center left no-repeat;
     padding: 20px
 }
+
 #direct-saved-search .success,
 #direct-saved-search .warning{
     font-weight: bold;
     color: #090;
     font-size: 1.2em;
 }
+
 #direct-saved-search .warning{
     color: #F30;
 }
+
 #direct-saved-search .fielderror{
     font-weight: bold;
     color: #fff;
@@ -62,6 +63,7 @@
     border-bottom-right-radius: 4px;
     text-align: center;
 }
+
 #direct-saved-search .subtext{
     color: #999;
     padding-top: 5px;
@@ -69,4 +71,13 @@
     display: block;
     text-align: center;
     font-style: normal;
+}
+
+.saved-search-form {
+    margin-top: 15px;
+    margin-bottom: 9px;
+}
+
+#direct-saved-search .loading {
+    line-height: 30px;
 }
