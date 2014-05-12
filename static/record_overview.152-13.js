@@ -75,6 +75,10 @@ function update_records(btn_val) {
                 update_url(contact, contact_type, date_start, date_end);
             }
         }
+    }).done(function() {
+        if($("#date-range-list").is(":visible")) {
+            $("#time-range-menu").trigger("click");
+        }
     });
 }
 

@@ -21,6 +21,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.utils.text import force_text
 from django.utils.timezone import localtime, now
+from django.utils.datastructures import SortedDict
 from django.views.decorators.csrf import csrf_exempt
 
 from email_parser import build_email_dicts, get_datetime_from_str
@@ -902,17 +903,16 @@ def partner_get_records(request):
         else:
             meetingorevent_name = 'Meetings & Events'
 
-        data = {
-            'email': {"count": email, "name": email_name, 'typename': 'email'},
-            'phone': {"count": phone, "name": phone_name, 'typename': 'phone'},
-            'meetingorevent': {"count": meetingorevent,
-                               "name": meetingorevent_name,
-                               "typename": "meetingorevent"},
-        }
-        data = OrderedDict(sorted(data.items(), key=lambda t: t[1]['count']))
-        data_items = data.items()
-        data_items.reverse()
-        data = OrderedDict(data_items)
+        data = SortedDict()
+
+        data['email'] = {"count": email, "name": email_name,
+                         'typename': 'email'}
+        data['phone'] = {"count": phone, "name": phone_name,
+                         'typename': 'phone'}
+        data['meetingorevent'] = {"count": meetingorevent,
+                                  "name": meetingorevent_name,
+                                  "typename": "meetingorevent"}
+
         return HttpResponse(json.dumps(data))
     else:
         raise Http404

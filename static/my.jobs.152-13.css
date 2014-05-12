@@ -3603,25 +3603,18 @@ body.modal-open {
     cursor: pointer;
 }
 
-#activity-table td {
-    height: 140px;
-    max-height: 140px;
-    min-height: 140px;
+#activity-table td,
+#activity-table tr {
+    height: 100px;
+    max-height: 100px;
+    min-height: 100px;
     overflow: hidden;
-    display: block;
 }
 
 .all-contacts-table:hover tr,
 .clickable-tr:hover,
 #activity-table:hover td {
     cursor: pointer;
-}
-
-#activity-table tr {
-    height: 140px;
-    max-height: 140px;
-    min-height: 140px;
-    overflow: hidden;
 }
 
 .tip-content #activity-table tr {

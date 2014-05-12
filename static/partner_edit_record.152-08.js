@@ -1,65 +1,45 @@
+$(document).ready(function() {
+    show_fields();
+});
+
 $(function() {
-    var EditRecordView = Backbone.View.extend({
-        el: 'body',
-
-        initialize: function() {
-            this.once('renderEvent', function() {
-                show_fields();
-                $('[id$=notes]').placeholder();
-            });
-        },
-
-        render: function() {
-            this.trigger('renderEvent');
-        },
-
-        events: {
-            'change [id$="_contact_type"]': 'showing_fields',
-            'change [id$="id_contact_name"]': 'fill_contact_info',
-        },
-
-        showing_fields: function(){
-            show_fields();
-        },
-
-        fill_contact_info: function() {
-            if($('[id$="id_contact_name"]').val() != 'None'){
-            var form = $('#contact-record-form');
-
-            var data = form.serialize();
-                $.ajax({
-                    data: data,
-                    type: 'POST',
-                    url: '/prm/view/records/contact_info',
-                    success: function(data) {
-                        json = jQuery.parseJSON(data);
-                        if (json.hasOwnProperty('error')) {
-                            $('.form-status').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">&times;</button>'+json['error']+'.</div>');
-                        } else {
-                            if($('.form-status').html() != ''){
-                                $('.form-status').html('');
-                            }
-                            for(var key in json) {
-                                $('[id$="_'+key+'"]').val(json[key]);
-                            }
-
-                        }
-                    }
-                })
-            } else {
-                $('[id$="_email"]').val('');
-                $('[id$="_phone"]').val('');
-            }
-        }
+    $("[id$='_contact_type']").on("change", function() {
+        show_fields();
     });
 
-    var EditRecord = new EditRecordView;
-    EditRecord.render();
+    $("#id_contact_name").on("change", function() {
+        if($('[id$="id_contact_name"]').val() != 'None'){
+        var form = $('#contact-record-form');
+
+        var data = form.serialize();
+            $.ajax({
+                data: data,
+                type: 'POST',
+                url: '/prm/view/records/contact_info',
+                success: function(data) {
+                    json = jQuery.parseJSON(data);
+                    if (json.hasOwnProperty('error')) {
+                        $('.form-status').html('<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">&times;</button>'+json['error']+'.</div>');
+                    } else {
+                        if($('.form-status').html() != '') {
+                            $('.form-status').html('');
+                        }
+                        for(var key in json) {
+                            $('[id$="_'+key+'"]').val(json[key]);
+                        }
+
+                    }
+                }
+            })
+        } else {
+            $('[id$="_email"]').val('');
+            $('[id$="_phone"]').val('');
+        }
+    });
 
     $(document).on("change", '[id^=id_attachment]', function(){
         add_additional_input(this);
     });
-
 });
 
 function disable_fields(){
@@ -129,6 +109,7 @@ function show_fields(){
         $('label[for$="subject"]').hide();
         $('[id*="date_time_"]').hide();
         $('label[for*="date_time_"]').hide();
+        $(".date-time").hide();
     }
 }
 
