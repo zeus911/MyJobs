@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    var page = $('.prm-header').children(':first').html();
+    page = $('.prm-header').children(':first').html();
     $( ".datepicker" ).datepicker();
 
     if(page === 'Overview'){
@@ -20,10 +20,21 @@ $(document).ready(function () {
     }
 });
 
+
 $(function() {
-    $("#email, #phone, #meetingorevent, #job").on( "click", function(e) {go_to_records(e);} );
-    $(".header-menu").on( "click", function(e) {dropdown(e);} );
-    $("#today, #thirty-days, #ninety-days, #all-days").on( "click", function(e) {submit_date_range_from_li(e);} );
+    $(document).on("click", "#email, #phone, #meetingorevent, #job", function(e) {
+        go_to_records(e);
+    });
+
+    $(".header-menu").on( "click", function(e) {
+        dropdown(e);
+    });
+
+    $("#today, #thirty-days, #ninety-days, #all-days").on( "click", function(e) {
+        if(page === 'Reports'){
+            submit_date_range_from_li(e);
+        }
+    });
 
     $("#custom-date-dropdown").on("click", function(e) {
         e.stopPropagation();
@@ -69,6 +80,7 @@ $(function() {
     });
 });
 
+
 function draw_donut(size) {
     // Add GET from page.load to url if any.
     var get_data = window.location.search;
@@ -113,6 +125,7 @@ function draw_donut(size) {
         }
     });
 }
+
 
 function draw_chart() {
     // Add GET from page.load to url if any.
@@ -160,8 +173,10 @@ function draw_chart() {
     });
 }
 
+
 function submit_date_range_from_li (e) {
     days = e.currentTarget.id;
+    var range;
     if(days == 'today') {
         range = 1;
     }
@@ -178,6 +193,7 @@ function submit_date_range_from_li (e) {
     params = update_query('date_end', '', params);
     window.location = '/prm/view/reports/details' + update_query('date', range, params)
 }
+
 
 function dropdown(e) {
     $('[class*=header-menu]').each(function() {
@@ -201,6 +217,7 @@ function dropdown(e) {
     }
 }
 
+
 function go_to_records(e) {
     url = "/prm/view/reports/details/records/?company="+String(company_id)+"&partner="+String(partner_id)+"&record_type="+ e.currentTarget.id;
     if(admin_id != 'None') {
@@ -209,6 +226,7 @@ function go_to_records(e) {
     url += '&date_start=' + String(date_start) + '&date_end=' + String(date_end);
     window.location.href = url;
 }
+
 
 function disable_scroll(bool) {
     if($(window).width() < 500){
@@ -219,6 +237,7 @@ function disable_scroll(bool) {
         }
     }
 }
+
 
 function donut_options(height, width, chartArea_top, chartArea_left, chartArea_height, chartArea_width, piehole_radius){
     var options = {
@@ -233,6 +252,7 @@ function donut_options(height, width, chartArea_top, chartArea_left, chartArea_h
     return options
 }
 
+
 function fill_piehole(totalrecs, size){
     var doughnut = $("#donutchart");
     var piediv = doughnut.children(":first-child").children(":first-child");
@@ -244,8 +264,10 @@ function fill_piehole(totalrecs, size){
     }
 }
 
+
 function visual_boxes(chart_location,json, size){
     var location = $(chart_location).next();
+    console.log(json);
     if(size != 'small'){
         for(var i in json){
             location.append('<div class="chart-box" id="'+json[i].typename+'"><div class="big-num">'+String(json[i].count)+'</div><div class="reports-record-type">'+json[i].name+'</div></div>');
@@ -256,6 +278,7 @@ function visual_boxes(chart_location,json, size){
         }
     }
 }
+
 
 function add_links(chart, json, size){
     if(size === 'big'){
