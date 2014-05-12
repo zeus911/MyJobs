@@ -76,7 +76,7 @@ $(function() {
 
         params = update_query('date', '', window.location.search);
         params = update_query('date_end', new_date_end, params);
-        window.location = '/prm/view/reports/details' + update_query('date_start', new_date_start, params);
+        window.location = window.location.pathname + update_query('date_start', new_date_start, params);
     });
 });
 

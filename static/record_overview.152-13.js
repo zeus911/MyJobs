@@ -76,7 +76,9 @@ function update_records(btn_val) {
             }
         }
     }).done(function() {
-        $("#time-range-menu").trigger("click");
+        if($("#date-range-list").is(":visible")) {
+            $("#time-range-menu").trigger("click");
+        }
     });
 }
 

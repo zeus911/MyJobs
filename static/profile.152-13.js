@@ -4,7 +4,6 @@ $(document).ready(function() {
         changeMonth: true, changeYear: true, dateFormat: window.dateFormat,
                                                      constrainInput: false});
 
-
     if($(window).width() >= 501) {
         // This function will be executed when the user scrolls the page.
         $(window).scroll(function(e) {
@@ -50,7 +49,10 @@ $(document).ready(function() {
     }
     setTimeout(add_date_button, 1);
 
+    set_autocomplete();
+});
 
+$(function() {
     $('#profile-save').on("click", function(e) {
         e.preventDefault();
         console.log('mmm?');
@@ -192,8 +194,9 @@ $(document).ready(function() {
         input.closest('div').toggle(no_show);
     });
 
-
-    $('#id_militaryservice-country_code').on("change", set_autocomplete());
+    $('#id_militaryservice-country_code').on("change", function() {
+        set_autocomplete();
+    });
 });
 
 
