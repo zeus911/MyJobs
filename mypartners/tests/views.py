@@ -347,31 +347,6 @@ class RecordsOverviewTests(MyPartnersTestCase):
         records = soup.find(id='view-records')
         self.assertEqual(len(records('tr')), 6)
 
-    def test_most_recent_activity(self):
-        user = UserFactory(email="test@test.com")
-        contact_record = ContactRecordFactory(partner=self.partner)
-        for _ in range(3):
-            ContactLogEntryFactory(partner=self.partner,
-                                   user=user,
-                                   object_id=contact_record.id)
-
-        url = self.get_url(company=self.company.id,
-                           partner=self.partner.id)
-        response = self.client.get(url)
-        soup = BeautifulSoup(response.content)
-        activity = soup.find(id='recent-activity')
-        self.assertEqual(len(activity('tr')), 3)
-
-        for _ in range(10):
-            ContactLogEntryFactory(partner=self.partner,
-                                   user=user,
-                                   object_id=contact_record.id)
-        response = self.client.get(url)
-        soup = BeautifulSoup(response.content)
-        activity = soup.find(id='recent-activity')
-
-        self.assertEqual(len(activity('tr')), 10)
-
 
 class RecordsDetailsTests(MyPartnersTestCase):
     """Tests related to the records detail page, /prm/view/records/view/"""
