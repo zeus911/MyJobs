@@ -32,7 +32,8 @@
                 <h4>Most Recent Activity <small id="activity-num" class="pull-right"></small></h4>
                 {% if recent_activity %}
 
-                <table id="activity-table" class="table table-striped">
+                {# display: none, because before load all tr show. JS will show after hiding rest of tr #}
+                <table id="activity-table" class="table table-striped" style="display: none;">
                     {% for activity in recent_activity %}
                         {% get_activity_block activity %}
                     {% endfor %}

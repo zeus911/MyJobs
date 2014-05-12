@@ -75,6 +75,8 @@ function update_records(btn_val) {
                 update_url(contact, contact_type, date_start, date_end);
             }
         }
+    }).done(function() {
+        $("#time-range-menu").trigger("click");
     });
 }
 

@@ -10,6 +10,7 @@ $(document).ready(function() {
     }
     change_marker(current_num, max_num);
     show_row(rows, current_num);
+    $('#activity-table').show();
 
     $('#previous').on( "click", function() {previous();} );
     $('#next').on( "click", function() {next();} );
