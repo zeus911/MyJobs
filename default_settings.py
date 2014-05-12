@@ -178,7 +178,7 @@ RECAPTCHA_USE_SSL = True
 # only run on these apps
 PROJECT_APPS = ('myjobs', 'myprofile', 'mysearches', 'registration',
                 'mydashboard', 'mysignon', 'mymessages', 'mypartners',
-                'solr', )
+                'solr', 'postajob', )
 
 INSTALLED_APPS += PROJECT_APPS
 
