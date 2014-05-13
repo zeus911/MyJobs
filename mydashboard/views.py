@@ -163,6 +163,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
             '((page_category:listing) OR (page_category:redirect))').add_facet_field(
             'page_category')
 
+        rng = filter_by_date(request, field='view_date')[0]
+        job_solr = job_solr.add_filter_query(rng)
+
         if active_microsites:
             domain_q = ['(domain:%s)' % microsite
                         for microsite in active_microsites]
@@ -171,13 +174,9 @@ def dashboard(request, template="mydashboard/mydashboard.html",
             non_job_solr = Solr().add_filter_query(domain_q).add_query(
                 '((page_category:results) OR (page_category:home))'). \
                 add_facet_field('page_category')
+            non_job_solr = non_job_solr.add_filter_query(rng)
         else:
             non_job_solr = None
-
-        rng = filter_by_date(request, field='view_date')[0]
-        job_solr = job_solr.add_filter_query(rng)
-        if non_job_solr is not None:
-            non_job_solr = non_job_solr.add_filter_query(rng)
 
         for analytics_solr in [job_solr, non_job_solr]:
             # listing and results are tokenized to list and result
