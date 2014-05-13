@@ -15,6 +15,7 @@ class Job(models.Model):
     reqid = models.CharField(max_length=50, blank=True)
     description = models.TextField()
     show_on_sites = models.ManyToManyField(SeoSite, blank=True, null=True)
+    is_syndicated = models.BooleanField(default=False)
 
     city = models.CharField(max_length=255, blank=True)
     state = models.CharField(max_length=200, blank=True)
