@@ -32,7 +32,8 @@
                 <h4>Most Recent Activity <small id="activity-num" class="pull-right"></small></h4>
                 {% if recent_activity %}
 
-                <table id="activity-table" class="table table-striped">
+                {# display: none, because before load all tr show. JS will show after hiding rest of tr #}
+                <table id="activity-table" class="table table-striped" style="display: none;">
                     {% for activity in recent_activity %}
                         {% get_activity_block activity %}
                     {% endfor %}
@@ -146,8 +147,8 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}partner-overview.151-01.js{{ gz }}"></script>
-<script src="{{ STATIC_URL }}partner-reports.151-01.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}partner-overview.152-13.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}partner-reports.152-13.js{{ gz }}"></script>
 
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">

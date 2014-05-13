@@ -304,6 +304,11 @@ h1 > small > a:hover {
 
 .contact-record-tr > td {
     word-break: break-word;
+    font-size: 0.9em;
+}
+
+.record-details {
+    max-width: 300px;
 }
 
 #prm-arrow-left{
@@ -1306,7 +1311,7 @@ fieldset textarea,
 }
 
 .formBox.no-padding > table > tbody > tr > td {
-    padding: 5px 10px;
+    padding: 5px;
 }
 
 .formBox.no-padding .table-bordered {
@@ -3598,25 +3603,18 @@ body.modal-open {
     cursor: pointer;
 }
 
-#activity-table td {
-    height: 140px;
-    max-height: 140px;
-    min-height: 140px;
+#activity-table td,
+#activity-table tr {
+    height: 100px;
+    max-height: 100px;
+    min-height: 100px;
     overflow: hidden;
-    display: block;
 }
 
 .all-contacts-table:hover tr,
 .clickable-tr:hover,
 #activity-table:hover td {
     cursor: pointer;
-}
-
-#activity-table tr {
-    height: 140px;
-    max-height: 140px;
-    min-height: 140px;
-    overflow: hidden;
 }
 
 .tip-content #activity-table tr {
