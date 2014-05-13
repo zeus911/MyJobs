@@ -559,6 +559,32 @@ class MyJobsViewsTests(TestCase):
         soup = BeautifulSoup(response.content)
         self.assertFalse(soup.findAll('a', {'id': 'savedsearch-link'}))
 
+    def test_inactive_user_account_settings(self):
+        """
+        Test that the communication portion of account settings is not
+        present for inactive users
+        """
+        def assert_communication_settings_presence(is_active, contents):
+            """
+            If is_active is True, assert that div#as-communication exists
+            Else, assert that it does not exist
+            """
+            communication_div = contents.find('div',
+                                              {'id': 'as-communication'})
+            if is_active is True:
+                self.assertTrue(communication_div)
+            else:
+                self.assertFalse(communication_div)
+
+        inactive_user = UserFactory(email='inactive@my.jobs', is_active=False)
+
+        for user in [self.user, inactive_user]:
+            self.client.login_user(user)
+            response = self.client.get(reverse('edit_account'))
+            soup = BeautifulSoup(response.content)
+
+            assert_communication_settings_presence(user.is_active, soup)
+
     def test_case_insensitive_login(self):
         """
         Test that emails are case-insensitive when logging in
