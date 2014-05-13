@@ -276,7 +276,10 @@ def edit_account(request):
     obj = User.objects.get(id=user.id)
     change_password = False
 
-    communication_form = EditCommunicationForm(user=user, instance=obj)
+    if user.is_active:
+        communication_form = EditCommunicationForm(user=user, instance=obj)
+    else:
+        communication_form = None
     password_form = ChangePasswordForm(user=user)
 
     if request.user.password_change:

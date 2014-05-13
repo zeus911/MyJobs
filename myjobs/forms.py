@@ -14,8 +14,9 @@ def make_choices(user):
     Inputs:
     :user: User instance
     """
-    choices = [(user.email, user.email)]
+    choices = []
     if user.is_active:
+        choices.append((user.email, user.email))
         for email in SecondaryEmail.objects.filter(user=user, verified=True):
             choices.append((email.email, email.email))
     return choices
