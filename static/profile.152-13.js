@@ -150,7 +150,7 @@ $(function() {
     });
 
 
-    $('.calendar').on("click", function(e) {
+    $(document).on("click", ".calendar", function(e) {
         e.stopPropagation();
         e.preventDefault();
         that = $(e.target).parents('.input-append');
@@ -261,8 +261,8 @@ function add_date_button() {
         var field_width = field.width() - 28;
         field.css("width", String(field_width)+"px");
     }
-
     field.after('<span class="btn add-on calendar"><i class="icon-search icon-calendar"></i></span>');
+
 }
 
 function getYear(when){
