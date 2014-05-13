@@ -46,12 +46,18 @@ def analytics(employer, company, candidate):
         buid_q = ' OR '.join(buid_q)
         buid_q = '(%s)' % buid_q
 
-        domain_q = ['(domain:%s)' % microsite
-                    for microsite in authorized_microsites]
-        domain_q = ' OR '.join(domain_q)
-        domain_q = '(%s)' % domain_q
+        if authorized_microsites:
+            domain_q = ['(domain:%s)' % microsite
+                        for microsite in authorized_microsites]
+            domain_q = ' OR '.join(domain_q)
+            domain_q = '(%s)' % domain_q
+        else:
+            domain_q = None
 
-        q = '(%s OR %s)' % (buid_q, domain_q)
+        if domain_q is not None:
+            q = '(%s OR %s)' % (buid_q, domain_q)
+        else:
+            q = buid_q
         solr = Solr().add_filter_query(q).add_query(
             'User_id:%s' % candidate.pk)
         return solr.search().docs
