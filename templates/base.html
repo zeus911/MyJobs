@@ -28,189 +28,7 @@
 
 <body>
     {% block topbar %}
-    <div class="topbar" data-dropdown="dropdown">
-        <div class="topbar-inner">
-            <div class="wrapper">
-                <div class="row">
-                    {% is_a_group_member user "Employer" as group_member %}
-                    {% if group_member and company_name|length >= 1 %}
-                    <div class="span4" id="logo-block">
-                    {% else %}
-                    <div class="span6v-1-8" id="logo-block">
-                    {% endif %}
-                        <a href="http://www.my.jobs/">
-                            <h3 id="topbar-logo" class="pull-left">my.jobs</h3>
-                        </a>
-
-                        {% get_ms_name as last_name %}
-                        {% if last_name %}
-
-                        <div id="last-microsite">
-                            <a href="{% get_ms_url %}">
-                                <span id="last-microsite-name">
-                                    {{ last_name }}
-                                </span>
-                                <span class="arrow pull-left"></span>
-                            </a>
-                        </div>
-
-                        {% endif %}
-
-                    </div>
-
-                        {% if user.is_authenticated %}
-
-                        {% if group_member and company_name|length >= 1 %}
-                        <div class="span7">
-                        {% else %}
-                        <div class="span6">
-                        {% endif %}
-                            <ul class="nav nav-tabs pull-right menu-tabs">
-
-
-                                {% get_company_name user as company_name %}
-                                <li class="{% active_tab 'My Profile' %}"><a href="{% url 'view_profile' %}">{% trans "Profile" %}</a></li>
-                                {% if user.is_active %}
-                                <li class="{% active_tab 'Saved Searches' %}"><a href="{% url 'saved_search_main' %}">{% trans "Saved Searches" %}</a></li>
-                                {% if group_member and company_name|length >= 1 %}
-                                <li class="{% active_tab 'Company Dashboard' %}" id="company-dropdown">
-                                    {% if company_name|length == 1 %}
-                                    <a id="candidate-tab" href="{% url 'dashboard' %}?company={{ company_name.0.id }}">{% trans "Candidates" %}</a>
-                                    {% else %}
-                                    <a id="candidate-tab">{% trans "Candidates" %}</a>
-                                    <ul id="company-menu" class="no-show">
-                                        {% for company in company_name %}
-                                        <li><a id="company-item" href="{% url 'dashboard' %}?company={{ company.id }}">{{ company }}</a></li>
-                                        {% endfor %}
-                                    </ul>
-                                    {% endif %}
-                                    {# /company-menu #}
-                                </li>
-                                <li class="{% active_tab 'PRM' %}" id="partner-dropdown">
-                                    {% if company_name|length == 1 %}
-                                    <a id="partner-tab" href="{% url 'prm' %}?company={{ company_name.0.id }}">{% trans "PRM" %}</a>
-                                    {% else %}
-                                    <a id="partner-tab">{% trans "PRM" %}</a>
-                                    <ul id="partner-menu" class="no-show">
-                                        {% for company in company_name %}
-                                        <li><a id="partner-item" href="{% url 'prm' %}?company={{ company.id }}">{{ company }}</a></li>
-                                        {% endfor %}
-                                    </ul>
-                                    {% endif %}
-                                </li>
-                                {% endif %}
-                                {% endif %}
-                                <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
-                            </ul>{# /nav nav-tabs pull-right menu-tabs #}
-                        </div>{# /span6 #}
-
-                        {% if group_member and company_name|length >= 1 %}
-                        <div class="span1">
-                        {% else %}
-                        <div class="span2v-1-8">
-                        {% endif %}
-                            <a id="topbar-back" class="desktop_hide" href="#" onclick="javascript:window.history.back(-1);return false;"><span id="prm-arrow-left"></span></a>
-                            <div class="menu-bar pagination-right pull-right">
-                                <ul id="nav" class="pull-right">
-                                    <li>
-                                        <a href="" class="main-nav">
-                                            {% get_gravatar user %}
-                                            <span class="arrow"></span>
-                                        </a>
-                                        <ul class="span4" id="pop-menu">
-                                            <li id="logged-in-li">
-                                                {% trans "Logged in as " %}
-                                                <b>
-
-                                                    {% with short_email=user.email|truncatechars:"20" %}
-
-                                                    {% with name_obj=user.get_full_name %}
-
-                                                    {% if not name_obj %}
-
-                                                    {{ short_email }}
-
-                                                    {% else %}
-
-                                                    {{ name_obj }}
-
-                                                    {% endif %}
-
-                                                    {% endwith %}
-
-                                                    {% endwith %}
-
-                                                </b>
-                                            </li>
-                                            <li id="back-btn-li" class="no-show"><a id="back-btn"><span class="arrow-left"></span></a></li>
-
-                                            {% if not user.is_disabled %}
-                                                <li><a id="profile-link" href="{% url 'view_profile' %}">{% trans "Profile" %}</a></li>
-
-                                                {% if user.is_active %}
-
-                                                    <li><a id="savedsearch-link" href="{% url 'saved_search_main' %}">{% trans "Saved Searches" %}</a></li>
-
-                                                    {% if group_member and user.is_active and company_name|length == 1  %}
-
-                                                        <li><a id="candidate-link-one" href="{% url 'dashboard' %}?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
-
-                                                        <li><a id="partner-link-one" href="{% url 'prm' %}?company={{ company_name.0.id }}">{% trans "PRM" %}</a></li>
-
-                                                    {% elif group_member and user.is_active and company_name|length >= 2 %}
-
-                                                        <li><a id="candidate-link">{% trans "Candidates" %}</a></li>
-
-                                                        <li><a id="partner-link">{% trans "PRM" %}</a></li>
-
-                                                    {% endif %}
-                                                {% endif %}                                                
-
-                                                <li><a id="account-link" href="{% url 'edit_account' %}">{% trans "Account Settings" %}</a></li>
-                                                <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
-                                                <li><a id="settings-link">{% trans "Settings" %}</a></li>                                                
-                                                
-                                            {% endif %}
-
-                                            <li><a id="logout-link" href="{% url 'auth_logout' %}">Log Out</a></li>
-
-                                            {% for company in company_name %}
-
-                                                <li><a class="company-nav-item sub-nav-item no-show" href="{% url 'dashboard' %}?company={{ company.id }}">{{ company|truncatechars:"20" }}</a></li>
-
-                                                <li><a class="partner-nav-item sub-nav-item no-show" href="{% url 'prm' %}?company={{ company.id }}">{{ company|truncatechars:"20" }}</a></li>
-
-                                            {% endfor %}
-
-                                            <li><a class="settings-nav-item sub-nav-item no-show" href="{% url 'edit_account' %}">{% trans "Account Settings" %}</a></li>
-                                            <li><a class="settings-nav-item sub-nav-item no-show" href="{% url 'auth_logout' %}">Log Out</a></li>
-                                        </ul>{# /pop-menu #}
-                                    </li>
-                                </ul>{# /nav #}
-                            </div>{# /menu-bar pagination-right pull-right #}
-                        </div>{# /span2v1-8 #}
-
-                        {% else %}
-                        <div class="pull-right span7">
-                            <ul class="nav nav-tabs pull-right menu-tabs">
-                                <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
-                            </ul>{# /nav nav-tabs pull-left menu-tabs #}
-                        </div>{# /span7 #}
-                        <div class="span10 pagination-right" id="topbar-login">
-                            {% block topbarlogin %}
-                            <ul id="nav" class="navbar pull-right">
-                                <li>
-                                    <a class="pull-right" href="/">{% trans 'Login' %}</a>
-                                </li>
-                            </ul>
-                            {% endblock %}
-                        </div>
-
-                        {% endif %}
-                </div>
-            </div>
-        </div>{# /topbar-inner #}
-    </div>
+    {% include "includes/topbar.html" %}
     {% endblock %}
     <section>
         <div class="section subpage">
@@ -320,19 +138,19 @@
     {% endblock %}
 
     <script type="text/javascript">
-    loc = document.location+"";
-    if(loc.indexOf(".jobs:")<0){ //only run this on live sites
-        var _gaq = _gaq || [];
-        _gaq.push(['_setAccount', 'UA-16316580-1']);
-        _gaq.push(['_trackPageview']);
-        _gaq.push(['_setCustomVar', 2, 'View Source', 'Dot Jobs (88)', 2]);
+        loc = document.location+"";
+        if(loc.indexOf(".jobs:")<0){ //only run this on live sites
+            var _gaq = _gaq || [];
+            _gaq.push(['_setAccount', 'UA-16316580-1']);
+            _gaq.push(['_trackPageview']);
+            _gaq.push(['_setCustomVar', 2, 'View Source', 'Dot Jobs (88)', 2]);
 
-        (function() {
-            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-        })();
-    }
+            (function() {
+                var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+                ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+            })();
+        }
     </script>
 </body>
 </html>
