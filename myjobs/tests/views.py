@@ -707,14 +707,19 @@ class MyJobsViewsTests(TestCase):
         self.assertEqual(response.redirect_chain[-1][0],
                          'https://secure.my.jobs/?next=http://www.my.jobs/')
 
-    def test_created_on_site(self):
+    def test_user_creation_source(self):
+        """
+        User.source should be set to the last microsite a new user visited,
+        or https://secure.my.jobs if the user never visited one or was created
+        via PRM.
+        """
         self.client.post(reverse('home'),
                          {'action': 'register',
                           'email': 'default@example.com',
                           'password1': 'secret',
                           'password2': 'secret'})
         user = User.objects.get(email='default@example.com')
-        self.assertEqual(user.created_on, 'https://secure.my.jobs')
+        self.assertEqual(user.source, 'https://secure.my.jobs')
 
         self.client.get(
             reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http%3A%2F%2Findianapolis.jobs&callback=foo',
@@ -730,6 +735,6 @@ class MyJobsViewsTests(TestCase):
                           'password2': 'secret'})
 
         user = User.objects.get(email='microsite@example.com')
-        self.assertEqual(user.created_on, last_site)
+        self.assertEqual(user.source, last_site)
 
 

@@ -77,7 +77,7 @@ class CustomUserManager(BaseUserManager):
             if request is not None:
                 last_microsite = request.COOKIES.get('lastmicrosite', None)
                 if last_microsite is not None:
-                    user.created_on = last_microsite
+                    user.source = last_microsite
             user.full_clean()
             user.save(using=self._db)
             user.add_default_group()
@@ -228,10 +228,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=255, blank=True)
     timezone = models.CharField(max_length=255, default=settings.TIME_ZONE)
 
-    created_on = models.CharField(max_length=255,
-                                  default='https://secure.my.jobs',
-                                  help_text=_('Site that initiated account '
-                                              'creation'))
+    source = models.CharField(max_length=255,
+                              default='https://secure.my.jobs',
+                              help_text=_('Site that initiated account '
+                                          'creation'))
 
     USERNAME_FIELD = 'email'
     objects = CustomUserManager()

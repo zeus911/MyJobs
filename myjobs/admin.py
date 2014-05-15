@@ -14,13 +14,13 @@ class EmailLogAdmin(admin.ModelAdmin):
 
 class UserAdmin(admin.ModelAdmin):
     list_display = ['email', 'date_joined', 'last_response', 'is_active',
-                    'created_on']
+                    'source']
     search_fields = ['email', 'last_microsite']
     list_filter = ['is_active', 'is_disabled', 'is_superuser', 'is_staff']
 
     form = UserAdminForm
     readonly_fields = ('password', 'user_guid', 'last_response',
-                       'created_on')
+                       'source')
     exclude = ('profile_completion', )
     filter_horizontal = ['groups', 'user_permissions']
     fieldsets = [
@@ -38,7 +38,7 @@ class UserAdmin(admin.ModelAdmin):
             'fields': [
                 ('user_permissions', 'groups', ),
                 'is_active', 'is_superuser', 'is_staff', 'is_disabled',
-                'created_on', ]}),
+                'source', ]}),
     ]
 
 admin.site.register(User, UserAdmin)
