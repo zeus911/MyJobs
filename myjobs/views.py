@@ -117,6 +117,7 @@ def home(request):
             registrationform = RegistrationForm(request.POST, auto_id=False)
             if registrationform.is_valid():
                 new_user, created = User.objects.create_inactive_user(
+                    request=request,
                     **registrationform.cleaned_data)
                 user_cache = authenticate(
                     username=registrationform.cleaned_data['email'],
@@ -200,12 +201,13 @@ def home(request):
                 return HttpResponse('valid')
             else:
                 return render_to_response('includes/initial-profile-form.html',
-                          {'name_form': name_form,
-                           'phone_form': phone_form,
-                           'address_form': address_form,
-                           'work_form': work_form,
-                           'education_form': education_form},
-                           context_instance=RequestContext(request))
+                                          {'name_form': name_form,
+                                           'phone_form': phone_form,
+                                           'address_form': address_form,
+                                           'work_form': work_form,
+                                           'education_form': education_form},
+                                          context_instance=RequestContext(
+                                              request))
 
     return render_to_response('index.html', data_dict, RequestContext(request))
 
@@ -248,7 +250,8 @@ def contact(request):
 
             to_jira = log_to_jira(subject, body, issue_dict, from_email)
             if to_jira:
-                time = datetime.datetime.now().strftime('%A, %B %d, %Y %l:%M %p')
+                time = datetime.datetime.now().strftime(
+                    '%A, %B %d, %Y %l:%M %p')
                 return HttpResponse(json.dumps({'validation': 'success',
                                                 'name': name,
                                                 'c_type': contact_type,
@@ -292,7 +295,7 @@ def edit_account(request):
 
     if request.method == "POST":
         obj = User.objects.get(id=request.user.id)
-        if request.REQUEST.has_key('communication'):
+        if 'communication' in request.REQUEST:
             form = EditCommunicationForm(user=request.user, instance=obj,
                                          data=request.POST)
             if form.is_valid():
@@ -308,7 +311,7 @@ def edit_account(request):
                 return render_to_response('myjobs/edit-account.html', ctx,
                                           RequestContext(request))
 
-        elif request.REQUEST.has_key('password'):
+        elif 'password' in request.REQUEST:
             form = ChangePasswordForm(user=request.user, data=request.POST)
             if form.is_valid():
                 request.user.password_change = False
@@ -373,19 +376,19 @@ def batch_message_digest(request):
                                     password=login_info[1])
                 target_user = User.objects.get(email='accounts@my.jobs')
                 if user is not None and user == target_user:
-                    events = request.raw_post_data
+                    events = request.body
                     try:
                         # try parsing post data as json
                         event_list = json.loads(events)
-                    except ValueError, e: #nope, it's V1 or V2
+                    except ValueError, e:  # nope, it's V1 or V2
                         event_list = []
                         events = events.splitlines()
                         for event_str in events:
                             if event_str == '':
                                 continue
-                            try: #nested try :/ -need to catch json exceptions
+                            try:  # nested try :/ -need to catch json exceptions
                                 event_list.append(json.loads(event_str))
-                            except ValueError, e: #return 404 is bad json
+                            except ValueError, e:  # return 404 is bad json
                                 return HttpResponse(status=400)
                     except Exception:
                         return HttpResponse(status=400)
@@ -401,7 +404,8 @@ def batch_message_digest(request):
                                      float(event['timestamp'])
                                  )).save()
                         if event['event'] == 'bounce' and \
-                                event.get('category', '') == 'My.jobs email redirect':
+                                event.get('category', '') == \
+                                'My.jobs email redirect':
                             subject = 'My.jobs email redirect failure'
                             body = """
                                    Contact: %s
@@ -420,6 +424,7 @@ def batch_message_digest(request):
                     return HttpResponse(status=200)
     return HttpResponse(status=403)
 
+
 @user_is_allowed(pass_user=True)
 def continue_sending_mail(request, user=None):
     """
@@ -435,7 +440,7 @@ def continue_sending_mail(request, user=None):
 
 def check_name_obj(user):
     """
-    Utility function to process and return the user name obect.
+    Utility function to process and return the user name object.
 
     Inputs:
     :user:  request.user object
@@ -467,7 +472,7 @@ def toolbar(request):
     user = request.user
     if not user or user.is_anonymous():
         # Ensure that old myguid cookies can be handled correctly
-        guid = request.COOKIES.get('myguid', '').replace('-','')
+        guid = request.COOKIES.get('myguid', '').replace('-', '')
         try:
             user = User.objects.get(user_guid=guid)
         except User.DoesNotExist:
@@ -535,13 +540,13 @@ def cas(request):
                                 redirect_url)
         else:
             if '?' in redirect_url:
-                response = redirect("%s&ticket=%s&uid=%s" % (redirect_url,
-                                                             ticket.ticket,
-                                                             ticket.user.user_guid))
+                response = redirect("%s&ticket=%s&uid=%s" %
+                                    (redirect_url, ticket.ticket,
+                                     ticket.user.user_guid))
             else:
-                response = redirect("%s?ticket=%s&uid=%s" % (redirect_url,
-                                                             ticket.ticket,
-                                                             ticket.user.user_guid))
+                response = redirect("%s?ticket=%s&uid=%s" %
+                                    (redirect_url, ticket.ticket,
+                                     ticket.user.user_guid))
     caller = urlparse(redirect_url)
     try:
         page = CustomHomepage.objects.get(domain=caller.netloc.split(":")[0])

@@ -34,7 +34,7 @@ class UserResource(ModelResource):
     def create_response(self, request, data, response_class=HttpResponse,
                         **response_kwargs):
         """
-        Intercepts the default create_reponse(). Checks for existing user
+        Intercepts the default create_response(). Checks for existing user
         and creates a new user if one matching the email doesn't exist.
 
         Creates new JSON formatted "data" based on the success, failure, 
@@ -51,13 +51,13 @@ class UserResource(ModelResource):
         try:
             kwargs = {'email': email,
                       'password1': request.GET.get('password', ''),
-                      'custom_msg': request.GET.get('custom_msg')}
+                      'custom_msg': request.GET.get('custom_msg'),
+                      'request': request}
             user, created = User.objects.create_inactive_user(**kwargs)
 
             data = {
                 'user_created': created,
-                'email': email
-                }
+                'email': email}
         except IntegrityError:
             data = {'email': 'That username already exists'}
 
@@ -160,4 +160,3 @@ class SavedSearchResource(ModelResource):
 
         return super(SavedSearchResource, self).create_response(
             request, data, response_class=HttpResponse, **response_kwargs)
-
