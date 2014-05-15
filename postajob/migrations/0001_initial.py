@@ -10,12 +10,14 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding model 'Job'
         db.create_table(u'postajob_job', (
-            ('id', self.gf('django.db.models.fields.IntegerField')(unique=True, primary_key=True)),
-            ('uid', self.gf('django.db.models.fields.CharField')(unique=True, max_length=255)),
+            ('id', self.gf('django.db.models.fields.AutoField')(unique=True, primary_key=True)),
+            ('guid', self.gf('django.db.models.fields.CharField')(unique=True, max_length=255)),
+            ('buid', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mydashboard.BusinessUnit'])),
             ('title', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('company', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mydashboard.Company'])),
             ('reqid', self.gf('django.db.models.fields.CharField')(max_length=50, blank=True)),
             ('description', self.gf('django.db.models.fields.TextField')()),
+            ('apply_link', self.gf('django.db.models.fields.URLField')(max_length=200)),
             ('is_syndicated', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('city', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('state', self.gf('django.db.models.fields.CharField')(max_length=200, blank=True)),
@@ -125,6 +127,8 @@ class Migration(SchemaMigration):
         },
         u'postajob.job': {
             'Meta': {'object_name': 'Job'},
+            'apply_link': ('django.db.models.fields.URLField', [], {'max_length': '200'}),
+            'buid': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.BusinessUnit']"}),
             'city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'company': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
             'country': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
@@ -132,14 +136,14 @@ class Migration(SchemaMigration):
             'date_new': ('django.db.models.fields.DateTimeField', [], {}),
             'date_updated': ('django.db.models.fields.DateTimeField', [], {}),
             'description': ('django.db.models.fields.TextField', [], {}),
-            'id': ('django.db.models.fields.IntegerField', [], {'unique': 'True', 'primary_key': 'True'}),
+            'guid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'}),
+            'id': ('django.db.models.fields.AutoField', [], {'unique': 'True', 'primary_key': 'True'}),
             'is_syndicated': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'reqid': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'show_on_sites': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['mydashboard.SeoSite']", 'null': 'True', 'blank': 'True'}),
             'state': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
             'state_short': ('django.db.models.fields.CharField', [], {'max_length': '3', 'blank': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'uid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'}),
             'zipcode': ('django.db.models.fields.CharField', [], {'max_length': '15', 'blank': 'True'})
         },
         u'sites.site': {
