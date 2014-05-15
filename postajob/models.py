@@ -1,33 +1,32 @@
 import json
-from datetime import datetime
 from urllib import urlencode
-from urllib2 import Request, urlopen
+from urllib2 import HTTPError, Request, urlopen
 from uuid import uuid4
 
 from django.conf import settings
 from django.db import models
+from django.db.models.signals import pre_delete
 
-from mydashboard.models import BusinessUnit, Company, SeoSite
+from mydashboard.models import Company, SeoSite
 
 
 class Job(models.Model):
     id = models.AutoField(primary_key=True, unique=True)
     guid = models.CharField(max_length=255, unique=True)
-    buid = models.ForeignKey(BusinessUnit)
 
     title = models.CharField(max_length=255)
     company = models.ForeignKey(Company)
-    reqid = models.CharField(max_length=50, blank=True)
+    reqid = models.CharField(max_length=50)
     description = models.TextField()
     apply_link = models.URLField()
-    show_on_sites = models.ManyToManyField(SeoSite, blank=True, null=True)
+    show_on_sites = models.ManyToManyField(SeoSite, null=True)
     is_syndicated = models.BooleanField(default=False)
 
     city = models.CharField(max_length=255, blank=True)
-    state = models.CharField(max_length=200, blank=True)
-    state_short = models.CharField(max_length=3, blank=True)
-    country = models.CharField(max_length=200, blank=True)
-    country_short = models.CharField(max_length=3, blank=True)
+    state = models.CharField(max_length=200)
+    state_short = models.CharField(max_length=3)
+    country = models.CharField(max_length=200)
+    country_short = models.CharField(max_length=3)
     zipcode = models.CharField(max_length=15, blank=True)
 
     date_new = models.DateTimeField(auto_now=True)
@@ -40,19 +39,22 @@ class Job(models.Model):
     def add_to_solr(self):
         """
         Microsites is expecting following fields: id (postajob.job.id),
-        buid, city, company (company.id), country, country_short, date_new,
+        city, company (company.id), country, country_short, date_new,
         date_updated, description, guid, link, on_sites, state,
         state_short, reqid, title, uid, and zipcode.
         """
-        on_sites = ",".join([str(x.id) for x in self.show_on_sites.all()])
+        if self.show_on_sites.all():
+            on_sites = ",".join([str(x.id) for x in self.show_on_sites.all()])
+        else:
+            on_sites = ''
         job = {
             'id': self.id,
-            'buid': '',
             'city': self.city,
             'company': self.company.id,
             'country': self.country,
             'country_short': self.country_short,
-            # Microsites expects date format '%Y-%m-%d %H:%M:%S.%f'
+            # Microsites expects date format '%Y-%m-%d %H:%M:%S.%f' or
+            # '%Y-%m-%d %H:%M:%S'.
             'date_new': str(self.date_new.replace(tzinfo=None)),
             'date_updated': str(self.date_updated.replace(tzinfo=None)),
             'description': self.description,
@@ -73,18 +75,23 @@ class Job(models.Model):
         request = Request(settings.POSTAJOB_URLS['post'], data)
         try:
             response = urlopen(request).read()
-        except Exception, e:
-            print e
+        except HTTPError:
+            response = json.dumps({'error': 'Insert failed.'})
+        return response
 
-    def delete(self, using=None):
-        self.remove_from_solr()
-        return super(Job, self).delete(using)
+    def save(self, **kwargs):
+        self.generate_guid()
+
+        job = super(Job, self).save(**kwargs)
+        self.add_to_solr()
+        return job
 
     def remove_from_solr(self):
         data = urlencode({
             'key': settings.POSTAJOB_API_KEY,
             'guids': self.guid
         })
+        print settings.POSTAJOB_URLS['delete']
         request = Request(settings.POSTAJOB_URLS['delete'], data)
         response = urlopen(request).read()
         return response
@@ -121,3 +128,7 @@ class Job(models.Model):
         state_map['None'] = 'None'
         return state_map
 
+
+def on_delete(sender, instance, **kwargs):
+    instance.remove_from_solr()
+pre_delete.connect(on_delete, sender=Job)
