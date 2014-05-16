@@ -89,5 +89,13 @@ function jsonp_ajax_call(ajax_url) {
             'Content-Type': "application/json",
             Accept: 'text/javascript'
         },
+        complete: function() {
+            $('#saved-search-email').keyup(function(event) {
+                var ENTER = 13; // The keycode of the enter button
+                if (event.which === ENTER) {
+                    save_search();
+                }
+            });
+        }
     });
 }
