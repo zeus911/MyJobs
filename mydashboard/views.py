@@ -51,9 +51,15 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     # Add join only if we're using facets, not if we're simply searching.
     query_params = {'search', 'company'}
-    if not query_params.issuperset(set(request.GET.keys())):
+    if not query_params.issuperset({q_key for q_key in request.GET.keys()
+                                    if q_key not in ['querystring_key',
+                                                     'date_end', 'date_start',
+                                                     'page']}):
         user_solr = user_solr.add_join(from_field='ProfileUnits_user_id',
                                        to_field='User_id')
+        print 'not subset'
+    else:
+        print 'subset'
     facet_solr = facet_solr.add_join(from_field='User_id',
                                      to_field='ProfileUnits_user_id')
     facet_solr = facet_solr.rows_to_fetch(0)
@@ -107,7 +113,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     user_solr, facet_solr = filter_by_microsite(active_microsites, user_solr,
                                                 facet_solr)
     # Because location faceting requires facet.prefix to work properly, and
-    # facet prefixes apply to all facets, a seperate solr result set has to be
+    # facet prefixes apply to all facets, a separate solr result set has to be
     # obtained specifically for locations. Because we're still faceting,
     # minus the facet prefix it is identical to facet_solr.
     loc_solr = facet_solr._clone()
@@ -216,7 +222,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     context['candidates'] = candidate_list
     context['total_candidates'] = len(candidate_list)
-
 
     if extra_context is not None:
         context.update(extra_context)

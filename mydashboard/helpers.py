@@ -318,6 +318,7 @@ def update_url_param(url, param, new_val):
     parts[4] = urllib.urlencode(query)
     return urlunparse(parts)
 
+
 def remove_param_from_url(url, param):
     """
     Removes a specified field from a query string
