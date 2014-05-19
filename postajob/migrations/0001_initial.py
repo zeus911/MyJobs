@@ -3,6 +3,7 @@ import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
+from django.conf import settings
 
 
 class Migration(SchemaMigration):
@@ -39,11 +40,12 @@ class Migration(SchemaMigration):
         db.create_unique(u'postajob_job_show_on_sites', ['job_id', 'seosite_id'])
 
         # Switching appropriate columns to UTF-8
-        db.execute('ALTER TABLE postajob_job CHARACTER SET utf8 COLLATE utf8_unicode_ci')
-        db.execute('ALTER TABLE postajob_job MODIFY COLUMN city VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci')
-        db.execute('ALTER TABLE postajob_job MODIFY COLUMN description LONGTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci')
-        db.execute('ALTER TABLE postajob_job MODIFY COLUMN title VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci')
-        db.execute('ALTER TABLE postajob_job MODIFY COLUMN apply_info LONGTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci')
+        if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
+            db.execute('ALTER TABLE postajob_job CHARACTER SET utf8 COLLATE utf8_unicode_ci')
+            db.execute('ALTER TABLE postajob_job MODIFY COLUMN city VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci')
+            db.execute('ALTER TABLE postajob_job MODIFY COLUMN description LONGTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci')
+            db.execute('ALTER TABLE postajob_job MODIFY COLUMN title VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci')
+            db.execute('ALTER TABLE postajob_job MODIFY COLUMN apply_info LONGTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci')
 
     def backwards(self, orm):
         # Deleting model 'Job'
