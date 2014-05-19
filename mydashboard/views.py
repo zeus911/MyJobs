@@ -51,9 +51,15 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     # Add join only if we're using facets, not if we're simply searching.
     query_params = {'search', 'company'}
-    if not query_params.issuperset(set(request.GET.keys())):
+    if not query_params.issuperset({q_key for q_key in request.GET.keys()
+                                    if q_key not in ['querystring_key',
+                                                     'date_end', 'date_start',
+                                                     'page']}):
         user_solr = user_solr.add_join(from_field='ProfileUnits_user_id',
                                        to_field='User_id')
+        print 'not subset'
+    else:
+        print 'subset'
     facet_solr = facet_solr.add_join(from_field='User_id',
                                      to_field='ProfileUnits_user_id')
     facet_solr = facet_solr.rows_to_fetch(0)
@@ -71,28 +77,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
             raise Http404
 
     authorized_microsites, buids = get_company_microsites(company)
-
-    if buids:
-        unique_buids = set(buids)
-        unique_microsites = set(authorized_microsites)
-        buid_q = ['(job_view_buid:%s)' % str(buid) for buid in unique_buids]
-        buid_q = ' OR '.join(buid_q)
-        buid_q = '(%s)' % buid_q
-        job_solr = Solr().add_filter_query(buid_q).add_query(
-            '((page_category:listing) OR (page_category:redirect))').add_facet_field(
-                'page_category')
-
-        domain_q = ['(domain:%s)' % microsite
-                    for microsite in unique_microsites]
-        domain_q = ' OR '.join(domain_q)
-        domain_q = '(%s)' % domain_q
-        non_job_solr = Solr().add_filter_query(domain_q).add_query(
-            '((page_category:results) OR (page_category:home))').add_facet_field(
-                'page_category')
-    else:
-        # Likelihood that a company doesn't have buids attached to it?
-        # Should never happen; catch it anyway.
-        job_solr = None
 
     admins = CompanyUser.objects.filter(company=company.id)
 
@@ -116,15 +100,11 @@ def dashboard(request, template="mydashboard/mydashboard.html",
             site_name = active_microsites[0]
         except IndexError:
             site_name = ''
+    active_microsites = set(active_microsites)
 
     rng, date_start, date_end, date_display = filter_by_date(request)
     user_solr = user_solr.add_filter_query(rng)
     facet_solr = facet_solr.add_query(rng)
-
-    if job_solr is not None:
-        rng = filter_by_date(request, field='view_date')[0]
-        job_solr = job_solr.add_filter_query(rng)
-        non_job_solr = non_job_solr.add_filter_query(rng)
 
     if request.GET.get('search', False):
         user_solr = user_solr.add_query("%s" % request.GET['search'])
@@ -133,7 +113,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     user_solr, facet_solr = filter_by_microsite(active_microsites, user_solr,
                                                 facet_solr)
     # Because location faceting requires facet.prefix to work properly, and
-    # facet prefixes apply to all facets, a seperate solr result set has to be
+    # facet prefixes apply to all facets, a separate solr result set has to be
     # obtained specifically for locations. Because we're still faceting,
     # minus the facet prefix it is identical to facet_solr.
     loc_solr = facet_solr._clone()
@@ -180,7 +160,30 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     results = solr_results.docs
 
-    if job_solr is not None:
+    if buids:
+        unique_buids = set(buids)
+        buid_q = ['(job_view_buid:%s)' % str(buid) for buid in unique_buids]
+        buid_q = ' OR '.join(buid_q)
+        buid_q = '(%s)' % buid_q
+        job_solr = Solr().add_filter_query(buid_q).add_query(
+            '((page_category:listing) OR (page_category:redirect))').add_facet_field(
+            'page_category')
+
+        rng = filter_by_date(request, field='view_date')[0]
+        job_solr = job_solr.add_filter_query(rng)
+
+        if active_microsites:
+            domain_q = ['(domain:%s)' % microsite
+                        for microsite in active_microsites]
+            domain_q = ' OR '.join(domain_q)
+            domain_q = '(%s)' % domain_q
+            non_job_solr = Solr().add_filter_query(domain_q).add_query(
+                '((page_category:results) OR (page_category:home))'). \
+                add_facet_field('page_category')
+            non_job_solr = non_job_solr.add_filter_query(rng)
+        else:
+            non_job_solr = None
+
         for analytics_solr in [job_solr, non_job_solr]:
             # listing and results are tokenized to list and result
             facet_var_map = {
@@ -190,18 +193,20 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                 'redirect': 'apply',
             }
 
-            all_results = analytics_solr.rows_to_fetch(0).search()
-            analytics_facets = all_results.facets.get('facet_fields', {}).get(
-                'page_category', [])
-            facet_dict = sequence_to_dict(analytics_facets)
-            for key in facet_dict.keys():
-                context_key = 'total_%s' % facet_var_map.get(key, '')
-                context[context_key] = facet_dict[key]
+            if analytics_solr is not None:
+                all_results = analytics_solr.rows_to_fetch(0).search()
+                analytics_facets = all_results.facets.get(
+                    'facet_fields', {}).get('page_category', [])
+                facet_dict = sequence_to_dict(analytics_facets)
+                for key in facet_dict.keys():
+                    context_key = 'total_%s' % facet_var_map.get(key, '')
+                    context[context_key] = facet_dict[key]
 
-            analytics_solr = analytics_solr.add_filter_query('User_id:[* TO *]')
+                analytics_solr = analytics_solr.add_filter_query(
+                    'User_id:[* TO *]')
 
-            auth_results = analytics_solr.search()
-            results += auth_results.docs
+                auth_results = analytics_solr.search()
+                results += auth_results.docs
 
     # Filter out duplicate entries for a user.
     candidates = sorted(dict_to_object(results),
@@ -217,7 +222,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     context['candidates'] = candidate_list
     context['total_candidates'] = len(candidate_list)
-
 
     if extra_context is not None:
         context.update(extra_context)

@@ -461,3 +461,13 @@ class MyDashboardViewsTests(TestCase):
                 with self.assertRaises(KeyError):
                     # This is marked as having no effect, which is intended
                     container.attrs['data-original-title']
+
+    def test_dashboard_with_no_microsites(self):
+        """
+        Trying to access the dashboard of a company that has no microsites
+        associated with it should not create malformed solr queries.
+        """
+        self.microsite.delete()
+        response = self.client.post(
+            reverse('dashboard')+'?company='+str(self.company.id))
+        self.assertEqual(response.status_code, 200)
