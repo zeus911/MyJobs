@@ -1,0 +1,1 @@
+from postajob.tests.models import *

@@ -1,6 +1,6 @@
 import json
 from urllib import urlencode
-from urllib2 import HTTPError, Request, urlopen
+import urllib2
 from uuid import uuid4
 
 from django.conf import settings
@@ -18,11 +18,14 @@ class Job(models.Model):
     company = models.ForeignKey(Company)
     reqid = models.CharField(max_length=50)
     description = models.TextField()
-    apply_link = models.URLField()
+    # This really should be a URLField, but URLFields don't allow for
+    # mailto links.
+    apply_link = models.TextField(blank=True)
+    apply_info = models.TextField(blank=True, verbose_name="Apply Information")
     show_on_sites = models.ManyToManyField(SeoSite, null=True)
     is_syndicated = models.BooleanField(default=False)
 
-    city = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=255)
     state = models.CharField(max_length=200)
     state_short = models.CharField(max_length=3)
     country = models.CharField(max_length=200)
@@ -39,8 +42,8 @@ class Job(models.Model):
     def add_to_solr(self):
         """
         Microsites is expecting following fields: id (postajob.job.id),
-        city, company (company.id), country, country_short, date_new,
-        date_updated, description, guid, link, on_sites, state,
+        apply_info, city, company (company.id), country, country_short,
+        date_new, date_updated, description, guid, link, on_sites, state,
         state_short, reqid, title, uid, and zipcode.
         """
         if self.show_on_sites.all():
@@ -60,6 +63,7 @@ class Job(models.Model):
             'description': self.description,
             'guid': self.guid,
             'link': self.apply_link,
+            'apply_info': self.apply_info,
             'on_sites': on_sites,
             'state': self.state,
             'state_short': self.state_short,
@@ -72,11 +76,8 @@ class Job(models.Model):
             'key': settings.POSTAJOB_API_KEY,
             'jobs': json.dumps([job])
         })
-        request = Request(settings.POSTAJOB_URLS['post'], data)
-        try:
-            response = urlopen(request).read()
-        except HTTPError:
-            response = json.dumps({'error': 'Insert failed.'})
+        request = urllib2.Request(settings.POSTAJOB_URLS['post'], data)
+        response = urllib2.urlopen(request).read()
         return response
 
     def save(self, **kwargs):
@@ -91,9 +92,8 @@ class Job(models.Model):
             'key': settings.POSTAJOB_API_KEY,
             'guids': self.guid
         })
-        print settings.POSTAJOB_URLS['delete']
-        request = Request(settings.POSTAJOB_URLS['delete'], data)
-        response = urlopen(request).read()
+        request = urllib2.Request(settings.POSTAJOB_URLS['delete'], data)
+        response = urllib2.urlopen(request).read()
         return response
 
     def generate_guid(self):
@@ -112,7 +112,7 @@ class Job(models.Model):
     @staticmethod
     def get_country_map():
         data_url = 'https://d2e48ltfsb5exy.cloudfront.net/myjobs/data/countries.json'
-        data_list = json.loads(urlopen(data_url).read())['countries']
+        data_list = json.loads(urllib2.urlopen(data_url).read())['countries']
         return dict([(x['name'], x['code']) for x in data_list])
 
     @staticmethod
@@ -123,7 +123,7 @@ class Job(models.Model):
     @staticmethod
     def get_state_map():
         data_url = 'https://d2e48ltfsb5exy.cloudfront.net/myjobs/data/usa_regions.json'
-        data_list = json.loads(urlopen(data_url).read())['regions']
+        data_list = json.loads(urllib2.urlopen(data_url).read())['regions']
         state_map = dict([(x['name'], x['code']) for x in data_list])
         state_map['None'] = 'None'
         return state_map
