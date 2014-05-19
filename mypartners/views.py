@@ -1138,6 +1138,9 @@ def process_email(request):
             prm_attachment.contact_record = record
             setattr(prm_attachment, 'partner', contact.partner)
             prm_attachment.save()
+            # The file pointer for this attachment is now at the end of the
+            # file; reset it to the beginning for future use.
+            attachment.seek(0)
         log_change(record, None, admin_user, contact.partner,  contact.name,
                    action_type=ADDITION, change_msg=change_msg)
 
