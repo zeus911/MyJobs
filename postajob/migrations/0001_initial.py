@@ -43,6 +43,7 @@ class Migration(SchemaMigration):
         db.execute('ALTER TABLE postajob_job MODIFY COLUMN city VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci')
         db.execute('ALTER TABLE postajob_job MODIFY COLUMN description LONGTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci')
         db.execute('ALTER TABLE postajob_job MODIFY COLUMN title VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci')
+        db.execute('ALTER TABLE postajob_job MODIFY COLUMN apply_info LONGTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci')
 
     def backwards(self, orm):
         # Deleting model 'Job'
