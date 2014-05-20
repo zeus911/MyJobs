@@ -5,17 +5,15 @@ import uuid
 
 from django.utils.safestring import mark_safe
 from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
-                                        _user_has_perm, Group, PermissionsMixin)
+                                        Group, PermissionsMixin)
 from django.contrib.sites.models import Site
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import EmailMessage
 from django.db import models
-from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
-from django.http import HttpResponse
 from django.contrib.auth.signals import user_logged_in, user_logged_out
-from django.contrib.sessions.models import Session
 from django.utils.importlib import import_module
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
@@ -43,9 +41,9 @@ class CustomUserManager(BaseUserManager):
                 user = None
         return user
 
-    def create_inactive_user(self, send_email=True, **kwargs):
+    def create_inactive_user(self, send_email=True, request=None, **kwargs):
         """
-        Creates an inactive user, calls the regisration app to generate a
+        Creates an inactive user, calls the registration app to generate a
         key and sends an activation email to the user.
 
         Inputs:
@@ -76,6 +74,10 @@ class CustomUserManager(BaseUserManager):
             user.gravatar = ''
             user.make_guid()
             user.timezone = settings.TIME_ZONE
+            if request is not None:
+                last_microsite = request.COOKIES.get('lastmicrosite', None)
+                if last_microsite is not None:
+                    user.source = last_microsite
             user.full_clean()
             user.save(using=self._db)
             user.add_default_group()
@@ -190,37 +192,46 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     # Permission Levels
     is_staff = models.BooleanField(_('staff status'), default=False,
-                                   help_text=_("Designates whether the user can " +\
-                                               "log into this admin site."))
+                                   help_text=_("Designates whether the user "
+                                               "can log into this admin site."))
     is_active = models.BooleanField(_('active'), default=True,
-                                    help_text=_("Designates whether this user " +\
-                                                "should be treated as active. " +\
-                                                "Unselect this instead of deleting accounts."))
+                                    help_text=_("Designates whether this user "
+                                                "should be treated as active. "
+                                                "Unselect this instead of "
+                                                "deleting accounts."))
     is_disabled = models.BooleanField(_('disabled'), default=False)
 
     # Communication Settings
 
     # opt_in_myjobs is current hidden on the top level, refer to forms.py
-    opt_in_myjobs = models.BooleanField(_('Opt-in to non-account emails and Saved Search:'),
+    opt_in_myjobs = models.BooleanField(_('Opt-in to non-account emails and '
+                                          'Saved Search:'),
                                         default=True,
-                                        help_text=_('Checking this enables my.jobs\
-                                                    to send email updates to you.'))
+                                        help_text=_('Checking this enables '
+                                                    'my.jobs to send email '
+                                                    'updates to you.'))
 
     opt_in_employers = models.BooleanField(_('Email is visible to Employers:'),
                                            default=True,
-                                           help_text=_("Employers can message me."))
+                                           help_text=_("Employers can "
+                                                       "message me."))
     
     last_response = models.DateField(default=datetime.datetime.now, blank=True)
 
     # Password Settings
-    password_change = models.BooleanField(_('Password must be changed on next \
-                                            login'), default=False)
+    password_change = models.BooleanField(_('Password must be changed on next '
+                                            'login'), default=False)
 
     user_guid = models.CharField(max_length=100, db_index=True, unique=True)
 
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
     timezone = models.CharField(max_length=255, default=settings.TIME_ZONE)
+
+    source = models.CharField(max_length=255,
+                              default='https://secure.my.jobs',
+                              help_text=_('Site that initiated account '
+                                          'creation'))
 
     USERNAME_FIELD = 'email'
     objects = CustomUserManager()
@@ -253,9 +264,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         """
 
         gravatar_url = GRAVATAR_URL_PREFIX + \
-                       hashlib.md5(self.gravatar.lower()).hexdigest() + "?"
-        gravatar_url += urllib.urlencode({'d':GRAVATAR_URL_DEFAULT,
-                                          's':str(size)})
+            hashlib.md5(self.gravatar.lower()).hexdigest() + "?"
+        gravatar_url += urllib.urlencode({'d': GRAVATAR_URL_DEFAULT,
+                                          's': str(size)})
         
         if urllib.urlopen(gravatar_url).getcode() == 404:
             # Determine background color for initials block based on the
@@ -271,16 +282,16 @@ class User(AbstractBaseUser, PermissionsMixin):
                     text = self.email[0]
                 else:
                     text = "%s%s" % (text.given_name[0], text.family_name[0])
-            except:
+            except ObjectDoesNotExist:
                 text = self.email[0]
 
             font_size = int(size)
-            font_size = font_size * .65
-            gravatar_url = mark_safe("<div class='gravatar-blank gravatar-%s'"
-                            " style='height: %spx; width: %spx'>"
-                            "<span class='gravatar-text' style='font-size:"
-                            "%spx;'>%s</span></div>" %
-                            (color, size, size, font_size, text.upper()))
+            font_size *= .65
+            gravatar_url = mark_safe(
+                "<div class='gravatar-blank gravatar-%s' style='height: %spx; "
+                "width: %spx'><span class='gravatar-text' style='font-size:"
+                "%spx;'>%s</span></div>" % (color, size, size,
+                                            font_size, text.upper()))
         else:
             gravatar_url = mark_safe("<img src='%s' id='id_gravatar'>"
                                      % gravatar_url)
@@ -304,8 +315,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         num_complete = len(list(set([unit.get_model_name() for unit
                            in profile_dict if unit.get_model_name()
                            in settings.PROFILE_COMPLETION_MODULES])))
-        self.profile_completion = int(float(1.0 * num_complete/
-                                  len(settings.PROFILE_COMPLETION_MODULES))*100)
+        self.profile_completion = int(float(
+            1.0 * num_complete / len(settings.PROFILE_COMPLETION_MODULES))*100)
         self.save()
 
     def add_default_group(self):
@@ -389,7 +400,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         try:
             name_obj = self.profileunits_set.filter(
                 content_type__name="name").get(name__primary=True)
-        except Exception:
+        except ObjectDoesNotExist:
             name_obj = None
 
         if name_obj:
@@ -424,7 +435,7 @@ class Ticket(models.Model):
 
 
 class Shared_Sessions(models.Model):
-    # mj_session and ms_session are comma seperated list stored as a string
+    # mj_session and ms_session are comma separated list stored as a string
     # of session keys
     mj_session = models.TextField(blank=True)
     ms_session = models.TextField(blank=True)

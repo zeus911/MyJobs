@@ -12,11 +12,9 @@ from django.core.urlresolvers import reverse
 from django.http import HttpRequest
 from django.test.client import Client
 from django.test import TestCase
-from django.utils import simplejson as json
 
 from myjobs.models import User, EmailLog
 from myjobs.tests.factories import UserFactory
-from myprofile.models import Name
 from mysearches.models import SavedSearch
 from registration.models import ActivationProfile
 from registration import signals as custom_signals
@@ -34,7 +32,8 @@ class TestClient(Client):
 
     def login_user(self, user):
         if not 'django.contrib.sessions' in settings.INSTALLED_APPS:
-            raise AssertionError("Unable to login without django.contrib.sessions in INSTALLED_APPS")
+            raise AssertionError("Unable to login without "
+                                 "django.contrib.sessions in INSTALLED_APPS")
         user.backend = "%s.%s" % ("django.contrib.auth.backends",
                                   "ModelBackend")
         engine = import_module(settings.SESSION_ENGINE)
@@ -93,7 +92,7 @@ class MyJobsViewsTests(TestCase):
         for event in self.events:
             messages.append(message.format(time.mktime(when.timetuple()),
                                            event))
-        if apiversion<3:
+        if apiversion < 3:
             return '\r\n'.join(messages)
         else:
             return_json = ','.join(messages)
@@ -255,8 +254,8 @@ class MyJobsViewsTests(TestCase):
                                     data=messages,
                                     content_type="text/json",
                                     HTTP_AUTHORIZATION='BASIC %s' %
-                                        base64.b64encode(
-                                            'accounts%40my.jobs:secret'))
+                                    base64.b64encode(
+                                        'accounts%40my.jobs:secret'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         process_batch_events()
@@ -287,8 +286,8 @@ class MyJobsViewsTests(TestCase):
                                     data=messages,
                                     content_type="text/json",
                                     HTTP_AUTHORIZATION='BASIC %s' %
-                                        base64.b64encode(
-                                            'accounts%40my.jobs:secret'))
+                                    base64.b64encode(
+                                        'accounts%40my.jobs:secret'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         process_batch_events()
@@ -314,8 +313,8 @@ class MyJobsViewsTests(TestCase):
                                         data=messages,
                                         content_type='text/json',
                                         HTTP_AUTHORIZATION='BASIC %s' %
-                                            base64.b64encode(
-                                                'accounts%40my.jobs:secret'))
+                                        base64.b64encode(
+                                            'accounts%40my.jobs:secret'))
             self.assertEqual(response.status_code, 200)
         process_batch_events()
         self.assertEqual(EmailLog.objects.count(), 2)
@@ -326,13 +325,13 @@ class MyJobsViewsTests(TestCase):
                   '"event":"bounce","category":"My.jobs email redirect",' \
                   '"status":418,"reason":"I\'m a teapot!",' \
                   '"type":"bounced"}}]'.format(
-            time.mktime(now.timetuple()))
+                      time.mktime(now.timetuple()))
         response = self.client.post(reverse('batch_message_digest'),
                                     data=message,
                                     content_type='text/json',
                                     HTTP_AUTHORIZATION='BASIC %s' %
-                                        base64.b64encode(
-                                            'accounts%40my.jobs:secret'))
+                                    base64.b64encode(
+                                        'accounts%40my.jobs:secret'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox.pop()
@@ -367,8 +366,8 @@ class MyJobsViewsTests(TestCase):
                                     data=messages,
                                     content_type="text/json",
                                     HTTP_AUTHORIZATION='BASIC %s' %
-                                        base64.b64encode(
-                                            'accounts%40my.jobs:secret'))
+                                    base64.b64encode(
+                                        'accounts%40my.jobs:secret'))
         self.assertTrue(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         self.assertEqual(
@@ -402,8 +401,8 @@ class MyJobsViewsTests(TestCase):
                                     data=messages,
                                     content_type="text/json",
                                     HTTP_AUTHORIZATION='BASIC %s' %
-                                        base64.b64encode(
-                                            'accounts%40my.jobs:secret'))
+                                    base64.b64encode(
+                                        'accounts%40my.jobs:secret'))
         self.assertTrue(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         self.assertEqual(
@@ -437,8 +436,8 @@ class MyJobsViewsTests(TestCase):
                                     data=messages,
                                     content_type="text/json",
                                     HTTP_AUTHORIZATION='BASIC %s' %
-                                        base64.b64encode(
-                                            'accounts%40my.jobs:secret'))
+                                    base64.b64encode(
+                                        'accounts%40my.jobs:secret'))
         self.assertTrue(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         self.assertEqual(
@@ -458,8 +457,8 @@ class MyJobsViewsTests(TestCase):
                                     data='this is invalid',
                                     content_type="text/json",
                                     HTTP_AUTHORIZATION='BASIC %s' %
-                                        base64.b64encode(
-                                            'accounts%40my.jobs:secret'))
+                                    base64.b64encode(
+                                        'accounts%40my.jobs:secret'))
         self.assertEqual(response.status_code, 400)
 
     def test_invalid_user(self):
@@ -475,8 +474,8 @@ class MyJobsViewsTests(TestCase):
                                     data=messages,
                                     content_type="text/json",
                                     HTTP_AUTHORIZATION='BASIC %s' %
-                                        base64.b64encode(
-                                            'does%40not.exist:wrong_pass'))
+                                    base64.b64encode(
+                                        'does%40not.exist:wrong_pass'))
         self.assertEqual(response.status_code, 403)
 
     def test_anonymous_continue_sending_mail(self):
@@ -687,7 +686,7 @@ class MyJobsViewsTests(TestCase):
 
     def test_referring_site_in_topbar(self):
         self.client.get(
-            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=indianapolis.jobs&callback=foo',
+            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http%3A%2F%2Findianapolis.jobs&callback=foo',
             HTTP_REFERER='http://indianapolis.jobs')
 
         last_site = self.client.cookies.get('lastmicrosite').value
@@ -700,11 +699,42 @@ class MyJobsViewsTests(TestCase):
     def test_cas_logged_in(self):
         response = self.client.get(reverse('cas'), follow=True)
         self.assertEqual(response.redirect_chain[-1][0].split("?")[0],
-                             'http://www.my.jobs/')
+                         'http://www.my.jobs/')
 
     def test_cas_not_logged_in(self):
         self.client.post(reverse('auth_logout'))
         response = self.client.get(reverse('cas'), follow=True)
         self.assertEqual(response.redirect_chain[-1][0],
                          'https://secure.my.jobs/?next=http://www.my.jobs/')
+
+    def test_user_creation_source(self):
+        """
+        User.source should be set to the last microsite a new user visited,
+        or https://secure.my.jobs if the user never visited one or was created
+        via PRM.
+        """
+        self.client.post(reverse('home'),
+                         {'action': 'register',
+                          'email': 'default@example.com',
+                          'password1': 'secret',
+                          'password2': 'secret'})
+        user = User.objects.get(email='default@example.com')
+        self.assertEqual(user.source, 'https://secure.my.jobs')
+
+        self.client.get(
+            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http%3A%2F%2Findianapolis.jobs&callback=foo',
+            HTTP_REFERER='http://indianapolis.jobs')
+
+        last_site = self.client.cookies.get('lastmicrosite').value
+        self.assertEqual(last_site, 'http://indianapolis.jobs')
+
+        self.client.post(reverse('home'),
+                         {'action': 'register',
+                          'email': 'microsite@example.com',
+                          'password1': 'secret',
+                          'password2': 'secret'})
+
+        user = User.objects.get(email='microsite@example.com')
+        self.assertEqual(user.source, last_site)
+
 
