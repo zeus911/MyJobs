@@ -408,8 +408,15 @@ def read_new_logs(solr_location=settings.SOLR['default']):
 @task(name='tasks.expire_jobs')
 def expire_jobs():
     jobs = Job.objects.filter(date_expired=date.today(),
-                              is_expired=False)
+                              is_expired=False, autorenew=False)
     for job in jobs:
-        job.remove_from_solr()
+        # Setting is_expired to True will trigger job.remove_from_solr()
         job.is_expired = True
+        job.save()
+
+    jobs = Job.objects.filter(date_expired=date.today(),
+                              is_expired=False, autorenew=True)
+    for job in jobs:
+        job.date_expired = date.today() + timedelta(days=30)
+        # Saving will trigger job.add_to_solr().
         job.save()

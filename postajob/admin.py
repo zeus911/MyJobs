@@ -94,9 +94,6 @@ class JobAdminForm(ModelForm):
         if not job.pk:
             job.save()
         [job.show_on_sites.add(s) for s in sites]
-
-        if job.is_expired:
-            job.remove_from_solr()
         return job
 
 
@@ -110,7 +107,7 @@ class JobAdmin(admin.ModelAdmin):
         ('Job Information', {
             'fields': (('title', 'is_syndicated'), 'reqid', 'description',
                        'city', 'state', 'country', 'zipcode',
-                       ('date_expired', 'autorenew', )),
+                       ('date_expired', 'is_expired', 'autorenew', )),
         }),
         ('Application Instructions', {
             'fields': ('apply_link', 'apply_email', 'apply_info', ),

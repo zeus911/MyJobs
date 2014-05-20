@@ -1,3 +1,4 @@
+import datetime
 import json
 from urllib import urlencode
 import urllib2
@@ -86,10 +87,15 @@ class Job(models.Model):
     def save(self, **kwargs):
         self.generate_guid()
 
+        if self.is_expired and self.date_expired > datetime.date.today():
+            self.date_expired = datetime.date.today()
+
         job = super(Job, self).save(**kwargs)
 
         if not self.is_expired:
             self.add_to_solr()
+        else:
+            self.remove_from_solr()
 
         return job
 
