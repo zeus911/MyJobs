@@ -1144,7 +1144,7 @@ def process_email(request):
                 # file; reset it to the beginning for future use.
                 attachment.seek(0)
         except AttributeError:
-            attachment_failures.append((record.contact_name, record.contact_email))
+            attachment_failures.append(record)
         log_change(record, None, admin_user, contact.partner,  contact.name,
                    action_type=ADDITION, change_msg=change_msg)
 

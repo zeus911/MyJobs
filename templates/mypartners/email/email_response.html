@@ -12,9 +12,9 @@
     {% endif %}
 
     {% if attachment_failures %}
-        We were unable to associate your email attachments with the following individuals. Please <a href="https://secure.my.jobs/{% url 'prm' %}">add the attachments via the Partner Relationship Manager.</a><br />
+        We were unable to associate your email attachments with the following individuals. Please add the attachments via the Partner Relationship Manager.<br />
         {% for individual in attachment_failures %}
-            {{ individual }}<br />
+            <a href="https://secure.my.jobs{{ individual.get_record_url }}">{{ individual.contact_name }}</a><br />
         {% endfor %}
     {% endif %}
 
