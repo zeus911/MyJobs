@@ -57,9 +57,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                                                      'page']}):
         user_solr = user_solr.add_join(from_field='ProfileUnits_user_id',
                                        to_field='User_id')
-        print 'not subset'
-    else:
-        print 'subset'
     facet_solr = facet_solr.add_join(from_field='User_id',
                                      to_field='ProfileUnits_user_id')
     facet_solr = facet_solr.rows_to_fetch(0)

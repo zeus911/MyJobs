@@ -1,3 +1,5 @@
+import re
+
 from django.conf import settings
 from django.core import mail
 from django.test import TestCase
@@ -5,7 +7,6 @@ from django.test import TestCase
 from testfixtures import Replacer
 
 from myjobs.tests.factories import UserFactory
-from mysearches import models
 from mysearches.tests.factories import SavedSearchFactory, SavedSearchDigestFactory
 from mysearches.tests.test_helpers import return_file
 from tasks import send_search_digests
@@ -35,6 +36,8 @@ class SavedSearchModelsTests(TestCase):
         self.assertEqual(email.subject, search.label)
         self.assertTrue("table" in email.body)
         self.assertTrue(email.to[0] in email.body)
+        self.assertNotEqual(email.body.find(search.url), -1,
+                            "Search url was not found in email body")
 
     def test_send_search_digest_email(self):
         SavedSearchDigestFactory(user=self.user)
