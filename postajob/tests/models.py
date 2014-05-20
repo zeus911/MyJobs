@@ -28,6 +28,7 @@ class ModelTests(TestCase):
             'zipcode': '46268',
             'date_new': datetime.datetime.now(),
             'date_updated': datetime.datetime.now(),
+            'date_expired': datetime.date.today(),
             'guid': 'abcdef123456',
         }
         self.request_data = {

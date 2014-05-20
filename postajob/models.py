@@ -34,6 +34,9 @@ class Job(models.Model):
 
     date_new = models.DateTimeField(auto_now=True)
     date_updated = models.DateTimeField(auto_now_add=True)
+    date_expired = models.DateField(verbose_name='Expires on')
+    is_expired = models.BooleanField(default=False)
+    autorenew = models.BooleanField(default=False, verbose_name="Auto-Renew")
 
     def __unicode__(self):
         return '{company} - {title}'.format(company=self.company.name,
@@ -84,7 +87,10 @@ class Job(models.Model):
         self.generate_guid()
 
         job = super(Job, self).save(**kwargs)
-        self.add_to_solr()
+
+        if not self.is_expired:
+            self.add_to_solr()
+
         return job
 
     def remove_from_solr(self):

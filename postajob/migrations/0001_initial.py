@@ -3,7 +3,6 @@ import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
-from django.conf import settings
 
 
 class Migration(SchemaMigration):
@@ -28,6 +27,9 @@ class Migration(SchemaMigration):
             ('zipcode', self.gf('django.db.models.fields.CharField')(max_length=15, blank=True)),
             ('date_new', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('date_updated', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('date_expired', self.gf('django.db.models.fields.DateField')()),
+            ('is_expired', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('autorenew', self.gf('django.db.models.fields.BooleanField')(default=False)),
         ))
         db.send_create_signal(u'postajob', ['Job'])
 
@@ -39,13 +41,6 @@ class Migration(SchemaMigration):
         ))
         db.create_unique(u'postajob_job_show_on_sites', ['job_id', 'seosite_id'])
 
-        # Switching appropriate columns to UTF-8
-        if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
-            db.execute('ALTER TABLE postajob_job CHARACTER SET utf8 COLLATE utf8_unicode_ci')
-            db.execute('ALTER TABLE postajob_job MODIFY COLUMN city VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci')
-            db.execute('ALTER TABLE postajob_job MODIFY COLUMN description LONGTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci')
-            db.execute('ALTER TABLE postajob_job MODIFY COLUMN title VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci')
-            db.execute('ALTER TABLE postajob_job MODIFY COLUMN apply_info LONGTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci')
 
     def backwards(self, orm):
         # Deleting model 'Job'
@@ -137,15 +132,18 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Job'},
             'apply_info': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'apply_link': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'autorenew': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'city': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'company': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
             'country': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'country_short': ('django.db.models.fields.CharField', [], {'max_length': '3'}),
+            'date_expired': ('django.db.models.fields.DateField', [], {}),
             'date_new': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'date_updated': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'description': ('django.db.models.fields.TextField', [], {}),
             'guid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'}),
             'id': ('django.db.models.fields.AutoField', [], {'unique': 'True', 'primary_key': 'True'}),
+            'is_expired': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_syndicated': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'reqid': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'show_on_sites': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['mydashboard.SeoSite']", 'null': 'True', 'symmetrical': 'False'}),
