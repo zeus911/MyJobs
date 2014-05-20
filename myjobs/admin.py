@@ -15,7 +15,7 @@ class EmailLogAdmin(admin.ModelAdmin):
 class UserAdmin(admin.ModelAdmin):
     list_display = ['email', 'date_joined', 'last_response', 'is_active',
                     'source']
-    search_fields = ['email', 'last_microsite']
+    search_fields = ['email', 'source']
     list_filter = ['is_active', 'is_disabled', 'is_superuser', 'is_staff']
 
     form = UserAdminForm
