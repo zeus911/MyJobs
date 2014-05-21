@@ -533,7 +533,10 @@
             <div id="last-microsite" class="de-topbar-item">
                 <a href="{% get_ms_url %}">
                     <span id="last-microsite-name">
-                        {{ last_name }}
+                        {% get_ms_name as microsite_name %}
+                        {% if microsite_name != None %}
+                        {{ microsite_name }}
+                        {% endif %}
                     </span>
                     <span class="arrow pull-left"></span>
                 </a>
