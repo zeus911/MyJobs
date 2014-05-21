@@ -555,3 +555,16 @@ def cas(request):
         pass
 
     return response
+
+
+def topbar(request):
+    callback = request.REQUEST.get('callback')
+    user = request.user if request.user.is_authenticated() else None
+
+    ctx = {'user': user}
+    html = render_to_response('includes/topbar.html', ctx,
+                              RequestContext(request))
+
+    return HttpResponse("%s(%s)" % (callback, json.dumps(html.content)),
+                        content_type='text/javascript')
+
