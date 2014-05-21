@@ -32,7 +32,7 @@ function update_apply_fields() {
     }
     else if(apply_type == 'email') {
         show_apply_field('apply-email');
-        clear_input('apply_email');
+        clear_input('apply_info');
         clear_input('apply_link');
         hide_apply_field('apply-link');
         hide_apply_field('apply-instructions')
