@@ -1,25 +1,25 @@
-import re
-
 from django.conf import settings
 from django.core import mail
 from django.test import TestCase
 
-from testfixtures import Replacer
+from mock import patch
 
 from myjobs.tests.factories import UserFactory
-from mysearches.tests.factories import SavedSearchFactory, SavedSearchDigestFactory
+from mysearches.tests.factories import (SavedSearchFactory,
+                                        SavedSearchDigestFactory)
 from mysearches.tests.test_helpers import return_file
 from tasks import send_search_digests
+
 
 class SavedSearchModelsTests(TestCase):
     def setUp(self):
         self.user = UserFactory()
 
-        self.r = Replacer()
-        self.r.replace('urllib2.urlopen', return_file)
+        self.patcher = patch('urllib2.urlopen', return_file)
+        self.mock_urlopen = self.patcher.start()
 
     def tearDown(self):
-        self.r.restore()
+        self.patcher.stop()
 
     def test_send_search_email(self):
         SavedSearchDigestFactory(user=self.user,

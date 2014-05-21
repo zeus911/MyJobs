@@ -2,8 +2,8 @@ import json
 
 from django.test import TestCase
 
+from mock import patch
 from tastypie.models import create_api_key
-from testfixtures import Replacer
 
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
@@ -20,20 +20,19 @@ class UserResourceTests(TestCase):
         create_api_key(User, instance=self.user, created=True)
         self.data = {'email': 'foo@example.com',
                      'username': self.user.email,
-                     'api_key': self.user.api_key.key
-        }
+                     'api_key': self.user.api_key.key}
 
     def make_response(self, data):
         url = '/api/v1/user/'
         response = self.client.get(url, data)
         return response
 
-
     def test_create_new_user(self):
         response = self.make_response(self.data)
         content = json.loads(response.content)
         self.assertEqual(content, 
-            {'user_created':True, 'email':'foo@example.com'})
+                         {'user_created': True,
+                          'email': 'foo@example.com'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(User.objects.count(), 2)
         user = User.objects.get(email=self.data['email'])
@@ -60,16 +59,17 @@ class SavedSearchResourceTests(TestCase):
         super(SavedSearchResourceTests, self).setUp()
         self.user = UserFactory()
         self.client = TestClient()
-        self.data = {'email':'alice@example.com', 'url':'www.my.jobs/jobs'}
+        self.data = {'email': 'alice@example.com',
+                     'url': 'www.my.jobs/jobs'}
         create_api_key(User, instance=self.user, created=True)
 
         self.credentials = (self.user.email, self.user.api_key.key)
 
-        self.r = Replacer()
-        self.r.replace('urllib2.urlopen', return_file)
+        self.patcher = patch('urllib2.urlopen', return_file)
+        self.patcher.start()
 
     def tearDown(self):
-        self.r.restore()
+        self.patcher.stop()
 
     def make_response(self, data):
         """
@@ -117,8 +117,8 @@ class SavedSearchResourceTests(TestCase):
         self.assertEqual(SavedSearch.objects.count(), 0)
         self.assertEqual(User.objects.count(), 1)
         content = json.loads(response.content)
-        self.assertEqual(content['error'], 'No user with email %s exists' % \
-                                   self.data['email'])
+        self.assertEqual(content['error'],
+                         'No user with email %s exists' % self.data['email'])
         self.assertEqual(len(content), 1)
 
     def test_new_search_secondary_email(self):

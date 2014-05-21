@@ -1,6 +1,8 @@
 from datetime import datetime
 from StringIO import StringIO
 
+import requests
+
 
 def return_file(url, *args, **kwargs):
     """
@@ -23,12 +25,12 @@ def return_file(url, *args, **kwargs):
         file_ = 'json.json'
         feed = True
     elif 'mcdonalds/careers/' in url or \
-       url.endswith('?location=chicago&q=nurse'):
+            url.endswith('?location=chicago&q=nurse'):
         file_ = 'careers.html'
     elif 'www.my.jobs/jobs' in url or 'www.my.jobs/search' in url:
         file_ = 'jobs.html'
     else:
-        file_ = 'other'
+        return StringIO(requests.get(url).text)
 
     target = 'mysearches/tests/local/'
     target += file_
