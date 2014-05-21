@@ -9,16 +9,18 @@ from registration.models import ActivationProfile
 class EmailLogAdmin(admin.ModelAdmin):
     list_display = ['email', 'event', 'received', 'processed']
     search_fields = ['email']
-    list_filter = ['event','processed']
+    list_filter = ['event', 'processed']
 
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ['email', 'date_joined', 'last_response', 'is_active']
-    search_fields = ['email']
+    list_display = ['email', 'date_joined', 'last_response', 'is_active',
+                    'source']
+    search_fields = ['email', 'source']
     list_filter = ['is_active', 'is_disabled', 'is_superuser', 'is_staff']
 
     form = UserAdminForm
-    readonly_fields = ('password', 'user_guid', 'last_response')
+    readonly_fields = ('password', 'user_guid', 'last_response',
+                       'source')
     exclude = ('profile_completion', )
     filter_horizontal = ['groups', 'user_permissions']
     fieldsets = [
@@ -35,7 +37,8 @@ class UserAdmin(admin.ModelAdmin):
         ('Admin', {
             'fields': [
                 ('user_permissions', 'groups', ),
-                'is_active', 'is_superuser', 'is_staff', 'is_disabled']}),
+                'is_active', 'is_superuser', 'is_staff', 'is_disabled',
+                'source', ]}),
     ]
 
 admin.site.register(User, UserAdmin)

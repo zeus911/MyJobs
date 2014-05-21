@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth import logout as log_out
 from django.contrib.auth.decorators import user_passes_test
 from django.http import HttpResponseRedirect, HttpResponse
-from django.shortcuts import render_to_response, redirect, get_object_or_404
+from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
 from django.views.generic import TemplateView
 
@@ -34,7 +34,8 @@ def register(request):
     if request.method == "POST":
         form = RegistrationForm(request.POST)
         if form.is_valid():
-            new_user = User.objects.create_inactive_user(**form.cleaned_data)
+            new_user = User.objects.create_inactive_user(request=request,
+                                                         **form.cleaned_data)
             username = form.cleaned_data['email']
             password = form.cleaned_data['password1']
             user = authenticate(username=username, password=password)
@@ -97,7 +98,7 @@ def merge_accounts(request, activation_key):
     # Check if activation key exists
     if not AP.objects.filter(activation_key=activation_key).exists():
         return render_to_response('registration/merge_request.html', ctx,
-                              context_instance=RequestContext(request))
+                                  context_instance=RequestContext(request))
 
     # Get activation key and associated user
     activation_profile = AP.objects.get(activation_key=activation_key)
@@ -107,12 +108,12 @@ def merge_accounts(request, activation_key):
     # Check if the activation request is expired
     if activation_profile.activation_key_expired():
         return render_to_response('registration/merge_request.html', ctx,
-                              context_instance=RequestContext(request))
+                                  context_instance=RequestContext(request))
 
     # Create a secondary email
     SecondaryEmail.objects.create(user=existing_user, label='Merged Email',
-                           email=activation_profile.email, verified=True,
-                           verified_date=datetime.datetime.now())
+                                  email=activation_profile.email, verified=True,
+                                  verified_date=datetime.datetime.now())
 
     # Update the contacts
     for contact in new_user.contact_set.all():

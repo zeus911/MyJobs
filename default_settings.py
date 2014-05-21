@@ -124,6 +124,10 @@ CELERYBEAT_SCHEDULE = {
         'task': 'tasks.process_batch_events',
         'schedule': crontab(minute=0, hour=0),
     },
+    'daily-job-expire': {
+        'task': 'tasks.expire_jobs',
+        'schedule': crontab(minute=0, hour=0),
+    },
     'regular-solr-update': {
         'task': 'tasks.update_solr_from_model',
         'schedule': crontab(minute='*/5'),
@@ -178,7 +182,7 @@ RECAPTCHA_USE_SSL = True
 # only run on these apps
 PROJECT_APPS = ('myjobs', 'myprofile', 'mysearches', 'registration',
                 'mydashboard', 'mysignon', 'mymessages', 'mypartners',
-                'solr', )
+                'solr', 'postajob', )
 
 INSTALLED_APPS += PROJECT_APPS
 
