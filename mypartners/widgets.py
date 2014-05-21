@@ -145,7 +145,7 @@ class SplitDateTimeDropDownField(MultiValueField):
         return date_time
 
 class SplitDateDropDownField(MultiValueField):
-    widget = SplitDateTimeDropDownWidget
+    widget = SplitDateDropDownWidget
 
     def __init__(self, *args, **kwargs):
         list_fields = (
