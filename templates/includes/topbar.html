@@ -648,10 +648,6 @@
 </div>
 
 <script type="text/javascript">
-    var cid = read_cookie();
-    if(cid)
-        update_employer_tools(cid);
-
     window.onload = function() {
         /* Explicit control of main menu, primarily for mobile but also provides
         non hover and cover option if that becomes an issue. */
@@ -738,11 +734,21 @@
             });
         });
 
-        if(multiple_companies)
-                get_companies();
+        // multiple_companies initialized in template if
+        // user is an employer and has more than one company
+        if(multiple_companies) {
+            // See if a cookie is already set. If so update employer links.
+            var cid = read_cookie();
+            if(cid)
+                update_employer_tools(cid);
+
+            // Build multiple company selector
+            get_companies();
+        }
     };
 
     function get_companies() {
+        // Retrieve a list of companies and IDs
         $.ajax({
             global: false,
             dataType: "json",
@@ -763,12 +769,19 @@
                 };
 
                 var label = document.createElement("a");
+
+                // Company id from myjobs_company cookie
                 var cid = read_cookie();
 
                 var list = document.createElement("ul");
                 list.setAttribute("id", "select_company");
+
+                // Company name used to show user what current company is selected
                 var menu_company_name;
+
+                // Creating li items for "list" (the ul)
                 for(var i=0; i<data.length; i++) {
+                    // Get company name from cid, if cid exists
                     if(!menu_company_name) {
                         if(cid) {
                             if(data[i].id == cid)
