@@ -5,7 +5,6 @@ import urllib2
 from uuid import uuid4
 
 from django.conf import settings
-from django.core.urlresolvers import reverse_lazy
 from django.db import models
 from django.db.models.signals import pre_delete
 
@@ -23,7 +22,7 @@ class Job(models.Model):
     # This really should be a URLField, but URLFields don't allow for
     # mailto links.
     apply_link = models.TextField(blank=True, verbose_name="Apply Link")
-    apply_info = models.TextField(blank=True, verbose_name="Apply Information")
+    apply_info = models.TextField(blank=True, verbose_name="Apply Instructions")
     show_on_sites = models.ManyToManyField(SeoSite, null=True)
     is_syndicated = models.BooleanField(default=False, verbose_name="Syndicated")
 

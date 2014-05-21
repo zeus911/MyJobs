@@ -1,8 +1,8 @@
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
-from django.forms import (CharField, ModelForm, ModelMultipleChoiceField,
-                          Select, TextInput)
+from django.forms import (CharField, CheckboxSelectMultiple, ModelForm,
+                          ModelMultipleChoiceField, Select, TextInput)
 
 from mydashboard.models import SeoSite
 from mypartners.widgets import SplitDateDropDownField
@@ -11,7 +11,7 @@ from postajob.models import Job
 
 class JobForm(ModelForm):
     class Meta:
-        exclude = ('guid', 'country_short', 'state_short', )
+        exclude = ('guid', 'country_short', 'state_short', 'is_syndicated', )
         fields = ('title', 'is_syndicated', 'reqid', 'description', 'city',
                   'state', 'country', 'zipcode', 'date_expired', 'is_expired',
                   'autorenew', 'apply_link', 'apply_email', 'apply_info',
@@ -21,6 +21,9 @@ class JobForm(ModelForm):
     apply_email = CharField(required=False, max_length=255,
                             label='Apply Email',
                             widget=TextInput(attrs={'size': 50}))
+    apply_link = CharField(required=False, max_length=255,
+                            label='Apply Link',
+                            widget=TextInput(attrs={'rows': 1, 'size': 50}))
     show_on_sites_widget = admin.widgets.FilteredSelectMultiple('Sites', False)
     show_on_sites = ModelMultipleChoiceField(SeoSite.objects.all(),
                                              label="On Sites",
@@ -34,6 +37,29 @@ class JobForm(ModelForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super(JobForm, self).__init__(*args, **kwargs)
+        if not self.request.path.startswith('/admin'):
+            # Prevent all three apply options from being show on the page at
+            # once.
+            apply_choices = [('link', "Link"), ('email', 'Email'),
+                             ('instructions', 'Instructions')]
+            if self.instance and self.instance.apply_info:
+                apply_initial = 'instructions'
+            else:
+                apply_initial = 'link'
+            self.fields['apply_type'] = CharField(label='Application Method',
+                                                  widget=Select(choices=apply_choices),
+                                                  initial=apply_initial)
+
+            # Place the apply_choices filter in a place that makes sense.
+            self.fields.keyOrder.pop(-1)
+            apply_link_index = self.fields.keyOrder.index('apply_link')
+            self.fields.keyOrder.insert(apply_link_index, 'apply_type')
+
+            # FilteredSelectMultiple doesn't work outside the admin, so
+            # switch to a widget that does work.
+            self.fields['show_on_sites'].widget = CheckboxSelectMultiple(
+                attrs={'class': 'job-sites-checkbox'})
+
         if not self.request.user.is_superuser:
             # Limit a user's access to only companies/sites they own.
             kwargs = {'admins': self.request.user}

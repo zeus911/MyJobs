@@ -11,7 +11,7 @@ class JobAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Job Information', {
-            'fields': (('title', 'is_syndicated'), 'reqid', 'description',
+            'fields': (('title', ), 'reqid', 'description',
                        'city', 'state', 'country', 'zipcode',
                        ('date_expired', 'is_expired', 'autorenew', )),
         }),

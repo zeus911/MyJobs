@@ -31,19 +31,19 @@ form -- the rest of the form.
 
                 {% if field.html_name == "use_code" %}
 
-                <div class="span3 form-label pull-left initial">
+                <div class="span3 form-label pull-left initial {{ field.label|slugify }}-label">
                     {% add_required_label field %}
                 </div>
-                <div class="profile-form-input">
+                <div class="profile-form-input {{ field.label|slugify }}-field">
                     {{field}}
                 </div>
 
                 {% else %}
 
-                <div class="span3 form-label pull-left initial">
+                <div class="span3 form-label pull-left initial {{ field.label|slugify }}-label">
                     {% add_required_label field %}
                 </div>
-                <div class="profile-form-input">
+                <div class="profile-form-input {{ field.label|slugify }}-field">
                     {{field}}
                 </div>
 
@@ -51,16 +51,16 @@ form -- the rest of the form.
 
             {% elif is_boolean %}
 
-            <div class="span3 form-label pull-left checkbox-label">
+            <div class="span3 form-label pull-left checkbox-label {{ field.label|slugify }}-label">
                 {% add_required_label field %}
             </div>
-            <div class="profile-form-input">
+            <div class="profile-form-input {{ field.label|slugify }}-field">
             {{field}}
             </div>
 
             {% elif 'country_code' in field.html_name %}
 
-            <div class="profile-form-input">
+            <div class="profile-form-input {{ field.label|slugify }}-field">
                 {% with "id_"|add:form.prefix|add:"-country_sub_division_code" as region_id %}
                 {% country_select selected=field|default_country html_id=field.id_for_label  region_html_id=region_id input_name=field.html_name %}
                 {% endwith %}
@@ -70,10 +70,10 @@ form -- the rest of the form.
 
                 {% if '_dialing' in field.html_name or field.html_name == "ph-number" or field.html_name == "ph-extension" or field.html_name == "number" or field.html_name == "extension" %}
 
-                <div class="span3 form-label pull-left initial">
+                <div class="span3 form-label pull-left initial {{ field.label|slugify }}-label">
                     {% add_required_label field %}
                 </div>
-                <div class="profile-form-input">
+                <div class="profile-form-input {{ field.label|slugify }}-field">
                     {{field}}
 
                     {% if field.help_text %}
@@ -92,10 +92,10 @@ form -- the rest of the form.
                     
                 {% endif %}
 
-                <div class="span3 form-label pull-left initial">
+                <div class="span3 form-label pull-left initial {{ field.label|slugify }}-label">
                     {% add_required_label field %}
                 </div>
-                <div class="profile-form-input">
+                <div class="profile-form-input {{ field.label|slugify }}-field">
                     {{ field  }}
 
                     {% if field.help_text %}
