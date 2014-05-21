@@ -692,3 +692,9 @@ def retrieve_fields(instance):
                                         u'date_created', u'date_updated',
                                         u'content_type']]
     return fields
+
+
+def retrieve_company_list(request):
+    companies = Company.objects.filter(admins=request.user)
+    info = [{"name": company.name, "id": company.id} for company in companies]
+    return HttpResponse(json.dumps(info))
