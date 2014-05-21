@@ -18,7 +18,7 @@ function show_apply_field(field_name) {
 
 function update_apply_fields() {
     apply_type = $('#id_apply_type').val();
-    console.log('apply_type');
+
     if(apply_type == 'link') {
         show_apply_field('apply-link');
         hide_apply_field('apply-email');
