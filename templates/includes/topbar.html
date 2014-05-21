@@ -6,41 +6,522 @@
         left: 0;
         right: 0;
         top: 0;
+        z-index: 1000;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        line-height: 20px;
+    }
+
+    .topbar fieldset{
+        margin-bottom: 0;
+    }
+
+    .topbar h3{
+        height: 1em;
+        margin: 0;
+        line-height: 1em;
+        font-size: 24.5px;
+    }
+
+    .topbar h3 a {
+        height: 26px;
+        padding: 4px 0 0 0;
+    }
+
+    .topbar-inner {
+        background-color: #444;
+        height: 30px;
+        webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25),inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        -moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25),inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25),inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .topbar #topbar-logo {
+        width: 100px;
+        background: transparent url(http://d2e48ltfsb5exy.cloudfront.net/myjobs/logos/myjobs_logo_white_small.png) center left no-repeat;
+        text-indent: -9000px;
+    }
+
+    .topbar input {
+        width: 100px;
+        margin-right: 10px;
+    }
+
+    .topbar ul {
+        padding-left: 0;
+    }
+
+    .topbar .menu-tabs a,
+    .topbar #last-microsite-name {
+        border: 1px solid transparent !important;
+        background-color: transparent;
+        color: #FFF;
+        font-weight: bold;
+        text-decoration: none;
+        padding-top: 4px !important;
+        padding-bottom: 5px !important;
+    }
+
+    .topbar #last-microsite-name {
+        margin-left: 10px;
+    }
+
+    .topbar .menu-tabs a:hover {
+        color: #FFF;
+        background-color: #a95051;
+    }
+
+    .menu-tabs .active a {
+        background-color: #a95051 !important;
     }
 
     .de-topbar-item {
         display: inline-block;
+    }
+
+    .wrapper{
+        margin: 0 auto;
+        width: 960px;
+        display: block;
+    }
+
+    .menu-container {
+        float: right;
+        width: auto;
+    }
+
+    .menu-container > ul,
+    .menu-container > a {
+        float: left;
+        padding-top: 5px;
+    }
+
+    .menu-container > div {
         float: left;
     }
 
-    .de-topbar-item.menu-item {
-        padding: 5px 12px;
-    }
-
-    .de-topbar-item.menu-item:hover {
-        cursor: pointer;
-        background-color: #a95051;
-    }
-
-    .de-topbar-item > ul {
+    .menu-container > ul {
         margin: 0;
-    }
-
-    #seeker-apps, #employer-apps {
         color: #FFF;
         font-weight: bold;
     }
 
-    #seeker-apps > ul,
-    #employer-apps > ul {
-        /*display: none;*/
-        padding: 10px;
-        background-color: #444;
+    .menu-container > ul > li {
+        display: inline;
+        position: relative;
+        padding: 7px 0;
+    }
+
+    .menu-container > ul > li > a {
+        padding: 6px 12px;
+        text-decoration: none;
         color: #FFF;
     }
 
+    .menu-container > ul > li:hover > a {
+        cursor: pointer;
+        background-color: #a95051;
+        text-decoration: none;
+    }
+    
+    .menu-container > ul > li > ul {
+        display: none;
+        background-color: #666;
+        color: #FFF;
+        position: absolute;
+        top: 29px;
+        right: 4px;
+        width: 250px;
+    }
+
+    .menu-container > ul > li:last-of-type > ul {
+        right: 0;
+    }
+
+    .menu-container > ul > li:hover > ul {
+        display: list-item;
+    }
+
+    .submenu > li {
+        width: 100%;
+        border-bottom: 1px solid #333;
+        box-sizing: border-box;
+        font-weight: normal;
+    }
+
+    .submenu > li > a {
+        text-decoration: none;
+        color: white;
+        padding: 4px;
+        display: block;
+    }
+
+    .submenu > li:hover {
+        background-color: #444;
+        cursor: pointer;
+    }
+
+    .topbar ul {
+        list-style: none;
+    }
+
+    #nav {
+        z-index: 1;
+        margin: 0 0 0 25px;
+    }
+
+    #nav:hover {
+        background: #222;
+        color: #000;
+    }
+
+    #nav > li {
+        padding: 5px 2px 3px 2px;
+    }
+
+    #nav a {
+        color: #fff;
+    }
+
+    #nav .main-nav img {
+        max-width: none;
+        padding-left: 5px;
+    }
+
+    #nav .main-nav {
+        color: #fff;
+        text-decoration: none;
+        display: block;
+        padding-right: 4px;
+        width: 40px;
+    }
+
+    .arrow-left {
+        float: left;
+        width: 0px;
+        height: 0px;
+        border-style: solid;
+        border-width: 15px 20px 15px 0;
+        border-color: transparent #FFF transparent transparent;
+    }
+
+
+    #nav ul#pop-menu {
+        background:#444;
+        padding: 0;
+        margin: 2px 0 0 -2px;
+        position:absolute;
+        display: none;
+        border-bottom-left-radius: 4px;
+        border-bottom-right-radius: 4px;
+        width: 275px;
+    }
+
+    .topbar .arrow {
+        float: right;
+        display: block;
+        width: 0;
+        border: 4px solid transparent;
+        border-right: 6px solid #999;
+        border-left: 0;
+        margin-top: 6px;
+        margin-top: -15px;
+        margin-left: 30px;
+        margin-bottom: 12px;
+    }
+
+    .topbar #nav:hover .arrow {
+        border: 4px solid transparent;
+        border-top: 6px solid #eee;
+        border-bottom: 0;
+        position: relative;
+        left: 2px;
+        top: 2px;
+    }
+
+    .topbar #last-microsite .arrow {
+        position: absolute;
+        float: left;
+        margin-left: 2px;
+        border-right: 0px;
+        border-left: 6px solid #fff;
+        margin-top: -15px;
+    }
+
+    .topbar #last-microsite {
+        margin-top: 6px;
+    }
+
+    #pop-menu li {
+        margin: 0;
+        padding: 0;
+        color: #FFF;
+    }
+
+    #pop-menu a {
+        display: block;
+        padding: 4px;
+        background: #666;
+        border-top: 1px solid #333;
+        text-decoration: none;
+    }
+
+    #pop-menu a.no-show {
+        display: none;
+    }
+
+    #nav.active li ul#pop-menu {
+        display: block;
+        text-align: left;
+    }
+
+    #logged-in-li {
+        padding: 4px !important;
+    }
+
+    #back-btn {
+        border-right: 1px solid #FFF !important;
+        height: 100% !important;
+    }
+
+    #back-btn-li {
+        float: left;
+        width: 40px !important;
+        height: 100%;
+        z-index: 999;
+    }
+
+    .sub-nav-item {
+        margin-left: 40px;
+    }
+
+    #pop-menu .desktop_hide {
+        display: none;
+    }
+
+    .submenu-dropdown {
+        background-color: #444;
+    }
+
+    .submenu-dropdown > ul {
+        display: none;
+        margin: 0;
+    }
+
+    .submenu-dropdown ul li {
+        padding: 0 10px 0 10px;
+    }
+
+    .submenu-dropdown ul li a,
+    .submenu-dropdown ul li a:hover {
+        color: #fff;
+        text-decoration: none;
+    }
+
+    .submenu-dropdown ul li:hover {
+        background-color: #222;
+    }
+
+    #nav.active ul#pop-menu li a:hover,
+    #nav li:hover ul#pop-menu li a:hover {
+        background:#444;
+        color: #fff;
+        text-decoration:none;
+    }
+
+    .no-show {
+        display: none;
+    }
+
+    .gravatar-text {
+        display: table-cell;
+        vertical-align: middle;
+        position: static;
+    }
+
+    td .gravatar-blank,
+    .main-nav .gravatar-blank,
+    .gravatar .gravatar-blank {
+        border-radius: 0 !important;
+    }
+
+    .form-label .gravatar-blank,
+    .form-label #id_gravatar {
+        margin-left: 220px;
+    }
+
+    .gravatar-blank {
+        font-weight: bold;
+        color: #333;
+        border: 1px solid #333;
+        border-radius: 4px;
+        text-align: center;
+        display: table;
+    }
+
+    .gravatar-danger {
+        background-color: #dd514c;
+    }
+
+    .gravatar-warning {
+        background-color: #faa732;
+    }
+
+    .gravatar-info {
+        background-color: #4bb1cf;
+    }
+
+    .gravatar-success {
+        background-color: #5eb95e;
+    }
+
+    @media screen and (max-width: 992px) {
+        .wrapper {
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .menu-container > .mobile_hide {
+            display: none;
+        }
+
+        #logo-block {
+            margin-top: 10px;
+        }
+
+        .topbar #nav .arrow {
+            display: none;
+        }
+
+        .topbar .gravatar-blank,
+        .topbar #nav img {
+            display: none;
+        }
+
+        #nav .main-nav {
+            background: #a95051 url(http://d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/superbutton.png) no-repeat;
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            width: 45px;
+            height: 45px;
+            padding: 0;
+            text-indent: -9000px;
+            z-index: 101;
+            border: 2px solid #FFF;
+            border-radius: 4px;
+        }
+
+        .topbar li a {
+            border-width: 1px;
+            border-style: solid;
+        }
+
+        .topbar-inner {
+            background: #444;
+            height: 50px;
+            border-bottom: 20px solid #a95051;
+        }
+
+        #topbar-login form {
+            display: none;
+        }
+
+        .section #nav {
+            display: none;
+        }
+
+        #topbar-login #nav.active + form,
+        #topbar-login #nav:hover + form {
+            background:#444;
+            padding: 10px 0 10px 0;
+            margin: 3px 0 0 0;
+            position:absolute;
+            top: 0;
+            left: 0;
+            display: block;
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+            width: 100%;
+        }
+
+        .topbar #topbar-login input {
+            height: 30px;
+         }
+
+        .topbar #topbar-login button {
+            margin-right: 70px;
+            padding: 10px 25px 9px 25px;
+        }
+
+        .topbar #nav ul#pop-menu {
+            border-top: 20px solid #a95051;
+            position: fixed;
+            left: 0;
+            width: 100%;
+            top: 0;
+            bottom: 0;
+            z-index: 100;
+            margin: 0 -10px 0 0;
+        }
+
+        .topbar #nav ul#pop-menu li {
+            display: block;
+            margin: 0;
+            width: 100%;
+        }
+
+        .topbar #nav ul#pop-menu li.no-show {
+            display: none;
+        }
+
+        .topbar #nav ul#pop-menu li a {
+            -webkit-border-radius: 0;
+            -moz-border-radius: 0;
+            border-radius: 0;
+            border-left: 0;
+            border-right: 0;
+            font-size: 2em;
+            height: 25px;
+            padding: 10px;
+        }
+
+        #pop-menu {
+            height: 100%;
+        }
+
+        #pop-menu .desktop_hide {
+            display: block;
+        }
+    }
+    @media screen and (min-width: 993px) {
+        #nav ul#pop-menu {
+            right: 0;
+        }
+
+        #profile-link,
+        #savedsearch-link,
+        #candidate-link,
+        #partner-link,
+        #settings-link {
+            display: none !important;
+        }
+
+        #account-link, #logout-link {
+            display: block;
+        }
+
+        .topbar ul {
+            position: relative;
+        }
+
+        #nav li:hover ul#pop-menu {
+            display: block;
+            text-align: left;
+        }
+    }
 </style>
-<div class="topbar">
+<div class="topbar" role="menubar">
     <div class="topbar-inner">
         <div id="de-topbar-content" class="wrapper" {% if from_ajax %}style="margin:0 auto; width:960px; display:block;"{% endif %}>
             <div id="logo-block" class="de-topbar-item">
@@ -58,37 +539,41 @@
                 </a>
             </div>
 
-            <div style="float: right; width: auto;">
-                <div class="de-topbar-item menu-item">
-                    <ul>
-                        <li id="seeker-apps" class="de-topbar-dropdown">
-                            Seeker Apps
-                            <ul>
-                                <li>Profile</li>
-                                <li>Saved Searches</li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="de-topbar-item menu-item" class="de-topbar-dropdown">
-                    <ul>
-                        <li id="employer-apps">
-                            Employeer Apps
-                            <ul>
-                                <li>Candidates</li>
-                                <li>PRM</li>
-                                <li>Post a Job</li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
+            <div class="menu-container" role="menu">
+                {% if user.is_authenticated %}
+                {% is_a_group_member user "Employer" as group_member %}
+                {% if group_member and company_name|length > 1 %}
+                <script>
+                    multiple_companies = true;
+                </script>
+                {% endif %}
+                <ul class="mobile_hide">
+                    <li class="{% active_tab 'seeker-tools' %}">
+                        <a>{% trans "Job Tools" %}</a>
+                        <ul id="seeker-apps" class="submenu">
+                            <li><a href="http://secure.my.jobs/profile/view/">{% trans "Profile" %}</a></li>
+                            <li><a href="http://secure.my.jobs/saved-search/view/">{% trans "Saved Searches" %}</a></li>
+                        </ul>
+                    </li>
+                    {% is_a_group_member user "Employer" as group_member %}
+                    {% get_company_name user as company_name %}
+                    {% if group_member %}
+                    <li class="{% active_tab 'employer-tools' %}">
+                        <a>{% trans "Employer Tools" %}</a>
+                        <ul id="employer-apps" class="submenu">
+                            <li><a id="candidate-tab" href="http://secure.my.jobs/candidates/view?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
+                            <li><a id="partner-tab" href="http://secure.my.jobs/prm/view?company={{ company_name.0.id }}">{% trans "PRM" %}</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
+                </ul>
 
                 <a id="topbar-back" class="desktop_hide" href="#" onclick="javascript:window.history.back(-1);return false;"><span id="prm-arrow-left"></span></a>
-                <div id="" class="menu-bar pagination-right de-topbar-item">
+                <div id="" class="menu-bar" style="text-align: right;">
                     <ul id="nav">
                         <li>
-                            <a href="" class="main-nav">
+                            <a class="main-nav">
                                 {% get_gravatar user %}
                                 <span class="arrow"></span>
                             </a>
@@ -120,235 +605,242 @@
                                 <li id="back-btn-li" class="no-show"><a id="back-btn"><span class="arrow-left"></span></a></li>
 
                                 {% if not user.is_disabled %}
-                                    <li><a id="profile-link" href="{% url 'view_profile' %}">{% trans "Profile" %}</a></li>
+                                    <li><a id="job-tools" class="no-show desktop_hide" href="#">{% trans "Job Tools" %}</a></li>
+                                    <li><a id="profile-link" class="no-show sub-nav-item seeker-menu" href="http://secure.my.jobs/profile/view/">{% trans "Profile" %}</a></li>
 
                                     {% if user.is_active %}
 
-                                        <li><a id="savedsearch-link" href="{% url 'saved_search_main' %}">{% trans "Saved Searches" %}</a></li>
+                                        <li><a id="savedsearch-link" class="no-show sub-nav-item seeker-menu" href="http://secure.my.jobs/saved-search/view/">{% trans "Saved Searches" %}</a></li>
 
-                                        {% if group_member and user.is_active and company_name|length == 1  %}
+                                        {% if group_member and user.is_active  %}
 
-                                            <li><a id="candidate-link-one" href="{% url 'dashboard' %}?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
+                                            <li><a id="employer-tools" class="no-show desktop_hide" href="#">{% trans "Employer Tools" %}</a></li>
 
-                                            <li><a id="partner-link-one" href="{% url 'prm' %}?company={{ company_name.0.id }}">{% trans "PRM" %}</a></li>
+                                            <li><a id="candidate-link" class="no-show sub-nav-item employer-menu" href="http://secure.my.jobs/candidates/view?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
 
-                                        {% elif group_member and user.is_active and company_name|length >= 2 %}
-
-                                            <li><a id="candidate-link">{% trans "Candidates" %}</a></li>
-
-                                            <li><a id="partner-link">{% trans "PRM" %}</a></li>
+                                            <li><a id="partner-link" class="no-show sub-nav-item employer-menu" href="http://secure.my.jobs/prm/view?company={{ company_name.0.id }}">{% trans "PRM" %}</a></li>
 
                                         {% endif %}
                                     {% endif %}
-
-                                    <li><a id="account-link" href="{% url 'edit_account' %}">{% trans "Account Settings" %}</a></li>
-                                    <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
+                                    <li><a id="account-link" href="http://secure.my.jobs/account/edit">{% trans "Account Settings" %}</a></li>
+                                    <li><a id="search-jobs" href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
                                     <li><a id="settings-link">{% trans "Settings" %}</a></li>
 
                                 {% endif %}
 
-                                <li><a id="logout-link" href="{% url 'auth_logout' %}">Log Out</a></li>
+                                <li><a id="logout-link" href="http://secure.my.jobs/account/logout/">Log Out</a></li>
 
-                                {% for company in company_name %}
-
-                                    <li><a class="company-nav-item sub-nav-item no-show" href="{% url 'dashboard' %}?company={{ company.id }}">{{ company|truncatechars:"20" }}</a></li>
-
-                                    <li><a class="partner-nav-item sub-nav-item no-show" href="{% url 'prm' %}?company={{ company.id }}">{{ company|truncatechars:"20" }}</a></li>
-
-                                {% endfor %}
-
-                                <li><a class="settings-nav-item sub-nav-item no-show" href="{% url 'edit_account' %}">{% trans "Account Settings" %}</a></li>
-                                <li><a class="settings-nav-item sub-nav-item no-show" href="{% url 'auth_logout' %}">Log Out</a></li>
+                                <li><a class="settings-nav-item sub-nav-item no-show" href="http://secure.my.jobs/account/edit">{% trans "Account Settings" %}</a></li>
+                                <li><a class="settings-nav-item sub-nav-item no-show" href="http://secure.my.jobs/account/logout">Log Out</a></li>
                             </ul>{# /pop-menu #}
                         </li>
                     </ul>{# /nav #}
                 </div>{# /menu-bar pagination-right pull-right #}
+                {% else %}
+                    <ul class="mobile_hide">
+                        <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
+                        <li><a href="/">{% trans 'Login' %}</a></li>
+                    </ul>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
-<!--
-<div class="topbar" data-dropdown="dropdown">
-    <div class="topbar-inner">
-        <div class="wrapper">
-            <div class="row">
-                {% is_a_group_member user "Employer" as group_member %}
-                {% if group_member and company_name|length >= 1 %}
-                <div class="span4" id="logo-block">
-                {% else %}
-                <div class="span6v-1-8" id="logo-block">
-                {% endif %}
-                    <a href="http://www.my.jobs/">
-                        <h3 id="topbar-logo" class="pull-left">my.jobs</h3>
-                    </a>
 
-                    {% get_ms_name as last_name %}
-                    {% if last_name %}
+<script type="text/javascript">
+    var cid = read_cookie();
+    if(cid)
+        update_employer_tools(cid);
 
-                    <div id="last-microsite">
-                        <a href="{% get_ms_url %}">
-                            <span id="last-microsite-name">
-                                {{ last_name }}
-                            </span>
-                            <span class="arrow pull-left"></span>
-                        </a>
-                    </div>
+    window.onload = function() {
+        /* Explicit control of main menu, primarily for mobile but also provides
+        non hover and cover option if that becomes an issue. */
+        $(function() {
+            $(".main-nav").click(function(e){
+                e.preventDefault();
+                if($(window).width() < 994){
+                    $("#nav").toggleClass("active");
+                    $(".company-nav-item").addClass("no-show");
+                    $(".settings-nav-item").addClass("no-show");
+                    $(".seeker-menu").addClass("no-show");
+                    $(".employer-menu").addClass("no-show");
+                    $("#back-btn-li").addClass("no-show");
+                    $("#account-link").addClass("no-show");
+                    $("#logout-link").addClass("no-show");
+                    $("#logged-in-li").addClass("no-show");
 
-                    {% endif %}
+                    $("#job-tools").removeClass("no-show");
+                    $("#employer-tools").removeClass("no-show");
+                    $("#search-jobs").removeClass("no-show");
+                    $('#settings-link').removeClass("no-show");
+                }
+            });
 
-                </div>
+            $("#pop-menu").mouseleave(function(){
+                $("#back-btn-li").addClass("no-show");
 
-                    {% if user.is_authenticated %}
+                $("#account-link").removeClass("no-show");
+                $("#logout-link").removeClass("no-show");
+                $("#search-jobs").removeClass("no-show");
+                $("#logged-in-li").removeClass("no-show");
+                $("#nav").removeClass("active");
+            });
 
-                    {% if group_member and company_name|length >= 1 %}
-                    <div class="span7">
-                    {% else %}
-                    <div class="span6">
-                    {% endif %}
-                        <ul class="nav nav-tabs pull-right menu-tabs">
+            $("#job-tools").click(function(e) {
+                $("#back-btn-li").removeClass("no-show");
+                $(".seeker-menu").removeClass("no-show");
 
+                $("#settings-link").addClass("no-show");
+                $("#search-jobs").addClass("no-show");
+                $("#job-tools").addClass("no-show");
+                $("#employer-tools").addClass("no-show");
+            });
 
-                            {% get_company_name user as company_name %}
-                            <li class="{% active_tab 'My Profile' %}"><a href="{% url 'view_profile' %}">{% trans "Profile" %}</a></li>
-                            {% if user.is_active %}
-                            <li class="{% active_tab 'Saved Searches' %}"><a href="{% url 'saved_search_main' %}">{% trans "Saved Searches" %}</a></li>
-                            {% if group_member and company_name|length >= 1 %}
-                            <li class="{% active_tab 'Company Dashboard' %}" id="company-dropdown">
-                                {% if company_name|length == 1 %}
-                                <a id="candidate-tab" href="{% url 'dashboard' %}?company={{ company_name.0.id }}">{% trans "Candidates" %}</a>
-                                {% else %}
-                                <a id="candidate-tab">{% trans "Candidates" %}</a>
-                                <ul id="company-menu" class="no-show">
-                                    {% for company in company_name %}
-                                    <li><a id="company-item" href="{% url 'dashboard' %}?company={{ company.id }}">{{ company }}</a></li>
-                                    {% endfor %}
-                                </ul>
-                                {% endif %}
-                                {# /company-menu #}
-                            </li>
-                            <li class="{% active_tab 'PRM' %}" id="partner-dropdown">
-                                {% if company_name|length == 1 %}
-                                <a id="partner-tab" href="{% url 'prm' %}?company={{ company_name.0.id }}">{% trans "PRM" %}</a>
-                                {% else %}
-                                <a id="partner-tab">{% trans "PRM" %}</a>
-                                <ul id="partner-menu" class="no-show">
-                                    {% for company in company_name %}
-                                    <li><a id="partner-item" href="{% url 'prm' %}?company={{ company.id }}">{{ company }}</a></li>
-                                    {% endfor %}
-                                </ul>
-                                {% endif %}
-                            </li>
-                            {% endif %}
-                            {% endif %}
-                            <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
-                        </ul>{# /nav nav-tabs pull-right menu-tabs #}
-                    </div>{# /span6 #}
+            $("#employer-tools").click(function(e) {
+                $("#back-btn-li").removeClass("no-show");
+                $(".employer-menu").removeClass("no-show");
 
-                    {% if group_member and company_name|length >= 1 %}
-                    <div class="span1">
-                    {% else %}
-                    <div class="span2v-1-8">
-                    {% endif %}
-                        <a id="topbar-back" class="desktop_hide" href="#" onclick="javascript:window.history.back(-1);return false;"><span id="prm-arrow-left"></span></a>
-                        <div class="menu-bar pagination-right pull-right">
-                            <ul id="nav" class="pull-right">
-                                <li>
-                                    <a href="" class="main-nav">
-                                        {% get_gravatar user %}
-                                        <span class="arrow"></span>
-                                    </a>
-                                    <ul class="span4" id="pop-menu">
-                                        <li id="logged-in-li">
-                                            {% trans "Logged in as " %}
-                                            <b>
+                $("#settings-link").addClass("no-show");
+                $("#search-jobs").addClass("no-show");
+                $("#job-tools").addClass("no-show");
+                $("#employer-tools").addClass("no-show");
+            });
 
-                                                {% with short_email=user.email|truncatechars:"20" %}
+            $('#settings-link').click(function(e) {
+                $(".settings-nav-item").removeClass("no-show");
+                $("#back-btn-li").removeClass("no-show");
 
-                                                {% with name_obj=user.get_full_name %}
+                $("#settings-link").addClass("no-show");
+                $("#job-tools").addClass("no-show");
+                $("#employer-tools").addClass("no-show");
+                $("#search-jobs").addClass("no-show");
+                $("#profile-link").addClass("no-show");
+                $("#savedsearch-link").addClass("no-show");
+                $("#candidate-link").addClass("no-show");
+                $("#partner-link").addClass("no-show");
+                $("#account-link").addClass("no-show");
+            });
 
-                                                {% if not name_obj %}
+            $("#back-btn").click(function(e){
+                e.preventDefault();
 
-                                                {{ short_email }}
+                $(".company-nav-item").addClass("no-show");
+                $(".partner-nav-item").addClass("no-show");
+                $(".settings-nav-item").addClass("no-show");
+                $(".seeker-menu").addClass("no-show");
+                $(".employer-menu").addClass("no-show");
+                $("#back-btn-li").addClass("no-show");
 
-                                                {% else %}
+                $("#job-tools").removeClass("no-show");
+                $("#employer-tools").removeClass("no-show");
+                $("#search-jobs").removeClass("no-show");
+                $("#settings-link").removeClass("no-show");
+            });
+        });
 
-                                                {{ name_obj }}
+        if(multiple_companies)
+                get_companies();
+    };
 
-                                                {% endif %}
+    function get_companies() {
+        $.ajax({
+            global: false,
+            dataType: "json",
+            url: "http://secure.my.jobs/candidates/topbar/companies",
+            success: function(data) {
+                var parent_list_item = document.createElement("li");
+                parent_list_item.setAttribute("id", "current-company");
+                parent_list_item.setAttribute("class", "submenu-dropdown");
 
-                                                {% endwith %}
+                parent_list_item.onclick = function(event) {
+                    event.preventDefault();
+                    var li_last_child = parent_list_item.lastChild;
 
-                                                {% endwith %}
+                    if (li_last_child.currentStyle ? li_last_child.currentStyle.display : getComputedStyle(li_last_child, null).display === "none")
+                        li_last_child.style.display = "block";
+                    else
+                        li_last_child.style.display = "none";
+                };
 
-                                            </b>
-                                        </li>
-                                        <li id="back-btn-li" class="no-show"><a id="back-btn"><span class="arrow-left"></span></a></li>
+                var label = document.createElement("a");
+                var cid = read_cookie();
 
-                                        {% if not user.is_disabled %}
-                                            <li><a id="profile-link" href="{% url 'view_profile' %}">{% trans "Profile" %}</a></li>
+                var list = document.createElement("ul");
+                list.setAttribute("id", "select_company");
+                var menu_company_name;
+                for(var i=0; i<data.length; i++) {
+                    if(!menu_company_name) {
+                        if(cid) {
+                            if(data[i].id == cid)
+                                menu_company_name = data[i].name;
+                        }
+                        else {
+                            set_cookie(data[0].id, 14);
+                            menu_company_name = data[0].name;
+                        }
+                    }
+                    var list_item = document.createElement("li");
+                    list_item.setAttribute("id", "company_" + String(data[i].id));
+                    list_item.innerHTML = "<a>"+data[i].name+"</a>";
+                    list_item.onclick = function() {
+                        // this.id Format: company_COMPANYID
+                        var item_id = this.id.split("_")[1];
 
-                                            {% if user.is_active %}
+                        // 14 = 2 weeks
+                        set_cookie(item_id, 14);
 
-                                                <li><a id="savedsearch-link" href="{% url 'saved_search_main' %}">{% trans "Saved Searches" %}</a></li>
+                        // replaces text of main li holding company list
+                        parent_list_item.firstChild.innerHTML = "Currently <b>"+ this.firstChild.innerHTML +"</b>";
 
-                                                {% if group_member and user.is_active and company_name|length == 1  %}
+                        update_employer_tools(item_id);
+                    };
+                    list.appendChild(list_item);
+                }
+                label.innerHTML = "Currently <b>"+ menu_company_name +"</b>";
+                parent_list_item.appendChild(label);
+                parent_list_item.appendChild(list);
 
-                                                    <li><a id="candidate-link-one" href="{% url 'dashboard' %}?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
+                var parent_element = document.getElementById("employer-apps");
+                var first_child = parent_element.firstChild;
+                parent_element.insertBefore(parent_list_item, first_child);
+            }
+        });
+    }
 
-                                                    <li><a id="partner-link-one" href="{% url 'prm' %}?company={{ company_name.0.id }}">{% trans "PRM" %}</a></li>
+    function set_cookie(company_id, days) {
+        var expires;
+        if(days) {
+            var date = new Date();
+            date.setTime(date.getTime()+(days*24*60*60*1000));
+            expires = "; expires="+date.toGMTString();
+        } else
+            expires = "";
+        document.cookie = "myjobs_company="+company_id+expires+"; path=/";
+    }
 
-                                                {% elif group_member and user.is_active and company_name|length >= 2 %}
+    function read_cookie() {
+        var nameEQ = "myjobs_company=";
+        var ca = document.cookie.split(';');
+        for (var i=0; i< ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) === ' ')
+                c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0)
+                return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
 
-                                                    <li><a id="candidate-link">{% trans "Candidates" %}</a></li>
+    function delete_cookie() {
+        set_cookie("", -1);
+    }
 
-                                                    <li><a id="partner-link">{% trans "PRM" %}</a></li>
+    function update_employer_tools(company_id) {
+        // li_children are children of Employer Tools
+        var li_children = document.getElementById("employer-apps").children;
 
-                                                {% endif %}
-                                            {% endif %}
-
-                                            <li><a id="account-link" href="{% url 'edit_account' %}">{% trans "Account Settings" %}</a></li>
-                                            <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
-                                            <li><a id="settings-link">{% trans "Settings" %}</a></li>
-
-                                        {% endif %}
-
-                                        <li><a id="logout-link" href="{% url 'auth_logout' %}">Log Out</a></li>
-
-                                        {% for company in company_name %}
-
-                                            <li><a class="company-nav-item sub-nav-item no-show" href="{% url 'dashboard' %}?company={{ company.id }}">{{ company|truncatechars:"20" }}</a></li>
-
-                                            <li><a class="partner-nav-item sub-nav-item no-show" href="{% url 'prm' %}?company={{ company.id }}">{{ company|truncatechars:"20" }}</a></li>
-
-                                        {% endfor %}
-
-                                        <li><a class="settings-nav-item sub-nav-item no-show" href="{% url 'edit_account' %}">{% trans "Account Settings" %}</a></li>
-                                        <li><a class="settings-nav-item sub-nav-item no-show" href="{% url 'auth_logout' %}">Log Out</a></li>
-                                    </ul>{# /pop-menu #}
-                                </li>
-                            </ul>{# /nav #}
-                        </div>{# /menu-bar pagination-right pull-right #}
-                    </div>{# /span2v1-8 #}
-
-                    {% else %}
-                    <div class="pull-right span7">
-                        <ul class="nav nav-tabs pull-right menu-tabs">
-                            <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
-                        </ul>{# /nav nav-tabs pull-left menu-tabs #}
-                    </div>{# /span7 #}
-                    <div class="span10 pagination-right" id="topbar-login">
-                        {% block topbarlogin %}
-                        <ul id="nav" class="navbar pull-right">
-                            <li>
-                                <a class="pull-right" href="/">{% trans 'Login' %}</a>
-                            </li>
-                        </ul>
-                        {% endblock %}
-                    </div>
-
-                    {% endif %}
-            </div>
-        </div>
-    </div>{# /topbar-inner #}
-</div>
--->
+        // Editing links from old company to newly set company
+        for(var i=0; i<li_children.length; i++)
+            li_children[i].firstChild.search = "company="+company_id;
+    }
+</script>
