@@ -1,0 +1,20 @@
+{% load postajob_tags %}
+
+<tbody id="posted-jobs">
+    {% if jobs %}
+    {% for job in jobs %}
+        <tr class="posted-job-tr" onclick="window.document.location='{% url 'job_update' pk=job.pk %}';">
+            <td class="posted-job-title">{{ job.title }}</td>
+            <td class="posted-job-company">{{ job.company.name }}</td>
+            <td class="mobile_hide posted-job-reqid">{{ job.reqid }}</td>
+            <td class="posted-job-is-expired">{{ job.is_expired }}</td>
+            <td class="mobile-hide posted-job-date-expired">{{ job.date_expired }}</td>
+            <td class="mobile_hide">{% get_job_links job %}</td>
+        </tr>
+    {% endfor %}
+    {% else %}
+    <tr>
+        <td colspan=5>You currently have no posted jobs.</td>
+    </tr>
+    {% endif %}
+</tbody>

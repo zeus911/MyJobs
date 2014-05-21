@@ -19,7 +19,9 @@ is_company_user = lambda u: u.companyuser_set.all().count() >= 1
 @user_is_allowed()
 @user_passes_test(is_company_user)
 def jobs_overview(request):
-    data = {}
+    data = {
+        'jobs': Job.objects.all()
+    }
     return render_to_response('postajob/jobs_overview.html', data,
                               RequestContext(request))
 
