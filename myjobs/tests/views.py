@@ -736,5 +736,3 @@ class MyJobsViewsTests(TestCase):
 
         user = User.objects.get(email='microsite@example.com')
         self.assertEqual(user.source, last_site)
-
-
