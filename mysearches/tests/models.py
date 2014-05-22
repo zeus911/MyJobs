@@ -26,7 +26,7 @@ class SavedSearchModelsTests(TestCase):
                                  is_active=False)
         search = SavedSearchFactory(user=self.user, is_active=True,
                                     frequency='D',
-                                    url='www.my.jobs/search?q=new+search')
+                                    url='www.my.jobs/jobs?q=new+search')
         send_search_digests()
         self.assertEqual(len(mail.outbox), 1)
 
@@ -36,7 +36,8 @@ class SavedSearchModelsTests(TestCase):
         self.assertEqual(email.subject, search.label)
         self.assertTrue("table" in email.body)
         self.assertTrue(email.to[0] in email.body)
-        self.assertNotEqual(email.body.find(search.url), -1,
+        self.assertNotEqual(email.body.find(search.url),
+                            -1,
                             "Search url was not found in email body")
 
     def test_send_search_digest_email(self):
@@ -90,3 +91,26 @@ class SavedSearchModelsTests(TestCase):
         self.assertTrue("table" in email.body)
         self.assertTrue("Your search is updated" in email.body)
         self.assertTrue(email.to[0] in email.body)
+
+    def test_saved_search_all_jobs_link(self):
+        search = SavedSearchFactory(user=self.user)
+        search.send_email()
+
+        email = mail.outbox.pop()
+        # When search.url does not start with my.jobs, use it as the all jobs
+        # link
+        self.assertFalse(search.url.startswith('http://my.jobs'))
+        self.assertNotEqual(email.body.find(search.url), -1)
+        self.assertEqual(email.body.find(search.feed.replace('/feed/rss', '')),
+                         -1)
+
+        # When search.url starts with my.jobs, strip /feed/rss from search.feed
+        # if it exists and use that as the all jobs link
+        search.url = 'http://my.jobs/' + '1'*32
+        search.save()
+        search.send_email()
+        email = mail.outbox.pop()
+        self.assertEqual(email.body.find(search.url),
+                         -1)
+        self.assertNotEqual(email.body.find(search.feed.replace('/feed/rss', '')),
+                            -1)
