@@ -7,11 +7,10 @@ from collections import OrderedDict
 import pytz
 
 from myprofile.forms import generate_custom_widgets
-from myjobs.forms import BaseUserForm
 from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
                                ADDITION, CHANGE, MAX_ATTACHMENT_MB)
 from mypartners.helpers import log_change, get_attachment_link
-from mypartners.widgets import (MultipleFileField, MultipleFileInputWidget,
+from mypartners.widgets import (MultipleFileField,
                                 SplitDateTimeDropDownField, TimeDropDownField)
 
 
@@ -58,7 +57,7 @@ class ContactForm(forms.ModelForm):
         return contact
 
 
-class PartnerInitialForm(BaseUserForm):
+class PartnerInitialForm(forms.ModelForm):
     """
     This form is used when an employer currently has no partner to create a
     partner (short and sweet version).
@@ -104,7 +103,7 @@ class PartnerInitialForm(BaseUserForm):
         return partner
 
 
-class NewPartnerForm(BaseUserForm):
+class NewPartnerForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """
         This form is used only to create a partner.
@@ -113,6 +112,7 @@ class NewPartnerForm(BaseUserForm):
         'append' to the new fields because new fields need to be first.
 
         """
+        self.user = kwargs.pop('user', '')
         super(NewPartnerForm, self).__init__(*args, **kwargs)
         for field in self.fields.itervalues():
             field.label = "Primary Contact " + field.label
@@ -183,7 +183,7 @@ def remove_partner_data(dictionary, keys):
     return new_dictionary
 
 
-class PartnerForm(BaseUserForm):
+class PartnerForm(forms.ModelForm):
     """
     This form is used only to edit the partner form. (see prm/view/details)
 
