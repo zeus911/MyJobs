@@ -18,7 +18,7 @@ def readable_boolean(value):
         "True": "Yes",
         "False": "No"
     }
-    return value_lookup.get(str(value), value)
+    return value_lookup.get(repr(value), value)
 
 @register.simple_tag(name='add_required_label')
 def add_required_label(field, *classes):
