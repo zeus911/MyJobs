@@ -198,8 +198,8 @@
 
     .arrow-left {
         float: left;
-        width: 0px;
-        height: 0px;
+        width: 0;
+        height: 0;
         border-style: solid;
         border-width: 15px 20px 15px 0;
         border-color: transparent #FFF transparent transparent;
@@ -224,7 +224,6 @@
         border: 4px solid transparent;
         border-right: 6px solid #999;
         border-left: 0;
-        margin-top: 6px;
         margin-top: -15px;
         margin-left: 30px;
         margin-bottom: 12px;
@@ -243,7 +242,7 @@
         position: absolute;
         float: left;
         margin-left: 2px;
-        border-right: 0px;
+        border-right: 0;
         border-left: 6px solid #fff;
         margin-top: -15px;
     }
@@ -301,6 +300,15 @@
 
     .submenu-dropdown {
         background-color: #444;
+    }
+
+    .submenu-dropdown > a:after {
+        float: right;
+        display: block;
+        width: 0;
+        border: 4px solid transparent;
+        border-left: 6px solid #999;
+        border-right: 0;
     }
 
     .submenu-dropdown > ul {
@@ -554,8 +562,8 @@
                     <li class="{% active_tab 'seeker-tools' %}">
                         <a>{% trans "Job Tools" %}</a>
                         <ul id="seeker-apps" class="submenu">
-                            <li><a href="http://secure.my.jobs/profile/view/">{% trans "Profile" %}</a></li>
-                            <li><a href="http://secure.my.jobs/saved-search/view/">{% trans "Saved Searches" %}</a></li>
+                            <li><a href="https://secure.my.jobs/profile/view/">{% trans "Profile" %}</a></li>
+                            <li><a href="https://secure.my.jobs/saved-search/view/">{% trans "Saved Searches" %}</a></li>
                         </ul>
                     </li>
                     {% is_a_group_member user "Employer" as group_member %}
@@ -564,8 +572,8 @@
                     <li class="{% active_tab 'employer-tools' %}">
                         <a>{% trans "Employer Tools" %}</a>
                         <ul id="employer-apps" class="submenu">
-                            <li><a id="candidate-tab" href="http://secure.my.jobs/candidates/view?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
-                            <li><a id="partner-tab" href="http://secure.my.jobs/prm/view?company={{ company_name.0.id }}">{% trans "PRM" %}</a></li>
+                            <li><a id="candidate-tab" href="https://secure.my.jobs/candidates/view?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
+                            <li><a id="partner-tab" href="https://secure.my.jobs/prm/view?company={{ company_name.0.id }}">{% trans "PRM" %}</a></li>
                         </ul>
                     </li>
                     {% endif %}
@@ -609,32 +617,32 @@
 
                                 {% if not user.is_disabled %}
                                     <li><a id="job-tools" class="no-show desktop_hide" href="#">{% trans "Job Tools" %}</a></li>
-                                    <li><a id="profile-link" class="no-show sub-nav-item seeker-menu" href="http://secure.my.jobs/profile/view/">{% trans "Profile" %}</a></li>
+                                    <li><a id="profile-link" class="no-show sub-nav-item seeker-menu" href="https://secure.my.jobs/profile/view/">{% trans "Profile" %}</a></li>
 
                                     {% if user.is_active %}
 
-                                        <li><a id="savedsearch-link" class="no-show sub-nav-item seeker-menu" href="http://secure.my.jobs/saved-search/view/">{% trans "Saved Searches" %}</a></li>
+                                        <li><a id="savedsearch-link" class="no-show sub-nav-item seeker-menu" href="https://secure.my.jobs/saved-search/view/">{% trans "Saved Searches" %}</a></li>
 
                                         {% if group_member and user.is_active  %}
 
                                             <li><a id="employer-tools" class="no-show desktop_hide" href="#">{% trans "Employer Tools" %}</a></li>
 
-                                            <li><a id="candidate-link" class="no-show sub-nav-item employer-menu" href="http://secure.my.jobs/candidates/view?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
+                                            <li><a id="candidate-link" class="no-show sub-nav-item employer-menu" href="https://secure.my.jobs/candidates/view?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
 
-                                            <li><a id="partner-link" class="no-show sub-nav-item employer-menu" href="http://secure.my.jobs/prm/view?company={{ company_name.0.id }}">{% trans "PRM" %}</a></li>
+                                            <li><a id="partner-link" class="no-show sub-nav-item employer-menu" href="https://secure.my.jobs/prm/view?company={{ company_name.0.id }}">{% trans "PRM" %}</a></li>
 
                                         {% endif %}
                                     {% endif %}
-                                    <li><a id="account-link" href="http://secure.my.jobs/account/edit">{% trans "Account Settings" %}</a></li>
+                                    <li><a id="account-link" href="https://secure.my.jobs/account/edit">{% trans "Account Settings" %}</a></li>
                                     <li><a id="search-jobs" href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
                                     <li><a id="settings-link">{% trans "Settings" %}</a></li>
 
                                 {% endif %}
 
-                                <li><a id="logout-link" href="http://secure.my.jobs/account/logout/">Log Out</a></li>
+                                <li><a id="logout-link" href="https://secure.my.jobs/account/logout/">Log Out</a></li>
 
-                                <li><a class="settings-nav-item sub-nav-item no-show" href="http://secure.my.jobs/account/edit">{% trans "Account Settings" %}</a></li>
-                                <li><a class="settings-nav-item sub-nav-item no-show" href="http://secure.my.jobs/account/logout">Log Out</a></li>
+                                <li><a class="settings-nav-item sub-nav-item no-show" href="https://secure.my.jobs/account/edit">{% trans "Account Settings" %}</a></li>
+                                <li><a class="settings-nav-item sub-nav-item no-show" href="https://secure.my.jobs/account/logout">Log Out</a></li>
                             </ul>{# /pop-menu #}
                         </li>
                     </ul>{# /nav #}
@@ -642,7 +650,7 @@
                 {% else %}
                     <ul class="mobile_hide">
                         <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
-                        <li><a href="/">{% trans 'Login' %}</a></li>
+                        <li><a href="https://secure.my.jobs">{% trans 'Login' %}</a></li>
                     </ul>
                 {% endif %}
             </div>
@@ -739,14 +747,17 @@
 
         // multiple_companies initialized in template if
         // user is an employer and has more than one company
-        if(multiple_companies) {
-            // See if a cookie is already set. If so update employer links.
-            var cid = read_cookie();
-            if(cid)
-                update_employer_tools(cid);
+        // Check if multiple_companies is defined to avoid referencing before defined
+        if(typeof(multiple_companies) != "undefined") {
+            if(multiple_companies){
+                // See if a cookie is already set. If so update employer links.
+                var cid = read_cookie();
+                if(cid)
+                    update_employer_tools(cid);
 
-            // Build multiple company selector
-            get_companies();
+                // Build multiple company selector
+                get_companies();
+            }
         }
     };
 
@@ -755,7 +766,7 @@
         $.ajax({
             global: false,
             dataType: "json",
-            url: "http://secure.my.jobs/candidates/topbar/companies",
+            url: "https//:secure.my.jobs/candidates/topbar/companies",
             success: function(data) {
                 var parent_list_item = document.createElement("li");
                 parent_list_item.setAttribute("id", "current-company");
