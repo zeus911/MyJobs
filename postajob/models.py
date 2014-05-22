@@ -17,14 +17,14 @@ class Job(models.Model):
 
     title = models.CharField(max_length=255)
     company = models.ForeignKey(Company)
-    reqid = models.CharField(max_length=50)
+    reqid = models.CharField(max_length=50, verbose_name="Req ID")
     description = models.TextField()
     # This really should be a URLField, but URLFields don't allow for
     # mailto links.
-    apply_link = models.TextField(blank=True)
-    apply_info = models.TextField(blank=True, verbose_name="Apply Information")
+    apply_link = models.TextField(blank=True, verbose_name="Apply Link")
+    apply_info = models.TextField(blank=True, verbose_name="Apply Instructions")
     show_on_sites = models.ManyToManyField(SeoSite, null=True)
-    is_syndicated = models.BooleanField(default=False)
+    is_syndicated = models.BooleanField(default=False, verbose_name="Syndicated")
 
     city = models.CharField(max_length=255)
     state = models.CharField(max_length=200)
@@ -35,8 +35,8 @@ class Job(models.Model):
 
     date_new = models.DateTimeField(auto_now=True)
     date_updated = models.DateTimeField(auto_now_add=True)
-    date_expired = models.DateField(verbose_name='Expires on')
-    is_expired = models.BooleanField(default=False)
+    date_expired = models.DateField()
+    is_expired = models.BooleanField(default=False, verbose_name="Expired")
     autorenew = models.BooleanField(default=False, verbose_name="Auto-Renew")
 
     def __unicode__(self):
@@ -81,8 +81,7 @@ class Job(models.Model):
             'jobs': json.dumps([job])
         })
         request = urllib2.Request(settings.POSTAJOB_URLS['post'], data)
-        response = urllib2.urlopen(request).read()
-        return response
+        urllib2.urlopen(request).read()
 
     def save(self, **kwargs):
         self.generate_guid()
@@ -105,8 +104,7 @@ class Job(models.Model):
             'guids': self.guid
         })
         request = urllib2.Request(settings.POSTAJOB_URLS['delete'], data)
-        response = urllib2.urlopen(request).read()
-        return response
+        urllib2.urlopen(request).read()
 
     def generate_guid(self):
         if not self.guid:
