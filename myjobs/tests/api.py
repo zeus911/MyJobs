@@ -1,4 +1,5 @@
 import json
+from django.core.urlresolvers import reverse
 
 from django.test import TestCase
 
@@ -204,3 +205,18 @@ class SavedSearchResourceTests(TestCase):
             self.assertEqual(len(content), 3)
             self.assertFalse(content['new_search'])
         self.assertEqual(SavedSearch.objects.count(), 1)
+
+    def test_user_creation_source_override(self):
+        """
+        Providing a source parameter to the account creation API should
+        override user.source with its value.
+        """
+        self.client.get(
+            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http%3A%2F%2Findianapolis.jobs&callback=foo',
+            HTTP_REFERER='http://indianapolis.jobs')
+
+        self.data['source'] = 'redirect'
+        self.make_response(self.data)
+
+        user = User.objects.get(email=self.data['email'])
+        self.assertTrue(user.source, self.data['source'])
