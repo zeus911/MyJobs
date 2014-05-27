@@ -58,7 +58,7 @@
     <tr>
         <td style="font-size: 12px;">
             There are no results for today! <br/>
-            You are subscribed to receive this email {{saved_search.0.frequency|make_verbose_frequency|lower}}, even when there are no results. <a href="https://secure.my.jobs{% url 'saved_search_main' %}?verify-email={{saved_search.user.email}}">Click here</a> to change this setting.
+            You are subscribed to receive this email {{saved_search.0.frequency|make_verbose_frequency|lower}}, even when there are no results. <a href="https://secure.my.jobs{% url 'saved_search_main' %}?verify={{saved_search.user.user_guid}}">Click here</a> to change this setting.
         </td>
     </tr>
 

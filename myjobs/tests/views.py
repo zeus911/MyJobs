@@ -490,12 +490,12 @@ class MyJobsViewsTests(TestCase):
 
         # or with the wrong email address...
         response = self.client.get(reverse('continue_sending_mail') +
-                                   '?verify-email=wrong@example.com')
+                                   '?verify=wrong@example.com')
         self.assertRedirects(response, reverse('home'))
         # should result in redirecting to the login page
 
         response = self.client.get(reverse('continue_sending_mail') +
-                                   '?verify-email=%s' % self.user.email)
+                                   '?verify=%s' % self.user.user_guid)
         self.assertRedirects(response, reverse('home'))
         self.user = User.objects.get(pk=self.user.pk)
         self.assertEqual(self.user.last_response, date.today())
@@ -638,7 +638,7 @@ class MyJobsViewsTests(TestCase):
         self.assertRedirects(response, reverse('home')+'?next='+path)
         # or with the wrong email address...
         response = self.client.get(reverse('unsubscribe_all') +
-                                   '?verify-email=wrong@example.com')
+                                   '?verify=wrong@example.com')
         # should result in the user's status remaining unchanged
         # and the user should be redirected to the login page
         self.assertRedirects(response, reverse('home'))
@@ -648,7 +648,7 @@ class MyJobsViewsTests(TestCase):
         # Navigating to the unsubscribe page while logged out
         # and with the correct email address...
         response = self.client.get(reverse('unsubscribe_all') +
-                                   '?verify-email=%s' % self.user.email)
+                                   '?verify=%s' % self.user.user_guid)
         self.user = User.objects.get(id=self.user.id)
         # should result in the user's :opt_in_myjobs: attribute being
         # set to False

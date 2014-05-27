@@ -74,7 +74,7 @@ class UserManagerTests(TestCase):
 
     def test_not_disabled(self):
         """
-        An anonymous user who provides the :verify-email: query string or
+        An anonymous user who provides the :verify: query string or
         user with is_disabled set to True should be redirected to the home
         page. An anonymous user who does not should see a 404. A user with
         is_active set to False should proceed to their destination.
@@ -89,10 +89,10 @@ class UserManagerTests(TestCase):
 
         # This is ugly, but it is an artifact of the way Django redirects
         # users who fail the `user_passes_test` decorator.
-        qs = '?verify-email=%s' % user.email
+        qs = '?verify=%s' % user.user_guid
         next_qs = '?next=' + urlquote('/profile/view/%s' % qs)
 
-        # Anonymous user navigates to url with :verify-email: in query string
+        # Anonymous user navigates to url with :verify: in query string
         resp = client.get(reverse('view_profile') + qs)
         # Old path + qs is urlquoted and added to the url as the :next: param
         self.assertRedirects(resp, "http://testserver/" + next_qs)

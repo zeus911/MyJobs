@@ -64,7 +64,7 @@ class RegistrationViewTests(TestCase):
         profile = ActivationProfile.objects.get(user__email=self.user.email)
         response = self.client.get(reverse('registration_activate',
                                            args=[profile.activation_key]) +
-                                   '?verify-email=%s' % self.user.email)
+                                   '?verify=%s' % self.user.user_guid)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.data['email'])
 

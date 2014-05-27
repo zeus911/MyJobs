@@ -36,7 +36,7 @@ following context:
 {% endif %}
 </p>
 {% url 'registration_activate' activation_key as url %}
-<a href="https://secure.my.jobs{{url}}?verify-email={{user.email}}">Activate my account.</a>
+<a href="https://secure.my.jobs{{url}}?verify={{user.user_guid}}">Activate my account.</a>
 
 {% if password %}
     {% blocktrans %}
