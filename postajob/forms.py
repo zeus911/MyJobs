@@ -22,8 +22,8 @@ class JobForm(ModelForm):
                             label='Apply Email',
                             widget=TextInput(attrs={'size': 50}))
     apply_link = CharField(required=False, max_length=255,
-                            label='Apply Link',
-                            widget=TextInput(attrs={'rows': 1, 'size': 50}))
+                           label='Apply Link',
+                           widget=TextInput(attrs={'rows': 1, 'size': 50}))
     show_on_sites_widget = admin.widgets.FilteredSelectMultiple('Sites', False)
     show_on_sites = ModelMultipleChoiceField(SeoSite.objects.all(),
                                              label="On Sites",
@@ -59,6 +59,8 @@ class JobForm(ModelForm):
             # switch to a widget that does work.
             self.fields['show_on_sites'].widget = CheckboxSelectMultiple(
                 attrs={'class': 'job-sites-checkbox'})
+            # After changing the widget the queryset also needs reset.
+            self.fields['show_on_sites'].queryset = SeoSite.objects.all()
 
         if not self.request.user.is_superuser:
             # Limit a user's access to only companies/sites they own.
