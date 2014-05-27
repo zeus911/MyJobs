@@ -252,12 +252,14 @@ def get_records_from_request(request):
 
 
 def send_contact_record_email_response(created_records, created_contacts,
-                                       unmatched_contacts, error, to_email):
+                                       attachment_failures, unmatched_contacts,
+                                       error, to_email):
     ctx = {
         'created_records': created_records,
         'created_contacts': created_contacts,
         'error': error,
         'unmatched_contacts': unmatched_contacts,
+        'attachment_failures': attachment_failures,
     }
 
     subject = 'Partner Relationship Manager Contact Records'

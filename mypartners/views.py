@@ -1120,6 +1120,7 @@ def process_email(request):
         attachments.append(attachment)
 
     created_records = []
+    attachment_failures = []
     date_time = now() if not date_time else date_time
     for contact in possible_contacts + created_contacts:
         change_msg = "Email was sent by %s to %s" % \
@@ -1132,17 +1133,24 @@ def process_email(request):
                                               date_time=date_time,
                                               subject=subject,
                                               notes=force_text(email_text))
-        for attachment in attachments:
-            prm_attachment = PRMAttachment()
-            prm_attachment.attachment = attachment
-            prm_attachment.contact_record = record
-            setattr(prm_attachment, 'partner', contact.partner)
-            prm_attachment.save()
+        try:
+            for attachment in attachments:
+                prm_attachment = PRMAttachment()
+                prm_attachment.attachment = attachment
+                prm_attachment.contact_record = record
+                setattr(prm_attachment, 'partner', contact.partner)
+                prm_attachment.save()
+                # The file pointer for this attachment is now at the end of the
+                # file; reset it to the beginning for future use.
+                attachment.seek(0)
+        except AttributeError:
+            attachment_failures.append(record)
         log_change(record, None, admin_user, contact.partner,  contact.name,
                    action_type=ADDITION, change_msg=change_msg)
 
         created_records.append(record)
 
     send_contact_record_email_response(created_records, created_contacts,
-                                       unmatched_contacts, None, admin_email)
+                                       attachment_failures, unmatched_contacts,
+                                       None, admin_email)
     return HttpResponse(status=200)
