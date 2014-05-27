@@ -64,6 +64,7 @@ class PartnerInitialForm(forms.ModelForm):
 
     """
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', '')
         super(PartnerInitialForm, self).__init__(*args, **kwargs)
         self.fields['pc-contactname'] = forms.CharField(
             label="Primary Contact Name", max_length=255, required=False,
@@ -80,7 +81,7 @@ class PartnerInitialForm(forms.ModelForm):
         fields = ['name', 'uri']
         widgets = generate_custom_widgets(model)
 
-    def save(self, user, commit=True):
+    def save(self, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
         self.instance.owner_id = self.data['company_id']
         partner = super(PartnerInitialForm, self).save(commit)
@@ -92,12 +93,12 @@ class PartnerInitialForm(forms.ModelForm):
                                              email=contact_email,
                                              partner=partner)
             contact.save()
-            log_change(contact, self, user, partner, contact.name,
+            log_change(contact, self, self.user, partner, contact.name,
                        action_type=ADDITION)
             partner.primary_contact = contact
             partner.save()
 
-        log_change(partner, self, user, partner, partner.name,
+        log_change(partner, self, self.user, partner, partner.name,
                    action_type=new_or_change)
 
         return partner
@@ -143,7 +144,7 @@ class NewPartnerForm(forms.ModelForm):
             attrs={'rows': 5, 'cols': 24,
                    'placeholder': 'Notes About This Contact'})
 
-    def save(self, user, commit=True):
+    def save(self, commit=True):
         # self.instance is a Contact instance
         company_id = self.data['company_id']
 
@@ -152,7 +153,7 @@ class NewPartnerForm(forms.ModelForm):
         partner = Partner.objects.create(name=self.data['partnername'],
                                          uri=partner_url, owner_id=company_id)
 
-        log_change(partner, self, user, partner, partner.name,
+        log_change(partner, self, self.user, partner, partner.name,
                    action_type=ADDITION)
 
         self.data = remove_partner_data(self.data,
@@ -168,7 +169,7 @@ class NewPartnerForm(forms.ModelForm):
             instance = super(NewPartnerForm, self).save(commit)
             partner.primary_contact = instance
             partner.save()
-            log_change(instance, self, user, partner, instance.name,
+            log_change(instance, self, self.user, partner, instance.name,
                        action_type=ADDITION)
 
             return instance
