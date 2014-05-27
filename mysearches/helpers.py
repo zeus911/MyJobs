@@ -131,7 +131,8 @@ def get_json(json_url):
         return []
 
 
-def parse_feed(feed_url, frequency='W', num_items=20, offset=0, return_items=None):
+def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
+               return_items=None):
     """
     Parses job data from an RSS feed and returns it as a list of dictionaries.
     The data returned is limited based on the corresponding data range (daily,
@@ -223,7 +224,6 @@ def url_sort_options(feed_url, sort_by, frequency=None):
     query = parse_qs(unparsed_feed.query)
     query.pop('date_sort', None)
 
-
     if sort_by == "Relevance":
         query.update({'date_sort': 'False'})
 
@@ -231,7 +231,7 @@ def url_sort_options(feed_url, sort_by, frequency=None):
 
         query.update({'days_ago': interval})
 
-    unparsed_feed = unparsed_feed._replace(query = urlencode(query, True))
+    unparsed_feed = unparsed_feed._replace(query=urlencode(query, True))
     # Convert byte string back into unicode
     feed_url = smart_unicode(urlunparse(unparsed_feed))
 
@@ -243,4 +243,3 @@ def get_interval_from_frequency(frequency):
                  'W': -7,
                  'M': -30}
     return intervals.get(frequency, -1)
-

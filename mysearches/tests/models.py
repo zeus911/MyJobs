@@ -2,30 +2,31 @@ from django.conf import settings
 from django.core import mail
 from django.test import TestCase
 
-from testfixtures import Replacer
+from mock import patch
 
 from myjobs.tests.factories import UserFactory
-from mysearches import models
-from mysearches.tests.factories import SavedSearchFactory, SavedSearchDigestFactory
+from mysearches.tests.factories import (SavedSearchFactory,
+                                        SavedSearchDigestFactory)
 from mysearches.tests.test_helpers import return_file
 from tasks import send_search_digests
+
 
 class SavedSearchModelsTests(TestCase):
     def setUp(self):
         self.user = UserFactory()
 
-        self.r = Replacer()
-        self.r.replace('urllib2.urlopen', return_file)
+        self.patcher = patch('urllib2.urlopen', return_file)
+        self.mock_urlopen = self.patcher.start()
 
     def tearDown(self):
-        self.r.restore()
+        self.patcher.stop()
 
     def test_send_search_email(self):
         SavedSearchDigestFactory(user=self.user,
                                  is_active=False)
         search = SavedSearchFactory(user=self.user, is_active=True,
                                     frequency='D',
-                                    url='www.my.jobs/search?q=new+search')
+                                    url='www.my.jobs/jobs?q=new+search')
         send_search_digests()
         self.assertEqual(len(mail.outbox), 1)
 
@@ -35,6 +36,9 @@ class SavedSearchModelsTests(TestCase):
         self.assertEqual(email.subject, search.label)
         self.assertTrue("table" in email.body)
         self.assertTrue(email.to[0] in email.body)
+        self.assertNotEqual(email.body.find(search.url),
+                            -1,
+                            "Search url was not found in email body")
 
     def test_send_search_digest_email(self):
         SavedSearchDigestFactory(user=self.user)
@@ -87,3 +91,26 @@ class SavedSearchModelsTests(TestCase):
         self.assertTrue("table" in email.body)
         self.assertTrue("Your search is updated" in email.body)
         self.assertTrue(email.to[0] in email.body)
+
+    def test_saved_search_all_jobs_link(self):
+        search = SavedSearchFactory(user=self.user)
+        search.send_email()
+
+        email = mail.outbox.pop()
+        # When search.url does not start with my.jobs, use it as the all jobs
+        # link
+        self.assertFalse(search.url.startswith('http://my.jobs'))
+        self.assertNotEqual(email.body.find(search.url), -1)
+        self.assertEqual(email.body.find(search.feed.replace('/feed/rss', '')),
+                         -1)
+
+        # When search.url starts with my.jobs, strip /feed/rss from search.feed
+        # if it exists and use that as the all jobs link
+        search.url = 'http://my.jobs/' + '1'*32
+        search.save()
+        search.send_email()
+        email = mail.outbox.pop()
+        self.assertEqual(email.body.find(search.url),
+                         -1)
+        self.assertNotEqual(email.body.find(search.feed.replace('/feed/rss', '')),
+                            -1)
