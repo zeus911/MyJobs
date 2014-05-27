@@ -52,8 +52,7 @@ def user_is_allowed(model=None, pk_name=None, pass_user=False):
                     # Log out the user and redirect to login page
                     logout(request)
                     return HttpResponseRedirect(reverse('home'))
-
-            if guid:
+            elif guid:
                 try:
                     user = User.objects.get(user_guid=guid)
                 except User.DoesNotExist:
