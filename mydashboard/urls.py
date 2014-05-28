@@ -10,5 +10,4 @@ urlpatterns = patterns('MyJobs.mydashboard.views',
         name='candidate_information'),
     url(r'^view/microsite$', 'microsite_activity', name='microsite_activity'),
     url(r'^view/export$', 'export_candidates', name='export_candidates'),
-    url(r'topbar/companies', 'retrieve_company_list', name='retrieve_company_list')
 )
