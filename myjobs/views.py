@@ -24,7 +24,8 @@ from myjobs.forms import ChangePasswordForm, EditCommunicationForm
 from myjobs.helpers import expire_login, log_to_jira
 from myjobs.models import EmailLog, Ticket, User
 from myprofile.forms import (InitialNameForm, InitialEducationForm,
-    InitialAddressForm, InitialPhoneForm, InitialWorkForm)
+                             InitialAddressForm, InitialPhoneForm,
+                             InitialWorkForm)
 from myprofile.models import ProfileUnits, Name
 from registration.forms import RegistrationForm, CustomAuthForm, CustomHomepage
 
@@ -288,10 +289,12 @@ def edit_account(request):
     if request.user.password_change:
         change_password = True
 
-    ctx = {'user': user,
-           'communication_form': communication_form,
-           'password_form': password_form,
-           'change_password': change_password}
+    ctx = {
+        'user': user,
+        'communication_form': communication_form,
+        'password_form': password_form,
+        'change_password': change_password,
+    }
 
     if request.method == "POST":
         obj = User.objects.get(id=request.user.id)

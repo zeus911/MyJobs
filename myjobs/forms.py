@@ -1,9 +1,57 @@
+import pytz
+
 from django.forms import *
 from django.core.validators import ValidationError
-from django.utils.translation import ugettext_lazy as _
 
 from myjobs.models import User
-from myprofile.models import Name, SecondaryEmail
+from myprofile.models import SecondaryEmail
+
+
+timezones = [('America/New_York', 'America/New_York'),
+             ('America/Chicago', 'America/Chicago'),
+             ('America/Phoenix', 'America/Phoenix'),
+             ('America/Los_Angeles', 'America/Los_Angeles'),
+             ('America/Anchorage', 'America/Anchorage'),
+             ('US/Alaska', 'US/Alaska'),
+             ('US/Aleutian', 'US/Aleutian'),
+             ('US/Arizona', 'US/Arizona'),
+             ('US/Central', 'US/Central'),
+             ('US/East-Indiana', 'US/East-Indiana'),
+             ('US/Eastern', 'US/Eastern'),
+             ('US/Hawaii', 'US/Hawaii'),
+             ('US/Indiana-Starke', 'US/Indiana-Starke'),
+             ('US/Michigan', 'US/Michigan'),
+             ('US/Mountain', 'US/Mountain'),
+             ('US/Pacific', 'US/Pacific'),
+             ('US/Pacific-New', 'US/Pacific-New'),
+             ('US/Samoa', 'US/Samoa'),
+             ('Etc/GMT0', 'GMT+0'),
+             ('Etc/GMT+1', 'GMT+1'),
+             ('Etc/GMT+2', 'GMT+2'),
+             ('Etc/GMT+3', 'GMT+3'),
+             ('Etc/GMT+4', 'GMT+4'),
+             ('Etc/GMT+5', 'GMT+5'),
+             ('Etc/GMT+6', 'GMT+6'),
+             ('Etc/GMT+7', 'GMT+7'),
+             ('Etc/GMT+8', 'GMT+8'),
+             ('Etc/GMT+9', 'GMT+9'),
+             ('Etc/GMT+10', 'GMT+10'),
+             ('Etc/GMT+11', 'GMT+11'),
+             ('Etc/GMT+12', 'GMT+12'),
+             ('Etc/GMT-1', 'GMT-1'),
+             ('Etc/GMT-2', 'GMT-2'),
+             ('Etc/GMT-3', 'GMT-3'),
+             ('Etc/GMT-4', 'GMT-4'),
+             ('Etc/GMT-5', 'GMT-5'),
+             ('Etc/GMT-6', 'GMT-6'),
+             ('Etc/GMT-7', 'GMT-7'),
+             ('Etc/GMT-8', 'GMT-8'),
+             ('Etc/GMT-9', 'GMT-9'),
+             ('Etc/GMT-10', 'GMT-10'),
+             ('Etc/GMT-11', 'GMT-11'),
+             ('Etc/GMT-12', 'GMT-12'),
+             ('Etc/GMT-13', 'GMT-13'),
+             ('Etc/GMT-14', 'GMT-14')]
 
 
 def make_choices(user):
@@ -55,6 +103,7 @@ class BaseUserForm(ModelForm):
             instance.save()
         return instance
 
+
 class EditCommunicationForm(BaseUserForm):
     def __init__(self, *args, **kwargs):
         super(EditCommunicationForm, self).__init__(*args, **kwargs)
@@ -63,7 +112,14 @@ class EditCommunicationForm(BaseUserForm):
                                            'id': 'id_digest_email'}),
                                            choices=choices,
                                            initial=choices[0][0])
-        self.fields["email"].label = "Primary Email:"
+        self.fields["email"].label = "Primary Email"
+        self.fields['timezone'].widget = Select(choices=timezones)
+        self.fields['timezone'].initial = self.user.timezone
+
+    def clean_timezone(self):
+        if self.cleaned_data['timezone'] not in pytz.all_timezones:
+            raise ValidationError("You must select a valid timezone.")
+        return self.cleaned_data['timezone']
 
     def save(self):
         if self.cleaned_data['email'] != self.user.email:
@@ -77,7 +133,7 @@ class EditCommunicationForm(BaseUserForm):
 
     class Meta:
         model = User
-        fields = ('email', 'opt_in_myjobs', 'opt_in_employers')
+        fields = ('email', 'timezone', 'opt_in_myjobs', 'opt_in_employers', )
 
 
 class ChangePasswordForm(Form):
