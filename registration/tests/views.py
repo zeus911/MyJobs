@@ -118,9 +118,9 @@ class RegistrationViewTests(TestCase):
         self.assertEqual(len(mail.outbox), 1,
                          [msg.subject for msg in mail.outbox])
         msg = mail.outbox[0]
-        self.assertEqual(msg.subject, "Password Reset on My.Jobs")
-        self.assertIn("The My.Jobs Team", msg.body)
-        self.assertIn("user account at My.Jobs.", msg.body)
+        self.assertEqual(msg.subject, "Password Reset on My.jobs")
+        self.assertIn("The My.jobs Team", msg.body)
+        self.assertIn("user account at My.jobs.", msg.body)
 
 
 class MergeUserTests(TestCase):
