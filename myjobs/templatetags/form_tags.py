@@ -1,6 +1,6 @@
 from django import template
-from django.db import models
 from django.forms.fields import BooleanField, TypedChoiceField
+from django.utils.encoding import force_text
 
 register = template.Library()
 
@@ -18,7 +18,7 @@ def readable_boolean(value):
         "True": "Yes",
         "False": "No"
     }
-    return value_lookup.get(str(value), value)
+    return value_lookup.get(force_text(value), value)
 
 @register.simple_tag(name='add_required_label')
 def add_required_label(field, *classes):

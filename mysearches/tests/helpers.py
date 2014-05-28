@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.test import TestCase
 
-from testfixtures import Replacer
+from mock import patch
 
 from mysearches.models import SavedSearch
 from mysearches.helpers import (date_in_range, parse_feed,
@@ -21,25 +21,28 @@ class SavedSearchHelperTests(TestCase):
     def setUp(self):
         super(SavedSearchHelperTests, self).setUp()
         self.user = UserFactory()
-        self.valid_url = 'http://www.my.jobs/search?location=chicago&q=nurse'
-        
-        self.r = Replacer()
-        self.r.replace('urllib2.urlopen', return_file)
+        self.valid_url = 'http://www.my.jobs/jobs?location=chicago&q=nurse'
+
+        self.patcher = patch('urllib2.urlopen', return_file)
+        self.patcher.start()
 
     def tearDown(self):
-        self.r.restore()
-        
+        self.patcher.stop()
+
     def test_valid_dotjobs_url(self):
         url, soup = validate_dotjobs_url(self.valid_url, self.user)
         self.assertIsNotNone(url)
         self.assertIsNotNone(soup)
 
-        no_netloc = 'www.my.jobs/search?location=chicago&q=nurse'
+        no_netloc = 'www.my.jobs/jobs?location=chicago&q=nurse'
         title, url = validate_dotjobs_url(no_netloc, self.user)
         self.assertIsNotNone(title)
         self.assertIsNotNone(url)
-        self.assertEquals('http://www.my.jobs/jobs/feed/rss?q=nurse&amp;location=chicago',
-                          url)
+        expected = urlparse(
+            'http://www.my.jobs/jobs/feed/rss?q=nurse&location=chicago')
+        actual = urlparse(url.replace('amp;', ''))
+        self.assertEqual(actual.path, expected.path)
+        self.assertEqual(parse_qs(actual.query), parse_qs(expected.query))
 
         valid_filter_url = 'www.my.jobs/chicago/illinois/usa/jobs/mcdonalds/careers/'
         title, url = validate_dotjobs_url(valid_filter_url, self.user)
@@ -68,15 +71,15 @@ class SavedSearchHelperTests(TestCase):
             self.assertIsNone(url)
 
     def test_date_in_range(self):
-        start = datetime.date(month=1,day=1,year=2013)
-        end = datetime.date(month=12,day=1,year=2013)
-        x = datetime.date(month=6,day=1,year=2013)
+        start = datetime.date(month=1, day=1, year=2013)
+        end = datetime.date(month=12, day=1, year=2013)
+        x = datetime.date(month=6, day=1, year=2013)
         is_in_range = date_in_range(start, end, x)
         self.assertTrue(is_in_range)
 
-        start = datetime.date(month=1,day=1,year=2013)
-        end = datetime.date(month=12,day=1,year=2013)
-        x = datetime.date(month=6,day=1,year=2010)
+        start = datetime.date(month=1, day=1, year=2013)
+        end = datetime.date(month=12, day=1, year=2013)
+        x = datetime.date(month=6, day=1, year=2010)
         is_in_range = date_in_range(start, end, x)
         self.assertFalse(is_in_range)
         

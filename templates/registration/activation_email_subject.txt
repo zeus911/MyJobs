@@ -14,4 +14,4 @@ being used. This template has the following context:
     activated.
 
 {% endcomment %}{% load i18n %}
-{% blocktrans %}Account activation for My Jobs{% endblocktrans %}
+{% blocktrans %}Account activation for My.jobs{% endblocktrans %}

@@ -85,7 +85,7 @@ class MyProfileTests(TestCase):
         self.assertEqual(mail.outbox[0].to, [secondary_email.email])
         self.assertTrue('secondary email' in mail.outbox[0].body)
 
-    def test_verify_email(self):
+    def test_verify(self):
         """
         Clicking the activation link sets the ActivationProfile object to
         activated and sets the SecondaryEmail object to verified.
@@ -96,7 +96,7 @@ class MyProfileTests(TestCase):
                                                    email=secondary_email.email)
         response = self.client.get(reverse('registration_activate',
                                            args=[activation.activation_key]) +
-                                   '?verify-email=%s' % self.user.email)
+                                   '?verify=%s' % self.user.user_guid)
         secondary_email = SecondaryEmail.objects.get(user=self.user,
                                                      email=secondary_email.email)
         activation = ActivationProfile.objects.get(user=self.user,

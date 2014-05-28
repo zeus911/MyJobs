@@ -5,15 +5,15 @@ from django.contrib.sessions.models import Session
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
-from testfixtures import Replacer
+from mock import patch
 
 from myjobs.tests.views import TestClient
 from myjobs.tests.factories import UserFactory
 
-from mysearches import forms
-from mysearches import models
+from mysearches import forms, models
 from mysearches.tests.test_helpers import return_file
-from mysearches.tests.factories import SavedSearchDigestFactory, SavedSearchFactory
+from mysearches.tests.factories import (SavedSearchDigestFactory,
+                                        SavedSearchFactory)
 
 
 class MySearchViewTests(TestCase):
@@ -41,11 +41,11 @@ class MySearchViewTests(TestCase):
         self.new_form = forms.SavedSearchForm(user=self.user,
                                               data=self.new_form_data)
 
-        self.r = Replacer()
-        self.r.replace('urllib2.urlopen', return_file)
+        self.patcher = patch('urllib2.urlopen', return_file)
+        self.patcher.start()
 
     def tearDown(self):
-        self.r.restore()
+        self.patcher.stop()
 
     def test_search_main(self):
         response = self.client.get(reverse('saved_search_main'))
@@ -146,7 +146,8 @@ class MySearchViewTests(TestCase):
                                     self.new_digest_data,
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"email": ["This field is required."]}')
+        self.assertEqual(response.content,
+                         '{"email": ["This field is required."]}')
 
     def test_unsubscribe_owned_search(self):
         """
@@ -208,7 +209,7 @@ class MySearchViewTests(TestCase):
         # or with the wrong email address...
         response = self.client.get(
             reverse('unsubscribe') + '?id='+str(
-                search.id)+'&verify-email=wrong@example.com')
+                search.id)+'&verify=wrong@example.com')
         # results in being redirected to the login page and the searches
         # remaining unchanged
         self.assertRedirects(response, reverse('home'))
@@ -216,8 +217,8 @@ class MySearchViewTests(TestCase):
         self.assertTrue(search.is_active)
 
         response = self.client.get(
-            reverse('unsubscribe') + '?id=%s&verify-email=%s' % (
-                search.id, self.user.email))
+            reverse('unsubscribe') + '?id=%s&verify=%s' % (
+                search.id, self.user.user_guid))
         search = models.SavedSearch.objects.get(id=search.id)
         self.assertFalse(search.is_active)
 
@@ -275,15 +276,15 @@ class MySearchViewTests(TestCase):
         # or with the wrong email address...
         response = self.client.get(
             reverse('delete_saved_search')+'?id='+str(
-                search.id)+'&verify-email=wrong@example.com')
+                search.id)+'&verify=wrong@example.com')
         # results in being redirected to the login page and no searches being
         # deleted
         self.assertRedirects(response, reverse('home'))
         self.assertEqual(models.SavedSearch.objects.count(), 1)
 
         response = self.client.get(
-            reverse('delete_saved_search')+'?id=%s&verify-email=%s' % (
-                search.id, self.user.email))
+            reverse('delete_saved_search')+'?id=%s&verify=%s' % (
+                search.id, self.user.user_guid))
         self.assertEqual(models.SavedSearch.objects.count(), 0)
 
         # assertRedirects follows any redirect and waits for a 200 status code;

@@ -1,10 +1,8 @@
 from django.test import TestCase
 
-from testfixtures import Replacer
+from mock import patch
 
 from mysearches.forms import SavedSearchForm
-from mysearches import helpers
-from mysearches.models import SavedSearch, SavedSearchDigest
 from mysearches.tests.test_helpers import return_file
 from mysearches.tests.factories import SavedSearchFactory
 from myjobs.tests.factories import UserFactory
@@ -20,11 +18,11 @@ class SavedSearchFormTests(TestCase):
                      'label': 'All jobs from www.my.jobs',
                      'sort_by': 'Relevance'}
 
-        self.r = Replacer()
-        self.r.replace('urllib2.urlopen', return_file)
+        self.patcher = patch('urllib2.urlopen', return_file)
+        self.patcher.start()
 
     def tearDown(self):
-        self.r.restore()
+        self.patcher.stop()
 
     def test_successful_form(self):
         form = SavedSearchForm(user=self.user,data=self.data)

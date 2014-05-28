@@ -75,9 +75,13 @@ class CustomUserManager(BaseUserManager):
             user.make_guid()
             user.timezone = settings.TIME_ZONE
             if request is not None:
-                last_microsite = request.COOKIES.get('lastmicrosite', None)
-                if last_microsite is not None:
-                    user.source = last_microsite
+                source = request.GET.get('source')
+                if source is not None:
+                    user.source = source
+                else:
+                    last_microsite = request.COOKIES.get('lastmicrosite', None)
+                    if last_microsite is not None:
+                        user.source = last_microsite
             user.full_clean()
             user.save(using=self._db)
             user.add_default_group()

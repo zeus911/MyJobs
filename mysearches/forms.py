@@ -1,4 +1,6 @@
-from django.forms import *
+from django.forms import (BooleanField, CharField, CheckboxInput, ChoiceField,
+                          HiddenInput, ModelForm, RadioSelect, Select,
+                          TextInput, Textarea, URLField, ValidationError)
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
@@ -14,9 +16,9 @@ from mypartners.helpers import log_change, send_custom_activation_email
 
 class HorizontalRadioRenderer(RadioSelect.renderer):
     """
-    Overrides the original RadioSelect renderer. The original displayed the radio
-    buttons as an unordered list. This removes the unordered list, displaying just
-    the radio button fields.
+    Overrides the original RadioSelect renderer. The original displayed the
+    radio buttons as an unordered list. This removes the unordered list,
+    displaying just the radio button fields.
     """
     def render(self):
             return mark_safe(u'\n'.join([u'%s\n' % w for w in self]))
@@ -100,7 +102,7 @@ class DigestForm(BaseUserForm):
                                            label=_('Send digest results to:'))
 
     is_active = BooleanField(label=_('Send as a digest:'),
-                             widget=CheckboxInput(attrs={'id': 'id_digest_active'}),
+                             widget=CheckboxInput(attrs={'id':'id_digest_active'}),
                              required=False)
 
     def clean_day_of_week(self):

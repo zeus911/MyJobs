@@ -18,21 +18,21 @@ v1_api.register(SavedSearchResource())
 handler500 = "myjobs.views.error_500"
 
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    '',
     url('', include('MyJobs.myjobs.urls')),
-    url(r'^candidates/',
-        include('MyJobs.mydashboard.urls')),
+    url(r'^candidates/', include('MyJobs.mydashboard.urls')),
     url(r'^accounts/', include('MyJobs.registration.urls')),
-    url(r'^profile/',
-        include('MyJobs.myprofile.urls')),
-    url(r'^saved-search/',
-        include('MyJobs.mysearches.urls')),
+    url(r'^profile/', include('MyJobs.myprofile.urls')),
+    url(r'^saved-search/', include('MyJobs.mysearches.urls')),
     url(r'^api/', include(v1_api.urls)),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^authorize/', include('MyJobs.mysignon.urls')),
     url(r'^message/', include('MyJobs.mymessages.urls')),
     url(r'^prm/', include('MyJobs.mypartners.urls')),
+    url(r'^postajob/', include('MyJobs.postajob.urls')),
 )
+
 
 try:
     if repr(default_storage.connection) == 'S3Connection:s3.amazonaws.com':

@@ -30,3 +30,9 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 JENKINS_TEST_RUNNER = 'testrunner.SilentTestRunner'
 TEST_SOLR_INSTANCE = SOLR['default']
 CELERY_ALWAYS_EAGER = True
+
+
+POSTAJOB_URLS = {
+    'post': '',
+    'delete': ''
+}

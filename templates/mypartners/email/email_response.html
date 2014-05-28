@@ -11,6 +11,13 @@
         {% endfor %}
     {% endif %}
 
+    {% if attachment_failures %}
+        <br />We were unable to associate your email attachments with the following individuals. Please add the attachments via the Partner Relationship Manager.<br />
+        {% for individual in attachment_failures %}
+            <a href="https://secure.my.jobs{{ individual.get_record_url }}">{{ individual.contact_name }}</a><br />
+        {% endfor %}
+    {% endif %}
+
     {% if created_contacts %}
         <br/>Contacts have been created for the following email addresses:<br/>
         {% for contact in created_contacts %}

@@ -7,11 +7,10 @@ from collections import OrderedDict
 import pytz
 
 from myprofile.forms import generate_custom_widgets
-from myjobs.forms import BaseUserForm
 from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
                                ADDITION, CHANGE, MAX_ATTACHMENT_MB)
 from mypartners.helpers import log_change, get_attachment_link
-from mypartners.widgets import (MultipleFileField, MultipleFileInputWidget,
+from mypartners.widgets import (MultipleFileField,
                                 SplitDateTimeDropDownField, TimeDropDownField)
 
 
@@ -58,13 +57,14 @@ class ContactForm(forms.ModelForm):
         return contact
 
 
-class PartnerInitialForm(BaseUserForm):
+class PartnerInitialForm(forms.ModelForm):
     """
     This form is used when an employer currently has no partner to create a
     partner (short and sweet version).
 
     """
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', '')
         super(PartnerInitialForm, self).__init__(*args, **kwargs)
         self.fields['pc-contactname'] = forms.CharField(
             label="Primary Contact Name", max_length=255, required=False,
@@ -81,7 +81,7 @@ class PartnerInitialForm(BaseUserForm):
         fields = ['name', 'uri']
         widgets = generate_custom_widgets(model)
 
-    def save(self, user, commit=True):
+    def save(self, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
         self.instance.owner_id = self.data['company_id']
         partner = super(PartnerInitialForm, self).save(commit)
@@ -93,18 +93,18 @@ class PartnerInitialForm(BaseUserForm):
                                              email=contact_email,
                                              partner=partner)
             contact.save()
-            log_change(contact, self, user, partner, contact.name,
+            log_change(contact, self, self.user, partner, contact.name,
                        action_type=ADDITION)
             partner.primary_contact = contact
             partner.save()
 
-        log_change(partner, self, user, partner, partner.name,
+        log_change(partner, self, self.user, partner, partner.name,
                    action_type=new_or_change)
 
         return partner
 
 
-class NewPartnerForm(BaseUserForm):
+class NewPartnerForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """
         This form is used only to create a partner.
@@ -113,6 +113,7 @@ class NewPartnerForm(BaseUserForm):
         'append' to the new fields because new fields need to be first.
 
         """
+        self.user = kwargs.pop('user', '')
         super(NewPartnerForm, self).__init__(*args, **kwargs)
         for field in self.fields.itervalues():
             field.label = "Primary Contact " + field.label
@@ -143,7 +144,7 @@ class NewPartnerForm(BaseUserForm):
             attrs={'rows': 5, 'cols': 24,
                    'placeholder': 'Notes About This Contact'})
 
-    def save(self, user, commit=True):
+    def save(self, commit=True):
         # self.instance is a Contact instance
         company_id = self.data['company_id']
 
@@ -152,7 +153,7 @@ class NewPartnerForm(BaseUserForm):
         partner = Partner.objects.create(name=self.data['partnername'],
                                          uri=partner_url, owner_id=company_id)
 
-        log_change(partner, self, user, partner, partner.name,
+        log_change(partner, self, self.user, partner, partner.name,
                    action_type=ADDITION)
 
         self.data = remove_partner_data(self.data,
@@ -168,7 +169,7 @@ class NewPartnerForm(BaseUserForm):
             instance = super(NewPartnerForm, self).save(commit)
             partner.primary_contact = instance
             partner.save()
-            log_change(instance, self, user, partner, instance.name,
+            log_change(instance, self, self.user, partner, instance.name,
                        action_type=ADDITION)
 
             return instance
@@ -183,7 +184,7 @@ def remove_partner_data(dictionary, keys):
     return new_dictionary
 
 
-class PartnerForm(BaseUserForm):
+class PartnerForm(forms.ModelForm):
     """
     This form is used only to edit the partner form. (see prm/view/details)
 

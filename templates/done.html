@@ -36,15 +36,15 @@ done.html -- presents user_view_profile.
                 <tr><td class="table-field"><b>{% trans "Date Joined" %}</b></td>
                   <td>{{ user.date_joined|naturaltime }}</td></tr>
                 <tr><td class="table-field"><b>{% trans "Email Notifications" %}</b></td>
-                  <td>{% if user.opt_in_myjobs %}You've opted to receive communications from MyJobs{% else %}
-                    You've declined to receive communications from MyJobs {% endif %}
+                  <td>{% if user.opt_in_myjobs %}You've opted to receive communications from My.jobs{% else %}
+                    You've declined to receive communications from My.jobs {% endif %}
                 </td></tr>
               </tbody>
           </table>
           <br>
           {% if not user.is_active %}
           <div class="alert-message info">
-            <p>{% trans "Your account doesn't have full access to MyJobs features! Please activate it using the activation link sent to your email. "%} <a href="{% url 'resend_activation' %}">Didn't get an email?</a></p>
+            <p>{% trans "Your account doesn't have full access to My.jobs features! Please activate it using the activation link sent to your email. "%} <a href="{% url 'resend_activation' %}">Didn't get an email?</a></p>
           </div>
           {% endif %}
         </div>

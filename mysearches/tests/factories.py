@@ -1,6 +1,6 @@
 import factory
 from myjobs.tests.factories import UserFactory
-from mysearches.models import *
+from mysearches.models import SavedSearch, SavedSearchDigest, PartnerSavedSearch
 
 
 class SavedSearchFactory(factory.Factory):

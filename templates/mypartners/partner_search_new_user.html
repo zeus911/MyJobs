@@ -1,11 +1,11 @@
 <p>
 {{ creator }} from {{ company }} has created a job search for you on 
-My.Jobs.  If you have a My.Jobs account, click 
+My.jobs.  If you have a My.jobs account, click
 {% url 'merge_accounts' activation.activation_key as url %}
 <a href="https://secure.my.jobs{{url}}">here</a> to add this to your 
 saved searches.  Don't have an Account?  Click 
 {% url 'registration_activate' activation_key as url %}
-<a href="https://secure.my.jobs{{url}}?verify-email={{user.email}}">here</a> to
+<a href="https://secure.my.jobs{{url}}?verify={{user.user_guid}}">here</a> to
 sign up.
 </p> 
 

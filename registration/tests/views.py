@@ -64,7 +64,7 @@ class RegistrationViewTests(TestCase):
         profile = ActivationProfile.objects.get(user__email=self.user.email)
         response = self.client.get(reverse('registration_activate',
                                            args=[profile.activation_key]) +
-                                   '?verify-email=%s' % self.user.email)
+                                   '?verify=%s' % self.user.user_guid)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.data['email'])
 
@@ -118,9 +118,9 @@ class RegistrationViewTests(TestCase):
         self.assertEqual(len(mail.outbox), 1,
                          [msg.subject for msg in mail.outbox])
         msg = mail.outbox[0]
-        self.assertEqual(msg.subject, "Password Reset on My.Jobs")
-        self.assertIn("The My.Jobs Team", msg.body)
-        self.assertIn("user account at My.Jobs.", msg.body)
+        self.assertEqual(msg.subject, "Password Reset on My.jobs")
+        self.assertIn("The My.jobs Team", msg.body)
+        self.assertIn("user account at My.jobs.", msg.body)
 
 
 class MergeUserTests(TestCase):
