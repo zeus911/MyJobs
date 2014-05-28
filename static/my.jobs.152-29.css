@@ -2245,20 +2245,6 @@ td .gravatar-blank,
         width: calc(96% - 28px);
     }
 
-    #topbar-back {
-        position: absolute;
-        right: 70px;
-        top: 10px;
-        padding: 13px;
-        background-color: #a95051;
-        border: 2px solid #FFF;
-        border-radius: 5px;
-    }
-
-    #topbar-back > #prm-arrow-left {
-        border-right: 15px solid #FFF;
-    }
-
     /* Contact Form Styles */
     #success-table tr td{
         min-width: 0;

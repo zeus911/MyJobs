@@ -113,7 +113,7 @@
     }
 
     .menu-container > ul > li > a {
-        padding: 6px 12px;
+        padding: 7px 12px;
         text-decoration: none;
         color: #FFF;
     }
@@ -144,9 +144,14 @@
 
     .submenu > li {
         width: 100%;
+        border-top: 1px solid #333;
         border-bottom: 1px solid #333;
         box-sizing: border-box;
         font-weight: normal;
+    }
+
+    .submenu > li + li {
+        border-top: 0;
     }
 
     .submenu > li > a {
@@ -165,35 +170,9 @@
         list-style: none;
     }
 
-    #nav {
-        z-index: 1;
-        margin: 0 0 0 25px;
-    }
-
-    #nav:hover {
-        background: #222;
-        color: #000;
-    }
-
-    #nav > li {
-        padding: 5px 2px 3px 2px;
-    }
-
-    #nav a {
-        color: #fff;
-    }
-
     #nav .main-nav img {
         max-width: none;
         padding-left: 5px;
-    }
-
-    #nav .main-nav {
-        color: #fff;
-        text-decoration: none;
-        display: block;
-        padding-right: 4px;
-        width: 40px;
     }
 
     .arrow-left {
@@ -203,39 +182,6 @@
         border-style: solid;
         border-width: 15px 20px 15px 0;
         border-color: transparent #FFF transparent transparent;
-    }
-
-
-    #nav ul#pop-menu {
-        background:#444;
-        padding: 0;
-        margin: 2px 0 0 -2px;
-        position:absolute;
-        display: none;
-        border-bottom-left-radius: 4px;
-        border-bottom-right-radius: 4px;
-        width: 275px;
-    }
-
-    .topbar .arrow {
-        float: right;
-        display: block;
-        width: 0;
-        border: 4px solid transparent;
-        border-right: 6px solid #999;
-        border-left: 0;
-        margin-top: -15px;
-        margin-left: 30px;
-        margin-bottom: 12px;
-    }
-
-    .topbar #nav:hover .arrow {
-        border: 4px solid transparent;
-        border-top: 6px solid #eee;
-        border-bottom: 0;
-        position: relative;
-        left: 2px;
-        top: 2px;
     }
 
     .topbar #last-microsite .arrow {
@@ -341,46 +287,23 @@
         display: none;
     }
 
-    .gravatar-text {
-        display: table-cell;
-        vertical-align: middle;
-        position: static;
+    #nav ul#pop-menu {
+        background:#444;
+        padding: 0;
+        margin: 2px 0 0 -2px;
+        position:absolute;
+        display: none;
+        border-bottom-left-radius: 4px;
+        border-bottom-right-radius: 4px;
+        width: 275px;
     }
 
-    td .gravatar-blank,
-    .main-nav .gravatar-blank,
-    .gravatar .gravatar-blank {
-        border-radius: 0 !important;
+    #nav a {
+        color: #fff;
     }
 
-    .form-label .gravatar-blank,
-    .form-label #id_gravatar {
-        margin-left: 220px;
-    }
-
-    .gravatar-blank {
-        font-weight: bold;
-        color: #333;
-        border: 1px solid #333;
-        border-radius: 4px;
-        text-align: center;
-        display: table;
-    }
-
-    .gravatar-danger {
-        background-color: #dd514c;
-    }
-
-    .gravatar-warning {
-        background-color: #faa732;
-    }
-
-    .gravatar-info {
-        background-color: #4bb1cf;
-    }
-
-    .gravatar-success {
-        background-color: #5eb95e;
+    #nav > li {
+        padding: 5px 2px 3px 2px;
     }
 
     @media screen and (max-width: 992px) {
@@ -391,6 +314,10 @@
 
         .menu-container > .mobile_hide {
             display: none;
+        }
+
+        .menu-container > .desktop_hide {
+            display: block;
         }
 
         #logo-block {
@@ -406,6 +333,31 @@
             display: none;
         }
 
+        #topbar-back {
+            position: absolute;
+            right: 70px;
+            top: 10px;
+            padding: 13px;
+            background-color: #a95051;
+            border: 2px solid #FFF;
+            border-radius: 5px;
+        }
+
+        #topbar-back #prm-arrow-left{
+            width: 0;
+            height: 0;
+            border-bottom: 10px solid transparent;
+            border-top: 10px solid transparent;
+            border-right: 15px solid #2f2f2f;
+            font-size: 0;
+            line-height: 0;
+            display: block;
+        }
+
+        #topbar-back > #prm-arrow-left {
+            border-right: 15px solid #FFF;
+        }
+
         #nav .main-nav {
             background: #a95051 url(http://d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/superbutton.png) no-repeat;
             position: absolute;
@@ -418,6 +370,7 @@
             z-index: 101;
             border: 2px solid #FFF;
             border-radius: 4px;
+            cursor: pointer;
         }
 
         .topbar li a {
@@ -534,7 +487,7 @@
         <div id="de-topbar-content" class="wrapper" {% if from_ajax %}style="margin:0 auto; width:960px; display:block;"{% endif %}>
             <div id="logo-block" class="de-topbar-item">
                 <a href="http://www.my.jobs/">
-                    <h3 id="topbar-logo">my.jobs</h3>
+                    <h3 id="topbar-logo">My.jobs</h3>
                 </a>
             </div>
 
@@ -552,42 +505,40 @@
 
             <div class="menu-container" role="menu">
                 {% if user.is_authenticated %}
-                {% is_a_group_member user "Employer" as group_member %}
-                {% if group_member and company_name|length > 1 %}
-                <script>
-                    multiple_companies = true;
-                </script>
-                {% endif %}
                 <ul class="mobile_hide">
-                    <li class="{% active_tab 'seeker-tools' %}">
-                        <a>{% trans "Job Tools" %}</a>
-                        <ul id="seeker-apps" class="submenu">
-                            <li><a href="https://secure.my.jobs/profile/view/">{% trans "Profile" %}</a></li>
-                            <li><a href="https://secure.my.jobs/saved-search/view/">{% trans "Saved Searches" %}</a></li>
-                        </ul>
-                    </li>
                     {% is_a_group_member user "Employer" as group_member %}
                     {% get_company_name user as company_name %}
+                    {% if group_member and company_name|length > 1 %}
+                    <script>
+                        multiple_companies = true;
+                    </script>
+                    {% endif %}
                     {% if group_member %}
                     <li class="{% active_tab 'employer-tools' %}">
-                        <a>{% trans "Employer Tools" %}</a>
+                        <a>{% trans "Employers" %}</a>
                         <ul id="employer-apps" class="submenu">
                             <li><a id="candidate-tab" href="https://secure.my.jobs/candidates/view?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
                             <li><a id="partner-tab" href="https://secure.my.jobs/prm/view?company={{ company_name.0.id }}">{% trans "PRM" %}</a></li>
                         </ul>
                     </li>
                     {% endif %}
-                    <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
+                    <li>
+                        <a>{{ user.email }}</a>
+                        <ul class="submenu">
+                            <li><a>{% trans "My Profile" %}</a></li>
+                            <li><a>{% trans "My Saved Searches" %}</a></li>
+                            <li><a href="https://secure.my.jobs/account/edit">{% trans "Account Settings" %}</a></li>
+                            <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
+                            <li><a href="https://secure.my.jobs/account/logout">Log Out</a></li>
+                        </ul>
+                    </li>
                 </ul>
 
                 <a id="topbar-back" class="desktop_hide" href="#" onclick="javascript:window.history.back(-1);return false;"><span id="prm-arrow-left"></span></a>
-                <div id="" class="menu-bar" style="text-align: right;">
+                <div id="" class="menu-bar desktop_hide" style="text-align: right;">
                     <ul id="nav">
                         <li>
-                            <a class="main-nav">
-                                {% get_gravatar user %}
-                                <span class="arrow"></span>
-                            </a>
+                            <a class="main-nav"></a>
                             <ul class="span4" id="pop-menu">
                                 <li id="logged-in-li">
                                     {% trans "Logged in as " %}
@@ -616,16 +567,15 @@
                                 <li id="back-btn-li" class="no-show"><a id="back-btn"><span class="arrow-left"></span></a></li>
 
                                 {% if not user.is_disabled %}
-                                    <li><a id="job-tools" class="no-show desktop_hide" href="#">{% trans "Job Tools" %}</a></li>
-                                    <li><a id="profile-link" class="no-show sub-nav-item seeker-menu" href="https://secure.my.jobs/profile/view/">{% trans "Profile" %}</a></li>
+                                    <li><a id="profile-link" class="no-show seeker-menu" href="https://secure.my.jobs/profile/view/">{% trans "My Profile" %}</a></li>
 
                                     {% if user.is_active %}
 
-                                        <li><a id="savedsearch-link" class="no-show sub-nav-item seeker-menu" href="https://secure.my.jobs/saved-search/view/">{% trans "Saved Searches" %}</a></li>
+                                        <li><a id="savedsearch-link" class="no-show seeker-menu" href="https://secure.my.jobs/saved-search/view/">{% trans "My Saved Searches" %}</a></li>
 
                                         {% if group_member and user.is_active  %}
 
-                                            <li><a id="employer-tools" class="no-show desktop_hide" href="#">{% trans "Employer Tools" %}</a></li>
+                                            <li><a id="employer-tools" class="no-show desktop_hide" style="cursor: pointer;">{% trans "Employer" %}</a></li>
 
                                             <li><a id="candidate-link" class="no-show sub-nav-item employer-menu" href="https://secure.my.jobs/candidates/view?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
 
@@ -635,7 +585,7 @@
                                     {% endif %}
                                     <li><a id="account-link" href="https://secure.my.jobs/account/edit">{% trans "Account Settings" %}</a></li>
                                     <li><a id="search-jobs" href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
-                                    <li><a id="settings-link">{% trans "Settings" %}</a></li>
+                                    <li><a id="settings-link" style="cursor: pointer;">{% trans "Settings" %}</a></li>
 
                                 {% endif %}
 
@@ -648,10 +598,25 @@
                     </ul>{# /nav #}
                 </div>{# /menu-bar pagination-right pull-right #}
                 {% else %}
+                    {# MOBILE VIEW #}
                     <ul class="mobile_hide">
-                        <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
+                        <li><a href="http://www.my.jobs/employers/">{% trans "Employers: Schedule a Demo" %}</a></li>
+                        <li><a href="https://secure.my.jobs">{% trans "Create a Profile" %}</a></li>
                         <li><a href="https://secure.my.jobs">{% trans 'Login' %}</a></li>
                     </ul>
+                    <a id="topbar-back" class="desktop_hide" href="#" onclick="javascript:window.history.back(-1);return false;"><span id="prm-arrow-left"></span></a>
+                    <div id="" class="menu-bar desktop_hide" style="text-align: right;">
+                        <ul id="nav">
+                            <li>
+                                <a class="main-nav"></a>
+                                <ul id="pop-menu">
+                                    <li><a id="demo-link" class="no-show" href="http://www.my.jobs/employers/">{% trans "Employers: Schedule a Demo" %}</a></li>
+                                    <li><a id="create-profile" class="no-show" href="https://secure.my.jobs">{% trans "Create a Profile" %}</a></li>
+                                    <li><a id="login-link" class="no-show" href="https://secure.my.jobs">{% trans 'Login' %}</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -669,17 +634,22 @@
                     $("#nav").toggleClass("active");
                     $(".company-nav-item").addClass("no-show");
                     $(".settings-nav-item").addClass("no-show");
-                    $(".seeker-menu").addClass("no-show");
                     $(".employer-menu").addClass("no-show");
                     $("#back-btn-li").addClass("no-show");
                     $("#account-link").addClass("no-show");
                     $("#logout-link").addClass("no-show");
                     $("#logged-in-li").addClass("no-show");
 
-                    $("#job-tools").removeClass("no-show");
+                    $("#mobile-company-select").removeClass("no-show");
+                    $(".seeker-menu").removeClass("no-show");
                     $("#employer-tools").removeClass("no-show");
                     $("#search-jobs").removeClass("no-show");
                     $('#settings-link').removeClass("no-show");
+
+                    //Not logged in mobile view
+                    $("#demo-link").removeClass("no-show");
+                    $("#create-profile").removeClass("no-show");
+                    $("#login-link").removeClass("no-show");
                 }
             });
 
@@ -693,20 +663,12 @@
                 $("#nav").removeClass("active");
             });
 
-            $("#job-tools").click(function(e) {
-                $("#back-btn-li").removeClass("no-show");
-                $(".seeker-menu").removeClass("no-show");
-
-                $("#settings-link").addClass("no-show");
-                $("#search-jobs").addClass("no-show");
-                $("#job-tools").addClass("no-show");
-                $("#employer-tools").addClass("no-show");
-            });
-
             $("#employer-tools").click(function(e) {
                 $("#back-btn-li").removeClass("no-show");
                 $(".employer-menu").removeClass("no-show");
 
+                $(".seeker-menu").addClass("no-show");
+                $("#mobile-company-select").addClass("no-show");
                 $("#settings-link").addClass("no-show");
                 $("#search-jobs").addClass("no-show");
                 $("#job-tools").addClass("no-show");
@@ -734,10 +696,12 @@
                 $(".company-nav-item").addClass("no-show");
                 $(".partner-nav-item").addClass("no-show");
                 $(".settings-nav-item").addClass("no-show");
-                $(".seeker-menu").addClass("no-show");
                 $(".employer-menu").addClass("no-show");
                 $("#back-btn-li").addClass("no-show");
+                $(".multiple_companies").addClass("no-show");
 
+                $(".seeker-menu").removeClass("no-show");
+                $("#mobile-company-select").removeClass("no-show");
                 $("#job-tools").removeClass("no-show");
                 $("#employer-tools").removeClass("no-show");
                 $("#search-jobs").removeClass("no-show");
@@ -745,93 +709,122 @@
             });
         });
 
-        // multiple_companies initialized in template if
-        // user is an employer and has more than one company
-        // Check if multiple_companies is defined to avoid referencing before defined
-        if(typeof(multiple_companies) != "undefined") {
-            if(multiple_companies){
-                // See if a cookie is already set. If so update employer links.
-                var cid = read_cookie();
-                if(cid)
-                    update_employer_tools(cid);
+        {% if group_member and company_name|length > 1 %}
+        // See if a cookie is already set. If so update employer links.
+        var cid = read_cookie();
+        if(cid)
+            update_employer_tools(cid);
 
-                // Build multiple company selector
-                get_companies();
-            }
-        }
+        // Build multiple company selector
+        get_companies();
     };
 
     function get_companies() {
-        // Retrieve a list of companies and IDs
-        $.ajax({
-            global: false,
-            dataType: "json",
-            url: "https//:secure.my.jobs/candidates/topbar/companies",
-            success: function(data) {
-                var parent_list_item = document.createElement("li");
-                parent_list_item.setAttribute("id", "current-company");
-                parent_list_item.setAttribute("class", "submenu-dropdown");
+        {% json_companies company_name as companies %}
+        var data = {{ companies|safe }};
+        var parent_list_item = document.createElement("li");
+        parent_list_item.setAttribute("id", "current-company");
+        parent_list_item.setAttribute("class", "submenu-dropdown");
 
-                parent_list_item.onclick = function(event) {
-                    event.preventDefault();
-                    var li_last_child = parent_list_item.lastChild;
+        parent_list_item.onclick = function(event) {
+            event.preventDefault();
+            var li_last_child = parent_list_item.lastChild;
 
-                    if (li_last_child.currentStyle ? li_last_child.currentStyle.display : getComputedStyle(li_last_child, null).display === "none")
-                        li_last_child.style.display = "block";
-                    else
-                        li_last_child.style.display = "none";
-                };
+            if (li_last_child.currentStyle ? li_last_child.currentStyle.display : getComputedStyle(li_last_child, null).display === "none")
+                li_last_child.style.display = "block";
+            else
+                li_last_child.style.display = "none";
+        };
 
-                var label = document.createElement("a");
+        var label = document.createElement("a");
 
-                // Company id from myjobs_company cookie
-                var cid = read_cookie();
+        // Company id from myjobs_company cookie
+        var cid = read_cookie();
 
-                var list = document.createElement("ul");
-                list.setAttribute("id", "select_company");
+        var list = document.createElement("ul");
+        list.setAttribute("id", "select_company");
 
-                // Company name used to show user what current company is selected
-                var menu_company_name;
+        // Company name used to show user what current company is selected
+        var menu_company_name;
 
-                // Creating li items for "list" (the ul)
-                for(var i=0; i<data.length; i++) {
-                    // Get company name from cid, if cid exists
-                    if(!menu_company_name) {
-                        if(cid) {
-                            if(data[i].id == cid)
-                                menu_company_name = data[i].name;
-                        }
-                        else {
-                            set_cookie(data[0].id, 14);
-                            menu_company_name = data[0].name;
-                        }
-                    }
-                    var list_item = document.createElement("li");
-                    list_item.setAttribute("id", "company_" + String(data[i].id));
-                    list_item.innerHTML = "<a>"+data[i].name+"</a>";
-                    list_item.onclick = function() {
-                        // this.id Format: company_COMPANYID
-                        var item_id = this.id.split("_")[1];
-
-                        // 14 = 2 weeks
-                        set_cookie(item_id, 14);
-
-                        // replaces text of main li holding company list
-                        parent_list_item.firstChild.innerHTML = "Currently <b>"+ this.firstChild.innerHTML +"</b>";
-
-                        update_employer_tools(item_id);
-                    };
-                    list.appendChild(list_item);
+        // Creating li items for "list" (the ul)
+        for(var i=0; i<data.length; i++) {
+            // Get company name from cid, if cid exists
+            if(!menu_company_name) {
+                if(cid) {
+                    if(data[i].id == cid)
+                        menu_company_name = data[i].name;
                 }
-                label.innerHTML = "Currently <b>"+ menu_company_name +"</b>";
-                parent_list_item.appendChild(label);
-                parent_list_item.appendChild(list);
-
-                var parent_element = document.getElementById("employer-apps");
-                var first_child = parent_element.firstChild;
-                parent_element.insertBefore(parent_list_item, first_child);
+                else {
+                    set_cookie(data[0].id, 14);
+                    menu_company_name = data[0].name;
+                }
             }
-        });
+            var list_item = document.createElement("li");
+            list_item.setAttribute("id", "company_" + String(data[i].id));
+            list_item.innerHTML = "<a>"+data[i].name+"</a>";
+            list_item.onclick = function() {
+                // this.id Format: company_COMPANYID
+                var item_id = this.id.split("_")[1];
+
+                // 14 = 2 weeks
+                set_cookie(item_id, 14);
+
+                // replaces text of main li holding company list
+                parent_list_item.firstChild.innerHTML = "Currently <b>"+ this.firstChild.innerHTML +"</b>";
+
+                update_employer_tools(item_id);
+            };
+            list.appendChild(list_item);
+        }
+        label.innerHTML = "Currently <b>"+ menu_company_name +"</b>";
+        parent_list_item.appendChild(label);
+        parent_list_item.appendChild(list);
+
+        var parent_element = document.getElementById("employer-apps");
+        var first_child = parent_element.firstChild;
+        parent_element.insertBefore(parent_list_item, first_child);
+
+        // Mobile
+        var mobile_parent_element = document.createElement("li");
+        mobile_parent_element.setAttribute("id", "mobile-company-select");
+        mobile_parent_element.setAttribute("class", "no-show");
+        var mobile_label = document.createElement("a");
+        mobile_label.innerHTML = "Currently <b>" + menu_company_name + "</b>";
+        mobile_parent_element.appendChild(mobile_label);
+        mobile_parent_element.onclick = function() {
+            $(".multiple_companies").removeClass("no-show");
+            $("#back-btn-li").removeClass("no-show");
+
+            $("#settings-link").addClass("no-show");
+            $("#job-tools").addClass("no-show");
+            $("#employer-tools").addClass("no-show");
+            $("#search-jobs").addClass("no-show");
+            $("#profile-link").addClass("no-show");
+            $("#savedsearch-link").addClass("no-show");
+            $("#candidate-link").addClass("no-show");
+            $("#partner-link").addClass("no-show");
+            $("#account-link").addClass("no-show");
+        };
+        var pop_menu = document.getElementById("pop-menu");
+        var search_item = document.getElementById("search-jobs");
+        pop_menu.insertBefore(mobile_parent_element, search_item.parentNode);
+
+        for(var j=0; j<data.length; j++) {
+            var mobile_list_item = document.createElement("li");
+            mobile_list_item.setAttribute("id", "mobilecompany_" + data[j].id);
+            mobile_list_item.setAttribute("class", "no-show sub-nav-item multiple_companies");
+            mobile_list_item.setAttribute("style", "cursor:pointer");
+            mobile_list_item.innerHTML = "<a>"+ data[j].name +"</a>";
+            mobile_list_item.onclick = function() {
+                var mobile_item_id = this.id.split("_")[1];
+                set_cookie(mobile_item_id, 14);
+                mobile_parent_element.firstChild.innerHTML = "Currently <b>"+ this.firstChild.innerHTML + "</b>";
+                update_employer_tools(mobile_item_id);
+                $("#back-btn").click();
+            };
+            pop_menu.appendChild(mobile_list_item);
+        }
     }
 
     function set_cookie(company_id, days) {
@@ -869,5 +862,15 @@
         // Editing links from old company to newly set company
         for(var i=0; i<li_children.length; i++)
             li_children[i].firstChild.search = "company="+company_id;
+
+        var candidate_link = document.getElementById("candidate-link");
+        candidate_link.search = "company=" + company_id;
+
+        var partner_link = document.getElementById("partner-link");
+        partner_link.search = "company=" + company_id;
     }
+
+    {% else %}
+    }
+    {% endif %}
 </script>
