@@ -62,6 +62,15 @@
         padding-bottom: 5px !important;
     }
 
+    #anchor-logo {
+        float: left;
+        padding: 0 0 5px 0;
+    }
+
+    #anchor-logo.active {
+        background-color: #a95051;
+    }
+
     .topbar #last-microsite-name {
         margin-left: 10px;
     }
@@ -486,7 +495,7 @@
     <div class="topbar-inner">
         <div id="de-topbar-content" class="wrapper" {% if from_ajax %}style="margin:0 auto; width:960px; display:block;"{% endif %}>
             <div id="logo-block" class="de-topbar-item">
-                <a href="http://www.my.jobs/">
+                <a id="anchor-logo" href="http://www.my.jobs/">
                     <h3 id="topbar-logo">My.jobs</h3>
                 </a>
             </div>
