@@ -567,12 +567,36 @@ def cas(request):
 
 def topbar(request):
     callback = request.REQUEST.get('callback')
-    user = request.user if request.user.is_authenticated() else None
+    user = request.user
+
+    if not user or user.is_anonymous():
+        # Ensure that old myguid cookies can be handled correctly
+        guid = request.COOKIES.get('myguid', '').replace('-', '')
+        try:
+            user = User.objects.get(user_guid=guid)
+        except User.DoesNotExist:
+            pass
+    if not user or user.is_anonymous():
+        user = None
 
     ctx = {'user': user}
     html = render_to_response('includes/topbar.html', ctx,
                               RequestContext(request))
 
-    return HttpResponse("%s(%s)" % (callback, json.dumps(html.content)),
+    response = HttpResponse("%s(%s)" % (callback, json.dumps(html.content)),
                         content_type='text/javascript')
+
+    caller = request.REQUEST.get('site', '')
+    if caller:
+        max_age = 30 * 24 * 60 * 60
+        last_name = request.REQUEST.get('site_name', caller)
+        response.set_cookie(key='lastmicrosite',
+                            value=caller,
+                            max_age=max_age,
+                            domain='.my.jobs')
+        response.set_cookie(key='lastmicrositename',
+                            value=last_name,
+                            max_age=max_age,
+                            domain='.my.jobs')
+    return response
 

@@ -508,11 +508,6 @@
                 <ul class="mobile_hide">
                     {% is_a_group_member user "Employer" as group_member %}
                     {% get_company_name user as company_name %}
-                    {% if group_member and company_name|length > 1 %}
-                    <script>
-                        multiple_companies = true;
-                    </script>
-                    {% endif %}
                     {% if group_member %}
                     <li class="{% active_tab 'employer-tools' %}">
                         <a>{% trans "Employers" %}</a>
