@@ -178,7 +178,7 @@ def save_init_partner_form(request):
     else:
         form = PartnerInitialForm(user=request.user, data=request.POST)
     if form.is_valid():
-        form.save(request.user)
+        form.save()
         return HttpResponse(status=200)
     else:
         return HttpResponse(json.dumps(form.errors))
@@ -234,7 +234,7 @@ def save_item(request):
         partner = get_object_or_404(company.partner_set.all(), id=partner_id)
         form = PartnerForm(instance=partner, auto_id=False, data=request.POST)
         if form.is_valid():
-            form.save(request.user)
+            form.save()
             return HttpResponse(status=200)
         else:
             return HttpResponse(json.dumps(form.errors))
