@@ -234,7 +234,7 @@ def save_item(request):
         partner = get_object_or_404(company.partner_set.all(), id=partner_id)
         form = PartnerForm(instance=partner, auto_id=False, data=request.POST)
         if form.is_valid():
-            form.save()
+            form.save(request.user, partner)
             return HttpResponse(status=200)
         else:
             return HttpResponse(json.dumps(form.errors))
