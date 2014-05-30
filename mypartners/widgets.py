@@ -1,3 +1,6 @@
+from datetime import datetime, time
+import pytz
+
 from django.core.exceptions import ValidationError
 from django.forms import (FileField, FileInput, MultiValueField, MultiWidget,
                           Select,
@@ -5,7 +8,6 @@ from django.forms import (FileField, FileInput, MultiValueField, MultiWidget,
 from django.utils.safestring import mark_safe
 from django.utils.timezone import localtime, now
 
-from datetime import datetime, time
 
 hour_choices = [(str(x).zfill(2), str(x).zfill(2)) for x in range(1, 13)]
 length_hour_choices = [(str(x).zfill(2), str(x).zfill(2)) for x in range(0, 24)]
@@ -82,6 +84,8 @@ class SplitDateTimeDropDownWidget(MultiWidget):
     def decompress(self, value):
         if not value:
             value = localtime(now())
+        else:
+            value = localtime(value)
         month = datetime.strftime(value, '%b')
         day = datetime.strftime(value, '%d')
         year = datetime.strftime(value, '%Y')

@@ -2,6 +2,7 @@
 body {
     background-color: #ddd;
     font-family: Arial, Helvetica, sans-serif;
+    padding-top: 29px;
 }
 
 #main {
@@ -1119,68 +1120,6 @@ ul.ui-autocomplete {
     overflow-y: scroll;
 }
 
-/*Topbar Styles*/
-.span6v-1-8{
-    width: 340px;
-}
-
-.span2v-1-8{
-    width: 80px;
-}
-
-.topbar-inner {
-    background-color: #444;
-}
-
-.topbar #topbar-logo {
-    height: 30px;
-    width: 100px;
-    background: transparent url(//d2e48ltfsb5exy.cloudfront.net/myjobs/logos/myjobs_logo_white_small.png) center left no-repeat;
-    text-indent: -9000px;
-}
-
-.topbar input {
-    width: 100px;
-    margin-right: 10px;
-}
-
-.topbar input.text {
-    height: 16px;
-    width: 200px;
-}
-
-.topbar .btn {        
-    padding-bottom: 2px;
-}
-
-.menu-tabs {
-    border-bottom: 0 solid #444;
-}
-
-.topbar .menu-tabs a,
-.topbar #last-microsite-name {
-    border: 1px solid transparent !important;
-    background-color: transparent;
-    color: #FFF;
-    font-weight: bold;
-    text-decoration: none;
-    padding-top: 4px !important;
-    padding-bottom: 5px !important;
-}
-
-.topbar #last-microsite-name {
-    margin-left: 10px;
-}
-
-.topbar .menu-tabs a:hover {
-    color: #FFF;
-    background-color: #a95051;
-}
-
-.menu-tabs .active a {
-    background-color: #a95051 !important;
-}
-
 .formBox select {
     width: 221px;
 }
@@ -1214,7 +1153,7 @@ fieldset textarea,
 }
 
 #title h1 {
-    text-indent: -9000px;    
+    text-indent: -9000px;
     display: block;
     height: 149px;
     margin-top: 40px;
@@ -1624,136 +1563,6 @@ em.pendingText {
 }
     
 /* Topbar Dropdown Styles*/
-.topbar ul {
-    list-style: none;
-    text-align: left;
-}
-
-#nav {
-    z-index: 1;
-}
-
-#nav:hover {
-    background: #222;
-	color: #000;
-}
-
-#nav > li {
-    padding: 6px 2px 4px 2px;    
-}
-
-#nav a {
-    color: #fff;
-}
-
-#nav .main-nav img {
-    max-width: none;
-    padding-left: 5px;
-}
-
-#nav .main-nav {
-    color: #fff;
-    text-decoration: none;
-    display: block;
-    padding-right: 4px;
-    width: 40px;
-}
-
-.arrow-left {
-    float: left;
-    width: 0px;
-    height: 0px;
-    border-style: solid;
-    border-width: 15px 20px 15px 0;
-    border-color: transparent #FFF transparent transparent;
-}
-
-
-#nav ul#pop-menu {
-    background:#444;
-    padding: 0;
-    margin: 3px 0 0 -2px;
-    position:absolute;
-    display: none;
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
-    width: 275px;
-}
-
-.topbar .arrow {
-    float: right;
-    display: block;
-    width: 0;
-    border: 4px solid transparent;
-    border-right: 6px solid #999;
-    border-left: 0;
-    margin-top: 6px;
-    margin-top: -15px;
-    margin-left: 30px;
-    margin-bottom: 12px;
-}
-
-.topbar #nav:hover .arrow {
-    border: 4px solid transparent;
-    border-top: 6px solid #eee;
-    border-bottom: 0;
-    position: relative;
-    left: 2px;
-    top: 2px;
-}
-
-.topbar #last-microsite .arrow {
-    position: absolute;
-    float: left;
-    margin-left: 2px;
-    border-right: 0px;
-    border-left: 6px solid #fff;
-    margin-top: -15px;
-}
-
-.topbar #last-microsite {
-    float: left;
-    margin-top: 6px;
-}
-
-#pop-menu li {
-    margin: 0;
-    padding: 0;
-    color: #FFF;
-}
-
-#pop-menu a {
-	display: block;
-	padding: 4px;
-	background: #666;
-	border-top: 1px solid #333;
-}
-
-#nav.active li ul#pop-menu {
-	display: block;
-	text-align: left;
-}
-
-#logged-in-li {
-    padding: 4px !important;
-}
-
-#back-btn {
-    border-right: 1px solid #FFF !important;
-    height: 100% !important;
-}
-
-#back-btn-li {
-    float: left;
-    width: 40px !important;
-    height: 100%;
-    z-index: 999;
-}
-
-.sub-nav-item {
-    margin-left: 40px;
-}
-
 #ui-datepicker-div {
     position: relative;
     z-index: 9999 !important;
@@ -1768,46 +1577,6 @@ em.pendingText {
     #titleRow .loginBox {
         margin-top: 80px;
     }
-}
-
-@media screen and (min-width: 993px) {
-    #nav ul#pop-menu {
-        right: 0;
-    }
-
-    #profile-link,
-    #savedsearch-link,
-    #candidate-link,
-    #candidate-link-one,
-    #partner-link,
-    #partner-link-one,
-    #settings-link {
-        display: none !important;
-    }
-    
-    #account-link, #logout-link {
-        display: block;
-    }
-
-    .topbar ul {
-        position: relative;
-    }
-
-    #nav li:hover ul#pop-menu {
-        display: block;
-        text-align: left;
-    }
-
-    #saved-search-list .buttons {
-        width: 125px;
-    }
-}
-
-#nav.active ul#pop-menu li a:hover,
-#nav li:hover ul#pop-menu li a:hover {
-	background:#444;
-	color: #fff;
-	text-decoration:none;
 }
 
 /* Account Creation Slider styles */
@@ -2112,6 +1881,10 @@ td .gravatar-blank,
 
 /* Tablets */
 @media screen and (max-width: 992px) {
+    body {
+        padding-top: 70px;
+    }
+
     .arrow-down-a {
         border-style: none !important;
         display: none !important;
@@ -2129,12 +1902,6 @@ td .gravatar-blank,
         margin-top: 20px;
     }
 
-    .topbar-inner {
-        background: #444;
-        height: 50px;        
-        border-bottom: 20px solid #a95051;
-    }
-
     #logged-in-li {
         display: block;
         font-size: 2em;
@@ -2146,104 +1913,12 @@ td .gravatar-blank,
     #logout-link, #account-link {
         display: none !important;
     }
-    
-    #pop-menu {
-        height: 100%;
-    }
 
     .btn-link{
         display: block !important;
         text-align: center;
         border: 1px solid #5a6d81;
         margin: 2px 0;
-    }
-
-    #logo-block {
-        margin-top: 10px;
-    }
-
-    .topbar .menu-tabs {
-        display: none;
-    }
-
-    .topbar #nav .arrow {
-        display: none;
-    }
-
-    .topbar .gravatar-blank,
-    .topbar #nav img {
-        display: none;
-    }
-
-    #nav .main-nav {
-        background: #a95051 url(//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/superbutton.png) no-repeat;
-        position: absolute;
-        right: 10px;
-        top: 10px;
-        width: 45px;
-        height: 45px;
-        padding: 0;
-        text-indent: -9000px;
-        z-index: 101;
-        border-width: 2px;
-    }
-
-    #topbar-login form {
-        display: none;
-    }
-
-    .section #nav {
-        display: none;
-    }
-
-    #topbar-login #nav.active + form,
-    #topbar-login #nav:hover + form {
-        background:#444;
-        padding: 10px 0 10px 0;
-        margin: 3px 0 0 0;
-        position:absolute;
-        top: 0;
-        left: 0;
-        display: block;
-        border-bottom-left-radius: 4px;
-        border-bottom-right-radius: 4px;
-        width: 100%;
-    }
-
-    .topbar #topbar-login input {
-        height: 30px;
-     }
-
-    .topbar #topbar-login button {
-        margin-right: 70px;
-        padding: 10px 25px 9px 25px;
-    }
-
-    .topbar #nav ul#pop-menu {
-        border-top: 20px solid #a95051;
-        position: absolute;
-        left: 0;
-        width: 100%;
-        top: 0;
-        z-index: 100;
-        margin: 0 -10px 0 0;
-    }
-
-    .topbar #nav ul#pop-menu li {
-        display: block;
-        margin: 0;
-        width: 100%;
-    }
-
-    .topbar #nav ul#pop-menu li a {
-        -webkit-border-radius: 0;
-        -moz-border-radius: 0;
-        border-radius: 0;
-        border-left: 0;
-        border-right: 0;
-        font-size: 2em;
-        height: 25px;
-        padding: 10px;        
     }
 
     .loginBox a {
@@ -2336,6 +2011,10 @@ td .gravatar-blank,
 }
 
 @media screen and (max-width: 500px) {
+    body {
+        padding-top: 70px;
+    }
+
     .date-range-select-form {
         background: inherit;
         box-shadow: inherit;
@@ -2564,20 +2243,6 @@ td .gravatar-blank,
         width: -moz-calc(96% - 28px);
         width: -o-calc(96% - 28px);
         width: calc(96% - 28px);
-    }
-
-    #topbar-back {
-        position: absolute;
-        right: 70px;
-        top: 10px;
-        padding: 13px;
-        background-color: #a95051;
-        border: 2px solid #FFF;
-        border-radius: 5px;
-    }
-
-    #topbar-back > #prm-arrow-left {
-        border-right: 15px solid #FFF;
     }
 
     /* Contact Form Styles */

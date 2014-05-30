@@ -24,4 +24,5 @@ urlpatterns = patterns('MyJobs.myjobs.views',
     url(r'^send/$', 'continue_sending_mail', name='continue_sending_mail'),
     url(r'^toolbar/$', 'toolbar', name='toolbar'),
     url(r'^cas/$', 'cas', name='cas'),
+    url(r'^topbar/$', 'topbar', name='topbar'),
 )

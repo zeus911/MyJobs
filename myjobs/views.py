@@ -24,7 +24,8 @@ from myjobs.forms import ChangePasswordForm, EditCommunicationForm
 from myjobs.helpers import expire_login, log_to_jira
 from myjobs.models import EmailLog, Ticket, User
 from myprofile.forms import (InitialNameForm, InitialEducationForm,
-    InitialAddressForm, InitialPhoneForm, InitialWorkForm)
+                             InitialAddressForm, InitialPhoneForm,
+                             InitialWorkForm)
 from myprofile.models import ProfileUnits, Name
 from registration.forms import RegistrationForm, CustomAuthForm, CustomHomepage
 
@@ -288,10 +289,12 @@ def edit_account(request):
     if request.user.password_change:
         change_password = True
 
-    ctx = {'user': user,
-           'communication_form': communication_form,
-           'password_form': password_form,
-           'change_password': change_password}
+    ctx = {
+        'user': user,
+        'communication_form': communication_form,
+        'password_form': password_form,
+        'change_password': change_password,
+    }
 
     if request.method == "POST":
         obj = User.objects.get(id=request.user.id)
@@ -563,3 +566,40 @@ def cas(request):
         pass
 
     return response
+
+
+def topbar(request):
+    callback = request.REQUEST.get('callback')
+    user = request.user
+
+    if not user or user.is_anonymous():
+        # Ensure that old myguid cookies can be handled correctly
+        guid = request.COOKIES.get('myguid', '').replace('-', '')
+        try:
+            user = User.objects.get(user_guid=guid)
+        except User.DoesNotExist:
+            pass
+    if not user or user.is_anonymous():
+        user = None
+
+    ctx = {'user': user}
+    html = render_to_response('includes/topbar.html', ctx,
+                              RequestContext(request))
+
+    response = HttpResponse("%s(%s)" % (callback, json.dumps(html.content)),
+                        content_type='text/javascript')
+
+    caller = request.REQUEST.get('site', '')
+    if caller:
+        max_age = 30 * 24 * 60 * 60
+        last_name = request.REQUEST.get('site_name', caller)
+        response.set_cookie(key='lastmicrosite',
+                            value=caller,
+                            max_age=max_age,
+                            domain='.my.jobs')
+        response.set_cookie(key='lastmicrositename',
+                            value=last_name,
+                            max_age=max_age,
+                            domain='.my.jobs')
+    return response
+
