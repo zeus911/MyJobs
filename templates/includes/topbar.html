@@ -30,7 +30,9 @@
 
     .topbar-inner {
         background-color: #444;
+        background-image: none;
         height: 30px;
+        padding: 0;
         webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25),inset 0 -1px 0 rgba(0, 0, 0, 0.1);
         -moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25),inset 0 -1px 0 rgba(0, 0, 0, 0.1);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25),inset 0 -1px 0 rgba(0, 0, 0, 0.1);
@@ -40,15 +42,6 @@
         width: 100px;
         background: transparent url(http://d2e48ltfsb5exy.cloudfront.net/myjobs/logos/myjobs_logo_white_small.png) center left no-repeat;
         text-indent: -9000px;
-    }
-
-    .topbar input {
-        width: 100px;
-        margin-right: 10px;
-    }
-
-    .topbar ul {
-        padding-left: 0;
     }
 
     .topbar .menu-tabs a,
@@ -67,6 +60,10 @@
         padding: 0 0 5px 0;
     }
 
+    #anchor-logo:after {
+        clear: left;
+    }
+
     #anchor-logo.active {
         background-color: #a95051;
     }
@@ -75,23 +72,16 @@
         margin-left: 10px;
     }
 
-    .topbar .menu-tabs a:hover {
-        color: #FFF;
-        background-color: #a95051;
-    }
-
-    .menu-tabs .active a {
-        background-color: #a95051 !important;
-    }
-
     .de-topbar-item {
         display: inline-block;
+        float: left;
     }
 
     .wrapper{
         margin: 0 auto;
         width: 960px;
         display: block;
+        position: relative;
     }
 
     .menu-container {
@@ -102,7 +92,6 @@
     .menu-container > ul,
     .menu-container > a {
         float: left;
-        padding-top: 5px;
     }
 
     .menu-container > div {
@@ -118,19 +107,23 @@
     .menu-container > ul > li {
         display: inline;
         position: relative;
-        padding: 7px 0;
+        float: left;
+        padding: 5px 0;
     }
 
     .menu-container > ul > li > a {
         padding: 7px 12px;
         text-decoration: none;
         color: #FFF;
+        display: inline;
     }
 
     .menu-container > ul > li:hover > a {
         cursor: pointer;
         background-color: #a95051;
         text-decoration: none;
+        border-radius: 0;
+        -webkit-border-radius: 0;
     }
     
     .menu-container > ul > li > ul {
@@ -139,7 +132,7 @@
         color: #FFF;
         position: absolute;
         top: 29px;
-        right: 4px;
+        right: 0;
         width: 250px;
     }
 
@@ -163,14 +156,17 @@
         border-top: 0;
     }
 
-    .submenu > li > a {
+    div.menu-container ul.submenu > li > a {
         text-decoration: none;
         color: white;
         padding: 4px;
         display: block;
+        margin-top: 0;
+        border-radius: 0;
+        -webkit-border-radius: 0;
     }
 
-    .submenu > li:hover {
+    ul.submenu > li > a:hover {
         background-color: #444;
         cursor: pointer;
     }
@@ -279,6 +275,14 @@
     .submenu-dropdown ul li a:hover {
         color: #fff;
         text-decoration: none;
+        margin-top: 0;
+        padding: 0;
+    }
+
+    .submenu-dropdown ul li a:hover {
+        background-color: #222;
+        border-radius: 0;
+        -webkit-border-radius: 0;
     }
 
     .submenu-dropdown ul li:hover {
@@ -313,6 +317,10 @@
 
     #nav > li {
         padding: 5px 2px 3px 2px;
+    }
+
+    .menu-container > .desktop_hide {
+        display: none;
     }
 
     @media screen and (max-width: 992px) {
@@ -604,7 +612,7 @@
                 {% else %}
                     {# MOBILE VIEW #}
                     <ul class="mobile_hide">
-                        <li><a href="http://www.my.jobs/employers/">{% trans "Employers: Schedule a Demo" %}</a></li>
+                        <li><a href="http://www.my.jobs/employers/">{% trans "Employers / Post Jobs" %}</a></li>
                         <li><a href="https://secure.my.jobs">{% trans "Create a Profile" %}</a></li>
                         <li><a href="https://secure.my.jobs">{% trans 'Login' %}</a></li>
                     </ul>
@@ -614,7 +622,7 @@
                             <li>
                                 <a class="main-nav"></a>
                                 <ul id="pop-menu">
-                                    <li><a id="demo-link" class="no-show" href="http://www.my.jobs/employers/">{% trans "Employers: Schedule a Demo" %}</a></li>
+                                    <li><a id="demo-link" class="no-show" href="http://www.my.jobs/employers/">{% trans "Employers / Post Jobs" %}</a></li>
                                     <li><a id="create-profile" class="no-show" href="https://secure.my.jobs">{% trans "Create a Profile" %}</a></li>
                                     <li><a id="login-link" class="no-show" href="https://secure.my.jobs">{% trans 'Login' %}</a></li>
                                 </ul>
