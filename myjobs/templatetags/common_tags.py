@@ -1,5 +1,6 @@
-from time import strptime, strftime
+import json
 
+from time import strptime, strftime
 from django import template
 from django.conf import settings
 
@@ -199,3 +200,8 @@ def gz(context):
         return '.gz'
     else:
         return ''
+
+@register.assignment_tag
+def json_companies(companies):
+    info = [{"name": company.name, "id": company.id} for company in companies]
+    return json.dumps(info)
