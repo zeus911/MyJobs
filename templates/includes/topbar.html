@@ -39,8 +39,8 @@
                     <li>
                         <a>{{ user.email }}</a>
                         <ul class="submenu">
-                            <li><a>{% trans "My Profile" %}</a></li>
-                            <li><a>{% trans "My Saved Searches" %}</a></li>
+                            <li><a href="https://secure.my.jobs/profile/view/">{% trans "My Profile" %}</a></li>
+                            <li><a href="https://secure.my.jobs/saved-search/view/">{% trans "My Saved Searches" %}</a></li>
                             <li><a href="https://secure.my.jobs/account/edit">{% trans "Account Settings" %}</a></li>
                             <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
                             <li><a href="https://secure.my.jobs/accounts/logout">Log Out</a></li>
@@ -277,6 +277,7 @@
             }
             var list_item = document.createElement("li");
             list_item.setAttribute("id", "company_" + String(data[i].id));
+            list_item.setAttribute("style", "cursor: pointer");
             list_item.innerHTML = "<a>"+data[i].name+"</a>";
             list_item.onclick = function() {
                 // this.id Format: company_COMPANYID
