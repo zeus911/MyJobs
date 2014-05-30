@@ -12,32 +12,63 @@ from mydashboard.models import Company, SeoSite
 
 
 class Job(models.Model):
+    help_text = {
+        'apply_email': 'The email address where candidates should send their '
+                       'application.',
+        'apply_info': 'Describe how dandidates should apply for this job.',
+        'apply_link': 'The URL of the application form.',
+        'apply_type': 'How should applicants submit their application?',
+        'autorenew': 'Automatically renew this job for an additional 30 '
+                     'days whenever it expires.',
+        'city': 'The city where the job is located.',
+        'country': 'The country where the job is located.',
+        'date_expired': 'When the job will be automatically removed from '
+                        'the site.',
+        'description': 'The job description.',
+        'is_expired': 'Mark this job as expired to remove it from any site(s). '
+                      'This does <b>not</b> delete the job.',
+        'reqid': 'The Requisition ID from your system, if any.',
+        'state': 'The state where the job is located.',
+        'title': 'The title of the job as you want it to appear.',
+        'zipcode': 'The zipcode of the job location.',
+    }
+
     id = models.AutoField(primary_key=True, unique=True)
     guid = models.CharField(max_length=255, unique=True)
 
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, help_text=help_text['title'])
     company = models.ForeignKey(Company)
-    reqid = models.CharField(max_length=50, verbose_name="Req ID")
-    description = models.TextField()
+    reqid = models.CharField(max_length=50, verbose_name="Requisition ID",
+                             help_text=help_text['reqid'], blank=True)
+    description = models.TextField(help_text=help_text['description'])
     # This really should be a URLField, but URLFields don't allow for
     # mailto links.
-    apply_link = models.TextField(blank=True, verbose_name="Apply Link")
-    apply_info = models.TextField(blank=True, verbose_name="Apply Instructions")
+    apply_link = models.TextField(blank=True, verbose_name="Apply Link",
+                                  help_text=help_text['apply_link'])
+    apply_info = models.TextField(blank=True, verbose_name="Apply Instructions",
+                                  help_text=help_text['apply_info'])
     show_on_sites = models.ManyToManyField(SeoSite, null=True)
-    is_syndicated = models.BooleanField(default=False, verbose_name="Syndicated")
+    is_syndicated = models.BooleanField(default=False,
+                                        verbose_name="Syndicated")
 
-    city = models.CharField(max_length=255)
-    state = models.CharField(max_length=200)
+    city = models.CharField(max_length=255,
+                            help_text=help_text['city'])
+    state = models.CharField(max_length=200, verbose_name='State',
+                             help_text=help_text['state'])
     state_short = models.CharField(max_length=3)
-    country = models.CharField(max_length=200)
+    country = models.CharField(max_length=200,
+                               help_text=help_text['country'])
     country_short = models.CharField(max_length=3)
-    zipcode = models.CharField(max_length=15, blank=True)
+    zipcode = models.CharField(max_length=15, blank=True,
+                               help_text=help_text['zipcode'])
 
     date_new = models.DateTimeField(auto_now=True)
     date_updated = models.DateTimeField(auto_now_add=True)
-    date_expired = models.DateField()
-    is_expired = models.BooleanField(default=False, verbose_name="Expired")
-    autorenew = models.BooleanField(default=False, verbose_name="Auto-Renew")
+    date_expired = models.DateField(help_text=help_text['date_expired'])
+    is_expired = models.BooleanField(default=False, verbose_name="Expired",
+                                     help_text=help_text['is_expired'])
+    autorenew = models.BooleanField(default=False, verbose_name="Auto-Renew",
+                                    help_text=help_text['autorenew'])
 
     def __unicode__(self):
         return '{company} - {title}'.format(company=self.company.name,

@@ -20,9 +20,11 @@ class JobForm(ModelForm):
 
     apply_email = CharField(required=False, max_length=255,
                             label='Apply Email',
-                            widget=TextInput(attrs={'size': 50}))
+                            widget=TextInput(attrs={'size': 50}),
+                            help_text=Job.help_text['apply_email'])
     apply_link = CharField(required=False, max_length=255,
                            label='Apply Link',
+                           help_text=Job.help_text['apply_link'],
                            widget=TextInput(attrs={'rows': 1, 'size': 50}))
     show_on_sites_widget = admin.widgets.FilteredSelectMultiple('Sites', False)
     show_on_sites = ModelMultipleChoiceField(SeoSite.objects.all(),
@@ -30,9 +32,12 @@ class JobForm(ModelForm):
                                              required=False,
                                              widget=show_on_sites_widget)
     country = CharField(widget=Select(choices=Job.get_country_choices()),
+                        help_text=Job.help_text['country'],
                         initial='United States of America')
-    state = CharField(widget=Select(choices=Job.get_state_choices()))
-    date_expired = SplitDateDropDownField(label="Expires On")
+    state = CharField(label='State', help_text=Job.help_text['state'],
+                      widget=Select(choices=Job.get_state_choices()))
+    date_expired = SplitDateDropDownField(label="Expires On",
+                                          help_text=Job.help_text['date_expired'])
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
@@ -48,7 +53,8 @@ class JobForm(ModelForm):
                 apply_initial = 'link'
             self.fields['apply_type'] = CharField(label='Application Method',
                                                   widget=Select(choices=apply_choices),
-                                                  initial=apply_initial)
+                                                  initial=apply_initial,
+                                                  help_text=Job.help_text['apply_type'])
 
             # Place the apply_choices filter in a place that makes sense.
             self.fields.keyOrder.pop(-1)
