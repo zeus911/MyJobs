@@ -6,7 +6,7 @@ from django.forms import (CharField, CheckboxSelectMultiple, ModelForm,
 
 from mydashboard.models import SeoSite
 from mypartners.widgets import SplitDateDropDownField
-from postajob.models import Job
+from postajob.models import Job, SitePackage
 
 
 class JobForm(ModelForm):
@@ -15,8 +15,14 @@ class JobForm(ModelForm):
         fields = ('title', 'is_syndicated', 'reqid', 'description', 'city',
                   'state', 'country', 'zipcode', 'date_expired', 'is_expired',
                   'autorenew', 'apply_link', 'apply_email', 'apply_info',
-                  'company', 'show_on_sites', )
+                  'company', 'site_packages', )
         model = Job
+
+    class Media:
+        css = {
+            'all': ('postajob.152-22.css', )
+        }
+        js = ('postajob.152-22.js', )
 
     apply_email = CharField(required=False, max_length=255,
                             label='Apply Email',
@@ -26,11 +32,17 @@ class JobForm(ModelForm):
                            label='Apply Link',
                            help_text=Job.help_text['apply_link'],
                            widget=TextInput(attrs={'rows': 1, 'size': 50}))
-    show_on_sites_widget = admin.widgets.FilteredSelectMultiple('Sites', False)
-    show_on_sites = ModelMultipleChoiceField(SeoSite.objects.all(),
+
+    # For a single job posting by a member company to a microsite
+    # we consider each site an individual site package but the
+    # site_package for a site is only created when it's first used,
+    # so we use SeoSite as the queryset here instead of SitePackage.
+    site_packages_widget = admin.widgets.FilteredSelectMultiple('Sites', False)
+    site_packages = ModelMultipleChoiceField(SeoSite.objects.all(),
                                              label="On Sites",
                                              required=False,
-                                             widget=show_on_sites_widget)
+                                             widget=site_packages_widget)
+
     country = CharField(widget=Select(choices=Job.get_country_choices()),
                         help_text=Job.help_text['country'],
                         initial='United States of America')
@@ -63,10 +75,10 @@ class JobForm(ModelForm):
 
             # FilteredSelectMultiple doesn't work outside the admin, so
             # switch to a widget that does work.
-            self.fields['show_on_sites'].widget = CheckboxSelectMultiple(
+            self.fields['site_packages'].widget = CheckboxSelectMultiple(
                 attrs={'class': 'job-sites-checkbox'})
             # After changing the widget the queryset also needs reset.
-            self.fields['show_on_sites'].queryset = SeoSite.objects.all()
+            self.fields['site_packages'].queryset = SeoSite.objects.all()
 
         if not self.request.user.is_superuser:
             # Limit a user's access to only companies/sites they own.
@@ -74,8 +86,14 @@ class JobForm(ModelForm):
             self.fields['company'].queryset = \
                 self.fields['company'].queryset.filter(**kwargs)
             kwargs = {'business_units__company__admins': self.request.user}
-            self.fields['show_on_sites'].queryset = \
-                self.fields['show_on_sites'].queryset.filter(**kwargs).distinct()
+            self.fields['site_packages'].queryset = \
+                self.fields['site_packages'].queryset.filter(**kwargs).distinct()
+
+        # Since we're not using actual site_packages for the site_packages,
+        # the initial data also needs to be manually set.
+        if self.instance.site_packages:
+            self.initial['site_packages'] = [str(site.pk) for site in
+                                             self.instance.on_sites()]
 
     def clean_apply_link(self):
         """
@@ -92,6 +110,23 @@ class JobForm(ModelForm):
         if apply_link:
             URLValidator(apply_link)
         return apply_link
+
+    def clean_site_packages(self):
+        """
+        Convert from SeoSite to a SitePackage.
+
+        """
+        sites = self.cleaned_data.get('site_packages')
+        site_packages = []
+        for site in sites:
+            if not site.site_package:
+                # If a site doesn't already have a site_package specific
+                # to it create one.
+                package = SitePackage(name=site.domain)
+                package.make_unique_for_site(site)
+            site_packages.append(site.site_package)
+
+        return site_packages
 
     def clean(self):
         apply_info = self.cleaned_data.get('apply_info')
@@ -118,7 +153,7 @@ class JobForm(ModelForm):
         return self.cleaned_data
 
     def save(self, commit=True):
-        sites = self.cleaned_data['show_on_sites']
+        sites = self.cleaned_data['site_packages']
         job = super(JobForm, self).save(commit)
 
         country = job.country
@@ -136,5 +171,25 @@ class JobForm(ModelForm):
         # relationship can be created.
         if not job.pk:
             job.save()
-        [job.show_on_sites.add(s) for s in sites]
+        [job.site_packages.add(s) for s in sites]
         return job
+
+
+class SitePackageForm(ModelForm):
+    class Meta:
+        model = SitePackage
+
+    sites_widget = admin.widgets.FilteredSelectMultiple('Sites', False)
+    sites = ModelMultipleChoiceField(SeoSite.objects.all(),
+                                     label="On Sites",
+                                     required=False,
+                                     widget=sites_widget)
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super(SitePackageForm, self).__init__(*args, **kwargs)
+        if not self.request.user.is_superuser:
+            # Limit a user's access to only sites they own.
+            kwargs = {'business_units__company__admins': self.request.user}
+            self.fields['sites'].queryset = \
+                self.fields['sites'].queryset.filter(**kwargs).distinct()

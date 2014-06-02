@@ -1,0 +1,162 @@
+{% load i18n %}
+{% load tz %}
+{% load common_tags %}
+{% gz as gz %}
+
+{% localtime on %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block site-title %}
+    <title>My.jobs</title>
+    <meta name="title" content="My.jobs">
+    {% endblock %}
+
+    {% block meta %}
+    {% include "includes/meta.html" %}
+    {% endblock %}
+
+    {% block meta-extra %}{% endblock %}
+
+<<<<<<< HEAD
+    <link href="{{ STATIC_URL }}def.ui.152-10.css{{ gz }}" rel="stylesheet" type="text/css">
+    <link href="{{ STATIC_URL }}my.jobs.153-03.css{{ gz }}" rel="stylesheet" type="text/css">
+=======
+    <link href="{{ STATIC_URL }}def.ui.152-21.css{{ gz }}" rel="stylesheet" type="text/css">
+    <link href="{{ STATIC_URL }}my.jobs.152-29.css{{ gz }}" rel="stylesheet" type="text/css">
+>>>>>>> 097744649a285f5df21de7c9b2314182ba9d098c
+    <!--[if IE]>
+    <link href="{{ STATIC_URL }}my.jobs.ie.151-01.css{{ gz }}" rel="stylesheet" type="text/css">
+    <![endif]-->
+    <link href="{{ STATIC_URL }}bootstrap/bootstrap-modal.css{{ gz }}" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+    {% block topbar %}
+    {% include "includes/topbar.html" %}
+    {% endblock %}
+    <section>
+        <div class="section subpage">
+            {% block page %}
+                {% block main %}
+                <div id="header">
+                    <div class="wrapper">
+                        <div class="row">
+                            <div class="span12">
+                                {% block header %}
+                                {{ site_title }}
+                                {% endblock header %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="wrapper">
+                    <div class="row">
+                        {% block activation_message %}
+                        {% if user.is_authenticated %}
+                            {% if not user.is_active %}
+
+                            <div class="alert alert-error hide-mobile">
+                                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                                Please activate your account using the activation link sent to your email. <a href="{% url 'resend_activation' %}">Click here to resend the activation email.</a>
+                            </div>
+
+                            {% endif %}
+
+                            {% with user.messages_unread as messages %}
+
+                            {% for message_info in messages %}
+
+                            <div class="alert alert-{{ message_info.message.message_type }} mail-alert hide-mobile">
+                                <b>{{ message_info.message.subject }}</b>
+                                <br>
+                                {{ message_info.message.body|safe }}
+                                <div class="clear"></div>
+                                <button class="btn pull-right mymessage-{{ message_info.message.id }}-{{ user.id }}">{{ message_info.message.btn_text }}</button>
+                                <div class="clear"></div>
+                            </div>
+
+                            {% endfor %}
+
+                            {% endwith %}
+
+                        {% endif %}
+                        {% endblock%}
+                        
+                        {% block content %}{% endblock %}
+                        <div id="ajax-busy"></div>
+                    </div>
+                </div>
+                {% endblock %}
+            {% endblock %}
+            <div id="inbox-spacing"></div>
+        </div>{# /section subpage #}
+    </section>
+    <footer>
+        <div id="footer">
+            {% block footer %}
+            <div class="wrapper footer">
+                <div class="span1 offset5">
+                      <a href="{% url 'about' %}">About</a>
+                </div>
+                <div class="span1">
+                    <a href="{% url 'contact' %}">Contact</a>
+                </div>
+                <div class="span1">
+                    <a href="{% url 'privacy' %}">Privacy</a>
+                </div>
+                <div class="span1">
+                    <a href="{% url 'terms' %}">Terms</a>
+                </div>
+                <div class="span3">
+                    <a href="http://directemployers.org" target="_blank">by DirectEmployers</a>
+                </div>
+            </div>
+            {% endblock %}
+            {% block quantcast %}
+            {# Start Quantcast tag #}
+            <script type="text/javascript">
+                _qoptions={
+                    qacct:"p-f4sayuhJjqv_Q",
+                    labels:"Dot Jobs"
+                };
+            </script>
+            <script type="text/javascript" src="//edge.quantserve.com/quant.js"></script>
+            <noscript>
+                <img src="//pixel.quantserve.com/pixel/p-f4sayuhJjqv_Q.gif" style="display: none;" border="0" height="1" width="1" alt="Quantcast"/>
+            </noscript>
+            {# End Quantcast tag #}
+            {% endblock %}
+        </div>
+    </footer>
+    <script>
+        var static_url = "{{ STATIC_URL }}";
+    </script>
+    <script type="text/javascript" src="//d2e48ltfsb5exy.cloudfront.net/framework/v2/secure/js/code/jquery-1.7.1.min.js{{ gz }}"></script>
+    <script type="text/javascript" src="//d2e48ltfsb5exy.cloudfront.net/framework/v2/secure/js/code/jquery-ui.min.js{{ gz }}"></script>
+    <script type="text/javascript" src="//d2e48ltfsb5exy.cloudfront.net/framework/v2/secure/js/code/bootstrap-alerts.js{{ gz }}"></script>
+    <script src="{{ STATIC_URL }}my.jobs.152-21.js{{ gz }}"></script>
+    <script src="{{ STATIC_URL }}jquery.placeholder.js{{ gz }}"></script>
+
+    {% block extra-js %}
+    <script src="{{ STATIC_URL }}account-creation.151-25.js{{ gz }}" type="text/javascript"></script>
+    {% endblock %}
+
+    <script type="text/javascript">
+        loc = document.location+"";
+        if(loc.indexOf(".jobs:")<0){ //only run this on live sites
+            var _gaq = _gaq || [];
+            _gaq.push(['_setAccount', 'UA-16316580-1']);
+            _gaq.push(['_trackPageview']);
+            _gaq.push(['_setCustomVar', 2, 'View Source', 'Dot Jobs (88)', 2]);
+
+            (function() {
+                var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+                ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+            })();
+        }
+    </script>
+</body>
+</html>
+{% endlocaltime %}

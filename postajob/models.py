@@ -8,8 +8,6 @@ from django.conf import settings
 from django.db import models
 from django.db.models.signals import pre_delete
 
-from mydashboard.models import Company, SeoSite
-
 
 class Job(models.Model):
     help_text = {
@@ -37,7 +35,7 @@ class Job(models.Model):
     guid = models.CharField(max_length=255, unique=True)
 
     title = models.CharField(max_length=255, help_text=help_text['title'])
-    company = models.ForeignKey(Company)
+    company = models.ForeignKey('mydashboard.Company')
     reqid = models.CharField(max_length=50, verbose_name="Requisition ID",
                              help_text=help_text['reqid'], blank=True)
     description = models.TextField(help_text=help_text['description'])
@@ -47,7 +45,7 @@ class Job(models.Model):
                                   help_text=help_text['apply_link'])
     apply_info = models.TextField(blank=True, verbose_name="Apply Instructions",
                                   help_text=help_text['apply_info'])
-    show_on_sites = models.ManyToManyField(SeoSite, null=True)
+    site_packages = models.ManyToManyField('SitePackage', null=True)
     is_syndicated = models.BooleanField(default=False,
                                         verbose_name="Syndicated")
 
@@ -81,8 +79,8 @@ class Job(models.Model):
         date_new, date_updated, description, guid, link, on_sites, state,
         state_short, reqid, title, uid, and zipcode.
         """
-        if self.show_on_sites.all():
-            on_sites = ",".join([str(x.id) for x in self.show_on_sites.all()])
+        if self.site_packages.all():
+            on_sites = ",".join([str(package.pk) for package in self.site_packages.all()])
         else:
             on_sites = ''
         job = {
@@ -145,6 +143,10 @@ class Job(models.Model):
             else:
                 self.guid = guid
 
+    def on_sites(self):
+        from mydashboard.models import SeoSite
+        return SeoSite.objects.filter(sitepackage__job=self)
+
     @staticmethod
     def get_country_choices():
         country_dict = Job.get_country_map()
@@ -159,7 +161,10 @@ class Job(models.Model):
     @staticmethod
     def get_state_choices():
         state_dict = Job.get_state_map()
-        return [(x, x) for x in sorted(state_dict.keys())]
+        state_choices = [(x, x) for x in sorted(state_dict.keys())]
+        none_choice = state_choices.pop(state_choices.index(('None', 'None')))
+        state_choices.insert(0, none_choice)
+        return state_choices
 
     @staticmethod
     def get_state_map():
@@ -171,5 +176,33 @@ class Job(models.Model):
 
 
 def on_delete(sender, instance, **kwargs):
+    """
+    Ensures that an object is successfully removed from solr when it is deleted,
+    and prevents deletion if it can't be removed from solr for some reason.
+
+    """
     instance.remove_from_solr()
 pre_delete.connect(on_delete, sender=Job)
+
+
+class SitePackage(models.Model):
+    name = models.CharField(max_length=255)
+    sites = models.ManyToManyField('mydashboard.SeoSite', null=True)
+
+    def __unicode__(self):
+        return self.name
+
+    def make_unique_for_site(self, seo_site):
+        """
+        Associates a SitePackage instance with a specific SeoSite. This
+        should only be used when the SitePackage applies only to a single
+        SeoSite. This removes all previous SeoSite relationships.
+
+        """
+        if not self.pk:
+            self.save()
+        self.sites = [seo_site]
+        self.name = seo_site.domain
+        seo_site.site_package = self
+        seo_site.save()
+        self.save()

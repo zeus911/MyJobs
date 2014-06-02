@@ -1143,6 +1143,10 @@ fieldset textarea,
     width: 248px;
 }
 
+.checkbox-help-block {
+    padding-top: 7px;
+}
+
 .reset-pass-input{
     width: 100% !important;
 }

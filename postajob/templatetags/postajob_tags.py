@@ -10,7 +10,8 @@ register = Library()
 
 @register.simple_tag
 def get_job_links(job):
-    domains = [site.domain for site in job.show_on_sites.all()]
+    sites = job.on_sites()
+    domains = [site.domain for site in sites]
 
     location = u'{city}, {state}'.format(city=job.city, state=job.state_short)
     loc_slug = bleach.clean(slugify(location))

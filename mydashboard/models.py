@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group
 from django.db import models
 
 from myjobs.models import User
+from postajob.models import SitePackage
 
 
 class Company(models.Model):
@@ -40,6 +41,7 @@ class SeoSite(Site):
     site_title = models.CharField('Site Title', max_length=200, blank=True,
                                   default='')
     view_sources = models.ForeignKey('ViewSource', null=True, blank=True)
+    site_package = models.ForeignKey(SitePackage, null=True)
 
     class Meta:
         db_table = 'seo_seosite'
@@ -73,7 +75,7 @@ class BusinessUnit(models.Model):
 class CandidateEvent(models.Model):
     """
     Something happened! This log tracks job views and saved searches.
-    
+
     """
     who = models.ForeignKey(User)
     whom = models.ForeignKey(Company)
@@ -84,8 +86,6 @@ class CandidateEvent(models.Model):
 
 class DashboardModule(models.Model):
     company = models.ForeignKey(Company)
-
-
 
 
 class CompanyUser(models.Model):
@@ -108,7 +108,7 @@ class CompanyUser(models.Model):
         group = Group.objects.get(name=self.GROUP_NAME)
         self.user.groups.add(group)
 
-        super(CompanyUser,self).save(*args, **kwargs)
+        return super(CompanyUser, self).save(*args, **kwargs)
 
     class Meta:
         unique_together = ('user', 'company')
