@@ -483,3 +483,9 @@ def delete_related_session(sender, user, request, **kwargs):
 
 user_logged_in.connect(save_related_session)
 user_logged_out.connect(delete_related_session)
+
+
+class FAQ(models.Model):
+    question = models.TextField(verbose_name='Question')
+    answer = models.TextField(verbose_name='Answer')
+    is_visible = models.BooleanField(default=True, verbose_name='Is visible')
