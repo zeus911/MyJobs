@@ -13,10 +13,18 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.related.ForeignKey')(to=orm['postajob.SitePackage'], null=True),
                       keep_default=False)
 
+        # Adding field 'Company.site_package'
+        db.add_column('seo_company', 'site_package',
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['postajob.SitePackage'], null=True),
+                      keep_default=False)
+
 
     def backwards(self, orm):
         # Deleting field 'SeoSite.site_package'
         db.delete_column('seo_seosite', 'site_package_id')
+
+        # Deleting field 'Company.site_package'
+        db.delete_column('seo_company', 'site_package_id')
 
 
     models = {
@@ -60,7 +68,8 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.IntegerField', [], {'primary_key': 'True'}),
             'job_source_ids': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['mydashboard.BusinessUnit']", 'symmetrical': 'False'}),
             'member': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '200'})
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '200'}),
+            'site_package': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.SitePackage']", 'null': 'True'})
         },
         u'mydashboard.companyuser': {
             'Meta': {'unique_together': "(('user', 'company'),)", 'object_name': 'CompanyUser'},

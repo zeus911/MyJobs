@@ -25,6 +25,9 @@ class Job(models.Model):
         'description': 'The job description.',
         'is_expired': 'Mark this job as expired to remove it from any site(s). '
                       'This does <b>not</b> delete the job.',
+        'post_to': 'Select either the entire My.jobs network, or one of your '
+                   'corporate sites. Posting to the network will make this '
+                   'job available to all of your microsites.',
         'reqid': 'The Requisition ID from your system, if any.',
         'state': 'The state where the job is located.',
         'title': 'The title of the job as you want it to appear.',
@@ -205,4 +208,19 @@ class SitePackage(models.Model):
         self.name = seo_site.domain
         seo_site.site_package = self
         seo_site.save()
+        self.save()
+
+    def make_unique_for_company(self, company):
+        """
+        Associates a SitePackage instance with a specific SeoSite. This
+        should only be used when the SitePackage applies only to a single
+        SeoSite. This removes all previous SeoSite relationships.
+
+        """
+        if not self.pk:
+            self.save()
+        self.sites = company.get_seo_sites()
+        self.name = company.name
+        company.site_package = self
+        company.save()
         self.save()

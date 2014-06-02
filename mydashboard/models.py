@@ -23,6 +23,7 @@ class Company(models.Model):
     job_source_ids = models.ManyToManyField('BusinessUnit')
     member = models.BooleanField('DirectEmployers Association Member',
                                  default=False)
+    site_package = models.ForeignKey(SitePackage, null=True)
 
     def __unicode__(self):
         return self.name
@@ -33,6 +34,22 @@ class Company(models.Model):
 
     def slugified_name(self):
         return slugify(self.name)
+
+    def get_seo_sites(self):
+        """
+        Retrieves a given company's microsites
+
+        Inputs:
+        :company: Company whose microsites are being retrieved
+
+        Outputs:
+        :microsites: List of microsites
+        :buids: List of buids associated with the company's microsites
+        """
+        job_source_ids = self.job_source_ids.all()
+        buids = job_source_ids.values_list('id', flat=True)
+        microsites = SeoSite.objects.filter(business_units__in=buids)
+        return microsites
 
 
 class SeoSite(Site):

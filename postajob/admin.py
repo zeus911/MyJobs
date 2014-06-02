@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Q
 
 from postajob.forms import JobForm, SitePackageForm
 from postajob.models import Job, SitePackage
@@ -33,10 +34,11 @@ class JobAdmin(ModelAdminWithRequest):
                        ('date_expired', 'is_expired', 'autorenew', )),
         }),
         ('Application Instructions', {
-            'fields': ('apply_link', 'apply_email', 'apply_info', ),
+            'fields': ('apply_type', 'apply_link', 'apply_email',
+                       'apply_info', ),
         }),
         ('Site Information', {
-            'fields': ('company', 'site_packages', ),
+            'fields': ('company', 'post_to', 'site_packages', ),
         }),
     )
 
