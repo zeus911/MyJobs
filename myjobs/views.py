@@ -471,6 +471,50 @@ def unsubscribe_all(request, user=None):
                               context_instance=RequestContext(request))
 
 
+def toolbar(request):
+    user = request.user
+    if not user or user.is_anonymous():
+        # Ensure that old myguid cookies can be handled correctly
+        guid = request.COOKIES.get('myguid', '').replace('-', '')
+        try:
+            user = User.objects.get(user_guid=guid)
+        except User.DoesNotExist:
+            pass
+    if not user or user.is_anonymous():
+        data = {"user_fullname": "",
+                "user_gravatar": "",
+                "employer": ""}
+    else:
+        try:
+            name = user.get_full_name()
+            if not name:
+                name = user.email
+        except ProfileUnits.DoesNotExist:
+            name = user.email
+        employer = (True if user.groups.filter(name='Employer')
+                    else False)
+        data = {"user_fullname": (("%s..." % name[:17]) if len(name) > 20
+                                  else name),
+                "user_gravatar": user.get_gravatar_url(),
+                "employer": employer}
+    callback = request.GET.get('callback', '')
+    response = '%s(%s);' % (callback, json.dumps(data))
+    response = HttpResponse(response, content_type="text/javascript")
+    caller = request.REQUEST.get('site', '')
+    if caller and not caller.endswith('www.my.jobs'):
+        max_age = 30 * 24 * 60 * 60
+        last_name = request.REQUEST.get('site_name', caller)
+        response.set_cookie(key='lastmicrosite',
+                            value=caller,
+                            max_age=max_age,
+                            domain='.my.jobs')
+        response.set_cookie(key='lastmicrositename',
+                            value=last_name,
+                            max_age=max_age,
+                            domain='.my.jobs')
+    return response
+
+
 def cas(request):
     redirect_url = request.GET.get('redirect_url', 'http://www.my.jobs/')
     user = request.user
