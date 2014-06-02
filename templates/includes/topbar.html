@@ -138,90 +138,116 @@
 </div>
 
 <script type="text/javascript">
-    window.onload = function() {
-        /* Explicit control of main menu, primarily for mobile but also provides
-        non hover and cover option if that becomes an issue. */
-        $(function() {
-            $(".main-nav").click(function(e){
-                e.preventDefault();
-                if($(window).width() < 994){
-                    $("#nav").toggleClass("active");
-                    $(".company-nav-item").addClass("no-show");
-                    $(".settings-nav-item").addClass("no-show");
-                    $(".employer-menu").addClass("no-show");
-                    $("#back-btn-li").addClass("no-show");
-                    $("#account-link").addClass("no-show");
-                    $("#logout-link").addClass("no-show");
-                    $("#logged-in-li").addClass("no-show");
+    function addEvents(func) {
+        /*
+        window.onload is being used here because this code uses jQuery which
+        is at the bottom of the page on My.jobs and not loaded yet when
+        this topbar runs.
 
-                    $("#mobile-company-select").removeClass("no-show");
-                    $(".seeker-menu").removeClass("no-show");
-                    $("#employer-tools").removeClass("no-show");
-                    $("#search-jobs").removeClass("no-show");
-                    $('#settings-link').removeClass("no-show");
+        Looks to see if there is an window.onload already set.  If not then
+        use window.onload.  Otherwise execute the current window.onload function
+        then execute :func:.
 
-                    //Not logged in mobile view
-                    $("#demo-link").removeClass("no-show");
-                    $("#create-profile").removeClass("no-show");
-                    $("#login-link").removeClass("no-show");
-                }
-            });
+        Inputs:
+        :func:      Additional logic to add to window.onload.
 
-            $("#pop-menu").mouseleave(function(){
-                $("#back-btn-li").addClass("no-show");
+         */
+        var current_onload = window.onload;
+        if(typeof(window.onload) != 'function') {
+            window.onload = func;
+        } else {
+            window.onload = function() {
+                if(current_onload)
+                    current_onload();
+                func();
+            }
+        }
+    }
 
-                $("#account-link").removeClass("no-show");
-                $("#logout-link").removeClass("no-show");
-                $("#search-jobs").removeClass("no-show");
-                $("#logged-in-li").removeClass("no-show");
-                $("#nav").removeClass("active");
-            });
-
-            $("#employer-tools").click(function(e) {
-                $("#back-btn-li").removeClass("no-show");
-                $(".employer-menu").removeClass("no-show");
-
-                $(".seeker-menu").addClass("no-show");
-                $("#mobile-company-select").addClass("no-show");
-                $("#settings-link").addClass("no-show");
-                $("#search-jobs").addClass("no-show");
-                $("#job-tools").addClass("no-show");
-                $("#employer-tools").addClass("no-show");
-            });
-
-            $('#settings-link').click(function(e) {
-                $(".settings-nav-item").removeClass("no-show");
-                $("#back-btn-li").removeClass("no-show");
-
-                $("#mobile-company-select").addClass("no-show");
-                $("#settings-link").addClass("no-show");
-                $("#job-tools").addClass("no-show");
-                $("#employer-tools").addClass("no-show");
-                $("#search-jobs").addClass("no-show");
-                $("#profile-link").addClass("no-show");
-                $("#savedsearch-link").addClass("no-show");
-                $("#candidate-link").addClass("no-show");
-                $("#partner-link").addClass("no-show");
-                $("#account-link").addClass("no-show");
-            });
-
-            $("#back-btn").click(function(e){
-                e.preventDefault();
-
+    addEvents(function() {
+        /*
+        Explicit control of main menu, primarily for mobile but also provides
+        non hover and cover option if that becomes an issue.
+        */
+        $(".main-nav").click(function(e){
+            e.preventDefault();
+            if($(window).width() < 994){
+                $("#nav").toggleClass("active");
                 $(".company-nav-item").addClass("no-show");
-                $(".partner-nav-item").addClass("no-show");
                 $(".settings-nav-item").addClass("no-show");
                 $(".employer-menu").addClass("no-show");
                 $("#back-btn-li").addClass("no-show");
-                $(".multiple_companies").addClass("no-show");
+                $("#account-link").addClass("no-show");
+                $("#logout-link").addClass("no-show");
+                $("#logged-in-li").addClass("no-show");
 
-                $(".seeker-menu").removeClass("no-show");
                 $("#mobile-company-select").removeClass("no-show");
-                $("#job-tools").removeClass("no-show");
+                $(".seeker-menu").removeClass("no-show");
                 $("#employer-tools").removeClass("no-show");
                 $("#search-jobs").removeClass("no-show");
-                $("#settings-link").removeClass("no-show");
-            });
+                $('#settings-link').removeClass("no-show");
+
+                //Not logged in mobile view
+                $("#demo-link").removeClass("no-show");
+                $("#create-profile").removeClass("no-show");
+                $("#login-link").removeClass("no-show");
+            }
+        });
+
+        $("#pop-menu").mouseleave(function(){
+            $("#back-btn-li").addClass("no-show");
+
+            $("#account-link").removeClass("no-show");
+            $("#logout-link").removeClass("no-show");
+            $("#search-jobs").removeClass("no-show");
+            $("#logged-in-li").removeClass("no-show");
+            $("#nav").removeClass("active");
+        });
+
+        $("#employer-tools").click(function(e) {
+            $("#back-btn-li").removeClass("no-show");
+            $(".employer-menu").removeClass("no-show");
+
+            $(".seeker-menu").addClass("no-show");
+            $("#mobile-company-select").addClass("no-show");
+            $("#settings-link").addClass("no-show");
+            $("#search-jobs").addClass("no-show");
+            $("#job-tools").addClass("no-show");
+            $("#employer-tools").addClass("no-show");
+        });
+
+        $('#settings-link').click(function(e) {
+            $(".settings-nav-item").removeClass("no-show");
+            $("#back-btn-li").removeClass("no-show");
+
+            $("#mobile-company-select").addClass("no-show");
+            $("#settings-link").addClass("no-show");
+            $("#job-tools").addClass("no-show");
+            $("#employer-tools").addClass("no-show");
+            $("#search-jobs").addClass("no-show");
+            $("#profile-link").addClass("no-show");
+            $("#savedsearch-link").addClass("no-show");
+            $("#candidate-link").addClass("no-show");
+            $("#partner-link").addClass("no-show");
+            $("#account-link").addClass("no-show");
+        });
+
+        $("#back-btn").click(function(e){
+            e.preventDefault();
+
+            $(".company-nav-item").addClass("no-show");
+            $(".partner-nav-item").addClass("no-show");
+            $(".settings-nav-item").addClass("no-show");
+            $(".employer-menu").addClass("no-show");
+            $("#back-btn-li").addClass("no-show");
+            $(".multiple_companies").addClass("no-show");
+
+            $(".seeker-menu").removeClass("no-show");
+            $("#mobile-company-select").removeClass("no-show");
+            $("#job-tools").removeClass("no-show");
+            $("#employer-tools").removeClass("no-show");
+            $("#search-jobs").removeClass("no-show");
+            $("#settings-link").removeClass("no-show");
         });
 
         {% if group_member and company_name|length > 1 %}
@@ -232,9 +258,10 @@
 
         // Build multiple company selector
         get_companies();
-    };
+    });
 
     function get_companies() {
+        // Function builds multiple company elements and functions
         {% json_companies company_name as companies %}
         var data = {{ companies|safe }};
         var parent_list_item = document.createElement("li");
@@ -388,6 +415,6 @@
     }
 
     {% else %}
-    }
+    });
     {% endif %}
 </script>
