@@ -25,4 +25,7 @@ def get_job_links(job):
                                   title_slug=title_slug, guid=job.guid)
 
         urls.append(href_tag.format(url=job_url, domain=domain))
-    return mark_safe("<br/>".join(urls))
+    url_html = mark_safe("<br/>".join(urls[:3]))
+    if len(urls) > 3:
+        url_html = mark_safe("%s <br/>..." % url_html)
+    return url_html

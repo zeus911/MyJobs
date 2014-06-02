@@ -5,7 +5,7 @@ from django.forms import (CharField, CheckboxSelectMultiple, ModelForm,
                           ModelMultipleChoiceField, RadioSelect,
                           Select, TextInput)
 
-from mydashboard.models import SeoSite
+from mydashboard.models import Company, SeoSite
 from mypartners.widgets import SplitDateDropDownField
 from postajob.models import Job, SitePackage
 
@@ -65,6 +65,10 @@ class JobForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
+        self.company = self.request.COOKIES.get('myjobs_company')
+        if self.company:
+            self.company = Company.objects.get(pk=self.company)
+
         super(JobForm, self).__init__(*args, **kwargs)
         # Prevent all three apply options from being show on the page at
         # once.
@@ -81,10 +85,15 @@ class JobForm(ModelForm):
             self.fields['site_packages'].queryset = SeoSite.objects.all()
         if not self.request.user.is_superuser:
             # Limit a user's access to only companies/sites they own.
-            kwargs = {'admins': self.request.user}
+            kwargs = {
+                'admins': self.request.user
+            }
             self.fields['company'].queryset = \
                 self.fields['company'].queryset.filter(**kwargs)
-            kwargs = {'business_units__company__admins': self.request.user}
+            kwargs = {
+                'business_units__company__admins': self.request.user,
+                'business_units__company': self.company
+            }
             self.fields['site_packages'].queryset = \
                 self.fields['site_packages'].queryset.filter(**kwargs).distinct()
 
@@ -98,6 +107,11 @@ class JobForm(ModelForm):
             if (packages.count() == 1 and
                     packages[0] == self.instance.company.site_package):
                 self.initial['post_to'] = 'network'
+
+        # If we have the company cookie, remove all option to even set the
+        # company.
+        if self.company and not self.request.path.startswith('/admin'):
+            del self.fields['company']
 
     def clean_apply_link(self):
         """
@@ -145,7 +159,7 @@ class JobForm(ModelForm):
         # overriding the 'None' that cleaned_data should've been
         # set to during clean_site_packages().
         if post_to == 'network':
-            company = self.cleaned_data.get('company')
+            company = self.cleaned_data.get('company', self.company)
 
             if not company.site_package:
                 package = SitePackage()
@@ -172,6 +186,9 @@ class JobForm(ModelForm):
         return self.cleaned_data
 
     def save(self, commit=True):
+        if self.request.COOKIES.get('myjobs_company'):
+            company = self.request.COOKIES.get('myjobs_company')
+            self.instance.company_id = company
         sites = self.cleaned_data['site_packages']
         job = super(JobForm, self).save(commit)
 
