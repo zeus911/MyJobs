@@ -1,8 +1,8 @@
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
-from django.forms import (CharField, CheckboxSelectMultiple, ModelForm,
-                          ModelMultipleChoiceField, RadioSelect,
+from django.forms import (CharField, CheckboxSelectMultiple, HiddenInput,
+                          ModelForm, ModelMultipleChoiceField, RadioSelect,
                           Select, TextInput)
 
 from mydashboard.models import Company, SeoSite
@@ -12,7 +12,8 @@ from postajob.models import Job, SitePackage
 
 class JobForm(ModelForm):
     class Meta:
-        exclude = ('guid', 'country_short', 'state_short', 'is_syndicated', )
+        exclude = ('guid', 'country_short', 'state_short',
+                   'is_syndicated', )
         fields = ('title', 'is_syndicated', 'reqid', 'description', 'city',
                   'state', 'country', 'zipcode', 'date_expired', 'is_expired',
                   'autorenew', 'apply_type', 'apply_link', 'apply_email',
@@ -68,8 +69,13 @@ class JobForm(ModelForm):
         self.company = self.request.COOKIES.get('myjobs_company')
         if self.company:
             self.company = Company.objects.get(pk=self.company)
-
+        else:
+            self.company = self.request.user.companyuser_set.all()[0].company
         super(JobForm, self).__init__(*args, **kwargs)
+        # If the company cookie isn't set, then the user should have
+        # only one company, so use that one.
+        print self.errors.keys()
+        print self.errors
         # Prevent all three apply options from being show on the page at
         # once.
         if self.instance and self.instance.apply_info:
@@ -99,7 +105,7 @@ class JobForm(ModelForm):
 
         # Since we're not using actual site_packages for the site_packages,
         # the initial data also needs to be manually set.
-        if self.instance.site_packages:
+        if self.instance.pk and self.instance.site_packages:
             packages = self.instance.site_packages.all()
             self.initial['site_packages'] = [str(site.pk) for site in
                                              self.instance.on_sites()]
@@ -111,7 +117,7 @@ class JobForm(ModelForm):
         # If we have the company cookie, remove all option to even set the
         # company.
         if self.company and not self.request.path.startswith('/admin'):
-            del self.fields['company']
+            self.fields['company'].widget = HiddenInput()
 
     def clean_apply_link(self):
         """
@@ -148,6 +154,9 @@ class JobForm(ModelForm):
             site_packages.append(site.site_package)
 
         return site_packages
+
+    def clean_company(self):
+        return self.company
 
     def clean(self):
         apply_info = self.cleaned_data.get('apply_info')

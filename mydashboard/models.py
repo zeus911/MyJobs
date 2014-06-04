@@ -23,7 +23,8 @@ class Company(models.Model):
     job_source_ids = models.ManyToManyField('BusinessUnit')
     member = models.BooleanField('DirectEmployers Association Member',
                                  default=False)
-    site_package = models.ForeignKey(SitePackage, null=True)
+    site_package = models.ForeignKey(SitePackage, null=True,
+                                     on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return self.name
@@ -58,7 +59,8 @@ class SeoSite(Site):
     site_title = models.CharField('Site Title', max_length=200, blank=True,
                                   default='')
     view_sources = models.ForeignKey('ViewSource', null=True, blank=True)
-    site_package = models.ForeignKey(SitePackage, null=True)
+    site_package = models.ForeignKey(SitePackage, null=True,
+                                     on_delete=models.SET_NULL)
 
     class Meta:
         db_table = 'seo_seosite'

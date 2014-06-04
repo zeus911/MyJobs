@@ -6,14 +6,21 @@ from urlparse import parse_qs
 from django.conf import settings
 from django.test import TestCase
 
-from mydashboard.tests.factories import CompanyFactory, SeoSiteFactory
-from postajob.models import Job
+from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
+                                         SeoSiteFactory)
+from postajob.models import Job, SitePackage
 
 
 class ModelTests(TestCase):
     def setUp(self):
         self.company = CompanyFactory()
         self.site = SeoSiteFactory()
+        self.bu = BusinessUnitFactory()
+        self.site.business_units.add(self.bu)
+        self.site.save()
+        self.company.job_source_ids.add(self.bu)
+        self.company.save()
+
         self.job_data = {
             'title': 'title',
             'company': self.company,
@@ -47,6 +54,9 @@ class ModelTests(TestCase):
             'on_sites': '',
             'apply_info': '',
         }
+        self.site_package_data = {
+            'name': 'Test Site Package',
+        }
 
     @patch('urllib2.urlopen')
     def test_job_creation(self, urlopen_mock):
@@ -63,7 +73,7 @@ class ModelTests(TestCase):
         self.assertEqual(Job.objects.all().count(), 0)
 
     @patch('urllib2.urlopen')
-    def test_add_to_solr(self, urlopen_mock):
+    def test_job_add_to_solr(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('{"jobs_added": 1}')
         Job.objects.create(**self.job_data)
         # add_to_solr() is called in save(), so urlopen should've been
@@ -80,7 +90,7 @@ class ModelTests(TestCase):
             self.assertEqual(data['jobs'][0][field], self.request_data[field])
 
     @patch('urllib2.urlopen')
-    def test_remove_from_solr(self, urlopen_mock):
+    def test_job_remove_from_solr(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('{"jobs_deleted": 1}')
         job = Job.objects.create(**self.job_data)
         job.remove_from_solr()
@@ -97,7 +107,7 @@ class ModelTests(TestCase):
         self.assertEqual(data['guids'][0], self.request_data['guid'])
 
     @patch('urllib2.urlopen')
-    def test_generate_guid(self, urlopen_mock):
+    def test_job_generate_guid(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('')
 
         # Confirm that pre-assigned guids are not being overwritten.
@@ -112,3 +122,43 @@ class ModelTests(TestCase):
         job = Job.objects.create(**self.job_data)
         self.assertIsNotNone(job.guid)
         self.assertNotEqual(job.guid, guid)
+
+    def test_site_package_make_unique_for_site(self):
+        package = SitePackage.objects.create(**self.site_package_data)
+        package.make_unique_for_site(self.site)
+        self.assertEqual(self.site.site_package, package)
+        package.delete()
+
+        package = SitePackage.objects.create(**self.site_package_data)
+        for x in range(100, 110):
+            site = SeoSiteFactory(id=x, domain="%s.jobs" % x)
+            package.sites.add(site)
+
+        # Site packages with existing sites associated with it should still
+        # only end up with one associated site.
+        site = SeoSiteFactory(id=4000, domain="4000.jobs")
+        package.make_unique_for_site(site)
+        self.assertEqual(site.site_package, package)
+
+    def test_site_package_make_unique_for_company(self):
+        package = SitePackage.objects.create(**self.site_package_data)
+        package.make_unique_for_company(self.company)
+        self.assertEqual(self.company.site_package, package)
+        package.delete()
+
+        package = SitePackage.objects.create(**self.site_package_data)
+        for x in range(1000, 1003):
+            site = SeoSiteFactory(id=x, domain="%s.jobs" % x)
+            package.sites.add(site)
+        self.assertItemsEqual(package.sites.all().values_list('id', flat=True),
+                              [1000, 1001, 1002])
+        for x in range(100, 103):
+            site = SeoSiteFactory(id=x, domain="%s.jobs" % x)
+            site.business_units.add(self.bu)
+            site.save()
+        # Site packages with existing sites associated with it should
+        # only end up with the sites for a company.
+        package.make_unique_for_company(self.company)
+        self.assertEqual(self.company.site_package, package)
+        self.assertItemsEqual(package.sites.all().values_list('id', flat=True),
+                              [100, 101, 102, 2])

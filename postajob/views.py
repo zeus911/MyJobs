@@ -55,9 +55,17 @@ class JobFormView(FormView, ModelFormMixin, SingleObjectMixin):
         kwargs['request'] = self.request
         return kwargs
 
+    @staticmethod
+    def queryset(request):
+        user_companies = request.user.companyuser_set.all()
+        kwargs = {
+            'company__in': user_companies.values_list('company', flat=True)
+        }
+        return Job.objects.filter(**kwargs)
+
     def get(self, request, *args, **kwargs):
         if not request.path.startswith(reverse('job_add')):
-            self.object = self.get_object()
+            self.object = self.get_object(queryset=self.queryset(request))
             pk = {'pk': self.object.pk}
             if request.path.startswith(reverse('job_delete', kwargs=pk)):
                 return self.delete()
@@ -67,7 +75,7 @@ class JobFormView(FormView, ModelFormMixin, SingleObjectMixin):
 
     def post(self, request, *args, **kwargs):
         if not request.path.startswith(reverse('job_add')):
-            self.object = self.get_object()
+            self.object = self.get_object(queryset=self.queryset(request))
             pk = {'pk': self.object.pk}
             if request.path.startswith(reverse('job_delete', kwargs=pk)):
                 return self.delete()
@@ -84,4 +92,5 @@ class JobFormView(FormView, ModelFormMixin, SingleObjectMixin):
 
         """
         return super(JobFormView, self).dispatch(*args, **kwargs)
+
 
