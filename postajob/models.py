@@ -276,6 +276,11 @@ class PurchasedProduct(models.Model):
     owner = models.ForeignKey('mydashboard.Company')
     purchase_date = models.DateField(auto_now_add=True)
 
+    def jobs_remaining(self):
+        jobs_allowed = self.product.num_jobs_allowed
+        current_jobs = PurchasedJob.objects.filter(purchased_product=self)
+        return jobs_allowed - current_jobs.count()
+
 
 class ProductGrouping(models.Model):
     products = models.ManyToManyField('Product', null=True)
