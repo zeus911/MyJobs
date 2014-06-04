@@ -597,11 +597,8 @@ def topbar(request):
         user = None
 
     ctx = {'user': user}
-    html = render_to_response('includes/topbar.html', ctx,
-                              RequestContext(request))
 
-    response = HttpResponse("%s(%s)" % (callback, json.dumps(html.content)),
-                        content_type='text/javascript')
+    response = HttpResponse(content_type='text/javascript')
 
     caller = request.REQUEST.get('site', '')
     if caller:
@@ -615,5 +612,11 @@ def topbar(request):
                             value=last_name,
                             max_age=max_age,
                             domain='.my.jobs')
+
+    html = render_to_response('includes/topbar.html', ctx,
+                              RequestContext(request))
+
+    response.content = "%s(%s)" % (callback, json.dumps(html.content))
+
     return response
 

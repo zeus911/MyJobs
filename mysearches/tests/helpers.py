@@ -44,7 +44,7 @@ class SavedSearchHelperTests(TestCase):
         self.assertEqual(actual.path, expected.path)
         self.assertEqual(parse_qs(actual.query), parse_qs(expected.query))
 
-        valid_filter_url = 'www.my.jobs/chicago/illinois/usa/jobs/mcdonalds/careers/'
+        valid_filter_url = 'www.my.jobs/jobs/'
         title, url = validate_dotjobs_url(valid_filter_url, self.user)
         self.assertIsNotNone(title)
         self.assertIsNotNone(url)
