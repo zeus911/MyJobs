@@ -486,6 +486,7 @@ user_logged_out.connect(delete_related_session)
 
 
 class FAQ(models.Model):
-    question = models.TextField(verbose_name='Question')
-    answer = models.TextField(verbose_name='Answer')
+    question = models.CharField(max_length=255, verbose_name='Question')
+    answer = models.TextField(verbose_name='Answer',
+                              help_text='Answers allow use of HTML')
     is_visible = models.BooleanField(default=True, verbose_name='Is visible')
