@@ -8,7 +8,8 @@ from django.test import TestCase
 
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          SeoSiteFactory)
-from postajob.models import Job, SitePackage
+from postajob.models import (Job, Product, PurchasedJob, PurchasedProduct,
+                             SitePackage)
 
 
 class ModelTests(TestCase):
@@ -162,3 +163,37 @@ class ModelTests(TestCase):
         self.assertEqual(self.company.site_package, package)
         self.assertItemsEqual(package.sites.all().values_list('id', flat=True),
                               [100, 101, 102, 2])
+
+    @patch('urllib2.urlopen')
+    def test_purchased_job_add(self, urlopen_mock):
+        urlopen_mock.return_value = StringIO('')
+        package = SitePackage.objects.create(**self.site_package_data)
+        product = Product.objects.create(site_package=package, cost='100.00',
+                                         owner=self.company)
+        purchased_product = PurchasedProduct.objects.create(product=product,
+                                                            owner=self.company)
+        self.job_data['max_expired_date'] = datetime.date.today() + datetime.timedelta(days=1)
+        self.job_data['purchased_product'] = purchased_product
+        PurchasedJob.objects.create(**self.job_data)
+        self.assertEqual(PurchasedJob.objects.all().count(), 1)
+        job = PurchasedJob.objects.get()
+        self.assertItemsEqual(job.site_packages.all(), [package])
+
+    @patch('urllib2.urlopen')
+    def test_purchased_job_add_to_solr(self, urlopen_mock):
+        urlopen_mock.return_value = StringIO('')
+        package = SitePackage.objects.create(**self.site_package_data)
+        product = Product.objects.create(site_package=package, cost='100.00',
+                                         owner=self.company)
+        purchased_product = PurchasedProduct.objects.create(product=product,
+                                                            owner=self.company)
+        self.job_data['max_expired_date'] = datetime.date.today() + datetime.timedelta(days=1)
+        self.job_data['purchased_product'] = purchased_product
+        job = PurchasedJob.objects.create(**self.job_data)
+        # Add to solr and delete from solr shouldn't be called until
+        # the job is approved.
+        self.assertEqual(urlopen_mock.call_count, 0)
+        job.is_approved = True
+        job.save()
+        # Now that the job is approved, it should've been sent to solr.
+        self.assertEqual(urlopen_mock.call_count, 1)

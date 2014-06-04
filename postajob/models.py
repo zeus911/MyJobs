@@ -126,7 +126,6 @@ class Job(models.Model):
             self.date_expired = datetime.date.today()
 
         job = super(Job, self).save(**kwargs)
-
         if not self.is_expired:
             self.add_to_solr()
         else:
@@ -188,8 +187,14 @@ class PurchasedJob(Job):
     is_approved = models.BooleanField(default=False)
 
     def save(self, **kwargs):
-        self.site_packages = [self.purchased_product.site_package]
-        return super(PurchasedJob, self).save(**kwargs)
+        super(PurchasedJob, self).save(**kwargs)
+        self.site_packages = [self.purchased_product.product.site_package]
+
+    def add_to_solr(self):
+        if not self.is_approved:
+            return
+        else:
+            return super(PurchasedJob, self).add_to_solr()
 
 
 def on_delete(sender, instance, **kwargs):
