@@ -52,7 +52,7 @@ def edit_profile(request):
     data_dict = {'profile_config': profile_config,
                  'unit_names': empty_display_names,
                  'user': user,
-                 'view_name': 'My Profile'}
+                 'view_name': 'My Resume'}
 
     return render_to_response('myprofile/edit_profile.html', data_dict,
                               RequestContext(request))
@@ -88,7 +88,7 @@ def handle_form(request):
         # Someone must have manipulated request data?
         raise Http404
 
-    data_dict = {'view_name': 'My Profile',
+    data_dict = {'view_name': 'My Resume',
                  'item_id': item_id,
                  'module': module}
 
@@ -177,6 +177,6 @@ def get_details(request):
     module_config['name'] = module
     module_config['item'] = item
     data_dict = {'module': module_config}
-    data_dict['view_name'] = 'My Profile'
+    data_dict['view_name'] = 'My Resume'
     return render_to_response('myprofile/profile_details.html',
                               data_dict, RequestContext(request))

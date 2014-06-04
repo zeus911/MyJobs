@@ -28,8 +28,8 @@
         {% with saved_search=saved_searches.0.0 %}
 
         <td colspan=1 style="width: 33%; padding: 8px; line-height: 20px; border-top: 1px solid #ddd;">
-            <a href="https://secure.my.jobs{% url 'view_profile' %}?verify={{saved_search.user.user_guid}}">{% trans 'My Profile' %}</a><br>
-            <a href="https://secure.my.jobs{% url 'saved_search_main' %}?verify={{saved_search.user.user_guid}}">{% trans 'Saved Searches' %}</a><br>
+            <a href="https://secure.my.jobs{% url 'view_profile' %}?verify={{saved_search.user.user_guid}}">{% trans 'My Resume' %}</a><br>
+            <a href="https://secure.my.jobs{% url 'saved_search_main' %}?verify={{saved_search.user.user_guid}}">{% trans 'My Saved Searches' %}</a><br>
             <a href="https://secure.my.jobs{% url 'edit_account' %}?verify={{saved_search.user.user_guid}}">{% trans 'Account Settings' %}</a><br>
         </td>
         <td colspan=1 style="padding: 8px; line-height: 20px; border-top: 1px solid #ddd;">

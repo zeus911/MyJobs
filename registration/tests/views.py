@@ -214,7 +214,7 @@ class MergeUserTests(TestCase):
         phrases = [
             'Your account has been successfully merged, and you are'\
             ' now logged in.',
-            "Add to your profile",
+            "Add to your resume",
             "Manage your saved searches",
             "Manage your account"]
         for phrase in phrases:
