@@ -1,6 +1,8 @@
 import datetime
-import pytz
 import uuid
+
+from mock import Mock
+import pytz
 
 from django.conf import settings
 from django.test import TestCase
@@ -15,6 +17,7 @@ from MyJobs.solr.helpers import Solr
 from MyJobs.solr.signals import profileunits_to_dict, object_to_dict
 from MyJobs.solr.tests.helpers import MockLog
 from MyJobs.tasks import update_solr_task, parse_log
+from mydashboard.tests import CompanyFactory, BusinessUnitFactory
 
 
 class SolrTests(TestCase):
@@ -202,6 +205,15 @@ class SolrTests(TestCase):
         """
         Ensure that analytics logs are parsed and stored in solr correctly
         """
+        company = CompanyFactory(id=1)
+        business_unit = BusinessUnitFactory(id=1000)
+        company.job_source_ids.add(business_unit)
+
+        match = Mock(
+            wraps=lambda: self.assertEqual(doc['company_id'], company.pk))
+        no_match = Mock(
+            wraps=lambda: self.assertEqual(doc['company_id'], 999999))
+
         for log_type in ['analytics', 'redirect']:
             log = MockLog(log_type=log_type)
             parse_log([log], self.test_solr)
@@ -226,6 +238,12 @@ class SolrTests(TestCase):
             with self.assertRaises(KeyError):
                 results.docs[0]['User_user_guid']
 
+            for doc in results.docs:
+                if doc['job_view_buid'] == business_unit.pk:
+                    match()
+                else:
+                    no_match()
+
             solr.delete()
             user = UserFactory()
             user.user_guid = '1e5f7e122156483f98727366afe06e0b'
@@ -237,3 +255,9 @@ class SolrTests(TestCase):
 
             solr.delete()
             user.delete()
+
+        # We have already determined that there are only two documents.
+        # Ensure that there is exactly one document that matches a specific
+        # company and one document that was given the default company
+        self.assertEqual(match.call_count, 1)
+        self.assertEqual(no_match.call_count, 1)

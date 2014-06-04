@@ -44,7 +44,8 @@ CACHES = {
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 
 SOLR = {
-    'default': 'http://127.0.0.1:8983/solr/myjobs/',
+    'all': 'http://127.0.0.1:8983/solr/myjobs/',
+    'current': 'http://127.0.0.1:8983/solr/myjobs_current/',
 }
 
 AWS_STORAGE_BUCKET_NAME = 'my-jobs'

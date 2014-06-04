@@ -61,8 +61,9 @@ class MyDashboardViewsTests(TestCase):
         update_solr_task(settings.TEST_SOLR_INSTANCE)
 
     def tearDown(self):
-        solr = pysolr.Solr(settings.TEST_SOLR_INSTANCE)
-        solr.delete(q='*:*')
+        for location in settings.TEST_SOLR_INSTANCE.values():
+            solr = pysolr.Solr(location)
+            solr.delete(q='*:*')
 
     def add_analytics_data(self, type_, num_to_add=2):
         """
