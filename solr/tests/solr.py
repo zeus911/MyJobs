@@ -67,7 +67,7 @@ class SolrTests(TestCase):
         expected = {
             "Name_content_type_id": [25],
             "Name_given_name": ["Alice"],
-            "uid": "23##%s" % (user.pk, ),
+            "uid": "24##%s" % (user.pk, ),
             "ProfileUnits_user_id": 1,
             "Name_user_id": [1],
             "Name_id": [name.pk],
@@ -119,7 +119,7 @@ class SolrTests(TestCase):
         user = UserFactory(email="example@example.com")
         search = SavedSearchFactory(user=user)
         expected = {'User_is_superuser': False,
-                    'uid': '35##%s' % str(search.pk),
+                    'uid': '36##%s' % str(search.pk),
                     'User_is_staff': False,
                     'SavedSearch_day_of_month': None,
                     'User_is_disabled': False,
