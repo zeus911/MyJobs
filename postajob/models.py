@@ -122,7 +122,6 @@ class Job(models.Model):
             self.date_expired = datetime.date.today()
 
         job = super(Job, self).save(**kwargs)
-
         if not self.is_expired:
             self.add_to_solr()
         else:

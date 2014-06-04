@@ -67,15 +67,13 @@ class JobForm(ModelForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         self.company = self.request.COOKIES.get('myjobs_company')
+        # If the company cookie isn't set, then the user should have
+        # only one company, so use that one.
         if self.company:
             self.company = Company.objects.get(pk=self.company)
         else:
             self.company = self.request.user.companyuser_set.all()[0].company
         super(JobForm, self).__init__(*args, **kwargs)
-        # If the company cookie isn't set, then the user should have
-        # only one company, so use that one.
-        print self.errors.keys()
-        print self.errors
         # Prevent all three apply options from being show on the page at
         # once.
         if self.instance and self.instance.apply_info:
@@ -163,7 +161,6 @@ class JobForm(ModelForm):
         apply_link = self.cleaned_data.get('apply_link')
         apply_email = self.cleaned_data.get('apply_email')
         post_to = self.cleaned_data.get('post_to')
-
         # clean() is run after clean_site_packages(), allowing
         # overriding the 'None' that cleaned_data should've been
         # set to during clean_site_packages().
