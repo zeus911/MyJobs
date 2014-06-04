@@ -20,6 +20,22 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'postajob', ['Product'])
 
+        # Adding model 'ProductGrouping'
+        db.create_table(u'postajob_productgrouping', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('score', self.gf('django.db.models.fields.IntegerField')(default=0)),
+            ('grouping_name', self.gf('django.db.models.fields.CharField')(max_length=255)),
+        ))
+        db.send_create_signal(u'postajob', ['ProductGrouping'])
+
+        # Adding M2M table for field products on 'ProductGrouping'
+        db.create_table(u'postajob_productgrouping_products', (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('productgrouping', models.ForeignKey(orm[u'postajob.productgrouping'], null=False)),
+            ('product', models.ForeignKey(orm[u'postajob.product'], null=False))
+        ))
+        db.create_unique(u'postajob_productgrouping_products', ['productgrouping_id', 'product_id'])
+
         # Adding model 'PurchasedProduct'
         db.create_table(u'postajob_purchasedproduct', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -41,6 +57,12 @@ class Migration(SchemaMigration):
     def backwards(self, orm):
         # Deleting model 'Product'
         db.delete_table(u'postajob_product')
+
+        # Deleting model 'ProductGrouping'
+        db.delete_table(u'postajob_productgrouping')
+
+        # Removing M2M table for field products on 'ProductGrouping'
+        db.delete_table('postajob_productgrouping_products')
 
         # Deleting model 'PurchasedProduct'
         db.delete_table(u'postajob_purchasedproduct')
@@ -163,6 +185,13 @@ class Migration(SchemaMigration):
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
             'posting_window_length': ('django.db.models.fields.IntegerField', [], {'default': '30'}),
             'site_package': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.SitePackage']", 'null': 'True'})
+        },
+        u'postajob.productgrouping': {
+            'Meta': {'object_name': 'ProductGrouping'},
+            'grouping_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'products': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['postajob.Product']", 'null': 'True', 'symmetrical': 'False'}),
+            'score': ('django.db.models.fields.IntegerField', [], {'default': '0'})
         },
         u'postajob.purchasedjob': {
             'Meta': {'object_name': 'PurchasedJob', '_ormbases': [u'postajob.Job']},

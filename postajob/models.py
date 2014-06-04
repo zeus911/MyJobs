@@ -269,3 +269,9 @@ class PurchasedProduct(models.Model):
     product = models.ForeignKey('Product')
     owner = models.ForeignKey('mydashboard.Company')
     purchase_date = models.DateField(auto_now_add=True)
+
+
+class ProductGrouping(models.Model):
+    products = models.ManyToManyField('Product', null=True)
+    score = models.IntegerField(default=0)
+    grouping_name = models.CharField(max_length=255)
