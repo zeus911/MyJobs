@@ -51,7 +51,7 @@ class ModelTests(TestCase):
             'country_short': 'USA',
             'zipcode': '46268',
             'guid': 'abcdef123456',
-            'on_sites': '',
+            'on_sites': '0',
             'apply_info': '',
         }
         self.site_package_data = {

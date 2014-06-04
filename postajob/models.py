@@ -75,17 +75,11 @@ class Job(models.Model):
         return '{company} - {title}'.format(company=self.company.name,
                                             title=self.title)
 
-    def add_to_solr(self):
-        """
-        Microsites is expecting following fields: id (postajob.job.id),
-        apply_info, city, company (company.id), country, country_short,
-        date_new, date_updated, description, guid, link, on_sites, state,
-        state_short, reqid, title, uid, and zipcode.
-        """
+    def solr_dict(self):
         if self.site_packages.all():
             on_sites = ",".join([str(package.pk) for package in self.site_packages.all()])
         else:
-            on_sites = ''
+            on_sites = '0'
         job = {
             'id': self.id,
             'city': self.city,
@@ -108,6 +102,16 @@ class Job(models.Model):
             'uid': self.id,
             'zipcode': self.zipcode
         }
+        return job
+
+    def add_to_solr(self):
+        """
+        Microsites is expecting following fields: id (postajob.job.id),
+        apply_info, city, company (company.id), country, country_short,
+        date_new, date_updated, description, guid, link, on_sites, state,
+        state_short, reqid, title, uid, and zipcode.
+        """
+        job = self.solr_dict()
         data = urlencode({
             'key': settings.POSTAJOB_API_KEY,
             'jobs': json.dumps([job])
@@ -122,6 +126,7 @@ class Job(models.Model):
             self.date_expired = datetime.date.today()
 
         job = super(Job, self).save(**kwargs)
+
         if not self.is_expired:
             self.add_to_solr()
         else:
@@ -177,6 +182,15 @@ class Job(models.Model):
         return state_map
 
 
+class PurchasedJob(Job):
+    max_expired_date = models.DateField(editable=False)
+    purchased_product = models.ForeignKey('PurchasedProduct')
+
+    def save(self, **kwargs):
+        self.site_packages = [self.purchased_product.site_package]
+        return super(PurchasedJob, self).save(**kwargs)
+
+
 def on_delete(sender, instance, **kwargs):
     """
     Ensures that an object is successfully removed from solr when it is deleted,
@@ -185,6 +199,7 @@ def on_delete(sender, instance, **kwargs):
     """
     instance.remove_from_solr()
 pre_delete.connect(on_delete, sender=Job)
+pre_delete.connect(on_delete, sender=PurchasedJob)
 
 
 class SitePackage(models.Model):
@@ -223,3 +238,34 @@ class SitePackage(models.Model):
         company.site_package = self
         company.save()
         self.save()
+
+
+class Product(models.Model):
+    posting_window_choices = [(30, '30 Days'), (60, '60 Days'),
+                              (90, '90 Days'), (365, '1 Year'), ]
+    max_job_length_choices = [(15, '15 Days'), (30, '30 Days'), (60, '60 Days'),
+                              (90, '90 Days'), (365, '1 Year'), ]
+
+    help_text = {
+        'cost': 'How much this package should cost.',
+        'max_job_length': 'The maximum number of days a job can be posted for.',
+        'posting_window_length': 'The number of days the customer has to '
+                                 'post jobs.',
+        'site_package': 'The site package for this product.',
+    }
+
+    site_package = models.ForeignKey('SitePackage', null=True)
+    cost = models.DecimalField(max_digits=20, decimal_places=2)
+    owner = models.ForeignKey('mydashboard.Company')
+    posting_window_length = models.IntegerField(default=30,
+                                                choices=posting_window_choices)
+    max_job_length = models.IntegerField(default=30,
+                                         choices=max_job_length_choices)
+
+    num_jobs_allowed = models.IntegerField(default=5)
+
+
+class PurchasedProduct(models.Model):
+    product = models.ForeignKey('Product')
+    owner = models.ForeignKey('mydashboard.Company')
+    purchase_date = models.DateField(auto_now_add=True)
