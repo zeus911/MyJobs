@@ -240,7 +240,8 @@ def contact(request):
             component_ids = {'My.jobs Error': {'id': '12903'},
                              'Job Seeker': {'id': '12902'},
                              'Employer': {'id': '12900'},
-                             'Partner': {'id': '12901'}, }
+                             'Partner': {'id': '12901'},
+                             'Request Demo': {'id': '13900'}}
             if component_ids.get(reason):
                 components.append(component_ids.get(reason))
             components.append(component_ids.get(contact_type))
