@@ -8,17 +8,14 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'Product'
-        db.create_table(u'postajob_product', (
+        # Adding model 'PurchasedProduct'
+        db.create_table(u'postajob_purchasedproduct', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('site_package', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['postajob.SitePackage'], null=True)),
-            ('cost', self.gf('django.db.models.fields.DecimalField')(max_digits=20, decimal_places=2)),
+            ('product', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['postajob.Product'])),
             ('owner', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mydashboard.Company'])),
-            ('posting_window_length', self.gf('django.db.models.fields.IntegerField')(default=30)),
-            ('max_job_length', self.gf('django.db.models.fields.IntegerField')(default=30)),
-            ('num_jobs_allowed', self.gf('django.db.models.fields.IntegerField')(default=5)),
+            ('purchase_date', self.gf('django.db.models.fields.DateField')(auto_now_add=True, blank=True)),
         ))
-        db.send_create_signal(u'postajob', ['Product'])
+        db.send_create_signal(u'postajob', ['PurchasedProduct'])
 
         # Adding model 'ProductGrouping'
         db.create_table(u'postajob_productgrouping', (
@@ -36,27 +33,31 @@ class Migration(SchemaMigration):
         ))
         db.create_unique(u'postajob_productgrouping_products', ['productgrouping_id', 'product_id'])
 
-        # Adding model 'PurchasedProduct'
-        db.create_table(u'postajob_purchasedproduct', (
+        # Adding model 'Product'
+        db.create_table(u'postajob_product', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('product', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['postajob.Product'])),
+            ('site_package', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['postajob.SitePackage'], null=True)),
+            ('cost', self.gf('django.db.models.fields.DecimalField')(max_digits=20, decimal_places=2)),
             ('owner', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mydashboard.Company'])),
-            ('purchase_date', self.gf('django.db.models.fields.DateField')(auto_now_add=True, blank=True)),
+            ('posting_window_length', self.gf('django.db.models.fields.IntegerField')(default=30)),
+            ('max_job_length', self.gf('django.db.models.fields.IntegerField')(default=30)),
+            ('num_jobs_allowed', self.gf('django.db.models.fields.IntegerField')(default=5)),
         ))
-        db.send_create_signal(u'postajob', ['PurchasedProduct'])
+        db.send_create_signal(u'postajob', ['Product'])
 
         # Adding model 'PurchasedJob'
         db.create_table(u'postajob_purchasedjob', (
             (u'job_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['postajob.Job'], unique=True, primary_key=True)),
             ('max_expired_date', self.gf('django.db.models.fields.DateField')()),
             ('purchased_product', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['postajob.PurchasedProduct'])),
+            ('is_approved', self.gf('django.db.models.fields.BooleanField')(default=False)),
         ))
         db.send_create_signal(u'postajob', ['PurchasedJob'])
 
 
     def backwards(self, orm):
-        # Deleting model 'Product'
-        db.delete_table(u'postajob_product')
+        # Deleting model 'PurchasedProduct'
+        db.delete_table(u'postajob_purchasedproduct')
 
         # Deleting model 'ProductGrouping'
         db.delete_table(u'postajob_productgrouping')
@@ -64,8 +65,8 @@ class Migration(SchemaMigration):
         # Removing M2M table for field products on 'ProductGrouping'
         db.delete_table('postajob_productgrouping_products')
 
-        # Deleting model 'PurchasedProduct'
-        db.delete_table(u'postajob_purchasedproduct')
+        # Deleting model 'Product'
+        db.delete_table(u'postajob_product')
 
         # Deleting model 'PurchasedJob'
         db.delete_table(u'postajob_purchasedjob')
@@ -195,6 +196,7 @@ class Migration(SchemaMigration):
         },
         u'postajob.purchasedjob': {
             'Meta': {'object_name': 'PurchasedJob', '_ormbases': [u'postajob.Job']},
+            'is_approved': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             u'job_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['postajob.Job']", 'unique': 'True', 'primary_key': 'True'}),
             'max_expired_date': ('django.db.models.fields.DateField', [], {}),
             'purchased_product': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.PurchasedProduct']"})

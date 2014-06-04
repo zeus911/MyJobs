@@ -185,6 +185,7 @@ class Job(models.Model):
 class PurchasedJob(Job):
     max_expired_date = models.DateField(editable=False)
     purchased_product = models.ForeignKey('PurchasedProduct')
+    is_approved = models.BooleanField(default=False)
 
     def save(self, **kwargs):
         self.site_packages = [self.purchased_product.site_package]
