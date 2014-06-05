@@ -77,7 +77,15 @@ class Job(models.Model):
 
     def solr_dict(self):
         if self.site_packages.all():
-            on_sites = ",".join([str(package.pk) for package in self.site_packages.all()])
+            package_list = self.site_packages.all().values_list('pk', flat=True)
+            package_list = list(package_list)
+            if (self.site_packages.all().count() == 1 and
+                    self.site_packages.all()[0].company_set.all().count() > 0):
+                # If it's posted to a company site_pacakge only, that means it
+                # was posted to all network + company sites, so add
+                # the all sites flag.
+                package_list.append(0)
+            on_sites = ",".join([str(package) for package in package_list])
         else:
             on_sites = '0'
         job = {

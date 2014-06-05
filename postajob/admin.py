@@ -73,8 +73,12 @@ class SitePackageAdmin(ModelAdminWithRequest):
 
         """
         sites = SitePackage.objects.filter(sites=-1)
-        if request.user.is_superuser:
-            sites = SitePackage.objects.filter(seosite__isnull=True)
+        if not request.user.is_superuser:
+            kwargs = {
+                'seosite__isnull': True,
+                'company__isnull': True,
+            }
+            sites = SitePackage.objects.filter(**kwargs)
         return sites
 
 admin.site.register(SitePackage, SitePackageAdmin)

@@ -96,8 +96,9 @@ class JobForm(ModelForm):
                 self.fields['company'].queryset.filter(**kwargs)
             kwargs = {
                 'business_units__company__admins': self.request.user,
-                'business_units__company': self.company
             }
+            if not self.request.path.startswith('/admin'):
+                kwargs['business_units__company'] = self.company
             self.fields['site_packages'].queryset = \
                 self.fields['site_packages'].queryset.filter(**kwargs).distinct()
 

@@ -4,8 +4,26 @@ from postajob import views
 
 urlpatterns = patterns(
     '',
-    url(r'^add', views.JobFormView.as_view(), name='job_add'),
-    url(r'^delete/(?P<pk>\d+)', views.JobFormView.as_view(), name='job_delete'),
-    url(r'^update/(?P<pk>\d+)', views.JobFormView.as_view(), name='job_update'),
-    url(r'^$', views.jobs_overview, name='jobs_overview'),
+
+    # Posted job management for members
+    url(r'^job/add', views.JobFormView.as_view(), name='job_add'),
+    url(r'^job/delete/(?P<pk>\d+)', views.JobFormView.as_view(), name='job_delete'),
+    url(r'^job/update/(?P<pk>\d+)', views.JobFormView.as_view(), name='job_update'),
+    url(r'^jobs$', views.jobs_overview, name='jobs_overview'),
+
+    # Product management
+    url(r'^product/add', views.JobFormView.as_view(), name='product_add'),
+    url(r'^product/delete/(?P<pk>\d+)', views.JobFormView.as_view(),
+        name='product_delete'),
+    url(r'^product/update/(?P<pk>\d+)', views.JobFormView.as_view(),
+        name='product_update'),
+    url(r'^products/$', views.jobs_overview, name='products_overview'),
+
+    url(r'^product/group/add', views.JobFormView.as_view(),
+        name='productgroup_add'),
+    url(r'^product/group/delete/(?P<pk>\d+)', views.JobFormView.as_view(),
+        name='productgroup_delete'),
+    url(r'^product/group/update/(?P<pk>\d+)', views.JobFormView.as_view(),
+        name='productgroup_update'),
+
 )

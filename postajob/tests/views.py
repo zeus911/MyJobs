@@ -62,16 +62,17 @@ class ViewTests(TestCase):
         self.company_user.delete()
 
         response = self.client.post(reverse('jobs_overview'))
-        self.assertRedirects(response, 'http://testserver/?next=/postajob/',
+        self.assertRedirects(response, 'http://testserver/?next=/postajob/jobs',
                              status_code=302)
         response = self.client.post(reverse('job_add'))
-        self.assertRedirects(response, 'http://testserver/?next=/postajob/add',
+        self.assertRedirects(response,
+                             'http://testserver/?next=/postajob/job/add',
                              status_code=302)
         response = self.client.post(reverse('job_delete', kwargs={'pk': 1}))
-        expected = 'http://testserver/?next=/postajob/delete/1'
+        expected = 'http://testserver/?next=/job/postajob/delete/1'
         self.assertRedirects(response, expected, status_code=302)
         response = self.client.post(reverse('job_update', kwargs={'pk': 1}))
-        expected = 'http://testserver/?next=/postajob/update/1'
+        expected = 'http://testserver/?next=/job/postajob/update/1'
         self.assertRedirects(response, expected, status_code=302)
 
     @patch('urllib2.urlopen')
@@ -98,7 +99,7 @@ class ViewTests(TestCase):
         response = self.client.post(reverse('job_update', kwargs=kwargs))
         self.assertEqual(response.status_code, 200)
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
-        self.assertRedirects(response, 'http://testserver/postajob/',
+        self.assertRedirects(response, 'http://testserver/postajob/jobs',
                              status_code=302)
 
     @patch('urllib2.urlopen')

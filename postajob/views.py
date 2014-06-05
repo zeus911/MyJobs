@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic.edit import FormView, ModelFormMixin
 from django.views.generic.detail import SingleObjectMixin
 
+from mydashboard.models import Company
 from myjobs.decorators import user_is_allowed
 from postajob.forms import JobForm
 from postajob.models import Job
@@ -19,10 +20,15 @@ is_company_user = lambda u: u.companyuser_set.all().count() >= 1
 @user_is_allowed()
 @user_passes_test(is_company_user)
 def jobs_overview(request):
-    companies = request.user.companyuser_set.all().values_list('company',
-                                                               flat=True)
+    company = request.COOKIES.get('myjobs_company')
+    # If the company cookie isn't set, then the user should have
+    # only one company, so use that one.
+    if company:
+        company = Company.objects.get(pk=company)
+    else:
+        company = request.user.companyuser_set.all()[0].company
     data = {
-        'jobs': Job.objects.filter(company__in=companies)
+        'jobs': Job.objects.filter(company=company)
     }
     return render_to_response('postajob/jobs_overview.html', data,
                               RequestContext(request))
