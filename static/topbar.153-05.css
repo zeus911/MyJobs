@@ -37,7 +37,7 @@
 
 .topbar #topbar-logo {
     width: 100px;
-    background: transparent url(http://d2e48ltfsb5exy.cloudfront.net/myjobs/logos/myjobs_logo_white_small.png) center left no-repeat;
+    background: transparent url(//d2e48ltfsb5exy.cloudfront.net/myjobs/logos/myjobs_logo_white_small.png) center left no-repeat;
     text-indent: -9000px;
 }
 
@@ -373,7 +373,7 @@ ul.submenu > li > a:hover {
     }
 
     #nav .main-nav {
-        background: #a95051 url(http://d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/superbutton.png) no-repeat;
+        background: #a95051 url(//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/superbutton.png) no-repeat;
         position: absolute;
         right: 10px;
         top: 10px;

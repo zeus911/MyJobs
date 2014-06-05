@@ -55,7 +55,10 @@ form -- the rest of the form.
                 {% add_required_label field %}
             </div>
             <div class="profile-form-input {{ field.label|slugify }}-field">
-            {{field}}
+                {{field}}
+                {% if field.help_text %}
+                    <br/><span class="help-block checkbox-help-block">{{ field.help_text|safe }}</span>
+                {% endif %}
             </div>
 
             {% elif 'country_code' in field.html_name %}

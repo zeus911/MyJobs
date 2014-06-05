@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group
 from django.db import models
 
 from myjobs.models import User
+from postajob.models import SitePackage
 
 
 class Company(models.Model):
@@ -22,6 +23,8 @@ class Company(models.Model):
     job_source_ids = models.ManyToManyField('BusinessUnit')
     member = models.BooleanField('DirectEmployers Association Member',
                                  default=False)
+    site_package = models.ForeignKey(SitePackage, null=True,
+                                     on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return self.name
@@ -33,6 +36,22 @@ class Company(models.Model):
     def slugified_name(self):
         return slugify(self.name)
 
+    def get_seo_sites(self):
+        """
+        Retrieves a given company's microsites
+
+        Inputs:
+        :company: Company whose microsites are being retrieved
+
+        Outputs:
+        :microsites: List of microsites
+        :buids: List of buids associated with the company's microsites
+        """
+        job_source_ids = self.job_source_ids.all()
+        buids = job_source_ids.values_list('id', flat=True)
+        microsites = SeoSite.objects.filter(business_units__in=buids)
+        return microsites
+
 
 class SeoSite(Site):
     business_units = models.ManyToManyField('BusinessUnit', null=True,
@@ -40,6 +59,8 @@ class SeoSite(Site):
     site_title = models.CharField('Site Title', max_length=200, blank=True,
                                   default='')
     view_sources = models.ForeignKey('ViewSource', null=True, blank=True)
+    site_package = models.ForeignKey(SitePackage, null=True,
+                                     on_delete=models.SET_NULL)
 
     class Meta:
         db_table = 'seo_seosite'
@@ -73,7 +94,7 @@ class BusinessUnit(models.Model):
 class CandidateEvent(models.Model):
     """
     Something happened! This log tracks job views and saved searches.
-    
+
     """
     who = models.ForeignKey(User)
     whom = models.ForeignKey(Company)
@@ -84,8 +105,6 @@ class CandidateEvent(models.Model):
 
 class DashboardModule(models.Model):
     company = models.ForeignKey(Company)
-
-
 
 
 class CompanyUser(models.Model):
@@ -108,7 +127,7 @@ class CompanyUser(models.Model):
         group = Group.objects.get(name=self.GROUP_NAME)
         self.user.groups.add(group)
 
-        super(CompanyUser,self).save(*args, **kwargs)
+        return super(CompanyUser, self).save(*args, **kwargs)
 
     class Meta:
         unique_together = ('user', 'company')

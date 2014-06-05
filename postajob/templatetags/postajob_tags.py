@@ -10,7 +10,8 @@ register = Library()
 
 @register.simple_tag
 def get_job_links(job):
-    domains = [site.domain for site in job.show_on_sites.all()]
+    sites = job.on_sites()
+    domains = [site.domain for site in sites]
 
     location = u'{city}, {state}'.format(city=job.city, state=job.state_short)
     loc_slug = bleach.clean(slugify(location))
@@ -24,4 +25,7 @@ def get_job_links(job):
                                   title_slug=title_slug, guid=job.guid)
 
         urls.append(href_tag.format(url=job_url, domain=domain))
-    return mark_safe("<br/>".join(urls))
+    url_html = mark_safe("<br/>".join(urls[:3]))
+    if len(urls) > 3:
+        url_html = mark_safe("%s <br/>..." % url_html)
+    return url_html

@@ -1,0 +1,30 @@
+.site-field {
+    width: 400px;
+    height: 200px;
+    overflow-y: scroll;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.site-field ul {
+    list-style: none;
+    margin-left: 0;
+    padding-bottom: 0px;
+}
+
+.field-apply_type > div > ul
+.field-post_to > div > ul,
+.field-site_packages > div > ul,
+.post-to-field > ul,
+.application-method-field > ul {
+    list-style: none;
+    display: table;
+    padding: 0;
+}
+
+.field-apply_type > div> ul> li,
+.field-site_packages > div > ul > li,
+.field-post_to > div > ul > li{
+    list-style-type: none;
+}

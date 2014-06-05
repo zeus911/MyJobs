@@ -13,7 +13,7 @@ from django.http import HttpRequest
 from django.test.client import Client
 from django.test import TestCase
 
-from myjobs.models import User, EmailLog
+from myjobs.models import User, EmailLog, FAQ
 from myjobs.tests.factories import UserFactory
 from mysearches.models import SavedSearch
 from registration.models import ActivationProfile
@@ -736,3 +736,27 @@ class MyJobsViewsTests(TestCase):
 
         user = User.objects.get(email='microsite@example.com')
         self.assertEqual(user.source, last_site)
+
+    def test_contact_FAQ(self):
+        """
+        Tests the redirect feature when no FAQ is created or visible.
+        Then creates FAQ and checks to make sure it does show.
+
+        """
+        response = self.client.post(reverse('contact_faq'))
+        # checks redirect
+        self.assertEqual(response.status_code, 302)
+
+        faq = FAQ(question="1101", answer="13")
+        faq.save()
+
+        response = self.client.post(reverse('contact_faq'))
+        self.assertEqual(response.status_code, 200)
+
+        faq.is_visible = False
+        faq.save()
+
+        response = self.client.post(reverse('contact_faq'))
+        # checks redirect
+        self.assertEqual(response.status_code, 302)
+

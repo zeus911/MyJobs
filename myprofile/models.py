@@ -672,7 +672,7 @@ class Summary(ProfileUnits):
             return [{'msg': "Would you like to add a summary of your career?",
                      'url': reverse('handle_form') + '?module=Summary&id=new',
                      'priority': 5,
-                     'module': 'Profile Summary'}]
+                     'module': 'Resume Summary'}]
         return []
 
 

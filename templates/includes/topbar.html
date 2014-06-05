@@ -1,6 +1,6 @@
 {% load i18n %}
 {% load common_tags %}
-<link href="https://d2e48ltfsb5exy.cloudfront.net/content_mj/files/topbar.152-30.css" rel="stylesheet" type="text/css">
+<link href="{{ STATIC_URL }}topbar.153-05.css" rel="stylesheet" type="text/css">
 <div class="topbar" data-dropdown="dropdown" role="menubar">
     <div class="topbar-inner">
         <div id="de-topbar-content" class="wrapper" {% if from_ajax %}style="margin:0 auto; width:960px; display:block;"{% endif %}>
@@ -39,7 +39,7 @@
                     <li>
                         <a>{{ user.email }}</a>
                         <ul class="submenu">
-                            <li><a href="https://secure.my.jobs/profile/view/">{% trans "My Profile" %}</a></li>
+                            <li><a href="https://secure.my.jobs/profile/view/">{% trans "My Resume" %}</a></li>
                             <li><a href="https://secure.my.jobs/saved-search/view/">{% trans "My Saved Searches" %}</a></li>
                             <li><a href="https://secure.my.jobs/account/edit">{% trans "Account Settings" %}</a></li>
                             <li><a href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
@@ -81,7 +81,7 @@
                                 <li id="back-btn-li" class="no-show"><a id="back-btn"><span class="arrow-left"></span></a></li>
 
                                 {% if not user.is_disabled %}
-                                    <li><a id="profile-link" class="no-show seeker-menu" href="https://secure.my.jobs/profile/view/">{% trans "My Profile" %}</a></li>
+                                    <li><a id="profile-link" class="no-show seeker-menu" href="https://secure.my.jobs/profile/view/">{% trans "My Resume" %}</a></li>
 
                                     {% if user.is_active %}
 
