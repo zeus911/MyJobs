@@ -11,7 +11,8 @@ from django.contrib.auth import logout, authenticate
 from django.contrib.auth.decorators import user_passes_test
 from django.db import IntegrityError
 from django.forms import Form, model_to_dict
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response, redirect, render, Http404
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
@@ -22,7 +23,7 @@ from captcha.fields import ReCaptchaField
 from myjobs.decorators import user_is_allowed
 from myjobs.forms import ChangePasswordForm, EditCommunicationForm
 from myjobs.helpers import expire_login, log_to_jira
-from myjobs.models import EmailLog, Ticket, User
+from myjobs.models import EmailLog, Ticket, User, FAQ
 from myprofile.forms import (InitialNameForm, InitialEducationForm,
                              InitialAddressForm, InitialPhoneForm,
                              InitialWorkForm)
@@ -213,6 +214,18 @@ def home(request):
     return render_to_response('index.html', data_dict, RequestContext(request))
 
 
+def contact_faq(request):
+    """
+    Grabs FAQ and orders them by alphabetical order on question.
+
+    """
+    faq = FAQ.objects.filter(is_visible=True).order_by('question')
+    if not faq.count() > 0:
+        return HttpResponseRedirect(reverse('contact'))
+    data_dict = {'faq': faq}
+    return render_to_response('contact-faq.html', data_dict, RequestContext(request))
+
+
 def contact(request):
     if request.POST:
         name = request.POST.get('name')
@@ -227,7 +240,8 @@ def contact(request):
             component_ids = {'My.jobs Error': {'id': '12903'},
                              'Job Seeker': {'id': '12902'},
                              'Employer': {'id': '12900'},
-                             'Partner': {'id': '12901'}, }
+                             'Partner': {'id': '12901'},
+                             'Request Demo': {'id': '13900'}}
             if component_ids.get(reason):
                 components.append(component_ids.get(reason))
             components.append(component_ids.get(contact_type))

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.sites.models import Site
 
-from myjobs.models import User, CustomHomepage, EmailLog
+from myjobs.models import User, CustomHomepage, EmailLog, FAQ
 from myjobs.forms import UserAdminForm
 from registration.models import ActivationProfile
 
@@ -41,8 +41,14 @@ class UserAdmin(admin.ModelAdmin):
                 'source', ]}),
     ]
 
+
+class FAQAdmin(admin.ModelAdmin):
+    list_display = ['question', 'is_visible']
+    search_fields = ['question', ]
+
 admin.site.register(User, UserAdmin)
 admin.site.register(ActivationProfile)
 admin.site.register(CustomHomepage)
 admin.site.register(EmailLog, EmailLogAdmin)
+admin.site.register(FAQ, FAQAdmin)
 admin.site.unregister(Site)
