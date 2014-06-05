@@ -64,6 +64,49 @@ h1 > small > a:hover {
     display: none;
 }
 
+/*Contact FAQ styles*/
+.faq + .faq {
+    margin-top: 20px;
+}
+
+.faq-question {
+    padding: 10px 20px;
+    background-color: #f2f2f2;
+    border: 1px solid #f2f2f2;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #666;
+}
+
+.faq-question:hover {
+    cursor: pointer;
+    background-color: #fff;
+    border: 1px solid #e6e6e6;
+}
+
+.faq-answer {
+    margin-left: 20px;
+    padding: 10px;
+    border-left: 1px solid #e6e6e6;
+    display: none;
+}
+
+.row.faq:first-of-type .faq-answer {
+    display: block;
+}
+
+#continue-contact-us {
+    margin-top: 20px;
+    float: right;
+}
+
+/* Contact Us Styles */
+.form-textarea {
+    width: 297px;
+}
+
 /*Candidate Activity mobile desktop hide*/
 .candidate-activity-mobile {
     display: none;
@@ -188,7 +231,7 @@ h1 > small > a:hover {
 
 .prm-init-formbox{
     width: 302px;
-    z-index: 9999;
+    z-index: 999;
     position:absolute;
     margin-left: 319px;
     margin-top: 75px;
@@ -2249,9 +2292,19 @@ td .gravatar-blank,
         width: calc(96% - 28px);
     }
 
+    /* Contact FAQ Styles */
+    #continue-contact-us {
+        float: none;
+    }
+
     /* Contact Form Styles */
     #success-table tr td{
         min-width: 0;
+    }
+
+    .form-textarea {
+        width: 100%;
+        box-sizing: border-box;
     }
 
     /* About Page Styles */
