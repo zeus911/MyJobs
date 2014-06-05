@@ -31,6 +31,10 @@ class UserResource(ModelResource):
                                 content_types={'json': 'application/json',
                                                'jsonp': 'text/javascript'})
 
+    def build_filters(self, filters=None):
+        filters.pop('source', '')
+        return super(UserResource, self).build_filters(filters)
+
     def create_response(self, request, data, response_class=HttpResponse,
                         **response_kwargs):
         """
