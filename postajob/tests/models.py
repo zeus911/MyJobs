@@ -8,7 +8,8 @@ from django.test import TestCase
 
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          SeoSiteFactory)
-from postajob.models import Job, SitePackage
+from postajob.models import (Job, Product, PurchasedJob, PurchasedProduct,
+                             SitePackage)
 
 
 class ModelTests(TestCase):
@@ -51,7 +52,7 @@ class ModelTests(TestCase):
             'country_short': 'USA',
             'zipcode': '46268',
             'guid': 'abcdef123456',
-            'on_sites': '',
+            'on_sites': '0',
             'apply_info': '',
         }
         self.site_package_data = {
@@ -162,3 +163,50 @@ class ModelTests(TestCase):
         self.assertEqual(self.company.site_package, package)
         self.assertItemsEqual(package.sites.all().values_list('id', flat=True),
                               [100, 101, 102, 2])
+
+    def create_purchased_job(self, pk=None):
+        if not hasattr(self, 'package'):
+            self.package = SitePackage.objects.create(**self.site_package_data)
+        if not hasattr(self, 'product'):
+            self.product = Product.objects.create(site_package=self.package,
+                                                  cost='100.00',
+                                                  owner=self.company)
+        if not hasattr(self, 'purchased_product'):
+            self.purchased_product = PurchasedProduct.objects.create(
+                product=self.product, owner=self.company)
+        self.job_data['max_expired_date'] = datetime.date.today() + datetime.timedelta(days=1)
+        self.job_data['purchased_product'] = self.purchased_product
+        self.job_data['pk'] = pk
+        return PurchasedJob.objects.create(**self.job_data)
+
+    @patch('urllib2.urlopen')
+    def test_purchased_job_add(self, urlopen_mock):
+        urlopen_mock.return_value = StringIO('')
+        self.create_purchased_job()
+        self.assertEqual(PurchasedJob.objects.all().count(), 1)
+        self.assertEqual(SitePackage.objects.all().count(), 1)
+        package = SitePackage.objects.get()
+        job = PurchasedJob.objects.get()
+        self.assertItemsEqual(job.site_packages.all(), [package])
+
+    @patch('urllib2.urlopen')
+    def test_purchased_job_add_to_solr(self, urlopen_mock):
+        urlopen_mock.return_value = StringIO('')
+        job = self.create_purchased_job()
+        # Add to solr and delete from solr shouldn't be called until
+        # the job is approved.
+        self.assertEqual(urlopen_mock.call_count, 0)
+        job.is_approved = True
+        job.save()
+        # Now that the job is approved, it should've been sent to solr.
+        self.assertEqual(urlopen_mock.call_count, 1)
+
+    def test_purchased_product_jobs_remaining(self):
+        del self.job_data['guid']
+        field = Product._meta.get_field_by_name('num_jobs_allowed')
+        expected_num_jobs = field[0].default
+        for x in range(50, 55):
+            self.create_purchased_job()
+            expected_num_jobs -= 1
+            self.assertEqual(self.purchased_product.jobs_remaining(),
+                             expected_num_jobs)
