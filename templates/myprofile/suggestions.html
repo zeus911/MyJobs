@@ -4,11 +4,11 @@
     <h3>Thanks for updating your {{ model_name }}</h3>
     <p>
         Updating your {{ model_name }} will help employers locate you and increase your
-        chances at getting noticed.  You can continue to improve your profile 
+        chances at getting noticed.  You can continue to improve your resume
         with the options to the below.
     </p>
 
-    <h4>Add these modules to improve your profile</h4>
+    <h4>Add these modules to improve your resume</h4>
     {% for suggestion in suggestions %}
         <a class="btn primary suggestion add-module-btn" 
            href="{{ suggestion.url }}" 
@@ -21,7 +21,7 @@
     <div id="description" style="min-height:40px;">&nbsp;</div>
 
     <a class="btn-link" 
-       href="{% url 'view_profile' %}">No thanks, Take me to my Profile</a>
+       href="{% url 'view_profile' %}">No thanks, Take me to my Resume</a>
 </div>
 <div class="span4" id="suggestions" style="clear: right;">
     

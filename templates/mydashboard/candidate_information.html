@@ -34,7 +34,7 @@
         <table><tr>
         <td>{% get_gravatar the_user '100' %}</td>
         <td><div id="candidate-completion">
-            <b><div >Profile is <span id="highlight" class="initial-highlight">{{ the_user.profile_completion }}% complete</span></div></b>
+            <b><div >Resume is <span id="highlight" class="initial-highlight">{{ the_user.profile_completion }}% complete</span></div></b>
             <div class="progress" id="candidate-progress">
                 <div class="bar bar-{% completion_level the_user.profile_completion %}" id="initial-bar" style="width: {{ the_user.profile_completion}}%;"></div>
             </div>
