@@ -69,15 +69,11 @@ function get_default_widget_html(success) {
 
 
 function create_saved_search() {
-    var call_url = base_url + "/api/v1/savedsearch/?callback=reload_default_widget&email=" + user_email + ss_api_str + "&url=" + ss_url;
-    if (typeof source !== "undefined") {
-        call_url += "&source=" + source;
-    }
-    jsonp_ajax_call(call_url);
+    jsonp_ajax_call(base_url + "/api/v1/savedsearch/?callback=reload_default_widget&email=" + user_email + ss_api_str + "&url=" + ss_url);
 }
 
 function create_user() {
-    jsonp_ajax_call(base_url + "/api/v1/user/?callback=create_saved_search&email=" + user_email + ss_api_str);
+    jsonp_ajax_call(base_url + "/api/v1/user/?callback=create_saved_search&email=" + user_email + ss_api_str + "&source=" + window.location.hostname);
 }
 
 
