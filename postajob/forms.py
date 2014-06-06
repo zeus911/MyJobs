@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
 from django.forms import (CharField, CheckboxSelectMultiple, HiddenInput,
@@ -143,7 +144,7 @@ class JobForm(ModelForm):
         if self.cleaned_data.get('post_to') == 'network':
             company = self.cleaned_data.get('owner', self.company)
 
-            if not company.site_package:
+            if not hasattr(company, 'site_package'):
                 package = SitePackage()
                 package.make_unique_for_company(company)
             site_packages = [company.site_package]
@@ -234,9 +235,14 @@ class SitePackageForm(ModelForm):
 class ProductForm(ModelForm):
     class Meta:
         model = Product
-        fields = ('name', 'owner', 'site_package', 'cost',
+        fields = ('name', 'package', 'owner', 'cost',
                   'posting_window_length', 'max_job_length',
                   'num_jobs_allowed', )
+
+    package_widget = Select()
+    package = CharField(SitePackage.objects.all(),
+                        label="Packages",
+                        widget=package_widget)
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
@@ -245,25 +251,23 @@ class ProductForm(ModelForm):
         if not self.request.user.is_superuser:
             # Update querysets based on what the user should have
             # access to.
+            user_companies = self.request.user.get_companies()
             if not self.request.path.startswith('/admin'):
-                # Site Packages
-                kwargs = {'owner': self.company}
-                self.fields['site_package'].queryset = \
-                    self.fields['site_package'].queryset.filter(**kwargs)
-
-                # Owner
+                # Owner. Based on myjobs_company cookie.
                 self.fields['owner'].widget = HiddenInput()
                 self.initial['owner'] = self.company
-
             else:
-                # Site Packages
-                user_companies = self.request.user.get_companies()
-                kwargs = {'owner__in': user_companies}
-                self.fields['site_package'].queryset = \
-                    self.fields['site_package'].queryset.filter(**kwargs)
-
                 # Owner
                 self.fields['owner'].queryset = user_companies
+
+    def save(self, commit=True):
+        package = self.cleaned_data.get('package')
+        print package
+        print package.__class__
+        ct = ContentType.objects.get_for_model(package.__class__)
+        self.instance.content_type = ct
+        self.instance.package_id = package.pk
+        return super(ProductForm, self).save(commit)
 
 
 class ProductGroupingForm(ModelForm):
@@ -275,11 +279,10 @@ class ProductGroupingForm(ModelForm):
             'all': ('postajob.153-10.css', )
         }
 
-    products_widget = CheckboxSelectMultiple(
-        attrs={'class': 'job-sites-checkbox'})
-    products = ModelMultipleChoiceField(Product.objects.all(),
-                                        label="Products",
-                                        widget=products_widget)
+    products_widget = CheckboxSelectMultiple()
+    products = CharField(Product.objects.all(),
+                         label="Products",
+                         widget=products_widget)
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)

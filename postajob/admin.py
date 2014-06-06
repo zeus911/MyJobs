@@ -79,14 +79,11 @@ class SitePackageAdmin(ModelAdminWithRequest):
 
 class ProductFormAdmin(ModelAdminWithRequest):
     form = ProductForm
-    list_display = ('owner', 'site_package', )
+    list_display = ('owner', 'package', )
 
     fieldsets = (
         ('', {
-            'fields': ('name', )
-        }),
-        ('Company Information', {
-            'fields': ('owner', 'site_package', )
+            'fields': ('name', 'owner', 'package')
         }),
         ('Package Details', {
             'fields': ('cost', 'posting_window_length',
@@ -103,7 +100,7 @@ class ProductFormAdmin(ModelAdminWithRequest):
 
 class ProductGroupingFormAdmin(ModelAdminWithRequest):
     form = ProductGroupingForm
-    list_display = ('display_order', 'grouping_name', )
+    list_display = ('display_order', 'name', )
 
     def queryset(self, request):
         groups = ProductGrouping.objects.all()
