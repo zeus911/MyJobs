@@ -73,8 +73,10 @@ class MyDashboardViewsTests(TestCase):
         authenticated hits.
         """
         dicts = []
-        base_dict = {'domain': self.microsite.domain,
-                     'view_date': datetime.now()
+        base_dict = {
+            'domain': self.microsite.domain,
+            'view_date': datetime.now(),
+            'company_id': self.company.pk,
         }
         home_dict = {
             'page_category': 'home'
@@ -113,7 +115,7 @@ class MyDashboardViewsTests(TestCase):
                 analytics_dict['aguid']
             )
 
-        solr = pysolr.Solr(settings.TEST_SOLR_INSTANCE)
+        solr = pysolr.Solr(settings.TEST_SOLR_INSTANCE['default'])
         solr.add(dicts)
 
     def test_number_of_searches_and_users_is_correct(self):

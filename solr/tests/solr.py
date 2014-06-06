@@ -2,6 +2,7 @@ import datetime
 import uuid
 
 from mock import Mock
+import pysolr
 import pytz
 
 from django.conf import settings
@@ -16,7 +17,7 @@ from MyJobs.solr.models import Update
 from MyJobs.solr.helpers import Solr
 from MyJobs.solr.signals import profileunits_to_dict, object_to_dict
 from MyJobs.solr.tests.helpers import MockLog
-from MyJobs.tasks import update_solr_task, parse_log
+from MyJobs.tasks import update_solr_task, parse_log, delete_old_analytics_docs
 from mydashboard.tests import CompanyFactory, BusinessUnitFactory
 
 
@@ -261,3 +262,45 @@ class SolrTests(TestCase):
         # company and one document that was given the default company
         self.assertEqual(match.call_count, 1)
         self.assertEqual(no_match.call_count, 1)
+
+    def test_analytics_delete_old_data(self):
+        """
+        When Solr is updated with analytics data, we should delete all docs
+        from the "current" collection older than 30 days.
+        """
+        solr = Solr()
+
+        # Create old logs that will be pruned when delete is run
+        logs = [MockLog(log_type=type_, delta=datetime.timedelta(days=-31))
+                for type_ in ['analytics', 'redirect']]
+        parse_log(logs, self.test_solr)
+        results = solr.search(q='doc_type:analytics')
+        self.assertEqual(results.hits, 2, 'Old logs were not added')
+        old_uids = {doc['uid'] for doc in results.docs}
+
+        # Create logs timestamped for today
+        logs = [MockLog(log_type=type_) for type_ in ['analytics', 'redirect']]
+        parse_log(logs, self.test_solr)
+        results = solr.search(q='doc_type:analytics')
+        self.assertEqual(results.hits, 4, 'New logs were not added')
+        all_uids = {doc['uid'] for doc in results.docs}
+
+        # delete_old_analytics_docs is called after parse_logs in read_new_logs
+        # and has not been called yet. Call it now
+        delete_old_analytics_docs()
+        results = solr.search(q='doc_type:analytics')
+        self.assertEqual(results.hits, 2, 'Old logs were not deleted')
+        new_uids = {doc['uid'] for doc in results.docs}
+
+        # Ensure that the correct documents have been added/removed
+        # The old and new uid sets should be disjoint (no elements in common)
+        self.assertTrue(old_uids.isdisjoint(new_uids),
+                        'Sets are not disjoint; Intersecting elements: %s' %
+                        str(old_uids.intersection(new_uids)))
+        # Since the old and new uid sets have nothing in common, their union
+        # should equal the set of all uids
+        self.assertEqual(old_uids.union(new_uids),
+                         all_uids,
+                         'Sets are not equal; difference: %s' %
+                         str(old_uids.union(new_uids).symmetric_difference(
+                             all_uids)))

@@ -403,6 +403,21 @@ def parse_log(logs, solr_location):
                 solr.add(subset)
 
 
+@task(name="tasks.delete_old_analytics_docs")
+def delete_old_analytics_docs():
+    """
+    Deletes all analytics docs from the "current" collection that are older
+    than 30 days
+    """
+    if hasattr(mail, 'outbox'):
+        solr_location = settings.TEST_SOLR_INSTANCE['default']
+    else:
+        solr_location = settings.SOLR['current']
+
+    pysolr.Solr(solr_location).delete(
+        q="doc_type:analytics AND view_date:[* TO NOW/DAY-30DAYS]")
+
+
 @task(name="tasks.update_solr_from_log")
 def read_new_logs(solr_location=None):
     """
@@ -450,6 +465,8 @@ def read_new_logs(solr_location=None):
     parse_log(unprocessed, solr_location)
 
     settings.PROCESSED_LOGS = set([log.key for log in logs_to_process])
+
+    delete_old_analytics_docs.delay()
 
 
 @task(name='tasks.expire_jobs')
