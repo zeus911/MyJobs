@@ -210,6 +210,9 @@ class SolrTests(TestCase):
         business_unit = BusinessUnitFactory(id=1000)
         company.job_source_ids.add(business_unit)
 
+        # match and no_match will be used later to ensure that the correct
+        # number of documents were associated with a company or associated
+        # with the default company
         match = Mock(
             wraps=lambda: self.assertEqual(doc['company_id'], company.pk))
         no_match = Mock(
@@ -241,8 +244,11 @@ class SolrTests(TestCase):
 
             for doc in results.docs:
                 if doc['job_view_buid'] == business_unit.pk:
+                    # If business units match, company ids should match
                     match()
                 else:
+                    # Business units don't match; company id should be set to
+                    # the default company
                     no_match()
 
             solr.delete()
