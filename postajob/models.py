@@ -5,6 +5,8 @@ import urllib2
 from uuid import uuid4
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes import generic
 from django.db import models
 from django.db.models.signals import pre_delete
 
@@ -306,31 +308,49 @@ class Product(BaseModel):
                               (90, '90 Days'), (365, '1 Year'), ]
 
     help_text = {
-        'cost': 'How much this package should cost.',
-        'max_job_length': 'The maximum number of days a job can be posted for.',
+        'cost': 'How much this product should cost.',
+        'is_archived': '',
+        'is_displayed': 'Products should not show up in the online '
+                        'product lists.',
+        'max_job_length': 'Number of days each job may appear.',
         'num_jobs_allowed': 'The number of jobs that can be posted.',
         'posting_window_length': 'The number of days the customer has to '
                                  'post jobs.',
-        'site_package': 'The site package for this product.',
+        'requires_approval': 'Jobs posted will require administrator approval.'
     }
-    name = models.CharField(max_length=255, blank=True)
-    site_package = models.ForeignKey('SitePackage', null=True,
-                                     help_text=help_text['site_package'],
 
-                                     verbose_name='Site Package')
-    cost = models.DecimalField(max_digits=20, decimal_places=2,
-                               help_text=help_text['cost'])
+    package = generic.GenericForeignKey('package_content_type', 'package_id')
+    package_content_type = models.ForeignKey(ContentType)
+    package_id = models.PositiveIntegerField()
+
     owner = models.ForeignKey('mydashboard.Company')
+
+    name = models.CharField(max_length=255, blank=True)
+    cost = models.DecimalField(max_digits=20, decimal_places=2,
+                               verbose_name='Product Price',
+                               help_text=help_text['cost'])
     posting_window_length = models.IntegerField(default=30,
                                                 choices=posting_window_choices,
                                                 help_text=help_text['posting_window_length'],
-                                                verbose_name='Posting Window Length')
+                                                verbose_name='Posting Window Duration')
     max_job_length = models.IntegerField(default=30,
                                          choices=max_job_length_choices,
                                          help_text=help_text['max_job_length'],
-                                         verbose_name='Maximum Job Length')
+                                         verbose_name='Maximum Job Duration')
     num_jobs_allowed = models.IntegerField(default=5, help_text=help_text['num_jobs_allowed'],
                                            verbose_name='Number of Jobs')
+
+    description = models.TextField(verbose_name='Product Description')
+    featured = models.BooleanField(default=False)
+    requires_approval = models.BooleanField(help_text=help_text['requires_approval'],
+                                            verbose_name='Requires Approval',
+                                            default=True)
+
+    is_archived = models.BooleanField(help_text=help_text['is_archived'],
+                                      verbose_name='Archived', default=False)
+    is_displayed = models.BooleanField(help_text=help_text['is_displayed'],
+                                       verbose_name='Displayed', default=False)
+    notes = models.TextField(blank=True)
 
     def __unicode__(self):
         return self.name
@@ -348,10 +368,22 @@ class PurchasedProduct(BaseModel):
 
 
 class ProductGrouping(BaseModel):
-    products = models.ManyToManyField('Product', null=True)
-    score = models.IntegerField(default=0)
-    grouping_name = models.CharField(max_length=255)
+    class Meta:
+        ordering = ['display_order']
+
+    products = models.ManyToManyField('Product', null=True,
+                                      through='ProductOrder')
+    display_order = models.IntegerField(default=0)
+    display_title = models.CharField(max_length=255)
+    explanation = models.TextField()
+    name = models.CharField(max_length=255)
     owner = models.ForeignKey('mydashboard.Company')
 
     def __unicode__(self):
         return self.grouping_name
+
+
+class ProductOrder(models.Model):
+    product = models.ForeignKey('Product')
+    group = models.ForeignKey('ProductGrouping')
+    display_order = models.PositiveIntegerField()
