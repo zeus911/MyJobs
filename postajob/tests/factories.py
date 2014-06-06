@@ -9,7 +9,7 @@ class JobFactory(factory.Factory):
     FACTORY_FOR = Job
 
     title = 'Job Title'
-    company = factory.SubFactory(CompanyFactory)
+    owner = factory.SubFactory(CompanyFactory)
     reqid = 1
     description = 'The job description.'
     apply_link = 'www.google.com'

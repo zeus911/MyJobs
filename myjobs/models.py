@@ -302,6 +302,23 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         return gravatar_url
 
+    def get_companies(self):
+        """
+        Returns a QuerySet of all the Companies a User has access to.
+
+        """
+        from mydashboard.models import Company
+        return Company.objects.filter(admins=self).distinct()
+
+    def get_sites(self):
+        """
+        Returns a QuerySet of all the SeoSites a User has access to.
+
+        """
+        from mydashboard.models import SeoSite
+        kwargs = {'business_units__company__admins': self}
+        return SeoSite.objects.filter(**kwargs).distinct()
+
     def disable(self):
         self.is_active = False
         self.is_disabled = True

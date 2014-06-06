@@ -52,6 +52,13 @@ class Company(models.Model):
         microsites = SeoSite.objects.filter(business_units__in=buids)
         return microsites
 
+    def user_has_access(self, user):
+        """
+        In order for a user to have access they must be a CompanyUser
+        for the Company.
+        """
+        return user in self.admins.all()
+
 
 class SeoSite(Site):
     business_units = models.ManyToManyField('BusinessUnit', null=True,
@@ -66,6 +73,23 @@ class SeoSite(Site):
         db_table = 'seo_seosite'
         verbose_name = 'seo site'
         verbose_name_plural = 'seo sites'
+
+    def user_has_access(self, user):
+        """
+        In order for a user to have access they must be a CompanyUser
+        for the Company that owns the SeoSite.
+        """
+        site_buids = self.business_units.all()
+        companies = Company.objects.filter(job_source_ids__in=site_buids)
+        user_companies = user.get_companies()
+        for company in companies:
+            if company not in user_companies:
+                return False
+        return True
+
+    def get_companies(self):
+        site_buids = self.business_units.all()
+        return Company.objects.filter(job_source_ids__in=site_buids).distinct()
 
 
 class ViewSource(models.Model):
@@ -89,22 +113,6 @@ class BusinessUnit(models.Model):
 
     class Meta:
         db_table = 'seo_businessunit'
-
-
-class CandidateEvent(models.Model):
-    """
-    Something happened! This log tracks job views and saved searches.
-
-    """
-    who = models.ForeignKey(User)
-    whom = models.ForeignKey(Company)
-    what = models.CharField(max_length=255)
-    where = models.URLField(max_length=300)
-    when = models.DateTimeField(auto_now=True)
-
-
-class DashboardModule(models.Model):
-    company = models.ForeignKey(Company)
 
 
 class CompanyUser(models.Model):

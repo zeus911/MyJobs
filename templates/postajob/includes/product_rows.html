@@ -1,0 +1,16 @@
+{% load postajob_tags %}
+
+<tbody id="product-jobs">
+    {% if products %}
+    {% for product in products %}
+        <tr class="product-tr" onclick="window.document.location='{% url 'product_update' pk=product.pk %}';">
+            <td class="product-name">{{ product.name }}</td>
+            <td class="product-package">{{ product.site_package }}</td>
+        </tr>
+    {% endfor %}
+    {% else %}
+    <tr>
+        <td colspan=2>You currently have no products.</td>
+    </tr>
+    {% endif %}
+</tbody>

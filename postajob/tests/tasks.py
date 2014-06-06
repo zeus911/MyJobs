@@ -14,7 +14,7 @@ class TaskTests(TestCase):
         self.company = CompanyFactory()
         self.job_data = {
             'title': 'title',
-            'company': self.company,
+            'owner': self.company,
             'description': 'sadfljasdfljasdflasdfj',
             'apply_link': 'www.google.com',
             'city': 'Indianapolis',

@@ -36,7 +36,7 @@ class ViewTests(TestCase):
             'description': 'Description',
             'title': 'Job Form Data Title',
             'country': 'United States of America',
-            'company': str(self.company.pk),
+            'owner': str(self.company.pk),
             'reqid': '123456',
             'apply_info': '',
             'zipcode': '46268',
@@ -58,28 +58,29 @@ class ViewTests(TestCase):
                              'action': 'login',
                          })
 
-    def test_postajob_access_not_company_user(self):
+    def test_job_access_not_company_user(self):
         self.company_user.delete()
 
         response = self.client.post(reverse('jobs_overview'))
-        self.assertRedirects(response, 'http://testserver/?next=/postajob/jobs',
+        expected = 'http://testserver/?next=/postajob/jobs/'
+        self.assertRedirects(response, expected,
                              status_code=302)
         response = self.client.post(reverse('job_add'))
         self.assertRedirects(response,
-                             'http://testserver/?next=/postajob/job/add',
+                             'http://testserver/?next=/postajob/job/add/',
                              status_code=302)
         response = self.client.post(reverse('job_delete', kwargs={'pk': 1}))
-        expected = 'http://testserver/?next=/job/postajob/delete/1'
+        expected = 'http://testserver/?next=/postajob/job/delete/1/'
         self.assertRedirects(response, expected, status_code=302)
         response = self.client.post(reverse('job_update', kwargs={'pk': 1}))
-        expected = 'http://testserver/?next=/job/postajob/update/1'
+        expected = 'http://testserver/?next=/postajob/job/update/1/'
         self.assertRedirects(response, expected, status_code=302)
 
     @patch('urllib2.urlopen')
-    def test_postajob_access_job_not_for_company(self, urlopen_mock):
+    def test_job_access_not_for_company(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('')
         new_company = CompanyFactory(name='Another Company', pk=1000)
-        job = JobFactory(company=new_company)
+        job = JobFactory(owner=new_company)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
@@ -91,15 +92,19 @@ class ViewTests(TestCase):
         self.assertEqual(Job.objects.all().count(), 1)
 
     @patch('urllib2.urlopen')
-    def test_postajob_access_allowed(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
-        job = JobFactory(company=self.company)
+    def test_job_access_allowed(self, urlopen_mock):
+        mock_obj = Mock()
+        mock_obj.read.side_effect = self.side_effect
+        urlopen_mock.return_value = mock_obj
+        job = JobFactory(owner=self.company)
         kwargs = {'pk': job.pk}
 
-        response = self.client.post(reverse('job_update', kwargs=kwargs))
-        self.assertEqual(response.status_code, 200)
+        response = self.client.post(reverse('job_update', kwargs=kwargs),
+                                    data=self.job_form_data)
+        self.assertRedirects(response, 'http://testserver/postajob/jobs/',
+                             status_code=302)
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
-        self.assertRedirects(response, 'http://testserver/postajob/jobs',
+        self.assertRedirects(response, 'http://testserver/postajob/jobs/',
                              status_code=302)
 
     @patch('urllib2.urlopen')
@@ -117,7 +122,7 @@ class ViewTests(TestCase):
         mock_obj = Mock()
         mock_obj.read.side_effect = self.side_effect
         urlopen_mock.return_value = mock_obj
-        job = JobFactory(company=self.company)
+        job = JobFactory(owner=self.company)
         kwargs = {'pk': job.pk}
 
         self.assertNotEqual(job.title, self.job_form_data['title'])
@@ -132,7 +137,7 @@ class ViewTests(TestCase):
     @patch('urllib2.urlopen')
     def test_job_delete(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('')
-        job = JobFactory(company=self.company)
+        job = JobFactory(owner=self.company)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
@@ -149,7 +154,7 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         job = Job.objects.get()
         self.assertItemsEqual(job.site_packages.all(),
-                              [job.company.site_package])
+                              [job.owner.site_package])
 
     @patch('urllib2.urlopen')
     def test_job_add_site(self, urlopen_mock):
@@ -167,7 +172,7 @@ class ViewTests(TestCase):
         self.assertEqual(Job.objects.all().count(), 1)
         job = Job.objects.get()
         # The company site_package should've never been created
-        self.assertIsNone(job.company.site_package)
+        self.assertIsNone(job.owner.site_package)
         # The site_package we created for the site should be
         # the package that shows up on the job.
         self.assertIn(package.pk,

@@ -24,7 +24,7 @@ class ModelTests(TestCase):
 
         self.job_data = {
             'title': 'title',
-            'company': self.company,
+            'owner': self.company,
             'reqid': '1',
             'description': 'sadfljasdfljasdflasdfj',
             'apply_link': 'www.google.com',

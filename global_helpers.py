@@ -1,5 +1,7 @@
 import re
 
+from mydashboard.models import Company
+
 
 def get_int_or_none(string):
     try:
@@ -46,3 +48,21 @@ def sequence_to_dict(from_):
         Dictionary created from the input sequence
     """
     return dict(zip(*[iter(from_)]*2))
+
+
+def get_company(request):
+    """
+    Uses the myjobs_company cookie to determine what the current company is.
+
+    """
+    company = request.COOKIES.get('myjobs_company')
+    # If the company cookie isn't set, then the user should have
+    # only one company, so use that one.
+    if company:
+        company = Company.objects.get(pk=company)
+    else:
+        try:
+            company = request.user.companyuser_set.all()[0].company
+        except IndexError:
+            company = None
+    return company

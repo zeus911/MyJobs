@@ -9,7 +9,19 @@ from django.db import models
 from django.db.models.signals import pre_delete
 
 
-class Job(models.Model):
+class BaseModel(models.Model):
+    class Meta:
+        abstract = True
+
+    def user_has_access(self, user):
+        """
+        In order for a user to have access they must be a company user
+        for the Company that owns the object.
+        """
+        return user in self.owner.admins.all()
+
+
+class Job(BaseModel):
     help_text = {
         'apply_email': 'The email address where candidates should send their '
                        'application.',
@@ -33,12 +45,10 @@ class Job(models.Model):
         'title': 'The title of the job as you want it to appear.',
         'zipcode': 'The zipcode of the job location.',
     }
-
-    id = models.AutoField(primary_key=True, unique=True)
     guid = models.CharField(max_length=255, unique=True)
 
     title = models.CharField(max_length=255, help_text=help_text['title'])
-    company = models.ForeignKey('mydashboard.Company')
+    owner = models.ForeignKey('mydashboard.Company')
     reqid = models.CharField(max_length=50, verbose_name="Requisition ID",
                              help_text=help_text['reqid'], blank=True)
     description = models.TextField(help_text=help_text['description'])
@@ -72,7 +82,7 @@ class Job(models.Model):
                                     help_text=help_text['autorenew'])
 
     def __unicode__(self):
-        return '{company} - {title}'.format(company=self.company.name,
+        return '{company} - {title}'.format(company=self.owner.name,
                                             title=self.title)
 
     def solr_dict(self):
@@ -91,7 +101,7 @@ class Job(models.Model):
         job = {
             'id': self.id,
             'city': self.city,
-            'company': self.company.id,
+            'company': self.owner.id,
             'country': self.country,
             'country_short': self.country_short,
             # Microsites expects date format '%Y-%m-%d %H:%M:%S.%f' or
@@ -216,12 +226,47 @@ pre_delete.connect(on_delete, sender=Job)
 pre_delete.connect(on_delete, sender=PurchasedJob)
 
 
-class SitePackage(models.Model):
+class SitePackageManager(models.Manager):
+    def user_available(self):
+        """
+        Filters out all Company- and SeoSite-specific SitePackages which
+        should never be available for use by the user.
+        """
+        kwargs = {
+            'seosite__isnull': True,
+            'company__isnull': True,
+        }
+        return self.filter(**kwargs)
+
+
+class SitePackage(BaseModel):
     name = models.CharField(max_length=255)
     sites = models.ManyToManyField('mydashboard.SeoSite', null=True)
+    owner = models.ForeignKey('mydashboard.Company', null=True, blank=True,
+                              help_text='The owner of this site package. '
+                                        'This should only be used if the '
+                                        'site package will be used by '
+                                        'the company for partner microsites.')
+    objects = SitePackageManager()
 
     def __unicode__(self):
         return self.name
+
+    def user_has_access(self, user):
+        """
+        The base user_has_access() is not sufficient in situations where
+        no owner Company has been specified.
+
+        """
+        if self.owner:
+            return super(SitePackage, self).user_has_access(user)
+        else:
+            user_companies = user.get_companies()
+            for site in self.sites.all():
+                for company in site.get_companies():
+                    if company not in user_companies:
+                        return False
+        return True
 
     def make_unique_for_site(self, seo_site):
         """
@@ -254,7 +299,7 @@ class SitePackage(models.Model):
         self.save()
 
 
-class Product(models.Model):
+class Product(BaseModel):
     posting_window_choices = [(30, '30 Days'), (60, '60 Days'),
                               (90, '90 Days'), (365, '1 Year'), ]
     max_job_length_choices = [(15, '15 Days'), (30, '30 Days'), (60, '60 Days'),
@@ -263,23 +308,35 @@ class Product(models.Model):
     help_text = {
         'cost': 'How much this package should cost.',
         'max_job_length': 'The maximum number of days a job can be posted for.',
+        'num_jobs_allowed': 'The number of jobs that can be posted.',
         'posting_window_length': 'The number of days the customer has to '
                                  'post jobs.',
         'site_package': 'The site package for this product.',
     }
+    name = models.CharField(max_length=255, blank=True)
+    site_package = models.ForeignKey('SitePackage', null=True,
+                                     help_text=help_text['site_package'],
 
-    site_package = models.ForeignKey('SitePackage', null=True)
-    cost = models.DecimalField(max_digits=20, decimal_places=2)
+                                     verbose_name='Site Package')
+    cost = models.DecimalField(max_digits=20, decimal_places=2,
+                               help_text=help_text['cost'])
     owner = models.ForeignKey('mydashboard.Company')
     posting_window_length = models.IntegerField(default=30,
-                                                choices=posting_window_choices)
+                                                choices=posting_window_choices,
+                                                help_text=help_text['posting_window_length'],
+                                                verbose_name='Posting Window Length')
     max_job_length = models.IntegerField(default=30,
-                                         choices=max_job_length_choices)
+                                         choices=max_job_length_choices,
+                                         help_text=help_text['max_job_length'],
+                                         verbose_name='Maximum Job Length')
+    num_jobs_allowed = models.IntegerField(default=5, help_text=help_text['num_jobs_allowed'],
+                                           verbose_name='Number of Jobs')
 
-    num_jobs_allowed = models.IntegerField(default=5)
+    def __unicode__(self):
+        return self.name
 
 
-class PurchasedProduct(models.Model):
+class PurchasedProduct(BaseModel):
     product = models.ForeignKey('Product')
     owner = models.ForeignKey('mydashboard.Company')
     purchase_date = models.DateField(auto_now_add=True)
@@ -290,7 +347,11 @@ class PurchasedProduct(models.Model):
         return jobs_allowed - current_jobs.count()
 
 
-class ProductGrouping(models.Model):
+class ProductGrouping(BaseModel):
     products = models.ManyToManyField('Product', null=True)
     score = models.IntegerField(default=0)
     grouping_name = models.CharField(max_length=255)
+    owner = models.ForeignKey('mydashboard.Company')
+
+    def __unicode__(self):
+        return self.grouping_name
