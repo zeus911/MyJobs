@@ -21,6 +21,11 @@ class Migration(SchemaMigration):
         # Deleting field 'Job.company'
         db.rename_column(u'postajob_job', 'company_id', 'owner_id')
 
+        # Adding field 'Product.name'
+        db.add_column(u'postajob_product', 'name',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
+                      keep_default=False)
+
     def backwards(self, orm):
         # Deleting field 'ProductGrouping.owner'
         db.delete_column(u'postajob_productgrouping', 'owner_id')
@@ -31,6 +36,8 @@ class Migration(SchemaMigration):
         # Renaming field 'Job.owner'
         db.rename_column(u'postajob_job', 'company_id', 'owner_id')
 
+        # Deleting field 'Product.name'
+        db.delete_column(u'postajob_product', 'name')
 
     models = {
         u'auth.group': {
@@ -142,6 +149,7 @@ class Migration(SchemaMigration):
             'cost': ('django.db.models.fields.DecimalField', [], {'max_digits': '20', 'decimal_places': '2'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'max_job_length': ('django.db.models.fields.IntegerField', [], {'default': '30'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'num_jobs_allowed': ('django.db.models.fields.IntegerField', [], {'default': '5'}),
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
             'posting_window_length': ('django.db.models.fields.IntegerField', [], {'default': '30'}),
