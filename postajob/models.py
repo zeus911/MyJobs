@@ -6,7 +6,6 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
 from django.db import models
 from django.db.models.signals import pre_delete
 
@@ -137,7 +136,10 @@ class Job(BaseModel):
             'jobs': json.dumps([job])
         })
         request = urllib2.Request(settings.POSTAJOB_URLS['post'], data)
-        urllib2.urlopen(request).read()
+        try:
+            urllib2.urlopen(request).read()
+        except Exception, e:
+            print e.read()
 
     def save(self, **kwargs):
         self.generate_guid()
@@ -228,6 +230,14 @@ pre_delete.connect(on_delete, sender=Job)
 pre_delete.connect(on_delete, sender=PurchasedJob)
 
 
+class Package(BaseModel):
+    name = models.CharField(max_length=255)
+    content_type = models.ForeignKey(ContentType)
+
+    def __unicode__(self):
+        return self.name
+
+
 class SitePackageManager(models.Manager):
     def user_available(self):
         """
@@ -241,8 +251,7 @@ class SitePackageManager(models.Manager):
         return self.filter(**kwargs)
 
 
-class SitePackage(BaseModel):
-    name = models.CharField(max_length=255)
+class SitePackage(Package):
     sites = models.ManyToManyField('mydashboard.SeoSite', null=True)
     owner = models.ForeignKey('mydashboard.Company', null=True, blank=True,
                               help_text='The owner of this site package. '
@@ -251,8 +260,8 @@ class SitePackage(BaseModel):
                                         'the company for partner microsites.')
     objects = SitePackageManager()
 
-    def __unicode__(self):
-        return self.name
+    def get_model_name(self):
+        return self.__class__.__name__
 
     def user_has_access(self, user):
         """
@@ -301,61 +310,6 @@ class SitePackage(BaseModel):
         self.save()
 
 
-class Product(BaseModel):
-    posting_window_choices = [(30, '30 Days'), (60, '60 Days'),
-                              (90, '90 Days'), (365, '1 Year'), ]
-    max_job_length_choices = [(15, '15 Days'), (30, '30 Days'), (60, '60 Days'),
-                              (90, '90 Days'), (365, '1 Year'), ]
-
-    help_text = {
-        'cost': 'How much this product should cost.',
-        'is_archived': '',
-        'is_displayed': 'Products should not show up in the online '
-                        'product lists.',
-        'max_job_length': 'Number of days each job may appear.',
-        'num_jobs_allowed': 'The number of jobs that can be posted.',
-        'posting_window_length': 'The number of days the customer has to '
-                                 'post jobs.',
-        'requires_approval': 'Jobs posted will require administrator approval.'
-    }
-
-    package = generic.GenericForeignKey('package_content_type', 'package_id')
-    package_content_type = models.ForeignKey(ContentType)
-    package_id = models.PositiveIntegerField()
-
-    owner = models.ForeignKey('mydashboard.Company')
-
-    name = models.CharField(max_length=255, blank=True)
-    cost = models.DecimalField(max_digits=20, decimal_places=2,
-                               verbose_name='Product Price',
-                               help_text=help_text['cost'])
-    posting_window_length = models.IntegerField(default=30,
-                                                choices=posting_window_choices,
-                                                help_text=help_text['posting_window_length'],
-                                                verbose_name='Posting Window Duration')
-    max_job_length = models.IntegerField(default=30,
-                                         choices=max_job_length_choices,
-                                         help_text=help_text['max_job_length'],
-                                         verbose_name='Maximum Job Duration')
-    num_jobs_allowed = models.IntegerField(default=5, help_text=help_text['num_jobs_allowed'],
-                                           verbose_name='Number of Jobs')
-
-    description = models.TextField(verbose_name='Product Description')
-    featured = models.BooleanField(default=False)
-    requires_approval = models.BooleanField(help_text=help_text['requires_approval'],
-                                            verbose_name='Requires Approval',
-                                            default=True)
-
-    is_archived = models.BooleanField(help_text=help_text['is_archived'],
-                                      verbose_name='Archived', default=False)
-    is_displayed = models.BooleanField(help_text=help_text['is_displayed'],
-                                       verbose_name='Displayed', default=False)
-    notes = models.TextField(blank=True)
-
-    def __unicode__(self):
-        return self.name
-
-
 class PurchasedProduct(BaseModel):
     product = models.ForeignKey('Product')
     owner = models.ForeignKey('mydashboard.Company')
@@ -387,3 +341,56 @@ class ProductOrder(models.Model):
     product = models.ForeignKey('Product')
     group = models.ForeignKey('ProductGrouping')
     display_order = models.PositiveIntegerField()
+
+
+class Product(BaseModel):
+    package_models = (SitePackage, )
+    posting_window_choices = ((30, '30 Days'), (60, '60 Days'),
+                              (90, '90 Days'), (365, '1 Year'), )
+    max_job_length_choices = ((15, '15 Days'), (30, '30 Days'), (60, '60 Days'),
+                              (90, '90 Days'), (365, '1 Year'), )
+
+    help_text = {
+        'cost': 'How much this product should cost.',
+        'is_archived': '',
+        'is_displayed': 'Products should not show up in the online '
+                        'product lists.',
+        'max_job_length': 'Number of days each job may appear.',
+        'num_jobs_allowed': 'The number of jobs that can be posted.',
+        'posting_window_length': 'The number of days the customer has to '
+                                 'post jobs.',
+        'requires_approval': 'Jobs posted will require administrator approval.'
+    }
+
+    package = models.ForeignKey('Package')
+    owner = models.ForeignKey('mydashboard.Company')
+
+    name = models.CharField(max_length=255, blank=True)
+    cost = models.DecimalField(max_digits=20, decimal_places=2,
+                               verbose_name='Product Price',
+                               help_text=help_text['cost'])
+    posting_window_length = models.IntegerField(default=30,
+                                                choices=posting_window_choices,
+                                                help_text=help_text['posting_window_length'],
+                                                verbose_name='Posting Window Duration')
+    max_job_length = models.IntegerField(default=30,
+                                         choices=max_job_length_choices,
+                                         help_text=help_text['max_job_length'],
+                                         verbose_name='Maximum Job Duration')
+    num_jobs_allowed = models.IntegerField(default=5, help_text=help_text['num_jobs_allowed'],
+                                           verbose_name='Number of Jobs')
+
+    description = models.TextField(verbose_name='Product Description')
+    featured = models.BooleanField(default=False)
+    requires_approval = models.BooleanField(help_text=help_text['requires_approval'],
+                                            verbose_name='Requires Approval',
+                                            default=True)
+
+    is_archived = models.BooleanField(help_text=help_text['is_archived'],
+                                      verbose_name='Archived', default=False)
+    is_displayed = models.BooleanField(help_text=help_text['is_displayed'],
+                                       verbose_name='Displayed', default=False)
+    notes = models.TextField(blank=True)
+
+    def __unicode__(self):
+        return self.name

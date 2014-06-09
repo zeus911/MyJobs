@@ -2,9 +2,9 @@ from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
-from django.forms import (CharField, CheckboxSelectMultiple, HiddenInput,
-                          ModelForm, ModelMultipleChoiceField, RadioSelect,
-                          Select, TextInput)
+from django.forms import (CharField, CheckboxSelectMultiple, ChoiceField,
+                          HiddenInput, ModelForm, ModelMultipleChoiceField,
+                          RadioSelect, Select, TextInput)
 
 from global_helpers import get_company
 from mydashboard.models import SeoSite
@@ -239,15 +239,11 @@ class ProductForm(ModelForm):
                   'posting_window_length', 'max_job_length',
                   'num_jobs_allowed', )
 
-    package_widget = Select()
-    package = CharField(SitePackage.objects.all(),
-                        label="Packages",
-                        widget=package_widget)
-
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         self.company = get_company(self.request)
         super(ProductForm, self).__init__(*args, **kwargs)
+        print self.fields['package'].queryset
         if not self.request.user.is_superuser:
             # Update querysets based on what the user should have
             # access to.

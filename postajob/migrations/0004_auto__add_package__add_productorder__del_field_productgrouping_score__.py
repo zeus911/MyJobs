@@ -8,6 +8,24 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        try:
+            db.delete_foreign_key('postajob_job_site_packages', 'sitepackage_id')
+            db.delete_foreign_key('postajob_sitepackage_sites', 'sitepackage_id')
+            db.delete_foreign_key('postajob_product', 'site_package_id')
+        except Exception, e:
+            print e
+            exit()
+        db.execute('ALTER TABLE postajob_sitepackage CHANGE id id INT(10) UNSIGNED NOT NULL')
+        db.delete_primary_key('postajob_sitepackage')
+
+        # Adding model 'Package'
+        db.create_table(u'postajob_package', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('content_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['contenttypes.ContentType'])),
+        ))
+        db.send_create_signal(u'postajob', ['Package'])
+
         # Adding model 'ProductOrder'
         db.create_table(u'postajob_productorder', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -54,14 +72,9 @@ class Migration(SchemaMigration):
         # Deleting field 'Product.site_package'
         db.delete_column(u'postajob_product', 'site_package_id')
 
-        # Adding field 'Product.package_content_type'
-        db.add_column(u'postajob_product', 'package_content_type',
-                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['contenttypes.ContentType']),
-                      keep_default=False)
-
-        # Adding field 'Product.package_id'
-        db.add_column(u'postajob_product', 'package_id',
-                      self.gf('django.db.models.fields.PositiveIntegerField')(default=1),
+        # Adding field 'Product.package'
+        db.add_column(u'postajob_product', 'package',
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['postajob.Package']),
                       keep_default=False)
 
         # Adding field 'Product.name'
@@ -99,6 +112,14 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.TextField')(default='', blank=True),
                       keep_default=False)
 
+        # Deleting field 'SitePackage.name'
+        db.delete_column(u'postajob_sitepackage', 'name')
+
+        # Adding field 'SitePackage.package_ptr'
+        db.add_column(u'postajob_sitepackage', u'package_ptr',
+                      self.gf('django.db.models.fields.related.OneToOneField')(default=1, to=orm['postajob.Package'], unique=True, primary_key=True),
+                      keep_default=False)
+
         # Adding field 'SitePackage.owner'
         db.add_column(u'postajob_sitepackage', 'owner',
                       self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mydashboard.Company'], null=True, blank=True),
@@ -114,6 +135,9 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
+        # Deleting model 'Package'
+        db.delete_table(u'postajob_package')
+
         # Deleting model 'ProductOrder'
         db.delete_table(u'postajob_productorder')
 
@@ -153,10 +177,7 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.related.ForeignKey')(to=orm['postajob.SitePackage'], null=True),
                       keep_default=False)
 
-        # Deleting field 'Product.package_content_type'
-        db.delete_column(u'postajob_product', 'package_content_type_id')
-
-        # Deleting field 'Product.package_id'
+        # Deleting field 'Product.package'
         db.delete_column(u'postajob_product', 'package_id')
 
         # Deleting field 'Product.name'
@@ -180,12 +201,22 @@ class Migration(SchemaMigration):
         # Deleting field 'Product.notes'
         db.delete_column(u'postajob_product', 'notes')
 
+        # Adding field 'SitePackage.name'
+        db.add_column(u'postajob_sitepackage', 'name',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
+                      keep_default=False)
+
+        # Deleting field 'SitePackage.package_ptr'
+        db.delete_column(u'postajob_sitepackage', u'package_ptr_id')
+
         # Deleting field 'SitePackage.owner'
         db.delete_column(u'postajob_sitepackage', 'owner_id')
 
+        # Adding field 'Job.company'
+        db.add_column(u'postajob_job', 'company',
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['mydashboard.Company']),
+                      keep_default=False)
 
-        # User chose to not deal with backwards NULL issues for 'Job.company'
-        raise RuntimeError("Cannot reverse this migration. 'Job.company' and its values cannot be restored.")
         # Deleting field 'Job.owner'
         db.delete_column(u'postajob_job', 'owner_id')
 
@@ -295,6 +326,12 @@ class Migration(SchemaMigration):
             'title': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'zipcode': ('django.db.models.fields.CharField', [], {'max_length': '15', 'blank': 'True'})
         },
+        u'postajob.package': {
+            'Meta': {'object_name': 'Package'},
+            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'})
+        },
         u'postajob.product': {
             'Meta': {'object_name': 'Product'},
             'cost': ('django.db.models.fields.DecimalField', [], {'max_digits': '20', 'decimal_places': '2'}),
@@ -308,8 +345,7 @@ class Migration(SchemaMigration):
             'notes': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'num_jobs_allowed': ('django.db.models.fields.IntegerField', [], {'default': '5'}),
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
-            'package_content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
-            'package_id': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'package': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.Package']"}),
             'posting_window_length': ('django.db.models.fields.IntegerField', [], {'default': '30'}),
             'requires_approval': ('django.db.models.fields.BooleanField', [], {'default': 'True'})
         },
@@ -345,10 +381,9 @@ class Migration(SchemaMigration):
             'purchase_date': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'})
         },
         u'postajob.sitepackage': {
-            'Meta': {'object_name': 'SitePackage'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'Meta': {'object_name': 'SitePackage', '_ormbases': [u'postajob.Package']},
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']", 'null': 'True', 'blank': 'True'}),
+            u'package_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['postajob.Package']", 'unique': 'True', 'primary_key': 'True'}),
             'sites': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['mydashboard.SeoSite']", 'null': 'True', 'symmetrical': 'False'})
         },
         u'sites.site': {
