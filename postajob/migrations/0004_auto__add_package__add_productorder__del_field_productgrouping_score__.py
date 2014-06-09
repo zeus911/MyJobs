@@ -2,20 +2,18 @@
 import datetime
 from south.db import db
 from south.v2 import SchemaMigration
+from django.conf import settings
 from django.db import models
 
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        try:
+        if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
             db.delete_foreign_key('postajob_job_site_packages', 'sitepackage_id')
             db.delete_foreign_key('postajob_sitepackage_sites', 'sitepackage_id')
             db.delete_foreign_key('postajob_product', 'site_package_id')
-        except Exception, e:
-            print e
-            exit()
-        db.execute('ALTER TABLE postajob_sitepackage CHANGE id id INT(10) UNSIGNED NOT NULL')
+            db.execute('ALTER TABLE postajob_sitepackage CHANGE id id INT(10) UNSIGNED NOT NULL')
         db.delete_primary_key('postajob_sitepackage')
 
         # Adding model 'Package'

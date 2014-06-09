@@ -2,14 +2,15 @@ from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
-from django.forms import (CharField, CheckboxSelectMultiple, ChoiceField,
+from django.forms import (CharField, CheckboxSelectMultiple,
                           HiddenInput, ModelForm, ModelMultipleChoiceField,
                           RadioSelect, Select, TextInput)
 
 from global_helpers import get_company
 from mydashboard.models import SeoSite
 from mypartners.widgets import SplitDateDropDownField
-from postajob.models import (Job, Product, ProductGrouping, SitePackage)
+from postajob.models import (Job, Package, Product, ProductGrouping,
+                             SitePackage)
 
 
 class JobForm(ModelForm):
@@ -143,17 +144,15 @@ class JobForm(ModelForm):
         """
         if self.cleaned_data.get('post_to') == 'network':
             company = self.cleaned_data.get('owner', self.company)
-
-            if not hasattr(company, 'site_package'):
+            if not hasattr(company, 'site_package') or not company.site_package:
                 package = SitePackage()
                 package.make_unique_for_company(company)
             site_packages = [company.site_package]
-
         else:
             sites = self.cleaned_data.get('site_packages')
             site_packages = []
             for site in sites:
-                if not site.site_package:
+                if not hasattr(site, 'site_package') or not site.site_package:
                     # If a site doesn't already have a site_package specific
                     # to it create one.
                     package = SitePackage(name=site.domain)
@@ -212,6 +211,7 @@ class JobForm(ModelForm):
 class SitePackageForm(ModelForm):
     class Meta:
         model = SitePackage
+        fields = ('name', 'sites', 'owner', )
 
     sites_widget = admin.widgets.FilteredSelectMultiple('Sites', False)
     sites = ModelMultipleChoiceField(SeoSite.objects.all(),
@@ -243,7 +243,7 @@ class ProductForm(ModelForm):
         self.request = kwargs.pop('request', None)
         self.company = get_company(self.request)
         super(ProductForm, self).__init__(*args, **kwargs)
-        print self.fields['package'].queryset
+
         if not self.request.user.is_superuser:
             # Update querysets based on what the user should have
             # access to.
@@ -252,17 +252,16 @@ class ProductForm(ModelForm):
                 # Owner. Based on myjobs_company cookie.
                 self.fields['owner'].widget = HiddenInput()
                 self.initial['owner'] = self.company
+
+                self.fields['package'].queryset = \
+                    Package.objects.user_available().filter_company([self.company])
             else:
                 # Owner
                 self.fields['owner'].queryset = user_companies
+                self.fields['package'].queryset = \
+                    Package.objects.user_available().filter_company(user_companies)
 
     def save(self, commit=True):
-        package = self.cleaned_data.get('package')
-        print package
-        print package.__class__
-        ct = ContentType.objects.get_for_model(package.__class__)
-        self.instance.content_type = ct
-        self.instance.package_id = package.pk
         return super(ProductForm, self).save(commit)
 
 
@@ -275,10 +274,7 @@ class ProductGroupingForm(ModelForm):
             'all': ('postajob.153-10.css', )
         }
 
-    products_widget = CheckboxSelectMultiple()
-    products = CharField(Product.objects.all(),
-                         label="Products",
-                         widget=products_widget)
+
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)

@@ -167,8 +167,9 @@ class ModelTests(TestCase):
     def create_purchased_job(self, pk=None):
         if not hasattr(self, 'package'):
             self.package = SitePackage.objects.create(**self.site_package_data)
+
         if not hasattr(self, 'product'):
-            self.product = Product.objects.create(site_package=self.package,
+            self.product = Product.objects.create(package=self.package,
                                                   cost='100.00',
                                                   owner=self.company)
         if not hasattr(self, 'purchased_product'):

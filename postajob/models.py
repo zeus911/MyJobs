@@ -1,5 +1,6 @@
 import datetime
 import json
+import operator
 from urllib import urlencode
 import urllib2
 from uuid import uuid4
@@ -7,6 +8,7 @@ from uuid import uuid4
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models.query import QuerySet
 from django.db.models.signals import pre_delete
 
 
@@ -136,10 +138,7 @@ class Job(BaseModel):
             'jobs': json.dumps([job])
         })
         request = urllib2.Request(settings.POSTAJOB_URLS['post'], data)
-        try:
-            urllib2.urlopen(request).read()
-        except Exception, e:
-            print e.read()
+        urllib2.urlopen(request).read()
 
     def save(self, **kwargs):
         self.generate_guid()
@@ -210,7 +209,7 @@ class PurchasedJob(Job):
 
     def save(self, **kwargs):
         super(PurchasedJob, self).save(**kwargs)
-        self.site_packages = [self.purchased_product.product.site_package]
+        self.site_packages = [self.purchased_product.product.package]
 
     def add_to_solr(self):
         if not self.is_approved:
@@ -230,35 +229,102 @@ pre_delete.connect(on_delete, sender=Job)
 pre_delete.connect(on_delete, sender=PurchasedJob)
 
 
-class Package(BaseModel):
+class PackageMixin(object):
+    def user_available(self):
+        """
+        Filters out anything that shouldn't be available to the user.
+        Right now this is just handling SeoSite- and Company-specific
+        SitePackages.
+
+        In the future, as more models inherit off of Package,
+        this will need to handle more subclasses better.
+
+        """
+        sitepackage_kwargs = {
+            'sitepackage__isnull': False,
+            'sitepackage__seosite__isnull': True,
+            'sitepackage__company__isnull': True,
+        }
+        return self.filter(**sitepackage_kwargs)
+
+    def filter_company(self, company_list):
+        attributes = Package.get_related_attributes()
+        key = '{field}__owner_id'
+        q_list = []
+        for company in company_list:
+            [q_list.append(models.Q(**{key.format(field=attribute): company.id}))
+             for attribute in attributes]
+        result = self.filter(reduce(operator.or_, q_list))
+        return result
+
+
+class PackageQuerySet(QuerySet, PackageMixin):
+    pass
+
+
+class PackageManager(models.Manager, PackageMixin):
+    def get_query_set(self):
+        return PackageQuerySet(self.model, using=self._db)
+
+
+class Package(models.Model):
     name = models.CharField(max_length=255)
     content_type = models.ForeignKey(ContentType)
+    # There is also code that makes the assumption that the owner field
+    # exists. Because SitePackage doesn't require an owner field (but other
+    # package types likely will require an owner field) there's no good
+    # way to force the existance of this field.
+    # owner = models.ForeignKey('mydashboard.Company')
+
+    objects = PackageManager()
 
     def __unicode__(self):
-        return self.name
+        name = "{content_type} - {name}"
+        return name.format(content_type=self.content_type.name.title(),
+                           name=self.name)
+
+    def save(self, *args, **kwargs):
+        if not hasattr(self, 'content_type') or not self.content_type:
+            self.content_type = ContentType.objects.get_for_model(self.__class__)
+        return super(Package, self).save(*args, **kwargs)
+
+    def get_model_name(self):
+        return self.content_type.model
+
+    @staticmethod
+    def get_related_attributes():
+        related_attrs = []
+        subclasses = Package.__subclasses__()
+        package_fields = ['name', 'content_type', 'id']
+        fields = Package._meta.init_name_map()
+        for key, value in fields.items():
+            if key not in package_fields and value[0].model in subclasses:
+                related_attrs.append(key)
+        return related_attrs
 
 
 class SitePackageManager(models.Manager):
     def user_available(self):
         """
-        Filters out all Company- and SeoSite-specific SitePackages which
-        should never be available for use by the user.
+        Filters out anything that shouldn't be available to the user.
+
         """
-        kwargs = {
+        sitepackage_kwargs = {
             'seosite__isnull': True,
             'company__isnull': True,
         }
-        return self.filter(**kwargs)
+        return self.filter(**sitepackage_kwargs)
 
 
 class SitePackage(Package):
+    objects = SitePackageManager()
+
     sites = models.ManyToManyField('mydashboard.SeoSite', null=True)
     owner = models.ForeignKey('mydashboard.Company', null=True, blank=True,
                               help_text='The owner of this site package. '
                                         'This should only be used if the '
                                         'site package will be used by '
                                         'the company for partner microsites.')
-    objects = SitePackageManager()
 
     def get_model_name(self):
         return self.__class__.__name__
