@@ -84,36 +84,54 @@ $(function() {
 function draw_donut(size) {
     // Add GET from page.load to url if any.
     var get_data = window.location.search;
-    if (get_data.length) {
+    if (get_data.length)
         get_data = get_data.substr(1);
-    }
     $.ajax({
         type: "GET",
         data: get_data,
         global:false,
         url: "/prm/view/records/retrieve_records",
         success: function(dump) {
-            var info = jQuery.parseJSON(dump);
-            var data = google.visualization.arrayToDataTable([
-                            ['Records',             'All Records'],
-                            [info.email.name,       info.email.count],
-                            [info.phone.name,       info.phone.count],
-                            [info.meetingorevent.name,  info.meetingorevent.count]
-                        ]);
+            /* Variables */
+            var info = jQuery.parseJSON(dump),
+                data,
+                options,
+                slice_options,
+                show_tooltips = true;
 
-            var options;
+            /* Chart Data */
+            if(info.email.count > 0 || info.phone.count > 0 || info.meetingorevent.count >0) {
+                data = google.visualization.arrayToDataTable([
+                    ['Records',             'All Records'],
+                    [info.email.name,       info.email.count],
+                    [info.phone.name,       info.phone.count],
+                    [info.meetingorevent.name,  info.meetingorevent.count]
+                ]);
+                slice_options = {0: {color: '#5eb95e'}, 1: {color: '#4bb1cf'}, 2: {color: '#faa732'}};
+            } else {
+                data = google.visualization.arrayToDataTable([
+                    ['Records', 'All Records'],
+                    ['No Records', 1]
+                ]);
+                slice_options = {0: {color: '#e6e6e6'}};
+                show_tooltips = false;
+            }
+
+            /* Chart Options */
             if($(window).width() < 500){
-                options = donut_options(250, 250, 12, 12, 225, 225, 0.6);
+                options = donut_options(250, 250, 12, 12, 225, 225, 0.6, slice_options, show_tooltips);
                 $('#ajax-loading-donut').hide();
             } else {
                 if(size === 'small') {
-                    options = donut_options(200, 200, 12, 12, 175, 175, 0.6);
+                    options = donut_options(200, 200, 12, 12, 175, 175, 0.6, slice_options, show_tooltips);
                     $('#donut-box').hide();
                 } else if(size === 'big') {
-                    options = donut_options(330, 350, 12, 12, 300, 330, 0.6);
+                    options = donut_options(330, 350, 12, 12, 300, 330, 0.6, slice_options, show_tooltips);
                     $('#ajax-loading-donut').hide();
                 }
             }
+
+            /* Render Chart */
             var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
             chart.draw(data, options);
             fill_piehole(total_records, size);
@@ -141,12 +159,12 @@ function draw_chart() {
         success: function(dump){
             var info = jQuery.parseJSON(dump);
             var data = google.visualization.arrayToDataTable([
-                            ['Activity',      'Amount',                  { role: 'style' }],
-                            ['Applications',  info.applications.count,   'color: #5eb95e'],
-                            ['Interviews',    info.interviews.count,     'color:#4bb1cf'],
-                            ['Hires',         info.hires.count,          'color: #faa732'],
-                            ['Records',       total_ref,                 'color: #5f6c82']
-                        ]);
+                ['Activity',      'Amount',                  { role: 'style' }],
+                ['Applications',  info.applications.count,   'color: #5eb95e'],
+                ['Interviews',    info.interviews.count,     'color:#4bb1cf'],
+                ['Hires',         info.hires.count,          'color: #faa732'],
+                ['Records',       total_ref,                 'color: #5f6c82']
+            ]);
             if($(window).width() < 500){
                 var options = {width: 250,
                                height: 250,
@@ -162,6 +180,7 @@ function draw_chart() {
 
 
             var chart = new google.visualization.ColumnChart(document.getElementById('barchart'));
+            console.log(data);
             chart.draw(data, options);
             var bar = $('#barchart');
             visual_boxes(bar, info, 'big');
@@ -177,18 +196,14 @@ function draw_chart() {
 function submit_date_range_from_li (e) {
     days = e.currentTarget.id;
     var range;
-    if(days == 'today') {
+    if(days == 'today')
         range = 1;
-    }
-    else if(days == 'thirty-days') {
+    else if(days == 'thirty-days')
         range = 30;
-    }
-    else if(days == 'ninety-days') {
+    else if(days == 'ninety-days')
         range = 90;
-    }
-    else if(days == 'all-days') {
+    else if(days == 'all-days')
         range = 0;
-    }
     params = update_query('date_start', '', window.location.search);
     params = update_query('date_end', '', params);
     window.location = '/prm/view/reports/details' + update_query('date', range, params)
@@ -239,7 +254,7 @@ function disable_scroll(bool) {
 }
 
 
-function donut_options(height, width, chartArea_top, chartArea_left, chartArea_height, chartArea_width, piehole_radius){
+function donut_options(height, width, chartArea_top, chartArea_left, chartArea_height, chartArea_width, piehole_radius, slice_colors, show_tooltips){
     var options = {
                     legend: 'none',
                     pieHole: piehole_radius,
@@ -247,8 +262,10 @@ function donut_options(height, width, chartArea_top, chartArea_left, chartArea_h
                     height: height,
                     width: width,
                     chartArea: {top:chartArea_top, left:chartArea_left, height: chartArea_height, width: chartArea_width},
-                    slices: {0: {color: '#5eb95e'}, 1: {color: '#4bb1cf'}, 2: {color: '#faa732'}}
+                    slices: slice_colors
                   };
+    if(!show_tooltips)
+        options['tooltip'] = { trigger: 'none' };
     return options
 }
 
@@ -267,7 +284,6 @@ function fill_piehole(totalrecs, size){
 
 function visual_boxes(chart_location,json, size){
     var location = $(chart_location).next();
-    console.log(json);
     if(size != 'small'){
         for(var i in json){
             location.append('<div class="chart-box" id="'+json[i].typename+'"><div class="big-num">'+String(json[i].count)+'</div><div class="reports-record-type">'+json[i].name+'</div></div>');
