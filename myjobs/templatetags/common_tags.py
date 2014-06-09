@@ -205,3 +205,20 @@ def gz(context):
 def json_companies(companies):
     info = [{"name": company.name, "id": company.id} for company in companies]
     return json.dumps(info)
+
+@register.filter
+def get_suggestions(user):
+    """
+    Get all resume suggestions for the given user, sorted by resume importance
+
+    Inputs:
+    :user: User for whom suggestions will be retrieved
+
+    Outputs:
+    :suggestions: List of resume suggestions
+    """
+    suggestions = [suggestion for suggestion in
+                   user.profileunits_set.model.suggestions(user,
+                                                           by_priority=False)
+                   if suggestion['priority'] == 5]
+    return suggestions

@@ -270,13 +270,12 @@ NEW_RELIC_TRACKING = False
 
 # Modules considered when calculating profile completion
 PROFILE_COMPLETION_MODULES = (
+    'name',
+    'summary',
     'address',
     'telephone',
-    'education',
-    'secondaryemail',
-    'name',
     'employmenthistory',
-    'summary'
+    'education',
 )
 
 BOTS = ['agent', 'archive', 'ask', 'auto', 'bot', 'check', 'crawl',
