@@ -180,7 +180,6 @@ function draw_chart() {
 
 
             var chart = new google.visualization.ColumnChart(document.getElementById('barchart'));
-            console.log(data);
             chart.draw(data, options);
             var bar = $('#barchart');
             visual_boxes(bar, info, 'big');
