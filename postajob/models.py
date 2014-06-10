@@ -427,7 +427,7 @@ class Product(BaseModel):
         'requires_approval': 'Jobs posted will require administrator approval.'
     }
 
-    packages = models.ManyToManyField('Package')
+    package = models.ForeignKey('Package')
     owner = models.ForeignKey('mydashboard.Company')
 
     name = models.CharField(max_length=255, blank=True)

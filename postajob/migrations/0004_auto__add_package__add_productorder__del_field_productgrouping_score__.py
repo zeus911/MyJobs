@@ -131,17 +131,6 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['mydashboard.Company']),
                       keep_default=False)
 
-        # Deleting field 'Product.package'
-        db.delete_column(u'postajob_product', 'package_id')
-
-        # Adding M2M table for field packages on 'Product'
-        db.create_table(u'postajob_product_packages', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('product', models.ForeignKey(orm[u'postajob.product'], null=False)),
-            ('package', models.ForeignKey(orm[u'postajob.package'], null=False))
-        ))
-        db.create_unique(u'postajob_product_packages', ['product_id', 'package_id'])
-
 
     def backwards(self, orm):
         # Deleting model 'Package'
