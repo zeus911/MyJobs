@@ -8,8 +8,10 @@ from django.test import TestCase
 
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          SeoSiteFactory)
-from postajob.models import (Job, Product, PurchasedJob, PurchasedProduct,
-                             SitePackage)
+from postajob.models import (Job, Product, ProductGrouping, ProductOrder,
+                             PurchasedJob, PurchasedProduct, SitePackage)
+from postajob.tests.factories import (product_factory, purchasedproduct_factory,
+                                      sitepackage_factory)
 
 
 class ModelTests(TestCase):
@@ -166,15 +168,12 @@ class ModelTests(TestCase):
 
     def create_purchased_job(self, pk=None):
         if not hasattr(self, 'package'):
-            self.package = SitePackage.objects.create(**self.site_package_data)
-
+            self.package = sitepackage_factory(self.company)
         if not hasattr(self, 'product'):
-            self.product = Product.objects.create(package=self.package,
-                                                  cost='100.00',
-                                                  owner=self.company)
+            self.product = product_factory(self.package, self.company)
         if not hasattr(self, 'purchased_product'):
-            self.purchased_product = PurchasedProduct.objects.create(
-                product=self.product, owner=self.company)
+            self.purchased_product = purchasedproduct_factory(self.product,
+                                                              self.company)
         self.job_data['max_expired_date'] = datetime.date.today() + datetime.timedelta(days=1)
         self.job_data['purchased_product'] = self.purchased_product
         self.job_data['pk'] = pk
@@ -211,3 +210,21 @@ class ModelTests(TestCase):
             expected_num_jobs -= 1
             self.assertEqual(self.purchased_product.jobs_remaining(),
                              expected_num_jobs)
+
+    def test_productgrouping_add_delete(self):
+        self.create_purchased_job()
+        ProductGrouping.objects.create(display_title='Test Grouping',
+                                       explanation='Test Grouping',
+                                       name='Test Grouping',
+                                       owner=self.company)
+        self.assertEqual(ProductGrouping.objects.all().count(), 1)
+        grouping = ProductGrouping.objects.get()
+
+        order = ProductOrder.objects.create(product=self.product,
+                                            group=grouping)
+        grouping_products = grouping.products.all().values_list('pk', flat=True)
+        self.assertItemsEqual(grouping_products, [order.pk])
+
+        grouping.delete()
+        self.assertEqual(ProductGrouping.objects.all().count(), 0)
+        self.assertEqual(ProductOrder.objects.all().count(), 0)

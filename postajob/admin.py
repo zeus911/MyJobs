@@ -100,7 +100,7 @@ class ProductFormAdmin(ModelAdminWithRequest):
 
 class ProductGroupingFormAdmin(ModelAdminWithRequest):
     form = ProductGroupingForm
-    list_display = ('display_order', 'name', )
+    list_display = ('owner', 'display_order', 'name', )
 
     def queryset(self, request):
         groups = ProductGrouping.objects.all()

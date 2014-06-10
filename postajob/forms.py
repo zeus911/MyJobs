@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
 from django.forms import (CharField, CheckboxSelectMultiple,
@@ -10,10 +9,17 @@ from global_helpers import get_company
 from mydashboard.models import SeoSite
 from mypartners.widgets import SplitDateDropDownField
 from postajob.models import (Job, Package, Product, ProductGrouping,
-                             SitePackage)
+                             ProductOrder, SitePackage)
 
 
-class JobForm(ModelForm):
+class PostAJobForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        self.company = get_company(self.request)
+        super(PostAJobForm, self).__init__(*args, **kwargs)
+
+
+class JobForm(PostAJobForm):
     class Meta:
         exclude = ('guid', 'country_short', 'state_short',
                    'is_syndicated', )
@@ -68,8 +74,6 @@ class JobForm(ModelForm):
                         initial='site')
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
-        self.company = get_company(self.request)
         super(JobForm, self).__init__(*args, **kwargs)
 
         # Set the starting apply option.
@@ -182,7 +186,6 @@ class JobForm(ModelForm):
             # reformatted as a mailto and saved as the link.
             apply_email = 'mailto:{link}'.format(link=apply_email)
             self.cleaned_data['apply_link'] = apply_email
-
         return self.cleaned_data
 
     def save(self, commit=True):
@@ -208,7 +211,7 @@ class JobForm(ModelForm):
         return job
 
 
-class SitePackageForm(ModelForm):
+class SitePackageForm(PostAJobForm):
     class Meta:
         model = SitePackage
         fields = ('name', 'sites', 'owner', )
@@ -220,8 +223,6 @@ class SitePackageForm(ModelForm):
                                      widget=sites_widget)
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
-
         super(SitePackageForm, self).__init__(*args, **kwargs)
 
         if not self.request.user.is_superuser:
@@ -232,7 +233,7 @@ class SitePackageForm(ModelForm):
             self.fields['owner'].queryset = self.request.user.get_companies()
 
 
-class ProductForm(ModelForm):
+class ProductForm(PostAJobForm):
     class Meta:
         model = Product
         fields = ('name', 'package', 'owner', 'cost',
@@ -240,10 +241,7 @@ class ProductForm(ModelForm):
                   'num_jobs_allowed', )
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
-        self.company = get_company(self.request)
         super(ProductForm, self).__init__(*args, **kwargs)
-
         if not self.request.user.is_superuser:
             # Update querysets based on what the user should have
             # access to.
@@ -261,35 +259,41 @@ class ProductForm(ModelForm):
                 self.fields['package'].queryset = \
                     Package.objects.user_available().filter_company(user_companies)
 
-    def save(self, commit=True):
-        return super(ProductForm, self).save(commit)
 
-
-class ProductGroupingForm(ModelForm):
+class ProductGroupingForm(PostAJobForm):
     class Meta:
         model = ProductGrouping
+        fields = ('products', 'display_order', 'display_title',
+                  'explanation', 'name', 'owner', )
 
     class Media:
         css = {
             'all': ('postajob.153-10.css', )
         }
 
-
+    products_widget = CheckboxSelectMultiple()
+    products = ModelMultipleChoiceField(Product.objects.all(),
+                                        widget=products_widget)
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
-        self.company = get_company(self.request)
         super(ProductGroupingForm, self).__init__(*args, **kwargs)
 
         if not self.request.user.is_superuser:
-            kwargs = {'owner__admins': self.request.user}
-            self.fields['products'].queryset = \
-                self.fields['products'].queryset.filter(**kwargs)
-            self.fields['owner'].queryset = self.request.user.get_companies()
+            # Update querysets based on what the user should have
+            # access to.
+            user_companies = self.request.user.get_companies()
+            if self.request.path.startswith('/admin'):
+                # Products
+                kwargs = {'owner__admins': self.request.user}
+                self.fields['products'].queryset = \
+                    self.fields['products'].queryset.filter(**kwargs)
+
+                # Owner
+                self.fields['owner'].queryset = user_companies
 
             # If they're not in the admin they should only be able to work
             # with the current company.
-            if not self.request.path.startswith('/admin'):
+            else:
                 # Products
                 kwargs = {'owner': self.company}
                 self.fields['products'].queryset = \
@@ -298,3 +302,36 @@ class ProductGroupingForm(ModelForm):
                 # Owner
                 self.initial['owner'] = self.company
                 self.fields['owner'].widget = HiddenInput()
+
+    def clean(self):
+        display_order = self.cleaned_data.get('display_order')
+        company = self.cleaned_data.get('owner')
+
+        # Enforce a pseudo-unique-together between owner and display order.
+        kwargs = {
+            'display_order': display_order,
+            'owner': company,
+        }
+        query = ProductGrouping.objects.filter(**kwargs)
+        if hasattr(self.instance, 'pk') and self.instance.pk:
+            query = query.exclude(pk=self.instance.pk)
+
+        if query.exists():
+            error = 'A product already exists for {company_name} ' \
+                    'with the selected display order.'
+            raise ValidationError(error.format(company_name=company.name))
+        return self.cleaned_data
+
+    def save(self, commit=True):
+        products = self.cleaned_data.pop('products')
+        instance = super(ProductGroupingForm, self).save(commit)
+        if not instance.pk:
+            instance.save()
+
+        for product in products:
+            ordered_product, _ = ProductOrder.objects.get_or_create(product=product,
+                                                                    group=instance)
+            ordered_product.display_order = 0
+            ordered_product.save()
+
+        return instance

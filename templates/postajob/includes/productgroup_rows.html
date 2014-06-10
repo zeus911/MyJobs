@@ -5,7 +5,7 @@
     {% for group in product_groupings %}
         <tr class="product-group-tr" onclick="window.document.location='{% url 'productgrouping_update' pk=group.pk %}';">
             <td class="product-group-display_order">{{ group.display_order }}</td>
-            <td class="product-group-name">{{ group.grouping_name }}</td>
+            <td class="product-group-name">{{ group.name }}</td>
             <td class="product-group-products">{{ group.products.all|join:", " }}</td>
         </tr>
     {% endfor %}

@@ -7,8 +7,10 @@ from django.test import TestCase
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          CompanyUserFactory, SeoSiteFactory)
 from myjobs.tests.factories import UserFactory
-from postajob.tests.factories import JobFactory
-from postajob.models import Job, SitePackage
+from postajob.tests.factories import (product_factory, productgrouping_factory,
+                                      sitepackage_factory,
+                                      JobFactory)
+from postajob.models import Job, Package, Product, ProductGrouping, SitePackage
 
 
 class ViewTests(TestCase):
@@ -24,12 +26,37 @@ class ViewTests(TestCase):
         self.company.save()
         self.company_user = CompanyUserFactory(user=self.user,
                                                company=self.company)
+        sitepackage_factory(self.company)
+        self.package = Package.objects.get()
+        self.product = product_factory(self.package, self.company)
+
         self.login_user()
 
         self.choices_data = ('{"countries":[{"code":"USA", '
                              '"name":"United States of America"}], '
                              '"regions":[{"code":"IN", "name":"Indiana"}] }')
         self.side_effect = [self.choices_data for x in range(0, 50)]
+
+        # Form data
+        self.product_form_data = {
+            'package': str(self.package.pk),
+            'owner': str(self.company.pk),
+            'name': 'Test Product',
+            'cost': '5',
+            'posting_window_length': 30,
+            'max_job_length': 30,
+            'num_jobs_allowed': '5',
+            'description': 'Test product description.'
+        }
+
+        self.productgrouping_form_data = {
+            'products': str(self.product.pk),
+            'display_order': 10,
+            'display_title': 'Test Grouping',
+            'explanation': 'Test grouping explanation.',
+            'name': 'Test Gruping',
+            'owner': str(self.company.pk)
+        }
 
         self.job_form_data = {
             'city': 'Indianapolis',
@@ -242,3 +269,64 @@ class ViewTests(TestCase):
         self.assertEqual(Job.objects.all().count(), 1)
         Job.objects.all().delete()
 
+    def test_product_add(self):
+        response = self.client.post(reverse('product_add'),
+                                    data=self.product_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        # Should get the product just added + self.product
+        self.assertEqual(Product.objects.all().count(), 2)
+
+    def test_product_update(self):
+        self.product_form_data['name'] = 'New Title'
+        kwargs = {'pk': self.product.pk}
+
+        self.assertNotEqual(self.product.name, self.product_form_data['name'])
+        response = self.client.post(reverse('product_update', kwargs=kwargs),
+                                    data=self.product_form_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Product.objects.all().count(), 1)
+
+        product = Product.objects.get()
+        self.assertEqual(product.name, self.product_form_data['name'])
+
+    def test_product_delete(self):
+        self.product_form_data['name'] = 'New Title'
+        kwargs = {'pk': self.product.pk}
+
+        response = self.client.post(reverse('product_delete', kwargs=kwargs))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Job.objects.all().count(), 0)
+
+    def test_productgrouping_add(self):
+        response = self.client.post(reverse('productgrouping_add'),
+                                    data=self.productgrouping_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ProductGrouping.objects.all().count(), 1)
+
+    def test_productgrouping_update(self):
+        group = productgrouping_factory(self.company)
+        self.productgrouping_form_data['name'] = 'New Title'
+        kwargs = {'pk': group.pk}
+
+        self.assertNotEqual(group.name, self.productgrouping_form_data['name'])
+        response = self.client.post(reverse('productgrouping_update',
+                                            kwargs=kwargs),
+                                    data=self.productgrouping_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ProductGrouping.objects.all().count(), 1)
+
+        group = ProductGrouping.objects.get()
+        self.assertEqual(group.name, self.productgrouping_form_data['name'])
+
+    def test_productgrouping_delete(self):
+        group = productgrouping_factory(self.company)
+        self.product_form_data['name'] = 'New Title'
+        kwargs = {'pk': group.pk}
+
+        response = self.client.post(reverse('productgrouping_delete',
+                                            kwargs=kwargs))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(ProductGrouping.objects.all().count(), 0)

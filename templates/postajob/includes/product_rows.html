@@ -5,7 +5,7 @@
     {% for product in products %}
         <tr class="product-tr" onclick="window.document.location='{% url 'product_update' pk=product.pk %}';">
             <td class="product-name">{{ product.name }}</td>
-            <td class="product-package">{{ product.packages.all|join:', ' }}</td>
+            <td class="product-package">{{ product.package.name }}</td>
         </tr>
     {% endfor %}
     {% else %}

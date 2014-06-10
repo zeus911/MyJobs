@@ -146,13 +146,11 @@ class Job(BaseModel):
         if self.is_expired and self.date_expired > datetime.date.today():
             self.date_expired = datetime.date.today()
 
-        job = super(Job, self).save(**kwargs)
+        super(Job, self).save(**kwargs)
         if not self.is_expired:
             self.add_to_solr()
         else:
             self.remove_from_solr()
-
-        return job
 
     def remove_from_solr(self):
         data = urlencode({
@@ -286,7 +284,7 @@ class Package(models.Model):
     def save(self, *args, **kwargs):
         if not hasattr(self, 'content_type') or not self.content_type:
             self.content_type = ContentType.objects.get_for_model(self.__class__)
-        return super(Package, self).save(*args, **kwargs)
+        super(Package, self).save(*args, **kwargs)
 
     def get_model_name(self):
         return self.content_type.model
@@ -391,22 +389,38 @@ class ProductGrouping(BaseModel):
     class Meta:
         ordering = ['display_order']
 
+    help_text = {
+        'explanation': 'The explanation of the grouping as it will be '
+                       'displayed to the user.',
+        'display_order': 'The',
+        'display_title': 'The product grouping title as it will be displayed '
+                         'to the user.',
+        'name': 'The name of the product grouping. This is only used in '
+                'the admin',
+        'products': 'The products you want displayed with this grouping.',
+    }
+
     products = models.ManyToManyField('Product', null=True,
-                                      through='ProductOrder')
-    display_order = models.IntegerField(default=0)
-    display_title = models.CharField(max_length=255)
-    explanation = models.TextField()
-    name = models.CharField(max_length=255)
+                                      through='ProductOrder',
+                                      help_text=help_text['products'])
+    display_order = models.IntegerField(default=0,
+                                        help_text=help_text['display_order'])
+    display_title = models.CharField(max_length=255,
+                                     help_text=help_text['display_title'])
+    explanation = models.TextField(help_text=help_text['explanation'])
+    name = models.CharField(max_length=255, help_text=help_text['name'])
     owner = models.ForeignKey('mydashboard.Company')
 
     def __unicode__(self):
-        return self.grouping_name
+        return self.name
 
 
 class ProductOrder(models.Model):
+    class Meta:
+        unique_together = ('product', 'group', )
     product = models.ForeignKey('Product')
     group = models.ForeignKey('ProductGrouping')
-    display_order = models.PositiveIntegerField()
+    display_order = models.PositiveIntegerField(default=0)
 
 
 class Product(BaseModel):

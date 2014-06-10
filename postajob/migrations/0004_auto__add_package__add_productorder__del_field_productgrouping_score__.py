@@ -131,6 +131,7 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['mydashboard.Company']),
                       keep_default=False)
 
+        db.create_unique(u'postajob_productorder', ['product_id', 'group_id'])
 
     def backwards(self, orm):
         # Deleting model 'Package'
@@ -218,6 +219,7 @@ class Migration(SchemaMigration):
         # Deleting field 'Job.owner'
         db.delete_column(u'postajob_job', 'owner_id')
 
+        db.delete_unique(u'postajob_productorder', ['product_id', 'group_id'])
 
     models = {
         u'auth.group': {
