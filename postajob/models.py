@@ -406,9 +406,11 @@ class ProductGrouping(BaseModel):
                                       through='ProductOrder',
                                       help_text=help_text['products'])
     display_order = models.IntegerField(default=0,
-                                        help_text=help_text['display_order'])
+                                        help_text=help_text['display_order'],
+                                        verbose_name='Display Order')
     display_title = models.CharField(max_length=255,
-                                     help_text=help_text['display_title'])
+                                     help_text=help_text['display_title'],
+                                     verbose_name='Display Title')
     explanation = models.TextField(help_text=help_text['explanation'])
     name = models.CharField(max_length=255, help_text=help_text['name'])
     owner = models.ForeignKey('mydashboard.Company')
