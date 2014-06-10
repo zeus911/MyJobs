@@ -410,7 +410,6 @@ class ProductOrder(models.Model):
 
 
 class Product(BaseModel):
-    package_models = (SitePackage, )
     posting_window_choices = ((30, '30 Days'), (60, '60 Days'),
                               (90, '90 Days'), (365, '1 Year'), )
     max_job_length_choices = ((15, '15 Days'), (30, '30 Days'), (60, '60 Days'),
@@ -428,7 +427,7 @@ class Product(BaseModel):
         'requires_approval': 'Jobs posted will require administrator approval.'
     }
 
-    package = models.ForeignKey('Package')
+    packages = models.ManyToManyField('Package')
     owner = models.ForeignKey('mydashboard.Company')
 
     name = models.CharField(max_length=255, blank=True)
