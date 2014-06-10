@@ -2,9 +2,11 @@ from django.conf import settings
 from django.core import mail
 from django.test import TestCase
 
+from BeautifulSoup import BeautifulSoup
 from mock import patch
 
 from myjobs.tests.factories import UserFactory
+from myprofile.tests.factories import PrimaryNameFactory
 from mysearches.tests.factories import (SavedSearchFactory,
                                         SavedSearchDigestFactory)
 from mysearches.tests.test_helpers import return_file
@@ -114,3 +116,41 @@ class SavedSearchModelsTests(TestCase):
                          -1)
         self.assertNotEqual(email.body.find(search.feed.replace('/feed/rss', '')),
                             -1)
+
+    def assert_modules_in_hrefs(self, modules):
+        """
+        Assert that each module in :modules: is in the set of HTML elements
+        matched by li > a in an email
+        """
+        email = mail.outbox.pop()
+        soup = BeautifulSoup(email.body)
+        lis = soup.findAll('li')
+        # .attrs is a list of two-tuples, where the first item is the attribute
+        # and the second is its value
+        hrefs = [li.find('a').attrs[0][1] for li in lis]
+
+        self.assertEqual(len(hrefs), len(modules))
+
+        # We can do self because the list of modules in settings and the list
+        # of recommendations should be in the same order
+        mapping = zip(modules, hrefs)
+        for pair in mapping:
+            # Saved search emails should have one li per required profile unit
+            # that the owner does not currently have
+            self.assertTrue(pair[0] in pair[1].lower())
+
+    def test_email_profile_completion(self):
+
+        search = SavedSearchFactory(user=self.user)
+        search.send_email()
+        self.assertEqual(len(settings.PROFILE_COMPLETION_MODULES), 6)
+        self.assert_modules_in_hrefs(settings.PROFILE_COMPLETION_MODULES)
+
+        PrimaryNameFactory(user=self.user)
+
+        search.send_email()
+
+        new_modules = [module for module in settings.PROFILE_COMPLETION_MODULES
+                       if module != 'name']
+        self.assertEqual(len(new_modules), 5)
+        self.assert_modules_in_hrefs(new_modules)
