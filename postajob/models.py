@@ -392,11 +392,13 @@ class ProductGrouping(BaseModel):
     help_text = {
         'explanation': 'The explanation of the grouping as it will be '
                        'displayed to the user.',
-        'display_order': 'The',
+        'display_order': 'The position in which this group will be '
+                         'displayed to the customer on the product group '
+                         'page.',
         'display_title': 'The product grouping title as it will be displayed '
                          'to the user.',
-        'name': 'The name of the product grouping. This is only used in '
-                'the admin',
+        'name': 'The "short" name of the product grouping. This is only used '
+                'in the admin.',
         'products': 'The products you want displayed with this grouping.',
     }
 

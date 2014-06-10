@@ -211,14 +211,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     opt_in_myjobs = models.BooleanField(_('Opt-in to non-account emails and '
                                           'Saved Search'),
                                         default=True,
-                                        help_text=_('Checking this enables '
-                                                    'my.jobs to send email '
+                                        help_text=_('Checking this allows '
+                                                    'My.jobs to send email '
                                                     'updates to you.'))
 
     opt_in_employers = models.BooleanField(_('Email is visible to Employers'),
                                            default=True,
-                                           help_text=_("Employers can "
-                                                       "message me."))
+                                           help_text=_('Checking this allows '
+                                                       'employers to send '
+                                                       'emails to you.'))
     
     last_response = models.DateField(default=datetime.datetime.now, blank=True)
 
