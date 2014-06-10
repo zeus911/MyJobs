@@ -199,7 +199,7 @@ def get_records_from_request(request):
     records = partner.get_contact_records(contact_name=contact,
                                           record_type=contact_type,
                                           created_by=admin)
-    print records
+
     date_range = request.REQUEST.get('date')
     if date_range:
         try:
@@ -254,7 +254,7 @@ def get_records_from_request(request):
             date_str = "30 Days"
 
         records = records.filter(date_time__range=[range_start, range_end])
-    print range_start, range_end
+
     return (range_start, range_end), date_str, records
 
 
