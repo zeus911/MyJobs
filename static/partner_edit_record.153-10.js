@@ -124,12 +124,10 @@ function add_additional_input(field) {
 
 function number_of_blank_and_visible_file_inputs() {
     var number_that_are_blank_and_visible = 0;
-    console.log($("[id^=id_attachment]").length);
     $("[id^=id_attachment]").each(function() {
         if(($(this).val() == "" || $(this).val() == 0) && $(this).is(":visible")) {
             number_that_are_blank_and_visible += 1;
         }
     });
-    console.log(number_that_are_blank_and_visible);
     return number_that_are_blank_and_visible;
 }
