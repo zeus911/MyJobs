@@ -15,6 +15,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import mail
 from django.template.loader import render_to_string
 from django.db.models import Q
+from mydashboard.models import Company
 
 from myjobs.models import EmailLog, User
 from myprofile.models import SecondaryEmail
@@ -146,15 +147,19 @@ def process_batch_events():
 
 
 @task(name="tasks.update_solr_from_model")
-def update_solr_task(solr_location=settings.SOLR['default']):
+def update_solr_task(solr_location=None):
     """
     Deletes all items scheduled for deletion, and then adds all items
     scheduled to be added to solr.
 
+    Inputs:
+    :solr_location: Dict of separate cores to be updated
     """
 
     if hasattr(mail, 'outbox'):
         solr_location = settings.TEST_SOLR_INSTANCE
+    elif solr_location is None:
+        solr_location = settings.SOLR
     objs = Update.objects.filter(delete=True).values_list('uid', flat=True)
 
     if objs:
@@ -162,12 +167,12 @@ def update_solr_task(solr_location=settings.SOLR['default']):
         for obj_list in objs:
             obj_list = filter(None, list(obj_list))
             uid_list = " OR ".join(obj_list)
-            solr = pysolr.Solr(solr_location)
-            solr.delete(q="uid:(%s)" % uid_list)
+            for location in solr_location.values():
+                solr = pysolr.Solr(location)
+                solr.delete(q="uid:(%s)" % uid_list)
             Update.objects.filter(delete=True).delete()
 
     objs = Update.objects.filter(delete=False)
-    solr = pysolr.Solr(solr_location)
     updates = []
 
     for obj in objs:
@@ -186,9 +191,11 @@ def update_solr_task(solr_location=settings.SOLR['default']):
             updates.append(profileunits_to_dict(key))
 
     updates = split_list(updates, 1000)
-    for update_subset in updates:
-        update_subset = filter(None, list(update_subset))
-        solr.add(list(update_subset))
+    for location in solr_location.values():
+        solr = pysolr.Solr(location)
+        for update_subset in updates:
+            update_subset = filter(None, list(update_subset))
+            solr.add(list(update_subset))
     objs.delete()
 
 
@@ -211,12 +218,16 @@ def split_list(l, list_len, fill_val=None):
 
 
 @task(name="tasks.reindex_solr")
-def task_reindex_solr(solr_location=settings.SOLR['default']):
+def task_reindex_solr(solr_location=None):
     """
     Adds all ProfileUnits, Users, and SavedSearches to solr.
 
+    Inputs:
+    :solr_location: Dict of separate cores to be updated (Optional);
+        defaults to the default instance from settings
     """
-    solr = pysolr.Solr(solr_location)
+    if solr_location is None:
+        solr_location = settings.SOLR
     l = []
 
     u = User.objects.all().values_list('id', flat=True)
@@ -225,16 +236,21 @@ def task_reindex_solr(solr_location=settings.SOLR['default']):
 
     s = SavedSearch.objects.all()
     for x in s:
-        l.append(object_to_dict(SavedSearch, x))
+        saved_search_dict = object_to_dict(SavedSearch, x)
+        saved_search_dict['doc_type'] = 'savedsearch'
+        l.append(saved_search_dict)
 
     u = User.objects.all()
     for x in u:
         l.append(object_to_dict(User, x))
 
     l = split_list(l, 1000)
-    for x in l:
-        x = filter(None, list(x))
-        solr.add(x)
+
+    for location in solr_location.values():
+        solr = pysolr.Solr(location)
+        for x in l:
+            x = filter(None, list(x))
+            solr.add(x)
 
 
 def parse_log(logs, solr_location):
@@ -250,8 +266,14 @@ def parse_log(logs, solr_location):
         Lines in redirect logs are formatted slightly differently:
             %{%Y-%m-%d %H:%M:%S}t %a %m %U %{X-REDIRECT}o %p %u %{X-Real-IP}i
                 %H "%{User-agent}i" %{r.my.jobs}C %{Referer}i %V %>s %O %I %D
+
+    :solr_location: Dict of separate cores to be updated (Optional);
+        defaults to the default instance from settings
     """
-    solr = pysolr.Solr(solr_location)
+    # Logs are potentially very large. If we are going to look up the company
+    # associated with each hit, we should memoize the ids.
+    log_memo = {}
+
     for log in logs:
         to_solr = []
         with open('/tmp/%s' % uuid.uuid4().hex, 'w+') as f:
@@ -288,18 +310,20 @@ def parse_log(logs, solr_location):
                     # Only track hits that come from actual users
                     update_dict = {
                         'view_date': line[0],
+                        'doc_type': 'analytics',
                     }
 
-                    # Make sure the value for a given key is only a list if there
-                    # are multiple elements
+                    # Make sure the value for a given key is only a list if
+                    # there are multiple elements
                     qs = dict((k, v if len(v) > 1 else v[0])
-                              for k, v in urlparse.parse_qs(line[4]).iteritems())
+                              for k, v in urlparse.parse_qs(
+                                  line[4]).iteritems())
 
                     if 'redirect' in log.key:
                         aguid = qs.get('jcnlx.aguid', '')
                         myguid = qs.get('jcnlx.myguid', '')
                         update_dict['view_source'] = qs.get('jcnlx.vsid', 0)
-                        update_dict['job_view_buid'] = qs.get('jcnlx.buid', 0)
+                        update_dict['job_view_buid'] = qs.get('jcnlx.buid', '0')
 
                         # GUID is the path portion of this line, which starts
                         # with a '/'; Remove it
@@ -309,12 +333,11 @@ def parse_log(logs, solr_location):
                         aguid = qs.get('aguid', '')
                         myguid = qs.get('myguid', '')
                         update_dict['view_source'] = qs.get('jvs', 0)
-                        update_dict['job_view_buid'] = qs.get('jvb', 0)
+                        update_dict['job_view_buid'] = qs.get('jvb', '0')
                         update_dict['job_view_guid'] = qs.get('jvg', '')
                         update_dict['page_category'] = qs.get('pc', '')
 
-                        # These fields are only set in analytics logs at the moment;
-                        # if any are added to redirect logs, they can be unindented
+                        # These fields are only set in analytics logs
                         update_dict['domain'] = qs.get('d', '')
                         update_dict['facets'] = qs.get('f', '')
                         update_dict['job_view_title_exact'] = qs.get('jvt', '')
@@ -340,6 +363,26 @@ def parse_log(logs, solr_location):
                         else:
                             update_dict.update(object_to_dict(User, user))
 
+                    buid = update_dict['job_view_buid']
+                    if buid not in log_memo:  # We haven't seen this buid before
+                        try:
+                            # See if there is a company associated with it
+                            company_id = Company.objects.get(
+                                job_source_ids=buid).pk
+                        except Company.DoesNotExist:
+                            # There is not; default to DirectEmployers
+                            # Association
+                            company_id = 999999
+
+                        # Since buids are being pulled out of query strings as
+                        # strings, our memoization dict structure should be
+                        # {str(buid): int(company_id)}. Log the new buid
+                        log_memo[buid] = company_id
+
+                    # By this point, we are guaranteed that buid is in log_memo;
+                    # pull the company id from the memo dict
+                    update_dict['company_id'] = log_memo[buid]
+
                     update_dict['uid'] = 'analytics##%s#%s' % \
                         (update_dict['view_date'], aguid)
                     to_solr.append(update_dict)
@@ -353,23 +396,42 @@ def parse_log(logs, solr_location):
         # Ensure all hits get recorded by breaking a potentially massive list
         # down into something that solr can manage
         subsets = split_list(to_solr, 500)
-        for subset in subsets:
-            subset = filter(None, subset)
-            solr.add(subset)
+        for location in solr_location.values():
+            solr = pysolr.Solr(location)
+            for subset in subsets:
+                subset = filter(None, subset)
+                solr.add(subset)
+
+
+@task(name="tasks.delete_old_analytics_docs")
+def delete_old_analytics_docs():
+    """
+    Deletes all analytics docs from the "current" collection that are older
+    than 30 days
+    """
+    if hasattr(mail, 'outbox'):
+        solr_location = settings.TEST_SOLR_INSTANCE['default']
+    else:
+        solr_location = settings.SOLR['current']
+
+    pysolr.Solr(solr_location).delete(
+        q="doc_type:analytics AND view_date:[* TO NOW/DAY-30DAYS]")
 
 
 @task(name="tasks.update_solr_from_log")
-def read_new_logs(solr_location=settings.SOLR['default']):
+def read_new_logs(solr_location=None):
     """
     Reads new logs and stores their contents in solr
 
     Inputs:
-    :solr_location: Solr instance to use for all future operations
-        (Optional); defaults to the default instance from settings
+    :solr_location: Dict of separate cores to be updated (Optional);
+        defaults to the default instance from settings
     """
     # If running tests, use test instance of local solr
     if hasattr(mail, 'outbox'):
         solr_location = settings.TEST_SOLR_INSTANCE
+    elif solr_location is None:
+        solr_location = settings.SOLR
 
     conn = boto.connect_s3(aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
                            aws_secret_access_key=settings.AWS_SECRET_KEY)
@@ -403,6 +465,8 @@ def read_new_logs(solr_location=settings.SOLR['default']):
     parse_log(unprocessed, solr_location)
 
     settings.PROCESSED_LOGS = set([log.key for log in logs_to_process])
+
+    delete_old_analytics_docs.delay()
 
 
 @task(name='tasks.expire_jobs')
