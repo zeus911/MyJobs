@@ -1,12 +1,12 @@
 from collections import Counter
 import urllib
-
 from copy import copy
 from datetime import datetime, timedelta
-from django.http import Http404
 from urlparse import urlparse, urlunparse, parse_qsl
 
-from global_helpers import get_domain
+from django.http import Http404
+
+from universal.helpers import get_domain
 from mydashboard.models import SeoSite
 from myprofile.models import EDUCATION_LEVEL_CHOICES
 from solr.helpers import format_date, Solr

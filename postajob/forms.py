@@ -2,24 +2,17 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
 from django.forms import (CharField, CheckboxSelectMultiple,
-                          HiddenInput, ModelForm, ModelMultipleChoiceField,
+                          HiddenInput, ModelMultipleChoiceField,
                           RadioSelect, Select, TextInput)
 
-from global_helpers import get_company
+from universal.forms import RequestForm
 from mydashboard.models import SeoSite
 from mypartners.widgets import SplitDateDropDownField
 from postajob.models import (Job, Package, Product, ProductGrouping,
                              ProductOrder, SitePackage)
 
 
-class PostAJobForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
-        self.company = get_company(self.request)
-        super(PostAJobForm, self).__init__(*args, **kwargs)
-
-
-class JobForm(PostAJobForm):
+class JobForm(RequestForm):
     class Meta:
         exclude = ('guid', 'country_short', 'state_short',
                    'is_syndicated', 'created_by', )
@@ -212,7 +205,7 @@ class JobForm(PostAJobForm):
         return job
 
 
-class SitePackageForm(PostAJobForm):
+class SitePackageForm(RequestForm):
     class Meta:
         model = SitePackage
         fields = ('name', 'sites', 'owner', )
@@ -234,7 +227,7 @@ class SitePackageForm(PostAJobForm):
             self.fields['owner'].queryset = self.request.user.get_companies()
 
 
-class ProductForm(PostAJobForm):
+class ProductForm(RequestForm):
     class Meta:
         model = Product
         fields = ('name', 'package', 'owner', 'cost',
@@ -261,7 +254,7 @@ class ProductForm(PostAJobForm):
                     Package.objects.user_available().filter_company(user_companies)
 
 
-class ProductGroupingForm(PostAJobForm):
+class ProductGroupingForm(RequestForm):
     class Meta:
         model = ProductGrouping
         fields = ('products', 'display_order', 'display_title',
