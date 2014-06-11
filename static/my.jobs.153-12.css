@@ -65,11 +65,13 @@ h1 > small > a:hover {
 }
 
 /*Contact FAQ styles*/
-.faq + .faq {
+.faq + .faq,
+.row.as + .row.as {
     margin-top: 20px;
 }
 
-.faq-question {
+.faq-question,
+.as-section {
     padding: 10px 20px;
     background-color: #f2f2f2;
     border: 1px solid #f2f2f2;
@@ -80,7 +82,8 @@ h1 > small > a:hover {
     color: #666;
 }
 
-.faq-question:hover {
+.faq-question:hover,
+.as-section:hover {
     cursor: pointer;
     background-color: #fff;
     border: 1px solid #e6e6e6;
@@ -2890,54 +2893,22 @@ td .gravatar-blank,
 }
 
 /* Account Settings */
-.as-section > hr { margin: 5px 0 0 0; }
-.as-content { padding: 50px 20px; }
 .as-content > .span4 + .span8 { margin-left: 0; }
 .as-content .actions.offset4 { margin-left: 355px; }
+.as-content form { margin-bottom: 0; }
 .as-content .form-label { width: 300px; }
 .as-content .profile-form-input select { width: 314px; }
 .as-content .profile-form-input input[type="password"],
 .as-content .profile-form-input input[type="text"] { width: 300px; }
 
-.as-section > h4 {
-    margin-bottom: 0;
-    cursor: pointer;
-}
-
-.as-section > h4:after {
-    content: "";
-    position: absolute;
-    margin-left: 5px;
-    margin-top: 6px;
-    width: 0;
-    height: 0;
-    border-left: 7px solid transparent;
-    border-right: 7px solid transparent;
-    border-top: 7px solid #444;
-    background-color: inherit;
-}
-
-.as-section.as-hide > h4:after{
-    content: "";
-    position: absolute;
-    margin-left: 10px;
-    margin-top: 3px;
-    width: 0;
-    height: 0;
-    border-left: 7px solid #444;
-    border-bottom: 7px solid transparent;
-    border-top: 7px solid transparent;
-    background-color: inherit;
-}
-
-.as-section.as-hide > .as-content {
+.as-content {
+    padding: 50px 20px 30px 20px;
     display: none;
 }
 
 @media screen and (max-width: 500px) {
     .as-content .actions.offset4 { margin-left: 0; }
 }
-
 
 .account-box {
     padding: 0;

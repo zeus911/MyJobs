@@ -39,47 +39,44 @@
         </div>
     </div>
     {% if communication_form %}
-    <div class="row">
-        <div id="as-communication" class="span12 as-section">
-            <h4>Communication Settings</h4>
-            <hr />
-            <div class="as-content">
+    <div class="row as">
+        <div class="span12">
+            <div id="as-communication" class="as-section">Communication Settings</div>
+            <div class="as-content" style="display: block;">
                 <form method="post" action="{% url 'edit_account' %}?communication#as-communication" id="as-communication-form">
                     {% with communication_form as form %}
                     {% include "includes/form-error-highlight.html" %}
                     {% csrf_token %}
                     {% endwith %}
                     <div class="offset4 span4 actions">
-                        <button type="submit" class="btn primary pull-right" value="submit">{% trans "Save" %}</button>
-                        <div class="clear"></div>
+                        <button type="submit" class="btn pull-right" value="submit">{% trans "Save" %}</button>
                     </div>
+                    <div class="clear"></div>
                 </form>
             </div>
         </div>
     </div>
     {% endif %}
-    <div class="row">
-        <div id="as-password" class="span12 as-section as-hide">
-            <h4>Change Password</h4>
-            <hr />
-            <div id='as-password-content' class="as-content">
+    <div class="row as">
+        <div class="span12">
+            <div id="as-password" class="as-section">Change Password</div>
+            <div id="as-password-content" class="as-content">
                 <form method="post" action="{% url 'edit_account' %}?password#as-password" id="as-communication-form">
                     {% with password_form as form %}
                     {% include "includes/form-error-highlight.html" %}
                     {% csrf_token %}
                     {% endwith %}
                     <div class="offset4 span4 actions">
-                        <button type="submit" class="btn primary pull-right" value="submit">{% trans "Save" %}</button>
-                        <div class="clear"></div>
+                        <button type="submit" class="btn pull-right" value="submit">{% trans "Save" %}</button>
                     </div>
+                    <div class="clear"></div>
                 </form>
             </div>
         </div>
     </div>
-    <div class="row">
-        <div id="as-disable" class="span12 as-section as-hide">
-            <h4>Disable Account</h4>
-            <hr />
+    <div class="row as">
+        <div class="span12">
+            <div id="as-disable" class="as-section">Disable Account</div>
             <div class="as-content">
                 <div class="span3 pull-left">
                     <div class="gravatar-message">
@@ -104,7 +101,42 @@
                     </div>
                 </div>
                 <div class="offset4 span6 actions">
-                    <button id="delete" type="button" data-toggle="modal" data-target="#disable-confirm" class="btn primary pull-right confirm-modal">{% trans 'Disable' %}</button>
+                    <button id="delete" type="button" data-toggle="modal" data-target="#disable-confirm" class="btn pull-right confirm-modal">{% trans 'Disable Account' %}</button>
+                    <div class="clear"></div>
+                </div>
+                <div class="clear"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row as">
+        <div class="span12">
+            <div id="as-delete" class="as-section">Delete Account</div>
+            <div class="as-content">
+                <div class="span3 pull-left">
+                    <div class="gravatar-message">
+                        {% get_gravatar user '150' %}
+                        <br>
+                        <img class="warning-badge" src="{{STATIC_URL}}images/critical-badge.png" />
+                    </div>
+                </div>
+                <div class="span8 pull-right">
+                    <div class="row">
+                        <div class="span8">
+                            {% trans "This will do the following:" %}<br/>
+                            <ul>
+                                <li>{% trans "Delete all your resume data" %}</li>
+                                <li>{% trans "Delete all your saved searches" %}</li>
+                                <li>{% trans "Delete your login information" %}</li>
+                            </ul>
+                            {% trans "This cannot be reversed." %}<br /> <br />
+                            {% trans "If you want to preserve your account for use later, then you should" %}
+                        <a id='to-disable' href="#">{% trans "disable your account" %}</a> {% trans "instead." %}
+                        </div>
+                    </div>
+                </div>
+                <div class="offset4 span6 actions">
+                    <button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn pull-right confirm-modal">{% trans 'Delete Account' %}</button>
                     <div class="clear"></div>
                 </div>
                 <div class="clear"></div>
@@ -130,42 +162,7 @@
                 <a href="{% url 'disable_account' %}" class="btn">Yes, disable my account</a>
             </div>
         </div>
-    </div>{# /delete-confirm #}
-    <div class="row">
-        <div id="as-delete" class="span12 as-section as-hide">
-            <h4>Delete Account</h4>
-            <hr />
-            <div class="as-content">
-                <div class="span3 pull-left">
-                    <div class="gravatar-message">
-                        {% get_gravatar user '150' %}
-                        <br>
-                        <img class="warning-badge" src="{{STATIC_URL}}images/critical-badge.png" />
-                    </div>
-                </div>
-                <div class="span8 pull-right">
-                    <div class="row">
-                        <div class="span8">
-                            {% trans "This will do the following:" %}<br/>
-                            <ul>
-                                <li>{% trans "Delete all your resume data" %}</li>
-                                <li>{% trans "Delete all your saved searches" %}</li>
-                                <li>{% trans "Delete your login information" %}</li>
-                            </ul>
-                            {% trans "This cannot be reversed." %}<br /> <br />
-                            {% trans "If you want to preserve your account for use later, then you should" %}
-                        <a id='to-disable' href="#">{% trans "disable your account" %}</a> {% trans "instead." %}
-                        </div>
-                    </div>
-                </div>
-                <div class="offset4 span6 actions">
-                    <button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn primary pull-right confirm-modal">{% trans 'Delete' %}</button>
-                    <div class="clear"></div>
-                </div>
-                <div class="clear"></div>
-            </div>
-        </div>
-    </div>
+    </div>{# /disable-confirm #}
     <div id="delete-confirm" class="modal hide fade row">
         <div class="modal-header">
             {% trans 'Delete Account?' %}
@@ -191,7 +188,7 @@
 
 {% block extra-js %}
 <script type="text/javascript" src="//www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
-<script src="{{ STATIC_URL }}account-settings.152-01.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}account-settings.153-12.js{{ gz }}"></script>
 <script type="text/javascript">
     var auto_user = {% if user.password_change %}true{% else %}false{% endif %}
 </script>
