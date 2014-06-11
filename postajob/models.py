@@ -83,6 +83,7 @@ class Job(BaseModel):
                                      help_text=help_text['is_expired'])
     autorenew = models.BooleanField(default=False, verbose_name="Auto-Renew",
                                     help_text=help_text['autorenew'])
+    created_by = models.ForeignKey('myjobs.User')
 
     def __unicode__(self):
         return '{company} - {title}'.format(company=self.owner.name,

@@ -1,29 +1,7 @@
 import datetime
-import factory
 
-from mydashboard.tests.factories import CompanyFactory
-from postajob.models import (Job, Product, ProductGrouping, PurchasedProduct,
-                             SitePackage)
-
-
-class JobFactory(factory.Factory):
-    FACTORY_FOR = Job
-
-    title = 'Job Title'
-    owner = factory.SubFactory(CompanyFactory)
-    reqid = 1
-    description = 'The job description.'
-    apply_link = 'www.google.com'
-    city = 'Indianapolis'
-    state = 'Indiana'
-    state_short = 'IN'
-    country = 'United States of America'
-    country_short = 'USA'
-    zipcode = 46268
-    date_new = factory.LazyAttribute(lambda n: datetime.datetime.now())
-    date_updated = factory.LazyAttribute(lambda n: datetime.datetime.now())
-    date_expired = factory.LazyAttribute(lambda n: datetime.date.today())
-    guid = 'abcdef123456'
+from postajob.models import (Job, Product, ProductGrouping, PurchasedJob,
+                             PurchasedProduct, SitePackage)
 
 
 # Because of the way the SubFactory works, each Factory was generating
@@ -31,11 +9,54 @@ class JobFactory(factory.Factory):
 # and matching errors between owners on objects that should share owners.
 # It ended up being a lot easier just to create a custom "factory"
 # for the models that were having this problem instead.
-
 def create_instance(model, data, kwargs):
     if kwargs:
         data.update(kwargs)
     return model.objects.create(**data)
+
+
+def job_factory(company, user, **kwargs):
+    job_data = {
+        'title': 'title',
+        'owner': company,
+        'reqid': '1',
+        'description': 'sadfljasdfljasdflasdfj',
+        'apply_link': 'www.google.com',
+        'city': 'Indianapolis',
+        'state': 'Indiana',
+        'state_short': 'IN',
+        'country': 'United States of America',
+        'country_short': 'USA',
+        'zipcode': '46268',
+        'date_new': datetime.datetime.now(),
+        'date_updated': datetime.datetime.now(),
+        'date_expired': datetime.date.today(),
+        'created_by': user,
+    }
+    return create_instance(Job, job_data, kwargs)
+
+
+def purchasedjob_factory(company, user, purchased_product, **kwargs):
+    purchasedjob_data = {
+        'title': 'title',
+        'owner': company,
+        'reqid': '1',
+        'description': 'sadfljasdfljasdflasdfj',
+        'apply_link': 'www.google.com',
+        'city': 'Indianapolis',
+        'state': 'Indiana',
+        'state_short': 'IN',
+        'country': 'United States of America',
+        'country_short': 'USA',
+        'zipcode': '46268',
+        'date_new': datetime.datetime.now(),
+        'date_updated': datetime.datetime.now(),
+        'date_expired': datetime.date.today(),
+        'created_by': user,
+        'max_expired_date': datetime.date.today() + datetime.timedelta(days=1),
+        'purchased_product': purchased_product,
+    }
+    return create_instance(PurchasedJob, purchasedjob_data, kwargs)
 
 
 def sitepackage_factory(company, **kwargs):

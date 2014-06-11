@@ -7,9 +7,9 @@ from django.test import TestCase
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          CompanyUserFactory, SeoSiteFactory)
 from myjobs.tests.factories import UserFactory
-from postajob.tests.factories import (product_factory, productgrouping_factory,
-                                      sitepackage_factory,
-                                      JobFactory)
+from postajob.tests.factories import (product_factory, job_factory,
+                                      productgrouping_factory,
+                                      sitepackage_factory)
 from postajob.models import Job, Package, Product, ProductGrouping, SitePackage
 
 
@@ -107,7 +107,7 @@ class ViewTests(TestCase):
     def test_job_access_not_for_company(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('')
         new_company = CompanyFactory(name='Another Company', pk=1000)
-        job = JobFactory(owner=new_company)
+        job = job_factory(new_company, self.user)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
@@ -123,7 +123,7 @@ class ViewTests(TestCase):
         mock_obj = Mock()
         mock_obj.read.side_effect = self.side_effect
         urlopen_mock.return_value = mock_obj
-        job = JobFactory(owner=self.company)
+        job = job_factory(self.company, self.user)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_update', kwargs=kwargs),
@@ -149,7 +149,7 @@ class ViewTests(TestCase):
         mock_obj = Mock()
         mock_obj.read.side_effect = self.side_effect
         urlopen_mock.return_value = mock_obj
-        job = JobFactory(owner=self.company)
+        job = job_factory(self.company, self.user)
         kwargs = {'pk': job.pk}
 
         self.assertNotEqual(job.title, self.job_form_data['title'])
@@ -164,7 +164,7 @@ class ViewTests(TestCase):
     @patch('urllib2.urlopen')
     def test_job_delete(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('')
-        job = JobFactory(owner=self.company)
+        job = job_factory(self.company, self.user)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_delete', kwargs=kwargs))

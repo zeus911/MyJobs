@@ -22,7 +22,7 @@ class PostAJobForm(ModelForm):
 class JobForm(PostAJobForm):
     class Meta:
         exclude = ('guid', 'country_short', 'state_short',
-                   'is_syndicated', )
+                   'is_syndicated', 'created_by', )
         fields = ('title', 'is_syndicated', 'reqid', 'description', 'city',
                   'state', 'country', 'zipcode', 'date_expired', 'is_expired',
                   'autorenew', 'apply_type', 'apply_link', 'apply_email',
@@ -189,6 +189,7 @@ class JobForm(PostAJobForm):
         return self.cleaned_data
 
     def save(self, commit=True):
+        self.instance.created_by = self.request.user
         sites = self.cleaned_data['site_packages']
         job = super(JobForm, self).save(commit)
 

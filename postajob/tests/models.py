@@ -1,4 +1,3 @@
-import datetime
 from mock import patch
 from StringIO import StringIO
 from urlparse import parse_qs
@@ -8,14 +7,18 @@ from django.test import TestCase
 
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          SeoSiteFactory)
+from myjobs.models import User
 from postajob.models import (Job, Product, ProductGrouping, ProductOrder,
-                             PurchasedJob, PurchasedProduct, SitePackage)
-from postajob.tests.factories import (product_factory, purchasedproduct_factory,
+                             PurchasedJob, SitePackage)
+from postajob.tests.factories import (job_factory, product_factory,
+                                      purchasedjob_factory,
+                                      purchasedproduct_factory,
                                       sitepackage_factory)
 
 
 class ModelTests(TestCase):
     def setUp(self):
+        self.user = User.objects.create(email='user@test.email')
         self.company = CompanyFactory()
         self.site = SeoSiteFactory()
         self.bu = BusinessUnitFactory()
@@ -24,23 +27,6 @@ class ModelTests(TestCase):
         self.company.job_source_ids.add(self.bu)
         self.company.save()
 
-        self.job_data = {
-            'title': 'title',
-            'owner': self.company,
-            'reqid': '1',
-            'description': 'sadfljasdfljasdflasdfj',
-            'apply_link': 'www.google.com',
-            'city': 'Indianapolis',
-            'state': 'Indiana',
-            'state_short': 'IN',
-            'country': 'United States of America',
-            'country_short': 'USA',
-            'zipcode': '46268',
-            'date_new': datetime.datetime.now(),
-            'date_updated': datetime.datetime.now(),
-            'date_expired': datetime.date.today(),
-            'guid': 'abcdef123456',
-        }
         self.request_data = {
             'title': 'title',
             'company': self.company.id,
@@ -64,13 +50,13 @@ class ModelTests(TestCase):
     @patch('urllib2.urlopen')
     def test_job_creation(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('{"jobs_added": 1}')
-        Job.objects.create(**self.job_data)
+        job_factory(self.company, self.user)
         self.assertEqual(Job.objects.all().count(), 1)
 
     @patch('urllib2.urlopen')
     def test_job_deletion(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('{"jobs_deleted": 1}')
-        job = Job.objects.create(**self.job_data)
+        job = job_factory(self.company, self.user)
         self.assertEqual(Job.objects.all().count(), 1)
         job.delete()
         self.assertEqual(Job.objects.all().count(), 0)
@@ -78,7 +64,7 @@ class ModelTests(TestCase):
     @patch('urllib2.urlopen')
     def test_job_add_to_solr(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('{"jobs_added": 1}')
-        Job.objects.create(**self.job_data)
+        job_factory(self.company, self.user)
         # add_to_solr() is called in save(), so urlopen should've been
         # called once at this point.
         self.assertEqual(urlopen_mock.call_count, 1)
@@ -89,13 +75,15 @@ class ModelTests(TestCase):
         data = parse_qs(args[0].data)
         data['jobs'] = eval(data['jobs'][0])
         self.assertEqual(data['key'][0], settings.POSTAJOB_API_KEY)
+        del self.request_data['guid']
         for field in self.request_data.keys():
             self.assertEqual(data['jobs'][0][field], self.request_data[field])
 
     @patch('urllib2.urlopen')
     def test_job_remove_from_solr(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('{"jobs_deleted": 1}')
-        job = Job.objects.create(**self.job_data)
+        job = job_factory(self.company, self.user,
+                          guid=self.request_data['guid'])
         job.remove_from_solr()
 
         # add_to_solr() is called in save(), which is combined with the
@@ -112,17 +100,16 @@ class ModelTests(TestCase):
     @patch('urllib2.urlopen')
     def test_job_generate_guid(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('')
+        guid = '1'*32
 
         # Confirm that pre-assigned guids are not being overwritten.
-        job = Job.objects.create(**self.job_data)
-        self.assertEqual(self.job_data['guid'], job.guid)
+        job = job_factory(self.company, self.user, guid=guid)
+        self.assertEqual(guid, job.guid)
         job.delete()
 
         # Confirm that if a guid isn't assigned one is getting assigned
         # to it properly.
-        guid = self.job_data['guid']
-        del self.job_data['guid']
-        job = Job.objects.create(**self.job_data)
+        job = job_factory(self.company, self.user)
         self.assertIsNotNone(job.guid)
         self.assertNotEqual(job.guid, guid)
 
@@ -174,10 +161,8 @@ class ModelTests(TestCase):
         if not hasattr(self, 'purchased_product'):
             self.purchased_product = purchasedproduct_factory(self.product,
                                                               self.company)
-        self.job_data['max_expired_date'] = datetime.date.today() + datetime.timedelta(days=1)
-        self.job_data['purchased_product'] = self.purchased_product
-        self.job_data['pk'] = pk
-        return PurchasedJob.objects.create(**self.job_data)
+        return purchasedjob_factory(self.company, self.user,
+                                    self.purchased_product, pk=pk)
 
     @patch('urllib2.urlopen')
     def test_purchased_job_add(self, urlopen_mock):
@@ -202,7 +187,6 @@ class ModelTests(TestCase):
         self.assertEqual(urlopen_mock.call_count, 1)
 
     def test_purchased_product_jobs_remaining(self):
-        del self.job_data['guid']
         field = Product._meta.get_field_by_name('num_jobs_allowed')
         expected_num_jobs = field[0].default
         for x in range(50, 55):
