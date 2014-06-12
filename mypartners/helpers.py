@@ -1,3 +1,7 @@
+from datetime import datetime, time, timedelta
+from urlparse import urlparse, parse_qsl, urlunparse
+from urllib import urlencode
+
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -10,13 +14,9 @@ from django.utils.safestring import mark_safe
 from django.utils.text import get_text_list, force_unicode, force_text
 from django.utils.timezone import get_current_timezone_name, now
 from django.utils.translation import ugettext
-
-from datetime import datetime, time, timedelta
 import pytz
-from urlparse import urlparse, parse_qsl, urlunparse
-from urllib import urlencode
 
-from global_helpers import get_domain
+from universal.helpers import get_domain
 from mydashboard.models import Company
 from mypartners.models import (ContactLogEntry, CONTACT_TYPE_CHOICES, CHANGE)
 from registration.models import ActivationProfile

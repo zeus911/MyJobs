@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block site-title %}
+    <title>Product Overview - My.jobs</title>
+    <meta name="title" content="Product Overview - My.jobs">
+{% endblock %}
+{% load i18n %}
+
+{% block content %}
+    <h1>Products</h1>
+    <div class="row">
+        <div class="span12">
+            <a class="btn" href="{% url 'product_add' %}">Create a New Product</a>
+            <br/><br/>
+            <div class="formBox no-padding">
+                <h4>Products</h4>
+                <table class="table table-bordered table-striped">
+                    {% if products %}
+                    <thead>
+                        <tr>
+                            <td>Product</td>
+                            <td>Package</td>
+                        </tr>
+                    </thead>
+                    {% endif %}
+                    {% include "postajob/includes/product_rows.html" %}
+                </table>
+            </div>
+            <br/><br/><br/>
+            <a class="btn" href="{% url 'productgrouping_add' %}">Create a New Product Group</a>
+            <br/><br/>
+            <div class="formBox no-padding">
+                <h4>Product Groups</h4>
+                <table class="table table-bordered table-striped">
+                    {% if product_groupings %}
+                    <thead>
+                        <tr>
+                            <td>Display Order</td>
+                            <td>Group</td>
+                            <td>Products</td>
+                        </tr>
+                    </thead>
+                    {% endif %}
+                    {% include "postajob/includes/productgroup_rows.html" %}
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block extra-js %}
+
+{% endblock %}

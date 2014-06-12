@@ -1,16 +1,16 @@
 import json
 import urllib
 import urllib2
-from bs4 import BeautifulSoup
 from urlparse import urlparse, urlunparse, parse_qs, parse_qsl
 from urllib import urlencode
-from dateutil import parser as dateparser
 import datetime
 
+from bs4 import BeautifulSoup
+from dateutil import parser as dateparser
 from django.conf import settings
 from django.utils.encoding import smart_str, smart_unicode
 
-from global_helpers import get_domain
+from universal.helpers import get_domain
 from mydashboard.models import SeoSite
 
 

@@ -1,15 +1,14 @@
-import bleach
-from collections import OrderedDict
-import unicodecsv
 from datetime import date, datetime, timedelta
 from email.parser import HeaderParser
 from email.utils import getaddresses
 from itertools import chain
 import json
-from lxml import etree
-import pytz
 import re
 
+import bleach
+import unicodecsv
+from lxml import etree
+import pytz
 from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
@@ -25,7 +24,7 @@ from django.utils.datastructures import SortedDict
 from django.views.decorators.csrf import csrf_exempt
 
 from email_parser import build_email_dicts, get_datetime_from_str
-from global_helpers import get_domain, get_int_or_none
+from universal.helpers import get_int_or_none
 from myjobs.models import User
 from mydashboard.helpers import get_company_microsites
 from mydashboard.models import Company

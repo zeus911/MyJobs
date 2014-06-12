@@ -1,0 +1,17 @@
+{% load postajob_tags %}
+
+<tbody id="product-groups">
+    {% if product_groupings %}
+    {% for group in product_groupings %}
+        <tr class="product-group-tr" onclick="window.document.location='{% url 'productgrouping_update' pk=group.pk %}';">
+            <td class="product-group-display_order">{{ group.display_order }}</td>
+            <td class="product-group-name">{{ group.name }}</td>
+            <td class="product-group-products">{{ group.products.all|join:", " }}</td>
+        </tr>
+    {% endfor %}
+    {% else %}
+    <tr>
+        <td colspan=3>You currently have no product groups.</td>
+    </tr>
+    {% endif %}
+</tbody>
