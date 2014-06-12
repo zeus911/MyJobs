@@ -219,7 +219,7 @@ function dropdown(e) {
 
 
 function go_to_records(e) {
-    url = "/prm/view/reports/details/records/?company="+String(company_id)+"&partner="+String(partner_id)+"&record_type="+ e.currentTarget.id;
+    url = "/prm/view/reports/details/records/?partner="+String(partner_id)+"&record_type="+ e.currentTarget.id;
     if(admin_id != 'None') {
         url += '&admin=' + admin_id;
     }
@@ -283,7 +283,7 @@ function visual_boxes(chart_location,json, size){
 function add_links(chart, json, size){
     if(size === 'big'){
         var button = $('#reports-view-all');
-        button.attr('href', '/prm/view/reports/details/records/?company='+String(company_id)+'&partner='+String(partner_id));
+        button.attr('href', '/prm/view/reports/details/records/?partner='+String(partner_id));
     }
 }
 

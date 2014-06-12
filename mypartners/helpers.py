@@ -16,8 +16,7 @@ from django.utils.timezone import get_current_timezone_name, now
 from django.utils.translation import ugettext
 import pytz
 
-from universal.helpers import get_domain
-from mydashboard.models import Company
+from universal.helpers import get_domain, get_company
 from mypartners.models import (ContactLogEntry, CONTACT_TYPE_CHOICES, CHANGE)
 from registration.models import ActivationProfile
 
@@ -27,17 +26,14 @@ def prm_worthy(request):
     Makes sure the User is worthy enough to use PRM.
 
     """
-    company_id = request.REQUEST.get('company')
-    company = get_object_or_404(Company, id=company_id)
-
-    user = request.user
-    if not user in company.admins.all():
+    company = get_company(request)
+    if company is None:
         raise Http404
 
     partner_id = int(request.REQUEST.get('partner'))
     partner = get_object_or_404(company.partner_set, id=partner_id)
 
-    return company, partner, user
+    return company, partner, request.user
 
 
 def add_extra_params(url, extra_urls):
@@ -132,14 +128,12 @@ def get_change_message(form):
     return change_message or ugettext('No fields changed.')
 
 
-def get_attachment_link(company_id, partner_id, attachment_id, attachment_name):
+def get_attachment_link(partner_id, attachment_id, attachment_name):
     """
     Creates a link (html included) to a PRMAttachment.
 
     """
-    url = '/prm/download?company=%s&partner=%s&id=%s' % (company_id,
-                                                         partner_id,
-                                                         attachment_id)
+    url = '/prm/download?partner=%s&id=%s' % (partner_id, attachment_id)
 
     html = "<a href='{url}' target='_blank'>{attachment_name}</a>"
     return mark_safe(html.format(url=url, attachment_name=attachment_name))

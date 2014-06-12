@@ -9,11 +9,11 @@
 {% load i18n %}
 
 {% block content %}
-    <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> <small><a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small></h1>
+    <h1><a href="{% url 'prm' %}">{{ company.name }}</a> <small><a href="{% url 'partner_overview' %}?partner={{ partner.id }}">{{ partner.name }}</a></small></h1>
     <div class="row">
         <div class="span12 prm-header">
             <span>Reports</span>
-            <a class="mobile_hide" href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
+            <a class="mobile_hide" href="{% url 'partner_overview' %}?partner={{ partner.id }}">Back to Overview</a>
             <span class="pull-right">
                 <span id="admin-filter">{% include "mypartners/includes/company_admins.html" %}</span>
                 <span id="date-filter">{% include "mypartners/includes/date_range.html" %}</span>
@@ -54,7 +54,7 @@
             <h4>All Contacts</h4>
             {% for contact in contacts %}
             <table class="all-contacts-table">
-                <tr onclick="window.document.location='{% url 'prm_report_records' %}?company={{ company.id }}&partner={{ partner.id }}&contact={{ contact.name }}&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}';">
+                <tr onclick="window.document.location='{% url 'prm_report_records' %}?partner={{ partner.id }}&contact={{ contact.name }}&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}';">
                     <td>
                         <span>{% get_nonuser_gravatar contact.name '55' %}</span>
                     </td>
@@ -63,13 +63,13 @@
                         {{ contact.email }}
                     </td>
                     <td>
-                        <a class="chart-box-link" href="{% url 'prm_report_records' %}?company={{ company.id }}&partner={{ partner.id }}&contact={{ contact.name }}&record_type=job&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
+                        <a class="chart-box-link" href="{% url 'prm_report_records' %}?partner={{ partner.id }}&contact={{ contact.name }}&record_type=job&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
                             <div class="chart-box small-chart-box inline-box">
                                 <div class="big-num">{{ contact.ref_count }}</div>
                                 <div class="reports-record-type">Referral Records</div>
                             </div>
                         </a>
-                        <a class="chart-box-link" href="{% url 'prm_report_records' %}?company={{ company.id }}&partner={{ partner.id }}&contact={{ contact.name }}&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
+                        <a class="chart-box-link" href="{% url 'prm_report_records' %}?partner={{ partner.id }}&contact={{ contact.name }}&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
                             <div class="chart-box small-chart-box inline-box">
                                 <div class="big-num">{{ contact.cr_count }}</div>
                                 <div class="reports-record-type">Contact Records</div>
@@ -92,7 +92,7 @@
             {% endif %}
             <div id="top-contacts">
                 {% for contact in top_contacts %}
-                <a class="chart-box-link" href="{% url 'prm_report_records' %}?company={{ company.id }}&partner={{ partner.id }}&contact={{ contact.contact_name }}&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
+                <a class="chart-box-link" href="{% url 'prm_report_records' %}?partner={{ partner.id }}&contact={{ contact.contact_name }}&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
                     <div class="chart-box inline-box">
                         <div class="big-num">{{ contact.count }}</div>
                         <div class="reports-record-type">{{ contact.contact_name|truncatechars:13 }}</div>
