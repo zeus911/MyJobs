@@ -107,11 +107,6 @@ h1 > small > a:hover {
     width: 297px;
 }
 
-/*Candidate Activity mobile desktop hide*/
-.candidate-activity-mobile {
-    display: none;
-}
-
 /*Employer Dashboard */
 #user-list-details-table {
     overflow-y: auto;
@@ -856,9 +851,10 @@ table#row-link-table {
 }
 
 #row-link-table td {
+    border-bottom: 1px solid #eae6de;
+    box-sizing: border-box;
     padding: 5px;
     width: 40%;
-    border-bottom: 1px solid #eae6de;
 }
 
 #row-link-table td:first-child {
@@ -2323,23 +2319,34 @@ td .gravatar-blank,
         display: block;
     }
 
-    .candidate-activity-mobile {
+    .candidate-activity td {
         display: block;
     }
 
-    .candidate-activity-mobile a {
+    .candidate-activity a {
         border: none;
         padding: 2px;
         background-color: transparent;
         text-decoration: none;
     }
 
-    #row-link-table td {        
-        width: 80%;
+    .candidate-email {
+        font-size: 1.2em;
     }
 
-    #row-link-table td:first-child {    
-        width: 20%;
+    .activity-progress {
+        height: 10px;
+        width: 98%;
+        margin-bottom: 0;
+    }
+
+    #row-link-table td {
+        width: 100%;
+    }
+
+    #row-link-table td:first-child {
+        width: 100%;
+        border-bottom: 0;
     }
 
     #company-information {

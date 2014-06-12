@@ -14,7 +14,7 @@
             <div id="microsite-details-table" class="facets accordion-body">
                 <div class="accordion-inner" style="max-height: 95px; overflow-y: scroll;">
                     <ul class="facet-link">
-                        {% for facet in domain_facets %}
+                        {% for facet in domain_facets.items %}
                             <li class="facet">
                                 <a href="{{ request.path }}?{{ request.META.QUERY_STRING }}&microsite={{ facet.0 }}">
                                     <span class="facet-count">{{ facet.1 }}</span>

@@ -22,6 +22,10 @@ $(document).ready(function() {
         });
     });
 
+    $('.candidate-activity a').click(function(e){
+        e.stopPropagation();
+    });
+
     var _href = $("a.endless_more").attr("href");
     if(_href){
         if (_href.length < 100) {

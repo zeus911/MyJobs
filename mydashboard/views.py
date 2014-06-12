@@ -80,14 +80,14 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     # Removes main user from admin list to display other admins
     admins = admins.exclude(user=request.user)
-    requested_microsite = request.REQUEST.get('microsite', company.name)
+    requested_microsite = request.REQUEST.get('microsite', '')
     requested_date_button = request.REQUEST.get('date_button', False)    
     candidates_page = request.REQUEST.get('page', 1)    
           
     # the url value for 'All' in the select box is company name
     # which then gets replaced with all microsite urls for that company
     site_name = ''
-    if requested_microsite != company.name:
+    if requested_microsite != '':
         active_microsites = authorized_microsites.filter(
             domain__startswith=requested_microsite)
     else:
@@ -117,6 +117,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     loc_solr = facet_solr._clone()
     (user_solr, facet_solr, loc_solr, filters) = apply_facets_and_filters(
         request, user_solr, facet_solr, loc_solr)
+    user_solr = user_solr.add_facet_field('SavedSearch_url')
     solr_results = user_solr.rows_to_fetch(100).search()
 
     # List of dashboard widgets to display.
@@ -164,8 +165,13 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         'results': 'search',
         'redirect': 'apply',
     }
-    analytics_solr = Solr(settings.SOLR['current']).add_query('company_id:%d' % company.pk).add_facet_field(
+    analytics_solr = Solr(settings.SOLR['current']).add_facet_field(
         'page_category')
+    if requested_microsite:
+        analytics_solr = analytics_solr.add_query('domain:%s' %
+                                                  requested_microsite)
+    else:
+        analytics_solr = analytics_solr.add_query('company_id:%d' % company.pk)
 
     rng = filter_by_date(request, field='view_date')[0]
     analytics_solr = analytics_solr.add_filter_query(rng)
@@ -182,14 +188,22 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         add_facet_field('domain')
 
     auth_results = analytics_solr.search()
-    domain_facet_list = auth_results.facets.get(
+    analytics_facet_list = auth_results.facets.get(
         'facet_fields', {}).get('domain', [])
-    domain_facets = sequence_to_dict(domain_facet_list)
-    domain_facets = [domain for domain in domain_facets.items()
+    analytics_facets = sequence_to_dict(analytics_facet_list)
+    analytics_facets = [domain for domain in analytics_facets.items()
+                        if domain[0] in active_microsites]
+    search_facet_list = solr_results.facets.get(
+        'facet_fields', {}).get('SavedSearch_url', [])
+    search_facet_list[::2] = [get_domain(item)
+                              for item in search_facet_list[::2]]
+    search_facets = sequence_to_dict(search_facet_list)
+    search_facets = [domain for domain in search_facets.items()
                      if domain[0] in active_microsites]
-    domain_facets = sorted(domain_facets,
-                           key=lambda x: x[1],
-                           reverse=True)
+    domain_facets = {}
+    for domain, group in groupby(analytics_facets + search_facets,
+                                 key=lambda x: x[0]):
+        domain_facets[domain] = sum(item[1] for item in group)
     results += auth_results.docs
 
     candidates = dict_to_object(results)
