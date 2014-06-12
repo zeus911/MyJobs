@@ -17,7 +17,7 @@ class ViewTests(TestCase):
     def setUp(self):
         super(ViewTests, self).setUp()
         self.user = UserFactory()
-        self.company = CompanyFactory()
+        self.company = CompanyFactory(product_access=True)
         self.site = SeoSiteFactory()
         self.bu = BusinessUnitFactory()
         self.site.business_units.add(self.bu)
@@ -89,19 +89,13 @@ class ViewTests(TestCase):
         self.company_user.delete()
 
         response = self.client.post(reverse('jobs_overview'))
-        expected = 'http://testserver/?next=/postajob/jobs/'
-        self.assertRedirects(response, expected,
-                             status_code=302)
+        self.assertEqual(response.status_code, 404)
         response = self.client.post(reverse('job_add'))
-        self.assertRedirects(response,
-                             'http://testserver/?next=/postajob/job/add/',
-                             status_code=302)
+        self.assertEqual(response.status_code, 404)
         response = self.client.post(reverse('job_delete', kwargs={'pk': 1}))
-        expected = 'http://testserver/?next=/postajob/job/delete/1/'
-        self.assertRedirects(response, expected, status_code=302)
+        self.assertEqual(response.status_code, 404)
         response = self.client.post(reverse('job_update', kwargs={'pk': 1}))
-        expected = 'http://testserver/?next=/postajob/job/update/1/'
-        self.assertRedirects(response, expected, status_code=302)
+        self.assertEqual(response.status_code, 404)
 
     @patch('urllib2.urlopen')
     def test_job_access_not_for_company(self, urlopen_mock):
