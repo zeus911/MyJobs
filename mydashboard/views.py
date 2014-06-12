@@ -5,6 +5,7 @@ import operator
 from datetime import datetime
 from collections import Counter, OrderedDict
 from itertools import groupby
+from django.conf import settings
 
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Q
@@ -163,7 +164,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         'results': 'search',
         'redirect': 'apply',
     }
-    analytics_solr = Solr().add_query('company_id:%d' % company.pk).add_facet_field(
+    analytics_solr = Solr(settings.SOLR['current']).add_query('company_id:%d' % company.pk).add_facet_field(
         'page_category')
 
     rng = filter_by_date(request, field='view_date')[0]
@@ -182,20 +183,17 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     auth_results = analytics_solr.search()
     results += auth_results.docs
 
-    # Filter out duplicate entries for a user.
-    candidates = sorted(dict_to_object(results),
-                        key=lambda y: y.User_id)
-    candidate_list = []
-    for x in groupby(candidates, key=lambda y: y.User_id):
-        candidate_list.append(list(x[1])[0])
-    candidate_list = sorted(candidate_list,
+    candidates = dict_to_object(results)
+
+    candidate_list = sorted(candidates,
                             key=lambda y: y.SavedSearch_created_on
                             if hasattr(y, 'SavedSearch_created_on')
                             else y.view_date,
                             reverse=True)
 
     context['candidates'] = candidate_list
-    context['total_candidates'] = len(candidate_list)
+    context['total_candidates'] = len([x for x in groupby(
+        candidate_list, key=lambda y: y.User_id)])
 
     if extra_context is not None:
         context.update(extra_context)
