@@ -1,4 +1,3 @@
-from django.contrib.auth.decorators import user_passes_test
 from django.core.urlresolvers import reverse_lazy
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -6,16 +5,12 @@ from django.utils.decorators import method_decorator
 
 from universal.helpers import get_company
 from universal.views import RequestFormViewBase
-from myjobs.decorators import user_is_allowed
+from universal.decorators import company_has_access
 from postajob.forms import (JobForm, ProductForm, ProductGroupingForm)
 from postajob.models import (Job, Product, ProductGrouping)
 
 
-is_company_user = lambda u: u.companyuser_set.all().count() >= 1
-
-
-@user_is_allowed()
-@user_passes_test(is_company_user)
+@company_has_access('prm_access')
 def jobs_overview(request):
     company = get_company(request)
     data = {'jobs': Job.objects.filter(owner=company)}
@@ -23,8 +18,7 @@ def jobs_overview(request):
                               RequestContext(request))
 
 
-@user_is_allowed()
-@user_passes_test(is_company_user)
+@company_has_access('product_access')
 def products_overview(request):
     company = get_company(request)
     data = {
@@ -60,8 +54,7 @@ class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
     update_name = 'job_update'
     delete_name = 'job_delete'
 
-    @method_decorator(user_is_allowed())
-    @method_decorator(user_passes_test(is_company_user))
+    @method_decorator(company_has_access('prm_access'))
     def dispatch(self, *args, **kwargs):
         """
         Decorators on this function will be run on every request that
@@ -81,6 +74,15 @@ class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):
     update_name = 'product_update'
     delete_name = 'product_delete'
 
+    @method_decorator(company_has_access('product_access'))
+    def dispatch(self, *args, **kwargs):
+        """
+        Decorators on this function will be run on every request that
+        goes through this class.
+
+        """
+        return super(ProductFormView, self).dispatch(*args, **kwargs)
+
 
 class ProductGroupingFormView(PostajobModelFormMixin, RequestFormViewBase):
     form_class = ProductGroupingForm
@@ -91,3 +93,12 @@ class ProductGroupingFormView(PostajobModelFormMixin, RequestFormViewBase):
     add_name = 'productgrouping_add'
     update_name = 'productgrouping_update'
     delete_name = 'productgrouping_delete'
+
+    @method_decorator(company_has_access('product_access'))
+    def dispatch(self, *args, **kwargs):
+        """
+        Decorators on this function will be run on every request that
+        goes through this class.
+
+        """
+        return super(ProductGroupingFormView, self).dispatch(*args, **kwargs)

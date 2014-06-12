@@ -26,6 +26,10 @@ class Company(models.Model):
     site_package = models.ForeignKey(SitePackage, null=True,
                                      on_delete=models.SET_NULL)
 
+    # Permissions
+    prm_access = models.BooleanField(default=True)
+    product_access = models.BooleanField(default=False)
+
     def __unicode__(self):
         return self.name
 
