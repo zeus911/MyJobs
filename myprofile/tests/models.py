@@ -417,15 +417,6 @@ class ProfileSuggestionTests(TestCase):
                             " with Organization?")
         self.assertEqual(suggestion['priority'], 1)
 
-    def test_suggestion_when_secondary_email_blank(self):
-        suggestions = SecondaryEmail.get_suggestion(self.user)
-
-        self.assertEqual(len(suggestions), 1)
-        suggestion = suggestions[0]
-        self.assertEqual(suggestion['msg'],
-                         "Would you like to add an additional email?")
-        self.assertEqual(suggestion['priority'], 5)
-
     def test_suggestion_when_secondary_email_provided(self):
         SecondaryEmail.objects.create(user=self.user,
                                       email="test@test.com")

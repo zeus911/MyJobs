@@ -55,7 +55,6 @@ $(document).ready(function() {
 $(function() {
     $('#profile-save').on("click", function(e) {
         e.preventDefault();
-        console.log('mmm?');
 
         var form = $('#profile-unit-form');
 
@@ -73,7 +72,6 @@ $(function() {
             url: '/profile/view/edit',
             data: serialized_data,
             success: function(data, status) {
-                console.log('test');
                 // Replace the content with the result of the AJAX call
                 container = $('#profile-unit-form').parent().parent()
                 container.fadeOut(400, function () {

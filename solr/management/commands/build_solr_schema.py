@@ -90,13 +90,6 @@ class Command(BaseCommand):
                 'multiValued': 'true',
             })
             # Analytics
-            schema_fields.append({
-                'field_name': 'page_category',
-                'type': 'text_en',
-                'indexed': 'true',
-                'stored': 'true',
-                'multiValued': 'false',
-            })
             for field in ['job_view_title', 'job_view_company',
                           'job_view_location']:
                 exact_field = field + '_exact'
@@ -113,7 +106,8 @@ class Command(BaseCommand):
                 schema_fields.append(field_data)
                 copy_fields.append({'source': exact_field, 'dest': field})
             for field in ['aguid', 'domain', 'job_view_canonical_domain',
-                          'job_view_guid', 'search_location', 'search_query']:
+                          'job_view_guid', 'search_location', 'search_query',
+                          'page_category', 'doc_type']:
                 # myguid is the same as User_user_guid and will be kept there
                 schema_fields.append({
                     'field_name': field,
@@ -122,7 +116,7 @@ class Command(BaseCommand):
                     'stored': 'true',
                     'multiValued': 'false',
                 })
-            for field in ['view_source', 'job_view_buid']:
+            for field in ['view_source', 'job_view_buid', 'company_id']:
                 schema_fields.append({
                     'field_name': field,
                     'type': 'long',

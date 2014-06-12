@@ -17,7 +17,8 @@ DATABASES = {
     },
 }
 SOLR = {
-    'default': 'http://ec2-23-20-67-65.compute-1.amazonaws.com:8983/solr/myjobs_test/',
+    'all': 'http://ec2-23-20-67-65.compute-1.amazonaws.com:8983/solr/myjobs_test/',
+    'current': 'http://ec2-23-20-67-65.compute-1.amazonaws.com:8983/solr/myjobs_test_current/',
 }
 CACHES = {
     'default': {
@@ -28,7 +29,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 
 JENKINS_TEST_RUNNER = 'testrunner.SilentTestRunner'
-TEST_SOLR_INSTANCE = SOLR['default']
+TEST_SOLR_INSTANCE = {'default': SOLR['all']}
 CELERY_ALWAYS_EAGER = True
 
 

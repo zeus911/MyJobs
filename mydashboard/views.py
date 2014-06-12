@@ -155,53 +155,30 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     results = solr_results.docs
 
-    if buids:
-        unique_buids = set(buids)
-        buid_q = ['(job_view_buid:%s)' % str(buid) for buid in unique_buids]
-        buid_q = ' OR '.join(buid_q)
-        buid_q = '(%s)' % buid_q
-        job_solr = Solr().add_filter_query(buid_q).add_query(
-            '((page_category:listing) OR (page_category:redirect))').add_facet_field(
-            'page_category')
+    facet_var_map = {
+        'home': 'home',
+        'listing': 'job_view',
+        'results': 'search',
+        'redirect': 'apply',
+    }
+    analytics_solr = Solr().add_query('company_id:%d' % company.pk).add_facet_field(
+        'page_category')
 
-        rng = filter_by_date(request, field='view_date')[0]
-        job_solr = job_solr.add_filter_query(rng)
+    rng = filter_by_date(request, field='view_date')[0]
+    analytics_solr = analytics_solr.add_filter_query(rng)
 
-        if active_microsites:
-            domain_q = ['(domain:%s)' % microsite
-                        for microsite in active_microsites]
-            domain_q = ' OR '.join(domain_q)
-            domain_q = '(%s)' % domain_q
-            non_job_solr = Solr().add_filter_query(domain_q).add_query(
-                '((page_category:results) OR (page_category:home))'). \
-                add_facet_field('page_category')
-            non_job_solr = non_job_solr.add_filter_query(rng)
-        else:
-            non_job_solr = None
+    all_results = analytics_solr.rows_to_fetch(0).search()
+    analytics_facets = all_results.facets.get('facet_fields', {}).get(
+        'page_category', [])
+    facet_dict = sequence_to_dict(analytics_facets)
+    for key in facet_dict.keys():
+        context_key = 'total_%s' % facet_var_map.get(key, '')
+        context[context_key] = facet_dict[key]
 
-        for analytics_solr in [job_solr, non_job_solr]:
-            # listing and results are tokenized to list and result
-            facet_var_map = {
-                'home': 'home',
-                'list': 'job_view',
-                'result': 'search',
-                'redirect': 'apply',
-            }
+    analytics_solr = analytics_solr.add_filter_query('User_id:[* TO *]')
 
-            if analytics_solr is not None:
-                all_results = analytics_solr.rows_to_fetch(0).search()
-                analytics_facets = all_results.facets.get(
-                    'facet_fields', {}).get('page_category', [])
-                facet_dict = sequence_to_dict(analytics_facets)
-                for key in facet_dict.keys():
-                    context_key = 'total_%s' % facet_var_map.get(key, '')
-                    context[context_key] = facet_dict[key]
-
-                analytics_solr = analytics_solr.add_filter_query(
-                    'User_id:[* TO *]')
-
-                auth_results = analytics_solr.search()
-                results += auth_results.docs
+    auth_results = analytics_solr.search()
+    results += auth_results.docs
 
     # Filter out duplicate entries for a user.
     candidates = sorted(dict_to_object(results),

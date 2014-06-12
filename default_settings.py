@@ -270,13 +270,12 @@ NEW_RELIC_TRACKING = False
 
 # Modules considered when calculating profile completion
 PROFILE_COMPLETION_MODULES = (
+    'name',
+    'summary',
     'address',
     'telephone',
-    'education',
-    'secondaryemail',
-    'name',
     'employmenthistory',
-    'summary'
+    'education',
 )
 
 BOTS = ['agent', 'archive', 'ask', 'auto', 'bot', 'check', 'crawl',
@@ -291,4 +290,4 @@ BOTS = ['agent', 'archive', 'ask', 'auto', 'bot', 'check', 'crawl',
 # to access them. Copied from directseo.
 PROTECTED_SITES = {42751: [25803, ]}
 
-TEST_SOLR_INSTANCE = 'http://127.0.0.1:8983/solr/myjobs_test/'
+TEST_SOLR_INSTANCE = {'default': 'http://127.0.0.1:8983/solr/myjobs_test/'}

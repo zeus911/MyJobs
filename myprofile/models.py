@@ -64,11 +64,13 @@ class ProfileUnits(models.Model):
         return self.content_type.name.title()
 
     @classmethod
-    def suggestions(cls, user):
+    def suggestions(cls, user, by_priority=True):
         """Get a list of all suggestions for a user to improve their profile.
 
         :Inputs:
         user = User for which to get suggestions
+        by_priority: Sort results by priority before returning, otherwise items
+            will be in the order they appear in the `classes` list
 
         :Outputs:
         suggestions - A list of dictionary objects.  Each dictionary should
@@ -83,12 +85,15 @@ class ProfileUnits(models.Model):
         because for any given class the user may not have an instance that can
         be used to access it.
         """
-        classes = [Address, Education, EmploymentHistory, License,
-                   MilitaryService, Name, SecondaryEmail, Summary, Telephone,
+        classes = [Name, Summary, Address, Telephone, EmploymentHistory,
+                   Education, License, MilitaryService, SecondaryEmail,
                    VolunteerHistory, Website]
 
         suggestions = chain(*[klass.get_suggestion(user) for klass in classes])
-        return sorted(suggestions, reverse=True, key=lambda x: x['priority'])
+        if by_priority:
+            suggestions = sorted(suggestions, reverse=True,
+                                 key=lambda x: x['priority'])
+        return suggestions
 
 
 class Name(ProfileUnits):
@@ -230,13 +235,13 @@ post_delete.connect(delete_primary, sender=Name, dispatch_uid="delete_primary")
 
 
 EDUCATION_LEVEL_CHOICES = (
-        ('', _('Education Level')),
-        (3, _('High School')),
-        (4, _('Non-Degree Education')),
-        (5, _('Associate')),
-        (6, _('Bachelor')),
-        (7, _('Master')),
-        (8, _('Doctoral')),
+    ('', _('Education Level')),
+    (3, _('High School')),
+    (4, _('Non-Degree Education')),
+    (5, _('Associate')),
+    (6, _('Bachelor')),
+    (7, _('Master')),
+    (8, _('Doctoral')),
 )
 
 
@@ -284,9 +289,9 @@ class Education(ProfileUnits):
             return [{
                 'msg': ("Would you like to provide information about "
                         "your education?"),
-                 'priority': 5,
-                 'module': 'Education',
-                 'url': reverse('handle_form') + '?module=Education&id=new'}]
+                'priority': 5,
+                'module': 'Education',
+                'url': reverse('handle_form') + '?module=Education&id=new'}]
         else:
             return []
 
@@ -302,11 +307,11 @@ class Address(ProfileUnits):
                                  verbose_name=_("City"))
     country_sub_division_code = models.CharField(max_length=5, blank=True,
                                                  verbose_name=_("State/Region"))
-    country_code = models.CharField(max_length=3, blank=True, 
+    country_code = models.CharField(max_length=3, blank=True,
                                     verbose_name=_("Country"))
     postal_code = models.CharField(max_length=12, blank=True,
                                    verbose_name=_("Postal Code"))
-    
+
     @classmethod
     def get_suggestion(cls, user):
         """Get a list of all suggestions for a user to improve their address
@@ -328,8 +333,8 @@ class Address(ProfileUnits):
         else:
             return [{'msg': 'Do you need to update your address from %s?' %
                             objects[0].address_line_one,
-                    'url': reverse('handle_form') + '?module=Address&id=%s' %
-                                                    objects[0].pk,
+                     'url': reverse('handle_form') + '?module=Address&id=%s' %
+                            objects[0].pk,
                      'priority': 1,
                      'module': 'Address'}]
 
@@ -372,7 +377,7 @@ class Telephone(ProfileUnits):
                      'priority': 5,
                      'module': 'Telephone',
                      'url': reverse('handle_form') + '?module=Telephone&id=new'
-                     }]
+                    }]
         else:
             return []
 
@@ -437,7 +442,7 @@ class EmploymentHistory(ProfileUnits):
                      'module': 'Employment'}]
         elif objects[0].current_indicator:
             return [{'msg': "Are you still employed with %s?" %
-                                objects[0].organization_name,
+                            objects[0].organization_name,
                      'url': reverse('handle_form') + \
                             '?module=EmploymentHistory&id=%s' % objects[0].pk,
                      'priority': 0,
@@ -514,7 +519,7 @@ class SecondaryEmail(ProfileUnits):
             return [{'msg': "Would you like to add an additional email?",
                      'url': reverse('handle_form') + \
                             '?module=SecondaryEmail&id=new',
-                     'priority': 5,
+                     'priority': 3,
                      'module': 'Secondary Email'}]
         return []
 

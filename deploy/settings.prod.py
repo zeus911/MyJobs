@@ -54,7 +54,8 @@ CACHES = {
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 
 SOLR = {
-    'default': 'http://ec2-54-87-235-123.compute-1.amazonaws.com:8080/solr/profiles/',
+    'all': 'http://ec2-54-87-235-123.compute-1.amazonaws.com:8080/solr/profiles/',
+    'current': 'http://ec2-54-87-235-123.compute-1.amazonaws.com:8080/solr/profiles_current/',
 }
 
 AWS_STORAGE_BUCKET_NAME = 'my-jobs'

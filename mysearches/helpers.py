@@ -132,7 +132,7 @@ def get_json(json_url):
 
 
 def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
-               return_items=None):
+               return_items=None, use_json=True):
     """
     Parses job data from an RSS feed and returns it as a list of dictionaries.
     The data returned is limited based on the corresponding data range (daily,
@@ -145,6 +145,7 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
     :offset:        The page on which the RSS feed is on.
     :return_items: The number of items to be returned; if not provided,
         equals :num_items:
+    :use_json:       Default feed to json, if available; Default: True
 
     Outputs:
     :tuple:         First index is a list of :return_items: jobs
@@ -157,7 +158,8 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
     else:
         separator = '?'
 
-    feed_url = feed_url.replace('feed/rss', 'feed/json')
+    if use_json:
+        feed_url = feed_url.replace('feed/rss', 'feed/json')
 
     interval = get_interval_from_frequency(frequency)
 
@@ -186,7 +188,7 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
             item_dict['title'] = item.findChild('title').text
             item_dict['link'] = item.findChild('link').text
             item_dict['pubdate'] = dateparser.parse(
-                item.findchild('pubdate').text)
+                item.findChild('pubdate').text)
             item_dict['description'] = item.findChild('description').text
 
         if date_in_range(start, end, item_dict['pubdate'].date()):
