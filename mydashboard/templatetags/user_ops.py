@@ -64,7 +64,7 @@ def get_candidate_query_string(context, company_id, user_id):
 
 
 @register.simple_tag
-def readable_activity(candidate):
+def display_activity(candidate):
     activities = {
         'listing': u'<strong>Viewed a job for {title}</strong><br />'
                    u'{domain}<br />{date}',

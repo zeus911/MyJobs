@@ -1,18 +1,52 @@
 {% load i18n %}
 
 <div class="accordion" id="details-{{ facet_field }}-collapse">
+    {% if domain_facets %}
+        <div class="accordion-group">
+            <div class="accordion-heading details-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#details-microsite-collapse" href="#microsite-details-table">
+                    Microsite
+                    <span class="pull-right">
+                        <i class="icon icon-minus"></i>
+                    </span>
+                </a>
+            </div>
+            <div id="microsite-details-table" class="facets accordion-body">
+                <div class="accordion-inner" style="max-height: 95px; overflow-y: scroll;">
+                    <ul class="facet-link">
+                        {% for facet in domain_facets %}
+                            <li class="facet">
+                                <a href="{{ request.path }}?{{ request.META.QUERY_STRING }}&microsite={{ facet.0 }}">
+                                    <span class="facet-count">{{ facet.1 }}</span>
+                                    <span class="facet-buffer"></span>
+                                    <span class="facet-term">{{ facet.0 }}</span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    {% endif %}
     {% for facet_field, facet_list in facets.items %}
         <div class="accordion-group">
-            <div class="accordion-heading details-heading"><a class="accordion-toggle" data-toggle="collapse" data-parent="#details-{{ facet_field }}-collapse" href="#{{ facet_field }}-details-table">{{ facet_field }}<span class="pull-right"><i class="icon icon-minus"></i></span></a></div>
-                <div id="{{ facet_field }}-details-table" class="facets accordion-body in collapse">
+            <div class="accordion-heading details-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#details-{{ facet_field }}-collapse" href="#{{ facet_field }}-details-table">
+                    {{ facet_field }}
+                    <span class="pull-right">
+                        <i class="icon icon-minus"></i>
+                    </span>
+                </a>
+            </div>
+            <div id="{{ facet_field }}-details-table" class="facets accordion-body in collapse">
                 <div class="accordion-inner">
-                        <ul id="facet-link">
+                        <ul class="facet-link">
                             {% for facet in facet_list %}
-                                <li id="facet">
+                                <li class="facet">
                                     <a href="{{ facet.2 }}">
-                                        <span id="facet-count">{{ facet.1 }}</span>
-                                        <span id="facet-buffer"></span>
-                                        <span id="facet-term">{{ facet.0 }}</span>
+                                        <span class="facet-count">{{ facet.1 }}</span>
+                                        <span class="facet-buffer"></span>
+                                        <span class="facet-term">{{ facet.0 }}</span>
                                     </a>
                                 </li>
                             {% endfor %}

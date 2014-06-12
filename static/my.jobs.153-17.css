@@ -3245,7 +3245,7 @@ body.modal-open {
      padding: 0 2px;
 }
 
-#facet-link {
+.facet-link {
     list-style-type: none;
     margin-left: 0;
     margin-bottom: 0;
@@ -3258,7 +3258,7 @@ body.modal-open {
     max-height: 200px !important;
 }
 
-#facet {
+.facet {
     display: table;
     width: 100%;
     table-layout: fixed;
@@ -3266,28 +3266,28 @@ body.modal-open {
     padding-top: 3px;
 }
 
-#facet a{
+.facet a{
     display: inline-block;
     text-decoration: none;
 }
 
-#facet:hover{
+.facet:hover{
     background-color: #d2cfc7;
 }
 
-#facet-count {
+.facet-count {
     display: table-cell;
     width: 30px;
     vertical-align: top;
     text-align: right;
 }
 
-#facet-buffer {
+.facet-buffer {
     display: table-cell;
     padding-right: 10px;
 }
 
-#facet-term {
+.facet-term {
     display:table-cell;
     vertical-align: top;
 }

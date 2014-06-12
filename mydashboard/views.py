@@ -84,7 +84,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     requested_date_button = request.REQUEST.get('date_button', False)    
     candidates_page = request.REQUEST.get('page', 1)    
           
-    # the url value for 'All' in the select box is company name 
+    # the url value for 'All' in the select box is company name
     # which then gets replaced with all microsite urls for that company
     site_name = ''
     if requested_microsite != company.name:
@@ -178,9 +178,18 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         context_key = 'total_%s' % facet_var_map.get(key, '')
         context[context_key] = facet_dict[key]
 
-    analytics_solr = analytics_solr.add_filter_query('User_id:[* TO *]')
+    analytics_solr = analytics_solr.add_filter_query('User_id:[* TO *]').\
+        add_facet_field('domain')
 
     auth_results = analytics_solr.search()
+    domain_facet_list = auth_results.facets.get(
+        'facet_fields', {}).get('domain', [])
+    domain_facets = sequence_to_dict(domain_facet_list)
+    domain_facets = [domain for domain in domain_facets.items()
+                     if domain[0] in active_microsites]
+    domain_facets = sorted(domain_facets,
+                           key=lambda x: x[1],
+                           reverse=True)
     results += auth_results.docs
 
     candidates = dict_to_object(results)
@@ -191,6 +200,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                             else y.view_date,
                             reverse=True)
 
+    context['domain_facets'] = domain_facets
     context['candidates'] = candidate_list
     context['total_candidates'] = len([x for x in groupby(
         candidate_list, key=lambda y: y.User_id)])
@@ -199,7 +209,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         context.update(extra_context)
     return render_to_response(template, context,
                               context_instance=RequestContext(request))
-    
+
 
 @page_template("mydashboard/site_activity.html")
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))

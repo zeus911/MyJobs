@@ -41,7 +41,7 @@ def analytics(employer, company, candidate):
         raise Http404
 
     solr = Solr(settings.SOLR['current']).add_filter_query(
-        'company_id:%d' % company.pk).add_query('User_id:%s' % candidate.pk)
+        'company_id:%d' % company.pk).add_query('User_id:%d' % candidate.pk)
     return solr.search().docs
 
 

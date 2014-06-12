@@ -27,7 +27,7 @@
                         {{ candidate.SavedSearch_url|url_domain }}<br>
                         {% str_to_date candidate.SavedSearch_created_on %}
                     {% else %}
-                        {% readable_activity candidate %}
+                        {% display_activity candidate %}
                     {% endif %}
                 </td>
              </tr>
