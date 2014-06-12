@@ -396,9 +396,9 @@ def parse_log(logs, solr_location):
 
                         # The defining feature of a given document will either
                         # be the domain or the buid.
-                        # Since buids are being pulled out of query strings as
-                        # strings, our memoization dict structure should be
-                        # {str(buid): int(company_id)}. Log the new buid
+                        # Our memoization dict will have the following structure
+                        # {str(buid): int(company_id),
+                        #  str(domain): int(company_id)}
                         log_memo[key] = company_id
 
                     # By this point, we are guaranteed that the correct key is
