@@ -329,6 +329,9 @@ def parse_log(logs, solr_location):
                         # with a '/'; Remove it
                         update_dict['job_view_guid'] = line[3][1:]
                         update_dict['page_category'] = 'redirect'
+                        domain = qs.get('jcnlx.ref', '')
+                        domain = urlparse.urlparse(domain).netloc
+                        update_dict['domain'] = domain
                     else:
                         aguid = qs.get('aguid', '')
                         myguid = qs.get('myguid', '')
