@@ -1,16 +1,18 @@
 from collections import Counter
-import urllib
-
 from copy import copy
 from datetime import datetime, timedelta
-from django.http import Http404
+import urllib
 from urlparse import urlparse, urlunparse, parse_qsl
 
+from django.conf import settings
+from django.core import mail
+from django.http import Http404
+
+from countries import COUNTRIES
 from global_helpers import get_domain
 from mydashboard.models import SeoSite
 from myprofile.models import EDUCATION_LEVEL_CHOICES
 from solr.helpers import format_date, Solr
-from countries import COUNTRIES
 
 
 edu_codes = dict([(x, y) for x, y in EDUCATION_LEVEL_CHOICES])
@@ -32,35 +34,21 @@ def get_company_microsites(company):
     buids = job_source_ids.values_list('id', flat=True)
     microsites = SeoSite.objects.filter(business_units__in=buids) \
         .values_list('domain', flat=True)
-    return (microsites, buids)
+    return microsites, buids
 
 
 def analytics(employer, company, candidate):
     if employer not in company.admins.all():
         raise Http404
 
-    authorized_microsites, buids = get_company_microsites(company)
+    if hasattr(mail, 'outbox'):
+        solr = settings.TEST_SOLR_INSTANCE
+    else:
+        solr = settings.SOLR
 
-    if buids:
-        buid_q = ['(job_view_buid:%s)' % str(buid) for buid in buids]
-        buid_q = ' OR '.join(buid_q)
-        buid_q = '(%s)' % buid_q
-
-        if authorized_microsites:
-            domain_q = ['(domain:%s)' % microsite
-                        for microsite in authorized_microsites]
-            domain_q = ' OR '.join(domain_q)
-            domain_q = '(%s)' % domain_q
-        else:
-            domain_q = None
-
-        if domain_q is not None:
-            q = '(%s OR %s)' % (buid_q, domain_q)
-        else:
-            q = buid_q
-        solr = Solr().add_filter_query(q).add_query(
-            'User_id:%s' % candidate.pk)
-        return solr.search().docs
+    analytics_solr = Solr(solr['current']).add_filter_query(
+        'company_id:%d' % company.pk).add_query('User_id:%d' % candidate.pk)
+    return analytics_solr.search().docs
 
 
 def saved_searches(employer, company, candidate):

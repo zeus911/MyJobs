@@ -125,9 +125,8 @@ class SavedSearchModelsTests(TestCase):
         email = mail.outbox.pop()
         soup = BeautifulSoup(email.body)
         lis = soup.findAll('li')
-        # .attrs is a list of two-tuples, where the first item is the attribute
-        # and the second is its value
-        hrefs = [li.find('a').attrs[0][1] for li in lis]
+        # .attrs is a dictionary, where the key is the attribute
+        hrefs = [li.find('a').attrs['href'] for li in lis]
 
         self.assertEqual(len(hrefs), len(modules))
 

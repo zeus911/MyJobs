@@ -8,7 +8,7 @@ from django.core import mail
 class Solr(object):
     def __init__(self, solr_location=settings.SOLR['all']):
         if hasattr(mail, 'outbox'):
-            solr_location = settings.TEST_SOLR_INSTANCE['default']
+            solr_location = settings.TEST_SOLR_INSTANCE['current']
         self.location = solr_location
         self.solr = pysolr.Solr(self.location)
         self.q = '(*:*)'
@@ -207,6 +207,7 @@ def format_date(date, time_format="23:59:59Z"):
     """
     date_format = "%Y-%m-%dT{time}".format(time=time_format)
     return date.strftime(date_format)
+
 
 def dict_to_object(results):
     objs = []

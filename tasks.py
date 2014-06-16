@@ -8,7 +8,6 @@ import uuid
 
 import boto
 from celery import task
-from celery.schedules import crontab
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -18,11 +17,9 @@ from django.db.models import Q
 
 from mydashboard.models import BusinessUnit, Company, SeoSite
 from myjobs.models import EmailLog, User
-from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch, SavedSearchDigest
 from postajob.models import Job
 from registration.models import ActivationProfile
-from solr import signals as solr_signals
 from solr import helpers
 from solr.models import Update
 from solr.signals import object_to_dict, profileunits_to_dict
@@ -155,7 +152,6 @@ def update_solr_task(solr_location=None):
     Inputs:
     :solr_location: Dict of separate cores to be updated
     """
-
     if hasattr(mail, 'outbox'):
         solr_location = settings.TEST_SOLR_INSTANCE
     elif solr_location is None:
@@ -170,14 +166,14 @@ def update_solr_task(solr_location=None):
             for location in solr_location.values():
                 solr = pysolr.Solr(location)
                 solr.delete(q="uid:(%s)" % uid_list)
-            Update.objects.filter(delete=True).delete()
+        Update.objects.filter(delete=True).delete()
 
     objs = Update.objects.filter(delete=False)
     updates = []
 
     for obj in objs:
         content_type, key = obj.uid.split("##")
-        model = ContentType.objects.get(pk=content_type).model_class()
+        model = ContentType.objects.get_for_id(content_type).model_class()
         if model == SavedSearch:
             updates.append(object_to_dict(model, model.objects.get(pk=key)))
         # If the user is being updated, because the user is stored on the
@@ -329,6 +325,9 @@ def parse_log(logs, solr_location):
                         # with a '/'; Remove it
                         update_dict['job_view_guid'] = line[3][1:]
                         update_dict['page_category'] = 'redirect'
+                        domain = qs.get('jcnlx.ref', '')
+                        domain = urlparse.urlparse(domain).netloc
+                        update_dict['domain'] = domain
                     else:
                         aguid = qs.get('aguid', '')
                         myguid = qs.get('myguid', '')
@@ -434,7 +433,7 @@ def delete_old_analytics_docs():
     than 30 days
     """
     if hasattr(mail, 'outbox'):
-        solr_location = settings.TEST_SOLR_INSTANCE['default']
+        solr_location = settings.TEST_SOLR_INSTANCE['current']
     else:
         solr_location = settings.SOLR['current']
 
