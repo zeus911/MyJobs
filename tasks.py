@@ -365,8 +365,7 @@ def parse_log(logs, solr_location):
 
                     buid = update_dict['job_view_buid']
                     domain = update_dict.get('domain', None)
-                    if not any([buid in log_memo,
-                                domain in log_memo]):
+                    if not (buid in log_memo or domain in log_memo):
                         # We haven't seen this buid or domain before
                         if buid == '0' and domain is not None:
                             # Retrieve company id via domain
@@ -483,7 +482,7 @@ def read_new_logs(solr_location=None):
         # last log uploaded by that host
         logs_to_process += logs_by_host[key][-1:]
 
-    # Ensure we only process each file once
+    # Ensure we only process each['href'] file once
     processed = getattr(settings, 'PROCESSED_LOGS', set())
     unprocessed = [log for log in logs_to_process if log.key not in processed]
 
