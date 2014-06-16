@@ -5,6 +5,7 @@ import urllib
 from urlparse import urlparse, urlunparse, parse_qsl
 
 from django.conf import settings
+from django.core import mail
 from django.http import Http404
 
 from countries import COUNTRIES
@@ -40,9 +41,14 @@ def analytics(employer, company, candidate):
     if employer not in company.admins.all():
         raise Http404
 
-    solr = Solr(settings.SOLR['current']).add_filter_query(
+    if hasattr(mail, 'outbox'):
+        solr = settings.TEST_SOLR_INSTANCE
+    else:
+        solr = settings.SOLR
+
+    analytics_solr = Solr(solr['current']).add_filter_query(
         'company_id:%d' % company.pk).add_query('User_id:%d' % candidate.pk)
-    return solr.search().docs
+    return analytics_solr.search().docs
 
 
 def saved_searches(employer, company, candidate):

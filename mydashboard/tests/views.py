@@ -115,16 +115,18 @@ class MyDashboardViewsTests(TestCase):
                 analytics_dict['aguid']
             )
 
-        solr = pysolr.Solr(settings.TEST_SOLR_INSTANCE['default'])
-        solr.add(dicts)
+        for location in settings.TEST_SOLR_INSTANCE.values():
+            solr = pysolr.Solr(location)
+            solr.add(dicts)
 
     def test_number_of_searches_and_users_is_correct(self):
         response = self.client.post(
-            reverse('dashboard')+'?company='+str(self.company.id),
-            {'microsite': 'test.jobs'})
+            reverse('dashboard')+'?company='+str(self.company.id))
         soup = BeautifulSoup(response.content)
-        # 6 users total, two rows per search
-        self.assertEqual(len(soup.select('#row-link-table tr')), 12)
+        # 6 users total
+        count_box = soup.select('.count-box-left')
+        count = int(count_box[0].text)
+        self.assertEqual(count, 6)
 
         old_search = SavedSearch.objects.all()[0]
         old_search.created_on -= timedelta(days=31)
@@ -134,7 +136,9 @@ class MyDashboardViewsTests(TestCase):
             reverse('dashboard')+'?company='+str(self.company.id),
             {'microsite': 'test.jobs'})
         soup = BeautifulSoup(response.content)
-        self.assertEqual(len(soup.select('#row-link-table tr')), 12)
+        count_box = soup.select('.count-box-left')
+        count = int(count_box[0].text)
+        self.assertEqual(count, 6)
 
     def test_facets(self):
         education = EducationFactory(user=self.candidate_user)
@@ -143,21 +147,29 @@ class MyDashboardViewsTests(TestCase):
         self.candidate_user.save()
         update_solr_task(settings.TEST_SOLR_INSTANCE)
 
-        country_str = 'http://testserver/candidates/view?company=1&amp;location={country}'
-        edu_str = 'http://testserver/candidates/view?company=1&amp;education={education}'
-        license_str = 'http://testserver/candidates/view?company=1&amp;license=Name">'
+        country_str = 'http://testserver/candidates/view?company=1&location={country}'
+        education_str = 'http://testserver/candidates/view?company=1&education={education}'
+        license_str = 'http://testserver/candidates/view?company=1&license={license_name}'
 
         country_str = country_str.format(country=adr.country_code)
-        edu_str = edu_str.format(education=education.education_level_code)
+        education_str = education_str.format(education=education.education_level_code)
         license_str = license_str.format(license_name=license.license_name)
 
         q = '?company={company}'
         q = q.format(company=str(self.company.id))
         response = self.client.post(reverse('dashboard')+q)
+        soup = BeautifulSoup(response.content)
 
-        self.assertIn(country_str, response.content)
-        self.assertIn(edu_str, response.content)
-        self.assertIn(license_str, response.content)
+        types = ['Country', 'Education', 'License']
+        hrefs = []
+        for facet_type in types:
+            container = soup.select('#%s-details-table' % facet_type)[0]
+            href = container.select('a')[0].attrs['href']
+            hrefs.append(href)
+
+        self.assertIn(country_str, hrefs)
+        self.assertIn(education_str, hrefs)
+        self.assertIn(license_str, hrefs)
 
     def test_filters(self):
         adr = AddressFactory(user=self.candidate_user)
@@ -222,12 +234,16 @@ class MyDashboardViewsTests(TestCase):
         # assert it finds all 5 searches.
         response = self.client.post(build_url('python'))
         soup = BeautifulSoup(response.content)
-        self.assertEqual(len(soup.select('#row-link-table tr')), 10)
+        count_box = soup.select('.count-box-left')
+        count = int(count_box[0].text)
+        self.assertEqual(count, 5)
 
-        # 6 users total, two rows per search
+        # 6 users total
         response = self.client.post(build_url('example'))
         soup = BeautifulSoup(response.content)
-        self.assertEqual(len(soup.select('#row-link-table tr')), 12)
+        count_box = soup.select('.count-box-left')
+        count = int(count_box[0].text)
+        self.assertEqual(count, 6)
 
     def test_search_email(self):
         """We should be able to search for an exact email."""
@@ -244,7 +260,7 @@ class MyDashboardViewsTests(TestCase):
 
         response = self.client.post(url)
         soup = BeautifulSoup(response.content)
-        self.assertEqual(len(soup.select('#row-link-table tr')), 2)
+        self.assertEqual(len(soup.select('#row-link-table tr')), 1)
 
     def test_search_domain(self):
         """We should be able to search for domain."""
@@ -261,13 +277,13 @@ class MyDashboardViewsTests(TestCase):
 
         response = self.client.post(url)
         soup = BeautifulSoup(response.content)
-        self.assertEqual(len(soup.select('#row-link-table tr')), 2)
+        self.assertEqual(len(soup.select('#row-link-table tr')), 1)
 
     def test_search_updates_facet_counts(self):
         # Add ProfileData to the candidate_user
-        education = EducationFactory(user=self.candidate_user)
-        adr = AddressFactory(user=self.candidate_user)
-        license = LicenseFactory(user=self.candidate_user)
+        EducationFactory(user=self.candidate_user)
+        AddressFactory(user=self.candidate_user)
+        LicenseFactory(user=self.candidate_user)
         self.candidate_user.save()
 
         # Create a new user with ProfileData
@@ -283,7 +299,7 @@ class MyDashboardViewsTests(TestCase):
         update_solr_task(settings.TEST_SOLR_INSTANCE)
 
         # Assert there are two users with country codes
-        country_tag = '#Country-details-table #facet-count'
+        country_tag = '#Country-details-table .facet-count'
         q = '?company={company}'
         q = q.format(company=str(self.company.id))
         response = self.client.post(reverse('dashboard') + q)
@@ -432,9 +448,9 @@ class MyDashboardViewsTests(TestCase):
         num_clicks = 1234
         self.add_analytics_data('redirect', num_to_add=num_clicks)
 
+
         response = self.client.post(
-            reverse('dashboard')+'?company='+str(self.company.id),
-            {'microsite': 'test.jobs'})
+            reverse('dashboard')+'?company='+str(self.company.id))
 
         soup = BeautifulSoup(response.content)
 

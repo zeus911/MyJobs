@@ -8,6 +8,7 @@ from itertools import groupby
 from django.conf import settings
 
 from django.contrib.auth.decorators import user_passes_test
+from django.core import mail
 from django.db.models import Q
 from django.http import Http404, HttpResponse
 from django.template import RequestContext
@@ -47,8 +48,12 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     :render_to_response:    renders template with context dict
 
     """
-    user_solr = Solr()
-    facet_solr = Solr()
+    if hasattr(mail, 'outbox'):
+        solr = settings.TEST_SOLR_INSTANCE
+    else:
+        solr = settings.SOLR
+    user_solr = Solr(solr['current'])
+    facet_solr = Solr(solr['current'])
 
     # Add join only if we're using facets, not if we're simply searching.
     query_params = {'search', 'company'}
@@ -165,7 +170,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         'results': 'search',
         'redirect': 'apply',
     }
-    analytics_solr = Solr(settings.SOLR['current']).add_facet_field(
+    analytics_solr = Solr(solr['current']).add_facet_field(
         'page_category')
     if requested_microsite:
         analytics_solr = analytics_solr.add_query('domain:%s' %

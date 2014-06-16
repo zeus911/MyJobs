@@ -8,7 +8,7 @@ from django.core import mail
 class Solr(object):
     def __init__(self, solr_location=settings.SOLR['all']):
         if hasattr(mail, 'outbox'):
-            solr_location = settings.TEST_SOLR_INSTANCE['default']
+            solr_location = settings.TEST_SOLR_INSTANCE['current']
         self.location = solr_location
         self.solr = pysolr.Solr(self.location)
         self.q = '(*:*)'

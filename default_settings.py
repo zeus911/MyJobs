@@ -290,4 +290,7 @@ BOTS = ['agent', 'archive', 'ask', 'auto', 'bot', 'check', 'crawl',
 # to access them. Copied from directseo.
 PROTECTED_SITES = {42751: [25803, ]}
 
-TEST_SOLR_INSTANCE = {'default': 'http://127.0.0.1:8983/solr/myjobs_test/'}
+TEST_SOLR_INSTANCE = {
+    'all': 'http://127.0.0.1:8983/solr/myjobs_test/',
+    'current': 'http://127.0.0.1:8983/solr/myjobs_test_current/'
+}
