@@ -3,10 +3,11 @@
 <tbody id="product-groups">
     {% if product_groupings %}
     {% for group in product_groupings %}
-        <tr class="product-group-tr" onclick="window.document.location='{% url 'productgrouping_update' pk=group.pk %}';">
+        <tr class="product-group-tr">
             <td class="product-group-display_order">{{ group.display_order }}</td>
             <td class="product-group-name">{{ group.name }}</td>
             <td class="product-group-products">{{ group.products.all|join:", " }}</td>
+            <td class="product-edit"><a href="{% url 'productgrouping_update' pk=group.pk %}" class="btn-link">Edit</a></td>
         </tr>
     {% endfor %}
     {% else %}

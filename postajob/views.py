@@ -22,10 +22,33 @@ def jobs_overview(request):
 def products_overview(request):
     company = get_company(request)
     data = {
-        'products': Product.objects.filter(owner=company),
-        'product_groupings': ProductGrouping.objects.filter(owner=company)
+        'products': Product.objects.filter(owner=company)[:3],
+        'product_groupings': ProductGrouping.objects.filter(owner=company)[:3],
+        'company': company
     }
     return render_to_response('postajob/products_overview.html', data,
+                              RequestContext(request))
+
+
+@company_has_access('product_access')
+def admin_products(request):
+    company = get_company(request)
+    data = {
+        'products': Product.objects.filter(owner=company),
+        'company': company
+    }
+    return render_to_response('postajob/products.html', data,
+                              RequestContext(request))
+
+
+@company_has_access('product_access')
+def admin_groupings(request):
+    company = get_company(request)
+    data = {
+        'product_groupings': ProductGrouping.objects.filter(owner=company),
+        'company': company
+    }
+    return render_to_response('postajob/productgroups.html', data,
                               RequestContext(request))
 
 
