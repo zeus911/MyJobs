@@ -1,5 +1,7 @@
 import re
 
+from django.shortcuts import get_object_or_404
+
 from mydashboard.models import Company
 
 
@@ -56,13 +58,19 @@ def get_company(request):
 
     """
     company = request.COOKIES.get('myjobs_company')
-    # If the company cookie isn't set, then the user should have
-    # only one company, so use that one.
     if company:
-        company = Company.objects.get(pk=company)
-    else:
+        company = get_object_or_404(Company, pk=company)
+
+        # If the company cookie is correctly set, confirm that the user
+        # actually has access to that company.
+        if company not in request.user.get_companies():
+            company = None
+
+    if not company:
         try:
-            company = request.user.companyuser_set.all()[0].company
+            # If the company cookie isn't set, then the user should have
+            # only one company, so use that one.
+            company = request.user.get_companies()[0]
         except IndexError:
             company = None
     return company
