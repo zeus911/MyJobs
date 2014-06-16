@@ -27,3 +27,4 @@ bleach==1.4
 unicodecsv==0.9.4
 django-extensions==1.3.3
 mock==1.0.1
+AuthorizeSauce==0.3.1
