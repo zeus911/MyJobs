@@ -28,20 +28,7 @@
                     {% endif %}
                 </td>
              </tr>
-             {% comment %}<tr class="candidate-activity-mobile" onclick="window.open('{% url 'candidate_information' %}{% get_candidate_query_string company_id candidate.User_id %}', '_blank');" >
-                <td>
-                    {% if candidate.User_first_name and candidate.User_last_name %}
-                        <span class="candidate-name pull-left">{{ candidate.User_first_name }} {{ candidate.User_last_name }}</span>
-                        <br />
-                    {% endif %}
-                    <a href="{% url 'candidate_information' %}{% get_candidate_query_string company_id candidate.User_id %}" class="candidate-activity-mobile pull-left">{{ candidate.User_email }}</a>
-                    <br style="clear:both" />
-                    <div class="progress activity-progress">
-                        <div class="bar bar-{% completion_level candidate.User_profile_completion %}" style="width: {{ candidate.User_profile_completion }}%"></div>
-                    </div>
-                </td>
-             </tr>{% endcomment %}
-             {% endfor %}                    
+             {% endfor %}
          </table>
          
          {% show_more %}

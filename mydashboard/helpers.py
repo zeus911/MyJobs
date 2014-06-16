@@ -34,7 +34,7 @@ def get_company_microsites(company):
     buids = job_source_ids.values_list('id', flat=True)
     microsites = SeoSite.objects.filter(business_units__in=buids) \
         .values_list('domain', flat=True)
-    return (microsites, buids)
+    return microsites, buids
 
 
 def analytics(employer, company, candidate):

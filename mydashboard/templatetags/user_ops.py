@@ -1,15 +1,11 @@
-from itertools import groupby
-import uuid
-
 from django import template
 from urlparse import urlparse
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 
 from mydashboard.helpers import update_url_param
-from myjobs.models import User
 from myjobs.templatetags.common_tags import str_to_date
-from myprofile.models import ProfileUnits, Name
+from myprofile.models import Name
 
 register = template.Library()
 

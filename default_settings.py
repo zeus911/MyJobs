@@ -1,11 +1,9 @@
 import djcelery
-import logging
 import os
 import sys
 
 from celery.schedules import crontab
 from os.path import abspath, dirname, basename, join
-from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
 
 from secrets import *
 
@@ -26,7 +24,6 @@ TEMPLATE_DEBUG = True
 # NOTE: Databse in local_settings.py or deploy_settings.py
 
 ROOT_PATH = abspath(dirname(__file__))
-PROJECT_NAME = "myjobs"
 PROJECT_NAME = basename(ROOT_PATH)
 
 TIME_ZONE = 'America/New_York'
@@ -56,10 +53,6 @@ USE_L10N = True
 MEDIA_ROOT = os.path.join(_PATH, 'files', 'media')
 MEDIA_URL = '/files/media/'
 
-STATICFILES_DIRS = (
-    os.path.join(PROJ_ROOT, 'static'),
-)
-
 STATIC_ROOT = os.path.join(_PATH, 'files', 'static')
 STATIC_URL = '/files/'
 
@@ -84,7 +77,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.RemoteUserMiddleware', # http auth
+    'django.contrib.auth.middleware.RemoteUserMiddleware',  # http auth
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     'django.contrib.redirects.middleware.RedirectFallbackMiddleware',
@@ -97,8 +90,8 @@ MIDDLEWARE_CLASSES = (
 
 AUTHENTICATION_BACKENDS = (
     'backends.CaseInsensitiveAuthBackend',
-    'django.contrib.auth.backends.ModelBackend', # default
-    'django.contrib.auth.backends.RemoteUserBackend', # http
+    'django.contrib.auth.backends.ModelBackend',  # default
+    'django.contrib.auth.backends.RemoteUserBackend',  # http
 )
 
 ROOT_URLCONF = 'MyJobs.urls'
@@ -114,7 +107,7 @@ CELERYBEAT_PIDFILE = '/var/run/celerybeat.pid'
 CELERYBEAT_SCHEDULE = {
     'daily-search-digest': {
         'task': 'tasks.send_search_digests',
-        'schedule': crontab(minute=0,hour=16),
+        'schedule': crontab(minute=0, hour=16),
     },
     'daily-delete-activation': {
         'task': 'tasks.delete_inactive_activations',
@@ -214,34 +207,34 @@ LOGGING = {
     'disable_existing_loggers': True,
     'formatters': {
         'standard': {
-            'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
-            'datefmt' : "%d/%b/%Y %H:%M:%S"
+            'format': "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            'datefmt': "%d/%b/%Y %H:%M:%S"
         },
     },
     'handlers': {
         'null': {
-            'level':'DEBUG',
-            'class':'django.utils.log.NullHandler',
+            'level': 'DEBUG',
+            'class': 'django.utils.log.NullHandler',
         },
         'logfile': {
-            'level':'DEBUG',
-            'class':'logging.handlers.RotatingFileHandler',
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': "/home/web/myjobslogs/logfile",
             'maxBytes': 50000,
             'backupCount': 2,
             'formatter': 'standard',
         },
-        'console':{
-            'level':'INFO',
-            'class':'logging.StreamHandler',
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
             'formatter': 'standard'
         },
     },
     'loggers': {
         'django': {
-            'handlers':['console', 'logfile'],
+            'handlers': ['console', 'logfile'],
             'propagate': True,
-            'level':'WARN',
+            'level': 'WARN',
         },
         'django.db.backends': {
             'handlers': ['console'],

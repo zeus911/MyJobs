@@ -8,7 +8,6 @@ import uuid
 
 import boto
 from celery import task
-from celery.schedules import crontab
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -18,11 +17,9 @@ from django.db.models import Q
 from mydashboard.models import Company
 
 from myjobs.models import EmailLog, User
-from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch, SavedSearchDigest
 from postajob.models import Job
 from registration.models import ActivationProfile
-from solr import signals as solr_signals
 from solr import helpers
 from solr.models import Update
 from solr.signals import object_to_dict, profileunits_to_dict

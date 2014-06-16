@@ -392,6 +392,7 @@ def export_candidates(request):
         raise Http404
     return response
 
+
 def filter_candidates(request):
     """
     Some default filtering for company/microsite. This function will
@@ -519,7 +520,6 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
     temp_user = None
     for unit in users_units:
         user = unit.user
-        continued = False
         num = 0
         if user == temp_user:
             continued = True
@@ -534,13 +534,12 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
                 writer.writerow(user_fields)
             user_fields = [user.email]
         # Filling in user_fields with default data
-        whileloop = True
-        while num > len(headers)-1 or whileloop == True:
+        while num > len(headers)-1:
             if not len(user_fields) == len(headers):
                 user_fields.append('""')
                 num += 1
             else:
-                whileloop = False
+                break
         
         instance = getattr(unit, unit.content_type.name.replace(" ", ""))
         fields = retrieve_fields(instance)

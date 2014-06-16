@@ -448,7 +448,6 @@ class MyDashboardViewsTests(TestCase):
         num_clicks = 1234
         self.add_analytics_data('redirect', num_to_add=num_clicks)
 
-
         response = self.client.post(
             reverse('dashboard')+'?company='+str(self.company.id))
 
