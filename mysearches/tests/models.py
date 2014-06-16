@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core import mail
 from django.test import TestCase
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 from mock import patch
 
 from myjobs.tests.factories import UserFactory
