@@ -87,7 +87,7 @@ class ProductFormAdmin(ModelAdminWithRequest):
         }),
         ('Package Details', {
             'fields': ('cost', 'posting_window_length',
-                       'max_job_length', 'num_jobs_allowed', )
+                       'max_job_length', 'job_limit', 'num_jobs_allowed', )
         }),
     )
 

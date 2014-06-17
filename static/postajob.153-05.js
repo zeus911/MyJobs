@@ -8,7 +8,9 @@ if(typeof jQuery == 'undefined') {
 window.onload = function(){
     update_apply_fields();
     update_site_fields();
+    update_job_limit_fields();
 
+    // Job Form
     $(document).on("change", '#id_apply_type_0', function(){
         update_apply_fields();
     });
@@ -18,12 +20,19 @@ window.onload = function(){
     $(document).on("change", '#id_apply_type_2', function(){
         update_apply_fields();
     });
-
     $(document).on("change", '#post-to-selector_0', function() {
         update_site_fields();
     });
     $(document).on("change", '#post-to-selector_1', function() {
         update_site_fields();
+    });
+
+    // Product Form
+    $(document).on("change", '#id_job_limit_0', function() {
+        update_job_limit_fields();
+    });
+    $(document).on("change", '#id_job_limit_1', function() {
+        update_job_limit_fields();
     });
 };
 
@@ -96,5 +105,16 @@ function update_site_fields() {
     else {
         show_field('site');
         show_admin_field('site_packages');
+    }
+}
+
+function update_job_limit_fields() {
+    if($('#id_job_limit_0').is(':checked')) {
+        hide_field('number-of-jobs');
+        hide_admin_field('num_jobs_allowed');
+    }
+    else {
+        show_field('number-of-jobs');
+        show_admin_field('num_jobs_allowed');
     }
 }

@@ -461,7 +461,7 @@ class Product(BaseModel):
                                          choices=max_job_length_choices,
                                          help_text=help_text['max_job_length'],
                                          verbose_name='Maximum Job Duration')
-    num_jobs_allowed = models.IntegerField(default=5, help_text=help_text['num_jobs_allowed'],
+    num_jobs_allowed = models.IntegerField(default=5,
                                            verbose_name='Number of Jobs')
 
     description = models.TextField(verbose_name='Product Description')
