@@ -1,6 +1,6 @@
 {% load i18n %}
 {% load common_tags %}
-<link href="{{ STATIC_URL }}topbar.153-05.css" rel="stylesheet" type="text/css">
+<link href="{{ STATIC_URL }}topbar.153-19.css" rel="stylesheet" type="text/css">
 <div class="topbar" data-dropdown="dropdown" role="menubar">
     <div class="topbar-inner">
         <div id="de-topbar-content" class="wrapper" {% if from_ajax %}style="margin:0 auto; width:960px; display:block;"{% endif %}>
@@ -28,7 +28,7 @@
                     {% is_a_group_member user "Employer" as group_member %}
                     {% get_company_name user as company_name %}
                     {% if group_member %}
-                    <li class="{% active_tab 'employer-tools' %}">
+                    <li class="{% active_tab 'employer-tools' %} has-drop">
                         <a>{% trans "Employers" %}</a>
                         <ul id="employer-apps" class="submenu">
                             <li><a id="candidate-tab" href="https://secure.my.jobs/candidates/view?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
@@ -36,7 +36,7 @@
                         </ul>
                     </li>
                     {% endif %}
-                    <li>
+                    <li class="has-drop">
                         <a>{{ user.email }}</a>
                         <ul class="submenu">
                             <li><a href="https://secure.my.jobs/profile/view/">{% trans "My Resume" %}</a></li>
@@ -315,13 +315,13 @@
                 set_cookie(item_id, 14);
 
                 // replaces text of main li holding company list
-                parent_list_item.firstChild.innerHTML = "Currently <b>"+ this.firstChild.innerHTML +"</b>";
+                parent_list_item.firstChild.innerHTML = "<b>"+ this.firstChild.innerHTML +"</b>";
 
                 update_employer_tools(item_id);
             };
             list.appendChild(list_item);
         }
-        label.innerHTML = "Currently <b>"+ menu_company_name +"</b>";
+        label.innerHTML = "<b>"+ menu_company_name +"</b>";
         parent_list_item.appendChild(label);
         parent_list_item.appendChild(list);
 
@@ -333,8 +333,11 @@
         var mobile_parent_element = document.createElement("li");
         mobile_parent_element.setAttribute("id", "mobile-company-select");
         mobile_parent_element.setAttribute("class", "no-show");
+        mobile_parent_element.setAttribute("style", "cursor:pointer");
         var mobile_label = document.createElement("a");
-        mobile_label.innerHTML = "Currently <b>" + menu_company_name + "</b>";
+        mobile_label.innerHTML = "<b>" + menu_company_name + "</b>";
+        if(menu_company_name.length > 20)
+            mobile_label.setAttribute("style", "font-size: 21px");
         mobile_parent_element.appendChild(mobile_label);
         mobile_parent_element.onclick = function() {
             $(".multiple_companies").removeClass("no-show");
@@ -364,7 +367,7 @@
             mobile_list_item.onclick = function() {
                 var mobile_item_id = this.id.split("_")[1];
                 set_cookie(mobile_item_id, 14);
-                mobile_parent_element.firstChild.innerHTML = "Currently <b>"+ this.firstChild.innerHTML + "</b>";
+                mobile_parent_element.firstChild.innerHTML = "<b>"+ this.firstChild.innerHTML + "</b>";
                 update_employer_tools(mobile_item_id);
                 $("#back-btn").click();
             };

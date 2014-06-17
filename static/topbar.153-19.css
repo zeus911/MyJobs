@@ -109,10 +109,29 @@
 }
 
 .menu-container > ul > li > a {
-    padding: 7px 12px;
+    padding: 7px 15px;
     text-decoration: none;
     color: #FFF;
     display: inline;
+}
+
+.menu-container > ul > li.has-drop > a:after {
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #FFF;
+    content: "";
+    margin-top: 8px;
+    margin-left: 3px;
+    position: absolute;
+}
+
+ul.submenu > li.submenu-dropdown > a:after {
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #FFF;
+    content: "";
+    margin-top: 8px;
+    margin-left: 3px;
 }
 
 .menu-container > ul > li:hover > a {
@@ -190,9 +209,11 @@ ul.submenu > li > a:hover {
     position: absolute;
     float: left;
     margin-left: 2px;
+    border: 4px solid transparent;
     border-right: 0;
     border-left: 6px solid #fff;
     margin-top: -15px;
+    display: block;
 }
 
 .topbar #last-microsite {
@@ -368,6 +389,20 @@ ul.submenu > li > a:hover {
         display: block;
     }
 
+    #employer-tools:after,
+    #settings-link:after,
+    #mobile-company-select > a:after{
+        border-bottom: 10px solid transparent;
+        border-left: 15px solid #FFF;
+        border-top: 10px solid transparent;
+        content: "";
+        display: inline-block;
+        font-size: 0;
+        line-height: 0;
+        margin-bottom: -2px;
+        margin-left: 15px;
+    }
+
     #topbar-back > #prm-arrow-left {
         border-right: 15px solid #FFF;
     }
@@ -467,6 +502,10 @@ ul.submenu > li > a:hover {
 
     #pop-menu .desktop_hide {
         display: block;
+    }
+
+    .topbar #last-microsite .arrow {
+        margin-top: -6px;
     }
 }
 @media screen and (min-width: 993px) {
