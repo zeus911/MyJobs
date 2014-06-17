@@ -363,6 +363,11 @@ ul.submenu > li > a:hover {
         margin-top: 10px;
     }
 
+    .topbar #last-microsite-name {
+        display: block;
+        margin-top: 2px;
+    }
+
     .topbar #nav .arrow {
         display: none;
     }
@@ -509,7 +514,7 @@ ul.submenu > li > a:hover {
     }
 
     .topbar #last-microsite .arrow {
-        margin-top: -6px;
+        margin-top: -19px;
     }
 }
 @media screen and (min-width: 993px) {

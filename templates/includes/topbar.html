@@ -10,17 +10,17 @@
                 </a>
             </div>
 
+            {% get_ms_name as microsite_name %}
+            {% if microsite_name != None %}
             <div id="last-microsite" class="de-topbar-item">
                 <a href="{% get_ms_url %}">
                     <span id="last-microsite-name">
-                        {% get_ms_name as microsite_name %}
-                        {% if microsite_name != None %}
                         {{ microsite_name }}
-                        {% endif %}
                     </span>
                     <span class="arrow pull-left"></span>
                 </a>
             </div>
+            {% endif %}
 
             <div class="menu-container" role="menu">
                 {% if user.is_authenticated %}
