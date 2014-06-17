@@ -18,6 +18,8 @@
     padding-bottom: 0px;
 }
 
+.field-job_limit > div > ul,
+.job-limit-field > ul,
 .field-products > div > ul,
 .field-apply_type > div > ul,
 .field-post_to > div > ul,
@@ -29,6 +31,8 @@
     padding: 0;
 }
 
+.field-job_limit > div > ul > li,
+.job-limit-field > ul > li,
 .field-products > div > ul > li,
 .field-apply_type > div> ul > li,
 .field-site_packages > div > ul > li,

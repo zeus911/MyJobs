@@ -232,7 +232,20 @@ class ProductForm(RequestForm):
         model = Product
         fields = ('name', 'package', 'owner', 'cost',
                   'posting_window_length', 'max_job_length',
-                  'num_jobs_allowed', )
+                  'job_limit', 'num_jobs_allowed', )
+
+    class Media:
+        css = {
+            'all': ('postajob.153-10.css', )
+        }
+        js = ('postajob.153-05.js', )
+
+    job_limit_choices = [('unlimited', "Unlimited"),
+                         ('specific', 'A Specific Number'), ]
+    job_limit = CharField(
+        label='Job Limit', widget=RadioSelect(choices=job_limit_choices),
+        help_text=Product.help_text['num_jobs_allowed'], initial='unlimited'
+    )
 
     def __init__(self, *args, **kwargs):
         super(ProductForm, self).__init__(*args, **kwargs)
@@ -252,6 +265,15 @@ class ProductForm(RequestForm):
                 self.fields['owner'].queryset = user_companies
                 self.fields['package'].queryset = \
                     Package.objects.user_available().filter_company(user_companies)
+
+        if self.instance.pk and self.instance.num_jobs_allowed != 0:
+            self.initial['job_limit'] = 'specific'
+
+    def clean(self):
+        num_jobs_selector = self.cleaned_data.get('job_limit')
+        if num_jobs_selector == 'unlimited':
+            self.cleaned_data['num_jobs_allowed'] = 0
+        return self.cleaned_data
 
 
 class ProductGroupingForm(RequestForm):
