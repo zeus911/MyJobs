@@ -1,5 +1,9 @@
 import re
 
+from django.shortcuts import get_object_or_404
+
+from mydashboard.models import Company
+
 
 def get_int_or_none(string):
     try:
@@ -46,3 +50,27 @@ def sequence_to_dict(from_):
         Dictionary created from the input sequence
     """
     return dict(zip(*[iter(from_)]*2))
+
+
+def get_company(request):
+    """
+    Uses the myjobs_company cookie to determine what the current company is.
+
+    """
+    company = request.COOKIES.get('myjobs_company')
+    if company:
+        company = get_object_or_404(Company, pk=company)
+
+        # If the company cookie is correctly set, confirm that the user
+        # actually has access to that company.
+        if company not in request.user.get_companies():
+            company = None
+
+    if not company:
+        try:
+            # If the company cookie isn't set, then the user should have
+            # only one company, so use that one.
+            company = request.user.get_companies()[0]
+        except IndexError:
+            company = None
+    return company

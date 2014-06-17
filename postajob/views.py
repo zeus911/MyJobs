@@ -1,90 +1,83 @@
-from django.contrib.auth.decorators import user_passes_test
-from django.core.urlresolvers import reverse
 from django.core.urlresolvers import reverse_lazy
-from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
-from django.views.generic.edit import FormView, ModelFormMixin
-from django.views.generic.detail import SingleObjectMixin
 
-from myjobs.decorators import user_is_allowed
-from postajob.forms import JobForm
-from postajob.models import Job
-
-
-is_company_user = lambda u: u.companyuser_set.all().count() >= 1
+from universal.helpers import get_company
+from universal.views import RequestFormViewBase
+from universal.decorators import company_has_access
+from postajob.forms import (JobForm, ProductForm, ProductGroupingForm)
+from postajob.models import (Job, Product, ProductGrouping)
 
 
-@user_is_allowed()
-@user_passes_test(is_company_user)
+@company_has_access('prm_access')
 def jobs_overview(request):
-    companies = request.user.companyuser_set.all().values_list('company',
-                                                               flat=True)
-    data = {
-        'jobs': Job.objects.filter(company__in=companies)
-    }
+    company = get_company(request)
+    data = {'jobs': Job.objects.filter(owner=company)}
     return render_to_response('postajob/jobs_overview.html', data,
                               RequestContext(request))
 
 
-class JobFormView(FormView, ModelFormMixin, SingleObjectMixin):
-    context_object_name = 'job'
-    form_class = JobForm
-    model = Job
-    success_url = reverse_lazy('jobs_overview')
+@company_has_access('product_access')
+def products_overview(request):
+    company = get_company(request)
+    data = {
+        'products': Product.objects.filter(owner=company)[:3],
+        'product_groupings': ProductGrouping.objects.filter(owner=company)[:3],
+        'company': company
+    }
+    return render_to_response('postajob/products_overview.html', data,
+                              RequestContext(request))
+
+
+@company_has_access('product_access')
+def admin_products(request):
+    company = get_company(request)
+    data = {
+        'products': Product.objects.filter(owner=company),
+        'company': company
+    }
+    return render_to_response('postajob/products.html', data,
+                              RequestContext(request))
+
+
+@company_has_access('product_access')
+def admin_groupings(request):
+    company = get_company(request)
+    data = {
+        'product_groupings': ProductGrouping.objects.filter(owner=company),
+        'company': company
+    }
+    return render_to_response('postajob/productgroups.html', data,
+                              RequestContext(request))
+
+
+class PostajobModelFormMixin(object):
+    """
+    A mixin for postajob models, since nearly all of them rely on
+    owner for filtering by company.
+
+    """
+    model = None
     template_name = 'postajob/form.html'
 
-    def delete(self):
-        """
-        Calls the delete() method on the fetched object and then
-        redirects to the success URL.
+    def get_queryset(self, request):
+        kwargs = {'owner__in': request.user.get_companies()}
+        self.queryset = self.model.objects.filter(**kwargs)
+        return self.queryset
 
-        """
-        success_url = self.get_success_url()
-        self.object.delete()
-        return HttpResponseRedirect(success_url)
 
-    def get_form_kwargs(self):
-        """
-        Allows for passing the request along to the JobForm so the JobForm
-        can have access to the user.
+class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
+    form_class = JobForm
+    model = Job
+    display_name = 'Job'
 
-        """
-        kwargs = super(JobFormView, self).get_form_kwargs()
-        kwargs['request'] = self.request
-        return kwargs
+    success_url = reverse_lazy('jobs_overview')
+    add_name = 'job_add'
+    update_name = 'job_update'
+    delete_name = 'job_delete'
 
-    @staticmethod
-    def queryset(request):
-        user_companies = request.user.companyuser_set.all()
-        kwargs = {
-            'company__in': user_companies.values_list('company', flat=True)
-        }
-        return Job.objects.filter(**kwargs)
-
-    def get(self, request, *args, **kwargs):
-        if not request.path.startswith(reverse('job_add')):
-            self.object = self.get_object(queryset=self.queryset(request))
-            pk = {'pk': self.object.pk}
-            if request.path.startswith(reverse('job_delete', kwargs=pk)):
-                return self.delete()
-        else:
-            self.object = None
-        return super(JobFormView, self).get(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        if not request.path.startswith(reverse('job_add')):
-            self.object = self.get_object(queryset=self.queryset(request))
-            pk = {'pk': self.object.pk}
-            if request.path.startswith(reverse('job_delete', kwargs=pk)):
-                return self.delete()
-        else:
-            self.object = None
-        return super(JobFormView, self).post(request, *args, **kwargs)
-
-    @method_decorator(user_is_allowed())
-    @method_decorator(user_passes_test(is_company_user))
+    @method_decorator(company_has_access('prm_access'))
     def dispatch(self, *args, **kwargs):
         """
         Decorators on this function will be run on every request that
@@ -94,3 +87,41 @@ class JobFormView(FormView, ModelFormMixin, SingleObjectMixin):
         return super(JobFormView, self).dispatch(*args, **kwargs)
 
 
+class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):
+    form_class = ProductForm
+    model = Product
+    display_name = 'Product'
+
+    success_url = reverse_lazy('products_overview')
+    add_name = 'product_add'
+    update_name = 'product_update'
+    delete_name = 'product_delete'
+
+    @method_decorator(company_has_access('product_access'))
+    def dispatch(self, *args, **kwargs):
+        """
+        Decorators on this function will be run on every request that
+        goes through this class.
+
+        """
+        return super(ProductFormView, self).dispatch(*args, **kwargs)
+
+
+class ProductGroupingFormView(PostajobModelFormMixin, RequestFormViewBase):
+    form_class = ProductGroupingForm
+    model = ProductGrouping
+    display_name = 'Product Grouping'
+
+    success_url = reverse_lazy('products_overview')
+    add_name = 'productgrouping_add'
+    update_name = 'productgrouping_update'
+    delete_name = 'productgrouping_delete'
+
+    @method_decorator(company_has_access('product_access'))
+    def dispatch(self, *args, **kwargs):
+        """
+        Decorators on this function will be run on every request that
+        goes through this class.
+
+        """
+        return super(ProductGroupingFormView, self).dispatch(*args, **kwargs)

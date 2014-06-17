@@ -8,7 +8,7 @@
 {% load i18n %}
 
 {% block content %}
-    <h1><a class="mobile_hide" href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
+    <h1><a class="mobile_hide" href="{% url 'prm' %}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
     <div class="row">
         <div class="span12 prm-header">
             <span>{% if item_id %}Edit{% else %}New{% endif %} Partner Saved Search</span>
@@ -25,7 +25,7 @@
             <div class="form-label pull-left">&nbsp;</div>
             <div class="actions pull-right">
                 {% if item_id %}<button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
-                <a class="btn" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">{% trans 'Cancel' %}</a>
+                <a class="btn" href="{% url 'partner_searches' %}?partner={{ partner.id }}">{% trans 'Cancel' %}</a>
                 <button type="submit" class="btn primary" id="partner_ss_save">{% trans 'Save' %}</button>
             </div>
             <div class="clear"></div>
@@ -47,7 +47,7 @@
             <div class="modal-footer">
                 <div class="actions">
                     <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
-                    <a class="btn" href="{% url 'delete_prm_item' %}?company={{ company.id }}&partner={{ partner.id }}&ct={{ content_type }}&id={{ item_id }}">{% trans 'Delete' %}</a>
+                    <a class="btn" href="{% url 'delete_prm_item' %}?partner={{ partner.id }}&ct={{ content_type }}&id={{ item_id }}">{% trans 'Delete' %}</a>
                 </div>
             </div>
         </div>{# /delete-confirm #}
@@ -58,7 +58,7 @@
                     Use the URL Extra field to attach source codes to each of the links.
                 </div>
                 <div class="tip-footer">
-                    <a class="btn-link" href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
+                    <a class="btn-link" href="{% url 'partner_overview' %}?partner={{ partner.id }}">Back to Overview</a>
                 </div>
             </div>
 

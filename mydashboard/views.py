@@ -1,18 +1,20 @@
 import csv
 import json
 import operator
-
 from datetime import datetime
 from collections import Counter, OrderedDict
 from itertools import groupby
+from urlparse import urlparse
 
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Q
 from django.http import Http404, HttpResponse
 from django.template import RequestContext
 from django.shortcuts import render_to_response
+from endless_pagination.decorators import page_template
+from lxml import etree
 
-from global_helpers import get_domain, get_int_or_none, sequence_to_dict
+from universal.helpers import get_domain, get_int_or_none, sequence_to_dict
 from mydashboard.helpers import (saved_searches, filter_by_microsite,
                                  filter_by_date, apply_facets_and_filters,
                                  parse_facets, remove_param_from_url,
@@ -23,10 +25,6 @@ from myjobs.models import User
 from myprofile.models import PrimaryNameProfileUnitManager, ProfileUnits
 from mysearches.models import SavedSearch
 from solr.helpers import Solr, dict_to_object
-
-from endless_pagination.decorators import page_template
-from urlparse import urlparse
-from lxml import etree
 
 
 @page_template("mydashboard/dashboard_activity.html")
