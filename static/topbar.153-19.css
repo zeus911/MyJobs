@@ -134,6 +134,10 @@ ul.submenu > li.submenu-dropdown > a:after {
     margin-left: 3px;
 }
 
+.menu-container > ul > li.has-drop:hover > a:after {
+    border:0;
+}
+
 .menu-container > ul > li:hover > a {
     cursor: pointer;
     background-color: #a95051;
