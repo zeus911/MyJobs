@@ -30,6 +30,8 @@ SESSION_COOKIE_SECURE = True
 
 STATIC_URL = "//d2e48ltfsb5exy.cloudfront.net/content_mj/files/"
 
+ABSOLUTE_URL = "https://secure.my.jobs/"
+
 SESSION_CACHE_ALIAS = 'sessions'
 CACHES = {
     'default': {
