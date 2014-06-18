@@ -1,5 +1,4 @@
 from authorize import AuthorizeInvalidError, AuthorizeResponseError
-from datetime import date
 
 from django.contrib import admin
 from django.core.exceptions import ValidationError
@@ -347,10 +346,6 @@ class PurchasedProductForm(RequestForm):
         css = {
             'all': ('postajob.153-10.css', )
         }
-
-    month_choices = ((x, x) for x in range(1, 13))
-    year_choices = ((x, x) for x in range(date.today().year,
-                                          date.today().year + 15))
 
     card_number = CharField(label='Credit Card Number')
     cvv = IntegerField(label='CVV')
