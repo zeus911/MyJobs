@@ -1,7 +1,9 @@
 from collections import Counter
 import urllib
+
 from copy import copy
 from datetime import datetime, timedelta
+from django.http import Http404
 from urlparse import urlparse, urlunparse, parse_qsl
 
 from django.conf import settings
