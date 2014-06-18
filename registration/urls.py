@@ -1,8 +1,9 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import patterns, url
 from django.contrib.auth import views as auth_views
 
-from registration.forms import CustomAuthForm, CustomPasswordResetForm
-from registration.views import *
+from registration.forms import CustomPasswordResetForm
+from registration.views import (RegistrationComplete, activate, merge_accounts,
+                                resend_activation, logout)
 
 urlpatterns = patterns('',
     # Authorization URLS

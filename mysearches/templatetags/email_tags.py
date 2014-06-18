@@ -1,4 +1,7 @@
 from django import template
+from django.core.urlresolvers import reverse
+
+from registration.models import ActivationProfile
 
 register = template.Library()
 
@@ -36,4 +39,30 @@ def get_all_jobs_link(saved_search):
         if feed:
             return feed.replace('/feed/rss', '')
 
+    return url
+
+
+@register.simple_tag
+def get_created_url(saved_search):
+    """
+    Constructs the url for the "yes, I created this" button
+
+    If a user is not active, the link will point to their activation page
+    If a user is active, the link will point to the My.jobs saved search
+        feed viewer
+    """
+    user = saved_search.user
+    user_guid_qs = 'verify={guid}'.format(guid=user.user_guid)
+
+    if user.is_active:
+        url = reverse('view_full_feed') + '?id={id}&{guid}'.format(
+            id=saved_search.pk, guid=user_guid_qs)
+    else:
+        profile, _ = ActivationProfile.objects.get_or_create(user=user,
+                                                             email=user.email)
+        if profile.activation_key_expired():
+            profile.reset_activation()
+        url = reverse('registration_activate',
+                      args=[profile.activation_key]) + '?{guid}'.format(
+                          guid=user_guid_qs)
     return url

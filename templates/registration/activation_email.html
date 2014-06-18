@@ -17,6 +17,9 @@ following context:
     The user's auto-generated password, if any
 
 {% endcomment %}
+<style>
+    {% include "includes/email.css" %}
+</style>
 <p>
 {% if custom_msg|length %}
     {{ custom_msg }}
@@ -36,12 +39,12 @@ following context:
 {% endif %}
 </p>
 {% url 'registration_activate' activation_key as url %}
-<a href="https://secure.my.jobs{{url}}?verify={{user.user_guid}}">Activate my account.</a>
+<a href="https://secure.my.jobs{{url}}?verify={{user.user_guid}}" class="btn">Activate my account</a>
 
 {% if password %}
     {% blocktrans %}
 
-    <p>Your temporary password is <span style="color:#FF4040;">{{password}}</span></p>
+    <p>Your temporary password is <span class="password">{{password}}</span></p>
 
     <p>It must be changed upon logging in.</p>
 
@@ -50,9 +53,7 @@ following context:
 
 {% blocktrans %}
 
-<p>Please note that if your activation does not succeed
-within {{ expiration_days }} days, you will have to restart
-the verification process.</p>
+<p>Please note that if your activation does not succeed within {{ expiration_days }} days, you will have to restart the verification process.</p>
 
 {% endblocktrans %}
 
