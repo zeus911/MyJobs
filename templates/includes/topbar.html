@@ -317,7 +317,8 @@
                 // replaces text of main li holding company list
                 parent_list_item.firstChild.innerHTML = "<b>"+ this.firstChild.innerHTML +"</b>";
 
-                update_employer_tools(item_id);
+                // Reloads page
+                location.reload();
             };
             list.appendChild(list_item);
         }

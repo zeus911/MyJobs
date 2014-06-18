@@ -406,10 +406,10 @@ ul.submenu > li > a:hover {
         border-top: 10px solid transparent;
         content: "";
         display: inline-block;
+        float: right;
         font-size: 0;
         line-height: 0;
         margin-bottom: -2px;
-        margin-left: 15px;
     }
 
     #topbar-back > #prm-arrow-left {
