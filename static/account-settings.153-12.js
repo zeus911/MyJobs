@@ -1,21 +1,14 @@
 $(document).ready(function() {
     var hash = window.location.hash;
 
-    $("[class*='as-section']").children('h4').each(function() {
-        $(this).on("click", function() {
-            closeOtherSections();
-            var parent = $(this).parent();
-            if($(this).siblings('div').is(':visible')){
-                parent.addClass('as-hide');
-            } else {
-                parent.removeClass('as-hide');
-            }
-        });
+    $(".as-section").on("click", function() {
+        var closest_content = $(this).next();
+        $(closest_content).slideToggle();
     });
 
     if(hash) {
         closeOtherSections();
-        $("div"+ hash + "").children('h4').trigger("click");
+        $("div"+ hash + "").trigger("click");
     }
 
     $("[class*='confirm-modal']").each(function() {
@@ -40,14 +33,15 @@ $(document).ready(function() {
     });
 
     $("#to-disable").on("click", function(){
-        $('#as-disable').children('h4').trigger("click");
+        $("#as-delete").trigger("click");
+        $('#as-disable').trigger("click");
     })
 });
 
 function closeOtherSections() {
     $("[class*='as-section']").each(function () {
-        if($(this).children('div').is(':visible')) {
-            $(this).addClass('as-hide');
+        if($(this).next().is(':visible')) {
+            $(this).next().hide();
         }
     });
 }

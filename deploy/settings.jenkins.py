@@ -29,7 +29,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 
 JENKINS_TEST_RUNNER = 'testrunner.SilentTestRunner'
-TEST_SOLR_INSTANCE = {'default': SOLR['all']}
+TEST_SOLR_INSTANCE = SOLR
 CELERY_ALWAYS_EAGER = True
 
 
