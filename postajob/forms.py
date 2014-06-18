@@ -367,8 +367,8 @@ class PurchasedProductForm(RequestForm):
             msg = 'Invalid CC Expiration Date.'
             self._errors['exp_Date'] = self.error_class([msg])
             raise ValidationError(msg)
-        address = (self.cleaned_data.get('address_line_one') +
-                   self.cleaned_data.get('address_line_two'))
+        address = "%s %s" % (self.cleaned_data.get('address_line_one', ''),
+                             self.cleaned_data.get('address_line_two', ''))
         try:
             card = get_card(self.cleaned_data.get('card_number'),
                             self.cleaned_data.get('cvv'), month, year,
@@ -385,8 +385,9 @@ class PurchasedProductForm(RequestForm):
         try:
             self.instance.transaction = charge_card(self.product.cost, card).uid
         except AuthorizeResponseError, e:
-            self._errors['card_number'] = self.error_class([e])
-            raise ValidationError(e)
+            msg = e.full_response['response_reason_text']
+            self._errors['card_number'] = self.error_class([msg])
+            raise ValidationError(msg)
 
         return self.cleaned_data
 

@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from mock import patch, Mock
 from StringIO import StringIO
 
@@ -11,7 +12,8 @@ from postajob.tests.factories import (product_factory, job_factory,
                                       productgrouping_factory,
                                       purchasedproduct_factory,
                                       sitepackage_factory)
-from postajob.models import Job, Package, Product, ProductGrouping, SitePackage
+from postajob.models import (Job, Package, Product, ProductGrouping,
+                             PurchasedProduct, SitePackage)
 
 
 class ViewTests(TestCase):
@@ -76,6 +78,20 @@ class ViewTests(TestCase):
             'date_expired_1': '04',
             'date_expired_0': 'Jun',
             'date_expired_2': '2014',
+        }
+
+        self.purchasedproduct_form_data = {
+            'address_line_one': '123 Street Rd.',
+            'card_number': '4007000000027',
+            'city': 'Indianapolis',
+            'country': 'USA',
+            'cvv': '123',
+            'exp_date_0': date.today().month + 1,
+            'exp_date_1': date.today().year + 5,
+            'first_name': 'John',
+            'last_name': 'Smith',
+            'state': 'Indiana',
+            'zipcode': '46268',
         }
 
     def login_user(self):
@@ -325,6 +341,31 @@ class ViewTests(TestCase):
                                             kwargs=kwargs))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(ProductGrouping.objects.all().count(), 0)
+
+    def test_purchasedproduct_add(self):
+        product = {'product': self.product.pk}
+        response = self.client.post(reverse('purchasedproduct_add',
+                                            kwargs=product),
+                                    data=self.purchasedproduct_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(PurchasedProduct.objects.all().count(), 1)
+
+    def test_purchasedproduct_add_card_declined(self):
+        # Change the card number so it doesn't artificially get declined
+        # due to duplicate transactions.
+        self.purchasedproduct_form_data['card_number'] = 4012888818888
+        # 70.02 should always result in a decline for test cards.
+        self.product.cost = 70.02
+        self.product.save()
+        product = {'product': self.product.pk}
+        response = self.client.post(reverse('purchasedproduct_add',
+                                            kwargs=product),
+                                    data=self.purchasedproduct_form_data,
+                                    follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(PurchasedProduct.objects.all().count(), 0)
 
     def test_purchasedproduct_update(self):
         purchased_product = purchasedproduct_factory(self.product, self.company)
