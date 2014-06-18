@@ -350,6 +350,7 @@ class ViewTests(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(PurchasedProduct.objects.all().count(), 1)
+        self.assertEqual(PurchasedProduct.objects.filter(paid=True).count(), 1)
 
     def test_purchasedproduct_add_card_declined(self):
         # Change the card number so it doesn't artificially get declined

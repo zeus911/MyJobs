@@ -384,7 +384,7 @@ class PurchasedProduct(BaseModel):
     owner = models.ForeignKey('mydashboard.Company')
     purchase_date = models.DateField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)
-    paid = models.BooleanField(default=True)
+    paid = models.BooleanField(default=False)
 
     expiration_date = models.DateField()
     num_jobs_allowed = models.IntegerField()

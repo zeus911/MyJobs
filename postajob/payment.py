@@ -19,3 +19,11 @@ def get_card(card_num, cvn, exp_month, exp_year, fname, lname,
 
 def charge_card(amount, card):
     return card.capture(amount)
+
+
+def settle_transaction(transaction):
+    return transaction.settle()
+
+
+def authorize_card(amount, card):
+    return card.auth(amount)

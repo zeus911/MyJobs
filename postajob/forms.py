@@ -12,7 +12,7 @@ from mydashboard.models import SeoSite
 from mypartners.widgets import SplitDateDropDownField
 from postajob.models import (Job, Package, Product, ProductGrouping,
                              ProductOrder, PurchasedProduct, SitePackage)
-from postajob.payment import get_card, charge_card
+from postajob.payment import authorize_card, get_card, settle_transaction
 from postajob.widgets import ExpField
 
 
@@ -383,7 +383,7 @@ class PurchasedProductForm(RequestForm):
             raise ValidationError(e.message)
 
         try:
-            self.instance.transaction = charge_card(self.product.cost, card).uid
+            self.transaction = authorize_card(self.product.cost, card)
         except AuthorizeResponseError, e:
             msg = e.full_response['response_reason_text']
             self._errors['card_number'] = self.error_class([msg])
@@ -392,10 +392,14 @@ class PurchasedProductForm(RequestForm):
         return self.cleaned_data
 
     def save(self, commit=True):
-        # Product is passed through only in the add view
-        if self.product:
-            self.instance.product = self.product
-
+        self.instance.transaction = self.transaction.uid
+        self.instance.product = self.product
         self.instance.owner = self.company
         super(PurchasedProductForm, self).save(commit)
-
+        try:
+            settled_transaction = settle_transaction(self.transaction)
+            self.instance.transaction = settled_transaction.uid
+            self.instance.paid = True
+            self.instance.save()
+        except AuthorizeResponseError, e:
+            pass
