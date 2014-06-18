@@ -1,5 +1,8 @@
 {% load i18n %}
 
+{% block style %}
+{% endblock %}
+
 <table style="display: table;">
     <tr>
         <td colspan=2>
@@ -26,11 +29,13 @@
 
         {% with saved_search=saved_searches.0.0 %}
 
+            {% block completion %}
             <tr>
                 <td colspan="2">
                     {% include "includes/widget-completion-email.html" with user=saved_search.user %}
                 </td>
             </tr>
+            {% endblock %}
 
             <tr>
 

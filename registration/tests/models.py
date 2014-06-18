@@ -2,13 +2,14 @@ import datetime
 import re
 
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from myjobs.models import User
 from django.contrib.sites.models import Site
 from django.core import mail
-from django.core import management
 from django.test import TestCase
 from django.utils.hashcompat import sha_constructor
 
+from registration.tests.helpers import assert_email_inlines_styles
 from registration.models import ActivationProfile
 
 
@@ -51,8 +52,10 @@ class RegistrationModelTests(TestCase):
         new_user, created = User.objects.create_inactive_user(**self.user_info)
         profile = ActivationProfile.objects.get(user=new_user)
 
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to, [self.user_info['email']])
+        email = mail.outbox.pop()
+        self.assertEqual(email.to, [self.user_info['email']])
+
+        assert_email_inlines_styles(self, email)
 
     def test_user_creation(self):
         """
