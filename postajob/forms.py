@@ -1,4 +1,4 @@
-from authorize import AuthorizeInvalidError
+from authorize import AuthorizeInvalidError, AuthorizeResponseError
 
 from django.contrib import admin
 from django.core.exceptions import ValidationError
@@ -378,10 +378,16 @@ class PurchasedProductForm(RequestForm):
                             self.cleaned_data.get('state'),
                             self.cleaned_data.get('zip_code'),
                             self.cleaned_data.get('country'))
-            self.instance.transaction = charge_card(self.product.cost, card).uid
         except AuthorizeInvalidError, e:
             self._errors['card_number'] = self.error_class([e.message])
             raise ValidationError(e.message)
+
+        try:
+            self.instance.transaction = charge_card(self.product.cost, card).uid
+        except AuthorizeResponseError, e:
+            self._errors['card_number'] = self.error_class([e])
+            raise ValidationError(e)
+
         return self.cleaned_data
 
     def save(self, commit=True):

@@ -1,5 +1,4 @@
-from authorize.client import (AuthorizeClient, AuthorizeCreditCard,
-                              AuthorizeTransaction)
+from authorize.client import AuthorizeClient, AuthorizeCreditCard
 from authorize.data import Address, CreditCard
 
 from django.conf import settings
@@ -20,16 +19,3 @@ def get_card(card_num, cvn, exp_month, exp_year, fname, lname,
 
 def charge_card(amount, card):
     return card.capture(amount)
-
-
-def settle_transaction(transaction):
-    return transaction.settle()
-
-
-def authorize_card(amount, card):
-    return card.auth(amount)
-
-
-def get_transaction(transaction_uid):
-    client = get_client()
-    return AuthorizeTransaction(client, transaction_uid)
