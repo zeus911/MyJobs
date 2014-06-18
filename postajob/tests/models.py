@@ -182,18 +182,25 @@ class ModelTests(TestCase):
         # the job is approved.
         self.assertEqual(urlopen_mock.call_count, 0)
         job.is_approved = True
+        # Jobs won't be added/deleted until it's confirmed that the
+        # purchased product is paid for as well.
+        job.purchased_product.paid = True
+        job.purchased_product.save()
         job.save()
         # Now that the job is approved, it should've been sent to solr.
         self.assertEqual(urlopen_mock.call_count, 1)
 
     def test_purchased_product_jobs_remaining(self):
-        field = Product._meta.get_field_by_name('num_jobs_allowed')
-        expected_num_jobs = field[0].default
-        for x in range(50, 55):
+        num_jobs_allowed = Product._meta.get_field_by_name('num_jobs_allowed')
+        expected_num_jobs = num_jobs_allowed[0].default
+        for x in range(50, 50 + expected_num_jobs):
+            if hasattr(self, 'purchased_product'):
+                self.assertTrue(self.purchased_product.can_post_more())
             self.create_purchased_job()
             expected_num_jobs -= 1
             self.assertEqual(self.purchased_product.jobs_remaining,
                              expected_num_jobs)
+        self.assertFalse(self.purchased_product.can_post_more())
 
     def test_productgrouping_add_delete(self):
         self.create_purchased_job()

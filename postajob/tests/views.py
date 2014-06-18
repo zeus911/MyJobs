@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 from mock import patch, Mock
 from StringIO import StringIO
 
@@ -10,10 +10,11 @@ from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
 from myjobs.tests.factories import UserFactory
 from postajob.tests.factories import (product_factory, job_factory,
                                       productgrouping_factory,
+                                      purchasedjob_factory,
                                       purchasedproduct_factory,
                                       sitepackage_factory)
 from postajob.models import (Job, Package, Product, ProductGrouping,
-                             PurchasedProduct, SitePackage)
+                             PurchasedJob, PurchasedProduct, SitePackage)
 
 
 class ViewTests(TestCase):
@@ -62,6 +63,25 @@ class ViewTests(TestCase):
         }
 
         self.job_form_data = {
+            'city': 'Indianapolis',
+            'description': 'Description',
+            'title': 'Job Form Data Title',
+            'country': 'United States of America',
+            'owner': str(self.company.pk),
+            'reqid': '123456',
+            'apply_info': '',
+            'zipcode': '46268',
+            'apply_link': 'www.google.com',
+            'state': 'Indiana',
+            'apply_email': '',
+            'apply_type': 'link',
+            'post_to': 'network',
+            'date_expired_1': '04',
+            'date_expired_0': 'Jun',
+            'date_expired_2': '2014',
+        }
+
+        self.purchasedjob_form_data = {
             'city': 'Indianapolis',
             'description': 'Description',
             'title': 'Job Form Data Title',
@@ -181,6 +201,55 @@ class ViewTests(TestCase):
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Job.objects.all().count(), 0)
+
+    @patch('urllib2.urlopen')
+    def test_purchasedjob_add(self, urlopen_mock):
+        mock_obj = Mock()
+        mock_obj.read.side_effect = self.side_effect
+        urlopen_mock.return_value = mock_obj
+
+        product = purchasedproduct_factory(self.product, self.company)
+        kwargs = {'product': product.pk}
+
+        response = self.client.post(reverse('purchasedjob_add', kwargs=kwargs),
+                                    data=self.purchasedjob_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(PurchasedJob.objects.all().count(), 1)
+
+    @patch('urllib2.urlopen')
+    def test_purchasedjob_update(self, urlopen_mock):
+        mock_obj = Mock()
+        mock_obj.read.side_effect = self.side_effect
+        urlopen_mock.return_value = mock_obj
+
+        product = purchasedproduct_factory(self.product, self.company)
+        job = purchasedjob_factory(self.company, self.user, product)
+        kwargs = {'pk': job.pk}
+
+        self.assertNotEqual(job.title, self.job_form_data['title'])
+        response = self.client.post(reverse('purchasedjob_update',
+                                            kwargs=kwargs),
+                                    data=self.purchasedjob_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(PurchasedJob.objects.all().count(), 1)
+        # Ensure we're working with the most recent copy of the job.
+        job = Job.objects.get()
+        self.assertEqual(job.title, self.job_form_data['title'])
+
+    @patch('urllib2.urlopen')
+    def test_purchasedjob_delete(self, urlopen_mock):
+        urlopen_mock.return_value = StringIO('')
+
+        product = purchasedproduct_factory(self.product, self.company)
+        job = purchasedjob_factory(self.company, self.user, product)
+        kwargs = {'pk': job.pk}
+
+        response = self.client.post(reverse('purchasedjob_delete',
+                                            kwargs=kwargs))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(PurchasedJob.objects.all().count(), 0)
 
     @patch('urllib2.urlopen')
     def test_job_add_network(self, urlopen_mock):

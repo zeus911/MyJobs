@@ -7,7 +7,7 @@ from universal.helpers import get_company
 from universal.views import RequestFormViewBase
 from universal.decorators import company_has_access
 from postajob.forms import (JobForm, ProductForm, ProductGroupingForm,
-                            PurchasedProductForm)
+                            PurchasedJobForm, PurchasedProductForm)
 from postajob.models import (Job, Product, ProductGrouping, PurchasedJob,
                              PurchasedProduct)
 
@@ -64,6 +64,38 @@ def admin_groupings(request):
                               RequestContext(request))
 
 
+class PurchaseFormViewBase(RequestFormViewBase):
+    purchase_field = None
+    purchase_model = None
+
+    def dispatch(self, *args, **kwargs):
+        """
+        Decorators on this function will be run on every request that
+        goes through this class.
+
+        Determine and set which product is attempting to be purchased.
+
+        """
+        # The add url also has the pk for the product they're attempting
+        # to purchase.
+        if kwargs.get('product'):
+            self.product = get_object_or_404(self.purchase_model,
+                                             pk=kwargs.get('product'))
+        else:
+            obj = get_object_or_404(self.model, pk=kwargs.get('pk'))
+            self.product = getattr(obj, self.purchase_field, None)
+
+        # Set the display name based on the model
+        self.display_name = self.display_name.format(product=self.product)
+
+        return super(PurchaseFormViewBase, self).dispatch(*args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super(PurchaseFormViewBase, self).get_form_kwargs()
+        kwargs['product'] = self.product
+        return kwargs
+
+
 class PostajobModelFormMixin(object):
     """
     A mixin for postajob models, since nearly all of them rely on
@@ -100,6 +132,20 @@ class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
 
         """
         return super(JobFormView, self).dispatch(*args, **kwargs)
+
+
+class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
+    form_class = PurchasedJobForm
+    model = PurchasedJob
+    display_name = '{product} Job'
+
+    success_url = reverse_lazy('purchasedjobs_overview')
+    add_name = 'purchasedjob_add'
+    update_name = 'purchasedjob_update'
+    delete_name = 'purchasedjob_delete'
+
+    purchase_field = 'purchased_product'
+    purchase_model = PurchasedProduct
 
 
 class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):
@@ -142,7 +188,7 @@ class ProductGroupingFormView(PostajobModelFormMixin, RequestFormViewBase):
         return super(ProductGroupingFormView, self).dispatch(*args, **kwargs)
 
 
-class PurchasedProductFormView(PostajobModelFormMixin, RequestFormViewBase):
+class PurchasedProductFormView(PostajobModelFormMixin, PurchaseFormViewBase):
     form_class = PurchasedProductForm
     model = PurchasedProduct
     # The display name is determined by the product id and set in dispatch().
@@ -153,33 +199,15 @@ class PurchasedProductFormView(PostajobModelFormMixin, RequestFormViewBase):
     update_name = 'purchasedproduct_update'
     delete_name = 'purchasedproduct_delete'
 
+    purchase_field = 'product'
+    purchase_model = Product
+
     def set_object(self, request):
         """
-        Purchased products can't be edited or deleted. Setting self.product
-        in dispatch() should prevent anyone from ever getting this far, but in
-        case they do this ensures that a user will never get an actual object
-        to edit/delete.
+        Purchased products can't be edited or deleted, so prevent anyone
+        getting an actual object to edit/delete.
 
         """
         self.object = None
         if resolve(request.path).url_name != 'purchasedproduct_add':
             raise Http404
-
-    def dispatch(self, *args, **kwargs):
-        """
-        Decorators on this function will be run on every request that
-        goes through this class.
-
-        Determine and set which product is attempting to be purchased.
-
-        """
-        # The add url also has the pk for the product they're attempting
-        # to purchase.
-        self.product = get_object_or_404(Product, pk=kwargs.get('product'))
-        self.display_name = self.display_name.format(product=self.product.name)
-        return super(PurchasedProductFormView, self).dispatch(*args, **kwargs)
-
-    def get_form_kwargs(self):
-        kwargs = super(PurchasedProductFormView, self).get_form_kwargs()
-        kwargs['product'] = self.product
-        return kwargs
