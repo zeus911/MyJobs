@@ -2,11 +2,12 @@ from authorize.client import (AuthorizeClient, AuthorizeCreditCard,
                               AuthorizeTransaction)
 from authorize.data import Address, CreditCard
 
-from secrets import CC_AUTH
+from django.conf import settings
 
 
 def get_client():
-    return AuthorizeClient(CC_AUTH['api_id'], CC_AUTH['transaction_key'])
+    return AuthorizeClient(settings.CC_AUTH['api_id'],
+                           settings.CC_AUTH['transaction_key'])
 
 
 def get_card(card_num, cvn, exp_month, exp_year, fname, lname,

@@ -207,6 +207,9 @@ class PurchasedJob(Job):
     is_approved = models.BooleanField(default=False)
 
     def save(self, **kwargs):
+        if not hasattr(self, 'pk') or not self.pk:
+            self.purchased_product.jobs_remaining -= 1
+            self.purchased_product.save()
         super(PurchasedJob, self).save(**kwargs)
         self.site_packages = [self.purchased_product.product.package]
 

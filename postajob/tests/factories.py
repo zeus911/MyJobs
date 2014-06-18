@@ -94,7 +94,17 @@ def productgrouping_factory(company, **kwargs):
 
 def purchasedproduct_factory(product, company, **kwargs):
     purchasedproduct_data = {
+        'address_line_one': '123 Street Rd',
+        'address_line_two': 'Suite 321',
+        'city': 'Indianapolis',
+        'country': 'US',
+        'first_name': 'John',
+        'last_name': 'Smith',
         'owner': company,
         'product': product,
+        'purchase_date': datetime.datetime.now(),
+        'state': 'Indiana',
+        'transaction': '123456',
+        'zipcode': '46268',
     }
     return create_instance(PurchasedProduct, purchasedproduct_data, kwargs)

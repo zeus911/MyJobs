@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import Http404, reverse_lazy, resolve
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
@@ -154,7 +154,16 @@ class PurchasedProductFormView(PostajobModelFormMixin, RequestFormViewBase):
     delete_name = 'purchasedproduct_delete'
 
     def set_object(self, request):
+        """
+        Purchased products can't be edited or deleted. Setting self.product
+        in dispatch() should prevent anyone from ever getting this far, but in
+        case they do this ensures that a user will never get an actual object
+        to edit/delete.
+
+        """
         self.object = None
+        if resolve(request.path).url_name != 'purchasedproduct_add':
+            raise Http404
 
     def dispatch(self, *args, **kwargs):
         """

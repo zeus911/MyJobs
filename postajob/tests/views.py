@@ -9,6 +9,7 @@ from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
 from myjobs.tests.factories import UserFactory
 from postajob.tests.factories import (product_factory, job_factory,
                                       productgrouping_factory,
+                                      purchasedproduct_factory,
                                       sitepackage_factory)
 from postajob.models import Job, Package, Product, ProductGrouping, SitePackage
 
@@ -324,3 +325,19 @@ class ViewTests(TestCase):
                                             kwargs=kwargs))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(ProductGrouping.objects.all().count(), 0)
+
+    def test_purchasedproduct_update(self):
+        purchased_product = purchasedproduct_factory(self.product, self.company)
+        kwargs = {'pk': purchased_product.pk}
+
+        response = self.client.post(reverse('purchasedproduct_update',
+                                            kwargs=kwargs))
+        self.assertEqual(response.status_code, 404)
+
+    def test_purchasedproduct_delete(self):
+        purchased_product = purchasedproduct_factory(self.product, self.company)
+        kwargs = {'pk': purchased_product.pk}
+
+        response = self.client.post(reverse('purchasedproduct_delete',
+                                            kwargs=kwargs))
+        self.assertEqual(response.status_code, 404)

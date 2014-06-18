@@ -192,7 +192,7 @@ class ModelTests(TestCase):
         for x in range(50, 55):
             self.create_purchased_job()
             expected_num_jobs -= 1
-            self.assertEqual(self.purchased_product.jobs_remaining(),
+            self.assertEqual(self.purchased_product.jobs_remaining,
                              expected_num_jobs)
 
     def test_productgrouping_add_delete(self):
