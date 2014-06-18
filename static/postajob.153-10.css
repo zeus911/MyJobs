@@ -35,3 +35,8 @@
 .field-post_to > div > ul > li {
     list-style-type: none;
 }
+
+#id_exp_date_0,
+#id_exp_date_1 {
+    width: 130px;
+}

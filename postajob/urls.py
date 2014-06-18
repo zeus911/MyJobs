@@ -5,7 +5,22 @@ from postajob import views
 urlpatterns = patterns(
     '',
 
-    # Posted job management for members
+    # Posted job management
+    url(r'^jobs/$',
+        views.jobs_overview,
+        name='jobs_overview'),
+
+    # Purchased job management
+    url(r'^purchased/jobs/$',
+        views.purchasedjobs_overview,
+        name='purchasedjobs_overview'),
+
+    # Purchased microsite management
+    url(r'^admin/$',
+        views.products_overview,
+        name='products_overview'),
+
+    # Job
     url(r'^job/add/',
         views.JobFormView.as_view(),
         name='job_add'),
@@ -15,14 +30,8 @@ urlpatterns = patterns(
     url(r'^job/update/(?P<pk>\d+)/',
         views.JobFormView.as_view(),
         name='job_update'),
-    url(r'^jobs/$',
-        views.jobs_overview,
-        name='jobs_overview'),
 
-    # Product management
-    url(r'^admin/$',
-        views.products_overview,
-        name='products_overview'),
+    # Product
     url(r'^admin/product/$',
         views.admin_products,
         name='product'),
@@ -36,6 +45,7 @@ urlpatterns = patterns(
         views.ProductFormView.as_view(),
         name='product_update'),
 
+    # ProductGrouping
     url(r'^admin/group/$',
         views.admin_groupings,
         name='productgrouping'),
@@ -48,5 +58,16 @@ urlpatterns = patterns(
     url(r'^admin/group/update/(?P<pk>\d+)/',
         views.ProductGroupingFormView.as_view(),
         name='productgrouping_update'),
+
+    # PurchasedProduct
+    url(r'^product/purchase/add/(?P<product>\d+)/',
+        views.PurchasedProductFormView.as_view(),
+        name='purchasedproduct_add'),
+    url(r'^product/purchase/delete/(?P<pk>\d+)/',
+        views.PurchasedProductFormView.as_view(),
+        name='purchasedproduct_delete'),
+    url(r'^product/purchase/update/(?P<pk>\d+)/',
+        views.PurchasedProductFormView.as_view(),
+        name='purchasedproduct_update'),
 
 )

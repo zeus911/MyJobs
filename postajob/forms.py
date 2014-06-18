@@ -1,15 +1,19 @@
+from authorize import AuthorizeInvalidError
+
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
 from django.forms import (CharField, CheckboxSelectMultiple,
-                          HiddenInput, ModelMultipleChoiceField,
+                          HiddenInput, IntegerField, ModelMultipleChoiceField,
                           RadioSelect, Select, TextInput)
 
 from universal.forms import RequestForm
 from mydashboard.models import SeoSite
 from mypartners.widgets import SplitDateDropDownField
 from postajob.models import (Job, Package, Product, ProductGrouping,
-                             ProductOrder, SitePackage)
+                             ProductOrder, PurchasedProduct, SitePackage)
+from postajob.payment import get_card, charge_card
+from postajob.widgets import ExpField
 
 
 class JobForm(RequestForm):
@@ -323,9 +327,68 @@ class ProductGroupingForm(RequestForm):
             instance.save()
 
         for product in products:
-            ordered_product, _ = ProductOrder.objects.get_or_create(product=product,
-                                                                    group=instance)
+            ordered_product, _ = ProductOrder.objects.get_or_create(
+                product=product, group=instance)
             ordered_product.display_order = 0
             ordered_product.save()
 
         return instance
+
+
+class PurchasedProductForm(RequestForm):
+    class Meta:
+        model = PurchasedProduct
+        fields = ('card_number', 'cvv', 'exp_date', 'first_name', 'last_name',
+                  'address_line_one', 'address_line_two', 'city', 'state',
+                  'country', 'zipcode')
+
+    class Media:
+        css = {
+            'all': ('postajob.153-10.css', )
+        }
+
+    month_choices = [(x, x) for x in range(1, 12)]
+    year_choices = [(x, x) for x in range(2014, 2030)]
+
+    card_number = CharField(label='Credit Card Number')
+    cvv = IntegerField(label='CVV')
+    exp_date = ExpField(label='Expiration Date')
+
+    def __init__(self, *args, **kwargs):
+        self.product = kwargs.pop('product', None)
+        super(PurchasedProductForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        exp_date = self.cleaned_data.get('exp_date')
+        try:
+            month = exp_date.month
+            year = exp_date.year
+        except AttributeError:
+            msg = 'Invalid CC Expiration Date.'
+            self._errors['exp_Date'] = self.error_class([msg])
+            raise ValidationError(msg)
+        address = (self.cleaned_data.get('address_line_one') +
+                   self.cleaned_data.get('address_line_two'))
+        try:
+            card = get_card(self.cleaned_data.get('card_number'),
+                            self.cleaned_data.get('cvv'), month, year,
+                            self.cleaned_data.get('first_name'),
+                            self.cleaned_data.get('last_name'),
+                            address, self.cleaned_data.get('city'),
+                            self.cleaned_data.get('state'),
+                            self.cleaned_data.get('zip_code'),
+                            self.cleaned_data.get('country'))
+            self.instance.transaction = charge_card(self.product.cost, card).uid
+        except AuthorizeInvalidError, e:
+            self._errors['card_number'] = self.error_class([e.message])
+            raise ValidationError(e.message)
+        return self.cleaned_data
+
+    def save(self, commit=True):
+        # Product is passed through only in the add view
+        if self.product:
+            self.instance.product = self.product
+
+        self.instance.owner = self.company
+        super(PurchasedProductForm, self).save(commit)
+
