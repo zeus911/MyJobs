@@ -1,28 +1,30 @@
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
-from django.forms import (CharField, CheckboxSelectMultiple, HiddenInput,
-                          ModelForm, ModelMultipleChoiceField, RadioSelect,
-                          Select, TextInput)
+from django.forms import (CharField, CheckboxSelectMultiple,
+                          HiddenInput, ModelMultipleChoiceField,
+                          RadioSelect, Select, TextInput)
 
-from mydashboard.models import Company, SeoSite
+from universal.forms import RequestForm
+from mydashboard.models import SeoSite
 from mypartners.widgets import SplitDateDropDownField
-from postajob.models import Job, SitePackage
+from postajob.models import (Job, Package, Product, ProductGrouping,
+                             ProductOrder, SitePackage)
 
 
-class JobForm(ModelForm):
+class JobForm(RequestForm):
     class Meta:
         exclude = ('guid', 'country_short', 'state_short',
-                   'is_syndicated', )
+                   'is_syndicated', 'created_by', )
         fields = ('title', 'is_syndicated', 'reqid', 'description', 'city',
                   'state', 'country', 'zipcode', 'date_expired', 'is_expired',
                   'autorenew', 'apply_type', 'apply_link', 'apply_email',
-                  'apply_info', 'company', 'post_to', 'site_packages', )
+                  'apply_info', 'owner', 'post_to', 'site_packages', )
         model = Job
 
     class Media:
         css = {
-            'all': ('postajob.153-05.css', )
+            'all': ('postajob.153-10.css', )
         }
         js = ('postajob.153-05.js', )
 
@@ -65,21 +67,16 @@ class JobForm(ModelForm):
                         initial='site')
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
-        self.company = self.request.COOKIES.get('myjobs_company')
-        # If the company cookie isn't set, then the user should have
-        # only one company, so use that one.
-        if self.company:
-            self.company = Company.objects.get(pk=self.company)
-        else:
-            self.company = self.request.user.companyuser_set.all()[0].company
         super(JobForm, self).__init__(*args, **kwargs)
-        # Prevent all three apply options from being show on the page at
-        # once.
+
+        # Set the starting apply option.
         if self.instance and self.instance.apply_info:
             self.initial['apply_type'] = 'instructions'
         else:
+            # This works because apply_email is actually a link
+            # that uses mailto:
             self.initial['apply_type'] = 'link'
+
         if not self.request.path.startswith('/admin'):
             # FilteredSelectMultiple doesn't work outside the admin, so
             # switch to a widget that does work.
@@ -87,19 +84,21 @@ class JobForm(ModelForm):
                 attrs={'class': 'job-sites-checkbox'})
             # After changing the widget the queryset also needs reset.
             self.fields['site_packages'].queryset = SeoSite.objects.all()
+
         if not self.request.user.is_superuser:
-            # Limit a user's access to only companies/sites they own.
-            kwargs = {
-                'admins': self.request.user
-            }
-            self.fields['company'].queryset = \
-                self.fields['company'].queryset.filter(**kwargs)
-            kwargs = {
-                'business_units__company__admins': self.request.user,
-                'business_units__company': self.company
-            }
-            self.fields['site_packages'].queryset = \
-                self.fields['site_packages'].queryset.filter(**kwargs).distinct()
+            # Limit a non-superuser's access to only companies they own.
+            if self.request.path.startswith('/admin'):
+                user_companies = self.request.user.get_companies()
+                self.fields['owner'].queryset = user_companies
+
+            # Limit a non-superuser's access to only sites they own.
+            user_sites = self.request.user.get_sites()
+            if not self.request.path.startswith('/admin'):
+                # Outside the admin, also limit the sites to the current
+                # company.
+                kwargs = {'business_units__company': self.company}
+                user_sites = user_sites.filter(**kwargs)
+            self.fields['site_packages'].queryset = user_sites
 
         # Since we're not using actual site_packages for the site_packages,
         # the initial data also needs to be manually set.
@@ -107,15 +106,17 @@ class JobForm(ModelForm):
             packages = self.instance.site_packages.all()
             self.initial['site_packages'] = [str(site.pk) for site in
                                              self.instance.on_sites()]
-            # If the only site package is the
+            # If the only site package is the company package, then the
+            # current job must be posted to all cmpany and network sites.
             if (packages.count() == 1 and
-                    packages[0] == self.instance.company.site_package):
+                    packages[0] == self.instance.owner.site_package):
                 self.initial['post_to'] = 'network'
 
-        # If we have the company cookie, remove all option to even set the
-        # company.
-        if self.company and not self.request.path.startswith('/admin'):
-            self.fields['company'].widget = HiddenInput()
+        # Since we're using the myjobs_company cookie outside the admin,
+        # remove the option to set the company.
+        if not self.request.path.startswith('/admin'):
+            self.fields['owner'].widget = HiddenInput()
+            self.initial['owner'] = self.company
 
     def clean_apply_link(self):
         """
@@ -135,45 +136,35 @@ class JobForm(ModelForm):
 
     def clean_site_packages(self):
         """
-        Convert from SeoSite to a SitePackage.
+        Convert from SeoSite or network sites to a SitePackage.
 
         """
         if self.cleaned_data.get('post_to') == 'network':
-            return None
-
-        sites = self.cleaned_data.get('site_packages')
-        site_packages = []
-        for site in sites:
-            if not site.site_package:
-                # If a site doesn't already have a site_package specific
-                # to it create one.
-                package = SitePackage(name=site.domain)
-                package.make_unique_for_site(site)
-            site_packages.append(site.site_package)
+            company = self.cleaned_data.get('owner', self.company)
+            if not hasattr(company, 'site_package') or not company.site_package:
+                package = SitePackage()
+                package.make_unique_for_company(company)
+            site_packages = [company.site_package]
+        else:
+            sites = self.cleaned_data.get('site_packages')
+            site_packages = []
+            for site in sites:
+                if not hasattr(site, 'site_package') or not site.site_package:
+                    # If a site doesn't already have a site_package specific
+                    # to it create one.
+                    package = SitePackage(name=site.domain)
+                    package.make_unique_for_site(site)
+                site_packages.append(site.site_package)
 
         return site_packages
-
-    def clean_company(self):
-        return self.company
 
     def clean(self):
         apply_info = self.cleaned_data.get('apply_info')
         apply_link = self.cleaned_data.get('apply_link')
         apply_email = self.cleaned_data.get('apply_email')
-        post_to = self.cleaned_data.get('post_to')
-        # clean() is run after clean_site_packages(), allowing
-        # overriding the 'None' that cleaned_data should've been
-        # set to during clean_site_packages().
-        if post_to == 'network':
-            company = self.cleaned_data.get('company', self.company)
-
-            if not company.site_package:
-                package = SitePackage()
-                package.make_unique_for_company(company)
-            self.cleaned_data['site_packages'] = [company.site_package]
 
         # Require one set of apply instructions.
-        if not apply_info and not apply_link and not apply_email:
+        if not any([apply_info, apply_link, apply_email]):
             raise ValidationError('You must supply some type of appliction '
                                   'information.')
         # Allow only one set of apply instructions.
@@ -188,13 +179,10 @@ class JobForm(ModelForm):
             # reformatted as a mailto and saved as the link.
             apply_email = 'mailto:{link}'.format(link=apply_email)
             self.cleaned_data['apply_link'] = apply_email
-
         return self.cleaned_data
 
     def save(self, commit=True):
-        if self.request.COOKIES.get('myjobs_company'):
-            company = self.request.COOKIES.get('myjobs_company')
-            self.instance.company_id = company
+        self.instance.created_by = self.request.user
         sites = self.cleaned_data['site_packages']
         job = super(JobForm, self).save(commit)
 
@@ -217,9 +205,10 @@ class JobForm(ModelForm):
         return job
 
 
-class SitePackageForm(ModelForm):
+class SitePackageForm(RequestForm):
     class Meta:
         model = SitePackage
+        fields = ('name', 'sites', 'owner', )
 
     sites_widget = admin.widgets.FilteredSelectMultiple('Sites', False)
     sites = ModelMultipleChoiceField(SeoSite.objects.all(),
@@ -228,10 +217,137 @@ class SitePackageForm(ModelForm):
                                      widget=sites_widget)
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
         super(SitePackageForm, self).__init__(*args, **kwargs)
+
         if not self.request.user.is_superuser:
             # Limit a user's access to only sites they own.
-            kwargs = {'business_units__company__admins': self.request.user}
-            self.fields['sites'].queryset = \
-                self.fields['sites'].queryset.filter(**kwargs).distinct()
+            self.fields['sites'].queryset = self.request.user.get_sites()
+
+            # Limit a user to only companies they have access to.
+            self.fields['owner'].queryset = self.request.user.get_companies()
+
+
+class ProductForm(RequestForm):
+    class Meta:
+        model = Product
+        fields = ('name', 'package', 'owner', 'cost',
+                  'posting_window_length', 'max_job_length',
+                  'job_limit', 'num_jobs_allowed', )
+
+    class Media:
+        css = {
+            'all': ('postajob.153-10.css', )
+        }
+        js = ('postajob.153-05.js', )
+
+    job_limit_choices = [('unlimited', "Unlimited"),
+                         ('specific', 'A Specific Number'), ]
+    job_limit = CharField(
+        label='Job Limit', widget=RadioSelect(choices=job_limit_choices),
+        help_text=Product.help_text['num_jobs_allowed'], initial='unlimited'
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(ProductForm, self).__init__(*args, **kwargs)
+        if not self.request.user.is_superuser:
+            # Update querysets based on what the user should have
+            # access to.
+            user_companies = self.request.user.get_companies()
+            if not self.request.path.startswith('/admin'):
+                # Owner. Based on myjobs_company cookie.
+                self.fields['owner'].widget = HiddenInput()
+                self.initial['owner'] = self.company
+
+                self.fields['package'].queryset = \
+                    Package.objects.user_available().filter_company([self.company])
+            else:
+                # Owner
+                self.fields['owner'].queryset = user_companies
+                self.fields['package'].queryset = \
+                    Package.objects.user_available().filter_company(user_companies)
+
+        if self.instance.pk and self.instance.num_jobs_allowed != 0:
+            self.initial['job_limit'] = 'specific'
+
+    def clean(self):
+        num_jobs_selector = self.cleaned_data.get('job_limit')
+        if num_jobs_selector == 'unlimited':
+            self.cleaned_data['num_jobs_allowed'] = 0
+        return self.cleaned_data
+
+
+class ProductGroupingForm(RequestForm):
+    class Meta:
+        model = ProductGrouping
+        fields = ('products', 'display_order', 'display_title',
+                  'explanation', 'name', 'owner', )
+
+    class Media:
+        css = {
+            'all': ('postajob.153-10.css', )
+        }
+
+    products_widget = CheckboxSelectMultiple()
+    products = ModelMultipleChoiceField(Product.objects.all(),
+                                        widget=products_widget)
+
+    def __init__(self, *args, **kwargs):
+        super(ProductGroupingForm, self).__init__(*args, **kwargs)
+
+        if not self.request.user.is_superuser:
+            # Update querysets based on what the user should have
+            # access to.
+            user_companies = self.request.user.get_companies()
+            if self.request.path.startswith('/admin'):
+                # Products
+                kwargs = {'owner__admins': self.request.user}
+                self.fields['products'].queryset = \
+                    self.fields['products'].queryset.filter(**kwargs)
+
+                # Owner
+                self.fields['owner'].queryset = user_companies
+
+            # If they're not in the admin they should only be able to work
+            # with the current company.
+            else:
+                # Products
+                kwargs = {'owner': self.company}
+                self.fields['products'].queryset = \
+                    self.fields['products'].queryset.filter(**kwargs)
+
+                # Owner
+                self.initial['owner'] = self.company
+                self.fields['owner'].widget = HiddenInput()
+
+    def clean(self):
+        display_order = self.cleaned_data.get('display_order')
+        company = self.cleaned_data.get('owner')
+
+        # Enforce a pseudo-unique-together between owner and display order.
+        kwargs = {
+            'display_order': display_order,
+            'owner': company,
+        }
+        query = ProductGrouping.objects.filter(**kwargs)
+        if hasattr(self.instance, 'pk') and self.instance.pk:
+            query = query.exclude(pk=self.instance.pk)
+
+        if query.exists():
+            error = 'A product already exists for {company_name} ' \
+                    'with the selected display order.'
+            raise ValidationError(error.format(company_name=company.name))
+        return self.cleaned_data
+
+    def save(self, commit=True):
+        products = self.cleaned_data.pop('products')
+        instance = super(ProductGroupingForm, self).save(commit)
+        if not instance.pk:
+            instance.save()
+
+        for product in products:
+            ordered_product, _ = ProductOrder.objects.get_or_create(product=product,
+                                                                    group=instance)
+            ordered_product.display_order = 0
+            ordered_product.save()
+
+        return instance

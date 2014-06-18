@@ -1,18 +1,18 @@
 from collections import Counter
+import urllib
 from copy import copy
 from datetime import datetime, timedelta
-import urllib
 from urlparse import urlparse, urlunparse, parse_qsl
 
 from django.conf import settings
 from django.core import mail
 from django.http import Http404
 
-from countries import COUNTRIES
-from global_helpers import get_domain
+from universal.helpers import get_domain
 from mydashboard.models import SeoSite
 from myprofile.models import EDUCATION_LEVEL_CHOICES
 from solr.helpers import format_date, Solr
+from countries import COUNTRIES
 
 
 edu_codes = dict([(x, y) for x, y in EDUCATION_LEVEL_CHOICES])

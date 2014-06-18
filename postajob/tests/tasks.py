@@ -5,6 +5,7 @@ from StringIO import StringIO
 from django.test import TestCase
 
 from mydashboard.tests.factories import CompanyFactory
+from myjobs.tests.factories import UserFactory
 from postajob.models import Job
 from MyJobs.tasks import expire_jobs
 
@@ -12,9 +13,10 @@ from MyJobs.tasks import expire_jobs
 class TaskTests(TestCase):
     def setUp(self):
         self.company = CompanyFactory()
+        self.user = UserFactory()
         self.job_data = {
             'title': 'title',
-            'company': self.company,
+            'owner': self.company,
             'description': 'sadfljasdfljasdflasdfj',
             'apply_link': 'www.google.com',
             'city': 'Indianapolis',
@@ -23,6 +25,7 @@ class TaskTests(TestCase):
             'country': 'United States of America',
             'country_short': 'USA',
             'zipcode': '46268',
+            'created_by': self.user,
         }
 
     @patch('urllib2.urlopen')

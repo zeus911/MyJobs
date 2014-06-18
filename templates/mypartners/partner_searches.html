@@ -9,11 +9,11 @@
 {% load i18n %}
 
 {% block content %}
-    <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
+    <h1><a href="{% url 'prm' %}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
     <div class="row">
         <div class="span12 prm-header">
             <span>Saved Searches</span>
-            <a class="mobile_hide" href="{% url "partner_overview" %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
+            <a class="mobile_hide" href="{% url 'partner_overview' %}?partner={{ partner.id }}">Back to Overview</a>
         </div>
     </div>
     <div class="row">
@@ -54,8 +54,8 @@
 
                         </td>
                         <td class="prm-buttons">
-                            <a href="{% url 'partner_view_full_feed' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ search.id }}" class="btn-link mobile_hide">{% trans 'View' %}</a>
-                            <a href="{% url 'partner_edit_search' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ search.id }}" class="btn-link edit">{% trans 'Edit' %}</a>
+                            <a href="{% url 'partner_view_full_feed' %}?partner={{ partner.id }}&id={{ search.id }}" class="btn-link mobile_hide">{% trans 'View' %}</a>
+                            <a href="{% url 'partner_edit_search' %}?partner={{ partner.id }}&id={{ search.id }}" class="btn-link edit">{% trans 'Edit' %}</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -65,7 +65,7 @@
             {% else %}
             Currently <b>{{ partner.name }}</b> has no Saved Searches.
             {% endif %}
-        <a class="btn pull-right" href="{% url 'partner_edit_search' %}?company={{ company.id }}&partner={{ partner.id }}">New Saved Search</a>
+        <a class="btn pull-right" href="{% url 'partner_edit_search' %}?partner={{ partner.id }}">New Saved Search</a>
         </div>
     </div>
 {% endblock %}

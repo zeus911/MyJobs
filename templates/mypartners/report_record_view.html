@@ -12,11 +12,11 @@
 {% load i18n %}
 
 {% block content %}
-    <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
+    <h1><a href="{% url 'prm' %}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
     <div class="row">
         <div class="span12 prm-header">
             <span>Records</span>
-            <a class="mobile_hide" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Reports</a>
+            <a class="mobile_hide" href="{% url 'report_view' %}?partner={{ partner.id }}">Back to Reports</a>
             <span class="pull-right">
                 <span id="record-download">{% include "mypartners/includes/download_records.html" %}</span>
                 <span id="date-filter">{% include "mypartners/includes/date_range.html" %}</span>

@@ -7,15 +7,17 @@ from django.test import TestCase
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          CompanyUserFactory, SeoSiteFactory)
 from myjobs.tests.factories import UserFactory
-from postajob.tests.factories import JobFactory
-from postajob.models import Job, SitePackage
+from postajob.tests.factories import (product_factory, job_factory,
+                                      productgrouping_factory,
+                                      sitepackage_factory)
+from postajob.models import Job, Package, Product, ProductGrouping, SitePackage
 
 
 class ViewTests(TestCase):
     def setUp(self):
         super(ViewTests, self).setUp()
         self.user = UserFactory()
-        self.company = CompanyFactory()
+        self.company = CompanyFactory(product_access=True)
         self.site = SeoSiteFactory()
         self.bu = BusinessUnitFactory()
         self.site.business_units.add(self.bu)
@@ -24,6 +26,10 @@ class ViewTests(TestCase):
         self.company.save()
         self.company_user = CompanyUserFactory(user=self.user,
                                                company=self.company)
+        sitepackage_factory(self.company)
+        self.package = Package.objects.get()
+        self.product = product_factory(self.package, self.company)
+
         self.login_user()
 
         self.choices_data = ('{"countries":[{"code":"USA", '
@@ -31,12 +37,34 @@ class ViewTests(TestCase):
                              '"regions":[{"code":"IN", "name":"Indiana"}] }')
         self.side_effect = [self.choices_data for x in range(0, 50)]
 
+        # Form data
+        self.product_form_data = {
+            'package': str(self.package.pk),
+            'owner': str(self.company.pk),
+            'name': 'Test Product',
+            'cost': '5',
+            'posting_window_length': 30,
+            'max_job_length': 30,
+            'job_limit': 'specific',
+            'num_jobs_allowed': '5',
+            'description': 'Test product description.'
+        }
+
+        self.productgrouping_form_data = {
+            'products': str(self.product.pk),
+            'display_order': 10,
+            'display_title': 'Test Grouping',
+            'explanation': 'Test grouping explanation.',
+            'name': 'Test Gruping',
+            'owner': str(self.company.pk)
+        }
+
         self.job_form_data = {
             'city': 'Indianapolis',
             'description': 'Description',
             'title': 'Job Form Data Title',
             'country': 'United States of America',
-            'company': str(self.company.pk),
+            'owner': str(self.company.pk),
             'reqid': '123456',
             'apply_info': '',
             'zipcode': '46268',
@@ -58,27 +86,23 @@ class ViewTests(TestCase):
                              'action': 'login',
                          })
 
-    def test_postajob_access_not_company_user(self):
+    def test_job_access_not_company_user(self):
         self.company_user.delete()
 
         response = self.client.post(reverse('jobs_overview'))
-        self.assertRedirects(response, 'http://testserver/?next=/postajob/',
-                             status_code=302)
+        self.assertEqual(response.status_code, 404)
         response = self.client.post(reverse('job_add'))
-        self.assertRedirects(response, 'http://testserver/?next=/postajob/add',
-                             status_code=302)
+        self.assertEqual(response.status_code, 404)
         response = self.client.post(reverse('job_delete', kwargs={'pk': 1}))
-        expected = 'http://testserver/?next=/postajob/delete/1'
-        self.assertRedirects(response, expected, status_code=302)
+        self.assertEqual(response.status_code, 404)
         response = self.client.post(reverse('job_update', kwargs={'pk': 1}))
-        expected = 'http://testserver/?next=/postajob/update/1'
-        self.assertRedirects(response, expected, status_code=302)
+        self.assertEqual(response.status_code, 404)
 
     @patch('urllib2.urlopen')
-    def test_postajob_access_job_not_for_company(self, urlopen_mock):
+    def test_job_access_not_for_company(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('')
         new_company = CompanyFactory(name='Another Company', pk=1000)
-        job = JobFactory(company=new_company)
+        job = job_factory(new_company, self.user)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
@@ -90,15 +114,19 @@ class ViewTests(TestCase):
         self.assertEqual(Job.objects.all().count(), 1)
 
     @patch('urllib2.urlopen')
-    def test_postajob_access_allowed(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
-        job = JobFactory(company=self.company)
+    def test_job_access_allowed(self, urlopen_mock):
+        mock_obj = Mock()
+        mock_obj.read.side_effect = self.side_effect
+        urlopen_mock.return_value = mock_obj
+        job = job_factory(self.company, self.user)
         kwargs = {'pk': job.pk}
 
-        response = self.client.post(reverse('job_update', kwargs=kwargs))
-        self.assertEqual(response.status_code, 200)
+        response = self.client.post(reverse('job_update', kwargs=kwargs),
+                                    data=self.job_form_data)
+        self.assertRedirects(response, 'http://testserver/postajob/jobs/',
+                             status_code=302)
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
-        self.assertRedirects(response, 'http://testserver/postajob/',
+        self.assertRedirects(response, 'http://testserver/postajob/jobs/',
                              status_code=302)
 
     @patch('urllib2.urlopen')
@@ -116,7 +144,7 @@ class ViewTests(TestCase):
         mock_obj = Mock()
         mock_obj.read.side_effect = self.side_effect
         urlopen_mock.return_value = mock_obj
-        job = JobFactory(company=self.company)
+        job = job_factory(self.company, self.user)
         kwargs = {'pk': job.pk}
 
         self.assertNotEqual(job.title, self.job_form_data['title'])
@@ -131,7 +159,7 @@ class ViewTests(TestCase):
     @patch('urllib2.urlopen')
     def test_job_delete(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('')
-        job = JobFactory(company=self.company)
+        job = job_factory(self.company, self.user)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
@@ -148,7 +176,7 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         job = Job.objects.get()
         self.assertItemsEqual(job.site_packages.all(),
-                              [job.company.site_package])
+                              [job.owner.site_package])
 
     @patch('urllib2.urlopen')
     def test_job_add_site(self, urlopen_mock):
@@ -166,7 +194,7 @@ class ViewTests(TestCase):
         self.assertEqual(Job.objects.all().count(), 1)
         job = Job.objects.get()
         # The company site_package should've never been created
-        self.assertIsNone(job.company.site_package)
+        self.assertIsNone(job.owner.site_package)
         # The site_package we created for the site should be
         # the package that shows up on the job.
         self.assertIn(package.pk,
@@ -236,3 +264,80 @@ class ViewTests(TestCase):
         self.assertEqual(Job.objects.all().count(), 1)
         Job.objects.all().delete()
 
+    def test_product_add(self):
+        response = self.client.post(reverse('product_add'),
+                                    data=self.product_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        # Should get the product just added + self.product
+        self.assertEqual(Product.objects.all().count(), 2)
+
+    def test_product_update(self):
+        self.product_form_data['name'] = 'New Title'
+        kwargs = {'pk': self.product.pk}
+
+        self.assertNotEqual(self.product.name, self.product_form_data['name'])
+        response = self.client.post(reverse('product_update', kwargs=kwargs),
+                                    data=self.product_form_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Product.objects.all().count(), 1)
+
+        product = Product.objects.get()
+        self.assertEqual(product.name, self.product_form_data['name'])
+
+    def test_product_delete(self):
+        self.product_form_data['name'] = 'New Title'
+        kwargs = {'pk': self.product.pk}
+
+        response = self.client.post(reverse('product_delete', kwargs=kwargs))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Job.objects.all().count(), 0)
+
+    def test_product_update_job_limit(self):
+        self.product_form_data['name'] = 'New Title'
+        kwargs = {'pk': self.product.pk}
+
+        self.product_form_data['job_limit'] = 'unlimited'
+
+        self.assertNotEqual(self.product.name, self.product_form_data['name'])
+        response = self.client.post(reverse('product_update', kwargs=kwargs),
+                                    data=self.product_form_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Product.objects.all().count(), 1)
+
+        product = Product.objects.get()
+        self.assertEqual(product.name, self.product_form_data['name'])
+        self.assertEqual(product.num_jobs_allowed, 0)
+
+    def test_productgrouping_add(self):
+        response = self.client.post(reverse('productgrouping_add'),
+                                    data=self.productgrouping_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ProductGrouping.objects.all().count(), 1)
+
+    def test_productgrouping_update(self):
+        group = productgrouping_factory(self.company)
+        self.productgrouping_form_data['name'] = 'New Title'
+        kwargs = {'pk': group.pk}
+
+        self.assertNotEqual(group.name, self.productgrouping_form_data['name'])
+        response = self.client.post(reverse('productgrouping_update',
+                                            kwargs=kwargs),
+                                    data=self.productgrouping_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ProductGrouping.objects.all().count(), 1)
+
+        group = ProductGrouping.objects.get()
+        self.assertEqual(group.name, self.productgrouping_form_data['name'])
+
+    def test_productgrouping_delete(self):
+        group = productgrouping_factory(self.company)
+        self.product_form_data['name'] = 'New Title'
+        kwargs = {'pk': group.pk}
+
+        response = self.client.post(reverse('productgrouping_delete',
+                                            kwargs=kwargs))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(ProductGrouping.objects.all().count(), 0)

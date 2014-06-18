@@ -751,6 +751,17 @@ ul.header-menu > li > ul > a > li:hover {
     margin-right: 0;
 }
 
+/* Post a Job Styles */
+.product-group-tr > .product-group-display_order,
+.product-group-tr > .product-edit,
+.product-tr > .product-edit {
+    width: 70px;
+}
+
+.product-group-tr > .product-edit {
+    text-align: center;
+}
+
 
 
 /* Sort by field in saved search save/edit */

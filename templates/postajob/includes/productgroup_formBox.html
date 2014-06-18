@@ -1,0 +1,22 @@
+<div class="formBox no-padding">
+    <h4>{{ formBox_title }}</h4>
+    <table id="group-table-{{ company.id }}" class="table table-bordered table-striped">
+        {% if product_groupings %}
+        <thead>
+            <tr>
+                <td>Order</td>
+                <td>Group</td>
+                <td>Products</td>
+                <td></td>
+            </tr>
+        </thead>
+        {% endif %}
+        {% include "postajob/includes/productgroup_rows.html" %}
+    </table>
+    {% if formBox_footer %}
+    <div class="formBox-footer">
+        <a href="{% url 'productgrouping' %}" class="btn pull-right">Manage Groups</a>
+        <div class="clear"></div>
+    </div>
+    {% endif %}
+</div>

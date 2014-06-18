@@ -7,13 +7,21 @@
     border-radius: 4px;
 }
 
+.products-field ul {
+    display: inline-block;
+}
+
+.products-field ul,
 .site-field ul {
     list-style: none;
     margin-left: 0;
     padding-bottom: 0px;
 }
 
-.field-apply_type > div > ul
+.field-job_limit > div > ul,
+.job-limit-field > ul,
+.field-products > div > ul,
+.field-apply_type > div > ul,
 .field-post_to > div > ul,
 .field-site_packages > div > ul,
 .post-to-field > ul,
@@ -23,8 +31,11 @@
     padding: 0;
 }
 
-.field-apply_type > div> ul> li,
+.field-job_limit > div > ul > li,
+.job-limit-field > ul > li,
+.field-products > div > ul > li,
+.field-apply_type > div> ul > li,
 .field-site_packages > div > ul > li,
-.field-post_to > div > ul > li{
+.field-post_to > div > ul > li {
     list-style-type: none;
 }
