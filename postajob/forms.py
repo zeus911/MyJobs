@@ -480,11 +480,15 @@ class PurchasedProductForm(RequestForm):
         self.instance.transaction = self.transaction.uid
         self.instance.product = self.product
         self.instance.owner = self.company
+        self.instance.card_last_four = self.cleaned_data.get('card_number')[-4:]
+        self.instance.card_exp_date = self.cleaned_data.get('exp_date')
         super(PurchasedProductForm, self).save(commit)
         try:
             settled_transaction = settle_transaction(self.transaction)
             self.instance.transaction = settled_transaction.uid
             self.instance.paid = True
             self.instance.save()
-        except AuthorizeResponseError, e:
+        except AuthorizeResponseError:
             pass
+        else:
+            self.instance.send_invoice_email([self.request.user.email])

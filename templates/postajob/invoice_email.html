@@ -1,0 +1,61 @@
+<table width="400">
+    <tr><td align="center">
+        {{ purchase.product.owner.name }}
+        {% if purchase.product.owner.companyprofile %}
+            <br/>{{ purchase.product.owner.companyprofile.address_line_one }}
+            {% if purchase.product.owner.companyprofile.address_line_two %}<br/>{{ purchase.product.owner.companyprofile.address_line_two }}{% endif %}
+            <br/>{{ purchase.product.owner.companyprofile.city}}, {{ purchase.product.owner.companyprofile.state }} {{ purchase.product.owner.companyprofile.zipcode }} {{ purchase.product.owner.companyprofile.country }}
+            {% if purchase.product.owner.companyprofile.phone %}<br/>{{ purchase.product.owner.companyprofile.phone }}{% endif %}
+        {% endif %}
+    </td></tr>
+    <tr><td align="right">
+        Invoice No: {{ purchase.transaction }}
+        <br/>Date: {{ purchase.purchase_date }}
+    </td></tr>
+</table>
+
+<table border="1px solid" width="400">
+    <tr><td align="center" colspan="4"><b>Invoice</b></td></tr>
+    <tr><td colspan="4">
+        Company: {{ purchase.owner.name }}
+        <br/>Address: {{ purchase.address_line_one }}, {{ purchase.address_line_two }}
+        <br/>City: {{ purchase.city }}
+        <br/>State: {{ purchase.state }}
+        <br/>ZIP: {{ purchase.zipcode }}
+        <br/>Country: {{ purchase.country }}
+    </td></tr>
+    <tr>
+        <td>Qty</td>
+        <td>Description</td>
+        <td>Unit Price</td>
+        <td>Total</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>{{ purchase.product.name }}</td>
+        <td>${{ purchase.purchase_amount }}</td>
+        <td>${{ purchase.purchase_amount }}</td>
+    </tr>
+    <tr>
+        <td colspan="3" align="right">Subtotal</td>
+        <td align="right">${{ purchase.purchase_amount }}</td>
+    </tr>
+    <tr>
+        <td colspan="3" align="right">Taxes</td>
+        <td align="right">$0.00</td>
+    </tr>
+    <tr>
+        <td colspan="3" align="right">Total</td>
+        <td align="right">${{ purchase.purchase_amount }}</td>
+    </tr>
+</table>
+
+<table>
+    <tr><td><b>Payment Details</b></td></tr>
+    <tr><td>
+        Credit Card Number: *************{{ purchase.card_last_four }}
+        <br/>Expiration: {{ purchase.card_exp_date.month }}/{{ purchase.card_exp_date.year }}
+        <br/>Name on Credit Card: {{ purchase.first_name }} {{ purchase.last_name }}
+        <br/>Amount Charged: ${{ purchase.purchase_amount }}
+    </td></tr>
+</table>
