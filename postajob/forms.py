@@ -435,9 +435,6 @@ class PurchasedProductForm(RequestForm):
             'all': ('postajob.153-10.css', )
         }
 
-    month_choices = [(x, x) for x in range(1, 12)]
-    year_choices = [(x, x) for x in range(2014, 2030)]
-
     card_number = CharField(label='Credit Card Number')
     cvv = IntegerField(label='CVV')
     exp_date = ExpField(label='Expiration Date')
