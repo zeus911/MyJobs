@@ -1,4 +1,4 @@
-import datetime
+from datetime import date, timedelta
 import json
 import operator
 from urllib import urlencode
@@ -6,15 +6,20 @@ import urllib2
 from uuid import uuid4
 
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
+from django.core.mail import EmailMessage
 from django.db import models
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_delete
+from django.template.loader import render_to_string
 
 
 class BaseModel(models.Model):
     class Meta:
         abstract = True
+
+    ADMIN_GROUP_NAME = 'Purchased Microsite Admin'
 
     def user_has_access(self, user):
         """
@@ -144,8 +149,8 @@ class Job(BaseModel):
     def save(self, **kwargs):
         self.generate_guid()
 
-        if self.is_expired and self.date_expired > datetime.date.today():
-            self.date_expired = datetime.date.today()
+        if self.is_expired and self.date_expired > date.today():
+            self.date_expired = date.today()
 
         super(Job, self).save(**kwargs)
         if not self.is_expired:
@@ -207,14 +212,35 @@ class PurchasedJob(Job):
     is_approved = models.BooleanField(default=False)
 
     def save(self, **kwargs):
+        if not hasattr(self, 'pk') or not self.pk:
+            # Set number of jobs remaining
+            self.purchased_product.jobs_remaining -= 1
+            self.purchased_product.save()
+
+            # Set the last date a job can possibly expire
+            max_job_length = self.purchased_product.max_job_length
+            self.max_expired_date = (date.today() + timedelta(max_job_length))
+
+            # If the product dictates that jobs don't require approval,
+            # immidiately approve the job.
+            if not self.purchased_product.product.requires_approval:
+                self.is_approved = True
+
         super(PurchasedJob, self).save(**kwargs)
-        self.site_packages = [self.purchased_product.product.package]
+        self.site_packages = [self.purchased_product.product.package.sitepackage]
 
     def add_to_solr(self):
-        if not self.is_approved:
-            return
-        else:
+        if self.is_approved and self.purchased_product.paid:
             return super(PurchasedJob, self).add_to_solr()
+
+    def get_solr_on_sites(self):
+        if self.site_packages.all():
+            package_list = self.site_packages.all().values_list('pk', flat=True)
+            package_list = list(package_list)
+            on_sites = ",".join([str(package) for package in package_list])
+        else:
+            on_sites = ''
+        return on_sites
 
 
 def on_delete(sender, instance, **kwargs):
@@ -377,13 +403,80 @@ class SitePackage(Package):
 
 class PurchasedProduct(BaseModel):
     product = models.ForeignKey('Product')
+
     owner = models.ForeignKey('mydashboard.Company')
     purchase_date = models.DateField(auto_now_add=True)
+    is_approved = models.BooleanField(default=False)
+    paid = models.BooleanField(default=False)
 
-    def jobs_remaining(self):
-        jobs_allowed = self.product.num_jobs_allowed
-        current_jobs = PurchasedJob.objects.filter(purchased_product=self)
-        return jobs_allowed - current_jobs.count()
+    # These fields represent the product purchased at the time of purchase.
+    # This prevents the admin from changing anything about the
+    # purchase (except whether or not jobs require approval) after the
+    # item has been purchased.
+    purchase_amount = models.DecimalField(max_digits=20, decimal_places=2)
+    expiration_date = models.DateField()
+    num_jobs_allowed = models.IntegerField()
+    max_job_length = models.IntegerField()
+    jobs_remaining = models.IntegerField()
+
+    transaction = models.CharField(max_length=255)
+    card_last_four = models.CharField(max_length=5)
+    card_exp_date = models.DateField()
+    first_name = models.CharField(max_length=255, verbose_name='First Name')
+    last_name = models.CharField(max_length=255, verbose_name='Last Name')
+    address_line_one = models.CharField(max_length=255,
+                                        verbose_name='Address Line One')
+    address_line_two = models.CharField(max_length=255, blank=True,
+                                        verbose_name='Address Line Two')
+    city = models.CharField(max_length=255)
+    state = models.CharField(max_length=255)
+    country = models.CharField(max_length=255)
+    zipcode = models.CharField(max_length=255)
+
+    def __unicode__(self):
+        return self.product.name
+
+    def save(self, **kwargs):
+        length = self.product.posting_window_length
+        self.num_jobs_allowed = self.product.num_jobs_allowed
+        if not hasattr(self, 'pk') or not self.pk:
+            self.purchase_amount = self.product.cost
+            self.expiration_date = date.today() + timedelta(length)
+            self.max_job_length = self.product.max_job_length
+            self.jobs_remaining = self.num_jobs_allowed
+        super(PurchasedProduct, self).save(**kwargs)
+
+    def send_invoice_email(self, other_recipients=[]):
+        """
+        Sends the invoice email to the company admins along with
+        any other optional recipients.
+
+        """
+        from mydashboard.models import CompanyUser
+        data = {
+            'purchase': self,
+        }
+        owner = self.product.owner
+        group, _ = Group.objects.get_or_create(name=self.ADMIN_GROUP_NAME)
+        owner_admins = CompanyUser.objects.filter(company=owner, group=group)
+        owner_admins = owner_admins.values_list('user__email', flat=True)
+        recipients = set(other_recipients +
+                         list(owner_admins))
+        if recipients:
+            subject = '{company} Invoice'.format(company=owner.name)
+            message = render_to_string('postajob/invoice_email.html', data)
+            msg = EmailMessage(subject, message, settings.INVOICE_EMAIL,
+                               list(recipients))
+            msg.content_subtype = 'html'
+            msg.send()
+
+    def can_post_more(self):
+        if date.today() > self.expiration_date:
+            return False
+        if self.num_jobs_allowed == 0:
+            # Product allows for unlimited jobs.
+            return True
+        return bool(self.jobs_remaining > 0)
 
 
 class ProductGrouping(BaseModel):
@@ -483,3 +576,16 @@ class Product(BaseModel):
 
     def __unicode__(self):
         return self.name
+
+
+class CompanyProfile(models.Model):
+    company = models.OneToOneField('mydashboard.Company')
+    address_line_one = models.CharField(max_length=255, blank=True,
+                                        verbose_name='Address Line One')
+    address_line_two = models.CharField(max_length=255, blank=True,
+                                        verbose_name='Address Line Two')
+    city = models.CharField(max_length=255, blank=True)
+    state = models.CharField(max_length=255, blank=True)
+    country = models.CharField(max_length=255, blank=True)
+    zipcode = models.CharField(max_length=255, blank=True)
+    phone = models.CharField(max_length=255, blank=True)

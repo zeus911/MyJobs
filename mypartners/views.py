@@ -295,8 +295,6 @@ def prm_overview(request):
     older_records = partner.get_contact_records()
     older_records = older_records.exclude(date_time__gte=now() + timedelta(-30))
 
-    print older_records.count()
-
     ctx = {
         'partner': partner,
         'company': company,

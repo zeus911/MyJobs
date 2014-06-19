@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, resolve
 from django.http import HttpResponseRedirect, Http404
 from django.views.generic.edit import FormView, ModelFormMixin
 from django.views.generic.detail import SingleObjectMixin
@@ -38,7 +38,7 @@ class FormViewBase(FormView, ModelFormMixin, SingleObjectMixin):
         raise NotImplementedError('FormViewBase requires get_queryset().')
 
     def set_object(self, request):
-        if not request.path == reverse(self.add_name):
+        if not resolve(self.request.path).url_name == self.add_name:
             queryset = self.get_queryset(request)
             self.object = self.get_object(queryset=queryset)
             if not self.object.user_has_access(request.user):

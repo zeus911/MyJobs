@@ -1,6 +1,8 @@
+from datetime import date
 from mock import patch, Mock
 from StringIO import StringIO
 
+from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
@@ -9,8 +11,11 @@ from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
 from myjobs.tests.factories import UserFactory
 from postajob.tests.factories import (product_factory, job_factory,
                                       productgrouping_factory,
+                                      purchasedjob_factory,
+                                      purchasedproduct_factory,
                                       sitepackage_factory)
-from postajob.models import Job, Package, Product, ProductGrouping, SitePackage
+from postajob.models import (Job, Package, Product, ProductGrouping,
+                             PurchasedJob, PurchasedProduct, SitePackage)
 
 
 class ViewTests(TestCase):
@@ -76,6 +81,39 @@ class ViewTests(TestCase):
             'date_expired_1': '04',
             'date_expired_0': 'Jun',
             'date_expired_2': '2014',
+        }
+
+        self.purchasedjob_form_data = {
+            'city': 'Indianapolis',
+            'description': 'Description',
+            'title': 'Job Form Data Title',
+            'country': 'United States of America',
+            'owner': str(self.company.pk),
+            'reqid': '123456',
+            'apply_info': '',
+            'zipcode': '46268',
+            'apply_link': 'www.google.com',
+            'state': 'Indiana',
+            'apply_email': '',
+            'apply_type': 'link',
+            'post_to': 'network',
+            'date_expired_1': '04',
+            'date_expired_0': 'Jun',
+            'date_expired_2': '2014',
+        }
+
+        self.purchasedproduct_form_data = {
+            'address_line_one': '123 Street Rd.',
+            'card_number': '4007000000027',
+            'city': 'Indianapolis',
+            'country': 'USA',
+            'cvv': '123',
+            'exp_date_0': date.today().month + 1,
+            'exp_date_1': date.today().year + 5,
+            'first_name': 'John',
+            'last_name': 'Smith',
+            'state': 'Indiana',
+            'zipcode': '46268',
         }
 
     def login_user(self):
@@ -165,6 +203,55 @@ class ViewTests(TestCase):
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Job.objects.all().count(), 0)
+
+    @patch('urllib2.urlopen')
+    def test_purchasedjob_add(self, urlopen_mock):
+        mock_obj = Mock()
+        mock_obj.read.side_effect = self.side_effect
+        urlopen_mock.return_value = mock_obj
+
+        product = purchasedproduct_factory(self.product, self.company)
+        kwargs = {'product': product.pk}
+
+        response = self.client.post(reverse('purchasedjob_add', kwargs=kwargs),
+                                    data=self.purchasedjob_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(PurchasedJob.objects.all().count(), 1)
+
+    @patch('urllib2.urlopen')
+    def test_purchasedjob_update(self, urlopen_mock):
+        mock_obj = Mock()
+        mock_obj.read.side_effect = self.side_effect
+        urlopen_mock.return_value = mock_obj
+
+        product = purchasedproduct_factory(self.product, self.company)
+        job = purchasedjob_factory(self.company, self.user, product)
+        kwargs = {'pk': job.pk}
+
+        self.assertNotEqual(job.title, self.job_form_data['title'])
+        response = self.client.post(reverse('purchasedjob_update',
+                                            kwargs=kwargs),
+                                    data=self.purchasedjob_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(PurchasedJob.objects.all().count(), 1)
+        # Ensure we're working with the most recent copy of the job.
+        job = Job.objects.get()
+        self.assertEqual(job.title, self.job_form_data['title'])
+
+    @patch('urllib2.urlopen')
+    def test_purchasedjob_delete(self, urlopen_mock):
+        urlopen_mock.return_value = StringIO('')
+
+        product = purchasedproduct_factory(self.product, self.company)
+        job = purchasedjob_factory(self.company, self.user, product)
+        kwargs = {'pk': job.pk}
+
+        response = self.client.post(reverse('purchasedjob_delete',
+                                            kwargs=kwargs))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(PurchasedJob.objects.all().count(), 0)
 
     @patch('urllib2.urlopen')
     def test_job_add_network(self, urlopen_mock):
@@ -341,3 +428,53 @@ class ViewTests(TestCase):
                                             kwargs=kwargs))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(ProductGrouping.objects.all().count(), 0)
+
+    def test_purchasedproduct_add(self):
+        product = {'product': self.product.pk}
+        response = self.client.post(reverse('purchasedproduct_add',
+                                            kwargs=product),
+                                    data=self.purchasedproduct_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(PurchasedProduct.objects.all().count(), 1)
+        purchase = PurchasedProduct.objects.get()
+        self.assertTrue(purchase.paid)
+        self.assertEqual(purchase.card_last_four,
+                         self.purchasedproduct_form_data['card_number'][-4:])
+        self.assertEqual(purchase.card_exp_date.month,
+                         self.purchasedproduct_form_data['exp_date_0'])
+        self.assertEqual(purchase.card_exp_date.year,
+                         self.purchasedproduct_form_data['exp_date_1'])
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_purchasedproduct_add_card_declined(self):
+        # Change the card number so it doesn't artificially get declined
+        # due to duplicate transactions.
+        self.purchasedproduct_form_data['card_number'] = 4012888818888
+        # 70.02 should always result in a decline for test cards.
+        self.product.cost = 70.02
+        self.product.save()
+        product = {'product': self.product.pk}
+        response = self.client.post(reverse('purchasedproduct_add',
+                                            kwargs=product),
+                                    data=self.purchasedproduct_form_data,
+                                    follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(PurchasedProduct.objects.all().count(), 0)
+
+    def test_purchasedproduct_update(self):
+        purchased_product = purchasedproduct_factory(self.product, self.company)
+        kwargs = {'pk': purchased_product.pk}
+
+        response = self.client.post(reverse('purchasedproduct_update',
+                                            kwargs=kwargs))
+        self.assertEqual(response.status_code, 404)
+
+    def test_purchasedproduct_delete(self):
+        purchased_product = purchasedproduct_factory(self.product, self.company)
+        kwargs = {'pk': purchased_product.pk}
+
+        response = self.client.post(reverse('purchasedproduct_delete',
+                                            kwargs=kwargs))
+        self.assertEqual(response.status_code, 404)

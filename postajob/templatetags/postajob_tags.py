@@ -1,5 +1,6 @@
 import bleach
 
+from django.core.urlresolvers import resolve
 from django.template import Library
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
@@ -29,3 +30,13 @@ def get_job_links(job):
     if len(urls) > 3:
         url_html = mark_safe("%s <br/>..." % url_html)
     return url_html
+
+
+@register.simple_tag(takes_context=True)
+def get_form_action(context):
+    current_url_name = resolve(context['request'].path).url_name
+    if context.get('item') and context['item'].pk:
+        return 'Edit'
+    elif current_url_name == 'purchasedproduct_add':
+        return 'Purchase'
+    return 'Add'

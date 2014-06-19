@@ -125,6 +125,7 @@ class CompanyUser(models.Model):
     user = models.ForeignKey(User)
     company = models.ForeignKey(Company)
     date_added = models.DateTimeField(auto_now=True)
+    group = models.ManyToManyField('auth.Group', blank=True)
 
     def __unicode__(self):
         return 'Admin %s for %s' % (self.user.email, self.company.name)

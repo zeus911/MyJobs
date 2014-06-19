@@ -10,7 +10,22 @@ urlpatterns = patterns(
         views.order_postajob,
         name="order_postajob"),
 
-    # Posted job management for members
+    # Posted job management
+    url(r'^jobs/$',
+        views.jobs_overview,
+        name='jobs_overview'),
+
+    # Purchased job management
+    url(r'^purchased/jobs/$',
+        views.purchasedjobs_overview,
+        name='purchasedjobs_overview'),
+
+    # Purchased microsite management
+    url(r'^admin/$',
+        views.products_overview,
+        name='products_overview'),
+
+    # Job
     url(r'^job/add/',
         views.JobFormView.as_view(),
         name='job_add'),
@@ -20,9 +35,17 @@ urlpatterns = patterns(
     url(r'^job/update/(?P<pk>\d+)/',
         views.JobFormView.as_view(),
         name='job_update'),
-    url(r'^jobs/$',
-        views.jobs_overview,
-        name='jobs_overview'),
+
+    # PurchasedJob
+    url(r'^job/purchase/add/(?P<product>\d+)/',
+        views.PurchasedJobFormView.as_view(),
+        name='purchasedjob_add'),
+    url(r'^job/purchase/delete/(?P<pk>\d+)/',
+        views.PurchasedJobFormView.as_view(),
+        name='purchasedjob_update'),
+    url(r'^job/purchase/update/(?P<pk>\d+)/',
+        views.PurchasedJobFormView.as_view(),
+        name='purchasedjob_delete'),
 
     # Product management
     url(r'^admin/$',
@@ -41,6 +64,7 @@ urlpatterns = patterns(
         views.ProductFormView.as_view(),
         name='product_update'),
 
+    # ProductGrouping
     url(r'^admin/group/$',
         views.admin_groupings,
         name='productgrouping'),
@@ -54,4 +78,14 @@ urlpatterns = patterns(
         views.ProductGroupingFormView.as_view(),
         name='productgrouping_update'),
 
+    # PurchasedProduct
+    url(r'^product/purchase/add/(?P<product>\d+)/',
+        views.PurchasedProductFormView.as_view(),
+        name='purchasedproduct_add'),
+    url(r'^product/purchase/delete/(?P<pk>\d+)/',
+        views.PurchasedProductFormView.as_view(),
+        name='purchasedproduct_delete'),
+    url(r'^product/purchase/update/(?P<pk>\d+)/',
+        views.PurchasedProductFormView.as_view(),
+        name='purchasedproduct_update'),
 )

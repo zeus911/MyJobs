@@ -1,13 +1,15 @@
-from django.core.urlresolvers import reverse_lazy
-from django.shortcuts import render_to_response
+from django.core.urlresolvers import Http404, reverse_lazy, resolve
+from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
 
 from universal.helpers import get_company
 from universal.views import RequestFormViewBase
 from universal.decorators import company_has_access
-from postajob.forms import (JobForm, ProductForm, ProductGroupingForm)
-from postajob.models import (Job, Product, ProductGrouping)
+from postajob.forms import (JobForm, ProductForm, ProductGroupingForm,
+                            PurchasedJobForm, PurchasedProductForm)
+from postajob.models import (Job, Product, ProductGrouping, PurchasedJob,
+                             PurchasedProduct)
 
 
 @company_has_access('prm_access')
@@ -15,6 +17,16 @@ def jobs_overview(request):
     company = get_company(request)
     data = {'jobs': Job.objects.filter(owner=company)}
     return render_to_response('postajob/jobs_overview.html', data,
+                              RequestContext(request))
+
+
+def purchasedjobs_overview(request):
+    company = get_company(request)
+    data = {
+        'jobs': PurchasedJob.objects.filter(owner=company),
+        'products': PurchasedProduct.objects.filter(owner=company),
+    }
+    return render_to_response('postajob/purchasedjobs_overview.html', data,
                               RequestContext(request))
 
 
@@ -35,7 +47,7 @@ def admin_products(request):
     company = get_company(request)
     data = {
         'products': Product.objects.filter(owner=company),
-        'company': company
+        'company': company,
     }
     return render_to_response('postajob/products.html', data,
                               RequestContext(request))
@@ -46,10 +58,42 @@ def admin_groupings(request):
     company = get_company(request)
     data = {
         'product_groupings': ProductGrouping.objects.filter(owner=company),
-        'company': company
+        'company': company,
     }
     return render_to_response('postajob/productgroups.html', data,
                               RequestContext(request))
+
+
+class PurchaseFormViewBase(RequestFormViewBase):
+    purchase_field = None
+    purchase_model = None
+
+    def dispatch(self, *args, **kwargs):
+        """
+        Decorators on this function will be run on every request that
+        goes through this class.
+
+        Determine and set which product is attempting to be purchased.
+
+        """
+        # The add url also has the pk for the product they're attempting
+        # to purchase.
+        if kwargs.get('product'):
+            self.product = get_object_or_404(self.purchase_model,
+                                             pk=kwargs.get('product'))
+        else:
+            obj = get_object_or_404(self.model, pk=kwargs.get('pk'))
+            self.product = getattr(obj, self.purchase_field, None)
+
+        # Set the display name based on the model
+        self.display_name = self.display_name.format(product=self.product)
+
+        return super(PurchaseFormViewBase, self).dispatch(*args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super(PurchaseFormViewBase, self).get_form_kwargs()
+        kwargs['product'] = self.product
+        return kwargs
 
 
 @company_has_access('product_access')
@@ -96,6 +140,9 @@ class PostajobModelFormMixin(object):
         self.queryset = self.model.objects.filter(**kwargs)
         return self.queryset
 
+    def get_success_url(self):
+        return self.success_url
+
 
 class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
     form_class = JobForm
@@ -115,6 +162,20 @@ class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
 
         """
         return super(JobFormView, self).dispatch(*args, **kwargs)
+
+
+class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
+    form_class = PurchasedJobForm
+    model = PurchasedJob
+    display_name = '{product} Job'
+
+    success_url = reverse_lazy('purchasedjobs_overview')
+    add_name = 'purchasedjob_add'
+    update_name = 'purchasedjob_update'
+    delete_name = 'purchasedjob_delete'
+
+    purchase_field = 'purchased_product'
+    purchase_model = PurchasedProduct
 
 
 class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):
@@ -155,3 +216,28 @@ class ProductGroupingFormView(PostajobModelFormMixin, RequestFormViewBase):
 
         """
         return super(ProductGroupingFormView, self).dispatch(*args, **kwargs)
+
+
+class PurchasedProductFormView(PostajobModelFormMixin, PurchaseFormViewBase):
+    form_class = PurchasedProductForm
+    model = PurchasedProduct
+    # The display name is determined by the product id and set in dispatch().
+    display_name = '{product} - Billing Information'
+
+    success_url = reverse_lazy('purchasedjobs_overview')
+    add_name = 'purchasedproduct_add'
+    update_name = 'purchasedproduct_update'
+    delete_name = 'purchasedproduct_delete'
+
+    purchase_field = 'product'
+    purchase_model = Product
+
+    def set_object(self, request):
+        """
+        Purchased products can't be edited or deleted, so prevent anyone
+        getting an actual object to edit/delete.
+
+        """
+        self.object = None
+        if resolve(request.path).url_name != 'purchasedproduct_add':
+            raise Http404

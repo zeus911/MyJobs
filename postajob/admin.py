@@ -1,8 +1,10 @@
 from django.contrib import admin
 
 from postajob.forms import (JobForm, ProductForm, ProductGroupingForm,
+                            PurchasedProductForm, PurchasedJobAdminForm,
                             SitePackageForm)
-from postajob.models import (Job, Product, ProductGrouping, SitePackage)
+from postajob.models import (Job, Product, ProductGrouping, PurchasedProduct,
+                             PurchasedJob, SitePackage)
 
 
 class ModelAdminWithRequest(admin.ModelAdmin):
@@ -61,6 +63,45 @@ class JobAdmin(ModelAdminWithRequest):
         return jobs
 
 
+class PurchasedJobAdmin(ModelAdminWithRequest):
+    form = PurchasedJobAdminForm
+    list_display = ('__unicode__', 'guid', )
+    search_fields = ('title', 'owner', )
+
+    fieldsets = (
+        ('Job Information', {
+            'fields': (('title', 'is_approved', ), 'reqid', 'description',
+                       'city', 'state', 'country', 'zipcode',
+                       ('date_expired', 'is_expired', 'autorenew', )),
+        }),
+        ('Application Instructions', {
+            'fields': ('apply_type', 'apply_link', 'apply_email',
+                       'apply_info', ),
+        }),
+        ('Site Information', {
+            'fields': ('owner', 'purchased_product', ),
+        }),
+    )
+
+    def delete_model(self, request, obj):
+        # Django admin bulk delete doesn't trigger a post_delete signal. This
+        # ensures that the remove_from_solr() usually handled by a delete
+        # signal is called in those cases.
+        obj.remove_from_solr()
+        obj.delete()
+
+    def queryset(self, request):
+        """
+        Prevent users from seeing jobs that don't belong to their company
+        in the admin.
+
+        """
+        jobs = super(PurchasedJobAdmin, self).queryset(request)
+        if not request.user.is_superuser:
+            jobs = jobs.filter(owner__admins=request.user)
+        return jobs
+
+
 class SitePackageAdmin(ModelAdminWithRequest):
     form = SitePackageForm
     list_display = ('id', 'name', )
@@ -87,7 +128,8 @@ class ProductFormAdmin(ModelAdminWithRequest):
         }),
         ('Package Details', {
             'fields': ('cost', 'posting_window_length',
-                       'max_job_length', 'job_limit', 'num_jobs_allowed', )
+                       'max_job_length', 'job_limit', 'num_jobs_allowed',
+                       'requires_approval', )
         }),
     )
 
@@ -109,7 +151,25 @@ class ProductGroupingFormAdmin(ModelAdminWithRequest):
         return groups
 
 
+class PurchasedProductFormAdmin(ModelAdminWithRequest):
+    actions = None
+    form = PurchasedProductForm
+    list_display = ('transaction', 'product', 'owner', 'first_name',
+                    'last_name', 'paid', 'expiration_date', 'num_jobs_allowed',
+                    'jobs_remaining', )
+
+    def __init__(self, *args, **kwargs):
+        super(PurchasedProductFormAdmin, self).__init__(*args, **kwargs)
+        # Remove edit links, since you can't really edit a purchase.
+        self.list_display_links = (None, )
+
+    def has_add_permission(self, request):
+        return False
+
+
 admin.site.register(Job, JobAdmin)
+admin.site.register(PurchasedJob, PurchasedJobAdmin)
 admin.site.register(SitePackage, SitePackageAdmin)
 admin.site.register(Product, ProductFormAdmin)
 admin.site.register(ProductGrouping, ProductGroupingFormAdmin)
+admin.site.register(PurchasedProduct, PurchasedProductFormAdmin)

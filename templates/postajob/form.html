@@ -1,17 +1,18 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load common_tags %}
+{% load postajob_tags %}
 {% gz as gz %}
 
 {% block site-title %}
-    <title>{% if item.pk %}{% trans 'Edit' %}{% else %}{% trans 'Add' %}{% endif %} {{ display_name }} - My.jobs</title>
+    <title>{% get_form_action %} {{ display_name }} - My.jobs</title>
     <meta name="title" content="{{ display_name }} - My.jobs">
 {% endblock site-title %}
 
 
 {% block content %}
     <h1>
-        {% if item.pk %}{% trans 'Edit' %}{% else %}{% trans 'Add' %}{% endif %}
+        {% get_form_action %}
         <small>{{ display_name }}</small>
     </h1>
     <form action="?" method="post">
