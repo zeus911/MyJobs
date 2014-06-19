@@ -248,7 +248,7 @@ LOGGING = {
         },
         'tasks': {
             'handlers': ['console', 'logfile'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'formatter': 'standard',
         },
     }
