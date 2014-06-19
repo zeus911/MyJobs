@@ -37,3 +37,5 @@ POSTAJOB_URLS = {
     'post': '',
     'delete': ''
 }
+
+CC_AUTH = TESTING_CC_AUTH

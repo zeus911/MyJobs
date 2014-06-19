@@ -1,4 +1,4 @@
-import datetime
+from datetime import date, timedelta
 import json
 import operator
 from urllib import urlencode
@@ -144,8 +144,8 @@ class Job(BaseModel):
     def save(self, **kwargs):
         self.generate_guid()
 
-        if self.is_expired and self.date_expired > datetime.date.today():
-            self.date_expired = datetime.date.today()
+        if self.is_expired and self.date_expired > date.today():
+            self.date_expired = date.today()
 
         super(Job, self).save(**kwargs)
         if not self.is_expired:
@@ -207,6 +207,9 @@ class PurchasedJob(Job):
     is_approved = models.BooleanField(default=False)
 
     def save(self, **kwargs):
+        if not hasattr(self, 'pk') or not self.pk:
+            self.purchased_product.jobs_remaining -= 1
+            self.purchased_product.save()
         super(PurchasedJob, self).save(**kwargs)
         self.site_packages = [self.purchased_product.product.package]
 
@@ -377,13 +380,35 @@ class SitePackage(Package):
 
 class PurchasedProduct(BaseModel):
     product = models.ForeignKey('Product')
+
     owner = models.ForeignKey('mydashboard.Company')
     purchase_date = models.DateField(auto_now_add=True)
+    is_approved = models.BooleanField(default=False)
+    paid = models.BooleanField(default=False)
 
-    def jobs_remaining(self):
-        jobs_allowed = self.product.num_jobs_allowed
-        current_jobs = PurchasedJob.objects.filter(purchased_product=self)
-        return jobs_allowed - current_jobs.count()
+    expiration_date = models.DateField()
+    num_jobs_allowed = models.IntegerField()
+    jobs_remaining = models.IntegerField()
+
+    transaction = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=255, verbose_name='First Name')
+    last_name = models.CharField(max_length=255, verbose_name='Last Name')
+    address_line_one = models.CharField(max_length=255,
+                                        verbose_name='Address Line One')
+    address_line_two = models.CharField(max_length=255, blank=True,
+                                        verbose_name='Address Line Two')
+    city = models.CharField(max_length=255)
+    state = models.CharField(max_length=255)
+    country = models.CharField(max_length=255)
+    zipcode = models.CharField(max_length=255)
+
+    def save(self, **kwargs):
+        length = self.product.posting_window_length
+        self.num_jobs_allowed = self.product.num_jobs_allowed
+        if not hasattr(self, 'pk') or not self.pk:
+            self.expiration_date = date.today() + timedelta(length)
+            self.jobs_remaining = self.num_jobs_allowed
+        super(PurchasedProduct, self).save(**kwargs)
 
 
 class ProductGrouping(BaseModel):

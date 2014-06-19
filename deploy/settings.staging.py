@@ -56,3 +56,5 @@ POSTAJOB_URLS = {
     'post': 'http://50.19.231.150/ajax/postajob/',
     'delete': 'http://50.19.231.150/ajax/deleteajob/'
 }
+
+CC_AUTH = TESTING_CC_AUTH

@@ -1,8 +1,9 @@
 from django.contrib import admin
 
 from postajob.forms import (JobForm, ProductForm, ProductGroupingForm,
-                            SitePackageForm)
-from postajob.models import (Job, Product, ProductGrouping, SitePackage)
+                            PurchasedProductForm, SitePackageForm)
+from postajob.models import (Job, Product, ProductGrouping, PurchasedProduct,
+                             SitePackage)
 
 
 class ModelAdminWithRequest(admin.ModelAdmin):
@@ -109,7 +110,24 @@ class ProductGroupingFormAdmin(ModelAdminWithRequest):
         return groups
 
 
+class PurchasedProductFormAdmin(ModelAdminWithRequest):
+    actions = None
+    form = PurchasedProductForm
+    list_display = ('transaction', 'product', 'owner', 'first_name',
+                    'last_name', 'paid', 'expiration_date', 'num_jobs_allowed',
+                    'jobs_remaining', )
+
+    def __init__(self, *args, **kwargs):
+        super(PurchasedProductFormAdmin, self).__init__(*args, **kwargs)
+        # Remove edit links, since you can't really edit a purchase.
+        self.list_display_links = (None, )
+
+    def has_add_permission(self, request):
+        return False
+
+
 admin.site.register(Job, JobAdmin)
 admin.site.register(SitePackage, SitePackageAdmin)
 admin.site.register(Product, ProductFormAdmin)
 admin.site.register(ProductGrouping, ProductGroupingFormAdmin)
+admin.site.register(PurchasedProduct, PurchasedProductFormAdmin)
