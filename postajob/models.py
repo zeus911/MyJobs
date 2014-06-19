@@ -6,15 +6,20 @@ import urllib2
 from uuid import uuid4
 
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
+from django.core.mail import EmailMessage
 from django.db import models
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_delete
+from django.template.loader import render_to_string
 
 
 class BaseModel(models.Model):
     class Meta:
         abstract = True
+
+    ADMIN_GROUP_NAME = 'Purchased Microsite Admin'
 
     def user_has_access(self, user):
         """
@@ -386,11 +391,18 @@ class PurchasedProduct(BaseModel):
     is_approved = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
 
+    # These fields represent the product purchased at the time of purchase.
+    # This prevents the admin from changing anything about the
+    # purchase (except whether or not jobs require approval) after the
+    # item has been purchased.
+    purchase_amount = models.DecimalField(max_digits=20, decimal_places=2)
     expiration_date = models.DateField()
     num_jobs_allowed = models.IntegerField()
     jobs_remaining = models.IntegerField()
 
     transaction = models.CharField(max_length=255)
+    card_last_four = models.CharField(max_length=5)
+    card_exp_date = models.DateField()
     first_name = models.CharField(max_length=255, verbose_name='First Name')
     last_name = models.CharField(max_length=255, verbose_name='Last Name')
     address_line_one = models.CharField(max_length=255,
@@ -406,9 +418,34 @@ class PurchasedProduct(BaseModel):
         length = self.product.posting_window_length
         self.num_jobs_allowed = self.product.num_jobs_allowed
         if not hasattr(self, 'pk') or not self.pk:
+            self.purchase_amount = self.product.cost
             self.expiration_date = date.today() + timedelta(length)
             self.jobs_remaining = self.num_jobs_allowed
         super(PurchasedProduct, self).save(**kwargs)
+
+    def send_invoice_email(self, other_recipients=[]):
+        """
+        Sends the invoice email to the company admins along with
+        any other optional recipients.
+
+        """
+        from mydashboard.models import CompanyUser
+        data = {
+            'purchase': self,
+        }
+        owner = self.product.owner
+        group, _ = Group.objects.get_or_create(name=self.ADMIN_GROUP_NAME)
+        owner_admins = CompanyUser.objects.filter(company=owner, group=group)
+        owner_admins = owner_admins.values_list('user__email', flat=True)
+        recipients = set(other_recipients +
+                         list(owner_admins))
+        if recipients:
+            subject = '{company} Invoice'.format(company=owner.name)
+            message = render_to_string('postajob/invoice_email.html', data)
+            msg = EmailMessage(subject, message, settings.INVOICE_EMAIL,
+                               list(recipients))
+            msg.content_subtype = 'html'
+            msg.send()
 
 
 class ProductGrouping(BaseModel):
@@ -503,3 +540,16 @@ class Product(BaseModel):
 
     def __unicode__(self):
         return self.name
+
+
+class CompanyProfile(models.Model):
+    company = models.OneToOneField('mydashboard.Company')
+    address_line_one = models.CharField(max_length=255, blank=True,
+                                        verbose_name='Address Line One')
+    address_line_two = models.CharField(max_length=255, blank=True,
+                                        verbose_name='Address Line Two')
+    city = models.CharField(max_length=255, blank=True)
+    state = models.CharField(max_length=255, blank=True)
+    country = models.CharField(max_length=255, blank=True)
+    zipcode = models.CharField(max_length=255, blank=True)
+    phone = models.CharField(max_length=255, blank=True)

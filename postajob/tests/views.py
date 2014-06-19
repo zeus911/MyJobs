@@ -1,7 +1,8 @@
-from datetime import date, timedelta
+from datetime import date
 from mock import patch, Mock
 from StringIO import StringIO
 
+from django.core import mail
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
@@ -367,7 +368,15 @@ class ViewTests(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(PurchasedProduct.objects.all().count(), 1)
-        self.assertEqual(PurchasedProduct.objects.filter(paid=True).count(), 1)
+        purchase = PurchasedProduct.objects.get()
+        self.assertTrue(purchase.paid)
+        self.assertEqual(purchase.card_last_four,
+                         self.purchasedproduct_form_data['card_number'][-4:])
+        self.assertEqual(purchase.card_exp_date.month,
+                         self.purchasedproduct_form_data['exp_date_0'])
+        self.assertEqual(purchase.card_exp_date.year,
+                         self.purchasedproduct_form_data['exp_date_1'])
+        self.assertEqual(len(mail.outbox), 1)
 
     def test_purchasedproduct_add_card_declined(self):
         # Change the card number so it doesn't artificially get declined
