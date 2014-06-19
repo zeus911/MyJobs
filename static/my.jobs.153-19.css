@@ -752,10 +752,13 @@ ul.header-menu > li > ul > a > li:hover {
 }
 
 /* Post a Job Styles */
-.product-group-tr > .product-group-display_order,
-.product-group-tr > .product-edit,
+#product-groups > tr > .product-edit,
 .product-tr > .product-edit {
     width: 70px;
+}
+
+#product-groups > tr > .product-group-order {
+    width: 100px;
 }
 
 .product-group-tr > .product-edit {

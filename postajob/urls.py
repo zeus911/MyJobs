@@ -5,6 +5,11 @@ from postajob import views
 urlpatterns = patterns(
     '',
 
+    # Views for job and admin
+    url(r'^order/',
+        views.order_postajob,
+        name="order_postajob"),
+
     # Posted job management
     url(r'^jobs/$',
         views.jobs_overview,
@@ -42,7 +47,10 @@ urlpatterns = patterns(
         views.PurchasedJobFormView.as_view(),
         name='purchasedjob_delete'),
 
-    # Product
+    # Product management
+    url(r'^admin/$',
+        views.products_overview,
+        name='products_overview'),
     url(r'^admin/product/$',
         views.admin_products,
         name='product'),

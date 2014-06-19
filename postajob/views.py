@@ -96,6 +96,36 @@ class PurchaseFormViewBase(RequestFormViewBase):
         return kwargs
 
 
+@company_has_access('product_access')
+def order_postajob(request):
+    """
+    This view will always get two variables and always switches display_order
+    """
+    company = get_company(request)
+    obj_type = request.GET.get('obj_type')
+    # Variables
+    if obj_type == "groupings":
+        a = ProductGrouping.objects.get(pk=request.GET.get('a'))
+        b = ProductGrouping.objects.get(pk=request.GET.get('b'))
+
+        # Swap two variables
+        a.display_order, b.display_order = b.display_order, a.display_order
+
+        # Save Objects
+        a.save()
+        b.save()
+
+    data = {
+        'product_groupings': ProductGrouping.objects.filter(owner=company),
+        'order': True
+    }
+
+    # Render updated rows
+    html = render_to_response('postajob/includes/productgroup_rows.html', data,
+                              RequestContext(request))
+    return html
+
+
 class PostajobModelFormMixin(object):
     """
     A mixin for postajob models, since nearly all of them rely on
@@ -153,7 +183,7 @@ class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):
     model = Product
     display_name = 'Product'
 
-    success_url = reverse_lazy('products_overview')
+    success_url = reverse_lazy('product')
     add_name = 'product_add'
     update_name = 'product_update'
     delete_name = 'product_delete'
@@ -173,7 +203,7 @@ class ProductGroupingFormView(PostajobModelFormMixin, RequestFormViewBase):
     model = ProductGrouping
     display_name = 'Product Grouping'
 
-    success_url = reverse_lazy('products_overview')
+    success_url = reverse_lazy('productgrouping')
     add_name = 'productgrouping_add'
     update_name = 'productgrouping_update'
     delete_name = 'productgrouping_delete'

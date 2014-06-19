@@ -494,6 +494,8 @@ class ProductGrouping(BaseModel):
         'name': 'The "short" name of the product grouping. This is only used '
                 'in the admin.',
         'products': 'The products you want displayed with this grouping.',
+        'is_displayed': 'If "checked" this group will be displayed to the '
+                        'customer on the product group page.'
     }
 
     products = models.ManyToManyField('Product', null=True,
@@ -508,6 +510,9 @@ class ProductGrouping(BaseModel):
     explanation = models.TextField(help_text=help_text['explanation'])
     name = models.CharField(max_length=255, help_text=help_text['name'])
     owner = models.ForeignKey('mydashboard.Company')
+    is_displayed = models.BooleanField(default=True,
+                                       help_text=help_text['is_displayed'],
+                                       verbose_name="Is Displayed")
 
     def __unicode__(self):
         return self.name

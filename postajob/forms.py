@@ -349,8 +349,9 @@ class ProductForm(RequestForm):
 class ProductGroupingForm(RequestForm):
     class Meta:
         model = ProductGrouping
-        fields = ('products', 'display_order', 'display_title',
-                  'explanation', 'name', 'owner', )
+        exclude = ('display_order', )
+        fields = ('products', 'display_title', 'explanation',
+                  'name', 'owner', 'is_displayed', )
 
     class Media:
         css = {
