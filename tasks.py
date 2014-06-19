@@ -417,12 +417,12 @@ def parse_log(logs, solr_location):
                     update_dict['uid'] = 'analytics##%s#%s' % \
                         (update_dict['view_date'], aguid)
                     to_solr.append(update_dict)
-        except:
+        except Exception:
+            # There may be more logs to process, don't propagate the exception
             pass
         finally:
-            # Closing is probably unnecessary as the file is closed when
-            # we leave the enclosing with, but we should remove the file from
-            # the filesystem and closing it here does no harm
+            # remove the file from the filesystem to ensure we don't fill the
+            # drive (again)
             f.close()
             os.remove(f.name)
 
