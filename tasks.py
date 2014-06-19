@@ -7,7 +7,7 @@ import urlparse
 import uuid
 
 import boto
-from celery import task
+from celery import task, group
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -96,6 +96,21 @@ def delete_inactive_activations():
             profile.delete()
 
 
+@task(name='tasks.process_user_events')
+def process_user_events(email):
+    """
+    Processes all email events for a given user.
+    """
+    user = User.objects.get_email_owner(email=email)
+    logs = EmailLog.objects.filter(email=email,
+                                   processed=False).order_by('-received')
+    newest_log = logs[0]
+    if user and user.last_response < newest_log.received:
+        user.last_response = newest_log.received
+        user.save()
+    logs.update(processed=True)
+
+
 @task(name='tasks.process_batch_events')
 def process_batch_events():
     """
@@ -109,15 +124,10 @@ def process_batch_events():
 
     emails = set(EmailLog.objects.values_list('email', flat=True).filter(
         processed=False))
-    for email in emails:
-        user = User.objects.get_email_owner(email=email)
-        logs = EmailLog.objects.filter(email=email,
-                                       processed=False).order_by('-received')
-        newest_log = logs[0]
-        if user and user.last_response < newest_log.received:
-            user.last_response = newest_log.received
-            user.save()
-        logs.update(processed=True)
+
+    result = group(process_user_events.subtask((email, ))
+                   for email in emails).apply()
+    result.join()
 
     # These users have not responded in a month. Send them an email if they
     # own any saved searches
