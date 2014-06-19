@@ -19,7 +19,6 @@ class CompanyUserTests(TestCase):
         message.
         """
         company_user_form = CompanyUserForm(data=self.data)
-        print company_user_form.errors
         self.assertTrue(company_user_form.is_valid())
         company_user_form.save()
 
