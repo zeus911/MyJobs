@@ -213,16 +213,34 @@ class PurchasedJob(Job):
 
     def save(self, **kwargs):
         if not hasattr(self, 'pk') or not self.pk:
+            # Set number of jobs remaining
             self.purchased_product.jobs_remaining -= 1
             self.purchased_product.save()
+
+            # Set the last date a job can possibly expire
+            max_job_length = self.purchased_product.max_job_length
+            self.max_expired_date = (date.today() + timedelta(max_job_length))
+
+            # If the product dictates that jobs don't require approval,
+            # immidiately approve the job.
+            if not self.purchased_product.product.requires_approval:
+                self.is_approved = True
+
         super(PurchasedJob, self).save(**kwargs)
-        self.site_packages = [self.purchased_product.product.package]
+        self.site_packages = [self.purchased_product.product.package.sitepackage]
 
     def add_to_solr(self):
-        if not self.is_approved:
-            return
-        else:
+        if self.is_approved and self.purchased_product.paid:
             return super(PurchasedJob, self).add_to_solr()
+
+    def get_solr_on_sites(self):
+        if self.site_packages.all():
+            package_list = self.site_packages.all().values_list('pk', flat=True)
+            package_list = list(package_list)
+            on_sites = ",".join([str(package) for package in package_list])
+        else:
+            on_sites = ''
+        return on_sites
 
 
 def on_delete(sender, instance, **kwargs):
@@ -398,6 +416,7 @@ class PurchasedProduct(BaseModel):
     purchase_amount = models.DecimalField(max_digits=20, decimal_places=2)
     expiration_date = models.DateField()
     num_jobs_allowed = models.IntegerField()
+    max_job_length = models.IntegerField()
     jobs_remaining = models.IntegerField()
 
     transaction = models.CharField(max_length=255)
@@ -414,12 +433,16 @@ class PurchasedProduct(BaseModel):
     country = models.CharField(max_length=255)
     zipcode = models.CharField(max_length=255)
 
+    def __unicode__(self):
+        return self.product.name
+
     def save(self, **kwargs):
         length = self.product.posting_window_length
         self.num_jobs_allowed = self.product.num_jobs_allowed
         if not hasattr(self, 'pk') or not self.pk:
             self.purchase_amount = self.product.cost
             self.expiration_date = date.today() + timedelta(length)
+            self.max_job_length = self.product.max_job_length
             self.jobs_remaining = self.num_jobs_allowed
         super(PurchasedProduct, self).save(**kwargs)
 
@@ -446,6 +469,14 @@ class PurchasedProduct(BaseModel):
                                list(recipients))
             msg.content_subtype = 'html'
             msg.send()
+
+    def can_post_more(self):
+        if date.today() > self.expiration_date:
+            return False
+        if self.num_jobs_allowed == 0:
+            # Product allows for unlimited jobs.
+            return True
+        return bool(self.jobs_remaining > 0)
 
 
 class ProductGrouping(BaseModel):

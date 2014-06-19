@@ -31,6 +31,17 @@ urlpatterns = patterns(
         views.JobFormView.as_view(),
         name='job_update'),
 
+    # PurchasedJob
+    url(r'^job/purchase/add/(?P<product>\d+)/',
+        views.PurchasedJobFormView.as_view(),
+        name='purchasedjob_add'),
+    url(r'^job/purchase/delete/(?P<pk>\d+)/',
+        views.PurchasedJobFormView.as_view(),
+        name='purchasedjob_update'),
+    url(r'^job/purchase/update/(?P<pk>\d+)/',
+        views.PurchasedJobFormView.as_view(),
+        name='purchasedjob_delete'),
+
     # Product
     url(r'^admin/product/$',
         views.admin_products,
@@ -69,5 +80,4 @@ urlpatterns = patterns(
     url(r'^product/purchase/update/(?P<pk>\d+)/',
         views.PurchasedProductFormView.as_view(),
         name='purchasedproduct_update'),
-
 )
