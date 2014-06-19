@@ -106,20 +106,19 @@ def process_batch_events():
     now = date.today()
     EmailLog.objects.filter(received__lte=now-timedelta(days=60),
                             processed=True).delete()
-    new_logs = EmailLog.objects.filter(processed=False)
-    for log in new_logs:
-        user = User.objects.get_email_owner(email=log.email)
-        if not user:
-            # This can happen if a user removes a secondary address or deletes
-            # their account between interacting with an email and the batch
-            # process being run
-            # There is no course of action but to ignore that event
-            continue
-        if user.last_response < log.received:
-            user.last_response = log.received
+
+    emails = set(EmailLog.objects.values_list('email', flat=True).filter(
+        processed=False))
+    for email in emails:
+        user = User.objects.get_email_owner(email=email)
+        logs = EmailLog.objects.filter(email=email,
+                                       processed=False).order_by('-received')
+        newest_log = logs[0]
+        if user and user.last_response < newest_log.received:
+            user.last_response = newest_log.received
             user.save()
-        log.processed = True
-        log.save()
+        logs.update(processed=True)
+
     # These users have not responded in a month. Send them an email if they
     # own any saved searches
     inactive = User.objects.select_related('savedsearch_set')
@@ -136,11 +135,8 @@ def process_batch_events():
                             settings.DEFAULT_FROM_EMAIL)
 
     # These users have not responded in a month and a week. Stop sending emails.
-    stop_sending = User.objects.filter(
-        last_response__lte=now-timedelta(days=37))
-    for user in stop_sending:
-        user.opt_in_myjobs = False
-        user.save()
+    User.objects.filter(last_response__lte=now-timedelta(days=37)).update(
+        opt_in_myjobs=False)
 
 
 @task(name="tasks.update_solr_from_model")
