@@ -15,7 +15,7 @@ from django.core import mail
 from django.template.loader import render_to_string
 from django.db.models import Q
 
-from mydashboard.models import BusinessUnit, Company, SeoSite
+from mydashboard.models import Company, SeoSite
 from myjobs.models import EmailLog, User
 from mysearches.models import SavedSearch, SavedSearchDigest
 from postajob.models import Job
@@ -272,7 +272,15 @@ def parse_log(logs, solr_location):
 
     for log in logs:
         to_solr = []
-        with open('/tmp/%s' % uuid.uuid4().hex, 'w+') as f:
+        path = '/tmp/parse_log'
+        # Ensure local temp storage for log files exists
+        try:
+            os.mkdir(path)
+        except OSError:
+            if not os.path.isdir(path):
+                raise
+        f = open('%s/%s' % (path, uuid.uuid4().hex), 'w+')
+        try:
             log.get_contents_to_file(f)
             f.seek(0)
 
@@ -409,10 +417,12 @@ def parse_log(logs, solr_location):
                     update_dict['uid'] = 'analytics##%s#%s' % \
                         (update_dict['view_date'], aguid)
                     to_solr.append(update_dict)
-
-            # Closing is probably unnecessary as the file is closed when
-            # we leave the enclosing with, but we should remove the file from
-            # the filesystem and closing it here does no harm
+        except Exception:
+            # There may be more logs to process, don't propagate the exception
+            pass
+        finally:
+            # remove the file from the filesystem to ensure we don't fill the
+            # drive (again)
             f.close()
             os.remove(f.name)
 
