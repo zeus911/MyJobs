@@ -67,9 +67,9 @@ def order_postajob(request):
         # Swap two variables
         a.display_order, b.display_order = b.display_order, a.display_order
 
-    # Save Objects
-    a.save()
-    b.save()
+        # Save Objects
+        a.save()
+        b.save()
 
     data = {
         'product_groupings': ProductGrouping.objects.filter(owner=company),
