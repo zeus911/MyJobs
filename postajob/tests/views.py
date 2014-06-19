@@ -49,6 +49,7 @@ class ViewTests(TestCase):
             'cost': '5',
             'posting_window_length': 30,
             'max_job_length': 30,
+            'job_limit': 'specific',
             'num_jobs_allowed': '5',
             'description': 'Test product description.'
         }
@@ -377,6 +378,22 @@ class ViewTests(TestCase):
         response = self.client.post(reverse('product_delete', kwargs=kwargs))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Job.objects.all().count(), 0)
+
+    def test_product_update_job_limit(self):
+        self.product_form_data['name'] = 'New Title'
+        kwargs = {'pk': self.product.pk}
+
+        self.product_form_data['job_limit'] = 'unlimited'
+
+        self.assertNotEqual(self.product.name, self.product_form_data['name'])
+        response = self.client.post(reverse('product_update', kwargs=kwargs),
+                                    data=self.product_form_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Product.objects.all().count(), 1)
+
+        product = Product.objects.get()
+        self.assertEqual(product.name, self.product_form_data['name'])
+        self.assertEqual(product.num_jobs_allowed, 0)
 
     def test_productgrouping_add(self):
         response = self.client.post(reverse('productgrouping_add'),

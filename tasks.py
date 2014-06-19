@@ -8,21 +8,18 @@ import uuid
 
 import boto
 from celery import task
-from celery.schedules import crontab
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core import mail
 from django.template.loader import render_to_string
 from django.db.models import Q
-from mydashboard.models import Company
 
+from mydashboard.models import BusinessUnit, Company, SeoSite
 from myjobs.models import EmailLog, User
-from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch, SavedSearchDigest
 from postajob.models import Job
 from registration.models import ActivationProfile
-from solr import signals as solr_signals
 from solr import helpers
 from solr.models import Update
 from solr.signals import object_to_dict, profileunits_to_dict
@@ -155,7 +152,6 @@ def update_solr_task(solr_location=None):
     Inputs:
     :solr_location: Dict of separate cores to be updated
     """
-
     if hasattr(mail, 'outbox'):
         solr_location = settings.TEST_SOLR_INSTANCE
     elif solr_location is None:
@@ -170,14 +166,14 @@ def update_solr_task(solr_location=None):
             for location in solr_location.values():
                 solr = pysolr.Solr(location)
                 solr.delete(q="uid:(%s)" % uid_list)
-            Update.objects.filter(delete=True).delete()
+        Update.objects.filter(delete=True).delete()
 
     objs = Update.objects.filter(delete=False)
     updates = []
 
     for obj in objs:
         content_type, key = obj.uid.split("##")
-        model = ContentType.objects.get(pk=content_type).model_class()
+        model = ContentType.objects.get_for_id(content_type).model_class()
         if model == SavedSearch:
             updates.append(object_to_dict(model, model.objects.get(pk=key)))
         # If the user is being updated, because the user is stored on the
@@ -329,6 +325,9 @@ def parse_log(logs, solr_location):
                         # with a '/'; Remove it
                         update_dict['job_view_guid'] = line[3][1:]
                         update_dict['page_category'] = 'redirect'
+                        domain = qs.get('jcnlx.ref', '')
+                        domain = urlparse.urlparse(domain).netloc
+                        update_dict['domain'] = domain
                     else:
                         aguid = qs.get('aguid', '')
                         myguid = qs.get('myguid', '')
@@ -364,24 +363,48 @@ def parse_log(logs, solr_location):
                             update_dict.update(object_to_dict(User, user))
 
                     buid = update_dict['job_view_buid']
-                    if buid not in log_memo:  # We haven't seen this buid before
-                        try:
-                            # See if there is a company associated with it
-                            company_id = Company.objects.get(
-                                job_source_ids=buid).pk
-                        except Company.DoesNotExist:
-                            # There is not; default to DirectEmployers
-                            # Association
-                            company_id = 999999
+                    domain = update_dict.get('domain', None)
+                    if not (buid in log_memo or domain in log_memo):
+                        # We haven't seen this buid or domain before
+                        if buid == '0' and domain is not None:
+                            # Retrieve company id via domain
+                            try:
+                                site = SeoSite.objects.get(domain=domain)
+                                company_id = site.business_units.values_list(
+                                    'company__pk', flat=True)[0]
+                            except (SeoSite.DoesNotExist,
+                                    IndexError):
+                                # SeoSite.DoesNotExist: Site does not exist
+                                #   with the given domain
+                                # IndexError: SeoSite exists, but is not
+                                #   associated with business units or companies
+                                company_id = 999999
+                            key = domain
+                        else:
+                            # Retrieve company id via buid
+                            try:
+                                # See if there is a company associated with it
+                                company_id = Company.objects.filter(
+                                    job_source_ids=buid)[0].pk
+                            except IndexError:
+                                # There is not; default to DirectEmployers
+                                # Association
+                                company_id = 999999
+                            key = buid
 
-                        # Since buids are being pulled out of query strings as
-                        # strings, our memoization dict structure should be
-                        # {str(buid): int(company_id)}. Log the new buid
-                        log_memo[buid] = company_id
+                        # The defining feature of a given document will either
+                        # be the domain or the buid.
+                        # Our memoization dict will have the following structure
+                        # {str(buid): int(company_id),
+                        #  str(domain): int(company_id)}
+                        log_memo[key] = company_id
 
-                    # By this point, we are guaranteed that buid is in log_memo;
-                    # pull the company id from the memo dict
-                    update_dict['company_id'] = log_memo[buid]
+                    # By this point, we are guaranteed that the correct key is
+                    # in log_memo; pull the company id from the memo dict.
+                    if domain is not None and domain in log_memo:
+                        update_dict['company_id'] = log_memo[domain]
+                    else:
+                        update_dict['company_id'] = log_memo[buid]
 
                     update_dict['uid'] = 'analytics##%s#%s' % \
                         (update_dict['view_date'], aguid)
@@ -410,7 +433,7 @@ def delete_old_analytics_docs():
     than 30 days
     """
     if hasattr(mail, 'outbox'):
-        solr_location = settings.TEST_SOLR_INSTANCE['default']
+        solr_location = settings.TEST_SOLR_INSTANCE['current']
     else:
         solr_location = settings.SOLR['current']
 
@@ -458,7 +481,7 @@ def read_new_logs(solr_location=None):
         # last log uploaded by that host
         logs_to_process += logs_by_host[key][-1:]
 
-    # Ensure we only process each file once
+    # Ensure we only process each['href'] file once
     processed = getattr(settings, 'PROCESSED_LOGS', set())
     unprocessed = [log for log in logs_to_process if log.key not in processed]
 

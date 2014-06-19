@@ -8,15 +8,12 @@
                        
         <table id="row-link-table">
             {% for candidate in candidates %}
-            <tr class="hide-mobile" onclick="window.open('{% url 'candidate_information' %}{% get_candidate_query_string company_id candidate.User_id %}', '_blank');" >
-                <td>
-                    <span class="gravatar pull-left">{% get_gravatar_by_id candidate.User_id '55' %}</span>
-                </td>
+            <tr class="candidate-activity" onclick="window.open('{% url 'candidate_information' %}{% get_candidate_query_string company_id candidate.User_id %}', '_blank');" >
                 <td>
                     {% if candidate.User_first_name and candidate.User_last_name %}
                         <div class="candidate-name">{{ candidate.User_first_name }} {{ candidate.User_last_name }}</div>
                     {% endif %}
-                    <div>{{ candidate.User_email }}</div>
+                    <div class="candidate-email">{{ candidate.User_email }}</div>
                     <div class="progress activity-progress">
                         <div class="bar bar-{% completion_level candidate.User_profile_completion %}" style="width: {{ candidate.User_profile_completion }}%"></div>
                     </div>
@@ -27,27 +24,11 @@
                         {{ candidate.SavedSearch_url|url_domain }}<br>
                         {% str_to_date candidate.SavedSearch_created_on %}
                     {% else %}
-                        {% str_to_date candidate.view_date %}
+                        {% display_activity candidate %}
                     {% endif %}
                 </td>
              </tr>
-             <tr class="candidate-activity-mobile" onclick="window.open('{% url 'candidate_information' %}{% get_candidate_query_string company_id candidate.User_id %}', '_blank');" >
-                <td>
-                    <span class="gravatar pull-left">{% get_gravatar_by_id candidate.User_id '45' %}</span>
-                </td>
-                <td>
-                    {% if candidate.User_first_name and candidate.User_last_name %}
-                        <span class="candidate-name pull-left">{{ candidate.User_first_name }} {{ candidate.User_last_name }}</span>
-                        <br />
-                    {% endif %}
-                    <a href="{% url 'candidate_information' %}{% get_candidate_query_string company_id candidate.User_id %}" class="candidate-activity-mobile pull-left">{{ candidate.User_email }}</a>
-                    <br style="clear:both" />
-                    <div class="progress activity-progress">
-                        <div class="bar bar-{% completion_level candidate.User_profile_completion %}" style="width: {{ candidate.User_profile_completion }}%"></div>
-                    </div>
-                </td>
-             </tr>
-             {% endfor %}                    
+             {% endfor %}
          </table>
          
          {% show_more %}
