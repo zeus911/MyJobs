@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.utils.translation import ugettext_lazy as _
 from django.template.loader import render_to_string
+from pynliner import Pynliner
 
 from mydashboard.models import Company
 from myjobs.models import User
@@ -110,6 +111,7 @@ class SavedSearch(models.Model):
             subject = "My.jobs New Saved Search - %s" % self.label.strip()
             message = render_to_string("mysearches/email_initial.html",
                                        context_dict)
+            message = Pynliner().from_string(message).run()
 
             msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
                                [self.email])
