@@ -446,7 +446,7 @@ class PurchasedProduct(BaseModel):
             self.jobs_remaining = self.num_jobs_allowed
         super(PurchasedProduct, self).save(**kwargs)
 
-def send_invoice_email(self, other_recipients=[]):
+    def send_invoice_email(self, other_recipients=[]):
         """
         Sends the invoice email to the company admins along with
         any other optional recipients.
@@ -469,7 +469,6 @@ def send_invoice_email(self, other_recipients=[]):
                                list(recipients))
             msg.content_subtype = 'html'
             msg.send()
-
 
     def can_post_more(self):
         if date.today() > self.expiration_date:
