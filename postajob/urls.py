@@ -5,6 +5,11 @@ from postajob import views
 urlpatterns = patterns(
     '',
 
+    # Views for job and admin
+    url(r'^order/',
+        views.order_postajob,
+        name="order_postajob"),
+
     # Posted job management for members
     url(r'^job/add/',
         views.JobFormView.as_view(),
