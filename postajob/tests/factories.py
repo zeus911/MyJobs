@@ -96,6 +96,8 @@ def purchasedproduct_factory(product, company, **kwargs):
     purchasedproduct_data = {
         'address_line_one': '123 Street Rd',
         'address_line_two': 'Suite 321',
+        'card_exp_date': datetime.date.today(),
+        'card_last_four': '1234',
         'city': 'Indianapolis',
         'country': 'US',
         'first_name': 'John',

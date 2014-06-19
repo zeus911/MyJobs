@@ -3,10 +3,13 @@ from StringIO import StringIO
 from urlparse import parse_qs
 
 from django.conf import settings
+from django.contrib.auth.models import Group
+from django.core import mail
 from django.test import TestCase
 
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          SeoSiteFactory)
+from mydashboard.models import CompanyUser
 from myjobs.models import User
 from postajob.models import (Job, Product, ProductGrouping, ProductOrder,
                              PurchasedJob, SitePackage)
@@ -194,6 +197,36 @@ class ModelTests(TestCase):
             expected_num_jobs -= 1
             self.assertEqual(self.purchased_product.jobs_remaining,
                              expected_num_jobs)
+
+    def test_purchased_product_send_invoice_email(self):
+        self.create_purchased_job()
+        group, _ = Group.objects.get_or_create(name=Product.ADMIN_GROUP_NAME)
+
+        # No one to recieve the email.
+        self.purchased_product.send_invoice_email()
+        self.assertEqual(len(mail.outbox), 0)
+
+        # Only recipient is specified recipient.
+        self.purchased_product.send_invoice_email(['this@isa.test'])
+        self.assertItemsEqual(mail.outbox[0].to,
+                              ['this@isa.test'])
+
+        mail.outbox = []
+
+        # Only recipients are admins.
+        user = CompanyUser.objects.create(user=self.user, company=self.company)
+        user.group.add(group)
+        user.save()
+        self.purchased_product.send_invoice_email()
+        self.assertItemsEqual(mail.outbox[0].to,
+                              [u'user@test.email'])
+
+        mail.outbox = []
+
+        # Recipients are admins + specified recipients.
+        self.purchased_product.send_invoice_email(['this@isa.test'])
+        self.assertItemsEqual(mail.outbox[0].to,
+                              ['this@isa.test', u'user@test.email'])
 
     def test_productgrouping_add_delete(self):
         self.create_purchased_job()
