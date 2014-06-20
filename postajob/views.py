@@ -186,7 +186,6 @@ class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
         return super(PurchasedJobFormView, self).set_object(*args, **kwargs)
 
 
-
 class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):
     form_class = ProductForm
     model = Product
