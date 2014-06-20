@@ -27,7 +27,8 @@ from solr.signals import object_to_dict, profileunits_to_dict
 logger = logging.getLogger(__name__)
 
 
-@task(name='tasks.send_search_digest', ignore_result=True)
+@task(name='tasks.send_search_digest', ignore_result=True,
+      default_retry_delay=180, max_retries=2)
 def send_search_digest(search):
     """
     Task used by send_send_search_digests to send individual digest or search
@@ -36,7 +37,15 @@ def send_search_digest(search):
     Inputs:
     :search: SavedSearch or SavedSearchDigest instance to be mailed
     """
-    search.send_email()
+    try:
+        search.send_email()
+    except ValueError as e:
+        if task.current.request.retries < 3:  # Try sending email three times
+            raise send_search_digest.retry(arg=[search], exc=e)
+        else:
+            # After the initial try and two retries, disable the offending
+            # saved search
+            search.disable_or_fix()
 
 
 @task(name='tasks.send_search_digests')
@@ -68,7 +77,10 @@ def send_search_digests():
     digests = SavedSearchDigest.objects.filter(is_active=True)
     digests = filter_by_time(digests)
     for obj in digests:
-        send_search_digest.s(obj).apply_async()
+        try:
+            send_search_digest.s(obj).apply_async()
+        except send_search_digest.MaxRetriesExceededError:
+            obj.disable()
 
     not_digest = SavedSearchDigest.objects.filter(is_active=False)
     for item in not_digest:

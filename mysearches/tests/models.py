@@ -7,6 +7,7 @@ from mock import patch
 
 from myjobs.tests.factories import UserFactory
 from myprofile.tests.factories import PrimaryNameFactory
+from mysearches.models import SavedSearch
 from mysearches.tests.factories import (SavedSearchFactory,
                                         SavedSearchDigestFactory)
 from mysearches.tests.test_helpers import return_file
@@ -22,7 +23,11 @@ class SavedSearchModelsTests(TestCase):
         self.mock_urlopen = self.patcher.start()
 
     def tearDown(self):
-        self.patcher.stop()
+        try:
+            self.patcher.stop()
+        except RuntimeError:
+            # patcher was stopped in a test
+            pass
 
     def test_send_search_email(self):
         SavedSearchDigestFactory(user=self.user,
@@ -156,3 +161,14 @@ class SavedSearchModelsTests(TestCase):
                        if module != 'name']
         self.assertEqual(len(new_modules), 5)
         self.assert_modules_in_hrefs(new_modules)
+
+    def test_disable_bad_search(self):
+        self.patcher.stop()
+        SavedSearchDigestFactory(user=self.user)
+        search = SavedSearchFactory(user=self.user, feed='')
+        print mail.outbox
+        send_search_digests()
+
+        search = SavedSearch.objects.get(pk=search.pk)
+        print search.is_active
+        print mail.outbox

@@ -12,7 +12,7 @@ from mydashboard.models import Company
 from myjobs.models import User
 from mypartners.models import Contact, ContactRecord, Partner, EMAIL
 from mysearches.helpers import (parse_feed, update_url_if_protected,
-                                url_sort_options)
+                                url_sort_options, validate_dotjobs_url)
 import mypartners.helpers
 
 
@@ -175,6 +175,34 @@ class SavedSearch(models.Model):
     class Meta:
         verbose_name_plural = "saved searches"
 
+    def disable_or_fix(self):
+        """
+        Disables or fixes this saved search based on the presence or lack of an
+        rss feed on the search url. Sends a "search has been disabled" email
+        if this is not fixable.
+        """
+        _, feed = validate_dotjobs_url(self.url, self.user)
+        if feed is None:
+            # search url did not contain an rss link and is not valid
+            self.is_active = False
+            self.save()
+            self.send_disable_email()
+        elif self.feed == '':
+            # search url passed validation in the past even though there was
+            # an issue retrieving the page; update the feed url
+            self.feed = feed
+            self.save()
+
+    def send_disable_email(self):
+        subject = 'Invalid search url in your My.jobs saved search'
+        message = render_to_string('mysearches/email_disable.html',
+                                   {'saved_search': self})
+
+        msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
+                           [self.email])
+        msg.content_subtype = 'html'
+        msg.send()
+
 
 class SavedSearchDigest(models.Model):
     is_active = models.BooleanField(default=False)
@@ -225,6 +253,14 @@ class SavedSearchDigest(models.Model):
                                [self.email])
             msg.content_subtype = 'html'
             msg.send()
+
+    def disable_or_fix(self):
+        """
+        Calls SavedSearch.disable_or_fix for each saved search associated
+        with the owner of this digest.
+        """
+        for search in self.user.savedsearch_set.filter(is_active=True):
+            search.disable_or_fix()
 
 
 class PartnerSavedSearch(SavedSearch):
