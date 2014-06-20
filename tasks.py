@@ -77,10 +77,7 @@ def send_search_digests():
     digests = SavedSearchDigest.objects.filter(is_active=True)
     digests = filter_by_time(digests)
     for obj in digests:
-        try:
-            send_search_digest.s(obj).apply_async()
-        except send_search_digest.MaxRetriesExceededError:
-            obj.disable()
+        send_search_digest.s(obj).apply_async()
 
     not_digest = SavedSearchDigest.objects.filter(is_active=False)
     for item in not_digest:
