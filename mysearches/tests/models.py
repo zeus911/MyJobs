@@ -162,13 +162,29 @@ class SavedSearchModelsTests(TestCase):
         self.assertEqual(len(new_modules), 5)
         self.assert_modules_in_hrefs(new_modules)
 
-    def test_disable_bad_search(self):
+    def test_fix_fixable_search(self):
         self.patcher.stop()
         SavedSearchDigestFactory(user=self.user)
         search = SavedSearchFactory(user=self.user, feed='')
-        print mail.outbox
+        self.assertFalse(search.feed)
+
         send_search_digests()
+        self.assertEqual(len(mail.outbox), 0)
 
         search = SavedSearch.objects.get(pk=search.pk)
-        print search.is_active
-        print mail.outbox
+        self.assertTrue(search.is_active)
+        self.assertTrue(search.feed)
+
+    def test_disable_bad_search(self):
+        self.patcher.stop()
+        SavedSearchDigestFactory(user=self.user)
+        search = SavedSearchFactory(user=self.user, feed='',
+                                    url='http://example.com')
+        self.assertFalse(search.feed)
+
+        send_search_digests()
+        email = mail.outbox.pop()
+        search = SavedSearch.objects.get(pk=search.pk)
+        self.assertFalse(search.is_active)
+
+        self.assertTrue('has failed URL validation' in email.body)

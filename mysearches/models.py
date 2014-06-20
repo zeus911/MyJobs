@@ -181,7 +181,11 @@ class SavedSearch(models.Model):
         rss feed on the search url. Sends a "search has been disabled" email
         if this is not fixable.
         """
-        _, feed = validate_dotjobs_url(self.url, self.user)
+        try:
+            _, feed = validate_dotjobs_url(self.url, self.user)
+        except ValueError:
+            feed = None
+
         if feed is None:
             # search url did not contain an rss link and is not valid
             self.is_active = False

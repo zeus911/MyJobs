@@ -40,7 +40,7 @@ def send_search_digest(search):
     try:
         search.send_email()
     except ValueError as e:
-        if task.current.request.retries < 3:  # Try sending email three times
+        if task.current.request.retries < 2:  # retry sending email twice
             raise send_search_digest.retry(arg=[search], exc=e)
         else:
             # After the initial try and two retries, disable the offending
