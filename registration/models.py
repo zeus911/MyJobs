@@ -3,19 +3,15 @@ import hashlib
 import random
 import re
 
+from pynliner import Pynliner
+
 from django.conf import settings
-from django.contrib.auth import views as auth_views
 from django.db import models
-from django.db import transaction
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
+from django.utils.timezone import now as datetime_now
 from django.utils.translation import ugettext_lazy as _
-
-try:
-    from django.utils.timezone import now as datetime_now
-except ImportError:
-    datetime_now = datetime.datetime.now
 
 SHA1_RE = re.compile('^[a-f0-9]{40}$')
 
@@ -119,6 +115,7 @@ class ActivationProfile(models.Model):
 
         message = render_to_string('registration/activation_email.html',
                                    ctx_dict)
+        message = Pynliner().from_string(message).run()
         msg = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL, [self.email])
         msg.content_subtype = 'html'
         msg.send()
