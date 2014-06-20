@@ -37,7 +37,7 @@
                     </li>
                     {% endif %}
                     <li class="has-drop">
-                        <a>{{ user.email }}</a>
+                        <a onclick="return false;">{{ user.email }}</a>
                         <ul class="submenu">
                             <li><a href="{{ ABSOLUTE_URL }}profile/view/">{% trans "My Resume" %}</a></li>
                             <li><a href="{{ ABSOLUTE_URL }}saved-search/view/">{% trans "My Saved Searches" %}</a></li>
@@ -317,8 +317,8 @@
                 // replaces text of main li holding company list
                 parent_list_item.firstChild.innerHTML = "<b>"+ this.firstChild.innerHTML +"</b>";
 
-                // Reloads page
-                location.reload();
+                // update employer links
+                update_employer_tools(item_id);
             };
             list.appendChild(list_item);
         }
