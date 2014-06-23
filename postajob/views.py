@@ -64,6 +64,36 @@ def admin_groupings(request):
                               RequestContext(request))
 
 
+@company_has_access('product_access')
+def order_postajob(request):
+    """
+    This view will always get two variables and always switches display_order
+    """
+    company = get_company(request)
+    obj_type = request.GET.get('obj_type')
+    # Variables
+    if obj_type == "groupings":
+        a = ProductGrouping.objects.get(pk=request.GET.get('a'))
+        b = ProductGrouping.objects.get(pk=request.GET.get('b'))
+
+        # Swap two variables
+        a.display_order, b.display_order = b.display_order, a.display_order
+
+        # Save Objects
+        a.save()
+        b.save()
+
+    data = {
+        'product_groupings': ProductGrouping.objects.filter(owner=company),
+        'order': True
+    }
+
+    # Render updated rows
+    html = render_to_response('postajob/includes/productgroup_rows.html', data,
+                              RequestContext(request))
+    return html
+
+
 class PurchaseFormViewBase(RequestFormViewBase):
     purchase_field = None
     purchase_model = None
@@ -94,36 +124,6 @@ class PurchaseFormViewBase(RequestFormViewBase):
         kwargs = super(PurchaseFormViewBase, self).get_form_kwargs()
         kwargs['product'] = self.product
         return kwargs
-
-
-@company_has_access('product_access')
-def order_postajob(request):
-    """
-    This view will always get two variables and always switches display_order
-    """
-    company = get_company(request)
-    obj_type = request.GET.get('obj_type')
-    # Variables
-    if obj_type == "groupings":
-        a = ProductGrouping.objects.get(pk=request.GET.get('a'))
-        b = ProductGrouping.objects.get(pk=request.GET.get('b'))
-
-        # Swap two variables
-        a.display_order, b.display_order = b.display_order, a.display_order
-
-        # Save Objects
-        a.save()
-        b.save()
-
-    data = {
-        'product_groupings': ProductGrouping.objects.filter(owner=company),
-        'order': True
-    }
-
-    # Render updated rows
-    html = render_to_response('postajob/includes/productgroup_rows.html', data,
-                              RequestContext(request))
-    return html
 
 
 class PostajobModelFormMixin(object):
@@ -176,6 +176,14 @@ class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
 
     purchase_field = 'purchased_product'
     purchase_model = PurchasedProduct
+
+    def set_object(self, *args, **kwargs):
+        if (not self.product.can_post_more()
+                and resolve(self.request.path).url_name == self.add_name):
+            # If more jobs can't be posted to the project, don't allow
+            # the user to access the add view.
+            raise Http404
+        return super(PurchasedJobFormView, self).set_object(*args, **kwargs)
 
 
 class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):

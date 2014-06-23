@@ -254,6 +254,27 @@ class ViewTests(TestCase):
         self.assertEqual(PurchasedJob.objects.all().count(), 0)
 
     @patch('urllib2.urlopen')
+    def test_purchasedjob_add_too_many(self, urlopen_mock):
+        mock_obj = Mock()
+        mock_obj.read.side_effect = self.side_effect
+        urlopen_mock.return_value = mock_obj
+
+        product = purchasedproduct_factory(self.product, self.company)
+        product.jobs_remaining = 1
+        product.save()
+        kwargs = {'product': product.pk}
+
+        response = self.client.post(reverse('purchasedjob_add', kwargs=kwargs),
+                                    data=self.purchasedjob_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(PurchasedJob.objects.all().count(), 1)
+
+        response = self.client.post(reverse('purchasedjob_add', kwargs=kwargs),
+                                    data=self.purchasedjob_form_data)
+        self.assertEqual(response.status_code, 404)
+
+    @patch('urllib2.urlopen')
     def test_job_add_network(self, urlopen_mock):
         mock_obj = Mock()
         mock_obj.read.side_effect = self.side_effect

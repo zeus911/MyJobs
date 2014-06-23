@@ -472,6 +472,7 @@ class PurchasedProduct(BaseModel):
 
     def can_post_more(self):
         if date.today() > self.expiration_date:
+            # Product is expired.
             return False
         if self.num_jobs_allowed == 0:
             # Product allows for unlimited jobs.
