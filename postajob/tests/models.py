@@ -12,7 +12,7 @@ from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
 from mydashboard.models import CompanyUser
 from myjobs.models import User
 from postajob.models import (Job, Product, ProductGrouping, ProductOrder,
-                             PurchasedJob, SitePackage)
+                             PurchasedJob, Request, SitePackage)
 from postajob.tests.factories import (job_factory, product_factory,
                                       purchasedjob_factory,
                                       purchasedproduct_factory,
@@ -173,6 +173,7 @@ class ModelTests(TestCase):
         self.create_purchased_job()
         self.assertEqual(PurchasedJob.objects.all().count(), 1)
         self.assertEqual(SitePackage.objects.all().count(), 1)
+        self.assertEqual(Request.objects.all().count(), 1)
         package = SitePackage.objects.get()
         job = PurchasedJob.objects.get()
         self.assertItemsEqual(job.site_packages.all(), [package])
@@ -252,3 +253,16 @@ class ModelTests(TestCase):
         grouping.delete()
         self.assertEqual(ProductGrouping.objects.all().count(), 0)
         self.assertEqual(ProductOrder.objects.all().count(), 0)
+
+    @patch('urllib2.urlopen')
+    def test_request_generation(self, urlopen_mock):
+        urlopen_mock.return_value = StringIO('')
+        self.create_purchased_job()
+        self.assertEqual(PurchasedJob.objects.all().count(), 1)
+        self.assertEqual(Request.objects.all().count(), 1)
+
+        # Already approved jobs should not generate an additional request.
+        purchasedjob_factory(self.company, self.user, self.purchased_product,
+                             is_approved=True)
+        self.assertEqual(PurchasedJob.objects.all().count(), 2)
+        self.assertEqual(Request.objects.all().count(), 1)

@@ -15,7 +15,8 @@ from postajob.tests.factories import (product_factory, job_factory,
                                       purchasedproduct_factory,
                                       sitepackage_factory)
 from postajob.models import (Job, Package, Product, ProductGrouping,
-                             PurchasedJob, PurchasedProduct, SitePackage)
+                             PurchasedJob, PurchasedProduct, Request,
+                             SitePackage)
 
 
 class ViewTests(TestCase):
@@ -218,6 +219,7 @@ class ViewTests(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(PurchasedJob.objects.all().count(), 1)
+        self.assertEqual(Request.objects.all().count(), 1)
 
     @patch('urllib2.urlopen')
     def test_purchasedjob_update(self, urlopen_mock):
