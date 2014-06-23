@@ -3,10 +3,10 @@ import logging
 from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save, post_delete, pre_save
 
-from MyJobs.myjobs.models import User
-from MyJobs.myprofile.models import ProfileUnits
-from MyJobs.mysearches.models import SavedSearch
-from MyJobs.solr.models import Update
+from myjobs.models import User
+from myprofile.models import ProfileUnits
+from mysearches.models import SavedSearch
+from solr.models import Update
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -66,7 +66,8 @@ def prepare_delete_from_solr(sender, instance, **kwargs):
         # If there are existing ProfileUnits for a user, since all ProfileUnits
         # are in the same solr document, update the document rather than
         # removing it.
-        if ProfileUnits.objects.filter(user_id=instance.user_id):
+        if ProfileUnits.objects.filter(user_id=instance.user_id).exclude(
+                pk=instance.pk):
             prepare_add_to_solr(sender, instance, **kwargs)
             return
     else:
@@ -123,7 +124,7 @@ def profileunits_to_dict(user_id):
                                                    getattr(obj, 'country_sub_division_code'),
                                                    getattr(obj, 'city_name'))
                                                   for obj in objs]
-        for field in objs[0]._meta._fields():
+        for field in objs[0]._meta.fields:
             obj_list = [getattr(obj, field.attname) for obj in objs]
             field_type = field.get_internal_type()
             if (field_type != 'OneToOneField' and 'password' not in
@@ -150,14 +151,14 @@ def object_to_dict(model, obj):
     }
 
     if model == SavedSearch:
-        for field in User._meta._fields():
+        for field in User._meta.fields:
             field_type = field.get_internal_type()
             if (field_type != 'OneToOneField' and 'password' not in
                 field.attname and 'timezone' not in field.attname):
                 field_name = "User_%s" % field.attname
                 solr_dict[field_name] = getattr(obj.user, field.attname)
 
-    for field in model._meta._fields():
+    for field in model._meta.fields:
         field_type = field.get_internal_type()
         if (field_type != 'OneToOneField' and 'password' not in
             field.attname and 'timezone' not in field.attname):

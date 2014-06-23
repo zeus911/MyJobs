@@ -1,19 +1,16 @@
 import datetime
 
 from django.conf import settings
-from django.contrib.auth import login
 from django.core import mail
 from django.core.urlresolvers import reverse
-from django.http import HttpRequest
 from django.test import TestCase
 
 from myjobs.models import User
-from myjobs.tests.views import TestClient
+from myjobs.tests.test_views import TestClient
 from mypartners.models import Contact
 from mypartners.tests.factories import PartnerFactory
 from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch
-from registration import forms
 from registration.models import ActivationProfile
 
 
@@ -113,8 +110,10 @@ class RegistrationViewTests(TestCase):
 
     def test_site_name_in_password_reset_email(self):
         mail.outbox = []
-        self.client.post(reverse('auth_password_reset'),
-                         data={'email':self.user.email})
+        self.user.is_active = True
+        self.user.save()
+        self.client.post(reverse('password_reset'),
+                         data={'email': self.user.email})
         self.assertEqual(len(mail.outbox), 1,
                          [msg.subject for msg in mail.outbox])
         msg = mail.outbox[0]
@@ -136,8 +135,8 @@ class MergeUserTests(TestCase):
         self.new_user = User.objects.create(email="new@email.com",
                                             user_guid="b")
         self.activation_profile = ActivationProfile.objects.create(
-                                      user=self.new_user,
-                                      email="ap@email.com")
+            user=self.new_user,
+            email="ap@email.com")
         self.activation_profile.activation_key = self.key
         self.activation_profile.save()
 

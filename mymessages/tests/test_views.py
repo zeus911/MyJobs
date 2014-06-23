@@ -3,8 +3,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.models import Group
 
 from myjobs.tests.factories import UserFactory
-from myjobs.tests.views import TestClient
-from myjobs.models import User
+from myjobs.tests.test_views import TestClient
 from mymessages.models import Message, MessageInfo
 
 

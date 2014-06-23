@@ -94,14 +94,14 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.RemoteUserBackend',  # http
 )
 
-ROOT_URLCONF = 'MyJobs.urls'
+ROOT_URLCONF = 'urls'
 
 TEMPLATE_DIRS = (
     join(ROOT_PATH, 'templates')
 )
 
 
-CELERY_IMPORTS = ('MyJobs.tasks',)
+CELERY_IMPORTS = ('tasks',)
 CELERY_TIMEZONE = 'US/Eastern'
 CELERYBEAT_PIDFILE = '/var/run/celerybeat.pid'
 CELERYBEAT_SCHEDULE = {
@@ -179,12 +179,9 @@ PROJECT_APPS = ('myjobs', 'myprofile', 'mysearches', 'registration',
 
 INSTALLED_APPS += PROJECT_APPS
 
-TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
-
 JENKINS_TASKS = (
     'django_jenkins.tasks.with_coverage',
     'django_jenkins.tasks.run_pep8',
-    'django_jenkins.tasks.django_tests',
     'django_jenkins.tasks.run_pyflakes',
 )
 

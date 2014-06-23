@@ -1,6 +1,5 @@
 from default_settings import *
-import datetime
-import os
+from celery import current_app
 
 
 DEBUG = True
@@ -28,9 +27,12 @@ CACHES = {
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 
-JENKINS_TEST_RUNNER = 'testrunner.SilentTestRunner'
+JENKINS_TEST_RUNNER = 'silent_testrunner.SilentTestRunner'
 TEST_SOLR_INSTANCE = SOLR
 CELERY_ALWAYS_EAGER = True
+CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+current_app.conf.CELERY_ALWAYS_EAGER = True
+current_app.conf.CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 
 
 POSTAJOB_URLS = {

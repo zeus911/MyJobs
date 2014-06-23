@@ -8,6 +8,9 @@ from tastypie.api import Api
 
 from myjobs.api import UserResource, SavedSearchResource
 
+import warnings
+warnings.simplefilter('error', DeprecationWarning)
+
 admin.autodiscover()
 
 # API Resources
@@ -20,17 +23,17 @@ handler500 = "myjobs.views.error_500"
 
 urlpatterns = patterns(
     '',
-    url('', include('MyJobs.myjobs.urls')),
-    url(r'^candidates/', include('MyJobs.mydashboard.urls')),
-    url(r'^accounts/', include('MyJobs.registration.urls')),
-    url(r'^profile/', include('MyJobs.myprofile.urls')),
-    url(r'^saved-search/', include('MyJobs.mysearches.urls')),
+    url('', include('myjobs.urls')),
+    url(r'^candidates/', include('mydashboard.urls')),
+    url(r'^accounts/', include('registration.urls')),
+    url(r'^profile/', include('myprofile.urls')),
+    url(r'^saved-search/', include('mysearches.urls')),
     url(r'^api/', include(v1_api.urls)),
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^authorize/', include('MyJobs.mysignon.urls')),
-    url(r'^message/', include('MyJobs.mymessages.urls')),
-    url(r'^prm/', include('MyJobs.mypartners.urls')),
-    url(r'^postajob/', include('MyJobs.postajob.urls')),
+    url(r'^authorize/', include('mysignon.urls')),
+    url(r'^message/', include('mymessages.urls')),
+    url(r'^prm/', include('mypartners.urls')),
+    url(r'^postajob/', include('postajob.urls')),
 )
 
 

@@ -1,7 +1,7 @@
+import json
 import urllib2
 
 from django import template
-from django.utils import simplejson as json
 
 register = template.Library()
 
