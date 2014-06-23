@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from mock import patch, Mock
 from StringIO import StringIO
 
@@ -466,6 +466,8 @@ class ViewTests(TestCase):
                          self.purchasedproduct_form_data['exp_date_0'])
         self.assertEqual(purchase.card_exp_date.year,
                          self.purchasedproduct_form_data['exp_date_1'])
+        exp_date = date.today() + timedelta(self.product.posting_window_length)
+        self.assertEqual(purchase.expiration_date, exp_date)
         self.assertEqual(len(mail.outbox), 1)
 
     def test_purchasedproduct_add_card_declined(self):
