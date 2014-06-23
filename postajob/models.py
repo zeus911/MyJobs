@@ -590,3 +590,9 @@ class CompanyProfile(models.Model):
     country = models.CharField(max_length=255, blank=True)
     zipcode = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=255, blank=True)
+
+
+class Request(models.Model):
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.IntegerField()
+    action_taken = models.BooleanField(default=False)
