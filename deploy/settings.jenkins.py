@@ -5,6 +5,7 @@ import os
 
 DEBUG = True
 
+ABSOLUTE_URL = "/"
 
 DATABASES = {
     'default': {

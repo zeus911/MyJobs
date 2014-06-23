@@ -29,3 +29,10 @@ def current_site_info(request):
         # Return empty strings in case template needs context vars
         values = {'site_domain':'', 'site_name':'', 'description':'', 'keywords':'',}
         return values
+
+
+def absolute_url(request):
+    values = {
+        'ABSOLUTE_URL': settings.ABSOLUTE_URL
+    }
+    return values
