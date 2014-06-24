@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from mock import patch
 from StringIO import StringIO
 from urlparse import parse_qs
@@ -164,6 +165,8 @@ class ModelTests(TestCase):
         if not hasattr(self, 'purchased_product'):
             self.purchased_product = purchasedproduct_factory(self.product,
                                                               self.company)
+        exp_date = date.today() + timedelta(self.product.posting_window_length)
+        self.assertEqual(self.purchased_product.expiration_date, exp_date)
         return purchasedjob_factory(self.company, self.user,
                                     self.purchased_product, pk=pk)
 
