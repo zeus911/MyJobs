@@ -503,3 +503,11 @@ class ViewTests(TestCase):
         response = self.client.post(reverse('purchasedproduct_delete',
                                             kwargs=kwargs))
         self.assertEqual(response.status_code, 404)
+
+    def test_purchasedjob_access_not_company_user(self):
+        response = self.client.post(reverse('purchasedjobs_overview'))
+        self.assertEqual(response.status_code, 200)
+        self.company_user.delete()
+
+        response = self.client.post(reverse('purchasedjobs_overview'))
+        self.assertEqual(response.status_code, 404)

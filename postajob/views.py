@@ -19,7 +19,7 @@ def jobs_overview(request):
     return render_to_response('postajob/jobs_overview.html', data,
                               RequestContext(request))
 
-
+@company_has_access(None)
 def purchasedjobs_overview(request):
     company = get_company(request)
     data = {

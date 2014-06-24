@@ -31,7 +31,9 @@ def company_has_access(perm_field):
             # are a CompanyUser, but their current Company doesn't have
             # perm_field access, return a 404.
             company = get_company(request)
-            if not company or not getattr(company, perm_field, False):
+
+            if not company or (perm_field and not getattr(company, perm_field,
+                                                          False)):
                 raise Http404
 
             return view_func(request, *args, **kwargs)
