@@ -49,8 +49,14 @@
                     {% endblock %}
                     <a href="https://secure.my.jobs{% url 'unsubscribe_all' %}?verify={{saved_search.user.user_guid}}">{% trans 'Unsubscribe from all My.jobs emails' %}</a><br>
                 </td>
-
             </tr>
+            {% block footer-sub %}
+                <tr>
+                    <td colspan="2">
+                        {% include 'includes/widget-activation-email.html' %}
+                    </td>
+                </tr>
+            {% endblock %}
 
         {% endwith %}
 

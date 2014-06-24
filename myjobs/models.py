@@ -3,6 +3,8 @@ import urllib
 import hashlib
 import uuid
 
+import pytz
+
 from django.utils.safestring import mark_safe
 from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
                                         Group, PermissionsMixin)
@@ -415,6 +417,28 @@ class User(AbstractBaseUser, PermissionsMixin):
             self.first_name = ""
             self.last_name = ""
             self.save()
+
+    def get_expiration(self):
+        """
+        Returns expiration date for this user's activation profile
+
+        Outputs:
+        :delta: Time delta between now and activation profile expiration;
+            Negative delta is in the past, positive is in the future
+        """
+        if self.is_active:
+            return None
+        else:
+            profile, _ = self.activationprofile_set.get_or_create(
+                email=self.email)
+            now = datetime.datetime.now(tz=pytz.UTC)
+            return profile.expires() - now
+
+    def can_receive_myjobs_email(self):
+        if self.opt_in_myjobs and not self.is_disabled:
+            if self.is_active or self.get_expiration().total_seconds() > 0:
+                return True
+        return False
 
 
 class EmailLog(models.Model):

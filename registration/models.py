@@ -124,3 +124,7 @@ class ActivationProfile(models.Model):
         if not self.pk:
             self.activation_key = self.generate_key()
         super(ActivationProfile, self).save(*args, **kwargs)
+
+    def expires(self):
+        delta = datetime.timedelta(days=settings.ACCOUNT_ACTIVATION_DAYS)
+        return self.sent + delta

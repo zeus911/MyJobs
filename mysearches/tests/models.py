@@ -156,3 +156,16 @@ class SavedSearchModelsTests(TestCase):
                        if module != 'name']
         self.assertEqual(len(new_modules), 5)
         self.assert_modules_in_hrefs(new_modules)
+
+    def test_email_contains_activate_link(self):
+        search = SavedSearchFactory(user=self.user)
+        self.assertTrue(self.user.is_active)
+        search.send_email()
+        email = mail.outbox.pop()
+        self.assertFalse('activate your account' in email.body)
+
+        self.user.is_active = False
+        self.user.save()
+        search.send_email()
+        email = mail.outbox.pop()
+        self.assertTrue('activate your account' in email.body)
