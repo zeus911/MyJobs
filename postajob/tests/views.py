@@ -17,6 +17,7 @@ from postajob.tests.factories import (product_factory, job_factory,
 from postajob.models import (Job, Package, Product, ProductGrouping,
                              PurchasedJob, PurchasedProduct, Request,
                              SitePackage)
+from universal.helpers import build_url
 
 
 class ViewTests(TestCase):
@@ -510,4 +511,31 @@ class ViewTests(TestCase):
         self.company_user.delete()
 
         response = self.client.post(reverse('purchasedjobs_overview'))
+        self.assertEqual(response.status_code, 404)
+
+    def test_is_company_user(self):
+        # Current user is a CompanyUser
+        params = {'email': self.user.email}
+        url = build_url(reverse('is_company_user'), params)
+        response = self.client.post(url)
+        self.assertEqual(response.content, 'true')
+
+        # Non-existant user is not a CompanyUser
+        params = {'email': 'thisemail@is.madeup'}
+        url = build_url(reverse('is_company_user'), params)
+        response = self.client.post(url)
+        self.assertEqual(response.content, 'false')
+
+        # Generic User is not a CompanyUser.
+        user = UserFactory(email='anew@user.email')
+        params = {'email': user.email}
+        url = build_url(reverse('is_company_user'), params)
+        response = self.client.post(url)
+        self.assertEqual(response.content, 'false')
+
+        # Is inaccessable to non-CompanyUsers.
+        self.company_user.delete()
+        params = {'email': self.user.email}
+        url = build_url(reverse('is_company_user'), params)
+        response = self.client.post(url)
         self.assertEqual(response.status_code, 404)

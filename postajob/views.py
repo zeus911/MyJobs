@@ -1,4 +1,7 @@
+import json
+
 from django.core.urlresolvers import Http404, reverse_lazy, resolve
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
@@ -6,6 +9,7 @@ from django.utils.decorators import method_decorator
 from universal.helpers import get_company
 from universal.views import RequestFormViewBase
 from universal.decorators import company_has_access
+from mydashboard.models import CompanyUser
 from postajob.forms import (JobForm, ProductForm, ProductGroupingForm,
                             PurchasedJobForm, PurchasedProductForm)
 from postajob.models import (Job, Product, ProductGrouping, PurchasedJob,
@@ -67,7 +71,8 @@ def admin_groupings(request):
 @company_has_access('product_access')
 def order_postajob(request):
     """
-    This view will always get two variables and always switches display_order
+    This view will always get two variables and always switches display_order.
+
     """
     company = get_company(request)
     obj_type = request.GET.get('obj_type')
@@ -92,6 +97,13 @@ def order_postajob(request):
     html = render_to_response('postajob/includes/productgroup_rows.html', data,
                               RequestContext(request))
     return html
+
+
+@company_has_access('product_access')
+def is_company_user(request):
+    email = request.REQUEST.get('email')
+    exists = CompanyUser.objects.filter(user__email=email).exists()
+    return HttpResponse(json.dumps(exists))
 
 
 class PurchaseFormViewBase(RequestFormViewBase):

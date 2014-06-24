@@ -9,6 +9,9 @@ urlpatterns = patterns(
     url(r'^order/',
         views.order_postajob,
         name="order_postajob"),
+    url(r'^companyuser/',
+        views.is_company_user,
+        name="is_company_user"),
 
     # Posted job management
     url(r'^jobs/$',

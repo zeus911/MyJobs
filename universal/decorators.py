@@ -1,10 +1,9 @@
 from functools import wraps
-import urllib
 
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
 
-from universal.helpers import get_company
+from universal.helpers import build_url, get_company
 
 
 def company_has_access(perm_field):
@@ -39,7 +38,3 @@ def company_has_access(perm_field):
             return view_func(request, *args, **kwargs)
         return wraps(view_func)(wrap)
     return decorator
-
-
-def build_url(reverse_url, params):
-    return '%s?%s' % (reverse_url, urllib.urlencode(params))
