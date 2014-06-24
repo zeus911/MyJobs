@@ -8,15 +8,19 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'ProductGrouping.is_displayed'
-        db.add_column(u'postajob_productgrouping', 'is_displayed',
-                      self.gf('django.db.models.fields.BooleanField')(default=True),
-                      keep_default=False)
+        # Adding model 'Request'
+        db.create_table(u'postajob_request', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('content_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['contenttypes.ContentType'])),
+            ('object_id', self.gf('django.db.models.fields.IntegerField')()),
+            ('action_taken', self.gf('django.db.models.fields.BooleanField')(default=False)),
+        ))
+        db.send_create_signal(u'postajob', ['Request'])
 
 
     def backwards(self, orm):
-        # Deleting field 'ProductGrouping.is_displayed'
-        db.delete_column(u'postajob_productgrouping', 'is_displayed')
+        # Deleting model 'Request'
+        db.delete_table(u'postajob_request')
 
 
     models = {
@@ -60,6 +64,7 @@ class Migration(SchemaMigration):
             'Meta': {'unique_together': "(('user', 'company'),)", 'object_name': 'CompanyUser'},
             'company': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
             'date_added': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'group': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Group']", 'symmetrical': 'False', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})
         },
@@ -101,6 +106,18 @@ class Migration(SchemaMigration):
             'timezone': ('django.db.models.fields.CharField', [], {'default': "'America/New_York'", 'max_length': '255'}),
             'user_guid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'})
+        },
+        u'postajob.companyprofile': {
+            'Meta': {'object_name': 'CompanyProfile'},
+            'address_line_one': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'address_line_two': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'company': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['mydashboard.Company']", 'unique': 'True'}),
+            'country': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'phone': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'state': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'zipcode': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'})
         },
         u'postajob.job': {
             'Meta': {'object_name': 'Job'},
@@ -177,10 +194,35 @@ class Migration(SchemaMigration):
         },
         u'postajob.purchasedproduct': {
             'Meta': {'object_name': 'PurchasedProduct'},
+            'address_line_one': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'address_line_two': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'card_exp_date': ('django.db.models.fields.DateField', [], {}),
+            'card_last_four': ('django.db.models.fields.CharField', [], {'max_length': '5'}),
+            'city': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'country': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'expiration_date': ('django.db.models.fields.DateField', [], {}),
+            'first_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_approved': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'jobs_remaining': ('django.db.models.fields.IntegerField', [], {}),
+            'last_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'max_job_length': ('django.db.models.fields.IntegerField', [], {}),
+            'num_jobs_allowed': ('django.db.models.fields.IntegerField', [], {}),
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
+            'paid': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'product': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.Product']"}),
-            'purchase_date': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'})
+            'purchase_amount': ('django.db.models.fields.DecimalField', [], {'max_digits': '20', 'decimal_places': '2'}),
+            'purchase_date': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'state': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'transaction': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'zipcode': ('django.db.models.fields.CharField', [], {'max_length': '255'})
+        },
+        u'postajob.request': {
+            'Meta': {'object_name': 'Request'},
+            'action_taken': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'object_id': ('django.db.models.fields.IntegerField', [], {})
         },
         u'postajob.sitepackage': {
             'Meta': {'object_name': 'SitePackage', '_ormbases': [u'postajob.Package']},

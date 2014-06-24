@@ -11,21 +11,173 @@ class Migration(SchemaMigration):
         # Adding model 'CompanyProfile'
         db.create_table(u'postajob_companyprofile', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('company', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mydashboard.Company'])),
-            ('address_line_one', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('company', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['mydashboard.Company'], unique=True)),
+            ('address_line_one', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('address_line_two', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('city', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('state', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('country', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('zipcode', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('phone', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('city', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('state', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('country', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('zipcode', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('phone', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
         ))
         db.send_create_signal(u'postajob', ['CompanyProfile'])
+
+        # Adding field 'PurchasedProduct.is_approved'
+        db.add_column(u'postajob_purchasedproduct', 'is_approved',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.paid'
+        db.add_column(u'postajob_purchasedproduct', 'paid',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.purchase_amount'
+        db.add_column(u'postajob_purchasedproduct', 'purchase_amount',
+                      self.gf('django.db.models.fields.DecimalField')(default=0, max_digits=20, decimal_places=2),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.expiration_date'
+        db.add_column(u'postajob_purchasedproduct', 'expiration_date',
+                      self.gf('django.db.models.fields.DateField')(default=datetime.datetime(2014, 6, 23, 0, 0)),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.num_jobs_allowed'
+        db.add_column(u'postajob_purchasedproduct', 'num_jobs_allowed',
+                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.max_job_length'
+        db.add_column(u'postajob_purchasedproduct', 'max_job_length',
+                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.jobs_remaining'
+        db.add_column(u'postajob_purchasedproduct', 'jobs_remaining',
+                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.transaction'
+        db.add_column(u'postajob_purchasedproduct', 'transaction',
+                      self.gf('django.db.models.fields.CharField')(default=0, max_length=255),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.card_last_four'
+        db.add_column(u'postajob_purchasedproduct', 'card_last_four',
+                      self.gf('django.db.models.fields.CharField')(default=0, max_length=5),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.card_exp_date'
+        db.add_column(u'postajob_purchasedproduct', 'card_exp_date',
+                      self.gf('django.db.models.fields.DateField')(default=datetime.datetime(2014, 6, 23, 0, 0)),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.first_name'
+        db.add_column(u'postajob_purchasedproduct', 'first_name',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.last_name'
+        db.add_column(u'postajob_purchasedproduct', 'last_name',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.address_line_one'
+        db.add_column(u'postajob_purchasedproduct', 'address_line_one',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.address_line_two'
+        db.add_column(u'postajob_purchasedproduct', 'address_line_two',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.city'
+        db.add_column(u'postajob_purchasedproduct', 'city',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.state'
+        db.add_column(u'postajob_purchasedproduct', 'state',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.country'
+        db.add_column(u'postajob_purchasedproduct', 'country',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.zipcode'
+        db.add_column(u'postajob_purchasedproduct', 'zipcode',
+                      self.gf('django.db.models.fields.CharField')(default=12345, max_length=255),
+                      keep_default=False)
+
+        # Adding field 'ProductGrouping.is_displayed'
+        db.add_column(u'postajob_productgrouping', 'is_displayed',
+                      self.gf('django.db.models.fields.BooleanField')(default=True),
+                      keep_default=False)
 
 
     def backwards(self, orm):
         # Deleting model 'CompanyProfile'
         db.delete_table(u'postajob_companyprofile')
+
+        # Deleting field 'PurchasedProduct.is_approved'
+        db.delete_column(u'postajob_purchasedproduct', 'is_approved')
+
+        # Deleting field 'PurchasedProduct.paid'
+        db.delete_column(u'postajob_purchasedproduct', 'paid')
+
+        # Deleting field 'PurchasedProduct.purchase_amount'
+        db.delete_column(u'postajob_purchasedproduct', 'purchase_amount')
+
+        # Deleting field 'PurchasedProduct.expiration_date'
+        db.delete_column(u'postajob_purchasedproduct', 'expiration_date')
+
+        # Deleting field 'PurchasedProduct.num_jobs_allowed'
+        db.delete_column(u'postajob_purchasedproduct', 'num_jobs_allowed')
+
+        # Deleting field 'PurchasedProduct.max_job_length'
+        db.delete_column(u'postajob_purchasedproduct', 'max_job_length')
+
+        # Deleting field 'PurchasedProduct.jobs_remaining'
+        db.delete_column(u'postajob_purchasedproduct', 'jobs_remaining')
+
+        # Deleting field 'PurchasedProduct.transaction'
+        db.delete_column(u'postajob_purchasedproduct', 'transaction')
+
+        # Deleting field 'PurchasedProduct.card_last_four'
+        db.delete_column(u'postajob_purchasedproduct', 'card_last_four')
+
+        # Deleting field 'PurchasedProduct.card_exp_date'
+        db.delete_column(u'postajob_purchasedproduct', 'card_exp_date')
+
+        # Deleting field 'PurchasedProduct.first_name'
+        db.delete_column(u'postajob_purchasedproduct', 'first_name')
+
+        # Deleting field 'PurchasedProduct.last_name'
+        db.delete_column(u'postajob_purchasedproduct', 'last_name')
+
+        # Deleting field 'PurchasedProduct.address_line_one'
+        db.delete_column(u'postajob_purchasedproduct', 'address_line_one')
+
+        # Deleting field 'PurchasedProduct.address_line_two'
+        db.delete_column(u'postajob_purchasedproduct', 'address_line_two')
+
+        # Deleting field 'PurchasedProduct.city'
+        db.delete_column(u'postajob_purchasedproduct', 'city')
+
+        # Deleting field 'PurchasedProduct.state'
+        db.delete_column(u'postajob_purchasedproduct', 'state')
+
+        # Deleting field 'PurchasedProduct.country'
+        db.delete_column(u'postajob_purchasedproduct', 'country')
+
+        # Deleting field 'PurchasedProduct.zipcode'
+        db.delete_column(u'postajob_purchasedproduct', 'zipcode')
+
+        # Deleting field 'ProductGrouping.is_displayed'
+        db.delete_column(u'postajob_productgrouping', 'is_displayed')
 
 
     models = {
@@ -69,7 +221,7 @@ class Migration(SchemaMigration):
             'Meta': {'unique_together': "(('user', 'company'),)", 'object_name': 'CompanyUser'},
             'company': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
             'date_added': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'group': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Group']", 'symmetrical': 'False'}),
+            'group': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Group']", 'symmetrical': 'False', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"})
         },
@@ -114,15 +266,15 @@ class Migration(SchemaMigration):
         },
         u'postajob.companyprofile': {
             'Meta': {'object_name': 'CompanyProfile'},
-            'address_line_one': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'address_line_one': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'address_line_two': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'city': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'company': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
-            'country': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'company': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['mydashboard.Company']", 'unique': 'True'}),
+            'country': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'phone': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'state': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'zipcode': ('django.db.models.fields.CharField', [], {'max_length': '255'})
+            'phone': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'state': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'zipcode': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'})
         },
         u'postajob.job': {
             'Meta': {'object_name': 'Job'},
@@ -178,6 +330,7 @@ class Migration(SchemaMigration):
             'display_title': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'explanation': ('django.db.models.fields.TextField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_displayed': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
             'products': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['postajob.Product']", 'null': 'True', 'through': u"orm['postajob.ProductOrder']", 'symmetrical': 'False'})
@@ -200,6 +353,8 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'PurchasedProduct'},
             'address_line_one': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'address_line_two': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'card_exp_date': ('django.db.models.fields.DateField', [], {}),
+            'card_last_four': ('django.db.models.fields.CharField', [], {'max_length': '5'}),
             'city': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'country': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'expiration_date': ('django.db.models.fields.DateField', [], {}),
@@ -208,6 +363,7 @@ class Migration(SchemaMigration):
             'is_approved': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'jobs_remaining': ('django.db.models.fields.IntegerField', [], {}),
             'last_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'max_job_length': ('django.db.models.fields.IntegerField', [], {}),
             'num_jobs_allowed': ('django.db.models.fields.IntegerField', [], {}),
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mydashboard.Company']"}),
             'paid': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),

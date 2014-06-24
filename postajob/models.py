@@ -229,6 +229,11 @@ class PurchasedJob(Job):
         super(PurchasedJob, self).save(**kwargs)
         self.site_packages = [self.purchased_product.product.package.sitepackage]
 
+        if not self.is_approved:
+            content_type = ContentType.objects.get_for_model(PurchasedJob)
+            Request.objects.create(content_type=content_type,
+                                   object_id=self.pk)
+
     def add_to_solr(self):
         if self.is_approved and self.purchased_product.paid:
             return super(PurchasedJob, self).add_to_solr()
@@ -590,3 +595,13 @@ class CompanyProfile(models.Model):
     country = models.CharField(max_length=255, blank=True)
     zipcode = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=255, blank=True)
+
+
+class Request(models.Model):
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.IntegerField()
+    action_taken = models.BooleanField(default=False)
+
+    def template(self):
+        model = self.content_type.model
+        return 'postajob/request/{model}.html'.format(model=model)
