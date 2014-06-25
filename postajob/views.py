@@ -10,10 +10,11 @@ from universal.helpers import get_company
 from universal.views import RequestFormViewBase
 from universal.decorators import company_has_access
 from mydashboard.models import CompanyUser
-from postajob.forms import (JobForm, ProductForm, ProductGroupingForm,
-                            PurchasedJobForm, PurchasedProductForm)
-from postajob.models import (Job, Product, ProductGrouping, PurchasedJob,
-                             PurchasedProduct)
+from postajob.forms import (JobForm, OfflinePurchaseForm, ProductForm,
+                            ProductGroupingForm, PurchasedJobForm,
+                            PurchasedProductForm)
+from postajob.models import (Job, OfflinePurchase, Product, ProductGrouping,
+                             PurchasedJob, PurchasedProduct)
 
 
 @company_has_access('prm_access')
@@ -261,3 +262,14 @@ class PurchasedProductFormView(PostajobModelFormMixin, PurchaseFormViewBase):
         self.object = None
         if resolve(request.path).url_name != 'purchasedproduct_add':
             raise Http404
+
+
+class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
+    form_class = OfflinePurchaseForm
+    model = OfflinePurchase
+    display_name = 'Offline Purchase'
+
+    success_url = reverse_lazy('products_overview')
+    add_name = 'offlinepurchase_add'
+    update_name = 'offlinepurchase_update'
+    delete_name = 'offlinepurchase_delete'

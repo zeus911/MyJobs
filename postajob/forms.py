@@ -11,9 +11,9 @@ from django.forms import (CharField, CheckboxSelectMultiple,
 from universal.forms import RequestForm
 from mydashboard.models import SeoSite
 from mypartners.widgets import SplitDateDropDownField
-from postajob.models import (Job, Package, Product, ProductGrouping,
-                             ProductOrder, PurchasedProduct, PurchasedJob,
-                             SitePackage)
+from postajob.models import (Job, OfflinePurchase, Package, Product,
+                             ProductGrouping, ProductOrder, PurchasedProduct,
+                             PurchasedJob, SitePackage)
 from postajob.payment import authorize_card, get_card, settle_transaction
 from postajob.widgets import ExpField
 
@@ -493,3 +493,38 @@ class PurchasedProductForm(RequestForm):
             pass
         else:
             self.instance.send_invoice_email([self.request.user.email])
+
+
+class OfflinePurchaseForm(RequestForm):
+    """
+    This is barely a traditional ModelForm (and would probably be better off
+    as just a regular form), but is going to be treated as a ModelForm
+    so the same form can override the OfflinePurchase admin
+    as well.
+
+    """
+    existing_user = CharField(label='Email Address', required=False,
+                              help_text="If the purchaser has an existing "
+                                        "account, enter their email "
+                                        "address.")
+
+    class Media:
+        js = ('postajob.153-05.js', )
+        css = {
+            'all': ('postajob.153-10.css', )
+        }
+
+
+    class Meta:
+        model = OfflinePurchase
+        exclude = ('created_by', 'created_on', 'redeemed_by', 'redeemed_on',
+                   'redemption_uid', 'products', )
+
+    def __init__(self, *args, **kwargs):
+        super(OfflinePurchaseForm, self).__init__(*args, **kwargs)
+        products = Product.objects.filter(owner=self.company)
+        for product in products:
+            label = '{name} - ${cost}'.format(name=product.name,
+                                              cost=product.cost)
+            self.fields[product.pk] = IntegerField(label=label,
+                                                   initial=0)
