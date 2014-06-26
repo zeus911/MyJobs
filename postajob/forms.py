@@ -11,9 +11,9 @@ from django.forms import (CharField, CheckboxSelectMultiple,
 from universal.forms import RequestForm
 from mydashboard.models import SeoSite
 from mypartners.widgets import SplitDateDropDownField
-from postajob.models import (Job, OfflinePurchase, Package, Product,
-                             ProductGrouping, ProductOrder, PurchasedProduct,
-                             PurchasedJob, SitePackage)
+from postajob.models import (CompanyProfile, Job, OfflinePurchase, Package,
+                             Product, ProductGrouping, ProductOrder,
+                             PurchasedProduct, PurchasedJob, SitePackage)
 from postajob.payment import authorize_card, get_card, settle_transaction
 from postajob.widgets import ExpField
 
@@ -302,7 +302,7 @@ class ProductForm(RequestForm):
         model = Product
         fields = ('name', 'package', 'owner', 'cost',
                   'posting_window_length', 'max_job_length',
-                  'job_limit', 'num_jobs_allowed', 'requires_approval' )
+                  'job_limit', 'num_jobs_allowed', 'requires_approval', )
 
     class Media:
         css = {
@@ -503,18 +503,6 @@ class OfflinePurchaseForm(RequestForm):
     as well.
 
     """
-    existing_user = CharField(label='Email Address', required=False,
-                              help_text="If the purchaser has an existing "
-                                        "account, enter their email "
-                                        "address.")
-
-    class Media:
-        js = ('postajob.153-05.js', )
-        css = {
-            'all': ('postajob.153-10.css', )
-        }
-
-
     class Meta:
         model = OfflinePurchase
         exclude = ('created_by', 'created_on', 'redeemed_by', 'redeemed_on',
@@ -522,6 +510,18 @@ class OfflinePurchaseForm(RequestForm):
 
     def __init__(self, *args, **kwargs):
         super(OfflinePurchaseForm, self).__init__(*args, **kwargs)
+
+        # Create select box of available companies.
+        profiles = CompanyProfile.objects.filter(customer_of=self.company)
+        company_choices = [(x.company.pk, x.company.name) for x in profiles]
+        company_choices.insert(0, (0, 'None'))
+        self.fields['purchasing_company'] = CharField(
+            label='Purchasing Company', widget=Select(choices=company_choices),
+            required=False, help_text="Only companies that have specified "
+                                      "that they are a customer will be in "
+                                      "this list.")
+
+        # Create the Product list.
         products = Product.objects.filter(owner=self.company)
         for product in products:
             label = '{name} - ${cost}'.format(name=product.name,

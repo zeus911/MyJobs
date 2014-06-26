@@ -35,14 +35,6 @@ window.onload = function(){
     $(document).on("change", '#id_job_limit_1', function() {
         update_job_limit_fields();
     });
-
-    // OfflinePurchase Form
-    $(".refresh").on("click", function(e) {
-        validate_company_user(e)
-    });
-    $("#id_existing_user").on("input keypress cut paste", function(e) {
-        validate_company_user(e)
-    });
 };
 
 
@@ -133,78 +125,5 @@ function update_job_limit_fields() {
     else {
         show_field('number-of-jobs');
         show_admin_field('num_jobs_allowed');
-    }
-}
-
-
-function add_refresh_btn() {
-    var field = $('#id_existing_user');
-    field.parent().addClass('input-append');
-
-    var field_width = field.width() - 28;
-    field.css("width", String(field_width)+"px");
-
-    field.after('<span class="btn add-on refresh"><i class="icon icon-refresh">');
-}
-
-
-function validate_company_user(e) {
-    if (e.target == $('#id_existing_user').get(0)) {
-        if (this.timer) {
-            clearTimeout(this.timer);
-        }
-
-        var pause_interval = 1000;
-
-        if($(window).width() < 500){
-            pause_interval = 3000;
-        }
-
-        this.timer = setTimeout(function() {validate();}, pause_interval);
-    }
-    else {
-        validate();
-    }
-}
-
-
-function validate() {
-    var user_email = $('#id_existing_user').val();
-    validation_status('validating...')
-    $.ajax({
-        type: "GET",
-        url: "/postajob/companyuser/",
-        data: {email: user_email},
-        success: function(data) {
-            var json = jQuery.parseJSON(data);
-            if (json) {
-                validation_status('Valid Email');
-            }
-            else {
-                validation_status('Invalid Email');
-            }
-        }
-    });
-}
-
-
-function validation_status(status) {
-    var label_text;
-
-    if (status == 'Valid Email') {
-        label_text = 'label-success';
-    }
-    else {
-        label_text = 'label-important';
-    }
-
-    if ($('#validated').length) {
-        $('#validated').removeClass('label-success');
-        $('#validated').removeClass('label-important');
-        $('#validated').addClass(label_text);
-        $('#validated').text(status);
-    }
-    else {
-        $('[class~=refresh]').after('<div id="validated" class="companyuser-validation-label label ' + label_text + '">' + status + '</div>');
     }
 }

@@ -596,6 +596,12 @@ class CompanyProfile(models.Model):
     zipcode = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=255, blank=True)
 
+    # Companies can associate themselves with Purchased Microsites,
+    # allowing them to show up on the list of available companies for
+    # offline purchases.
+    customer_of = models.ManyToManyField('mydashboard.Company', null=True,
+                                         blank=True, related_name='customer')
+
 
 class Request(models.Model):
     content_type = models.ForeignKey(ContentType)
