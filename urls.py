@@ -8,9 +8,6 @@ from tastypie.api import Api
 
 from myjobs.api import UserResource, SavedSearchResource
 
-import warnings
-warnings.simplefilter('error', DeprecationWarning)
-
 admin.autodiscover()
 
 # API Resources
