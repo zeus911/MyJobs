@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 from django.core import mail
 from django.utils.timezone import utc
 
-from myjobs.tests.views import TestClient
+from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
 from mydashboard.models import CompanyUser
 from mydashboard.tests.factories import CompanyFactory, CompanyUserFactory

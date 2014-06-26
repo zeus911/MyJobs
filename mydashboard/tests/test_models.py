@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from mydashboard.tests.factories import CompanyFactory
-from mydashboard.tests.test_forms import CompanyUserForm
+from mydashboard.tests.forms import CompanyUserForm
 
 from myjobs.tests.factories import UserFactory
 

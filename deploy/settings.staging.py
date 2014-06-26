@@ -24,6 +24,10 @@ _PATH = os.path.abspath(os.path.dirname(__file__))
 STATIC_ROOT = os.path.join(_PATH, 'files', 'static')
 STATIC_URL = '/files/'
 
+# Absolute URL used for cross site links, relative during local/staging
+# absolute during production
+ABSOLUTE_URL = '/'
+
 SESSION_CACHE_ALIAS = 'sessions'
 CACHES = {
     'default': {

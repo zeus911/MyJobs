@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
-from registration.forms import *
+from registration.forms import RegistrationForm, CustomPasswordResetForm
 
 
 class RegistrationFormTests(TestCase):

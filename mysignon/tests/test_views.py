@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 
 from myjobs.tests.factories import UserFactory
-from myjobs.tests.views import TestClient
+from myjobs.tests.test_views import TestClient
 from mysignon.models import AuthorizedClient
 from mysignon.tests.factories import AuthorizedClientFactory
 

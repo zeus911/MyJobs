@@ -2,7 +2,7 @@
 myjobs
 """
 
-import MyJobs.solr.signals
+import solr.signals
 
 __version_info__ = {
     'major': 0,
