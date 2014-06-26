@@ -7,7 +7,7 @@ from django.test import TestCase
 
 from mock import patch
 
-from myjobs.tests.views import TestClient
+from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
 
 from mysearches import forms, models

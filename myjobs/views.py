@@ -23,12 +23,12 @@ from captcha.fields import ReCaptchaField
 from myjobs.decorators import user_is_allowed
 from myjobs.forms import ChangePasswordForm, EditCommunicationForm
 from myjobs.helpers import expire_login, log_to_jira
-from myjobs.models import EmailLog, Ticket, User, FAQ
+from myjobs.models import EmailLog, Ticket, User, FAQ, CustomHomepage
 from myprofile.forms import (InitialNameForm, InitialEducationForm,
                              InitialAddressForm, InitialPhoneForm,
                              InitialWorkForm)
 from myprofile.models import ProfileUnits, Name
-from registration.forms import RegistrationForm, CustomAuthForm, CustomHomepage
+from registration.forms import RegistrationForm, CustomAuthForm
 
 logger = logging.getLogger('__name__')
 

@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
 from django.views.generic import RedirectView
 
-urlpatterns = patterns('MyJobs.myprofile.views',
+urlpatterns = patterns('myprofile.views',
     url(r'^$', RedirectView.as_view(url='/profile/view/')),
     url(r'^view$', 'edit_profile', name='view_profile'),
     url(r'^view/$', 'edit_profile', name='view_profile'),
