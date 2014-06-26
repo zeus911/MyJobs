@@ -3,7 +3,7 @@ from django.test import TestCase
 
 from myjobs.tests.factories import UserFactory
 from mysearches.templatetags.email_tags import get_created_url
-from mysearches.tests import SavedSearchFactory
+from mysearches.tests.factories import SavedSearchFactory
 from registration.models import ActivationProfile
 
 

@@ -1,5 +1,5 @@
 from mypartners.helpers import find_partner_from_email
-from mypartners.tests.views import MyPartnersTestCase
+from mypartners.tests.test_views import MyPartnersTestCase
 
 
 class HelpersTests(MyPartnersTestCase):

@@ -1,13 +1,9 @@
-from bs4 import BeautifulSoup
-
-from django.core.urlresolvers import reverse
 from django.test import TestCase
 
 from myjobs.forms import ChangePasswordForm
 from myjobs.tests.factories import UserFactory
-from myjobs.tests.views import TestClient
+from myjobs.tests.test_views import TestClient
 from myprofile.tests.factories import PrimaryNameFactory
-from myprofile.models import Name
 
 class AccountFormTests(TestCase):
     def setUp(self):

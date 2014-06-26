@@ -1,11 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm
-from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.hashers import UNUSABLE_PASSWORD
+from django.contrib.auth import authenticate
 from django.utils.translation import ugettext_lazy as _
 
-from myjobs.models import *
-from myprofile.models import SecondaryEmail
+from myjobs.models import User
 
 class CustomAuthForm(AuthenticationForm):
     """
@@ -71,23 +69,23 @@ class CustomPasswordResetForm(PasswordResetForm):
     """
     Custom password reset form validates even when user is not active.
     """
-    email = forms.CharField(error_messages={'required':'Email is required.'},
-                               label=_("Email"), required=True,
-                               widget=forms.TextInput(
-                                   attrs={'placeholder': _('Email'),
-                                          'id':'id_email',
-                                          'class': 'reset-pass-input'}))
+    email = forms.CharField(error_messages={'required': 'Email is required.'},
+                            label=_("Email"), required=True,
+                            widget=forms.TextInput(
+                                attrs={'placeholder': _('Email'),
+                                       'id': 'id_email',
+                                       'class': 'reset-pass-input'}))
+
     def __init__(self, *args, **kwargs):
         super(CustomPasswordResetForm, self).__init__(*args, **kwargs)
 
     def clean_email(self):
-        UserModel = get_user_model()
         email = self.cleaned_data["email"]
-        self.users_cache = UserModel._default_manager.filter(email__iexact=email)
-        if not len(self.users_cache):
+        users = User.objects.filter(email__iexact=email)
+        if not users.exists():
             raise forms.ValidationError(self.error_messages['unknown'])
-        if any((user.password == UNUSABLE_PASSWORD)
-               for user in self.users_cache):
+        if not any((user.has_usable_password())
+                   for user in users):
             raise forms.ValidationError(self.error_messages['unusable'])
         return email
         

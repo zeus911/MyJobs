@@ -8,10 +8,10 @@ from tastypie.models import create_api_key
 
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
-from myjobs.tests.views import TestClient
+from myjobs.tests.test_views import TestClient
 from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch
-from mysearches.tests.test_helpers import return_file
+from mysearches.tests.helpers import return_file
 
 
 class UserResourceTests(TestCase):

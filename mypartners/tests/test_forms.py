@@ -1,6 +1,6 @@
 from mypartners.forms import ContactForm
 from mypartners.models import Contact
-from mypartners.tests.views import MyPartnersTestCase
+from mypartners.tests.test_views import MyPartnersTestCase
 
 
 class ContactFormTests(MyPartnersTestCase):

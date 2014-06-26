@@ -2,12 +2,18 @@ from django.core import mail
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.urlresolvers import reverse
 from django.db import IntegrityError
+from django.middleware.transaction import transaction
 from django.test import TestCase
 
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
-from myprofile.models import *
-from myprofile.tests.factories import *
+from myprofile.models import ProfileUnits, Name, SecondaryEmail, Education, \
+    Address, Telephone, EmploymentHistory, MilitaryService, Website, License, \
+    Summary, VolunteerHistory
+from myprofile.tests.factories import PrimaryNameFactory, \
+    NewPrimaryNameFactory, SecondaryEmailFactory, NewNameFactory, \
+    MilitaryServiceFactory, LicenseFactory, WebsiteFactory, SummaryFactory, \
+    VolunteerHistoryFactory
 from registration.models import ActivationProfile
 from datetime import date
 
@@ -231,8 +237,9 @@ class MyProfileTests(TestCase):
         another secondary email, it may not be used as a secondary email again.
         """
         secondary_email = SecondaryEmailFactory(user=self.user)
-        with self.assertRaises(IntegrityError):
-            new_secondary_email = SecondaryEmailFactory(user=self.user)
+        with transaction.atomic():
+            with self.assertRaises(IntegrityError):
+                new_secondary_email = SecondaryEmailFactory(user=self.user)
         new_secondary_email = SecondaryEmailFactory(user=self.user,
                                                     email='email@example.com')
 
@@ -367,7 +374,7 @@ class ProfileSuggestionTests(TestCase):
 
         actual = Telephone.get_suggestion(self.user)
 
-        # Sort lists to ensure indentical order
+        # Sort lists to ensure identical order
         self.assertEqual(actual, expected)
 
     def test_suggestion_when_phone_entered(self):
