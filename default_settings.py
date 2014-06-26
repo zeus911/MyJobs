@@ -94,14 +94,14 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.RemoteUserBackend',  # http
 )
 
-ROOT_URLCONF = 'MyJobs.urls'
+ROOT_URLCONF = 'urls'
 
 TEMPLATE_DIRS = (
     join(ROOT_PATH, 'templates')
 )
 
 
-CELERY_IMPORTS = ('MyJobs.tasks',)
+CELERY_IMPORTS = ('tasks',)
 CELERY_TIMEZONE = 'US/Eastern'
 CELERYBEAT_PIDFILE = '/var/run/celerybeat.pid'
 CELERYBEAT_SCHEDULE = {
@@ -141,6 +141,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.contrib.messages.context_processors.messages',
     'django.core.context_processors.request',
     'myjobs.context_processors.current_site_info',
+    'myjobs.context_processors.absolute_url',
 )
 
 INTERNAL_IPS = ('127.0.0.1', '216.136.63.6',)
@@ -179,12 +180,9 @@ PROJECT_APPS = ('myjobs', 'myprofile', 'mysearches', 'registration',
 
 INSTALLED_APPS += PROJECT_APPS
 
-TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
-
 JENKINS_TASKS = (
     'django_jenkins.tasks.with_coverage',
     'django_jenkins.tasks.run_pep8',
-    'django_jenkins.tasks.django_tests',
     'django_jenkins.tasks.run_pyflakes',
 )
 
@@ -248,7 +246,7 @@ LOGGING = {
         },
         'tasks': {
             'handlers': ['console', 'logfile'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'formatter': 'standard',
         },
     }

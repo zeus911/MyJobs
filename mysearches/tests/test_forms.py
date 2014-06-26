@@ -3,7 +3,7 @@ from django.test import TestCase
 from mock import patch
 
 from mysearches.forms import SavedSearchForm
-from mysearches.tests.test_helpers import return_file
+from mysearches.tests.helpers import return_file
 from mysearches.tests.factories import SavedSearchFactory
 from myjobs.tests.factories import UserFactory
 

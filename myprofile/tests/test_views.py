@@ -4,10 +4,10 @@ import json
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
-from myjobs.tests.views import TestClient
+from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
-from myprofile.tests.factories import (AddressFactory, PrimaryNameFactory,
-    SummaryFactory)
+from myprofile.tests.factories import AddressFactory, PrimaryNameFactory, \
+    SummaryFactory
 from myprofile.models import Name
 
 

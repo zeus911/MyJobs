@@ -3,9 +3,9 @@ from optparse import make_option
 from django.core.management.base import BaseCommand
 from django.template import loader, Context
 
-from MyJobs.myprofile.models import ProfileUnits
-from MyJobs.myjobs.models import User
-from MyJobs.mysearches.models import SavedSearch
+from myprofile.models import ProfileUnits
+from myjobs.models import User
+from mysearches.models import SavedSearch
 
 DEFAULT_FIELD_NAME = 'text'
 UNIQUE_FIELD_NAME = 'uid'

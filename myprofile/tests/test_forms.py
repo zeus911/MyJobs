@@ -1,6 +1,5 @@
 from django.test import TestCase
 from django.contrib.auth.models import AnonymousUser
-from django.db.models import Count
 
 from myprofile.forms import InitialNameForm
 from myjobs.models import User

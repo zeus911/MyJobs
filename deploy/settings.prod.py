@@ -30,6 +30,10 @@ SESSION_COOKIE_SECURE = True
 
 STATIC_URL = "//d2e48ltfsb5exy.cloudfront.net/content_mj/files/"
 
+# Absolute URL used for cross site links, relative during local/staging
+# absolute during production
+ABSOLUTE_URL = "https://secure.my.jobs/"
+
 SESSION_CACHE_ALIAS = 'sessions'
 CACHES = {
     'default': {

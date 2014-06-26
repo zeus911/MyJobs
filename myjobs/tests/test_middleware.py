@@ -1,13 +1,9 @@
-import urllib
-
 from django.contrib.auth.models import AnonymousUser
 from django.core.urlresolvers import reverse
-from django.http import HttpRequest
 from django.test import TestCase
 from django.test.client import RequestFactory
 
-from MyJobs.middleware import RedirectMiddleware
-from myjobs.models import User
+from middleware import RedirectMiddleware
 from myjobs.tests.factories import UserFactory
 
 
