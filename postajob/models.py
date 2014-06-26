@@ -596,6 +596,12 @@ class CompanyProfile(models.Model):
     zipcode = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=255, blank=True)
 
+    # Companies can associate themselves with Purchased Microsites,
+    # allowing them to show up on the list of available companies for
+    # offline purchases.
+    customer_of = models.ManyToManyField('mydashboard.Company', null=True,
+                                         blank=True, related_name='customer')
+
 
 class Request(models.Model):
     content_type = models.ForeignKey(ContentType)
@@ -605,3 +611,56 @@ class Request(models.Model):
     def template(self):
         model = self.content_type.model
         return 'postajob/request/{model}.html'.format(model=model)
+
+
+class OfflineProduct(models.Model):
+    product = models.ForeignKey('Product')
+    offline_purchase = models.ForeignKey('OfflinePurchase')
+    product_quantity = models.PositiveIntegerField(default=1)
+
+
+class OfflinePurchase(models.Model):
+    products = models.ManyToManyField('Product', through='OfflineProduct')
+    redemption_uid = models.CharField(max_length=255)
+
+    created_by = models.ForeignKey('mydashboard.CompanyUser',
+                                   related_name='created')
+    created_on = models.DateField(auto_now_add=True)
+
+    redeemed_by = models.ForeignKey('mydashboard.CompanyUser', null=True,
+                                    blank=True, related_name='redeemed')
+    redeemed_on = models.DateField(null=True, blank=True)
+
+    def save(self, **kwargs):
+        self.generate_redemption_uid()
+        super(OfflinePurchase, self).save(**kwargs)
+
+    def generate_redemption_uid(self):
+        if not self.redemption_uid:
+            uid = uuid4().hex
+            if OfflinePurchase.objects.filter(redemption_uid=uid):
+                self.generate_redemption_uid()
+            else:
+                self.redemption_uid = uid
+
+    def create_purchased_products(self, company):
+        kwargs = {
+            'owner': company,
+            'paid': True,
+            'purchase_amount': 0,
+            'transaction': self.redemption_uid,
+            'card_last_four': '',
+            'card_exp_date': date(1971, 01, 01),
+            'first_name': '',
+            'last_name': '',
+            'address_line_one': '',
+            'city': '',
+            'state': '',
+            'country': '',
+            'zipcode': '',
+        }
+        for product in self.products.all():
+            length = product.posting_window_length
+            kwargs['expiration_date'] = date.today() + timedelta(length)
+            kwargs['product'] = product
+            PurchasedProduct.objects.create(**kwargs)

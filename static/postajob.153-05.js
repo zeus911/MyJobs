@@ -9,6 +9,7 @@ window.onload = function(){
     update_apply_fields();
     update_site_fields();
     update_job_limit_fields();
+    add_refresh_btn();
 
     // Job Form
     $(document).on("change", '#id_apply_type_0', function(){
@@ -36,27 +37,33 @@ window.onload = function(){
     });
 };
 
+
 function hide_field(field_name) {
     $('.' + field_name + '-label').hide();
     $('.' + field_name + '-field').hide();
 }
 
+
 function hide_admin_field(field_name) {
     $('.field-' + field_name).hide();
 }
+
 
 function show_field(field_name) {
     $('.' + field_name + '-label').show();
     $('.' + field_name + '-field').show();
 }
 
+
 function show_admin_field(field_name) {
     $('.field-' + field_name).show();
 }
 
+
 function clear_input(field_name) {
     $('#id_' + field_name).val('');
 }
+
 
 function update_apply_fields() {
     if($('#id_apply_type_0').is(':checked')) {
@@ -97,6 +104,7 @@ function update_apply_fields() {
     }
 }
 
+
 function update_site_fields() {
     if($('#post-to-selector_0').is(':checked')) {
         hide_field('site');
@@ -107,6 +115,7 @@ function update_site_fields() {
         show_admin_field('site_packages');
     }
 }
+
 
 function update_job_limit_fields() {
     if($('#id_job_limit_0').is(':checked')) {

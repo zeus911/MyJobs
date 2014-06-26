@@ -1,8 +1,13 @@
 import re
+import urllib
 
 from django.shortcuts import get_object_or_404
 
 from mydashboard.models import Company
+
+
+def build_url(reverse_url, params):
+    return '%s?%s' % (reverse_url, urllib.urlencode(params))
 
 
 def get_int_or_none(string):

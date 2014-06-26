@@ -9,6 +9,9 @@ urlpatterns = patterns(
     url(r'^order/',
         views.order_postajob,
         name="order_postajob"),
+    url(r'^companyuser/',
+        views.is_company_user,
+        name="is_company_user"),
 
     # Posted job management
     url(r'^jobs/$',
@@ -88,4 +91,15 @@ urlpatterns = patterns(
     url(r'^product/purchase/update/(?P<pk>\d+)/',
         views.PurchasedProductFormView.as_view(),
         name='purchasedproduct_update'),
+
+    # Offline Purchases
+    url(r'^offlinepurchase/add/',
+        views.OfflinePurchaseFormView.as_view(),
+        name='offlinepurchase_add'),
+    url(r'^offlinepurchase/delete/(?P<pk>\d+)/',
+        views.OfflinePurchaseFormView.as_view(),
+        name='offlinepurchase_delete'),
+    url(r'^offlinepurchase/update/(?P<pk>\d+)/',
+        views.OfflinePurchaseFormView.as_view(),
+        name='offlinepurchase_update'),
 )
