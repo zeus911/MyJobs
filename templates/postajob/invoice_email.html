@@ -9,35 +9,35 @@
         {% endif %}
     </td></tr>
     <tr><td align="right">
-        Invoice No: {{ purchase.transaction }}
-        <br/>Date: {{ purchase.purchase_date }}
+        Invoice No: {{ invoice.transaction }}
+        <br/>Date: {{ purchase_date }}
     </td></tr>
 </table>
 
 <table border="1px solid" width="400">
     <tr><td align="center" colspan="4"><b>Invoice</b></td></tr>
     <tr><td colspan="4">
-        Company: {{ purchase.owner.name }}
-        {% if purchase.first_name and purchase.last_name %}
-            <br/>Address: {{ purchase.address_line_one }}, {{ purchase.address_line_two }}
-            <br/>City: {{ purchase.city }}
-            <br/>State: {{ purchase.state }}
-            <br/>ZIP: {{ purchase.zipcode }}
-            <br/>Country: {{ purchase.country }}
+        Company: {{ invoice.owner.name }}
+        {% if invoice.first_name and invoice.last_name %}
+            <br/>Address: {{ invoice.address_line_one }}, {{ invoice.address_line_two }}
+            <br/>City: {{ invoice.city }}
+            <br/>State: {{ invoice.state }}
+            <br/>ZIP: {{ invoice.zipcode }}
+            <br/>Country: {{ invoice.country }}
         {% endif %}
     </td></tr>
     <tr>
-        <td>Qty</td>
         <td>Description</td>
         <td>Unit Price</td>
         <td>Total</td>
     </tr>
-    <tr>
-        <td>1</td>
-        <td>{{ purchase.product.name }}</td>
-        <td>${{ purchase.purchase_amount }}</td>
-        <td>${{ purchase.purchase_amount }}</td>
-    </tr>
+    {% for purchase in purchases %}
+        <tr>
+            <td>{{ purchase.product.name }}</td>
+            <td>${{ purchase.purchase_amount }}</td>
+            <td>${{ purchase.purchase_amount }}</td>
+        </tr>
+    {% endfor %}
     <tr>
         <td colspan="3" align="right">Subtotal</td>
         <td align="right">${{ purchase.purchase_amount }}</td>
@@ -55,13 +55,13 @@
 <table>
     <tr><td><b>Payment Details</b></td></tr>
     <tr><td>
-        {% if purchase.first_name and purchase.last_name %}
+        {% if invoice.first_name and invoice.last_name %}
             Credit Card Number: *************{{ purchase.card_last_four }}
-            <br/>Expiration: {{ purchase.card_exp_date.month }}/{{ purchase.card_exp_date.year }}
-            <br/>Name on Credit Card: {{ purchase.first_name }} {{ purchase.last_name }}
-            <br/>Amount Charged: ${{ purchase.purchase_amount }}
+            <br/>Expiration: {{ invoice.card_exp_date.month }}/{{ invoice.card_exp_date.year }}
+            <br/>Name on Credit Card: {{ invoice.first_name }} {{ invoice.last_name }}
+            <br/>Amount Charged: ${{ invoice.purchase_amount }}
         {% else %}
-            Redemption Code: {{ purchase.transaction }}
+            Redemption Code: {{ invoice.transaction }}
         {% endif %}
     </td></tr>
 </table>

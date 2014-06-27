@@ -408,6 +408,7 @@ class SitePackage(Package):
 
 class PurchasedProduct(BaseModel):
     product = models.ForeignKey('Product')
+    invoice = models.ForeignKey('Invoice')
 
     owner = models.ForeignKey('mydashboard.Company')
     purchase_date = models.DateField(auto_now_add=True)
@@ -424,20 +425,6 @@ class PurchasedProduct(BaseModel):
     max_job_length = models.IntegerField()
     jobs_remaining = models.IntegerField()
 
-    transaction = models.CharField(max_length=255)
-    card_last_four = models.CharField(max_length=5)
-    card_exp_date = models.DateField()
-    first_name = models.CharField(max_length=255, verbose_name='First Name')
-    last_name = models.CharField(max_length=255, verbose_name='Last Name')
-    address_line_one = models.CharField(max_length=255,
-                                        verbose_name='Address Line One')
-    address_line_two = models.CharField(max_length=255, blank=True,
-                                        verbose_name='Address Line Two')
-    city = models.CharField(max_length=255)
-    state = models.CharField(max_length=255)
-    country = models.CharField(max_length=255)
-    zipcode = models.CharField(max_length=255)
-
     def __unicode__(self):
         return self.product.name
 
@@ -450,30 +437,6 @@ class PurchasedProduct(BaseModel):
             self.max_job_length = self.product.max_job_length
             self.jobs_remaining = self.num_jobs_allowed
         super(PurchasedProduct, self).save(**kwargs)
-
-    def send_invoice_email(self, other_recipients=[]):
-        """
-        Sends the invoice email to the company admins along with
-        any other optional recipients.
-
-        """
-        from mydashboard.models import CompanyUser
-        data = {
-            'purchase': self,
-        }
-        owner = self.product.owner
-        group, _ = Group.objects.get_or_create(name=self.ADMIN_GROUP_NAME)
-        owner_admins = CompanyUser.objects.filter(company=owner, group=group)
-        owner_admins = owner_admins.values_list('user__email', flat=True)
-        recipients = set(other_recipients +
-                         list(owner_admins))
-        if recipients:
-            subject = '{company} Invoice'.format(company=owner.name)
-            message = render_to_string('postajob/invoice_email.html', data)
-            msg = EmailMessage(subject, message, settings.INVOICE_EMAIL,
-                               list(recipients))
-            msg.content_subtype = 'html'
-            msg.send()
 
     def can_post_more(self):
         if date.today() > self.expiration_date:
@@ -596,6 +559,10 @@ class CompanyProfile(models.Model):
     zipcode = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=255, blank=True)
 
+    # Only used for Purchased Microsites.
+    authorize_net_login = models.CharField(max_length=255, blank=True)
+    authorize_net_transaction_key = models.CharField(max_length=255, blank=True)
+
     # Companies can associate themselves with Purchased Microsites,
     # allowing them to show up on the list of available companies for
     # offline purchases.
@@ -621,6 +588,8 @@ class OfflineProduct(models.Model):
 
 class OfflinePurchase(models.Model):
     products = models.ManyToManyField('Product', through='OfflineProduct')
+    invoice = models.ForeignKey('Invoice')
+
     redemption_uid = models.CharField(max_length=255)
 
     created_by = models.ForeignKey('mydashboard.CompanyUser',
@@ -664,3 +633,60 @@ class OfflinePurchase(models.Model):
             kwargs['expiration_date'] = date.today() + timedelta(length)
             kwargs['product'] = product
             PurchasedProduct.objects.create(**kwargs)
+
+
+class Invoice(BaseModel):
+    # Either the Authorize.Net transaction id or the id of the
+    # OfflinePurchase.
+    transaction = models.CharField(max_length=255)
+
+    card_last_four = models.CharField(max_length=5)
+    card_exp_date = models.DateField()
+    first_name = models.CharField(max_length=255, verbose_name='First Name')
+    last_name = models.CharField(max_length=255, verbose_name='Last Name')
+    address_line_one = models.CharField(max_length=255,
+                                        verbose_name='Address Line One')
+    address_line_two = models.CharField(max_length=255, blank=True,
+                                        verbose_name='Address Line Two')
+    city = models.CharField(max_length=255)
+    state = models.CharField(max_length=255)
+    country = models.CharField(max_length=255)
+    zipcode = models.CharField(max_length=255)
+
+    # Owner is the Company that owns the Products.
+    owner = models.ForeignKey('mydashboard.Company', related_name='owner')
+
+    def send_invoice_email(self, other_recipients=None):
+        """
+        Sends the invoice email to the company admins along with
+        any other optional recipients.
+
+        """
+        from mydashboard.models import CompanyUser
+
+        other_recipients = [] if not other_recipients else other_recipients
+
+        purchases = OfflinePurchase.objects.filter(invoice=self)
+        if not purchases:
+            purchases = PurchasedProduct.objects.filter(invoice=self)
+
+        data = {
+            'invoice': self,
+            'purchase_date': (purchases[0].purchase_date if purchases
+                              else date.today()),
+            'purchases': PurchasedProduct.objects.filter(invoice=self),
+        }
+
+        owner = self.owner
+        group, _ = Group.objects.get_or_create(name=self.ADMIN_GROUP_NAME)
+        owner_admins = CompanyUser.objects.filter(company=owner, group=group)
+        owner_admins = owner_admins.values_list('user__email', flat=True)
+
+        recipients = set(other_recipients + list(owner_admins))
+        if recipients:
+            subject = '{company} Invoice'.format(company=owner.name)
+            message = render_to_string('postajob/invoice_email.html', data)
+            msg = EmailMessage(subject, message, settings.INVOICE_EMAIL,
+                               list(recipients))
+            msg.content_subtype = 'html'
+            msg.send()

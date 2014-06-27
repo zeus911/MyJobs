@@ -209,16 +209,16 @@ class ModelTests(TestCase):
                              expected_num_jobs)
         self.assertFalse(self.purchased_product.can_post_more())
 
-    def test_purchased_product_send_invoice_email(self):
+    def test_invoice_send_invoice_email(self):
         self.create_purchased_job()
         group, _ = Group.objects.get_or_create(name=Product.ADMIN_GROUP_NAME)
 
         # No one to recieve the email.
-        self.purchased_product.send_invoice_email()
+        self.purchased_product.invoice.send_invoice_email()
         self.assertEqual(len(mail.outbox), 0)
 
         # Only recipient is specified recipient.
-        self.purchased_product.send_invoice_email(['this@isa.test'])
+        self.purchased_product.invoice.send_invoice_email(['this@isa.test'])
         self.assertItemsEqual(mail.outbox[0].to,
                               ['this@isa.test'])
 
@@ -228,14 +228,14 @@ class ModelTests(TestCase):
         user = CompanyUser.objects.create(user=self.user, company=self.company)
         user.group.add(group)
         user.save()
-        self.purchased_product.send_invoice_email()
+        self.purchased_product.invoice.send_invoice_email()
         self.assertItemsEqual(mail.outbox[0].to,
                               [u'user@test.email'])
 
         mail.outbox = []
 
         # Recipients are admins + specified recipients.
-        self.purchased_product.send_invoice_email(['this@isa.test'])
+        self.purchased_product.invoice.send_invoice_email(['this@isa.test'])
         self.assertItemsEqual(mail.outbox[0].to,
                               ['this@isa.test', u'user@test.email'])
 
