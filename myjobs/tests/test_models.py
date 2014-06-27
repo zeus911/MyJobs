@@ -8,7 +8,7 @@ from django.test import TestCase
 from django.utils.http import urlquote
 
 from myjobs.models import User
-from myjobs.tests.views import TestClient
+from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
 from myprofile.models import SecondaryEmail, Name, Telephone
 

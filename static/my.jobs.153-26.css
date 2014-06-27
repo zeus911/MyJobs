@@ -751,20 +751,6 @@ ul.header-menu > li > ul > a > li:hover {
     margin-right: 0;
 }
 
-/* Post a Job Styles */
-#product-groups > tr > .product-edit,
-.product-tr > .product-edit {
-    width: 70px;
-}
-
-#product-groups > tr > .product-group-order {
-    width: 100px;
-}
-
-.product-group-tr > .product-edit {
-    text-align: center;
-}
-
 
 
 /* Sort by field in saved search save/edit */
@@ -3183,6 +3169,17 @@ body.modal-open {
 
 .required-border {
     border: 1px solid #900;
+}
+
+.required ::-webkit-input-placeholder,
+.required :-ms-input-placeholder {
+    color: #900;
+}
+
+.required ::-moz-placeholder,
+.required :-moz-placeholder {
+    color: #900;
+    opacity: 1;
 }
 
 /*Candidate menu items*/

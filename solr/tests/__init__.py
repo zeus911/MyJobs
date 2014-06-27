@@ -1,1 +1,0 @@
-from MyJobs.solr.tests.solr import *

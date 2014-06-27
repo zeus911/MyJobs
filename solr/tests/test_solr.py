@@ -2,23 +2,24 @@ import datetime
 import uuid
 
 from mock import Mock
-import pysolr
 import pytz
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 
-from MyJobs.myjobs.models import User
-from MyJobs.myjobs.tests.factories import UserFactory
-from MyJobs.myprofile.tests.factories import PrimaryNameFactory, AddressFactory
-from MyJobs.mysearches.models import SavedSearch
-from MyJobs.mysearches.tests.factories import SavedSearchFactory
-from MyJobs.solr.models import Update
-from MyJobs.solr.helpers import Solr
-from MyJobs.solr.signals import profileunits_to_dict, object_to_dict
-from MyJobs.solr.tests.helpers import MockLog
-from MyJobs.tasks import update_solr_task, parse_log, delete_old_analytics_docs
-from mydashboard.tests import CompanyFactory, BusinessUnitFactory
+from mydashboard.tests.factories import CompanyFactory, BusinessUnitFactory
+from myjobs.models import User
+from myjobs.tests.factories import UserFactory
+from myprofile.models import ProfileUnits
+from myprofile.tests.factories import PrimaryNameFactory, AddressFactory
+from mysearches.models import SavedSearch
+from mysearches.tests.factories import SavedSearchFactory
+from solr.models import Update
+from solr.helpers import Solr
+from solr.signals import profileunits_to_dict, object_to_dict
+from solr.tests.helpers import MockLog
+from tasks import update_solr_task, parse_log, delete_old_analytics_docs
 
 
 class SolrTests(TestCase):
@@ -67,11 +68,12 @@ class SolrTests(TestCase):
         """
         user = UserFactory(email="example@example.com")
         name = PrimaryNameFactory(user=user)
+        content_type = ContentType.objects.get_for_model(ProfileUnits)
 
         expected = {
             "Name_content_type_id": [25],
             "Name_given_name": ["Alice"],
-            "uid": "24##%s" % (user.pk, ),
+            "uid": "%s##%s" % (str(content_type.pk), str(user.pk)),
             "ProfileUnits_user_id": 1,
             "Name_user_id": [1],
             "Name_id": [name.pk],
@@ -91,10 +93,11 @@ class SolrTests(TestCase):
 
         """
         user = UserFactory(email="example@example.com")
+        content_type = ContentType.objects.get_for_model(User)
         expected = {
             'User_is_superuser': False,
             u'User_id': 1,
-            'uid': '18##%s' % str(user.pk),
+            'uid': '%s##%s' % (str(content_type.pk), str(user.pk)),
             'User_is_active': True,
             'User_user_guid': 'c1cf679c-86f8-4bce-bf1a-ade8341cd3c1',
             'User_is_staff': False, 'User_first_name': u'',
@@ -122,8 +125,9 @@ class SolrTests(TestCase):
         """
         user = UserFactory(email="example@example.com")
         search = SavedSearchFactory(user=user)
+        content_type = ContentType.objects.get_for_model(SavedSearch)
         expected = {'User_is_superuser': False,
-                    'uid': '36##%s' % str(search.pk),
+                    'uid': '%s##%s' % (str(content_type.pk), str(search.pk)),
                     'User_is_staff': False,
                     'SavedSearch_day_of_month': None,
                     'User_is_disabled': False,

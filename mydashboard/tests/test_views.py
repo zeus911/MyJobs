@@ -13,7 +13,7 @@ from mydashboard.models import CompanyUser
 from mydashboard.tests.factories import (CompanyFactory, CompanyUserFactory,
                                          SeoSiteFactory, BusinessUnitFactory)
 from mydashboard.helpers import country_codes
-from myjobs.tests.views import TestClient
+from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
 from myprofile.tests.factories import (PrimaryNameFactory,
                                        SecondaryEmailFactory,

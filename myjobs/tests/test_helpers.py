@@ -6,10 +6,9 @@ import time
 from django.contrib.sessions.models import Session
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from django.utils.encoding import force_unicode
 
 from myjobs.tests.factories import UserFactory
-from myjobs.tests.views import TestClient
+from myjobs.tests.test_views import TestClient
 
 
 class MyJobsHelpersTests(TestCase):

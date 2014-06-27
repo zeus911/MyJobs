@@ -5,6 +5,7 @@ import os
 
 DEBUG = True
 
+ABSOLUTE_URL = "/"
 
 DATABASES = {
     'default': {
@@ -28,7 +29,7 @@ CACHES = {
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 
-JENKINS_TEST_RUNNER = 'testrunner.SilentTestRunner'
+JENKINS_TEST_RUNNER = 'silent_testrunner.SilentTestRunner'
 TEST_SOLR_INSTANCE = SOLR
 CELERY_ALWAYS_EAGER = True
 
@@ -37,5 +38,4 @@ POSTAJOB_URLS = {
     'post': '',
     'delete': ''
 }
-
 CC_AUTH = TESTING_CC_AUTH

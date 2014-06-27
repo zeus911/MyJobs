@@ -391,7 +391,7 @@ def export_candidates(request):
         elif export_type == 'xml' or export_type == 'json':
             candidates = filter_candidates(request)
             response = export_hr(request, candidates, export_type)
-    except:
+    except Exception, e:
         raise Http404
     return response
 
@@ -468,7 +468,7 @@ def export_csv(request, candidates, models_excluded=[], fields_excluded=[]):
     :response:          Sends a .csv file to the user.
     """
 
-    response = HttpResponse(mimetype='text/csv')
+    response = HttpResponse(content_type='text/csv')
     time = datetime.now().strftime('%m%d%Y')
     company_id = request.REQUEST.get('company')
     try:
@@ -642,7 +642,7 @@ def export_hr(request, candidates, export_type, models_excluded=[]):
                         value = unicode(getattr(instance, field))
                         etree.SubElement(xunit, field).text = value
         response = HttpResponse(etree.tostring(root, pretty_print=True),
-                                mimetype='application/force-download')
+                                content_type='application/force-download')
         response['Content-Disposition'] = 'attachment; filename=' + \
                                           company.name + "_DE_"+time+'.xml'
         return response
@@ -687,7 +687,7 @@ def export_hr(request, candidates, export_type, models_excluded=[]):
             user_info[user.email] = units_info
         full_json['candidates'] = user_info
         response = HttpResponse(json.dumps(full_json, indent=4),
-                                mimetype='application/force-download')
+                                content_type='application/force-download')
         response['Content-Disposition'] = 'attachment; filename=' + \
                                           company.name + "_DE_"+time+'.json'
         return response

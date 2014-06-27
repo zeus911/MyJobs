@@ -1,9 +1,6 @@
-from bs4 import BeautifulSoup
-
 from django.template import Template, Context
 from django.test import TestCase
 
-from myjobs.models import User
 from myjobs.tests.factories import UserFactory
 from myjobs.templatetags.common_tags import gz
 from myprofile.tests.factories import PrimaryNameFactory

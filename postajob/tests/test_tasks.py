@@ -7,7 +7,7 @@ from django.test import TestCase
 from mydashboard.tests.factories import CompanyFactory
 from myjobs.tests.factories import UserFactory
 from postajob.models import Job
-from MyJobs.tasks import expire_jobs
+from tasks import expire_jobs
 
 
 class TaskTests(TestCase):
