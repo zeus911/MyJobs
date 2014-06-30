@@ -29,18 +29,17 @@
     <tr>
         <td>Description</td>
         <td>Unit Price</td>
-        <td>Total</td>
     </tr>
     {% for purchase in purchases %}
         <tr>
             <td>{{ purchase.product.name }}</td>
             <td>${{ purchase.purchase_amount }}</td>
-            <td>${{ purchase.purchase_amount }}</td>
         </tr>
     {% endfor %}
+    {% get_purchase_total purchases as total %}
     <tr>
         <td colspan="3" align="right">Subtotal</td>
-        <td align="right">${{ purchase.purchase_amount }}</td>
+        <td align="right">${{ total }}</td>
     </tr>
     <tr>
         <td colspan="3" align="right">Taxes</td>
@@ -48,7 +47,7 @@
     </tr>
     <tr>
         <td colspan="3" align="right">Total</td>
-        <td align="right">${{ purchase.purchase_amount }}</td>
+        <td align="right">${{ total }}</td>
     </tr>
 </table>
 
@@ -59,7 +58,7 @@
             Credit Card Number: *************{{ purchase.card_last_four }}
             <br/>Expiration: {{ invoice.card_exp_date.month }}/{{ invoice.card_exp_date.year }}
             <br/>Name on Credit Card: {{ invoice.first_name }} {{ invoice.last_name }}
-            <br/>Amount Charged: ${{ invoice.purchase_amount }}
+            <br/>Amount Charged: ${{ total }}
         {% else %}
             Redemption Code: {{ invoice.transaction }}
         {% endif %}
