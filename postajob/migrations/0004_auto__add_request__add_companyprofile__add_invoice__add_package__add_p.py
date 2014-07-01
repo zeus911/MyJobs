@@ -2,12 +2,55 @@
 from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import SchemaMigration
+from django.conf import settings
 from django.db import models
 
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
+            db.delete_foreign_key('postajob_product', 'site_package_id')
+            db.delete_foreign_key('seo_company', 'site_package_id')
+            db.delete_foreign_key('seo_seosite', 'site_package_id')
+            db.execute('ALTER TABLE postajob_sitepackage CHANGE id id INT(10) UNSIGNED NOT NULL')
+        db.delete_primary_key('postajob_sitepackage')
+
+
+        # Adding model 'Request'
+        db.create_table(u'postajob_request', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('content_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['contenttypes.ContentType'])),
+            ('object_id', self.gf('django.db.models.fields.IntegerField')()),
+            ('action_taken', self.gf('django.db.models.fields.BooleanField')(default=False)),
+        ))
+        db.send_create_signal(u'postajob', ['Request'])
+
+        # Adding model 'CompanyProfile'
+        db.create_table(u'postajob_companyprofile', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('company', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['mydashboard.Company'], unique=True)),
+            ('address_line_one', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('address_line_two', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('city', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('state', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('country', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('zipcode', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('phone', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('authorize_net_login', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('authorize_net_transaction_key', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+        ))
+        db.send_create_signal(u'postajob', ['CompanyProfile'])
+
+        # Adding M2M table for field customer_of on 'CompanyProfile'
+        m2m_table_name = db.shorten_name(u'postajob_companyprofile_customer_of')
+        db.create_table(m2m_table_name, (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('companyprofile', models.ForeignKey(orm[u'postajob.companyprofile'], null=False)),
+            ('company', models.ForeignKey(orm[u'mydashboard.company'], null=False))
+        ))
+        db.create_unique(m2m_table_name, ['companyprofile_id', 'company_id'])
+
         # Adding model 'Invoice'
         db.create_table(u'postajob_invoice', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -22,125 +65,339 @@ class Migration(SchemaMigration):
             ('state', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('country', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('zipcode', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('owner', self.gf('django.db.models.fields.related.ForeignKey')(related_name='owner', to=orm['mydashboard.Company'])),
         ))
         db.send_create_signal(u'postajob', ['Invoice'])
 
-        # Deleting field 'PurchasedProduct.last_name'
-        db.delete_column(u'postajob_purchasedproduct', 'last_name')
+        # Adding model 'Package'
+        db.create_table(u'postajob_package', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('content_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['contenttypes.ContentType'])),
+        ))
+        db.send_create_signal(u'postajob', ['Package'])
 
-        # Deleting field 'PurchasedProduct.card_last_four'
-        db.delete_column(u'postajob_purchasedproduct', 'card_last_four')
+        # Adding model 'ProductOrder'
+        db.create_table(u'postajob_productorder', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('product', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['postajob.Product'])),
+            ('group', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['postajob.ProductGrouping'])),
+            ('display_order', self.gf('django.db.models.fields.PositiveIntegerField')(default=0)),
+        ))
+        db.send_create_signal(u'postajob', ['ProductOrder'])
 
-        # Deleting field 'PurchasedProduct.city'
-        db.delete_column(u'postajob_purchasedproduct', 'city')
+        # Adding unique constraint on 'ProductOrder', fields ['product', 'group']
+        db.create_unique(u'postajob_productorder', ['product_id', 'group_id'])
 
-        # Deleting field 'PurchasedProduct.first_name'
-        db.delete_column(u'postajob_purchasedproduct', 'first_name')
+        # Adding model 'OfflineProduct'
+        db.create_table(u'postajob_offlineproduct', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('product', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['postajob.Product'])),
+            ('offline_purchase', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['postajob.OfflinePurchase'])),
+            ('product_quantity', self.gf('django.db.models.fields.PositiveIntegerField')(default=1)),
+        ))
+        db.send_create_signal(u'postajob', ['OfflineProduct'])
 
-        # Deleting field 'PurchasedProduct.zipcode'
-        db.delete_column(u'postajob_purchasedproduct', 'zipcode')
-
-        # Deleting field 'PurchasedProduct.state'
-        db.delete_column(u'postajob_purchasedproduct', 'state')
-
-        # Deleting field 'PurchasedProduct.card_exp_date'
-        db.delete_column(u'postajob_purchasedproduct', 'card_exp_date')
-
-        # Deleting field 'PurchasedProduct.address_line_one'
-        db.delete_column(u'postajob_purchasedproduct', 'address_line_one')
-
-        # Deleting field 'PurchasedProduct.transaction'
-        db.delete_column(u'postajob_purchasedproduct', 'transaction')
-
-        # Deleting field 'PurchasedProduct.country'
-        db.delete_column(u'postajob_purchasedproduct', 'country')
-
-        # Deleting field 'PurchasedProduct.address_line_two'
-        db.delete_column(u'postajob_purchasedproduct', 'address_line_two')
+        # Adding model 'OfflinePurchase'
+        db.create_table(u'postajob_offlinepurchase', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('invoice', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['postajob.Invoice'])),
+            ('redemption_uid', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('created_by', self.gf('django.db.models.fields.related.ForeignKey')(related_name='created', to=orm['mydashboard.CompanyUser'])),
+            ('created_on', self.gf('django.db.models.fields.DateField')(auto_now_add=True, blank=True)),
+            ('redeemed_by', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='redeemed', null=True, to=orm['mydashboard.CompanyUser'])),
+            ('redeemed_on', self.gf('django.db.models.fields.DateField')(null=True, blank=True)),
+        ))
+        db.send_create_signal(u'postajob', ['OfflinePurchase'])
 
         # Adding field 'PurchasedProduct.invoice'
         db.add_column(u'postajob_purchasedproduct', 'invoice',
                       self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['postajob.Invoice']),
                       keep_default=False)
 
-        # Adding field 'CompanyProfile.authorize_net_login'
-        db.add_column(u'postajob_companyprofile', 'authorize_net_login',
+        # Adding field 'PurchasedProduct.is_approved'
+        db.add_column(u'postajob_purchasedproduct', 'is_approved',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.paid'
+        db.add_column(u'postajob_purchasedproduct', 'paid',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.purchase_amount'
+        db.add_column(u'postajob_purchasedproduct', 'purchase_amount',
+                      self.gf('django.db.models.fields.DecimalField')(default=0, max_digits=20, decimal_places=2),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.expiration_date'
+        db.add_column(u'postajob_purchasedproduct', 'expiration_date',
+                      self.gf('django.db.models.fields.DateField')(default=datetime.datetime(2014, 7, 1, 0, 0)),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.num_jobs_allowed'
+        db.add_column(u'postajob_purchasedproduct', 'num_jobs_allowed',
+                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.max_job_length'
+        db.add_column(u'postajob_purchasedproduct', 'max_job_length',
+                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      keep_default=False)
+
+        # Adding field 'PurchasedProduct.jobs_remaining'
+        db.add_column(u'postajob_purchasedproduct', 'jobs_remaining',
+                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      keep_default=False)
+
+        # Deleting field 'ProductGrouping.score'
+        db.delete_column(u'postajob_productgrouping', 'score')
+
+        # Deleting field 'ProductGrouping.grouping_name'
+        db.delete_column(u'postajob_productgrouping', 'grouping_name')
+
+        # Adding field 'ProductGrouping.display_order'
+        db.add_column(u'postajob_productgrouping', 'display_order',
+                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      keep_default=False)
+
+        # Adding field 'ProductGrouping.display_title'
+        db.add_column(u'postajob_productgrouping', 'display_title',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
+                      keep_default=False)
+
+        # Adding field 'ProductGrouping.explanation'
+        db.add_column(u'postajob_productgrouping', 'explanation',
+                      self.gf('django.db.models.fields.TextField')(default=''),
+                      keep_default=False)
+
+        # Adding field 'ProductGrouping.name'
+        db.add_column(u'postajob_productgrouping', 'name',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
+                      keep_default=False)
+
+        # Adding field 'ProductGrouping.owner'
+        db.add_column(u'postajob_productgrouping', 'owner',
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['mydashboard.Company']),
+                      keep_default=False)
+
+        # Adding field 'ProductGrouping.is_displayed'
+        db.add_column(u'postajob_productgrouping', 'is_displayed',
+                      self.gf('django.db.models.fields.BooleanField')(default=True),
+                      keep_default=False)
+
+        # Removing M2M table for field products on 'ProductGrouping'
+        db.delete_table(db.shorten_name(u'postajob_productgrouping_products'))
+
+        # Deleting field 'Product.site_package'
+        db.delete_column(u'postajob_product', 'site_package_id')
+
+        # Adding field 'Product.package'
+        db.add_column(u'postajob_product', 'package',
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['postajob.Package']),
+                      keep_default=False)
+
+        # Adding field 'Product.name'
+        db.add_column(u'postajob_product', 'name',
                       self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
                       keep_default=False)
 
-        # Adding field 'CompanyProfile.authorize_net_transaction_key'
-        db.add_column(u'postajob_companyprofile', 'authorize_net_transaction_key',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
+        # Adding field 'Product.description'
+        db.add_column(u'postajob_product', 'description',
+                      self.gf('django.db.models.fields.TextField')(default=''),
+                      keep_default=False)
+
+        # Adding field 'Product.featured'
+        db.add_column(u'postajob_product', 'featured',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
+        # Adding field 'Product.requires_approval'
+        db.add_column(u'postajob_product', 'requires_approval',
+                      self.gf('django.db.models.fields.BooleanField')(default=True),
+                      keep_default=False)
+
+        # Adding field 'Product.is_archived'
+        db.add_column(u'postajob_product', 'is_archived',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
+        # Adding field 'Product.is_displayed'
+        db.add_column(u'postajob_product', 'is_displayed',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
+        # Adding field 'Product.notes'
+        db.add_column(u'postajob_product', 'notes',
+                      self.gf('django.db.models.fields.TextField')(default='', blank=True),
+                      keep_default=False)
+
+        # Deleting field 'SitePackage.name'
+        db.delete_column(u'postajob_sitepackage', 'name')
+
+        # Adding field 'SitePackage.package_ptr'
+        db.add_column(u'postajob_sitepackage', u'package_ptr',
+                      self.gf('django.db.models.fields.related.OneToOneField')(default=1, to=orm['postajob.Package'], unique=True, primary_key=True),
+                      keep_default=False)
+
+        # Adding field 'SitePackage.owner'
+        db.add_column(u'postajob_sitepackage', 'owner',
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mydashboard.Company'], null=True, blank=True),
+                      keep_default=False)
+
+        # Deleting field 'Job.company'
+        db.delete_column(u'postajob_job', 'company_id')
+
+        # Adding field 'Job.owner'
+        db.add_column(u'postajob_job', 'owner',
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['mydashboard.Company']),
+                      keep_default=False)
+
+        # Adding field 'Job.created_by'
+        db.add_column(u'postajob_job', 'created_by',
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['myjobs.User']),
                       keep_default=False)
 
 
     def backwards(self, orm):
+        # Removing unique constraint on 'ProductOrder', fields ['product', 'group']
+        db.delete_unique(u'postajob_productorder', ['product_id', 'group_id'])
+
+        # Deleting model 'Request'
+        db.delete_table(u'postajob_request')
+
+        # Deleting model 'CompanyProfile'
+        db.delete_table(u'postajob_companyprofile')
+
+        # Removing M2M table for field customer_of on 'CompanyProfile'
+        db.delete_table(db.shorten_name(u'postajob_companyprofile_customer_of'))
+
         # Deleting model 'Invoice'
         db.delete_table(u'postajob_invoice')
 
-        # Adding field 'PurchasedProduct.last_name'
-        db.add_column(u'postajob_purchasedproduct', 'last_name',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
-                      keep_default=False)
+        # Deleting model 'Package'
+        db.delete_table(u'postajob_package')
 
-        # Adding field 'PurchasedProduct.card_last_four'
-        db.add_column(u'postajob_purchasedproduct', 'card_last_four',
-                      self.gf('django.db.models.fields.CharField')(default='0000', max_length=5),
-                      keep_default=False)
+        # Deleting model 'ProductOrder'
+        db.delete_table(u'postajob_productorder')
 
-        # Adding field 'PurchasedProduct.city'
-        db.add_column(u'postajob_purchasedproduct', 'city',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
-                      keep_default=False)
+        # Deleting model 'OfflineProduct'
+        db.delete_table(u'postajob_offlineproduct')
 
-        # Adding field 'PurchasedProduct.first_name'
-        db.add_column(u'postajob_purchasedproduct', 'first_name',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
-                      keep_default=False)
-
-        # Adding field 'PurchasedProduct.zipcode'
-        db.add_column(u'postajob_purchasedproduct', 'zipcode',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
-                      keep_default=False)
-
-        # Adding field 'PurchasedProduct.state'
-        db.add_column(u'postajob_purchasedproduct', 'state',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
-                      keep_default=False)
-
-        # Adding field 'PurchasedProduct.card_exp_date'
-        db.add_column(u'postajob_purchasedproduct', 'card_exp_date',
-                      self.gf('django.db.models.fields.DateField')(default=(datetime.date(1971, 1, 1),)),
-                      keep_default=False)
-
-        # Adding field 'PurchasedProduct.address_line_one'
-        db.add_column(u'postajob_purchasedproduct', 'address_line_one',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
-                      keep_default=False)
-
-        # Adding field 'PurchasedProduct.transaction'
-        db.add_column(u'postajob_purchasedproduct', 'transaction',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
-                      keep_default=False)
-
-        # Adding field 'PurchasedProduct.country'
-        db.add_column(u'postajob_purchasedproduct', 'country',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
-                      keep_default=False)
-
-        # Adding field 'PurchasedProduct.address_line_two'
-        db.add_column(u'postajob_purchasedproduct', 'address_line_two',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
-                      keep_default=False)
+        # Deleting model 'OfflinePurchase'
+        db.delete_table(u'postajob_offlinepurchase')
 
         # Deleting field 'PurchasedProduct.invoice'
         db.delete_column(u'postajob_purchasedproduct', 'invoice_id')
 
-        # Deleting field 'CompanyProfile.authorize_net_login'
-        db.delete_column(u'postajob_companyprofile', 'authorize_net_login')
+        # Deleting field 'PurchasedProduct.is_approved'
+        db.delete_column(u'postajob_purchasedproduct', 'is_approved')
 
-        # Deleting field 'CompanyProfile.authorize_net_transaction_key'
-        db.delete_column(u'postajob_companyprofile', 'authorize_net_transaction_key')
+        # Deleting field 'PurchasedProduct.paid'
+        db.delete_column(u'postajob_purchasedproduct', 'paid')
+
+        # Deleting field 'PurchasedProduct.purchase_amount'
+        db.delete_column(u'postajob_purchasedproduct', 'purchase_amount')
+
+        # Deleting field 'PurchasedProduct.expiration_date'
+        db.delete_column(u'postajob_purchasedproduct', 'expiration_date')
+
+        # Deleting field 'PurchasedProduct.num_jobs_allowed'
+        db.delete_column(u'postajob_purchasedproduct', 'num_jobs_allowed')
+
+        # Deleting field 'PurchasedProduct.max_job_length'
+        db.delete_column(u'postajob_purchasedproduct', 'max_job_length')
+
+        # Deleting field 'PurchasedProduct.jobs_remaining'
+        db.delete_column(u'postajob_purchasedproduct', 'jobs_remaining')
+
+        # Adding field 'ProductGrouping.score'
+        db.add_column(u'postajob_productgrouping', 'score',
+                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      keep_default=False)
+
+        # Adding field 'ProductGrouping.grouping_name'
+        db.add_column(u'postajob_productgrouping', 'grouping_name',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
+                      keep_default=False)
+
+        # Deleting field 'ProductGrouping.display_order'
+        db.delete_column(u'postajob_productgrouping', 'display_order')
+
+        # Deleting field 'ProductGrouping.display_title'
+        db.delete_column(u'postajob_productgrouping', 'display_title')
+
+        # Deleting field 'ProductGrouping.explanation'
+        db.delete_column(u'postajob_productgrouping', 'explanation')
+
+        # Deleting field 'ProductGrouping.name'
+        db.delete_column(u'postajob_productgrouping', 'name')
+
+        # Deleting field 'ProductGrouping.owner'
+        db.delete_column(u'postajob_productgrouping', 'owner_id')
+
+        # Deleting field 'ProductGrouping.is_displayed'
+        db.delete_column(u'postajob_productgrouping', 'is_displayed')
+
+        # Adding M2M table for field products on 'ProductGrouping'
+        m2m_table_name = db.shorten_name(u'postajob_productgrouping_products')
+        db.create_table(m2m_table_name, (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('productgrouping', models.ForeignKey(orm[u'postajob.productgrouping'], null=False)),
+            ('product', models.ForeignKey(orm[u'postajob.product'], null=False))
+        ))
+        db.create_unique(m2m_table_name, ['productgrouping_id', 'product_id'])
+
+        # Adding field 'Product.site_package'
+        db.add_column(u'postajob_product', 'site_package',
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['postajob.SitePackage'], null=True),
+                      keep_default=False)
+
+        # Deleting field 'Product.package'
+        db.delete_column(u'postajob_product', 'package_id')
+
+        # Deleting field 'Product.name'
+        db.delete_column(u'postajob_product', 'name')
+
+        # Deleting field 'Product.description'
+        db.delete_column(u'postajob_product', 'description')
+
+        # Deleting field 'Product.featured'
+        db.delete_column(u'postajob_product', 'featured')
+
+        # Deleting field 'Product.requires_approval'
+        db.delete_column(u'postajob_product', 'requires_approval')
+
+        # Deleting field 'Product.is_archived'
+        db.delete_column(u'postajob_product', 'is_archived')
+
+        # Deleting field 'Product.is_displayed'
+        db.delete_column(u'postajob_product', 'is_displayed')
+
+        # Deleting field 'Product.notes'
+        db.delete_column(u'postajob_product', 'notes')
+
+        # Adding field 'SitePackage.name'
+        db.add_column(u'postajob_sitepackage', 'name',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
+                      keep_default=False)
+
+        # Deleting field 'SitePackage.package_ptr'
+        db.delete_column(u'postajob_sitepackage', u'package_ptr_id')
+
+        # Deleting field 'SitePackage.owner'
+        db.delete_column(u'postajob_sitepackage', 'owner_id')
+
+        # Adding field 'Job.company'
+        db.add_column(u'postajob_job', 'company',
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['mydashboard.Company']),
+                      keep_default=False)
+
+        # Deleting field 'Job.owner'
+        db.delete_column(u'postajob_job', 'owner_id')
+
+        # Deleting field 'Job.created_by'
+        db.delete_column(u'postajob_job', 'created_by_id')
 
 
     models = {
@@ -253,6 +510,7 @@ class Migration(SchemaMigration):
             'first_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'owner': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'owner'", 'to': u"orm['mydashboard.Company']"}),
             'state': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'transaction': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'zipcode': ('django.db.models.fields.CharField', [], {'max_length': '255'})
@@ -294,6 +552,7 @@ class Migration(SchemaMigration):
             'created_by': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created'", 'to': u"orm['mydashboard.CompanyUser']"}),
             'created_on': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'invoice': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.Invoice']"}),
             'products': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['postajob.Product']", 'through': u"orm['postajob.OfflineProduct']", 'symmetrical': 'False'}),
             'redeemed_by': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'redeemed'", 'null': 'True', 'to': u"orm['mydashboard.CompanyUser']"}),
             'redeemed_on': ('django.db.models.fields.DateField', [], {'null': 'True', 'blank': 'True'}),
