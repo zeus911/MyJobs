@@ -63,5 +63,8 @@ class CompanyUserAdmin(ForeignKeyAutocompleteAdmin):
     class Meta:
         model = CompanyUser
 
+    class Media:
+        js = ('django_extensions/js/jquery-1.7.2.min.js', )
+
 
 admin.site.register(CompanyUser, CompanyUserAdmin)
