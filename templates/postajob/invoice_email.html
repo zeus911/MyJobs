@@ -1,3 +1,4 @@
+{% load postajob_tags %}
 <table width="400">
     <tr><td align="center">
         {{ purchase.product.owner.name }}
@@ -60,7 +61,7 @@
             <br/>Name on Credit Card: {{ invoice.first_name }} {{ invoice.last_name }}
             <br/>Amount Charged: ${{ total }}
         {% else %}
-            Redemption Code: {{ invoice.transaction }}
+            Redemption Code: {{ purchases.0.redemption_uid }}
         {% endif %}
     </td></tr>
 </table>

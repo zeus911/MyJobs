@@ -674,7 +674,7 @@ class Invoice(BaseModel):
             'invoice': self,
             'purchase_date': (purchases[0].purchase_date if purchases
                               else date.today()),
-            'purchases': PurchasedProduct.objects.filter(invoice=self),
+            'purchases': purchases,
         }
 
         owner = self.owner
