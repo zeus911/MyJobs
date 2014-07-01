@@ -448,7 +448,7 @@ class PurchasedProductForm(RequestForm):
     city = CharField(label='Billing City')
     state = CharField(label='Billing State')
     country = CharField(label='Billing Country')
-    zipcode = CharField(label='Billing Zipcode')
+    zipcode = CharField(label='Billing Zip Code')
 
     def __init__(self, *args, **kwargs):
         self.product = kwargs.pop('product', None)
