@@ -548,7 +548,6 @@ class OfflinePurchaseForm(RequestForm):
 
         # Create the Product list.
         products = Product.objects.filter(owner=self.company)
-        print products
         for product in products:
             label = '{name} - ${cost}'.format(name=product.name,
                                               cost=product.cost)
