@@ -11,8 +11,8 @@ from django.forms import (CharField, CheckboxSelectMultiple,
 from universal.forms import RequestForm
 from mydashboard.models import SeoSite
 from mypartners.widgets import SplitDateDropDownField
-from postajob.models import (CompanyProfile, Job, OfflinePurchase, Package,
-                             Product, ProductGrouping, ProductOrder,
+from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
+                             Package, Product, ProductGrouping, ProductOrder,
                              PurchasedProduct, PurchasedJob, SitePackage)
 from postajob.payment import authorize_card, get_card, settle_transaction
 from postajob.widgets import ExpField
@@ -440,6 +440,16 @@ class PurchasedProductForm(RequestForm):
     cvv = IntegerField(label='CVV')
     exp_date = ExpField(label='Expiration Date')
 
+    first_name = CharField(label='First Name on Card')
+    last_name = CharField(label='Last Name on Card')
+    address_line_one = CharField(label='Billing Address Line One')
+    address_line_two = CharField(label='Billing Address Line Two',
+                                 required=False)
+    city = CharField(label='Billing City')
+    state = CharField(label='Billing State')
+    country = CharField(label='Billing Country')
+    zipcode = CharField(label='Billing Zip Code')
+
     def __init__(self, *args, **kwargs):
         self.product = kwargs.pop('product', None)
         super(PurchasedProductForm, self).__init__(*args, **kwargs)
@@ -469,6 +479,7 @@ class PurchasedProductForm(RequestForm):
             raise ValidationError(e.message)
 
         try:
+            self.transaction = '1'
             self.transaction = authorize_card(self.product.cost, card)
         except AuthorizeResponseError, e:
             msg = e.full_response['response_reason_text']
@@ -478,21 +489,35 @@ class PurchasedProductForm(RequestForm):
         return self.cleaned_data
 
     def save(self, commit=True):
-        self.instance.transaction = self.transaction.uid
+        invoice = Invoice.objects.create(
+            address_line_one=self.cleaned_data.get('address_line_one'),
+            address_line_two=self.cleaned_data.get('address_line_two'),
+            card_exp_date=self.cleaned_data.get('exp_date'),
+            card_last_four=self.cleaned_data.get('card_number')[-4:],
+            city=self.cleaned_data.get('city'),
+            country=self.cleaned_data.get('country'),
+            first_name=self.cleaned_data.get('first_name'),
+            last_name=self.cleaned_data.get('last_name'),
+            owner=self.product.owner,
+            state=self.cleaned_data.get('state'),
+            transaction=self.transaction.uid,
+            zipcode=self.cleaned_data.get('zipcode'),
+        )
+        self.instance.invoice = invoice
         self.instance.product = self.product
         self.instance.owner = self.company
-        self.instance.card_last_four = self.cleaned_data.get('card_number')[-4:]
-        self.instance.card_exp_date = self.cleaned_data.get('exp_date')
+
         super(PurchasedProductForm, self).save(commit)
         try:
             settled_transaction = settle_transaction(self.transaction)
-            self.instance.transaction = settled_transaction.uid
+            invoice.transaction = settled_transaction.uid
             self.instance.paid = True
             self.instance.save()
+            invoice.save()
         except AuthorizeResponseError:
             pass
         else:
-            self.instance.send_invoice_email([self.request.user.email])
+            invoice.send_invoice_email([self.request.user.email])
 
 
 class OfflinePurchaseForm(RequestForm):
@@ -506,7 +531,7 @@ class OfflinePurchaseForm(RequestForm):
     class Meta:
         model = OfflinePurchase
         exclude = ('created_by', 'created_on', 'redeemed_by', 'redeemed_on',
-                   'redemption_uid', 'products', )
+                   'redemption_uid', 'products', 'invoice', )
 
     def __init__(self, *args, **kwargs):
         super(OfflinePurchaseForm, self).__init__(*args, **kwargs)

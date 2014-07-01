@@ -4,6 +4,7 @@ from StringIO import StringIO
 
 from django.core import mail
 from django.core.urlresolvers import reverse
+from django.middleware.transaction import transaction
 from django.test import TestCase
 
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
@@ -455,6 +456,7 @@ class ViewTests(TestCase):
 
     def test_purchasedproduct_add(self):
         product = {'product': self.product.pk}
+
         response = self.client.post(reverse('purchasedproduct_add',
                                             kwargs=product),
                                     data=self.purchasedproduct_form_data,
@@ -463,11 +465,11 @@ class ViewTests(TestCase):
         self.assertEqual(PurchasedProduct.objects.all().count(), 1)
         purchase = PurchasedProduct.objects.get()
         self.assertTrue(purchase.paid)
-        self.assertEqual(purchase.card_last_four,
+        self.assertEqual(purchase.invoice.card_last_four,
                          self.purchasedproduct_form_data['card_number'][-4:])
-        self.assertEqual(purchase.card_exp_date.month,
+        self.assertEqual(purchase.invoice.card_exp_date.month,
                          self.purchasedproduct_form_data['exp_date_0'])
-        self.assertEqual(purchase.card_exp_date.year,
+        self.assertEqual(purchase.invoice.card_exp_date.year,
                          self.purchasedproduct_form_data['exp_date_1'])
         exp_date = date.today() + timedelta(self.product.posting_window_length)
         self.assertEqual(purchase.expiration_date, exp_date)

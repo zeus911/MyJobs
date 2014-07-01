@@ -40,3 +40,8 @@ def get_form_action(context):
     elif current_url_name == 'purchasedproduct_add':
         return 'Purchase'
     return 'Add'
+
+
+@register.assignment_tag
+def get_purchase_total(purchases):
+    return sum(purchase.purchase_amount for purchase in purchases)

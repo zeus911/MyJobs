@@ -1,7 +1,7 @@
 import datetime
 
-from postajob.models import (Job, Product, ProductGrouping, PurchasedJob,
-                             PurchasedProduct, SitePackage)
+from postajob.models import (Job, Invoice, Product, ProductGrouping,
+                             PurchasedJob, PurchasedProduct, SitePackage)
 
 
 # Because of the way the SubFactory works, each Factory was generating
@@ -94,6 +94,16 @@ def productgrouping_factory(company, **kwargs):
 
 def purchasedproduct_factory(product, company, **kwargs):
     purchasedproduct_data = {
+        'invoice': invoice_factory(product.owner),
+        'owner': company,
+        'product': product,
+        'purchase_date': datetime.datetime.now(),
+    }
+    return create_instance(PurchasedProduct, purchasedproduct_data, kwargs)
+
+
+def invoice_factory(owner, **kwargs):
+    invoice_data = {
         'address_line_one': '123 Street Rd',
         'address_line_two': 'Suite 321',
         'card_exp_date': datetime.date.today(),
@@ -102,11 +112,9 @@ def purchasedproduct_factory(product, company, **kwargs):
         'country': 'US',
         'first_name': 'John',
         'last_name': 'Smith',
-        'owner': company,
-        'product': product,
-        'purchase_date': datetime.datetime.now(),
+        'owner': owner,
         'state': 'Indiana',
         'transaction': '123456',
         'zipcode': '46268',
     }
-    return create_instance(PurchasedProduct, purchasedproduct_data, kwargs)
+    return create_instance(Invoice, invoice_data, kwargs)

@@ -75,23 +75,32 @@ def order_postajob(request):
     This view will always get two variables and always switches display_order.
 
     """
+    models = {
+        'grouping': ProductGrouping
+    }
+
     company = get_company(request)
     obj_type = request.GET.get('obj_type')
     # Variables
-    if obj_type == "groupings":
-        a = ProductGrouping.objects.get(pk=request.GET.get('a'))
-        b = ProductGrouping.objects.get(pk=request.GET.get('b'))
 
-        # Swap two variables
-        a.display_order, b.display_order = b.display_order, a.display_order
+    try:
+        model = models[obj_type]
+    except KeyError:
+        raise Http404
 
-        # Save Objects
-        a.save()
-        b.save()
+    a = model.objects.get(pk=request.GET.get('a'))
+    b = model.objects.get(pk=request.GET.get('b'))
+
+    # Swap two variables
+    a.display_order, b.display_order = b.display_order, a.display_order
+
+    # Save Objects
+    a.save()
+    b.save()
 
     data = {
+        'order': True,
         'product_groupings': ProductGrouping.objects.filter(owner=company),
-        'order': True
     }
 
     # Render updated rows
@@ -273,3 +282,12 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
     add_name = 'offlinepurchase_add'
     update_name = 'offlinepurchase_update'
     delete_name = 'offlinepurchase_delete'
+
+    @method_decorator(company_has_access('product_access'))
+    def dispatch(self, *args, **kwargs):
+        """
+        Decorators on this function will be run on every request that
+        goes through this class.
+
+        """
+        return super(OfflinePurchaseFormView, self).dispatch(*args, **kwargs)
