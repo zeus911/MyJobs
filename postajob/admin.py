@@ -154,8 +154,8 @@ class ProductGroupingFormAdmin(ModelAdminWithRequest):
 class PurchasedProductFormAdmin(ModelAdminWithRequest):
     actions = None
     form = PurchasedProductForm
-    list_display = ('transaction', 'product', 'owner', 'first_name',
-                    'last_name', 'paid', 'expiration_date', 'num_jobs_allowed',
+    list_display = ('product', 'owner',
+                    'paid', 'expiration_date', 'num_jobs_allowed',
                     'jobs_remaining', )
 
     def __init__(self, *args, **kwargs):

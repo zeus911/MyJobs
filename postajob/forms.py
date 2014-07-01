@@ -531,7 +531,7 @@ class OfflinePurchaseForm(RequestForm):
     class Meta:
         model = OfflinePurchase
         exclude = ('created_by', 'created_on', 'redeemed_by', 'redeemed_on',
-                   'redemption_uid', 'products', )
+                   'redemption_uid', 'products', 'invoice', )
 
     def __init__(self, *args, **kwargs):
         super(OfflinePurchaseForm, self).__init__(*args, **kwargs)
@@ -548,6 +548,7 @@ class OfflinePurchaseForm(RequestForm):
 
         # Create the Product list.
         products = Product.objects.filter(owner=self.company)
+        print products
         for product in products:
             label = '{name} - ${cost}'.format(name=product.name,
                                               cost=product.cost)

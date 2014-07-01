@@ -290,4 +290,4 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
         goes through this class.
 
         """
-        return super(ProductGroupingFormView, self).dispatch(*args, **kwargs)
+        return super(OfflinePurchaseFormView, self).dispatch(*args, **kwargs)
