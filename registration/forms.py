@@ -77,18 +77,6 @@ class CustomPasswordResetForm(PasswordResetForm):
                                        'id': 'id_email',
                                        'class': 'reset-pass-input'}))
 
-    #def __init__(self, *args, **kwargs):
-#        super(CustomPasswordResetForm, self).__init__(*args, **kwargs)
-
-    #def clean_email(self):
-    #    email = self.cleaned_data['email']
-    #    users = User.objects.filter(email__iexact=email)
-    #    if not users.exists():
-    #        raise forms.ValidationError('no user')
-    #    if not any((user.has_usable_password()) for user in users):
-    #        raise forms.ValidationError('no usable passwords')
-#        return email
-
 
 class RegistrationForm(forms.Form):
     email = forms.EmailField(error_messages={'required':'Email is required.'},
