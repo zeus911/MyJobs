@@ -5,6 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from myjobs.models import User
 
+
 class CustomAuthForm(AuthenticationForm):
     """
     Custom login form based on Django's default login form. This allows us to
@@ -76,20 +77,19 @@ class CustomPasswordResetForm(PasswordResetForm):
                                        'id': 'id_email',
                                        'class': 'reset-pass-input'}))
 
-    def __init__(self, *args, **kwargs):
-        super(CustomPasswordResetForm, self).__init__(*args, **kwargs)
+    #def __init__(self, *args, **kwargs):
+#        super(CustomPasswordResetForm, self).__init__(*args, **kwargs)
 
-    def clean_email(self):
-        email = self.cleaned_data["email"]
-        users = User.objects.filter(email__iexact=email)
-        if not users.exists():
-            raise forms.ValidationError(self.error_messages['unknown'])
-        if not any((user.has_usable_password())
-                   for user in users):
-            raise forms.ValidationError(self.error_messages['unusable'])
-        return email
-        
-        
+    #def clean_email(self):
+    #    email = self.cleaned_data['email']
+    #    users = User.objects.filter(email__iexact=email)
+    #    if not users.exists():
+    #        raise forms.ValidationError('no user')
+    #    if not any((user.has_usable_password()) for user in users):
+    #        raise forms.ValidationError('no usable passwords')
+#        return email
+
+
 class RegistrationForm(forms.Form):
     email = forms.EmailField(error_messages={'required':'Email is required.'},
                              label=_("Email"), required=True,
