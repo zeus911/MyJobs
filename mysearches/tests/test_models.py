@@ -7,6 +7,7 @@ from mock import patch
 
 from myjobs.tests.factories import UserFactory
 from myprofile.tests.factories import PrimaryNameFactory
+from mysearches.models import SavedSearch
 from mysearches.tests.factories import (SavedSearchFactory,
                                         SavedSearchDigestFactory)
 from mysearches.tests.test_helpers import return_file
@@ -22,7 +23,11 @@ class SavedSearchModelsTests(TestCase):
         self.mock_urlopen = self.patcher.start()
 
     def tearDown(self):
-        self.patcher.stop()
+        try:
+            self.patcher.stop()
+        except RuntimeError:
+            # patcher was stopped in a test
+            pass
 
     def test_send_search_email(self):
         SavedSearchDigestFactory(user=self.user,
@@ -169,3 +174,30 @@ class SavedSearchModelsTests(TestCase):
         search.send_email()
         email = mail.outbox.pop()
         self.assertTrue('activate your account' in email.body)
+
+    def test_fix_fixable_search(self):
+        self.patcher.stop()
+        SavedSearchDigestFactory(user=self.user)
+        search = SavedSearchFactory(user=self.user, feed='')
+        self.assertFalse(search.feed)
+
+        send_search_digests()
+        self.assertEqual(len(mail.outbox), 0)
+
+        search = SavedSearch.objects.get(pk=search.pk)
+        self.assertTrue(search.is_active)
+        self.assertTrue(search.feed)
+
+    def test_disable_bad_search(self):
+        self.patcher.stop()
+        SavedSearchDigestFactory(user=self.user)
+        search = SavedSearchFactory(user=self.user, feed='',
+                                    url='http://example.com')
+        self.assertFalse(search.feed)
+
+        send_search_digests()
+        email = mail.outbox.pop()
+        search = SavedSearch.objects.get(pk=search.pk)
+        self.assertFalse(search.is_active)
+
+        self.assertTrue('has failed URL validation' in email.body)
