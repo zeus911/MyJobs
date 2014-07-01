@@ -115,8 +115,7 @@ class Name(ProfileUnits):
     def save(self, *args, **kwargs):
         """
         Custom name save method to ensure only one name object per user
-        has one primary=True. We avoid a race condition by locking the
-        transaction using select_for_update. Also, this function updates the
+        has one primary=True. This function also updates the
         user's first_name and last_name.
         """
         duplicate_names = Name.objects.filter(user=self.user,
@@ -130,8 +129,8 @@ class Name(ProfileUnits):
                     duplicate = duplicate_names[0]
                     if duplicate.primary is False:
                         try:
-                            current_primary = Name.objects.select_for_update(
-                            ).get(primary=True, user=self.user)
+                            current_primary = Name.objects.get(primary=True,
+                                                               user=self.user)
                         except Name.DoesNotExist:
                             duplicate.primary = True
                             self.user.add_primary_name(
@@ -167,8 +166,7 @@ class Name(ProfileUnits):
 
     def switch_primary_name(self, *args, **kwargs):
         try:
-            temp = Name.objects.select_for_update().get(primary=True,
-                                                        user=self.user)
+            temp = Name.objects.get(primary=True, user=self.user)
         except Name.DoesNotExist:
             self.user_full_name_check()
             super(Name, self).save(*args, **kwargs)
