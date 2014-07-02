@@ -592,3 +592,38 @@ class OfflinePurchaseForm(RequestForm):
             instance.redeemed_on = date.today()
             instance.create_purchased_products(company)
             instance.save()
+
+
+class OfflinePurchaseRedemptionForm(RequestForm):
+    """
+    This is barely a traditional ModelForm (and would probably be better off
+    as just a regular form), but is going to be treated as a ModelForm
+    so the same form can override the OfflinePurchase admin
+    as well.
+
+    """
+    class Meta:
+        model = OfflinePurchase
+        exclude = ('created_by', 'created_on', 'redeemed_by', 'redeemed_on',
+                   'redemption_uid', 'products', 'invoice', 'owner', )
+
+    redemption_id = CharField(label='Redemption ID')
+
+    def clean_redemption_id(self):
+        redemption_id = self.cleaned_data.get('redemption_id')
+        offline_purchase = get_object_or_none(OfflinePurchase,
+                                              redemption_uid=redemption_id,
+                                              redeemed_by=None,
+                                              redeemed_on=None)
+        if not offline_purchase:
+            raise ValidationError('The redemption id you entered is invalid.')
+
+        return offline_purchase
+
+    def save(self, commit=True):
+        self.instance = self.cleaned_data.get('redemption_id')
+        self.instance.redeemed_by = CompanyUser.objects.get(
+            user=self.request.user, company=self.company)
+        self.instance.redeemed_on = date.today()
+        instance = super(OfflinePurchaseRedemptionForm, self).save(commit)
+        instance.create_purchased_products(self.company)

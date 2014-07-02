@@ -10,7 +10,8 @@ from universal.helpers import get_company
 from universal.views import RequestFormViewBase
 from universal.decorators import company_has_access
 from mydashboard.models import CompanyUser
-from postajob.forms import (JobForm, OfflinePurchaseForm, ProductForm,
+from postajob.forms import (JobForm, OfflinePurchaseForm,
+                            OfflinePurchaseRedemptionForm, ProductForm,
                             ProductGroupingForm, PurchasedJobForm,
                             PurchasedProductForm)
 from postajob.models import (Job, OfflinePurchase, Product, ProductGrouping,
@@ -302,3 +303,25 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
 
         """
         return super(OfflinePurchaseFormView, self).dispatch(*args, **kwargs)
+
+
+class OfflinePurchaseRedemptionFormView(PostajobModelFormMixin,
+                                        RequestFormViewBase):
+    form_class = OfflinePurchaseRedemptionForm
+    model = OfflinePurchase
+    display_name = 'Offline Purchase'
+
+    success_url = reverse_lazy('purchasedjobs_overview')
+    add_name = 'offlinepurchase_redeem'
+    update_name = None
+    delete_name = None
+
+    def set_object(self, request):
+        """
+        Purchased products can't be edited or deleted, so prevent anyone
+        getting an actual object to edit/delete.
+
+        """
+        self.object = None
+        if not resolve(request.path).url_name == self.add_name:
+            raise Http404
