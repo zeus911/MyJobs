@@ -91,7 +91,7 @@ class SavedSearch(models.Model):
                 self.url = mypartners.helpers.add_extra_params(self.url, extras)
         if self.custom_message and not custom_msg:
             custom_msg = self.custom_message
-        if self.user.opt_in_myjobs and items:
+        if self.user.can_receive_myjobs_email() and items:
             context_dict = {'saved_searches': [(self, items, count)],
                             'custom_msg': custom_msg}
             subject = self.label.strip()
@@ -245,7 +245,7 @@ class SavedSearchDigest(models.Model):
         saved_searches = [(search, items, count)
                           for search, items, count in search_list
                           if items]
-        if self.user.opt_in_myjobs and saved_searches:
+        if self.user.can_receive_myjobs_email() and saved_searches:
             subject = _('Your Daily Saved Search Digest')
             context_dict = {'saved_searches': saved_searches,
                             'digest': self,

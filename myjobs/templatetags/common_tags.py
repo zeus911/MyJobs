@@ -201,10 +201,12 @@ def gz(context):
     else:
         return ''
 
+
 @register.assignment_tag
 def json_companies(companies):
     info = [{"name": company.name, "id": company.id} for company in companies]
     return json.dumps(info)
+
 
 @register.filter
 def get_suggestions(user):
