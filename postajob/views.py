@@ -36,14 +36,15 @@ def purchasedjobs_overview(request):
 
 
 @company_has_access('product_access')
-def products_overview(request):
+def admin_overview(request):
     company = get_company(request)
     data = {
         'products': Product.objects.filter(owner=company)[:3],
         'product_groupings': ProductGrouping.objects.filter(owner=company)[:3],
+        'offline_purchases': OfflinePurchase.objects.filter(owner=company)[:3],
         'company': company
     }
-    return render_to_response('postajob/products_overview.html', data,
+    return render_to_response('postajob/admin_overview.html', data,
                               RequestContext(request))
 
 
@@ -65,7 +66,17 @@ def admin_groupings(request):
         'product_groupings': ProductGrouping.objects.filter(owner=company),
         'company': company,
     }
-    return render_to_response('postajob/productgroups.html', data,
+    return render_to_response('postajob/productgrouping.html', data,
+                              RequestContext(request))
+
+@company_has_access('product_access')
+def admin_offlinepurchase(request):
+    company = get_company(request)
+    data = {
+        'offline_purchases': OfflinePurchase.objects.filter(owner=company),
+        'company': company,
+    }
+    return render_to_response('postajob/offlinepurchase.html', data,
                               RequestContext(request))
 
 
@@ -166,23 +177,6 @@ class PostajobModelFormMixin(object):
         return self.success_url
 
 
-class DisableUpdateDeleteMixin(object):
-    """
-    A mixin that disables the update/delete views that are otherwise
-    required by ModelForms.
-
-    """
-    def set_object(self, request):
-        """
-        Purchased products can't be edited or deleted, so prevent anyone
-        getting an actual object to edit/delete.
-
-        """
-        self.object = None
-        if not resolve(request.path).url_name.endswith('_add'):
-            raise Http404
-
-
 class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
     form_class = JobForm
     model = Job
@@ -265,8 +259,7 @@ class ProductGroupingFormView(PostajobModelFormMixin, RequestFormViewBase):
         return super(ProductGroupingFormView, self).dispatch(*args, **kwargs)
 
 
-class PurchasedProductFormView(DisableUpdateDeleteMixin, PostajobModelFormMixin,
-                               PurchaseFormViewBase):
+class PurchasedProductFormView(PostajobModelFormMixin, PurchaseFormViewBase):
     form_class = PurchasedProductForm
     model = PurchasedProduct
     # The display name is determined by the product id and set in dispatch().
@@ -280,13 +273,23 @@ class PurchasedProductFormView(DisableUpdateDeleteMixin, PostajobModelFormMixin,
     purchase_field = 'product'
     purchase_model = Product
 
+    def set_object(self, request):
+        """
+        Purchased products can't be edited or deleted, so prevent anyone
+        getting an actual object to edit/delete.
+
+        """
+        self.object = None
+        if not resolve(request.path).url_name.endswith('_add'):
+            raise Http404
+
 
 class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
     form_class = OfflinePurchaseForm
     model = OfflinePurchase
     display_name = 'Offline Purchase'
 
-    success_url = reverse_lazy('products_overview')
+    success_url = reverse_lazy('offlinepurchase')
     add_name = 'offlinepurchase_add'
     update_name = 'offlinepurchase_update'
     delete_name = 'offlinepurchase_delete'

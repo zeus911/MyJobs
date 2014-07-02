@@ -2,8 +2,8 @@
 {% load i18n %}
 
 {% block site-title %}
-    <title>Product Overview - My.jobs</title>
-    <meta name="title" content="Product Overview - My.jobs">
+<title>Product Overview - My.jobs</title>
+<meta name="title" content="Offline Purchase Overvivew - My.jobs">
 {% endblock %}
 {% load i18n %}
 
@@ -18,9 +18,9 @@ Products
 {% block postajob_content %}
 <div class="row">
     <div class="span8">
-        <a href="{% url 'product_add' %}" class="btn">Add Product</a>
+        <a href="{% url 'offlinepurchase_add' %}" class="btn">Add an Offline Purchase</a>
         <br /><br />
-        {% include "postajob/includes/product_formBox.html" with formBox_title="Products" formBox_footer=False %}
+        {% include "postajob/includes/offlinepurchase_formBox.html" with formBox_title="Offline Purchases" formBox_footer=False %}
     </div>
     <div class="span4">
         {% include "postajob/includes/postajob_navigation.html" %}

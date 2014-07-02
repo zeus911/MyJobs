@@ -8,14 +8,16 @@ from django.forms import (CharField, CheckboxSelectMultiple,
                           HiddenInput, IntegerField, ModelMultipleChoiceField,
                           RadioSelect, Select, TextInput)
 
-from universal.forms import RequestForm
-from mydashboard.models import SeoSite
+from mydashboard.models import Company, CompanyUser, SeoSite
 from mypartners.widgets import SplitDateDropDownField
 from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
-                             Package, Product, ProductGrouping, ProductOrder,
-                             PurchasedProduct, PurchasedJob, SitePackage)
+                             OfflineProduct, Package, Product, ProductGrouping,
+                             ProductOrder, PurchasedProduct, PurchasedJob,
+                             SitePackage)
 from postajob.payment import authorize_card, get_card, settle_transaction
 from postajob.widgets import ExpField
+from universal.forms import RequestForm
+from universal.helpers import get_object_or_none
 
 
 class BaseJobForm(RequestForm):
@@ -530,7 +532,7 @@ class OfflinePurchaseForm(RequestForm):
     class Meta:
         model = OfflinePurchase
         exclude = ('created_by', 'created_on', 'redeemed_by', 'redeemed_on',
-                   'redemption_uid', 'products', 'invoice', )
+                   'redemption_uid', 'products', 'invoice', 'owner', )
 
     class Media:
         css = {
@@ -541,19 +543,52 @@ class OfflinePurchaseForm(RequestForm):
     def __init__(self, *args, **kwargs):
         super(OfflinePurchaseForm, self).__init__(*args, **kwargs)
 
+        self.products = Product.objects.filter(owner=self.company)
+
         # Create select box of available companies.
         profiles = CompanyProfile.objects.filter(customer_of=self.company)
         company_choices = [(x.company.pk, x.company.name) for x in profiles]
-        company_choices.insert(0, (0, 'None'))
+        company_choices.insert(0, ('', 'None'))
         self.fields['purchasing_company'] = CharField(
             label='Purchasing Company', widget=Select(choices=company_choices),
             required=False, help_text="Only companies that have specified "
                                       "that they are a customer will be in "
                                       "this list.")
-
         # Create the Product list.
-        products = Product.objects.filter(owner=self.company)
-        for product in products:
+        for product in self.products:
             label = '{name}'.format(name=product.name, cost=product.cost)
-            self.fields[product.pk] = IntegerField(label=label,
-                                                   initial=0)
+            self.fields[str(product.pk)] = IntegerField(label=label, initial=0,
+                                                        min_value=0)
+
+    def save(self, commit=True):
+        self.instance.owner = self.company
+        self.instance.created_by = CompanyUser.objects.get(
+            company=self.company, user=self.request.user)
+
+        instance = super(OfflinePurchaseForm, self).save(commit)
+
+        invoice = Invoice.objects.create(
+            card_exp_date=date.today(), card_last_four='XXXX',
+            address_line_one='', city='', state='', zipcode='', country='',
+            first_name='', last_name='',
+            owner=self.company,
+            transaction=instance.pk,
+        )
+        instance.invoice = invoice
+
+        for product in self.products:
+            product_quantity = self.cleaned_data.get(str(product.pk))
+            if product_quantity:
+                OfflineProduct.objects.create(
+                    product=product, offline_purchase=instance,
+                    product_quantity=product_quantity
+                )
+
+        instance.save()
+
+        company = get_object_or_none(Company,
+                                     pk=self.cleaned_data.get('purchasing_company'))
+        if company:
+            instance.redeemed_on = date.today()
+            instance.create_purchased_products(company)
+            instance.save()

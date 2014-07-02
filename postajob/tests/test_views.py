@@ -4,7 +4,6 @@ from StringIO import StringIO
 
 from django.core import mail
 from django.core.urlresolvers import reverse
-from django.middleware.transaction import transaction
 from django.test import TestCase
 
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
