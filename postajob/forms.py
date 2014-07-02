@@ -479,7 +479,6 @@ class PurchasedProductForm(RequestForm):
             raise ValidationError(e.message)
 
         try:
-            self.transaction = '1'
             self.transaction = authorize_card(self.product.cost, card)
         except AuthorizeResponseError, e:
             msg = e.full_response['response_reason_text']
@@ -533,6 +532,12 @@ class OfflinePurchaseForm(RequestForm):
         exclude = ('created_by', 'created_on', 'redeemed_by', 'redeemed_on',
                    'redemption_uid', 'products', 'invoice', )
 
+    class Media:
+        css = {
+            'all': ('postajob.153-10.css', )
+        }
+        js = ('postajob.153-05.js', )
+
     def __init__(self, *args, **kwargs):
         super(OfflinePurchaseForm, self).__init__(*args, **kwargs)
 
@@ -549,7 +554,6 @@ class OfflinePurchaseForm(RequestForm):
         # Create the Product list.
         products = Product.objects.filter(owner=self.company)
         for product in products:
-            label = '{name} - ${cost}'.format(name=product.name,
-                                              cost=product.cost)
+            label = '{name}'.format(name=product.name, cost=product.cost)
             self.fields[product.pk] = IntegerField(label=label,
                                                    initial=0)

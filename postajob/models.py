@@ -486,6 +486,16 @@ class ProductGrouping(BaseModel):
     def __unicode__(self):
         return self.name
 
+    def save(self, **kwargs):
+        if self.is_displayed and self.display_order == 0:
+            next_order = ProductGrouping.objects.filter(owner=self.owner)
+            next_order = next_order.aggregate(models.Max('display_order'))
+            self.display_order = ((next_order['display_order__max'] + 1)
+                                  if next_order['display_order__max'] else 1)
+        elif not self.is_displayed:
+            self.display_order = 0
+        super(ProductGrouping, self).save(**kwargs)
+
 
 class ProductOrder(models.Model):
     class Meta:

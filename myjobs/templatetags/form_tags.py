@@ -32,4 +32,4 @@ def add_required_label(field, *classes):
     if field.field.required:
         field.label = "{label} *".format(label=unicode(field.label))
     label = field.label_tag(attrs={'class': ' '.join(classes)})
-    return label
+    return label.replace(":", "")

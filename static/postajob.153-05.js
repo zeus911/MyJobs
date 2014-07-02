@@ -9,7 +9,6 @@ window.onload = function(){
     update_apply_fields();
     update_site_fields();
     update_job_limit_fields();
-    add_refresh_btn();
 
     // Job Form
     $(document).on("change", '#id_apply_type_0', function(){
@@ -35,6 +34,9 @@ window.onload = function(){
     $(document).on("change", '#id_job_limit_1', function() {
         update_job_limit_fields();
     });
+
+    var header_html = '<div class="clear"></div><div class="span3 form-label pull-left initial header"><b>Product</b></div><div class="profile-form-input header"><b>Quantity</b></div>';
+    $(header_html).insertAfter('.purchasing-company-field');
 };
 
 
