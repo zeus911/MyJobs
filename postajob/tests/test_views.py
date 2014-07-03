@@ -4,20 +4,21 @@ from StringIO import StringIO
 
 from django.core import mail
 from django.core.urlresolvers import reverse
-from django.middleware.transaction import transaction
 from django.test import TestCase
 
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          CompanyUserFactory, SeoSiteFactory)
 from myjobs.tests.factories import UserFactory
 from postajob.tests.factories import (product_factory, job_factory,
+                                      offlinepurchase_factory,
+                                      offlineproduct_factory,
                                       productgrouping_factory,
                                       purchasedjob_factory,
                                       purchasedproduct_factory,
                                       sitepackage_factory)
-from postajob.models import (Job, Package, Product, ProductGrouping,
-                             PurchasedJob, PurchasedProduct, Request,
-                             SitePackage)
+from postajob.models import (Job, OfflinePurchase, Package, Product,
+                             ProductGrouping, PurchasedJob, PurchasedProduct,
+                             Request, SitePackage)
 from universal.helpers import build_url
 
 
@@ -117,6 +118,11 @@ class ViewTests(TestCase):
             'last_name': 'Smith',
             'state': 'Indiana',
             'zipcode': '46268',
+        }
+
+        self.offlinepurchase_form_data = {
+            'purchasing_company': '',
+            str(self.product.pk): 1,
         }
 
     def login_user(self):
@@ -541,3 +547,86 @@ class ViewTests(TestCase):
         url = build_url(reverse('is_company_user'), params)
         response = self.client.post(url)
         self.assertEqual(response.status_code, 404)
+
+    def test_offlinepurchase_redeem(self):
+        offline_purchase = offlinepurchase_factory(self.company,
+                                                   self.company_user)
+        offlineproduct_factory(self.product, offline_purchase,
+                               product_quantity=3)
+
+        data = {'redemption_id': offline_purchase.redemption_uid}
+        current_product_count = PurchasedProduct.objects.all().count()
+        response = self.client.post(reverse('offlinepurchase_redeem'),
+                                    data=data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(current_product_count + 3,
+                         PurchasedProduct.objects.all().count())
+
+        # Make sure we're working with the most recent copy of the object.
+        offline_purchase = OfflinePurchase.objects.get()
+        self.assertIsNotNone(offline_purchase.redeemed_on)
+        self.assertIsNotNone(offline_purchase.redeemed_by)
+
+    def test_offlinepurchase_redeem_invalid(self):
+        data = {'redemption_id': 1}
+        current_product_count = PurchasedProduct.objects.all().count()
+        response = self.client.post(reverse('offlinepurchase_redeem'),
+                                    data=data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(current_product_count,
+                         PurchasedProduct.objects.all().count())
+
+    def test_offlinepurchase_redeem_already_redeemed(self):
+        offline_purchase = offlinepurchase_factory(
+            self.company, self.company_user, redeemed_on=date.today(),
+            redeemed_by=self.company_user
+        )
+        offlineproduct_factory(self.product, offline_purchase,
+                               product_quantity=7)
+
+        data = {'redemption_id': offline_purchase.redemption_uid}
+        current_product_count = PurchasedProduct.objects.all().count()
+        response = self.client.post(reverse('offlinepurchase_redeem'),
+                                    data=data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(current_product_count,
+                         PurchasedProduct.objects.all().count())
+
+    def test_offlinepurchase_add_without_company(self):
+        response = self.client.post(reverse('offlinepurchase_add'),
+                                    data=self.offlinepurchase_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(OfflinePurchase.objects.all().count(), 1)
+        offline_purchase = OfflinePurchase.objects.get()
+        self.assertIn(offline_purchase.redemption_uid, response.content)
+
+    def test_offlinepurchase_add_with_company(self):
+        self.offlinepurchase_form_data['purchasing_company'] = str(self.company.pk)
+        response = self.client.post(reverse('offlinepurchase_add'),
+                                    data=self.offlinepurchase_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(OfflinePurchase.objects.all().count(), 1)
+        offline_purchase = OfflinePurchase.objects.get()
+        self.assertNotIn(offline_purchase.redemption_uid, response.content)
+        self.assertIsNotNone(offline_purchase.redeemed_on)
+
+    def test_offlinepurchase_update(self):
+        offline_purchase = offlinepurchase_factory(self.company,
+                                                   self.company_user)
+        kwargs = {'pk': offline_purchase.pk}
+
+        response = self.client.post(reverse('offlinepurchase_update',
+                                            kwargs=kwargs))
+        self.assertEqual(response.status_code, 404)
+
+    def test_offlinepurchase_delete(self):
+        offline_purchase = offlinepurchase_factory(self.company,
+                                                   self.company_user)
+        kwargs = {'pk': offline_purchase.pk}
+
+        response = self.client.post(reverse('offlinepurchase_delete',
+                                            kwargs=kwargs), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(OfflinePurchase.objects.all().count(), 0)

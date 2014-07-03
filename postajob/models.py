@@ -408,6 +408,8 @@ class SitePackage(Package):
 
 class PurchasedProduct(BaseModel):
     product = models.ForeignKey('Product')
+    offline_purchase = models.ForeignKey('OfflinePurchase', null=True,
+                                        blank=True)
     invoice = models.ForeignKey('Invoice')
 
     owner = models.ForeignKey('mydashboard.Company')
@@ -485,6 +487,20 @@ class ProductGrouping(BaseModel):
 
     def __unicode__(self):
         return self.name
+
+    def save(self, **kwargs):
+        if self.is_displayed and self.display_order == 0:
+            # Force the display order to be max + 1 if it's not already set
+            # and the ProductGrouping is displayed.
+            next_order = ProductGrouping.objects.filter(owner=self.owner)
+            next_order = next_order.aggregate(models.Max('display_order'))
+            self.display_order = ((next_order['display_order__max'] + 1)
+                                  if next_order['display_order__max'] else 1)
+        elif not self.is_displayed:
+            # Force the display order to 0 if the ProductGrouping isn't
+            # supposed to be displayed.
+            self.display_order = 0
+        super(ProductGrouping, self).save(**kwargs)
 
 
 class ProductOrder(models.Model):
@@ -586,9 +602,10 @@ class OfflineProduct(models.Model):
     product_quantity = models.PositiveIntegerField(default=1)
 
 
-class OfflinePurchase(models.Model):
+class OfflinePurchase(BaseModel):
     products = models.ManyToManyField('Product', through='OfflineProduct')
-    invoice = models.ForeignKey('Invoice')
+    owner = models.ForeignKey('mydashboard.Company')
+    invoice = models.ForeignKey('Invoice', null=True)
 
     redemption_uid = models.CharField(max_length=255)
 
@@ -614,25 +631,17 @@ class OfflinePurchase(models.Model):
 
     def create_purchased_products(self, company):
         kwargs = {
+            'invoice': self.invoice,
+            'is_approved': True,
+            'offline_purchase': self,
             'owner': company,
             'paid': True,
-            'purchase_amount': 0,
-            'transaction': self.redemption_uid,
-            'card_last_four': '',
-            'card_exp_date': date(1971, 01, 01),
-            'first_name': '',
-            'last_name': '',
-            'address_line_one': '',
-            'city': '',
-            'state': '',
-            'country': '',
-            'zipcode': '',
         }
-        for product in self.products.all():
-            length = product.posting_window_length
-            kwargs['expiration_date'] = date.today() + timedelta(length)
-            kwargs['product'] = product
-            PurchasedProduct.objects.create(**kwargs)
+        offline_products = OfflineProduct.objects.filter(offline_purchase=self)
+        for offline_product in offline_products:
+            kwargs['product'] = offline_product.product
+            for x in range(0, offline_product.product_quantity):
+                PurchasedProduct.objects.create(**kwargs)
 
 
 class Invoice(BaseModel):

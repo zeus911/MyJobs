@@ -25,8 +25,14 @@ urlpatterns = patterns(
 
     # Purchased microsite management
     url(r'^admin/$',
-        views.products_overview,
-        name='products_overview'),
+        views.admin_overview,
+        name='admin_overview'),
+
+    # Requests
+    url(r'^admin/request/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+        views.admin_request,
+        name='admin_request'),
+
 
     # Job
     url(r'^job/add/',
@@ -51,9 +57,6 @@ urlpatterns = patterns(
         name='purchasedjob_delete'),
 
     # Product management
-    url(r'^admin/$',
-        views.products_overview,
-        name='products_overview'),
     url(r'^admin/product/$',
         views.admin_products,
         name='product'),
@@ -68,18 +71,40 @@ urlpatterns = patterns(
         name='product_update'),
 
     # ProductGrouping
-    url(r'^admin/group/$',
+    url(r'^admin/product/group/$',
         views.admin_groupings,
         name='productgrouping'),
-    url(r'^admin/group/add/',
+    url(r'^admin/product/group/add/',
         views.ProductGroupingFormView.as_view(),
         name='productgrouping_add'),
-    url(r'^admin/group/delete/(?P<pk>\d+)/',
+    url(r'^admin/product/group/delete/(?P<pk>\d+)/',
         views.ProductGroupingFormView.as_view(),
         name='productgrouping_delete'),
-    url(r'^admin/group/update/(?P<pk>\d+)/',
+    url(r'^admin/product/group/update/(?P<pk>\d+)/',
         views.ProductGroupingFormView.as_view(),
         name='productgrouping_update'),
+
+    # Offline Purchases
+    url(r'^admin/purchase/offline/$',
+        views.admin_offlinepurchase,
+        name='offlinepurchase'),
+    url(r'^admin/purchase/offline/add/',
+        views.OfflinePurchaseFormView.as_view(),
+        name='offlinepurchase_add'),
+    url(r'^admin/purchase/offline/delete/(?P<pk>\d+)/',
+        views.OfflinePurchaseFormView.as_view(),
+        name='offlinepurchase_delete'),
+    url(r'^admin/purchase/offline/update/(?P<pk>\d+)/',
+        views.OfflinePurchaseFormView.as_view(),
+        name='offlinepurchase_update'),
+
+    url(r'purchase/redeem/$',
+        views.OfflinePurchaseRedemptionFormView.as_view(),
+        name='offlinepurchase_redeem'),
+    url(r'^admin/purchase/offline/success/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+        views.admin_request,
+        name='offline_purchase_success'),
+
 
     # PurchasedProduct
     url(r'^product/purchase/add/(?P<product>\d+)/',
@@ -91,15 +116,4 @@ urlpatterns = patterns(
     url(r'^product/purchase/update/(?P<pk>\d+)/',
         views.PurchasedProductFormView.as_view(),
         name='purchasedproduct_update'),
-
-    # Offline Purchases
-    url(r'^offlinepurchase/add/',
-        views.OfflinePurchaseFormView.as_view(),
-        name='offlinepurchase_add'),
-    url(r'^offlinepurchase/delete/(?P<pk>\d+)/',
-        views.OfflinePurchaseFormView.as_view(),
-        name='offlinepurchase_delete'),
-    url(r'^offlinepurchase/update/(?P<pk>\d+)/',
-        views.OfflinePurchaseFormView.as_view(),
-        name='offlinepurchase_update'),
 )

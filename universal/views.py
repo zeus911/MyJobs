@@ -9,6 +9,7 @@ class FormViewBase(FormView, ModelFormMixin, SingleObjectMixin):
     A FormView built to handle a single instance of a model.
 
     """
+    request = None
     add_name = None
     update_name = None
     delete_name = None

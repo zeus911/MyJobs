@@ -5,6 +5,7 @@ from django.template import Library
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 
+from postajob.models import PurchasedProduct
 
 register = Library()
 
@@ -45,3 +46,28 @@ def get_form_action(context):
 @register.assignment_tag
 def get_purchase_total(purchases):
     return sum(purchase.purchase_amount for purchase in purchases)
+
+
+@register.simple_tag
+def get_redeemer(offline_purchase):
+    # This is only set if a user has redeemed the purchase.
+    if offline_purchase.redeemed_by:
+        return offline_purchase.redeemed_by.company.name
+    # Otherwise attempt to get the name from a Product created from the
+    # OfflinePurchase.
+    else:
+        products = PurchasedProduct.objects.filter(
+            offline_purchase=offline_purchase)
+        if products:
+            return products[0].owner
+
+    # Otherwise the product hasn't been redeemed yet, and therefore there
+    # is no redeemer.
+    return ''
+
+
+@register.simple_tag
+def get_product_names(offline_purchase):
+    products = offline_purchase.products.all()
+    names = [product.name for product in products]
+    return ", ".join(names)

@@ -50,3 +50,9 @@
     margin-top: 0;
     position: absolute;
 }
+
+.header {
+    font-size: 18px;
+    padding-top: 15px;
+    padding-bottom: 10px;
+}

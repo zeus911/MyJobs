@@ -1,20 +1,22 @@
 import json
 
-from django.core.urlresolvers import Http404, reverse_lazy, resolve
+from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import Http404, reverse, reverse_lazy, resolve
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
 
-from universal.helpers import get_company
-from universal.views import RequestFormViewBase
 from universal.decorators import company_has_access
 from mydashboard.models import CompanyUser
-from postajob.forms import (JobForm, OfflinePurchaseForm, ProductForm,
+from postajob.forms import (JobForm, OfflinePurchaseForm,
+                            OfflinePurchaseRedemptionForm, ProductForm,
                             ProductGroupingForm, PurchasedJobForm,
                             PurchasedProductForm)
 from postajob.models import (Job, OfflinePurchase, Product, ProductGrouping,
                              PurchasedJob, PurchasedProduct)
+from universal.helpers import get_company, get_object_or_none
+from universal.views import RequestFormViewBase
 
 
 @company_has_access('prm_access')
@@ -36,14 +38,15 @@ def purchasedjobs_overview(request):
 
 
 @company_has_access('product_access')
-def products_overview(request):
+def admin_overview(request):
     company = get_company(request)
     data = {
         'products': Product.objects.filter(owner=company)[:3],
         'product_groupings': ProductGrouping.objects.filter(owner=company)[:3],
+        'offline_purchases': OfflinePurchase.objects.filter(owner=company)[:3],
         'company': company
     }
-    return render_to_response('postajob/products_overview.html', data,
+    return render_to_response('postajob/admin_overview.html', data,
                               RequestContext(request))
 
 
@@ -65,7 +68,30 @@ def admin_groupings(request):
         'product_groupings': ProductGrouping.objects.filter(owner=company),
         'company': company,
     }
-    return render_to_response('postajob/productgroups.html', data,
+    return render_to_response('postajob/productgrouping.html', data,
+                              RequestContext(request))
+
+@company_has_access('product_access')
+def admin_offlinepurchase(request):
+    company = get_company(request)
+    data = {
+        'offline_purchases': OfflinePurchase.objects.filter(owner=company),
+        'company': company,
+    }
+    return render_to_response('postajob/offlinepurchase.html', data,
+                              RequestContext(request))
+
+@company_has_access('product_access')
+def admin_request(request, content_type, pk):
+    template = 'postajob/request/{model}.html'
+    company = get_company(request)
+    content_type = ContentType.objects.get(pk=content_type)
+    data = {
+        'company': company,
+        'object': get_object_or_none(content_type.model_class(), pk=pk)
+    }
+
+    return render_to_response(template.format(model=content_type.model), data,
                               RequestContext(request))
 
 
@@ -76,7 +102,7 @@ def order_postajob(request):
 
     """
     models = {
-        'grouping': ProductGrouping
+        'groupings': ProductGrouping
     }
 
     company = get_company(request)
@@ -269,7 +295,7 @@ class PurchasedProductFormView(PostajobModelFormMixin, PurchaseFormViewBase):
 
         """
         self.object = None
-        if resolve(request.path).url_name != 'purchasedproduct_add':
+        if not resolve(request.path).url_name.endswith('_add'):
             raise Http404
 
 
@@ -278,7 +304,7 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
     model = OfflinePurchase
     display_name = 'Offline Purchase'
 
-    success_url = reverse_lazy('products_overview')
+    success_url = 'offlinepurchase'
     add_name = 'offlinepurchase_add'
     update_name = 'offlinepurchase_update'
     delete_name = 'offlinepurchase_delete'
@@ -291,3 +317,45 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
 
         """
         return super(OfflinePurchaseFormView, self).dispatch(*args, **kwargs)
+
+    def get_success_url(self):
+        if resolve(self.request.path).url_name == self.add_name:
+            kwargs = {
+                'content_type': ContentType.objects.get_for_model(self.model).pk,
+                'pk': self.object.pk,
+            }
+            return reverse('offline_purchase_success', kwargs=kwargs)
+        return reverse(self.success_url)
+
+    def set_object(self, request):
+        """
+        Attempting to determine what happens to Products in an already-redeemed
+        OfflinePurchase is nearly impossible, so OfflinePurchases can
+        only be added or deleted.
+
+        """
+        acceptable_names = [self.add_name, self.delete_name]
+        if resolve(request.path).url_name not in acceptable_names:
+            raise Http404
+        return super(OfflinePurchaseFormView, self).set_object(request)
+
+
+class OfflinePurchaseRedemptionFormView(PostajobModelFormMixin,
+                                        RequestFormViewBase):
+    form_class = OfflinePurchaseRedemptionForm
+    model = OfflinePurchase
+    display_name = 'Offline Purchase'
+
+    success_url = reverse_lazy('purchasedjobs_overview')
+    add_name = 'offlinepurchase_redeem'
+    update_name = None
+    delete_name = None
+
+    def set_object(self, request):
+        """
+        OfflinePurchases can only be redeemed (added) by generic users.
+
+        """
+        self.object = None
+        if not resolve(request.path).url_name == self.add_name:
+            raise Http404

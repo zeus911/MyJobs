@@ -12,9 +12,12 @@ from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          SeoSiteFactory)
 from mydashboard.models import CompanyUser
 from myjobs.models import User
-from postajob.models import (Job, Product, ProductGrouping, ProductOrder,
-                             PurchasedJob, Request, SitePackage)
+from postajob.models import (Job, OfflineProduct, Product, ProductGrouping,
+                             ProductOrder, PurchasedJob, PurchasedProduct,
+                             Request, SitePackage)
 from postajob.tests.factories import (job_factory, product_factory,
+                                      offlineproduct_factory,
+                                      offlinepurchase_factory,
                                       purchasedjob_factory,
                                       purchasedproduct_factory,
                                       sitepackage_factory)
@@ -269,3 +272,29 @@ class ModelTests(TestCase):
                              is_approved=True)
         self.assertEqual(PurchasedJob.objects.all().count(), 2)
         self.assertEqual(Request.objects.all().count(), 1)
+
+    def test_offlinepurchase_create_purchased_products(self):
+        user = CompanyUser.objects.create(user=self.user, company=self.company)
+        offline_purchase = offlinepurchase_factory(self.company, user)
+        package = sitepackage_factory(self.company)
+        product = product_factory(package, self.company)
+
+        for x in range(1, 15):
+            PurchasedProduct.objects.all().delete()
+            OfflineProduct.objects.all().delete()
+            offlineproduct_factory(product, offline_purchase,
+                                   product_quantity=x)
+            offline_purchase.create_purchased_products(self.company)
+            self.assertEqual(PurchasedProduct.objects.all().count(), x)
+
+        product_two = product_factory(package, self.company)
+        for x in range(1, 15):
+            PurchasedProduct.objects.all().delete()
+            OfflineProduct.objects.all().delete()
+            offlineproduct_factory(product, offline_purchase,
+                                   product_quantity=x)
+            offlineproduct_factory(product_two, offline_purchase,
+                                   product_quantity=x)
+            offline_purchase.create_purchased_products(self.company)
+            self.assertEqual(PurchasedProduct.objects.all().count(), x*2)
+
