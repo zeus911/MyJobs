@@ -1,3 +1,4 @@
+from datetime import date, datetime
 import json
 
 from django.contrib.contenttypes.models import ContentType
@@ -29,9 +30,11 @@ def jobs_overview(request):
 @company_has_access(None)
 def purchasedjobs_overview(request):
     company = get_company(request)
+    products = PurchasedProduct.objects.filter(owner=company)
     data = {
         'jobs': PurchasedJob.objects.filter(owner=company),
-        'products': PurchasedProduct.objects.filter(owner=company),
+        'active_products': products.filter(expiration_date__gte=date.today()),
+        'expired_products': products.filter(expiration_date__lt=date.today()),
     }
     return render_to_response('postajob/purchasedjobs_overview.html', data,
                               RequestContext(request))
