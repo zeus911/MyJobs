@@ -5,7 +5,7 @@ from django.template import Library
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 
-from postajob.models import PurchasedProduct
+from postajob.models import PurchasedJob, PurchasedProduct
 
 register = Library()
 
@@ -31,6 +31,11 @@ def get_job_links(job):
     if len(urls) > 3:
         url_html = mark_safe("%s <br/>..." % url_html)
     return url_html
+
+
+@register.assignment_tag
+def get_jobs(purchased_product):
+    return PurchasedJob.objects.filter(purchased_product=purchased_product)
 
 
 @register.simple_tag(takes_context=True)

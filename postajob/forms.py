@@ -228,9 +228,9 @@ class JobForm(BaseJobForm):
 
 class PurchasedJobBaseForm(BaseJobForm):
     class Meta:
-        fields = ('title', 'is_syndicated', 'reqid', 'description', 'city',
+        fields = ('title', 'reqid', 'description', 'city',
                   'state', 'country', 'zipcode', 'date_expired', 'is_expired',
-                  'autorenew', 'apply_type', 'apply_link', 'apply_email',
+                  'apply_type', 'apply_link', 'apply_email',
                   'apply_info', 'owner', )
         model = PurchasedJob
         purchased_product = None

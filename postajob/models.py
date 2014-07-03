@@ -247,6 +247,8 @@ class PurchasedJob(Job):
             on_sites = ''
         return on_sites
 
+    def is_past_max_expiration_date(self):
+        return bool(self.max_expired_date < date.today())
 
 def on_delete(sender, instance, **kwargs):
     """
