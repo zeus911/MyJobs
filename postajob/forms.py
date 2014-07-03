@@ -586,12 +586,14 @@ class OfflinePurchaseForm(RequestForm):
 
         instance.save()
 
-        company = get_object_or_none(Company,
-                                     pk=self.cleaned_data.get('purchasing_company'))
+        company = get_object_or_none(
+            Company, pk=self.cleaned_data.get('purchasing_company'))
         if company:
             instance.redeemed_on = date.today()
             instance.create_purchased_products(company)
             instance.save()
+
+        return instance
 
 
 class OfflinePurchaseRedemptionForm(RequestForm):

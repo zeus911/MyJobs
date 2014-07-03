@@ -1,13 +1,12 @@
 import json
 
-from django.core.urlresolvers import Http404, reverse_lazy, resolve
+from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import Http404, reverse, reverse_lazy, resolve
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
 
-from universal.helpers import get_company
-from universal.views import RequestFormViewBase
 from universal.decorators import company_has_access
 from mydashboard.models import CompanyUser
 from postajob.forms import (JobForm, OfflinePurchaseForm,
@@ -16,6 +15,8 @@ from postajob.forms import (JobForm, OfflinePurchaseForm,
                             PurchasedProductForm)
 from postajob.models import (Job, OfflinePurchase, Product, ProductGrouping,
                              PurchasedJob, PurchasedProduct)
+from universal.helpers import get_company, get_object_or_none
+from universal.views import RequestFormViewBase
 
 
 @company_has_access('prm_access')
@@ -78,6 +79,19 @@ def admin_offlinepurchase(request):
         'company': company,
     }
     return render_to_response('postajob/offlinepurchase.html', data,
+                              RequestContext(request))
+
+@company_has_access('product_access')
+def admin_request(request, content_type, pk):
+    template = 'postajob/request/{model}.html'
+    company = get_company(request)
+    content_type = ContentType.objects.get(pk=content_type)
+    data = {
+        'company': company,
+        'object': get_object_or_none(content_type.model_class(), pk=pk)
+    }
+
+    return render_to_response(template.format(model=content_type.model), data,
                               RequestContext(request))
 
 
@@ -290,7 +304,7 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
     model = OfflinePurchase
     display_name = 'Offline Purchase'
 
-    success_url = reverse_lazy('offlinepurchase')
+    success_url = 'offlinepurchase'
     add_name = 'offlinepurchase_add'
     update_name = 'offlinepurchase_update'
     delete_name = 'offlinepurchase_delete'
@@ -303,6 +317,15 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
 
         """
         return super(OfflinePurchaseFormView, self).dispatch(*args, **kwargs)
+
+    def get_success_url(self):
+        if resolve(self.request.path).url_name == self.add_name:
+            kwargs = {
+                'content_type': ContentType.objects.get_for_model(self.model).pk,
+                'pk': self.object.pk,
+            }
+            return reverse('admin_request', kwargs=kwargs)
+        return reverse(self.success_url)
 
 
 class OfflinePurchaseRedemptionFormView(PostajobModelFormMixin,

@@ -28,6 +28,12 @@ urlpatterns = patterns(
         views.admin_overview,
         name='admin_overview'),
 
+    # Requests
+    url(r'^admin/request/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+        views.admin_request,
+        name='admin_request'),
+
+
     # Job
     url(r'^job/add/',
         views.JobFormView.as_view(),
