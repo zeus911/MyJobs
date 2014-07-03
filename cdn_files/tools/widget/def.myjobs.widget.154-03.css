@@ -8,7 +8,7 @@
 }
 
 #direct-saved-search h3{
-    background: url(//d2e48ltfsb5exy.cloudfront.net/myjobs/logos/myjobs_logo_white_small.png) #5a6d81 center center no-repeat;
+    background: url('//d2e48ltfsb5exy.cloudfront.net/myjobs/logos/myjobs_logo_white_small.png') #5a6d81 center center no-repeat;
     text-indent: -9000px;
     padding: 10px 0;
     height: 10px;
@@ -29,7 +29,7 @@
     padding: 5px 0;
     text-indent: 5px;
     height: 18px;
-    margin-bottom: 9px;
+    margin-bottom: 5px;
     font-size: 13px;
     line-height: 18px;
     color: #555;
@@ -74,10 +74,22 @@
 }
 
 .saved-search-form {
-    margin-top: 15px;
-    margin-bottom: 9px;
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+
+#cta-saved-search-form {
+    color: #666666;
+    font-size: 16px;
+    margin-top: 10px;
+    text-align: center;
 }
 
 #direct-saved-search .loading {
     line-height: 30px;
+}
+
+#saved-search-btn a {
+    display: block;
+    position: relative;
 }
