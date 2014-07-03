@@ -10,13 +10,14 @@ from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          CompanyUserFactory, SeoSiteFactory)
 from myjobs.tests.factories import UserFactory
 from postajob.tests.factories import (product_factory, job_factory,
+                                      offlinepurchase_factory,
                                       productgrouping_factory,
                                       purchasedjob_factory,
                                       purchasedproduct_factory,
                                       sitepackage_factory)
-from postajob.models import (Job, Package, Product, ProductGrouping,
-                             PurchasedJob, PurchasedProduct, Request,
-                             SitePackage)
+from postajob.models import (Job, OfflinePurchase, Package, Product,
+                             ProductGrouping, PurchasedJob, PurchasedProduct,
+                             Request, SitePackage)
 from universal.helpers import build_url
 
 
@@ -540,3 +541,28 @@ class ViewTests(TestCase):
         url = build_url(reverse('is_company_user'), params)
         response = self.client.post(url)
         self.assertEqual(response.status_code, 404)
+
+    def test_offline_purchase_redeem(self):
+        pass
+
+    def test_offline_purchase_create(self):
+        pass
+
+    def test_offline_purchase_update(self):
+        offline_purchase = offlinepurchase_factory(self.company,
+                                                   self.company_user)
+        kwargs = {'pk': offline_purchase.pk}
+
+        response = self.client.post(reverse('offlinepurchase_update',
+                                            kwargs=kwargs))
+        self.assertEqual(response.status_code, 404)
+
+    def test_offline_purchase_delete(self):
+        offline_purchase = offlinepurchase_factory(self.company,
+                                                   self.company_user)
+        kwargs = {'pk': offline_purchase.pk}
+
+        response = self.client.post(reverse('offlinepurchase_delete',
+                                            kwargs=kwargs), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(OfflinePurchase.objects.all().count(), 0)

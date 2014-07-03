@@ -327,6 +327,18 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
             return reverse('offline_purchase_success', kwargs=kwargs)
         return reverse(self.success_url)
 
+    def set_object(self, request):
+        """
+        Attempting to determine what happens to Products in an already-redeemed
+        OfflinePurchase is nearly impossible, so OfflinePurchases can
+        only be added or deleted.
+
+        """
+        acceptable_names = [self.add_name, self.delete_name]
+        if resolve(request.path).url_name not in acceptable_names:
+            raise Http404
+        return super(OfflinePurchaseFormView, self).set_object(request)
+
 
 class OfflinePurchaseRedemptionFormView(PostajobModelFormMixin,
                                         RequestFormViewBase):
@@ -341,8 +353,7 @@ class OfflinePurchaseRedemptionFormView(PostajobModelFormMixin,
 
     def set_object(self, request):
         """
-        Purchased products can't be edited or deleted, so prevent anyone
-        getting an actual object to edit/delete.
+        OfflinePurchases can only be redeemed (added) by generic users.
 
         """
         self.object = None

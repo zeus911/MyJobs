@@ -556,7 +556,7 @@ class OfflinePurchaseForm(RequestForm):
                                       "this list.")
         # Create the Product list.
         for product in self.products:
-            label = '{name}'.format(name=product.name, cost=product.cost)
+            label = '{name}'.format(name=product.name)
             self.fields[str(product.pk)] = IntegerField(label=label, initial=0,
                                                         min_value=0)
 
