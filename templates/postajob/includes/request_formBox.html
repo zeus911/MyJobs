@@ -1,0 +1,22 @@
+<div class="formBox no-padding">
+    <h4>{{ formBox_title }}</h4>
+    <table id="product-table-{{ company.id }}" class="table table-bordered table-striped">
+        {% if requests %}
+        <thead>
+        <tr>
+            <td>Request Type</td>
+            <td>Requested By</td>
+            <td>Requested On</td>
+            <td>Action Taken</td>
+        </tr>
+        </thead>
+        {% endif %}
+        {% include "postajob/includes/request_rows.html" %}
+    </table>
+    {% if formBox_footer %}
+    <div class="formBox-footer">
+        <a href="" class="btn pull-right">Manage Requests</a>
+        <div class="clear"></div>
+    </div>
+    {% endif %}
+</div>

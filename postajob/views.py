@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date
 import json
 
 from django.contrib.contenttypes.models import ContentType
@@ -15,7 +15,7 @@ from postajob.forms import (JobForm, OfflinePurchaseForm,
                             ProductGroupingForm, PurchasedJobForm,
                             PurchasedProductForm)
 from postajob.models import (Job, OfflinePurchase, Product, ProductGrouping,
-                             PurchasedJob, PurchasedProduct)
+                             PurchasedJob, PurchasedProduct, Request)
 from universal.helpers import get_company, get_object_or_none
 from universal.views import RequestFormViewBase
 
@@ -47,6 +47,7 @@ def admin_overview(request):
         'products': Product.objects.filter(owner=company)[:3],
         'product_groupings': ProductGrouping.objects.filter(owner=company)[:3],
         'offline_purchases': OfflinePurchase.objects.filter(owner=company)[:3],
+        'requests': Request.objects.filter(owner=company)[:3],
         'company': company
     }
     return render_to_response('postajob/admin_overview.html', data,

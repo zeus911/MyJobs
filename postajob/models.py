@@ -232,7 +232,8 @@ class PurchasedJob(Job):
         if not self.is_approved:
             content_type = ContentType.objects.get_for_model(PurchasedJob)
             Request.objects.create(content_type=content_type,
-                                   object_id=self.pk)
+                                   object_id=self.pk,
+                                   owner=self.purchased_product.product.owner)
 
     def add_to_solr(self):
         if self.is_approved and self.purchased_product.paid:
@@ -249,6 +250,7 @@ class PurchasedJob(Job):
 
     def is_past_max_expiration_date(self):
         return bool(self.max_expired_date < date.today())
+
 
 def on_delete(sender, instance, **kwargs):
     """
@@ -588,14 +590,35 @@ class CompanyProfile(models.Model):
                                          blank=True, related_name='customer')
 
 
-class Request(models.Model):
+class Request(BaseModel):
     content_type = models.ForeignKey(ContentType)
     object_id = models.IntegerField()
     action_taken = models.BooleanField(default=False)
+    made_on = models.DateField(auto_now_add=True)
+    owner = models.ForeignKey('mydashboard.Company')
 
     def template(self):
         model = self.content_type.model
         return 'postajob/request/{model}.html'.format(model=model)
+
+    def model_name(self):
+        return self.content_type.name.title()
+
+    def requesting_company(self):
+        request = self.request_object()
+        if request:
+            return request.owner
+        else:
+            return None
+
+    def request_object(self):
+        """
+        Gets the object referred to by the request. Because this is not a
+        true ForeignKey, this object may not exist.
+
+        """
+        from universal.helpers import get_object_or_none
+        return get_object_or_none(self.content_type.model_class(), pk=self.pk)
 
 
 class OfflineProduct(models.Model):
