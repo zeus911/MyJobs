@@ -324,7 +324,7 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
                 'content_type': ContentType.objects.get_for_model(self.model).pk,
                 'pk': self.object.pk,
             }
-            return reverse('admin_request', kwargs=kwargs)
+            return reverse('offline_purchase_success', kwargs=kwargs)
         return reverse(self.success_url)
 
 

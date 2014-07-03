@@ -101,6 +101,10 @@ urlpatterns = patterns(
     url(r'purchase/redeem/$',
         views.OfflinePurchaseRedemptionFormView.as_view(),
         name='offlinepurchase_redeem'),
+    url(r'^admin/purchase/offline/success/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+        views.admin_request,
+        name='offline_purchase_success'),
+
 
     # PurchasedProduct
     url(r'^product/purchase/add/(?P<product>\d+)/',
