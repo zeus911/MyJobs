@@ -14,7 +14,7 @@ class EmailLogAdmin(admin.ModelAdmin):
 
 class UserAdmin(admin.ModelAdmin):
     list_display = ['email', 'date_joined', 'last_response', 'is_active',
-                    'source']
+                    'deactive_type', 'source',]
     search_fields = ['email', 'source']
     list_filter = ['is_active', 'is_disabled', 'is_superuser', 'is_staff']
 
@@ -37,8 +37,8 @@ class UserAdmin(admin.ModelAdmin):
         ('Admin', {
             'fields': [
                 ('user_permissions', 'groups', ),
-                'is_active', 'is_superuser', 'is_staff', 'is_disabled',
-                'source', ]}),
+                ('is_active', 'deactive_type'),
+                'is_superuser', 'is_staff', 'is_disabled', 'source', ]}),
     ]
 
 

@@ -5,8 +5,11 @@ from StringIO import StringIO
 from django.test import TestCase
 
 from mydashboard.tests.factories import CompanyFactory
+from myjobs.models import DEACTIVE_TYPES_AND_NONE, DEACTIVE_TYPES, EmailLog, \
+    User
+from myjobs.tests.factories import UserFactory
 from postajob.models import Job
-from tasks import expire_jobs
+from tasks import expire_jobs, process_batch_events
 
 
 class TaskTests(TestCase):
@@ -116,3 +119,19 @@ class TaskTests(TestCase):
         # jobs.
         for job in autorenew_jobs:
             self.assertEqual(new_expire_date, job.date_expired)
+
+    def test_bad_events_deactivate_user(self):
+        now = datetime.datetime.now()
+        for event in DEACTIVE_TYPES:
+            u = UserFactory()
+            EmailLog.objects.create(email=u.email, event=event, received=now,
+                                    processed=False)
+            process_batch_events()
+
+            u = User.objects.get(pk=u.pk)
+            self.assertEqual(u.deactive_type, event)
+            self.assertFalse(u.is_active)
+            self.assertFalse(u.opt_in_myjobs)
+
+            EmailLog.objects.all().delete()
+            u.delete()

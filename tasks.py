@@ -16,7 +16,7 @@ from django.template.loader import render_to_string
 from django.db.models import Q
 
 from mydashboard.models import Company, SeoSite
-from myjobs.models import EmailLog, User
+from myjobs.models import EmailLog, User, DEACTIVE_TYPES
 from mysearches.models import SavedSearch, SavedSearchDigest
 from postajob.models import Job
 from registration.models import ActivationProfile
@@ -113,10 +113,23 @@ def process_user_events(email):
     user = User.objects.get_email_owner(email=email)
     logs = EmailLog.objects.filter(email=email,
                                    processed=False).order_by('-received')
+    events = set(log.event for log in logs)
+    deactivate = events.intersection(set(DEACTIVE_TYPES))
+    update_fields = []
+    if user and deactivate:
+        user.deactive_type = deactivate.pop()
+        user.is_active = False
+        user.opt_in_myjobs = False
+        update_fields.extend(['deactive_type', 'is_active', 'opt_in_myjobs'])
+
     newest_log = logs[0]
     if user and user.last_response < newest_log.received:
         user.last_response = newest_log.received
-        user.save()
+        update_fields.append('last_response')
+
+    # If update_fields is an empty iterable, the save is aborted
+    # This doesn't hit the DB unless a field has changed
+    user.save(update_fields=update_fields)
     logs.update(processed=True)
 
 

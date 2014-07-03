@@ -146,7 +146,9 @@ class Command(BaseCommand):
 
                     # The OneToOneField fields is useless in every single case
                     # so far.
-                    if field_type == 'OneToOneField' or 'password' in field.attname:
+                    if field_type == 'OneToOneField' or \
+                            any(s in field.attname
+                                for s in ['password', 'deactive_type']):
                         continue
 
                     field_data = {
