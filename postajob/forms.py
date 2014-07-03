@@ -629,3 +629,4 @@ class OfflinePurchaseRedemptionForm(RequestForm):
         self.instance.redeemed_on = date.today()
         instance = super(OfflinePurchaseRedemptionForm, self).save(commit)
         instance.create_purchased_products(self.company)
+        return instance

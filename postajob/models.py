@@ -637,9 +637,11 @@ class OfflinePurchase(BaseModel):
             'owner': company,
             'paid': True,
         }
-        for product in self.products.all():
-            kwargs['product'] = product
-            PurchasedProduct.objects.create(**kwargs)
+        offline_products = OfflineProduct.objects.filter(offline_purchase=self)
+        for offline_product in offline_products:
+            kwargs['product'] = offline_product.product
+            for x in range(0, offline_product.product_quantity):
+                PurchasedProduct.objects.create(**kwargs)
 
 
 class Invoice(BaseModel):
