@@ -34,12 +34,5 @@ urlpatterns = patterns(
 )
 
 
-try:
-    if repr(default_storage.connection) == 'S3Connection:s3.amazonaws.com':
-        pass
-    else:
-        urlpatterns += static(settings.MEDIA_URL,
-                              document_root=settings.MEDIA_ROOT)
-except AttributeError:
-    urlpatterns += static(settings.MEDIA_URL,
-                          document_root=settings.MEDIA_ROOT)
+if repr(getattr(default_storage, 'connection', '')) != 'S3Connection:s3.amazonaws.com':
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
