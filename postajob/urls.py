@@ -29,9 +29,15 @@ urlpatterns = patterns(
         name='admin_overview'),
 
     # Requests
-    url(r'^admin/request/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+    url(r'^admin/request/$',
         views.admin_request,
-        name='admin_request'),
+        name='request'),
+    url(r'^admin/request/view/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+        views.view_request,
+        name='view_request'),
+    url(r'^admin/request/approve/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+        views.approve_admin_request,
+        name='approve_admin_request'),
 
 
     # Job
@@ -102,7 +108,7 @@ urlpatterns = patterns(
         views.OfflinePurchaseRedemptionFormView.as_view(),
         name='offlinepurchase_redeem'),
     url(r'^admin/purchase/offline/success/(?P<content_type>\d+)/(?P<pk>\d+)/$',
-        views.admin_request,
+        views.view_request,
         name='offline_purchase_success'),
 
 

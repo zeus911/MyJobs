@@ -11,7 +11,7 @@ register = Library()
 
 
 @register.simple_tag
-def get_job_links(job):
+def get_job_links(job, max_sites=3):
     sites = job.on_sites()
     domains = [site.domain for site in sites]
 
@@ -27,8 +27,8 @@ def get_job_links(job):
                                   title_slug=title_slug, guid=job.guid)
 
         urls.append(href_tag.format(url=job_url, domain=domain))
-    url_html = mark_safe("<br/>".join(urls[:3]))
-    if len(urls) > 3:
+    url_html = mark_safe("<br/>".join(urls[:max_sites]))
+    if max_sites and len(urls) > max_sites:
         url_html = mark_safe("%s <br/>..." % url_html)
     return url_html
 

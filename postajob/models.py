@@ -228,12 +228,12 @@ class PurchasedJob(Job):
 
         super(PurchasedJob, self).save(**kwargs)
         self.site_packages = [self.purchased_product.product.package.sitepackage]
-
         if not self.is_approved:
+            product_owner = self.purchased_product.product.owner
             content_type = ContentType.objects.get_for_model(PurchasedJob)
-            Request.objects.create(content_type=content_type,
-                                   object_id=self.pk,
-                                   owner=self.purchased_product.product.owner)
+            Request.objects.get_or_create(content_type=content_type,
+                                          object_id=self.pk,
+                                          owner=product_owner)
 
     def add_to_solr(self):
         if self.is_approved and self.purchased_product.paid:
@@ -618,7 +618,8 @@ class Request(BaseModel):
 
         """
         from universal.helpers import get_object_or_none
-        return get_object_or_none(self.content_type.model_class(), pk=self.pk)
+        return get_object_or_none(self.content_type.model_class(),
+                                  pk=self.object_id)
 
 
 class OfflineProduct(models.Model):
