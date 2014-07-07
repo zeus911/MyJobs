@@ -88,7 +88,9 @@ class SavedSearch(models.Model):
             extras = self.partnersavedsearch.url_extras
             if extras:
                 mypartners.helpers.add_extra_params_to_jobs(items, extras)
-                self.url = mypartners.helpers.add_extra_params(self.url, extras)
+                self.url = mypartners.helpers.add_extra_params(self.url,
+                                                               extras)
+            self.partnersavedsearch.create_record(custom_msg)
         if self.custom_message and not custom_msg:
             custom_msg = self.custom_message
         if self.user.can_receive_myjobs_email() and items:
@@ -235,12 +237,19 @@ class SavedSearchDigest(models.Model):
         search_list = []
         for search in saved_searches:
             items, count = search.get_feed_items()
+            pss = None
             if hasattr(search, 'partnersavedsearch'):
-                extras = search.partnersavedsearch.url_extras
+                pss = search.partnersavedsearch
+            elif isinstance(search, PartnerSavedSearch):
+                pss = search
+
+            if pss is not None:
+                extras = pss.url_extras
                 if extras:
                     mypartners.helpers.add_extra_params_to_jobs(items, extras)
                     search.url = mypartners.helpers.add_extra_params(search.url,
                                                                      extras)
+                pss.create_record(custom_msg)
             search_list.append((search, items, count))
         saved_searches = [(search, items, count)
                           for search, items, count in search_list
@@ -302,11 +311,6 @@ class PartnerSavedSearch(SavedSearch):
         if created:
             self.send_initial_email()
 
-    def send_email(self, custom_msg=None):
-        super(PartnerSavedSearch, self).send_email(custom_msg)
-        change_msg = "Automatic sending of partner saved search."
-        self.create_record(change_msg)
-
     def send_initial_email(self, custom_msg=None):
         super(PartnerSavedSearch, self).send_initial_email(custom_msg)
         change_msg = "Automatic sending of initial partner saved search."
@@ -317,8 +321,10 @@ class PartnerSavedSearch(SavedSearch):
         change_msg = "Automatic sending of updated partner saved search."
         self.create_record(change_msg)
 
-    def create_record(self, change_msg=""):
+    def create_record(self, change_msg=None):
         items, count = self.get_feed_items()
+        if change_msg is None:
+            change_msg = "Automatic sending of partner saved search."
 
         extras = self.partnersavedsearch.url_extras
         if extras:

@@ -1,4 +1,7 @@
 import factory
+
+from mydashboard.tests.factories import CompanyFactory
+from mypartners.tests.factories import PartnerFactory
 from myjobs.tests.factories import UserFactory
 from mysearches.models import SavedSearch, SavedSearchDigest, PartnerSavedSearch
 
@@ -30,3 +33,8 @@ class PartnerSavedSearchFactory(SavedSearchFactory):
     FACTORY_FOR = PartnerSavedSearch
 
     created_by = factory.SubFactory(UserFactory)
+    provider = factory.SubFactory(CompanyFactory)
+    partner = factory.SubFactory(PartnerFactory)
+    url_extras = ""
+    partner_message = ""
+    account_activation_message = ""
