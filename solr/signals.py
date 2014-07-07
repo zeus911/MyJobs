@@ -129,7 +129,8 @@ def profileunits_to_dict(user_id):
             field_type = field.get_internal_type()
             if (field_type != 'OneToOneField' and
                     not any(s in field.attname
-                            for s in ['password', 'timezone', 'deactive_type'])):
+                            for s in ['password', 'timezone',
+                                      'deactivate_type'])):
                 field_name = "%s_%s" % (model_name, field.attname)
                 solr_dict[field_name] = filter(None, list(obj_list))
 
@@ -156,7 +157,8 @@ def object_to_dict(model, obj):
             field_type = field.get_internal_type()
             if (field_type != 'OneToOneField' and
                     not any(s in field.attname
-                            for s in ['password', 'timezone', 'deactive_type'])):
+                            for s in ['password', 'timezone',
+                                      'deactivate_type'])):
                 field_name = "User_%s" % field.attname
                 solr_dict[field_name] = getattr(obj.user, field.attname)
 
@@ -164,7 +166,8 @@ def object_to_dict(model, obj):
         field_type = field.get_internal_type()
         if (field_type != 'OneToOneField' and
                 not any(s in field.attname
-                        for s in ['password', 'timezone', 'deactive_type'])):
+                        for s in ['password', 'timezone',
+                                  'deactivate_type'])):
             field_name = "%s_%s" % (model.__name__, field.attname)
             solr_dict[field_name] = getattr(obj, field.attname)
     return solr_dict

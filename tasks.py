@@ -12,11 +12,13 @@ from celery import task, group
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core import mail
+from django.core.urlresolvers import reverse_lazy
 from django.template.loader import render_to_string
 from django.db.models import Q
 
 from mydashboard.models import Company, SeoSite
-from myjobs.models import EmailLog, User, DEACTIVE_TYPES
+from myjobs.models import EmailLog, User, STOP_SENDING, BAD_EMAIL
+from mymessages.models import Message
 from mysearches.models import SavedSearch, SavedSearchDigest
 from postajob.models import Job
 from registration.models import ActivationProfile
@@ -113,16 +115,36 @@ def process_user_events(email):
     user = User.objects.get_email_owner(email=email)
     logs = EmailLog.objects.filter(email=email,
                                    processed=False).order_by('-received')
-    events = set(log.event for log in logs)
-    deactivate = events.intersection(set(DEACTIVE_TYPES))
+    newest_log = logs[0]
+
+    filter_qs = lambda x: [log for log in logs if log.event in x]
+
+    # The presence of deactivate or stop_sending determines what kind (if any)
+    # of My.jobs message the user will receive. deactivate takes precedence.
+    deactivate = filter_qs(BAD_EMAIL)
+    stop_sending = filter_qs(STOP_SENDING)
     update_fields = []
-    if user and deactivate:
-        user.deactive_type = deactivate.pop()
+    if user and (deactivate or stop_sending) and user.opt_in_myjobs:
         user.is_active = False
         user.opt_in_myjobs = False
-        update_fields.extend(['deactive_type', 'is_active', 'opt_in_myjobs'])
+        if deactivate:
+            user.deactivate_type = deactivate[0].event
+            body = """
+            <b>Warning</b>: Attempts to send messages to {email} have failed.
+            Please check your email address in your <a href="{{settings_url}}">
+            account settings</a>.
+            """.format(email=deactivate[0].email)
+        else:
+            user.deactivate_type = stop_sending[0].event
+            body = """
+            <b>Warning</b>: We have received a request to stop communications
+            with {email}. If this was in error, please opt back into emails in
+            your <a href="{{settings_url}}">account settings</a>.
+            """.format(email=stop_sending[0].email)
+        body = body.format(settings_url=reverse_lazy('edit_account'))
+        Message.objects.create_message(users=user, subject='', body=body)
+        update_fields.extend(['deactivate_type', 'is_active', 'opt_in_myjobs'])
 
-    newest_log = logs[0]
     if user and user.last_response < newest_log.received:
         user.last_response = newest_log.received
         update_fields.append('last_response')

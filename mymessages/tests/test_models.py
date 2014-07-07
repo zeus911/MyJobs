@@ -68,3 +68,40 @@ class MessageTests(TestCase):
         m.message.save()
         m.expired_time()
         self.assertFalse(m.expired)
+
+class MessageManagerTests(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.user.groups.add(Group.objects.get(pk=1))
+
+    def test_create_message_by_group(self):
+        message = Message.objects.create_message(
+            subject='subject', body='message body',
+            groups=Group.objects.all())
+
+        infos = self.user.messages_unread()
+        self.assertEqual(len(infos), 1)
+        self.assertEqual(infos[0].message, message)
+
+    def test_create_message_creates_messageinfo(self):
+        message = Message.objects.create_message(
+            users=self.user, subject='subject', body='message body')
+
+        infos = MessageInfo.objects.all()
+        self.assertEqual(infos.count(), 1)
+        self.assertEqual(infos[0].user, self.user)
+        self.assertEqual(infos[0].message, message)
+
+    def test_create_message_with_users_and_groups(self):
+        new_user = UserFactory(email='second@example.com')
+        message = Message.objects.create_message(
+            users=new_user, subject='subject', body='message body',
+            groups=Group.objects.get(pk=1))
+
+        group_user_messages = [info.message for info
+                               in self.user.messages_unread()]
+        new_user_messages = [info.message for info
+                             in new_user.messages_unread()]
+        self.assertEqual(group_user_messages, new_user_messages)
+        self.assertEqual(len(group_user_messages), 1)
+        self.assertEqual(group_user_messages[0], message)

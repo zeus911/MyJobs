@@ -8,15 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'User.deactive_type'
-        db.add_column(u'myjobs_user', 'deactive_type',
+        # Adding field 'User.deactivate_type'
+        db.add_column(u'myjobs_user', 'deactivate_type',
                       self.gf('django.db.models.fields.CharField')(default='none', max_length=11),
                       keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting field 'User.deactive_type'
-        db.delete_column(u'myjobs_user', 'deactive_type')
+        # Deleting field 'User.deactivate_type'
+        db.delete_column(u'myjobs_user', 'deactivate_type')
 
 
     models = {
@@ -77,7 +77,7 @@ class Migration(SchemaMigration):
         u'myjobs.user': {
             'Meta': {'object_name': 'User'},
             'date_joined': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'deactive_type': ('django.db.models.fields.CharField', [], {'default': "'none'", 'max_length': '11'}),
+            'deactivate_type': ('django.db.models.fields.CharField', [], {'default': "'none'", 'max_length': '11'}),
             'email': ('django.db.models.fields.EmailField', [], {'unique': 'True', 'max_length': '255', 'db_index': 'True'}),
             'first_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'gravatar': ('django.db.models.fields.EmailField', [], {'db_index': 'True', 'max_length': '255', 'blank': 'True'}),
