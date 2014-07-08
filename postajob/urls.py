@@ -39,7 +39,6 @@ urlpatterns = patterns(
         views.approve_admin_request,
         name='approve_admin_request'),
 
-
     # Job
     url(r'^job/add/',
         views.JobFormView.as_view(),
@@ -111,7 +110,6 @@ urlpatterns = patterns(
         views.view_request,
         name='offline_purchase_success'),
 
-
     # PurchasedProduct
     url(r'^product/purchase/add/(?P<product>\d+)/',
         views.PurchasedProductFormView.as_view(),
@@ -122,4 +120,15 @@ urlpatterns = patterns(
     url(r'^product/purchase/update/(?P<pk>\d+)/',
         views.PurchasedProductFormView.as_view(),
         name='purchasedproduct_update'),
+
+    # CompanyProfile
+    url(r'^admin/profile/',
+        views.CompanyProfileFormView.as_view(),
+        name='companyprofile_add'),
+    url(r'^admin/profile/delete/(?P<pk>\d+)/',
+        views.CompanyProfileFormView.as_view(),
+        name='companyprofile_delete'),
+    url(r'^admin/profile/update/(?P<pk>\d+)/',
+        views.CompanyProfileFormView.as_view(),
+        name='companyprofile_update'),
 )

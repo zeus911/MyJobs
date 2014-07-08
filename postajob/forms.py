@@ -632,3 +632,22 @@ class OfflinePurchaseRedemptionForm(RequestForm):
         instance = super(OfflinePurchaseRedemptionForm, self).save(commit)
         instance.create_purchased_products(self.company)
         return instance
+
+
+class CompanyProfileForm(RequestForm):
+    class Meta:
+        model = CompanyProfile
+        exclude = ('company', )
+
+    class Media:
+        css = {
+            'all': ('postajob.153-10.css', )
+        }
+
+    customer_of_choices = Company.objects.filter(product_access=True)
+    customer_of = ModelMultipleChoiceField(customer_of_choices, required=False,
+                                           widget=CheckboxSelectMultiple())
+
+    def save(self, commit=True):
+        self.instance.company = self.company
+        super(CompanyProfileForm, self).save(commit)

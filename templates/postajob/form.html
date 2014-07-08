@@ -21,7 +21,7 @@
         <div class="clear"></div>
         <div class="actions">
             <div class="form-label pull-left">&nbsp;</div>
-            {% if item.pk %}
+            {% if item.pk and not prevent_delete %}
                 <button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>
                 <div id="delete-confirm" class="modal hide fade row">
                     <div class="modal-header">{% trans 'Really Delete?' %}</div>

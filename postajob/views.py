@@ -1,6 +1,7 @@
 from datetime import date
 import json
 
+from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import Http404, reverse, reverse_lazy, resolve
 from django.http import HttpResponse
@@ -10,12 +11,13 @@ from django.utils.decorators import method_decorator
 
 from universal.decorators import company_has_access
 from mydashboard.models import CompanyUser
-from postajob.forms import (JobForm, OfflinePurchaseForm,
+from postajob.forms import (CompanyProfileForm, JobForm, OfflinePurchaseForm,
                             OfflinePurchaseRedemptionForm, ProductForm,
                             ProductGroupingForm, PurchasedJobForm,
                             PurchasedProductForm)
-from postajob.models import (Job, OfflinePurchase, Product, ProductGrouping,
-                             PurchasedJob, PurchasedProduct, Request)
+from postajob.models import (CompanyProfile, Job, OfflinePurchase, Product,
+                             ProductGrouping, PurchasedJob, PurchasedProduct,
+                             Request)
 from universal.helpers import get_company
 from universal.views import RequestFormViewBase
 
@@ -28,6 +30,7 @@ def jobs_overview(request):
     }
     return render_to_response('postajob/jobs_overview.html', data,
                               RequestContext(request))
+
 
 @company_has_access(None)
 def purchasedjobs_overview(request):
@@ -76,6 +79,7 @@ def admin_groupings(request):
     }
     return render_to_response('postajob/productgrouping.html', data,
                               RequestContext(request))
+
 
 @company_has_access('product_access')
 def admin_offlinepurchase(request):
@@ -137,6 +141,7 @@ def approve_admin_request(request, content_type, pk):
 
     return redirect('request')
 
+
 @company_has_access('product_access')
 def order_postajob(request):
     """
@@ -190,9 +195,6 @@ class PurchaseFormViewBase(RequestFormViewBase):
 
     def dispatch(self, *args, **kwargs):
         """
-        Decorators on this function will be run on every request that
-        goes through this class.
-
         Determine and set which product is attempting to be purchased.
 
         """
@@ -223,6 +225,7 @@ class PostajobModelFormMixin(object):
 
     """
     model = None
+    prevent_delete = False
     template_name = 'postajob/form.html'
 
     def get_queryset(self, request):
@@ -232,6 +235,10 @@ class PostajobModelFormMixin(object):
 
     def get_success_url(self):
         return self.success_url
+
+    def get_context_data(self, **kwargs):
+        kwargs['prevent_delete'] = self.prevent_delete
+        return super(PostajobModelFormMixin, self).get_context_data(**kwargs)
 
 
 class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
@@ -407,3 +414,36 @@ class OfflinePurchaseRedemptionFormView(PostajobModelFormMixin,
         self.object = None
         if not resolve(request.path).url_name == self.add_name:
             raise Http404
+
+
+class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
+    form_class = CompanyProfileForm
+    model = CompanyProfile
+    prevent_delete = True
+    display_name = 'Company Profile'
+
+    success_url = reverse_lazy('admin_overview')
+    add_name = 'companyprofile_add'
+    update_name = 'companyprofile_edit'
+    delete_name = 'companyprofile_delete'
+
+    @method_decorator(user_passes_test(lambda user: user.companyuser_set.all().exists()))
+    def dispatch(self, *args, **kwargs):
+        """
+        Decorators on this function will be run on every request that
+        goes through this class.
+
+        """
+        return super(CompanyProfileFormView, self).dispatch(*args, **kwargs)
+
+    def set_object(self, *args, **kwargs):
+        """
+        Every add is actually an edit.
+
+        """
+        kwargs = {'company': get_company(self.request)}
+        self.object, _ = self.model.objects.get_or_create(**kwargs)
+        return self.object
+
+    def delete(self):
+        return
