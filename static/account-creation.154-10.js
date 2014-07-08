@@ -315,7 +315,7 @@ function jsonErrors(index, errors){
     /*
     Gets errors and adds front-end attributes and styling to show the user
     what went wrong with their form. Shows error messages in placeholders for
-    bowsers with the exception of IE. IE messages are displayed above the field
+    browsers with the exception of IE. IE messages are displayed above the field
     that has the error.
 
     This function in most cases will be ran in conjunction with a for loop.
@@ -325,15 +325,13 @@ function jsonErrors(index, errors){
                 'multidimensional array' {errors:[key][value]}
     */
     var $error = $('[id$="_'+errors[index][0]+'"]');
-    var $labelOfError = $error.parent().prev();
     // insert new errors after the relevant inputs
     if($.browser.msie){
         field = $error.parent().prev();
         field.before("<div class='msieError'><i>" + errors[index][1] + "</i></div>");
     }else{
-        $error.addClass('required-border');
         $error.val('');
         $error.attr("placeholder",errors[index][1]);
     }
-    $error.css('border', '1px solid #D00')
+    $error.wrap("<div class='required'></div>");
 }
