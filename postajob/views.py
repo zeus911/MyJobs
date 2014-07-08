@@ -1,10 +1,10 @@
-from datetime import date, datetime
+from datetime import date
 import json
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import Http404, reverse, reverse_lazy, resolve
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render_to_response
+from django.shortcuts import get_object_or_404, redirect, render_to_response
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
 
@@ -15,15 +15,17 @@ from postajob.forms import (JobForm, OfflinePurchaseForm,
                             ProductGroupingForm, PurchasedJobForm,
                             PurchasedProductForm)
 from postajob.models import (Job, OfflinePurchase, Product, ProductGrouping,
-                             PurchasedJob, PurchasedProduct)
-from universal.helpers import get_company, get_object_or_none
+                             PurchasedJob, PurchasedProduct, Request)
+from universal.helpers import get_company
 from universal.views import RequestFormViewBase
 
 
 @company_has_access('prm_access')
 def jobs_overview(request):
     company = get_company(request)
-    data = {'jobs': Job.objects.filter(owner=company)}
+    data = {
+        'jobs': Job.objects.filter(owner=company, purchasedjob__isnull=True),
+    }
     return render_to_response('postajob/jobs_overview.html', data,
                               RequestContext(request))
 
@@ -47,6 +49,7 @@ def admin_overview(request):
         'products': Product.objects.filter(owner=company)[:3],
         'product_groupings': ProductGrouping.objects.filter(owner=company)[:3],
         'offline_purchases': OfflinePurchase.objects.filter(owner=company)[:3],
+        'requests': Request.objects.filter(owner=company)[:3],
         'company': company
     }
     return render_to_response('postajob/admin_overview.html', data,
@@ -84,19 +87,55 @@ def admin_offlinepurchase(request):
     return render_to_response('postajob/offlinepurchase.html', data,
                               RequestContext(request))
 
+
 @company_has_access('product_access')
-def admin_request(request, content_type, pk):
+def admin_request(request):
+    company = get_company(request)
+    data = {
+        'company': company,
+        'requests': Request.objects.filter(owner=company)
+    }
+
+    return render_to_response('postajob/request.html', data,
+                              RequestContext(request))
+
+
+@company_has_access('product_access')
+def view_request(request, content_type, pk):
     template = 'postajob/request/{model}.html'
     company = get_company(request)
     content_type = ContentType.objects.get(pk=content_type)
     data = {
         'company': company,
-        'object': get_object_or_none(content_type.model_class(), pk=pk)
+        'content_type': content_type,
+        'object': get_object_or_404(content_type.model_class(), pk=pk)
     }
+
+    if not data['object'].user_has_access(request.user):
+        raise Http404
 
     return render_to_response(template.format(model=content_type.model), data,
                               RequestContext(request))
 
+
+@company_has_access('product_access')
+def approve_admin_request(request, content_type, pk):
+    """
+    Marks a Request as action taken on it and sets corresponding object
+    to approved. Assumes the object has an is_approved field.
+
+    """
+    content_type = ContentType.objects.get(pk=content_type)
+    request_made = Request.objects.get(content_type=content_type, object_id=pk)
+
+    request_object = request_made.request_object()
+    if request_object and request_object.user_has_access(request.user):
+        request_object.is_approved = True
+        request_object.save()
+        request_made.action_taken = True
+        request_made.save()
+
+    return redirect('request')
 
 @company_has_access('product_access')
 def order_postajob(request):
@@ -213,6 +252,12 @@ class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
 
         """
         return super(JobFormView, self).dispatch(*args, **kwargs)
+
+    def get_queryset(self, request):
+        super(JobFormView, self).get_queryset(request)
+        kwargs = {'purchasedjob__isnull': True}
+        self.queryset = self.queryset.filter(**kwargs)
+        return self.queryset
 
 
 class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):

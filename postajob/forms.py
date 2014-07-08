@@ -148,6 +148,7 @@ class JobForm(BaseJobForm):
     # so we use SeoSite as the queryset here instead of SitePackage.
     site_packages_widget = admin.widgets.FilteredSelectMultiple('Sites', False)
     site_packages = ModelMultipleChoiceField(SeoSite.objects.all(),
+                                             help_text="",
                                              label="Site",
                                              required=False,
                                              widget=site_packages_widget)
@@ -163,6 +164,7 @@ class JobForm(BaseJobForm):
         if not self.request.path.startswith('/admin'):
             # FilteredSelectMultiple doesn't work outside the admin, so
             # switch to a widget that does work.
+            self.fields['site_packages'].help_text = ""
             self.fields['site_packages'].widget = CheckboxSelectMultiple(
                 attrs={'class': 'job-sites-checkbox'})
             # After changing the widget the queryset also needs reset.
