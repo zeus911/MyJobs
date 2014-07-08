@@ -3,11 +3,13 @@ from itertools import chain, izip_longest
 import logging
 import os
 import pysolr
+from urllib2 import HTTPError, URLError
 import urlparse
 import uuid
 
 import boto
 from celery import task, group
+#from requests import HTTPError
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -39,7 +41,7 @@ def send_search_digest(search):
     """
     try:
         search.send_email()
-    except ValueError as e:
+    except (ValueError, URLError, HTTPError) as e:
         if task.current.request.retries < 2:  # retry sending email twice
             raise send_search_digest.retry(arg=[search], exc=e)
         else:
