@@ -3171,13 +3171,24 @@ body.modal-open {
     border: 1px solid #900;
 }
 
-.required ::-webkit-input-placeholder,
-.required :-ms-input-placeholder {
+.required input::-webkit-input-placeholder,
+.required textarea::-webkit-input-placeholder {
     color: #900;
 }
 
-.required ::-moz-placeholder,
-.required :-moz-placeholder {
+.required input:-ms-input-placeholder,
+.required textarea:-ms-input-placeholder {
+    color: #900;
+}
+
+.required input::-moz-placeholder,
+.required textarea::-moz-placeholder {
+    color: #900;
+    opacity: 1;
+}
+
+.required input:-moz-placeholder,
+.required textarea:-moz-placeholder {
     color: #900;
     opacity: 1;
 }
