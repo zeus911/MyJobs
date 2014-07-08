@@ -20,6 +20,13 @@
             </table>
         </td>
     </tr>
+    {% block activation %}
+        <tr>
+            <td colspan=2>
+                {% include 'includes/widget-activation-email.html' with saved_search=saved_searches.0.0 %}
+            </td>
+        </tr>
+    {% endblock %}
     <tr>
         <td colspan=2>
             {% block content %}
@@ -49,7 +56,6 @@
                     {% endblock %}
                     <a href="https://secure.my.jobs{% url 'unsubscribe_all' %}?verify={{saved_search.user.user_guid}}">{% trans 'Unsubscribe from all My.jobs emails' %}</a><br>
                 </td>
-
             </tr>
 
         {% endwith %}

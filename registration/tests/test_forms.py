@@ -1,3 +1,4 @@
+from django.core import mail
 from django.test import TestCase
 
 from myjobs.models import User
@@ -54,4 +55,16 @@ class RegistrationFormTests(TestCase):
         user = UserFactory(email='alice2@example.com', is_active=False)
         form = CustomPasswordResetForm({'email':user.email})
         self.assertTrue(form.is_valid())
-        
+
+    def test_invalid_password_reset(self):
+        user = UserFactory(is_active=True)
+        user.set_unusable_password()
+        user.save()
+
+        for email in [user.email, 'alice2@example.com']:
+            self.assertEqual(len(mail.outbox), 0)
+            form = CustomPasswordResetForm({'email': email})
+            self.assertTrue(form.is_valid())
+            form.save()
+            self.assertEqual(len(mail.outbox), 0)
+

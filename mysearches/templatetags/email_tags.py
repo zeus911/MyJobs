@@ -52,17 +52,22 @@ def get_created_url(saved_search):
         feed viewer
     """
     user = saved_search.user
-    user_guid_qs = 'verify={guid}'.format(guid=user.user_guid)
 
     if user.is_active:
-        url = reverse('view_full_feed') + '?id={id}&{guid}'.format(
-            id=saved_search.pk, guid=user_guid_qs)
+        url = reverse('view_full_feed') + '?id={id}&verify={guid}'.format(
+            id=saved_search.pk, guid=user.user_guid)
     else:
-        profile, _ = ActivationProfile.objects.get_or_create(user=user,
-                                                             email=user.email)
-        if profile.activation_key_expired():
-            profile.reset_activation()
-        url = reverse('registration_activate',
-                      args=[profile.activation_key]) + '?{guid}'.format(
-                          guid=user_guid_qs)
+        url = get_activation_link(user)
+    return url
+
+
+@register.simple_tag
+def get_activation_link(user):
+    profile, _ = ActivationProfile.objects.get_or_create(user=user,
+                                                         email=user.email)
+    if profile.activation_key_expired():
+        profile.reset_activation()
+    url = reverse('registration_activate',
+                  args=[profile.activation_key]) + '?verify={guid}'.format(
+                      guid=user.user_guid)
     return url

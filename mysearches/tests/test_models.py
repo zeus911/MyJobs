@@ -4,11 +4,16 @@ from django.test import TestCase
 
 from bs4 import BeautifulSoup
 from mock import patch
+from mydashboard.tests.factories import CompanyFactory
 
 from myjobs.tests.factories import UserFactory
+from mypartners.models import ContactRecord
+from mypartners.tests.factories import PartnerFactory, ContactFactory
 from myprofile.tests.factories import PrimaryNameFactory
+from mysearches.models import SavedSearch
 from mysearches.tests.factories import (SavedSearchFactory,
-                                        SavedSearchDigestFactory)
+                                        SavedSearchDigestFactory,
+                                        PartnerSavedSearchFactory)
 from mysearches.tests.test_helpers import return_file
 from registration.tests.helpers import assert_email_inlines_styles
 from tasks import send_search_digests
@@ -22,7 +27,11 @@ class SavedSearchModelsTests(TestCase):
         self.mock_urlopen = self.patcher.start()
 
     def tearDown(self):
-        self.patcher.stop()
+        try:
+            self.patcher.stop()
+        except RuntimeError:
+            # patcher was stopped in a test
+            pass
 
     def test_send_search_email(self):
         SavedSearchDigestFactory(user=self.user,
@@ -157,3 +166,99 @@ class SavedSearchModelsTests(TestCase):
                        if module != 'name']
         self.assertEqual(len(new_modules), 5)
         self.assert_modules_in_hrefs(new_modules)
+
+    def test_email_contains_activate_link(self):
+        search = SavedSearchFactory(user=self.user)
+        self.assertTrue(self.user.is_active)
+        search.send_email()
+        email = mail.outbox.pop()
+        self.assertFalse('activate your account' in email.body)
+
+        self.user.is_active = False
+        self.user.save()
+        search.send_email()
+        email = mail.outbox.pop()
+        self.assertTrue('activate your account' in email.body)
+
+    def test_fix_fixable_search(self):
+        self.patcher.stop()
+        SavedSearchDigestFactory(user=self.user)
+        search = SavedSearchFactory(user=self.user, feed='')
+        self.assertFalse(search.feed)
+
+        send_search_digests()
+        self.assertEqual(len(mail.outbox), 0)
+
+        search = SavedSearch.objects.get(pk=search.pk)
+        self.assertTrue(search.is_active)
+        self.assertTrue(search.feed)
+
+    def test_disable_bad_search(self):
+        self.patcher.stop()
+        SavedSearchDigestFactory(user=self.user)
+        search = SavedSearchFactory(user=self.user, feed='',
+                                    url='http://example.com')
+        self.assertFalse(search.feed)
+
+        send_search_digests()
+        email = mail.outbox.pop()
+        search = SavedSearch.objects.get(pk=search.pk)
+        self.assertFalse(search.is_active)
+
+        self.assertTrue('has failed URL validation' in email.body)
+
+
+class PartnerSavedSearchTests(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.digest = SavedSearchDigestFactory(user=self.user)
+        self.company = CompanyFactory()
+        self.partner = PartnerFactory(owner=self.company)
+        self.contact = ContactFactory(user=self.user,
+                                      partner=self.partner)
+        self.partner_search = PartnerSavedSearchFactory(user=self.user,
+                                                        created_by=self.user,
+                                                        provider=self.company,
+                                                        partner=self.partner)
+
+        self.patcher = patch('urllib2.urlopen', return_file)
+        self.mock_urlopen = self.patcher.start()
+
+    def tearDown(self):
+        try:
+            self.patcher.stop()
+        except RuntimeError:
+            # patcher was stopped in a test
+            pass
+
+    def test_send_partner_saved_search_as_saved_search(self):
+        """
+        When we send saved searches, we assume they are instances of SavedSearch
+        and disregard any subclasses. Ensure that partner saved searches are
+        correctly recorded as sent when this happens.
+        """
+        search = SavedSearch.objects.get(pk=self.partner_search.pk)
+        mail.outbox = []
+        self.assertEqual(ContactRecord.objects.count(), 1)
+        self.partner_search.send_email()
+        self.assertEqual(ContactRecord.objects.count(), 2)
+        partner_record = ContactRecord.objects.all()[1]
+        partner_email = mail.outbox.pop()
+
+        search.send_email()
+        self.assertEqual(ContactRecord.objects.count(), 3)
+        search_record = ContactRecord.objects.all()[2]
+        search_email = mail.outbox.pop()
+
+        self.assertEqual(partner_record.notes, search_record.notes)
+        self.assertEqual(partner_email.body, search_email.body)
+        self.assertEqual(partner_record.notes, partner_email.body)
+
+    def test_send_partner_saved_search_in_digest(self):
+        """
+        Saved search digests bypass the SavedSearch.send_email method. Ensure
+        that partner saved searches are recorded when sent in a digest.
+        """
+        self.assertEqual(ContactRecord.objects.count(), 1)
+        self.digest.send_email()
+        self.assertEqual(ContactRecord.objects.count(), 2)

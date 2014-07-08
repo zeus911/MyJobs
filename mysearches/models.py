@@ -12,7 +12,7 @@ from mydashboard.models import Company
 from myjobs.models import User
 from mypartners.models import Contact, ContactRecord, Partner, EMAIL
 from mysearches.helpers import (parse_feed, update_url_if_protected,
-                                url_sort_options)
+                                url_sort_options, validate_dotjobs_url)
 import mypartners.helpers
 
 
@@ -88,10 +88,12 @@ class SavedSearch(models.Model):
             extras = self.partnersavedsearch.url_extras
             if extras:
                 mypartners.helpers.add_extra_params_to_jobs(items, extras)
-                self.url = mypartners.helpers.add_extra_params(self.url, extras)
+                self.url = mypartners.helpers.add_extra_params(self.url,
+                                                               extras)
+            self.partnersavedsearch.create_record(custom_msg)
         if self.custom_message and not custom_msg:
             custom_msg = self.custom_message
-        if self.user.opt_in_myjobs and items:
+        if self.user.can_receive_myjobs_email() and items:
             context_dict = {'saved_searches': [(self, items, count)],
                             'custom_msg': custom_msg}
             subject = self.label.strip()
@@ -175,6 +177,38 @@ class SavedSearch(models.Model):
     class Meta:
         verbose_name_plural = "saved searches"
 
+    def disable_or_fix(self):
+        """
+        Disables or fixes this saved search based on the presence or lack of an
+        rss feed on the search url. Sends a "search has been disabled" email
+        if this is not fixable.
+        """
+        try:
+            _, feed = validate_dotjobs_url(self.url, self.user)
+        except ValueError:
+            feed = None
+
+        if feed is None:
+            # search url did not contain an rss link and is not valid
+            self.is_active = False
+            self.save()
+            self.send_disable_email()
+        elif self.feed == '':
+            # search url passed validation in the past even though there was
+            # an issue retrieving the page; update the feed url
+            self.feed = feed
+            self.save()
+
+    def send_disable_email(self):
+        subject = 'Invalid search url in your My.jobs saved search'
+        message = render_to_string('mysearches/email_disable.html',
+                                   {'saved_search': self})
+
+        msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
+                           [self.email])
+        msg.content_subtype = 'html'
+        msg.send()
+
 
 class SavedSearchDigest(models.Model):
     is_active = models.BooleanField(default=False)
@@ -203,17 +237,24 @@ class SavedSearchDigest(models.Model):
         search_list = []
         for search in saved_searches:
             items, count = search.get_feed_items()
+            pss = None
             if hasattr(search, 'partnersavedsearch'):
-                extras = search.partnersavedsearch.url_extras
+                pss = search.partnersavedsearch
+            elif isinstance(search, PartnerSavedSearch):
+                pss = search
+
+            if pss is not None:
+                extras = pss.url_extras
                 if extras:
                     mypartners.helpers.add_extra_params_to_jobs(items, extras)
                     search.url = mypartners.helpers.add_extra_params(search.url,
                                                                      extras)
+                pss.create_record(custom_msg)
             search_list.append((search, items, count))
         saved_searches = [(search, items, count)
                           for search, items, count in search_list
                           if items]
-        if self.user.opt_in_myjobs and saved_searches:
+        if self.user.can_receive_myjobs_email() and saved_searches:
             subject = _('Your Daily Saved Search Digest')
             context_dict = {'saved_searches': saved_searches,
                             'digest': self,
@@ -225,6 +266,14 @@ class SavedSearchDigest(models.Model):
                                [self.email])
             msg.content_subtype = 'html'
             msg.send()
+
+    def disable_or_fix(self):
+        """
+        Calls SavedSearch.disable_or_fix for each saved search associated
+        with the owner of this digest.
+        """
+        for search in self.user.savedsearch_set.filter(is_active=True):
+            search.disable_or_fix()
 
 
 class PartnerSavedSearch(SavedSearch):
@@ -262,11 +311,6 @@ class PartnerSavedSearch(SavedSearch):
         if created:
             self.send_initial_email()
 
-    def send_email(self, custom_msg=None):
-        super(PartnerSavedSearch, self).send_email(custom_msg)
-        change_msg = "Automatic sending of partner saved search."
-        self.create_record(change_msg)
-
     def send_initial_email(self, custom_msg=None):
         super(PartnerSavedSearch, self).send_initial_email(custom_msg)
         change_msg = "Automatic sending of initial partner saved search."
@@ -277,8 +321,10 @@ class PartnerSavedSearch(SavedSearch):
         change_msg = "Automatic sending of updated partner saved search."
         self.create_record(change_msg)
 
-    def create_record(self, change_msg=""):
+    def create_record(self, change_msg=None):
         items, count = self.get_feed_items()
+        if change_msg is None:
+            change_msg = "Automatic sending of partner saved search."
 
         extras = self.partnersavedsearch.url_extras
         if extras:
