@@ -580,8 +580,12 @@ class CompanyProfile(models.Model):
     phone = models.CharField(max_length=255, blank=True)
 
     # Only used for Purchased Microsites.
-    authorize_net_login = models.CharField(max_length=255, blank=True)
-    authorize_net_transaction_key = models.CharField(max_length=255, blank=True)
+    authorize_net_login = models.CharField(
+        max_length=255, blank=True, verbose_name="Authorize.net Login")
+    authorize_net_transaction_key = models.CharField(
+        max_length=255, blank=True,
+        verbose_name="Authorize.net Transaction Key"
+    )
 
     # Companies can associate themselves with Purchased Microsites,
     # allowing them to show up on the list of available companies for
