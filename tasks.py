@@ -9,7 +9,6 @@ import uuid
 
 import boto
 from celery import task, group
-#from requests import HTTPError
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
