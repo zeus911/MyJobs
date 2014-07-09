@@ -58,13 +58,6 @@ Used to check if registration was successful.
             width: 100%;
         }
         </style>
-        <script>
-        $(document).ready(function(){
-            $('button#login').addClass('activation-login');
-            $('button#login').removeAttr('id');
-        });
-        var num_modules = {{ num_modules }};
-        </script>
         <div class="span4" id="active-login">
             <div class="loginBox formBox">
                 <h3>Sign In</h3>
@@ -113,4 +106,18 @@ Used to check if registration was successful.
 
     </div>
     {% include "includes/account-page-2.html" %}
+{% endblock %}
+
+{% block extra-js %}
+    {% if activated %}
+        {% if not logged_in %}
+        <script type="text/javascript">
+        $(document).ready(function() {
+            $('button#login').addClass('activation-login');
+            $('button#login').removeAttr('id');
+        });
+        var num_modules = {{ num_modules }};
+        </script>
+        {% endif %}
+    {% endif %}
 {% endblock %}
