@@ -2,6 +2,7 @@ import collections
 import datetime
 
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from django.contrib.auth.models import Group
 
@@ -17,7 +18,8 @@ def expire_default():
 
 
 class MessageManager(models.Manager):
-    def create_message(self, subject, body, expires=True, **kwargs):
+    def create_message(self, subject, body, users=None, groups=None,
+                       expires=True, **kwargs):
         """
         Create a message for one or more users.
         If users is provided but not groups, just those users will receive
@@ -29,23 +31,19 @@ class MessageManager(models.Manager):
         Inputs:
         :subject: Subject title for message being created
         :body: Body text of the message to be created
-        :expires: Will this message have an expiration date, default: True
         :users: List of users to add this message to; :users:, :groups:, or
             both must be provided
         :groups: List of groups whose members should see this message; :users:,
             :groups:, or both must be provided
+        :expires: Will this message have an expiration date, default: True
         :kwargs: Other fields from the Message model, all optional
         """
-        users = kwargs.pop('users', None)
-        if users is not None and not isinstance(users, collections.Iterable):
-            users = [users]
-
         kwargs.setdefault('message_type', 'error')
 
         if not expires:
-            kwargs['expires_at'] = None
-
-        groups = kwargs.pop('groups', None)
+            # Message should not expire; ensure expire_at is not going to be
+            # set by the caller
+            kwargs['expire_at'] = None
 
         if groups is None and users is None:
             raise ValueError("users and/or groups must have a value")
@@ -59,6 +57,12 @@ class MessageManager(models.Manager):
                 message.group.add(group)
 
         if users is not None:
+            # Users are associated with messages via the MessageInfo through
+            # table. If we are going to add users, we need to add entries to
+            # the through table for them.
+            if not isinstance(users, collections.Iterable):
+                users = [users]
+
             for user in users:
                 MessageInfo.objects.create(user=user, message=message)
 
@@ -150,8 +154,8 @@ class MessageInfo(models.Model):
 
 def get_messages(user):
     """
-    Gathers Messages based on user's groups and if message has started and is
-    not expired.
+    Gathers Messages based on user, user's groups and if message has started
+    and is not expired.
 
     Inputs:
     :user:              User obj to get user's groups
@@ -163,7 +167,9 @@ def get_messages(user):
     """
     now = timezone.now()
     groups = Group.objects.filter(user=user)
-    messages = set(Message.objects.filter(group__in=groups, start_on__lte=now,
-                                          expire_at__gt=now)).union(
-                   set(Message.objects.filter(users=user)))
+    expires_query = Q(expire_at__isnull=True) | Q(expire_at__gt=now)
+    messages = set(Message.objects.filter(
+        expires_query,
+        group__in=groups, start_on__lte=now)).union(
+            set(Message.objects.filter(users=user)))
     return messages

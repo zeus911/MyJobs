@@ -56,7 +56,7 @@ class MessageTests(TestCase):
     def test_message_expired_w_method(self):
         m = self.messageInfo
         m.message.expire_at = datetime.datetime.now() - \
-                              datetime.timedelta(days=20)
+            datetime.timedelta(days=20)
         m.message.save()
         m.expired_time()
         self.assertTrue(m.expired)
@@ -64,10 +64,11 @@ class MessageTests(TestCase):
     def test_message_not_expired_w_method(self):
         m = self.messageInfo
         m.message.expire_at = datetime.datetime.now() + \
-                              datetime.timedelta(days=10)
+            datetime.timedelta(days=10)
         m.message.save()
         m.expired_time()
         self.assertFalse(m.expired)
+
 
 class MessageManagerTests(TestCase):
     def setUp(self):
@@ -98,10 +99,19 @@ class MessageManagerTests(TestCase):
             users=new_user, subject='subject', body='message body',
             groups=Group.objects.get(pk=1))
 
-        group_user_messages = [info.message for info
-                               in self.user.messages_unread()]
-        new_user_messages = [info.message for info
-                             in new_user.messages_unread()]
+        get_messages = lambda u: [info.message for info in u.messages_unread()]
+        group_user_messages = get_messages(self.user)
+        new_user_messages = get_messages(new_user)
+
         self.assertEqual(group_user_messages, new_user_messages)
         self.assertEqual(len(group_user_messages), 1)
         self.assertEqual(group_user_messages[0], message)
+
+    def test_create_message_sets_expiration(self):
+        message = Message.objects.create_message(
+            subject='subject', body='message body',
+            groups=Group.objects.get(pk=1), expires=False)
+
+        self.assertTrue(message.expire_at is None)
+        info = self.user.messages_unread()[0]
+        self.assertFalse(info.expired_time())

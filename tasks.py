@@ -117,12 +117,14 @@ def process_user_events(email):
                                    processed=False).order_by('-received')
     newest_log = logs[0]
 
-    filter_qs = lambda x: [log for log in logs if log.event in x]
+    filter_by_event = lambda x: [log for log in logs if log.event in x]
 
     # The presence of deactivate or stop_sending determines what kind (if any)
     # of My.jobs message the user will receive. deactivate takes precedence.
-    deactivate = filter_qs(BAD_EMAIL)
-    stop_sending = filter_qs(STOP_SENDING)
+    # The logs query set has already been evaluated, so the only overhead
+    # is the list comprehension
+    deactivate = filter_by_event(BAD_EMAIL)
+    stop_sending = filter_by_event(STOP_SENDING)
     update_fields = []
     if user and (deactivate or stop_sending) and user.opt_in_myjobs:
         user.is_active = False
