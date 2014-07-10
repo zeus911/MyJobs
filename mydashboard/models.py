@@ -185,6 +185,5 @@ class CompanyUser(models.Model):
 
     def make_purchased_microsite_admin(self):
         group, _ = Group.objects.get_or_create(name=self.ADMIN_GROUP_NAME)
-        print group
         self.group.add(group)
         self.save()
