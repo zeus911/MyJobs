@@ -1,6 +1,8 @@
+import collections
 import datetime
 
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from django.contrib.auth.models import Group
 
@@ -13,6 +15,58 @@ def start_default():
 
 def expire_default():
     return datetime.datetime.now() + datetime.timedelta(days=14)
+
+
+class MessageManager(models.Manager):
+    def create_message(self, subject, body, users=None, groups=None,
+                       expires=True, **kwargs):
+        """
+        Create a message for one or more users.
+        If users is provided but not groups, just those users will receive
+        the message. If groups is provided but not users, all members of that
+        group, past, current, and future, should see it. If both are provided,
+        all group members as well as the specified users (even if they are not
+        group members) will get the message.
+
+        Inputs:
+        :subject: Subject title for message being created
+        :body: Body text of the message to be created
+        :users: List of users to add this message to; :users:, :groups:, or
+            both must be provided
+        :groups: List of groups whose members should see this message; :users:,
+            :groups:, or both must be provided
+        :expires: Will this message have an expiration date, default: True
+        :kwargs: Other fields from the Message model, all optional
+        """
+        kwargs.setdefault('message_type', 'error')
+
+        if not expires:
+            # Message should not expire; ensure expire_at is not going to be
+            # set by the caller
+            kwargs['expire_at'] = None
+
+        if groups is None and users is None:
+            raise ValueError("users and/or groups must have a value")
+
+        message = self.create(subject=subject, body=body, **kwargs)
+
+        if groups is not None:
+            if not isinstance(groups, collections.Iterable):
+                groups = [groups]
+            for group in groups:
+                message.group.add(group)
+
+        if users is not None:
+            # Users are associated with messages via the MessageInfo through
+            # table. If we are going to add users, we need to add entries to
+            # the through table for them.
+            if not isinstance(users, collections.Iterable):
+                users = [users]
+
+            for user in users:
+                MessageInfo.objects.create(user=user, message=message)
+
+        return message
 
 
 class Message(models.Model):
@@ -38,6 +92,8 @@ class Message(models.Model):
                                      help_text="Default is two weeks " +
                                                "after message is sent.")
     btn_text = models.CharField('Button Text', max_length=100, default='Okay')
+
+    objects = MessageManager()
 
     def __unicode__(self):
         return self.subject
@@ -78,6 +134,8 @@ class MessageInfo(models.Model):
 
     def expired_time(self):
         message = self.message
+        if message.expire_at is None:
+            return False
         now = timezone.now()
         if timezone.is_naive(self.message.expire_at):
             message.expire_at = timezone.make_aware(
@@ -96,8 +154,8 @@ class MessageInfo(models.Model):
 
 def get_messages(user):
     """
-    Gathers Messages based on user's groups and if message has started and is
-    not expired.
+    Gathers Messages based on user, user's groups and if message has started
+    and is not expired.
 
     Inputs:
     :user:              User obj to get user's groups
@@ -109,6 +167,9 @@ def get_messages(user):
     """
     now = timezone.now()
     groups = Group.objects.filter(user=user)
-    messages = set(Message.objects.filter(group__in=groups, start_on__lte=now,
-                                          expire_at__gt=now))
+    expires_query = Q(expire_at__isnull=True) | Q(expire_at__gt=now)
+    messages = set(Message.objects.filter(
+        expires_query,
+        group__in=groups, start_on__lte=now)).union(
+            set(Message.objects.filter(users=user)))
     return messages

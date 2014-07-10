@@ -1,6 +1,6 @@
 import datetime
-import urllib
 import hashlib
+import urllib
 import uuid
 
 import pytz
@@ -20,6 +20,10 @@ from django.utils.importlib import import_module
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
+
+BAD_EMAIL = ['dropped', 'bounce']
+STOP_SENDING = ['unsubscribe', 'spamreport']
+DEACTIVE_TYPES_AND_NONE = ['none'] + BAD_EMAIL + STOP_SENDING
 
 
 class CustomUserManager(BaseUserManager):
@@ -239,12 +243,26 @@ class User(AbstractBaseUser, PermissionsMixin):
                               default='https://secure.my.jobs',
                               help_text=_('Site that initiated account '
                                           'creation'))
+    deactivate_type = models.CharField(max_length=11,
+                                       choices=zip(DEACTIVE_TYPES_AND_NONE,
+                                                   DEACTIVE_TYPES_AND_NONE),
+                                       blank=False,
+                                       default=DEACTIVE_TYPES_AND_NONE[0])
 
     USERNAME_FIELD = 'email'
     objects = CustomUserManager()
 
     def __unicode__(self):
         return self.email
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if update_fields is not None and 'is_active' in update_fields:
+            if self.is_active:
+                self.deactivate_type = DEACTIVE_TYPES_AND_NONE[0]
+                if 'deactivate_type' not in update_fields:
+                    update_fields.append('deactivate_type')
+        super(User, self).save(force_insert, force_update, using, update_fields)
 
     def email_user(self, subject, message, from_email):
         msg = EmailMessage(subject, message, from_email, [self.email])
