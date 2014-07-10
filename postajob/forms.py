@@ -457,8 +457,18 @@ class PurchasedProductForm(RequestForm):
     def __init__(self, *args, **kwargs):
         self.product = kwargs.pop('product', None)
         super(PurchasedProductForm, self).__init__(*args, **kwargs)
+        if not self.company:
+            self.fields['company_name'] = CharField(label='Company Name')
+            self.fields.keyOrder.insert(0, self.fields.keyOrder.pop())
 
     def clean(self):
+        if not self.company:
+            company_name = self.cleaned_data.get('company_name')
+            msg = clean_company_name(company_name, None)
+            if msg:
+                self._errors['company_name'] = self.error_class([msg])
+                raise ValidationError(msg)
+
         exp_date = self.cleaned_data.get('exp_date')
         try:
             month = exp_date.month
@@ -492,6 +502,13 @@ class PurchasedProductForm(RequestForm):
         return self.cleaned_data
 
     def save(self, commit=True):
+        if not self.company:
+            company_name = self.cleaned_data.get('company_name')
+            self.company = Company.objects.create(name=company_name)
+            cu = CompanyUser.objects.create(user=self.request.user,
+                                            company=self.company)
+            cu.make_purchased_microsite_admin()
+
         invoice = Invoice.objects.create(
             address_line_one=self.cleaned_data.get('address_line_one'),
             address_line_two=self.cleaned_data.get('address_line_two'),
@@ -648,6 +665,37 @@ class CompanyProfileForm(RequestForm):
     customer_of = ModelMultipleChoiceField(customer_of_choices, required=False,
                                            widget=CheckboxSelectMultiple())
 
+    def __init__(self, *args, **kwargs):
+        super(CompanyProfileForm, self).__init__(*args, **kwargs)
+        if self.instance.company.user_created:
+            self.fields['company_name'] = CharField(
+                initial=self.instance.company.name, label='Company Name')
+
+            self.fields.keyOrder.insert(0, self.fields.keyOrder.pop())
+
+    def clean(self):
+        if self.instance.company.user_created:
+            company_name = self.cleaned_data.get('company_name')
+            msg = clean_company_name(company_name, self.instance.company)
+            if msg:
+                self._errors['company_name'] = self.error_class([msg])
+                raise ValidationError(msg)
+        return self.cleaned_data
+
     def save(self, commit=True):
         self.instance.company = self.company
+        if self.instance.company.user_created:
+            company_name = self.cleaned_data.get('company_name')
+            self.instance.company.name = company_name
+            self.instance.company.save()
+
         super(CompanyProfileForm, self).save(commit)
+
+
+def clean_company_name(company_name, current_company):
+    company_query = Company.objects.filter(name=company_name)
+    if current_company:
+        company_query = company_query.exclude(pk=current_company.pk)
+    if company_query.exists():
+        return "A company with that name already exists."
+    return None
