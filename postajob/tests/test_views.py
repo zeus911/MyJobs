@@ -16,9 +16,9 @@ from postajob.tests.factories import (product_factory, job_factory,
                                       purchasedjob_factory,
                                       purchasedproduct_factory,
                                       sitepackage_factory)
-from postajob.models import (Job, OfflinePurchase, Package, Product,
-                             ProductGrouping, PurchasedJob, PurchasedProduct,
-                             Request, SitePackage)
+from postajob.models import (CompanyProfile, Job, OfflinePurchase, Package,
+                             Product, ProductGrouping, PurchasedJob,
+                             PurchasedProduct, Request, SitePackage)
 from universal.helpers import build_url
 
 
@@ -123,6 +123,15 @@ class ViewTests(TestCase):
         self.offlinepurchase_form_data = {
             'purchasing_company': '',
             str(self.product.pk): 1,
+        }
+
+        self.companyprofile_form_data = {
+            'address_line_one': '123 Street Rd.',
+            'city': 'Indianapolis',
+            'country': 'USA',
+            'state': 'Indiana',
+            'zipcode': '46268',
+            'phone': '111-111-1111'
         }
 
     def login_user(self):
@@ -630,3 +639,19 @@ class ViewTests(TestCase):
                                             kwargs=kwargs), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(OfflinePurchase.objects.all().count(), 0)
+
+    def test_update_companyprofile(self):
+        self.client.post(reverse('companyprofile_add'),
+                         data=self.companyprofile_form_data, follow=True)
+        profile = CompanyProfile.objects.get()
+        self.assertEqual(profile.address_line_one,
+                         self.companyprofile_form_data['address_line_one'])
+
+        self.company.user_created = True
+        self.company.save()
+        self.companyprofile_form_data['company_name'] = 'A New Name'
+        self.client.post(reverse('companyprofile_add'),
+                         data=self.companyprofile_form_data, follow=True)
+        profile = CompanyProfile.objects.get()
+        self.assertEqual(profile.company.name,
+                         self.companyprofile_form_data['company_name'])
