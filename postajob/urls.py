@@ -22,9 +22,6 @@ urlpatterns = patterns(
     url(r'^purchased/jobs/$',
         views.purchasedjobs_overview,
         name='purchasedjobs_overview'),
-    url(r'^admin/purchased/jobs/$',
-        views.admin_purchasedjobs,
-        name='purchasedjobs'),
 
     # Purchased microsite management
     url(r'^admin/$',
@@ -123,6 +120,10 @@ urlpatterns = patterns(
     url(r'^product/purchase/update/(?P<pk>\d+)/',
         views.PurchasedProductFormView.as_view(),
         name='purchasedproduct_update'),
+
+    url(r'^admin/purchased/product$',
+        views.admin_purchasedproduct,
+        name='purchasedproduct'),
 
     # CompanyProfile
     url(r'^admin/profile/',

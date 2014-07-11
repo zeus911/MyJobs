@@ -13,9 +13,6 @@
 Purchased Job Request
 {% endblock page_title %}
 
-{% block goback_link %}
-<a href="{% url 'request' %}">Back to Requests Overview</a>
-{% endblock %}
 
 {% block postajob_content %}
 <div class="row">
@@ -74,10 +71,12 @@ Purchased Job Request
         <div class="profile-form-input purchasedjob-request-field">{% get_job_links object max_sites=None %}</div>
         <div class="clear"></div>
 
-        <form action="{% url 'approve_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
-            {% csrf_token %}
-            <button type="submit" class="btn primary pull-right" id="profile-save">{% trans 'Approve This Job' %}</button>
-        </form>
+        {% if not object.is_approved %}
+            <form action="{% url 'approve_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn primary pull-right" id="profile-save">{% trans 'Approve This Job' %}</button>
+            </form>
+        {% endif %}
 
     </div>
     <div class="span4">

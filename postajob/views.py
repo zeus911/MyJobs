@@ -49,16 +49,15 @@ def purchasedjobs_overview(request):
 def admin_overview(request):
     company = get_company(request)
 
-    purchasedjobs_kwargs = {'purchased_product__product__owner': company}
     data = {
         'products': Product.objects.filter(owner=company)[:3],
         'product_groupings': ProductGrouping.objects.filter(owner=company)[:3],
-        'purchased_jobs': PurchasedJob.objects.filter(**purchasedjobs_kwargs),
-        'purchases': PurchasedProduct.objects.filter(product__owner=company)[:3],
+        'purchased_products': PurchasedProduct.objects.filter(product__owner=company),
         'offline_purchases': OfflinePurchase.objects.filter(owner=company)[:3],
         'requests': Request.objects.filter(owner=company)[:3],
         'company': company
     }
+
     return render_to_response('postajob/admin_overview.html', data,
                               RequestContext(request))
 
@@ -109,15 +108,17 @@ def admin_request(request):
 
 
 @company_has_access('product_access')
-def admin_purchasedjobs(request):
+def admin_purchasedproduct(request):
     company = get_company(request)
-    kwargs = {'purchased_product__product__owner': company}
+    purchases = PurchasedProduct.objects.filter(product__owner=company)
+
     data = {
         'company': company,
-        'purchased_jobs': PurchasedJob.objects.filter(**kwargs),
+        'active_products': purchases.filter(expiration_date__gte=date.today()),
+        'expired_products': purchases.filter(expiration_date__lt=date.today()),
     }
 
-    return render_to_response('postajob/purchasedjob.html', data,
+    return render_to_response('postajob/purchasedproduct.html', data,
                               RequestContext(request))
 
 
