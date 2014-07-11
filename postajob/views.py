@@ -48,9 +48,13 @@ def purchasedjobs_overview(request):
 @company_has_access('product_access')
 def admin_overview(request):
     company = get_company(request)
+
+    purchasedjobs_kwargs = {'purchased_product__product__owner': company}
     data = {
         'products': Product.objects.filter(owner=company)[:3],
         'product_groupings': ProductGrouping.objects.filter(owner=company)[:3],
+        'purchased_jobs': PurchasedJob.objects.filter(**purchasedjobs_kwargs),
+        'purchases': PurchasedProduct.objects.filter(product__owner=company)[:3],
         'offline_purchases': OfflinePurchase.objects.filter(owner=company)[:3],
         'requests': Request.objects.filter(owner=company)[:3],
         'company': company
@@ -101,6 +105,19 @@ def admin_request(request):
     }
 
     return render_to_response('postajob/request.html', data,
+                              RequestContext(request))
+
+
+@company_has_access('product_access')
+def admin_purchasedjobs(request):
+    company = get_company(request)
+    kwargs = {'purchased_product__product__owner': company}
+    data = {
+        'company': company,
+        'requests': PurchasedJob.objects.filter(**kwargs),
+    }
+
+    return render_to_response('postajob/purchasedjob.html', data,
                               RequestContext(request))
 
 
@@ -441,7 +458,10 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
         Every add is actually an edit.
 
         """
-        kwargs = {'company': get_company(self.request)}
+        company = get_company(self.request)
+        if not company:
+            raise Http404
+        kwargs = {'company': company}
         self.object, _ = self.model.objects.get_or_create(**kwargs)
         return self.object
 

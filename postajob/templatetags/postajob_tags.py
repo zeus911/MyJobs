@@ -1,5 +1,6 @@
 import bleach
 
+from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import resolve
 from django.template import Library
 from django.utils.text import slugify
@@ -76,3 +77,8 @@ def get_product_names(offline_purchase):
     products = offline_purchase.products.all()
     names = [product.name for product in products]
     return ", ".join(names)
+
+
+@register.assignment_tag
+def get_content_type(object):
+    return ContentType.objects.get_for_model(object.__class__)

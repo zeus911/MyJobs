@@ -568,6 +568,12 @@ class Product(BaseModel):
 
 
 class CompanyProfile(models.Model):
+
+    help_text = {
+        'email_on_request': 'Send email to admins every time a request '
+                            'is made.',
+    }
+
     company = models.OneToOneField('mydashboard.Company')
     address_line_one = models.CharField(max_length=255, blank=True,
                                         verbose_name='Address Line One')
@@ -586,6 +592,9 @@ class CompanyProfile(models.Model):
         max_length=255, blank=True,
         verbose_name="Authorize.net Transaction Key"
     )
+
+    email_on_request = models.BooleanField(
+        default=True, help_text=help_text['email_on_request'])
 
     # Companies can associate themselves with Purchased Microsites,
     # allowing them to show up on the list of available companies for
@@ -624,6 +633,37 @@ class Request(BaseModel):
         from universal.helpers import get_object_or_none
         return get_object_or_none(self.content_type.model_class(),
                                   pk=self.object_id)
+
+    def send_email(self):
+        from mydashboard.models import CompanyUser
+
+        group, _ = Group.objects.get_or_create(name=self.ADMIN_GROUP_NAME)
+        admins = CompanyUser.objects.filter(group=group, company=self.owner)
+        admin_emails = admins.values_list('user__email', flat=True)
+
+        # Confirm that the request object was fully created and still exists
+        # before sending the email.
+        if self.request_object():
+            requester = self.requesting_company()
+            subject = 'New request from {company}'.format(company=requester.name)
+
+            data = {
+                'request': self,
+                'requester': requester.name,
+            }
+            message = render_to_string('postajob/request_email.html', data)
+            msg = EmailMessage(subject, message, settings.REQUEST_EMAIL,
+                               list(admin_emails))
+            msg.content_subtype = 'html'
+            msg.send()
+
+    def save(self, **kwargs):
+        is_new = False
+        if not getattr(self, 'pk', None):
+            is_new = True
+        super(Request, self).save(**kwargs)
+        if is_new and self.owner.companyprofile.email_on_request:
+            self.send_email()
 
 
 class OfflineProduct(models.Model):

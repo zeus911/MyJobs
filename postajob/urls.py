@@ -22,6 +22,9 @@ urlpatterns = patterns(
     url(r'^purchased/jobs/$',
         views.purchasedjobs_overview,
         name='purchasedjobs_overview'),
+    url(r'^admin/purchased/jobs/$',
+        views.admin_purchasedjobs,
+        name='purchasedjobs'),
 
     # Purchased microsite management
     url(r'^admin/$',
