@@ -35,8 +35,15 @@ window.onload = function(){
         update_job_limit_fields();
     });
 
+    // Fake headers on OfflinePurchase Form
     var header_html = '<div class="clear"></div><div class="span3 form-label pull-left initial header"><b>Product</b></div><div class="profile-form-input header"><b>Quantity</b></div>';
     $(header_html).insertAfter('.purchasing-company-field');
+
+    //PurchasedProduct admin, Purchased Microsite admin overview
+    $('[id^="resend-invoice"]').on("click", function(e) {
+        var id_array = $(this).attr('id').split("-")
+        resend_invoice(id_array[id_array.length - 1]);
+    });
 };
 
 
@@ -128,4 +135,11 @@ function update_job_limit_fields() {
         show_field('number-of-jobs');
         show_admin_field('num_jobs_allowed');
     }
+}
+
+function resend_invoice(id) {
+    $.ajax({
+        type: 'POST',
+        url: '/postajob/admin/invoice/' + id + '/'
+    });
 }

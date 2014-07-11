@@ -8,6 +8,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render_to_response
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 from universal.decorators import company_has_access
 from mydashboard.models import CompanyUser
@@ -205,6 +206,19 @@ def is_company_user(request):
     email = request.REQUEST.get('email')
     exists = CompanyUser.objects.filter(user__email=email).exists()
     return HttpResponse(json.dumps(exists))
+
+@csrf_exempt
+@company_has_access('product_access')
+def resend_invoice(request, pk):
+    company = get_company(request)
+
+    try:
+        product = PurchasedProduct.objects.get(pk=pk, product__owner=company)
+    except PurchasedProduct.DoesNotExist:
+        return HttpResponse(json.dumps(False))
+
+    product.invoice.send_invoice_email()
+    return HttpResponse(json.dumps(True))
 
 
 class PurchaseFormViewBase(RequestFormViewBase):

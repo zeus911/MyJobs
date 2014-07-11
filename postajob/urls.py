@@ -28,6 +28,11 @@ urlpatterns = patterns(
         views.admin_overview,
         name='admin_overview'),
 
+    # Invoices
+    url(r'^admin/invoice/(?P<pk>\d+)/$',
+        views.resend_invoice,
+        name='resend_invoice'),
+
     # Requests
     url(r'^admin/request/$',
         views.admin_request,

@@ -7,7 +7,8 @@
                 <td class="purchasedproduct-name">{{ product.product.name }}</td>
                 <td class="purchasedproduct-package">{{ product.owner.name }}</td>
                 <td class="purchasedproduct-jobs-remaining">{% if product.can_post_more and product.jobs_remaining > 0 %}{{ product.jobs_remaining }}{% elif product.can_post_more %}Unlimited{% else %}0{% endif %}</td>
-                <td class="purchasedproduct-actions"><a href="">Resend Invoice</a></td>
+                <td class="purchasedproduct-actions"><a href="#" id="resend-invoice-{{ product.pk }}">Resend Invoice</a>
+                </td>
             </tr>
         {% endfor %}
     {% else %}
