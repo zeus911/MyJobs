@@ -27,6 +27,7 @@ class ModelTests(TestCase):
     def setUp(self):
         self.user = User.objects.create(email='user@test.email')
         self.company = CompanyFactory()
+        CompanyProfile.objects.create(company=self.company)
         self.site = SeoSiteFactory()
         self.bu = BusinessUnitFactory()
         self.site.business_units.add(self.bu)
@@ -271,7 +272,6 @@ class ModelTests(TestCase):
         mock_obj.read.side_effect = self.side_effect
         urlopen_mock.return_value = mock_obj
 
-        CompanyProfile.objects.create(company=self.company)
         cu = CompanyUser.objects.create(user=self.user,
                                         company=self.company)
         cu.make_purchased_microsite_admin()
