@@ -114,7 +114,7 @@ def admin_purchasedjobs(request):
     kwargs = {'purchased_product__product__owner': company}
     data = {
         'company': company,
-        'requests': PurchasedJob.objects.filter(**kwargs),
+        'purchased_jobs': PurchasedJob.objects.filter(**kwargs),
     }
 
     return render_to_response('postajob/purchasedjob.html', data,
