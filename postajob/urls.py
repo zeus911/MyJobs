@@ -28,6 +28,11 @@ urlpatterns = patterns(
         views.admin_overview,
         name='admin_overview'),
 
+    # Invoices
+    url(r'^admin/invoice/(?P<pk>\d+)/$',
+        views.resend_invoice,
+        name='resend_invoice'),
+
     # Requests
     url(r'^admin/request/$',
         views.admin_request,
@@ -120,6 +125,10 @@ urlpatterns = patterns(
     url(r'^product/purchase/update/(?P<pk>\d+)/',
         views.PurchasedProductFormView.as_view(),
         name='purchasedproduct_update'),
+
+    url(r'^admin/purchased/product$',
+        views.admin_purchasedproduct,
+        name='purchasedproduct'),
 
     # CompanyProfile
     url(r'^admin/profile/',

@@ -27,6 +27,7 @@ class ViewTests(TestCase):
         super(ViewTests, self).setUp()
         self.user = UserFactory()
         self.company = CompanyFactory(product_access=True)
+        CompanyProfile.objects.create(company=self.company)
         self.site = SeoSiteFactory()
         self.bu = BusinessUnitFactory()
         self.site.business_units.add(self.bu)

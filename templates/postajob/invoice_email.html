@@ -28,13 +28,13 @@
         {% endif %}
     </td></tr>
     <tr>
-        <td>Description</td>
-        <td>Unit Price</td>
+        <td align="center" colspan="2"><b>Description</b></td>
+        <td align="center" colspan="2"><b>Price</b></td>
     </tr>
     {% for purchase in purchases %}
         <tr>
-            <td>{{ purchase.product.name }}</td>
-            <td>${{ purchase.purchase_amount }}</td>
+            <td colspan="2">{{ purchase.product.name }}</td>
+            <td colspan="2">${{ purchase.purchase_amount }}</td>
         </tr>
     {% endfor %}
     {% get_purchase_total purchases as total %}

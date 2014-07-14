@@ -8,6 +8,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render_to_response
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 from universal.decorators import company_has_access
 from mydashboard.models import CompanyUser
@@ -48,13 +49,16 @@ def purchasedjobs_overview(request):
 @company_has_access('product_access')
 def admin_overview(request):
     company = get_company(request)
+
     data = {
         'products': Product.objects.filter(owner=company)[:3],
         'product_groupings': ProductGrouping.objects.filter(owner=company)[:3],
+        'purchased_products': PurchasedProduct.objects.filter(product__owner=company),
         'offline_purchases': OfflinePurchase.objects.filter(owner=company)[:3],
         'requests': Request.objects.filter(owner=company)[:3],
         'company': company
     }
+
     return render_to_response('postajob/admin_overview.html', data,
                               RequestContext(request))
 
@@ -101,6 +105,21 @@ def admin_request(request):
     }
 
     return render_to_response('postajob/request.html', data,
+                              RequestContext(request))
+
+
+@company_has_access('product_access')
+def admin_purchasedproduct(request):
+    company = get_company(request)
+    purchases = PurchasedProduct.objects.filter(product__owner=company)
+
+    data = {
+        'company': company,
+        'active_products': purchases.filter(expiration_date__gte=date.today()),
+        'expired_products': purchases.filter(expiration_date__lt=date.today()),
+    }
+
+    return render_to_response('postajob/purchasedproduct.html', data,
                               RequestContext(request))
 
 
@@ -187,6 +206,19 @@ def is_company_user(request):
     email = request.REQUEST.get('email')
     exists = CompanyUser.objects.filter(user__email=email).exists()
     return HttpResponse(json.dumps(exists))
+
+@csrf_exempt
+@company_has_access('product_access')
+def resend_invoice(request, pk):
+    company = get_company(request)
+
+    try:
+        product = PurchasedProduct.objects.get(pk=pk, product__owner=company)
+    except PurchasedProduct.DoesNotExist:
+        return HttpResponse(json.dumps(False))
+
+    product.invoice.send_invoice_email()
+    return HttpResponse(json.dumps(True))
 
 
 class PurchaseFormViewBase(RequestFormViewBase):
@@ -441,7 +473,10 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
         Every add is actually an edit.
 
         """
-        kwargs = {'company': get_company(self.request)}
+        company = get_company(self.request)
+        if not company:
+            raise Http404
+        kwargs = {'company': company}
         self.object, _ = self.model.objects.get_or_create(**kwargs)
         return self.object
 

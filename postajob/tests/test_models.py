@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from mock import patch
+from mock import patch, Mock
 from StringIO import StringIO
 from urlparse import parse_qs
 
@@ -12,9 +12,9 @@ from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          SeoSiteFactory)
 from mydashboard.models import CompanyUser
 from myjobs.models import User
-from postajob.models import (Job, OfflineProduct, Product, ProductGrouping,
-                             ProductOrder, PurchasedJob, PurchasedProduct,
-                             Request, SitePackage)
+from postajob.models import (CompanyProfile, Job, OfflineProduct, Product,
+                             ProductGrouping, ProductOrder, PurchasedJob,
+                             PurchasedProduct, Request, SitePackage)
 from postajob.tests.factories import (job_factory, product_factory,
                                       offlineproduct_factory,
                                       offlinepurchase_factory,
@@ -27,6 +27,7 @@ class ModelTests(TestCase):
     def setUp(self):
         self.user = User.objects.create(email='user@test.email')
         self.company = CompanyFactory()
+        CompanyProfile.objects.create(company=self.company)
         self.site = SeoSiteFactory()
         self.bu = BusinessUnitFactory()
         self.site.business_units.add(self.bu)
@@ -53,6 +54,11 @@ class ModelTests(TestCase):
         self.site_package_data = {
             'name': 'Test Site Package',
         }
+
+        self.choices_data = ('{"countries":[{"code":"USA", '
+                             '"name":"United States of America"}], '
+                             '"regions":[{"code":"IN", "name":"Indiana"}] }')
+        self.side_effect = [self.choices_data for x in range(0, 50)]
 
     @patch('urllib2.urlopen')
     def test_job_creation(self, urlopen_mock):
@@ -262,16 +268,26 @@ class ModelTests(TestCase):
 
     @patch('urllib2.urlopen')
     def test_request_generation(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
+        mock_obj = Mock()
+        mock_obj.read.side_effect = self.side_effect
+        urlopen_mock.return_value = mock_obj
+
+        cu = CompanyUser.objects.create(user=self.user,
+                                        company=self.company)
+        cu.make_purchased_microsite_admin()
+
         self.create_purchased_job()
         self.assertEqual(PurchasedJob.objects.all().count(), 1)
         self.assertEqual(Request.objects.all().count(), 1)
+        self.assertEqual(len(mail.outbox), 1)
+        mail.outbox = []
 
         # Already approved jobs should not generate an additional request.
         purchasedjob_factory(self.company, self.user, self.purchased_product,
                              is_approved=True)
         self.assertEqual(PurchasedJob.objects.all().count(), 2)
         self.assertEqual(Request.objects.all().count(), 1)
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_offlinepurchase_create_purchased_products(self):
         user = CompanyUser.objects.create(user=self.user, company=self.company)
