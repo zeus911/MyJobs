@@ -107,7 +107,7 @@ CELERYBEAT_PIDFILE = '/var/run/celerybeat.pid'
 CELERYBEAT_SCHEDULE = {
     'daily-search-digest': {
         'task': 'tasks.send_search_digests',
-        'schedule': crontab(minute=0, hour=16),
+        'schedule': crontab(minute=0, hour=10),
     },
     'daily-delete-activation': {
         'task': 'tasks.delete_inactive_activations',
