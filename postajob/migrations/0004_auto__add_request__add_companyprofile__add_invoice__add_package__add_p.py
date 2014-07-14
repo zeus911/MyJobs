@@ -234,9 +234,6 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.TextField')(default='', blank=True),
                       keep_default=False)
 
-        # Deleting field 'SitePackage.name'
-        db.delete_column(u'postajob_sitepackage', 'name')
-
         # Adding field 'SitePackage.package_ptr'
         db.add_column(u'postajob_sitepackage', u'package_ptr',
                       self.gf('django.db.models.fields.related.OneToOneField')(default=1, to=orm['postajob.Package'], unique=True, primary_key=True),
@@ -378,11 +375,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'Product.notes'
         db.delete_column(u'postajob_product', 'notes')
-
-        # Adding field 'SitePackage.name'
-        db.add_column(u'postajob_sitepackage', 'name',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
-                      keep_default=False)
 
         # Deleting field 'SitePackage.package_ptr'
         db.delete_column(u'postajob_sitepackage', u'package_ptr_id')

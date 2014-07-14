@@ -10,10 +10,18 @@ class Migration(SchemaMigration):
         # Deleting field 'SitePackage.id'
         db.delete_column(u'postajob_sitepackage', u'id')
 
+        # Deleting field 'SitePackage.name'
+        db.delete_column(u'postajob_sitepackage', 'name')
+
     def backwards(self, orm):
         # Adding field 'SitePackage.id'
         db.add_column(u'postajob_sitepackage', u'id',
                       self.gf('django.db.models.fields.AutoField')(default=1, primary_key=True),
+                      keep_default=False)
+
+        # Adding field 'SitePackage.name'
+        db.add_column(u'postajob_sitepackage', 'name',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
                       keep_default=False)
 
     models = {
