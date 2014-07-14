@@ -8,14 +8,62 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Company.user_created'
-        db.add_column('seo_company', 'user_created',
+        # Adding field 'Company.company_slug'
+        db.add_column('seo_company', 'company_slug',
+                      self.gf('django.db.models.fields.SlugField')(max_length=200, null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'Company.logo_url'
+        db.add_column('seo_company', 'logo_url',
+                      self.gf('django.db.models.fields.URLField')(max_length=200, null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'Company.linkedin_id'
+        db.add_column('seo_company', 'linkedin_id',
+                      self.gf('django.db.models.fields.CharField')(max_length=20, null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'Company.og_img'
+        db.add_column('seo_company', 'og_img',
+                      self.gf('django.db.models.fields.URLField')(max_length=200, null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'Company.canonical_microsite'
+        db.add_column('seo_company', 'canonical_microsite',
+                      self.gf('django.db.models.fields.URLField')(max_length=200, null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'Company.digital_strategies_customer'
+        db.add_column('seo_company', 'digital_strategies_customer',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
+        # Adding field 'Company.enhanced'
+        db.add_column('seo_company', 'enhanced',
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
     def backwards(self, orm):
-        # Deleting field 'Company.user_created'
-        db.delete_column('seo_company', 'user_created')
+        # Deleting field 'Company.company_slug'
+        db.delete_column('seo_company', 'company_slug')
+
+        # Deleting field 'Company.logo_url'
+        db.delete_column('seo_company', 'logo_url')
+
+        # Deleting field 'Company.linkedin_id'
+        db.delete_column('seo_company', 'linkedin_id')
+
+        # Deleting field 'Company.og_img'
+        db.delete_column('seo_company', 'og_img')
+
+        # Deleting field 'Company.canonical_microsite'
+        db.delete_column('seo_company', 'canonical_microsite')
+
+        # Deleting field 'Company.digital_strategies_customer'
+        db.delete_column('seo_company', 'digital_strategies_customer')
+
+        # Deleting field 'Company.enhanced'
+        db.delete_column('seo_company', 'enhanced')
 
     models = {
         u'auth.group': {
