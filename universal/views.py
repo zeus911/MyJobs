@@ -21,7 +21,7 @@ class FormViewBase(FormView, ModelFormMixin, SingleObjectMixin):
         if self.object:
             pk = {'pk': self.object.pk}
             kwargs['delete_url'] = reverse(self.delete_name, kwargs=pk)
-        kwargs['success_url'] = self.success_url
+        kwargs['success_url'] = reverse(self.success_url)
         kwargs['display_name'] = self.display_name
         return super(FormViewBase, self).get_context_data(**kwargs)
 
