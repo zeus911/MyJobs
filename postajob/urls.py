@@ -25,8 +25,8 @@ urlpatterns = patterns(
 
     # Purchased microsite management
     url(r'^admin/$',
-        views.admin_overview,
-        name='admin_overview'),
+        views.purchasedmicrosite_admin_overview,
+        name='purchasedmicrosite_admin_overview'),
 
     # Invoices
     url(r'^admin/invoice/(?P<pk>\d+)/$',

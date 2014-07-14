@@ -47,7 +47,7 @@ def purchasedjobs_overview(request):
 
 
 @company_has_access('product_access')
-def admin_overview(request):
+def purchasedmicrosite_admin_overview(request):
     company = get_company(request)
 
     data = {
@@ -454,7 +454,7 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
     prevent_delete = True
     display_name = 'Company Profile'
 
-    success_url = reverse_lazy('admin_overview')
+    success_url = reverse_lazy('purchasedmicrosite_admin_overview')
     add_name = 'companyprofile_add'
     update_name = 'companyprofile_edit'
     delete_name = 'companyprofile_delete'

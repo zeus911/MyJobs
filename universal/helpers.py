@@ -84,5 +84,5 @@ def get_company(request):
 def get_object_or_none(model, **kwargs):
     try:
         return model.objects.get(**kwargs)
-    except Exception, e:
+    except Exception:
         return None
