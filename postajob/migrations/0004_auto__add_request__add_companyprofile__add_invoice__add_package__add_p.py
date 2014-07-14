@@ -11,6 +11,8 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
             db.delete_foreign_key('postajob_product', 'site_package_id')
+            db.delete_foreign_key('postajob_job_site_packages', 'sitepackage_id')
+            db.delete_foreign_key('postajob_sitepackage_sites', 'sitepackage_id')
             db.delete_foreign_key('seo_company', 'site_package_id')
             db.delete_foreign_key('seo_seosite', 'site_package_id')
             db.execute('ALTER TABLE postajob_sitepackage CHANGE id id INT(10) UNSIGNED NOT NULL')
