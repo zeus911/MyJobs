@@ -100,12 +100,14 @@ class BaseJobForm(RequestForm):
 
         # Require one set of apply instructions.
         if not any([apply_info, apply_link, apply_email]):
-            raise ValidationError('You must supply some type of appliction '
-                                  'information.')
+            msg = 'You must supply some type of appliction information.'
+            self._errors['apply_type'] = self.error_class([msg])
+            raise ValidationError(msg)
         # Allow only one set of apply instructions.
         if sum([1 for x in [apply_info, apply_link, apply_email] if x]) > 1:
-            raise ValidationError('You can only supply one application '
-                                  'method.')
+            msg = 'You can only supply one application method.'
+            self._errors['apply_type'] = self.error_class([msg])
+            raise ValidationError(msg)
 
         if apply_email:
             # validate_email() raises its own ValidationError.
@@ -393,25 +395,6 @@ class ProductGroupingForm(RequestForm):
                 # Owner
                 self.initial['owner'] = self.company
                 self.fields['owner'].widget = HiddenInput()
-
-    def clean(self):
-        display_order = self.cleaned_data.get('display_order')
-        company = self.cleaned_data.get('owner')
-
-        # Enforce a pseudo-unique-together between owner and display order.
-        kwargs = {
-            'display_order': display_order,
-            'owner': company,
-        }
-        query = ProductGrouping.objects.filter(**kwargs)
-        if hasattr(self.instance, 'pk') and self.instance.pk:
-            query = query.exclude(pk=self.instance.pk)
-
-        if query.exists():
-            error = 'A product already exists for {company_name} ' \
-                    'with the selected display order.'
-            raise ValidationError(error.format(company_name=company.name))
-        return self.cleaned_data
 
     def save(self, commit=True):
         products = self.cleaned_data.pop('products')
