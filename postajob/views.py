@@ -391,7 +391,7 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
     model = OfflinePurchase
     display_name = 'Offline Purchase'
 
-    success_url = 'offlinepurchase'
+    success_url = reverse_lazy('offlinepurchase')
     add_name = 'offlinepurchase_add'
     update_name = 'offlinepurchase_update'
     delete_name = 'offlinepurchase_delete'

@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from decimal import Decimal
 import json
 import operator
 from urllib import urlencode
@@ -9,6 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import EmailMessage
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_delete
@@ -539,17 +541,21 @@ class Product(BaseModel):
     name = models.CharField(max_length=255, blank=True)
     cost = models.DecimalField(max_digits=20, decimal_places=2,
                                verbose_name='Product Price',
-                               help_text=help_text['cost'])
+                               help_text=help_text['cost'],
+                               validators=[MinValueValidator(Decimal('1.00'))])
     posting_window_length = models.IntegerField(default=30,
                                                 choices=posting_window_choices,
                                                 help_text=help_text['posting_window_length'],
-                                                verbose_name='Posting Window Duration')
-    max_job_length = models.IntegerField(default=30,
-                                         choices=max_job_length_choices,
-                                         help_text=help_text['max_job_length'],
-                                         verbose_name='Maximum Job Duration')
-    num_jobs_allowed = models.IntegerField(default=5,
-                                           verbose_name='Number of Jobs')
+                                                verbose_name='Posting Window '
+                                                             'Duration')
+    max_job_length = models.PositiveIntegerField(default=30,
+                                                 choices=max_job_length_choices,
+                                                 help_text=help_text['max_job_length'],
+                                                 verbose_name='Maximum Job '
+                                                              'Duration')
+    num_jobs_allowed = models.PositiveIntegerField(default=5,
+                                                   verbose_name='Number of '
+                                                                'Jobs')
 
     description = models.TextField(verbose_name='Product Description')
     featured = models.BooleanField(default=False)

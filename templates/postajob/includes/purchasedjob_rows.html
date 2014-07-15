@@ -8,6 +8,7 @@
     <td class="posted-job-company">{{ job.owner.name }}</td>
     <td class="mobile_hide posted-job-reqid">{{ job.reqid }}</td>
     <td class="posted-job-is-expired">{{ job.is_expired }}</td>
+    <td class="posted-job-is-approved">{{ job.is_approved }}</td>
     <td class="mobile-hide posted-job-date-expired">
         {{ job.date_expired }}
         {% if job.is_expired %}
