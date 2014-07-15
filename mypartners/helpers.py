@@ -193,30 +193,21 @@ def get_records_from_request(request):
     records = partner.get_contact_records(
         contact_name=contact, record_type=contact_type, created_by=admin)
 
-    if date_range:
-        date_range = int(date_range or 30)
-        if date_range == 0:
-            # Date range 0 means we're not going to filter by date
-            range_end = None
-            range_start = None
-    else:
-        try:
-            range_start = datetime.strptime(range_start, "%m/%d/%Y")
-            range_end = datetime.strptime(range_end, "%m/%d/%Y")
-            # Make range from 12:01 AM on start date to 11:59 PM on end date.
-            range_start = datetime.combine(range_start, time.min)
-            range_end = datetime.combine(range_end, time.max)
-            # Assume that the date range is implying the user's time zone.
-            # Transfer from the user's time zone to utc.
-            user_tz = pytz.timezone(get_current_timezone_name())
-            range_start = user_tz.localize(range_start)
-            range_end = user_tz.localize(range_end)
-            range_start = range_start.astimezone(pytz.utc)
-            range_end = range_end.astimezone(pytz.utc)
-        except (AttributeError, TypeError, ValueError):
-            range_start = now() - timedelta(30)
-            range_end = now()
+    if not date_range and all([range_start, range_end]):
+        range_start = datetime.strptime(range_start, "%m/%d/%Y")
+        range_end = datetime.strptime(range_end, "%m/%d/%Y")
+        # Make range from 12:01 AM on start date to 11:59 PM on end date.
+        range_start = datetime.combine(range_start, time.min)
+        range_end = datetime.combine(range_end, time.max)
+        # Assume that the date range is implying the user's time zone.
+        # Transfer from the user's time zone to utc.
+        user_tz = pytz.timezone(get_current_timezone_name())
+        range_start = user_tz.localize(range_start)
+        range_end = user_tz.localize(range_end)
+        range_start = range_start.astimezone(pytz.utc)
+        range_end = range_end.astimezone(pytz.utc)
 
+    date_range = int(date_range or 30)
     if date_range == 0:
         date_str = "View All"
         range_start = records.aggregate(Min('date_time')).get(
