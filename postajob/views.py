@@ -47,7 +47,7 @@ def purchasedjobs_overview(request):
 
 
 @company_has_access('product_access')
-def admin_overview(request):
+def purchasedmicrosite_admin_overview(request):
     company = get_company(request)
 
     data = {
@@ -391,7 +391,7 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
     model = OfflinePurchase
     display_name = 'Offline Purchase'
 
-    success_url = 'offlinepurchase'
+    success_url = reverse_lazy('offlinepurchase')
     add_name = 'offlinepurchase_add'
     update_name = 'offlinepurchase_update'
     delete_name = 'offlinepurchase_delete'
@@ -412,7 +412,7 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
                 'pk': self.object.pk,
             }
             return reverse('offline_purchase_success', kwargs=kwargs)
-        return reverse(self.success_url)
+        return self.success_url
 
     def set_object(self, request):
         """
@@ -454,7 +454,7 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
     prevent_delete = True
     display_name = 'Company Profile'
 
-    success_url = reverse_lazy('admin_overview')
+    success_url = reverse_lazy('purchasedmicrosite_admin_overview')
     add_name = 'companyprofile_add'
     update_name = 'companyprofile_edit'
     delete_name = 'companyprofile_delete'

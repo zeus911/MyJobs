@@ -25,8 +25,8 @@ urlpatterns = patterns(
 
     # Purchased microsite management
     url(r'^admin/$',
-        views.admin_overview,
-        name='admin_overview'),
+        views.purchasedmicrosite_admin_overview,
+        name='purchasedmicrosite_admin_overview'),
 
     # Invoices
     url(r'^admin/invoice/(?P<pk>\d+)/$',
@@ -108,7 +108,7 @@ urlpatterns = patterns(
         views.OfflinePurchaseFormView.as_view(),
         name='offlinepurchase_update'),
 
-    url(r'purchase/redeem/$',
+    url(r'^purchase/redeem/$',
         views.OfflinePurchaseRedemptionFormView.as_view(),
         name='offlinepurchase_redeem'),
     url(r'^admin/purchase/offline/success/(?P<content_type>\d+)/(?P<pk>\d+)/$',

@@ -3,11 +3,12 @@
 <tbody id="posted-jobs">
 {% if requests %}
 {% for request in requests %}
-<tr class="posted-job-tr" {% if not request.action_taken %}onclick="window.document.location='{% url 'view_request' content_type=request.content_type_id pk=request.object_id %}';"{% endif %}>
+<tr class="posted-job-tr">
     <td class="request-request-type">{{ request.model_name }}</td>
     <td class="request-requested-on">{{ request.requesting_company }}</td>
     <td class="request-requested-on">{{ request.made_on }}</td>
     <td class="request-requested-on">{{ request.action_taken }}</td>
+    <td class="request-actions">{% if not request.action_taken %}<a href="{% url 'view_request' content_type=request.content_type_id pk=request.object_id %}">View</a>{% endif %}</td>
 </tr>
 {% endfor %}
 {% else %}
