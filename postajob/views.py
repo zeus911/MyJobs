@@ -1,7 +1,6 @@
 from datetime import date
 import json
 
-from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import Http404, reverse, reverse_lazy, resolve
 from django.http import HttpResponse
@@ -12,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from universal.decorators import company_has_access
 from mydashboard.models import CompanyUser
+from myjobs.decorators import user_is_allowed
 from postajob.forms import (CompanyProfileForm, JobForm, OfflinePurchaseForm,
                             OfflinePurchaseRedemptionForm, ProductForm,
                             ProductGroupingForm, PurchasedJobForm,
@@ -225,6 +225,8 @@ class PurchaseFormViewBase(RequestFormViewBase):
     purchase_field = None
     purchase_model = None
 
+
+    @method_decorator(user_is_allowed())
     def dispatch(self, *args, **kwargs):
         """
         Determine and set which product is attempting to be purchased.
@@ -459,7 +461,7 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
     update_name = 'companyprofile_edit'
     delete_name = 'companyprofile_delete'
 
-    @method_decorator(user_passes_test(lambda user: user.companyuser_set.all().exists()))
+    @method_decorator(company_has_access(None))
     def dispatch(self, *args, **kwargs):
         """
         Decorators on this function will be run on every request that
