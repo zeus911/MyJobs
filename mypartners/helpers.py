@@ -184,6 +184,7 @@ def get_records_from_request(request):
     """
     _, partner, _ = prm_worthy(request)
 
+    # extract reelvant values from the request object
     contact, contact_type, admin, date_range, range_start, range_end = [
         value if value not in ["all", "undefined", ""] else None for value in [
             request.REQUEST.get(field) for field in [
@@ -216,10 +217,8 @@ def get_records_from_request(request):
             'date_time__max', now())
     else:
         date_range = int(date_range or 30)
-        if not range_start:
-            range_start = now() - timedelta(date_range)
-        if not range_end:
-            range_end = now()
+        range_start = range_start or now() - timedelta(date_range)
+        range_end = range_end or now()
 
         date_str = (range_end - range_start).days
         date_str = "%i Day"  % date_str + ("" if date_str == 1 else "s")
