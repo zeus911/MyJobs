@@ -219,14 +219,10 @@ def get_records_from_request(request):
 
     if date_range == 0:
         date_str = "View All"
-        try:
-            range_start = records.aggregate(Min('date_time'))['date_time__min']
-        except KeyError:
-            range_start = now()
-        try:
-            range_end = records.aggregate(Max('date_time'))['date_time__max']
-        except KeyError:
-            range_end = now()
+        range_start = records.aggregate(Min('date_time')).get(
+            'date_time__min', now())
+        range_end = records.aggregate(Max('date_time')).get(
+            'date_time__max', now())
     else:
         date_range = int(date_range or 30)
         if not range_start:
