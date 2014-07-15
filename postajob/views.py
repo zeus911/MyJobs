@@ -412,7 +412,7 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
                 'pk': self.object.pk,
             }
             return reverse('offline_purchase_success', kwargs=kwargs)
-        return reverse(self.success_url)
+        return self.success_url
 
     def set_object(self, request):
         """

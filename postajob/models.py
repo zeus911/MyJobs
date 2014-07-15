@@ -98,8 +98,11 @@ class Job(BaseModel):
 
     def solr_dict(self):
         if self.site_packages.all():
-            package_list = self.site_packages.all().values_list('pk', flat=True)
-            package_list = list(package_list)
+            package_list = self.site_packages.all()
+            # Microsites treats the package_ptr_id as the id for SitePackages,
+            # so pass the package_ptr_id along rather than the actual id.
+            package_list = list(package_list.values_list('package_ptr_id',
+                                                         flat=True))
             if (self.site_packages.all().count() == 1 and
                     self.site_packages.all()[0].company_set.all().count() > 0):
                 # If it's posted to a company site_pacakge only, that means it
