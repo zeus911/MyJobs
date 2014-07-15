@@ -37,7 +37,7 @@
                             <li><a id="partner-tab" href="{{ ABSOLUTE_URL }}prm/view?company={{ company.id }}">{% trans "PRM" %}</a></li>
                             {% endif %}
                             {% if company.product_access %}
-                            <li><a id="purchasedmicrosite-tab" href="{{ ABSOLUTE_URL }}postajob/admin">{% trans "Purchased Microsite" %}</a></li>
+                            <li><a id="purchasedmicrosite-tab" href="{{ ABSOLUTE_URL }}postajob/admin">{% trans "Partner Microsite" %}</a></li>
                             {% endif %}
                         </ul>
                     </li>
@@ -103,7 +103,7 @@
 
                                         {% endif %}
                                         {% if company.product_access %}
-                                            <li><a id="purchased-microsite-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Purchased Microsite" %}</a></li>
+                                            <li><a id="purchased-microsite-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Partner Microsite" %}</a></li>
                                         {% endif %}
                                     {% endif %}
                                     <li><a id="account-link" href="{{ ABSOLUTE_URL }}account/edit">{% trans "Account Settings" %}</a></li>
