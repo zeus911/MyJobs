@@ -182,40 +182,24 @@ def get_records_from_request(request):
 
 
     """
-    company, partner, user = prm_worthy(request)
+    _, partner, _ = prm_worthy(request)
 
-    contact = request.REQUEST.get('contact')
-    if contact == 'undefined':
-        contact = None
-    contact_type = request.REQUEST.get('record_type')
-    if contact_type == 'undefined':
-        contact_type = None
-    admin = request.REQUEST.get('admin')
-    if admin == 'undefined':
-        admin = None
+    contact, contact_type, admin, date_range, range_start, range_end = [
+        value if value not in ["all", "undefined", ""] else None for value in [
+            request.REQUEST.get(field) for field in [
+                "contact", "record_type", "admin", "date",
+                "date_start", "date_end"]]]
 
-    contact = None if contact == 'all' else contact
-    contact_type = None if contact_type == 'all' else contact_type
-    records = partner.get_contact_records(contact_name=contact,
-                                          record_type=contact_type,
-                                          created_by=admin)
+    records = partner.get_contact_records(
+        contact_name=contact, record_type=contact_type, created_by=admin)
 
-    date_range = request.REQUEST.get('date')
     if date_range:
-        try:
-            date_range = int(date_range)
-        except (TypeError, ValueError):
-            date_range = 30
+        date_range = int(date_range or 30)
         if date_range == 0:
             # Date range 0 means we're not going to filter by date
             range_end = None
             range_start = None
-        else:
-            range_end = now()
-            range_start = now() - timedelta(date_range + 1)
     else:
-        range_start = request.REQUEST.get('date_start')
-        range_end = request.REQUEST.get('date_end')
         try:
             range_start = datetime.strptime(range_start, "%m/%d/%Y")
             range_end = datetime.strptime(range_end, "%m/%d/%Y")
@@ -244,14 +228,12 @@ def get_records_from_request(request):
         except KeyError:
             range_end = now()
     else:
-        try:
-            date_str = (range_end - range_start).days
-            date_str = (("%s Days" % date_str) if date_str != 1
-                        else ("%s Day" % date_str))
-        except (ValidationError, TypeError):
-            range_start = now() + timedelta(-30)
-            range_end = now()
-            date_str = "30 Days"
+        date_range = int(date_range or 30)
+        if not range_start:
+            range_start = now() - timedelta(date_range)
+        range_end = now()
+        date_str = (range_end - range_start).days
+        date_str = "%i Day"  % date_str + ("" if date_str == 1 else "s")
 
         records = records.filter(date_time__range=[range_start, range_end])
 
