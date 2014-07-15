@@ -231,7 +231,9 @@ def get_records_from_request(request):
         date_range = int(date_range or 30)
         if not range_start:
             range_start = now() - timedelta(date_range)
-        range_end = now()
+        if not range_end:
+            range_end = now()
+
         date_str = (range_end - range_start).days
         date_str = "%i Day"  % date_str + ("" if date_str == 1 else "s")
 
