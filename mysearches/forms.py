@@ -210,6 +210,7 @@ class PartnerSavedSearchForm(ModelForm):
 
 class PartnerSubSavedSearchForm(ModelForm):
     def __init__(self, *args, **kwargs):
+        kwargs.pop('user', None)
         super(PartnerSubSavedSearchForm, self).__init__(*args, **kwargs)
 
     class Meta:

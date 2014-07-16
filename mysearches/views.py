@@ -163,18 +163,16 @@ def save_search_form(request):
 
     try:
         search_id = int(search_id)
-        original = SavedSearch.objects.get(id=search_id,
-                                           user=request.user)
-        if hasattr(original, 'partnersavedsearch'):
-            form = PartnerSubSavedSearchForm(user=request.user,
-                                             data=request.POST,
-                                             instance=original)
-        else:
-            form = SavedSearchForm(user=request.user,
-                                   data=request.POST,
-                                   instance=original)
-    except Exception:
-        form = SavedSearchForm(user=request.user, data=request.POST)
+        original = SavedSearch.objects.get(id=search_id, user=request.user)
+    except ValueError:
+        original = None
+
+    if hasattr(original, 'partnersavedsearch'):
+        form = PartnerSubSavedSearchForm(user=request.user, data=request.POST,
+                                         instance=original)
+    else:
+        form = SavedSearchForm(user=request.user, data=request.POST,
+                               instance=original)
 
     if form.is_valid():
         form.save()
