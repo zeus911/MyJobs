@@ -1,12 +1,12 @@
-<div>
+<div id="grouping-list">
     {% if product_groupings|length %}
         {% for grouping in product_groupings %}
-            <div>
+            <div id="products-{{ grouping.pk }}">
                 <strong>{{ grouping.display_title }}</strong>
                 <p>{{ grouping.explanation }}</p>
                 <ul>
                     {% for product in grouping.products.all %}
-                        <li><a href="https://secure.my.jobs{% url 'purchasedproduct_add' product.pk %}">{{ product }}</a></li>
+                        <li id="product-{{ grouping.pk }}-{{ product.pk }}"><a href="https://secure.my.jobs{% url 'purchasedproduct_add' product.pk %}">{{ product }}</a></li>
                     {% endfor %}
                 </ul>
             </div>
