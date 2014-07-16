@@ -590,12 +590,13 @@ def prm_view_records(request):
     View an individual ContactRecord.
 
     """
-    company, partner, user = prm_worthy(request)
+    company, partner, _ = prm_worthy(request)
     record_id = request.GET.get('id')
     record_type = request.GET.get('type')
     name = request.GET.get('name')
     range_start = request.REQUEST.get('date_start')
     range_end = request.REQUEST.get('date_end')
+    range_start = datetime.strptime(range_start, "%m/%d/%Y")
     try:
         range_start = datetime.strptime(range_start, "%m/%d/%Y")
         range_end = datetime.strptime(range_end, "%m/%d/%Y")
@@ -612,11 +613,15 @@ def prm_view_records(request):
 
     # we convert to a list so that we can do negative indexing
     records = list(partner.get_contact_records(
-        contact_name=name, record_type=record_type, 
+        contact_name=name, record_type=record_type,
         date_start=range_start, date_end=range_end).order_by("-date_time"))
 
     record = next_id = prev_id = None
-    if records:
+    if not records:
+        record = get_object_or_404(ContactRecord, pk=record_id)
+    elif len(records) <= 1:
+        record = record[0]
+    else:
         ids = [record.id for record in records]
         record_index = ids.index(record_id)
         record = records[record_index]
@@ -631,8 +636,6 @@ def prm_view_records(request):
             # we're somewhere in the middle
             prev_id = records[record_index - 1].id
             next_id = records[record_index + 1].id
-    else:
-        record = get_objecxt_or_404(ContactRecord, pk=record_id)
 
     attachments = PRMAttachment.objects.filter(contact_record=record)
     ct = ContentType.objects.get_for_model(ContactRecord).pk
