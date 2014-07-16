@@ -100,6 +100,7 @@ TEMPLATE_DIRS = (
     join(ROOT_PATH, 'templates')
 )
 
+CELERY_RESULT_BACKEND = 'amqp'
 
 CELERY_IMPORTS = ('tasks',)
 CELERY_TIMEZONE = 'US/Eastern'
