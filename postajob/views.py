@@ -1,4 +1,5 @@
 from datetime import date
+import itertools
 import json
 
 from django.contrib.auth.decorators import user_passes_test
@@ -11,7 +12,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
 from universal.decorators import company_has_access
-from mydashboard.models import CompanyUser
+from mydashboard.models import CompanyUser, SeoSite
 from postajob.forms import (CompanyProfileForm, JobForm, OfflinePurchaseForm,
                             OfflinePurchaseRedemptionForm, ProductForm,
                             ProductGroupingForm, PurchasedJobForm,
@@ -482,3 +483,27 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
 
     def delete(self):
         return
+
+
+def product_listing(request):
+    site_id = request.REQUEST.get('site')
+    callback = request.REQUEST.get('callback')
+    try:
+        site = SeoSite.objects.get(pk=site_id)
+    except SeoSite.DoesNotExist:
+        raise Http404
+    site_packages = site.sitepackage_set.all()
+    products = itertools.chain.from_iterable([site_package.product_set.all()
+                                              for site_package
+                                              in site_packages])
+    groupings = set()
+    for product in products:
+        groupings = groupings.union(
+            set(product.productgrouping_set.filter(is_displayed=True,
+                                                   products__isnull=False)))
+    groupings = sorted(groupings, key=lambda grouping: grouping.display_order)
+    html = render_to_response('postajob/package_list.html',
+                              {'product_groupings': groupings},
+                              RequestContext(request))
+    return HttpResponse('%s(%s)' % (callback, json.dumps(html.content)),
+                        content_type='text/javascript')

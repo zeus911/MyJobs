@@ -564,7 +564,11 @@ class Product(BaseModel):
     notes = models.TextField(blank=True)
 
     def __unicode__(self):
-        return self.name
+        if self.name:
+            return self.name
+        else:
+            return '%s-day job posting - $%s' % (self.posting_window_length,
+                                                 self.cost)
 
 
 class CompanyProfile(models.Model):

@@ -1,0 +1,17 @@
+<div>
+    {% if product_groupings|length %}
+        {% for grouping in product_groupings %}
+            <div>
+                <strong>{{ grouping.display_title }}</strong>
+                <p>{{ grouping.explanation }}</p>
+                <ul>
+                    {% for product in grouping.products.all %}
+                        <li><a href="https://secure.my.jobs{% url 'purchasedproduct_add' product.pk %}">{{ product }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>There are no products configured for purchase.</p>
+    {% endif %}
+</div>

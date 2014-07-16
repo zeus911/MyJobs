@@ -18,7 +18,8 @@ from postajob.tests.factories import (product_factory, job_factory,
                                       sitepackage_factory)
 from postajob.models import (CompanyProfile, Job, OfflinePurchase, Package,
                              Product, ProductGrouping, PurchasedJob,
-                             PurchasedProduct, Request, SitePackage)
+                             PurchasedProduct, Request, SitePackage,
+                             ProductOrder)
 from universal.helpers import build_url
 
 
@@ -38,6 +39,8 @@ class ViewTests(TestCase):
                                                company=self.company)
         sitepackage_factory(self.company)
         self.package = Package.objects.get()
+        self.sitepackage = SitePackage.objects.get()
+        self.site.sitepackage_set.add(self.sitepackage)
         self.product = product_factory(self.package, self.company)
 
         self.login_user()
@@ -656,3 +659,21 @@ class ViewTests(TestCase):
         profile = CompanyProfile.objects.get()
         self.assertEqual(profile.company.name,
                          self.companyprofile_form_data['company_name'])
+
+    def test_list_products_jsonp(self):
+        response = self.client.get(reverse('product_listing') +
+                                   '?site=%s&callback=callback' %
+                                   (self.site.pk, ))
+        self.assertTrue(response.content.startswith('callback("'))
+        self.assertTrue('There are no products configured for purchase'
+                        in response.content)
+
+        productgrouping = productgrouping_factory(company=self.company)
+        ProductOrder(product=self.product, group=productgrouping).save()
+
+        response = self.client.get(reverse('product_listing') +
+                                   '?site=%s&callback=callback' %
+                                   (self.site.pk, ))
+        for text in [productgrouping.display_title, productgrouping.explanation,
+                     unicode(self.product)]:
+            self.assertTrue(text in response.content)
