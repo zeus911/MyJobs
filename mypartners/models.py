@@ -150,8 +150,6 @@ class Partner(models.Model):
         if created_by:
             records = records.filter(created_by=created_by)
 
-        records = records.order_by('id')
-
         return records
 
 

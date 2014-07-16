@@ -613,7 +613,7 @@ def prm_view_records(request):
     # we convert to a list so that we can do negative indexing
     records = list(partner.get_contact_records(
         contact_name=name, record_type=record_type, 
-        date_start=range_start, date_end=range_end))
+        date_start=range_start, date_end=range_end).order_by("-date_time"))
 
     record = next_id = prev_id = None
     if records:
