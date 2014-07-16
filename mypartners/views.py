@@ -303,8 +303,9 @@ def prm_overview(request):
     company, partner, user = prm_worthy(request)
 
     most_recent_activity = partner.get_logs()
-    dt_range = [now() + timedelta(-30), now()]
-    records = partner.get_contact_records(date_time_range=dt_range)
+    range_start, range_end = [now() + timedelta(-30), now()]
+    records = partner.get_contact_records(date_start=range_start,
+                                          date_end=range_end)
     communication = records.order_by('-date_time')
     referrals = records.filter(contact_type='job').count()
     records = records.exclude(contact_type='job').count()
@@ -591,7 +592,6 @@ def prm_view_records(request):
     """
     company, partner, user = prm_worthy(request)
     record_id = request.GET.get('id')
-    offset = request.GET.get('offset', 0)
     record_type = request.GET.get('type')
     name = request.GET.get('name')
     range_start = request.REQUEST.get('date_start')
@@ -605,56 +605,34 @@ def prm_view_records(request):
 
     try:
         record_id = int(record_id)
-        offset = int(offset)
     except (TypeError, ValueError):
         return HttpResponseRedirect(reverse('partner_records') +
                                     '?company=%d&partner=%d' %
                                     (company.id, partner.id))
 
-    prev_offset = (offset - 1) if offset > 1 else 0
-    records = partner.get_contact_records(record_type=record_type,
-                                          contact_name=name,
-                                          date_time_range=[range_start,
-                                                           range_end],
-                                          offset=prev_offset,
-                                          limit=prev_offset + 3)
+    # we convert to a list so that we can do negative indexing
+    records = list(partner.get_contact_records(
+        contact_name=name, record_type=record_type, 
+        date_start=range_start, date_end=range_end))
 
-    # Since we always retrieve 3, if the record is at the beginning of the
-    # list we might have 3 results but no previous.
-    if len(records) == 3 and records[0].pk == record_id:
-        prev_id = None
-        record = records[0]
-        next_id = records[1].pk
-    elif len(records) == 3:
-        prev_id = records[0].pk
-        record = records[1]
-        next_id = records[2].pk
-    # If there are only 2 results, it means there is either no next or
-    # no previous, so we need to compare record ids to figure out which
-    # is which.
-    elif len(records) == 2 and records[0].pk == record_id:
-        prev_id = None
-        record = records[0]
-        next_id = records[1].pk
-    elif len(records) == 2:
-        prev_id = records[0].pk
-        record = records[1]
-        next_id = None
-    elif len(records) == 1:
-        prev_id = None
-        record = records[0]
-        next_id = None
+    record = next_id = prev_id = None
+    if records:
+        ids = [record.id for record in records]
+        record_index = ids.index(record_id)
+        record = records[record_index]
+
+        if record_index == len(ids) - 1:
+            # we're at the end of the list
+            prev_id = records[record_index - 1].id
+        elif record_index == 0:
+            # we're at the beginning of the list
+            next_id = records[record_index + 1].id
+        else:
+            # we're somewhere in the middle
+            prev_id = records[record_index - 1].id
+            next_id = records[record_index + 1].id
     else:
-        prev_id = None
-        record = get_object_or_404(ContactRecord, pk=record_id)
-        next_id = None
-
-    # Double check our results and drop the next and previous options if
-    # the results were wrong
-    if record_id != record.pk:
-        prev_id = None
-        record = get_object_or_404(ContactRecord, pk=record_id)
-        next_id = None
+        record = get_objecxt_or_404(ContactRecord, pk=record_id)
 
     attachments = PRMAttachment.objects.filter(contact_record=record)
     ct = ContentType.objects.get_for_model(ContactRecord).pk
@@ -669,9 +647,7 @@ def prm_view_records(request):
         'attachments': attachments,
         'record_history': record_history,
         'next_id': next_id,
-        'next_offset': offset + 1,
         'prev_id': prev_id,
-        'prev_offset': prev_offset,
         'contact_type': record_type,
         'contact_name': name,
         'view_name': 'PRM'

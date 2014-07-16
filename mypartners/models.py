@@ -135,13 +135,13 @@ class Partner(models.Model):
 
     # get_contact_records_for_partner
     def get_contact_records(self, contact_name=None, record_type=None,
-                            created_by=None, date_time_range=[], offset=None,
-                            limit=None):
+                            created_by=None, date_start=None, date_end=None):
+
         records = ContactRecord.objects.filter(partner=self)
         if contact_name:
             records = records.filter(contact_name=contact_name)
-        if date_time_range:
-            records = records.filter(date_time__range=date_time_range)
+        if date_start and date_end:
+            records = records.filter(date_time__range=[date_start, date_end])
         if record_type:
             if record_type == 'email':
                 records = records.filter(contact_type__in=['email', 'pssemail'])
@@ -149,7 +149,10 @@ class Partner(models.Model):
                 records = records.filter(contact_type=record_type)
         if created_by:
             records = records.filter(created_by=created_by)
-        return records[offset:limit]
+
+        records = records.order_by('id')
+
+        return records
 
 
 class ContactRecord(models.Model):
