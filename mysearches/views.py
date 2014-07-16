@@ -164,7 +164,7 @@ def save_search_form(request):
     try:
         search_id = int(search_id)
         original = SavedSearch.objects.get(id=search_id, user=request.user)
-    except ValueError:
+    except ValueError, TypeError:
         original = None
 
     if hasattr(original, 'partnersavedsearch'):
