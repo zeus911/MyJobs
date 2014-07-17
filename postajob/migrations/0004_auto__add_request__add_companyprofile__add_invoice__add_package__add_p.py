@@ -11,6 +11,8 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
             db.delete_foreign_key('postajob_product', 'site_package_id')
+            db.delete_foreign_key('postajob_job_site_packages', 'sitepackage_id')
+            db.delete_foreign_key('postajob_sitepackage_sites', 'sitepackage_id')
             db.delete_foreign_key('seo_company', 'site_package_id')
             db.delete_foreign_key('seo_seosite', 'site_package_id')
             db.execute('ALTER TABLE postajob_sitepackage CHANGE id id INT(10) UNSIGNED NOT NULL')
@@ -232,9 +234,6 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.TextField')(default='', blank=True),
                       keep_default=False)
 
-        # Deleting field 'SitePackage.name'
-        db.delete_column(u'postajob_sitepackage', 'name')
-
         # Adding field 'SitePackage.package_ptr'
         db.add_column(u'postajob_sitepackage', u'package_ptr',
                       self.gf('django.db.models.fields.related.OneToOneField')(default=1, to=orm['postajob.Package'], unique=True, primary_key=True),
@@ -376,11 +375,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'Product.notes'
         db.delete_column(u'postajob_product', 'notes')
-
-        # Adding field 'SitePackage.name'
-        db.add_column(u'postajob_sitepackage', 'name',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
-                      keep_default=False)
 
         # Deleting field 'SitePackage.package_ptr'
         db.delete_column(u'postajob_sitepackage', u'package_ptr_id')
