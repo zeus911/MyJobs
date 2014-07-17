@@ -596,7 +596,6 @@ def prm_view_records(request):
     name = request.GET.get('name')
     range_start = request.REQUEST.get('date_start')
     range_end = request.REQUEST.get('date_end')
-    range_start = datetime.strptime(range_start, "%m/%d/%Y")
     try:
         range_start = datetime.strptime(range_start, "%m/%d/%Y")
         range_end = datetime.strptime(range_end, "%m/%d/%Y")
