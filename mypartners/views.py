@@ -619,7 +619,7 @@ def prm_view_records(request):
     if not records:
         record = get_object_or_404(ContactRecord, pk=record_id)
     elif len(records) <= 1:
-        record = record[0]
+        record = records[0]
     else:
         ids = [record.id for record in records]
         record_index = ids.index(record_id)
