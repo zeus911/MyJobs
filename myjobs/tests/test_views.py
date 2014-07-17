@@ -15,6 +15,7 @@ from django.test import TestCase
 
 from myjobs.models import User, EmailLog, FAQ
 from myjobs.tests.factories import UserFactory
+from myprofile.models import Name, Education
 from mysearches.models import SavedSearch
 from registration.models import ActivationProfile
 from registration import signals as custom_signals
@@ -165,34 +166,28 @@ class MyJobsViewsTests(TestCase):
         self.assertContains(resp, 'This field is required.')
 
     def test_no_profile_duplicates(self):
-        # Form with errors shouldn't save valid sections until entire form
-        # is completely valid
-        # resp = self.client.post(reverse('home'),
-        #                         data={'name-given_name': 'Alice',
-        #                               'name-family_name': 'Smith',
-        #                               'name-primary':False,
-        #                               'education-organization_name': 'U',
-        #                               'action':'save_profile'}, follow=True)
+        # An initial registration form with errors should save those parts
+        # that are valid.
+        self.client.post(reverse('home'),
+                         data={'name-given_name': 'Alice',
+                               'name-family_name': 'Smith',
+                               'name-primary': False,
+                               'education-organization_name': 'U',
+                               'action': 'save_profile'}, follow=True)
 
-        # self.assertEqual(Name.objects.count(), 0)
-        # self.assertEqual(Education.objects.count(), 0)
-        # resp = self.client.post(reverse('home'),
-        #                         data={'name-given_name': 'Alice',
-        #                               'name-family_name': 'Smith',
-        #                               'name-primary':False,
-        #                               'edu-organization_name': 'U',
-        #                               'edu-degree_date': '2012-01-01',
-        #                               'edu-education_level_code': 6,
-        #                               'edu-degree_major': 'Basket Weaving',
-        #                               'action':'save_profile'}, follow=True)
-        # self.assertEqual(Name.objects.count(), 1)
-        # self.assertEqual(Education.objects.count(), 1)
-
-        # Commenting this out for the time being; will create a new ticket for
-        # this. When tested manually, this works. This test however, doesn't.
-        # In the view we're checking for changed data, for some reason the
-        # education form's changed_data attribute is still False.
-        pass
+        self.assertEqual(Name.objects.count(), 1)
+        self.assertEqual(Education.objects.count(), 0)
+        self.client.post(reverse('home'),
+                         data={'name-given_name': 'Alice',
+                               'name-family_name': 'Smith',
+                               'name-primary': False,
+                               'edu-organization_name': 'U',
+                               'edu-degree_date': '2012-01-01',
+                               'edu-education_level_code': 6,
+                               'edu-degree_major': 'Basket Weaving',
+                               'action': 'save_profile'}, follow=True)
+        self.assertEqual(Name.objects.count(), 1)
+        self.assertEqual(Education.objects.count(), 1)
 
     def test_delete_account(self):
         """
@@ -760,3 +755,18 @@ class MyJobsViewsTests(TestCase):
         # checks redirect
         self.assertEqual(response.status_code, 302)
 
+    def test_changing_title_content(self):
+        """
+        Tests that the title logo on the login page changes based on url.
+
+        """
+        self.client.logout()
+        response = self.client.get(reverse('home'))
+        content = BeautifulSoup(response.content)
+        title = content.select('div#title')[0]
+        self.assertTrue('The Right Place for' in title.text)
+
+        response = self.client.get(reverse('home') + '?next=/prm/view/')
+        content = BeautifulSoup(response.content)
+        title = content.select('div#title')[0]
+        self.assertTrue('The new OFCCP regulations' in title.text)

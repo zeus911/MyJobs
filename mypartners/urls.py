@@ -2,7 +2,7 @@ from django.conf.urls import patterns, url
 from django.views.generic import RedirectView
 
 urlpatterns = patterns('mypartners.views',
-    url(r'^$', RedirectView.as_view(url='/partners/view/')),
+    url(r'^$', RedirectView.as_view(url='/prm/view/')),
     url(r'^view/$', 'prm', name='prm'),
     url(r'^view$', 'prm', name='prm'),
     url(r'^view/overview$', 'prm_overview', name='partner_overview'),
