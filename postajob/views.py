@@ -13,6 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from universal.decorators import company_has_access
 from mydashboard.models import CompanyUser, SeoSite
+from myjobs.decorators import user_is_allowed
 from postajob.forms import (CompanyProfileForm, JobForm, OfflinePurchaseForm,
                             OfflinePurchaseRedemptionForm, ProductForm,
                             ProductGroupingForm, PurchasedJobForm,
@@ -226,6 +227,8 @@ class PurchaseFormViewBase(RequestFormViewBase):
     purchase_field = None
     purchase_model = None
 
+
+    @method_decorator(user_is_allowed())
     def dispatch(self, *args, **kwargs):
         """
         Determine and set which product is attempting to be purchased.
@@ -460,7 +463,7 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
     update_name = 'companyprofile_edit'
     delete_name = 'companyprofile_delete'
 
-    @method_decorator(user_passes_test(lambda user: user.companyuser_set.all().exists()))
+    @method_decorator(company_has_access(None))
     def dispatch(self, *args, **kwargs):
         """
         Decorators on this function will be run on every request that
@@ -483,27 +486,3 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
 
     def delete(self):
         return
-
-
-def product_listing(request):
-    site_id = request.REQUEST.get('site')
-    callback = request.REQUEST.get('callback')
-    try:
-        site = SeoSite.objects.get(pk=site_id)
-    except SeoSite.DoesNotExist:
-        raise Http404
-    site_packages = site.sitepackage_set.all()
-    products = itertools.chain.from_iterable(site_package.product_set.all()
-                                             for site_package
-                                             in site_packages)
-    groupings = set()
-    for product in products:
-        groupings = groupings.union(
-            set(product.productgrouping_set.filter(is_displayed=True,
-                                                   products__isnull=False)))
-    groupings = sorted(groupings, key=lambda grouping: grouping.display_order)
-    html = render_to_response('postajob/package_list.html',
-                              {'product_groupings': groupings},
-                              RequestContext(request))
-    return HttpResponse('%s(%s)' % (callback, json.dumps(html.content)),
-                        content_type='text/javascript')

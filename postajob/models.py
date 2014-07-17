@@ -21,7 +21,7 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
-    ADMIN_GROUP_NAME = 'Purchased Microsite Admin'
+    ADMIN_GROUP_NAME = 'Partner Microsite Admin'
 
     def user_has_access(self, user):
         """
@@ -598,7 +598,7 @@ class CompanyProfile(models.Model):
     zipcode = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=255, blank=True)
 
-    # Only used for Purchased Microsites.
+    # Only used for Partner Microsites.
     authorize_net_login = models.CharField(
         max_length=255, blank=True, verbose_name="Authorize.net Login")
     authorize_net_transaction_key = models.CharField(
@@ -609,7 +609,7 @@ class CompanyProfile(models.Model):
     email_on_request = models.BooleanField(
         default=True, help_text=help_text['email_on_request'])
 
-    # Companies can associate themselves with Purchased Microsites,
+    # Companies can associate themselves with Partner Microsites,
     # allowing them to show up on the list of available companies for
     # offline purchases.
     customer_of = models.ManyToManyField('mydashboard.Company', null=True,
