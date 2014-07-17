@@ -163,6 +163,29 @@ def approve_admin_request(request, content_type, pk):
     return redirect('request')
 
 
+def product_listing(request):
+    site_id = request.REQUEST.get('site')
+    callback = request.REQUEST.get('callback')
+    try:
+        site = SeoSite.objects.get(pk=site_id)
+    except SeoSite.DoesNotExist:
+        raise Http404
+
+    site_packages = site.sitepackage_set.all()
+    products = itertools.chain.from_iterable(site_package.product_set.all()
+                                             for site_package in site_packages)
+    groupings = set()
+    for product in products:
+        groupings = groupings.union(
+            set(product.productgrouping_set.filter(is_displayed=True,
+                                                   products__isnull=False)))
+    groupings = sorted(groupings, key=lambda grouping: grouping.display_order)
+    html = render_to_response('postajob/package_list.html',
+                              {'product_groupings': groupings},
+                              RequestContext(request))
+    return HttpResponse('%s(%s)' % (callback, json.dumps(html.content)),
+                        content_type='text/javascript')
+
 @company_has_access('product_access')
 def order_postajob(request):
     """
