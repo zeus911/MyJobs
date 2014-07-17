@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from decimal import Decimal
 import json
 import operator
 from urllib import urlencode
@@ -9,6 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import EmailMessage
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_delete
@@ -19,7 +21,7 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
-    ADMIN_GROUP_NAME = 'Purchased Microsite Admin'
+    ADMIN_GROUP_NAME = 'Partner Microsite Admin'
 
     def user_has_access(self, user):
         """
@@ -96,8 +98,11 @@ class Job(BaseModel):
 
     def solr_dict(self):
         if self.site_packages.all():
-            package_list = self.site_packages.all().values_list('pk', flat=True)
-            package_list = list(package_list)
+            package_list = self.site_packages.all()
+            # Microsites treats the package_ptr_id as the id for SitePackages,
+            # so pass the package_ptr_id along rather than the actual id.
+            package_list = list(package_list.values_list('package_ptr_id',
+                                                         flat=True))
             if (self.site_packages.all().count() == 1 and
                     self.site_packages.all()[0].company_set.all().count() > 0):
                 # If it's posted to a company site_pacakge only, that means it
@@ -539,17 +544,21 @@ class Product(BaseModel):
     name = models.CharField(max_length=255, blank=True)
     cost = models.DecimalField(max_digits=20, decimal_places=2,
                                verbose_name='Product Price',
-                               help_text=help_text['cost'])
+                               help_text=help_text['cost'],
+                               validators=[MinValueValidator(Decimal('1.00'))])
     posting_window_length = models.IntegerField(default=30,
                                                 choices=posting_window_choices,
                                                 help_text=help_text['posting_window_length'],
-                                                verbose_name='Posting Window Duration')
-    max_job_length = models.IntegerField(default=30,
-                                         choices=max_job_length_choices,
-                                         help_text=help_text['max_job_length'],
-                                         verbose_name='Maximum Job Duration')
-    num_jobs_allowed = models.IntegerField(default=5,
-                                           verbose_name='Number of Jobs')
+                                                verbose_name='Posting Window '
+                                                             'Duration')
+    max_job_length = models.PositiveIntegerField(default=30,
+                                                 choices=max_job_length_choices,
+                                                 help_text=help_text['max_job_length'],
+                                                 verbose_name='Maximum Job '
+                                                              'Duration')
+    num_jobs_allowed = models.PositiveIntegerField(default=5,
+                                                   verbose_name='Number of '
+                                                                'Jobs')
 
     description = models.TextField(verbose_name='Product Description')
     featured = models.BooleanField(default=False)
@@ -589,7 +598,7 @@ class CompanyProfile(models.Model):
     zipcode = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=255, blank=True)
 
-    # Only used for Purchased Microsites.
+    # Only used for Partner Microsites.
     authorize_net_login = models.CharField(
         max_length=255, blank=True, verbose_name="Authorize.net Login")
     authorize_net_transaction_key = models.CharField(
@@ -600,7 +609,7 @@ class CompanyProfile(models.Model):
     email_on_request = models.BooleanField(
         default=True, help_text=help_text['email_on_request'])
 
-    # Companies can associate themselves with Purchased Microsites,
+    # Companies can associate themselves with Partner Microsites,
     # allowing them to show up on the list of available companies for
     # offline purchases.
     customer_of = models.ManyToManyField('mydashboard.Company', null=True,
