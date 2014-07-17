@@ -665,6 +665,8 @@ class ViewTests(TestCase):
                                    '?site=%s&callback=callback' %
                                    (self.site.pk, ))
         self.assertTrue(response.content.startswith('callback("'))
+        # When an item in the chain of objects from SeoSite->ProductGrouping
+        # is missing, we return text stating that there is nothing to purchase
         self.assertTrue('There are no products configured for purchase'
                         in response.content)
 
@@ -676,4 +678,7 @@ class ViewTests(TestCase):
                                    (self.site.pk, ))
         for text in [productgrouping.display_title, productgrouping.explanation,
                      unicode(self.product)]:
+            # When the entire chain of objects exists, the return HTML should
+            # include elements from the relevant ProductGrouping and Product
+            # instances
             self.assertTrue(text in response.content)

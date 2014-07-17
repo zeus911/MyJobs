@@ -493,9 +493,9 @@ def product_listing(request):
     except SeoSite.DoesNotExist:
         raise Http404
     site_packages = site.sitepackage_set.all()
-    products = itertools.chain.from_iterable([site_package.product_set.all()
-                                              for site_package
-                                              in site_packages])
+    products = itertools.chain.from_iterable(site_package.product_set.all()
+                                             for site_package
+                                             in site_packages)
     groupings = set()
     for product in products:
         groupings = groupings.union(
