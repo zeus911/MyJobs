@@ -105,6 +105,10 @@ h1 > small > a:hover {
     float: right;
 }
 
+#contact.tip-box {
+    margin-top: 15px;
+}
+
 /* Contact Us Styles */
 .form-textarea {
     width: 297px;
