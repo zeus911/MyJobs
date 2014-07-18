@@ -209,10 +209,6 @@ class PartnerSavedSearchForm(ModelForm):
 
 
 class PartnerSubSavedSearchForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        kwargs.pop('user', None)
-        super(PartnerSubSavedSearchForm, self).__init__(*args, **kwargs)
-
     class Meta:
         model = PartnerSavedSearch
         fields = ('sort_by', 'frequency', 'day_of_month', 'day_of_week')
