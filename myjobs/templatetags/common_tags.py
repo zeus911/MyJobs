@@ -8,6 +8,7 @@ from myjobs import version
 from myjobs.models import User
 from myjobs.helpers import get_completion, make_fake_gravatar
 from mydashboard.models import CompanyUser
+from universal.helpers import get_company
 
 from django.db.models.loading import get_model
 
@@ -224,3 +225,11 @@ def get_suggestions(user):
                                                            by_priority=False)
                    if suggestion['priority'] == 5]
     return suggestions
+
+
+@register.assignment_tag(takes_context=True)
+def get_company_from_cookie(context):
+    request = context.get('request')
+    if request:
+        return get_company(request)
+    return None

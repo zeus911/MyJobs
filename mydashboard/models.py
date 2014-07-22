@@ -158,7 +158,7 @@ class BusinessUnit(models.Model):
 
 class CompanyUser(models.Model):
     GROUP_NAME = 'Employer'
-    ADMIN_GROUP_NAME = 'Purchased Microsite Admin'
+    ADMIN_GROUP_NAME = 'Partner Microsite Admin'
 
     user = models.ForeignKey(User)
     company = models.ForeignKey(Company)
