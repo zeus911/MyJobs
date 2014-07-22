@@ -38,7 +38,7 @@ def delete_saved_search(request, user=None):
 
 
 @user_is_allowed()
-@user_passes_test(User.objects.is_active)
+@user_passes_test(User.objects.is_verified)
 @user_passes_test(User.objects.not_disabled)
 def saved_search_main(request):
     # instantiate the form if the digest object exists
@@ -68,7 +68,7 @@ def saved_search_main(request):
 
 
 @user_is_allowed()
-@user_passes_test(User.objects.is_active)
+@user_passes_test(User.objects.is_verified)
 @user_passes_test(User.objects.not_disabled)
 def view_full_feed(request):
     search_id = request.REQUEST.get('id')
@@ -97,7 +97,7 @@ def view_full_feed(request):
         return HttpResponseRedirect(reverse('saved_search_main'))
 
 
-@user_passes_test(User.objects.is_active)
+@user_passes_test(User.objects.is_verified)
 @user_passes_test(User.objects.not_disabled)
 def more_feed_results(request):
     # Ajax request comes from the view_full_feed view when user scrolls to
@@ -112,7 +112,7 @@ def more_feed_results(request):
                                   {'items': items}, RequestContext(request))
 
 
-@user_passes_test(User.objects.is_active)
+@user_passes_test(User.objects.is_verified)
 @user_passes_test(User.objects.not_disabled)
 def validate_url(request):
     if request.is_ajax():
@@ -130,7 +130,7 @@ def validate_url(request):
         return HttpResponse(json.dumps(data))
 
 
-@user_passes_test(User.objects.is_active)
+@user_passes_test(User.objects.is_verified)
 @user_passes_test(User.objects.not_disabled)
 def save_digest_form(request):
     if request.method == 'POST':
@@ -156,7 +156,7 @@ def save_digest_form(request):
     return HttpResponseRedirect(reverse('saved_search_main'))
 
 
-@user_passes_test(User.objects.is_active)
+@user_passes_test(User.objects.is_verified)
 @user_passes_test(User.objects.not_disabled)
 def save_search_form(request):
     search_id = request.POST.get('search_id')
@@ -190,7 +190,7 @@ def save_search_form(request):
                                       RequestContext(request))
 
 
-@user_passes_test(User.objects.is_active)
+@user_passes_test(User.objects.is_verified)
 @user_passes_test(User.objects.not_disabled)
 def edit_search(request):
     search_id = request.REQUEST.get('id')
@@ -229,7 +229,7 @@ def edit_search(request):
                               RequestContext(request))
 
 
-@user_passes_test(User.objects.is_active)
+@user_passes_test(User.objects.is_verified)
 @user_passes_test(User.objects.not_disabled)
 def save_edit_form(request):
     if request.is_ajax():

@@ -121,7 +121,7 @@ def home(request):
         if request.POST.get('action') == "register":
             registrationform = RegistrationForm(request.POST, auto_id=False)
             if registrationform.is_valid():
-                new_user, created = User.objects.create_inactive_user(
+                new_user, created = User.objects.create_user(
                     request=request,
                     **registrationform.cleaned_data)
                 user_cache = authenticate(
@@ -297,7 +297,7 @@ def edit_account(request):
     obj = User.objects.get(id=user.id)
     change_password = False
 
-    if user.is_active:
+    if user.is_verified:
         communication_form = EditCommunicationForm(user=user, instance=obj)
     else:
         communication_form = None

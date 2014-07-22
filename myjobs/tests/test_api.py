@@ -37,6 +37,8 @@ class UserResourceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(User.objects.count(), 2)
         user = User.objects.get(email=self.data['email'])
+        for field, value in [('is_active', True), ('is_verified', False)]:
+            self.assertEqual(getattr(user, field), value)
 
     def test_no_email(self):
         self.data['email'] = ''

@@ -205,19 +205,17 @@ class MyJobsViewsTests(TestCase):
         (3) User is set to disabled.
         """
 
-        user = User.objects.get(id=self.user.id)
-        custom_signals.create_activation_profile(sender=self, user=user,
-                                                 email=user.email)
-        profile = ActivationProfile.objects.get(user=user)
+        custom_signals.create_activation_profile(sender=self, user=self.user,
+                                                 email=self.user.email)
+        profile = ActivationProfile.objects.get(user=self.user)
         ActivationProfile.objects.activate_user(profile.activation_key)
-        profile = ActivationProfile.objects.get(user=user)
+        profile = ActivationProfile.objects.get(user=self.user)
         self.assertEqual(profile.activation_key, 'ALREADY ACTIVATED')
 
         resp = self.client.get(reverse('disable_account'), follow=True)
         user = User.objects.get(id=self.user.id)
         profile = ActivationProfile.objects.get(user=user)
         self.assertNotEqual(profile.activation_key, 'ALREADY ACTIVATED')
-        self.assertFalse(user.is_active)
         self.assertTrue(user.is_disabled)
 
     def test_about_template(self):
@@ -553,31 +551,32 @@ class MyJobsViewsTests(TestCase):
         soup = BeautifulSoup(response.content)
         self.assertFalse(soup.findAll('a', {'id': 'savedsearch-link'}))
 
-    def test_inactive_user_account_settings(self):
+    def test_user_account_settings(self):
         """
         Test that the communication portion of account settings is not
         present for inactive users
         """
-        def assert_communication_settings_presence(is_active, contents):
+        def assert_communication_settings_presence(is_verified, contents):
             """
             If is_active is True, assert that div#as-communication exists
             Else, assert that it does not exist
             """
             communication_div = contents.find('div',
                                               {'id': 'as-communication'})
-            if is_active is True:
+            if is_verified is True:
                 self.assertTrue(communication_div)
             else:
                 self.assertFalse(communication_div)
 
-        inactive_user = UserFactory(email='inactive@my.jobs', is_active=False)
+        unverified_user = UserFactory(email='inactive@my.jobs',
+                                      is_verified=False)
 
-        for user in [self.user, inactive_user]:
+        for user in [self.user, unverified_user]:
             self.client.login_user(user)
             response = self.client.get(reverse('edit_account'))
             soup = BeautifulSoup(response.content)
 
-            assert_communication_settings_presence(user.is_active, soup)
+            assert_communication_settings_presence(user.is_verified, soup)
 
     def test_case_insensitive_login(self):
         """

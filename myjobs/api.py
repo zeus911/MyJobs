@@ -57,7 +57,7 @@ class UserResource(ModelResource):
                       'password1': request.GET.get('password', ''),
                       'custom_msg': request.GET.get('custom_msg'),
                       'request': request}
-            user, created = User.objects.create_inactive_user(**kwargs)
+            user, created = User.objects.create_user(**kwargs)
 
             data = {
                 'user_created': created,
