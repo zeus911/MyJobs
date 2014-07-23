@@ -861,6 +861,10 @@ class EmailTests(MyPartnersTestCase):
             'key': settings.EMAIL_KEY,
         }
 
+    def assert_contact_info_in_email(self, email):
+        self.assertTrue('For additional assistance, please contact'
+                        in email.body)
+
     def test_email_bad_contacts(self):
         start_contact_record_num = ContactRecord.objects.all().count()
         self.data['to'] = 'bademail@1.com, None, 6, bad@email.2'
@@ -877,6 +881,7 @@ class EmailTests(MyPartnersTestCase):
         self.assertEqual(email.from_email, settings.PRM_EMAIL)
         self.assertEqual(email.to, [self.admin.user.email])
         self.assertTrue(expected_str in email.body)
+        self.assert_contact_info_in_email(email)
 
     def test_contact_record_and_log_creation(self):
         new_contact = ContactFactory(partner=self.partner,
@@ -897,6 +902,7 @@ class EmailTests(MyPartnersTestCase):
         self.assertEqual(email.to, [self.admin.user.email])
         self.assertTrue(expected_str in email.body)
         self.assertFalse(unexpected_str in email.body)
+        self.assert_contact_info_in_email(email)
 
         record = ContactRecord.objects.get(contact_email=self.contact.email)
         self.assertEqual(record.notes, self.data['text'])
@@ -929,6 +935,7 @@ class EmailTests(MyPartnersTestCase):
         self.assertEqual(email.from_email, settings.PRM_EMAIL)
         self.assertEqual(email.to, [self.admin.user.email])
         self.assertTrue(expected_str in email.body)
+        self.assert_contact_info_in_email(email)
 
     def test_partner_email_matching(self):
         ten = PartnerFactory(owner=self.company, uri='ten.jobs', name='10',
