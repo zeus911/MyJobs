@@ -13,6 +13,7 @@ from django.dispatch import receiver
 
 from myjobs.models import User
 from mydashboard.models import Company
+from mypartners.ofccp import OFCCP
 
 
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
@@ -175,6 +176,14 @@ class Partner(models.Model):
             records = records.filter(created_by=created_by)
 
         return records
+
+
+class CompliancePartner(models.Model):
+    """ Office of Federal Contract Compliance Programs (OFCCP) Partners"""
+    # TODO: see what can be shared with Contact and Partner
+
+
+                                 
 
 
 class ContactRecord(models.Model):
