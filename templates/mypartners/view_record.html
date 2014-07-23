@@ -15,10 +15,10 @@
             <a class="mobile_hide" href="{% url 'record_view' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Communication Records</a>
             <span class="pull-right">
                 {% if prev_id %}
-                    <a href="{% url 'record_view' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ prev_id }}&offset={{ prev_offset }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}">Previous</a>&nbsp;&nbsp;
+                    <a href="{% url 'record_view' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ prev_id }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}">Previous</a>&nbsp;&nbsp;
                 {% endif %}
                 {% if next_id %}
-                    <a href="{% url 'record_view' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ next_id }}&offset={{ next_offset }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}">Next</a>&nbsp;&nbsp;
+                    <a href="{% url 'record_view' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ next_id }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}">Next</a>&nbsp;&nbsp;
                 {% endif %}
             </span>
         </div>
