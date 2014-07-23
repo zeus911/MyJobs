@@ -1,5 +1,4 @@
 import bleach
-from collections import OrderedDict
 import unicodecsv
 from datetime import date, datetime, timedelta
 from email.parser import HeaderParser
@@ -7,8 +6,10 @@ from email.utils import getaddresses
 from itertools import chain
 import json
 from lxml import etree
+import newrelic.agent
 import pytz
 import re
+import sys
 
 from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
@@ -599,6 +600,8 @@ def prm_view_records(request):
     try:
         range_start = datetime.strptime(range_start, "%m/%d/%Y")
         range_end = datetime.strptime(range_end, "%m/%d/%Y")
+        range_end = datetime(range_end.year, range_end.month,
+                             range_end.day, 23, 59, 59)
     except (AttributeError, TypeError):
         range_start = None
         range_end = None
@@ -606,35 +609,38 @@ def prm_view_records(request):
     try:
         record_id = int(record_id)
     except (TypeError, ValueError):
-        return HttpResponseRedirect(reverse('partner_records') +
-                                    '?company=%d&partner=%d' %
-                                    (company.id, partner.id))
+        raise Http404
 
     # we convert to a list so that we can do negative indexing
+    record = get_object_or_404(ContactRecord, pk=record_id)
+
     records = list(partner.get_contact_records(
         contact_name=name, record_type=record_type,
         date_start=range_start, date_end=range_end).order_by("-date_time"))
-
-    record = next_id = prev_id = None
-    if not records:
-        record = get_object_or_404(ContactRecord, pk=record_id)
-    elif len(records) <= 1:
-        record = records[0]
-    else:
-        ids = [record.id for record in records]
-        record_index = ids.index(record_id)
-        record = records[record_index]
-
-        if record_index == len(ids) - 1:
-            # we're at the end of the list
-            prev_id = records[record_index - 1].id
-        elif record_index == 0:
-            # we're at the beginning of the list
-            next_id = records[record_index + 1].id
+    next_id = prev_id = None
+    if len(records) > 1:
+        ids = [r.id for r in records]
+        try:
+            record_index = ids.index(record_id)
+        except Exception:
+            # Log the error in new relic so we know there is some reaosn
+            # that the next and previous aren't populating correctly, but
+            # don't allow that to prevent the user from seeing the requested
+            # record.
+            newrelic.agent.record_exception(*sys.exc_info())
         else:
-            # we're somewhere in the middle
-            prev_id = records[record_index - 1].id
-            next_id = records[record_index + 1].id
+            record = records[record_index]
+
+            if record_index == len(ids) - 1:
+                # we're at the end of the list
+                prev_id = records[record_index - 1].id
+            elif record_index == 0:
+                # we're at the beginning of the list
+                next_id = records[record_index + 1].id
+            else:
+                # we're somewhere in the middle
+                prev_id = records[record_index - 1].id
+                next_id = records[record_index + 1].id
 
     attachments = PRMAttachment.objects.filter(contact_record=record)
     ct = ContentType.objects.get_for_model(ContactRecord).pk
@@ -655,7 +661,6 @@ def prm_view_records(request):
         'view_name': 'PRM'
 
     }
-
     return render_to_response('mypartners/view_record.html', ctx,
                               RequestContext(request))
 
