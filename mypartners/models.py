@@ -178,12 +178,67 @@ class Partner(models.Model):
         return records
 
 
-class CompliancePartner(models.Model):
-    """ Office of Federal Contract Compliance Programs (OFCCP) Partners"""
-    # TODO: see what can be shared with Contact and Partner
+class ComplianceContact(models.Model):
+    title = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=255, blank=True)
+    middle_name = models.CharField(max_length=255, blank=True)
+    last_name = models.CharField(max_length=255, blank=True)
+
+    def __unicode__(self):
+        # Using a second join + split to get rid of extra white space
+        return " ".join(" ".join(self.first_name, self.middle_name, 
+                                 self.last_name).split())
+
+class ComplianceAddress:
+    street1 = models.CharField(max_length=255, blank=True)
+    street2 = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=255, blank=True)
+    state = models.CharField(max_length=5, blank=True)
+    zip_code = models.CharField(max_length=12, blank=True)
+
+    def __unicode__(self):
+        return "{}\n{}\n{}, {}  {}".format(self.street1, self.street2, city,
+                                           state, zip_code)
 
 
-                                 
+class ComplianceDemographics:
+    is_minority = models.BooleanField('minority', default=False)
+    is_female = models.BooleanField('female', default=False)
+    is_disabled = models.BooleanField('disabled', default=False)
+    is_veteran = models.BooleanField('veteran', default=False)
+
+    
+class ComplianceJobCategory:
+    exec_om = models.BooleanField('exec_om', default=False)
+    first_om = models.BooleanField('first_om', default=False)
+    professional = models.BooleanField('professional', default=False)
+    technician = models.BooleanField('technician', default=False)
+    sales =  models.BooleanField('sales', default=False)
+    admin_support =  models.BooleanField('admin_support', default=False)
+    craft = models.BooleanField('craft', default=False)
+    operative = models.BooleanField('operative', default=False)
+    labor = models.BooleanField('labor', default=False)
+    service =  models.BooleanField('service', default=False)
+
+
+class CompiancePartner(models.Model):
+    name = models.CharField(max_length=255)
+    website = models.URLField(blank=True)
+    region = models.CharField(max_length=30, blank=True) # choice?
+    state = models.CharField(max_length=30, blank=True)
+    area = models.CharField(max_length=30, blank=True)
+    phone = models.CharField(max_length=30, blank=True)
+    phone_ext = models.CharField(max_length=10, blank=True)
+    alt_phone = models.CharField(max_length=30, blank=True)
+    fax = models.CharField(max_length=30, blank=True)
+
+    contact = models.ForeignKey('ComplianceContact')
+    address = models.ForeignKey('ComplianceAddress')
+    demographics = models.ForeignKey('ComplianceDemographics')
+    categories = models.ForeignKey('ComplianceJobCategory')
+
+    def __unicode__(self):
+        return "{} ({})".format(self.name, self.website)
 
 
 class ContactRecord(models.Model):
