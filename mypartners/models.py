@@ -184,7 +184,7 @@ class ContactRecord(models.Model):
                              verbose_name='Details, Notes or Transcripts',
                              blank=True)
     job_id = models.CharField(max_length=40, verbose_name='Job Number/ID',
-                             blank=True)
+                              blank=True)
     job_applications = models.CharField(max_length=6,
                                         verbose_name="Number of Applications",
                                         blank=True)
@@ -203,6 +203,7 @@ class ContactRecord(models.Model):
         record.
 
         """
+        content_type = ContentType.objects.get_for_model(self.__class__)
         contact_type = dict(CONTACT_TYPE_CHOICES)[self.contact_type]
         if contact_type == 'Email':
             contact_type = 'n email'
@@ -210,7 +211,8 @@ class ContactRecord(models.Model):
             contact_type = ' %s' % contact_type
 
         try:
-            logs = ContactLogEntry.objects.filter(object_id=self.pk)
+            logs = ContactLogEntry.objects.filter(object_id=self.pk,
+                                                  content_type=content_type)
             log = logs.order_by('-action_time')[:1][0]
         except IndexError:
             return ""
