@@ -8,6 +8,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
 from django.core.urlresolvers import reverse
 from django.db import models
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 from myjobs.models import User
 from mydashboard.models import Company
@@ -101,6 +103,28 @@ class Contact(models.Model):
         }
         query_string = urlencode(params)
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
+
+
+@receiver(pre_delete, sender=Contact, dispatch_uid='pre_delete_contact_signal')
+def delete_contact(sender, instance, using, **kwargs):
+    """
+    Signalled when a Contact is deleted to deactivate associated partner saved
+    searches, if any exist
+    """
+
+    if instance.user is not None:
+        # user.partnersavedsearch_set filters on partnersavedsearch.owner, not
+        # .user
+        to_disable = instance.user.savedsearch_set.filter(
+            partnersavedsearch__isnull=False)
+
+        for pss in to_disable:
+            pss.is_active = False
+            note = ('\nThe contact for this partner saved search ({name}) '
+                    'was deleted by the partner. As a result, this search '
+                    'has been disabled.').format(name=instance.name)
+            pss.notes += note
+            pss.save()
 
 
 class Partner(models.Model):
