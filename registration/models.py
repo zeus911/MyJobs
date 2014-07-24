@@ -24,7 +24,7 @@ class RegistrationManager(models.Manager):
 
         Outputs:
         A boolean True and sets the key to 'ALREADY ACTIVATED'.
-        Otherwise, returns False to signify theactivation failed.
+        Otherwise, returns False to signify the activation failed.
         
         """
         if SHA1_RE.search(activation_key):
@@ -38,7 +38,7 @@ class RegistrationManager(models.Manager):
                 return False
             else:
                 from myprofile import signals
-                signals.activated.send(sender=self,user=user,
+                signals.activated.send(sender=self, user=user,
                                        email=profile.email)
                 profile.activation_key = self.model.ACTIVATED
                 profile.save()
@@ -51,7 +51,7 @@ class RegistrationManager(models.Manager):
                 if profile.activation_key_expired():
                     user = profile.user
 
-                    if not user.is_disabled and not user.is_active:
+                    if not user.is_disabled and not user.is_verified:
                         user.delete()
                         profile.delete()
             except DoesNotExist:
