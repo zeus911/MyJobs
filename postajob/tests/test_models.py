@@ -11,11 +11,12 @@ from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          SeoSiteFactory)
 from seo.models import CompanyUser
 from myjobs.models import User
-from postajob.models import (CompanyProfile, Job, OfflineProduct, Product,
-                             ProductGrouping, ProductOrder, PurchasedJob,
-                             PurchasedProduct, Request, SitePackage)
-from postajob.tests.factories import (job_factory, product_factory,
-                                      offlineproduct_factory,
+from postajob.models import (CompanyProfile, Job, JobLocation, OfflineProduct,
+                             Product, ProductGrouping, ProductOrder,
+                             PurchasedJob, PurchasedProduct, Request,
+                             SitePackage)
+from postajob.tests.factories import (job_factory, joblocation_factory,
+                                      product_factory, offlineproduct_factory,
                                       offlinepurchase_factory,
                                       purchasedjob_factory,
                                       purchasedproduct_factory,
@@ -62,18 +63,17 @@ class ModelTests(MyJobsBase):
         self.side_effect = [self.choices_data for x in range(0, 50)]
 
     @patch('urllib2.urlopen')
-    def test_job_creation(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('{"jobs_added": 1}')
-        job_factory(self.company, self.user)
-        self.assertEqual(Job.objects.all().count(), 1)
-
-    @patch('urllib2.urlopen')
-    def test_job_deletion(self, urlopen_mock):
+    def test_job_creation_and_deletion(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('{"jobs_deleted": 1}')
+        locations = [joblocation_factory() for x in range(0, 5)]
         job = job_factory(self.company, self.user)
+        job.locations = locations
+        job.save()
         self.assertEqual(Job.objects.all().count(), 1)
+        self.assertEqual(JobLocation.objects.all().count(), 5)
         job.delete()
         self.assertEqual(Job.objects.all().count(), 0)
+        self.assertEqual(JobLocation.objects.all().count(), 0)
 
     @patch('urllib2.urlopen')
     def test_job_add_to_solr(self, urlopen_mock):

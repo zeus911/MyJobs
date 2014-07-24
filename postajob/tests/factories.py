@@ -1,8 +1,8 @@
 import datetime
 
-from postajob.models import (Job, Invoice, OfflinePurchase, OfflineProduct,
-                             Product, ProductGrouping, PurchasedJob,
-                             PurchasedProduct, SitePackage)
+from postajob.models import (Job, JobLocation, Invoice, OfflinePurchase,
+                             OfflineProduct, Product, ProductGrouping,
+                             PurchasedJob, PurchasedProduct, SitePackage)
 
 
 # Because of the way the SubFactory works, each Factory was generating
@@ -16,6 +16,18 @@ def create_instance(model, data, kwargs):
     return model.objects.create(**data)
 
 
+def joblocation_factory(**kwargs):
+    joblocation_data = {
+        'city': 'Indianapolis',
+        'state': 'Indiana',
+        'state_short': 'IN',
+        'country': 'United States of America',
+        'country_short': 'USA',
+        'zipcode': '46268',
+    }
+    return create_instance(JobLocation, joblocation_data, kwargs)
+
+
 def job_factory(company, user, **kwargs):
     job_data = {
         'title': 'title',
@@ -23,12 +35,6 @@ def job_factory(company, user, **kwargs):
         'reqid': '1',
         'description': 'sadfljasdfljasdflasdfj',
         'apply_link': 'www.google.com',
-        'city': 'Indianapolis',
-        'state': 'Indiana',
-        'state_short': 'IN',
-        'country': 'United States of America',
-        'country_short': 'USA',
-        'zipcode': '46268',
         'date_new': datetime.datetime.now(),
         'date_updated': datetime.datetime.now(),
         'date_expired': datetime.date.today(),

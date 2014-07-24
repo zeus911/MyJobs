@@ -44,13 +44,6 @@ class JobAdmin(ModelAdminWithRequest):
         }),
     )
 
-    def delete_model(self, request, obj):
-        # Django admin bulk delete doesn't trigger a post_delete signal. This
-        # ensures that the remove_from_solr() usually handled by a delete
-        # signal is called in those cases.
-        obj.remove_from_solr()
-        obj.delete()
-
     def queryset(self, request):
         """
         Prevent users from seeing jobs that don't belong to their company
