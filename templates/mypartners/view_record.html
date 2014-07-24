@@ -15,10 +15,10 @@
             <a class="mobile_hide" href="{% url 'record_view' %}?partner={{ partner.id }}">Back to Communication Records</a>
             <span class="pull-right">
                 {% if prev_id %}
-                    <a href="{% url 'record_view' %}?partner={{ partner.id }}&id={{ prev_id }}&offset={{ prev_offset }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}">Previous</a>&nbsp;&nbsp;
+                    <a href="{% url 'record_view' %}?partner={{ partner.id }}&id={{ prev_id }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}">Previous</a>&nbsp;&nbsp;
                 {% endif %}
                 {% if next_id %}
-                    <a href="{% url 'record_view' %}?partner={{ partner.id }}&id={{ next_id }}&offset={{ next_offset }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}">Next</a>&nbsp;&nbsp;
+                    <a href="{% url 'record_view' %}?partner={{ partner.id }}&id={{ next_id }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}">Next</a>&nbsp;&nbsp;
                 {% endif %}
             </span>
         </div>
@@ -89,7 +89,7 @@
             </div>
         </div>
         <div class="span3">
-            <a class="btn one-hundred-percent-button-border-boxed" href="{% url 'partner_edit_record' %}?partner={{ partner.id }}&id={{ record.id }}">Edit</a>
+            <a class="btn one-hundred-percent-button-border-boxed" href="{% url 'partner_edit_record' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ record.id }}">Edit</a>
             <div class="tip-box" id="record-history">
             <h5>Record History</h5>
                 <div class="tip-content">

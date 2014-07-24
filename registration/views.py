@@ -34,8 +34,8 @@ def register(request):
     if request.method == "POST":
         form = RegistrationForm(request.POST)
         if form.is_valid():
-            new_user = User.objects.create_inactive_user(request=request,
-                                                         **form.cleaned_data)
+            new_user = User.objects.create_user(request=request,
+                                                **form.cleaned_data)
             username = form.cleaned_data['email']
             password = form.cleaned_data['password1']
             user = authenticate(username=username, password=password)

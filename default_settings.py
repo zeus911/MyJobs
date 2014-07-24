@@ -68,8 +68,10 @@ STATICFILES_FINDERS = (
 ADMIN_MEDIA_PREFIX = '//d2e48ltfsb5exy.cloudfront.net/myjobs/admin/'
 
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
+    ('django.template.loaders.cached.Loader', (
+        'django.template.loaders.filesystem.Loader',
+        'django.template.loaders.app_directories.Loader',
+    )),
 )
 
 MIDDLEWARE_CLASSES = (
@@ -100,6 +102,7 @@ TEMPLATE_DIRS = (
     join(ROOT_PATH, 'templates')
 )
 
+CELERY_RESULT_BACKEND = 'amqp'
 
 CELERY_IMPORTS = ('tasks',)
 CELERY_TIMEZONE = 'US/Eastern'
@@ -107,7 +110,7 @@ CELERYBEAT_PIDFILE = '/var/run/celerybeat.pid'
 CELERYBEAT_SCHEDULE = {
     'daily-search-digest': {
         'task': 'tasks.send_search_digests',
-        'schedule': crontab(minute=0, hour=16),
+        'schedule': crontab(minute=0, hour=10),
     },
     'daily-delete-activation': {
         'task': 'tasks.delete_inactive_activations',

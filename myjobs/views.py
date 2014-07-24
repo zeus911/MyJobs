@@ -20,9 +20,10 @@ from django.views.generic import TemplateView
 
 from captcha.fields import ReCaptchaField
 
+from global_helpers import get_domain
 from myjobs.decorators import user_is_allowed
 from myjobs.forms import ChangePasswordForm, EditCommunicationForm
-from myjobs.helpers import expire_login, log_to_jira
+from myjobs.helpers import expire_login, log_to_jira, get_title_template
 from myjobs.models import EmailLog, Ticket, User, FAQ, CustomHomepage
 from myprofile.forms import (InitialNameForm, InitialEducationForm,
                              InitialAddressForm, InitialPhoneForm,
@@ -81,6 +82,7 @@ def home(request):
     work_form = InitialWorkForm(prefix="work")
     address_form = InitialAddressForm(prefix="addr")
     nexturl = request.GET.get('next')
+    title_template = get_title_template(nexturl)
     if nexturl:
         nexturl = urllib2.unquote(nexturl)
         nexturl = urllib2.quote(nexturl.encode('utf8'))
@@ -91,7 +93,7 @@ def home(request):
     show_registration = True
     if last_ms:
         try:
-            last_ms = urlparse(last_ms).netloc
+            last_ms = get_domain(last_ms)
             custom_page = CustomHomepage.objects.get(domain=last_ms)
             logo_url = custom_page.logo_url
             show_registration = custom_page.show_signup_form
@@ -112,13 +114,14 @@ def home(request):
                  'logo_url': logo_url,
                  'show_registration': show_registration,
                  'site_name': site_name,
+                 'logo_template': title_template,
                  }
 
     if request.method == "POST":
         if request.POST.get('action') == "register":
             registrationform = RegistrationForm(request.POST, auto_id=False)
             if registrationform.is_valid():
-                new_user, created = User.objects.create_inactive_user(
+                new_user, created = User.objects.create_user(
                     request=request,
                     **registrationform.cleaned_data)
                 user_cache = authenticate(
@@ -294,7 +297,7 @@ def edit_account(request):
     obj = User.objects.get(id=user.id)
     change_password = False
 
-    if user.is_active:
+    if user.is_verified:
         communication_form = EditCommunicationForm(user=user, instance=obj)
     else:
         communication_form = None

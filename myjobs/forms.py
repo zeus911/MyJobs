@@ -63,7 +63,7 @@ def make_choices(user):
     :user: User instance
     """
     choices = []
-    if user.is_active:
+    if user.is_verified:
         choices.append((user.email, user.email))
         for email in SecondaryEmail.objects.filter(user=user, verified=True):
             choices.append((email.email, email.email))

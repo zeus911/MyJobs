@@ -93,7 +93,7 @@ def send_search_digests():
 @task(name='task.delete_inactive_activations')
 def delete_inactive_activations():
     """
-    Daily task checks if a activation keys are expired and deletes them.
+    Daily task checks if activation keys are expired and deletes them.
     Disabled users are exempt from this check.
     """
 
@@ -101,7 +101,7 @@ def delete_inactive_activations():
         try:
             if profile.activation_key_expired():
                 user = profile.user
-                if not user.is_disabled and not user.is_active:
+                if not user.is_disabled and not user.is_verified:
                     user.delete()
                     profile.delete()
         except User.DoesNotExist:
@@ -128,7 +128,7 @@ def process_user_events(email):
     stop_sending = filter_by_event(STOP_SENDING)
     update_fields = []
     if user and (deactivate or stop_sending) and user.opt_in_myjobs:
-        user.is_active = False
+        user.is_verified = False
         user.opt_in_myjobs = False
         if deactivate:
             user.deactivate_type = deactivate[0].event
@@ -146,7 +146,7 @@ def process_user_events(email):
             """.format(email=stop_sending[0].email)
         body = body.format(settings_url=reverse_lazy('edit_account'))
         Message.objects.create_message(users=user, subject='', body=body)
-        update_fields.extend(['deactivate_type', 'is_active', 'opt_in_myjobs'])
+        update_fields.extend(['deactivate_type', 'is_verified', 'opt_in_myjobs'])
 
     if user and user.last_response < newest_log.received:
         user.last_response = newest_log.received

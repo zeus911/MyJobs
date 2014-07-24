@@ -11,10 +11,12 @@ from mypartners.models import ContactRecord
 from mypartners.tests.factories import PartnerFactory, ContactFactory
 from myprofile.tests.factories import PrimaryNameFactory
 from mysearches.models import SavedSearch
+from mysearches.templatetags.email_tags import get_activation_link
 from mysearches.tests.factories import (SavedSearchFactory,
                                         SavedSearchDigestFactory,
                                         PartnerSavedSearchFactory)
 from mysearches.tests.test_helpers import return_file
+from registration.models import ActivationProfile
 from registration.tests.helpers import assert_email_inlines_styles
 from tasks import send_search_digests
 
@@ -262,3 +264,19 @@ class PartnerSavedSearchTests(TestCase):
         self.assertEqual(ContactRecord.objects.count(), 1)
         self.digest.send_email()
         self.assertEqual(ContactRecord.objects.count(), 2)
+
+    def test_send_partner_saved_search_with_inactive_user(self):
+        self.user.is_active = False
+        self.user.save()
+        mail.outbox = []
+        self.partner_search.send_initial_email()
+        email = mail.outbox.pop()
+        self.assertTrue('Your account is not currently active.' in email.body)
+
+        verify_url = get_activation_link(self.user)
+        profile = ActivationProfile.objects.get(user=self.user,
+                                                email=self.user.email)
+        self.assertTrue(profile.activation_key in verify_url)
+        self.assertTrue(self.user.user_guid in verify_url)
+        self.assertTrue('https://secure.my.jobs%s' % verify_url
+                        in email.body)
