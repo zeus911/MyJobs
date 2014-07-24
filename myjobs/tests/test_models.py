@@ -17,28 +17,20 @@ class UserManagerTests(TestCase):
     user_info = {'password1': 'complicated_password',
                  'email': 'alice@example.com'}
 
-    def test_inactive_user_creation(self):
-        new_user, _ = User.objects.create_inactive_user(**self.user_info)
-        self.assertEqual(User.objects.count(), 1)
-        self.assertEqual(new_user.is_active, False)
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(new_user.email, 'alice@example.com')
-        self.failUnless(new_user.check_password('complicated_password'))
-        self.failUnless(new_user.groups.filter(name='Job Seeker').count() == 1)
-        self.assertIsNotNone(new_user.user_guid)
-
-    def test_inactive_user_validation(self):
+    def test_user_validation(self):
         user_info = {'password1': 'complicated_password',
                      'email': 'Bad Email'}
         with self.assertRaises(ValidationError):
-            _, _ = User.objects.create_inactive_user(**user_info)
+            User.objects.create_user(**user_info)
         self.assertEqual(User.objects.count(), 0)
 
-    def test_active_user_creation(self):
-        new_user = User.objects.create_user(**self.user_info)
+    def test_user_creation(self):
+        new_user, _ = User.objects.create_user(**self.user_info)
 
+        self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(new_user.is_active, True)
+        self.assertEqual(new_user.is_verified, False)
         self.assertEqual(new_user.email, 'alice@example.com')
         self.failUnless(new_user.check_password('complicated_password'))
         self.failUnless(new_user.groups.filter(name='Job Seeker').count() == 1)
@@ -123,7 +115,7 @@ class UserManagerTests(TestCase):
         self.assertTrue(resp.status_code, 200)
 
         # Inactive user
-        user.is_active = False
+        user.is_verified= False
         user.save()
         resp = client.get(reverse('saved_search_main'))
         self.assertRedirects(resp,
@@ -158,7 +150,7 @@ class UserManagerTests(TestCase):
         Confirms that the owner of an email is correctly being found.
 
         """
-        user, _ = User.objects.create_inactive_user(**self.user_info)
+        user, _ = User.objects.create_user(**self.user_info)
         SecondaryEmail.objects.create(user=user, email='secondary@email.test')
         Telephone.objects.create(user=user)
         Name.objects.create(user=user, given_name="Test", family_name="Name")

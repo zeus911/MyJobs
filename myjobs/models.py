@@ -47,66 +47,87 @@ class CustomUserManager(BaseUserManager):
                 user = None
         return user
 
-    def create_inactive_user(self, send_email=True, request=None, **kwargs):
+    def create_user_by_type(self, **kwargs):
         """
-        Creates an inactive user, calls the registration app to generate a
-        key and sends an activation email to the user.
+        Creates users by user type (normal or superuser). If a user
+        already exists
 
-        Inputs:
+        Inputs (all kwargs):
+        :email: Email for this account; required
         :send_email: Boolean defaulted to true to signal that an email needs to
-        be sent.
-        :kwargs: Email and password information
+            be sent
+        :request: HttpRequest instance used to pull cookies related to creation
+            source
+        :user_type: String, must be either normal or superuser
+        Additionally accepts values for all fields on the User model
 
         Outputs:
         :user: User object instance
         :created: Boolean indicating whether a new user was created
         """
         email = kwargs.get('email')
-        password = kwargs.get('password1')
+        if not email:
+            raise ValueError('Email address required.')
+
+        user_type = kwargs.get('user_type', 'normal')
+        if user_type not in ['superuser', 'normal']:
+            raise ValueError('Bad user_type: %s' % user_type)
 
         user = self.get_email_owner(email)
         created = False
         if user is None:
-            email = CustomUserManager.normalize_email(email)
-            user = self.model(email=email)
-            if password:
-                auto_generated = False
+            email = self.normalize_email(email)
+            user_args = {'email': email,
+                         'gravatar': '',
+                         'timezone': settings.TIME_ZONE,
+                         'is_active': True,
+                         }
+
+            if user_type == 'superuser':
+                user_args.update({'is_staff': True, 'is_superuser': True})
+                password_field = 'password'
             else:
-                auto_generated = True
-                user.password_change = True
+                password_field = 'password1'
+            password = kwargs.get(password_field)
+            create_password = False
+            if not password:
+                create_password = True
+                user_args['password_change'] = True
                 password = self.make_random_password(length=8)
-            user.set_password(password)
-            user.is_active = False
-            user.gravatar = ''
-            user.make_guid()
-            user.timezone = settings.TIME_ZONE
+
+            request = kwargs.get('request')
             if request is not None:
                 source = request.GET.get('source')
                 if source is not None:
-                    user.source = source
+                    user_args['source'] = source
                 else:
-                    last_microsite = request.COOKIES.get('lastmicrosite', None)
+                    last_microsite = request.COOKIES.get('lastmicrosite',
+                                                         None)
                     if last_microsite is not None:
-                        user.source = last_microsite
+                        user_args['source'] = last_microsite
+
+            user = self.model(**user_args)
+            user.set_password(password)
+            user.make_guid()
             user.full_clean()
-            user.save(using=self._db)
+            user.save()
             user.add_default_group()
-            created = True
             custom_signals.email_created.send(sender=self, user=user,
                                               email=email)
+            send_email = kwargs.get('send_email', True)
             if send_email:
                 custom_msg = kwargs.get("custom_msg", None)
-                if auto_generated:
-                    custom_signals.send_activation.send(sender=self,
-                                                        user=user,
-                                                        email=email,
-                                                        password=password,
-                                                        custom_msg=custom_msg)
-                else:
-                    custom_signals.send_activation.send(sender=self,
-                                                        user=user,
-                                                        email=email,
-                                                        custom_msg=custom_msg)
+                activation_args = {
+                    'sender': self,
+                    'user': user,
+                    'email': email,
+                    'custom_msg': custom_msg,
+                }
+                if create_password:
+                    activation_args['password'] = password
+                custom_signals.send_activation.send(**activation_args)
+
+            created = True
         return user, created
 
     def create_user(self, **kwargs):
@@ -114,37 +135,11 @@ class CustomUserManager(BaseUserManager):
         Creates an already activated user.
 
         """
-        email = kwargs['email']
-        password = kwargs['password1']
-        if not email:
-            raise ValueError('Email address required.')
-        user = self.model(email=CustomUserManager.normalize_email(email))
-        user.is_active = True
-        user.gravatar = ''
-        user.set_password(password)
-        user.make_guid()
-        user.full_clean()
-        user.save(using=self._db)
-        user.add_default_group()
-        return user
+        return self.create_user_by_type(user_type='normal', **kwargs)
 
     def create_superuser(self, **kwargs):
-        email = kwargs['email']
-        password = kwargs['password']
-        if not email:
-            raise ValueError('Email address required.')
-        u = self.model(email=CustomUserManager.normalize_email(email))
-        u.is_staff = True
-        u.is_active = True
-        u.is_superuser = True
-        u.gravatar = u.email
-        u.set_password(password)
-        u.timezone = settings.TIME_ZONE
-        u.make_guid()
-        u.full_clean()
-        u.save(using=self._db)
-        u.add_default_group()
-        return u
+        user, _ = self.create_user_by_type(user_type='superuser', **kwargs)
+        return user
 
     def not_disabled(self, user):
         """
@@ -159,7 +154,7 @@ class CustomUserManager(BaseUserManager):
         else:
             return not user.is_disabled
 
-    def is_active(self, user):
+    def is_verified(self, user):
         """
         Used by the user_passes_test decorator to set view permissions
         """
@@ -167,7 +162,7 @@ class CustomUserManager(BaseUserManager):
         if user.is_anonymous():
             return False
         else:
-            return user.is_active
+            return user.is_verified
 
     def is_group_member(self, user, group):
         """
@@ -210,6 +205,8 @@ class User(AbstractBaseUser, PermissionsMixin):
                                                 "Unselect this instead of "
                                                 "deleting accounts."))
     is_disabled = models.BooleanField(_('disabled'), default=False)
+    is_verified = models.BooleanField(_('User has verified this address'),
+                                      default=False)
 
     # Communication Settings
 
@@ -341,7 +338,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         return SeoSite.objects.filter(**kwargs).distinct()
 
     def disable(self):
-        self.is_active = False
         self.is_disabled = True
         self.save()
         

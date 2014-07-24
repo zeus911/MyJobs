@@ -68,7 +68,7 @@
         <div class="span3 form-label pull-left initial">
             <label>{% trans "Are you Human?" %}</label>
         </div>
-        <script src="http://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
+        <script src="https://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
         <div class="profile-form-input captcha">
             {{form}}
         </div>
@@ -127,3 +127,20 @@
     }
 </script>
 {% endblock extra-js %}
+
+{% block quick-links %}
+    <div class="span4">
+        <div class="tip-box" id="contact">
+            <h4>Contact Information:</h4>
+            <div class="tip-content">
+                9002 N. Purdue Road, Suite 100<br />
+                Indianapolis, Indiana 46268<br /><br />
+
+                (866) 268-6206 toll free<br /><br />
+
+                Monday–Friday<br />
+                8 a.m. to 5 p.m. (EST)
+            </div>
+        </div>
+    </div>
+{% endblock %}

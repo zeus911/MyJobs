@@ -8,6 +8,8 @@ class UserFactory(factory.Factory):
     gravatar = 'alice@example.com'
     password = 'secret'
     user_guid = factory.LazyAttribute(lambda n: '{0}'.format(uuid.uuid4()))
+    is_active = True
+    is_verified = True
 
     @classmethod
     def _prepare(cls, create, **kwargs):

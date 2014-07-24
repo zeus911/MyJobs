@@ -7,13 +7,16 @@ from django.test import TestCase
 
 from mock import patch
 
+from mydashboard.tests.factories import CompanyFactory
 from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
+from mypartners.tests.factories import PartnerFactory, ContactFactory
 
 from mysearches import forms, models
 from mysearches.tests.test_helpers import return_file
 from mysearches.tests.factories import (SavedSearchDigestFactory,
-                                        SavedSearchFactory)
+                                        SavedSearchFactory,
+                                        PartnerSavedSearchFactory)
 
 
 class MySearchViewTests(TestCase):
@@ -293,3 +296,28 @@ class MySearchViewTests(TestCase):
         self.assertRedirects(response, reverse(
             'saved_search_main_query')+'?d='+str(urllib2.quote(
                                                  search.label)))
+
+    def test_widget_with_saved_search(self):
+        search = SavedSearchFactory(user=self.user)
+        response = self.client.get(reverse('saved_search_widget') +
+                                   '?url=%s&callback=callback' % (
+                                       search.url, ))
+        edit_url = '\\"https://secure.my.jobs%s?id=%s\\"' % (
+            reverse('edit_search'), search.pk)
+        self.assertTrue(edit_url in response.content)
+
+    def test_widget_with_partner_saved_search(self):
+        company = CompanyFactory()
+        partner = PartnerFactory(owner=company)
+        ContactFactory(user=self.user, partner=partner)
+        search = PartnerSavedSearchFactory(user=self.user,
+                                           created_by=self.user,
+                                           provider=company,
+                                           partner=partner)
+
+        response = self.client.get(reverse('saved_search_widget') +
+                                   '?url=%s&callback=callback' % (
+                                       search.url, ))
+        edit_url = '\\"https://secure.my.jobs%s?id=%s&pss=True\\"' % (
+            reverse('edit_search'), search.pk)
+        self.assertTrue(edit_url in response.content)

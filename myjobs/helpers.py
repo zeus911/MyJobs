@@ -100,3 +100,24 @@ def make_fake_gravatar(name, size):
                     (size, size, font_size, name[0].upper()))
 
     return gravatar_url
+
+
+def get_title_template(next_url):
+    """
+    Changes the title text on the My.jobs login page based on the ?next= query
+    parameter. If the parameter doesn't exist or we don't find a match, we
+    display the My.jobs logo as normal.
+
+    Inputs:
+    :next_url: URL that an unauthenticated user was trying to access
+
+    Outputs:
+    :title_template: Template that we will be including on the login page
+    """
+    title_template = 'logo'
+    if next_url is not None:
+        if next_url.startswith('/prm/'):
+            title_template = 'prm'
+    title_template = 'includes/index_titles/%s.html' % title_template
+
+    return title_template

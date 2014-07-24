@@ -16,7 +16,7 @@
                 {% if not success %}
                     <p><b>This search is being sent to {{ search.email }}.</b></p>
                 {% endif %}
-                <div class="direct-action-btn" id="saved-search-edit-btn"><a href="https://secure.my.jobs/saved-search/view/edit?id={{ search.id }}" target="_blank">Edit Search on My.jobs</a></div>
+                <div class="direct-action-btn" id="saved-search-edit-btn"><a href="https://secure.my.jobs/saved-search/view/edit?id={{ search.id }}{% if is_pss %}&pss=True{% endif %}" target="_blank">Edit Search on My.jobs</a></div>
     {% endif %}
     </div>
 </div>

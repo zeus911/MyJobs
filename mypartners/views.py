@@ -1,15 +1,19 @@
+import bleach
+from collections import OrderedDict
+import unicodecsv
 from datetime import date, datetime, timedelta
 from email.parser import HeaderParser
 from email.utils import getaddresses
 from itertools import chain
 import json
-import re
-
-import bleach
-import unicodecsv
 from lxml import etree
+import newrelic.agent
 import pytz
+import re
+import sys
+
 from django.conf import settings
+from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
 from django.db.models import Count
@@ -27,6 +31,7 @@ from universal.helpers import get_company, get_int_or_none
 from universal.decorators import company_has_access
 from myjobs.models import User
 from mydashboard.helpers import get_company_microsites
+from mydashboard.models import Company
 from mysearches.models import PartnerSavedSearch
 from mysearches.helpers import (url_sort_options, parse_feed,
                                 get_interval_from_frequency)
@@ -59,6 +64,10 @@ def prm(request):
     if not partners and not form:
         partner_form = PartnerInitialForm()
     else:
+        try:
+            partners = Partner.objects.filter(owner=company.id)
+        except Partner.DoesNotExist:
+            raise Http404
         partner_form = None
 
     ctx = {
@@ -283,11 +292,12 @@ def prm_overview(request):
     company, partner, user = prm_worthy(request)
 
     most_recent_activity = partner.get_logs()
-    dt_range = [now() + timedelta(-30), now()]
-    records = partner.get_contact_records(date_time_range=dt_range)
+    range_start, range_end = [now() + timedelta(-30), now()]
+    records = partner.get_contact_records(date_start=range_start,
+                                          date_end=range_end)
     communication = records.order_by('-date_time')
     referrals = records.filter(contact_type='job').count()
-
+    records = records.exclude(contact_type='job').count()
     most_recent_communication = communication[:3]
     saved_searches = partner.get_searches()
     most_recent_saved_searches = saved_searches[:3]
@@ -295,20 +305,16 @@ def prm_overview(request):
     older_records = partner.get_contact_records()
     older_records = older_records.exclude(date_time__gte=now() + timedelta(-30))
 
-    ctx = {
-        'partner': partner,
-        'company': company,
-        'recent_activity': most_recent_activity,
-        'recent_communication': most_recent_communication,
-        'recent_ss': most_recent_saved_searches,
-        'count': records.exclude(contact_type='job').count(),
-        'referrals': referrals,
-        'view_name': 'PRM',
-        # Records older than 30 days.
-        'num_older_records': older_records.count(),
-        # Other records from the past 30 days.
-        'num_other_records': records.count() - 3,
-    }
+    ctx = {'partner': partner,
+           'company': company,
+           'recent_activity': most_recent_activity,
+           'recent_communication': most_recent_communication,
+           'recent_ss': most_recent_saved_searches,
+           'count': records,
+           'referrals': referrals,
+           'view_name': 'PRM',
+           'num_older_records': older_records.count(),
+           'num_other_records': saved_searches.count() - 3, }
 
     return render_to_response('mypartners/overview.html', ctx,
                               RequestContext(request))
@@ -582,8 +588,7 @@ def prm_view_records(request):
     View an individual ContactRecord.
 
     """
-    company, partner, user = prm_worthy(request)
-
+    company, partner, _ = prm_worthy(request)
     record_id = request.GET.get('id')
     offset = request.GET.get('offset', 0)
     record_type = request.GET.get('type')
@@ -593,6 +598,8 @@ def prm_view_records(request):
     try:
         range_start = datetime.strptime(range_start, "%m/%d/%Y")
         range_end = datetime.strptime(range_end, "%m/%d/%Y")
+        range_end = datetime(range_end.year, range_end.month,
+                             range_end.day, 23, 59, 59)
     except (AttributeError, TypeError):
         range_start = None
         range_end = None
@@ -601,54 +608,38 @@ def prm_view_records(request):
         record_id = int(record_id)
         offset = int(offset)
     except (TypeError, ValueError):
-        return HttpResponseRedirect(reverse('partner_records') +
-                                    '?company=%d&partner=%d' %
-                                    (company.id, partner.id))
+        raise Http404
 
-    prev_offset = (offset - 1) if offset > 1 else 0
-    records = partner.get_contact_records(record_type=record_type,
-                                          contact_name=name,
-                                          date_time_range=[range_start,
-                                                           range_end],
-                                          offset=prev_offset,
-                                          limit=prev_offset + 3)
+    # we convert to a list so that we can do negative indexing
+    record = get_object_or_404(ContactRecord, pk=record_id)
 
-    # Since we always retrieve 3, if the record is at the beginning of the
-    # list we might have 3 results but no previous.
-    if len(records) == 3 and records[0].pk == record_id:
-        prev_id = None
-        record = records[0]
-        next_id = records[1].pk
-    elif len(records) == 3:
-        prev_id = records[0].pk
-        record = records[1]
-        next_id = records[2].pk
-    # If there are only 2 results, it means there is either no next or
-    # no previous, so we need to compare record ids to figure out which
-    # is which.
-    elif len(records) == 2 and records[0].pk == record_id:
-        prev_id = None
-        record = records[0]
-        next_id = records[1].pk
-    elif len(records) == 2:
-        prev_id = records[0].pk
-        record = records[1]
-        next_id = None
-    elif len(records) == 1:
-        prev_id = None
-        record = records[0]
-        next_id = None
-    else:
-        prev_id = None
-        record = get_object_or_404(ContactRecord, pk=record_id)
-        next_id = None
+    records = list(partner.get_contact_records(
+        contact_name=name, record_type=record_type,
+        date_start=range_start, date_end=range_end).order_by("-date_time"))
+    next_id = prev_id = None
+    if len(records) > 1:
+        ids = [r.id for r in records]
+        try:
+            record_index = ids.index(record_id)
+        except Exception:
+            # Log the error in new relic so we know there is some reaosn
+            # that the next and previous aren't populating correctly, but
+            # don't allow that to prevent the user from seeing the requested
+            # record.
+            newrelic.agent.record_exception(*sys.exc_info())
+        else:
+            record = records[record_index]
 
-    # Double check our results and drop the next and previous options if
-    # the results were wrong
-    if record_id != record.pk:
-        prev_id = None
-        record = get_object_or_404(ContactRecord, pk=record_id)
-        next_id = None
+            if record_index == len(ids) - 1:
+                # we're at the end of the list
+                prev_id = records[record_index - 1].id
+            elif record_index == 0:
+                # we're at the beginning of the list
+                next_id = records[record_index + 1].id
+            else:
+                # we're somewhere in the middle
+                prev_id = records[record_index - 1].id
+                next_id = records[record_index + 1].id
 
     attachments = PRMAttachment.objects.filter(contact_record=record)
     ct = ContentType.objects.get_for_model(ContactRecord).pk
@@ -663,9 +654,7 @@ def prm_view_records(request):
         'attachments': attachments,
         'record_history': record_history,
         'next_id': next_id,
-        'next_offset': offset + 1,
         'prev_id': prev_id,
-        'prev_offset': prev_offset,
         'contact_type': record_type,
         'contact_name': name,
         'view_name': 'PRM',
@@ -768,7 +757,6 @@ def get_uploaded_file(request):
 
     """
     company, partner, user = prm_worthy(request)
-
     file_id = request.GET.get('id', None)
     attachment = get_object_or_404(PRMAttachment, pk=file_id,
                                    contact_record__partner=partner)
@@ -793,7 +781,6 @@ def get_uploaded_file(request):
 @company_has_access('prm_access')
 def partner_main_reports(request):
     company, partner, user = prm_worthy(request)
-
     dt_range, date_str, records = get_records_from_request(request)
     total_records_wo_followup = records.exclude(contact_type='job').count()
     referral = records.filter(contact_type='job').count()
@@ -877,6 +864,8 @@ def partner_main_reports(request):
 @company_has_access('prm_access')
 def partner_get_records(request):
     if request.method == 'GET':
+        prm_worthy(request)
+
         dt_range, date_str, records = get_records_from_request(request)
         records = records.exclude(contact_type='job')
         email = records.filter(contact_type='email').count()
@@ -968,10 +957,9 @@ def partner_get_referrals(request):
         raise Http404
 
 
-@company_has_access('prm_access')
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_export(request):
     company, partner, user = prm_worthy(request)
-
     file_format = request.REQUEST.get('file_format', 'csv')
     fields = retrieve_fields(ContactRecord)
     _, _, records = get_records_from_request(request)

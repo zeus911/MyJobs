@@ -8,6 +8,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
 from django.core.urlresolvers import reverse
 from django.db import models
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 from myjobs.models import User
 from mydashboard.models import Company
@@ -103,6 +105,28 @@ class Contact(models.Model):
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
 
 
+@receiver(pre_delete, sender=Contact, dispatch_uid='pre_delete_contact_signal')
+def delete_contact(sender, instance, using, **kwargs):
+    """
+    Signalled when a Contact is deleted to deactivate associated partner saved
+    searches, if any exist
+    """
+
+    if instance.user is not None:
+        # user.partnersavedsearch_set filters on partnersavedsearch.owner, not
+        # .user
+        to_disable = instance.user.savedsearch_set.filter(
+            partnersavedsearch__isnull=False)
+
+        for pss in to_disable:
+            pss.is_active = False
+            note = ('\nThe contact for this partner saved search ({name}) '
+                    'was deleted by the partner. As a result, this search '
+                    'has been disabled.').format(name=instance.name)
+            pss.notes += note
+            pss.save()
+
+
 class Partner(models.Model):
     """
     Object that this whole app is built around.
@@ -135,13 +159,13 @@ class Partner(models.Model):
 
     # get_contact_records_for_partner
     def get_contact_records(self, contact_name=None, record_type=None,
-                            created_by=None, date_time_range=[], offset=None,
-                            limit=None):
+                            created_by=None, date_start=None, date_end=None):
+
         records = ContactRecord.objects.filter(partner=self)
         if contact_name:
             records = records.filter(contact_name=contact_name)
-        if date_time_range:
-            records = records.filter(date_time__range=date_time_range)
+        if date_start and date_end:
+            records = records.filter(date_time__range=[date_start, date_end])
         if record_type:
             if record_type == 'email':
                 records = records.filter(contact_type__in=['email', 'pssemail'])
@@ -149,7 +173,8 @@ class Partner(models.Model):
                 records = records.filter(contact_type=record_type)
         if created_by:
             records = records.filter(created_by=created_by)
-        return records[offset:limit]
+
+        return records
 
 
 class ContactRecord(models.Model):
@@ -183,7 +208,7 @@ class ContactRecord(models.Model):
                              verbose_name='Details, Notes or Transcripts',
                              blank=True)
     job_id = models.CharField(max_length=40, verbose_name='Job Number/ID',
-                             blank=True)
+                              blank=True)
     job_applications = models.CharField(max_length=6,
                                         verbose_name="Number of Applications",
                                         blank=True)
@@ -202,6 +227,7 @@ class ContactRecord(models.Model):
         record.
 
         """
+        content_type = ContentType.objects.get_for_model(self.__class__)
         contact_type = dict(CONTACT_TYPE_CHOICES)[self.contact_type]
         if contact_type == 'Email':
             contact_type = 'n email'
@@ -209,7 +235,8 @@ class ContactRecord(models.Model):
             contact_type = ' %s' % contact_type
 
         try:
-            logs = ContactLogEntry.objects.filter(object_id=self.pk)
+            logs = ContactLogEntry.objects.filter(object_id=self.pk,
+                                                  content_type=content_type)
             log = logs.order_by('-action_time')[:1][0]
         except IndexError:
             return ""
