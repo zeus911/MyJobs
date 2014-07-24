@@ -312,6 +312,7 @@ def saved_search_widget(request):
         'user': user,
         'search': search,
         'success': success_email,
+        'is_pss': hasattr(search, 'partnersavedsearch'),
     }
     html = render_to_response('mysearches/saved_search_widget.html', ctx,
                               RequestContext(request))
