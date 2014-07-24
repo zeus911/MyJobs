@@ -163,14 +163,16 @@ class Job(BaseModel):
         apply_info, city, company (company.id), country, country_short,
         date_new, date_updated, description, guid, link, on_sites, state,
         state_short, reqid, title, uid, and zipcode.
+
         """
         jobs = self.solr_dict()
-        data = urlencode({
-            'key': settings.POSTAJOB_API_KEY,
-            'jobs': json.dumps(jobs)
-        })
-        request = urllib2.Request(settings.POSTAJOB_URLS['post'], data)
-        urllib2.urlopen(request).read()
+        if jobs:
+            data = urlencode({
+                'key': settings.POSTAJOB_API_KEY,
+                'jobs': json.dumps(jobs)
+            })
+            request = urllib2.Request(settings.POSTAJOB_URLS['post'], data)
+            urllib2.urlopen(request).read()
 
     def save(self, **kwargs):
         if self.is_expired and self.date_expired > date.today():

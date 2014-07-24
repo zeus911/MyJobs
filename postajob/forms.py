@@ -22,8 +22,7 @@ from universal.helpers import get_object_or_none
 
 class BaseJobForm(RequestForm):
     class Meta:
-        exclude = ('guid', 'country_short', 'state_short',
-                   'is_syndicated', 'created_by', )
+        exclude = ('guid', 'is_syndicated', 'created_by', )
 
     class Media:
         css = {
@@ -45,12 +44,6 @@ class BaseJobForm(RequestForm):
                            label='Apply Link',
                            help_text=Job.help_text['apply_link'],
                            widget=TextInput(attrs={'rows': 1, 'size': 50}))
-
-    country = CharField(widget=Select(choices=Job.get_country_choices()),
-                        help_text=Job.help_text['country'],
-                        initial='United States of America')
-    state = CharField(label='State', help_text=Job.help_text['state'],
-                      widget=Select(choices=Job.get_state_choices()))
     date_expired = SplitDateDropDownField(label="Expires On",
                                           help_text=Job.help_text['date_expired'])
 
@@ -120,28 +113,15 @@ class BaseJobForm(RequestForm):
 
     def save(self, commit=True):
         self.instance.created_by = self.request.user
-        job = super(BaseJobForm, self).save(commit)
-
-        country = job.country
-        state = job.state
-        try:
-            job.state_short = Job.get_state_map()[state]
-        except IndexError:
-            job.state_short = None
-        try:
-            job.country_short = Job.get_country_map()[country]
-        except IndexError:
-            job.country_short = None
-
-        return job
+        return super(BaseJobForm, self).save(commit)
 
 
 class JobForm(BaseJobForm):
     class Meta:
-        fields = ('title', 'is_syndicated', 'reqid', 'description', 'city',
-                  'state', 'country', 'zipcode', 'date_expired', 'is_expired',
-                  'autorenew', 'apply_type', 'apply_link', 'apply_email',
-                  'apply_info', 'owner', 'post_to', 'site_packages', )
+        fields = ('title', 'is_syndicated', 'reqid', 'description',
+                  'date_expired', 'is_expired', 'autorenew', 'apply_type',
+                  'apply_link', 'apply_email', 'apply_info', 'owner',
+                  'post_to', 'site_packages', )
         model = Job
 
     # For a single job posting by a member company to a microsite
@@ -232,8 +212,8 @@ class JobForm(BaseJobForm):
 
 class PurchasedJobBaseForm(BaseJobForm):
     class Meta:
-        fields = ('title', 'reqid', 'description', 'city',
-                  'state', 'country', 'zipcode', 'date_expired', 'is_expired',
+        fields = ('title', 'reqid', 'description',
+                  'date_expired', 'is_expired',
                   'apply_type', 'apply_link', 'apply_email',
                   'apply_info', 'owner', )
         model = PurchasedJob
