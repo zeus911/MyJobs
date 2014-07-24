@@ -84,16 +84,17 @@ class SavedSearch(models.Model):
 
     def send_email(self, custom_msg=None):
         items, count = self.get_feed_items()
-        if hasattr(self, 'partnersavedsearch'):
-            extras = self.partnersavedsearch.url_extras
-            if extras:
-                mypartners.helpers.add_extra_params_to_jobs(items, extras)
-                self.url = mypartners.helpers.add_extra_params(self.url,
-                                                               extras)
-            self.partnersavedsearch.create_record(custom_msg)
-        if self.custom_message and not custom_msg:
-            custom_msg = self.custom_message
         if self.user.can_receive_myjobs_email() and items:
+            is_pss = hasattr(self, 'partnersavedsearch')
+            if is_pss:
+                extras = self.partnersavedsearch.url_extras
+                if extras:
+                    mypartners.helpers.add_extra_params_to_jobs(items, extras)
+                    self.url = mypartners.helpers.add_extra_params(self.url,
+                                                                   extras)
+            if self.custom_message and not custom_msg:
+                custom_msg = self.custom_message
+
             context_dict = {'saved_searches': [(self, items, count)],
                             'custom_msg': custom_msg}
             subject = self.label.strip()
@@ -105,6 +106,9 @@ class SavedSearch(models.Model):
             msg.send()
             self.last_sent = datetime.now()
             self.save()
+
+            if is_pss:
+                self.partnersavedsearch.create_record(custom_msg)
 
     def send_initial_email(self, custom_msg=None):
         if self.user.opt_in_myjobs:

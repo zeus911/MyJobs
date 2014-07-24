@@ -9,6 +9,8 @@ from myjobs.tests.factories import UserFactory
 from mydashboard.tests.factories import CompanyFactory
 from mypartners.tests.factories import PartnerFactory, ContactFactory
 from mypartners.models import Partner, Contact, PRMAttachment
+from mysearches.models import PartnerSavedSearch
+from mysearches.tests.factories import PartnerSavedSearchFactory
 
 
 class MyPartnerTests(TestCase):
@@ -85,3 +87,26 @@ class MyPartnerTests(TestCase):
             result = PRMAttachment.objects.get(
                 attachment__contains=expected_filename)
             result.delete()
+
+    def test_partner_saved_search_delete_contact(self):
+        """
+        When a contact gets deleted, we should log it and disable any partner
+        saved searches for that contact
+        """
+        user = UserFactory(email='user@example.com')
+        self.contact.user = user
+        self.contact.save()
+        self.contact = Contact.objects.get(pk=self.contact.pk)
+        owner = UserFactory(email='owner@example.com')
+
+        partner_saved_search = PartnerSavedSearchFactory(created_by=owner,
+                                                         provider=self.company,
+                                                         partner=self.partner,
+                                                         user=user,
+                                                         notes='')
+        self.assertTrue(partner_saved_search.is_active)
+        self.contact.delete()
+        partner_saved_search = PartnerSavedSearch.objects.get(
+            pk=partner_saved_search.pk)
+        self.assertFalse(partner_saved_search.is_active)
+        self.assertTrue(self.contact.name in partner_saved_search.notes)
