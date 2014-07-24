@@ -13,7 +13,6 @@ from django.dispatch import receiver
 
 from myjobs.models import User
 from mydashboard.models import Company
-from mypartners import ofccp
 
 
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
@@ -178,36 +177,45 @@ class Partner(models.Model):
         return records
 
 
-class ComplianceContact(models.Model):
+class OFCCPContact(models.Model):
+    """ Office of Federal Contract Compliance Programs (OFCCP) contacts.
+
+        .. note:: For the differences between `state` and `st`, see the ofccp
+                  module.
+    """
+    # Organization Info
+    organization = models.CharField(max_length=255)
+    website = models.URLField(blank=True)
+    region = models.CharField(max_length=30, blank=True)
+    # long state name
+    state = models.CharField(max_length=30, blank=True)
+    area = models.CharField(max_length=30, blank=True)
+
+    # Contact Info
     title = models.CharField(max_length=255)
     first_name = models.CharField(max_length=255, blank=True)
     middle_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
 
-    def __unicode__(self):
-        # Using a second join + split to get rid of extra white space
-        return " ".join(" ".join(self.first_name, self.middle_name, 
-                                 self.last_name).split())
+    phone = models.CharField(max_length=30, blank=True)
+    phone_ext = models.CharField(max_length=10, blank=True)
+    alt_phone = models.CharField(max_length=30, blank=True)
+    fax = models.CharField(max_length=30, blank=True)
 
-class ComplianceAddress(models.Model):
     street1 = models.CharField(max_length=255, blank=True)
     street2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=255, blank=True)
-    state = models.CharField(max_length=5, blank=True)
+    # short state name
+    st = models.CharField(max_length=5, blank=True)
     zip_code = models.CharField(max_length=12, blank=True)
 
-    def __unicode__(self):
-        return "{}\n{}\n{}, {}  {}".format(self.street1, self.street2, city,
-                                           state, zip_code)
-
-class ComplianceDemographics(models.Model):
+    # Demographic Info
     is_minority = models.BooleanField('minority', default=False)
     is_female = models.BooleanField('female', default=False)
     is_disabled = models.BooleanField('disabled', default=False)
     is_veteran = models.BooleanField('veteran', default=False)
 
-    
-class ComplianceJobCategory(models.Model):
+    # Job Categories
     exec_om = models.BooleanField('exec_om', default=False)
     first_om = models.BooleanField('first_om', default=False)
     professional = models.BooleanField('professional', default=False)
@@ -219,25 +227,10 @@ class ComplianceJobCategory(models.Model):
     labor = models.BooleanField('labor', default=False)
     service =  models.BooleanField('service', default=False)
 
-
-class CompiancePartner(models.Model):
-    name = models.CharField(max_length=255)
-    website = models.URLField(blank=True)
-    region = models.CharField(max_length=30, blank=True) # choice?
-    state = models.CharField(max_length=30, blank=True)
-    area = models.CharField(max_length=30, blank=True)
-    phone = models.CharField(max_length=30, blank=True)
-    phone_ext = models.CharField(max_length=10, blank=True)
-    alt_phone = models.CharField(max_length=30, blank=True)
-    fax = models.CharField(max_length=30, blank=True)
-
-    contact = models.ForeignKey('ComplianceContact', null=True)
-    address = models.ForeignKey('ComplianceAddress', null=True)
-    demographics = models.ForeignKey('ComplianceDemographics', null=True)
-    categories = models.ForeignKey('ComplianceJobCategory', null=True)
-
     def __unicode__(self):
-        return "{} ({})".format(self.name, self.website)
+        # the second join + split take care of extra internal whitespace
+        return " ".join(" ".join(self.first_name, self.middle_name,
+                                 self.last_name).split())
 
 
 class ContactRecord(models.Model):

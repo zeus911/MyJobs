@@ -49,5 +49,6 @@ def get_contacts(html_file=None):
     for row in CSSSelector("p ~ table tr")(tree):
         cols = [td.text or "" for td in CSSSelector("td")(row)]
 
-        if len(cols) == 34:
-            yield OFCCP(*[col or col.replace(u"\xa0", "") for col in cols])
+        if len(cols) > 1:
+            yield OFCCP(*[col.replace(u"\xa0", "") if col is not None else ""
+                          for col in cols])
