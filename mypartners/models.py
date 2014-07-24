@@ -13,7 +13,7 @@ from django.dispatch import receiver
 
 from myjobs.models import User
 from mydashboard.models import Company
-from mypartners.ofccp import OFCCP
+from mypartners import ofccp
 
 
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
