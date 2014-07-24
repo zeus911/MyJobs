@@ -189,7 +189,7 @@ class ComplianceContact(models.Model):
         return " ".join(" ".join(self.first_name, self.middle_name, 
                                  self.last_name).split())
 
-class ComplianceAddress:
+class ComplianceAddress(models.Model):
     street1 = models.CharField(max_length=255, blank=True)
     street2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=255, blank=True)
@@ -200,15 +200,14 @@ class ComplianceAddress:
         return "{}\n{}\n{}, {}  {}".format(self.street1, self.street2, city,
                                            state, zip_code)
 
-
-class ComplianceDemographics:
+class ComplianceDemographics(models.Model):
     is_minority = models.BooleanField('minority', default=False)
     is_female = models.BooleanField('female', default=False)
     is_disabled = models.BooleanField('disabled', default=False)
     is_veteran = models.BooleanField('veteran', default=False)
 
     
-class ComplianceJobCategory:
+class ComplianceJobCategory(models.Model):
     exec_om = models.BooleanField('exec_om', default=False)
     first_om = models.BooleanField('first_om', default=False)
     professional = models.BooleanField('professional', default=False)
@@ -232,10 +231,10 @@ class CompiancePartner(models.Model):
     alt_phone = models.CharField(max_length=30, blank=True)
     fax = models.CharField(max_length=30, blank=True)
 
-    contact = models.ForeignKey('ComplianceContact')
-    address = models.ForeignKey('ComplianceAddress')
-    demographics = models.ForeignKey('ComplianceDemographics')
-    categories = models.ForeignKey('ComplianceJobCategory')
+    contact = models.ForeignKey('ComplianceContact', null=True)
+    address = models.ForeignKey('ComplianceAddress', null=True)
+    demographics = models.ForeignKey('ComplianceDemographics', null=True)
+    categories = models.ForeignKey('ComplianceJobCategory', null=True)
 
     def __unicode__(self):
         return "{} ({})".format(self.name, self.website)
