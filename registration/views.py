@@ -3,6 +3,7 @@ import json
 from django.contrib.auth import authenticate
 from django.contrib.auth import logout as log_out
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.views import password_reset
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
@@ -132,9 +133,26 @@ def merge_accounts(request, activation_key):
     return render_to_response('registration/merge_request.html', ctx,
                               context_instance=RequestContext(request))
 
+
 def logout(request):
     log_out(request)
     response = redirect('home')
     if 'myguid' in request.COOKIES:
         response.delete_cookie(key='myguid', domain='.my.jobs')
     return response
+
+
+def password_reset_with_activation(request, *args, **kwargs):
+    """
+    Wrapper for django.contrib.auth.views.password_reset
+
+    Activates the user's account if it is not active.
+    """
+    if request.method == 'POST':
+        email = request.POST.get('email', None)
+        if email is not None:
+            user = User.objects.get_email_owner(email)
+            if user is not None and not user.is_active:
+                user.is_active = True
+                user.save()
+    return password_reset(request, *args, **kwargs)

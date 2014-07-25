@@ -4,12 +4,13 @@ from django.core.urlresolvers import reverse_lazy
 
 from registration.forms import CustomPasswordResetForm
 from registration.views import (RegistrationComplete, activate, merge_accounts,
-                                resend_activation, logout)
+                                resend_activation, logout,
+                                password_reset_with_activation)
 
 urlpatterns = patterns('',
     # Authorization URLS
 
-    url(r'^password/reset/$', auth_views.password_reset,
+    url(r'^password/reset/$', password_reset_with_activation,
         {'password_reset_form': CustomPasswordResetForm},
         name='password_reset'),
     url(r'^password/reset/confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
