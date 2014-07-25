@@ -9,10 +9,11 @@ import os
 
 from lxml import html
 from lxml.cssselect import CSSSelector
+import requests
 
 __ALL__ = ["get_contacts"]
 
-def get_contacts(html_file=None):
+def get_contacts(text=None):
     """ Generator that produces OFCCP contact info from an HTML file.
 
         .. note:: If no HTML file is given, a local file named
@@ -32,9 +33,9 @@ def get_contacts(html_file=None):
             field indicates the state in which the organization's home office
             resides.
     """
-    html_file = html_file or os.path.join(os.path.dirname(__file__),
-                                          "ofccp_contacts.html")
-    tree = html.fromstring(open(html_file, "r").read())
+    text = text or open(os.path.join(os.path.dirname(__file__),
+                                     "ofccp_contacts.html")).read()
+    tree = html.fromstring(text)
 
     # convert column headers to valid Python identifiers, and rename duplicates
     cols = []
@@ -52,3 +53,22 @@ def get_contacts(html_file=None):
         if len(cols) > 1:
             yield OFCCP(*[col.replace(u"\xa0", "") if col is not None else ""
                           for col in cols])
+
+def get_html():
+    """ Get OFCCP data in HTML format.
+
+        The POST request is necessary in order to get the cookie required by
+        the GET request in order to obtain useful results.
+    """
+    cookie_url = 'http://www.dol-esa.gov/errd/directory.jsp'
+    excel_url = 'http://www.dol-esa.gov/errd/directoryexcel.jsp'
+    response = requests.post(cookie_url, data=dict(
+        reg='None', # Region
+        stat='None', # State
+        name='',
+        city='',
+        sht='None', # Contractor Type
+        lst='None', # Resource Organization
+        sortorder='asc'))
+
+    return requests.get(excel_url, cookies=response.cookies).text
