@@ -499,7 +499,6 @@ def prm_records(request):
 
     dt_range, date_str, contact_records = get_records_from_request(request)
     most_recent_activity = partner.get_logs()
-    print (dt_range[1] - dt_range[0]).days
 
     contact_type_choices = list(CONTACT_TYPE_CHOICES)
     try:
