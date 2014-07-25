@@ -80,6 +80,20 @@ $(function() {
     });
 });
 
+function getQueryVariable(variable) {
+    var query = window.location.search.substring(1),
+        vars = query.split("&");
+
+    for (var i=0; i< vars.length; i++) {
+        var pair = vars[i].split("=");
+        if (pair[0] == variable) {
+            return pair[1];
+        }
+    }
+
+    return "";
+}
+
 
 function draw_donut(size) {
     // Add GET from page.load to url if any.
@@ -297,8 +311,17 @@ function visual_boxes(chart_location,json, size){
 
 function add_links(chart, json, size){
     if(size === 'big'){
-        var button = $('#reports-view-all');
-        button.attr('href', '/prm/view/reports/details/records/?company='+String(company_id)+'&partner='+String(partner_id));
+        var button = $('#reports-view-all'),
+            date_start = getQueryVariable("date_start"),
+            date_end = getQueryVariable("date_end"),
+            date = getQueryVariable("date");
+
+        button.attr('href', '/prm/view/reports/details/records/?company='
+            + String(company_id)
+            + '&partner=' + String(partner_id) 
+            + '&date_start=' + String(date_start) 
+            + '&date_end=' + String(date_end) 
+            + '&date=' + String(date));
     }
 }
 
