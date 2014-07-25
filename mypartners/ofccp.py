@@ -48,11 +48,25 @@ def get_contacts(text=None):
 
     OFCCP = namedtuple("OFCCP", cols)
     for row in CSSSelector("p ~ table tr")(tree):
-        cols = [td.text or "" for td in CSSSelector("td")(row)]
+        fields = dict((cols[i], td.text) for i, td in 
+                      enumerate(CSSSelector("td")(row)))
 
-        if len(cols) > 1:
-            yield OFCCP(*[col.replace(u"\xa0", "") if col is not None else ""
-                          for col in cols])
+        for column, value in fields.items():
+            if value in [u"\xa0", None]:
+                fields[column] = ""
+            elif value == "Y":
+                fields[column] = True
+            elif value == "N":
+                fields[column] = False
+
+            if column in ["minority", "female", "disabled", "veteran",
+                          "exec_om", "first_om", "professional", "technician",
+                          "sales", "admin_support", "craft", "operative", 
+                          "labor", "service"]:
+                fields[column] = bool(value.strip())
+
+        if len(fields) > 1:
+            yield OFCCP(**fields)
 
 def get_html():
     """ Get OFCCP data in HTML format.
