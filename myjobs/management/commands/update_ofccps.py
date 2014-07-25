@@ -1,3 +1,7 @@
+# TODO: 
+#   * proper logging
+#   * check for succesful record insertion without hitting the database
+#   * command line options
 from django.core.management.base import BaseCommand, CommandError
 
 from mypartners.models import OFCCPContact
@@ -47,3 +51,14 @@ class Command(BaseCommand):
                     is_operative=contact.operative,
                     is_labor=contact.labor,
                     is_service=contact.service).save()
+
+                #TODO: see if there is a way to do this without querying the
+                #      database
+                if OFCCPContact.objects.filter(email=contact.email_id):
+                    print "Successfully added %s %s (%s) from %s, %s." % (
+                        contact.first_name, contact.last_name,
+                        contact.email_id, contact.city, contact.st)
+            else:
+                print  "%s %s (%s) from %s, %s already exists, skipping.." % (
+                    contact.first_name, contact.last_name, contact.email_id,
+                    contact.city, contact.st)
