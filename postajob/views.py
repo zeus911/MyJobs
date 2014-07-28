@@ -1,90 +1,316 @@
+from datetime import date
+import itertools
+import json
+
 from django.contrib.auth.decorators import user_passes_test
-from django.core.urlresolvers import reverse
-from django.core.urlresolvers import reverse_lazy
-from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import Http404, reverse, reverse_lazy, resolve
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render_to_response
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
-from django.views.generic.edit import FormView, ModelFormMixin
-from django.views.generic.detail import SingleObjectMixin
+from django.views.decorators.csrf import csrf_exempt
 
+from universal.decorators import company_has_access
+from mydashboard.models import CompanyUser, SeoSite
 from myjobs.decorators import user_is_allowed
-from postajob.forms import JobForm
-from postajob.models import Job
+from postajob.forms import (CompanyProfileForm, JobForm, OfflinePurchaseForm,
+                            OfflinePurchaseRedemptionForm, ProductForm,
+                            ProductGroupingForm, PurchasedJobForm,
+                            PurchasedProductForm)
+from postajob.models import (CompanyProfile, Job, OfflinePurchase, Product,
+                             ProductGrouping, PurchasedJob, PurchasedProduct,
+                             Request)
+from universal.helpers import get_company
+from universal.views import RequestFormViewBase
 
 
-is_company_user = lambda u: u.companyuser_set.all().count() >= 1
-
-
-@user_is_allowed()
-@user_passes_test(is_company_user)
+@company_has_access('prm_access')
 def jobs_overview(request):
-    companies = request.user.companyuser_set.all().values_list('company',
-                                                               flat=True)
+    company = get_company(request)
     data = {
-        'jobs': Job.objects.filter(company__in=companies)
+        'jobs': Job.objects.filter(owner=company, purchasedjob__isnull=True),
     }
     return render_to_response('postajob/jobs_overview.html', data,
                               RequestContext(request))
 
 
-class JobFormView(FormView, ModelFormMixin, SingleObjectMixin):
-    context_object_name = 'job'
-    form_class = JobForm
-    model = Job
-    success_url = reverse_lazy('jobs_overview')
-    template_name = 'postajob/form.html'
+@company_has_access(None)
+def purchasedjobs_overview(request):
+    company = get_company(request)
+    products = PurchasedProduct.objects.filter(owner=company)
+    data = {
+        'jobs': PurchasedJob.objects.filter(owner=company),
+        'active_products': products.filter(expiration_date__gte=date.today()),
+        'expired_products': products.filter(expiration_date__lt=date.today()),
+    }
+    return render_to_response('postajob/purchasedjobs_overview.html', data,
+                              RequestContext(request))
 
-    def delete(self):
-        """
-        Calls the delete() method on the fetched object and then
-        redirects to the success URL.
 
-        """
-        success_url = self.get_success_url()
-        self.object.delete()
-        return HttpResponseRedirect(success_url)
+@company_has_access('product_access')
+def purchasedmicrosite_admin_overview(request):
+    company = get_company(request)
 
-    def get_form_kwargs(self):
-        """
-        Allows for passing the request along to the JobForm so the JobForm
-        can have access to the user.
+    data = {
+        'products': Product.objects.filter(owner=company)[:3],
+        'product_groupings': ProductGrouping.objects.filter(owner=company)[:3],
+        'purchased_products': PurchasedProduct.objects.filter(product__owner=company),
+        'offline_purchases': OfflinePurchase.objects.filter(owner=company)[:3],
+        'requests': Request.objects.filter(owner=company)[:3],
+        'company': company
+    }
 
-        """
-        kwargs = super(JobFormView, self).get_form_kwargs()
-        kwargs['request'] = self.request
-        return kwargs
+    return render_to_response('postajob/admin_overview.html', data,
+                              RequestContext(request))
 
-    @staticmethod
-    def queryset(request):
-        user_companies = request.user.companyuser_set.all()
-        kwargs = {
-            'company__in': user_companies.values_list('company', flat=True)
-        }
-        return Job.objects.filter(**kwargs)
 
-    def get(self, request, *args, **kwargs):
-        if not request.path.startswith(reverse('job_add')):
-            self.object = self.get_object(queryset=self.queryset(request))
-            pk = {'pk': self.object.pk}
-            if request.path.startswith(reverse('job_delete', kwargs=pk)):
-                return self.delete()
-        else:
-            self.object = None
-        return super(JobFormView, self).get(request, *args, **kwargs)
+@company_has_access('product_access')
+def admin_products(request):
+    company = get_company(request)
+    data = {
+        'products': Product.objects.filter(owner=company),
+        'company': company,
+    }
+    return render_to_response('postajob/products.html', data,
+                              RequestContext(request))
 
-    def post(self, request, *args, **kwargs):
-        if not request.path.startswith(reverse('job_add')):
-            self.object = self.get_object(queryset=self.queryset(request))
-            pk = {'pk': self.object.pk}
-            if request.path.startswith(reverse('job_delete', kwargs=pk)):
-                return self.delete()
-        else:
-            self.object = None
-        return super(JobFormView, self).post(request, *args, **kwargs)
+
+@company_has_access('product_access')
+def admin_groupings(request):
+    company = get_company(request)
+    data = {
+        'product_groupings': ProductGrouping.objects.filter(owner=company),
+        'company': company,
+    }
+    return render_to_response('postajob/productgrouping.html', data,
+                              RequestContext(request))
+
+
+@company_has_access('product_access')
+def admin_offlinepurchase(request):
+    company = get_company(request)
+    data = {
+        'offline_purchases': OfflinePurchase.objects.filter(owner=company),
+        'company': company,
+    }
+    return render_to_response('postajob/offlinepurchase.html', data,
+                              RequestContext(request))
+
+
+@company_has_access('product_access')
+def admin_request(request):
+    company = get_company(request)
+    data = {
+        'company': company,
+        'requests': Request.objects.filter(owner=company)
+    }
+
+    return render_to_response('postajob/request.html', data,
+                              RequestContext(request))
+
+
+@company_has_access('product_access')
+def admin_purchasedproduct(request):
+    company = get_company(request)
+    purchases = PurchasedProduct.objects.filter(product__owner=company)
+
+    data = {
+        'company': company,
+        'active_products': purchases.filter(expiration_date__gte=date.today()),
+        'expired_products': purchases.filter(expiration_date__lt=date.today()),
+    }
+
+    return render_to_response('postajob/purchasedproduct.html', data,
+                              RequestContext(request))
+
+
+@company_has_access('product_access')
+def view_request(request, content_type, pk):
+    template = 'postajob/request/{model}.html'
+    company = get_company(request)
+    content_type = ContentType.objects.get(pk=content_type)
+    data = {
+        'company': company,
+        'content_type': content_type,
+        'object': get_object_or_404(content_type.model_class(), pk=pk)
+    }
+
+    if not data['object'].user_has_access(request.user):
+        raise Http404
+
+    return render_to_response(template.format(model=content_type.model), data,
+                              RequestContext(request))
+
+
+@company_has_access('product_access')
+def approve_admin_request(request, content_type, pk):
+    """
+    Marks a Request as action taken on it and sets corresponding object
+    to approved. Assumes the object has an is_approved field.
+
+    """
+    content_type = ContentType.objects.get(pk=content_type)
+    request_made = Request.objects.get(content_type=content_type, object_id=pk)
+
+    request_object = request_made.request_object()
+    if request_object and request_object.user_has_access(request.user):
+        request_object.is_approved = True
+        request_object.save()
+        request_made.action_taken = True
+        request_made.save()
+
+    return redirect('request')
+
+
+def product_listing(request):
+    site_id = request.REQUEST.get('site')
+    callback = request.REQUEST.get('callback')
+    try:
+        site = SeoSite.objects.get(pk=site_id)
+    except SeoSite.DoesNotExist:
+        raise Http404
+
+    site_packages = site.sitepackage_set.all()
+    products = itertools.chain.from_iterable(site_package.product_set.all()
+                                             for site_package in site_packages)
+    groupings = set()
+    for product in products:
+        groupings = groupings.union(
+            set(product.productgrouping_set.filter(is_displayed=True,
+                                                   products__isnull=False)))
+    groupings = sorted(groupings, key=lambda grouping: grouping.display_order)
+    html = render_to_response('postajob/package_list.html',
+                              {'product_groupings': groupings},
+                              RequestContext(request))
+    return HttpResponse('%s(%s)' % (callback, json.dumps(html.content)),
+                        content_type='text/javascript')
+
+@company_has_access('product_access')
+def order_postajob(request):
+    """
+    This view will always get two variables and always switches display_order.
+
+    """
+    models = {
+        'groupings': ProductGrouping
+    }
+
+    company = get_company(request)
+    obj_type = request.GET.get('obj_type')
+    # Variables
+
+    try:
+        model = models[obj_type]
+    except KeyError:
+        raise Http404
+
+    a = model.objects.get(pk=request.GET.get('a'))
+    b = model.objects.get(pk=request.GET.get('b'))
+
+    # Swap two variables
+    a.display_order, b.display_order = b.display_order, a.display_order
+
+    # Save Objects
+    a.save()
+    b.save()
+
+    data = {
+        'order': True,
+        'product_groupings': ProductGrouping.objects.filter(owner=company),
+    }
+
+    # Render updated rows
+    html = render_to_response('postajob/includes/productgroup_rows.html', data,
+                              RequestContext(request))
+    return html
+
+
+@company_has_access('product_access')
+def is_company_user(request):
+    email = request.REQUEST.get('email')
+    exists = CompanyUser.objects.filter(user__email=email).exists()
+    return HttpResponse(json.dumps(exists))
+
+@csrf_exempt
+@company_has_access('product_access')
+def resend_invoice(request, pk):
+    company = get_company(request)
+
+    try:
+        product = PurchasedProduct.objects.get(pk=pk, product__owner=company)
+    except PurchasedProduct.DoesNotExist:
+        return HttpResponse(json.dumps(False))
+
+    product.invoice.send_invoice_email()
+    return HttpResponse(json.dumps(True))
+
+
+class PurchaseFormViewBase(RequestFormViewBase):
+    purchase_field = None
+    purchase_model = None
+
 
     @method_decorator(user_is_allowed())
-    @method_decorator(user_passes_test(is_company_user))
+    def dispatch(self, *args, **kwargs):
+        """
+        Determine and set which product is attempting to be purchased.
+
+        """
+        # The add url also has the pk for the product they're attempting
+        # to purchase.
+        if kwargs.get('product'):
+            self.product = get_object_or_404(self.purchase_model,
+                                             pk=kwargs.get('product'))
+        else:
+            obj = get_object_or_404(self.model, pk=kwargs.get('pk'))
+            self.product = getattr(obj, self.purchase_field, None)
+
+        # Set the display name based on the model
+        self.display_name = self.display_name.format(product=self.product)
+
+        return super(PurchaseFormViewBase, self).dispatch(*args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super(PurchaseFormViewBase, self).get_form_kwargs()
+        kwargs['product'] = self.product
+        return kwargs
+
+
+class PostajobModelFormMixin(object):
+    """
+    A mixin for postajob models, since nearly all of them rely on
+    owner for filtering by company.
+
+    """
+    model = None
+    prevent_delete = False
+    template_name = 'postajob/form.html'
+
+    def get_queryset(self, request):
+        kwargs = {'owner__in': request.user.get_companies()}
+        self.queryset = self.model.objects.filter(**kwargs)
+        return self.queryset
+
+    def get_success_url(self):
+        return self.success_url
+
+    def get_context_data(self, **kwargs):
+        kwargs['prevent_delete'] = self.prevent_delete
+        return super(PostajobModelFormMixin, self).get_context_data(**kwargs)
+
+
+class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
+    form_class = JobForm
+    model = Job
+    display_name = 'Job'
+
+    success_url = reverse_lazy('jobs_overview')
+    add_name = 'job_add'
+    update_name = 'job_update'
+    delete_name = 'job_delete'
+
+    @method_decorator(company_has_access('prm_access'))
     def dispatch(self, *args, **kwargs):
         """
         Decorators on this function will be run on every request that
@@ -93,4 +319,193 @@ class JobFormView(FormView, ModelFormMixin, SingleObjectMixin):
         """
         return super(JobFormView, self).dispatch(*args, **kwargs)
 
+    def get_queryset(self, request):
+        super(JobFormView, self).get_queryset(request)
+        kwargs = {'purchasedjob__isnull': True}
+        self.queryset = self.queryset.filter(**kwargs)
+        return self.queryset
 
+
+class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
+    form_class = PurchasedJobForm
+    model = PurchasedJob
+    display_name = '{product} Job'
+
+    success_url = reverse_lazy('purchasedjobs_overview')
+    add_name = 'purchasedjob_add'
+    update_name = 'purchasedjob_update'
+    delete_name = 'purchasedjob_delete'
+
+    purchase_field = 'purchased_product'
+    purchase_model = PurchasedProduct
+
+    def set_object(self, *args, **kwargs):
+        if (not self.product.can_post_more()
+                and resolve(self.request.path).url_name == self.add_name):
+            # If more jobs can't be posted to the project, don't allow
+            # the user to access the add view.
+            raise Http404
+        return super(PurchasedJobFormView, self).set_object(*args, **kwargs)
+
+
+class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):
+    form_class = ProductForm
+    model = Product
+    display_name = 'Product'
+
+    success_url = reverse_lazy('product')
+    add_name = 'product_add'
+    update_name = 'product_update'
+    delete_name = 'product_delete'
+
+    @method_decorator(company_has_access('product_access'))
+    def dispatch(self, *args, **kwargs):
+        """
+        Decorators on this function will be run on every request that
+        goes through this class.
+
+        """
+        return super(ProductFormView, self).dispatch(*args, **kwargs)
+
+
+class ProductGroupingFormView(PostajobModelFormMixin, RequestFormViewBase):
+    form_class = ProductGroupingForm
+    model = ProductGrouping
+    display_name = 'Product Grouping'
+
+    success_url = reverse_lazy('productgrouping')
+    add_name = 'productgrouping_add'
+    update_name = 'productgrouping_update'
+    delete_name = 'productgrouping_delete'
+
+    @method_decorator(company_has_access('product_access'))
+    def dispatch(self, *args, **kwargs):
+        """
+        Decorators on this function will be run on every request that
+        goes through this class.
+
+        """
+        return super(ProductGroupingFormView, self).dispatch(*args, **kwargs)
+
+
+class PurchasedProductFormView(PostajobModelFormMixin, PurchaseFormViewBase):
+    form_class = PurchasedProductForm
+    model = PurchasedProduct
+    # The display name is determined by the product id and set in dispatch().
+    display_name = '{product} - Billing Information'
+
+    success_url = reverse_lazy('purchasedjobs_overview')
+    add_name = 'purchasedproduct_add'
+    update_name = 'purchasedproduct_update'
+    delete_name = 'purchasedproduct_delete'
+
+    purchase_field = 'product'
+    purchase_model = Product
+
+    def set_object(self, request):
+        """
+        Purchased products can't be edited or deleted, so prevent anyone
+        getting an actual object to edit/delete.
+
+        """
+        self.object = None
+        if not resolve(request.path).url_name.endswith('_add'):
+            raise Http404
+
+
+class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
+    form_class = OfflinePurchaseForm
+    model = OfflinePurchase
+    display_name = 'Offline Purchase'
+
+    success_url = reverse_lazy('offlinepurchase')
+    add_name = 'offlinepurchase_add'
+    update_name = 'offlinepurchase_update'
+    delete_name = 'offlinepurchase_delete'
+
+    @method_decorator(company_has_access('product_access'))
+    def dispatch(self, *args, **kwargs):
+        """
+        Decorators on this function will be run on every request that
+        goes through this class.
+
+        """
+        return super(OfflinePurchaseFormView, self).dispatch(*args, **kwargs)
+
+    def get_success_url(self):
+        if resolve(self.request.path).url_name == self.add_name:
+            kwargs = {
+                'content_type': ContentType.objects.get_for_model(self.model).pk,
+                'pk': self.object.pk,
+            }
+            return reverse('offline_purchase_success', kwargs=kwargs)
+        return self.success_url
+
+    def set_object(self, request):
+        """
+        Attempting to determine what happens to Products in an already-redeemed
+        OfflinePurchase is nearly impossible, so OfflinePurchases can
+        only be added or deleted.
+
+        """
+        acceptable_names = [self.add_name, self.delete_name]
+        if resolve(request.path).url_name not in acceptable_names:
+            raise Http404
+        return super(OfflinePurchaseFormView, self).set_object(request)
+
+
+class OfflinePurchaseRedemptionFormView(PostajobModelFormMixin,
+                                        RequestFormViewBase):
+    form_class = OfflinePurchaseRedemptionForm
+    model = OfflinePurchase
+    display_name = 'Offline Purchase'
+
+    success_url = reverse_lazy('purchasedjobs_overview')
+    add_name = 'offlinepurchase_redeem'
+    update_name = None
+    delete_name = None
+
+    def set_object(self, request):
+        """
+        OfflinePurchases can only be redeemed (added) by generic users.
+
+        """
+        self.object = None
+        if not resolve(request.path).url_name == self.add_name:
+            raise Http404
+
+
+class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
+    form_class = CompanyProfileForm
+    model = CompanyProfile
+    prevent_delete = True
+    display_name = 'Company Profile'
+
+    success_url = reverse_lazy('purchasedmicrosite_admin_overview')
+    add_name = 'companyprofile_add'
+    update_name = 'companyprofile_edit'
+    delete_name = 'companyprofile_delete'
+
+    @method_decorator(company_has_access(None))
+    def dispatch(self, *args, **kwargs):
+        """
+        Decorators on this function will be run on every request that
+        goes through this class.
+
+        """
+        return super(CompanyProfileFormView, self).dispatch(*args, **kwargs)
+
+    def set_object(self, *args, **kwargs):
+        """
+        Every add is actually an edit.
+
+        """
+        company = get_company(self.request)
+        if not company:
+            raise Http404
+        kwargs = {'company': company}
+        self.object, _ = self.model.objects.get_or_create(**kwargs)
+        return self.object
+
+    def delete(self):
+        return

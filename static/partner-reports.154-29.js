@@ -247,7 +247,7 @@ function dropdown(e) {
 
 
 function go_to_records(e) {
-    url = "/prm/view/reports/details/records/?company="+String(company_id)+"&partner="+String(partner_id)+"&record_type="+ e.currentTarget.id;
+    url = "/prm/view/reports/details/records/?partner="+String(partner_id)+"&record_type="+ e.currentTarget.id;
     if(admin_id != 'None') {
         url += '&admin=' + admin_id;
     }

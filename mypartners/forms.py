@@ -298,9 +298,9 @@ class ContactRecordForm(forms.ModelForm):
         if instance:
             attachments = PRMAttachment.objects.filter(contact_record=instance)
             if attachments:
-                choices = [(a.pk, get_attachment_link(
-                    partner.owner.id, partner.id, a.id,
-                    a.attachment.name.split("/")[-1])) for a in attachments]
+                choices = [(a.pk, get_attachment_link(partner.id, a.id,
+                            a.attachment.name.split("/")[-1]))
+                           for a in attachments]
                 self.fields["attach_delete"] = forms.MultipleChoiceField(
                     required=False, choices=choices, label="Delete Files",
                     widget=forms.CheckboxSelectMultiple)

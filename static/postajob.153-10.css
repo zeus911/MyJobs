@@ -1,0 +1,65 @@
+.site-field {
+    width: 400px;
+    height: 200px;
+    overflow-y: scroll;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.products-field ul {
+    display: inline-block;
+}
+
+.products-field ul,
+.site-field ul {
+    list-style: none;
+    margin-left: 0;
+    padding-bottom: 0;
+}
+
+
+.field-job_limit > div > ul,
+.job-limit-field > ul,
+.field-products > div > ul,
+.field-apply_type > div > ul,
+.field-post_to > div > ul,
+.field-site_packages > div > ul,
+.field-customer-of > div > ul,
+.post-to-field > ul,
+.customer-of-field > ul,
+.application-method-field > ul {
+    list-style: none;
+    display: table;
+    padding: 0;
+}
+
+.field-job_limit > div > ul > li,
+.job-limit-field > ul > li,
+.field-products > div > ul > li,
+.field-apply_type > div> ul > li,
+.field-site_packages > div > ul > li,
+.field-post_to > div > ul > li {
+    list-style-type: none;
+}
+
+#id_exp_date_0,
+#id_exp_date_1 {
+    width: 130px;
+}
+
+.companyuser-validation-label {
+    margin-left: 10px;
+    margin-top: 0;
+    position: absolute;
+}
+
+.header {
+    font-size: 18px;
+    padding-top: 15px;
+    padding-bottom: 10px;
+}
+
+.purchasedjob-request-field {
+    display: table-row;
+}
