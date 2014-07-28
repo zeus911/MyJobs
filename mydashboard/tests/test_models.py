@@ -8,6 +8,7 @@ from myjobs.tests.factories import UserFactory
 
 class CompanyUserTests(TestCase):
     def setUp(self):
+
         self.user = UserFactory()
         self.company = CompanyFactory()
         self.data = {'user': self.user.id,

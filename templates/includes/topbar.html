@@ -27,12 +27,18 @@
                 <ul class="mobile_hide">
                     {% is_a_group_member user "Employer" as group_member %}
                     {% get_company_name user as company_name %}
+                    {% get_company_from_cookie as company %}
                     {% if group_member %}
                     <li class="{% active_tab 'employer-tools' %} has-drop">
                         <a>{% trans "Employers" %}</a>
                         <ul id="employer-apps" class="submenu">
-                            <li><a id="candidate-tab" href="{{ ABSOLUTE_URL }}candidates/view?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
-                            <li><a id="partner-tab" href="{{ ABSOLUTE_URL }}prm/view?company={{ company_name.0.id }}">{% trans "PRM" %}</a></li>
+                            {% if company.prm_access %}
+                            <li><a id="candidate-tab" href="{{ ABSOLUTE_URL }}candidates/view?company={{ company.id }}">{% trans "Candidates" %}</a></li>
+                            <li><a id="partner-tab" href="{{ ABSOLUTE_URL }}prm/view?company={{ company.id }}">{% trans "PRM" %}</a></li>
+                            {% endif %}
+                            {% if company.product_access %}
+                            <li><a id="purchasedmicrosite-tab" href="{{ ABSOLUTE_URL }}postajob/admin">{% trans "Partner Microsite" %}</a></li>
+                            {% endif %}
                         </ul>
                     </li>
                     {% endif %}
@@ -87,14 +93,17 @@
 
                                         <li><a id="savedsearch-link" class="no-show seeker-menu" href="{{ ABSOLUTE_URL }}saved-search/view/">{% trans "My Saved Searches" %}</a></li>
 
-                                        {% if group_member and user.is_active  %}
+                                        {% if company.prm_access  %}
 
                                             <li><a id="employer-tools" class="no-show desktop_hide" style="cursor: pointer;">{% trans "Employer" %}</a></li>
 
-                                            <li><a id="candidate-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}candidates/view?company={{ company_name.0.id }}">{% trans "Candidates" %}</a></li>
+                                            <li><a id="candidate-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}candidates/view?company={{ company.id }}">{% trans "Candidates" %}</a></li>
 
-                                            <li><a id="partner-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}prm/view?company={{ company_name.0.id }}">{% trans "PRM" %}</a></li>
+                                            <li><a id="partner-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}prm/view?company={{ company.id }}">{% trans "PRM" %}</a></li>
 
+                                        {% endif %}
+                                        {% if company.product_access %}
+                                            <li><a id="purchased-microsite-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Partner Microsite" %}</a></li>
                                         {% endif %}
                                     {% endif %}
                                     <li><a id="account-link" href="{{ ABSOLUTE_URL }}account/edit">{% trans "Account Settings" %}</a></li>

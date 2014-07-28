@@ -1,20 +1,33 @@
-import datetime
-from mock import patch
+from datetime import date, timedelta
+from mock import patch, Mock
 from StringIO import StringIO
 from urlparse import parse_qs
 
 from django.conf import settings
+from django.contrib.auth.models import Group
+from django.core import mail
 from django.test import TestCase
 
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          SeoSiteFactory)
-from postajob.models import (Job, Product, PurchasedJob, PurchasedProduct,
-                             SitePackage)
+from mydashboard.models import CompanyUser
+from myjobs.models import User
+from postajob.models import (CompanyProfile, Job, OfflineProduct, Product,
+                             ProductGrouping, ProductOrder, PurchasedJob,
+                             PurchasedProduct, Request, SitePackage)
+from postajob.tests.factories import (job_factory, product_factory,
+                                      offlineproduct_factory,
+                                      offlinepurchase_factory,
+                                      purchasedjob_factory,
+                                      purchasedproduct_factory,
+                                      sitepackage_factory)
 
 
 class ModelTests(TestCase):
     def setUp(self):
+        self.user = User.objects.create(email='user@test.email')
         self.company = CompanyFactory()
+        CompanyProfile.objects.create(company=self.company)
         self.site = SeoSiteFactory()
         self.bu = BusinessUnitFactory()
         self.site.business_units.add(self.bu)
@@ -22,23 +35,6 @@ class ModelTests(TestCase):
         self.company.job_source_ids.add(self.bu)
         self.company.save()
 
-        self.job_data = {
-            'title': 'title',
-            'company': self.company,
-            'reqid': '1',
-            'description': 'sadfljasdfljasdflasdfj',
-            'apply_link': 'www.google.com',
-            'city': 'Indianapolis',
-            'state': 'Indiana',
-            'state_short': 'IN',
-            'country': 'United States of America',
-            'country_short': 'USA',
-            'zipcode': '46268',
-            'date_new': datetime.datetime.now(),
-            'date_updated': datetime.datetime.now(),
-            'date_expired': datetime.date.today(),
-            'guid': 'abcdef123456',
-        }
         self.request_data = {
             'title': 'title',
             'company': self.company.id,
@@ -59,16 +55,21 @@ class ModelTests(TestCase):
             'name': 'Test Site Package',
         }
 
+        self.choices_data = ('{"countries":[{"code":"USA", '
+                             '"name":"United States of America"}], '
+                             '"regions":[{"code":"IN", "name":"Indiana"}] }')
+        self.side_effect = [self.choices_data for x in range(0, 50)]
+
     @patch('urllib2.urlopen')
     def test_job_creation(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('{"jobs_added": 1}')
-        Job.objects.create(**self.job_data)
+        job_factory(self.company, self.user)
         self.assertEqual(Job.objects.all().count(), 1)
 
     @patch('urllib2.urlopen')
     def test_job_deletion(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('{"jobs_deleted": 1}')
-        job = Job.objects.create(**self.job_data)
+        job = job_factory(self.company, self.user)
         self.assertEqual(Job.objects.all().count(), 1)
         job.delete()
         self.assertEqual(Job.objects.all().count(), 0)
@@ -76,7 +77,7 @@ class ModelTests(TestCase):
     @patch('urllib2.urlopen')
     def test_job_add_to_solr(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('{"jobs_added": 1}')
-        Job.objects.create(**self.job_data)
+        job_factory(self.company, self.user)
         # add_to_solr() is called in save(), so urlopen should've been
         # called once at this point.
         self.assertEqual(urlopen_mock.call_count, 1)
@@ -87,13 +88,15 @@ class ModelTests(TestCase):
         data = parse_qs(args[0].data)
         data['jobs'] = eval(data['jobs'][0])
         self.assertEqual(data['key'][0], settings.POSTAJOB_API_KEY)
+        del self.request_data['guid']
         for field in self.request_data.keys():
             self.assertEqual(data['jobs'][0][field], self.request_data[field])
 
     @patch('urllib2.urlopen')
     def test_job_remove_from_solr(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('{"jobs_deleted": 1}')
-        job = Job.objects.create(**self.job_data)
+        job = job_factory(self.company, self.user,
+                          guid=self.request_data['guid'])
         job.remove_from_solr()
 
         # add_to_solr() is called in save(), which is combined with the
@@ -110,17 +113,16 @@ class ModelTests(TestCase):
     @patch('urllib2.urlopen')
     def test_job_generate_guid(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('')
+        guid = '1'*32
 
         # Confirm that pre-assigned guids are not being overwritten.
-        job = Job.objects.create(**self.job_data)
-        self.assertEqual(self.job_data['guid'], job.guid)
+        job = job_factory(self.company, self.user, guid=guid)
+        self.assertEqual(guid, job.guid)
         job.delete()
 
         # Confirm that if a guid isn't assigned one is getting assigned
         # to it properly.
-        guid = self.job_data['guid']
-        del self.job_data['guid']
-        job = Job.objects.create(**self.job_data)
+        job = job_factory(self.company, self.user)
         self.assertIsNotNone(job.guid)
         self.assertNotEqual(job.guid, guid)
 
@@ -166,18 +168,16 @@ class ModelTests(TestCase):
 
     def create_purchased_job(self, pk=None):
         if not hasattr(self, 'package'):
-            self.package = SitePackage.objects.create(**self.site_package_data)
+            self.package = sitepackage_factory(self.company)
         if not hasattr(self, 'product'):
-            self.product = Product.objects.create(site_package=self.package,
-                                                  cost='100.00',
-                                                  owner=self.company)
+            self.product = product_factory(self.package, self.company)
         if not hasattr(self, 'purchased_product'):
-            self.purchased_product = PurchasedProduct.objects.create(
-                product=self.product, owner=self.company)
-        self.job_data['max_expired_date'] = datetime.date.today() + datetime.timedelta(days=1)
-        self.job_data['purchased_product'] = self.purchased_product
-        self.job_data['pk'] = pk
-        return PurchasedJob.objects.create(**self.job_data)
+            self.purchased_product = purchasedproduct_factory(self.product,
+                                                              self.company)
+        exp_date = date.today() + timedelta(self.product.posting_window_length)
+        self.assertEqual(self.purchased_product.expiration_date, exp_date)
+        return purchasedjob_factory(self.company, self.user,
+                                    self.purchased_product, pk=pk)
 
     @patch('urllib2.urlopen')
     def test_purchased_job_add(self, urlopen_mock):
@@ -185,6 +185,7 @@ class ModelTests(TestCase):
         self.create_purchased_job()
         self.assertEqual(PurchasedJob.objects.all().count(), 1)
         self.assertEqual(SitePackage.objects.all().count(), 1)
+        self.assertEqual(Request.objects.all().count(), 1)
         package = SitePackage.objects.get()
         job = PurchasedJob.objects.get()
         self.assertItemsEqual(job.site_packages.all(), [package])
@@ -197,16 +198,119 @@ class ModelTests(TestCase):
         # the job is approved.
         self.assertEqual(urlopen_mock.call_count, 0)
         job.is_approved = True
+        # Jobs won't be added/deleted until it's confirmed that the
+        # purchased product is paid for as well.
+        job.purchased_product.paid = True
+        job.purchased_product.save()
         job.save()
         # Now that the job is approved, it should've been sent to solr.
         self.assertEqual(urlopen_mock.call_count, 1)
 
     def test_purchased_product_jobs_remaining(self):
-        del self.job_data['guid']
-        field = Product._meta.get_field_by_name('num_jobs_allowed')
-        expected_num_jobs = field[0].default
-        for x in range(50, 55):
+        num_jobs_allowed = Product._meta.get_field_by_name('num_jobs_allowed')
+        expected_num_jobs = num_jobs_allowed[0].default
+        for x in range(50, 50 + expected_num_jobs):
+            if hasattr(self, 'purchased_product'):
+                self.assertTrue(self.purchased_product.can_post_more())
             self.create_purchased_job()
             expected_num_jobs -= 1
-            self.assertEqual(self.purchased_product.jobs_remaining(),
+            self.assertEqual(self.purchased_product.jobs_remaining,
                              expected_num_jobs)
+        self.assertFalse(self.purchased_product.can_post_more())
+
+    def test_invoice_send_invoice_email(self):
+        self.create_purchased_job()
+        group, _ = Group.objects.get_or_create(name=Product.ADMIN_GROUP_NAME)
+
+        # No one to recieve the email.
+        self.purchased_product.invoice.send_invoice_email()
+        self.assertEqual(len(mail.outbox), 0)
+
+        # Only recipient is specified recipient.
+        self.purchased_product.invoice.send_invoice_email(['this@isa.test'])
+        self.assertItemsEqual(mail.outbox[0].to,
+                              ['this@isa.test'])
+
+        mail.outbox = []
+
+        # Only recipients are admins.
+        user = CompanyUser.objects.create(user=self.user, company=self.company)
+        user.group.add(group)
+        user.save()
+        self.purchased_product.invoice.send_invoice_email()
+        self.assertItemsEqual(mail.outbox[0].to,
+                              [u'user@test.email'])
+
+        mail.outbox = []
+
+        # Recipients are admins + specified recipients.
+        self.purchased_product.invoice.send_invoice_email(['this@isa.test'])
+        self.assertItemsEqual(mail.outbox[0].to,
+                              ['this@isa.test', u'user@test.email'])
+
+    def test_productgrouping_add_delete(self):
+        self.create_purchased_job()
+        ProductGrouping.objects.create(display_title='Test Grouping',
+                                       explanation='Test Grouping',
+                                       name='Test Grouping',
+                                       owner=self.company)
+        self.assertEqual(ProductGrouping.objects.all().count(), 1)
+        grouping = ProductGrouping.objects.get()
+
+        order = ProductOrder.objects.create(product=self.product,
+                                            group=grouping)
+        grouping_products = grouping.products.all().values_list('pk', flat=True)
+        self.assertItemsEqual(grouping_products, [order.pk])
+
+        grouping.delete()
+        self.assertEqual(ProductGrouping.objects.all().count(), 0)
+        self.assertEqual(ProductOrder.objects.all().count(), 0)
+
+    @patch('urllib2.urlopen')
+    def test_request_generation(self, urlopen_mock):
+        mock_obj = Mock()
+        mock_obj.read.side_effect = self.side_effect
+        urlopen_mock.return_value = mock_obj
+
+        cu = CompanyUser.objects.create(user=self.user,
+                                        company=self.company)
+        cu.make_purchased_microsite_admin()
+
+        self.create_purchased_job()
+        self.assertEqual(PurchasedJob.objects.all().count(), 1)
+        self.assertEqual(Request.objects.all().count(), 1)
+        self.assertEqual(len(mail.outbox), 1)
+        mail.outbox = []
+
+        # Already approved jobs should not generate an additional request.
+        purchasedjob_factory(self.company, self.user, self.purchased_product,
+                             is_approved=True)
+        self.assertEqual(PurchasedJob.objects.all().count(), 2)
+        self.assertEqual(Request.objects.all().count(), 1)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_offlinepurchase_create_purchased_products(self):
+        user = CompanyUser.objects.create(user=self.user, company=self.company)
+        offline_purchase = offlinepurchase_factory(self.company, user)
+        package = sitepackage_factory(self.company)
+        product = product_factory(package, self.company)
+
+        for x in range(1, 15):
+            PurchasedProduct.objects.all().delete()
+            OfflineProduct.objects.all().delete()
+            offlineproduct_factory(product, offline_purchase,
+                                   product_quantity=x)
+            offline_purchase.create_purchased_products(self.company)
+            self.assertEqual(PurchasedProduct.objects.all().count(), x)
+
+        product_two = product_factory(package, self.company)
+        for x in range(1, 15):
+            PurchasedProduct.objects.all().delete()
+            OfflineProduct.objects.all().delete()
+            offlineproduct_factory(product, offline_purchase,
+                                   product_quantity=x)
+            offlineproduct_factory(product_two, offline_purchase,
+                                   product_quantity=x)
+            offline_purchase.create_purchased_products(self.company)
+            self.assertEqual(PurchasedProduct.objects.all().count(), x*2)
+

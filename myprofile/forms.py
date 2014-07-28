@@ -191,11 +191,9 @@ class InitialForm(BaseUserForm):
     def __init__(self, *args, **kwargs):
         super(InitialForm, self).__init__(*args, **kwargs)
         for key, field in self.fields.items():
-            if isinstance(field.widget, TextInput) or \
-                isinstance(field.widget, Textarea) or \
-                isinstance(field.widget, DateInput) or \
-                isinstance(field.widget, DateTimeInput) or \
-                    isinstance(field.widget, TimeInput):
+            input_types = (TextInput, Textarea, DateInput, DateTimeInput,
+                           TimeInput)
+            if isinstance(field.widget, input_types):
                 field.widget.attrs.update({'placeholder': field.label})
 
 
