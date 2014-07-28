@@ -5,8 +5,12 @@ body {
     padding-top: 29px;
 }
 
-#find-partner {
+.partner-search {
     padding: 0 0 0 20px;
+}
+
+div > .partner-search {
+    padding: 0;
 }
 
 #main {
