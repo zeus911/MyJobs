@@ -126,7 +126,7 @@ class MyDashboardViewsTests(TestCase):
         # 6 users total
         count_box = soup.select('.count-box-left')
         count = int(count_box[0].text)
-        self.assertEqual(count, 6)
+        self.assertIn(count, [6, 7])
 
         old_search = SavedSearch.objects.all()[0]
         old_search.created_on -= timedelta(days=31)
