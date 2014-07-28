@@ -12,7 +12,7 @@
     <div class="row">
         <div class="span12 prm-header">
             <span>{% if record.subject %}{{ record.subject }} - {% endif %}{{ record.date_time|date:'M d, Y' }} </span>
-            <a class="mobile_hide" href="{% url 'record_view' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Communication Records</a>
+            <a class="mobile_hide" href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Communication Records</a>
             <span class="pull-right">
                 {% if prev_id %}
                     <a href="{% url 'record_view' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ prev_id }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}">Previous</a>&nbsp;&nbsp;
