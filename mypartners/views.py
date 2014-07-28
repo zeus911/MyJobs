@@ -35,10 +35,11 @@ from mysearches.helpers import (url_sort_options, parse_feed,
                                 get_interval_from_frequency)
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
-                              NewPartnerForm, ContactRecordForm)
-from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
-                               ContactLogEntry, CONTACT_TYPE_CHOICES,
-                               ADDITION, DELETION)
+                              NewPartnerForm, FindPartnerForm, 
+                              ContactRecordForm)
+from mypartners.models import (Partner, Contact, OFCCPContact, ContactRecord, 
+                               PRMAttachment, ContactLogEntry, 
+                               CONTACT_TYPE_CHOICES, ADDITION, DELETION)
 from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
                                 contact_record_val_to_str, retrieve_fields,
@@ -169,6 +170,33 @@ def edit_item(request):
            'view_name': 'PRM'}
 
     return render_to_response('mypartners/edit_item.html', ctx,
+                              RequestContext(request))
+
+
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def find_partner_from_ofccp(request):
+    """
+    Form page that allows a user to search for compliance partners.
+    """
+    company_id = request.REQUEST.get('company')
+    company = get_object_or_404(Company, id=company_id)
+
+    if request.user not in company.admins.all():
+        raise Http404
+
+    try:
+        content_id = int(request.REQUEST.get('ct'))
+    except (ValueError, TypeError):
+        raise Http404
+
+
+    form = FindPartnerForm()
+    ctx = {'form': form,
+           'compnay': company,
+           'contact': content_id,
+           'view_name': 'PRM'}
+
+    return render_to_response('mypartners/find_partner.html', ctx,
                               RequestContext(request))
 
 

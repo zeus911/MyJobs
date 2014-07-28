@@ -7,8 +7,9 @@ from collections import OrderedDict
 import pytz
 
 from myprofile.forms import generate_custom_widgets
-from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
-                               ADDITION, CHANGE, MAX_ATTACHMENT_MB)
+from mypartners.models import (Contact, OFCCPContact, Partner, ContactRecord, 
+                               PRMAttachment, ADDITION, CHANGE, 
+                               MAX_ATTACHMENT_MB)
 from mypartners.helpers import log_change, get_attachment_link
 from mypartners.widgets import (MultipleFileField,
                                 SplitDateTimeDropDownField, TimeDropDownField)
@@ -229,6 +230,17 @@ class PartnerForm(forms.ModelForm):
                    action_type=new_or_change)
 
         return instance
+
+
+class FindPartnerForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', '')
+        super(FindPartnerForm, self).__init__(*args, **kwargs)
+
+    class Meta:
+        form_name = "Find Partner"
+        model =  OFCCPContact
+        widgets = generate_custom_widgets(model)
 
 
 def PartnerEmailChoices(partner):
