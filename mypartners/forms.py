@@ -232,16 +232,25 @@ class PartnerForm(forms.ModelForm):
         return instance
 
 
-class FindPartnerForm(forms.ModelForm):
+class BasicPartnerSearchForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', '')
-        super(FindPartnerForm, self).__init__(*args, **kwargs)
+        super(BasicPartnerSearchForm, self).__init__(*args, **kwargs)
 
     class Meta:
-        form_name = "Find Partner"
+        form_name = "Basic Partner Search"
         model =  OFCCPContact
         widgets = generate_custom_widgets(model)
 
+class AdvancedPartnerSearchForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', '')
+        super(AdvancedPartnerForm, self).__init__(*args, **kwargs)
+
+    class Meta:
+        form_name = "Advanced Partner Search"
+        model =  OFCCPContact
+        widgets = generate_custom_widgets(model)
 
 def PartnerEmailChoices(partner):
     choices = [(None, '----------')]

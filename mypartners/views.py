@@ -35,7 +35,7 @@ from mysearches.helpers import (url_sort_options, parse_feed,
                                 get_interval_from_frequency)
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
-                              NewPartnerForm, FindPartnerForm, 
+                              NewPartnerForm, BasicPartnerSearchForm, 
                               ContactRecordForm)
 from mypartners.models import (Partner, Contact, OFCCPContact, ContactRecord, 
                                PRMAttachment, ContactLogEntry, 
@@ -173,8 +173,8 @@ def edit_item(request):
                               RequestContext(request))
 
 
-#@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
-def find_partner_from_ofccp(request):
+@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+def partner_search(request):
     """
     Form page that allows a user to search for compliance partners.
     """
@@ -186,13 +186,13 @@ def find_partner_from_ofccp(request):
 
     content_id = int(request.REQUEST.get('ct') or 0)
 
-    form = FindPartnerForm()
+    form = BasicPartnerSearchForm()
     ctx = {'form': form,
            'compnay': company,
-           #'contact': content_id,
+           'contact': content_id,
            'view_name': 'PRM'}
     
-    return render_to_response('mypartners/find_partner.html', ctx,
+    return render_to_response('mypartners/partner_search.html', ctx,
                               RequestContext(request))
 
 
