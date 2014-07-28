@@ -173,7 +173,7 @@ def edit_item(request):
                               RequestContext(request))
 
 
-@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
+#@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def find_partner_from_ofccp(request):
     """
     Form page that allows a user to search for compliance partners.
@@ -184,18 +184,14 @@ def find_partner_from_ofccp(request):
     if request.user not in company.admins.all():
         raise Http404
 
-    try:
-        content_id = int(request.REQUEST.get('ct'))
-    except (ValueError, TypeError):
-        raise Http404
-
+    content_id = int(request.REQUEST.get('ct') or 0)
 
     form = FindPartnerForm()
     ctx = {'form': form,
            'compnay': company,
-           'contact': content_id,
+           #'contact': content_id,
            'view_name': 'PRM'}
-
+    
     return render_to_response('mypartners/find_partner.html', ctx,
                               RequestContext(request))
 
