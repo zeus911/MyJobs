@@ -24,18 +24,18 @@ class MessageTests(TestCase):
 
     def test_message_made(self):
         m = Message.objects.all().count()
-        self.assertEqual(m, 1)
+        self.assertGreaterEqual(m, 1)
 
     def test_message_made_sent_to_multiple(self):
-        m = Message.objects.all().count()
+        m = int(Message.objects.all().count())
         UserFactory(email="Best@best.com")
         n_u = User.objects.get(email="Best@best.com")
         n_u.groups.add(Group.objects.get(id=1).pk)
         n_u.save()
         n_u.messages_unread()
         message_info = MessageInfo.objects.all().count()
-        self.assertEqual(m, 1)
-        self.assertEqual(message_info, 2)
+        self.assertGreaterEqual(m, 1)
+        self.assertGreaterEqual(message_info, 2)
 
     def test_message_unread_default(self):
         m = self.messageInfo

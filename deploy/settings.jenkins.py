@@ -1,4 +1,6 @@
 from default_settings import *
+import datetime
+import os
 
 
 DEBUG = True
@@ -36,3 +38,4 @@ POSTAJOB_URLS = {
     'post': '',
     'delete': ''
 }
+CC_AUTH = TESTING_CC_AUTH

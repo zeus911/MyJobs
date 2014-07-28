@@ -70,3 +70,5 @@ POSTAJOB_URLS = {
     'post': 'http://www.my.jobs/ajax/postajob/',
     'delete': 'http://www.my.jobs/ajax/deleteajob/'
 }
+
+CC_AUTH = PROD_CC_AUTH

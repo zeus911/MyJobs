@@ -42,7 +42,7 @@
                     </table>
                     <button class="btn pull-right" value="New Partner" disabled>{% trans 'New Partner' %}</button>
                 </div>
-                <a class="btn primary" id="prm-mobile-btn" href="{% url 'create_partner' %}?company={{ company.id }}&ct={{ partner_ct }}">Get started with PRM today!</a>
+                <a class="btn primary" id="prm-mobile-btn" href="{% url 'create_partner' %}?ct={{ partner_ct }}">Get started with PRM today!</a>
             </div>
         </div>
 
@@ -62,7 +62,7 @@
 
                         {% for partner in partners %}
 
-                        <tr class="clickable-tr" onclick="window.document.location='{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}';">
+                        <tr class="clickable-tr" onclick="window.document.location='{% url 'partner_overview' %}?partner={{ partner.id }}';">
                             <td>
 
                             <b>{{ partner.name }}</b>
@@ -87,7 +87,7 @@
                             {% endif %}
 
                             </td>
-                            <td class="small-cell"><a class="btn-link" href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">open</a></td>
+                            <td class="small-cell"><a class="btn-link" href="{% url 'partner_overview' %}?partner={{ partner.id }}">open</a></td>
                         </tr>
 
                         {% endfor %}
@@ -100,7 +100,7 @@
             {# Recent Activity div #}
             <div class="span8"></div>
             <div class="span4">
-                <a id="new-prm-btn" class="btn pull-right" href="{% url 'create_partner' %}?company={{ company.id }}&ct={{ partner_ct }}">New Partner</a>
+                <a id="new-prm-btn" class="btn pull-right" href="{% url 'create_partner' %}?ct={{ partner_ct }}">New Partner</a>
             </div>
         </div>
 
