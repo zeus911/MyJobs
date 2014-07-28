@@ -44,9 +44,9 @@ def get_record_block(context, records, company, partner):
     }
 
 @register.simple_tag
-def attachment_link(attachment, partner, company):
+def attachment_link(attachment, partner):
     name = attachment.attachment.name.split("/")[-1]
-    return get_attachment_link(company.id, partner.id, attachment.id, name)
+    return get_attachment_link(partner.id, attachment.id, name)
 
 
 @register.simple_tag

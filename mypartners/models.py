@@ -259,7 +259,6 @@ class ContactRecord(models.Model):
     def get_record_url(self):
         params = {
             'partner': self.partner.pk,
-            'company': self.partner.owner.pk,
             'id': self.pk,
         }
         query_string = urlencode(params)
@@ -375,7 +374,6 @@ class ContactLogEntry(models.Model):
         }
         params = {
             'partner': self.partner.pk,
-            'company': self.partner.owner.pk,
             'id': obj.pk,
             'ct': self.content_type.pk,
         }

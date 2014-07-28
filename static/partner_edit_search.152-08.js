@@ -87,7 +87,7 @@ $(function() {
             success: function(data, status) {
                 if(data == '') {
                     if(status != 'prevent-redirect') {
-                        window.location = '/prm/view/searches?company=' + company_id + '&partner=' + partner_id;
+                        window.location = '/prm/view/searches?partner=' + partner_id;
                     }
                 } else {
                     // form was a json-encoded list of errors and error messages

@@ -139,6 +139,7 @@ class SavedSearchModelsTests(TestCase):
         email = mail.outbox.pop()
         soup = BeautifulSoup(email.body)
         lis = soup.findAll('li')
+
         # .attrs is a dictionary, where the key is the attribute
         hrefs = [li.find('a').attrs['href'] for li in lis]
 

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load common_tags %}
+
+{% block content %}
+    <div class="row">
+        <div class="span12">
+            <h1>{{ company.name }}</h1>
+        </div>
+    </div>
+    {% block content_bar %}
+        <div class="row">
+            <div class="span12 prm-header">
+                <span>{% block page_title %}{% endblock page_title %}</span>
+                {% block goback_link %}{% endblock goback_link %}
+                {% block additional_content_bar %}{% endblock additional_content_bar %}
+            </div>
+        </div>
+    {% endblock content_bar %}
+
+    {% block postajob_content %}
+
+    {% endblock postajob_content %}
+{% endblock %}

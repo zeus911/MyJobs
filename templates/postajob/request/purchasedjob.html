@@ -1,0 +1,92 @@
+{% extends "postajob/postajob_template.html" %}
+{% load i18n %}
+{% load postajob_tags %}
+
+{% block site-title %}
+<title>Purchased Job Request - My.jobs</title>
+<meta name="title" content="Purchased Job Request - My.jobs">
+{% endblock %}
+{% load i18n %}
+
+
+{% block page_title %}
+Purchased Job Request
+{% endblock page_title %}
+
+
+{% block postajob_content %}
+<div class="row">
+    <div class="span8">
+        <div class="span3 form-label pull-left purchasedjob-request-label"><b>Title</b></div>
+        <div class="profile-form-input purchasedjob-request-field">{{ object.title }}</div>
+        <div class="clear"></div>
+
+        <div class="span3 form-label pull-left purchasedjob-request-label"><b>Posting Company</b></div>
+        <div class="profile-form-input purchasedjob-request-field">{{ object.owner.name }}</div>
+        <div class="clear"></div>
+
+        <div class="span3 form-label pull-left purchasedjob-request-label"><b>Requisition ID</b></div>
+        <div class="profile-form-input purchasedjob-request-field">{{ object.reqid }}</div>
+        <div class="clear"></div>
+
+        <div class="span3 form-label pull-left purchasedjob-request-label"><b>Description</b></div>
+        <div class="profile-form-input purchasedjob-request-field">{{ object.description }}</div>
+        <div class="clear"></div>
+
+        <div class="span3 form-label pull-left purchasedjob-request-label"><b>City</b></div>
+        <div class="profile-form-input purchasedjob-request-field">{{ object.city }}</div>
+        <div class="clear"></div>
+
+        {% if object.state %}
+            <div class="span3 form-label pull-left purchasedjob-request-label"><b>State</b></div>
+            <div class="profile-form-input purchasedjob-request-field">{{ object.state }}</div>
+            <div class="clear"></div>
+        {% endif %}
+
+        <div class="span3 form-label pull-left purchasedjob-request-label"><b>Country</b></div>
+        <div class="profile-form-input purchasedjob-request-field">{{ object.country }}</div>
+        <div class="clear"></div>
+
+        {% if object.zipcode %}
+            <div class="span3 form-label pull-left purchasedjob-request-label"><b>Zip Code</b></div>
+            <div class="profile-form-input purchasedjob-request-field">{{ object.zipcode }}</div>
+            <div class="clear"></div>
+        {% endif %}
+
+        <div class="span3 form-label pull-left purchasedjob-request-label"><b>Expires On</b></div>
+        <div class="profile-form-input purchasedjob-request-field">{{ object.date_expired }}</div>
+        <div class="clear"></div>
+
+        {% if object.apply_link %}
+            <div class="span3 form-label pull-left purchasedjob-request-label"><b>Application Link</b></div>
+            <div class="profile-form-input purchasedjob-request-field">{{ object.apply_link }}</div>
+            <div class="clear"></div>
+        {% else %}
+            <div class="span3 form-label pull-left purchasedjob-request-label"><b>Application Instructions</b></div>
+            <div class="profile-form-input purchasedjob-request-field">{{ object.apply_info }}</div>
+            <div class="clear"></div>
+        {% endif %}
+
+        <div class="span3 form-label pull-left purchasedjob-request-label"><b>On Sites</b></div>
+        <div class="profile-form-input purchasedjob-request-field">{% get_job_links object max_sites=None %}</div>
+        <div class="clear"></div>
+
+        {% if not object.is_approved %}
+            <form action="{% url 'approve_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn primary pull-right" id="profile-save">{% trans 'Approve This Job' %}</button>
+            </form>
+        {% endif %}
+
+    </div>
+    <div class="span4">
+        {% include "postajob/includes/postajob_navigation.html" %}
+    </div>
+
+</div>
+{% endblock %}
+
+
+{% block extra-js %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}postajob.153-10.css{{ gz }}"></style>
+{% endblock %}

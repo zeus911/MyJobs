@@ -1,0 +1,37 @@
+{% extends "postajob/postajob_template.html" %}
+{% load i18n %}
+{% load postajob_tags %}
+
+{% block site-title %}
+<title>Offline Purchase Created - My.jobs</title>
+<meta name="title" content="Offline Purchase Created - My.jobs">
+{% endblock %}
+{% load i18n %}
+
+{% block page_title %}
+Successfully Created Offline Purchase
+{% endblock page_title %}
+
+{% block goback_link %}
+<a href="{% url 'offlinepurchase' %}">Back to Offline Purchases Overview</a>
+{% endblock %}
+
+{% block postajob_content %}
+<div class="row">
+    <div class="span8">
+        {% if not object.redeemed_on %}
+            The offline purchase has been completed. Products will be assigned to the purchaser upon redemption of the the following product code: <b>{{ object.redemption_uid }}</b>
+        {% else %}
+            The offline purchase has been completed. Products have been assigned to {% get_redeemer object %}.
+        {% endif %}
+    </div>
+    <div class="span4">
+        {% include "postajob/includes/postajob_navigation.html" %}
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extra-js %}
+
+{% endblock %}
