@@ -135,7 +135,8 @@ class ViewTests(TestCase):
             'country': 'USA',
             'state': 'Indiana',
             'zipcode': '46268',
-            'phone': '111-111-1111'
+            'phone': '111-111-1111',
+            'outgoing_email_domain': 'my.jobs'
         }
 
     def login_user(self):
