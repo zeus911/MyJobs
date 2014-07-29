@@ -147,7 +147,6 @@ class NewPartnerForm(forms.ModelForm):
     def save(self, commit=True):
         # self.instance is a Contact instance
         company_id = self.data['company_id']
-        print company_id
         partner_url = self.data.get('partnerurl', '')
 
         partner = Partner.objects.create(name=self.data['partnername'],
