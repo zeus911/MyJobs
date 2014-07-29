@@ -608,6 +608,7 @@ class CompanyProfile(models.Model):
 
     email_on_request = models.BooleanField(
         default=True, help_text=help_text['email_on_request'])
+    outgoing_email_domain = models.CharField(max_length=255, default='my.jobs')
 
     # Companies can associate themselves with Partner Microsites,
     # allowing them to show up on the list of available companies for
@@ -665,8 +666,11 @@ class Request(BaseModel):
                 'requester': requester.name,
             }
             message = render_to_string('postajob/request_email.html', data)
-            msg = EmailMessage(subject, message, settings.REQUEST_EMAIL,
-                               list(admin_emails))
+            if self.owner.companyprofile:
+                from_email = 'request@%s' % self.owner.companyprofile.outgoing_email_domain
+            else:
+                from_email = settings.REQUEST_EMAIL
+            msg = EmailMessage(subject, message, from_email, list(admin_emails))
             msg.content_subtype = 'html'
             msg.send()
 
@@ -778,7 +782,11 @@ class Invoice(BaseModel):
         if recipients:
             subject = '{company} Invoice'.format(company=owner.name)
             message = render_to_string('postajob/invoice_email.html', data)
-            msg = EmailMessage(subject, message, settings.INVOICE_EMAIL,
+            if self.owner.companyprofile:
+                from_email = 'invoice@%s' % self.owner.companyprofile.outgoing_email_domain
+            else:
+                from_email = settings.INVOICE_EMAIL
+            msg = EmailMessage(subject, message, from_email,
                                list(recipients))
             msg.content_subtype = 'html'
             msg.send()
