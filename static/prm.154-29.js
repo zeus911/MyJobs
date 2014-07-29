@@ -28,7 +28,7 @@ $(document).ready(function() {
 
                 if (data == ''){
                     if (status != 'prevent-redirect') {
-                        window.location = '/prm/view;
+                        window.location = '/prm/view';
                     }
                 } else {
                     // form was a json-encoded list of errors and error messages
