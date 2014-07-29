@@ -666,7 +666,7 @@ class Request(BaseModel):
                 'requester': requester.name,
             }
             message = render_to_string('postajob/request_email.html', data)
-            if self.owner.companyprofile:
+            if hasattr(self.owner, 'companyprofile'):
                 from_email = 'request@%s' % self.owner.companyprofile.outgoing_email_domain
             else:
                 from_email = settings.REQUEST_EMAIL
@@ -679,7 +679,8 @@ class Request(BaseModel):
         if not getattr(self, 'pk', None):
             is_new = True
         super(Request, self).save(**kwargs)
-        if is_new and self.owner.companyprofile.email_on_request:
+        if (is_new and hasattr(self.owner, 'companyprofile') and
+                self.owner.companyprofile.email_on_request):
             self.send_email()
 
 
@@ -782,7 +783,7 @@ class Invoice(BaseModel):
         if recipients:
             subject = '{company} Invoice'.format(company=owner.name)
             message = render_to_string('postajob/invoice_email.html', data)
-            if self.owner.companyprofile:
+            if hasattr(self.owner, 'companyprofile'):
                 from_email = 'invoice@%s' % self.owner.companyprofile.outgoing_email_domain
             else:
                 from_email = settings.INVOICE_EMAIL
