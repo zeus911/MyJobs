@@ -62,6 +62,8 @@ def get_company(request):
     Uses the myjobs_company cookie to determine what the current company is.
 
     """
+    if not request.user or request.user.is_anonymous():
+        return None
     company = request.COOKIES.get('myjobs_company')
     if company:
         company = get_object_or_404(Company, pk=company)
