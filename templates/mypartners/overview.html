@@ -123,20 +123,14 @@
             </div>
         </div>
         <div class="span4 mobile_hide">
-            {% if count or referrals %}
             <div class="info-box">
-                {% if count %}
                 <div id="donut-box">
                     <img src="{{ STATIC_URL }}images/ajax-loader.gif">
                 </div>
                 <div class="small-chart" id="donutchart" style="display:none"></div>
                 <div class="small-chart-box-holder" style="display:none"></div>
-                {% else %}
-                    No contact reports in the last 30 days.
-                {% endif %}
                 <a class="btn" href="{% url 'report_view' %}?partner={{ partner.id }}">View Reports</a>
             </div>
-            {% endif %}
 
             <div class="info-box" id="partner-details">
                 {% include "mypartners/partner_details_widget.html" %}
