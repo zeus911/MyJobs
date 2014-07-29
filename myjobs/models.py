@@ -200,13 +200,19 @@ class User(AbstractBaseUser, PermissionsMixin):
                                    help_text=_("Designates whether the user "
                                                "can log into this admin site."))
     is_active = models.BooleanField(_('active'), default=True,
-                                    help_text=_("Designates whether this user "
-                                                "should be treated as active. "
-                                                "Unselect this instead of "
-                                                "deleting accounts."))
+                                    help_text=_("Designates whether this "
+                                                "corresponds to a valid"
+                                                "email address. Deselect this"
+                                                "instead of deleting "
+                                                "accounts."))
     is_disabled = models.BooleanField(_('disabled'), default=False)
-    is_verified = models.BooleanField(_('User has verified this address'),
-                                      default=False)
+    is_verified = models.BooleanField(_('verified'),
+                                      default=False,
+                                      help_text=_("User has verified this "
+                                                  "address and can access "
+                                                  "most My.jobs features."
+                                                  "Deselect this instead of "
+                                                  "deleting accounts."))
 
     # Communication Settings
 
