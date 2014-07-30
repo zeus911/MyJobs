@@ -1050,6 +1050,10 @@ def process_email(request):
         except IndexError:
             contact_emails = []
 
+    # Prevent duplicate contact records for an email address because
+    # the address was in both To and CC.
+    contact_emails = list(set(contact_emails))
+
     for element in contact_emails:
         if element.lower() == 'prm@my.jobs':
             contact_emails.remove(element)
