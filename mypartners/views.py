@@ -120,10 +120,7 @@ def edit_item(request):
 
     if partner:
         if item_id:
-            try:
-                item = get_object_or_404(Contact, partner=partner, pk=item_id)
-            except:
-                raise Http404
+            item = get_object_or_404(Contact, partner=partner, pk=item_id)
             form = ContactForm(instance=item, auto_id=False)
         else:
             form = ContactForm()
