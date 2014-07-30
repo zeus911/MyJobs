@@ -14,9 +14,10 @@ class EmailLogAdmin(admin.ModelAdmin):
 
 class UserAdmin(admin.ModelAdmin):
     list_display = ['email', 'date_joined', 'last_response', 'is_active',
-                    'deactivate_type', 'source',]
+                    'is_verified', 'deactivate_type', 'source',]
     search_fields = ['email', 'source']
-    list_filter = ['is_active', 'is_disabled', 'is_superuser', 'is_staff']
+    list_filter = ['is_active', 'is_verified', 'is_disabled', 'is_superuser',
+                   'is_staff', 'deactivate_type']
 
     form = UserAdminForm
     readonly_fields = ('password', 'user_guid', 'last_response',
@@ -38,7 +39,8 @@ class UserAdmin(admin.ModelAdmin):
             'fields': [
                 ('user_permissions', 'groups', ),
                 ('is_active', 'deactivate_type'),
-                'is_superuser', 'is_staff', 'is_disabled', 'source', ]}),
+                'is_verified', 'is_superuser', 'is_staff', 'is_disabled',
+                'source', ]}),
     ]
 
 
