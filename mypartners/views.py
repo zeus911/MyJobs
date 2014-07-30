@@ -114,41 +114,25 @@ def edit_item(request):
 
     """
     company = get_company(request)
+    partner = int(request.REQUEST.get("partner") or 0)
+    item_id = int(request.REQUEST.get('id') or 0)
+    content_id = int(request.REQUEST.get('ct') or 0)
 
-    # If the user is trying to create a new Partner they won't have a
-    # partner_id. A Contact however does, it also comes from a different URL.
-    if request.path != reverse('create_partner'):
-        try:
-            partner_id = int(request.REQUEST.get('partner'))
-        except TypeError:
-            raise Http404
-        partner = get_object_or_404(company.partner_set.all(), id=partner_id)
-    else:
-        partner = None
-
-    try:
-        content_id = int(request.REQUEST.get('ct'))
-    except TypeError:
-        raise Http404
-    item_id = request.REQUEST.get('id') or None
-
-    if content_id == ContentType.objects.get_for_model(Partner).id:
-        if not item_id:
-            form = NewPartnerForm()
-        else:
-            item = get_object_or_404(Partner, pk=item_id)
-            form = PartnerForm(instance=item)
-    elif content_id == ContentType.objects.get_for_model(Contact).id:
-        if not item_id:
-            form = ContactForm()
-        else:
+    if partner:
+        if item_id:
             try:
-                item = Contact.objects.get(partner=partner, pk=item_id)
+                item = get_object_or_404(Contact, partner=partner, pk=item_id)
             except:
                 raise Http404
             form = ContactForm(instance=item, auto_id=False)
+        else:
+            form = ContactForm()
     else:
-        raise Http404
+        if item_id:
+            item = get_object_or_404(Partner, pk=item_id)
+            form = PartnerForm(instance=item)
+        else:
+            form = NewPartnerForm()
 
     ctx = {
         'form': form,
@@ -183,7 +167,7 @@ def save_item(request):
 
     """
     company = get_company(request)
-    content_id = int(request.REQUEST.get('ct'))
+    content_id = int(request.REQUEST.get('ct') or 0)
 
     if content_id == ContentType.objects.get_for_model(Contact).id:
         item_id = request.REQUEST.get('id') or None
