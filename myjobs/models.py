@@ -200,13 +200,19 @@ class User(AbstractBaseUser, PermissionsMixin):
                                    help_text=_("Designates whether the user "
                                                "can log into this admin site."))
     is_active = models.BooleanField(_('active'), default=True,
-                                    help_text=_("Designates whether this user "
-                                                "should be treated as active. "
-                                                "Unselect this instead of "
-                                                "deleting accounts."))
+                                    help_text=_("Designates whether this "
+                                                "corresponds to a valid"
+                                                "email address. Deselect this"
+                                                "instead of deleting "
+                                                "accounts."))
     is_disabled = models.BooleanField(_('disabled'), default=False)
-    is_verified = models.BooleanField(_('User has verified this address'),
-                                      default=False)
+    is_verified = models.BooleanField(_('verified'),
+                                      default=False,
+                                      help_text=_("User has verified this "
+                                                  "address and can access "
+                                                  "most My.jobs features."
+                                                  "Deselect this instead of "
+                                                  "deleting accounts."))
 
     # Communication Settings
 
@@ -214,14 +220,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     opt_in_myjobs = models.BooleanField(_('Opt-in to non-account emails and '
                                           'Saved Search'),
                                         default=True,
-                                        help_text=_('Checking this enables '
-                                                    'my.jobs to send email '
+                                        help_text=_('Checking this allows '
+                                                    'My.jobs to send email '
                                                     'updates to you.'))
 
     opt_in_employers = models.BooleanField(_('Email is visible to Employers'),
                                            default=True,
-                                           help_text=_("Employers can "
-                                                       "message me."))
+                                           help_text=_('Checking this allows '
+                                                       'employers to send '
+                                                       'emails to you.'))
     
     last_response = models.DateField(default=datetime.datetime.now, blank=True)
 
@@ -318,6 +325,23 @@ class User(AbstractBaseUser, PermissionsMixin):
                                      % gravatar_url)
 
         return gravatar_url
+
+    def get_companies(self):
+        """
+        Returns a QuerySet of all the Companies a User has access to.
+
+        """
+        from mydashboard.models import Company
+        return Company.objects.filter(admins=self).distinct()
+
+    def get_sites(self):
+        """
+        Returns a QuerySet of all the SeoSites a User has access to.
+
+        """
+        from mydashboard.models import SeoSite
+        kwargs = {'business_units__company__admins': self}
+        return SeoSite.objects.filter(**kwargs).distinct()
 
     def disable(self):
         self.is_disabled = True

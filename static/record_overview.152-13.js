@@ -46,7 +46,7 @@ $(function() {
 function update_records(btn_val) {
     var contact = $('#record_contact').val();
     var contact_type = $('#record_contact_type').val();
-    var data = "contact=" + contact + "&record_type=" + contact_type + "&company=" + company_id + "&partner=" + partner_id;
+    var data = "contact=" + contact + "&record_type=" + contact_type + "&partner=" + partner_id;
     if(admin_id != 'None') {
         data += '&admin=' + admin_id;
     }
@@ -84,7 +84,7 @@ function update_records(btn_val) {
 
 function update_url(contact, contact_type, date_start, date_end) {
     base_url = $(".records-csv-export-link").attr("href").split("?")[0];
-    var query_string = '?company=' + company_id + '&partner=' + partner_id + '&';
+    var query_string = '?partner=' + partner_id + '&';
     if(contact != 'all') {
         query_string += 'contact=' + contact + '&';
     }

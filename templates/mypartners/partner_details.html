@@ -8,7 +8,7 @@
 {% load i18n %}
 
 {% block content %}
-    <h1><a class="mobile_hide" href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> <small><a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small></h1>
+    <h1><a class="mobile_hide" href="{% url 'prm' %}">{{ company.name }}</a> <small><a href="{% url 'partner_overview' %}?partner={{ partner.id }}">{{ partner.name }}</a></small></h1>
     <div class="row">
         <div class="span12 prm-header">
             <span>Partner Details</span>
@@ -47,7 +47,7 @@
             <div class="modal-footer">
                 <div class="actions">
                     <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
-                    <a class="btn" href="{% url 'delete_prm_item' %}?company={{ company.id }}&partner={{ partner.id }}&ct={{ partner_ct }}">{% trans 'Delete' %}</a>
+                    <a class="btn" href="{% url 'delete_prm_item' %}?partner={{ partner.id }}&ct={{ partner_ct }}">{% trans 'Delete' %}</a>
                 </div>
             </div>
         </div>{# /delete-confirm #}
@@ -59,7 +59,7 @@
                     it any time.
                 </div>
                 <div class="tip-footer">
-                    <a class="btn-link" href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Overview</a>
+                    <a class="btn-link" href="{% url 'partner_overview' %}?partner={{ partner.id }}">Back to Overview</a>
                 </div>
             </div>
         </div>
@@ -76,13 +76,13 @@
                         <tr>
                             <td>{{ contact.name }}</td>
                             <td>{% if contact.email %}{{ contact.email }}{% endif %}</td>
-                            <td><a class="btn-link pull-right" href="{% url 'edit_contact' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ contact.id }}&ct={{ contact_ct }}">Edit</a></td>
+                            <td><a class="btn-link pull-right" href="{% url 'edit_contact' %}?partner={{ partner.id }}&id={{ contact.id }}&ct={{ contact_ct }}">Edit</a></td>
                         </tr>
                     {% endfor %}
                     </tbody>
                 </table>
                 {% endif %}
-                <a class="pull-right btn mobile-btn" href="{% url 'edit_contact' %}?company={{ company.id }}&partner={{ partner.id }}&ct={{ contact_ct }}">New Contact</a>
+                <a class="pull-right btn mobile-btn" href="{% url 'edit_contact' %}?partner={{ partner.id }}&ct={{ contact_ct }}">New Contact</a>
                 <div class="clear"></div>
             </div>
         </div>
@@ -90,5 +90,5 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}prm.152-08.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}prm.154-29.js{{ gz }}"></script>
 {% endblock %}

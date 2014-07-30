@@ -147,7 +147,6 @@ class NewPartnerForm(forms.ModelForm):
     def save(self, commit=True):
         # self.instance is a Contact instance
         company_id = self.data['company_id']
-
         partner_url = self.data.get('partnerurl', '')
 
         partner = Partner.objects.create(name=self.data['partnername'],
@@ -180,7 +179,8 @@ class NewPartnerForm(forms.ModelForm):
 def remove_partner_data(dictionary, keys):
     new_dictionary = dict(dictionary)
     for key in keys:
-        del new_dictionary[key]
+        if key in dictionary.keys():
+            del new_dictionary[key]
     return new_dictionary
 
 
@@ -298,9 +298,9 @@ class ContactRecordForm(forms.ModelForm):
         if instance:
             attachments = PRMAttachment.objects.filter(contact_record=instance)
             if attachments:
-                choices = [(a.pk, get_attachment_link(
-                    partner.owner.id, partner.id, a.id,
-                    a.attachment.name.split("/")[-1])) for a in attachments]
+                choices = [(a.pk, get_attachment_link(partner.id, a.id,
+                            a.attachment.name.split("/")[-1]))
+                           for a in attachments]
                 self.fields["attach_delete"] = forms.MultipleChoiceField(
                     required=False, choices=choices, label="Delete Files",
                     widget=forms.CheckboxSelectMultiple)

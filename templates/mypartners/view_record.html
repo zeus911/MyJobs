@@ -8,17 +8,17 @@
 {% endblock %}
 
 {% block content %}
-    <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
+    <h1><a href="{% url 'prm' %}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
     <div class="row">
         <div class="span12 prm-header">
             <span>{% if record.subject %}{{ record.subject }} - {% endif %}{{ record.date_time|date:'M d, Y' }} </span>
-            <a class="mobile_hide" href="{% url 'record_view' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Communication Records</a>
+            <a class="mobile_hide" href="{% url 'record_view' %}?partner={{ partner.id }}">Back to Communication Records</a>
             <span class="pull-right">
                 {% if prev_id %}
-                    <a href="{% url 'record_view' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ prev_id }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}">Previous</a>&nbsp;&nbsp;
+                    <a href="{% url 'record_view' %}?partner={{ partner.id }}&id={{ prev_id }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}">Previous</a>&nbsp;&nbsp;
                 {% endif %}
                 {% if next_id %}
-                    <a href="{% url 'record_view' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ next_id }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}">Next</a>&nbsp;&nbsp;
+                    <a href="{% url 'record_view' %}?partner={{ partner.id }}&id={{ next_id }}{% if contact_name %}&name={{ contact_name }}{% endif %}{%if contact_type %}&type={{ contact_type }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}">Next</a>&nbsp;&nbsp;
                 {% endif %}
             </span>
         </div>
@@ -70,7 +70,7 @@
             <h5>Attachments</h5>
                 <div class="tip-content">
                 {% for attachment in attachments %}
-                    {% attachment_link attachment partner company %}<br/>
+                    {% attachment_link attachment partner %}<br/>
                 {% endfor %}
                 </div>
             </div>

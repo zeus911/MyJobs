@@ -1,18 +1,19 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load common_tags %}
+{% load postajob_tags %}
 {% gz as gz %}
 
 {% block site-title %}
-    <title>Post-a-Job - My.jobs</title>
-    <meta name="title" content="Post-a-Job - My.jobs">
+    <title>{% get_form_action %} {{ display_name }} - My.jobs</title>
+    <meta name="title" content="{{ display_name }} - My.jobs">
 {% endblock site-title %}
 
 
 {% block content %}
     <h1>
-        {% if job.pk %}{% trans 'Edit' %}{% else %}{% trans 'Add' %}{% endif %}
-        <small>{% trans 'Job' %}</small>
+        {% get_form_action %}
+        <small>{{ display_name }}</small>
     </h1>
     <form action="?" method="post">
         {% include "includes/form-error-highlight.html" %}
@@ -20,7 +21,7 @@
         <div class="clear"></div>
         <div class="actions">
             <div class="form-label pull-left">&nbsp;</div>
-            {% if job.pk %}
+            {% if item.pk and not prevent_delete %}
                 <button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>
                 <div id="delete-confirm" class="modal hide fade row">
                     <div class="modal-header">{% trans 'Really Delete?' %}</div>
@@ -28,12 +29,12 @@
                     <div class="modal-footer">
                         <div class="actions">
                             <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
-                            <a class="btn pull-right" href="{% url 'job_delete' job.pk %}">{% trans 'Delete' %}</a>
+                            <a class="btn pull-right" href="{{ delete_url }}">{% trans 'Delete' %}</a>
                         </div>{# /actions #}
                     </div>{# /modal=footer #}
                 </div>{# /delete-confirm #}
             {% endif %}
-            <a href="{% url 'jobs_overview' %}" class="btn">{% trans 'Cancel' %}</a>
+            <a href="{{ success_url }}" class="btn">{% trans 'Cancel' %}</a>
             <button type="submit" class="btn primary" id="profile-save">{% trans 'Save' %}</button>
         </div>{# /actions #}
     </form>

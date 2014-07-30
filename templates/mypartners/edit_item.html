@@ -8,7 +8,7 @@
 {% load i18n %}
 
 {% block content %}
-    <h1><a class="mobile_hide" href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
+    <h1><a class="mobile_hide" href="{% url 'prm' %}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_details' %}?partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
     <div class="row">
         <div class="span12 prm-header">
             {# partner checks due to Add partner page not having a partner to refer to. #}
@@ -26,7 +26,7 @@
             <div class="form-label pull-left">&nbsp;</div>
             <div class="actions pull-right">
                 {% if contact %}<button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
-                <a class="btn" href="{% if partner %}{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}{% else %}{% url 'prm' %}?company={{ company.id }}{% endif %}">{% trans 'Cancel' %}</a>
+                <a class="btn" href="{% if partner %}{% url 'partner_details' %}?partner={{ partner.id }}{% else %}{% url 'prm' %}{% endif %}">{% trans 'Cancel' %}</a>
                 <button type="submit" class="btn primary" id="{% if not partner %}init-partner-save{% else %}item-save{% endif %}">{% trans 'Save' %}</button>
             </div>
 
@@ -49,7 +49,7 @@
             <div class="modal-footer">
                 <div class="actions">
                     <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
-                    <a class="btn" href="{% url 'delete_prm_item' %}?company={{ company.id }}&partner={{ partner.id }}&ct={{ content_id }}&id={{ contact }}">{% trans 'Delete' %}</a>
+                    <a class="btn" href="{% url 'delete_prm_item' %}?partner={{ partner.id }}&ct={{ content_id }}&id={{ contact }}">{% trans 'Delete' %}</a>
                 </div>
             </div>
         </div>{# /delete-confirm #}
@@ -73,9 +73,9 @@
                 </div>
                 <div class="tip-footer">
                     {% if not partner %}
-                    <a class="btn-link" href="{% url 'prm' %}?company={{ company.id }}">Back to PRM</a>
+                    <a class="btn-link" href="{% url 'prm' %}">Back to PRM</a>
                     {% else %}
-                    <a class="btn-link" href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Partner Page</a>
+                    <a class="btn-link" href="{% url 'partner_details' %}?partner={{ partner.id }}">Back to Partner Page</a>
                     {% endif %}
                 </div>
             </div>
@@ -84,5 +84,5 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}prm.152-08.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}prm.154-29.js{{ gz }}"></script>
 {% endblock %}

@@ -28,7 +28,7 @@ $(document).ready(function() {
 
                 if (data == ''){
                     if (status != 'prevent-redirect') {
-                        window.location = '/prm/view?company=' + company_id;
+                        window.location = '/prm/view';
                     }
                 } else {
                     // form was a json-encoded list of errors and error messages
@@ -90,7 +90,7 @@ $(document).ready(function() {
 
                 if (data == ''){
                     if (status != 'prevent-redirect') {
-                        window.location = '/prm/view/details?company=' + company_id + '&partner=' + partner_id;
+                        window.location = '/prm/view/details?partner=' + partner_id;
                     }
                 } else {
                     // form was a json-encoded list of errors and error messages

@@ -12,7 +12,7 @@
 {% load label_tags %}
 
 {% block content %}
-    <h1><a href="{% url 'prm' %}?company={{ company.id }}">{{ company.name }}</a> <small>{{ partner.name }}</small></h1>
+    <h1><a href="{% url 'prm' %}">{{ company.name }}</a> <small>{{ partner.name }}</small></h1>
     <div class="row">
         <div class="span12 prm-header">
             <span>Overview</span>
@@ -20,10 +20,10 @@
     </div>
     <div class="row desktop_hide" id="prm-mobile-row-buttons">
         <div class="span12">
-            <a class="btn" href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}">Communication Records</a>
-            <a class="btn" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">Saved Searches</a>
-            <a class="btn" href="{% url 'partner_details' %}?company={{ company.id }}&partner={{ partner.id }}">Edit Partner Details</a>
-            <a class="btn" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">Reports</a>
+            <a class="btn" href="{% url 'partner_records' %}?partner={{ partner.id }}">Communication Records</a>
+            <a class="btn" href="{% url 'partner_searches' %}?partner={{ partner.id }}">Saved Searches</a>
+            <a class="btn" href="{% url 'partner_details' %}?partner={{ partner.id }}">Edit Partner Details</a>
+            <a class="btn" href="{% url 'report_view' %}?partner={{ partner.id }}">Reports</a>
         </div>
     </div>
     <div class="row">
@@ -81,8 +81,8 @@
                 </table>
                 <div class="formBox-footer">
                     <span class="pull-left">
-                        {% if num_other_records > 0 %}{{ num_other_records }} more record{{ num_other_records|pluralize }} from the past 30 days - <a href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}&date=30">View these records</a><br/>{% endif %}
-                        {% if num_older_records > 0 %}{{ num_older_records }} record{{ num_older_records|pluralize }} older than 30 days - <a href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}&date=0">View all records</a>{% endif %}
+                        {% if num_other_records > 0 %}{{ num_other_records }} more record{{ num_other_records|pluralize }} from the past 30 days - <a href="{% url 'partner_records' %}?partner={{ partner.id }}&date=30">View these records</a><br/>{% endif %}
+                        {% if num_older_records > 0 %}{{ num_older_records }} record{{ num_older_records|pluralize }} older than 30 days - <a href="{% url 'partner_records' %}?partner={{ partner.id }}&date=0">View all records</a>{% endif %}
                     </span>
                     <a class="btn pull-right" href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}">Manage Records</a>
                     <div class="clear"></div>
@@ -117,7 +117,7 @@
                     {% endif %}
                 </table>
                 <div class="formBox-footer">
-                    <a class="btn pull-right" href="{% url 'partner_searches' %}?company={{ company.id }}&partner={{ partner.id }}">Manage Searches</a>
+                    <a class="btn pull-right" href="{% url 'partner_searches' %}?partner={{ partner.id }}">Manage Searches</a>
                     <div class="clear"></div>
                 </div>
             </div>
@@ -129,7 +129,7 @@
                 </div>
                 <div class="small-chart" id="donutchart" style="display:none"></div>
                 <div class="small-chart-box-holder" style="display:none"></div>
-                <a class="btn" href="{% url 'report_view' %}?company={{ company.id }}&partner={{ partner.id }}">View Reports</a>
+                <a class="btn" href="{% url 'report_view' %}?partner={{ partner.id }}">View Reports</a>
             </div>
 
             <div class="info-box" id="partner-details">
