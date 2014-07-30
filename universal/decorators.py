@@ -47,6 +47,7 @@ def activate_user(view_func):
     main use case for this is password resets, where the user must be active
     to successfully submit the request.
     """
+    @wraps(view_func)
     def wrap(request, *args, **kwargs):
         if request.method == 'POST':
             email = request.POST.get('email', None)
@@ -57,4 +58,4 @@ def activate_user(view_func):
                     user.deactivate_type = 'none'
                     user.save()
         return view_func(request, *args, **kwargs)
-    return wraps(view_func)(wrap)
+    return wrap
