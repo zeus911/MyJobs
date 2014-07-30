@@ -132,6 +132,7 @@ def merge_accounts(request, activation_key):
     return render_to_response('registration/merge_request.html', ctx,
                               context_instance=RequestContext(request))
 
+
 def logout(request):
     log_out(request)
     response = redirect('home')
