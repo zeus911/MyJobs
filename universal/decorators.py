@@ -41,21 +41,20 @@ def company_has_access(perm_field):
     return decorator
 
 
-def activate_user():
+def activate_user(view_func):
     """
     Activates the user for a given request if it is not already active. The
     main use case for this is password resets, where the user must be active
     to successfully submit the request.
     """
-    def decorator(view_func):
-        def wrap(request, *args, **kwargs):
-            if request.method == 'POST':
-                email = request.POST.get('email', None)
-                if email is not None:
-                    user = User.objects.get_email_owner(email)
-                    if user is not None and not user.is_active:
-                        user.is_active = True
-                        user.save()
-            return view_func(request, *args, **kwargs)
-        return wraps(view_func)(wrap)
-    return decorator
+    def wrap(request, *args, **kwargs):
+        if request.method == 'POST':
+            email = request.POST.get('email', None)
+            if email is not None:
+                user = User.objects.get_email_owner(email)
+                if user is not None and not user.is_active:
+                    user.is_active = True
+                    user.deactivate_type = 'none'
+                    user.save()
+        return view_func(request, *args, **kwargs)
+    return wraps(view_func)(wrap)

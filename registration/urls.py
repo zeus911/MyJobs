@@ -10,7 +10,7 @@ from registration.views import (RegistrationComplete, activate, merge_accounts,
 urlpatterns = patterns('',
     # Authorization URLS
 
-    url(r'^password/reset/$', activate_user()(auth_views.password_reset),
+    url(r'^password/reset/$', activate_user(auth_views.password_reset),
         {'password_reset_form': CustomPasswordResetForm},
         name='password_reset'),
     url(r'^password/reset/confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
