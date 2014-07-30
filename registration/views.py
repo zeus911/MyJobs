@@ -140,19 +140,3 @@ def logout(request):
     if 'myguid' in request.COOKIES:
         response.delete_cookie(key='myguid', domain='.my.jobs')
     return response
-
-
-def password_reset_with_activation(request, *args, **kwargs):
-    """
-    Wrapper for django.contrib.auth.views.password_reset
-
-    Activates the user's account if it is not active.
-    """
-    if request.method == 'POST':
-        email = request.POST.get('email', None)
-        if email is not None:
-            user = User.objects.get_email_owner(email)
-            if user is not None and not user.is_active:
-                user.is_active = True
-                user.save()
-    return password_reset(request, *args, **kwargs)
