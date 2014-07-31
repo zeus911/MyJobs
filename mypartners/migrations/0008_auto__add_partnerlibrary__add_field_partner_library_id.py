@@ -8,12 +8,10 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting model 'OFCCPContact'
-        db.delete_table(u'mypartners_ofccpcontact')
-
         # Adding model 'PartnerLibrary'
         db.create_table(u'mypartners_partnerlibrary', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('created_by', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
             ('organization', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('website', self.gf('django.db.models.fields.URLField')(max_length=200, blank=True)),
             ('region', self.gf('django.db.models.fields.CharField')(max_length=30, blank=True)),
@@ -37,16 +35,6 @@ class Migration(SchemaMigration):
             ('is_female', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('is_disabled', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('is_veteran', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_exec_om', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_first_om', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_professional', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_technician', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_sales', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_admin_support', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_craft', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_operative', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_labor', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_service', self.gf('django.db.models.fields.BooleanField')(default=False)),
         ))
         db.send_create_signal(u'mypartners', ['PartnerLibrary'])
 
@@ -57,45 +45,6 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        # Adding model 'OFCCPContact'
-        db.create_table(u'mypartners_ofccpcontact', (
-            ('website', self.gf('django.db.models.fields.URLField')(max_length=200, blank=True)),
-            ('alt_phone', self.gf('django.db.models.fields.CharField')(max_length=30, blank=True)),
-            ('fax', self.gf('django.db.models.fields.CharField')(max_length=30, blank=True)),
-            ('is_craft', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('title', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('is_minority', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_professional', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('street2', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('is_disabled', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('phone', self.gf('django.db.models.fields.CharField')(max_length=30, blank=True)),
-            ('last_name', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('is_exec_om', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_service', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_first_om', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_female', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('is_operative', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('city', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('first_name', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('middle_name', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('area', self.gf('django.db.models.fields.CharField')(max_length=30, blank=True)),
-            ('phone_ext', self.gf('django.db.models.fields.CharField')(max_length=10, blank=True)),
-            ('region', self.gf('django.db.models.fields.CharField')(max_length=30, blank=True)),
-            ('is_labor', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('st', self.gf('django.db.models.fields.CharField')(max_length=5, blank=True)),
-            ('state', self.gf('django.db.models.fields.CharField')(max_length=30, blank=True)),
-            ('is_technician', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_sales', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_veteran', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('street1', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('organization', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('is_admin_support', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('email', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
-            ('zip_code', self.gf('django.db.models.fields.CharField')(max_length=12, blank=True)),
-        ))
-        db.send_create_signal(u'mypartners', ['OFCCPContact'])
-
         # Deleting model 'PartnerLibrary'
         db.delete_table(u'mypartners_partnerlibrary')
 
@@ -261,23 +210,14 @@ class Migration(SchemaMigration):
             'alt_phone': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'area': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'created_by': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
             'email': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'fax': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'first_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'is_admin_support': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_craft': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_disabled': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_exec_om': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_female': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_first_om': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_labor': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_minority': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_operative': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_professional': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_sales': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_service': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_technician': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_veteran': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'last_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'middle_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
