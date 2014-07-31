@@ -158,20 +158,27 @@ class EditItemTests(MyPartnersTestCase):
         # ids start at 1 and shouldn't be an arbitrary string or unicode
         self.bad_ids = ["0", "-1", "bacon", "¥"]
         self.content_ids = dict(partner=49, contact=49)
+        # requests seem to be immutable (eg., changing partner after the fact,
+        # so I'm opting for lambdas here.
+        self.requests = dict(
+            partner=lambda **kwargs: self.request_factory.get('/prm/view/edit',
+                **kwargs),
+            contact=lambda **kwargs: self.request_factory.get(
+                '/prm/view/details/edit', dict({'partner': 1}, **kwargs)))
 
     def test_add_contat_with_bad_partner_id(self):
         """ Invalid partner should always result in a 404. """
 
         for partner in self.bad_ids:
-            # 
-            request = self.request_factory.get(
-                '/prm/view/details/edit', {
-                    'partner': partner,
-                    'id': 1,
-                }
-            )
+            request = self.requests['contact'](partner=partner, id=1)
             request.user = self.staff_user
-            self.assertRaises(Http404, views.edit_item, request)
+
+            try:
+                self.assertRaises(Http404, views.edit_item, request)
+            except AssertionError:
+                raise AssertionError("A valid partner id should be required "
+                                     "to display the Add Contact form, but "
+                                     "%s seems to work fine." % partner)
 
     def test_edit_contact_with_bad_item(self):
         """ Invalid item should result in a 404 if not 0, otherwise, should
@@ -179,32 +186,32 @@ class EditItemTests(MyPartnersTestCase):
         """
         for item in self.bad_ids[1:]:
             # 
-            request = self.request_factory.get(
-                '/prm/view/details/edit', {
-                    'partner': 1,
-                    'id': item,
-                }
-            )
+            request = self.requests['contact'](id=item)
             request.user = self.staff_user
-            self.assertRaises(Http404, views.edit_item, request)
+
+            try:
+                self.assertRaises(Http404, views.edit_item, request)
+            except AssertionError:
+                raise AssertionError("Navigating to /prm/view/details/edit "
+                                     "should raise an Http404 error when "
+                                     "using an id of %s, but it doesn't!" %
+                                     item)
 
     def test_content_id_ignored(self):
         """ The content ID is irrelevant, and should be ignored. """
 
         for ct in self.content_ids.values():
             # This URL is reached when editing a contact
-            contact_request = self.request_factory.get(
-                    '/prm/view/details/edit', { 'ct': ct, 'partner': 1 })
+            contact_request = self.requests['contact'](ct=ct)
             contact_request.user = self.staff_user
             # This URL is reached when editing a partner
-            partner_request = self.request_factory.get(
-                    '/prm/view/edit', { 'ct': ct })
+            partner_request = self.requests['partner'](ct=ct)
             partner_request.user = self.staff_user
 
             try:
                 self.assertEqual(
                     views.edit_item(partner_request).status_code, 200)
-            except Http404:
+            except AssertionError:
                 self.fail("test_content_id_ignored raised Http404 "
                           "unexpectedly while trying to test for partners!")
 
@@ -216,42 +223,32 @@ class EditItemTests(MyPartnersTestCase):
                           "unexpectedly while trying to test for contacts!")
 
     def test_add_partner_form_loaded(self):
-            request = self.request_factory.get('/prm/view/edit')
-            request.user = self.staff_user
+        request = self.requests['partner']()
+        request.user = self.staff_user
+        response = views.edit_item(request)
+        soup = BeautifulSoup(response.content)
 
-            response = views.edit_item(request)
-            self.assertEqual(response.status_code, 200)
-
-            soup = BeautifulSoup(response.content)
-
-            self.assertIn("Add Partner", soup.title.text)
+        self.assertIn("Add Partner", soup.title.text)
 
     def test_add_contact_form_loaded(self):
         # 0 is treated as an empty parameter
         for id_ in ["0", ""]:
-            request = self.request_factory.get(
-                 '/prm/view/details/edit', { 'partner': 1, 'id': id_ })
+            request = self.requests['contact'](id=id_)
             request.user = self.staff_user
 
             response = views.edit_item(request)
-            self.assertEqual(response.status_code, 200)
-
             soup = BeautifulSoup(response.content)
 
             self.assertIn("Add Contact", soup.title.text)
 
     def test_edit_contact_form_loaded(self):
-            request = self.request_factory.get(
-                 '/prm/view/details/edit', { 'partner': 1, 'id': 1 })
-            request.user = self.staff_user
+        request = self.requests['contact'](id=1)
+        request.user = self.staff_user
 
-            response = views.edit_item(request)
-            self.assertEqual(response.status_code, 200)
+        response = views.edit_item(request)
+        soup = BeautifulSoup(response.content)
 
-            soup = BeautifulSoup(response.content)
-
-            self.assertIn("Edit Contact", soup.title.text)
-
+        self.assertIn("Edit Contact", soup.title.text)
         
 
 class PartnerOverviewTests(MyPartnersTestCase):
