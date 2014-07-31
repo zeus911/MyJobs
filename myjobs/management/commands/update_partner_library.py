@@ -4,20 +4,20 @@
 #   * command line options
 from django.core.management.base import BaseCommand, CommandError
 
-from mypartners.models import OFCCPContact
-from mypartners import ofccp
+from mypartners.models import PartnerLibrary
+from mypartners.helpers import get_library_partners
 
 class Command(BaseCommand):
-    help = "Update OFCCP Contacts"
+    help = "Update PartnerLibrary Model"
 
     def handle(self, *args, **kwargs):
-        contacts = ofccp.get_contacts()
+        contacts = get_library_partners(from_html=True)
 
         for contact in contacts:
-            if not OFCCPContact.objects.filter(email=contact.email_id,
-                                               st=contact.st,
-                                               city=contact.city):
-                OFCCPContact(
+            if not PartnerLibrary.objects.filter(email=contact.email_id,
+                                                 st=contact.st,
+                                                 city=contact.city):
+                PartnerLibrary(
                     organization=contact.organization_name,
                     website=contact.website,
                     region=contact.region,
@@ -40,21 +40,11 @@ class Command(BaseCommand):
                     is_minority=contact.minority,
                     is_female=contact.female,
                     is_disabled=contact.disabled,
-                    is_veteran=contact.veteran,
-                    is_exec_om=contact.exec_om,
-                    is_first_om=contact.first_om,
-                    is_professional=contact.professional,
-                    is_technician=contact.technician,
-                    is_sales=contact.sales,
-                    is_admin_support=contact.admin_support,
-                    is_craft=contact.craft,
-                    is_operative=contact.operative,
-                    is_labor=contact.labor,
-                    is_service=contact.service).save()
+                    is_veteran=contact.veteran).save()
 
                 #TODO: see if there is a way to do this without querying the
                 #      database
-                if OFCCPContact.objects.filter(email=contact.email_id):
+                if PartnerLibrary.objects.filter(email=contact.email_id):
                     print "Successfully added %s %s (%s) from %s, %s." % (
                         contact.first_name, contact.last_name,
                         contact.email_id, contact.city, contact.st)

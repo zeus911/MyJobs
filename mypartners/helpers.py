@@ -1,6 +1,8 @@
+from collections import namedtuple
 from datetime import datetime, time, timedelta
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
+import os
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -14,10 +16,14 @@ from django.utils.safestring import mark_safe
 from django.utils.text import get_text_list, force_unicode, force_text
 from django.utils.timezone import get_current_timezone_name, now
 from django.utils.translation import ugettext
+from lxml import html
+from lxml.cssselect import CSSSelector
 import pytz
+import requests
 
 from universal.helpers import get_domain, get_company
-from mypartners.models import (ContactLogEntry, CONTACT_TYPE_CHOICES, CHANGE)
+from mypartners.models import (ContactLogEntry, CONTACT_TYPE_CHOICES, CHANGE,
+                               PartnerLibrary)
 from registration.models import ActivationProfile
 
 
@@ -165,6 +171,10 @@ def contact_record_val_to_str(value):
     return value
 
 
+def filter_partner_library(request): pass
+
+def filter_partners(request): pass
+
 def get_records_from_request(request):
     """
     Filters a list of records on partner, date_time, contact_name, and
@@ -286,3 +296,83 @@ def send_custom_activation_email(search):
                        [search.user.email])
     msg.content_subtype = 'html'
     msg.send()
+
+
+def get_library_as_html():
+    """ Get partner library data in HTML format.
+
+        The POST request is necessary in order to get the cookie required by
+        the GET request in order to obtain useful results.
+    """
+    cookie_url = 'http://www.dol-esa.gov/errd/directory.jsp'
+    excel_url = 'http://www.dol-esa.gov/errd/directoryexcel.jsp'
+    response = requests.post(cookie_url, data=dict(
+        reg='ALL', # Region
+        stat='None', # State
+        name='',
+        city='',
+        sht='None', # Contractor Type
+        lst='None', # Resource Organization
+        sortorder='asc'))
+
+    return requests.get(excel_url, cookies=response.cookies).text
+
+
+def get_library_partners(text=None, from_html=False):
+    """ Generator that produces partner library info from an HTML file.
+
+        .. note:: If no HTML file is given, a local file named
+        "ofccp_contacts.html" located in the same directory as this module is
+        assumed.
+
+        This generator yields a CompliancePartner namedtuple whose fields
+        coincide with the table headers present in `html_file`. In the case of
+        `state` there exists two fields:
+
+        state
+            The long version of the state. Presumably indicative of the state
+            in which the organization operates in.
+
+        st
+            This is the two-letter state abbreviation. Unlike `state`, this
+            field indicates the state in which the organization's home office
+            resides.
+    """
+    if from_html:
+        text = get_library_as_html()
+    else:
+        text = text or open(os.path.join(os.path.dirname(__file__),
+                                     "partner_library.html")).read()
+    tree = html.fromstring(text)
+
+    # convert column headers to valid Python identifiers, and rename duplicates
+    cols = []
+    for header in CSSSelector("p ~ table th")(tree):
+        col = header.text.lower()
+        if col in cols:
+            cols.append(col[:2])
+        else:
+            cols.append(col.replace(" ", "_"))
+
+    CompliancePartner = namedtuple("CompliancePartner", cols)
+    for row in CSSSelector("p ~ table tr")(tree):
+        fields = dict((cols[i], td.text) for i, td in 
+                      enumerate(CSSSelector("td")(row)))
+
+        for column, value in fields.items():
+            if value in [u"\xa0", None]:
+                fields[column] = ""
+            elif value == "Y":
+                fields[column] = True
+            elif value == "N":
+                fields[column] = False
+
+            if column in ["minority", "female", "disabled", "veteran",
+                          "exec_om", "first_om", "professional", "technician",
+                          "sales", "admin_support", "craft", "operative", 
+                          "labor", "service"]:
+                fields[column] = bool(value.strip())
+
+        if len(fields) > 1:
+            yield CompliancePartner(**fields)
+
