@@ -20,7 +20,6 @@
                 {% csrf_token %}
                 <input type="hidden" name="company_id" value="{{ company.id }}">
             <button type="submit" class="btn primary pull-right" id="init-partner-save">{% trans 'Save' %}</button>
-            <a class="partner-search" href="{% url 'partner_search' %}?company={{ company.id }}">Find Partner</a>
             </form>
             <div class="clear"></div>
         </div>
@@ -42,7 +41,6 @@
                         </tbody>
                     </table>
                     <button class="btn pull-right" value="New Partner" disabled>{% trans 'New Partner' %}</button>
-                    <a class="partner-search" href="{% url 'partner_search' %}?company={{ company.id }}">Find Partner</a>
                 </div>
                 <a class="btn primary" id="prm-mobile-btn" href="{% url 'create_partner' %}?ct={{ partner_ct }}">Get started with PRM today!</a>
             </div>
@@ -100,10 +98,7 @@
         </div>
         <div class="row">
             {# Recent Activity div #}
-            <div class="span2">
-                <a class="partner-search" href="{% url 'partner_search' %}?company={{ company.id }}">Find Partner</a>
-            </div>
-            <div class="span6"></div>
+            <div class="span8"></div>
             <div class="span4">
                 <a id="new-prm-btn" class="btn pull-right" href="{% url 'create_partner' %}?ct={{ partner_ct }}">New Partner</a>
             </div>
