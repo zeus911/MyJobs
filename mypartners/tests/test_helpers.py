@@ -2,7 +2,6 @@ from itertools import product
 from datetime import datetime, timedelta
 
 import pytz
-from django.test.client import RequestFactory 
 from django.db.models import Min, Max
 
 from mypartners import helpers
@@ -10,10 +9,6 @@ from mypartners.tests.test_views import MyPartnersTestCase
 
 
 class HelpersTests(MyPartnersTestCase):
-
-    def setUp(self):
-        super(HelpersTests, self).setUp()
-        self.request_factory = RequestFactory()
 
     def test_find_partner_from_email(self):
         email_and_expected_partner = [

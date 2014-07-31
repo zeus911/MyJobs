@@ -1,14 +1,19 @@
+# -*- coding: utf-8 -*-
+
 from bs4 import BeautifulSoup
 import json
 import re
 from time import sleep
+from itertools import permutations
 
-from django.test import TestCase
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.core import mail
+from django.http import Http404
+from django.test import TestCase
+from django.test.client import RequestFactory 
 from django.utils.timezone import utc
 
 from myjobs.tests.test_views import TestClient
@@ -20,6 +25,7 @@ from mypartners.tests.factories import (PartnerFactory, ContactFactory,
                                         ContactRecordFactory)
 from mysearches.tests.factories import PartnerSavedSearchFactory
 from datetime import datetime, timedelta
+from mypartners import views
 from mypartners.models import Contact, ContactRecord, ContactLogEntry, ADDITION
 from mypartners.helpers import find_partner_from_email
 from mysearches.models import PartnerSavedSearch
@@ -28,6 +34,9 @@ from mysearches.models import PartnerSavedSearch
 class MyPartnersTestCase(TestCase):
     def setUp(self):
         super(MyPartnersTestCase, self).setUp()
+
+        # ease the creation of tests that require a request object
+        self.request_factory = RequestFactory()
 
         # Create a user to login as
         self.staff_user = UserFactory()
@@ -135,7 +144,115 @@ class MyPartnerViewsTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
 
         self.assertEqual(len(soup.select('tr')), 10)
+        
 
+class EditItemTests(MyPartnersTestCase):
+    """ Test the `edit_item` view functio. 
+        
+        In particular, it tests that the appropriate HTTP response is reached
+        depending on the URL that the user navigates to.
+    """
+
+    def setUp(self):
+        super(EditItemTests, self).setUp()
+        # ids start at 1 and shouldn't be an arbitrary string or unicode
+        self.bad_ids = ["0", "-1", "bacon", "¥"]
+        self.content_ids = dict(partner=49, contact=49)
+
+    def test_add_contat_with_bad_partner_id(self):
+        """ Invalid partner should always result in a 404. """
+
+        for partner in self.bad_ids:
+            # 
+            request = self.request_factory.get(
+                '/prm/view/details/edit', {
+                    'partner': partner,
+                    'id': 1,
+                }
+            )
+            request.user = self.staff_user
+            self.assertRaises(Http404, views.edit_item, request)
+
+    def test_edit_contact_with_bad_item(self):
+        """ Invalid item should result in a 404 if not 0, otherwise, should
+            display the add contact form
+        """
+        for item in self.bad_ids[1:]:
+            # 
+            request = self.request_factory.get(
+                '/prm/view/details/edit', {
+                    'partner': 1,
+                    'id': item,
+                }
+            )
+            request.user = self.staff_user
+            self.assertRaises(Http404, views.edit_item, request)
+
+    def test_content_id_ignored(self):
+        """ The content ID is irrelevant, and should be ignored. """
+
+        for ct in self.content_ids.values():
+            # This URL is reached when editing a contact
+            contact_request = self.request_factory.get(
+                    '/prm/view/details/edit', { 'ct': ct, 'partner': 1 })
+            contact_request.user = self.staff_user
+            # This URL is reached when editing a partner
+            partner_request = self.request_factory.get(
+                    '/prm/view/edit', { 'ct': ct })
+            partner_request.user = self.staff_user
+
+            try:
+                self.assertEqual(
+                    views.edit_item(partner_request).status_code, 200)
+            except Http404:
+                self.fail("test_content_id_ignored raised Http404 "
+                          "unexpectedly while trying to test for partners!")
+
+            try:
+                self.assertEqual(
+                    views.edit_item(partner_request).status_code, 200)
+            except Http404:
+                self.fail("test_content_id_ignored raised Http404 "
+                          "unexpectedly while trying to test for contacts!")
+
+    def test_add_partner_form_loaded(self):
+            request = self.request_factory.get('/prm/view/edit')
+            request.user = self.staff_user
+
+            response = views.edit_item(request)
+            self.assertEqual(response.status_code, 200)
+
+            soup = BeautifulSoup(response.content)
+
+            self.assertIn("Add Partner", soup.title.text)
+
+    def test_add_contact_form_loaded(self):
+        # 0 is treated as an empty parameter
+        for id_ in ["0", ""]:
+            request = self.request_factory.get(
+                 '/prm/view/details/edit', { 'partner': 1, 'id': id_ })
+            request.user = self.staff_user
+
+            response = views.edit_item(request)
+            self.assertEqual(response.status_code, 200)
+
+            soup = BeautifulSoup(response.content)
+
+            self.assertIn("Add Contact", soup.title.text)
+
+    def test_edit_contact_form_loaded(self):
+            request = self.request_factory.get(
+                 '/prm/view/details/edit', { 'partner': 1, 'id': 1 })
+            request.user = self.staff_user
+
+            response = views.edit_item(request)
+            self.assertEqual(response.status_code, 200)
+
+            soup = BeautifulSoup(response.content)
+
+            self.assertIn("Edit Contact", soup.title.text)
+
+        
 
 class PartnerOverviewTests(MyPartnersTestCase):
     """Tests related to the partner overview page, /prm/view/overview/"""
