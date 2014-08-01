@@ -10,7 +10,7 @@
 {% load i18n %}
 
 {% block content %}
-    <h1>Partner Relationship Manager <small>{{ company.name }}</small></h1>
+    {% include "mypartners/includes/prm_header.html" with page_title="Partner Relationship Manager" %}
 
     {% if form %}
         <div class="formBox prm-init-formbox">
@@ -45,9 +45,18 @@
                 <a class="btn primary" id="prm-mobile-btn" href="{% url 'create_partner' %}?ct={{ partner_ct }}">Get started with PRM today!</a>
             </div>
         </div>
-
     {% else %}
-
+        <div class="row">
+            <div id="partner-holder" class="span8">
+                {% for partner in partners %}
+                    {% include "mypartners/includes/partner_card.html" %}
+                {% endfor %}
+            </div>
+            <div id="sidebar-holder" class="span4">
+                {% include "mypartners/includes/partner_sidebar.html" with filters=True navigation=True special_interest=False %}
+            </div>
+        </div>
+        <!--
         <div class="row">
             <div class="span12">
                 <table class="table table-striped table-bordered prm-table">
@@ -96,13 +105,7 @@
                 </table>
             </div>
         </div>
-        <div class="row">
-            {# Recent Activity div #}
-            <div class="span8"></div>
-            <div class="span4">
-                <a id="new-prm-btn" class="btn pull-right" href="{% url 'create_partner' %}?ct={{ partner_ct }}">New Partner</a>
-            </div>
-        </div>
+        -->
 
     {% endif %}
 

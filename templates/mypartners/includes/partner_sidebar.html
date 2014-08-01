@@ -1,0 +1,34 @@
+<div class="sidebar">
+    {% if filters %}
+    <div class="partner-filters">
+        <h2 class="top">Filter Partners</h2>
+        <label>Keywords:</label>
+        <input type="text" placeholder="Keywords" />
+        <label>Location:</label>
+        <input type="text" placeholder="Location" />
+        {% if special_interest %}
+        <label>Special Interest:</label>
+        <div class="tag-holder">
+            <div class="partner-tag veteran">Veteran</div>
+            <div class="partner-tag female">Female</div>
+            <div class="partner-tag minority">Minority</div>
+            <div class="partner-tag disabled">Disabled</div>
+            <div class="partner-tag disabled-veteran">Disabled Veteran</div>
+        </div>
+        {% endif %}
+        <a id="filter-partners" class="btn" style="margin-top: 10px; box-sizing: border-box; width: 100%;">Filter</a>
+        <div class="clearfix"></div>
+    </div>
+    {% endif %}
+    {% if navigation %}
+    <div class="navigation">
+        {% if filters %}
+        <h2>Navigation</h2>
+        {% else %}
+        <h2 class="top">Navigation</h2>
+        {% endif %}
+        <a class="btn" href="{% url 'partner_library' %}">Search Partner Library</a>
+        <a class="btn" href="{% url 'create_partner' %}?ct={{ partner_ct }}">Create New Partner</a>
+    </div>
+    {% endif %}
+</div>

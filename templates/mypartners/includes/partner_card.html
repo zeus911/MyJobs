@@ -1,0 +1,28 @@
+<div class="product-card">
+    <div class="big-title">
+        <b>{{ partner.name }}</b>
+    </div>
+    <div class="sub-title">
+        <small>
+            {% for location in partner.get_contact_locations %}
+                {% if not forloop.last %}
+                    {{ location }};
+                {% else %}
+                    {{ location }}
+                {% endif %}
+            {% endfor %}
+        </small>
+    </div>
+    <div class="product-details">
+        {% if partner.primary_contact %}
+        {% if partner.primary_contact.name %}
+        {{ partner.primary_contact.name }}
+        {% else %}
+        {{ partner.primary_contact.email }}
+        {% endif %}
+        {% else %}
+        No Primary Contact
+        {% endif %}
+    </div>
+    <a class="btn pull-right" href="{% url 'partner_overview' %}?partner={{ partner.id }}">Open</a>
+</div>

@@ -85,6 +85,21 @@ def prm(request):
 
 
 @company_has_access('prm_access')
+def partner_library(request):
+    company = get_company(request)
+    if company is None:
+        raise Http404
+
+    ctx = {
+        'company': company,
+        'view_name': 'PRM'
+    }
+
+    return render_to_response('mypartners/partner_library.html', ctx,
+                              RequestContext(request))
+
+
+@company_has_access('prm_access')
 def partner_details(request):
     company, partner, user = prm_worthy(request)
 
