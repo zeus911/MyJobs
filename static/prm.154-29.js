@@ -120,4 +120,14 @@ $(document).ready(function() {
             }
         });
     });
+
+    $(".partner-tag").on("click", function() {
+        if ($(this).children('i').hasClass('icon-ok')) {
+            $(this).children('i').remove();
+        } else {
+            var i = document.createElement('i');
+            $(i).addClass("icon icon-ok");
+            $(this).append(i);
+        }
+    });
 });

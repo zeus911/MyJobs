@@ -189,6 +189,122 @@ h1 > small > a:hover {
 }
 
 /* Partner Relationship Manager Styles */
+.product-card {
+    background-color: #F9FAFA;
+    box-sizing: border-box;
+    padding: 15px 10px;
+    border-bottom: 1px solid #E5E5E5;
+    box-shadow: 1px 1px 3px #BBB;
+}
+
+.product-card:hover {
+    background: -webkit-linear-gradient(left, #f9FAFA 0%, #f9FAFA 66%, #f2f2f2 100%);
+    box-shadow: 2px 2px 5px #BBB;
+    cursor: pointer;
+}
+
+.product-card .big-title {
+    font-size: 1.3em;
+    font-weight: 700;
+}
+
+.product-card .sub-title {
+    margin-top: -3px;
+    color: #888888;
+    font-style: italic;
+}
+
+.product-card .sub-title small {
+    line-height: 85%;
+}
+
+.product-card .product-details {
+    margin-top: 2px;
+}
+
+.product-card a.btn {
+    margin-top: -35px;
+}
+
+.sidebar {
+    background-color: #F9FAFA;
+    border-bottom: 1px solid #E5E5E5;
+    box-sizing: border-box;
+    box-shadow: 1px 1px 3px #BBB;
+    padding: 10px;
+}
+
+.sidebar * {
+    box-sizing: border-box;
+}
+
+.sidebar .navigation h2,
+.sidebar .partner-filters h2 {
+    background-color: #FFF;
+    border: 1px solid #d5d4d0;
+    padding: 10px 15px;
+    margin: 20px -15px;
+    box-shadow: 1px 1px 2px #BBB;
+}
+
+.sidebar label {
+    font-weight: 700;
+    color: #5e6c82;
+}
+
+.sidebar input {
+    width: 100%;
+    padding: 15px 5px;
+}
+
+.sidebar h2.top {
+    margin-top: -10px;
+}
+
+.sidebar .navigation a.btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.sidebar .navigation a.btn + a.btn {
+    margin-top: 5px;
+    margin-left: 0;
+}
+
+.sidebar .partner-tag {
+    width: 49%;
+    font-size: 0.9em;
+}
+
+.sidebar .partner-tag:nth-child(n+3) {
+    margin-top: 5px;
+}
+
+.partner-tag {
+    display: inline-block;
+    box-sizing: border-box;
+    padding: 5px 10px;
+    border-radius: 5px;
+    background-color: #AAA;
+    color: #FFF;
+}
+
+.partner-tag.veteran { background-color: #5eb94e; }
+.partner-tag.female  { background-color: #4bb1cf; }
+.partner-tag.minority { background-color: #faa732; }
+.partner-tag.disabled { background-color: #5f6c82; }
+.partner-tag.disabled-veteran { background-color: #477958; }
+
+.partner-tag:hover {
+    cursor: pointer;
+}
+
+.partner-tag i.icon {
+    float: right;
+}
+
 .blanket{
     opacity: .25;
     -webkit-filter: blur(1px);
@@ -205,7 +321,7 @@ h1 > small > a:hover {
 .prm-header{
     font-weight: bold;
     padding: 5px 0;
-    background-color: #f2f2f2;
+    background-color: #F9FAFA;
     margin-bottom: 20px;
     border: 1px solid #d5d4d0;
 }

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load common_tags %}
+{% gz as gz %}
+{% block site-title %}
+    {% with name_obj=user.full_name %}
+        <title>Partner Library {{ company.name }}</title>
+        <meta name="title" content="Partner Library {{ company.name }}">
+    {% endwith %}
+{% endblock %}
+{% load i18n %}
+
+{% block content %}
+    {% include "mypartners/includes/prm_header.html" with page_title="Partner Library" back_to="Back to Partner Relationship Manager" back_to_url="prm" %}
+    <div class="row">
+        <div class="span8">
+        </div>
+        <div class="span4">
+            {% include "mypartners/includes/partner_sidebar.html" with filters=True navigation=False special_interest=True %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra-js %}
+<script src="{{ STATIC_URL }}prm.154-29.js{{ gz }}"></script>
+{% endblock %}
