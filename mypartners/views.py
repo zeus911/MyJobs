@@ -16,7 +16,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
@@ -89,10 +89,44 @@ def partner_library(request):
     company = get_company(request)
     if company is None:
         raise Http404
+ 
+    keywords, location, special_interests, partner_library  = [
+        request.REQUEST.get(params) for params in [
+            'keywords', 'location', 'special_interests', 'partner_library']]
+
+    # the starting QuerySet will be different whether or not we are searching
+    # the partner library
+    if partner_library:
+        partners = PartnerLibrary.objects.all()
+        query = Q()
+    else:
+        partners = Partner.objects.select_related('owner', 'primary_contact')
+        query = Q(owner=company.id)
+
+    # only used with partner library searches for now
+    for interest in special_interests:
+        query |= Q(**{interest.replace(' ', '_'): True})
+
+    if location:
+        city, st = [item.strip() for item in location.split(',')]
+        query &= Q(city=city)
+        # location is retreived from a text field, so we need to check both
+        # state and st
+        query &= (Q(state=st) | Q(st=st))
+
+    # check for keywords in oganization name, website, and first/last name
+    for keyword in keywords.split(','):
+        query &= (Q(organization__contains=keyword) |
+                  Q(website__contains=keyword) |
+                  Q(first_name__in=keyword) |
+                  Q(last_name__in=keyword))
+
+    partners = partners.filter(query)
 
     ctx = {
         'company': company,
-        'view_name': 'PRM'
+        'view_name': 'PRM',
+        'partners': partners
     }
 
     return render_to_response('mypartners/partner_library.html', ctx,

@@ -165,7 +165,8 @@ class Partner(models.Model):
 
     # gets_all_contact_locations_for_partner (City, State)
     def get_contact_locations(self):
-        return [contact.get_location() for contact in self.contact_set.all()]
+        return [contact.get_location() for contact in self.contact_set.all()
+                if contact.get_location()]
 
     # get_contact_records_for_partner
     def get_contact_records(self, contact_name=None, record_type=None,
@@ -231,6 +232,8 @@ class PartnerLibrary(models.Model):
     is_female = models.BooleanField('female', default=False)
     is_disabled = models.BooleanField('disabled', default=False)
     is_veteran = models.BooleanField('veteran', default=False)
+    is_disabled_veteran = models.BooleanField(
+        'disabled_veteran', default=False)
 
     def __unicode__(self):
         # the second join + split take care of extra internal whitespace
