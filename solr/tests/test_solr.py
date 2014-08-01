@@ -12,7 +12,8 @@ from mydashboard.tests.factories import CompanyFactory, BusinessUnitFactory
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
 from myprofile.models import ProfileUnits
-from myprofile.tests.factories import PrimaryNameFactory, AddressFactory
+from myprofile.tests.factories import (PrimaryNameFactory, AddressFactory,
+                                       SummaryFactory)
 from mysearches.models import SavedSearch
 from mysearches.tests.factories import SavedSearchFactory
 from solr.models import Update
@@ -59,6 +60,15 @@ class SolrTests(TestCase):
         User.objects.all().delete()
         update_solr_task(self.test_solr)
         self.assertEqual(Solr().search().hits, 0)
+
+    def test_xml_chars(self):
+        Solr().delete()
+
+        user = UserFactory(email="example@example.com")
+        SummaryFactory(user=user, the_summary='&&& \x01test\x02')
+
+        update_solr_task(self.test_solr)
+        self.assertEqual(Solr().search().hits, 2)
 
     def test_profileunit_to_dict(self):
         """

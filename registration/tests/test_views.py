@@ -33,11 +33,8 @@ class RegistrationViewTests(TestCase):
             settings.ACCOUNT_ACTIVATION_DAYS = 7  # pragma: no cover
 
         self.data = {'email': 'alice@example.com',
-                     'password1': 'swordfish',
-                     'password2': 'swordfish',
-                     'action': 'register'}
-        self.client.post(reverse('home'), data=self.data)
-        self.user = User.objects.get(email=self.data['email'])
+                     'password1': 'swordfish'}
+        self.user, _ = User.objects.create_user(**self.data)
 
     def test_valid_activation(self):
         """
@@ -46,6 +43,7 @@ class RegistrationViewTests(TestCase):
         activation window).
 
         """
+        self.client.login_user(self.user)
         profile = ActivationProfile.objects.get(user__email=self.user.email)
         response = self.client.get(reverse('registration_activate',
                                            args=[profile.activation_key]))
@@ -72,6 +70,7 @@ class RegistrationViewTests(TestCase):
         activation window).
 
         """
+        self.client.login_user(self.user)
         expired_profile = ActivationProfile.objects.get(user=self.user)
         expired_profile.sent -= datetime.timedelta(
             days=settings.ACCOUNT_ACTIVATION_DAYS)
@@ -121,6 +120,17 @@ class RegistrationViewTests(TestCase):
         self.assertIn("The My.jobs Team", msg.body)
         self.assertIn("user account at My.jobs.", msg.body)
 
+    def test_inactive_user_requesting_password_reset(self):
+        """
+        Requesting a password reset as an inactive user should activate the
+        account, allowing the password reset to proceed.
+        """
+        self.user.is_active = False
+        self.user.save()
+
+        self.client.post(reverse('password_reset'), {'email': self.user.email})
+        user = User.objects.get(pk=self.user.pk)
+        self.assertTrue(user.is_active)
 
 class MergeUserTests(TestCase):
 

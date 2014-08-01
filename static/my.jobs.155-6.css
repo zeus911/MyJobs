@@ -391,6 +391,14 @@ h1 > small > a:hover {
     margin-top: 20px;
 }
 
+#manage-contacts td {
+    word-break:break-all;
+}
+
+#manage-contacts a {
+    white-space:nowrap;
+}
+
 #manage-contacts table > tbody > tr > td{
     border-left: 0;
 }
