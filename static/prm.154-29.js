@@ -130,4 +130,8 @@ $(document).ready(function() {
             $(this).append(i);
         }
     });
+
+    $("#filter-partners").on("click", function() {
+        
+    });
 });
