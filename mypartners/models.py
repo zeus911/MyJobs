@@ -157,6 +157,12 @@ class Partner(models.Model):
             logs = logs.filter(content_type_id=content_type_id)
         return logs.order_by('-action_time')[:num_items]
 
+    # gets_all_contact_locations_for_partner (City, State)
+    def get_contact_locations(self):
+        return [", ".join([contact.city, contact.state]).strip(" , ")
+                for contact in self.contact_set.all()
+                if contact.city or contact.state]
+
     # get_contact_records_for_partner
     def get_contact_records(self, contact_name=None, record_type=None,
                             created_by=None, date_start=None, date_end=None):
