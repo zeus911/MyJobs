@@ -11,44 +11,42 @@ class Command(BaseCommand):
     help = "Update PartnerLibrary Model"
 
     def handle(self, *args, **kwargs):
-        contacts = get_library_partners(from_html=True)
-
-        for contact in contacts:
-            if not PartnerLibrary.objects.filter(email=contact.email_id,
-                                                 st=contact.st,
-                                                 city=contact.city):
+        for partner in get_library_partners():
+            if not PartnerLibrary.objects.filter(email=partner.email_id,
+                                                 st=partner.st,
+                                                 city=partner.city):
                 PartnerLibrary(
-                    organization=contact.organization_name,
-                    website=contact.website,
-                    region=contact.region,
-                    state=contact.state,
-                    area=contact.area,
-                    title=contact.title,
-                    first_name=contact.first_name,
-                    middle_name=contact.middle_name,
-                    last_name=contact.last_name,
-                    phone=contact.phone,
-                    phone_ext=contact.phone_ext,
-                    alt_phone=contact.alt_phone,
-                    fax=contact.fax,
-                    email=contact.email_id,
-                    street1=contact.street1,
-                    street2=contact.street2,
-                    city=contact.city,
-                    st=contact.st,
-                    zip_code=contact.zip_code,
-                    is_minority=contact.minority,
-                    is_female=contact.female,
-                    is_disabled=contact.disabled,
-                    is_veteran=contact.veteran).save()
+                    organization=partner.organization_name,
+                    website=partner.website,
+                    region=partner.region,
+                    state=partner.state,
+                    area=partner.area,
+                    title=partner.title,
+                    first_name=partner.first_name,
+                    middle_name=partner.middle_name,
+                    last_name=partner.last_name,
+                    phone=partner.phone,
+                    phone_ext=partner.phone_ext,
+                    alt_phone=partner.alt_phone,
+                    fax=partner.fax,
+                    email=partner.email_id,
+                    street1=partner.street1,
+                    street2=partner.street2,
+                    city=partner.city,
+                    st=partner.st,
+                    zip_code=partner.zip_code,
+                    is_minority=partner.minority,
+                    is_female=partner.female,
+                    is_disabled=partner.disabled,
+                    is_veteran=partner.veteran).save()
 
                 #TODO: see if there is a way to do this without querying the
                 #      database
-                if PartnerLibrary.objects.filter(email=contact.email_id):
+                if PartnerLibrary.objects.filter(email=partner.email_id):
                     print "Successfully added %s %s (%s) from %s, %s." % (
-                        contact.first_name, contact.last_name,
-                        contact.email_id, contact.city, contact.st)
+                        partner.first_name, partner.last_name,
+                        partner.email_id, partner.city, partner.st)
             else:
                 print  "%s %s (%s) from %s, %s already exists, skipping.." % (
-                    contact.first_name, contact.last_name, contact.email_id,
-                    contact.city, contact.st)
+                    partner.first_name, partner.last_name, partner.email_id,
+                    partner.city, partner.st)

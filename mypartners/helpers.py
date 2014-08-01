@@ -318,7 +318,7 @@ def get_library_as_html():
     return requests.get(excel_url, cookies=response.cookies).text
 
 
-def get_library_partners(text=None, from_html=False):
+def get_library_partners(text=None, download=True):
     """ Generator that produces partner library info from an HTML file.
 
         .. note:: If no HTML file is given, a local file named
@@ -338,7 +338,7 @@ def get_library_partners(text=None, from_html=False):
             field indicates the state in which the organization's home office
             resides.
     """
-    if from_html:
+    if download:
         text = get_library_as_html()
     else:
         text = text or open(os.path.join(os.path.dirname(__file__),
