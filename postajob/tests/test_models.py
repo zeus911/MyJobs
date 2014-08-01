@@ -240,13 +240,20 @@ class ModelTests(TestCase):
         self.purchased_product.invoice.send_invoice_email()
         self.assertItemsEqual(mail.outbox[0].to,
                               [u'user@test.email'])
+        self.assertItemsEqual(mail.outbox[0].from_email,
+                              'invoice@my.jobs')
 
         mail.outbox = []
+
+        self.company.companyprofile.outgoing_email_domain = 'test.domain'
+        self.company.companyprofile.save()
 
         # Recipients are admins + specified recipients.
         self.purchased_product.invoice.send_invoice_email(['this@isa.test'])
         self.assertItemsEqual(mail.outbox[0].to,
                               ['this@isa.test', u'user@test.email'])
+        self.assertItemsEqual(mail.outbox[0].from_email,
+                              'invoice@test.domain')
 
     def test_productgrouping_add_delete(self):
         self.create_purchased_job()
@@ -280,6 +287,8 @@ class ModelTests(TestCase):
         self.assertEqual(PurchasedJob.objects.all().count(), 1)
         self.assertEqual(Request.objects.all().count(), 1)
         self.assertEqual(len(mail.outbox), 1)
+        self.assertItemsEqual(mail.outbox[0].from_email,
+                              'request@my.jobs')
         mail.outbox = []
 
         # Already approved jobs should not generate an additional request.
