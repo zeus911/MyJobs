@@ -104,6 +104,9 @@ class Contact(models.Model):
         query_string = urlencode(params)
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
 
+    def get_location(self):
+        return ", ".join([self.city, self.state]).strip(", ")
+
 
 @receiver(pre_delete, sender=Contact, dispatch_uid='pre_delete_contact_signal')
 def delete_contact(sender, instance, using, **kwargs):
@@ -159,9 +162,7 @@ class Partner(models.Model):
 
     # gets_all_contact_locations_for_partner (City, State)
     def get_contact_locations(self):
-        return [", ".join([contact.city, contact.state]).strip(" , ")
-                for contact in self.contact_set.all()
-                if contact.city or contact.state]
+        return [contact.get_location() for contact in self.contact_set.all()]
 
     # get_contact_records_for_partner
     def get_contact_records(self, contact_name=None, record_type=None,
