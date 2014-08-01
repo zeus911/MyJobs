@@ -113,7 +113,7 @@ $(document).ready(function() {
                         // insert new errors after the relevant inputs
                         $error.wrap('<div class="required" />');
                         $error.attr("placeholder",json[index][0]);
-                        $error.val('')
+                        $error.val('');
                         $labelOfError.addClass('error-text');
                     }
                 }
@@ -132,6 +132,31 @@ $(document).ready(function() {
     });
 
     $("#filter-partners").on("click", function() {
-        
+        /* Variables */
+        var data = {},
+            special_interest = [];
+
+        /* Populating data */
+        $(".partner-filters input").each(function() {
+            if($(this).val()) {
+                var data_key = $(this).prev('label').html().replace(":", "").toLowerCase();
+                data[data_key] = $(this).val();
+            }
+        });
+        // <i> is used for check icon
+        $(".partner-tag:has(i)").each(function() {
+            special_interest.push($(this).text().toLowerCase());
+        });
+        if(special_interest.length > 0)
+            data.special_interest = special_interest;
+
+        /* Ajax */
+        $.ajax({
+            type: 'GET',
+            url: "/",
+            data: data,
+            success: function(data) {
+            }
+        });
     });
 });
