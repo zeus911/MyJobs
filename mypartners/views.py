@@ -59,6 +59,17 @@ def prm(request):
     if company is None:
         raise Http404
 
+    if request.is_ajax():
+        partners = get_partners_from_filters(request, company)
+        paginator = add_pagination(request, partners)
+        ctx = {
+            'partners': paginator,
+            'on_page': 'prm'
+        }
+        html = render_to_response('mypartners/includes/partner_column.html',
+                                  ctx, RequestContext(request))
+        return json.dumps(html.content)
+
     form = request.REQUEST.get('form')
     partners = company.partner_set.all()
     if not partners and not form:
@@ -85,11 +96,7 @@ def prm(request):
                               RequestContext(request))
 
 
-def get_partners_from_filters(request):
-    company = get_company(request)
-    if company is None:
-        raise Http404
-
+def get_partners_from_filters(request, company):
     keywords = request.REQUEST.get('keywords', "").split(',')
     location = request.REQUEST.get('location', "")
     special_interests = request.REQUEST.get('special_intersts', [])
@@ -124,13 +131,16 @@ def get_partners_from_filters(request):
 
     partners = partners.filter(query)
 
-    return company, partners 
+    return partners
 
 
 @company_has_access('prm_access')
-def find_partners(request):
+def partner_library(request):
+    company = get_company(request)
+    if company is None:
+        raise Http404
 
-    company, partners = get_partners_from_filters(request)
+    partners = get_partners_from_filters(request, company)
 
     ctx = {
         'company': company,
@@ -138,7 +148,7 @@ def find_partners(request):
         'partners': partners
     }
 
-    return render_to_response('mypartners/find_partners.html', ctx,
+    return render_to_response('mypartners/partner_library.html', ctx,
                               RequestContext(request))
 
 

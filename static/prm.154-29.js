@@ -153,9 +153,10 @@ $(document).ready(function() {
         /* Ajax */
         $.ajax({
             type: 'GET',
-            url: "/",
+            url: window.location.pathname,
             data: data,
             success: function(data) {
+                console.log(data);
             }
         });
     });
