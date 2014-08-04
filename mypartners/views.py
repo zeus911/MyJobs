@@ -61,14 +61,18 @@ def prm(request):
 
     if request.is_ajax():
         partners = get_partners_from_filters(request, company)
+        print partners
         paginator = add_pagination(request, partners)
+        print paginator
         ctx = {
             'partners': paginator,
             'on_page': 'prm'
         }
+        response = HttpResponse(content_type='text/javascript')
         html = render_to_response('mypartners/includes/partner_column.html',
                                   ctx, RequestContext(request))
-        return json.dumps(html.content)
+        response.content = json.dumps(html.content)
+        return response
 
     form = request.REQUEST.get('form')
     partners = company.partner_set.all()
