@@ -118,10 +118,9 @@ def get_partners_from_filters(request, company):
 
     # check for keywords in oganization name, website, and first/last name
     for keyword in keywords:
-        query &= (Q(name__contains=keyword) |
-                  Q(uri=keyword) |
-                  Q(contact_name=keyword) if partner_library else
-                  Q(primary_contact__name=keyword))
+        query &= (Q(name__contains=keyword) | Q(uri__contains=keyword) |
+                  (Q(contact_name__contains=keyword) if partner_library else
+                     Q(primary_contact__name__contains=keyword)))
 
     if city:
         query &= (Q(city=city) if partner_library else 
