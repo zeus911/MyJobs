@@ -93,15 +93,28 @@ def find_partners(request):
     location = request.REQUEST.get('location', "")
     keywords = request.REQUEST.get('keywords', "").split(',')
     special_interests = request.REQUEST.get('special_intersts', [])
+    partner_library = request.REQUEST.get('partner_library', False)
 
     # the starting QuerySet will be different whether or not we are searching
     # the partner library
     if partner_library:
         partners = PartnerLibrary.objects.all()
         query = Q()
+
+        # check for keywords in oganization name, website, and first/last name
+        for keyword in keywords:
+            query &= (Q(organization__contains=keyword) |
+                      Q(website__contains=keyword) |
+                      Q(first_name__in=keyword) |
+                      Q(last_name__in=keyword))
     else:
         partners = Partner.objects.select_related('owner', 'primary_contact')
         query = Q(owner=company.id)
+
+        for keyword in keywords:
+            query &= (Q(name__contains=keyword) |
+                      Q(uri=keyword) |
+                      Q(primary_contact__name=keyword))
 
     # only used with partner library searches for now
     for interest in special_interests:
@@ -114,12 +127,6 @@ def find_partners(request):
         # state and st
         query &= (Q(state=st) | Q(st=st))
 
-    # check for keywords in oganization name, website, and first/last name
-    for keyword in keywords:
-        query &= (Q(organization__contains=keyword) |
-                  Q(website__contains=keyword) |
-                  Q(first_name__in=keyword) |
-                  Q(last_name__in=keyword))
 
     partners = partners.filter(query)
 
