@@ -86,17 +86,25 @@ def prm(request):
 
 @company_has_access('prm_access')
 def find_partners(request):
+    """ Find partner by keyword, location, and/or special interest(s).
+
+        This function is used to either filter existing partners or find new
+        partners. When used to filter existing partners, it takes keywords, and
+        location from the request query parameters. When finding new partners,
+        the special_interests parameter is taken as well.
+    """
+
     company = get_company(request)
     if company is None:
         raise Http404
- 
-    location = request.REQUEST.get('location', "")
+
     keywords = request.REQUEST.get('keywords', "").split(',')
+    location = request.REQUEST.get('location', "")
     special_interests = request.REQUEST.get('special_intersts', [])
     partner_library = request.REQUEST.get('partner_library', False)
 
-    # the starting QuerySet will be different whether or not we are searching
-    # the partner library
+    # The starting QuerySet will be different if we are searching through the
+    # partner library
     if partner_library:
         partners = PartnerLibrary.objects.all()
         query = Q()
@@ -104,9 +112,12 @@ def find_partners(request):
         partners = Partner.objects.select_related('owner', 'primary_contact')
         query = Q(owner=company.id)
 
-    # only used with partner library searches for now
-    for interest in special_interests:
-        query |= Q(**{interest.replace(' ', '_'): True})
+    # check for keywords in oganization name, website, and first/last name
+    for keyword in keywords:
+        query &= (Q(name__contains=keyword) |
+                  Q(uri=keyword) |
+                  Q(contact_name=keyword) if partner_library else
+                  Q(primary_contact__name=keyword))
 
     if location:
         city, st = [item.strip() for item in location.split(',')]
@@ -115,16 +126,9 @@ def find_partners(request):
         # state and st
         query &= (Q(state=st) | Q(st=st))
 
-    # check for keywords in oganization name, website, and first/last name
-    for keyword in keywords:
-        keyword_query = Q(name__contains=keyword) | Q(uri=keyword)
-
-        if partner_library:
-            keyword_query |= Q(contact_name=keyword)
-        else:
-            keyword_query |= Q(primary_contact__name=keyword)
-
-        query &= keyword_query
+    # only used with partner library searches for now
+    for interest in special_interests:
+        query |= Q(**{interest.replace(' ', '_'): True})
 
     partners = partners.filter(query)
 
@@ -1183,7 +1187,7 @@ def process_email(request):
                 attachment.seek(0)
         except AttributeError:
             attachment_failures.append(record)
-        log_change(record, None, admin_user, contact.partner,  contact.name,
+        log_change(record, None, admin_user, contact.partner, contact.name,
                    action_type=ADDITION, change_msg=change_msg)
 
         created_records.append(record)
