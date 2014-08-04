@@ -38,9 +38,9 @@ from mysearches.helpers import (url_sort_options, parse_feed,
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm, ContactRecordForm)
-from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
-                               ContactLogEntry, CONTACT_TYPE_CHOICES,
-                               ADDITION, DELETION)
+from mypartners.models import (Partner, PartnerLibrary, Contact, ContactRecord, 
+                               PRMAttachment, ContactLogEntry,
+                               CONTACT_TYPE_CHOICES, ADDITION, DELETION)
 from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
                                 contact_record_val_to_str, retrieve_fields,
@@ -90,9 +90,9 @@ def partner_library(request):
     if company is None:
         raise Http404
  
-    keywords, location, special_interests, partner_library  = [
-        request.REQUEST.get(params) for params in [
-            'keywords', 'location', 'special_interests', 'partner_library']]
+    location = request.REQUEST.get('location', "")
+    keywords = request.REQUEST.get('keywords', "").split(',')
+    special_interests = request.REQUEST.get('special_intersts', [])
 
     # the starting QuerySet will be different whether or not we are searching
     # the partner library
@@ -115,7 +115,7 @@ def partner_library(request):
         query &= (Q(state=st) | Q(st=st))
 
     # check for keywords in oganization name, website, and first/last name
-    for keyword in keywords.split(','):
+    for keyword in keywords:
         query &= (Q(organization__contains=keyword) |
                   Q(website__contains=keyword) |
                   Q(first_name__in=keyword) |
