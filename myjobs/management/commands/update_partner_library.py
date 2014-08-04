@@ -16,9 +16,9 @@ class Command(BaseCommand):
                                                  st=partner.st,
                                                  city=partner.city):
 
-                contact_name = " ".join(" ".join(partner.first_name, 
+                contact_name = " ".join(" ".join([partner.first_name, 
                                                  partner.middle_name,
-                                                 partner.last_name).split())
+                                                 partner.last_name]).split())
                 PartnerLibrary(
                     name=partner.organization_name,
                     uri=partner.website,

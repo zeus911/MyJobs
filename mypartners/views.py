@@ -117,10 +117,14 @@ def find_partners(request):
 
     # check for keywords in oganization name, website, and first/last name
     for keyword in keywords:
-        query &= (Q(name__contains=keyword) |
-                  Q(uri=keyword) |
+        keyword_query = Q(name__contains=keyword) | Q(uri=keyword)
 
+        if partner_library:
+            keyword_query |= Q(contact_name=keyword)
+        else:
+            keyword_query |= Q(primary_contact__name=keyword)
 
+        query &= keyword_query
 
     partners = partners.filter(query)
 
