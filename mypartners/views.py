@@ -27,7 +27,7 @@ from django.utils.datastructures import SortedDict
 from django.views.decorators.csrf import csrf_exempt
 
 from email_parser import build_email_dicts, get_datetime_from_str
-from universal.helpers import get_company, get_int_or_none
+from universal.helpers import get_company, get_int_or_none, add_pagination
 from universal.decorators import company_has_access
 from myjobs.models import User
 from mydashboard.helpers import get_company_microsites
@@ -68,11 +68,12 @@ def prm(request):
             partners = Partner.objects.filter(owner=company.id)
         except Partner.DoesNotExist:
             raise Http404
+        paginator = add_pagination(request, partners)
         partner_form = None
 
     ctx = {
         'has_partners': True if partners else False,
-        'partners': partners,
+        'partners': paginator,
         'form': partner_form or form,
         'company': company,
         'user': request.user,

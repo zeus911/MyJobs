@@ -7,4 +7,19 @@
         {% include "mypartners/includes/partner_card.html" with on_page="partner_library" %}
         {% endif %}
     {% endfor %}
+    <div class="pagination">
+        <span class="step-links">
+            {% if partners.has_previous %}
+                <a href="?page={{ partners.previous_page_number }}">Previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ partners.number }} of {{ partners.paginator.num_pages }}.
+            </span>
+
+            {% if partners.has_next %}
+                <a href="?page={{ partners.next_page_number }}">Next</a>
+            {% endif %}
+        </span>
+    </div>
 </div>
