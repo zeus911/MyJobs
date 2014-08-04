@@ -15,16 +15,17 @@ class Command(BaseCommand):
             if not PartnerLibrary.objects.filter(email=partner.email_id,
                                                  st=partner.st,
                                                  city=partner.city):
+
+                contact_name = " ".join(" ".join(partner.first_name, 
+                                                 partner.middle_name,
+                                                 partner.last_name).split())
                 PartnerLibrary(
-                    organization=partner.organization_name,
-                    website=partner.website,
+                    name=partner.organization_name,
+                    uri=partner.website,
                     region=partner.region,
                     state=partner.state,
                     area=partner.area,
-                    title=partner.title,
-                    first_name=partner.first_name,
-                    middle_name=partner.middle_name,
-                    last_name=partner.last_name,
+                    contact_name=contact_name,
                     phone=partner.phone,
                     phone_ext=partner.phone_ext,
                     alt_phone=partner.alt_phone,

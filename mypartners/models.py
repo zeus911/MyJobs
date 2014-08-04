@@ -201,18 +201,15 @@ class PartnerLibrary(models.Model):
 
     created_by = models.CharField(max_length=255, null=True)
     # Organization Info
-    organization = models.CharField(max_length=255)
-    website = models.URLField(blank=True)
+    name = models.CharField(max_length=255, verbose_name='Partner Organization')
+    uri = models.URLField(blank=True)
     region = models.CharField(max_length=30, blank=True)
     # long state name
     state = models.CharField(max_length=30, blank=True)
     area = models.CharField(max_length=30, blank=True)
 
     # Contact Info
-    title = models.CharField(max_length=255)
-    first_name = models.CharField(max_length=255, blank=True)
-    middle_name = models.CharField(max_length=255, blank=True)
-    last_name = models.CharField(max_length=255, blank=True)
+    contact_name = models.CharField(max_length=255, blank=True)
 
     phone = models.CharField(max_length=30, blank=True)
     phone_ext = models.CharField(max_length=10, blank=True)
