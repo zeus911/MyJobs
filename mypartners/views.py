@@ -85,16 +85,7 @@ def prm(request):
                               RequestContext(request))
 
 
-@company_has_access('prm_access')
-def find_partners(request):
-    """ Find partner by keyword, location, and/or special interest(s).
-
-        This function is used to either filter existing partners or find new
-        partners. When used to filter existing partners, it takes keywords, and
-        location from the request query parameters. When finding new partners,
-        the special_interests parameter is taken as well.
-    """
-
+def get_partners_from_filters(request):
     company = get_company(request)
     if company is None:
         raise Http404
@@ -132,6 +123,14 @@ def find_partners(request):
         query |= Q(**{interest.replace(' ', '_'): True})
 
     partners = partners.filter(query)
+
+    return company, partners 
+
+
+@company_has_access('prm_access')
+def find_partners(request):
+
+    company, partners = get_partners_from_filters(request)
 
     ctx = {
         'company': company,
