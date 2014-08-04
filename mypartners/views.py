@@ -85,7 +85,7 @@ def prm(request):
 
 
 @company_has_access('prm_access')
-def partner_library(request):
+def find_partners(request):
     company = get_company(request)
     if company is None:
         raise Http404
@@ -129,7 +129,7 @@ def partner_library(request):
         'partners': partners
     }
 
-    return render_to_response('mypartners/partner_library.html', ctx,
+    return render_to_response('mypartners/find_partners.html', ctx,
                               RequestContext(request))
 
 

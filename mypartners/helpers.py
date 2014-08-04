@@ -170,11 +170,6 @@ def contact_record_val_to_str(value):
 
     return value
 
-
-def filter_partner_library(request): pass
-
-def filter_partners(request): pass
-
 def get_records_from_request(request):
     """
     Filters a list of records on partner, date_time, contact_name, and
@@ -318,12 +313,11 @@ def get_library_as_html():
     return requests.get(excel_url, cookies=response.cookies).text
 
 
-def get_library_partners(text=None, download=True):
-    """ Generator that produces partner library info from an HTML file.
-
-        .. note:: If no HTML file is given, a local file named
-        "ofccp_contacts.html" located in the same directory as this module is
-        assumed.
+def get_library_partners(path=None):
+    """ Generator that produces partner library info.
+        
+        If no path is given, then the data is downloaded from
+        "www.dol-esa.gov/errd".
 
         This generator yields a CompliancePartner namedtuple whose fields
         coincide with the table headers present in `html_file`. In the case of
@@ -338,11 +332,12 @@ def get_library_partners(text=None, download=True):
             field indicates the state in which the organization's home office
             resides.
     """
-    if download:
-        text = get_library_as_html()
+
+    if path:
+        text = open(path, "r").read()
     else:
-        text = text or open(os.path.join(os.path.dirname(__file__),
-                                     "partner_library.html")).read()
+        text = get_library_as_html()
+
     tree = html.fromstring(text)
 
     # convert column headers to valid Python identifiers, and rename duplicates
