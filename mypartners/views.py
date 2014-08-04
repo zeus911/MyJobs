@@ -98,7 +98,8 @@ def prm(request):
 
 def get_partners_from_filters(request, company):
     keywords = request.REQUEST.get('keywords', "").split(',')
-    location = request.REQUEST.get('location', "")
+    city, _, state = [item.strip() for item in 
+                      request.REQUEST.get('location', "").partition(",")]
     special_interests = request.REQUEST.get('special_intersts', [])
     partner_library = request.REQUEST.get('partner_library', False)
 
@@ -118,12 +119,14 @@ def get_partners_from_filters(request, company):
                   Q(contact_name=keyword) if partner_library else
                   Q(primary_contact__name=keyword))
 
-    if location:
-        city, st = [item.strip() for item in location.split(',')]
-        query &= Q(city=city)
-        # location is retreived from a text field, so we need to check both
-        # state and st
-        query &= (Q(state=st) | Q(st=st))
+    if city:
+        query &= (Q(city=city) if partner_library else 
+                 Q(primary_contact__city=city))
+                
+
+    if state:
+        query &= ((Q(state=st) | Q(st=st)) if partner_library else
+                 Q(primary_contact__state=state))
 
     # only used with partner library searches for now
     for interest in special_interests:
