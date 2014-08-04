@@ -1,5 +1,6 @@
 from authorize import AuthorizeInvalidError, AuthorizeResponseError
 from datetime import date, timedelta
+from django import forms
 
 from django.contrib import admin
 from django.core.exceptions import ValidationError
@@ -7,13 +8,14 @@ from django.core.validators import validate_email, URLValidator
 from django.forms import (CharField, CheckboxSelectMultiple,
                           HiddenInput, IntegerField, ModelMultipleChoiceField,
                           RadioSelect, Select, TextInput)
+from django.forms.models import modelformset_factory
 
 from seo.models import Company, CompanyUser, SeoSite
 from mypartners.widgets import SplitDateDropDownField
 from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
                              OfflineProduct, Package, Product, ProductGrouping,
                              ProductOrder, PurchasedProduct, PurchasedJob,
-                             SitePackage)
+                             SitePackage, JobLocation)
 from postajob.payment import authorize_card, get_card, settle_transaction
 from postajob.widgets import ExpField
 from universal.forms import RequestForm
@@ -22,7 +24,7 @@ from universal.helpers import get_object_or_none
 
 class BaseJobForm(RequestForm):
     class Meta:
-        exclude = ('guid', 'is_syndicated', 'created_by', )
+        exclude = ('is_syndicated', 'created_by', )
 
     class Media:
         css = {
@@ -116,12 +118,23 @@ class BaseJobForm(RequestForm):
         return super(BaseJobForm, self).save(commit)
 
 
+class JobLocationForm(forms.ModelForm):
+    class Meta:
+        fields = ('city', 'state', 'country', 'zipcode')
+        excluded = ('guid', 'state_short', 'country_short')
+        model = JobLocation
+
+
+JobLocationFormSet = modelformset_factory(JobLocation, form=JobLocationForm,
+                                          extra=1)
+
+
 class JobForm(BaseJobForm):
     class Meta:
         fields = ('title', 'is_syndicated', 'reqid', 'description',
                   'date_expired', 'is_expired', 'autorenew', 'apply_type',
                   'apply_link', 'apply_email', 'apply_info', 'owner',
-                  'post_to', 'site_packages', )
+                  'post_to', 'site_packages')
         model = Job
 
     # For a single job posting by a member company to a microsite
@@ -169,7 +182,7 @@ class JobForm(BaseJobForm):
             self.initial['site_packages'] = [str(site.pk) for site in
                                              self.instance.on_sites()]
             # If the only site package is the company package, then the
-            # current job must be posted to all cmpany and network sites.
+            # current job must be posted to all company and network sites.
             if (packages.count() == 1 and
                     packages[0] == self.instance.owner.site_package):
                 self.initial['post_to'] = 'network'
@@ -198,6 +211,15 @@ class JobForm(BaseJobForm):
 
         return site_packages
 
+    def get_field_sets(self):
+        field_sets = [
+            [self['title'], self['description'], self['reqid']],
+            [self['apply_type'], self['apply_link'], self['apply_info'],
+             self['post_to'], self['site_packages'], self['is_syndicated']],
+            [self['date_expired'], self['is_expired']]
+        ]
+        return field_sets
+
     def save(self, commit=True):
         sites = self.cleaned_data['site_packages']
         job = super(JobForm, self).save(commit)
@@ -210,12 +232,12 @@ class JobForm(BaseJobForm):
         return job
 
 
-class PurchasedJobBaseForm(BaseJobForm):
+class PurchasedJobBaseForm(JobForm):
     class Meta:
-        fields = ('title', 'reqid', 'description',
-                  'date_expired', 'is_expired',
-                  'apply_type', 'apply_link', 'apply_email',
-                  'apply_info', 'owner', )
+        fields = ('title', 'is_syndicated', 'reqid', 'description',
+                  'date_expired', 'is_expired', 'autorenew', 'apply_type',
+                  'apply_link', 'apply_email', 'apply_info', 'owner',
+                  'post_to', 'site_packages')
         model = PurchasedJob
         purchased_product = None
 

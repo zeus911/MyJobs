@@ -1,6 +1,7 @@
 from datetime import date
 import itertools
 import json
+import uuid
 
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
@@ -17,10 +18,10 @@ from myjobs.decorators import user_is_allowed
 from postajob.forms import (CompanyProfileForm, JobForm, OfflinePurchaseForm,
                             OfflinePurchaseRedemptionForm, ProductForm,
                             ProductGroupingForm, PurchasedJobForm,
-                            PurchasedProductForm)
+                            PurchasedProductForm, JobLocationFormSet)
 from postajob.models import (CompanyProfile, Job, OfflinePurchase, Product,
                              ProductGrouping, PurchasedJob, PurchasedProduct,
-                             Request)
+                             Request, JobLocation)
 from universal.helpers import get_company
 from universal.views import RequestFormViewBase
 
@@ -120,6 +121,7 @@ def admin_purchasedproduct(request):
         'active_products': purchases.filter(expiration_date__gte=date.today()),
         'expired_products': purchases.filter(expiration_date__lt=date.today()),
     }
+    print data['active_products']
 
     return render_to_response('postajob/purchasedproduct.html', data,
                               RequestContext(request))
@@ -304,6 +306,7 @@ class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
     form_class = JobForm
     model = Job
     display_name = 'Job'
+    template_name = 'postajob/job_form.html'
 
     success_url = reverse_lazy('jobs_overview')
     add_name = 'job_add'
@@ -325,6 +328,32 @@ class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
         self.queryset = self.queryset.filter(**kwargs)
         return self.queryset
 
+    def get_context_data(self, **kwargs):
+        context = super(JobFormView, self).get_context_data(**kwargs)
+        if self.request.POST:
+            context['formset'] = JobLocationFormSet(self.request.POST)
+        else:
+            context['formset'] = JobLocationFormSet()
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        joblocation_form = context['formset']
+        if form.is_valid():
+            if joblocation_form.is_valid():
+                self.object = form.save()
+                joblocation_form.job = self.object
+                joblocation_form.save()
+                return redirect(self.success_url)
+        return self.render_to_response(self.get_context_data(form=form))
+
+    def form_invalid(self, form):
+        print form.errors
+
+    def post(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
+        return super(JobFormView, self).post(request, *args, **kwargs)
+
 
 class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
     form_class = PurchasedJobForm
@@ -335,6 +364,7 @@ class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
     add_name = 'purchasedjob_add'
     update_name = 'purchasedjob_update'
     delete_name = 'purchasedjob_delete'
+    template_name = 'postajob/job_form.html'
 
     purchase_field = 'purchased_product'
     purchase_model = PurchasedProduct
@@ -346,6 +376,38 @@ class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
             # the user to access the add view.
             raise Http404
         return super(PurchasedJobFormView, self).set_object(*args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(PurchasedJobFormView, self).get_context_data(**kwargs)
+        formset_args = {}
+        if context.get('item', None):
+            formset_qs = JobLocation.objects.filter(jobs=context['item'])
+        else:
+            formset_qs = JobLocation.objects.none()
+        if self.request.POST:
+            context['formset'] = JobLocationFormSet(self.request.POST,
+                                                    queryset=formset_qs)
+        else:
+            context['formset'] = JobLocationFormSet(queryset=formset_qs)
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        joblocation_form = context['formset']
+        if form.is_valid():
+            if joblocation_form.is_valid():
+                job = form.save()
+                location = joblocation_form.save()[0]
+                location.jobs.add(job)
+                return redirect(self.success_url)
+        return self.render_to_response(self.get_context_data(form=form))
+
+    def form_invalid(self, form):
+        print form.errors
+
+    def post(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
+        return super(PurchasedJobFormView, self).post(request, *args, **kwargs)
 
 
 class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):

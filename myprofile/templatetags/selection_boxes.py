@@ -99,8 +99,8 @@ def country_select(selected="usa", html_id="", input_name="country",
     try:
         label = data_list["friendly_label"]
     except KeyError:
-        label = "Country"        
-    
+        label = "Country"
+
     if region_html_id:
         sel_tag = _build_select_list(country_list,selected,input_name, html_id,
                                      "hasRegions", region_html_id)
@@ -113,8 +113,8 @@ def country_select(selected="usa", html_id="", input_name="country",
         html_str = "%s%s<div class='clear'></div>" % (html_str, sel_tag)
     else:
         html_str = sel_tag
-        
-    return html_str   
+
+    return html_str
 
 
 @register.simple_tag

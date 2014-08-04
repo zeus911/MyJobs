@@ -26,13 +26,12 @@ class ModelAdminWithRequest(admin.ModelAdmin):
 
 class JobAdmin(ModelAdminWithRequest):
     form = JobForm
-    list_display = ('__unicode__', 'guid', )
+    list_display = ('__unicode__', )
     search_fields = ('title', 'owner', 'site_packages__sites__domain', )
 
     fieldsets = (
         ('Job Information', {
             'fields': (('title', ), 'reqid', 'description',
-                       'city', 'state', 'country', 'zipcode',
                        ('date_expired', 'is_expired', 'autorenew', )),
         }),
         ('Application Instructions', {
@@ -58,13 +57,12 @@ class JobAdmin(ModelAdminWithRequest):
 
 class PurchasedJobAdmin(ModelAdminWithRequest):
     form = PurchasedJobAdminForm
-    list_display = ('__unicode__', 'guid', )
+    list_display = ('__unicode__', )
     search_fields = ('title', 'owner', )
 
     fieldsets = (
         ('Job Information', {
             'fields': (('title', 'is_approved', ), 'reqid', 'description',
-                       'city', 'state', 'country', 'zipcode',
                        ('date_expired', 'is_expired', 'autorenew', )),
         }),
         ('Application Instructions', {

@@ -15,6 +15,7 @@
         {% get_form_action %}
         <small>{{ display_name }}</small>
     </h1>
+    {% block form %}
     <form action="?" method="post">
         {% include "includes/form-error-highlight.html" %}
         {% csrf_token %}
@@ -38,6 +39,7 @@
             <button type="submit" class="btn primary" id="profile-save">{% trans 'Save' %}</button>
         </div>{# /actions #}
     </form>
+    {% endblock form %}
 {% endblock content %}
 
 {% block extra-js %}

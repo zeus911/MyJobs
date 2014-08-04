@@ -15,6 +15,7 @@ from django.db import models
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_delete
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext_lazy as _
 
 
 class BaseModel(models.Model):
@@ -38,17 +39,20 @@ class JobLocation(models.Model):
         'state': 'The state where the job is located.',
         'zipcode': 'The zipcode of the job location.',
     }
-    guid = models.CharField(max_length=255, unique=True)
+    guid = models.CharField(max_length=255, unique=True, blank=True, default='')
     city = models.CharField(max_length=255,
                             help_text=help_text['city'])
-    state = models.CharField(max_length=200, verbose_name='State',
-                             help_text=help_text['state'])
+    state = models.CharField(max_length=200,
+                             help_text=help_text['state'],
+                             verbose_name=_('State/Region'))
     state_short = models.CharField(max_length=3)
     country = models.CharField(max_length=200,
                                help_text=help_text['country'])
-    country_short = models.CharField(max_length=3)
+    country_short = models.CharField(max_length=3,
+                                     help_text=help_text['country'])
     zipcode = models.CharField(max_length=15, blank=True,
-                               help_text=help_text['zipcode'])
+                               help_text=help_text['zipcode'],
+                               verbose_name=_('Postal Code'))
 
     def save(self, **kwargs):
         self.generate_guid()
@@ -99,7 +103,7 @@ class Job(BaseModel):
     is_syndicated = models.BooleanField(default=False,
                                         verbose_name="Syndicated")
 
-    locations = models.ManyToManyField('JobLocation')
+    locations = models.ManyToManyField('JobLocation', related_name='jobs')
 
     date_new = models.DateTimeField(auto_now=True)
     date_updated = models.DateTimeField(auto_now_add=True)
@@ -254,7 +258,7 @@ class PurchasedJob(Job):
             self.max_expired_date = (date.today() + timedelta(max_job_length))
 
             # If the product dictates that jobs don't require approval,
-            # immidiately approve the job.
+            # immediately approve the job.
             if not self.purchased_product.product.requires_approval:
                 self.is_approved = True
 
