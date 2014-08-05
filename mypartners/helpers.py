@@ -377,7 +377,7 @@ def get_partners_from_filters(request, company, partner_library=False):
     keywords = request.REQUEST.get('keywords', "").split(',', 1)
     city = request.REQUEST.get('city', "").strip()
     state = request.REQUEST.get('state', "").strip()
-    special_interests = request.REQUEST.get('special_interest[]', [])
+    special_interests = request.REQUEST.getlist('special_interest[]')
 
     # The starting QuerySet will be different if we are searching through the
     # partner library
@@ -403,10 +403,9 @@ def get_partners_from_filters(request, company, partner_library=False):
                   Q(primary_contact__state=state))
 
     # only used with partner library searches for now
-    """
     for interest in special_interests:
-        query |= Q(**{"is_%s" % interest.replace(' ', '_'): True})
-    """
+        print "is_%s" % interest.replace(' ', '_')
+        query &= Q(**{"is_%s" % interest.replace(' ', '_'): True})
 
     partners = partners.filter(query)
 
