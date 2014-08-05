@@ -275,7 +275,7 @@ h1 > small > a:hover {
 
 .sidebar .partner-tag {
     width: 49%;
-    font-size: 0.9em;
+    padding: 5px 10px;
 }
 
 .sidebar .partner-tag:nth-child(n+3) {
@@ -285,10 +285,11 @@ h1 > small > a:hover {
 .partner-tag {
     display: inline-block;
     box-sizing: border-box;
-    padding: 5px 10px;
+    padding: 1px 5px;
     border-radius: 5px;
     background-color: #AAA;
     color: #FFF;
+    font-size: 0.9em;
 }
 
 .partner-tag.veteran { background-color: #5eb94e; }

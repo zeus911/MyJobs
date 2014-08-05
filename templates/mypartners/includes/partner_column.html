@@ -1,23 +1,23 @@
-    {% for partner in partners %}
-        {% if on_page = "prm" %}
-        {% include "mypartners/includes/partner_card.html" with on_page="prm" %}
+{% for partner in partners %}
+    {% if on_page = "prm" %}
+    {% include "mypartners/includes/partner_card.html" with on_page="prm" %}
+    {% endif %}
+    {% if on_page = "partner_library" %}
+    {% include "mypartners/includes/partner_card.html" with on_page="partner_library" %}
+    {% endif %}
+{% endfor %}
+<div class="pagination">
+    <span class="step-links">
+        {% if partners.has_previous %}
+            <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key 'page' %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ partners.previous_page_number }}">Previous</a>
         {% endif %}
-        {% if on_page = "find_partners" %}
-        {% include "mypartners/includes/partner_card.html" with on_page="find_partners" %}
-        {% endif %}
-    {% endfor %}
-    <div class="pagination">
-        <span class="step-links">
-            {% if partners.has_previous %}
-                <a href="?page={{ partners.previous_page_number }}">Previous</a>
-            {% endif %}
 
-            <span class="current">
-                Page {{ partners.number }} of {{ partners.paginator.num_pages }}.
-            </span>
-
-            {% if partners.has_next %}
-                <a href="?page={{ partners.next_page_number }}">Next</a>
-            {% endif %}
+        <span class="current">
+            Page {{ partners.number }} of {{ partners.paginator.num_pages }}.
         </span>
-    </div>
+
+        {% if partners.has_next %}
+            <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key 'page' %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ partners.next_page_number }}">Next page</a>
+        {% endif %}
+    </span>
+</div>
