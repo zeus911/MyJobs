@@ -173,12 +173,11 @@ class EditItemTests(MyPartnersTestCase):
             request = self.requests['contact'](partner=partner, id=1)
             request.user = self.staff_user
 
-            try:
-                self.assertRaises(Http404, views.edit_item, request)
-            except AssertionError:
-                raise AssertionError("A valid partner id should be required "
-                                     "to display the Add Contact form, but "
-                                     "%s seems to work fine." % partner)
+            with self.assertRaises(Http404,
+                                   "A valid partner id should be required to "
+                                   "display the Add Contact form, but %s "
+                                   "seems to work fine." % partner):
+                views.edit_item(request)
 
     def test_edit_contact_with_bad_item(self):
         """ Invalid item should result in a 404 if not 0, otherwise, should
@@ -189,13 +188,12 @@ class EditItemTests(MyPartnersTestCase):
             request = self.requests['contact'](id=item)
             request.user = self.staff_user
 
-            try:
-                self.assertRaises(Http404, views.edit_item, request)
-            except AssertionError:
-                raise AssertionError("Navigating to /prm/view/details/edit "
-                                     "should raise an Http404 error when "
-                                     "using an id of %s, but it doesn't!" %
-                                     item)
+
+            with self.assertRaises(Http404,
+                                   "Navigation to /prm/view/details/edit "
+                                   "should raise an Http404 error when using "
+                                   "an id of %s, but it doesn't!" % item):
+                views.edit_item(request)
 
     def test_content_id_ignored(self):
         """ The content ID is irrelevant, and should be ignored. """
@@ -208,19 +206,14 @@ class EditItemTests(MyPartnersTestCase):
             partner_request = self.requests['partner'](ct=ct)
             partner_request.user = self.staff_user
 
-            try:
-                self.assertEqual(
-                    views.edit_item(partner_request).status_code, 200)
-            except AssertionError:
-                self.fail("test_content_id_ignored raised Http404 "
-                          "unexpectedly while trying to test for partners!")
 
-            try:
-                self.assertEqual(
-                    views.edit_item(partner_request).status_code, 200)
-            except Http404:
-                self.fail("test_content_id_ignored raised Http404 "
-                          "unexpectedly while trying to test for contacts!")
+            # test content id for partner
+            self.assertEqual(
+                views.edit_item(contact_request).status_code, 200)
+
+            # test content id for contact
+            self.assertEqual(
+                views.edit_item(partner_request).status_code, 200)
 
     def test_add_partner_form_loaded(self):
         request = self.requests['partner']()
