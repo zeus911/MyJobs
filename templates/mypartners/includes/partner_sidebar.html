@@ -3,9 +3,9 @@
     <div class="partner-filters">
         <h2 class="top">Filter Partners</h2>
         <label>Keywords:</label>
-        <input type="text" placeholder="Keywords" />
+        <input type="text" placeholder="Keywords" {% if request.GET.keywords %}value="{{request.GET.keywords}}"{% endif %} />
         <label>Location:</label>
-        <input type="text" placeholder="Location" />
+        <input type="text" placeholder="Location" {% if request.GET.location %}value="{{request.GET.location}}"{% endif %} />
         {% if special_interest %}
         <label>Special Interest:</label>
         <div class="tag-holder">

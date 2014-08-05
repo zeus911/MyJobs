@@ -133,14 +133,15 @@ $(document).ready(function() {
 
     $("#filter-partners").on("click", function() {
         /* Variables */
-        var data = {},
-            special_interest = [];
+        var ctx = {},
+            special_interest = [],
+            path = location.pathname;
 
         /* Populating data */
         $(".partner-filters input").each(function() {
             if($(this).val()) {
                 var data_key = $(this).prev('label').html().replace(":", "").toLowerCase();
-                data[data_key] = $(this).val();
+                ctx[data_key] = $(this).val();
             }
         });
         // <i> is used for check icon
@@ -148,13 +149,13 @@ $(document).ready(function() {
             special_interest.push($(this).text().toLowerCase());
         });
         if(special_interest.length > 0)
-            data.special_interest = special_interest;
+            ctx.special_interest = special_interest;
 
         /* Ajax */
         $.ajax({
             type: 'GET',
-            url: window.location.pathname,
-            data: data,
+            url: path,
+            data: ctx,
             success: function(data) {
                 $("#partner-holder").html(data);
             }

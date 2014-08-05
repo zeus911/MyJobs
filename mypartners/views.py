@@ -61,9 +61,7 @@ def prm(request):
 
     if request.is_ajax():
         partners = get_partners_from_filters(request, company)
-        print partners
         paginator = add_pagination(request, partners)
-        print paginator
         ctx = {
             'partners': paginator,
             'on_page': 'prm'
@@ -88,7 +86,7 @@ def prm(request):
 
     ctx = {
         'has_partners': True if partners else False,
-        'partners': paginator,
+        'partners': paginator or partners,
         'form': partner_form or form,
         'company': company,
         'user': request.user,
@@ -100,12 +98,11 @@ def prm(request):
                               RequestContext(request))
 
 
-def get_partners_from_filters(request, company):
+def get_partners_from_filters(request, company, partner_library=False):
     keywords = request.REQUEST.get('keywords', "").split(',')
     city, _, state = [item.strip() for item in 
                       request.REQUEST.get('location', "").partition(",")]
     special_interests = request.REQUEST.get('special_intersts', [])
-    partner_library = request.REQUEST.get('partner_library', False)
 
     # The starting QuerySet will be different if we are searching through the
     # partner library
@@ -120,16 +117,15 @@ def get_partners_from_filters(request, company):
     for keyword in keywords:
         query &= (Q(name__contains=keyword) | Q(uri__contains=keyword) |
                   (Q(contact_name__contains=keyword) if partner_library else
-                     Q(primary_contact__name__contains=keyword)))
+                   Q(primary_contact__name__contains=keyword)))
 
     if city:
         query &= (Q(city=city) if partner_library else 
-                 Q(primary_contact__city=city))
-                
+                  Q(primary_contact__city=city))
 
     if state:
         query &= ((Q(state=st) | Q(st=st)) if partner_library else
-                 Q(primary_contact__state=state))
+                  Q(primary_contact__state=state))
 
     # only used with partner library searches for now
     for interest in special_interests:
@@ -146,12 +142,26 @@ def partner_library(request):
     if company is None:
         raise Http404
 
-    partners = get_partners_from_filters(request, company)
+    if request.is_ajax():
+        partners = get_partners_from_filters(request, company, partner_library=True)
+        paginator = add_pagination(request, partners)
+        ctx = {
+            'partners': paginator,
+            'on_page': 'partner_library'
+        }
+        response = HttpResponse()
+        html = render_to_response('mypartners/includes/partner_column.html',
+                                  ctx, RequestContext(request))
+        response.content = html.content
+        return response
+
+    partners = get_partners_from_filters(request, company, partner_library=True)
+    paginator = add_pagination(request, partners)
 
     ctx = {
         'company': company,
         'view_name': 'PRM',
-        'partners': partners
+        'partners': paginator
     }
 
     return render_to_response('mypartners/partner_library.html', ctx,

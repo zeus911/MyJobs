@@ -4,6 +4,8 @@
     </div>
     <div class="sub-title">
         <small>
+            {% if on_page == 'prm' %}
+
             {% for location in partner.get_contact_locations %}
                 {% if not forloop.last %}
                     {{ location }};
@@ -11,9 +13,40 @@
                     {{ location }}
                 {% endif %}
             {% endfor %}
+
+            {% elif on_page == 'partner_library' %}
+
+            {% if partner.city %}
+            {{ partner.city }}{% if partner.st %}, {{ partner.st }} {% endif %}
+            {% else %}
+            {{ partner.city }}
+            {% endif %}
+
+            {% endif %}
         </small>
     </div>
+    {% if on_page == 'partner_library' %}
+    <div class="partner-tags">
+        {% if partner.is_veteran %}
+            <div class="partner-tag veteran">Veteran</div>
+        {% endif %}
+        {% if partner.is_female %}
+            <div class="partner-tag female">Female</div>
+        {% endif %}
+        {% if partner.is_minority %}
+            <div class="partner-tag minority">Minority</div>
+        {% endif %}
+        {% if partner.is_disabled %}
+            <div class="partner-tag disabled">Disabled</div>
+        {% endif %}
+        {% if partner.is_disabled_veteran %}
+            <div class="partner-tag disabled-veteran">Disabled Veteran</div>
+        {% endif %}
+    </div>
+    {% endif %}
     <div class="product-details">
+        {% if on_page == 'prm' %}
+
         {% if partner.primary_contact %}
         {% if partner.primary_contact.name %}
         {{ partner.primary_contact.name }}
@@ -23,6 +56,20 @@
         {% else %}
         No Primary Contact
         {% endif %}
+
+        {% elif on_page == 'partner_library' %}
+
+        {% if partner.contact_name %}
+        {{ partner.contact_name }}
+        {% else %}
+        No Contact
+        {% endif %}
+
+        {% endif %}
     </div>
-    <a class="btn pull-right" href="{% url 'partner_overview' %}?partner={{ partner.id }}">Open</a>
+    {% if on_page == 'prm' %}
+    <a id="partner-{{ partner.id }}" class="btn pull-right" href="{% url 'partner_overview' %}?partner={{ partner.id }}">Open</a>
+    {% elif on_page == 'partner_library' %}
+    <a id="partner-{{ partner.id }}" class="btn pull-right" href="#">Add</a>
+    {% endif %}
 </div>
