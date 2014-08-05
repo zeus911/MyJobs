@@ -156,7 +156,7 @@ $(document).ready(function() {
             url: window.location.pathname,
             data: data,
             success: function(data) {
-                console.log(data);
+                $("#partner-holder").html(data);
             }
         });
     });

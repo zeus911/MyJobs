@@ -47,7 +47,9 @@
         </div>
     {% else %}
         <div class="row">
+            <div id="partner-holder" class="span8">
             {% include "mypartners/includes/partner_column.html" with on_page="prm" %}
+            </div>
             <div id="sidebar-holder" class="span4">
                 {% include "mypartners/includes/partner_sidebar.html" with filters=True navigation=True special_interest=False %}
             </div>

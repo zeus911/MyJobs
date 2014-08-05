@@ -68,10 +68,10 @@ def prm(request):
             'partners': paginator,
             'on_page': 'prm'
         }
-        response = HttpResponse(content_type='text/javascript')
+        response = HttpResponse()
         html = render_to_response('mypartners/includes/partner_column.html',
                                   ctx, RequestContext(request))
-        response.content = json.dumps(html.content)
+        response.content = html.content
         return response
 
     form = request.REQUEST.get('form')
