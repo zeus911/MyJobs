@@ -7,58 +7,48 @@
     <form action="?" method="post">
         {% csrf_token %}
         {{ form.owner }}
-        <div class="accordion" id="accordions">
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordions" href="#detail-body">
-                        Job Details
-                    </a>
+        <div> {# accordion container #}
+            <div class="simple-accordion">
+                <div class="header">
+                    Job Details
                 </div>
-                <div id="detail-body" class="accordion-body collapse in">
-                    <div class="accordion-inner">
+                <div class="contents">
+                    <fieldset>
                         {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.0 %}
-                    </div>
+                    </fieldset>
                 </div>
             </div>
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordions" href="#location-body">
+            <div class="simple-accordion">
+                    <div class="header">
                         Job Locations
-                    </a>
-                </div>
-                <div id="location-body" class="accordion-body collapse in">
-                    <div class="accordion-inner">
+                    </div>
+                    <div class="contents">
                         <fieldset>
-                            {% for formset_form in formset %}
+                            {% for formset_form in formset.forms %}
                                 {% include 'includes/form-error-highlight.html' with form=formset_form %}
                             {% endfor %}
                             {{ formset.management_form }}
                         </fieldset>
                     </div>
-                </div>
             </div>
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordions" href="#instruction-body">
+            <div class="simple-accordion">
+                <div class="header">
                         Application Instructions
-                    </a>
                 </div>
-                <div id="instruction-body" class="accordion-body collapse in">
-                    <div class="accordion-inner">
+                <div class="contents">
+                    <fieldset>
                         {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.1 %}
-                    </div>
+                    </fieldset>
                 </div>
             </div>
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" href="#expiration-body">
-                        Job Expiration
-                    </a>
+            <div class="simple-accordion">
+                <div class="header">
+                    Job Expiration
                 </div>
-                <div id="expiration-body" class="accordion-body collapse in">
-                    <div class="accordion-inner">
+                <div class="contents">
+                    <fieldset>
                         {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.2 %}
-                    </div>
+                    </fieldset>
                 </div>
             </div>
         </div>
@@ -85,10 +75,11 @@
 
 {% block extra-js %}
     {{ block.super }}
-    <script src="//d2e48ltfsb5exy.cloudfront.net/framework/v2/js/code/bootstrap-collapse.js{{ gz }}"></script>
     <script type="text/javascript">
-        //$('.collapse').collapse({hide: true});
         var form_count = {{ formset.total_form_count }};
         var form = '{{ formset.empty_form|escapejs }}';
+        $(document).ready(function() {
+            accordion('.header', '.contents');
+        });
     </script>
 {% endblock %}

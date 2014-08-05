@@ -281,7 +281,7 @@ class ModelTests(MyJobsBase):
         order = ProductOrder.objects.create(product=self.product,
                                             group=grouping)
         grouping_products = grouping.products.all().values_list('pk', flat=True)
-        self.assertItemsEqual(grouping_products, [order.pk])
+        self.assertItemsEqual(grouping_products, [order.product.pk])
 
         grouping.delete()
         self.assertEqual(ProductGrouping.objects.all().count(), 0)

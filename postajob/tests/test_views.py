@@ -50,6 +50,12 @@ class ViewTests(MyJobsBase):
                              '"regions":[{"code":"IN", "name":"Indiana"}] }')
         self.side_effect = [self.choices_data for x in range(0, 50)]
 
+        self.location_management_form_data = {
+            'form-TOTAL_FORMS': 0,
+            'form-INITIAL_FORMS': 0,
+            'form-MAX_NUM_FORMS': 0,
+        }
+
         # Form data
         self.product_form_data = {
             'package': str(self.package.pk),
@@ -92,16 +98,12 @@ class ViewTests(MyJobsBase):
         }
 
         self.purchasedjob_form_data = {
-            'city': 'Indianapolis',
             'description': 'Description',
             'title': 'Job Form Data Title',
-            'country': 'United States of America',
             'owner': str(self.company.pk),
             'reqid': '123456',
             'apply_info': '',
-            'zipcode': '46268',
             'apply_link': 'www.google.com',
-            'state': 'Indiana',
             'apply_email': '',
             'apply_type': 'link',
             'post_to': 'network',
@@ -138,6 +140,9 @@ class ViewTests(MyJobsBase):
             'phone': '111-111-1111',
             'outgoing_email_domain': 'my.jobs'
         }
+
+        for form_data in [self.job_form_data, self.purchasedjob_form_data]:
+            form_data.update(self.location_management_form_data)
 
     def login_user(self):
         self.client.post(reverse('home'),

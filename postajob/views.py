@@ -338,21 +338,16 @@ class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
 
     def form_valid(self, form):
         context = self.get_context_data()
-        joblocation_form = context['formset']
+        joblocation_formset = context['formset']
         if form.is_valid():
-            if joblocation_form.is_valid():
-                self.object = form.save()
-                joblocation_form.job = self.object
-                joblocation_form.save()
+            if joblocation_formset.is_valid():
+                job = form.save()
+                locations = joblocation_formset.save()
+                for location in locations:
+                    location.jobs.add(job)
+                job.save()
                 return redirect(self.success_url)
         return self.render_to_response(self.get_context_data(form=form))
-
-    def form_invalid(self, form):
-        print form.errors
-
-    def post(self, request, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
-        return super(JobFormView, self).post(request, *args, **kwargs)
 
 
 class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
@@ -379,7 +374,6 @@ class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
 
     def get_context_data(self, **kwargs):
         context = super(PurchasedJobFormView, self).get_context_data(**kwargs)
-        formset_args = {}
         if context.get('item', None):
             formset_qs = JobLocation.objects.filter(jobs=context['item'])
         else:
@@ -393,21 +387,16 @@ class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
 
     def form_valid(self, form):
         context = self.get_context_data()
-        joblocation_form = context['formset']
+        joblocation_formset = context['formset']
         if form.is_valid():
-            if joblocation_form.is_valid():
+            if joblocation_formset.is_valid():
                 job = form.save()
-                location = joblocation_form.save()[0]
-                location.jobs.add(job)
+                locations = joblocation_formset.save()
+                for location in locations:
+                    location.jobs.add(job)
+                job.save()
                 return redirect(self.success_url)
         return self.render_to_response(self.get_context_data(form=form))
-
-    def form_invalid(self, form):
-        print form.errors
-
-    def post(self, request, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
-        return super(PurchasedJobFormView, self).post(request, *args, **kwargs)
 
 
 class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):
