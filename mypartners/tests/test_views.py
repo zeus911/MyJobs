@@ -169,30 +169,29 @@ class EditItemTests(MyPartnersTestCase):
     def test_add_contat_with_bad_partner_id(self):
         """ Invalid partner should always result in a 404. """
 
+        fail_msg = "The partner id %s should have raised an Http404 but didnt"
+
         for partner in self.bad_ids:
             request = self.requests['contact'](partner=partner, id=1)
             request.user = self.staff_user
 
-            with self.assertRaises(Http404,
-                                   "A valid partner id should be required to "
-                                   "display the Add Contact form, but %s "
-                                   "seems to work fine." % partner):
+            with self.assertRaises(Http404, msg=fail_msg % partner):
                 views.edit_item(request)
 
     def test_edit_contact_with_bad_item(self):
         """ Invalid item should result in a 404 if not 0, otherwise, should
             display the add contact form
         """
+
+        fail_msg = ("Navigating to /prm/view/details/edit with an id of %s "
+                    "should have raised an Http404 but didn't.")
+
         for item in self.bad_ids[1:]:
             # 
             request = self.requests['contact'](id=item)
             request.user = self.staff_user
 
-
-            with self.assertRaises(Http404,
-                                   "Navigation to /prm/view/details/edit "
-                                   "should raise an Http404 error when using "
-                                   "an id of %s, but it doesn't!" % item):
+            with self.assertRaises(Http404, msg=fail_msg % item):
                 views.edit_item(request)
 
     def test_content_id_ignored(self):
