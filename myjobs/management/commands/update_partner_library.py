@@ -11,6 +11,7 @@ class Command(BaseCommand):
     help = "Update PartnerLibrary Model"
 
     def handle(self, *args, **kwargs):
+        print "Connecting to OFCCP directory..."
         for partner in get_library_partners():
             if not PartnerLibrary.objects.filter(email=partner.email_id,
                                                  st=partner.st,
