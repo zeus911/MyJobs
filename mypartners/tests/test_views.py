@@ -175,8 +175,11 @@ class EditItemTests(MyPartnersTestCase):
             request = self.requests['contact'](partner=partner, id=1)
             request.user = self.staff_user
 
-            with self.assertRaises(Http404, msg=fail_msg % partner):
+            with self.assertRaises(Http404) as a:
                 views.edit_item(request)
+
+                if cm.exception != Http404:
+                    print fail_msg % partner
 
     def test_edit_contact_with_bad_item(self):
         """ Invalid item should result in a 404 if not 0, otherwise, should
@@ -191,8 +194,11 @@ class EditItemTests(MyPartnersTestCase):
             request = self.requests['contact'](id=item)
             request.user = self.staff_user
 
-            with self.assertRaises(Http404, msg=fail_msg % item):
+            with self.assertRaises(Http404, msg=fail_msg % item) as cm:
                 views.edit_item(request)
+
+                if cm.exception != Http404:
+                    print fail_msg % item
 
     def test_content_id_ignored(self):
         """ The content ID is irrelevant, and should be ignored. """
