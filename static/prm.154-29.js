@@ -1,4 +1,5 @@
 $(document).ready(function() {
+    $.ajaxSettings.traditional = true;
     /*
     Saves both partner forms; init form and new/edit partner form
 
@@ -149,7 +150,7 @@ $(document).ready(function() {
             special_interest.push($(this).text().toLowerCase());
         });
         if(special_interest.length > 0)
-            ctx.special_interest = JSON.stringify(special_interest);
+            ctx.special_interest = special_interest;
 
         /* Ajax */
         $.ajax({

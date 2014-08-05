@@ -378,8 +378,8 @@ def get_partners_from_filters(request, company, partner_library=False):
     keywords = request.REQUEST.get('keywords', "").split(',', 1)
     city = request.REQUEST.get('city', "").strip()
     state = request.REQUEST.get('state', "").strip()
-    special_interest = json.loads(
-        request.REQUEST.get('special_interest', '[]'))
+    special_interest = request.REQUEST.getlist('special_interest')
+    print special_interest
 
     # The starting QuerySet will be different if we are searching through the
     # partner library
