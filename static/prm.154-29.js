@@ -138,7 +138,7 @@ $(document).ready(function() {
             path = location.pathname;
 
         /* Populating data */
-        $(".partner-filters input").each(function() {
+        $(".partner-filters :input").each(function() {
             if($(this).val()) {
                 var data_key = $(this).prev('label').html().replace(":", "").toLowerCase();
                 ctx[data_key] = $(this).val();
@@ -149,7 +149,7 @@ $(document).ready(function() {
             special_interest.push($(this).text().toLowerCase());
         });
         if(special_interest.length > 0)
-            ctx.special_interest = special_interest;
+            ctx.special_interest = JSON.stringify(special_interest);
 
         /* Ajax */
         $.ajax({

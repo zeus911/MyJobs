@@ -12,6 +12,13 @@
 {% block content %}
     {% include "mypartners/includes/prm_header.html" with page_title="Partner Library" back_to="Back to Partner Relationship Manager" back_to_url="prm" %}
     <div class="row">
+        <div id="ofccp-referral-directory" class="span12">
+            <small>
+                <i>The partner(s) listed here are from the Office of Federal Contract Compliance Programs (OFCCP) Employment Resource <a href="http://www.dol.gov/ofccp/ERRD/errsrvs.htm" style="text-decoration: underline">Referral Directory</a>.</i>
+            </small>
+        </div>
+    </div>
+    <div class="row">
         <div id="partner-holder" class="span8">
         {% include "mypartners/includes/partner_column.html" with on_page="partner_library" %}
         </div>

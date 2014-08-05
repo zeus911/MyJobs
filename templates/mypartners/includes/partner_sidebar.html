@@ -4,8 +4,11 @@
         <h2 class="top">Filter Partners</h2>
         <label>Keywords:</label>
         <input type="text" placeholder="Keywords" {% if request.GET.keywords %}value="{{request.GET.keywords}}"{% endif %} />
-        <label>Location:</label>
-        <input type="text" placeholder="Location" {% if request.GET.location %}value="{{request.GET.location}}"{% endif %} />
+        <label>State:</label>
+        {% include "includes/state_dropdown.html" %}
+        <label>City:</label>
+        <input type="text" placeholder="City" {% if request.GET.location %}value="{{request.GET.location}}"{% endif %} />
+
         {% if special_interest %}
         <label>Special Interest:</label>
         <div class="tag-holder">
