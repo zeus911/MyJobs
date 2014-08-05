@@ -1,4 +1,4 @@
-# TODO: 
+# TODO:
 #   * proper logging
 #   * check for succesful record insertion without hitting the database
 #   * command line options
@@ -17,7 +17,7 @@ class Command(BaseCommand):
                                                  st=partner.st,
                                                  city=partner.city):
 
-                contact_name = " ".join(" ".join([partner.first_name, 
+                contact_name = " ".join(" ".join([partner.first_name,
                                                  partner.middle_name,
                                                  partner.last_name]).split())
                 PartnerLibrary(
@@ -40,6 +40,7 @@ class Command(BaseCommand):
                     is_minority=partner.minority,
                     is_female=partner.female,
                     is_disabled=partner.disabled,
+                    is_disabled_veteran=partner.disabled_veteran,
                     is_veteran=partner.veteran).save()
 
                 #TODO: see if there is a way to do this without querying the

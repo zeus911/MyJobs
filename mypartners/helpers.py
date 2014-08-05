@@ -4,11 +4,11 @@ from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 import os
 
+from django.db.models import Min, Max, Q
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
-from django.db.models import Min, Max
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -23,7 +23,7 @@ import requests
 
 from universal.helpers import get_domain, get_company
 from mypartners.models import (ContactLogEntry, CONTACT_TYPE_CHOICES, CHANGE,
-                               PartnerLibrary)
+                               Partner, PartnerLibrary)
 from registration.models import ActivationProfile
 
 
@@ -315,7 +315,7 @@ def get_library_as_html():
 
 def get_library_partners(path=None):
     """ Generator that produces partner library info.
-        
+
         If no path is given, then the data is downloaded from
         "www.dol-esa.gov/errd".
 
@@ -351,7 +351,7 @@ def get_library_partners(path=None):
 
     CompliancePartner = namedtuple("CompliancePartner", cols)
     for row in CSSSelector("p ~ table tr")(tree):
-        fields = dict((cols[i], td.text) for i, td in 
+        fields = dict((cols[i], td.text) for i, td in
                       enumerate(CSSSelector("td")(row)))
 
         for column, value in fields.items():
@@ -363,11 +363,49 @@ def get_library_partners(path=None):
                 fields[column] = False
 
             if column in ["minority", "female", "disabled", "veteran",
-                          "exec_om", "first_om", "professional", "technician",
-                          "sales", "admin_support", "craft", "operative", 
-                          "labor", "service"]:
+                          "disabled_veteran", "exec_om", "first_om",
+                          "professional", "technician", "sales",
+                          "admin_support", "craft", "operative", "labor",
+                          "service"]:
                 fields[column] = bool(value.strip())
 
         if len(fields) > 1:
             yield CompliancePartner(**fields)
 
+
+def get_partners_from_filters(request, company, partner_library=False):
+    keywords = request.REQUEST.get('keywords', "").split(',', 1)
+    city = request.REQUEST.get('city', "").strip()
+    state = request.REQUEST.get('state', "").strip()
+    special_interests = request.REQUEST.get('special_interests', [])
+
+    # The starting QuerySet will be different if we are searching through the
+    # partner library
+    if partner_library:
+        partners = PartnerLibrary.objects.all()
+        query = Q()
+    else:
+        partners = Partner.objects.select_related('owner', 'primary_contact')
+        query = Q(owner=company.id)
+
+    # check for keywords in oganization name, website, and first/last name
+    for keyword in keywords:
+        query &= (Q(name__contains=keyword) | Q(uri__contains=keyword) |
+                  (Q(contact_name__contains=keyword) if partner_library else
+                   Q(primary_contact__name__contains=keyword)))
+
+    if city:
+        query &= (Q(city=city) if partner_library else
+                  Q(primary_contact__city=city))
+
+    if state:
+        query &= ((Q(state=st) | Q(st=st)) if partner_library else
+                  Q(primary_contact__state=state))
+
+    # only used with partner library searches for now
+    for interest in special_interests:
+        query |= Q(**{interest.replace(' ', '_'): True})
+
+    partners = partners.filter(query)
+
+    return partners

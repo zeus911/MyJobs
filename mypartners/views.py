@@ -16,7 +16,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
@@ -38,13 +38,14 @@ from mysearches.helpers import (url_sort_options, parse_feed,
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm, ContactRecordForm)
-from mypartners.models import (Partner, PartnerLibrary, Contact, ContactRecord, 
+from mypartners.models import (Partner, PartnerLibrary, Contact, ContactRecord,
                                PRMAttachment, ContactLogEntry,
                                CONTACT_TYPE_CHOICES, ADDITION, DELETION)
 from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
                                 contact_record_val_to_str, retrieve_fields,
                                 get_records_from_request,
+                                get_partners_from_filters,
                                 send_contact_record_email_response,
                                 find_partner_from_email)
 
@@ -98,42 +99,6 @@ def prm(request):
                               RequestContext(request))
 
 
-def get_partners_from_filters(request, company, partner_library=False):
-    keywords = request.REQUEST.get('keywords', "").split(',')
-    city, _, state = [item.strip() for item in 
-                      request.REQUEST.get('location', "").partition(",")]
-    special_interests = request.REQUEST.get('special_intersts', [])
-
-    # The starting QuerySet will be different if we are searching through the
-    # partner library
-    if partner_library:
-        partners = PartnerLibrary.objects.all()
-        query = Q()
-    else:
-        partners = Partner.objects.select_related('owner', 'primary_contact')
-        query = Q(owner=company.id)
-
-    # check for keywords in oganization name, website, and first/last name
-    for keyword in keywords:
-        query &= (Q(name__contains=keyword) | Q(uri__contains=keyword) |
-                  (Q(contact_name__contains=keyword) if partner_library else
-                   Q(primary_contact__name__contains=keyword)))
-
-    if city:
-        query &= (Q(city=city) if partner_library else 
-                  Q(primary_contact__city=city))
-
-    if state:
-        query &= ((Q(state=st) | Q(st=st)) if partner_library else
-                  Q(primary_contact__state=state))
-
-    # only used with partner library searches for now
-    for interest in special_interests:
-        query |= Q(**{interest.replace(' ', '_'): True})
-
-    partners = partners.filter(query)
-
-    return partners
 
 
 @company_has_access('prm_access')
