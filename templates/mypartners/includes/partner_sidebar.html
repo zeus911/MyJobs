@@ -12,14 +12,17 @@
         {% if special_interest %}
         <label>Special Interest:</label>
         <div class="tag-holder">
-            <div class="partner-tag veteran">Veteran</div>
-            <div class="partner-tag female">Female</div>
-            <div class="partner-tag minority">Minority</div>
-            <div class="partner-tag disabled">Disabled</div>
-            <div class="partner-tag disabled-veteran">Disabled Veteran</div>
+            <div class="partner-tag veteran button disabled-tag">Veteran</div>
+            <div class="partner-tag female button disabled-tag">Female</div>
+            <div class="partner-tag minority button disabled-tag">Minority</div>
+            <div class="partner-tag disabled button disabled-tag">Disabled</div>
+            <div class="partner-tag disabled-veteran button disabled-tag">Disabled Veteran</div>
+            <div class="partner-tag unspecified button disabled-tag">Unspecified</div>
+        </div>
+        <div class="help_text">
+            <small>(click to filter on selected interest)</small>
         </div>
         {% endif %}
-        <a id="filter-partners" class="btn" style="margin-top: 10px; box-sizing: border-box; width: 100%;">Filter</a>
         <div class="clearfix"></div>
     </div>
     {% endif %}

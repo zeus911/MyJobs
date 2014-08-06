@@ -283,8 +283,12 @@ h1 > small > a:hover {
 }
 
 .sidebar .partner-tag {
-    width: 49%;
+    width: 48.5%;
     padding: 5px 10px;
+}
+
+.sidebar .partner-tag:nth-child(2n) {
+    margin-left: 0.5%;
 }
 
 .sidebar .partner-tag:nth-child(n+3) {
@@ -296,16 +300,24 @@ h1 > small > a:hover {
     box-sizing: border-box;
     padding: 1px 5px;
     border-radius: 5px;
-    background-color: #AAA;
+    background-color: #888888;
     color: #FFF;
     font-size: 0.9em;
 }
 
-.partner-tag.veteran { background-color: #5eb94e; }
-.partner-tag.female  { background-color: #4bb1cf; }
-.partner-tag.minority { background-color: #faa732; }
-.partner-tag.disabled { background-color: #5f6c82; }
+.partner-tag.button { box-shadow: 2px 2px 0 #585858 }
+.partner-tag.veteran { background-color: #5EB94E; }
+.partner-tag.veteran.button { box-shadow: 2px 2px 0 #3E9F2F; }
+.partner-tag.female  { background-color: #4BB1CF; }
+.partner-tag.female.button { box-shadow: 2px 2px 0 #2B9CBC; }
+.partner-tag.minority { background-color: #FAA732; }
+.partner-tag.minority.button { box-shadow: 2px 2px 0 #DE860A; }
+.partner-tag.disabled { background-color: #5F6C82; }
+.partner-tag.disabled.button { box-shadow: 2px 2px 0 #45546D; }
 .partner-tag.disabled-veteran { background-color: #477958; }
+.partner-tag.disabled-veteran.button { box-shadow: 2px 2px 0 #2E593D; }
+.partner-tag.disabled-tag { background-color: #BCBCC2; }
+.partner-tag.disabled-tag.button { box-shadow: 2px 2px 0 #9696A3; }
 
 .partner-tag:hover {
     cursor: pointer;
@@ -313,6 +325,7 @@ h1 > small > a:hover {
 
 .partner-tag i.icon {
     float: right;
+    margin-top: 2px;
 }
 
 .blanket{
