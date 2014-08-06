@@ -143,3 +143,72 @@ function resend_invoice(id) {
         url: '/postajob/admin/invoice/' + id + '/'
     });
 }
+
+var fields = ['input[id$=-city]',
+    'input[id$=-state]',
+    'input[id$=-country]'];
+
+function add_location(location) {
+    var html_str = '<div><span>city, region_short country</span><a class="btn pull-right" href="?" id="remove-location-loc_num">Remove</a></div>';
+    var location_map = {
+        city: location.find('input[id$=-city]').val(),
+        region_short: location.find('input[id$=-state]').val(),
+        country: location.find('input[id$=-country]').val()
+    };
+    var location_number = location.find('input[id$=-id]').val();
+    if (location_number) {
+        location_map['loc_num'] = location_number;
+    } else {
+        location_map['loc_num'] = form_count;
+    }
+    html_str = html_str.replace(/city|region_short|country|loc_num/gi,
+        function(matched) {
+            return location_map[matched];
+        });
+    $('#job-location-display').append(html_str);
+}
+
+function add_locations() {
+    $('.formset-form').each(function() {
+        add_location($(this));
+    });
+}
+
+function copy_forms(from, to) {
+    var valid = true;
+    fields.every(function(element, index, array) {
+        var old = from.find(element).val();
+        if (old) {
+            to.find(element).val(old);
+            return true;
+        } else {
+            return false;
+        }
+    });
+    if (valid) {
+        $('#job-location-forms').append(to);
+    }
+    return valid;
+}
+
+function clear_form(form) {
+    fields.forEach(function(element, index, array) {
+        form.find(element).val('');
+    });
+}
+
+function create_location_events() {
+    $('#add-location').click(function(e) {
+        e.preventDefault();
+        var new_form = form.replace(/__prefix__/g, form_count);
+        new_form = $(new_form);
+        var old_form = $('#empty-form');
+        var valid = copy_forms(old_form, new_form);
+        if (valid) {
+            add_location(old_form);
+            clear_form(old_form);
+            form_count++;
+            $('input[id$=-TOTAL_FORMS]').val(form_count);
+        }
+    });
+}

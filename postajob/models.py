@@ -45,10 +45,10 @@ class JobLocation(models.Model):
     state = models.CharField(max_length=200,
                              help_text=help_text['state'],
                              verbose_name=_('State/Region'))
-    state_short = models.CharField(max_length=3)
+    state_short = models.CharField(max_length=3, blank=True)
     country = models.CharField(max_length=200,
                                help_text=help_text['country'])
-    country_short = models.CharField(max_length=3,
+    country_short = models.CharField(max_length=3, blank=True,
                                      help_text=help_text['country'])
     zipcode = models.CharField(max_length=15, blank=True,
                                help_text=help_text['zipcode'],

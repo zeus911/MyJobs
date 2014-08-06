@@ -121,7 +121,6 @@ def admin_purchasedproduct(request):
         'active_products': purchases.filter(expiration_date__gte=date.today()),
         'expired_products': purchases.filter(expiration_date__lt=date.today()),
     }
-    print data['active_products']
 
     return render_to_response('postajob/purchasedproduct.html', data,
                               RequestContext(request))
@@ -342,7 +341,8 @@ class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
         if form.is_valid():
             if joblocation_formset.is_valid():
                 job = form.save()
-                locations = joblocation_formset.save()
+                locations = [location_form.save()
+                             for location_form in joblocation_formset.forms]
                 for location in locations:
                     location.jobs.add(job)
                 job.save()
@@ -379,8 +379,10 @@ class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
         else:
             formset_qs = JobLocation.objects.none()
         if self.request.POST:
-            context['formset'] = JobLocationFormSet(self.request.POST,
-                                                    queryset=formset_qs)
+            context['formset'] = JobLocationFormSet(
+                {key: value for key, value in self.request.POST.items()
+                 if '__prefix__' not in key},
+                queryset=formset_qs)
         else:
             context['formset'] = JobLocationFormSet(queryset=formset_qs)
         return context
@@ -391,12 +393,19 @@ class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
         if form.is_valid():
             if joblocation_formset.is_valid():
                 job = form.save()
-                locations = joblocation_formset.save()
+                locations = [location_form.save()
+                             for location_form in joblocation_formset.forms]
                 for location in locations:
                     location.jobs.add(job)
                 job.save()
                 return redirect(self.success_url)
         return self.render_to_response(self.get_context_data(form=form))
+
+    def post(self, request, *args, **kwargs):
+        for key in request.POST.keys():
+            if key.startswith('form'):
+                val = request.POST[key]
+        return super(PurchasedJobFormView, self).post(request, *args, **kwargs)
 
 
 class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):

@@ -19,17 +19,28 @@
                 </div>
             </div>
             <div class="simple-accordion">
-                    <div class="header">
-                        Job Locations
-                    </div>
-                    <div class="contents">
-                        <fieldset>
+                <div class="header">
+                    Job Locations
+                </div>
+                <div class="contents">
+                    <fieldset>
+                        <div id="job-location-forms" class="no-show">
+                            <p>This will be hidden</p>
                             {% for formset_form in formset.forms %}
-                                {% include 'includes/form-error-highlight.html' with form=formset_form %}
+                                <div class="formset-form">
+                                    {{ formset_form }}
+                                </div>
                             {% endfor %}
-                            {{ formset.management_form }}
-                        </fieldset>
-                    </div>
+                        </div>
+                        <div id="job-location-display">
+                        </div>
+                        <div id="empty-form">
+                            {% include 'includes/form-error-highlight.html' with form=formset.empty_form %}
+                        </div>
+                        {{ formset.management_form }}
+                        <a class="btn" href="?" id="add-location">Add</a>
+                    </fieldset>
+                </div>
             </div>
             <div class="simple-accordion">
                 <div class="header">
@@ -80,6 +91,8 @@
         var form = '{{ formset.empty_form|escapejs }}';
         $(document).ready(function() {
             accordion('.header', '.contents');
+            add_locations();
+            create_location_events();
         });
     </script>
 {% endblock %}
