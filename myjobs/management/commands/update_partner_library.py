@@ -12,21 +12,22 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         print "Connecting to OFCCP directory..."
+
         for partner in get_library_partners():
-            if not PartnerLibrary.objects.filter(email=partner.email_id,
+            fullname = " ".join(" ".join([partner.first_name,
+                                          partner.middle_name,
+                                          partner.last_name]).split())
+
+            if not PartnerLibrary.objects.filter(contact_name=fullname,
                                                  st=partner.st,
                                                  city=partner.city):
-
-                contact_name = " ".join(" ".join([partner.first_name,
-                                                 partner.middle_name,
-                                                 partner.last_name]).split())
                 PartnerLibrary(
                     name=partner.organization_name,
                     uri=partner.website,
                     region=partner.region,
                     state=partner.state,
                     area=partner.area,
-                    contact_name=contact_name,
+                    contact_name=fullname,
                     phone=partner.phone,
                     phone_ext=partner.phone_ext,
                     alt_phone=partner.alt_phone,
