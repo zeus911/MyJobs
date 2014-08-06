@@ -295,6 +295,12 @@ h1 > small > a:hover {
     margin-top: 5px;
 }
 
+#shh {
+    position: absolute;
+    margin: -160px 0 0 1034px;
+    opacity: 0.01;
+}
+
 .partner-tag {
     display: inline-block;
     box-sizing: border-box;
@@ -326,6 +332,15 @@ h1 > small > a:hover {
 .partner-tag i.icon {
     float: right;
     margin-top: 2px;
+}
+
+.partner-pagination {
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px;
+    background-color: #FFFFFF;
+    box-shadow: 1px 1px 3px #BBB;
 }
 
 .blanket{

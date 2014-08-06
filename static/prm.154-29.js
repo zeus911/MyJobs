@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    $.ajaxSettings.traditional = true;
+    show_selected();
     /*
     Saves both partner forms; init form and new/edit partner form
 
@@ -163,7 +163,7 @@ function build_data() {
     $(".partner-filters :input").each(function() {
         if($(this).val()) {
             var data_key = $(this).prev('label').html().replace(":", "").toLowerCase();
-            data[data_key] = $(this).val().toLowerCase();
+            data[data_key] = $(this).val();
         }
     });
     $(".partner-tag:has(i)").each(function() {
@@ -172,34 +172,63 @@ function build_data() {
     if(special_interest.length > 0)
         data.special_interest = special_interest;
 
-    data.per_page = 5;
+    if($("#shh").is(":checked")) data.a=1;
 
     return data
 }
 
-function send_filter(data) {
+function send_filter(data_to_send) {
     var path = location.pathname;
     $.ajaxSettings.traditional = true;
     $.ajax({
         type: 'GET',
         url: path,
         global: false,
-        data: data,
+        data: data_to_send,
         success: function(data) {
             $("#partner-holder").html(data);
-            var the_list = $("#partner-holder").children("div.product-card");
-            $(the_list).each(function() {
-                $(this).hide();
-            });
-            var loop = function(index, list) {
-                if(index == list.length) return false;
-                $(list[index]).show("drop", {direction: 'left'}, 125, function() {
-                    loop(index + 1, list);
+            if(data_to_send.a) {
+                var the_list = $("#partner-holder").children("div.product-card");
+                $(the_list).each(function() {
+                    $(this).hide();
                 });
-            };
-            setTimeout(function() {
-                loop(0, the_list);
-            }, 10);
+                var loop = function(index, list) {
+                    if(index == list.length) return false;
+                    $(list[index]).show("drop", {direction: 'left'}, 125, function() {
+                        loop(index + 1, list);
+                    });
+                };
+                setTimeout(function() {
+                    loop(0, the_list);
+                }, 10);
+            }
         }
     });
+}
+
+function show_selected() {
+    var q = location.search,
+        params = q.replace("?", "").split("&"),
+        partners = $(".sidebar .partner-tag");
+    for(var i = 0; i < params.length; i++) {
+        var s = params[i].split("="),
+            key = s[0],
+            value = s[1];
+        if(key == "special_interest") {
+            partners.each(function() {
+                if($(this).hasClass(value)) {
+                    var i = document.createElement('i');
+                    $(i).addClass("icon icon-ok");
+                    $(this).append(i);
+                    $(this).removeClass("disabled-tag");
+                }
+            });
+        }
+        if(key == "state") {
+            $("select option").each(function(){
+                if($(this).val() == value)
+                    $(this).attr("selected", "selected");
+            });
+        }
+    }
 }
