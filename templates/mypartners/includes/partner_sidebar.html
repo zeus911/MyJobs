@@ -7,7 +7,7 @@
         <label>State:</label>
         {% include "includes/state_dropdown.html" %}
         <label>City:</label>
-        <input type="text" placeholder="City" {% if request.GET.location %}value="{{request.GET.location}}"{% endif %} />
+        <input type="text" placeholder="City" {% if request.GET.city %}value="{{request.GET.city}}"{% endif %} />
 
         {% if special_interest %}
         <label>Special Interest:</label>
