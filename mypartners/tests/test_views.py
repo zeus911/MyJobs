@@ -998,8 +998,42 @@ class EmailTests(MyPartnersTestCase):
                             '\\n\\r\\n\\r\\n test message'
 
         self.client.post(reverse('process_email'), self.data)
-
         ContactRecord.objects.get(contact_email='anewperson@my.jobs')
+
+    def test_various_forward_header_formats(self):
+        self.data['to'] = 'prm@my.jobs'
+        self.data['text'] = ("Some text before the forward\n"
+                            "\n"
+                            "From: A New Person<anewperson@my.jobs<mailto:anewperson@my.jobs>>\n"
+                            "Reply-To: A New Person<anewperson@my.jobs<mailto:anewperson@my.jobs>>\n"
+                            "Date: Tuesday, July 8, 2014 2:02 PM\n"
+                            "To: PRM <prm@my.jobs>\n"
+                            "Subject: Test email\n"
+                            "\n"
+                            "Forwarded email content\n"
+                            "\n")
+        self.client.post(reverse('process_email'), self.data)
+        ContactRecord.objects.get(contact_email='anewperson@my.jobs')
+        ContactRecord.objects.all().delete()
+
+        self.data['text'] = ("From: A New Person [mailto:anewperson@my.jobs] On Behalf Of Someone Else\n"
+                             "Sent: Wednesday, October 05, 2011 5:17 PM\n"
+                             "To: prm@my.jobs\n"
+                             "Subject: Stuff\n")
+
+        self.client.post(reverse('process_email'), self.data)
+        ContactRecord.objects.get(contact_email='anewperson@my.jobs')
+        ContactRecord.objects.all().delete()
+
+        self.data['text'] = ("-------- Original Message --------\n"
+                             "Subject: 	Test\n"
+                             "Date: 	Wed, 17 Aug 2011 11:39:46 -0400\n"
+                             "From: 	A New Person <anewperson@my.jobs>\n"
+                             "To: 	prm@my.jobs\n")
+
+        self.client.post(reverse('process_email'), self.data)
+        ContactRecord.objects.get(contact_email='anewperson@my.jobs')
+        ContactRecord.objects.all().delete()
 
     def test_timezone_awareness(self):
         self.data['to'] = self.contact.email
