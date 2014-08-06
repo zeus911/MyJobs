@@ -376,7 +376,8 @@ def get_partners_from_filters(request, company, partner_library=False):
     keywords = request.REQUEST.get('keywords', "").split(',', 1)
     city = request.REQUEST.get('city', "").strip()
     state = request.REQUEST.get('state', "").strip()
-    special_interest = request.REQUEST.getlist('special_interest')
+    # we use the request for pagination, so need to make a copy of these values
+    special_interest = request.REQUEST.getlist('special_interest')[:]
 
 
     # The starting QuerySet will be different if we are searching through the
@@ -407,8 +408,7 @@ def get_partners_from_filters(request, company, partner_library=False):
     unspecified = Q()
     interests = Q()
 
-    # we use the request for pagination, so need to make a copy of these values
-    if "unspecified" in special_interest[:]:
+    if "unspecified" in special_interest:
         special_interest.remove("unspecified")
         unspecified = Q(is_veteran=False, is_female=False, is_minority=False,
                         is_disabled=False, is_disabled_veteran=False)
