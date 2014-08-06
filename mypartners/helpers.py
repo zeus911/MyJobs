@@ -2,10 +2,8 @@ from collections import namedtuple
 from datetime import datetime, time, timedelta
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
-import os
-import json
 
-from django.db.models import Min, Max, Q
+from django.db.models import Min, Max, Q, Count
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -379,7 +377,7 @@ def get_partners_from_filters(request, company, partner_library=False):
     city = request.REQUEST.get('city', "").strip()
     state = request.REQUEST.get('state', "").strip()
     special_interest = request.REQUEST.getlist('special_interest')
-    print special_interest
+
 
     # The starting QuerySet will be different if we are searching through the
     # partner library
@@ -387,27 +385,40 @@ def get_partners_from_filters(request, company, partner_library=False):
         partners = PartnerLibrary.objects.all()
         query = Q()
     else:
-        partners = Partner.objects.select_related('owner', 'primary_contact')
+        partners = Partner.objects.select_related('contact')
+        #partners = Partner.objects.select_related('owner', 'primary_contact')
         query = Q(owner=company.id)
 
     # check for keywords in oganization name, website, and first/last name
     for keyword in keywords:
         query &= (Q(name__contains=keyword) | Q(uri__contains=keyword) |
-                  (Q(contact_name__contains=keyword) if partner_library else
-                   Q(primary_contact__name__contains=keyword)))
+                  (Q(contact_name__contains=keyword)
+                   if partner_library else Q(contact__name__contains=keyword)))
 
     if city:
         query &= (Q(city=city) if partner_library else
-                  Q(primary_contact__city=city))
+                  Q(contact__city__contains=city))
 
     if state:
-        query &= ((Q(state=state) | Q(st=state)) if partner_library else
-                  Q(primary_contact__state=state))
+        query &= ((Q(st__contains=state) | Q(state__contains=state))
+                 if partner_library else Q(contact__state__contains=state))
 
-    # only used with partner library searches for now
+
+    unspecified = Q()
+    interests = Q()
+
+    if "unspecified" in special_interest:
+        special_interest.remove("unspecified")
+        unspecified = Q(is_veteran=False, is_female=False, is_minority=False,
+                        is_disabled=False, is_disabled_veteran=False)
     for interest in special_interest:
-        query &= Q(**{"is_%s" % interest.replace(' ', '_'): True})
+        interests &= Q(**{"is_%s" % interest.replace(' ', '_'): True})
 
+    query &= Q(interests | unspecified)
+
+    # without aggregating, we get duplicate partner entries
     partners = partners.filter(query)
+    if not partner_library:
+        partners.annotate(Count('contact'))
 
     return partners
