@@ -19,7 +19,6 @@ from lxml import html
 from lxml.cssselect import CSSSelector
 import pytz
 import requests
-
 from universal.helpers import get_domain, get_company
 from mypartners.models import (ContactLogEntry, CONTACT_TYPE_CHOICES, CHANGE,
                                Partner, PartnerLibrary)
@@ -387,7 +386,6 @@ def get_partners_from_filters(request, company, partner_library=False):
         query = Q()
     else:
         partners = Partner.objects.select_related('contact')
-        #partners = Partner.objects.select_related('owner', 'primary_contact')
         query = Q(owner=company.id)
 
     # check for keywords in oganization name, website, and first/last name
@@ -418,8 +416,5 @@ def get_partners_from_filters(request, company, partner_library=False):
     query &= Q(interests | unspecified)
 
     # without aggregating, we get duplicate partner entries
-    partners = partners.filter(query)
-    if not partner_library:
-        partners.annotate(Count('contact'))
-
+    partners = partners.filter(query).annotate(Count('pk'))
     return partners
