@@ -20,6 +20,8 @@ from django.db.models import Q
 from mydashboard.models import Company, SeoSite
 from myjobs.models import EmailLog, User, STOP_SENDING, BAD_EMAIL
 from mymessages.models import Message
+from mypartners.models import PartnerLibrary
+from mypartners.helpers import get_library_partners
 from mysearches.models import SavedSearch, SavedSearchDigest
 from postajob.models import Job
 from registration.models import ActivationProfile
@@ -49,6 +51,53 @@ def send_search_digest(search):
             # After the initial try and two retries, disable the offending
             # saved search
             search.disable_or_fix()
+
+@task(name='tasks.update_partner_library', ignore_result=True,
+      default_retry_delay=180, max_retries=2)
+def update_partner_library():
+    print "Connecting to OFCCP directory..."
+
+    for partner in get_library_partners():
+        fullname = " ".join(" ".join([partner.first_name,
+                                      partner.middle_name,
+                                      partner.last_name]).split())
+
+        if not PartnerLibrary.objects.filter(contact_name=fullname,
+                                             st=partner.st,
+                                             city=partner.city):
+            PartnerLibrary(
+                name=partner.organization_name,
+                uri=partner.website,
+                region=partner.region,
+                state=partner.state,
+                area=partner.area,
+                contact_name=fullname,
+                phone=partner.phone,
+                phone_ext=partner.phone_ext,
+                alt_phone=partner.alt_phone,
+                fax=partner.fax,
+                email=partner.email_id,
+                street1=partner.street1,
+                street2=partner.street2,
+                city=partner.city,
+                st=partner.st,
+                zip_code=partner.zip_code,
+                is_minority=partner.minority,
+                is_female=partner.female,
+                is_disabled=partner.disabled,
+                is_disabled_veteran=partner.disabled_veteran,
+                is_veteran=partner.veteran).save()
+
+            #TODO: see if there is a way to do this without querying the
+            #      database
+            if PartnerLibrary.objects.filter(email=partner.email_id):
+                print "Successfully added %s %s (%s) from %s, %s." % (
+                    partner.first_name, partner.last_name,
+                    partner.email_id, partner.city, partner.st)
+        else:
+            print  "%s %s (%s) from %s, %s already exists, skipping.." % (
+                partner.first_name, partner.last_name, partner.email_id,
+                partner.city, partner.st)
 
 
 @task(name='tasks.send_search_digests')

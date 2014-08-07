@@ -134,6 +134,51 @@ def partner_library(request):
 
 
 @company_has_access('prm_access')
+def create_partner_from_library(request):
+    """ Creates a partner and contact from a library_id. """
+    company = get_company(request)
+    if company is None:
+        raise Http404
+
+    try:
+        library_id = int(request.REQUEST.get('library_id') or 0)
+    except ValueError:
+        raise Http404
+
+    library = get_object_or_404(PartnerLibrary(pk=library_id))
+    partner = Partner(
+        name=library.name,
+        uri=library.uri,
+        owner=company.id,
+        library_id=library_id)
+    partner.save()
+
+    contact = Contact(
+        partner=partner.id,
+        name=library.name,
+        email=library.email,
+        phone=library.phone,
+        address_line_one=library.street1,
+        address_line_two=library.street2,
+        city=library.city,
+        state=library.st,
+        country_code="USA",
+        postal_code=library.zip_code,
+        notes=("This contact was automatically generated from content in the "
+               "OFCCP directory."))
+    contact.save()
+
+    partner.primary_contact = contact.id
+    partner.save()
+
+    ctx = {
+        'partner': partner.id
+    }
+
+    return json.dump(ctx)
+
+
+@company_has_access('prm_access')
 def partner_details(request):
     company, partner, user = prm_worthy(request)
 
@@ -1053,8 +1098,7 @@ def prm_export(request):
 
 
 @csrf_exempt
-def process_email(request):
-    """
+def process_email(request): """
     Creates a contact record from an email received via POST.
 
     """
