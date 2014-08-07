@@ -144,8 +144,8 @@ def create_partner_from_library(request):
         library_id = int(request.REQUEST.get('library_id') or 0)
     except ValueError:
         raise Http404
-
     library = get_object_or_404(PartnerLibrary, pk=library_id)
+
     partner = Partner(
         name=library.name,
         uri=library.uri,
@@ -155,7 +155,7 @@ def create_partner_from_library(request):
 
     contact = Contact(
         partner=partner,
-        name=library.name,
+        name=library.contact_name,
         email=library.email,
         phone=library.phone,
         address_line_one=library.street1,
@@ -172,10 +172,12 @@ def create_partner_from_library(request):
     partner.save()
 
     ctx = {
-        'partner': partner.id
+        'partner': partner.id,
+        'contact': contact.id
     }
 
-    return json.dumps(ctx)
+    return render_to_response('mypartners/partner_library.html', ctx,
+                              RequestContext(request))
 
 
 @company_has_access('prm_access')
