@@ -19,7 +19,7 @@ from postajob.tests.factories import (product_factory, job_factory,
 from postajob.models import (CompanyProfile, Job, OfflinePurchase, Package,
                              Product, ProductGrouping, PurchasedJob,
                              PurchasedProduct, Request, SitePackage,
-                             ProductOrder)
+                             ProductOrder, JobLocation)
 from universal.helpers import build_url
 
 
@@ -53,7 +53,7 @@ class ViewTests(MyJobsBase):
         self.location_management_form_data = {
             'form-TOTAL_FORMS': 0,
             'form-INITIAL_FORMS': 0,
-            'form-MAX_NUM_FORMS': 0,
+            'form-MAX_NUM_FORMS': 5,
         }
 
         # Form data
@@ -79,16 +79,13 @@ class ViewTests(MyJobsBase):
         }
 
         self.job_form_data = {
-            'city': 'Indianapolis',
             'description': 'Description',
             'title': 'Job Form Data Title',
-            'country': 'United States of America',
             'owner': str(self.company.pk),
             'reqid': '123456',
             'apply_info': '',
             'zipcode': '46268',
             'apply_link': 'www.google.com',
-            'state': 'Indiana',
             'apply_email': '',
             'apply_type': 'link',
             'post_to': 'network',
@@ -688,3 +685,38 @@ class ViewTests(MyJobsBase):
             # include elements from the relevant ProductGrouping and Product
             # instances
             self.assertTrue(text in response.content)
+
+    @patch('urllib2.urlopen')
+    def test_job_add_and_remove_locations(self, urlopen_mock):
+        mock_obj = Mock()
+        mock_obj.read.side_effect = self.side_effect
+        urlopen_mock.return_value = mock_obj
+
+        location = {
+            'form-0-city': 'Indianapolis',
+            'form-0-state': 'Indiana',
+            'form-0-country': 'US'
+        }
+        self.job_form_data['form-TOTAL_FORMS'] = 1
+        self.job_form_data.update(location)
+        self.assertEqual(Job.objects.count(), 0)
+        self.assertEqual(JobLocation.objects.count(), 0)
+        self.client.post(reverse('job_add'), data=self.job_form_data,
+                         follow=True)
+        self.assertEqual(Job.objects.count(), 1)
+        self.assertEqual(JobLocation.objects.count(), 1)
+
+        job = Job.objects.get()
+        self.job_form_data['id'] = job.pk
+        self.job_form_data['form-TOTAL_FORMS'] = 2
+        self.job_form_data.update({
+            'form-0-DELETE': 'ok',
+            'form-1-city': 'Muncie',
+            'form-1-state': 'Indiana',
+            'form-1-country': 'US'
+        })
+        self.client.post(reverse('job_update', args=[job.pk]),
+                         data=self.job_form_data, follow=True)
+        print Job.objects.count()
+        print JobLocation.objects.count()
+        print [location.city for location in JobLocation.objects.all()]
