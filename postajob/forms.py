@@ -126,7 +126,7 @@ class JobLocationForm(forms.ModelForm):
 
 
 JobLocationFormSet = modelformset_factory(JobLocation, form=JobLocationForm,
-                                          extra=0)
+                                          extra=0, can_delete=True)
 
 
 class JobForm(BaseJobForm):

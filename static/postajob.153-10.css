@@ -63,3 +63,8 @@
 .purchasedjob-request-field {
     display: table-row;
 }
+
+[id$=-DELETE],
+[for$=-DELETE] {
+    display: none;
+}

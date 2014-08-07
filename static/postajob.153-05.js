@@ -144,23 +144,28 @@ function resend_invoice(id) {
     });
 }
 
+// Required fields for locations
+// This is also verified server-side; checking in JS just cuts down on the
+// number of requests we have to do.
 var fields = ['input[id$=-city]',
     'input[id$=-state]',
     'input[id$=-country]'];
 
 function add_location(location) {
-    var html_str = '<div><span>city, region_short country</span><a class="btn pull-right" href="?" id="remove-location-loc_num">Remove</a></div>';
+    /*
+    Creates condensed location tags for this job's locations
+     */
+    var html_str = '<div><span>city, region_short country</span><a class="pull-right" href="?" id="remove-location-loc_num">Remove</a></div>';
     var location_map = {
         city: location.find('input[id$=-city]').val(),
         region_short: location.find('input[id$=-state]').val(),
         country: location.find('input[id$=-country]').val()
     };
-    var location_number = location.find('input[id$=-id]').val();
-    if (location_number) {
-        location_map['loc_num'] = location_number;
-    } else {
-        location_map['loc_num'] = form_count;
-    }
+    // We need to find out which form on the page is for this location. The form
+    // input ids have the structure id_form-#-field, so we can get the form
+    // number by grabbing an input and splitting the number from its id.
+    var field_id = location.find('input[id$=-id]').attr('id');
+    location_map['loc_num'] = field_id.split('-')[1];
     html_str = html_str.replace(/city|region_short|country|loc_num/gi,
         function(matched) {
             return location_map[matched];
@@ -169,46 +174,89 @@ function add_location(location) {
 }
 
 function add_locations() {
+    /*
+    Adds location tags for all locations previously added to this job.
+     */
     $('.formset-form').each(function() {
         add_location($(this));
     });
 }
 
 function copy_forms(from, to) {
+    /*
+    Copy input values from the formset's default empty form to a more permanent
+    form.
+     */
     var valid = true;
-    fields.every(function(element, index, array) {
+    fields.forEach(function(element, index, array) {
         var old = from.find(element).val();
         if (old) {
             to.find(element).val(old);
-            return true;
         } else {
-            return false;
+            valid = false;
         }
     });
     if (valid) {
+        // Zip codes are optional and shouldn't affect the validity of a
+        // location. If the form is valid, copy the zip code from it as well.
+        var zip_selector = 'input[name$=-zipcode]';
+        to.find(zip_selector).val(from.find(zip_selector).val());
+
+        // Delete checkboxes for locations seem to start out as checked; they
+        // shouldn't be.
+        to.find('[name$=-DELETE]').removeAttr('checked');
         $('#job-location-forms').append(to);
     }
     return valid;
 }
 
 function clear_form(form) {
+    /*
+    Clears all values from our input form so that further locations can be
+    added.
+     */
     fields.forEach(function(element, index, array) {
         form.find(element).val('');
     });
+    form.find('input[name$=-zipcode]').val('');
 }
 
 function create_location_events() {
+    /*
+    Creating and editing jobs requires two events to be set up for locations to
+    function properly, one each for the add and remove buttons.
+     */
+    $('[name$=-DELETE]').each(function() {
+        $(this).removeAttr('checked');
+    });
     $('#add-location').click(function(e) {
         e.preventDefault();
+        // form_count holds the current number of location forms on the page.
+        // The form numbers start at 0, so form_count also represents the next
+        // available form number.
+
+        // form holds the formset's empty form with __prefix__ in place of the
+        // form number. We can turn this into a functional form by replacing
+        // the prefix with the next available number.
         var new_form = form.replace(/__prefix__/g, form_count);
-        new_form = $(new_form);
+        new_form = $(new_form).wrap('<div class="formset-form">');
         var old_form = $('#empty-form');
         var valid = copy_forms(old_form, new_form);
         if (valid) {
-            add_location(old_form);
+            add_location(new_form);
             clear_form(old_form);
+            $('input[name$=-' + form_count + '-DELETE').removeAttr('checked');
+            // The new location has been added; increment the number of forms
+            // and update the TOTAL_FORMS input.
             form_count++;
             $('input[id$=-TOTAL_FORMS]').val(form_count);
         }
+    });
+    $('a[id^=remove-location-]').click(function(e) {
+        e.preventDefault();
+        var id = $(this).attr('id').split('-')[2];
+        $('input[name=form-' + id + '-DELETE]').attr('checked', 'checked');
+        // TODO: Remove this and turn the delete button into a toggle
+        $(this).parent().remove();
     });
 }
