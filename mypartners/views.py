@@ -1098,7 +1098,8 @@ def prm_export(request):
 
 
 @csrf_exempt
-def process_email(request): """
+def process_email(request):
+    """
     Creates a contact record from an email received via POST.
 
     """
