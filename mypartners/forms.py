@@ -117,6 +117,8 @@ class NewPartnerForm(forms.ModelForm):
         super(NewPartnerForm, self).__init__(*args, **kwargs)
         for field in self.fields.itervalues():
             field.label = "Primary Contact " + field.label
+            # primary contact information isn't required to create a partner
+            field.required = False
         model_fields = OrderedDict(self.fields)
 
         new_fields = {
