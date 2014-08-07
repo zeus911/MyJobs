@@ -161,8 +161,12 @@ $(document).ready(function() {
             var library_id = $(this).attr("id").split("-")[1],
                 library_title = $(this).children("div.big-title").children("b").text(),
                 company_name = $("h1").children("a").text(),
+                body_message = "";
+            if(library_id % 2 == 0)
                 body_message = "Would you like to add OFCCP partner, <b>" + library_title + "</b>, to " +
                     ""+ company_name +"'s Partner Relationship Manager?";
+            else
+                body_message = "Would you like to add OFCCP partner: <br /><br /><b>"+library_title+"</b><br /><br />Clicking 'Add' will transfer this OFCCP partner to <b>"+company_name+"'s</b> Partner Relationship Manager.";
             $(".modal-body").children("p").html(body_message);
             $("#add-partner-library").data("num", library_id);
             $("#partner-library-modal").modal("show");
@@ -171,13 +175,13 @@ $(document).ready(function() {
 
     $("#add-partner-library").on("click", function(){
         var data = {};
-        data.partner_library = $(this).data("num");
+        data.library_id = $(this).data("num");
         $.ajax({
             type: "GET",
-            url: "/",
+            url: "/prm/view/partner-library/add/",
             data: data,
             success: function(data) {
-                console.log("yay");
+                console.log("New partner id: "+data.partner);
             }
         });
     })
