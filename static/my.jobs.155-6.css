@@ -301,7 +301,7 @@ h1 > small > a:hover {
 .row-filler input {
     position: absolute;
     margin: -160px 0 0 1034px;
-    opacity: 0.01;
+    opacity: 0.001;
 }
 
 .partner-tag {
@@ -2566,13 +2566,62 @@ td .gravatar-blank,
     /* Partner Relationship Manager */
     #partner-holder {
         float:right;
-        margin-top: 450px;
+        margin-top: 620px;
         width: 95%;
     }
 
     #partner-sidebar-holder {
         float: left;
         position: absolute;
+        width: 95%;
+    }
+
+    .product-card .sub-title {
+        margin-top: 0;
+        margin-bottom: 3px;
+    }
+
+    .product-card .sub-title small {
+        font-size: 100%;
+    }
+
+    .partner-tags .partner-tag:nth-child(n+5) {
+        margin-top: 5px;
+    }
+
+    .product-details {
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+
+    .product-card a.btn {
+        float: none;
+        margin-top: 0;
+    }
+
+    .sidebar .partner-tag {
+        width: 100%;
+        padding: 10px;
+        display: block;
+    }
+
+    .sidebar .partner-tag + .partner-tag {
+        margin-top: 5px;
+    }
+
+    .sidebar .partner-tag:nth-child(2n) {
+        margin-left: 0;
+    }
+
+    .sidebar .help_text {
+        font-size: 1.3em;
+        text-align: center;
+        margin-top: 5px;
+        font-variant: small-caps;
+    }
+
+    .sidebar .help_text small {
+        font-size: 100%;
     }
 
     .step-links .current {
