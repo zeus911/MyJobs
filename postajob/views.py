@@ -1,9 +1,7 @@
 from datetime import date
 import itertools
 import json
-import uuid
 
-from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import Http404, reverse, reverse_lazy, resolve
 from django.http import HttpResponse
@@ -301,7 +299,61 @@ class PostajobModelFormMixin(object):
         return super(PostajobModelFormMixin, self).get_context_data(**kwargs)
 
 
-class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
+class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
+    """
+    A mixin for job purchase formviews. JobFormView and PurchasedJobFormView
+    share this exact functionality.
+    """
+    def get_context_data(self, **kwargs):
+        context = super(BaseJobFormView, self).get_context_data(**kwargs)
+        if context.get('item', None):
+            formset_qs = JobLocation.objects.filter(jobs=context['item'])
+        else:
+            formset_qs = JobLocation.objects.none()
+        if self.request.POST:
+            pruned_post = {key: value
+                           for key, value in self.request.POST.items()
+                           if '__prefix__' not in key}
+            delete = []
+            delete_ids = []
+            for key in pruned_post.keys():
+                if key.endswith('DELETE'):
+                    delete.append(key)
+            for to_delete in delete:
+                prefix = to_delete.rsplit('-', 1)[0]
+                for key in pruned_post.keys():
+                    if key.startswith(prefix):
+                        if '-id' in key:
+                            id_ = pruned_post[key]
+                            delete_ids.append(id_)
+            context['formset'] = JobLocationFormSet(pruned_post,
+                                                    queryset=formset_qs)
+            context['delete'] = delete_ids
+        else:
+            context['formset'] = JobLocationFormSet(queryset=formset_qs)
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        joblocation_formset = context['formset']
+        if form.is_valid():
+            if joblocation_formset.is_valid():
+                job = form.save()
+                locations = [location_form.save()
+                             for location_form in joblocation_formset.forms]
+                for location in locations:
+                    location.jobs.add(job)
+                delete = context.get('delete')
+                if delete:
+                    delete = JobLocation.objects.filter(pk__in=delete)
+                    for location in delete:
+                        location.delete()
+                job.save()
+                return redirect(self.success_url)
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+class JobFormView(BaseJobFormView):
     form_class = JobForm
     model = Job
     display_name = 'Job'
@@ -327,56 +379,9 @@ class JobFormView(PostajobModelFormMixin, RequestFormViewBase):
         self.queryset = self.queryset.filter(**kwargs)
         return self.queryset
 
-    def get_context_data(self, **kwargs):
-        context = super(JobFormView, self).get_context_data(**kwargs)
-        if context.get('item', None):
-            formset_qs = JobLocation.objects.filter(jobs=context['item'])
-        else:
-            formset_qs = JobLocation.objects.none()
-        if self.request.POST:
-            pruned_post = {key: value
-                           for key, value in self.request.POST.items()
-                           if '__prefix__' not in key}
-            delete = []
-            delete_ids = []
-            for key in pruned_post.keys():
-                if key.endswith('DELETE'):
-                    delete.append(key)
-            for to_delete in delete:
-                prefix = to_delete.rsplit('-', 1)[0]
-                for key in pruned_post.keys():
-                    if key.startswith(prefix):
-                        if '-id' in key:
-                            id = pruned_post[key]
-                            delete_ids.append(id)
-            context['formset'] = JobLocationFormSet(pruned_post,
-                                                    queryset=formset_qs)
-            context['delete'] = delete_ids
-        else:
-            context['formset'] = JobLocationFormSet(queryset=formset_qs)
-        return context
 
-    def form_valid(self, form):
-        context = self.get_context_data()
-        joblocation_formset = context['formset']
-        if form.is_valid():
-            if joblocation_formset.is_valid():
-                job = form.save()
-                locations = [location_form.save()
-                             for location_form in joblocation_formset.forms]
-                for location in locations:
-                    location.jobs.add(job)
-                delete = context.get('delete')
-                if delete:
-                    delete = JobLocation.objects.filter(pk__in=delete)
-                    for location in delete:
-                        location.delete()
-                job.save()
-                return redirect(self.success_url)
-        return self.render_to_response(self.get_context_data(form=form))
-
-
-class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
+class PurchasedJobFormView(BaseJobFormView,
+                           PurchaseFormViewBase):
     form_class = PurchasedJobForm
     model = PurchasedJob
     display_name = '{product} Job'
@@ -397,54 +402,6 @@ class PurchasedJobFormView(PostajobModelFormMixin, PurchaseFormViewBase):
             # the user to access the add view.
             raise Http404
         return super(PurchasedJobFormView, self).set_object(*args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super(PurchasedJobFormView, self).get_context_data(**kwargs)
-        if context.get('item', None):
-            formset_qs = JobLocation.objects.filter(jobs=context['item'])
-        else:
-            formset_qs = JobLocation.objects.none()
-        if self.request.POST:
-            pruned_post = {key: value
-                           for key, value in self.request.POST.items()
-                           if '__prefix__' not in key}
-            delete = []
-            delete_ids = []
-            for key in pruned_post.keys():
-                if key.endswith('DELETE'):
-                    delete.append(key)
-            for to_delete in delete:
-                prefix = to_delete.rsplit('-', 1)[0]
-                for key in pruned_post.keys():
-                    if key.startswith(prefix):
-                        if '-id' in key:
-                            id = pruned_post[key]
-                            delete_ids.append(id)
-            context['formset'] = JobLocationFormSet(pruned_post,
-                                                    queryset=formset_qs)
-            context['delete'] = delete_ids
-        else:
-            context['formset'] = JobLocationFormSet(queryset=formset_qs)
-        return context
-
-    def form_valid(self, form):
-        context = self.get_context_data()
-        joblocation_formset = context['formset']
-        if form.is_valid():
-            if joblocation_formset.is_valid():
-                job = form.save()
-                locations = [location_form.save()
-                             for location_form in joblocation_formset.forms]
-                for location in locations:
-                    location.jobs.add(job)
-                delete = context.get('delete')
-                if delete:
-                    delete = JobLocation.objects.filter(pk__in=delete)
-                    for location in delete:
-                        location.delete()
-                job.save()
-                return redirect(self.success_url)
-        return self.render_to_response(self.get_context_data(form=form))
 
 
 class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):
