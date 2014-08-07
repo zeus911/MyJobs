@@ -19,7 +19,7 @@ def presave_solr(sender, instance, *args, **kwargs):
     """
     ignore_fields = ['last_response', 'last_sent', 'date_updated',
                      'last_login', 'date_joined']
-    setattr(instance, 'solr_update', False)
+    instance.solr_update = False
     if instance.pk:
         obj = sender.objects.get(pk=instance.pk)
         for field in obj._meta.fields:
@@ -28,7 +28,7 @@ def presave_solr(sender, instance, *args, **kwargs):
             try:
                 if field.attname not in ignore_fields and current_val != new_val:
                     setattr(instance, 'solr_update', True)
-            except TypeError, e:
+            except TypeError as e:
                 logger.error("%s for field %s" % (e, field.attname))
                 setattr(instance, 'solr_update', True)
     else:
@@ -94,18 +94,20 @@ def profileunits_to_dict(user_id):
     }
     models = {}
 
-    units = ProfileUnits.objects.filter(user_id=user_id).select_related('name',
-                                                                        'education',
-                                                                        'website',
-                                                                        'telephone',
-                                                                        'address',
-                                                                        'secondaryemail',
-                                                                        'militaryservice',
-                                                                        'license',
-                                                                        'summary',
-                                                                        'employmenthistory',
-                                                                        'volunteerhistory',
-                                                                        'content_type')
+    units = ProfileUnits.objects.filter(user_id=user_id).select_related(
+        'name',
+        'education',
+        'website',
+        'telephone',
+        'address',
+        'secondaryemail',
+        'militaryservice',
+        'license',
+        'summary',
+        'employmenthistory',
+        'volunteerhistory',
+        'content_type')
+
     for unit in units:
         unit = getattr(unit, unit.get_model_name())
         models.setdefault(unit.__class__.__name__, []).append(unit)
@@ -116,13 +118,13 @@ def profileunits_to_dict(user_id):
 
         if model_name == 'Address':
             solr_dict['Address_region'] = ["%s##%s" %
-                                           (getattr(obj, 'country_code'),
-                                            getattr(obj, 'country_sub_division_code'))
+                                           (obj.country_code,
+                                            obj.country_sub_division_code)
                                            for obj in objs]
             solr_dict['Address_full_location'] = ["%s##%s##%s" %
-                                                  (getattr(obj, 'country_code'),
-                                                   getattr(obj, 'country_sub_division_code'),
-                                                   getattr(obj, 'city_name'))
+                                                  (obj.country_code,
+                                                   obj.country_sub_division_code,
+                                                   obj.city_name)
                                                   for obj in objs]
         for field in objs[0]._meta.fields:
             obj_list = [getattr(obj, field.attname) for obj in objs]
@@ -148,19 +150,12 @@ def object_to_dict(model, obj):
     """
     content_type_id = ContentType.objects.get_for_model(model).pk
     object_id = obj.pk
-    solr_dict = {
-        'uid': "%s##%s" % (content_type_id, object_id),
-    }
+    solr_dict = {}
 
     if model == SavedSearch:
-        for field in User._meta.fields:
-            field_type = field.get_internal_type()
-            if (field_type != 'OneToOneField' and
-                    not any(s in field.attname
-                            for s in ['password', 'timezone',
-                                      'deactivate_type'])):
-                field_name = "User_%s" % field.attname
-                solr_dict[field_name] = getattr(obj.user, field.attname)
+        solr_dict.update(object_to_dict(User, obj.user))
+
+    solr_dict['uid'] = "%s##%s" % (content_type_id, object_id)
 
     for field in model._meta.fields:
         field_type = field.get_internal_type()
@@ -169,6 +164,7 @@ def object_to_dict(model, obj):
                         for s in ['password', 'timezone',
                                   'deactivate_type'])):
             field_name = "%s_%s" % (model.__name__, field.attname)
+
             solr_dict[field_name] = getattr(obj, field.attname)
     return solr_dict
 
