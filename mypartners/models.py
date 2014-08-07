@@ -236,8 +236,7 @@ class PartnerLibrary(models.Model):
 
     def __unicode__(self):
         # the second join + split take care of extra internal whitespace
-        return " ".join(" ".join([self.first_name, self.middle_name,
-                                 self.last_name]).split())
+        return self.contact_name
 
 
 class ContactRecord(models.Model):
