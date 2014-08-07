@@ -395,12 +395,12 @@ def get_partners_from_filters(request, company, partner_library=False):
                    if partner_library else Q(contact__name__contains=keyword)))
 
     if city:
-        query &= (Q(city=city) if partner_library else
+        query &= (Q(city__contains=city) if partner_library else
                   Q(contact__city__contains=city))
 
     if state:
-        query &= ((Q(st__contains=state) | Q(state__contains=state))
-                 if partner_library else Q(contact__state__contains=state))
+        query &= ((Q(st=state) | Q(state=state))
+                 if partner_library else Q(contact__state=state))
 
 
     unspecified = Q()
