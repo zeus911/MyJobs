@@ -5,7 +5,7 @@
             <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key 'page' %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ partners.previous_page_number }}"><< Previous</a>
         {% endif %}
 
-        <span style="left: 25%; position:absolute" class="current">
+        <span class="current">
             Page {{ partners.number }} of {{ partners.paginator.num_pages }}
         </span>
 

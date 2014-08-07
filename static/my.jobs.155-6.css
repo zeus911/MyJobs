@@ -278,8 +278,11 @@ h1 > small > a:hover {
 }
 
 .sidebar .navigation a.btn + a.btn {
-    margin-top: 5px;
     margin-left: 0;
+}
+
+.sidebar .navigation a.btn:nth-child(n+1) {
+    margin-top: 10px;
 }
 
 .sidebar .partner-tag {
@@ -295,10 +298,10 @@ h1 > small > a:hover {
     margin-top: 5px;
 }
 
-#shh {
+.row-filler input {
     position: absolute;
     margin: -160px 0 0 1034px;
-    opacity: 0.01;
+    opacity: 0.001;
 }
 
 .partner-tag {
@@ -341,6 +344,11 @@ h1 > small > a:hover {
     padding: 5px;
     background-color: #FFFFFF;
     box-shadow: 1px 1px 3px #BBB;
+}
+
+.step-links .current {
+    left: 25%;
+    position: absolute;
 }
 
 .blanket{
@@ -2556,6 +2564,71 @@ td .gravatar-blank,
     }
 
     /* Partner Relationship Manager */
+    #partner-holder {
+        float:right;
+        margin-top: 620px;
+        width: 95%;
+    }
+
+    #partner-sidebar-holder {
+        float: left;
+        position: absolute;
+        width: 95%;
+    }
+
+    .product-card .sub-title {
+        margin-top: 0;
+        margin-bottom: 3px;
+    }
+
+    .product-card .sub-title small {
+        font-size: 100%;
+    }
+
+    .partner-tags .partner-tag:nth-child(n+5) {
+        margin-top: 5px;
+    }
+
+    .product-details {
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+
+    .product-card a.btn {
+        float: none;
+        margin-top: 0;
+    }
+
+    .sidebar .partner-tag {
+        width: 100%;
+        padding: 10px;
+        display: block;
+    }
+
+    .sidebar .partner-tag + .partner-tag {
+        margin-top: 5px;
+    }
+
+    .sidebar .partner-tag:nth-child(2n) {
+        margin-left: 0;
+    }
+
+    .sidebar .help_text {
+        font-size: 1.3em;
+        text-align: center;
+        margin-top: 5px;
+        font-variant: small-caps;
+    }
+
+    .sidebar .help_text small {
+        font-size: 100%;
+    }
+
+    .step-links .current {
+        left: 41%;
+        position: absolute;
+    }
+
     .blanket {
         display: none;
     }

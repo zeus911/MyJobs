@@ -155,6 +155,36 @@ $(document).ready(function() {
         var data = build_data();
         send_filter(data);
     });
+
+    if(location.pathname == '/prm/view/partner-library/'){
+        $("body").on("click",".product-card:not(.product-card.disabled-card)", function() {
+            var library_id = $(this).attr("id").split("-")[1],
+                library_title = $(this).children("div.big-title").children("b").text(),
+                company_name = $("h1").children("a").text(),
+                body_message = "";
+            if(library_id % 2 == 0)
+                body_message = "Would you like to add OFCCP partner, <b>" + library_title + "</b>, to " +
+                    ""+ company_name +"'s Partner Relationship Manager?";
+            else
+                body_message = "Would you like to add OFCCP partner: <br /><br /><b>"+library_title+"</b><br /><br />Clicking 'Add' will transfer this OFCCP partner to <b>"+company_name+"'s</b> Partner Relationship Manager.";
+            $(".modal-body").children("p").html(body_message);
+            $("#add-partner-library").data("num", library_id);
+            $("#partner-library-modal").modal("show");
+        });
+    }
+
+    $("#add-partner-library").on("click", function(){
+        var data = {};
+        data.library_id = $(this).data("num");
+        $.ajax({
+            type: "GET",
+            url: "/prm/view/partner-library/add/",
+            data: data,
+            success: function(data) {
+                console.log("New partner id: "+data.partner);
+            }
+        });
+    })
 });
 
 function build_data() {
@@ -172,7 +202,7 @@ function build_data() {
     if(special_interest.length > 0)
         data.special_interest = special_interest;
 
-    if($("#shh").is(":checked")) data.a=1;
+    if($(".row-filler").children("input").is(":checked")) data.a=1;
 
     return data
 }
@@ -194,7 +224,12 @@ function send_filter(data_to_send) {
                 });
                 var loop = function(index, list) {
                     if(index == list.length) return false;
-                    $(list[index]).show("drop", {direction: 'left'}, 125, function() {
+                    var direction = 'left',
+                        num = Math.ceil(Math.random()*4);
+                    if(num==1) direction = 'up';
+                    else if(num==2) direction = 'right';
+                    else if(num==3) direction = 'down';
+                    $(list[index]).show("drop", {direction: direction}, 125, function() {
                         loop(index + 1, list);
                     });
                 };

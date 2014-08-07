@@ -145,16 +145,16 @@ def create_partner_from_library(request):
     except ValueError:
         raise Http404
 
-    library = get_object_or_404(PartnerLibrary(pk=library_id))
+    library = get_object_or_404(PartnerLibrary, pk=library_id)
     partner = Partner(
         name=library.name,
         uri=library.uri,
-        owner=company.id,
-        library_id=library_id)
+        owner=company,
+        library_id=library)
     partner.save()
 
     contact = Contact(
-        partner=partner.id,
+        partner=partner,
         name=library.name,
         email=library.email,
         phone=library.phone,
@@ -164,18 +164,18 @@ def create_partner_from_library(request):
         state=library.st,
         country_code="USA",
         postal_code=library.zip_code,
-        notes=("This contact was automatically generated from content in the "
+        notes=("This contact was generated from content in the "
                "OFCCP directory."))
     contact.save()
 
-    partner.primary_contact = contact.id
+    partner.primary_contact = contact
     partner.save()
 
     ctx = {
         'partner': partner.id
     }
 
-    return json.dump(ctx)
+    return json.dumps(ctx)
 
 
 @company_has_access('prm_access')
