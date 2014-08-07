@@ -193,6 +193,16 @@ h1 > small > a:hover {
     margin-top: -20px;
     margin-bottom: 20px;
 }
+
+.product-card > a .big-title,
+.product-card > a .product-details {
+    color: #333;
+}
+
+.product-card > a:hover {
+    text-decoration: none;
+}
+
 .product-card {
     background-color: #F9FAFA;
     box-sizing: border-box;
@@ -2564,13 +2574,19 @@ td .gravatar-blank,
     }
 
     /* Partner Relationship Manager */
+    .product-card > a:not(.btn) {
+        padding: 0;
+        border: 0;
+        background-color: inherit;
+    }
     #partner-holder {
         float:right;
         margin-top: 620px;
         width: 95%;
     }
 
-    #partner-sidebar-holder {
+    #partner-sidebar-holder,
+    #sidebar-holder {
         float: left;
         position: absolute;
         width: 95%;

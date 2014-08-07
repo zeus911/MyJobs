@@ -1,11 +1,12 @@
-{% if on_page == 'prm' %}
-<a>
-{% endif %}
+
 {% if on_page == 'partner_library' %}
 <div id="library-{{partner.id}}" class="product-card">
 {% else %}
 <div class="product-card">
 {% endif %}
+    {% if on_page == 'prm' %}
+    <a href="{% url 'partner_overview' %}?partner={{ partner.id }}">
+    {% endif %}
     <div class="big-title">
         <b>{{ partner.name }}</b>
     </div>
@@ -79,7 +80,7 @@
     {% elif on_page == 'partner_library' %}
     <a id="partner-{{ partner.id }}" class="btn pull-right" href="#">Add</a>
     {% endif %}
-</div>
 {% if on_page == 'prm' %}
 </a>
 {% endif %}
+</div>

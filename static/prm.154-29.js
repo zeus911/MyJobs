@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    show_selected();
+    if(location.search) show_selected();
     /*
     Saves both partner forms; init form and new/edit partner form
 
@@ -181,7 +181,7 @@ $(document).ready(function() {
             url: "/prm/view/partner-library/add/",
             data: data,
             success: function(data) {
-                console.log("New partner id: "+data.partner);
+                $("#partner-library-modal").modal("hide");
             }
         });
     })
@@ -248,7 +248,7 @@ function show_selected() {
     for(var i = 0; i < params.length; i++) {
         var s = params[i].split("="),
             key = s[0],
-            value = s[1];
+            value = s[1].replace("%20", "-");
         if(key == "special_interest") {
             partners.each(function() {
                 if($(this).hasClass(value)) {
