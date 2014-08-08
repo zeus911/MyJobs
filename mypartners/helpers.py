@@ -384,8 +384,8 @@ def filter_partners(request):
         query &= (Q(name__contains=keyword) | Q(uri__contains=keyword) |
                   Q(contact__name__contains=keyword))
 
-    city = query & Q(contact__city__contains=city) if city else query
-    state = query & Q(contact__state=state) if state else query
+    query = query & Q(contact__city__contains=city) if city else query
+    query = query & Q(contact__state=state) if state else query
 
     #partners = partners.filter(query).annotate(Count('pk'))
     partners = partners.filter(query).distinct()
