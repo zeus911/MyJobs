@@ -37,7 +37,7 @@ class JobLocation(models.Model):
         'city': 'The city where the job is located.',
         'country': 'The country where the job is located.',
         'state': 'The state where the job is located.',
-        'zipcode': 'The zipcode of the job location.',
+        'zipcode': 'The postal code of the job location.',
     }
     guid = models.CharField(max_length=255, unique=True, blank=True, default='')
     city = models.CharField(max_length=255,
