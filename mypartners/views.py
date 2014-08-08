@@ -205,46 +205,41 @@ def partner_details(request):
 
 @company_has_access('prm_access')
 def edit_item(request):
+    """ Contact/Partner Form.
+
+        If the user reaches this form thorugh the `edit_contact` URL and a
+        valid partner_id is provided, they are presented with the "Add Partner"
+        form.
+
+        Conversely, if the user reaches this form through the `create_partner`
+        URL, they are presented with "Add Contact" form. If a valid `item_id`
+        is passed, we preload the form with that contact's information.
     """
-    Form page that is what makes new and edits partners/contacts.
-
-    """
-    company = get_company(request)
-
-    # If the user is trying to create a new Partner they won't have a
-    # partner_id. A Contact however does, it also comes from a different URL.
-    if request.path != reverse('create_partner'):
-        try:
-            partner_id = int(request.REQUEST.get('partner'))
-        except TypeError:
-            raise Http404
-        partner = get_object_or_404(company.partner_set.all(), id=partner_id)
-    else:
-        partner = None
-
     try:
-        content_id = int(request.REQUEST.get('ct'))
-    except TypeError:
+        partner_id = int(request.REQUEST.get("partner") or 0)
+        item_id = int(request.REQUEST.get('id') or 0)
+        content_id = int(request.REQUEST.get('ct') or 0)
+    except ValueError:
         raise Http404
-    item_id = request.REQUEST.get('id') or None
 
-    if content_id == ContentType.objects.get_for_model(Partner).id:
-        if not item_id:
-            form = NewPartnerForm()
+    company = get_company(request)
+    if partner_id and request.path == reverse('edit_contact'):
+        partner = get_object_or_404(company.partner_set.all(), id=partner_id)
+        if item_id:
+            item = get_object_or_404(Contact, partner=partner, pk=item_id)
+            form = ContactForm(instance=item, auto_id=False)
         else:
+            form = ContactForm()
+    elif request.path == reverse('create_partner'):
+        partner = None
+        if item_id:
             item = get_object_or_404(Partner, pk=item_id)
             form = PartnerForm(instance=item)
-    elif content_id == ContentType.objects.get_for_model(Contact).id:
-        if not item_id:
-            form = ContactForm()
         else:
-            try:
-                item = Contact.objects.get(partner=partner, pk=item_id)
-            except:
-                raise Http404
-            form = ContactForm(instance=item, auto_id=False)
+            form = NewPartnerForm()
     else:
         raise Http404
+
 
     ctx = {
         'form': form,
@@ -279,12 +274,12 @@ def save_item(request):
 
     """
     company = get_company(request)
-    content_id = int(request.REQUEST.get('ct'))
+    content_id = int(request.REQUEST.get('ct') or 0)
 
     if content_id == ContentType.objects.get_for_model(Contact).id:
         item_id = request.REQUEST.get('id') or None
         try:
-            partner_id = int(request.REQUEST.get('partner'))
+            partner_id = int(request.REQUEST.get('partner') or 0)
         except TypeError:
             raise Http404
 

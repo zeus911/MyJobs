@@ -2,8 +2,8 @@
 {% load common_tags %}
 {% gz as gz %}
 {% block site-title %}
-    <title>{% if not contact %}Add Contact{% else %}Edit Contact{% endif %} {{ company.name }}</title>
-    <meta name="title" content="{% if not contact %}Add Contact{% else %}Edit Contact{% endif %} {{ company.name }}">
+    <title>{% if contact %}Edit Contact{% elif partner %}Add Contact{% else %}Add Partner{% endif %} {{ company.name }}</title>
+    <meta name="title" content="{% if contact %}Edit Contact{% elif partner %}Add Contact{% else %}Add Partner{% endif %} {{ company.name }}">
 {% endblock %}
 {% load i18n %}
 
@@ -11,8 +11,7 @@
     <h1><a class="mobile_hide" href="{% url 'prm' %}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_details' %}?partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
     <div class="row">
         <div class="span12 prm-header">
-            {# partner checks due to Add partner page not having a partner to refer to. #}
-            <span>{% if not partner %}Add Partner{% else %}Add Contact{% endif %}</span>
+            <span>{% if contact %}Edit Contact{% elif partner %}Add Contact{% else %}Add Partner{% endif %}</span>
         </div>
     </div>
     <div class="row">
