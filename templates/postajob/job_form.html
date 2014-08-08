@@ -65,16 +65,18 @@
                     </fieldset>
                 </div>
             </div>
-            <div class="simple-accordion">
-                <div class="header">
-                    Posting Location
+            {% if not item.pk %}
+                <div class="simple-accordion">
+                    <div class="header">
+                        Posting Location
+                    </div>
+                    <div class="contents">
+                        <fieldset>
+                            {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.3 %}
+                        </fieldset>
+                    </div>
                 </div>
-                <div class="contents">
-                    <fieldset>
-                        {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.3 %}
-                    </fieldset>
-                </div>
-            </div>
+            {% endif %}
         </div>
         <div class="actions">
             <div class="form-label pull-left">&nbsp;</div>
