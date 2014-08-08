@@ -120,7 +120,7 @@ class ModelTests(MyJobsBase):
         args, _ = urlopen_mock.call_args
         data = parse_qs(args[0].data)
         self.assertEqual(data['key'][0], settings.POSTAJOB_API_KEY)
-        self.assertItemsEqual(eval(data['guids'][0]), guids)
+        self.assertItemsEqual(data['guids'][0].split(','), guids)
 
     @patch('urllib2.urlopen')
     def test_job_generate_guid(self, urlopen_mock):

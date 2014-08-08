@@ -1,6 +1,7 @@
 {% extends 'postajob/form.html' %}
 {% load i18n %}
 {% load common_tags %}
+{% load postajob_tags %}
 {% gz as gz %}
 
 {% block form %}
@@ -61,6 +62,16 @@
                 <div class="contents">
                     <fieldset>
                         {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.2 %}
+                    </fieldset>
+                </div>
+            </div>
+            <div class="simple-accordion">
+                <div class="header">
+                    Posting Location
+                </div>
+                <div class="contents">
+                    <fieldset>
+                        {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.3 %}
                     </fieldset>
                 </div>
             </div>

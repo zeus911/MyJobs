@@ -379,6 +379,11 @@ class JobFormView(BaseJobFormView):
         self.queryset = self.queryset.filter(**kwargs)
         return self.queryset
 
+    def get_context_data(self, **kwargs):
+        context = super(JobFormView, self).get_context_data(**kwargs)
+        context['order_type'] = 'job'
+        return context
+
 
 class PurchasedJobFormView(BaseJobFormView,
                            PurchaseFormViewBase):
@@ -402,6 +407,11 @@ class PurchasedJobFormView(BaseJobFormView,
             # the user to access the add view.
             raise Http404
         return super(PurchasedJobFormView, self).set_object(*args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(PurchasedJobFormView, self).get_context_data(**kwargs)
+        context['order_type'] = 'purchasedjob'
+        return context
 
 
 class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):

@@ -205,7 +205,8 @@ class Job(BaseModel):
     def remove_from_solr(self):
         data = urlencode({
             'key': settings.POSTAJOB_API_KEY,
-            'guids': [location.guid for location in self.locations.all()]
+            'guids': ','.join(location.guid
+                              for location in self.locations.all())
         })
         request = urllib2.Request(settings.POSTAJOB_URLS['delete'], data)
         urllib2.urlopen(request).read()
@@ -246,6 +247,15 @@ class PurchasedJob(Job):
     max_expired_date = models.DateField(editable=False)
     purchased_product = models.ForeignKey('PurchasedProduct')
     is_approved = models.BooleanField(default=False)
+
+    def delete(self, **kwargs):
+        product = self.purchased_product
+        super(PurchasedJob, self).delete(**kwargs)
+        if product.num_jobs_allowed != 0:
+            # increment jobs_remaining if this job is not part of an unlimited
+            # product
+            product.jobs_remaining += 1
+            product.save(**kwargs)
 
     def save(self, **kwargs):
         if not hasattr(self, 'pk') or not self.pk:

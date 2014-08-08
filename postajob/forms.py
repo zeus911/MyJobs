@@ -214,9 +214,9 @@ class JobForm(BaseJobForm):
     def get_field_sets(self):
         field_sets = [
             [self['title'], self['description'], self['reqid']],
-            [self['apply_type'], self['apply_link'], self['apply_info'],
-             self['post_to'], self['site_packages'], self['is_syndicated']],
-            [self['date_expired'], self['is_expired']]
+            [self['apply_type'], self['apply_link'], self['apply_info']],
+            [self['date_expired'], self['is_expired']],
+            [self['post_to'], self['site_packages'], self['is_syndicated']]
         ]
         return field_sets
 
@@ -270,6 +270,9 @@ class PurchasedJobForm(PurchasedJobBaseForm):
     def __init__(self, *args, **kwargs):
         self.purchased_product = kwargs.pop('product', None)
         super(PurchasedJobForm, self).__init__(*args, **kwargs)
+        self.fields['site_packages'].widget.attrs['disabled'] = True
+        self.fields['is_syndicated'].widget.attrs['disabled'] = True
+        self.fields['post_to'].widget.attrs['disabled'] = True
 
     def save(self, commit=True):
         self.instance.purchased_product = self.purchased_product
