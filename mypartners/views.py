@@ -146,7 +146,7 @@ def create_partner_from_library(request):
     library = get_object_or_404(PartnerLibrary, pk=library_id)
 
     partner = Partner(
-        name=library.name,
+        name=library.name or "Not Available",
         uri=library.uri,
         owner=company,
         library_id=library)
