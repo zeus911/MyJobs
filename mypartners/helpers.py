@@ -3,7 +3,7 @@ from datetime import datetime, time, timedelta
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
-from django.db.models import Min, Max, Q, Count
+from django.db.models import Min, Max, Q
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -387,7 +387,8 @@ def filter_partners(request):
     city = query & Q(contact__city__contains=city) if city else query
     state = query & Q(contact__state=state) if state else query
 
-    partners = partners.filter(query).annotate(Count('pk'))
+    #partners = partners.filter(query).annotate(Count('pk'))
+    partners = partners.filter(query).distinct()
 
     return partners
 
@@ -421,6 +422,7 @@ def filter_partner_library(request):
         interests &= Q(**{"is_%s" % interest.replace(' ', '_'): True})
 
     query &= Q(interests | unspecified)
-    partners = partners.filter(query).annotate(Count('pk'))
+    #partners = partners.filter(query).annotate(Count('pk'))
+    partners = partners.filter(query).distinct()
 
     return partners
