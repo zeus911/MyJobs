@@ -371,37 +371,41 @@ def get_library_partners(path=None):
             yield CompliancePartner(**fields)
 
 
-def get_partners_from_filters(request, company, partner_library=False):
+def filter_partners(request):
+    company = get_company(request)
     keywords = request.REQUEST.get('keywords', "").split(',', 1)
     city = request.REQUEST.get('city', "").strip()
     state = request.REQUEST.get('state', "").strip()
-    # we use the request for pagination, so need to make a copy of these values
+    partners = Partner.objects.select_related('contact')
+    query = Q(owner=company.id)
+
+    for keyword in keywords:
+        query &= (Q(name__contains=keyword) | Q(uri__contains=keyword) |
+                  Q(contact__name__contains=keyword))
+
+    city = query & Q(contact__city__contains=city) if city else query
+    state = query & Q(contact__state=state) if state else query
+
+    partners = partners.filter(query).annotate(Count('pk'))
+
+    return partners
+
+def filter_partner_library(request):
+    keywords = request.REQUEST.get('keywords', "").split(',', 1)
+    city = request.REQUEST.get('city', "").strip()
+    state = request.REQUEST.get('state', "").strip()
     special_interest = request.REQUEST.getlist('special_interest')[:]
 
-
-    # The starting QuerySet will be different if we are searching through the
-    # partner library
-    if partner_library:
-        partners = PartnerLibrary.objects.all()
-        query = Q()
-    else:
-        partners = Partner.objects.select_related('contact')
-        query = Q(owner=company.id)
+    partners = PartnerLibrary.objects.all()
+    query = Q()
 
     # check for keywords in oganization name, website, and first/last name
     for keyword in keywords:
         query &= (Q(name__contains=keyword) | Q(uri__contains=keyword) |
-                  (Q(contact_name__contains=keyword)
-                   if partner_library else Q(contact__name__contains=keyword)))
+                  Q(contact_name__contains=keyword))
 
-    if city:
-        query &= (Q(city__contains=city) if partner_library else
-                  Q(contact__city__contains=city))
-
-    if state:
-        query &= ((Q(st=state) | Q(state=state))
-                 if partner_library else Q(contact__state=state))
-
+    query = query & Q(city__contains=city) if city else query
+    query = query & Q(st=state) | Q(state=state) if state else query
 
     unspecified = Q()
     interests = Q()
@@ -410,11 +414,11 @@ def get_partners_from_filters(request, company, partner_library=False):
         special_interest.remove("unspecified")
         unspecified = Q(is_veteran=False, is_female=False, is_minority=False,
                         is_disabled=False, is_disabled_veteran=False)
+
     for interest in special_interest:
         interests &= Q(**{"is_%s" % interest.replace(' ', '_'): True})
 
     query &= Q(interests | unspecified)
-
-    # without aggregating, we get duplicate partner entries
     partners = partners.filter(query).annotate(Count('pk'))
+
     return partners

@@ -45,7 +45,8 @@ from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
                                 contact_record_val_to_str, retrieve_fields,
                                 get_records_from_request,
-                                get_partners_from_filters,
+                                filter_partners,
+                                filter_partner_library,
                                 send_contact_record_email_response,
                                 find_partner_from_email)
 
@@ -61,7 +62,7 @@ def prm(request):
         raise Http404
 
     if request.is_ajax():
-        partners = get_partners_from_filters(request, company)
+        partners = filter_partners(request)
         paginator = add_pagination(request, partners)
         ctx = {
             'partners': paginator,
@@ -99,16 +100,14 @@ def prm(request):
                               RequestContext(request))
 
 
-
-
 @company_has_access('prm_access')
 def partner_library(request):
-    company = get_company(request)
+    company = get_company()
     if company is None:
         raise Http404
 
     if request.is_ajax():
-        partners = get_partners_from_filters(request, company, partner_library=True)
+        partners = filter_partner_library(request)
         paginator = add_pagination(request, partners)
         ctx = {
             'partners': paginator,
@@ -120,7 +119,7 @@ def partner_library(request):
         response.content = html.content
         return response
 
-    partners = get_partners_from_filters(request, company, partner_library=True)
+    partners = filter_partner_library(request)
     paginator = add_pagination(request, partners)
 
     ctx = {
