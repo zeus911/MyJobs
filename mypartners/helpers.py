@@ -376,6 +376,7 @@ def filter_partners(request):
     keywords = request.REQUEST.get('keywords', "").split(',', 1)
     city = request.REQUEST.get('city', "").strip()
     state = request.REQUEST.get('state', "").strip()
+
     partners = Partner.objects.select_related('contact')
     query = Q(owner=company.id)
 
@@ -389,6 +390,7 @@ def filter_partners(request):
     partners = partners.filter(query).annotate(Count('pk'))
 
     return partners
+
 
 def filter_partner_library(request):
     keywords = request.REQUEST.get('keywords', "").split(',', 1)

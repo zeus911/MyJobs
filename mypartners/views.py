@@ -102,7 +102,7 @@ def prm(request):
 
 @company_has_access('prm_access')
 def partner_library(request):
-    company = get_company()
+    company = get_company(request)
     if company is None:
         raise Http404
 
