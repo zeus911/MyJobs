@@ -32,13 +32,15 @@
                                 </div>
                             {% endfor %}
                         </div>
-                        <div id="job-location-display">
-                        </div>
+                        <div id="job-location-display"></div>
                         <div id="empty-form">
                             {% include 'includes/form-error-highlight.html' with form=formset.empty_form %}
                         </div>
                         {{ formset.management_form }}
-                        <a class="btn" href="?" id="add-location">Add</a>
+                        <div class="actions">
+                            <div class="form-label pull-left">&nbsp;</div>
+                            <a class="btn" href="?" id="add-location">Add</a>
+                        </div>
                     </fieldset>
                 </div>
             </div>

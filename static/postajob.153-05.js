@@ -153,9 +153,9 @@ var fields = ['input[id$=-city]',
 
 function add_location(location) {
     /*
-    Creates condensed location tags for this job's locations
+    Creates condensed location tags for a given location.
      */
-    var html_str = '<div><span>city, region_short country</span><a class="pull-right" href="?" id="remove-location-loc_num">Remove</a></div>';
+    var html_str = '<div class="location-display"><div>city, region_short country</div><div><a href="?" id="remove-location-loc_num">Remove</a></div></div>';
     var location_map = {
         city: location.find('input[id$=-city]').val(),
         region_short: location.find('input[id$=-state]').val(),
@@ -175,7 +175,7 @@ function add_location(location) {
 
 function add_locations() {
     /*
-    Adds location tags for all locations previously added to this job.
+    Creates location tags for all locations previously added to this job.
      */
     $('.formset-form').each(function() {
         add_location($(this));
@@ -230,6 +230,10 @@ function create_location_events() {
         $(this).removeAttr('checked');
     });
     $('#add-location').click(function(e) {
+        /*
+        Validates location form, copies valid forms to the correct location,
+        and adds a display for added locations.
+         */
         e.preventDefault();
         // form_count holds the current number of location forms on the page.
         // The form numbers start at 0, so form_count also represents the next
@@ -253,10 +257,20 @@ function create_location_events() {
         }
     });
     $('a[id^=remove-location-]').click(function(e) {
+        /*
+        Toggles the delete input for a given location. Changes the text of the
+        remove button to either Remove or Re-add based on the input status.
+         */
         e.preventDefault();
         var id = $(this).attr('id').split('-')[2];
-        $('input[name=form-' + id + '-DELETE]').attr('checked', 'checked');
-        // TODO: Remove this and turn the delete button into a toggle
-        $(this).parent().remove();
+        var delete_input = $('input[name=form-' + id + '-DELETE');
+        var checked = delete_input.attr('checked') == 'checked';
+        if (checked) {
+            delete_input.removeAttr('checked');
+            $(this).text('Remove');
+        } else {
+            delete_input.attr('checked', 'checked');
+            $(this).text('Re-add');
+        }
     });
 }

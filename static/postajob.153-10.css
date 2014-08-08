@@ -64,7 +64,37 @@
     display: table-row;
 }
 
+/* Job posting location formset styles */
 [id$=-DELETE],
 [for$=-DELETE] {
     display: none;
+}
+
+#job-location-display .location-display div {
+    display: inline-block;
+    width: 50%;
+}
+
+#job-location-display .location-display div:nth-child(2) {
+    text-align: right;
+    vertical-align: middle !important;
+}
+
+.location-display + .location-display {
+    border-top: 1px solid #e6e6e6;
+}
+
+.location-display:last-of-type {
+    margin-bottom: 5px;
+}
+
+@media screen and (max-width: 992px) {
+    .location-display {
+        height: auto;
+    }
+
+    .location-display + .location-display {
+        padding-top: 5px;
+        margin-top: 5px;
+    }
 }
