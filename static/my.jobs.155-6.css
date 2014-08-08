@@ -272,6 +272,11 @@ h1 > small > a:hover {
     padding-left: 8px;
 }
 
+.sidebar input.loading {
+    background:url('//d2e48ltfsb5exy.cloudfront.net/content_ms/files/ui-anim_basic_16x16.gif') no-repeat right center;
+    background-position-x: 97%;
+}
+
 .sidebar select {
     width: 100%;
 }

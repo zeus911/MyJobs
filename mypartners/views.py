@@ -66,30 +66,26 @@ def prm(request):
         paginator = add_pagination(request, partners)
         ctx = {
             'partners': paginator,
-            'on_page': 'prm'
+            'on_page': 'prm',
+            'ajax': 'true'
         }
         response = HttpResponse()
         html = render_to_response('mypartners/includes/partner_column.html',
                                   ctx, RequestContext(request))
         response.content = html.content
         return response
-
-    form = request.REQUEST.get('form')
-    partners = company.partner_set.all()
-    if not partners and not form:
-        partner_form = PartnerInitialForm()
-    else:
-        try:
-            partners = Partner.objects.filter(owner=company.id)
-        except Partner.DoesNotExist:
-            raise Http404
+    try:
+        partners = Partner.objects.filter(owner=company.id)
+    except Partner.DoesNotExist:
+        raise Http404
+    if partners:
         paginator = add_pagination(request, partners)
-        partner_form = None
+    else:
+        paginator = None
 
     ctx = {
         'has_partners': True if partners else False,
-        'partners': paginator or partners,
-        'form': partner_form or form,
+        'partners': paginator,
         'company': company,
         'user': request.user,
         'partner_ct': ContentType.objects.get_for_model(Partner).id,
@@ -170,13 +166,16 @@ def create_partner_from_library(request):
     partner.primary_contact = contact
     partner.save()
 
+    redirect = False
+    if request.REQUEST.get("redirect"):
+        redirect = True
     ctx = {
         'partner': partner.id,
-        'contact': contact.id
+        'contact': contact.id,
+        'redirect': redirect
     }
 
-    return render_to_response('mypartners/partner_library.html', ctx,
-                              RequestContext(request))
+    return HttpResponse(json.dumps(ctx))
 
 
 @company_has_access('prm_access')

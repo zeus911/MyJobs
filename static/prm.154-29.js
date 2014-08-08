@@ -133,12 +133,14 @@ $(document).ready(function() {
             $(this).removeClass("disabled-tag");
         }
         var data = build_data();
+        update_search_url(data);
         send_filter(data);
     });
 
-    $(".partner-filters :input:not(select)").on("keyup change", function() {
+    $(".partner-filters :input:not(select)").on("keyup paste", function() {
         /* Variables */
-        var wait_time;
+        var wait_time,
+            that = $(this);
         if($(window).width() < 993) wait_time = 3000;
         else wait_time = 1000;
 
@@ -147,12 +149,15 @@ $(document).ready(function() {
         /* Ajax */
         this.timer = setTimeout(function() {
             var data = build_data();
+            $(that).addClass("loading");
+            update_search_url(data);
             send_filter(data);
         }, wait_time);
     });
 
     $(".partner-filters :input:has(option)").on("change", function() {
         var data = build_data();
+        update_search_url(data);
         send_filter(data);
     });
 
@@ -161,12 +166,9 @@ $(document).ready(function() {
             var library_id = $(this).attr("id").split("-")[1],
                 library_title = $(this).children("div.big-title").children("b").text(),
                 company_name = $("h1").children("a").text(),
-                body_message = "";
-            if(library_id % 2 == 0)
-                body_message = "Would you like to add OFCCP partner, <b>" + library_title + "</b>, to " +
-                    ""+ company_name +"'s Partner Relationship Manager?";
-            else
-                body_message = "Would you like to add OFCCP partner: <br /><br /><b>"+library_title+"</b><br /><br />Clicking 'Add' will transfer this OFCCP partner to <b>"+company_name+"'s</b> Partner Relationship Manager.";
+                body_message = "Would you like to add OFCCP partner: <br /><br /><b>"+
+                    library_title+"</b><br /><br />Clicking 'Add' will copy this OFCCP partner to <b>"+
+                    company_name+"'s</b> Partner Relationship Manager.";
             $(".modal-body").children("p").html(body_message);
             $("#add-partner-library").data("num", library_id);
             $("#partner-library-modal").modal("show");
@@ -176,11 +178,17 @@ $(document).ready(function() {
     $("#add-partner-library").on("click", function(){
         var data = {};
         data.library_id = $(this).data("num");
+        if($("#go-to-partner:checked")) data.redirect = true;
         $.ajax({
             type: "GET",
             url: "/prm/view/partner-library/add/",
             data: data,
             success: function(data) {
+                var json = JSON.parse(data);
+                if(json.redirect === true) {
+                    window.location = location.protocol + "//" + location.host +
+                        "/prm/view/details?partner="+json.partner;
+                }
                 $("#partner-library-modal").modal("hide");
             }
         });
@@ -217,6 +225,11 @@ function send_filter(data_to_send) {
         data: data_to_send,
         success: function(data) {
             $("#partner-holder").html(data);
+            $(".partner-filters :input:not(select)").each(function() {
+                if($(this).hasClass("loading"))
+                    $(this).removeClass("loading")
+            });
+            // Very important, don't touch
             if(data_to_send.a) {
                 var the_list = $("#partner-holder").children("div.product-card");
                 $(the_list).each(function() {
@@ -239,6 +252,25 @@ function send_filter(data_to_send) {
             }
         }
     });
+}
+
+function update_search_url(data) {
+    var search_url = "?",
+        data_keys = Object.keys(data);
+    for(var i = 0; i < data_keys.length; i++) {
+        var key = data_keys[i],
+            value = data[key];
+        if(typeof(value) == "object"){
+            for(var j = 0; j < value.length; j++){
+                if(i != 0 || j != 0) search_url += "&";
+                search_url += key + "=" + value[j];
+            }
+        } else {
+            if(i != 0) search_url += "&";
+            search_url += key + "=" + value;
+        }
+    }
+    location.search = search_url;
 }
 
 function show_selected() {
