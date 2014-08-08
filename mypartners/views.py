@@ -150,7 +150,7 @@ def create_partner_from_library(request):
 
     contact = Contact(
         partner=partner,
-        name=library.contact_name,
+        name=library.contact_name or "Not Available",
         email=library.email,
         phone=library.phone,
         address_line_one=library.street1,
