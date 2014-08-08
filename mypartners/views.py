@@ -146,7 +146,7 @@ def create_partner_from_library(request):
     library = get_object_or_404(PartnerLibrary, pk=library_id)
 
     partner = Partner(
-        name=library.name or "Not Available",
+        name=library.name,
         uri=library.uri,
         owner=company,
         library_id=library)
@@ -154,7 +154,7 @@ def create_partner_from_library(request):
 
     contact = Contact(
         partner=partner,
-        name=library.contact_name,
+        name=library.contact_name or "Not Available",
         email=library.email,
         phone=library.phone,
         address_line_one=library.street1,
