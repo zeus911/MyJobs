@@ -158,6 +158,21 @@ class EditItemTests(MyPartnersTestCase):
             contact=lambda **kwargs: self.request_factory.get(
                 '/prm/view/details/edit', dict({'partner': 1}, **kwargs)))
 
+    def test_add_contact_with_bad_partner_id(self):
+        """ Invalid partner should always result in a 404. """
+
+        fail_msg = "The partner id %s should have raised an Http404 but didnt"
+
+        for partner in self.bad_ids:
+            request = self.requests['contact'](partner=partner, id=1)
+            request.user = self.staff_user
+
+            with self.assertRaises(Http404) as a:
+                views.edit_item(request)
+
+                if cm.exception != Http404:
+                    print fail_msg % partner
+
     def test_edit_contact_with_bad_item(self):
         """ Invalid item should result in a 404 if not 0, otherwise, should
             display the add contact form
@@ -217,7 +232,8 @@ class EditItemTests(MyPartnersTestCase):
             self.assertIn("Add Contact", soup.title.text)
 
     def test_edit_contact_form_loaded(self):
-        request = self.requests['contact'](id=1)
+        request = self.requests['contact'](id=self.contact.pk,
+                                           partner=self.partner.pk)
         request.user = self.staff_user
 
         response = views.edit_item(request)
