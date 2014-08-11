@@ -99,7 +99,8 @@ class Job(BaseModel):
                                   help_text=help_text['apply_link'])
     apply_info = models.TextField(blank=True, verbose_name="Apply Instructions",
                                   help_text=help_text['apply_info'])
-    site_packages = models.ManyToManyField('SitePackage', null=True)
+    site_packages = models.ManyToManyField('SitePackage', blank=True,
+                                           null=True)
     is_syndicated = models.BooleanField(default=False,
                                         verbose_name="Syndicated")
 

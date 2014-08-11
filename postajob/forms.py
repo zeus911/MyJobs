@@ -272,7 +272,17 @@ class PurchasedJobForm(PurchasedJobBaseForm):
         super(PurchasedJobForm, self).__init__(*args, **kwargs)
         self.fields['site_packages'].widget.attrs['disabled'] = True
         self.fields['is_syndicated'].widget.attrs['disabled'] = True
-        self.fields['post_to'].widget.attrs['disabled'] = True
+        self.fields.pop('post_to', None)
+        self.initial['site_packages'] = self.fields['site_packages'].queryset
+
+    def get_field_sets(self):
+        field_sets = [
+            [self['title'], self['description'], self['reqid']],
+            [self['apply_type'], self['apply_link'], self['apply_info']],
+            [self['date_expired'], self['is_expired']],
+            [self['site_packages'], self['is_syndicated']]
+        ]
+        return field_sets
 
     def save(self, commit=True):
         self.instance.purchased_product = self.purchased_product

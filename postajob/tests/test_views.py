@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from bs4 import BeautifulSoup
 from mock import patch, Mock
 from StringIO import StringIO
 
@@ -717,6 +718,26 @@ class ViewTests(MyJobsBase):
         })
         self.client.post(reverse('job_update', args=[job.pk]),
                          data=self.job_form_data, follow=True)
-        print Job.objects.count()
-        print JobLocation.objects.count()
-        print [location.city for location in JobLocation.objects.all()]
+
+    @patch('urllib2.urlopen')
+    def test_purchasedjob_form(self, urlopen_mock):
+        urlopen_mock.return_value = StringIO('')
+        purchasedproduct = purchasedproduct_factory(self.product,
+                                                    self.company)
+
+        site = SeoSiteFactory(domain='indiana.jobs', id=3)
+        site.business_units.add(self.bu)
+        site.sitepackage_set.add(self.sitepackage)
+        product = {'product': purchasedproduct.pk}
+        response = self.client.get(reverse('purchasedjob_add',
+                                           kwargs=product))
+        form = response.context['form']
+        soup = BeautifulSoup(form.as_table())
+        site_packages = soup.select('[id^=id_site_packages_]')
+        keys = [package.attrs['value'] for package in site_packages]
+        self.assertEqual(len(site_packages), 2)
+        self.assertItemsEqual([str(self.site.pk), str(site.pk)],
+                              keys)
+        for package in site_packages:
+            self.assertEqual(package.attrs['checked'], 'checked')
+            self.assertEqual(package.attrs['disabled'], 'True')
