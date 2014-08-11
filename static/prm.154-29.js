@@ -133,12 +133,14 @@ $(document).ready(function() {
             $(this).removeClass("disabled-tag");
         }
         var data = build_data();
+        update_search_url(data);
         send_filter(data);
     });
 
-    $(".partner-filters :input:not(select)").on("keyup change", function() {
+    $(".partner-filters :input:not(select)").on("keyup paste", function() {
         /* Variables */
-        var wait_time;
+        var wait_time,
+            that = $(this);
         if($(window).width() < 993) wait_time = 3000;
         else wait_time = 1000;
 
@@ -147,27 +149,69 @@ $(document).ready(function() {
         /* Ajax */
         this.timer = setTimeout(function() {
             var data = build_data();
+            $(that).addClass("loading");
+            update_search_url(data);
             send_filter(data);
         }, wait_time);
     });
 
     $(".partner-filters :input:has(option)").on("change", function() {
         var data = build_data();
+        update_search_url(data);
         send_filter(data);
     });
 
     if(location.pathname == '/prm/view/partner-library/'){
         $("body").on("click",".product-card:not(.product-card.disabled-card)", function() {
             var library_id = $(this).attr("id").split("-")[1],
-                library_title = $(this).children("div.big-title").children("b").text(),
+                library_title = $(this).children("div.big-title").children("b").text() +"*",
                 company_name = $("h1").children("a").text(),
-                body_message = "";
-            if(library_id % 2 == 0)
-                body_message = "Would you like to add OFCCP partner, <b>" + library_title + "</b>, to " +
-                    ""+ company_name +"'s Partner Relationship Manager?";
-            else
-                body_message = "Would you like to add OFCCP partner: <br /><br /><b>"+library_title+"</b><br /><br />Clicking 'Add' will transfer this OFCCP partner to <b>"+company_name+"'s</b> Partner Relationship Manager.";
+                body_message = "Would you like to add OFCCP partner: <br /><br /><b>"+
+                    library_title+"</b><br /><br />Clicking 'Add' will copy this partner to <b>"+
+                    company_name+"'s</b> Partner Relationship Manager.";
+            $(".modal-body").children(":not(p:first-child)").remove();
             $(".modal-body").children("p").html(body_message);
+
+            var for_completion = ["name", "email", "phone"];
+            $(this).children("div.product-details").children("input").each(function() {
+                if($(this).is("[type=hidden]")) {
+                    var info = $(this).attr("class").split("-")[1];
+                    if(for_completion.indexOf(info) >= 0) {
+                        for_completion.splice(for_completion.indexOf(info), 1);
+                    }
+                }
+            });
+            if(for_completion.length > 0) {
+                var p = document.createElement("p");
+                var note = document.createElement("span");
+                var note_node = document.createTextNode("Note: ");
+                note.appendChild(note_node);
+                note.setAttribute("style", "color: red");
+                var text = "This partner is missing information from the primary contact. " +
+                    "Please contact the partner to obtain this missing data:"
+                var ul = document.createElement("ul");
+                for(var i = 0; i < for_completion.length; i++) {
+                    var li = document.createElement("li");
+                    var li_node = document.createTextNode(for_completion[i]);
+                    li.appendChild(li_node);
+                    ul.appendChild(li);
+                }
+
+                var node = document.createTextNode(text);
+                p.appendChild(note);
+                p.appendChild(node);
+                $(".modal-body").append(p).append(ul);
+            }
+
+
+            var disclaimer = document.createElement("span"),
+                d_text = "*This partner's information was provided by the OFCCP Referral Directory. " +
+                    "To confirm its accuracy, DirectEmployers highly recommends following up directly " +
+                    "with the partner. ";
+            disclaimer.appendChild(document.createTextNode(d_text));
+            disclaimer.setAttribute("style", "font-size: 0.85em;");
+            $(".modal-body").append(disclaimer);
+
             $("#add-partner-library").data("num", library_id);
             $("#partner-library-modal").modal("show");
         });
@@ -176,11 +220,17 @@ $(document).ready(function() {
     $("#add-partner-library").on("click", function(){
         var data = {};
         data.library_id = $(this).data("num");
+        if($("#go-to-partner").is(":checked")) data.redirect = true;
         $.ajax({
             type: "GET",
             url: "/prm/view/partner-library/add/",
             data: data,
             success: function(data) {
+                var json = JSON.parse(data);
+                if(json.redirect === true) {
+                    window.location = location.protocol + "//" + location.host +
+                        "/prm/view/overview?partner="+json.partner;
+                }
                 $("#partner-library-modal").modal("hide");
             }
         });
@@ -217,6 +267,11 @@ function send_filter(data_to_send) {
         data: data_to_send,
         success: function(data) {
             $("#partner-holder").html(data);
+            $(".partner-filters :input:not(select)").each(function() {
+                if($(this).hasClass("loading"))
+                    $(this).removeClass("loading")
+            });
+            // Very important, don't touch
             if(data_to_send.a) {
                 var the_list = $("#partner-holder").children("div.product-card");
                 $(the_list).each(function() {
@@ -239,6 +294,25 @@ function send_filter(data_to_send) {
             }
         }
     });
+}
+
+function update_search_url(data) {
+    var search_url = "?",
+        data_keys = Object.keys(data);
+    for(var i = 0; i < data_keys.length; i++) {
+        var key = data_keys[i],
+            value = data[key];
+        if(typeof(value) == "object"){
+            for(var j = 0; j < value.length; j++){
+                if(i != 0 || j != 0) search_url += "&";
+                search_url += key + "=" + value[j];
+            }
+        } else {
+            if(i != 0) search_url += "&";
+            search_url += key + "=" + value;
+        }
+    }
+    //location.search = search_url;
 }
 
 function show_selected() {

@@ -272,6 +272,11 @@ h1 > small > a:hover {
     padding-left: 8px;
 }
 
+.sidebar input.loading {
+    background:url('//d2e48ltfsb5exy.cloudfront.net/content_ms/files/ui-anim_basic_16x16.gif') no-repeat right center;
+    background-position-x: 97%;
+}
+
 .sidebar select {
     width: 100%;
 }
@@ -322,6 +327,14 @@ h1 > small > a:hover {
     background-color: #888888;
     color: #FFF;
     font-size: 0.9em;
+}
+
+#library-modal-check {
+    margin-top: 10px;
+}
+
+#library-modal-check input {
+    margin: 0;
 }
 
 .partner-tag.button { box-shadow: 2px 2px 0 #585858 }
@@ -2188,6 +2201,12 @@ td .gravatar-blank,
     #saved-search-form label[for$=is_active] {
         margin-top: 7px;
     }
+
+    .product-card > a:not(.btn) {
+        padding: 0;
+        border: 0;
+        background-color: inherit;
+    }
 }
 
 @media screen and (min-width: 501px) {
@@ -2355,6 +2374,20 @@ td .gravatar-blank,
         text-align:left;
         font-weight: bold;
      }
+
+    #library-modal-check {
+        float: none;
+        margin-left: -30px;
+        margin-right: 34px;
+    }
+
+    #library-modal-check input {
+        float: none;
+    }
+
+    .modal-footer .btn+.btn {
+        margin-left: 0;
+    }
   
     .table-striped tbody tr:nth-child(even) td {
         background-color: #FFF !important;
