@@ -164,12 +164,54 @@ $(document).ready(function() {
     if(location.pathname == '/prm/view/partner-library/'){
         $("body").on("click",".product-card:not(.product-card.disabled-card)", function() {
             var library_id = $(this).attr("id").split("-")[1],
-                library_title = $(this).children("div.big-title").children("b").text(),
+                library_title = $(this).children("div.big-title").children("b").text() +"*",
                 company_name = $("h1").children("a").text(),
                 body_message = "Would you like to add OFCCP partner: <br /><br /><b>"+
-                    library_title+"</b><br /><br />Clicking 'Add' will copy this OFCCP partner to <b>"+
+                    library_title+"</b><br /><br />Clicking 'Add' will copy this partner to <b>"+
                     company_name+"'s</b> Partner Relationship Manager.";
+            $(".modal-body").children(":not(p:first-child)").remove();
             $(".modal-body").children("p").html(body_message);
+
+            var for_completion = ["name", "email", "phone"];
+            $(this).children("div.product-details").children("input").each(function() {
+                if($(this).is("[type=hidden]")) {
+                    var info = $(this).attr("class").split("-")[1];
+                    if(for_completion.indexOf(info) >= 0) {
+                        for_completion.splice(for_completion.indexOf(info), 1);
+                    }
+                }
+            });
+            if(for_completion.length > 0) {
+                var p = document.createElement("p");
+                var note = document.createElement("span");
+                var note_node = document.createTextNode("Note: ");
+                note.appendChild(note_node);
+                note.setAttribute("style", "color: red");
+                var text = "This partner is missing information from the primary contact. " +
+                    "Please contact the partner to obtain this missing data:"
+                var ul = document.createElement("ul");
+                for(var i = 0; i < for_completion.length; i++) {
+                    var li = document.createElement("li");
+                    var li_node = document.createTextNode(for_completion[i]);
+                    li.appendChild(li_node);
+                    ul.appendChild(li);
+                }
+
+                var node = document.createTextNode(text);
+                p.appendChild(note);
+                p.appendChild(node);
+                $(".modal-body").append(p).append(ul);
+            }
+
+
+            var disclaimer = document.createElement("span"),
+                d_text = "*This partner's information was provided by the OFCCP Referral Directory. " +
+                    "To confirm its accuracy, DirectEmployers highly recommends following up directly " +
+                    "with the partner. ";
+            disclaimer.appendChild(document.createTextNode(d_text));
+            disclaimer.setAttribute("style", "font-size: 0.85em;");
+            $(".modal-body").append(disclaimer);
+
             $("#add-partner-library").data("num", library_id);
             $("#partner-library-modal").modal("show");
         });
@@ -178,7 +220,7 @@ $(document).ready(function() {
     $("#add-partner-library").on("click", function(){
         var data = {};
         data.library_id = $(this).data("num");
-        if($("#go-to-partner:checked")) data.redirect = true;
+        if($("#go-to-partner").is(":checked")) data.redirect = true;
         $.ajax({
             type: "GET",
             url: "/prm/view/partner-library/add/",
@@ -187,7 +229,7 @@ $(document).ready(function() {
                 var json = JSON.parse(data);
                 if(json.redirect === true) {
                     window.location = location.protocol + "//" + location.host +
-                        "/prm/view/details?partner="+json.partner;
+                        "/prm/view/overview?partner="+json.partner;
                 }
                 $("#partner-library-modal").modal("hide");
             }
@@ -270,7 +312,7 @@ function update_search_url(data) {
             search_url += key + "=" + value;
         }
     }
-    location.search = search_url;
+    //location.search = search_url;
 }
 
 function show_selected() {
