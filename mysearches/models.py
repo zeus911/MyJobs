@@ -1,4 +1,6 @@
 from datetime import datetime
+from pynliner import Pynliner
+from urlparse import urlparse
 
 from django.conf import settings
 from django.db import models
@@ -6,9 +8,8 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.utils.translation import ugettext_lazy as _
 from django.template.loader import render_to_string
-from pynliner import Pynliner
 
-from mydashboard.models import Company
+from mydashboard.models import Company, SeoSite
 from myjobs.models import User
 from mypartners.models import Contact, ContactRecord, Partner, EMAIL
 from mysearches.helpers import (parse_feed, update_url_if_protected,
@@ -64,6 +65,22 @@ class SavedSearch(models.Model):
 
     # Custom messages were created for PartnerSavedSearches
     custom_message = models.TextField(max_length=300, blank=True, null=True)
+
+    def get_company(self):
+        """
+        Attempts to match the feed url to an SeoSite and then determine the
+        owner of that SeoSite.
+
+        """
+
+        netloc = urlparse(self.feed).netloc
+        try:
+            site = SeoSite.objects.get(domain__iexact=netloc)
+            return site.get_companies()[0].pk
+        except (SeoSite.DoesNotExist, SeoSite.MultipleObjectsReturned,
+                IndexError):
+            # No match was found, so make the company DirectEmployers.
+            return 999999
 
     def get_verbose_frequency(self):
         for choice in FREQUENCY_CHOICES:
