@@ -1,5 +1,21 @@
+window.onpopstate = function(event) {
+    fill_in_history_state(event.state);
+    send_filter(event.state);
+};
+
 $(document).ready(function() {
     if(location.search) show_selected();
+
+    /*$("#next_page").on("click", function(e) {
+        e.preventDefault();
+        var data = build_data();
+        data.page += 1;
+        console.log(data.page);
+        update_search_url(data);
+        if (isIE && isIE () < 9) {
+            send_filter(data);
+        }
+    }); */
     /*
     Saves both partner forms; init form and new/edit partner form
 
@@ -134,7 +150,9 @@ $(document).ready(function() {
         }
         var data = build_data();
         update_search_url(data);
-        send_filter(data);
+        if (isIE && isIE () < 9) {
+            send_filter(data);
+        }
     });
 
     $(".partner-filters :input:not(select)").on("keyup paste", function() {
@@ -151,14 +169,18 @@ $(document).ready(function() {
             var data = build_data();
             $(that).addClass("loading");
             update_search_url(data);
-            send_filter(data);
+            if (isIE && isIE () < 9) {
+                send_filter(data);
+            }
         }, wait_time);
     });
 
     $(".partner-filters :input:has(option)").on("change", function() {
         var data = build_data();
         update_search_url(data);
-        send_filter(data);
+        if (isIE && isIE () < 9) {
+            send_filter(data);
+        }
     });
 
     if(location.pathname == '/prm/view/partner-library/'){
@@ -188,7 +210,7 @@ $(document).ready(function() {
                 note.appendChild(note_node);
                 note.setAttribute("style", "color: red");
                 var text = "This partner is missing information from the primary contact. " +
-                    "Please contact the partner to obtain this missing data:"
+                    "Please contact the partner to obtain this missing data:";
                 var ul = document.createElement("ul");
                 for(var i = 0; i < for_completion.length; i++) {
                     var li = document.createElement("li");
@@ -237,6 +259,81 @@ $(document).ready(function() {
     })
 });
 
+function isIE () {
+    var myNav = navigator.userAgent.toLowerCase();
+    return (myNav.indexOf('msie') != -1) ? parseInt(myNav.split('msie')[1]) : false;
+}
+
+var qs = (function(a) {
+    if (a == "") return {};
+    var b = {};
+    for (var i = 0; i < a.length; ++i)
+    {
+        var p=a[i].split('=');
+        if (p.length != 2) continue;
+        b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+    }
+    return b;
+})(window.location.search.substr(1).split('&'));
+
+function fill_in_history_state(data){
+    /* Grab inputs */
+    var kw_input = $("#lib-keywords"),
+        ct_input = $("#lib-city");
+    var si_list = ["veteran", "female", "minority", "disabled",
+                       "disabled veteran", "unspecified"];
+    if(!data){
+        $(kw_input.val(""));
+        $("#state option[value='']").attr("selected", "selected");
+        $(ct_input).val("");
+        clear_special_interest(si_list);
+        return false
+    }
+    if(typeof(data.keywords) != "undefined")
+        $(kw_input).val(String(data.keywords));
+    else
+        $(kw_input.val(""));
+    $("#state option[value="+ data.state +"]").attr("selected", "selected");
+    if(typeof(data.city) != "undefined")
+        $(ct_input).val(String(data.city));
+    else
+        $(ct_input).val("");
+    if(typeof(data.special_interest) == "undefined") data.special_interest = [];
+    for(var i = 0; i < data.special_interest.length; i++){
+        if(si_list.indexOf(data.special_interest[i]) >= 0){
+            var value = data.special_interest[i];
+            si_list.splice(si_list.indexOf(value), 1);
+            var cl = String(value).replace(" ", "-");
+            $(".sidebar .partner-tag").each(function() {
+                if($(this).hasClass(cl)) {
+                    if (!$(this).children('i').hasClass('icon-ok')) {
+                        var i = document.createElement('i');
+                        $(i).addClass("icon icon-ok");
+                        $(this).append(i);
+                        $(this).removeClass("disabled-tag");
+                    }
+                }
+            });
+        }
+    }
+    clear_special_interest(si_list);
+    return false
+}
+
+function clear_special_interest(si_list) {
+    for(var x in si_list) {
+        var cl = String(si_list[x]).replace(" ", "-");
+        $(".sidebar .partner-tag").each(function() {
+            if($(this).hasClass(cl)){
+                if ($(this).children('i').hasClass('icon-ok')) {
+                    $(this).children('i').remove();
+                    $(this).addClass("disabled-tag");
+                }
+            }
+        });
+    }
+}
+
 function build_data() {
     var data = {},
         special_interest = [];
@@ -272,7 +369,7 @@ function send_filter(data_to_send) {
                     $(this).removeClass("loading")
             });
             // Very important, don't touch
-            if(data_to_send.a) {
+            if(data_to_send && data_to_send.a) {
                 var the_list = $("#partner-holder").children("div.product-card");
                 $(the_list).each(function() {
                     $(this).hide();
@@ -297,6 +394,19 @@ function send_filter(data_to_send) {
 }
 
 function update_search_url(data) {
+    if (!Object.keys) {
+      Object.keys = function(obj) {
+        var keys = [];
+
+        for (var i in obj) {
+          if (obj.hasOwnProperty(i)) {
+            keys.push(i);
+          }
+        }
+
+        return keys;
+      };
+    }
     var search_url = "?",
         data_keys = Object.keys(data);
     for(var i = 0; i < data_keys.length; i++) {
@@ -312,7 +422,13 @@ function update_search_url(data) {
             search_url += key + "=" + value;
         }
     }
-    //location.search = search_url;
+
+    if (isIE() && isIE () < 9) {
+        console.log("going to punch a baby");
+        location.search = search_url;
+    } else {
+        history.pushState(data, "filter", search_url);
+    }
 }
 
 function show_selected() {

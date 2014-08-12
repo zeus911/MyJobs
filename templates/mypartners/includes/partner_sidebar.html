@@ -3,11 +3,11 @@
     <div class="partner-filters">
         <h2 class="top">Filter Partners</h2>
         <label>Keywords:</label>
-        <input type="text" placeholder="Keywords" {% if request.GET.keywords %}value="{{request.GET.keywords}}"{% endif %} />
+        <input id="lib-keywords" type="text" placeholder="Keywords" {% if request.GET.keywords %}value="{{request.GET.keywords}}"{% endif %} />
         <label>State:</label>
         {% include "includes/state_dropdown.html" %}
         <label>City:</label>
-        <input type="text" placeholder="City" {% if request.GET.city %}value="{{request.GET.city}}"{% endif %} />
+        <input id="lib-city" type="text" placeholder="City" {% if request.GET.city %}value="{{request.GET.city}}"{% endif %} />
 
         {% if special_interest %}
         <label>Special Interest:</label>
