@@ -130,8 +130,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     url = request.build_absolute_uri()
     facets = parse_facets(facet_solr.search(), request)
 
-    all_facets = facets.items()
-
     context = {
         'admin_you': request.user,
         'applied_filters': filters,
@@ -146,7 +144,7 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         'date_end': date_end,
         'date_start': date_start,
         'date_submit_url': url,
-        'facets': all_facets,
+        'facets': facets,
         'site_name': site_name,
         'view_name': 'Company Dashboard',
     }

@@ -252,6 +252,7 @@ class MyDashboardViewsTests(TestCase):
         user = UserFactory(email="test@shouldWork.com")
         SavedSearchFactory(user=user,
                            url='http://test.jobs/search?q=python',
+                           feed='http://test.jobs/jobs/feed/rss?',
                            label='Python Jobs')
         user.save()
         update_solr_task(settings.TEST_SOLR_INSTANCE)
@@ -269,6 +270,7 @@ class MyDashboardViewsTests(TestCase):
         user = UserFactory(email="test@shouldWork.com")
         SavedSearchFactory(user=user,
                            url='http://test.jobs/search?q=python',
+                           feed='http://test.jobs/jobs/feed/rss?',
                            label='Python Jobs')
         user.save()
         update_solr_task(settings.TEST_SOLR_INSTANCE)
@@ -292,6 +294,7 @@ class MyDashboardViewsTests(TestCase):
         user = UserFactory(email="find@testuser.com")
         SavedSearchFactory(user=user,
                            url='http://test.jobs/search?q=python',
+                           feed='http://test.jobs/jobs/feed/rss?',
                            label='Python Jobs')
         EducationFactory(user=user)
         AddressFactory(user=user)
