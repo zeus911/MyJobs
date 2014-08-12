@@ -171,7 +171,6 @@ function add_location(location) {
         field_id = location.find('input[id$=-id]').attr('id'),
         display_container = $('#job-location-display');
     location_map['loc_num'] = field_id.split('-')[1];
-    console.log(location_map['loc_num']);
     location_tag = location_tag.replace(/city|region|country|loc_num/gi,
         function(matched) {
             return location_map[matched];
@@ -234,6 +233,7 @@ function create_location_events() {
     function properly, one each for the add and remove buttons.
      */
     $('[name$=-DELETE]').each(function() {
+        // The delete input added by formsets seems to default to checked.
         $(this).removeAttr('checked');
     });
     $('#add-location').click(function(e) {
@@ -269,9 +269,9 @@ function create_location_events() {
          remove button to either Remove or Re-add based on the input status.
          */
         e.preventDefault();
-        var id = $(this).attr('id').split('-')[2];
-        var delete_input = $('input[name=form-' + id + '-DELETE]');
-        var checked = delete_input.attr('checked') == 'checked';
+        var id = $(this).attr('id').split('-')[2],
+            delete_input = $('input[name=form-' + id + '-DELETE]'),
+            checked = delete_input.attr('checked') == 'checked';
         if (checked) {
             delete_input.removeAttr('checked');
             $(this).text('Remove');

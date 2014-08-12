@@ -185,6 +185,7 @@ def product_listing(request):
     return HttpResponse('%s(%s)' % (callback, json.dumps(html.content)),
                         content_type='text/javascript')
 
+
 @company_has_access('product_access')
 def order_postajob(request):
     """
@@ -231,6 +232,7 @@ def is_company_user(request):
     exists = CompanyUser.objects.filter(user__email=email).exists()
     return HttpResponse(json.dumps(exists))
 
+
 @csrf_exempt
 @company_has_access('product_access')
 def resend_invoice(request, pk):
@@ -248,7 +250,6 @@ def resend_invoice(request, pk):
 class PurchaseFormViewBase(RequestFormViewBase):
     purchase_field = None
     purchase_model = None
-
 
     @method_decorator(user_is_allowed())
     def dispatch(self, *args, **kwargs):

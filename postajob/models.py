@@ -350,7 +350,11 @@ class PackageManager(models.Manager, PackageMixin):
 
 class Package(models.Model):
     name = models.CharField(max_length=255)
+
+    # content_type will usually be that of a Site Package, but this is not
+    # a guarantee
     content_type = models.ForeignKey(ContentType)
+
     # There is also code that makes the assumption that the owner field
     # exists. Because SitePackage doesn't require an owner field (but other
     # package types likely will require an owner field) there's no good
@@ -460,7 +464,7 @@ class SitePackage(Package):
 class PurchasedProduct(BaseModel):
     product = models.ForeignKey('Product')
     offline_purchase = models.ForeignKey('OfflinePurchase', null=True,
-                                        blank=True)
+                                         blank=True)
     invoice = models.ForeignKey('Invoice')
 
     owner = models.ForeignKey('seo.Company')
