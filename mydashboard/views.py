@@ -20,7 +20,7 @@ from mydashboard.helpers import (saved_searches, filter_by_microsite,
                                  filter_by_date, apply_facets_and_filters,
                                  parse_facets, remove_param_from_url,
                                  get_company_microsites, analytics,
-                                 get_analytics_counts)
+                                 get_analytics_counts, filter_by_domain)
 from mydashboard.models import Company, CompanyUser
 from myjobs.models import User
 from myprofile.models import PrimaryNameProfileUnitManager, ProfileUnits
@@ -89,6 +89,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     if requested_microsite != '':
         active_microsites = authorized_microsites.filter(
             domain__startswith=requested_microsite)
+        user_solr, facet_solr = filter_by_domain(requested_microsite,
+                                                 user_solr, facet_solr)
     else:
         active_microsites = authorized_microsites
         site_name = company.name

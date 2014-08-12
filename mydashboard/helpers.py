@@ -86,9 +86,35 @@ def get_analytics_counts(actions):
     return Counter(page_types)
 
 
+def filter_by_domain(domain, user_solr=None, facet_solr=None):
+    """
+    Applies solr filters to SavedSearch.url based on a domain.
+
+    inputs:
+    :domain: The domain to filter the SavedSearches on.
+    :user_solr: A Solr instance used for retrieving SavedSearch documents
+        from solr.
+    :facet_solr: A Solr instance used for retrieving facets based on
+        ProfileUnits data.
+
+    outputs:
+    user_solr and facet_solr filtered by the company.
+
+    """
+    user_solr = Solr() if not user_solr else user_solr
+    facet_solr = Solr() if not facet_solr else facet_solr
+
+    query = 'SavedSearch_feed:*%s*' % domain
+
+    user_solr = user_solr.add_filter_query(query)
+    facet_solr = facet_solr.add_filter_query(query)
+
+    return user_solr, facet_solr
+
+
 def filter_by_microsite(company, user_solr=None, facet_solr=None):
     """
-    Applies solr filters based on company/microsite.
+    Applies solr filters based on company.
 
     inputs:
     :microsites: A list of the microsites to filter the SavedSearches on.
@@ -98,7 +124,7 @@ def filter_by_microsite(company, user_solr=None, facet_solr=None):
         ProfileUnits data.
 
     outputs:
-    user_solr and facet_solr filtered by applicable microsites.
+    user_solr and facet_solr filtered by the company.
 
     """
 
