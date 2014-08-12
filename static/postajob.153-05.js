@@ -41,7 +41,7 @@ window.onload = function(){
 
     //PurchasedProduct admin, Partner Microsite admin overview
     $('[id^="resend-invoice"]').on("click", function(e) {
-        var id_array = $(this).attr('id').split("-")
+        var id_array = $(this).attr('id').split("-");
         resend_invoice(id_array[id_array.length - 1]);
     });
 };
@@ -77,7 +77,7 @@ function clear_input(field_name) {
 function update_apply_fields() {
     if($('#id_apply_type_0').is(':checked')) {
         show_field('apply-link');
-        show_admin_field('apply_link')
+        show_admin_field('apply_link');
 
         clear_input('apply_email');
         clear_input('apply_info');
@@ -155,22 +155,29 @@ function add_location(location) {
     /*
     Creates condensed location tags for a given location.
      */
-    var html_str = '<div class="location-display"><div>city, region_short country</div><div><a href="?" id="remove-location-loc_num">Remove</a></div></div>';
-    var location_map = {
-        city: location.find('input[id$=-city]').val(),
-        region_short: location.find('input[id$=-state]').val(),
-        country: location.find('input[id$=-country]').val()
-    };
-    // We need to find out which form on the page is for this location. The form
-    // input ids have the structure id_form-#-field, so we can get the form
-    // number by grabbing an input and splitting the number from its id.
-    var field_id = location.find('input[id$=-id]').attr('id');
+
+    // All added locations will follow the same template, with the city,
+    // region, country, and loc_num placeholders replaced with the actual values
+    // for the relevant location
+    var location_tag = '<div class="location-display"><div>city, region country</div><div><a href="?" id="remove-location-loc_num">Remove</a></div></div>',
+        location_map = {
+            city: location.find('input[id$=-city]').val(),
+            region: location.find('input[id$=-state]').val(),
+            country: location.find('input[id$=-country]').val()
+        },
+        // We need to find out which form on the page is for this location. The
+        // form input ids have the structure id_form-#-field, so we can get the
+        // form number by grabbing an input and splitting the number from its id.
+        field_id = location.find('input[id$=-id]').attr('id'),
+        display_container = $('#job-location-display');
     location_map['loc_num'] = field_id.split('-')[1];
-    html_str = html_str.replace(/city|region_short|country|loc_num/gi,
+    console.log(location_map['loc_num']);
+    location_tag = location_tag.replace(/city|region|country|loc_num/gi,
         function(matched) {
             return location_map[matched];
         });
-    $('#job-location-display').append(html_str);
+    location_tag = $(location_tag);
+    display_container.append(location_tag);
 }
 
 function add_locations() {
@@ -188,7 +195,7 @@ function copy_forms(from, to) {
     form.
      */
     var valid = true;
-    fields.forEach(function(element, index, array) {
+    fields.forEach(function(element) {
         var old = from.find(element).val();
         if (old) {
             to.find(element).val(old);
@@ -215,7 +222,7 @@ function clear_form(form) {
     Clears all values from our input form so that further locations can be
     added.
      */
-    fields.forEach(function(element, index, array) {
+    fields.forEach(function(element) {
         form.find(element).val('');
     });
     form.find('input[name$=-zipcode]').val('');
@@ -256,14 +263,14 @@ function create_location_events() {
             $('input[id$=-TOTAL_FORMS]').val(form_count);
         }
     });
-    $('a[id^=remove-location-]').click(function(e) {
+    $('#job-location-display').on('click', 'a', function(e) {
         /*
-        Toggles the delete input for a given location. Changes the text of the
-        remove button to either Remove or Re-add based on the input status.
+         Toggles the delete input for a given location. Changes the text of the
+         remove button to either Remove or Re-add based on the input status.
          */
         e.preventDefault();
         var id = $(this).attr('id').split('-')[2];
-        var delete_input = $('input[name=form-' + id + '-DELETE');
+        var delete_input = $('input[name=form-' + id + '-DELETE]');
         var checked = delete_input.attr('checked') == 'checked';
         if (checked) {
             delete_input.removeAttr('checked');
