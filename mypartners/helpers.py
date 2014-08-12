@@ -400,7 +400,10 @@ def filter_partner_library(request):
     state = request.REQUEST.get('state', "").strip()
     special_interest = request.REQUEST.getlist('special_interest')[:]
 
-    partners = PartnerLibrary.objects.all()
+    library_ids = Partner.objects.exclude(
+        library_id__isnull=True).values_list('library_id', flat=True)
+
+    partners = PartnerLibrary.objects.exclude(id__in=library_ids)
     query = Q()
 
     # check for keywords in oganization name, website, and first/last name
