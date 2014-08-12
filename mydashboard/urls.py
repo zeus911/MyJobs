@@ -8,6 +8,5 @@ urlpatterns = patterns('mydashboard.views',
     url(r'^view$', 'dashboard', name='dashboard'),
     url(r'^view/details$', 'candidate_information',
         name='candidate_information'),
-    url(r'^view/microsite$', 'microsite_activity', name='microsite_activity'),
     url(r'^view/export$', 'export_candidates', name='export_candidates'),
 )

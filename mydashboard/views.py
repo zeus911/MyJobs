@@ -1,23 +1,21 @@
 import csv
 import json
 import operator
-
 from datetime import datetime
 from collections import Counter, OrderedDict
 from itertools import groupby
-from urlparse import urlparse
-from django.conf import settings
 
+from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
 from django.core import mail
 from django.db.models import Q
 from django.http import Http404, HttpResponse
 from django.template import RequestContext
 from django.shortcuts import render_to_response
-from endless_pagination.decorators import page_template
-from lxml import etree
 
-from universal.helpers import get_domain, get_int_or_none, sequence_to_dict
+
+from universal.helpers import (get_company, get_domain, get_int_or_none,
+                               sequence_to_dict)
 from mydashboard.helpers import (saved_searches, filter_by_microsite,
                                  filter_by_date, apply_facets_and_filters,
                                  parse_facets, remove_param_from_url,
@@ -37,7 +35,7 @@ from lxml import etree
 @page_template("mydashboard/dashboard_activity.html")
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def dashboard(request, template="mydashboard/mydashboard.html",
-              extra_context=None, company=None):
+              extra_context=None):
     """
     Returns a list of candidates who created a saved search for one of the
     microsites within the company microsite list or with the company name like
@@ -55,6 +53,11 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         solr = settings.TEST_SOLR_INSTANCE
     else:
         solr = settings.SOLR
+
+    company = get_company(request)
+    if not company:
+        raise Http404
+
     user_solr = Solr(solr['current'])
     facet_solr = Solr(solr['current'])
 
@@ -69,18 +72,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
     facet_solr = facet_solr.add_join(from_field='User_id',
                                      to_field='ProfileUnits_user_id')
     facet_solr = facet_solr.rows_to_fetch(0)
-
-    company_id = request.REQUEST.get('company')
-    if company_id is None:
-        try:
-            company = Company.objects.filter(admins=request.user)[0]
-        except Company.DoesNotExist:
-            raise Http404
-    if not company:
-        try:
-            company = Company.objects.get(admins=request.user, id=company_id)
-        except:
-            raise Http404
 
     authorized_microsites, buids = get_company_microsites(company)
 
@@ -116,16 +107,11 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         user_solr = user_solr.add_query("%s" % request.GET['search'])
         facet_solr = facet_solr.add_query("%s" % request.GET['search'])
 
-    user_solr, facet_solr = filter_by_microsite(active_microsites, user_solr,
-                                                facet_solr)
-    # Because location faceting requires facet.prefix to work properly, and
-    # facet prefixes apply to all facets, a separate solr result set has to be
-    # obtained specifically for locations. Because we're still faceting,
-    # minus the facet prefix it is identical to facet_solr.
-    loc_solr = facet_solr._clone()
-    (user_solr, facet_solr, loc_solr, filters) = apply_facets_and_filters(
-        request, user_solr, facet_solr, loc_solr)
-    user_solr = user_solr.add_facet_field('SavedSearch_url')
+    user_solr, facet_solr = filter_by_microsite(company, user_solr, facet_solr)
+
+    (user_solr, facet_solr, filters) = apply_facets_and_filters(
+        request, user_solr, facet_solr)
+
     solr_results = user_solr.rows_to_fetch(100).search()
 
     # List of dashboard widgets to display.
@@ -143,8 +129,8 @@ def dashboard(request, template="mydashboard/mydashboard.html",
 
     url = request.build_absolute_uri()
     facets = parse_facets(facet_solr.search(), request)
-    loc_facets = parse_facets(loc_solr.search(), request)
-    all_facets = dict(facets.items() + loc_facets.items())
+
+    all_facets = facets.items()
 
     context = {
         'admin_you': request.user,
@@ -192,29 +178,29 @@ def dashboard(request, template="mydashboard/mydashboard.html",
         context_key = 'total_%s' % facet_var_map.get(key, '')
         context[context_key] = facet_dict[key]
 
-    analytics_solr = analytics_solr.add_filter_query('User_id:[* TO *]').\
-        add_facet_field('domain')
+    analytics_solr = analytics_solr.add_filter_query('User_id:[* TO *]')
+    analytics_solr = analytics_solr.add_facet_field('domain')
 
     auth_results = analytics_solr.search()
     analytics_facet_list = auth_results.facets.get(
         'facet_fields', {}).get('domain', [])
+
     analytics_facets = sequence_to_dict(analytics_facet_list)
     analytics_facets = [domain for domain in analytics_facets.items()
                         if domain[0] in active_microsites]
-    search_facet_list = solr_results.facets.get(
-        'facet_fields', {}).get('SavedSearch_url', [])
-    search_facet_list[::2] = [get_domain(item)
-                              for item in search_facet_list[::2]]
-    search_facets = sequence_to_dict(search_facet_list)
-    search_facets = [domain for domain in search_facets.items()
-                     if domain[0] in active_microsites]
+
+    results += auth_results.docs
+
+    candidates = dict_to_object(results)
+
+    domains = [get_domain(c.SavedSearch_feed) for c in candidates
+               if hasattr(c, 'SavedSearch_feed')]
+    search_facets = [(domain, domains.count(domain)) for domain in set(domains)]
+
     domain_facets = {}
     for domain, group in groupby(analytics_facets + search_facets,
                                  key=lambda x: x[0]):
         domain_facets[domain] = sum(item[1] for item in group)
-    results += auth_results.docs
-
-    candidates = dict_to_object(results)
 
     candidate_list = sorted(candidates,
                             key=lambda y: y.SavedSearch_created_on
@@ -233,83 +219,6 @@ def dashboard(request, template="mydashboard/mydashboard.html",
                               context_instance=RequestContext(request))
 
 
-@page_template("mydashboard/site_activity.html")
-@user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
-def microsite_activity(request, template="mydashboard/microsite_activity.html",
-                       extra_context=None, company=None):
-    """
-    Returns the activity information for the microsite that was select on the
-    employer dashboard page.  Candidate activity for saved searches, job
-    views, etc.
-
-    Inputs:
-    :company:               company.id that is associated with request.user
-
-    Returns:
-    :render_to_response:    renders template with context dict
-    """
-    solr = Solr()
-
-    company_id = request.REQUEST.get('company')
-    if company_id is None:
-        try:
-            company = Company.objects.filter(admins=request.user)[0]
-        except Company.DoesNotExist:
-            raise Http404
-    if not company:
-        try:
-            company = Company.objects.get(admins=request.user, id=company_id)
-        except:
-            raise Http404
-    
-    requested_microsite = request.REQUEST.get('url', False)
-    requested_date_button = request.REQUEST.get('date_button', False)
-    candidates_page = request.REQUEST.get('page', 1)
-    
-    if not requested_microsite:
-        requested_microsite = request.REQUEST.get('microsite-hide', company.name)
-    
-    if requested_microsite.find('//') == -1:
-            requested_microsite = '//' + requested_microsite
-            
-    # Date button highlighting
-    if 'today' in request.REQUEST:
-        requested_date_button = 'today'
-    elif 'seven_days' in request.REQUEST:
-        requested_date_button = 'seven_days'
-    elif 'thirty_days' in request.REQUEST:
-        requested_date_button = 'thirty_days'
-
-    solr, date_start, date_end, date_display = filter_by_date(request, solr)
-    solr = filter_by_microsite(requested_microsite, solr)
-    solr_results = solr.result_rows_to_fetch(solr.search().hits).search()
-    candidates = dict_to_object(solr_results.docs)
-
-    # Filter out duplicate entries for a user.
-    candidate_list = []
-    for x in groupby(candidates, lambda y: y.User_id):
-        candidate_list.append(list(x[1])[0])
-
-    context = {
-        'microsite_url': requested_microsite,
-        'date_start': date_start,
-        'date_end': date_end,
-        'candidates': candidate_list,
-        'view_name': 'Company Dashboard',
-        'company_name': company.name,
-        'company_id': company.id,
-        'date_button': requested_date_button,
-        'candidates_page': candidates_page,
-        'saved_search_count': len(candidate_list),
-        'date_submit_url': request.build_absolute_uri(),
-    }
-    
-    if extra_context is not None:
-        context.update(extra_context)
-    return render_to_response(template, context,
-                              context_instance=RequestContext(request))
-
-
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def candidate_information(request):
     """
@@ -320,16 +229,15 @@ def candidate_information(request):
 
     """
     user_id = get_int_or_none(request.REQUEST.get('user'))
-    company_id = get_int_or_none(request.REQUEST.get('company'))
+    company = get_company(request)
 
-    if not user_id or not company_id:
+    if not user_id or not company:
         raise Http404
 
     # user gets pulled out from id
     try:
         candidate = User.objects.get(id=user_id)
-        company = Company.objects.get(id=company_id)
-    except (User.DoesNotExist, Company.DoesNotExist):
+    except User.DoesNotExist:
         raise Http404
 
     if not candidate.opt_in_employers:
@@ -349,22 +257,18 @@ def candidate_information(request):
 
     primary_name = getattr(manager, 'primary_name', 'Name not given')
 
-    if request.REQUEST.get('url'):
-        microsite_url = request.REQUEST.get('url')
-        coming_from = {'path': 'microsite', 'url': microsite_url}
-    else:
-        coming_from = {'path': 'view'}
+    coming_from = {'path': 'view'}
 
     searches = candidate.savedsearch_set.all()
     searches = [search for search in searches
-                if get_domain(search.url).lower() in urls]
+                if get_domain(search.feed).lower() in urls]
 
     modified_url = remove_param_from_url(request.build_absolute_uri(), 'user')
     query_string = "?%s" % urlparse(modified_url).query
 
     data_dict = {
         'user_info': models,
-        'company_id': company_id,
+        'company_id': company.pk,
         'primary_name': primary_name,
         'the_user': candidate,
         'searches': searches,
