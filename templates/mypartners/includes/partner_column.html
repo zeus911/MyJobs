@@ -2,7 +2,7 @@
 <div class="partner-pagination">
     <span class="step-links">
         {% if partners.has_previous %}
-            <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key 'page' %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ partners.previous_page_number }}"><< Previous</a>
+            <a id="previous_page" href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key 'page' %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ partners.previous_page_number }}"><< Previous</a>
         {% endif %}
 
         <span class="current">
@@ -28,7 +28,7 @@
 <div class="partner-pagination">
     <span class="step-links">
         {% if partners.has_previous %}
-            <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key 'page' %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ partners.previous_page_number }}"><< Previous</a>
+            <a id="previous_page" href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key 'page' %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ partners.previous_page_number }}"><< Previous</a>
         {% endif %}
 
         <span class="current">

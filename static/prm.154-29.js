@@ -3,19 +3,56 @@ window.onpopstate = function(event) {
     send_filter(event.state);
 };
 
+if (isIE() && isIE() < 9) {
+    if (!Array.prototype.indexOf)
+    {
+      Array.prototype.indexOf = function(elt /*, from*/)
+      {
+        var len = this.length >>> 0;
+
+        var from = Number(arguments[1]) || 0;
+        from = (from < 0)
+             ? Math.ceil(from)
+             : Math.floor(from);
+        if (from < 0)
+          from += len;
+
+        for (; from < len; from++)
+        {
+          if (from in this &&
+              this[from] === elt)
+            return from;
+        }
+        return -1;
+      };
+    }
+}
+
 $(document).ready(function() {
     if(location.search) show_selected();
 
-    /*$("#next_page").on("click", function(e) {
+    $("body").on("click", "#next_page", function(e) {
         e.preventDefault();
         var data = build_data();
-        data.page += 1;
-        console.log(data.page);
+        data.page = get_page(data);
+        data.page++;
         update_search_url(data);
-        if (isIE && isIE () < 9) {
+        if (!isIE() && !isIE () < 10) {
             send_filter(data);
         }
-    }); */
+    });
+
+    $("body").on("click", "#previous_page", function(e) {
+        e.preventDefault();
+        var data = build_data();
+        data.page = get_page(data);
+        data.page--;
+        update_search_url(data);
+        if (!isIE() && !isIE () < 10) {
+            send_filter(data);
+        }
+    });
+
     /*
     Saves both partner forms; init form and new/edit partner form
 
@@ -150,7 +187,7 @@ $(document).ready(function() {
         }
         var data = build_data();
         update_search_url(data);
-        if (isIE && isIE () < 9) {
+        if (!isIE() && !isIE() < 10) {
             send_filter(data);
         }
     });
@@ -169,7 +206,7 @@ $(document).ready(function() {
             var data = build_data();
             $(that).addClass("loading");
             update_search_url(data);
-            if (isIE && isIE () < 9) {
+            if (!isIE() && !isIE() < 10) {
                 send_filter(data);
             }
         }, wait_time);
@@ -178,7 +215,7 @@ $(document).ready(function() {
     $(".partner-filters :input:has(option)").on("change", function() {
         var data = build_data();
         update_search_url(data);
-        if (isIE && isIE () < 9) {
+        if (!isIE() && !isIE() < 10) {
             send_filter(data);
         }
     });
@@ -240,20 +277,40 @@ $(document).ready(function() {
     }
 
     $("#add-partner-library").on("click", function(){
-        var data = {};
-        data.library_id = $(this).data("num");
+        var data_to_send = {};
+        data_to_send.library_id = $(this).data("num");
         if($("#go-to-partner").is(":checked")) data.redirect = true;
         $.ajax({
             type: "GET",
             url: "/prm/view/partner-library/add/",
-            data: data,
+            data: data_to_send,
             success: function(data) {
                 var json = JSON.parse(data);
-                if(json.redirect === true) {
-                    window.location = location.protocol + "//" + location.host +
+                var r_location = location.protocol + "//" + location.host +
                         "/prm/view/overview?partner="+json.partner;
+                if(json.redirect === true) {
+                    window.location = r_location;
                 }
                 $("#partner-library-modal").modal("hide");
+
+                /* creating alert */
+                var partner_name = $(".modal-body b:first-of-type").text().slice(0, -1);
+                var company_name = $(".modal-body b:last-of-type").text();
+                var alert_html = "<div class=\"alert alert-success\"><button type=\"button\" " +
+                    "class=\"close\" data-dismiss=\"alert\">x</button><a style=\"text-decoration: underline\" " +
+                    "href="+r_location+">" + partner_name+"</a> was added to "+company_name+"'s " +
+                    "Partner Relationship Manager.</div>"
+
+                $("#lib-alerts").html(alert_html);
+                if (!isIE() && !isIE () < 10) {
+                    var filter_data = build_data();
+                    filter_data.page = get_page(filter_data);
+                    send_filter(filter_data);
+                } else {
+                    var selector = "#library-" + String(data_to_send.library_id);
+                    $(selector).remove();
+                }
+
             }
         });
     })
@@ -264,17 +321,13 @@ function isIE () {
     return (myNav.indexOf('msie') != -1) ? parseInt(myNav.split('msie')[1]) : false;
 }
 
-var qs = (function(a) {
-    if (a == "") return {};
-    var b = {};
-    for (var i = 0; i < a.length; ++i)
-    {
-        var p=a[i].split('=');
-        if (p.length != 2) continue;
-        b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
-    }
-    return b;
-})(window.location.search.substr(1).split('&'));
+
+function getParameterByName(name) {
+    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(location.search);
+    return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+}
 
 function fill_in_history_state(data){
     /* Grab inputs */
@@ -337,6 +390,7 @@ function clear_special_interest(si_list) {
 function build_data() {
     var data = {},
         special_interest = [];
+
     $(".partner-filters :input").each(function() {
         if($(this).val()) {
             var data_key = $(this).prev('label').html().replace(":", "").toLowerCase();
@@ -352,6 +406,15 @@ function build_data() {
     if($(".row-filler").children("input").is(":checked")) data.a=1;
 
     return data
+}
+
+function get_page(data) {
+    var page = parseInt(getParameterByName("page"));
+    if(page) {
+        return data.page = parseInt(getParameterByName("page"))
+    } else {
+        return data.page = 1;
+    }
 }
 
 function send_filter(data_to_send) {
@@ -423,8 +486,7 @@ function update_search_url(data) {
         }
     }
 
-    if (isIE() && isIE () < 9) {
-        console.log("going to punch a baby");
+    if (isIE() && isIE () < 10) {
         location.search = search_url;
     } else {
         history.pushState(data, "filter", search_url);
@@ -435,10 +497,14 @@ function show_selected() {
     var q = location.search,
         params = q.replace("?", "").split("&"),
         partners = $(".sidebar .partner-tag");
+    if (isIE() && isIE () < 9) {
+        if(q === "?") return false;
+    }
     for(var i = 0; i < params.length; i++) {
         var s = params[i].split("="),
-            key = s[0],
-            value = s[1].replace("%20", "-");
+            key = s[0];
+        var value = s[1].replace("%20", "-");
+        value = value.replace(" ", "-");
         if(key == "special_interest") {
             partners.each(function() {
                 if($(this).hasClass(value)) {

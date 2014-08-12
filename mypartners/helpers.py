@@ -168,6 +168,7 @@ def contact_record_val_to_str(value):
 
     return value
 
+
 def get_records_from_request(request):
     """
     Filters a list of records on partner, date_time, contact_name, and

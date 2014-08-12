@@ -27,3 +27,11 @@
     border-radius: 0;
 }
 
+/* Partner Relationship Manager */
+.sidebar .partner-tag {
+    margin-top: 5px;
+}
+
+.row-filler input {
+    display: none;
+}

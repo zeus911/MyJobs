@@ -74,10 +74,7 @@ def prm(request):
                                   ctx, RequestContext(request))
         response.content = html.content
         return response
-    try:
-        partners = Partner.objects.filter(owner=company.id)
-    except Partner.DoesNotExist:
-        raise Http404
+    partners = filter_partners(request)
     if partners:
         paginator = add_pagination(request, partners)
     else:
