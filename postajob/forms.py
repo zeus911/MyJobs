@@ -142,7 +142,7 @@ class JobForm(BaseJobForm):
     # site_package for a site is only created when it's first used,
     # so we use SeoSite as the queryset here instead of SitePackage.
     site_packages_widget = admin.widgets.FilteredSelectMultiple('Sites', False)
-    site_packages = ModelMultipleChoiceField(SeoSite.objects.all(),
+    site_packages = ModelMultipleChoiceField(SeoSite.objects.none(),
                                              help_text="",
                                              label="Site",
                                              required=False,
@@ -156,24 +156,26 @@ class JobForm(BaseJobForm):
 
     def __init__(self, *args, **kwargs):
         super(JobForm, self).__init__(*args, **kwargs)
-        if not self.request.path.startswith('/admin'):
+        kwargs = {'business_units__company': self.company}
+        if self.request.path.startswith('/admin') or \
+                self.request.user.is_superuser:
+            # If this is on the admin site or the user is a superuser,
+            # get all sites for the current company.
+            user_sites = SeoSite.objects.filter(**kwargs)
+        else:
             # FilteredSelectMultiple doesn't work outside the admin, so
             # switch to a widget that does work.
             self.fields['site_packages'].help_text = ""
             self.fields['site_packages'].widget = CheckboxSelectMultiple(
                 attrs={'class': 'job-sites-checkbox'})
-            # After changing the widget the queryset also needs reset.
-            self.fields['site_packages'].queryset = SeoSite.objects.all()
 
-        if not self.request.user.is_superuser:
-            # Limit a non-superuser's access to only sites they own.
             user_sites = self.request.user.get_sites()
-            if not self.request.path.startswith('/admin'):
-                # Outside the admin, also limit the sites to the current
-                # company.
-                kwargs = {'business_units__company': self.company}
-                user_sites = user_sites.filter(**kwargs)
-            self.fields['site_packages'].queryset = user_sites
+            # Outside the admin, also limit the sites to the current
+            # company.
+            user_sites = user_sites.filter(**kwargs)
+
+        # Limit a user's access to only sites they own.
+        self.fields['site_packages'].queryset = user_sites
 
         # Since we're not using actual site_packages for the site_packages,
         # the initial data also needs to be manually set.
