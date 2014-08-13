@@ -261,7 +261,8 @@ h1 > small > a:hover {
     box-shadow: 1px 1px 2px #BBB;
 }
 
-.sidebar label {
+.sidebar label,
+.partner-sort label {
     font-weight: 700;
     color: #5e6c82;
 }
@@ -360,13 +361,51 @@ h1 > small > a:hover {
     margin-top: 2px;
 }
 
-.partner-pagination {
+.partner-pagination,
+.partner-sort {
     margin: 0;
     width: 100%;
     box-sizing: border-box;
     padding: 5px;
     background-color: #FFFFFF;
     box-shadow: 1px 1px 3px #BBB;
+}
+
+.partner-sort div,
+.partner-sort label {
+    display: inline-block;
+}
+
+.sort-by {
+    background-color: #9696A3;
+    padding: 1px 5px;
+    border-radius: 5px;
+    color: #FFF;
+}
+
+.sort-by:hover {
+    cursor: pointer;
+}
+
+.sort-by.active {
+    background-color: #FF0000;
+}
+
+.sort-by.active.descending:before,
+.sort-by.active.ascending:before {
+    content: "\00a0";
+    padding: 0 5px;
+    margin-right: 5px;
+    position: relative;
+    top: 1px;
+}
+
+.sort-by.active.descending:before {
+    background: url("//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/glyphicons-halflings.png") -312px -144px;
+}
+
+.sort-by.active.ascending:before {
+    background: url("//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/glyphicons-halflings.png") -288px -144px;
 }
 
 .step-links .current {
@@ -1171,14 +1210,14 @@ table#row-link-table {
 
 /* Django Endless paging style modifications */
 .endless_container .btn {
-    padding-left: 0px;
-    padding-right: 0px;
+    padding-left: 0;
+    padding-right: 0;
     width: 100%;
     margin-top: 10px;
 }
 
 .endless_container .btn + .btn {
-    margin-left: 0px;
+    margin-left: 0;
 }
 
 /*Microsite Activity*/
@@ -1400,13 +1439,15 @@ fieldset textarea,
     display: block;
     height: 149px;
     margin-top: 40px;
-    background: transparent url('//d2e48ltfsb5exy.cloudfront.net/myjobs/logos/myjobs_logo.145-03.png') 120px 0px no-repeat;
+    background: transparent url('//d2e48ltfsb5exy.cloudfront.net/myjobs/logos/myjobs_logo.145-03.png') 120px 0 no-repeat;
 }
+
 #title h2{
     text-indent: 120px;
     color: #a95051;
     text-shadow: 1px 1px #ccc;
 }
+
 #subtitle {
     font-size: 1.85em;
     line-height: 1.1em;
@@ -2268,12 +2309,12 @@ td .gravatar-blank,
         background: inherit;
         box-shadow: inherit;
         position: inherit;
-        margin-left: 0px;
+        margin-left: 0;
     }
 
     #dashboard-time-filter {
-        margin-right: 0px;
-        margin-top: 0px;
+        margin-right: 0;
+        margin-top: 0;
         width: 100%;
     }
 
@@ -2403,7 +2444,7 @@ td .gravatar-blank,
     
     .form-label {
         text-align: left;
-        margin-left: 0px;        
+        margin-left: 0;
     }
     
     .account-box select {
@@ -2931,7 +2972,7 @@ td .gravatar-blank,
     }
     
     #saved-search-form label[for^='id_edit_sort_by'] {
-        margin: 0px;
+        margin: 0;
     }
     
     #saved-search-form div[class*=id_edit_sort_by] {
@@ -3213,7 +3254,7 @@ td .gravatar-blank,
 }
 
 .account-box .row {
-    margin-left: 0px;
+    margin-left: 0;
 }
 
 .settings-nav {

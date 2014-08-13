@@ -15,6 +15,21 @@
     </span>
     <div class="clearfix"></div>
 </div>
+<div class="partner-sort">
+    <label>Sort by:</label>
+    {% if request.GET.sort_by %}
+        {% if request.GET.sort_by == "name" %}
+        <div class="sort-by active {% if request.GET.desc %}descending{%else%}ascending{%endif%}">Name</div>
+        <div class="sort-by">City</div>
+        {% else %}
+        <div class="sort-by">Name</div>
+        <div class="sort-by active {% if request.GET.desc %}descending{%else%}ascending{%endif%}">City</div>
+        {% endif %}
+    {% else %}
+    <div class="sort-by active ascending">Name</div>
+    <div class="sort-by">City</div>
+    {% endif %}
+</div>
 {% endif %}
 {% for partner in partners %}
     {% if on_page = "prm" %}

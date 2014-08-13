@@ -3,7 +3,9 @@ window.onpopstate = function(event) {
     send_filter(event.state);
 };
 
-if (isIE() && isIE() < 9) {
+isIE = isIE();
+
+if (isIE && isIE < 9) {
     if (!Array.prototype.indexOf)
     {
       Array.prototype.indexOf = function(elt /*, from*/)
@@ -37,7 +39,7 @@ $(document).ready(function() {
         data.page = get_page(data);
         data.page++;
         update_search_url(data);
-        if (!isIE() && !isIE () < 10) {
+        if (!isIE && !isIE < 10) {
             send_filter(data);
         }
     });
@@ -48,7 +50,25 @@ $(document).ready(function() {
         data.page = get_page(data);
         data.page--;
         update_search_url(data);
-        if (!isIE() && !isIE () < 10) {
+        if (!isIE && !isIE < 10) {
+            send_filter(data);
+        }
+    });
+
+    $("body").on("click", ".sort-by", function() {
+        if($(this).hasClass("active")) {
+            if($(this).hasClass("ascending")) {
+                $(this).removeClass("ascending").addClass("descending");
+            } else {
+                $(this).removeClass("descending").addClass("ascending");
+            }
+        } else {
+            $(".sort-by.active").removeClass("active descending ascending");
+            $(this).addClass("active ascending");
+        }
+        var data = build_data();
+        update_search_url(data);
+        if (!isIE && !isIE < 10) {
             send_filter(data);
         }
     });
@@ -187,7 +207,7 @@ $(document).ready(function() {
         }
         var data = build_data();
         update_search_url(data);
-        if (!isIE() && !isIE() < 10) {
+        if (!isIE && !isIE < 10) {
             send_filter(data);
         }
     });
@@ -206,7 +226,7 @@ $(document).ready(function() {
             var data = build_data();
             $(that).addClass("loading");
             update_search_url(data);
-            if (!isIE() && !isIE() < 10) {
+            if (!isIE && !isIE < 10) {
                 send_filter(data);
             }
         }, wait_time);
@@ -215,7 +235,7 @@ $(document).ready(function() {
     $(".partner-filters :input:has(option)").on("change", function() {
         var data = build_data();
         update_search_url(data);
-        if (!isIE() && !isIE() < 10) {
+        if (!isIE && !isIE < 10) {
             send_filter(data);
         }
     });
@@ -225,8 +245,8 @@ $(document).ready(function() {
             var library_id = $(this).attr("id").split("-")[1],
                 library_title = $(this).children("div.big-title").children("b").text() +"*",
                 company_name = $("h1").children("a").text(),
-                body_message = "Would you like to add OFCCP partner: <br /><br /><b>"+
-                    library_title+"</b><br /><br />Clicking 'Add' will copy this partner to <b>"+
+                body_message = "Would you like to add OFCCP partner: <br /><br /><b id=\"modal-partner-name\">"+
+                    library_title+"</b><br /><br />Clicking 'Add' will copy this partner to <b id=\"modal-company-name\">"+
                     company_name+"'s</b> Partner Relationship Manager.";
             $(".modal-body").children(":not(p:first-child)").remove();
             $(".modal-body").children("p").html(body_message);
@@ -294,15 +314,15 @@ $(document).ready(function() {
                 $("#partner-library-modal").modal("hide");
 
                 /* creating alert */
-                var partner_name = $(".modal-body b:first-of-type").text().slice(0, -1);
-                var company_name = $(".modal-body b:last-of-type").text();
+                var partner_name = $(".modal-body #modal-partner-name").text().slice(0, -1);
+                var company_name = $(".modal-body #modal-company-name").text();
                 var alert_html = "<div class=\"alert alert-success\"><button type=\"button\" " +
                     "class=\"close\" data-dismiss=\"alert\">x</button><a style=\"text-decoration: underline\" " +
-                    "href="+r_location+">" + partner_name+"</a> was added to "+company_name+"'s " +
+                    "href="+r_location+">" + partner_name+"</a> was added to "+company_name+" " +
                     "Partner Relationship Manager.</div>"
 
                 $("#lib-alerts").html(alert_html);
-                if (!isIE() && !isIE () < 10) {
+                if (!isIE && !isIE < 10) {
                     var filter_data = build_data();
                     filter_data.page = get_page(filter_data);
                     send_filter(filter_data);
@@ -316,11 +336,10 @@ $(document).ready(function() {
     })
 });
 
-function isIE () {
+function isIE() {
     var myNav = navigator.userAgent.toLowerCase();
     return (myNav.indexOf('msie') != -1) ? parseInt(myNav.split('msie')[1]) : false;
 }
-
 
 function getParameterByName(name) {
     name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
@@ -346,7 +365,10 @@ function fill_in_history_state(data){
         $(kw_input).val(String(data.keywords));
     else
         $(kw_input.val(""));
-    $("#state option[value="+ data.state +"]").attr("selected", "selected");
+    if(typeof(data.state) != "undefined")
+        $("#state option[value="+ data.state +"]").attr("selected", "selected");
+    else
+        $("#state option[value='']").attr("selected", "selected");
     if(typeof(data.city) != "undefined")
         $(ct_input).val(String(data.city));
     else
@@ -402,6 +424,11 @@ function build_data() {
     });
     if(special_interest.length > 0)
         data.special_interest = special_interest;
+
+    var sort_by = $(".sort-by.active");
+    data.sort_by = sort_by.text().toLowerCase();
+    if($(sort_by).hasClass("descending"))
+        data.desc = 1;
 
     if($(".row-filler").children("input").is(":checked")) data.a=1;
 
@@ -486,7 +513,7 @@ function update_search_url(data) {
         }
     }
 
-    if (isIE() && isIE () < 10) {
+    if (isIE && isIE < 10) {
         location.search = search_url;
     } else {
         history.pushState(data, "filter", search_url);
@@ -497,7 +524,7 @@ function show_selected() {
     var q = location.search,
         params = q.replace("?", "").split("&"),
         partners = $(".sidebar .partner-tag");
-    if (isIE() && isIE () < 9) {
+    if (isIE && isIE < 9) {
         if(q === "?") return false;
     }
     for(var i = 0; i < params.length; i++) {
@@ -520,6 +547,18 @@ function show_selected() {
                 if($(this).val() == value)
                     $(this).attr("selected", "selected");
             });
+        }
+        if(key == "sort_by") {
+            $(".sort-by").each(function() {
+                if(value == $(this).text().toLowerCase()) {
+                    $(this).addClass("active ascending");
+                } else {
+                    $(this).removeClass("active descending ascending");
+                }
+            });
+        }
+        if(key == "desc") {
+            $(".sort-by.active").removeClass("ascending").addClass("descending");
         }
     }
 }
