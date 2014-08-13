@@ -377,6 +377,8 @@ def filter_partners(request):
     keywords = request.REQUEST.get('keywords', "").split(',', 1)
     city = request.REQUEST.get('city', "").strip()
     state = request.REQUEST.get('state', "").strip()
+    sort_order = "-" if request.REQUEST.get("desc", False) else ""
+    sort_by = sort_order + "contact__" + request.REQUEST.get('sort_by', 'name')
 
     partners = Partner.objects.select_related('contact')
     query = Q(owner=company.id)
@@ -388,8 +390,11 @@ def filter_partners(request):
     query = query & Q(contact__city__contains=city) if city else query
     query = query & Q(contact__state=state) if state else query
 
-    #partners = partners.filter(query).annotate(Count('pk'))
-    partners = partners.filter(query).distinct()
+    if "city" in sort_by:
+        partners = partners.filter(query).distinct().order_by(
+            sort_by, sort_order + "state")
+    else:
+        partners = partners.filter(query).distinct().order_by(sort_by)
 
     return partners
 
@@ -399,6 +404,8 @@ def filter_partner_library(request):
     city = request.REQUEST.get('city', "").strip()
     state = request.REQUEST.get('state', "").strip()
     special_interest = request.REQUEST.getlist('special_interest')[:]
+    sort_order = "-" if request.REQUEST.get("desc", False) else ""
+    sort_by = sort_order + request.REQUEST.get('sort_by', 'name')
 
     library_ids = Partner.objects.exclude(
         library_id__isnull=True).values_list('library_id', flat=True)
@@ -426,7 +433,11 @@ def filter_partner_library(request):
         interests &= Q(**{"is_%s" % interest.replace(' ', '_'): True})
 
     query &= Q(interests | unspecified)
-    #partners = partners.filter(query).annotate(Count('pk'))
-    partners = partners.filter(query).distinct()
+
+    if "city" in sort_by:
+        partners = partners.filter(query).distinct().order_by(
+            sort_by, sort_order + "st")
+    else:
+        partners = partners.filter(query).distinct().order_by(sort_by)
 
     return partners

@@ -89,6 +89,13 @@ class Command(BaseCommand):
                 'stored': 'false',
                 'multiValued': 'true',
             })
+            schema_fields.append({
+                'field_name': 'SavedSearch_company_id',
+                'type': 'long',
+                'indexed': 'true',
+                'stored': 'true',
+                'multiValued': 'false',
+            })
             # Analytics
             for field in ['job_view_title', 'job_view_company',
                           'job_view_location']:

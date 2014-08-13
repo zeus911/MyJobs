@@ -153,6 +153,8 @@ def object_to_dict(model, obj):
     }
 
     if model == SavedSearch:
+        solr_dict['SavedSearch_company_id'] = obj.get_company()
+
         for field in User._meta.fields:
             field_type = field.get_internal_type()
             if (field_type != 'OneToOneField' and
