@@ -461,9 +461,9 @@ def filter_partners(request, partner_library=False):
             'has_city': "%s == ''" % contact_city,
             'has_state': "%s == ''" % contact_state}).order_by(*
                 ['%shas_city' % sort_order,
-                '%s%s' % (sort_order, contact_city),
-                '%shas_state' % sort_order,
-                '%s%s' % (sort_order, contact_state)] + order_by)
+                 '%shas_state' % sort_order,
+                 '%s%s' % (sort_order, contact_city),
+                 '%s%s' % (sort_order, contact_state)] + order_by)
     else:
         partners = partners.filter(query).distinct().order_by(
             *[sort_by] + order_by)
