@@ -46,7 +46,6 @@ from mypartners.helpers import (prm_worthy, add_extra_params,
                                 contact_record_val_to_str, retrieve_fields,
                                 get_records_from_request,
                                 filter_partners,
-                                filter_partner_library,
                                 send_contact_record_email_response,
                                 find_partner_from_email)
 
@@ -100,7 +99,7 @@ def partner_library(request):
         raise Http404
 
     if request.is_ajax():
-        partners = filter_partner_library(request)
+        partners = filter_partners(request, True)
         paginator = add_pagination(request, partners)
         ctx = {
             'partners': paginator,
@@ -112,7 +111,7 @@ def partner_library(request):
         response.content = html.content
         return response
 
-    partners = filter_partner_library(request)
+    partners = filter_partners(request, True)
     paginator = add_pagination(request, partners)
 
     ctx = {

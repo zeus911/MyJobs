@@ -6,7 +6,7 @@ from urllib import urlencode
 from django.db.models import Min, Max, Q
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, FieldError
 from django.core.mail import EmailMessage
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -19,7 +19,7 @@ from lxml import html
 from lxml.cssselect import CSSSelector
 import pytz
 import requests
-from universal.helpers import get_domain, get_company
+from universal.helpers import get_domain, get_company, get_company_or_404
 from mypartners.models import (ContactLogEntry, CONTACT_TYPE_CHOICES, CHANGE,
                                Partner, PartnerLibrary)
 from registration.models import ActivationProfile
@@ -372,73 +372,100 @@ def get_library_partners(path=None):
             yield CompliancePartner(**fields)
 
 
-def filter_partners(request):
-    company = get_company(request)
-    keywords = request.REQUEST.get('keywords', "").split(',', 1)
-    city = request.REQUEST.get('city', "").strip()
-    state = request.REQUEST.get('state', "").strip()
+def filter_partners(request, partner_library=False):
+    """
+    Advanced partner filtering. 
+
+    If True, the partner_library parameter will determine whether or not the
+    OFCCP Partner Library should be filtered for results instead of the current
+    company's manually created partners.
+
+    The following request parameters may be used to manipulate the results:
+
+        keywords
+            A comma-separated string of keywords which are checked against the
+            partner name, contact name and URI.
+        city
+            The city in which the partner is located.
+        state
+            The state in which the partner is located.
+
+    When partner_library is True, the following parameter is also available:
+
+        special_interest
+            An array of special interest groups to which the partner belongs.
+            Possible values are 'minority', 'female', 'disabled', 'veteran',
+            and 'disabled_veteran'.
+
+    In addition to filtering, the following sort parameters may be passed:
+
+        desc
+            Any truthy string passed along here will indicate to this function
+            that the result list should be sorted descending.
+        sort_by
+            Determines which column is used to sort the results. Officially,
+            only 'location'-- which sorts by city and state-- and name -- which
+            sorts by partner name -- are allowed.
+    """
+
     sort_order = "-" if request.REQUEST.get("desc", False) else ""
     sort_by = sort_order + request.REQUEST.get('sort_by', 'name')
+    city = request.REQUEST.get('city', '').strip()
+    state = request.REQUEST.get('state', '').strip()
 
-    partners = Partner.objects.select_related('contact')
-    query = Q(owner=company.id)
+    if partner_library:
+        special_interest = request.REQUEST.getlist('special_interest')[:]
+        library_ids = Partner.objects.exclude(
+            library_id__isnull=True).values_list('library_id', flat=True)
+        # hide partners that the user has already added 
+        partners = PartnerLibrary.objects.exclude(id__in=library_ids)
+        contact_city = 'city'
+        contact_state = 'st'
 
-    for keyword in keywords:
-        query &= (Q(name__contains=keyword) | Q(uri__contains=keyword) |
-                  Q(contact__name__contains=keyword))
+        unspecified = Q()
+        interests = Q()
+        order_by = ['is_veteran', 'is_female', 'is_minority', 'is_disabled',
+                    'is_disabled_veteran'] 
 
-    query = query & Q(contact__city__contains=city) if city else query
-    query = query & Q(contact__state=state) if state else query
+        if "unspecified" in special_interest:
+            special_interest.remove("unspecified")
+            unspecified = Q(is_veteran=False, is_female=False,
+                            is_minority=False, is_disabled=False,
+                            is_disabled_veteran=False)
 
-    if "city" in sort_by:
-        sort_by = sort_by.replace("city", "contact__city")
-        partners = partners.filter(query).distinct().order_by(
-            sort_by, sort_order + "contact__state")
+        for interest in special_interest:
+            interests &= Q(**{"is_%s" % interest.replace(' ', '_'): True})
+
+        query = Q(interests | unspecified)
     else:
-        partners = partners.filter(query).distinct().order_by(sort_by)
+        partners = Partner.objects.select_related('contact')
+        query = Q(owner=get_company_or_404(request).id)
+        contact_city = 'contact__city'
+        contact_state = 'contact__state'
+        sort_by.replace('city', 'contact__city')
+        order_by = []
 
-    return partners
+    for keyword in request.REQUEST.get('keywords', "").split(',', 1):
+        query &= (Q(name__icontains=keyword) | Q(uri__icontains=keyword) |
+                  (Q(contact_name__icontains=keyword) if partner_library else
+                   Q(contact__name__icontains=keyword)))
 
+    if city:
+        query &= Q(**{'%s__icontains' % contact_city: city})
 
-def filter_partner_library(request):
-    keywords = request.REQUEST.get('keywords', "").split(',', 1)
-    city = request.REQUEST.get('city', "").strip()
-    state = request.REQUEST.get('state', "").strip()
-    special_interest = request.REQUEST.getlist('special_interest')[:]
-    sort_order = "-" if request.REQUEST.get("desc", False) else ""
-    sort_by = sort_order + request.REQUEST.get('sort_by', 'name')
+    if request.REQUEST.get('state', '').strip():
+        query &= Q(**{'%s__icontains' % contact_state: state})
 
-    library_ids = Partner.objects.exclude(
-        library_id__isnull=True).values_list('library_id', flat=True)
-
-    partners = PartnerLibrary.objects.exclude(id__in=library_ids)
-    query = Q()
-
-    # check for keywords in oganization name, website, and first/last name
-    for keyword in keywords:
-        query &= (Q(name__contains=keyword) | Q(uri__contains=keyword) |
-                  Q(contact_name__contains=keyword))
-
-    query = query & Q(city__contains=city) if city else query
-    query = query & Q(st=state) | Q(state=state) if state else query
-
-    unspecified = Q()
-    interests = Q()
-
-    if "unspecified" in special_interest:
-        special_interest.remove("unspecified")
-        unspecified = Q(is_veteran=False, is_female=False, is_minority=False,
-                        is_disabled=False, is_disabled_veteran=False)
-
-    for interest in special_interest:
-        interests &= Q(**{"is_%s" % interest.replace(' ', '_'): True})
-
-    query &= Q(interests | unspecified)
-
-    if "city" in sort_by:
-        partners = partners.filter(query).distinct().order_by(
-            sort_by, sort_order + "st")
+    if "location" in sort_by:
+        partners = partners.filter(query).distinct().extra(select={
+            'has_city': "%s != ''" % contact_city,
+            'has_state': "%s != ''" % contact_state}).order_by(*
+                ['%shas_city' % sort_order,
+                '%s%s' % (sort_order, contact_city),
+                '%shas_state' % sort_order,
+                '%s%s' % (sort_order, contact_state)] + order_by)
     else:
-        partners = partners.filter(query).distinct().order_by(sort_by)
+        partners = partners.filter(query).distinct().order_by(
+            *[sort_by] + order_by)
 
     return partners

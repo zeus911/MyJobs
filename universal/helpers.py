@@ -83,6 +83,17 @@ def get_company(request):
             company = None
     return company
 
+def get_company_or_404(request):
+    """ Simple wrapper around get_company that raises Http404 if no valid 
+        company is found.
+    """
+    company = get_company(request)
+
+    if not company:
+        raise Http404
+    else:
+        return company
+
 
 def get_object_or_none(model, **kwargs):
     try:
