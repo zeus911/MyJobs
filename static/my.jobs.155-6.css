@@ -314,9 +314,13 @@ h1 > small > a:hover {
     margin-top: 5px;
 }
 
+.sidebar .help_text {
+    text-align: center;
+}
+
 .row-filler input {
     position: absolute;
-    margin: -160px 0 0 1034px;
+    margin: -160px 0 0 1050px;
     opacity: 0.001;
 }
 

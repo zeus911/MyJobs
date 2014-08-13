@@ -15,6 +15,7 @@
     </span>
     <div class="clearfix"></div>
 </div>
+{% endif %}
 <div class="partner-sort">
     <label>Sort by:</label>
     {% if request.GET.sort_by %}
@@ -30,7 +31,6 @@
     <div class="sort-by">City</div>
     {% endif %}
 </div>
-{% endif %}
 {% for partner in partners %}
     {% if on_page = "prm" %}
     {% include "mypartners/includes/partner_card.html" with on_page="prm" %}
