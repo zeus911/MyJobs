@@ -1,10 +1,10 @@
 from authorize import AuthorizeInvalidError, AuthorizeResponseError
 from datetime import date, timedelta
-from django import forms
 
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
+from django import forms
 from django.forms import (CharField, CheckboxSelectMultiple,
                           HiddenInput, IntegerField, ModelMultipleChoiceField,
                           RadioSelect, Select, TextInput)
@@ -162,19 +162,22 @@ class JobForm(BaseJobForm):
             # If this is on the admin site or the user is a superuser,
             # get all sites for the current company.
             user_sites = SeoSite.objects.filter(**kwargs)
-        else:
+
+        if not self.request.path.startswith('/admin'):
+            # Superusers get the list of sites from the previous block, but
+            # also need the widget to be modified in this block. This
+            # necessitates the additional if.
+
             # FilteredSelectMultiple doesn't work outside the admin, so
             # switch to a widget that does work.
             self.fields['site_packages'].help_text = ""
             self.fields['site_packages'].widget = CheckboxSelectMultiple(
                 attrs={'class': 'job-sites-checkbox'})
+            if not self.request.user.is_superuser:
+                user_sites = self.request.user.get_sites()
+                # Outside the admin, limit the sites to the current company
+                user_sites = user_sites.filter(**kwargs)
 
-            user_sites = self.request.user.get_sites()
-            # Outside the admin, also limit the sites to the current
-            # company.
-            user_sites = user_sites.filter(**kwargs)
-
-        # Limit a user's access to only sites they own.
         self.fields['site_packages'].queryset = user_sites
 
         # Since we're not using actual site_packages for the site_packages,
@@ -236,10 +239,9 @@ class JobForm(BaseJobForm):
 
 class PurchasedJobBaseForm(JobForm):
     class Meta:
-        fields = ('title', 'is_syndicated', 'reqid', 'description',
-                  'date_expired', 'is_expired', 'autorenew', 'apply_type',
-                  'apply_link', 'apply_email', 'apply_info', 'owner',
-                  'post_to', 'site_packages')
+        fields = ('title', 'reqid', 'description', 'date_expired',
+                  'is_expired', 'autorenew', 'apply_type', 'apply_link',
+                  'apply_email', 'apply_info', 'owner', 'post_to')
         model = PurchasedJob
         purchased_product = None
 
@@ -272,8 +274,6 @@ class PurchasedJobForm(PurchasedJobBaseForm):
     def __init__(self, *args, **kwargs):
         self.purchased_product = kwargs.pop('product', None)
         super(PurchasedJobForm, self).__init__(*args, **kwargs)
-        self.fields['site_packages'].widget.attrs['disabled'] = True
-        self.fields['is_syndicated'].widget.attrs['disabled'] = True
         self.fields.pop('post_to', None)
         self.initial['site_packages'] = self.fields['site_packages'].queryset
 
@@ -282,7 +282,6 @@ class PurchasedJobForm(PurchasedJobBaseForm):
             [self['title'], self['description'], self['reqid']],
             [self['apply_type'], self['apply_link'], self['apply_info']],
             [self['date_expired'], self['is_expired']],
-            [self['site_packages'], self['is_syndicated']]
         ]
         return field_sets
 

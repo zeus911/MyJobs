@@ -731,13 +731,9 @@ class ViewTests(MyJobsBase):
         product = {'product': purchasedproduct.pk}
         response = self.client.get(reverse('purchasedjob_add',
                                            kwargs=product))
-        form = response.context['form']
-        soup = BeautifulSoup(form.as_table())
-        site_packages = soup.select('[id^=id_site_packages_]')
-        keys = [package.attrs['value'] for package in site_packages]
+        soup = BeautifulSoup(response.content)
+        site_packages = soup.select('[id^=id_site_packages]')[0]
+        site_packages = site_packages.text.strip().split('\n')
         self.assertEqual(len(site_packages), 2)
-        self.assertItemsEqual([str(self.site.pk), str(site.pk)],
-                              keys)
-        for package in site_packages:
-            self.assertEqual(package.attrs['checked'], 'checked')
-            self.assertEqual(package.attrs['disabled'], 'True')
+        self.assertItemsEqual([self.site.domain, site.domain],
+                              site_packages)

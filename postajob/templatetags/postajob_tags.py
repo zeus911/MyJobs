@@ -86,3 +86,8 @@ def get_product_names(offline_purchase):
 @register.assignment_tag
 def get_content_type(object):
     return ContentType.objects.get_for_model(object.__class__)
+
+@register.filter
+def get_sites(form):
+    return form.fields['site_packages'].queryset.values_list('domain',
+                                                             flat=True)

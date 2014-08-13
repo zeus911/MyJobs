@@ -2,6 +2,7 @@ from django.conf.urls import *
 
 from postajob import views
 
+
 urlpatterns = patterns(
     '',
 
