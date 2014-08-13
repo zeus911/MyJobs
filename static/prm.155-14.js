@@ -33,26 +33,53 @@ if (isIE && isIE < 9) {
 $(document).ready(function() {
     if(location.search) show_selected();
 
-    $("body").on("click", "#next_page", function(e) {
-        e.preventDefault();
-        var data = build_data();
-        data.page = get_page(data);
-        data.page++;
-        update_search_url(data);
-        if (!isIE && !isIE < 10) {
+    if (!isIE && !isIE < 10) {
+        $("body").on("click", "#next_page", function(e) {
+            e.preventDefault();
+            var data = build_data();
+            data.page = get_page(data);
+            data.page++;
+            update_search_url(data);
             send_filter(data);
+        });
+
+        $("body").on("click", "#previous_page", function(e) {
+            e.preventDefault();
+            var data = build_data();
+            data.page = get_page(data);
+            data.page--;
+            update_search_url(data);
+            send_filter(data);
+        });
+    }
+
+    $("body").on("click", "#per-page span", function() {
+        var value = $(this).text();
+        $(this).remove();
+        var input = document.createElement("input");
+        input.setAttribute("id", "per-page-input");
+        input.setAttribute("type", "text");
+        input.setAttribute("value", value);
+        var pp = document.getElementById("per-page");
+        pp.insertBefore(input, pp.firstChild);
+        $("#per-page-input").focus().select();
+    });
+
+    $("body").on("keypress", "#per-page-input", function(e) {
+        if(e.which == 13) {
+            $(this).remove();
         }
     });
 
-    $("body").on("click", "#previous_page", function(e) {
-        e.preventDefault();
-        var data = build_data();
-        data.page = get_page(data);
-        data.page--;
-        update_search_url(data);
-        if (!isIE && !isIE < 10) {
-            send_filter(data);
-        }
+    $("body").on("blur", "#per-page-input", function() {
+        $(this).remove();
+        var value = $(this).val();
+        var span = document.createElement("span");
+        var span_node = document.createTextNode(value);
+        span.appendChild(span_node);
+        var pp = document.getElementById("per-page");
+        pp.insertBefore(span, pp.firstChild);
+        run_ajax();
     });
 
     $("body").on("click", ".sort-by", function() {
@@ -66,11 +93,7 @@ $(document).ready(function() {
             $(".sort-by.active").removeClass("active descending ascending");
             $(this).addClass("active ascending");
         }
-        var data = build_data();
-        update_search_url(data);
-        if (!isIE && !isIE < 10) {
-            send_filter(data);
-        }
+        run_ajax();
     });
 
     /*
@@ -195,6 +218,34 @@ $(document).ready(function() {
         });
     });
 
+    $("#library-modal-check span").on("click", function() {
+        if($(this).prev().checked)
+            $(this).prev().prop("checked", true);
+        else
+            $(this).prev().prop("checked", false);
+    });
+
+    $("body").on("click", ".sub-title > small span", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var value = $(this).text().trim(),
+            split = value.replace(";", "").split(","),
+            city,
+            state;
+        if(/^([A-Z]{2,})$/.test(split[0]))
+            state = split[0];
+        else
+            city = split[0];
+        if(split.length > 1)
+            state = split[1];
+        if(city)
+            $("#lib-city").val(city);
+        if(state)
+            $("#state option[value="+ state +"]").attr("selected", "selected");
+
+        run_ajax();
+    });
+
     $(".partner-filters .partner-tag").on("click", function() {
         if ($(this).children('i').hasClass('icon-ok')) {
             $(this).children('i').remove();
@@ -205,11 +256,7 @@ $(document).ready(function() {
             $(this).append(i);
             $(this).removeClass("disabled-tag");
         }
-        var data = build_data();
-        update_search_url(data);
-        if (!isIE && !isIE < 10) {
-            send_filter(data);
-        }
+        run_ajax();
     });
 
     $(".partner-filters :input:not(select)").on("keyup paste", function() {
@@ -233,11 +280,7 @@ $(document).ready(function() {
     });
 
     $(".partner-filters :input:has(option)").on("change", function() {
-        var data = build_data();
-        update_search_url(data);
-        if (!isIE && !isIE < 10) {
-            send_filter(data);
-        }
+        run_ajax();
     });
 
     if(location.pathname == '/prm/view/partner-library/'){
@@ -333,7 +376,7 @@ $(document).ready(function() {
 
             }
         });
-    })
+    });
 });
 
 function isIE() {
@@ -346,6 +389,14 @@ function getParameterByName(name) {
     var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
         results = regex.exec(location.search);
     return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+}
+
+function run_ajax() {
+    var data = build_data();
+    update_search_url(data);
+    if (!isIE && !isIE < 10) {
+        send_filter(data);
+    }
 }
 
 function fill_in_history_state(data){
@@ -425,10 +476,16 @@ function build_data() {
     if(special_interest.length > 0)
         data.special_interest = special_interest;
 
-    var sort_by = $(".sort-by.active");
-    data.sort_by = sort_by.text().toLowerCase();
-    if($(sort_by).hasClass("descending"))
+    var sort_by = $(".sort-by.active").text().toLowerCase();
+    if(sort_by)
+        data.sort_by = sort_by;
+    if($(".sort-by.active").hasClass("descending"))
         data.desc = 1;
+
+    var per_page = $("#per-page span").text();
+    if(per_page && per_page != "10") {
+        data.per_page = per_page;
+    }
 
     if($(".row-filler").children("input").is(":checked")) data.a=1;
 
@@ -450,7 +507,6 @@ function send_filter(data_to_send) {
     $.ajax({
         type: 'GET',
         url: path,
-        global: false,
         data: data_to_send,
         success: function(data) {
             $("#partner-holder").html(data);
@@ -559,6 +615,9 @@ function show_selected() {
         }
         if(key == "desc") {
             $(".sort-by.active").removeClass("ascending").addClass("descending");
+        }
+        if(key == "per_page") {
+            $("#per-page span").text(value);
         }
     }
 }

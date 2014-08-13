@@ -10,29 +10,35 @@
     <div class="big-title">
         <b>{{ partner.name }}</b>
     </div>
+    {% if on_page == 'partner_library' and not partner.city %}
+    {% else %}
     <div class="sub-title">
         <small>
             {% if on_page == 'prm' %}
 
             {% for location in partner.get_contact_locations %}
+            <span title="Click to filter location">
                 {% if not forloop.last %}
                     {{ location }};
                 {% else %}
                     {{ location }}
                 {% endif %}
+            </span>
             {% endfor %}
 
             {% elif on_page == 'partner_library' %}
-
+            <span title="Click to filter location">
             {% if partner.city %}
             {{ partner.city }}{% if partner.st %}, {{ partner.st }} {% endif %}
             {% else %}
             {{ partner.city }}
             {% endif %}
+            </span>
 
             {% endif %}
         </small>
     </div>
+    {% endif %}
     {% if on_page == 'partner_library' %}
     <div class="partner-tags">
         {% if partner.is_veteran %}

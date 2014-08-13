@@ -8,31 +8,33 @@ $(document).ready(function(){
         $(".date-range-select-form").toggleClass('date-range-select-form-visible');
     });
 
-    $(this).ajaxStart(function () {
-        // Disable errant clicks when an ajax request is active
-        // Does not prevent the user from closing the modal
-        $('button').attr('disabled', 'disabled');
-        $('a.btn').attr('disabled', 'disabled');
+    var $loader = $("#ajax-busy"), timer;
+    $loader.hide()
+        .ajaxStart(function() {
+            timer && clearTimeout(timer);
+            timer = setTimeout(function() {
+                // Disable errant clicks when an ajax request is active
+                $('button').attr('disabled', 'disabled');
+                $('a.btn').attr('disabled', 'disabled');
 
-        // Show ajax processing indicator
-        $("#ajax-busy").show();
-        $("#ajax-busy").show();   
-    });
-    $(this).ajaxStop(function () {
-        // Allow button clicks when ajax request ends
-        $('button').removeAttr('disabled');
-        $('a.btn').removeAttr('disabled');
+                // Show ajax processing indicator
+                $loader.show();
+            }, 1000);
+        })
+        .ajaxStop(function() {
+            // Allow button clicks when ajax request ends
+            $('button').removeAttr('disabled');
+            $('a.btn').removeAttr('disabled');
 
-        // Hide ajax processing indicator
-        $("#ajax-busy").hide();
-        $(this).dialog("close");
-    });
-    $(this).ajaxError(function (e, xhr) {
-        if (xhr.status == 403) {
-            // redirect to the home page on 403
-            window.location = '/';
-        }
-    });
+            clearTimeout(timer);
+            $loader.hide();
+        })
+        .ajaxError(function (e, xhr) {
+            if (xhr.status == 403) {
+                // redirect to the home page on 403
+                window.location = '/';
+            }
+        });
     
     $('#disable-account').click(function(){
         var answer = confirm('Are you sure you want to disable your account?');
