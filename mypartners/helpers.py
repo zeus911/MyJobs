@@ -458,8 +458,8 @@ def filter_partners(request, partner_library=False):
 
     if "location" in sort_by:
         partners = partners.filter(query).distinct().extra(select={
-            'has_city': "%s != ''" % contact_city,
-            'has_state': "%s != ''" % contact_state}).order_by(*
+            'has_city': "%s == ''" % contact_city,
+            'has_state': "%s == ''" % contact_state}).order_by(*
                 ['%shas_city' % sort_order,
                 '%s%s' % (sort_order, contact_city),
                 '%shas_state' % sort_order,
