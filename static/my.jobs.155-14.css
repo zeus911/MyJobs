@@ -212,8 +212,8 @@ h1 > small > a:hover {
 }
 
 .product-card:hover {
-    background: -webkit-linear-gradient(left, #f9FAFA 0%, #f9FAFA 66%, #f2f2f2 100%);
-    box-shadow: 2px 2px 5px #BBB;
+    background: #D5FACF;
+    box-shadow: 2px 2px 3px #BBB;
     cursor: pointer;
 }
 
@@ -230,6 +230,10 @@ h1 > small > a:hover {
 
 .product-card .sub-title small {
     line-height: 85%;
+}
+
+.product-card .sub-title small span:hover {
+    text-decoration: underline;
 }
 
 .product-card .product-details {
@@ -274,7 +278,7 @@ h1 > small > a:hover {
 }
 
 .sidebar input.loading {
-    background:url('//d2e48ltfsb5exy.cloudfront.net/content_ms/files/ui-anim_basic_16x16.gif') no-repeat right center;
+    background:url('//d2e48ltfsb5exy.cloudfront.net/content_ms/files/ui-anim_basic_16x16.gif') no-repeat right center !important;
     background-position-x: 97%;
 }
 
@@ -314,7 +318,7 @@ h1 > small > a:hover {
     margin-top: 5px;
 }
 
-.sidebar .help_text {
+#partner-sidebar-holder .sidebar .help_text {
     text-align: center;
 }
 
@@ -381,8 +385,9 @@ h1 > small > a:hover {
 }
 
 .sort-by {
-    background-color: #9696A3;
-    padding: 1px 5px;
+    background-color: #BCBCC2;
+    box-shadow: 2px 2px 0 #9696A3;
+    padding: 1px 10px;
     border-radius: 5px;
     color: #FFF;
 }
@@ -392,24 +397,76 @@ h1 > small > a:hover {
 }
 
 .sort-by.active {
-    background-color: #FF0000;
+    padding-left: 5px;
+    background-color: #5EB94E;
+    box-shadow: 2px 2px 0 #3E9F2F;
 }
 
 .sort-by.active.descending:before,
 .sort-by.active.ascending:before {
     content: "\00a0";
-    padding: 0 5px;
     margin-right: 5px;
     position: relative;
-    top: 1px;
+    font-size: 0.8em;
+    top: -1px;
 }
 
 .sort-by.active.descending:before {
-    background: url("//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/glyphicons-halflings.png") -312px -144px;
+    content: "\25BC";
 }
 
 .sort-by.active.ascending:before {
-    background: url("//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/glyphicons-halflings.png") -288px -144px;
+    content: "\25B2";
+}
+
+.partner-sort #per-page {
+    margin-top: 2px;
+}
+
+.partner-sort #per-page * {
+    padding: 2px 0;
+}
+
+.partner-sort #per-page span {
+    box-sizing: border-box;
+    border: 1px solid #FFF;
+    padding: 2px 5px;
+}
+
+.partner-sort #per-page span:hover {
+    border: 1px solid #d5d4d0;
+    border-radius: 5px;
+    cursor: text;
+}
+
+.partner-sort #per-page #per-page-input {
+    width: 40px;
+    padding: 0 2px;
+    box-sizing: border-box;
+    float: left;
+    margin-right: 5px;
+    margin-top: 2px;
+}
+
+.prm-no-partner .span4 {
+    box-sizing: border-box;
+    padding: 10px;
+    background-color: #FFF;
+    border: 1px solid #d5d4d0;
+    box-shadow: 1px 1px 2px #BBB;
+}
+
+.prm-no-partner .span4:hover {
+    cursor: pointer;
+    background-color: #D5FACF;
+    box-shadow: 2px 2px 3px #BBB;
+}
+
+.bold-next-step {
+    font-variant: small-caps;
+    font-size: 1.5em;
+    font-weight: 700;
+    color: #5e6c82;
 }
 
 .step-links .current {
@@ -453,35 +510,6 @@ h1 > small > a:hover {
 
 .small-cell{
     width: 60px;
-}
-
-#fake-partner-table {
-    margin-top: 30px;
-}
-
-.prm-init-formbox{
-    width: 302px;
-    z-index: 999;
-    position:absolute;
-    margin-left: 319px;
-    margin-top: 75px;
-}
-
-.prm-init-formbox .form-label{
-    display: none;
-}
-
-.prm-init-formbox .profile-form-input{
-    padding-left: 20px;
-    padding-right: 20px;
-}
-
-.prm-init-formbox button{
-    margin-right: 20px;
-}
-
-.prm-init-formbox fieldset :nth-child(2) > input[placeholder]{
-    font-weight: bold;
 }
 
 .prm-buttons {
