@@ -378,7 +378,7 @@ def filter_partners(request):
     city = request.REQUEST.get('city', "").strip()
     state = request.REQUEST.get('state', "").strip()
     sort_order = "-" if request.REQUEST.get("desc", False) else ""
-    sort_by = sort_order + "contact__" + request.REQUEST.get('sort_by', 'name')
+    sort_by = sort_order + request.REQUEST.get('sort_by', 'name')
 
     partners = Partner.objects.select_related('contact')
     query = Q(owner=company.id)
@@ -391,8 +391,9 @@ def filter_partners(request):
     query = query & Q(contact__state=state) if state else query
 
     if "city" in sort_by:
+        sort_by = sort_by.replace("city", "contact__city")
         partners = partners.filter(query).distinct().order_by(
-            sort_by, sort_order + "state")
+            sort_by, sort_order + "contact__state")
     else:
         partners = partners.filter(query).distinct().order_by(sort_by)
 
