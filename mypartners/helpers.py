@@ -3,7 +3,7 @@ from datetime import datetime, time, timedelta
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
-from django.db.models import Min, Max, Q
+from django.db.models import Count, Min, Max, Q
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError, FieldError
@@ -453,19 +453,24 @@ def filter_partners(request, partner_library=False):
     if city:
         query &= Q(**{'%s__icontains' % contact_city: city})
 
-    if request.REQUEST.get('state', '').strip():
+    if state:
         query &= Q(**{'%s__icontains' % contact_state: state})
 
     if "location" in sort_by:
-        partners = partners.filter(query).distinct().extra(select={
-            'has_city': "%s == ''" % contact_city,
-            'has_state': "%s == ''" % contact_state}).order_by(*
-                ['%shas_city' % sort_order,
-                 '%shas_state' % sort_order,
-                 '%s%s' % (sort_order, contact_city),
-                 '%s%s' % (sort_order, contact_state)] + order_by)
-    else:
-        partners = partners.filter(query).distinct().order_by(
-            *[sort_by] + order_by)
+        incomplete_partners = partners.filter(query).distinct().filter(
+            Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
+                *['%s%s' % (sort_order, column) for column in
+                  [contact_city, contact_state]])
 
-    return partners
+        partners = partners.filter(query).distinct().exclude(
+            Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
+                *['%s%s' % (sort_order, column) for column in
+                  [contact_city, contact_state]])
+
+        partners = list(partners) + list(incomplete_partners)
+
+    else:
+        partners = list(partners.filter(query).distinct().order_by(
+            *[sort_by] + order_by))
+
+    return list(partners)
