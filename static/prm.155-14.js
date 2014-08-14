@@ -1,10 +1,17 @@
+/*
+onpopstate happens when a user goes back in history
+function gathers event state data that was pushed from pushState
+and builds the page back to which it was.
+*/
 window.onpopstate = function(event) {
     fill_in_history_state(event.state);
     send_filter(event.state);
 };
 
+// isIE is used a lot
 isIE = isIE();
 
+// indexOf fix for IE8
 if (isIE && isIE < 9) {
     if (!Array.prototype.indexOf)
     {
@@ -31,8 +38,16 @@ if (isIE && isIE < 9) {
 }
 
 $(document).ready(function() {
+    /*
+    If someone loads the page with request.GET info
+    (not from ajax) fill page with info
+    */
     if(location.search) show_selected();
 
+    /*
+    Fancy pushState next and previous buttons for everyone
+    but IE8 and IE9
+     */
     if (!isIE && !isIE < 10) {
         $("body").on("click", "#next_page", function(e) {
             e.preventDefault();
@@ -53,9 +68,10 @@ $(document).ready(function() {
         });
     }
 
+    // Removes span and adds input ready to be edited
     $("body").on("click", "#per-page span", function() {
-        var value = $(this).text();
         $(this).remove();
+        var value = $(this).text();
         var input = document.createElement("input");
         input.setAttribute("id", "per-page-input");
         input.setAttribute("type", "text");
@@ -65,12 +81,17 @@ $(document).ready(function() {
         $("#per-page-input").focus().select();
     });
 
+    // New input from clicking #per-page span if user hits enter remove this
     $("body").on("keypress", "#per-page-input", function(e) {
         if(e.which == 13) {
             $(this).remove();
         }
     });
 
+    /*
+    When the user stops focusing or if this input is removed
+    add back the span to #per-page with new info
+    */
     $("body").on("blur", "#per-page-input", function() {
         $(this).remove();
         var value = $(this).val();
@@ -82,6 +103,7 @@ $(document).ready(function() {
         run_ajax();
     });
 
+    // switch sort status and run ajax
     $("body").on("click", ".sort-by", function() {
         if($(this).hasClass("active")) {
             if($(this).hasClass("ascending")) {
@@ -218,13 +240,15 @@ $(document).ready(function() {
         });
     });
 
+    // Onclick span will check the checkbox it is next to
     $("#library-modal-check span").on("click", function() {
-        if($(this).prev().checked)
+        if(!$(this).prev().prop("checked"))
             $(this).prev().prop("checked", true);
         else
             $(this).prev().prop("checked", false);
     });
 
+    // Filter location by clicking location on product cards then run ajax
     $("body").on("click", ".sub-title > small span", function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -246,6 +270,7 @@ $(document).ready(function() {
         run_ajax();
     });
 
+    // Add check mark icon next to partner-tags then run ajax
     $(".partner-filters .partner-tag").on("click", function() {
         if ($(this).children('i').hasClass('icon-ok')) {
             $(this).children('i').remove();
@@ -259,6 +284,7 @@ $(document).ready(function() {
         run_ajax();
     });
 
+    // Waits till typing is completed for 1 sec (3 if tablet <) then runs ajax
     $(".partner-filters :input:not(select)").on("keyup paste", function() {
         /* Variables */
         var wait_time,
@@ -270,12 +296,8 @@ $(document).ready(function() {
 
         /* Ajax */
         this.timer = setTimeout(function() {
-            var data = build_data();
             $(that).addClass("loading");
-            update_search_url(data);
-            if (!isIE && !isIE < 10) {
-                send_filter(data);
-            }
+            run_ajax();
         }, wait_time);
     });
 
@@ -283,8 +305,11 @@ $(document).ready(function() {
         run_ajax();
     });
 
+    // Partner Library only logic
     if(location.pathname == '/prm/view/partner-library/'){
+        // Partner Library product card click
         $("body").on("click",".product-card:not(.product-card.disabled-card)", function() {
+            /* Variables */
             var library_id = $(this).attr("id").split("-")[1],
                 library_title = $(this).children("div.big-title").children("b").text() +"*",
                 company_name = $("h1").children("a").text(),
@@ -296,13 +321,16 @@ $(document).ready(function() {
 
             var for_completion = ["name", "email", "phone"];
             $(this).children("div.product-details").children("input").each(function() {
+                // if partner has name, email, or phone they will be added via template with type hidden
                 if($(this).is("[type=hidden]")) {
                     var info = $(this).attr("class").split("-")[1];
                     if(for_completion.indexOf(info) >= 0) {
+                        // remove from for_completion list if :info: in list
                         for_completion.splice(for_completion.indexOf(info), 1);
                     }
                 }
             });
+            // Add Note: section
             if(for_completion.length > 0) {
                 var p = document.createElement("p");
                 var note = document.createElement("span");
@@ -325,7 +353,6 @@ $(document).ready(function() {
                 $(".modal-body").append(p).append(ul);
             }
 
-
             var disclaimer = document.createElement("span"),
                 d_text = "*This partner's information was provided by the OFCCP Referral Directory. " +
                     "To confirm its accuracy, DirectEmployers highly recommends following up directly " +
@@ -334,15 +361,18 @@ $(document).ready(function() {
             disclaimer.setAttribute("style", "font-size: 0.85em;");
             $(".modal-body").append(disclaimer);
 
+            /* Important */
             $("#add-partner-library").data("num", library_id);
             $("#partner-library-modal").modal("show");
         });
     }
 
+    // When user clicks "Add" in Partner Library modal
     $("#add-partner-library").on("click", function(){
         var data_to_send = {};
+        // data("num") comes from clicking a product-card. Remember "Important"?
         data_to_send.library_id = $(this).data("num");
-        if($("#go-to-partner").is(":checked")) data.redirect = true;
+        if($("#go-to-partner").is(":checked")) data_to_send.redirect = true;
         $.ajax({
             type: "GET",
             url: "/prm/view/partner-library/add/",
@@ -379,11 +409,19 @@ $(document).ready(function() {
     });
 });
 
+/*
+ Checks to see if browser is IE.
+ If it is then get version.
+*/
 function isIE() {
     var myNav = navigator.userAgent.toLowerCase();
     return (myNav.indexOf('msie') != -1) ? parseInt(myNav.split('msie')[1]) : false;
 }
 
+/*
+Gets the param from URL
+:name:  Is the key
+ */
 function getParameterByName(name) {
     name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
     var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
@@ -391,6 +429,10 @@ function getParameterByName(name) {
     return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 }
 
+/*
+For DRY
+Build data, update the URL (pushState or refresh page), run ajax if not IE 9 or <
+ */
 function run_ajax() {
     var data = build_data();
     update_search_url(data);
@@ -399,6 +441,12 @@ function run_ajax() {
     }
 }
 
+/*
+Make the page look like it did location.history.go(-1) ago.
+
+Input:
+:data:  is the event.state from window.onpopstate
+ */
 function fill_in_history_state(data){
     /* Grab inputs */
     var kw_input = $("#lib-keywords"),
@@ -446,6 +494,9 @@ function fill_in_history_state(data){
     return false
 }
 
+/*
+Reset special interest (all disabled)
+ */
 function clear_special_interest(si_list) {
     for(var x in si_list) {
         var cl = String(si_list[x]).replace(" ", "-");
@@ -460,6 +511,9 @@ function clear_special_interest(si_list) {
     }
 }
 
+/*
+build data object from all sources on the page.
+ */
 function build_data() {
     var data = {},
         special_interest = [];
@@ -492,6 +546,7 @@ function build_data() {
     return data
 }
 
+// get page
 function get_page(data) {
     var page = parseInt(getParameterByName("page"));
     if(page) {
@@ -539,7 +594,13 @@ function send_filter(data_to_send) {
     });
 }
 
+/*
+Builds URL from data that is usually built from build_data()
+
+Uses new HTML5 history API or if IE8, 9 reloads the page.
+ */
 function update_search_url(data) {
+    // IE8 hates me
     if (!Object.keys) {
       Object.keys = function(obj) {
         var keys = [];
@@ -576,6 +637,9 @@ function update_search_url(data) {
     }
 }
 
+/*
+    If someone loads the page with request.GET info (not from ajax) fill page with info
+*/
 function show_selected() {
     var q = location.search,
         params = q.replace("?", "").split("&"),

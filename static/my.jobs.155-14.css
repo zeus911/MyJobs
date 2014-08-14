@@ -346,6 +346,10 @@ h1 > small > a:hover {
     margin: 0;
 }
 
+#library-modal-check span:hover {
+    cursor: pointer;
+}
+
 .partner-tag.button { box-shadow: 2px 2px 0 #585858 }
 .partner-tag.veteran { background-color: #5EB94E; }
 .partner-tag.veteran.button { box-shadow: 2px 2px 0 #3E9F2F; }
