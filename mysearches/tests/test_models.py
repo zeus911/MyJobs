@@ -1,11 +1,13 @@
+import datetime
+
 from django.conf import settings
 from django.core import mail
 from django.test import TestCase
 
 from bs4 import BeautifulSoup
 from mock import patch
-from mydashboard.tests.factories import CompanyFactory
 
+from mydashboard.tests.factories import CompanyFactory
 from myjobs.tests.factories import UserFactory
 from mypartners.models import ContactRecord
 from mypartners.tests.factories import PartnerFactory, ContactFactory
@@ -25,7 +27,7 @@ class SavedSearchModelsTests(TestCase):
     def setUp(self):
         self.user = UserFactory()
 
-        self.patcher = patch('urllib2.urlopen', return_file)
+        self.patcher = patch('urllib2.urlopen', return_file())
         self.mock_urlopen = self.patcher.start()
 
     def tearDown(self):
@@ -209,6 +211,24 @@ class SavedSearchModelsTests(TestCase):
 
         self.assertTrue('has failed URL validation' in email.body)
 
+    def test_get_unsent_jobs(self):
+        """
+        When sending a saved search email, we should retrieve all new jobs since
+        last send, not all new jobs based on frequency.
+        """
+        self.patcher.stop()
+        self.patcher = patch('urllib2.urlopen',
+                             return_file(time_=datetime.datetime.now() -
+                                         datetime.timedelta(days=3)))
+        self.mock_urlopen = self.patcher.start()
+        last_sent = datetime.datetime.now() - datetime.timedelta(days=3)
+        search = SavedSearchFactory(frequency='D',
+                                    last_sent=last_sent,
+                                    user=self.user,
+                                    email=self.user.email)
+        search.send_email()
+        self.assertEqual(len(mail.outbox), 1)
+
 
 class PartnerSavedSearchTests(TestCase):
     def setUp(self):
@@ -223,7 +243,7 @@ class PartnerSavedSearchTests(TestCase):
                                                         provider=self.company,
                                                         partner=self.partner)
 
-        self.patcher = patch('urllib2.urlopen', return_file)
+        self.patcher = patch('urllib2.urlopen', return_file())
         self.mock_urlopen = self.patcher.start()
 
     def tearDown(self):

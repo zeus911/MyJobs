@@ -45,7 +45,7 @@ def update_url_if_protected(url, user):
 
 def get_rss_soup(rss_url):
     """
-    Turn a URL into a BeatifulSoup object
+    Turn a URL into a BeautifulSoup object
 
     Inputs:
     :rss_url:      URL of an RSS feed
@@ -132,7 +132,7 @@ def get_json(json_url):
 
 
 def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
-               return_items=None, use_json=True):
+               return_items=None, use_json=True, last_sent=None):
     """
     Parses job data from an RSS feed and returns it as a list of dictionaries.
     The data returned is limited based on the corresponding data range (daily,
@@ -146,6 +146,9 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
     :return_items: The number of items to be returned; if not provided,
         equals :num_items:
     :use_json:       Default feed to json, if available; Default: True
+    :last_sent: Date that this saved search, if one exists, was sent; used to
+        grab jobs during a wider span of time in the event that saved searches
+        encounter issues and don't send for a period of time; Default: None
 
     Outputs:
     :tuple:         First index is a list of :return_items: jobs
@@ -165,6 +168,13 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
 
     end = datetime.date.today()
     start = end + datetime.timedelta(days=interval)
+    if last_sent is not None:
+        last_sent = last_sent.date()
+        last_sent_diff = last_sent - start
+        if interval >= last_sent_diff.days:
+            # interval and last_sent_diff are negative for times in the past
+            # (the normal case), so the comparison must be reversed.
+            start = last_sent
     item_list = []
 
     feed_url += '%snum_items=%s&offset=%s' % (
