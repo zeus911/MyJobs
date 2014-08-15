@@ -46,6 +46,7 @@ from mypartners.helpers import (prm_worthy, add_extra_params,
                                 contact_record_val_to_str, retrieve_fields,
                                 get_records_from_request,
                                 filter_partners,
+                                new_partner_from_library,
                                 send_contact_record_email_response,
                                 find_partner_from_email)
 
@@ -127,47 +128,13 @@ def partner_library(request):
 @company_has_access('prm_access')
 def create_partner_from_library(request):
     """ Creates a partner and contact from a library_id. """
-    company = get_company(request)
-    if company is None:
-        raise Http404
-
-    try:
-        library_id = int(request.REQUEST.get('library_id') or 0)
-    except ValueError:
-        raise Http404
-    library = get_object_or_404(PartnerLibrary, pk=library_id)
-
-    partner = Partner(
-        name=library.name,
-        uri=library.uri,
-        owner=company,
-        library_id=library)
-    partner.save()
-
-    contact = Contact(
-        partner=partner,
-        name=library.contact_name or "Not Available",
-        email=library.email,
-        phone=library.phone,
-        address_line_one=library.street1,
-        address_line_two=library.street2,
-        city=library.city,
-        state=library.st,
-        country_code="USA",
-        postal_code=library.zip_code,
-        notes=("This contact was generated from content in the "
-               "OFCCP directory."))
-    contact.save()
-
-    partner.primary_contact = contact
-    partner.save()
+    partner = new_partner_from_library(request)
 
     redirect = False
     if request.REQUEST.get("redirect"):
         redirect = True
     ctx = {
         'partner': partner.id,
-        'contact': contact.id,
         'redirect': redirect
     }
 

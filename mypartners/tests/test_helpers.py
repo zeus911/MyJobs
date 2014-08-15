@@ -8,7 +8,7 @@ from django.db.models import Min, Max
 
 from tasks import update_partner_library
 from mypartners import helpers, models
-from mypartners.helpers import get_library_partners
+from mypartners.helpers import get_library_partners, new_partner_from_library
 from mypartners.tests.test_views import MyPartnersTestCase
 
 
@@ -115,9 +115,24 @@ class PartnerFilterTests(MyPartnersTestCase):
         When a company has already added OFCCP partners, those partners should
         not be displayed in the filter search results.
         """
-        pass
 
-        
+        # create a new partner
+        library_id = random.randint(1, self.partner_library.count())
+        request = self.request_factory.get(
+            'prm/view/partner-library/add', dict(
+                company=self.company.id, library_id=library_id))
+        request.user = self.staff_user
 
+        partner = helpers.new_partner_from_library(request)
 
+        # get a list of OFCCP partners
+        request = self.request_factory.get(
+            'prm/view/partner-library', dict(company=self.company.id))
+        request.user = self.staff_user
+
+        library = helpers.filter_partners(request, partner_library=True)
+
+        partner_in_response = library.filter(id=partner.library_id.id).exists()
+
+        self.assertFalse(partner_in_response)
 

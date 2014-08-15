@@ -20,8 +20,8 @@ from lxml.cssselect import CSSSelector
 import pytz
 import requests
 from universal.helpers import get_domain, get_company, get_company_or_404
-from mypartners.models import (ContactLogEntry, CONTACT_TYPE_CHOICES, CHANGE,
-                               Partner, PartnerLibrary)
+from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
+                               CHANGE, Partner, PartnerLibrary)
 from registration.models import ActivationProfile
 
 
@@ -350,7 +350,7 @@ def get_library_partners(path=None):
 
     CompliancePartner = namedtuple("CompliancePartner", cols)
     for row in CSSSelector("p ~ table tr")(tree):
-        fields = dict((cols[i], td.text) for i, td in
+        fields = dict((cols[i], (td.text or "").strip()) for i, td in
                       enumerate(CSSSelector("td")(row)))
 
         for column, value in fields.items():
@@ -366,7 +366,7 @@ def get_library_partners(path=None):
                           "professional", "technician", "sales",
                           "admin_support", "craft", "operative", "labor",
                           "service"]:
-                fields[column] = bool(value.strip())
+                fields[column] = bool(value)
 
         if len(fields) > 1:
             yield CompliancePartner(**fields)
@@ -407,7 +407,6 @@ def filter_partners(request, partner_library=False):
             only 'location'-- which sorts by city and state-- and name -- which
             sorts by partner name -- are allowed.
     """
-
     sort_order = "-" if request.REQUEST.get("desc", False) else ""
     sort_by = sort_order + request.REQUEST.get('sort_by', 'name')
     city = request.REQUEST.get('city', '').strip()
@@ -456,21 +455,69 @@ def filter_partners(request, partner_library=False):
     if state:
         query &= Q(**{'%s__icontains' % contact_state: state})
 
+    partners = partners.distinct().filter(query)
+
+    # for location, we want to sort by both city and state
     if "location" in sort_by:
-        incomplete_partners = partners.filter(query).distinct().filter(
-            Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
-                *['%s%s' % (sort_order, column) for column in
-                  [contact_city, contact_state]])
+        if partner_library:
+            partners = partners.extra(select={
+                'has_city': "%s == ''" % contact_city,
+                'has_state': "%s == ''" % contact_state}).order_by(
+                    *['%shas_city' % sort_order,
+                      '%shas_state' % sort_order,
+                      '%s%s' % (sort_order, contact_city),
+                      '%s%s' % (sort_order, contact_state)] + order_by)
+        else:
+            # the select trick wont work with foreign relationships, so we
+            # instead create a queryset that doesn't contain blank city/state,
+            # and one that does, then stitch the two together.
+            incomplete_partners = partners.filter(
+                Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
+                    *['%s%s' % (sort_order, column) for column in
+                      [contact_city, contact_state]])
 
-        partners = partners.filter(query).distinct().exclude(
-            Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
-                *['%s%s' % (sort_order, column) for column in
-                  [contact_city, contact_state]])
+            partners = partners.exclude(
+                Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
+                    *['%s%s' % (sort_order, column) for column in
+                      [contact_city, contact_state]])
 
-        partners = list(partners) + list(incomplete_partners)
-
+            partners = list(partners) + list(incomplete_partners)
     else:
-        partners = list(partners.filter(query).distinct().order_by(
-            *[sort_by] + order_by))
+        partners = partners.order_by(*[sort_by] + order_by)
 
-    return list(partners)
+    return partners
+
+
+def new_partner_from_library(request):
+    company = get_company_or_404(request)
+
+    try:
+        library_id = int(request.REQUEST.get('library_id') or 0)
+    except ValueError:
+        raise Http404
+    library = get_object_or_404(PartnerLibrary, pk=library_id)
+
+    partner = Partner.objects.create(
+        name=library.name,
+        uri=library.uri,
+        owner=company,
+        library_id=library)
+
+    contact = Contact.objects.create(
+        partner=partner,
+        name=library.contact_name or "Not Available",
+        email=library.email,
+        phone=library.phone,
+        address_line_one=library.street1,
+        address_line_two=library.street2,
+        city=library.city,
+        state=library.st,
+        country_code="USA",
+        postal_code=library.zip_code,
+        notes=("This contact was generated from content in the "
+               "OFCCP directory."))
+
+    partner.primary_contact = contact
+    partner.save()
+
+    return partner
