@@ -415,7 +415,7 @@ def filter_partners(request, partner_library=False):
     if partner_library:
         special_interest = request.REQUEST.getlist('special_interest')[:]
         library_ids = Partner.objects.exclude(
-            library_id__isnull=True).values_list('library_id', flat=True)
+            library__isnull=True).values_list('library', flat=True)
         # hide partners that the user has already added 
         partners = PartnerLibrary.objects.exclude(id__in=library_ids)
         contact_city = 'city'
@@ -501,7 +501,7 @@ def new_partner_from_library(request):
         name=library.name,
         uri=library.uri,
         owner=company,
-        library_id=library)
+        library=library)
 
     contact = Contact.objects.create(
         partner=partner,

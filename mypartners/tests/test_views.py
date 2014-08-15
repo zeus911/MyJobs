@@ -168,12 +168,12 @@ class MyPartnerViewsTests(MyPartnersTestCase):
         request = self.request_factory.get(
             'prm/view/partner-library/add', dict(
                 company=self.company.id,
-                library_id=library_id))
+                library=library_id))
         request.user = self.staff_user
 
         views.create_partner_from_library(request)
 
-        self.assertTrue(Partner.objects.filter(library_id=library_id).exists())
+        self.assertTrue(Partner.objects.filter(library=library_id).exists())
 
         
 class EditItemTests(MyPartnersTestCase):

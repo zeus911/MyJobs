@@ -132,7 +132,7 @@ class PartnerFilterTests(MyPartnersTestCase):
 
         library = helpers.filter_partners(request, partner_library=True)
 
-        partner_in_response = library.filter(id=partner.library_id.id).exists()
+        partner_in_response = library.filter(id=partner.library.id).exists()
 
         self.assertFalse(partner_in_response)
 

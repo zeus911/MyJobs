@@ -142,7 +142,7 @@ class Partner(models.Model):
                                         related_name='primary_contact',
                                         on_delete=models.SET_NULL)
     # used if this partner was created by using the partner library
-    library_id = models.ForeignKey('PartnerLibrary', null=True,
+    library = models.ForeignKey('PartnerLibrary', null=True,
                                    on_delete=models.SET_NULL)
     # owner is the Company that owns this partner.
     owner = models.ForeignKey(Company)
