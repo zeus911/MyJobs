@@ -8,11 +8,11 @@ window.onpopstate = function(event) {
     send_filter(event.state);
 };
 
-// isIE is used a lot
+// isIE is used a lot, so lets make it a variable!
 isIE = isIE();
 
 // indexOf fix for IE8
-if (isIE && isIE < 9) {
+if (typeof(isIE) == "number" && isIE < 9) {
     if (!Array.prototype.indexOf)
     {
       Array.prototype.indexOf = function(elt /*, from*/)
@@ -48,7 +48,7 @@ $(document).ready(function() {
     Fancy pushState next and previous buttons for everyone
     but IE8 and IE9
      */
-    if (!isIE && !isIE < 10) {
+    if (typeof(isIE) == "number" && isIE > 9 || typeof(isIE) == 'boolean' && isIE == false) {
         $("body").on("click", "#next_page", function(e) {
             e.preventDefault();
             var data = build_data();
@@ -395,7 +395,7 @@ $(document).ready(function() {
                     "Partner Relationship Manager.</div>"
 
                 $("#lib-alerts").html(alert_html);
-                if (!isIE && !isIE < 10) {
+                if (typeof(isIE) == "number" && isIE > 9 || typeof(isIE) == 'boolean' && isIE == false) {
                     var filter_data = build_data();
                     filter_data.page = get_page(filter_data);
                     send_filter(filter_data);
@@ -436,7 +436,7 @@ Build data, update the URL (pushState or refresh page), run ajax if not IE 9 or 
 function run_ajax() {
     var data = build_data();
     update_search_url(data);
-    if (!isIE && !isIE < 10) {
+    if (typeof(isIE) == "number" && isIE > 9 || typeof(isIE) == 'boolean' && isIE == false) {
         send_filter(data);
     }
 }
@@ -630,21 +630,21 @@ function update_search_url(data) {
         }
     }
 
-    if (isIE && isIE < 10) {
-        location.search = search_url;
-    } else {
+    if (typeof(isIE) == "number" && isIE > 9 || typeof(isIE) == 'boolean' && isIE == false) {
         history.pushState(data, "filter", search_url);
+    } else {
+        location.search = search_url;
     }
 }
 
 /*
-    If someone loads the page with request.GET info (not from ajax) fill page with info
+If someone loads the page with request.GET info (not from ajax) fill page with info
 */
 function show_selected() {
     var q = location.search,
         params = q.replace("?", "").split("&"),
         partners = $(".sidebar .partner-tag");
-    if (isIE && isIE < 9) {
+    if (typeof(isIE) == "number" && isIE < 9) {
         if(q === "?") return false;
     }
     for(var i = 0; i < params.length; i++) {
