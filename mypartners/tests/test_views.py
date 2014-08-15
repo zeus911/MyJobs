@@ -86,32 +86,22 @@ class MyPartnerViewsTests(MyPartnersTestCase):
         response = self.client.post('/prm/view')
         soup = BeautifulSoup(response.content)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(soup.select('small')[0].contents[0], 'Test Company')
-
-        response = self.client.post(reverse('prm') +
-                                    '?company=' + str(self.company.id))
-        self.assertEqual(response.status_code, 200)
-
-        soup = BeautifulSoup(response.content)
-
-        # blanket is the class that holds the fake table on prm view when
-        # there are no partners
-        self.assertEqual(len(soup.select('.blanket')), 1)
+        self.assertEqual(len(soup.select(".prm-no-partner")), 1)
 
     def test_prm_page_with_a_partner(self):
         response = self.client.post('/prm/view')
         soup = BeautifulSoup(response.content)
 
         # 1 tr is dedicated to header, 1 tr for partner.
-        self.assertEqual(len(soup.select('tr')), 2)
+        self.assertEqual(len(soup.select('.product-card')), 1)
 
-        for _ in range(8):
+        for _ in range(9):
             partner = PartnerFactory(owner=self.company)
             partner.save()
 
         response = self.client.post('/prm/view')
         soup = BeautifulSoup(response.content)
-        self.assertEqual(len(soup.select('tr')), 10)
+        self.assertEqual(len(soup.select('.product-card')), 10)
 
     def test_partner_details_with_no_contacts(self):
         self.contact.delete()
@@ -144,8 +134,24 @@ class MyPartnerViewsTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
 
         self.assertEqual(len(soup.select('tr')), 10)
-        
 
+    def can_create_partner_from_library(self):
+        """
+        Given a library id, it should be possible to create a valid partner and
+        contact along with the relationships between the two.
+        """
+        library = PartnerLibrary.objects.all()
+        library_id = random.randint(1, library.count())
+        request = self.request_factory.get(
+            'prm/view/partner-library/add', dict(
+                company=self.company.id,
+                library_id=library_id))
+
+        response = views.create_partner_from_library(request)
+
+        self.fail(response.content)
+
+        
 class EditItemTests(MyPartnersTestCase):
     """ Test the `edit_item` view functio. 
         

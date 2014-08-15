@@ -1,10 +1,11 @@
 from itertools import product
 from datetime import datetime, timedelta
+import random
 
 import pytz
 from django.db.models import Min, Max
 
-from mypartners import helpers
+from mypartners import helpers, models
 from mypartners.tests.test_views import MyPartnersTestCase
 
 
@@ -59,4 +60,35 @@ class HelpersTests(MyPartnersTestCase):
                         "%i Days" % (range_end - range_start).days, date_str)
             else:
                 self.assertEqual("View All", date_str)
+
+
+class PartnerFilterTests(MyPartnersTestCase):
+
+    """
+    Tests related to filter_partners. 
+    """
+
+    def test_all_offcp_partners_available(self):
+        """
+        When a company doesn't have any OFCCP partners, they should all be
+        available to choose from in the partner library search.
+        """
+        partner_count = models.PartnerLibrary.objects.all().count()
+        request = self.request_factory.get(
+            'prm/view/partner-library/', dict(company=self.company.id))
+
+        response = helpers.filter_partners(request, partner_library=True)
+
+        self.assertEqual(len(response), partner_count)
+
+    def test_ofccp_duplicates_ignored(self):
+        """
+        When a company has already added OFCCP partners, those partners should
+        not be displayed in the filter search results.
+        """
+        pass
+
+        
+
+
 
