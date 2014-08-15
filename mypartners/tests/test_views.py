@@ -4,7 +4,9 @@ from bs4 import BeautifulSoup
 import json
 import re
 from time import sleep
-from itertools import permutations
+from itertools import permutations, islice
+import os
+import random
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -26,8 +28,9 @@ from mypartners.tests.factories import (PartnerFactory, ContactFactory,
 from mysearches.tests.factories import PartnerSavedSearchFactory
 from datetime import datetime, timedelta
 from mypartners import views
-from mypartners.models import Contact, ContactRecord, ContactLogEntry, ADDITION
-from mypartners.helpers import find_partner_from_email
+from mypartners.models import (Contact, ContactRecord, ContactLogEntry, 
+                               Partner, PartnerLibrary, ADDITION)
+from mypartners.helpers import find_partner_from_email, get_library_partners
 from mysearches.models import PartnerSavedSearch
 
 
@@ -70,7 +73,6 @@ class MyPartnersTestCase(TestCase):
         args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
         args = '&'.join(args)
         return reverse(view) + '?' + args
-
 
 class MyPartnerViewsTests(MyPartnersTestCase):
     """Tests for the /prm/view/ page"""
@@ -135,21 +137,43 @@ class MyPartnerViewsTests(MyPartnersTestCase):
 
         self.assertEqual(len(soup.select('tr')), 10)
 
-    def can_create_partner_from_library(self):
+    def test_can_create_partner_from_library(self):
         """
         Given a library id, it should be possible to create a valid partner and
         contact along with the relationships between the two.
         """
-        library = PartnerLibrary.objects.all()
-        library_id = random.randint(1, library.count())
+        path = os.path.join(
+            os.path.dirname(__file__), 'data', 'partner-library.html')
+        for partner in islice(get_library_partners(path), 0, 30):
+            fullname = " ".join(" ".join([partner.first_name,
+                                          partner.middle_name,
+                                          partner.last_name]).split())
+
+            if not PartnerLibrary.objects.filter(
+                contact_name=fullname, st=partner.st, city=partner.city):
+                PartnerLibrary(
+                    name=partner.organization_name, uri=partner.website,
+                    region=partner.region, state=partner.state, 
+                    area=partner.area, contact_name=fullname,
+                    phone=partner.phone, phone_ext=partner.phone_ext,
+                    alt_phone=partner.alt_phone, fax=partner.fax,
+                    email=partner.email_id, street1=partner.street1,
+                    street2=partner.street2, city=partner.city, st=partner.st,
+                    zip_code=partner.zip_code, is_minority=partner.minority,
+                    is_female=partner.female, is_disabled=partner.disabled,
+                    is_disabled_veteran=partner.disabled_veteran,
+                    is_veteran=partner.veteran).save()
+        partner_library = PartnerLibrary.objects.all()
+        library_id = random.randint(1, partner_library.count())
         request = self.request_factory.get(
             'prm/view/partner-library/add', dict(
                 company=self.company.id,
                 library_id=library_id))
+        request.user = self.staff_user
 
-        response = views.create_partner_from_library(request)
+        views.create_partner_from_library(request)
 
-        self.fail(response.content)
+        self.assertTrue(Partner.objects.filter(library_id=library_id).exists())
 
         
 class EditItemTests(MyPartnersTestCase):

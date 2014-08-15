@@ -54,10 +54,11 @@ def send_search_digest(search):
 
 @task(name='tasks.update_partner_library', ignore_result=True,
       default_retry_delay=180, max_retries=2)
-def update_partner_library():
-    print "Connecting to OFCCP directory..."
+def update_partner_library(path=None, quiet=False):
+    if not quiet:
+        print "Connecting to OFCCP directory..."
 
-    for partner in get_library_partners():
+    for partner in get_library_partners(path):
         fullname = " ".join(" ".join([partner.first_name,
                                       partner.middle_name,
                                       partner.last_name]).split())
@@ -91,13 +92,15 @@ def update_partner_library():
             #TODO: see if there is a way to do this without querying the
             #      database
             if PartnerLibrary.objects.filter(email=partner.email_id):
-                print "Successfully added %s %s (%s) from %s, %s." % (
-                    partner.first_name, partner.last_name,
-                    partner.email_id, partner.city, partner.st)
+                if not quiet:
+                    print "Successfully added %s %s (%s) from %s, %s." % (
+                        partner.first_name, partner.last_name,
+                        partner.email_id, partner.city, partner.st)
         else:
-            print  "%s %s (%s) from %s, %s already exists, skipping.." % (
-                partner.first_name, partner.last_name, partner.email_id,
-                partner.city, partner.st)
+            if not quiet:
+                print  "%s %s (%s) from %s, %s already exists, skipping.." % (
+                        partner.first_name, partner.last_name,
+                        partner.email_id, partner.city, partner.st)
 
 
 @task(name='tasks.send_search_digests')
