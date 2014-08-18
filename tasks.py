@@ -55,52 +55,57 @@ def send_search_digest(search):
 @task(name='tasks.update_partner_library', ignore_result=True,
       default_retry_delay=180, max_retries=2)
 def update_partner_library(path=None, quiet=False):
+    added = 0
+    skipped = 0
     if not quiet:
-        print "Connecting to OFCCP directory..."
+        if not path:
+            print "Connecting to OFCCP Directory...."
+
+        print "Parsing data for PartnerLibrary information..."
+
 
     for partner in get_library_partners(path):
         fullname = " ".join(" ".join([partner.first_name,
                                       partner.middle_name,
                                       partner.last_name]).split())
+        emails = [email.strip() for email in partner.email_id.split(';', 1)]
+        if len(emails) > 1:
+            for email in emails:
+                print "*" * 100
+                print email
 
-        if not PartnerLibrary.objects.filter(contact_name=fullname,
-                                             st=partner.st,
-                                             city=partner.city):
-            PartnerLibrary(
-                name=partner.organization_name,
-                uri=partner.website,
-                region=partner.region,
-                state=partner.state,
-                area=partner.area,
-                contact_name=fullname,
-                phone=partner.phone,
-                phone_ext=partner.phone_ext,
-                alt_phone=partner.alt_phone,
-                fax=partner.fax,
-                email=partner.email_id,
-                street1=partner.street1,
-                street2=partner.street2,
-                city=partner.city,
-                st=partner.st,
-                zip_code=partner.zip_code,
-                is_minority=partner.minority,
-                is_female=partner.female,
-                is_disabled=partner.disabled,
-                is_disabled_veteran=partner.disabled_veteran,
-                is_veteran=partner.veteran).save()
-
-            #TODO: see if there is a way to do this without querying the
-            #      database
-            if PartnerLibrary.objects.filter(email=partner.email_id):
-                if not quiet:
-                    print "Successfully added %s %s (%s) from %s, %s." % (
-                        partner.first_name, partner.last_name,
-                        partner.email_id, partner.city, partner.st)
-        else:
-            if not quiet:
-                print  "%s %s (%s) from %s, %s already exists, skipping.." % (
-                        partner.first_name, partner.last_name,
-                        partner.email_id, partner.city, partner.st)
+        for email in emails:
+            if not PartnerLibrary.objects.filter(contact_name=fullname,
+                                                 st=partner.st,
+                                                 city=partner.city,
+                                                 email=email):
+                PartnerLibrary.objects.create(
+                    name=partner.organization_name,
+                    uri=partner.website,
+                    region=partner.region,
+                    state=partner.state,
+                    area=partner.area,
+                    contact_name=fullname,
+                    phone=partner.phone,
+                    phone_ext=partner.phone_ext,
+                    alt_phone=partner.alt_phone,
+                    fax=partner.fax,
+                    email=email,
+                    street1=partner.street1,
+                    street2=partner.street2,
+                    city=partner.city,
+                    st=partner.st,
+                    zip_code=partner.zip_code,
+                    is_minority=partner.minority,
+                    is_female=partner.female,
+                    is_disabled=partner.disabled,
+                    is_disabled_veteran=partner.disabled_veteran,
+                    is_veteran=partner.veteran)
+                added += 1
+            else:
+                skipped += 1
+    if not quiet:
+        print "%d records added and %d records skipped." % (added, skipped)
 
 
 @task(name='tasks.send_search_digests')

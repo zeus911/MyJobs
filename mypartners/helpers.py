@@ -449,7 +449,9 @@ def filter_partners(request, partner_library=False):
     for keyword in keywords:
         query &= (Q(name__icontains=keyword) | Q(uri__icontains=keyword) |
                   (Q(contact_name__icontains=keyword) if partner_library else
-                   Q(contact__name__icontains=keyword)))
+                   Q(contact__name__icontains=keyword)) |
+                  (Q(email__icontains=keyword) if partner_library else
+                   Q(contact__email__icontains=keyword)))
 
     if city:
         query &= Q(**{'%s__icontains' % contact_city: city})
