@@ -112,7 +112,7 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
         request = self.request_factory.get(
             'prm/view/partner-library/', dict(
                 company=self.company.id,
-                keywords='.org, center'))
+                keywords='center, .org'))
         request.user = self.staff_user
 
         response = helpers.filter_partners(request, partner_library=True)

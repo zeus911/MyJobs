@@ -411,6 +411,8 @@ def filter_partners(request, partner_library=False):
     sort_by = sort_order + request.REQUEST.get('sort_by', 'name')
     city = request.REQUEST.get('city', '').strip()
     state = request.REQUEST.get('state', '').strip()
+    keywords = [keyword.strip() for keyword in request.REQUEST.get(
+        'keywords', '').split(',') if keyword]
 
     if partner_library:
         special_interest = request.REQUEST.getlist('special_interest')[:]
@@ -444,7 +446,7 @@ def filter_partners(request, partner_library=False):
         sort_by.replace('city', 'contact__city')
         order_by = []
 
-    for keyword in request.REQUEST.get('keywords', "").split(',', 1):
+    for keyword in keywords:
         query &= (Q(name__icontains=keyword) | Q(uri__icontains=keyword) |
                   (Q(contact_name__icontains=keyword) if partner_library else
                    Q(contact__name__icontains=keyword)))
