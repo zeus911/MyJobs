@@ -18,7 +18,7 @@ class SavedSearchFormTests(TestCase):
                      'label': 'All jobs from www.my.jobs',
                      'sort_by': 'Relevance'}
 
-        self.patcher = patch('urllib2.urlopen', return_file)
+        self.patcher = patch('urllib2.urlopen', return_file())
         self.patcher.start()
 
     def tearDown(self):

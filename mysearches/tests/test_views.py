@@ -44,7 +44,7 @@ class MySearchViewTests(TestCase):
         self.new_form = forms.SavedSearchForm(user=self.user,
                                               data=self.new_form_data)
 
-        self.patcher = patch('urllib2.urlopen', return_file)
+        self.patcher = patch('urllib2.urlopen', return_file())
         self.patcher.start()
 
     def tearDown(self):

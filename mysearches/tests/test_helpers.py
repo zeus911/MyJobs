@@ -23,7 +23,7 @@ class SavedSearchHelperTests(TestCase):
         self.user = UserFactory()
         self.valid_url = 'http://www.my.jobs/jobs?location=chicago&q=nurse'
 
-        self.patcher = patch('urllib2.urlopen', return_file)
+        self.patcher = patch('urllib2.urlopen', return_file())
         self.patcher.start()
 
     def tearDown(self):
