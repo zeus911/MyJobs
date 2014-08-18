@@ -1,7 +1,7 @@
 import re
 import urllib
 
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, Http404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from mydashboard.models import Company
@@ -83,6 +83,7 @@ def get_company(request):
             company = None
     return company
 
+
 def get_company_or_404(request):
     """ Simple wrapper around get_company that raises Http404 if no valid 
         company is found.
@@ -119,7 +120,10 @@ def add_pagination(request, object_list):
         pages that are created.
 
     """
-    objects_per_page = int(request.GET.get('per_page') or 10)
+    try:
+        objects_per_page = int(request.GET.get('per_page') or 10)
+    except ValueError:
+        objects_per_page = 10
     page = request.GET.get('page')
     paginator = Paginator(object_list, objects_per_page)
 

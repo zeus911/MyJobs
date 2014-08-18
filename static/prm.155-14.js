@@ -84,7 +84,8 @@ $(document).ready(function() {
     // New input from clicking #per-page span if user hits enter remove this
     $("body").on("keypress", "#per-page-input", function(e) {
         if(e.which == 13) {
-            $(this).remove();
+            $(this).hide();
+            if($(this).is(":focus")) $(this).focusout();
         }
     });
 
@@ -92,15 +93,17 @@ $(document).ready(function() {
     When the user stops focusing or if this input is removed
     add back the span to #per-page with new info
     */
-    $("body").on("blur", "#per-page-input", function() {
-        $(this).remove();
-        var value = $(this).val();
-        var span = document.createElement("span");
-        var span_node = document.createTextNode(value);
-        span.appendChild(span_node);
-        var pp = document.getElementById("per-page");
-        pp.insertBefore(span, pp.firstChild);
-        run_ajax();
+    $("body").one("blur", "#per-page-input", function() {
+        if($(this).is(":visible")) $(this).hide();
+        if(!$("#per-page span").length > 0) {
+            var value = $(this).val();
+            var span = document.createElement("span");
+            var span_node = document.createTextNode(value);
+            span.appendChild(span_node);
+            var pp = document.getElementById("per-page");
+            pp.insertBefore(span, pp.firstChild);
+            run_ajax();
+        }
     });
 
     // switch sort status and run ajax
