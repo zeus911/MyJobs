@@ -208,7 +208,7 @@ class PartnerLibrary(models.Model):
     region = models.CharField(max_length=30, blank=True)
     # long state name
     state = models.CharField(max_length=30, blank=True)
-    area = models.CharField(max_length=30, blank=True)
+    area = models.CharField(max_length=255, blank=True)
 
     # Contact Info
     contact_name = models.CharField(max_length=255, blank=True)

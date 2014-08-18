@@ -115,9 +115,49 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
                 keywords='center, .org'))
         request.user = self.staff_user
 
-        for partner in helpers.filter_partners(request, partner_library=True):
+        response = helpers.filter_partners(request, partner_library=True)
+        self.assertTrue(len(response) != 0)
+
+        for partner in response:
             searchable_fields = " ".join(
                 [partner.name, partner.uri, partner.contact_name]).lower()
 
             self.assertIn('center', searchable_fields)
             self.assertIn('.org', searchable_fields)
+
+    def test_state_filter(self):
+        """
+        Filter by state.
+        """
+
+        request = self.request_factory.get(
+            'prm/view/partner-library/', dict(
+                company=self.company.id,
+                state='PA'))
+        request.user = self.staff_user
+
+        response = helpers.filter_partners(request, partner_library=True)
+        self.assertTrue(len(response) != 0)
+
+        for partner in response:
+            self.assertEqual(partner.st, 'PA')
+
+    def test_city_filter(self):
+        """
+        Filter by city.
+        """
+
+        print [partner.city for partner in self.partner_library]
+        request = self.request_factory.get(
+            'prm/view/partner-library/', dict(
+                company=self.company.id,
+                city='Monaco'))
+        request.user = self.staff_user
+
+        response = helpers.filter_partners(request, partner_library=True)
+        self.assertTrue(len(response) != 0)
+
+        for partner in response:
+            self.assertEqual(partner.city, 'Monaco')
+    
+    
