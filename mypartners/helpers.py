@@ -461,29 +461,20 @@ def filter_partners(request, partner_library=False):
 
     # for location, we want to sort by both city and state
     if "location" in sort_by:
-        if partner_library:
-            partners = partners.extra(select={
-                'has_city': "%s == ''" % contact_city,
-                'has_state': "%s == ''" % contact_state}).order_by(
-                    *['%shas_city' % sort_order,
-                      '%shas_state' % sort_order,
-                      '%s%s' % (sort_order, contact_city),
-                      '%s%s' % (sort_order, contact_state)] + order_by)
-        else:
-            # the select trick wont work with foreign relationships, so we
-            # instead create a queryset that doesn't contain blank city/state,
-            # and one that does, then stitch the two together.
-            incomplete_partners = partners.filter(
-                Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
-                    *['%s%s' % (sort_order, column) for column in
-                      [contact_city, contact_state]])
+        # the select trick wont work with foreign relationships, so we instead
+        # create a queryset that doesn't contain blank city/state, and one that
+        # does, then stitch the two together.
+        incomplete_partners = partners.filter(
+            Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
+                *['%s%s' % (sort_order, column) for column in
+                  [contact_city, contact_state]])
 
-            partners = partners.exclude(
-                Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
-                    *['%s%s' % (sort_order, column) for column in
-                      [contact_city, contact_state]])
+        partners = partners.exclude(
+            Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
+                *['%s%s' % (sort_order, column) for column in
+                  [contact_city, contact_state]])
 
-            partners = list(partners) + list(incomplete_partners)
+        partners = list(partners) + list(incomplete_partners)
     else:
         partners = partners.order_by(*[sort_by] + order_by)
 
