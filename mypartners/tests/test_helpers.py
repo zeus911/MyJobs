@@ -115,12 +115,9 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
                 keywords='center, .org'))
         request.user = self.staff_user
 
-        response = helpers.filter_partners(request, partner_library=True)
-        relevant_fields = " ".join(
-            chain([p.name.lower() for p in response],
-                  [p.uri.lower() for p in response],
-                  [p.contact_name.lower() for p in response]))
+        for partner in helpers.filter_partners(request, partner_library=True):
+            searchable_fields = " ".join(
+                [partner.name, partner.uri, partner.contact_name]).lower()
 
-        self.assertIn('center', relevant_fields)
-        self.assertIn('.org', relevant_fields)
-
+            self.assertIn('center', searchable_fields)
+            self.assertIn('.org', searchable_fields)
