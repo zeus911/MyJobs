@@ -1,4 +1,4 @@
-from itertools import product, islice
+from itertools import chain, product, islice
 from datetime import datetime, timedelta
 import os
 import random
@@ -9,7 +9,8 @@ from django.db.models import Min, Max
 from tasks import update_partner_library
 from mypartners import helpers, models
 from mypartners.helpers import get_library_partners, new_partner_from_library
-from mypartners.tests.test_views import MyPartnersTestCase
+from mypartners.tests.test_views import (MyPartnersTestCase, 
+                                         PartnerLibraryTestCase)
 
 
 class HelpersTests(MyPartnersTestCase):
@@ -65,37 +66,7 @@ class HelpersTests(MyPartnersTestCase):
                 self.assertEqual("View All", date_str)
 
 
-class PartnerFilterTests(MyPartnersTestCase):
-
-    """
-    Tests related to filter_partners. 
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        super(PartnerFilterTests, cls).setUpClass()
-        path = os.path.join(
-            os.path.dirname(__file__), 'data', 'partner-library.html')
-        for partner in islice(get_library_partners(path), 0, 10):
-            fullname = " ".join(" ".join([partner.first_name,
-                                          partner.middle_name,
-                                          partner.last_name]).split())
-
-            if not models.PartnerLibrary.objects.filter(
-                    contact_name=fullname, st=partner.st, city=partner.city):
-                models.PartnerLibrary(
-                    name=partner.organization_name, uri=partner.website,
-                    region=partner.region, state=partner.state, 
-                    area=partner.area, contact_name=fullname,
-                    phone=partner.phone, phone_ext=partner.phone_ext,
-                    alt_phone=partner.alt_phone, fax=partner.fax,
-                    email=partner.email_id, street1=partner.street1,
-                    street2=partner.street2, city=partner.city, st=partner.st,
-                    zip_code=partner.zip_code, is_minority=partner.minority,
-                    is_female=partner.female, is_disabled=partner.disabled,
-                    is_disabled_veteran=partner.disabled_veteran,
-                    is_veteran=partner.veteran).save()
-        cls.partner_library = models.PartnerLibrary.objects.all()
+class PartnerLibraryFilterTests(PartnerLibraryTestCase):
 
     def test_all_offcp_partners_available(self):
         """
@@ -122,17 +93,34 @@ class PartnerFilterTests(MyPartnersTestCase):
             'prm/view/partner-library/add', dict(
                 company=self.company.id, library_id=library_id))
         request.user = self.staff_user
-
         partner = helpers.new_partner_from_library(request)
 
         # get a list of OFCCP partners
         request = self.request_factory.get(
             'prm/view/partner-library', dict(company=self.company.id))
         request.user = self.staff_user
-
         library = helpers.filter_partners(request, partner_library=True)
 
-        partner_in_response = library.filter(id=partner.library.id).exists()
+        self.assertFalse(library.filter(id=partner.library.id).exists())
 
-        self.assertFalse(partner_in_response)
+    def test_keyword_filter(self):
+        """
+        When a user tries to filter using keywords, the partner name, partner
+        URI, and contact name should be searched.
+        """
+
+        request = self.request_factory.get(
+            'prm/view/partner-library/', dict(
+                company=self.company.id,
+                keywords='.org, center'))
+        request.user = self.staff_user
+
+        response = helpers.filter_partners(request, partner_library=True)
+        relevant_fields = " ".join(
+            chain([p.name.lower() for p in response],
+                  [p.uri.lower() for p in response],
+                  [p.contact_name.lower() for p in response]))
+
+        self.assertIn('center', relevant_fields)
+        self.assertIn('.org', relevant_fields)
 
