@@ -16,7 +16,6 @@ $(document).ready(function(){
                 // Disable errant clicks when an ajax request is active
                 $('button').attr('disabled', 'disabled');
                 $('a.btn').attr('disabled', 'disabled');
-                $('input').attr('disabled', 'disabled');
 
                 // Show ajax processing indicator
                 $loader.show();
@@ -26,7 +25,6 @@ $(document).ready(function(){
             // Allow button clicks when ajax request ends
             $('button').removeAttr('disabled');
             $('a.btn').removeAttr('disabled');
-            $('input').removeAttr('disabled');
 
             clearTimeout(timer);
             $loader.hide();
