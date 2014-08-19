@@ -246,6 +246,12 @@ h1 > small > a:hover {
     margin-top: 2px;
 }
 
+.product-details .details-subtext {
+    font-size: 0.9em;
+    font-style: italic;
+    color: #888888;
+}
+
 .product-card a.btn {
     margin-top: -35px;
 }

@@ -64,6 +64,9 @@
         {% if partner.primary_contact %}
         {% if partner.primary_contact.name %}
         {{ partner.primary_contact.name }}
+        {% if partner.primary_contact.email %}
+        <span class="details-subtext">({{ partner.primary_contact.email }})</span>
+        {% endif %}
         {% else %}
         {{ partner.primary_contact.email }}
         {% endif %}
@@ -75,6 +78,9 @@
 
         {% if partner.contact_name %}
         {{ partner.contact_name }}
+        {% if partner.email %}
+        <span class="details-subtext">({{partner.email}})</span>
+        {% endif %}
         <input id="{{partner.id}}-name" class="partner-name" type="hidden" />
         {% else %}
         Name not available
@@ -93,6 +99,7 @@
     {% elif on_page == 'partner_library' %}
     <a id="partner-{{ partner.id }}" class="btn pull-right" href="#">Add</a>
     {% endif %}
+    <div class="clearfix"></div>
 {% if on_page == 'prm' %}
 </a>
 {% endif %}
