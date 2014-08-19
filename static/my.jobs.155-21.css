@@ -267,6 +267,7 @@ h1 > small > a:hover {
 
 .sidebar * {
     box-sizing: border-box;
+    -moz-box-sizing: border-box;
 }
 
 .sidebar h2 {
