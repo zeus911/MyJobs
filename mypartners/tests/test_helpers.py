@@ -65,6 +65,19 @@ class HelpersTests(MyPartnersTestCase):
             else:
                 self.assertEqual("View All", date_str)
 
+    def test_start_date_before_end_date(self):
+        request = self.request_factory.get(
+            'prm/view/reports/details/records/', dict(
+                company=self.company.id,
+                partner=self.partner.id,
+                range_start='02/15/14',
+                range_end='04/15/12'))
+        request.user = self.staff_user
+
+        response = helpers.get_records_from_request(request)
+        (start_date, end_date), _, _ = response
+        self.assertGreaterEqual(end_date, start_date)
+
 
 class PartnerLibraryFilterTests(PartnerLibraryTestCase):
 
