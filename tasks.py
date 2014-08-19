@@ -79,6 +79,7 @@ def update_partner_library(path=None, quiet=False):
                                                  st=partner.st,
                                                  city=partner.city,
                                                  email=email):
+                print email
                 PartnerLibrary.objects.create(
                     name=partner.organization_name,
                     uri=partner.website,
