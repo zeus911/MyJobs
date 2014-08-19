@@ -1199,7 +1199,7 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
         request = self.request_factory.get(
             'prm/view/partner-library/add', dict(
                 company=self.company.id,
-                library=library_id))
+                library_id=library_id))
         request.user = self.staff_user
 
         views.create_partner_from_library(request)
