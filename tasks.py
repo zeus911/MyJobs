@@ -69,10 +69,6 @@ def update_partner_library(path=None, quiet=False):
                                       partner.middle_name,
                                       partner.last_name]).split())
         emails = [email.strip() for email in partner.email_id.split(';', 1)]
-        if len(emails) > 1:
-            for email in emails:
-                print "*" * 100
-                print email
 
         for email in emails:
             if not PartnerLibrary.objects.filter(contact_name=fullname,
