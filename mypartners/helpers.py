@@ -194,6 +194,8 @@ def get_records_from_request(request):
         # Make range from 12:01 AM on start date to 11:59 PM on end date.
         range_start = datetime.combine(range_start, time.min)
         range_end = datetime.combine(range_end, time.max)
+        if range_start > range_end:
+            range_start, range_end = range_end, range_start
         # Assume that the date range is implying the user's time zone.
         # Transfer from the user's time zone to utc.
         user_tz = pytz.timezone(get_current_timezone_name())
