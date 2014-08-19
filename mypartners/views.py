@@ -27,7 +27,7 @@ from django.utils.datastructures import SortedDict
 from django.views.decorators.csrf import csrf_exempt
 
 from email_parser import build_email_dicts, get_datetime_from_str
-from universal.helpers import get_company, get_int_or_none
+from universal.helpers import get_company, get_int_or_none, add_pagination
 from universal.decorators import company_has_access
 from myjobs.models import User
 from mydashboard.helpers import get_company_microsites
@@ -38,13 +38,15 @@ from mysearches.helpers import (url_sort_options, parse_feed,
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm, ContactRecordForm)
-from mypartners.models import (Partner, Contact, ContactRecord, PRMAttachment,
-                               ContactLogEntry, CONTACT_TYPE_CHOICES,
-                               ADDITION, DELETION)
+from mypartners.models import (Partner, PartnerLibrary, Contact, ContactRecord,
+                               PRMAttachment, ContactLogEntry,
+                               CONTACT_TYPE_CHOICES, ADDITION, DELETION)
 from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
                                 contact_record_val_to_str, retrieve_fields,
                                 get_records_from_request,
+                                filter_partners,
+                                new_partner_from_library,
                                 send_contact_record_email_response,
                                 find_partner_from_email)
 
@@ -59,21 +61,28 @@ def prm(request):
     if company is None:
         raise Http404
 
-    form = request.REQUEST.get('form')
-    partners = company.partner_set.all()
-    if not partners and not form:
-        partner_form = PartnerInitialForm()
+    if request.is_ajax():
+        partners = filter_partners(request)
+        paginator = add_pagination(request, partners)
+        ctx = {
+            'partners': paginator,
+            'on_page': 'prm',
+            'ajax': 'true'
+        }
+        response = HttpResponse()
+        html = render_to_response('mypartners/includes/partner_column.html',
+                                  ctx, RequestContext(request))
+        response.content = html.content
+        return response
+    partners = filter_partners(request)
+    if partners:
+        paginator = add_pagination(request, partners)
     else:
-        try:
-            partners = Partner.objects.filter(owner=company.id)
-        except Partner.DoesNotExist:
-            raise Http404
-        partner_form = None
+        paginator = None
 
     ctx = {
         'has_partners': True if partners else False,
-        'partners': partners,
-        'form': partner_form or form,
+        'partners': paginator,
         'company': company,
         'user': request.user,
         'partner_ct': ContentType.objects.get_for_model(Partner).id,
@@ -82,6 +91,54 @@ def prm(request):
 
     return render_to_response('mypartners/prm.html', ctx,
                               RequestContext(request))
+
+
+@company_has_access('prm_access')
+def partner_library(request):
+    company = get_company(request)
+    if company is None:
+        raise Http404
+
+    if request.is_ajax():
+        partners = filter_partners(request, True)
+        paginator = add_pagination(request, partners)
+        ctx = {
+            'partners': paginator,
+            'on_page': 'partner_library'
+        }
+        response = HttpResponse()
+        html = render_to_response('mypartners/includes/partner_column.html',
+                                  ctx, RequestContext(request))
+        response.content = html.content
+        return response
+
+    partners = filter_partners(request, True)
+    paginator = add_pagination(request, partners)
+
+    ctx = {
+        'company': company,
+        'view_name': 'PRM',
+        'partners': paginator
+    }
+
+    return render_to_response('mypartners/partner_library.html', ctx,
+                              RequestContext(request))
+
+
+@company_has_access('prm_access')
+def create_partner_from_library(request):
+    """ Creates a partner and contact from a library_id. """
+    partner = new_partner_from_library(request)
+
+    redirect = False
+    if request.REQUEST.get("redirect"):
+        redirect = True
+    ctx = {
+        'partner': partner.id,
+        'redirect': redirect
+    }
+
+    return HttpResponse(json.dumps(ctx))
 
 
 @company_has_access('prm_access')
@@ -1128,7 +1185,7 @@ def process_email(request):
                 attachment.seek(0)
         except AttributeError:
             attachment_failures.append(record)
-        log_change(record, None, admin_user, contact.partner,  contact.name,
+        log_change(record, None, admin_user, contact.partner, contact.name,
                    action_type=ADDITION, change_msg=change_msg)
 
         created_records.append(record)

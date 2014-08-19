@@ -1,7 +1,8 @@
 import re
 import urllib
 
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, Http404
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from mydashboard.models import Company
 
@@ -83,8 +84,54 @@ def get_company(request):
     return company
 
 
+def get_company_or_404(request):
+    """ Simple wrapper around get_company that raises Http404 if no valid 
+        company is found.
+    """
+    company = get_company(request)
+
+    if not company:
+        raise Http404
+    else:
+        return company
+
+
 def get_object_or_none(model, **kwargs):
     try:
         return model.objects.get(**kwargs)
     except (model.DoesNotExist, ValueError):
         return None
+
+
+def add_pagination(request, object_list):
+    """
+    Basic Django Pagination -- Pass a list of objects you wish to paginate.
+    That listing will be wrapped by the Paginator object then the listing will
+    get split into Pages deemed by :objects_per_page:, which is defaulted
+    to 10.
+
+    Inputs:
+    :object_list:   A list (or Queryset) of an object you wish to paginate.
+
+    Outputs:
+        Returns a Paginator Object. Paginator acts as a wrapper for the object
+        list you pass through. The objects and their attributes are still
+        accessed the same but has added methods for the paginator and the
+        pages that are created.
+
+    """
+    try:
+        objects_per_page = int(request.GET.get('per_page') or 10)
+    except ValueError:
+        objects_per_page = 10
+    page = request.GET.get('page')
+    paginator = Paginator(object_list, objects_per_page)
+
+    try:
+        pagination = paginator.page(page)
+    except PageNotAnInteger:
+        pagination = paginator.page(1)
+    except EmptyPage:
+        pagination = paginator.page(paginator.num_pages)
+
+    return pagination

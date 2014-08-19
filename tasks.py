@@ -20,6 +20,8 @@ from django.db.models import Q
 from mydashboard.models import Company, SeoSite
 from myjobs.models import EmailLog, User, STOP_SENDING, BAD_EMAIL
 from mymessages.models import Message
+from mypartners.models import PartnerLibrary
+from mypartners.helpers import get_library_partners
 from mysearches.models import SavedSearch, SavedSearchDigest
 from postajob.models import Job
 from registration.models import ActivationProfile
@@ -49,6 +51,58 @@ def send_search_digest(search):
             # After the initial try and two retries, disable the offending
             # saved search
             search.disable_or_fix()
+
+@task(name='tasks.update_partner_library', ignore_result=True,
+      default_retry_delay=180, max_retries=2)
+def update_partner_library(path=None, quiet=False):
+    added = 0
+    skipped = 0
+    if not quiet:
+        if not path:
+            print "Connecting to OFCCP Directory...."
+
+        print "Parsing data for PartnerLibrary information..."
+
+
+    for partner in get_library_partners(path):
+        # the second join + split take care of extra internal whitespace
+        fullname = " ".join(" ".join([partner.first_name,
+                                      partner.middle_name,
+                                      partner.last_name]).split())
+        emails = [email.strip() for email in partner.email_id.split(';', 1)]
+
+        for email in emails:
+            if not PartnerLibrary.objects.filter(contact_name=fullname,
+                                                 st=partner.st,
+                                                 city=partner.city,
+                                                 email=email):
+                PartnerLibrary.objects.create(
+                    name=partner.organization_name,
+                    uri=partner.website,
+                    region=partner.region,
+                    state=partner.state,
+                    area=partner.area,
+                    contact_name=fullname,
+                    phone=partner.phone,
+                    phone_ext=partner.phone_ext,
+                    alt_phone=partner.alt_phone,
+                    fax=partner.fax,
+                    email=email,
+                    street1=partner.street1,
+                    street2=partner.street2,
+                    city=partner.city,
+                    st=partner.st,
+                    zip_code=partner.zip_code,
+                    is_minority=partner.minority,
+                    is_female=partner.female,
+                    is_disabled=partner.disabled,
+                    is_disabled_veteran=partner.disabled_veteran,
+                    is_veteran=partner.veteran)
+                added += 1
+            else:
+                skipped += 1
+    if not quiet:
+        print "%d records added and %d records skipped." % (added, skipped)
 
 
 @task(name='tasks.send_search_digests')
