@@ -68,7 +68,7 @@ class SavedSearchResourceTests(TestCase):
 
         self.credentials = (self.user.email, self.user.api_key.key)
 
-        self.patcher = patch('urllib2.urlopen', return_file)
+        self.patcher = patch('urllib2.urlopen', return_file())
         self.patcher.start()
 
     def tearDown(self):

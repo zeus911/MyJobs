@@ -96,7 +96,8 @@ class SavedSearch(models.Model):
         url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency)
         url_of_feed = update_url_if_protected(url_of_feed, self.user)
         items = parse_feed(url_of_feed, self.frequency,
-                           num_items=num_items, return_items=5)
+                           num_items=num_items, return_items=5,
+                           last_sent=self.last_sent)
         return items
 
     def send_email(self, custom_msg=None):
