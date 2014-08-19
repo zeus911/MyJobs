@@ -27,3 +27,29 @@
     border-radius: 0;
 }
 
+/* Partner Relationship Manager */
+.sidebar .partner-tag {
+    margin-top: 5px;
+}
+
+.product-card {
+    border-left: 1px solid #d5d4d0;
+    border-right: 1px solid #d5d4d0;
+}
+
+#partner-holder {
+    box-shadow: 0 0 0 #FFF;
+}
+
+.partner-pagination {
+    border: 1px solid #d5d4d0;
+}
+
+.partner-pagination + .partner-sort {
+    border: 1px solid #d5d4d0;
+    border-top: 0;
+}
+
+.row-filler input {
+    display: none;
+}

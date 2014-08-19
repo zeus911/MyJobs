@@ -8,106 +8,52 @@
     {% endwith %}
 {% endblock %}
 {% load i18n %}
+{% block meta-extra %}
+{# Sidebar has different heights on prm and partner library. I'm sorry, it had to be done. #}
+<style type="text/css">
+    @media screen and (max-width: 500px) {
+        #partner-holder {
+            margin-top: 480px !important;
+        }
+    }
+</style>
+{% endblock meta-extra  %}
 
 {% block content %}
-    <h1>Partner Relationship Manager <small>{{ company.name }}</small></h1>
-
-    {% if form %}
-        <div class="formBox prm-init-formbox">
-            <h5>Welcome to PRM <small>Add a partner to get started</small></h5>
-            <form method="post" action="" id="partner-form">
-                {% include "includes/form-error-highlight.html" %}
-                {% csrf_token %}
-                <input type="hidden" name="company_id" value="{{ company.id }}">
-            <button type="submit" class="btn primary pull-right" id="init-partner-save">{% trans 'Save' %}</button>
-            </form>
-            <div class="clear"></div>
-        </div>
+    {% include "mypartners/includes/prm_header.html" with page_title="Partner Relationship Manager" %}
+    {% if not partners %}
         <div class="row">
-            <div class="span12">
-                <div class="blanket" id="fake-partner-table">
-                    <table class="table table-striped table-bordered prm-table">
-                        <thead>
-                            <tr><th>Partner</th><th>Primary Contact</th><th></th></tr>
-                        </thead>
-                        <tbody>
-                        {% for i in "nein!rows" %}
-                            <tr height="30px">
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                    <button class="btn pull-right" value="New Partner" disabled>{% trans 'New Partner' %}</button>
+            <div class="span8 offset2">
+                <div class="row centered">
+                    <h2 style="margin-top: 0;">Add Your First Partner</h2>
                 </div>
-                <a class="btn primary" id="prm-mobile-btn" href="{% url 'create_partner' %}?ct={{ partner_ct }}">Get started with PRM today!</a>
+                <div class="row centered prm-no-partner">
+                    <div class="span4" onclick="location.href='{% url 'create_partner' %}?ct={{ partner_ct }}'">
+                        <h4 style="text-align: center">Create a Partner</h4>
+                        <p>Already have the right partner? Enter it here.</p>
+                        <span class="bold-next-step">next &#8594;</span>
+                    </div>
+                    <div class="span4" onclick="location.href='{% url 'partner_library' %}'">
+                        <h4>Search OFCCP Partner Library</h4>
+                        <p>Search for and find the right partner for you!</p>
+                        <span class="bold-next-step">next &#8594;</span>
+                    </div>
+                </div>
             </div>
         </div>
-
     {% else %}
-
         <div class="row">
-            <div class="span12">
-                <table class="table table-striped table-bordered prm-table">
-                    <thead>
-                        <tr>
-                            <th>Partner</th>
-                            <th class="mobile_hide">Primary Contact</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-
-                        {% for partner in partners %}
-
-                        <tr class="clickable-tr" onclick="window.document.location='{% url 'partner_overview' %}?partner={{ partner.id }}';">
-                            <td>
-
-                            <b>{{ partner.name }}</b>
-
-                            {% if partner.uri %}
-                            <br>
-                            {{ partner.uri }}
-                            {% endif %}
-                            </td>
-                            <td class="mobile_hide">
-
-                            {% if partner.primary_contact %}
-
-                            <b>{{ partner.primary_contact.name }}</b>
-
-                            {% if partner.primary_contact.email %}
-                            <br>
-                            {{ partner.primary_contact.email }}
-                            {% endif %}
-                            {% else %}
-                            No Primary Contact
-                            {% endif %}
-
-                            </td>
-                            <td class="small-cell"><a class="btn-link" href="{% url 'partner_overview' %}?partner={{ partner.id }}">open</a></td>
-                        </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-                </table>
+            <div id="partner-holder" class="span8">
+                {% include "mypartners/includes/partner_column.html" with on_page="prm" %}
+            </div>
+            <div id="sidebar-holder" class="span4">
+                {% include "mypartners/includes/partner_sidebar.html" with filters=True navigation=True special_interest=False %}
             </div>
         </div>
-        <div class="row">
-            {# Recent Activity div #}
-            <div class="span8"></div>
-            <div class="span4">
-                <a id="new-prm-btn" class="btn pull-right" href="{% url 'create_partner' %}?ct={{ partner_ct }}">New Partner</a>
-            </div>
-        </div>
-
     {% endif %}
 
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}prm.154-29.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}prm.155-14.js{{ gz }}"></script>
 {% endblock %}

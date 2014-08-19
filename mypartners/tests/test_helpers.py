@@ -1,11 +1,16 @@
-from itertools import product
+from itertools import chain, product, islice
 from datetime import datetime, timedelta
+import os
+import random
 
 import pytz
 from django.db.models import Min, Max
 
-from mypartners import helpers
-from mypartners.tests.test_views import MyPartnersTestCase
+from tasks import update_partner_library
+from mypartners import helpers, models
+from mypartners.helpers import get_library_partners, new_partner_from_library
+from mypartners.tests.test_views import (MyPartnersTestCase, 
+                                         PartnerLibraryTestCase)
 
 
 class HelpersTests(MyPartnersTestCase):
@@ -60,3 +65,98 @@ class HelpersTests(MyPartnersTestCase):
             else:
                 self.assertEqual("View All", date_str)
 
+
+class PartnerLibraryFilterTests(PartnerLibraryTestCase):
+
+    def test_all_offcp_partners_available(self):
+        """
+        When a company doesn't have any OFCCP partners, they should all be
+        available to choose from in the partner library search.
+        """
+        partner_count = self.partner_library.count()
+        request = self.request_factory.get(
+            'prm/view/partner-library/', dict(company=self.company.id))
+
+        response = helpers.filter_partners(request, partner_library=True)
+
+        self.assertEqual(len(response), partner_count)
+
+    def test_ofccp_duplicates_ignored(self):
+        """
+        When a company has already added OFCCP partners, those partners should
+        not be displayed in the filter search results.
+        """
+
+        # create a new partner
+        library_id = random.randint(1, self.partner_library.count())
+        request = self.request_factory.get(
+            'prm/view/partner-library/add', dict(
+                company=self.company.id, library_id=library_id))
+        request.user = self.staff_user
+        partner = helpers.new_partner_from_library(request)
+
+        # get a list of OFCCP partners
+        request = self.request_factory.get(
+            'prm/view/partner-library', dict(company=self.company.id))
+        request.user = self.staff_user
+        library = helpers.filter_partners(request, partner_library=True)
+
+        self.assertFalse(library.filter(id=partner.library.id).exists())
+
+    def test_keyword_filter(self):
+        """
+        When a user tries to filter using keywords, the partner name, partner
+        URI, and contact name should be searched.
+        """
+
+        request = self.request_factory.get(
+            'prm/view/partner-library/', dict(
+                company=self.company.id,
+                keywords='center, .org'))
+        request.user = self.staff_user
+
+        response = helpers.filter_partners(request, partner_library=True)
+        self.assertTrue(len(response) != 0)
+
+        for partner in response:
+            searchable_fields = " ".join(
+                [partner.name, partner.uri, partner.contact_name]).lower()
+
+            self.assertIn('center', searchable_fields)
+            self.assertIn('.org', searchable_fields)
+
+    def test_state_filter(self):
+        """
+        Filter by state.
+        """
+
+        request = self.request_factory.get(
+            'prm/view/partner-library/', dict(
+                company=self.company.id,
+                state='PA'))
+        request.user = self.staff_user
+
+        response = helpers.filter_partners(request, partner_library=True)
+        self.assertTrue(len(response) != 0)
+
+        for partner in response:
+            self.assertEqual(partner.st, 'PA')
+
+    def test_city_filter(self):
+        """
+        Filter by city.
+        """
+
+        request = self.request_factory.get(
+            'prm/view/partner-library/', dict(
+                company=self.company.id,
+                city='Monaca'))
+        request.user = self.staff_user
+
+        response = helpers.filter_partners(request, partner_library=True)
+        self.assertTrue(len(response) != 0)
+
+        for partner in response:
+            self.assertEqual(partner.city, 'Monaca')
+    
+    

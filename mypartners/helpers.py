@@ -1,12 +1,13 @@
+from collections import namedtuple
 from datetime import datetime, time, timedelta
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
+from django.db.models import Count, Min, Max, Q
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, FieldError
 from django.core.mail import EmailMessage
-from django.db.models import Min, Max
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -14,10 +15,13 @@ from django.utils.safestring import mark_safe
 from django.utils.text import get_text_list, force_unicode, force_text
 from django.utils.timezone import get_current_timezone_name, now
 from django.utils.translation import ugettext
+from lxml import html
+from lxml.cssselect import CSSSelector
 import pytz
-
-from universal.helpers import get_domain, get_company
-from mypartners.models import (ContactLogEntry, CONTACT_TYPE_CHOICES, CHANGE)
+import requests
+from universal.helpers import get_domain, get_company, get_company_or_404
+from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
+                               CHANGE, Partner, PartnerLibrary)
 from registration.models import ActivationProfile
 
 
@@ -286,3 +290,229 @@ def send_custom_activation_email(search):
                        [search.user.email])
     msg.content_subtype = 'html'
     msg.send()
+
+
+def get_library_as_html():
+    """ Get partner library data in HTML format.
+
+        The POST request is necessary in order to get the cookie required by
+        the GET request in order to obtain useful results.
+    """
+    cookie_url = 'http://www.dol-esa.gov/errd/directory.jsp'
+    excel_url = 'http://www.dol-esa.gov/errd/directoryexcel.jsp'
+    response = requests.post(cookie_url, data=dict(
+        reg='ALL', # Region
+        stat='None', # State
+        name='',
+        city='',
+        sht='None', # Contractor Type
+        lst='None', # Resource Organization
+        sortorder='asc'))
+
+    return requests.get(excel_url, cookies=response.cookies).text
+
+
+def get_library_partners(path=None):
+    """ Generator that produces partner library info.
+
+        If no path is given, then the data is downloaded from
+        "www.dol-esa.gov/errd".
+
+        This generator yields a CompliancePartner namedtuple whose fields
+        coincide with the table headers present in `html_file`. In the case of
+        `state` there exists two fields:
+
+        state
+            The long version of the state. Presumably indicative of the state
+            in which the organization operates in.
+
+        st
+            This is the two-letter state abbreviation. Unlike `state`, this
+            field indicates the state in which the organization's home office
+            resides.
+    """
+
+    if path:
+        text = open(path, "r").read()
+    else:
+        text = get_library_as_html()
+
+    tree = html.fromstring(text)
+
+    # convert column headers to valid Python identifiers, and rename duplicates
+    cols = []
+    for header in CSSSelector("p ~ table th")(tree):
+        col = header.text.lower()
+        if col in cols:
+            cols.append(col[:2])
+        else:
+            cols.append(col.replace(" ", "_"))
+
+    CompliancePartner = namedtuple("CompliancePartner", cols)
+    for row in CSSSelector("p ~ table tr")(tree):
+        fields = dict((cols[i], (td.text or "").strip()) for i, td in
+                      enumerate(CSSSelector("td")(row)))
+
+        for column, value in fields.items():
+            if value in [u"\xa0", None]:
+                fields[column] = ""
+            elif value == "Y":
+                fields[column] = True
+            elif value == "N":
+                fields[column] = False
+
+            if column in ["minority", "female", "disabled", "veteran",
+                          "disabled_veteran", "exec_om", "first_om",
+                          "professional", "technician", "sales",
+                          "admin_support", "craft", "operative", "labor",
+                          "service"]:
+                fields[column] = bool(value)
+
+        if len(fields) > 1:
+            yield CompliancePartner(**fields)
+
+
+def filter_partners(request, partner_library=False):
+    """
+    Advanced partner filtering. 
+
+    If True, the partner_library parameter will determine whether or not the
+    OFCCP Partner Library should be filtered for results instead of the current
+    company's manually created partners.
+
+    The following request parameters may be used to manipulate the results:
+
+        keywords
+            A comma-separated string of keywords which are checked against the
+            partner name, contact name and URI.
+        city
+            The city in which the partner is located.
+        state
+            The state in which the partner is located.
+
+    When partner_library is True, the following parameter is also available:
+
+        special_interest
+            An array of special interest groups to which the partner belongs.
+            Possible values are 'minority', 'female', 'disabled', 'veteran',
+            and 'disabled_veteran'.
+
+    In addition to filtering, the following sort parameters may be passed:
+
+        desc
+            Any truthy string passed along here will indicate to this function
+            that the result list should be sorted descending.
+        sort_by
+            Determines which column is used to sort the results. Officially,
+            only 'location'-- which sorts by city and state-- and name -- which
+            sorts by partner name -- are allowed.
+    """
+    sort_order = "-" if request.REQUEST.get("desc", False) else ""
+    sort_by = sort_order + request.REQUEST.get('sort_by', 'name')
+    city = request.REQUEST.get('city', '').strip()
+    state = request.REQUEST.get('state', '').strip()
+    keywords = [keyword.strip() for keyword in request.REQUEST.get(
+        'keywords', '').split(',') if keyword]
+
+    if partner_library:
+        special_interest = request.REQUEST.getlist('special_interest')[:]
+        library_ids = Partner.objects.exclude(
+            library__isnull=True).values_list('library', flat=True)
+        # hide partners that the user has already added 
+        partners = PartnerLibrary.objects.exclude(id__in=library_ids)
+        contact_city = 'city'
+        contact_state = 'st'
+
+        unspecified = Q()
+        interests = Q()
+        order_by = ['is_veteran', 'is_female', 'is_minority', 'is_disabled',
+                    'is_disabled_veteran'] 
+
+        if "unspecified" in special_interest:
+            special_interest.remove("unspecified")
+            unspecified = Q(is_veteran=False, is_female=False,
+                            is_minority=False, is_disabled=False,
+                            is_disabled_veteran=False)
+
+        for interest in special_interest:
+            interests &= Q(**{"is_%s" % interest.replace(' ', '_'): True})
+
+        query = Q(interests | unspecified)
+    else:
+        partners = Partner.objects.select_related('contact')
+        query = Q(owner=get_company_or_404(request).id)
+        contact_city = 'contact__city'
+        contact_state = 'contact__state'
+        sort_by.replace('city', 'contact__city')
+        order_by = []
+
+    for keyword in keywords:
+        query &= (Q(name__icontains=keyword) | Q(uri__icontains=keyword) |
+                  (Q(contact_name__icontains=keyword) if partner_library else
+                   Q(contact__name__icontains=keyword)) |
+                  (Q(email__icontains=keyword) if partner_library else
+                   Q(contact__email__icontains=keyword)))
+
+    if city:
+        query &= Q(**{'%s__icontains' % contact_city: city})
+
+    if state:
+        query &= Q(**{'%s__icontains' % contact_state: state})
+
+    partners = partners.distinct().filter(query)
+
+    # for location, we want to sort by both city and state
+    if "location" in sort_by:
+        # the select trick wont work with foreign relationships, so we instead
+        # create a queryset that doesn't contain blank city/state, and one that
+        # does, then stitch the two together.
+        incomplete_partners = partners.filter(
+            Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
+                *['%s%s' % (sort_order, column) for column in
+                  [contact_city, contact_state]])
+
+        partners = partners.exclude(
+            Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
+                *['%s%s' % (sort_order, column) for column in
+                  [contact_city, contact_state]])
+
+        partners = list(partners) + list(incomplete_partners)
+    else:
+        partners = partners.order_by(*[sort_by] + order_by)
+
+    return partners
+
+
+def new_partner_from_library(request):
+    company = get_company_or_404(request)
+
+    try:
+        library_id = int(request.REQUEST.get('library_id') or 0)
+    except ValueError:
+        raise Http404
+    library = get_object_or_404(PartnerLibrary, pk=library_id)
+
+    partner = Partner.objects.create(
+        name=library.name,
+        uri=library.uri,
+        owner=company,
+        library=library)
+
+    contact = Contact.objects.create(
+        partner=partner,
+        name=library.contact_name or "Not Available",
+        email=library.email,
+        phone=library.phone,
+        address_line_one=library.street1,
+        address_line_two=library.street2,
+        city=library.city,
+        state=library.st,
+        country_code="USA",
+        postal_code=library.zip_code,
+        notes=("This contact was generated from content in the "
+               "OFCCP directory."))
+
+    partner.primary_contact = contact
+    partner.save()
+
+    return partner
