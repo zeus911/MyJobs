@@ -65,6 +65,7 @@ def update_partner_library(path=None, quiet=False):
 
 
     for partner in get_library_partners(path):
+        # the second join + split take care of extra internal whitespace
         fullname = " ".join(" ".join([partner.first_name,
                                       partner.middle_name,
                                       partner.last_name]).split())

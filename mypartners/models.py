@@ -235,7 +235,6 @@ class PartnerLibrary(models.Model):
         'disabled_veteran', default=False)
 
     def __unicode__(self):
-        # the second join + split take care of extra internal whitespace
         return self.contact_name
 
 
