@@ -267,6 +267,7 @@ h1 > small > a:hover {
 
 .sidebar * {
     box-sizing: border-box;
+    -moz-box-sizing: border-box;
 }
 
 .sidebar h2 {
@@ -2306,7 +2307,7 @@ td .gravatar-blank,
     .product-card > a:not(.btn) {
         padding: 0;
         border: 0;
-        background-color: inherit;
+        background-color: transparent;
     }
 
     .prm-no-partner .span4 {
