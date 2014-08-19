@@ -2308,6 +2308,10 @@ td .gravatar-blank,
         border: 0;
         background-color: inherit;
     }
+
+    .prm-no-partner .span4 {
+        margin-left: 0;
+    }
 }
 
 @media screen and (min-width: 501px) {
