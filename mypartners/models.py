@@ -223,7 +223,7 @@ class PartnerLibrary(models.Model):
     street2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=255, blank=True)
     # short state name
-    st = models.CharField(max_length=5, blank=True)
+    st = models.CharField(max_length=10, blank=True)
     zip_code = models.CharField(max_length=12, blank=True)
 
     # Demographic Info
