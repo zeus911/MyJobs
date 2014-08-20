@@ -163,12 +163,17 @@ class PartnerSavedSearchForm(ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        url = cleaned_data.get('url')
         user_email = cleaned_data.get('email')
 
         if not user_email:
             raise ValidationError(_("This field is required."))
 
+        return cleaned_data
+
+    def save(self, commit=True):
+        cleaned_data = self.cleaned_data
+        user_email = cleaned_data.get('email')
+        url = cleaned_data.get('url')
         # Get or create the user since they might not exist yet
         created = False
         user = User.objects.get_email_owner(email=user_email)
@@ -195,9 +200,6 @@ class PartnerSavedSearchForm(ModelForm):
             self._errors.setdefault('url', []).append(error_msg)
 
         self.cleaned_data['feed'] = feed
-        return cleaned_data
-
-    def save(self, commit=True):
         self.instance.feed = self.cleaned_data.get('feed')
         is_new_or_change = CHANGE if self.instance.pk else ADDITION
         instance = super(PartnerSavedSearchForm, self).save(commit)
