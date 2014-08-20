@@ -11,7 +11,6 @@ import newrelic.agent
 import pytz
 import re
 import sys
-from urlparse import urlparse
 
 from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
@@ -400,7 +399,7 @@ def prm_edit_saved_search(request):
     else:
         form = PartnerSavedSearchForm(partner=partner)
 
-    microsites = {urlparse(site).netloc.lower()
+    microsites = {site.replace('http://', '').replae('https://', '').lower()
                   for site in get_company_microsites(company)[0]}
 
     content_type = ContentType.objects.get_for_model(PartnerSavedSearch)
