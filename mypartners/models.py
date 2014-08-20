@@ -64,6 +64,7 @@ class Contact(models.Model):
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
+    tags = models.ManyToManyField('Tag', null=True)
 
     class Meta:
         verbose_name_plural = 'contacts'
@@ -143,7 +144,8 @@ class Partner(models.Model):
                                         on_delete=models.SET_NULL)
     # used if this partner was created by using the partner library
     library = models.ForeignKey('PartnerLibrary', null=True,
-                                   on_delete=models.SET_NULL)
+                                on_delete=models.SET_NULL)
+    tags = models.ManyToManyField('Tag', null=True)
     # owner is the Company that owns this partner.
     owner = models.ForeignKey(Company)
 
@@ -279,6 +281,7 @@ class ContactRecord(models.Model):
                                       blank=True)
     job_hires = models.CharField(max_length=6, verbose_name="Number of Hires",
                                  blank=True)
+    tags = models.ManyToManyField('Tag', null=True)
 
     def __unicode__(self):
         return "%s Contact Record - %s" % (self.contact_type, self.subject)
@@ -441,3 +444,18 @@ class ContactLogEntry(models.Model):
         }
         query_string = urlencode(params)
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
+
+
+class Tag(models.Model):
+    name = models.CharField(max_length=255)
+    company = models.ForeignKey(Company)
+
+    created_on = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
+    def __unicode__(self):
+        return "%s for %s" % (self.name, self.company.name)
+
+    class Meta:
+        unique_together = ('name', 'company')
+        verbose_name = "tag"
