@@ -124,6 +124,7 @@ class DigestForm(BaseUserForm):
 
 class PartnerSavedSearchForm(ModelForm):
     def __init__(self, *args, **kwargs):
+        self.partner = kwargs.get('partner')
         choices = PartnerEmailChoices(kwargs.pop('partner', None))
         super(PartnerSavedSearchForm, self).__init__(*args, **kwargs)
         self.fields["email"] = ChoiceField(
@@ -178,9 +179,10 @@ class PartnerSavedSearchForm(ModelForm):
         created = False
         user = User.objects.get_email_owner(email=user_email)
         if user is None:
-            msg = ("An employee from Riddle Me This has created a job search "
-                   "for you on My.jobs. If you have a My.jobs account, click "
-                   "here to add this to your saved searches.")
+            ctx = {'creator': self.partner.name,
+                   'company': self.partner.owner}
+            msg = render_to_string('mypartners/partner_search_new_user.html',
+                                   ctx)
             user, created = User.objects.create_user(email=user_email,
                                                      send_email=True,
                                                      custom_msg=msg)
