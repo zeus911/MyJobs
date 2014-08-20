@@ -488,7 +488,7 @@ def partner_savedsearch_save(request):
 
     if form.is_valid():
         instance = form.instance
-        instance.feed = form.data['feed']
+        instance.feed = form.data.get('feed')
         instance.provider = company
         instance.partner = partner
         instance.created_by = request.user

@@ -200,11 +200,11 @@ class PartnerSavedSearchForm(ModelForm):
         else:
             error_msg = "That URL does not contain feed information"
             self._errors.setdefault('url', []).append(error_msg)
-
-        self.cleaned_data['feed'] = feed
-        self.instance.feed = self.cleaned_data.get('feed')
+        
+        self.instance.feed = cleaned_data.get('feed')
         is_new_or_change = CHANGE if self.instance.pk else ADDITION
         instance = super(PartnerSavedSearchForm, self).save(commit)
+
         partner = instance.partner
         contact = Contact.objects.filter(partner=partner,
                                          user=instance.user)[0]
