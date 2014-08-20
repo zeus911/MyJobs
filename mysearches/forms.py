@@ -3,6 +3,7 @@ from django.forms import (BooleanField, CharField, CheckboxInput, ChoiceField,
                           TextInput, Textarea, URLField, ValidationError)
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
+from django.template.loader import render_to_string
 
 from myjobs.models import User
 from myjobs.forms import BaseUserForm, make_choices
@@ -172,9 +173,12 @@ class PartnerSavedSearchForm(ModelForm):
         created = False
         user = User.objects.get_email_owner(email=user_email)
         if user is None:
-            # Don't send a email here, as this is not a typical user creation.
+            msg = ("An employee from Riddle Me This has created a job search "
+                   "for you on My.jobs. If you have a My.jobs account, click "
+                   "here to add this to your saved searches.")
             user, created = User.objects.create_user(email=user_email,
-                                                     send_email=False)
+                                                     send_email=True,
+                                                     custom_msg=msg)
             self.instance.user = user
             Contact.objects.filter(email=user_email).update(user=user)
         else:
@@ -197,8 +201,6 @@ class PartnerSavedSearchForm(ModelForm):
         self.instance.feed = self.cleaned_data.get('feed')
         is_new_or_change = CHANGE if self.instance.pk else ADDITION
         instance = super(PartnerSavedSearchForm, self).save(commit)
-        if self.created:
-            send_custom_activation_email(instance)
         partner = instance.partner
         contact = Contact.objects.filter(partner=partner,
                                          user=instance.user)[0]
