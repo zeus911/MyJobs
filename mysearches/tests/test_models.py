@@ -19,7 +19,6 @@ from mysearches.tests.factories import (SavedSearchFactory,
                                         PartnerSavedSearchFactory)
 from mysearches.tests.test_helpers import return_file
 from registration.models import ActivationProfile
-from registration.tests.helpers import assert_email_inlines_styles
 from tasks import send_search_digests
 
 
@@ -93,8 +92,6 @@ class SavedSearchModelsTests(TestCase):
         self.assertEqual("My.jobs New Saved Search" in email.subject, True)
         self.assertTrue("table" in email.body)
         self.assertTrue(email.to[0] in email.body)
-
-        assert_email_inlines_styles(self, email)
 
     def test_send_update_email(self):
         search = SavedSearchFactory(user=self.user, is_active=False,
