@@ -399,7 +399,7 @@ def prm_edit_saved_search(request):
     else:
         form = PartnerSavedSearchForm(partner=partner)
 
-    microsites = {site.replace('http://', '').replae('https://', '').lower()
+    microsites = {site.replace('http://', '').replace('https://', '').lower()
                   for site in get_company_microsites(company)[0]}
 
     content_type = ContentType.objects.get_for_model(PartnerSavedSearch)
