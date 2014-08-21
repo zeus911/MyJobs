@@ -391,7 +391,7 @@ def prm_saved_searches(request):
 
 @company_has_access('prm_access')
 def prm_edit_saved_search(request):
-    company, partner, user = prm_worthy(request)
+    company, partner, _ = prm_worthy(request)
     item_id = request.REQUEST.get('id')
     if item_id:
         instance = get_object_or_404(PartnerSavedSearch, id=item_id)
@@ -399,16 +399,17 @@ def prm_edit_saved_search(request):
     else:
         form = PartnerSavedSearchForm(partner=partner)
 
-    microsites = [site.replace('http://', '').replace('https://', '').lower()
-                  for site in get_company_microsites(company)[0]]
+    microsites = {site.replace('http://', '').replae('https://', '').lower()
+                  for site in get_company_microsites(company)[0]}
 
+    content_type = ContentType.objects.get_for_model(PartnerSavedSearch)
     ctx = {
         'company': company,
         'partner': partner,
         'item_id': item_id,
         'form': form,
-        'microsites': set(microsites),
-        'content_type': ContentType.objects.get_for_model(PartnerSavedSearch).id,
+        'microsites': microsites,
+        'content_type': content_type.id,
         'view_name': 'PRM',
     }
     return render_to_response('mypartners/partner_edit_search.html', ctx,
@@ -486,7 +487,7 @@ def partner_savedsearch_save(request):
 
     if form.is_valid():
         instance = form.instance
-        instance.feed = form.data['feed']
+        instance.feed = form.data.get('feed')
         instance.provider = company
         instance.partner = partner
         instance.created_by = request.user

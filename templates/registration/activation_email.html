@@ -26,21 +26,16 @@ following context:
 {% else %}
     {% if primary %}
         {% blocktrans %}
-        You have created an account for My.jobs, which has to
-        be activated. To do this, please follow the following link:
+        You have created an account for <a href="https://secure.my.jobs">My.jobs</a>.
         {% endblocktrans %}
     {% else %}
         {% blocktrans %}
-        You have added a secondary email address to your My.jobs
-        account, which has to be activated. To do this, please follow
-        the following link:
+        You have added a secondary email address to your <a href="https://secure.my.jobs">My.jobs</a>
+        account.
         {% endblocktrans %}
     {% endif %}
 {% endif %}
 </p>
-{% url 'registration_activate' activation_key as url %}
-<a href="https://secure.my.jobs{{url}}?verify={{user.user_guid}}" class="btn">Activate my account</a>
-
 {% if password %}
     {% blocktrans %}
 
@@ -51,10 +46,5 @@ following context:
     {% endblocktrans %}
 {% endif %}
 
-{% blocktrans %}
-
-<p>Please note that if your activation does not succeed within {{ expiration_days }} days, you will have to restart the verification process.</p>
-
-{% endblocktrans %}
 
 <p>My.jobs <a href="https://secure.my.jobs{% url 'terms' %}">Terms</a> and <a href="https://secure.my.jobs{% url 'privacy' %}">Privacy</a></p>
