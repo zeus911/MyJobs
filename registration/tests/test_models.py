@@ -8,7 +8,6 @@ from django.contrib.sites.models import Site
 from django.core import mail
 from django.test import TestCase
 
-from registration.tests.helpers import assert_email_inlines_styles
 from registration.models import ActivationProfile
 
 
@@ -53,8 +52,6 @@ class RegistrationModelTests(TestCase):
 
         email = mail.outbox.pop()
         self.assertEqual(email.to, [self.user_info['email']])
-
-        assert_email_inlines_styles(self, email)
 
     def test_user_creation_email(self):
         """
