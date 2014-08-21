@@ -13,6 +13,8 @@ import solr_settings
 class DirectSEOBase(TestCase):
     def setUp(self):
         from django.conf import settings
+        from django.template import context
+
         setattr(settings, 'ROOT_URLCONF', 'dseo_urls')
 
         self.base_middleware_classes = settings.MIDDLEWARE_CLASSES
@@ -26,6 +28,7 @@ class DirectSEOBase(TestCase):
             "seo.context_processors.site_config_context",
         )
         setattr(settings, 'TEMPLATE_CONTEXT_PROCESSORS', context_processors)
+        context._standard_context_processors = None
 
         self.conn = Solr('http://127.0.0.1:8983/solr/seo')
         self.conn.delete(q="*:*")
@@ -33,8 +36,11 @@ class DirectSEOBase(TestCase):
 
     def tearDown(self):
         from django.conf import settings
+        from django.template import context
+
         setattr(settings, 'TEMPLATE_CONTEXT_PROCESSORS',
                 self.base_context_processors)
+        context._standard_context_processors = None
         setattr(settings, 'MIDDLEWARE_CLASSES',
                 self.base_middleware_classes)
 

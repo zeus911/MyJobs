@@ -44,19 +44,6 @@ class RegistrationModelTests(MyJobsBase):
         self.assertEqual(unicode(profile),
                          "Registration for alice@example.com")
 
-    def test_activation_email(self):
-        """
-        ``RegistrationProfile.send_activation_email`` sends an
-        email.
-        
-        """
-        new_user, _ = User.objects.create_user(**self.user_info)
-        ActivationProfile.objects.get(user=new_user)
-
-        email = mail.outbox.pop()
-        self.assertEqual(email.to, [self.user_info['email']])
-
-        assert_email_inlines_styles(self, email)
 
     def test_user_creation_email(self):
         """

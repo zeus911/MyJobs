@@ -757,6 +757,7 @@ class TemplateTestCase(DirectSEOTestCase):
         self.site.configurations.clear()
         self.site.configurations.add(config)
         cache.clear()
+        request.site_config = config
         template = Template(
                 "{% load seo_extras %}"
                 "{% view_all_jobs_label site_config.view_all_jobs_detail %}")
@@ -789,6 +790,7 @@ class TemplateTestCase(DirectSEOTestCase):
         self.site.configurations.clear()
         self.site.configurations.add(config)
         cache.clear()
+        request.site_config = config
         template = Template(
                 "{% load seo_extras %}"
                 "{% view_all_jobs_label site_config.view_all_jobs_detail %}")
