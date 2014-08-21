@@ -93,9 +93,6 @@
         {% endif %}
         {% endif %}
     </div>
-    {% if on_page == 'prm' %}
-    </a>
-    {% endif %}
     <div class="clearfix"></div>
     {% if on_page == 'prm' %}
     <a id="partner-{{ partner.id }}" class="btn pull-right" href="{% url 'partner_overview' %}?partner={{ partner.id }}">Open</a>
@@ -103,5 +100,7 @@
     <a id="partner-{{ partner.id }}" class="btn pull-right" href="#">Add</a>
     {% endif %}
     <div class="clearfix"></div>
-
+{% if on_page == 'prm' %}
+</a>
+{% endif %}
 </div>

@@ -4,16 +4,16 @@ from django.core import mail
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.test import TestCase
 from django.utils.http import urlquote
 
+from setup import MyJobsBase
 from myjobs.models import User
 from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
 from myprofile.models import SecondaryEmail, Name, Telephone
 
 
-class UserManagerTests(TestCase):
+class UserManagerTests(MyJobsBase):
     user_info = {'password1': 'complicated_password',
                  'email': 'alice@example.com'}
 

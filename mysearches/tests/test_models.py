@@ -2,11 +2,11 @@ import datetime
 
 from django.conf import settings
 from django.core import mail
-from django.test import TestCase
 
 from bs4 import BeautifulSoup
 from mock import patch
 
+from myjobs.tests.setup import MyJobsBase
 from mydashboard.tests.factories import CompanyFactory
 from myjobs.tests.factories import UserFactory
 from mypartners.models import ContactRecord
@@ -23,7 +23,7 @@ from registration.tests.helpers import assert_email_inlines_styles
 from tasks import send_search_digests
 
 
-class SavedSearchModelsTests(TestCase):
+class SavedSearchModelsTests(MyJobsBase):
     def setUp(self):
         self.user = UserFactory()
 
@@ -230,7 +230,7 @@ class SavedSearchModelsTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
 
 
-class PartnerSavedSearchTests(TestCase):
+class PartnerSavedSearchTests(MyJobsBase):
     def setUp(self):
         self.user = UserFactory()
         self.digest = SavedSearchDigestFactory(user=self.user)

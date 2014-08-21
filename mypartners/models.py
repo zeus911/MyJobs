@@ -12,7 +12,6 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from myjobs.models import User
-from mydashboard.models import Company
 
 
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
@@ -147,7 +146,7 @@ class Partner(models.Model):
                                 on_delete=models.SET_NULL)
     tags = models.ManyToManyField('Tag', null=True)
     # owner is the Company that owns this partner.
-    owner = models.ForeignKey(Company)
+    owner = models.ForeignKey('seo.Company')
 
     def __unicode__(self):
         return self.name

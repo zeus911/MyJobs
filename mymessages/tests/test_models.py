@@ -1,14 +1,14 @@
 import datetime
 
-from django.test import TestCase
 from django.contrib.auth.models import Group
 
+from myjobs.tests.setup import MyJobsBase
 from myjobs.tests.factories import UserFactory
 from myjobs.models import User
 from mymessages.models import Message, MessageInfo
 
 
-class MessageTests(TestCase):
+class MessageTests(MyJobsBase):
     def setUp(self):
         self.user = UserFactory()
         self.message = Message(subject='subject',
@@ -70,7 +70,7 @@ class MessageTests(TestCase):
         self.assertFalse(m.expired)
 
 
-class MessageManagerTests(TestCase):
+class MessageManagerTests(MyJobsBase):
     def setUp(self):
         self.user = UserFactory()
         self.user.groups.add(Group.objects.get(pk=1))

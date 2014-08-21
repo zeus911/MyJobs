@@ -2,15 +2,14 @@ import datetime
 from mock import patch
 from StringIO import StringIO
 
-from django.test import TestCase
-
+from myjobs.tests.setup import MyJobsBase
 from mydashboard.tests.factories import CompanyFactory
 from myjobs.tests.factories import UserFactory
 from postajob.models import Job
 from tasks import expire_jobs
 
 
-class TaskTests(TestCase):
+class TaskTests(MyJobsBase):
     def setUp(self):
         self.company = CompanyFactory()
         self.user = UserFactory()

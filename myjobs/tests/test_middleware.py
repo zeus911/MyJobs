@@ -1,16 +1,16 @@
 from django.contrib.auth.models import AnonymousUser
 from django.core.urlresolvers import reverse
-from django.test import TestCase
 from django.test.client import RequestFactory
 
-from middleware import RedirectMiddleware
+from setup import MyJobsBase
+from middleware import PasswordChangeRedirectMiddleware
 from myjobs.tests.factories import UserFactory
 
 
-class RedirectMiddlewareTests(TestCase):
+class RedirectMiddlewareTests(MyJobsBase):
     def setUp(self):
         self.user = UserFactory()
-        self.redirect_middleware = RedirectMiddleware()
+        self.redirect_middleware = PasswordChangeRedirectMiddleware()
         self.request_factory = RequestFactory()
 
     def test_logged_in_no_redirect(self):

@@ -1,13 +1,12 @@
-from django.test import TestCase
-
 from mock import patch
 
+from myjobs.tests.setup import MyJobsBase
 from mysearches.forms import SavedSearchForm
 from mysearches.tests.helpers import return_file
 from mysearches.tests.factories import SavedSearchFactory
 from myjobs.tests.factories import UserFactory
 
-class SavedSearchFormTests(TestCase):
+class SavedSearchFormTests(MyJobsBase):
     def setUp(self):
         super(SavedSearchFormTests, self).setUp()
         self.user = UserFactory()

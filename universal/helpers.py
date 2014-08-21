@@ -4,8 +4,6 @@ import urllib
 from django.shortcuts import get_object_or_404, Http404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
-from mydashboard.models import Company
-
 
 def build_url(reverse_url, params):
     return '%s?%s' % (reverse_url, urllib.urlencode(params))
@@ -63,6 +61,8 @@ def get_company(request):
     Uses the myjobs_company cookie to determine what the current company is.
 
     """
+    from seo.models import Company
+
     if not request.user or request.user.is_anonymous():
         return None
     company = request.COOKIES.get('myjobs_company')

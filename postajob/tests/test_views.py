@@ -4,8 +4,8 @@ from StringIO import StringIO
 
 from django.core import mail
 from django.core.urlresolvers import reverse
-from django.test import TestCase
 
+from myjobs.tests.setup import MyJobsBase
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          CompanyUserFactory, SeoSiteFactory)
 from myjobs.tests.factories import UserFactory
@@ -23,7 +23,7 @@ from postajob.models import (CompanyProfile, Job, OfflinePurchase, Package,
 from universal.helpers import build_url
 
 
-class ViewTests(TestCase):
+class ViewTests(MyJobsBase):
     def setUp(self):
         super(ViewTests, self).setUp()
         self.user = UserFactory()

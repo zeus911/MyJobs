@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-
 from bs4 import BeautifulSoup
 import json
 import re
 from time import sleep
-from itertools import permutations, islice
+from itertools import islice
 import os
 import random
 
@@ -14,13 +13,13 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.core import mail
 from django.http import Http404
-from django.test import TestCase
 from django.test.client import RequestFactory 
 from django.utils.timezone import utc
 
+from myjobs.tests.setup import MyJobsBase
 from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
-from mydashboard.models import CompanyUser
+from seo.models import CompanyUser
 from mydashboard.tests.factories import CompanyFactory, CompanyUserFactory
 from mypartners.tests.factories import (PartnerFactory, ContactFactory,
                                         ContactLogEntryFactory,
@@ -34,7 +33,7 @@ from mypartners.helpers import find_partner_from_email, get_library_partners
 from mysearches.models import PartnerSavedSearch
 
 
-class MyPartnersTestCase(TestCase):
+class MyPartnersTestCase(MyJobsBase):
     def setUp(self):
         super(MyPartnersTestCase, self).setUp()
 
@@ -158,21 +157,6 @@ class EditItemTests(MyPartnersTestCase):
                 **kwargs),
             contact=lambda **kwargs: self.request_factory.get(
                 '/prm/view/details/edit', dict({'partner': 1}, **kwargs)))
-
-    def test_add_contat_with_bad_partner_id(self):
-        """ Invalid partner should always result in a 404. """
-
-        fail_msg = "The partner id %s should have raised an Http404 but didnt"
-
-        for partner in self.bad_ids:
-            request = self.requests['contact'](partner=partner, id=1)
-            request.user = self.staff_user
-
-            with self.assertRaises(Http404) as a:
-                views.edit_item(request)
-
-                if cm.exception != Http404:
-                    print fail_msg % partner
 
     def test_edit_contact_with_bad_item(self):
         """ Invalid item should result in a 404 if not 0, otherwise, should

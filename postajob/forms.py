@@ -8,7 +8,7 @@ from django.forms import (CharField, CheckboxSelectMultiple,
                           HiddenInput, IntegerField, ModelMultipleChoiceField,
                           RadioSelect, Select, TextInput)
 
-from mydashboard.models import Company, CompanyUser, SeoSite
+from seo.models import Company, CompanyUser, SeoSite
 from mypartners.widgets import SplitDateDropDownField
 from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
                              OfflineProduct, Package, Product, ProductGrouping,

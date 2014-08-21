@@ -1,12 +1,12 @@
 from django.template import Template, Context
-from django.test import TestCase
 
+from setup import MyJobsBase
 from myjobs.tests.factories import UserFactory
 from myjobs.templatetags.common_tags import gz
 from myprofile.tests.factories import PrimaryNameFactory
 
 
-class CommonTagsTests(TestCase):
+class CommonTagsTests(MyJobsBase):
     def setUp(self):
         super(CommonTagsTests, self).setUp()
         self.user = UserFactory()
@@ -39,7 +39,7 @@ class CommonTagsTests(TestCase):
         self.assertEqual(out, 'Default value')
 
 
-class GZipTagTestCase(TestCase):
+class GZipTagTestCase(MyJobsBase):
     """Validate that the gzip tag works correctly."""
 
     def test_gz_without_request(self):

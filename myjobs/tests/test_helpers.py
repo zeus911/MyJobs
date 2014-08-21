@@ -1,17 +1,14 @@
-import base64
 import datetime
-import pickle
-import time
 
 from django.contrib.sessions.models import Session
 from django.core.urlresolvers import reverse
-from django.test import TestCase
 
+from setup import MyJobsBase
 from myjobs.tests.factories import UserFactory
 from myjobs.tests.test_views import TestClient
 
 
-class MyJobsHelpersTests(TestCase):
+class MyJobsHelpersTests(MyJobsBase):
     def setUp(self):
         super(MyJobsHelpersTests, self).setUp()
         self.user = UserFactory()

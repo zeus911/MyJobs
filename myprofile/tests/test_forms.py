@@ -1,11 +1,11 @@
-from django.test import TestCase
 from django.contrib.auth.models import AnonymousUser
 
+from myjobs.tests.setup import MyJobsBase
 from myprofile.forms import InitialNameForm
 from myjobs.models import User
 
 
-class FormTests(TestCase):
+class FormTests(MyJobsBase):
     def test_anon_user(self):
         """
         Test confirms that forms using BaseModelForm save without errors or

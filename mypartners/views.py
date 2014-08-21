@@ -31,7 +31,7 @@ from universal.helpers import get_company, get_int_or_none, add_pagination
 from universal.decorators import company_has_access
 from myjobs.models import User
 from mydashboard.helpers import get_company_microsites
-from mydashboard.models import Company
+from seo.models import Company
 from mysearches.models import PartnerSavedSearch
 from mysearches.helpers import (url_sort_options, parse_feed,
                                 get_interval_from_frequency)

@@ -8,7 +8,7 @@ from mypartners.models import (Partner, Contact, ContactRecord,
 from mydashboard.tests.factories import CompanyFactory
 
 
-class PartnerFactory(factory.Factory):
+class PartnerFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Partner
 
     name = 'Company'
@@ -17,7 +17,7 @@ class PartnerFactory(factory.Factory):
     owner = factory.SubFactory(CompanyFactory)
 
 
-class ContactFactory(factory.Factory):
+class ContactFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Contact
 
     name = 'foo bar'
@@ -26,7 +26,7 @@ class ContactFactory(factory.Factory):
     address_line_one = '5683 Thing Street'
 
 
-class ContactRecordFactory(factory.Factory):
+class ContactRecordFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = ContactRecord
 
     contact_type = 'email'
@@ -39,7 +39,7 @@ class ContactRecordFactory(factory.Factory):
     partner = factory.SubFactory(PartnerFactory)
 
 
-class ContactLogEntryFactory(factory.Factory):
+class ContactLogEntryFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = ContactLogEntry
 
     action_flag = 1

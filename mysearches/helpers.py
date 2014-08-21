@@ -11,7 +11,6 @@ from django.conf import settings
 from django.utils.encoding import smart_str, smart_unicode
 
 from universal.helpers import get_domain
-from mydashboard.models import SeoSite
 
 
 def update_url_if_protected(url, user):
@@ -20,6 +19,8 @@ def update_url_if_protected(url, user):
     if the site is protected and the user has access to the site.
 
     """
+    from seo.models import SeoSite
+
     search_domain = urlparse(url).netloc
     protected_domains = []
     for key in settings.PROTECTED_SITES.keys():

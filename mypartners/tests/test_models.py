@@ -2,9 +2,8 @@
 from os import path
 
 from django.core.files import File
-from django.test import TestCase
-from django.db import IntegrityError, transaction
 
+from myjobs.tests.setup import MyJobsBase
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
 from mydashboard.tests.factories import CompanyFactory
@@ -14,7 +13,7 @@ from mysearches.models import PartnerSavedSearch
 from mysearches.tests.factories import PartnerSavedSearchFactory
 
 
-class MyPartnerTests(TestCase):
+class MyPartnerTests(MyJobsBase):
     def setUp(self):
         self.company = CompanyFactory()
         self.partner = PartnerFactory(owner=self.company)

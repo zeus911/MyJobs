@@ -143,4 +143,6 @@ urlpatterns = patterns(
     url(r'^admin/profile/update/(?P<pk>\d+)/',
         views.CompanyProfileFormView.as_view(),
         name='companyprofile_update'),
+
+    url(r'^list/$', 'product_list'),
 )

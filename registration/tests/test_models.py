@@ -6,13 +6,13 @@ from django.conf import settings
 from myjobs.models import User
 from django.contrib.sites.models import Site
 from django.core import mail
-from django.test import TestCase
 
+from myjobs.tests.setup import MyJobsBase
 from registration.tests.helpers import assert_email_inlines_styles
 from registration.models import ActivationProfile
 
 
-class RegistrationModelTests(TestCase):
+class RegistrationModelTests(MyJobsBase):
     """
     Test the model and manager used in the default backend.
     

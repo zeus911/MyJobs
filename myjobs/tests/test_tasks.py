@@ -1,13 +1,12 @@
 import datetime
 
-from django.utils.unittest.case import TestCase
-
+from setup import MyJobsBase
 from myjobs.models import STOP_SENDING, BAD_EMAIL, EmailLog, User
 from myjobs.tests.factories import UserFactory
 from tasks import process_batch_events
 
 
-class TaskTests(TestCase):
+class TaskTests(MyJobsBase):
     def test_bad_events_deactivate_user(self):
         now = datetime.datetime.now()
         for event in STOP_SENDING + BAD_EMAIL:

@@ -11,7 +11,7 @@ from django.core import mail
 from django.http import Http404
 
 from universal.helpers import get_domain
-from mydashboard.models import SeoSite
+from seo.models import SeoSite
 from myprofile.models import EDUCATION_LEVEL_CHOICES
 from solr.helpers import format_date, Solr
 from countries import COUNTRIES

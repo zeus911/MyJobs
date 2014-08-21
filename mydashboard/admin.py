@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from django_extensions.admin import ForeignKeyAutocompleteAdmin
 
-from mydashboard.models import CompanyUser
+from seo.models import CompanyUser
 
 
 def get_companyuser_pk(companyuser):

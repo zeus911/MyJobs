@@ -4,10 +4,10 @@ from urlparse import urlparse, parse_qs
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.test import TestCase
 
 from mock import patch
 
+from myjobs.tests.setup import MyJobsBase
 from mysearches.models import SavedSearch
 from mysearches.helpers import (date_in_range, parse_feed,
                                 update_url_if_protected, url_sort_options,
@@ -17,7 +17,7 @@ from mysearches.tests.helpers import return_file
 from myjobs.tests.factories import UserFactory
 
 
-class SavedSearchHelperTests(TestCase):
+class SavedSearchHelperTests(MyJobsBase):
     def setUp(self):
         super(SavedSearchHelperTests, self).setUp()
         self.user = UserFactory()

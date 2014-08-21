@@ -2,7 +2,7 @@ import factory
 from myjobs.models import *
 
 
-class UserFactory(factory.Factory):
+class UserFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = User
     email = 'alice@example.com'
     gravatar = 'alice@example.com'

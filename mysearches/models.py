@@ -9,7 +9,6 @@ from django.core.mail import EmailMessage
 from django.utils.translation import ugettext_lazy as _
 from django.template.loader import render_to_string
 
-from mydashboard.models import Company, SeoSite
 from myjobs.models import User
 from mypartners.models import Contact, ContactRecord, Partner, EMAIL
 from mysearches.helpers import (parse_feed, update_url_if_protected,
@@ -72,7 +71,7 @@ class SavedSearch(models.Model):
         owner of that SeoSite.
 
         """
-
+        from seo.models import SeoSite
         netloc = urlparse(self.feed).netloc
         try:
             site = SeoSite.objects.get(domain__iexact=netloc)
@@ -307,7 +306,7 @@ class PartnerSavedSearch(SavedSearch):
     User is SavedSearch.partnersavedsearch.
 
     """
-    provider = models.ForeignKey(Company)
+    provider = models.ForeignKey('seo.Company')
     partner = models.ForeignKey(Partner)
     url_extras = models.CharField(max_length=255, blank=True,
                                   help_text="Anything you put here will be "

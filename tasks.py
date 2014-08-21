@@ -1,28 +1,34 @@
+import boto
 from datetime import date, timedelta, datetime
 from itertools import chain, izip_longest
 import logging
 import os
 import pysolr
+import sys
+import traceback
 from urllib2 import HTTPError, URLError
 import urlparse
 import uuid
 
-import boto
-from celery import task, group
+from celery import group
+from celery import task
+from celery.schedules import crontab
 
 from django.conf import settings
+from django.contrib.sitemaps import ping_google
 from django.contrib.contenttypes.models import ContentType
 from django.core import mail
 from django.core.urlresolvers import reverse_lazy
 from django.template.loader import render_to_string
 from django.db.models import Q
 
-from mydashboard.models import Company, SeoSite
+from seo.models import Company, SeoSite
 from myjobs.models import EmailLog, User, STOP_SENDING, BAD_EMAIL
 from mymessages.models import Message
 from mypartners.models import PartnerLibrary
 from mypartners.helpers import get_library_partners
 from mysearches.models import SavedSearch, SavedSearchDigest
+import import_jobs
 from postajob.models import Job
 from registration.models import ActivationProfile
 from solr import helpers
@@ -30,6 +36,13 @@ from solr.models import Update
 from solr.signals import object_to_dict, profileunits_to_dict
 
 logger = logging.getLogger(__name__)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = "/de/data/"
+sys.path.insert(0, os.path.join(BASE_DIR))
+sys.path.insert(0, os.path.join(BASE_DIR, '../'))
+os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+FEED_FILE_PREFIX = "dseo_feed_"
 
 
 @task(name='tasks.send_search_digest', ignore_result=True,
@@ -422,13 +435,13 @@ def parse_log(logs, solr_location):
                     update_dict = {
                         'view_date': line[0],
                         'doc_type': 'analytics',
-                    }
+                        }
 
                     # Make sure the value for a given key is only a list if
                     # there are multiple elements
                     qs = dict((k, v if len(v) > 1 else v[0])
                               for k, v in urlparse.parse_qs(
-                                  line[4]).iteritems())
+                        line[4]).iteritems())
 
                     if 'redirect' in log.key:
                         aguid = qs.get('jcnlx.aguid', '')
@@ -522,7 +535,7 @@ def parse_log(logs, solr_location):
                         update_dict['company_id'] = log_memo[buid]
 
                     update_dict['uid'] = 'analytics##%s#%s' % \
-                        (update_dict['view_date'], aguid)
+                                         (update_dict['view_date'], aguid)
                     to_solr.append(update_dict)
         except Exception:
             # There may be more logs to process, don't propagate the exception
@@ -624,3 +637,56 @@ def expire_jobs():
         job.date_expired = date.today() + timedelta(days=30)
         # Saving will trigger job.add_to_solr().
         job.save()
+
+
+@task(name="tasks.task_update_solr", acks_late=True, ignore_result=True)
+def task_update_solr(jsid, **kwargs):
+    try:
+        import_jobs.update_solr(jsid, **kwargs)
+    except:
+        logging.error(traceback.format_exc(sys.exc_info()))
+        raise task_update_solr.retry()
+
+
+@task(name='tasks.etl_to_solr',)
+def task_etl_to_solr(guid):
+    try:
+        import_jobs.update_job_source(guid)
+    except Exception as e:
+        logging.error("Error loading jobs for jobsource: %s", guid)
+        logging.exception(e)
+        raise task_etl_to_solr.retry()
+
+
+@task(name="tasks.task_clear_solr")
+def task_clear_solr(jsid):
+    """Delete all jobs for a given Business Unit/Job Source."""
+    import_jobs.clear_solr(jsid)
+
+
+@task(name="tasks.task_force_create")
+def task_force_create(jsid):
+    import_jobs.force_create_jobs(jsid.id)
+
+
+@task(name="tasks.task_submit_sitemap")
+def task_submit_sitemap(domain):
+    """
+    Submits yesterday's sitemap to google for the given domain
+    Input:
+        :domain: sitemap domain
+    """
+    ping_google('http://{d}/sitemap.xml'.format(d=domain))
+
+
+@task(name="tasks.task_submit_all_sitemaps")
+def task_submit_all_sitemaps():
+    sites = SeoSite.objects.all()
+    for site in sites:
+        task_submit_sitemap.delay(site.domain)
+
+
+CELERYBEAT_SCHEDULE = {
+    #Submit sitemaps every morning at 0800 ET (1300 UTC)
+    'morning-sitemap-ping': 'tasks.submit_all_sitemaps',
+    'schedule': crontab(hour=13, minute=0)}

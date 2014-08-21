@@ -6,11 +6,10 @@ from urlparse import parse_qs
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core import mail
-from django.test import TestCase
 
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          SeoSiteFactory)
-from mydashboard.models import CompanyUser
+from seo.models import CompanyUser
 from myjobs.models import User
 from postajob.models import (CompanyProfile, Job, OfflineProduct, Product,
                              ProductGrouping, ProductOrder, PurchasedJob,
@@ -21,9 +20,10 @@ from postajob.tests.factories import (job_factory, product_factory,
                                       purchasedjob_factory,
                                       purchasedproduct_factory,
                                       sitepackage_factory)
+from myjobs.tests.setup import MyJobsBase
 
 
-class ModelTests(TestCase):
+class ModelTests(MyJobsBase):
     def setUp(self):
         self.user = User.objects.create(email='user@test.email')
         self.company = CompanyFactory()

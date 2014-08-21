@@ -58,7 +58,7 @@ class Job(BaseModel):
     guid = models.CharField(max_length=255, unique=True)
 
     title = models.CharField(max_length=255, help_text=help_text['title'])
-    owner = models.ForeignKey('mydashboard.Company')
+    owner = models.ForeignKey('seo.Company')
     reqid = models.CharField(max_length=50, verbose_name="Requisition ID",
                              help_text=help_text['reqid'], blank=True)
     description = models.TextField(help_text=help_text['description'])
@@ -180,7 +180,7 @@ class Job(BaseModel):
                 self.guid = guid
 
     def on_sites(self):
-        from mydashboard.models import SeoSite
+        from seo.models import SeoSite
         return SeoSite.objects.filter(sitepackage__job=self)
 
     @staticmethod
@@ -313,7 +313,7 @@ class Package(models.Model):
     # exists. Because SitePackage doesn't require an owner field (but other
     # package types likely will require an owner field) there's no good
     # way to force the existance of this field.
-    # owner = models.ForeignKey('mydashboard.Company')
+    # owner = models.ForeignKey('seo.Company')
 
     objects = PackageManager()
 
@@ -358,8 +358,8 @@ class SitePackageManager(models.Manager):
 class SitePackage(Package):
     objects = SitePackageManager()
 
-    sites = models.ManyToManyField('mydashboard.SeoSite', null=True)
-    owner = models.ForeignKey('mydashboard.Company', null=True, blank=True,
+    sites = models.ManyToManyField('seo.SeoSite', null=True)
+    owner = models.ForeignKey('seo.Company', null=True, blank=True,
                               help_text='The owner of this site package. '
                                         'This should only be used if the '
                                         'site package will be used by '
@@ -421,7 +421,7 @@ class PurchasedProduct(BaseModel):
                                         blank=True)
     invoice = models.ForeignKey('Invoice')
 
-    owner = models.ForeignKey('mydashboard.Company')
+    owner = models.ForeignKey('seo.Company')
     purchase_date = models.DateField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
@@ -489,7 +489,7 @@ class ProductGrouping(BaseModel):
                                      verbose_name='Display Title')
     explanation = models.TextField(help_text=help_text['explanation'])
     name = models.CharField(max_length=255, help_text=help_text['name'])
-    owner = models.ForeignKey('mydashboard.Company')
+    owner = models.ForeignKey('seo.Company')
     is_displayed = models.BooleanField(default=True,
                                        help_text=help_text['is_displayed'],
                                        verbose_name="Is Displayed")
@@ -539,7 +539,7 @@ class Product(BaseModel):
     }
 
     package = models.ForeignKey('Package')
-    owner = models.ForeignKey('mydashboard.Company')
+    owner = models.ForeignKey('seo.Company')
 
     name = models.CharField(max_length=255, blank=True)
     cost = models.DecimalField(max_digits=20, decimal_places=2,
@@ -587,7 +587,7 @@ class CompanyProfile(models.Model):
                             'is made.',
     }
 
-    company = models.OneToOneField('mydashboard.Company')
+    company = models.OneToOneField('seo.Company')
     address_line_one = models.CharField(max_length=255, blank=True,
                                         verbose_name='Address Line One')
     address_line_two = models.CharField(max_length=255, blank=True,
@@ -613,7 +613,7 @@ class CompanyProfile(models.Model):
     # Companies can associate themselves with Partner Microsites,
     # allowing them to show up on the list of available companies for
     # offline purchases.
-    customer_of = models.ManyToManyField('mydashboard.Company', null=True,
+    customer_of = models.ManyToManyField('seo.Company', null=True,
                                          blank=True, related_name='customer')
 
 
@@ -622,7 +622,7 @@ class Request(BaseModel):
     object_id = models.IntegerField()
     action_taken = models.BooleanField(default=False)
     made_on = models.DateField(auto_now_add=True)
-    owner = models.ForeignKey('mydashboard.Company')
+    owner = models.ForeignKey('seo.Company')
 
     def template(self):
         model = self.content_type.model
@@ -649,7 +649,7 @@ class Request(BaseModel):
                                   pk=self.object_id)
 
     def send_email(self):
-        from mydashboard.models import CompanyUser
+        from seo.models import CompanyUser
 
         group, _ = Group.objects.get_or_create(name=self.ADMIN_GROUP_NAME)
         admins = CompanyUser.objects.filter(group=group, company=self.owner)
@@ -692,16 +692,16 @@ class OfflineProduct(models.Model):
 
 class OfflinePurchase(BaseModel):
     products = models.ManyToManyField('Product', through='OfflineProduct')
-    owner = models.ForeignKey('mydashboard.Company')
+    owner = models.ForeignKey('seo.Company')
     invoice = models.ForeignKey('Invoice', null=True)
 
     redemption_uid = models.CharField(max_length=255)
 
-    created_by = models.ForeignKey('mydashboard.CompanyUser',
+    created_by = models.ForeignKey('seo.CompanyUser',
                                    related_name='created')
     created_on = models.DateField(auto_now_add=True)
 
-    redeemed_by = models.ForeignKey('mydashboard.CompanyUser', null=True,
+    redeemed_by = models.ForeignKey('seo.CompanyUser', null=True,
                                     blank=True, related_name='redeemed')
     redeemed_on = models.DateField(null=True, blank=True)
 
@@ -751,7 +751,7 @@ class Invoice(BaseModel):
     zipcode = models.CharField(max_length=255)
 
     # Owner is the Company that owns the Products.
-    owner = models.ForeignKey('mydashboard.Company', related_name='owner')
+    owner = models.ForeignKey('seo.Company', related_name='owner')
 
     def send_invoice_email(self, other_recipients=None):
         """
@@ -759,7 +759,7 @@ class Invoice(BaseModel):
         any other optional recipients.
 
         """
-        from mydashboard.models import CompanyUser
+        from seo.models import CompanyUser
 
         other_recipients = [] if not other_recipients else other_recipients
 

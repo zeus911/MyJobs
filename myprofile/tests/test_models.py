@@ -3,8 +3,8 @@ from django.core.exceptions import MultipleObjectsReturned
 from django.core.urlresolvers import reverse
 from django.db import IntegrityError
 from django.middleware.transaction import transaction
-from django.test import TestCase
 
+from myjobs.tests.setup import MyJobsBase
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
 from myprofile.models import ProfileUnits, Name, SecondaryEmail, Education, \
@@ -18,7 +18,7 @@ from registration.models import ActivationProfile
 from datetime import date
 
 
-class MyProfileTests(TestCase):
+class MyProfileTests(MyJobsBase):
     user_info = {'password1': 'complicated_password',
                  'email': 'alice@example.com'}
 
@@ -294,7 +294,7 @@ class MyProfileTests(TestCase):
         self.assertEqual(ms_object, 1)
 
 
-class ProfileSuggestionTests(TestCase):
+class ProfileSuggestionTests(MyJobsBase):
     user_info = {'password1': 'complicated_password',
                  'email': 'alice@example.com'}
 

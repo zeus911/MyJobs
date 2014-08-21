@@ -1,25 +1,32 @@
 import factory
+from slugify import slugify
 
 from myjobs.tests.factories import UserFactory
-from mydashboard.models import (BusinessUnit, Company, CompanyUser,
-                                SeoSite)
+from seo.models import (BusinessUnit, Company, CompanyUser,
+                        SeoSite)
 
 
-class BusinessUnitFactory(factory.Factory):
+class BusinessUnitFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = BusinessUnit
 
     id = 1
     title = 'Test Company'
+    title_slug = factory.LazyAttribute(lambda x: slugify(x.title))
+    federal_contractor = True
+    date_updated = "2010-10-18 10:59:24"
+    associated_jobs = 4
+    date_crawled = "2010-10-18 07:00:02"
+    enable_markdown = True
 
 
-class CompanyFactory(factory.Factory):
+class CompanyFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Company
 
     id = 1
     name = 'Test Company'
 
 
-class SeoSiteFactory(factory.Factory):
+class SeoSiteFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = SeoSite
 
     id = 2
@@ -27,7 +34,7 @@ class SeoSiteFactory(factory.Factory):
     name = 'Test Jobs'
 
 
-class CompanyUserFactory(factory.Factory):
+class CompanyUserFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = CompanyUser
 
     user = factory.SubFactory(UserFactory)

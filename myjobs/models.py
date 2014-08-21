@@ -85,10 +85,11 @@ class CustomUserManager(BaseUserManager):
 
             if user_type == 'superuser':
                 user_args.update({'is_staff': True, 'is_superuser': True})
-                password_field = 'password'
-            else:
-                password_field = 'password1'
-            password = kwargs.get(password_field)
+            password_fields = ['password', 'password1']
+            for password_field in password_fields:
+                password = kwargs.get(password_field)
+                if password:
+                    break
             create_password = False
             if not password:
                 create_password = True
@@ -331,7 +332,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         Returns a QuerySet of all the Companies a User has access to.
 
         """
-        from mydashboard.models import Company
+        from seo.models import Company
         return Company.objects.filter(admins=self).distinct()
 
     def get_sites(self):
@@ -339,7 +340,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         Returns a QuerySet of all the SeoSites a User has access to.
 
         """
-        from mydashboard.models import SeoSite
+        from seo.models import SeoSite
         kwargs = {'business_units__company__admins': self}
         return SeoSite.objects.filter(**kwargs).distinct()
 
@@ -364,7 +365,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.save()
 
     def add_default_group(self):
-        group = Group.objects.get(name='Job Seeker')
+        group, _ = Group.objects.get_or_create(name='Job Seeker')
         self.groups.add(group.pk)
 
     def make_guid(self):

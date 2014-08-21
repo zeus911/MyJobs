@@ -3,10 +3,10 @@ import urllib2
 
 from django.contrib.sessions.models import Session
 from django.core.urlresolvers import reverse
-from django.test import TestCase
 
 from mock import patch
 
+from myjobs.tests.setup import MyJobsBase
 from mydashboard.tests.factories import CompanyFactory
 from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
@@ -19,7 +19,7 @@ from mysearches.tests.factories import (SavedSearchDigestFactory,
                                         PartnerSavedSearchFactory)
 
 
-class MySearchViewTests(TestCase):
+class MySearchViewTests(MyJobsBase):
     def setUp(self):
         super(MySearchViewTests, self).setUp()
         self.client = TestClient()

@@ -1,7 +1,6 @@
 import json
 from django.core.urlresolvers import reverse
 
-from django.test import TestCase
 
 from mock import patch
 from tastypie.models import create_api_key
@@ -12,9 +11,10 @@ from myjobs.tests.test_views import TestClient
 from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch
 from mysearches.tests.helpers import return_file
+from setup import MyJobsBase
 
 
-class UserResourceTests(TestCase):
+class UserResourceTests(MyJobsBase):
     def setUp(self):
         self.user = UserFactory()
         self.client = TestClient()
@@ -57,7 +57,7 @@ class UserResourceTests(TestCase):
             self.assertEqual(content['email'].lower(), 'alice@example.com')
 
 
-class SavedSearchResourceTests(TestCase):
+class SavedSearchResourceTests(MyJobsBase):
     def setUp(self):
         super(SavedSearchResourceTests, self).setUp()
         self.user = UserFactory()
