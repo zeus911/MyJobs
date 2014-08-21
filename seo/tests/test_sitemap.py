@@ -9,6 +9,7 @@ from setup import DirectSEOBase
 
 class SitemapTestCase(DirectSEOBase):
     def setUp(self):
+        super(SitemapTestCase, self).setUp()
         self.conn = Solr('http://127.0.0.1:8983/solr/seo')
         self.conn.add(SOLR_FIXTURE)
 
@@ -61,4 +62,5 @@ class SitemapTestCase(DirectSEOBase):
         self.assertTrue("<url>" in resp.content)
         
     def tearDown(self):
+        super(SitemapTestCase, self).tearDown()
         self.conn.delete("*:*")

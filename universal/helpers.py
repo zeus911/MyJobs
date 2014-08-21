@@ -4,7 +4,6 @@ import urllib
 from django.shortcuts import get_object_or_404, Http404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
-
 def build_url(reverse_url, params):
     return '%s?%s' % (reverse_url, urllib.urlencode(params))
 
@@ -85,7 +84,7 @@ def get_company(request):
 
 
 def get_company_or_404(request):
-    """ Simple wrapper around get_company that raises Http404 if no valid 
+    """ Simple wrapper around get_company that raises Http404 if no valid
         company is found.
     """
     company = get_company(request)
@@ -134,4 +133,8 @@ def add_pagination(request, object_list):
     except EmptyPage:
         pagination = paginator.page(paginator.num_pages)
 
+<<<<<<< HEAD
     return pagination
+=======
+    return pagination
+>>>>>>> e3d3569... Fixed fallout from merge conflicts (mostly incorrect imports or incorrect deletions). Made sure tests were correctly inheriting from the base model for teardown.

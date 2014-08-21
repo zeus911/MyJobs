@@ -21,6 +21,7 @@ class SavedSearchFormTests(MyJobsBase):
         self.patcher.start()
 
     def tearDown(self):
+        super(SavedSearchFormTests, self).tearDown()
         self.patcher.stop()
 
     def test_successful_form(self):

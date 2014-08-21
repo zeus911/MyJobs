@@ -27,6 +27,7 @@ class SavedSearchHelperTests(MyJobsBase):
         self.patcher.start()
 
     def tearDown(self):
+        super(SavedSearchHelperTests, self).tearDown()
         self.patcher.stop()
 
     def test_valid_dotjobs_url(self):

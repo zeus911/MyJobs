@@ -25,6 +25,7 @@ class ImportJobsTestCase(DirectSEOBase):
         self.solr = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
 
     def tearDown(self):
+        super(ImportJobsTestCase, self).tearDown()
         self.solr.delete(q='*:*')
 
     def test_solr_rm_feedfile(self):

@@ -25,12 +25,14 @@ from tasks import send_search_digests
 
 class SavedSearchModelsTests(MyJobsBase):
     def setUp(self):
+        super(SavedSearchModelsTests, self).setUp()
         self.user = UserFactory()
 
         self.patcher = patch('urllib2.urlopen', return_file())
         self.mock_urlopen = self.patcher.start()
 
     def tearDown(self):
+        super(SavedSearchModelsTests, self).tearDown()
         try:
             self.patcher.stop()
         except RuntimeError:
@@ -232,6 +234,7 @@ class SavedSearchModelsTests(MyJobsBase):
 
 class PartnerSavedSearchTests(MyJobsBase):
     def setUp(self):
+        super(PartnerSavedSearchTests, self).setUp()
         self.user = UserFactory()
         self.digest = SavedSearchDigestFactory(user=self.user)
         self.company = CompanyFactory()
@@ -247,6 +250,7 @@ class PartnerSavedSearchTests(MyJobsBase):
         self.mock_urlopen = self.patcher.start()
 
     def tearDown(self):
+        super(PartnerSavedSearchTests, self).tearDown()
         try:
             self.patcher.stop()
         except RuntimeError:

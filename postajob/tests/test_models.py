@@ -25,6 +25,7 @@ from myjobs.tests.setup import MyJobsBase
 
 class ModelTests(MyJobsBase):
     def setUp(self):
+        super(ModelTests, self).setUp()
         self.user = User.objects.create(email='user@test.email')
         self.company = CompanyFactory()
         CompanyProfile.objects.create(company=self.company)

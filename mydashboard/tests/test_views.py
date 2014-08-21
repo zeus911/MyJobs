@@ -29,6 +29,7 @@ SEARCH_OPTS = ['django', 'python', 'programming']
 
 class MyDashboardViewsTests(MyJobsBase):
     def setUp(self):
+        super(MyDashboardViewsTests, self).setUp()
         self.staff_user = UserFactory()
         group = Group.objects.get(name=CompanyUser.GROUP_NAME)
         self.staff_user.groups.add(group)
@@ -61,6 +62,7 @@ class MyDashboardViewsTests(MyJobsBase):
         update_solr_task(settings.TEST_SOLR_INSTANCE)
 
     def tearDown(self):
+        super(MyDashboardViewsTests, self).tearDown()
         for location in settings.TEST_SOLR_INSTANCE.values():
             solr = pysolr.Solr(location)
             solr.delete(q='*:*')

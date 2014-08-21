@@ -25,9 +25,11 @@ from tasks import update_solr_task, parse_log, delete_old_analytics_docs
 
 class SolrTests(MyJobsBase):
     def setUp(self):
+        super(SolrTests, self).setUp()
         self.test_solr = settings.TEST_SOLR_INSTANCE
 
     def tearDown(self):
+        super(SolrTests, self).tearDown()
         Solr().delete()
 
     def test_adding_and_deleting_signals(self):

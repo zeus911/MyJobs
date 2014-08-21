@@ -48,6 +48,7 @@ class MySearchViewTests(MyJobsBase):
         self.patcher.start()
 
     def tearDown(self):
+        super(MySearchViewTests, self).tearDown()
         self.patcher.stop()
 
     def test_search_main(self):

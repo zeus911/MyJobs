@@ -9,7 +9,7 @@ from setup import DirectSEOBase
 
 class SiteRedirectMiddlewareTestCase(DirectSEOBase):
     def setUp(self):
-        
+        super(SiteRedirectMiddlewareTestCase, self).setUp()
         self.test_site = SeoSiteFactory.build()
         self.test_site.save()
         self.ssr1 = SeoSiteRedirectFactory.build(seosite_id=self.test_site.id)
@@ -65,6 +65,7 @@ class SiteRedirectMiddlewareTestCase(DirectSEOBase):
 
 class MultiHostMiddlewareTestCase(DirectSEOBase):
     def setUp(self):
+        super(MultiHostMiddlewareTestCase, self).setUp()
         self.bu = BusinessUnit(id=42, date_crawled=datetime.datetime.now(),
                                date_updated=datetime.datetime.now())
         self.bu.save()

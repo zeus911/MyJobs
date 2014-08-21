@@ -8,6 +8,7 @@ from myjobs.tests.setup import MyJobsBase
 
 class PaymentTests(MyJobsBase):
     def setUp(self):
+        super(PaymentTests, self).setUp()
         self.card_info = {
             'card_num': 4007000000027,
             'city': 'Indianapolis',

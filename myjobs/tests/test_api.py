@@ -16,6 +16,7 @@ from setup import MyJobsBase
 
 class UserResourceTests(MyJobsBase):
     def setUp(self):
+        super(UserResourceTests, self).setUp()
         self.user = UserFactory()
         self.client = TestClient()
         create_api_key(User, instance=self.user, created=True)
@@ -72,6 +73,7 @@ class SavedSearchResourceTests(MyJobsBase):
         self.patcher.start()
 
     def tearDown(self):
+        super(SavedSearchResourceTests, self).tearDown()
         self.patcher.stop()
 
     def make_response(self, data):

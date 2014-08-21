@@ -12,7 +12,7 @@ import uuid
 
 from celery import group
 from celery import task
-from celery.schedules import crontab
+
 
 from django.conf import settings
 from django.contrib.sitemaps import ping_google
@@ -28,6 +28,8 @@ from mymessages.models import Message
 from mypartners.models import PartnerLibrary
 from mypartners.helpers import get_library_partners
 from mysearches.models import SavedSearch, SavedSearchDigest
+from mypartners.models import PartnerLibrary
+from mypartners.helpers import get_library_partners
 import import_jobs
 from postajob.models import Job
 from registration.models import ActivationProfile
@@ -43,7 +45,6 @@ sys.path.insert(0, os.path.join(BASE_DIR))
 sys.path.insert(0, os.path.join(BASE_DIR, '../'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 FEED_FILE_PREFIX = "dseo_feed_"
-
 
 @task(name='tasks.send_search_digest', ignore_result=True,
       default_retry_delay=180, max_retries=2)
@@ -75,7 +76,6 @@ def update_partner_library(path=None, quiet=False):
             print "Connecting to OFCCP Directory...."
 
         print "Parsing data for PartnerLibrary information..."
-
 
     for partner in get_library_partners(path):
         # the second join + split take care of extra internal whitespace
@@ -638,7 +638,6 @@ def expire_jobs():
         # Saving will trigger job.add_to_solr().
         job.save()
 
-
 @task(name="tasks.task_update_solr", acks_late=True, ignore_result=True)
 def task_update_solr(jsid, **kwargs):
     try:
@@ -684,9 +683,3 @@ def task_submit_all_sitemaps():
     sites = SeoSite.objects.all()
     for site in sites:
         task_submit_sitemap.delay(site.domain)
-
-
-CELERYBEAT_SCHEDULE = {
-    #Submit sitemaps every morning at 0800 ET (1300 UTC)
-    'morning-sitemap-ping': 'tasks.submit_all_sitemaps',
-    'schedule': crontab(hour=13, minute=0)}

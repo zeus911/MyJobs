@@ -11,6 +11,7 @@ from tasks import expire_jobs
 
 class TaskTests(MyJobsBase):
     def setUp(self):
+        super(TaskTests, self).setUp()
         self.company = CompanyFactory()
         self.user = UserFactory()
         self.job_data = {

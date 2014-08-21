@@ -21,10 +21,12 @@ class RegistrationModelTests(MyJobsBase):
                  'email': 'alice@example.com'}
     
     def setUp(self):
+        super(RegistrationModelTests, self).setUp()
         self.old_activation = getattr(settings, 'ACCOUNT_ACTIVATION_DAYS', None)
         settings.ACCOUNT_ACTIVATION_DAYS = 7
 
     def tearDown(self):
+        super(RegistrationModelTests, self).tearDown()
         settings.ACCOUNT_ACTIVATION_DAYS = self.old_activation
 
     def test_profile_creation(self):

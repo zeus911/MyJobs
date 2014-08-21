@@ -10,6 +10,7 @@ from social_links.tests.factories import (SocialLinkFactory,
 
 class SocialLinksModelsTetCase(DirectSEOBase):
     def tearDown(self):
+        super(SocialLinksModelsTetCase, self).tearDown()
         for social_link_type in SocialLinkType.objects.all():
             social_link_type.delete()
 

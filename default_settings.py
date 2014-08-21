@@ -139,6 +139,10 @@ CELERYBEAT_SCHEDULE = {
         'task': 'tasks.update_solr_from_log',
         'schedule': crontab(hour='*/1'),
     },
+    'morning-sitemap-ping': {
+        'task': 'tasks.submit_all_sitemaps',
+        'schedule': crontab(hour=13, minute=0)
+    },
 }
 
 

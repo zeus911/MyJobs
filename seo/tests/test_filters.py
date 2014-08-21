@@ -32,7 +32,8 @@ class DummyConfig():
 class FiltersTestCase(DirectSEOBase):
 
     def setUp(self):
-        self.request =  DummyRequest()
+        super(FiltersTestCase, self).setUp()
+        self.request = DummyRequest()
         self.config = DummyConfig()
 
 

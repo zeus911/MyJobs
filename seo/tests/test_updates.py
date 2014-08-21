@@ -7,6 +7,7 @@ from setup import DirectSEOBase
 
 class UpdatesTests(DirectSEOBase):
     def setUp(self):
+        super(UpdatesTests, self).setUp()
         self.user = UserFactory()
         self.key = settings.BUID_API_KEY
         self.existing_bu = BusinessUnitFactory()
