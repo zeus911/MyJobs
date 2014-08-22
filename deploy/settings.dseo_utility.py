@@ -73,3 +73,8 @@ TEMPLATE_CONTEXT_PROCESSORS += (
     "social_links.context_processors.social_links_context",
     "seo.context_processors.site_config_context",
 )
+
+SOLR = {
+    'all': 'http://ec2-23-20-67-65.compute-1.amazonaws.com:8983/solr/myjobs_test/',
+    'current': 'http://ec2-23-20-67-65.compute-1.amazonaws.com:8983/solr/myjobs_test_current/',
+    }
