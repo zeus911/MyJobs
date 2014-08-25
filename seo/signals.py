@@ -3,12 +3,9 @@ import Queue
 from django.contrib import messages
 from django.db.models.signals import post_save, pre_delete, pre_save
 from django.dispatch import Signal, receiver
-from django.contrib.auth.signals import user_logged_in, user_logged_out
-from django.conf import settings
-from django.utils.importlib import import_module
 
 from seo.models import Configuration, SeoSite, Company
-from myjobs.models import Shared_Sessions
+
 
 # We're a using queue to store messages until they can be read by their handler
 # In admin, we check this queue so that warning messages can be sent to the user
@@ -39,51 +36,12 @@ class MessageQueue():
         self.message_queue.put(message)
 
 
-
 moc_toggled_on = Signal()
 moc_toggled_off = Signal()
 
-# Microsite signals should take Site intances for the sender argument
+# Microsite signals should take Site instances for the sender argument
 microsite_disabled = Signal()
 microsite_moved = Signal(['old_domain'])
-
-def save_related_session(sender, user, request, **kwargs):
-    if user and user.is_authenticated():
-        session, _ = Shared_Sessions.objects.get_or_create(user=user)
-        current = session.ms_session.split(",") if session.ms_session else []
-        try:
-            current.append(request.session.session_key)
-            session.ms_session = ",".join(current)
-        except:
-            pass
-        session.save()
-
-
-def delete_related_session(sender, user, request, **kwargs):
-    """
-    Deletes all myjobs sessions for user on logout.
-
-    """
-
-    if user and user.is_authenticated():
-        try:
-            sessions = Shared_Sessions.objects.get(user=user)
-        except Shared_Sessions.DoesNotExist:
-            return
-
-        mj_sessions = sessions.mj_session.split(",") if \
-            sessions.ms_session else []
-        engine = import_module(settings.SESSION_ENGINE)
-        for mj_session in mj_sessions:
-            try:
-                s = engine.SessionStore(mj_session)
-                s.delete()
-            except:
-                pass
-        sessions.delete()
-
-user_logged_in.connect(save_related_session)
-user_logged_out.connect(delete_related_session)
 
 
 def check_message_queue(f):

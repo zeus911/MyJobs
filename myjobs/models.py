@@ -502,20 +502,18 @@ class Ticket(models.Model):
 
 
 class Shared_Sessions(models.Model):
-    # mj_session and ms_session are comma separated list stored as a string
-    # of session keys
-    mj_session = models.TextField(blank=True)
-    ms_session = models.TextField(blank=True)
+    # session is a comma separated list stored as a string of session keys
+    session = models.TextField(blank=True)
     user = models.ForeignKey('User', unique=True)
 
 
 def save_related_session(sender, user, request, **kwargs):
     if user and user.is_authenticated():
         session, _ = Shared_Sessions.objects.get_or_create(user=user)
-        current = session.mj_session.split(",") if session.mj_session else []
+        current = session.session.split(",") if session.session else []
         try:
             current.append(request.session.session_key)
-            session.mj_session = ",".join(current)
+            session.session = ",".join(current)
         except:
             pass
         session.save()
@@ -533,12 +531,12 @@ def delete_related_session(sender, user, request, **kwargs):
         except Shared_Sessions.DoesNotExist:
             return
 
-        ms_sessions = sessions.ms_session.split(",") if \
-            sessions.ms_session else []
+        session_keys = sessions.session.split(",") if \
+            sessions.session else []
         engine = import_module(settings.SESSION_ENGINE)
-        for ms_session in ms_sessions:
+        for key in session_keys:
             try:
-                s = engine.SessionStore(ms_session)
+                s = engine.SessionStore(key)
                 s.delete()
             except:
                 pass
