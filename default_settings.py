@@ -295,7 +295,10 @@ LOGGING = {
         },
         'amqplib': {
             'level': 'INFO'
-        }
+        },
+        'factory': {
+            'level': 'INFO'
+        },
     }
 }
 
@@ -384,3 +387,6 @@ CACHE_MIDDLEWARE_ANONYMOUS_ONLY = True
 # South
 SOUTH_TESTS_MIGRATE = False
 SKIP_SOUTH_TESTS = True
+SOUTH_MIGRATION_MODULES = {
+    'taggit': 'taggit.south_migrations',
+}
