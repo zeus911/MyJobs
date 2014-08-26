@@ -468,7 +468,6 @@ class DEv2JobFeed(DEJobFeed):
             self.errors = True
             exc = error_log.last_error
             self.error_messages = {'exception': exc.message, 'line': exc.line}
-            feed_error.send(sender=self, **self.error_messages)
         else:
             self.errors = False
             self.error_messages = []
