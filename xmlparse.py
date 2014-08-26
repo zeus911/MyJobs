@@ -14,7 +14,6 @@ from slugify import slugify
 from urlparse import urlparse
 
 from django.contrib.contenttypes.models import ContentType
-from django.dispatch import Signal
 from django.utils.html import linebreaks
 
 from seo.models import BusinessUnit
@@ -442,10 +441,10 @@ class DEv2JobFeed(DEJobFeed):
         try:
             super(DEv2JobFeed, self).__init__(*args, **kwargs)
         except etree.XMLSyntaxError:
-            pass 
+            pass
         else:
             self.errors = False
-            self.error_messages = [] 
+            self.error_messages = []
         finally:
             self.create_parse_error_message(self.parser.error_log)
 
@@ -453,17 +452,17 @@ class DEv2JobFeed(DEJobFeed):
         """Creates jobfeed error messages from schema validation fail"""
         # We're sending one email for every validation error. This is going to
         # cause an email explosion if for some reason there is a mass error in
-        # the system that creates the feed files. Definitely, definitely want to
-        # build this out so that it aggregates messages and, after either a
+        # the system that creates the feed files. Definitely, definitely want
+        # to build this out so that it aggregates messages and, after either a
         # certain period of time or a certain number of errors, it sends a
         # single email.
         #
         # I would think the cache key would be a composite of the timestamp the
         # first error was cached and a list containing the data in
         # ``self.error_messages`` below. If a certain number of minutes have
-        # passed since the timestamp, send the email. Alternatively, if the size
-        # of the errors list grows beyond some limit, like 20, send the email
-        # and clear that cache key.
+        # passed since the timestamp, send the email. Alternatively, if the
+        # size of the errors list grows beyond some limit, like 20, send the
+        # email and clear that cache key.
         if len(error_log) > 0:
             self.errors = True
             exc = error_log.last_error
