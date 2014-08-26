@@ -281,3 +281,17 @@ function create_location_events() {
         }
     });
 }
+
+function expand_errors(contents) {
+    /*
+     Expands the content portion of an accordion (denoted by the :contents:
+     param) if an input inside the accordion has errors (has 'required' as
+     one of its classes)
+     */
+    $('.required').each(function() {
+        var parent_accordion = $(this).parents(contents);
+        if (parent_accordion.css('display') == "none") {
+            parent_accordion.slideToggle();
+        }
+    });
+}
