@@ -23,24 +23,6 @@ from moc_coding.models import CustomCareer, Moc
 text_fields = ['description', 'title', 'country', 'country_short', 'state',
                'state_short', 'city', 'company']
 
-def send_error_notice(sender, **kwargs):
-    """
-    A receiver to handle ``directseo.xmlparse.feed_error`` signal. This
-    signal is emitted when a feed file fails validation.
-    
-    """
-    # Logic TBD: HTTP request to an API on the feed-writer side?
-    # Mass email?
-    # Single daily emails of failure?
-    # Shut down Celery if x errors are detected within y minutes?
-    # An email for every error is NOT the right solution, especially
-    # since the Celery processes on both the Celery server and the Solr master
-    # server will send this signal. It will need to be able to handle
-    # deduplication.
-    return
-
-feed_error = Signal(providing_args=['buid', 'exception', 'line'])
-feed_error.connect(send_error_notice)
 
 class JobFeed(object):
     """
