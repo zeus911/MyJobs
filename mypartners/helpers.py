@@ -19,6 +19,8 @@ from lxml import html
 from lxml.cssselect import CSSSelector
 import pytz
 import requests
+
+import states
 from universal.helpers import get_domain, get_company, get_company_or_404
 from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
                                CHANGE, Partner, PartnerLibrary)
@@ -459,7 +461,7 @@ def filter_partners(request, partner_library=False):
         query &= Q(**{'%s__icontains' % contact_city: city})
 
     if state:
-        query &= Q(**{'%s__icontains' % contact_state: state})
+        query &= Q(**{'%s__in' % contact_state: states.synonyms[state.strip()]})
 
     partners = partners.distinct().filter(query)
 
