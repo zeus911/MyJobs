@@ -114,6 +114,56 @@ CELERY_PREFETCH_MULTIPLIER = 0
 CELERY_IGNORE_RESULTS = True
 CELERY_TIMEZONE = 'US/Eastern'
 CELERYBEAT_PIDFILE = '/var/run/celerybeat.pid'
+CELERY_QUEUES = {
+    'dseo': {
+        'binding_key': 'dseo.#'
+    },
+    'solr': {
+        'binding_key': 'solr.#'
+    },
+    'myjobs': {
+        'binding_key': 'myjobs.#'
+    }
+}
+CELERY_ROUTES = {
+    'tasks.task_update_solr': {
+        'queue': 'solr',
+        'routing_key': 'solr.update_solr'
+    },
+    'tasks.task_clear_solr': {
+        'queue': 'solr',
+        'routing_key': 'solr.clear_solr'
+    },
+    'tasks.etl_to_solr': {
+        'queue': 'solr',
+        'routing_key': 'solr.update_solr'
+    },
+    'tasks.send_search_digests': {
+        'queue': 'myjobs',
+        'routing_key': 'myjobs.send_search_digests'
+    },
+    'tasks.delete_inactive_activations': {
+        'queue': 'myjobs',
+        'routing_key': 'myjobs.delete_inactive_activations',
+    },
+    'tasks.process_batch_events': {
+        'queue': 'myjobs',
+        'routing_key': 'myjobs.process_batch_events'
+    },
+    'tasks.expire_jobs': {},
+    'tasks.update_solr_from_model': {
+        'queue': 'myjobs',
+        'routing_key': 'myjobs.expire_jobs'
+    },
+    'tasks.update_solr_from_log': {
+        'queue': 'myjobs',
+        'routing_key': 'myjobs.update_solr_from_log'
+    },
+    'tasks.submit_all_sitemaps': {
+        'queue': 'myjobs',
+        'routing_key': 'dseo.submit_all_sitemaps'
+    }
+}
 CELERYBEAT_SCHEDULE = {
     'daily-search-digest': {
         'task': 'tasks.send_search_digests',

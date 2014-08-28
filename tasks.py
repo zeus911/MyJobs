@@ -11,7 +11,7 @@ import urlparse
 import uuid
 
 from celery import group
-from celery import task
+from celery.task import task
 
 
 from django.conf import settings
@@ -47,8 +47,8 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 FEED_FILE_PREFIX = "dseo_feed_"
 
 @task(name='tasks.send_search_digest', ignore_result=True,
-      default_retry_delay=180, max_retries=2)
-def send_search_digest(search):
+      default_retry_delay=180, max_retries=2, bind=True)
+def send_search_digest(self, search):
     """
     Task used by send_send_search_digests to send individual digest or search
     emails.
@@ -59,7 +59,7 @@ def send_search_digest(search):
     try:
         search.send_email()
     except (ValueError, URLError, HTTPError) as e:
-        if task.current.request.retries < 2:  # retry sending email twice
+        if self.request.retries > 2:  # retry sending email twice
             raise send_search_digest.retry(arg=[search], exc=e)
         else:
             # After the initial try and two retries, disable the offending
