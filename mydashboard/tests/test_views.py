@@ -47,6 +47,7 @@ class MyDashboardViewsTests(TestCase):
 
         self.candidate_user = UserFactory(email="example@example.com")
         SavedSearchFactory(user=self.candidate_user,
+                           feed='http://test.jobs/jobs/feed/rss?',
                            url='http://test.jobs/search?q=django',
                            label='test Jobs')
 
@@ -57,6 +58,7 @@ class MyDashboardViewsTests(TestCase):
                 # Create 15 new searches and assign three per user
                 SavedSearchFactory(user=user,
                                    url='http://test.jobs/search?q=%s' % search,
+                                   feed='http://test.jobs/jobs/feed/rss?',
                                    label='%s Jobs' % search)
         update_solr_task(settings.TEST_SOLR_INSTANCE)
 
@@ -250,6 +252,7 @@ class MyDashboardViewsTests(TestCase):
         user = UserFactory(email="test@shouldWork.com")
         SavedSearchFactory(user=user,
                            url='http://test.jobs/search?q=python',
+                           feed='http://test.jobs/jobs/feed/rss?',
                            label='Python Jobs')
         user.save()
         update_solr_task(settings.TEST_SOLR_INSTANCE)
@@ -267,6 +270,7 @@ class MyDashboardViewsTests(TestCase):
         user = UserFactory(email="test@shouldWork.com")
         SavedSearchFactory(user=user,
                            url='http://test.jobs/search?q=python',
+                           feed='http://test.jobs/jobs/feed/rss?',
                            label='Python Jobs')
         user.save()
         update_solr_task(settings.TEST_SOLR_INSTANCE)
@@ -290,6 +294,7 @@ class MyDashboardViewsTests(TestCase):
         user = UserFactory(email="find@testuser.com")
         SavedSearchFactory(user=user,
                            url='http://test.jobs/search?q=python',
+                           feed='http://test.jobs/jobs/feed/rss?',
                            label='Python Jobs')
         EducationFactory(user=user)
         AddressFactory(user=user)
@@ -361,6 +366,7 @@ class MyDashboardViewsTests(TestCase):
         self.telephone = TelephoneFactory(user=self.candidate_user)
         self.employment = EmploymentHistoryFactory(user=self.candidate_user)
         self.candidate_user.save()
+        SavedSearchFactory(user=self.candidate_user)
 
         response = self.client.post(
             reverse('candidate_information',

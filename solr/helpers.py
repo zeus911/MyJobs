@@ -137,14 +137,16 @@ class Solr(object):
         solr.params['facet.field'].append(query_string)
         return solr
 
-    def add_facet_prefix(self, prefix):
+    def add_facet_prefix(self, prefix, fieldname=None):
         """
         Adds a facet prefix. This applies to all facets, so it should only be
         set when only one field is being faceted on.
 
         """
+        key = "f.%s.facet.prefix" % fieldname if fieldname else 'facet.prefix'
+
         solr = self._clone()
-        solr.params['facet.prefix'] = prefix
+        solr.params[key] = prefix
         return solr
 
     def sort(self, sort_field, order='desc'):

@@ -19,9 +19,9 @@
                     </div>
                 </td>
                 <td>
-                    {% if candidate.SavedSearch_url %}
+                    {% if candidate.SavedSearch_feed %}
                         <strong>{% if candidate.SavedSearch_label %}{{candidate.SavedSearch_label}}{% else %}Unlabeled{% endif %}</strong><br>
-                        {{ candidate.SavedSearch_url|url_domain }}<br>
+                        {{ candidate.SavedSearch_feed|url_domain }}<br>
                         {% str_to_date candidate.SavedSearch_created_on %}
                     {% else %}
                         {% display_activity candidate %}

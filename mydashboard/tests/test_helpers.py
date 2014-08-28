@@ -38,6 +38,7 @@ class HelpersTests(TestCase):
         # User has searches but none of them belong to the company
         SavedSearchFactory(user=self.candidate,
                            url='http://not-test.jobs/search?q=django',
+                           feed='http://not-test.jobs/jobs/feed/rss?',
                            label='test Jobs')
         searches = saved_searches(self.staff_user, self.company, self.candidate)
         self.assertFalse(searches)
@@ -47,11 +48,13 @@ class HelpersTests(TestCase):
         search2 = 'http://something.test2.jobs/search?q=python'
         SavedSearchFactory(user=self.candidate,
                            url=search1,
+                           feed=search1,
                            label='test Jobs')
         searches = saved_searches(self.staff_user, self.company, self.candidate)
         self.assertEqual(len(searches), 1)
         SavedSearchFactory(user=self.candidate,
                            url=search2,
+                           feed=search2,
                            label='test Jobs')
         searches = saved_searches(self.staff_user, self.company, self.candidate)
         self.assertEqual(len(searches), 2)
