@@ -59,7 +59,7 @@ def send_search_digest(self, search):
     try:
         search.send_email()
     except (ValueError, URLError, HTTPError) as e:
-        if self.request.retries > 2:  # retry sending email twice
+        if self.request.retries < 2:  # retry sending email twice
             raise send_search_digest.retry(arg=[search], exc=e)
         else:
             # After the initial try and two retries, disable the offending
