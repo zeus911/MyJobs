@@ -195,10 +195,17 @@ function copy_forms(from, to) {
      */
     var valid = true;
     fields.forEach(function(element) {
-        var old = from.find(element).val();
-        if (old) {
-            to.find(element).val(old);
+        var from_input = from.find(element),
+            from_value = from_input.val();
+        if (from_value) {
+            to.find(element).val(from_value);
+            if (from_input.parents('.required').length > 0) {
+                from_input.parent().unwrap();
+            }
         } else {
+            if (from_input.parents('.required').length == 0) {
+                from_input.parent('.profile-form-input').wrap('<div class="required">');
+            }
             valid = false;
         }
     });

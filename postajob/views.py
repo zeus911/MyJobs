@@ -320,7 +320,6 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
                 if key.endswith('DELETE'):
                     location_num = int(key.split('-')[1])
                     delete.append(location_num)
-            print delete
             context['formset'] = JobLocationFormSet(pruned_post,
                                                     queryset=formset_qs)
             context['delete'] = delete
