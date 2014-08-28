@@ -1,3 +1,4 @@
+# Map Abbreviations to their full state names. 
 states = dict(
     AL="Alabama",
     AK="Alaska",
@@ -60,5 +61,8 @@ states = dict(
     WI="Wisconsin",
     WY="Wyoming")
 
+# A dict that maps state names and their abbreviations to valid synonyms. For
+# example, synonyms['IN'] and synonyms['Indiana'] both return ['IN',
+# 'Indiana'].
 synonyms = dict([(key, [key, value]) for key, value in states.items()] +
                 [(value, [key, value]) for key, value in states.items()])
