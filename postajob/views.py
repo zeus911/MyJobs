@@ -316,20 +316,14 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
                            for key, value in self.request.POST.items()
                            if '__prefix__' not in key}
             delete = []
-            delete_ids = []
             for key in pruned_post.keys():
                 if key.endswith('DELETE'):
-                    delete.append(key)
-            for to_delete in delete:
-                prefix = to_delete.rsplit('-', 1)[0]
-                for key in pruned_post.keys():
-                    if key.startswith(prefix):
-                        if '-id' in key:
-                            id_ = pruned_post[key]
-                            delete_ids.append(id_)
+                    location_num = int(key.split('-')[1])
+                    delete.append(location_num)
+            print delete
             context['formset'] = JobLocationFormSet(pruned_post,
                                                     queryset=formset_qs)
-            context['delete'] = delete_ids
+            context['delete'] = delete
         else:
             context['formset'] = JobLocationFormSet(queryset=formset_qs)
         return context
@@ -346,9 +340,8 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
                     location.jobs.add(job)
                 delete = context.get('delete')
                 if delete:
-                    delete = JobLocation.objects.filter(pk__in=delete)
-                    for location in delete:
-                        location.delete()
+                    for to_delete in sorted(delete, reverse=True):
+                        locations[to_delete].delete()
                 job.save()
                 return redirect(self.success_url)
         return self.render_to_response(self.get_context_data(form=form))
