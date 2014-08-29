@@ -447,7 +447,7 @@ class ContactLogEntry(models.Model):
 
 class Tag(models.Model):
     name = models.CharField(max_length=255)
-    company = models.ForeignKey(Company)
+    company = models.ForeignKey('seo.Company')
 
     created_on = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)

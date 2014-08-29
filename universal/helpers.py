@@ -133,8 +133,4 @@ def add_pagination(request, object_list):
     except EmptyPage:
         pagination = paginator.page(paginator.num_pages)
 
-<<<<<<< HEAD
     return pagination
-=======
-    return pagination
->>>>>>> e3d3569... Fixed fallout from merge conflicts (mostly incorrect imports or incorrect deletions). Made sure tests were correctly inheriting from the base model for teardown.

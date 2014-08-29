@@ -7,7 +7,8 @@ from myjobs.tests.setup import MyJobsBase
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
 from mydashboard.tests.factories import CompanyFactory
-from mypartners.tests.factories import PartnerFactory, ContactFactory, TagFactory, ContactRecordFactory
+from mypartners.tests.factories import (PartnerFactory, ContactFactory, 
+                                        TagFactory, ContactRecordFactory)
 from mypartners.models import Partner, Contact, PRMAttachment
 from mysearches.models import PartnerSavedSearch
 from mysearches.tests.factories import PartnerSavedSearchFactory

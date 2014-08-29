@@ -57,8 +57,8 @@ USE_L10N = True
 MEDIA_ROOT = os.path.join(_PATH, 'files', 'media')
 MEDIA_URL = '/files/media/'
 
-STATIC_ROOT = os.path.join(_PATH, 'files', 'static')
-STATIC_URL = '/files/'
+STATIC_ROOT = os.path.join(_PATH, 'static')
+STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(PROJ_ROOT, 'static'),
 )
@@ -235,7 +235,6 @@ INSTALLED_APPS = (
     'haystack',
     'saved_search',
     'taggit',
-    'wildcard',
     'fsm',
 )
 
@@ -247,7 +246,8 @@ CAPTCHA_AJAX = True
 # only run on these apps
 PROJECT_APPS = ('myjobs', 'myprofile', 'mysearches', 'registration',
                 'mydashboard', 'mysignon', 'mymessages', 'mypartners',
-                'solr', 'postajob', 'seo', 'moc_coding', 'social_links', )
+                'solr', 'postajob', 'moc_coding', 'seo', 'social_links',
+                'wildcard', )
 
 INSTALLED_APPS += PROJECT_APPS
 
