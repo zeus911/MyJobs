@@ -119,13 +119,6 @@ class MyPartnerTests(MyJobsBase):
         tag2.save()
         cr = ContactRecordFactory(partner=self.partner)
 
-        # Check to make sure unique_together works
-        with self.assertRaises(IntegrityError) as cm:
-            # uncaught exceptions cause transactions to not properly be
-            # committed or rolled back
-            with transaction.atomic():
-                tag_same_name = TagFactory(company=self.company)
-
         # Add tag to models
         cr.tags.add(tag)
         self.partner.tags.add(tag)
