@@ -61,7 +61,12 @@
                 </div>
                 <div class="contents">
                     <fieldset>
+                        {% if item %}
                         {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.2 %}
+                        {% else %}
+                        {% comment %}Remove the is_expired box if we are creating a new job{% endcomment %}
+                        {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.2|slice:":-1" %}
+                        {% endif %}
                     </fieldset>
                 </div>
             </div>
