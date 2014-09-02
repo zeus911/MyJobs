@@ -19,7 +19,8 @@ from lxml import html
 from lxml.cssselect import CSSSelector
 import pytz
 import requests
-from universal.helpers import get_domain, get_company, get_company_or_404
+from universal.helpers import (get_domain, get_company, get_company_or_404,
+                               OrderedSet)
 from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
                                CHANGE, Partner, PartnerLibrary)
 from registration.models import ActivationProfile
@@ -478,7 +479,7 @@ def filter_partners(request, partner_library=False):
                 *['%s%s' % (sort_order, column) for column in
                   [contact_city, contact_state]])
 
-        partners = list(partners) + list(incomplete_partners)
+        partners = list(OrderedSet(list(partners) + list(incomplete_partners)))
     else:
         partners = partners.order_by(*[sort_by] + order_by)
 
