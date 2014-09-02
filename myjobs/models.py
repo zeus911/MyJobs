@@ -256,11 +256,27 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     objects = CustomUserManager()
 
+    def __init__(self, *args, **kwargs):
+        super(User, self).__init__(*args, **kwargs)
+        # Get a copy of the original password so we can determine if
+        # it has changed in the save().
+        self.__original_password = getattr(self, 'password', None)
+
     def __unicode__(self):
         return self.email
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
+
+        # If the password has changed, it's not being set for the first time
+        # and it wasn't change to a blank string, don't require them to change
+        # their password again.
+        print self.password
+        print self.__original_password
+        if ((self.password != self.__original_password)
+                and self.__original_password and (self.password != '')):
+            self.password_change = False
+
         if update_fields is not None and 'is_active' in update_fields:
             if self.is_active:
                 self.deactivate_type = DEACTIVE_TYPES_AND_NONE[0]
