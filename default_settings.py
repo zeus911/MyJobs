@@ -57,7 +57,7 @@ USE_L10N = True
 MEDIA_ROOT = os.path.join(_PATH, 'files', 'media')
 MEDIA_URL = '/files/media/'
 
-STATIC_ROOT = os.path.join(_PATH, 'static')
+STATIC_ROOT = os.path.join(_PATH, 'collected_static')
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(PROJ_ROOT, 'static'),
