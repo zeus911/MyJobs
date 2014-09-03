@@ -127,9 +127,6 @@ class PartnerSavedSearchForm(ModelForm):
         self.partner = kwargs.get('partner')
         choices = PartnerEmailChoices(kwargs.pop('partner', None))
         super(PartnerSavedSearchForm, self).__init__(*args, **kwargs)
-        initial = kwargs.get('instance')
-        if initial:
-            self.fields['feed'].initial = initial.feed
         self.fields["email"] = ChoiceField(
             widget=Select(), choices=choices,
             initial=choices[0][0], label="Send Results to",
@@ -138,8 +135,11 @@ class PartnerSavedSearchForm(ModelForm):
         self.fields["notes"].label = "Notes and Comments"
         self.fields["partner_message"].label = "Message for Contact"
         self.fields["url_extras"].label = "Source Codes & Campaigns"
-
-    feed = URLField(widget=HiddenInput())
+        initial = kwargs.get("instance")
+        feed_args = {"widget": HiddenInput()}
+        if initial:
+            feed_args["initial"] = initial.feed
+        self.fields["feed"] = URLField(**feed_args)
 
     class Meta:
         model = PartnerSavedSearch
