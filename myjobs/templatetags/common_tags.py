@@ -198,7 +198,12 @@ def gz(context):
         return ''
     ae = request.META.get('HTTP_ACCEPT_ENCODING', '')
     if 'gzip' in ae:
-        return '.gz'
+        return ''
+        # We've stopped returning .gz because of a bug in IE11 which causes
+        # the static files to not be loaded at all. No longer serving .gz
+        # files will also give us the opportunity to see what impact the
+        # static files actually have on load time.
+        #return '.gz'
     else:
         return ''
 
