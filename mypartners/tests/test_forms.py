@@ -1,6 +1,10 @@
+from django.core.urlresolvers import reverse
+from myjobs.tests.factories import UserFactory
 from mypartners.forms import ContactForm
 from mypartners.models import Contact
+from mypartners.tests.factories import ContactFactory
 from mypartners.tests.test_views import MyPartnersTestCase
+from mysearches.tests.factories import PartnerSavedSearchFactory
 
 
 class ContactFormTests(MyPartnersTestCase):
@@ -26,3 +30,17 @@ class ContactFormTests(MyPartnersTestCase):
         self.assertNotEqual(self.contact.email, self.data['email'])
         email_count = Contact.objects.filter(email=self.data['email']).count()
         self.assertEqual(email_count, 0)
+
+
+class PartnerSavedSearchFormTests(MyPartnersTestCase):
+    def test_partner_saved_search_form_from_instance(self):
+        user = UserFactory(email='user@example.com')
+        ContactFactory(user=user, partner=self.partner)
+        partner_saved_search = PartnerSavedSearchFactory(
+            created_by=self.staff_user, provider=self.company,
+            partner=self.partner, user=user, notes='')
+        response = self.client.get(reverse('partner_edit_search') +
+                                   '?partner=%s&id=%s' % (
+                                       self.partner.pk,
+                                       partner_saved_search.pk))
+        self.assertTrue(partner_saved_search.feed in response.content)
