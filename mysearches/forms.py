@@ -127,6 +127,9 @@ class PartnerSavedSearchForm(ModelForm):
         self.partner = kwargs.get('partner')
         choices = PartnerEmailChoices(kwargs.pop('partner', None))
         super(PartnerSavedSearchForm, self).__init__(*args, **kwargs)
+        initial = kwargs.get('instance')
+        if initial:
+            self.fields['feed'].initial = initial.feed
         self.fields["email"] = ChoiceField(
             widget=Select(), choices=choices,
             initial=choices[0][0], label="Send Results to",
