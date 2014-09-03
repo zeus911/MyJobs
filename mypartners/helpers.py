@@ -19,6 +19,7 @@ from lxml import html
 from lxml.cssselect import CSSSelector
 import pytz
 import requests
+import states
 from universal.helpers import (get_domain, get_company, get_company_or_404,
                                OrderedSet)
 from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
