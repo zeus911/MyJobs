@@ -66,7 +66,7 @@ ROOT_URLCONF = 'myjobs_urls'
 
 HAYSTACK_CONNECTIONS = {
     'default': {
-        'ENGINE': 'directseo.seo.search_backend.DESolrEngine',
+        'ENGINE': 'seo.search_backend.DESolrEngine',
         'URL': 'http://127.0.0.1:8983/solr/microsites',
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
