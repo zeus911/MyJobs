@@ -4,5 +4,5 @@ from postajob.models import Job
 # example, synonyms['IN'] and synonyms['Indiana'] both return ['IN',
 # 'Indiana'].
 synonyms = dict(
-    [(key, [key, value]) for key, value in Job.get_state_map().items()] +
-    [(value, [key, value]) for key, value in Job.get_state_map().items()])
+    [(key.lower(), [key, value]) for key, value in Job.get_state_map().items()] +
+    [(value.lower(), [key, value]) for key, value in Job.get_state_map().items()])

@@ -461,7 +461,12 @@ def filter_partners(request, partner_library=False):
         query &= Q(**{'%s__icontains' % contact_city: city})
 
     if state:
-        query &= Q(**{'%s__in' % contact_state: states.synonyms[state.strip()]})
+        state_query = Q()
+        for synonym in states.synonyms[state.strip().lower()]:
+            print synonym
+            state_query |= Q(**{'%s__iexact' % contact_state: synonym})
+
+        query &= state_query
 
     partners = partners.distinct().filter(query)
 
