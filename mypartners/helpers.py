@@ -463,7 +463,6 @@ def filter_partners(request, partner_library=False):
     if state:
         state_query = Q()
         for synonym in states.synonyms[state.strip().lower()]:
-            print synonym
             state_query |= Q(**{'%s__iexact' % contact_state: synonym})
 
         query &= state_query
