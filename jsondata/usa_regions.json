@@ -37,8 +37,8 @@
         "code":"GA",
         "name":"Georgia"
     },{
-    	"code":"GU",
-		"name":"Guam"
+        "code":"GU",
+        "name":"Guam"
     },{
         "code":"HI",
         "name":"Hawaii"
@@ -76,8 +76,8 @@
         "code":"MI",
         "name":"Michigan"
     },{
-    	"code":"MS",
-		"name":"Mississippi"
+        "code":"MS",
+        "name":"Mississippi"
     },{
         "code":"MN",
         "name":"Minnesota"
@@ -112,8 +112,8 @@
         "code":"ND",
         "name":"North Dakota"
     },{
-    	"code":"MP",
-		"name":"Northern Mariana Islands"
+        "code":"MP",
+        "name":"Northern Mariana Islands"
     },{
         "code":"OH",
         "name":"Ohio"
@@ -127,8 +127,8 @@
         "code":"PA",
         "name":"Pennsylvania"
     },{
-    	"code":"PR",
-		"name":"Puerto Rico"
+        "code":"PR",
+        "name":"Puerto Rico"
     },{
         "code":"RI",
         "name":"Rhode Island"
@@ -145,8 +145,8 @@
         "code":"TX",
         "name":"Texas"
     },{
-    	"code":"UM",
-		"name":"United States Minor Outlying Islands"
+        "code":"UM",
+        "name":"United States Minor Outlying Islands"
     },{
         "code":"UT",
         "name":"Utah"
@@ -157,8 +157,8 @@
         "code":"VA",
         "name":"Virginia"
     },{
-    	"code":"VI",
-		"name":"Virgin Islands"
+        "code":"VI",
+        "name":"Virgin Islands"
     },{
         "code":"WA",
         "name":"Washington"
@@ -169,14 +169,14 @@
         "code":"WI",
         "name":"Wisconsin"
     },{
-    	"code":"AA",
-		"name":"Armed Forces Americas"
+        "code":"AA",
+        "name":"Armed Forces Americas"
     },{
-    	"code":"AP",
-		"name":"Armed Forces Pacific"
+        "code":"AP",
+        "name":"Armed Forces Pacific"
     },{
-    	"code":"AE",
-		"name":"Armed Forces Others"
+        "code":"AE",
+        "name":"Armed Forces Others"
     }
     ],
     "friendly_label":"State",
