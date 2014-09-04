@@ -32,18 +32,14 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'directseo.settings'
 FEED_FILE_PREFIX = "dseo_feed_"
 
 
-def update_job_source(guid):
+def update_job_source(guid, buid, name):
     """Composed method for resopnding to a guid update."""
 
     logger.info("Updating Job Source %s", guid)
-    # BusinessUnit doesn't use GUIDs yet, so lookup BUID from GUID.
-    jobsource = lookup_job_source(guid)
-    buid = jobsource['config']['BusinessUnits']['BusinessUnitID']
-
     # Make the BusinessUnit and Company
     create_businessunit(buid)
     bu = BusinessUnit.objects.get(id=buid)
-    bu.title = jobsource['config']['BusinessUnits']['BusinessUnitName']
+    bu.title = name
     bu.save()
     add_company(bu)
 
@@ -76,25 +72,6 @@ def filter_current_jobs(jobs):
         if job.find(hr_xml_include_in_index).text == '0':
             continue
         yield job
-
-
-def lookup_job_source(guid):
-    """Helper method to wrap calls to Mike's API.
-
-    The point of this is that it's one place to get access to this information.
-    if how we access it changes, we can change it here and not have to rewrite
-    things in multiple places.
-
-    Input:
-        :guid: A guid identifying a jobsource (aka BusinessUnit)
-    :return: a dictionary from the json object."""
-    logger.debug("Lookup jobsource by guid: %s", guid)
-    url = "http://services.directemployers.org/api/1.0/jobsource/%s/" % guid
-    request = urllib2.Request(url)
-    base64string = base64.encodestring('%s:%s' % ('microsites', 'microsites')).replace('\n', '')
-    request.add_header("Authorization", "Basic %s" % base64string)
-    resp = urllib2.urlopen(request)
-    return json.loads(resp.read())
 
 
 def get_current_jobs(guid):

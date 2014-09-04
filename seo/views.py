@@ -1819,8 +1819,10 @@ def confirm_load_jobs_from_etl(response):
         if response.get('Subject', None) != 'END':
             msg = json.loads(response['Message'])
             jsid = msg['jsid']
+            buid = msg['buid']
+            name = msg['name']
             if jsid.lower() in blocked_jsids:
                 LOG.info("Ignoring sns for %s", jsid)
                 return None
-            task_etl_to_solr.delay(jsid)
+            task_etl_to_solr.delay(jsid, buid, name)
 

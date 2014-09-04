@@ -648,9 +648,9 @@ def task_update_solr(jsid, **kwargs):
 
 
 @task(name='tasks.etl_to_solr',)
-def task_etl_to_solr(guid):
+def task_etl_to_solr(guid, buid, name):
     try:
-        import_jobs.update_job_source(guid)
+        import_jobs.update_job_source(guid, buid, name)
     except Exception as e:
         logging.error("Error loading jobs for jobsource: %s", guid)
         logging.exception(e)
