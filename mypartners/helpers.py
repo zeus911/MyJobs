@@ -19,6 +19,7 @@ from lxml import html
 from lxml.cssselect import CSSSelector
 import pytz
 import requests
+import states
 from universal.helpers import (get_domain, get_company, get_company_or_404,
                                OrderedSet)
 from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
@@ -460,7 +461,11 @@ def filter_partners(request, partner_library=False):
         query &= Q(**{'%s__icontains' % contact_city: city})
 
     if state:
-        query &= Q(**{'%s__icontains' % contact_state: state})
+        state_query = Q()
+        for synonym in states.synonyms[state.strip().lower()]:
+            state_query |= Q(**{'%s__iexact' % contact_state: synonym})
+
+        query &= state_query
 
     partners = partners.distinct().filter(query)
 
