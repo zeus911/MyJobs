@@ -824,12 +824,11 @@ class SearchEditTests(MyPartnersTestCase):
                 'frequency': 'W',
                 'day_of_week': '3'}
 
-        with self.assertRaises(ValueError) as cm:
-            # When an invalid form is submitted, a ValueError is raised, but a
-            # user isn't able to submit an invalid form (except through curl or
-            # similar) since the other form fields are hidden if an invalid
-            # feed URL is given. 
-            response = self.client.post(url, data)
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 200)
+        errors = json.loads(response.content)
+        error_msg = 'That URL does not contain feed information'
+        self.assertIn(error_msg, errors['url'])
 
     def test_create_new_saved_search(self):
         self.search.delete()
@@ -927,16 +926,17 @@ class SearchEditTests(MyPartnersTestCase):
 
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 200)
-
-        # make sure only two emails are sent
         self.assertEqual(len(mail.outbox), 2)
+        for s in [self.staff_user.get_full_name(), str(self.company),
+                  'has created a job search for you']:
+            self.assertIn(s, mail.outbox[1].body)
 
-        # make sure that the first one is the activation email
-        self.assertIn("Your temporary password is", mail.outbox[0].body)
-        self.assertIn(self.company.name, mail.outbox[0].body)
-
-        # make sure the second one is the saved search email
-        self.assertIn("created this saved search", mail.outbox[1].body)
+        body = re.sub(r'\s+', ' ', mail.outbox[0].body)
+        for expected in ['%s created this saved search on your behalf:' % \
+                             (self.staff_user.email, ),
+                         'Saved Search Notification']:
+            self.assertTrue(expected in body)
+        self.assertFalse('delete this saved search' in body)
 
 
 class EmailTests(MyPartnersTestCase):

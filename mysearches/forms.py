@@ -3,7 +3,6 @@ from django.forms import (BooleanField, CharField, CheckboxInput, ChoiceField,
                           TextInput, Textarea, URLField, ValidationError)
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
-from django.template.loader import render_to_string
 
 from myjobs.models import User
 from myjobs.forms import BaseUserForm, make_choices
@@ -124,7 +123,6 @@ class DigestForm(BaseUserForm):
 
 class PartnerSavedSearchForm(ModelForm):
     def __init__(self, *args, **kwargs):
-        self.partner = kwargs.get('partner')
         choices = PartnerEmailChoices(kwargs.pop('partner', None))
         super(PartnerSavedSearchForm, self).__init__(*args, **kwargs)
         self.fields["email"] = ChoiceField(
@@ -135,11 +133,8 @@ class PartnerSavedSearchForm(ModelForm):
         self.fields["notes"].label = "Notes and Comments"
         self.fields["partner_message"].label = "Message for Contact"
         self.fields["url_extras"].label = "Source Codes & Campaigns"
-        initial = kwargs.get("instance")
-        feed_args = {"widget": HiddenInput()}
-        if initial:
-            feed_args["initial"] = initial.feed
-        self.fields["feed"] = URLField(**feed_args)
+
+    feed = URLField(widget=HiddenInput())
 
     class Meta:
         model = PartnerSavedSearch
@@ -167,28 +162,19 @@ class PartnerSavedSearchForm(ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
+        url = cleaned_data.get('url')
         user_email = cleaned_data.get('email')
 
         if not user_email:
             raise ValidationError(_("This field is required."))
 
-        return cleaned_data
-
-    def save(self, commit=True):
-        cleaned_data = self.cleaned_data
-        user_email = cleaned_data.get('email')
-        url = cleaned_data.get('url')
         # Get or create the user since they might not exist yet
         created = False
         user = User.objects.get_email_owner(email=user_email)
         if user is None:
-            ctx = {'creator': self.partner.name,
-                   'company': self.partner.owner}
-            msg = render_to_string('mypartners/partner_search_new_user.html',
-                                   ctx)
+            # Don't send a email here, as this is not a typical user creation.
             user, created = User.objects.create_user(email=user_email,
-                                                     send_email=True,
-                                                     custom_msg=msg)
+                                                     send_email=False)
             self.instance.user = user
             Contact.objects.filter(email=user_email).update(user=user)
         else:
@@ -203,11 +189,16 @@ class PartnerSavedSearchForm(ModelForm):
         else:
             error_msg = "That URL does not contain feed information"
             self._errors.setdefault('url', []).append(error_msg)
-        
-        self.instance.feed = cleaned_data.get('feed')
+
+        self.cleaned_data['feed'] = feed
+        return cleaned_data
+
+    def save(self, commit=True):
+        self.instance.feed = self.cleaned_data.get('feed')
         is_new_or_change = CHANGE if self.instance.pk else ADDITION
         instance = super(PartnerSavedSearchForm, self).save(commit)
-
+        if self.created:
+            send_custom_activation_email(instance)
         partner = instance.partner
         contact = Contact.objects.filter(partner=partner,
                                          user=instance.user)[0]
