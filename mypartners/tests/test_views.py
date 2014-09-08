@@ -232,8 +232,7 @@ class EditItemTests(MyPartnersTestCase):
             self.assertIn("Add Contact", soup.title.text)
 
     def test_edit_contact_form_loaded(self):
-        request = self.requests['contact'](id=self.contact.pk,
-                                           partner=self.partner.pk)
+        request = self.requests['contact'](id=self.contact.pk)
         request.user = self.staff_user
 
         response = views.edit_item(request)
