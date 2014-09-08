@@ -5,7 +5,7 @@ employment. It is funded and maintained by DirectEmployers Foundation.
 
 Copyright and License
 ---------------------
-Copyright (C) 2012-2013, DirectEmployers Foundation.  This project is provided under
+Copyright (C) 2012-2014, DirectEmployers Foundation.  This project is provided under
 a triple license that allows you to select the license that is best for your 
 needs. You may choose from:
 
