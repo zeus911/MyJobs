@@ -1411,7 +1411,7 @@ background: #ECEDED url('http://seo.nlx.org/my.jobs/img/fabric_of_squares_gray2.
 	color: #fff !important;
 	filter: none !important;
 	background-position: -2px 0;
-	background-image: url(/files/button-gradient-33.png);
+	background-image: url(/static/button-gradient-33.png);
 	height: 33px;
 	margin-top: 29px;
 }
@@ -1426,7 +1426,7 @@ background: #ECEDED url('http://seo.nlx.org/my.jobs/img/fabric_of_squares_gray2.
 	color: #fff !important;
 	filter: none !important;
 	background-position: -2px 0;
-	background-image: url(/files/button-gradient-33.png);
+	background-image: url(/static/button-gradient-33.png);
 }
 
 .action-title {

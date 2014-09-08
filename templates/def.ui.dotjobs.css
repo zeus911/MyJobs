@@ -30,7 +30,7 @@ h1, h2, h3, h4, h5, h6, label{
 }
 #direct_container .direct_searchContainer .btn.primary{
     background-position: -2px 0px;
-    background-image: url(/files/button-gradient-33.png);
+    background-image: url(/static/button-gradient-33.png);
     height: 33px;
     margin-top: 29px;    
 }
