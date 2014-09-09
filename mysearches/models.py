@@ -113,7 +113,8 @@ class SavedSearch(models.Model):
                 custom_msg = self.custom_message
 
             context_dict = {'saved_searches': [(self, items, count)],
-                            'custom_msg': custom_msg}
+                            'custom_msg': custom_msg,
+                            'contains_pss': is_pss}
             subject = self.label.strip()
             message = render_to_string('mysearches/email_single.html',
                                        context_dict)
@@ -130,7 +131,8 @@ class SavedSearch(models.Model):
     def send_initial_email(self, custom_msg=None):
         if self.user.opt_in_myjobs:
             context_dict = {'saved_searches': [(self,)],
-                            'custom_msg': custom_msg}
+                            'custom_msg': custom_msg,
+                            'contains_pss': hasattr(self, 'partnersavedsearch')}
             subject = "My.jobs New Saved Search - %s" % self.label.strip()
             message = render_to_string("mysearches/email_initial.html",
                                        context_dict)
@@ -159,6 +161,7 @@ class SavedSearch(models.Model):
             'saved_searches': [(self,)],
             'message': msg,
             'custom_msg': custom_msg,
+            'contains_pss': hasattr(self, 'partnersavedsearch')
         }
         subject = "My.jobs Saved Search Updated - %s" % self.label.strip()
         message = render_to_string("mysearches/email_update.html",
@@ -174,7 +177,6 @@ class SavedSearch(models.Model):
         On creation, check if that same URL exists for the user and raise
         validation if it's a duplicate.
         """
-
 
         duplicates = SavedSearch.objects.filter(user=self.user, url=self.url)
 
@@ -256,6 +258,7 @@ class SavedSearchDigest(models.Model):
     def send_email(self, custom_msg=None):
         saved_searches = self.user.savedsearch_set.filter(is_active=True)
         search_list = []
+        contains_pss = False
         for search in saved_searches:
             items, count = search.get_feed_items()
             pss = None
@@ -265,6 +268,7 @@ class SavedSearchDigest(models.Model):
                 pss = search
 
             if pss is not None:
+                contains_pss = True
                 extras = pss.url_extras
                 if extras:
                     mypartners.helpers.add_extra_params_to_jobs(items, extras)
@@ -277,9 +281,11 @@ class SavedSearchDigest(models.Model):
                           if items]
         if self.user.can_receive_myjobs_email() and saved_searches:
             subject = _('Your Daily Saved Search Digest')
-            context_dict = {'saved_searches': saved_searches,
-                            'digest': self,
-                            'custom_msg': custom_msg,
+            context_dict = {
+                'saved_searches': saved_searches,
+                'digest': self,
+                'custom_msg': custom_msg,
+                'contains_pss': contains_pss
             }
             message = render_to_string('mysearches/email_digest.html',
                                        context_dict)
@@ -355,7 +361,8 @@ class PartnerSavedSearch(SavedSearch):
         custom_msg = self.custom_message if self.custom_message else ''
         context_dict = {
             'saved_searches': [(self, items, count)],
-            'custom_msg': custom_msg
+            'custom_msg': custom_msg,
+            'contains_pss': True
         }
         subject = self.label.strip()
         message = render_to_string('mysearches/email_single.html',
