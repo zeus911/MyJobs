@@ -272,15 +272,21 @@ class PartnerSavedSearchTests(TestCase):
         self.assertEqual(partner_record.notes, search_record.notes)
         self.assertEqual(partner_email.body, search_email.body)
         self.assertEqual(partner_record.notes, partner_email.body)
+        self.assertFalse("Your resume is %s%% complete" %
+                         self.user.profile_completion in partner_email.body)
 
     def test_send_partner_saved_search_in_digest(self):
         """
         Saved search digests bypass the SavedSearch.send_email method. Ensure
         that partner saved searches are recorded when sent in a digest.
         """
+        SavedSearchFactory(user=self.user)
         self.assertEqual(ContactRecord.objects.count(), 1)
         self.digest.send_email()
         self.assertEqual(ContactRecord.objects.count(), 2)
+        email = mail.outbox[0]
+        self.assertFalse("Your resume is %s%% complete" %
+                         self.user.profile_completion in email.body)
 
     def test_send_partner_saved_search_with_inactive_user(self):
         self.user.is_active = False
