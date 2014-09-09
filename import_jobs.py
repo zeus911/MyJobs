@@ -47,7 +47,7 @@ def update_job_source(guid, buid, name):
     jobs = get_current_jobs(guid)
     # Hack to ignore the includeinindex bit for pearsoninternal.jobs
     # Should be temporary.
-    if buid not in [31578, 31094, 23525, 23500]:
+    if buid not in ["31578", "31094", "23525", "23500"]:
         jobs = filter_current_jobs(jobs)
     jobs = list(hr_xml_to_json(job, bu) for job in jobs)
     remove_expired_jobs(buid, jobs)
