@@ -8,7 +8,7 @@ from django.conf import settings
 from seo.models import BusinessUnit, SeoSite, CustomFacet, Company
 
 
-log = logging.getLogger('directseo.views')
+log = logging.getLogger('views')
 
 
 def update_businessunit(request):
