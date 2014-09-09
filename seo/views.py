@@ -2,6 +2,7 @@ import datetime
 import itertools
 import json
 import logging
+from lxml import etree
 import operator
 from fsm.views import FSMView
 import urllib
@@ -11,6 +12,7 @@ from types import IntType
 from urlparse import urlparse, urlunparse
 
 from django.conf import settings
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.sites.models import Site
 from django.contrib.syndication.views import Feed
 from django.contrib.humanize.templatetags.humanize import intcomma
@@ -47,11 +49,14 @@ from seo.templatetags.seo_extras import facet_text, smart_truncate
 from seo.cache import get_facet_count_key, get_site_config, get_total_jobs_count
 from seo.search_backend import DESearchQuerySet
 from seo import helpers
+from seo.forms import UploadJobFileForm
 from seo.models import (BusinessUnit, Company, Configuration, Country,
                         CustomFacet, GoogleAnalytics, JobFeed, SeoSite, SiteTag)
 from seo.decorators import (sns_json_message, custom_cache_page, protected_site,
                             home_page_check)
 from seo.sitemap import DateSitemap
+from transform import hr_xml_to_json
+
 
 """
 The 'filters' dictionary seen in some of these methods
@@ -65,7 +70,7 @@ filters = {'title_slug': {value}|None,
 From this dictionary, we should be able to filter most
 items down to what we actually need.
 """
-LOG = logging.getLogger('directseo.views')
+LOG = logging.getLogger('views')
 def ajax_get_facets(request, filter_path, facet_type):
     """
     Returns facets for the inputted facet_type
@@ -1826,3 +1831,42 @@ def confirm_load_jobs_from_etl(response):
                 return None
             task_etl_to_solr.delay(jsid, buid, name)
 
+
+@staff_member_required
+def test_markdown(request):
+    """
+    Gets an hrxml formatted job file and displays the job
+    detail page that it would generate.
+
+    """
+    class TempJob:
+        """
+        Creates a job object from a dictionary so the dict can be used
+        in the job_detail template.
+
+        """
+        def __init__(self, **entries):
+            self.__dict__.update(entries)
+
+    if request.method == 'POST':
+        form = UploadJobFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            xml = etree.fromstring(request.FILES['job_file'].read())
+            # Business Unit is usually specified by the sns message, but since
+            # there's no sns message and it's pretty unecessary to force
+            # the user to specify the business unit, use the DE one.
+            bu = BusinessUnit.objects.get(id=999999)
+            job_json = hr_xml_to_json(xml, bu, create_redirect=False)
+            job_json['buid'] = bu
+            data_dict = {
+                'the_job': TempJob(**job_json)
+            }
+            return render_to_response('job_detail.html', data_dict,
+                                      context_instance=RequestContext(request))
+    else:
+        form = UploadJobFileForm()
+        data_dict = {
+            'form': form,
+        }
+        return render_to_response('seo/basic_form.html', data_dict,
+                                  context_instance=RequestContext(request))

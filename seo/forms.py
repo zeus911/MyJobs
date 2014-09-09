@@ -617,3 +617,7 @@ class ATSSourceCodeForm(SeoSiteReverseForm):
 class ViewSourceForm(SeoSiteReverseForm):        
     class Meta:
         model = ViewSource
+
+
+class UploadJobFileForm(forms.Form):
+    job_file = forms.FileField(label='Job File')

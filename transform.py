@@ -193,14 +193,20 @@ def transform_for_postajob(job):
     return solr_job
 
 
-def hr_xml_to_json(xml, business_unit):
+def hr_xml_to_json(xml, business_unit, create_redirect=True):
     """
     Cleans a job coming from an HR-XML document. This should add any
     required fields, and re-format any fields that are not coming in
     in the required format.
 
+    This function is also used for markdown testing, and should not make
+    any changes to the database or solr.
+
     inputs:
         :xml: an HR-XML document
+        :business unit: the business unit the job is coming from
+        :create_redirect: flags whether or not a redirect for the job link
+                          should be added to the redirect table
 
     outputs:
         A solr-ready job as a dictionary
@@ -354,7 +360,8 @@ def hr_xml_to_json(xml, business_unit):
     job['text'] = " ".join([force_text((job.get(k)) or "None") for k in
                                   text_fields])
 
-    job['link'] = make_redirect(job, business_unit).make_link()
+    if create_redirect:
+        job['link'] = make_redirect(job, business_unit).make_link()
 
     return job
 
