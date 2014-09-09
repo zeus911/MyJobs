@@ -54,6 +54,8 @@ class SavedSearchModelsTests(TestCase):
         self.assertNotEqual(email.body.find(search.url),
                             -1,
                             "Search url was not found in email body")
+        self.assertTrue("Your resume is %s%% complete" %
+                        self.user.profile_completion in email.body)
 
     def test_send_search_digest_email(self):
         SavedSearchDigestFactory(user=self.user)
