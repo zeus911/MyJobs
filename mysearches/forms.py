@@ -215,20 +215,6 @@ class PartnerSavedSearchForm(ModelForm):
         self.cleaned_data['feed'] = feed
         return cleaned_data
 
-    def save(self, commit=True):
-        self.instance.feed = self.cleaned_data.get('feed')
-        is_new_or_change = CHANGE if self.instance.pk else ADDITION
-        instance = super(PartnerSavedSearchForm, self).save(commit)
-        if self.created:
-            send_custom_activation_email(instance)
-        partner = instance.partner
-        contact = Contact.objects.filter(partner=partner,
-                                         user=instance.user)[0]
-        log_change(instance, self, instance.created_by, partner,
-                   contact.email, action_type=is_new_or_change)
-
-        return instance
-
 
 class PartnerSubSavedSearchForm(ModelForm):
     class Meta:
