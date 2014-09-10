@@ -1,0 +1,132 @@
+{% extends 'postajob/form.html' %}
+{% load i18n %}
+{% load common_tags %}
+{% load postajob_tags %}
+{% gz as gz %}
+
+{% block form %}
+    <form action="?" method="post">
+        {% csrf_token %}
+        {{ form.owner }}
+        <div> {# accordion container #}
+            <div class="simple-accordion">
+                <div class="header">
+                    Job Details
+                </div>
+                <div class="contents">
+                    <fieldset>
+                        {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.0 %}
+                    </fieldset>
+                </div>
+            </div>
+            <div class="simple-accordion">
+                <div class="header">
+                    Job Locations
+                </div>
+                <div class="contents">
+                    <fieldset>
+                        <div id="job-location-forms" class="no-show">
+                            <p>This will be hidden</p>
+                            {% for formset_form in formset.forms %}
+                                <div class="formset-form">
+                                    {{ formset_form }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div id="job-location-display"></div>
+                        <div id="empty-form">
+                            {% include 'includes/form-error-highlight.html' with form=formset.empty_form %}
+                        </div>
+                        {{ formset.management_form }}
+                        <div class="actions">
+                            <div class="form-label pull-left">&nbsp;</div>
+                            <a class="btn" href="?" id="add-location">Add</a>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+            <div class="simple-accordion">
+                <div class="header">
+                        Application Instructions
+                </div>
+                <div class="contents">
+                    <fieldset>
+                        {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.1 %}
+                    </fieldset>
+                </div>
+            </div>
+            <div class="simple-accordion">
+                <div class="header">
+                    Job Expiration
+                </div>
+                <div class="contents">
+                    <fieldset>
+                        {% if item %}
+                        {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.2 %}
+                        {% else %}
+                        {% comment %}Remove the is_expired box if we are creating a new job{% endcomment %}
+                        {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.2|slice:":-1" %}
+                        {% endif %}
+                    </fieldset>
+                </div>
+            </div>
+            {% if not item.pk %}
+                <div class="simple-accordion">
+                    <div class="header">
+                        Posting Location
+                    </div>
+                    <div class="contents">
+                        {% if form.get_field_sets.3 %}
+                            <fieldset>
+                                {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.3 %}
+                            </fieldset>
+                        {% else %}
+                            <div class="span3 form-label pull-left initial site-label">
+                                <label>Site</label>
+                            </div>
+                            <div class="profile-form-input site-field">
+                                <ul id="id_site_packages">
+                                    {% for site in form|get_sites %}
+                                        <li>{{ site }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <div class="actions">
+            <div class="form-label pull-left">&nbsp;</div>
+            {% if item.pk and not prevent_delete %}
+                <button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>
+                <div id="delete-confirm" class="modal hide fade row">
+                    <div class="modal-header">{% trans 'Really Delete?' %}</div>
+                    <div class="modal-body">{% blocktrans %}Are you sure you want to delete this {{verbose}}?{% endblocktrans %}</div>
+                    <div class="modal-footer">
+                        <div class="actions">
+                            <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
+                            <a class="btn pull-right" href="{{ delete_url }}">{% trans 'Delete' %}</a>
+                        </div>{# /actions #}
+                    </div>{# /modal=footer #}
+                </div>{# /delete-confirm #}
+            {% endif %}
+            <a href="{{ success_url }}" class="btn">{% trans 'Cancel' %}</a>
+            <button type="submit" class="btn primary" id="profile-save">{% trans 'Save' %}</button>
+        </div>{# /actions #}
+    </form>
+{% endblock form %}
+
+{% block extra-js %}
+    {{ block.super }}
+    <script type="text/javascript">
+        var form_count = {{ formset.total_form_count }};
+        var form = '{{ formset.empty_form|escapejs }}';
+        $(document).ready(function() {
+            accordion('.header', '.contents');
+            expand_errors('.contents');
+            add_locations();
+            create_location_events();
+        });
+    </script>
+{% endblock %}

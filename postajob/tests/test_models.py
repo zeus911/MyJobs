@@ -11,11 +11,12 @@ from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          SeoSiteFactory)
 from seo.models import CompanyUser
 from myjobs.models import User
-from postajob.models import (CompanyProfile, Job, OfflineProduct, Product,
-                             ProductGrouping, ProductOrder, PurchasedJob,
-                             PurchasedProduct, Request, SitePackage)
-from postajob.tests.factories import (job_factory, product_factory,
-                                      offlineproduct_factory,
+from postajob.models import (CompanyProfile, Job, JobLocation, OfflineProduct,
+                             Product, ProductGrouping, ProductOrder,
+                             PurchasedJob, PurchasedProduct, Request,
+                             SitePackage)
+from postajob.tests.factories import (job_factory, joblocation_factory,
+                                      product_factory, offlineproduct_factory,
                                       offlinepurchase_factory,
                                       purchasedjob_factory,
                                       purchasedproduct_factory,
@@ -42,16 +43,19 @@ class ModelTests(MyJobsBase):
             'reqid': '1',
             'description': 'sadfljasdfljasdflasdfj',
             'link': 'www.google.com',
+            'on_sites': '0',
+            'apply_info': '',
+        }
+
+        self.request_location = {
             'city': 'Indianapolis',
             'state': 'Indiana',
             'state_short': 'IN',
             'country': 'United States of America',
             'country_short': 'USA',
             'zipcode': '46268',
-            'guid': 'abcdef123456',
-            'on_sites': '0',
-            'apply_info': '',
         }
+
         self.site_package_data = {
             'name': 'Test Site Package',
         }
@@ -62,23 +66,24 @@ class ModelTests(MyJobsBase):
         self.side_effect = [self.choices_data for x in range(0, 50)]
 
     @patch('urllib2.urlopen')
-    def test_job_creation(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('{"jobs_added": 1}')
-        job_factory(self.company, self.user)
-        self.assertEqual(Job.objects.all().count(), 1)
-
-    @patch('urllib2.urlopen')
-    def test_job_deletion(self, urlopen_mock):
+    def test_job_creation_and_deletion(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('{"jobs_deleted": 1}')
+        locations = [joblocation_factory() for x in range(0, 5)]
         job = job_factory(self.company, self.user)
+        job.locations = locations
+        job.save()
         self.assertEqual(Job.objects.all().count(), 1)
+        self.assertEqual(JobLocation.objects.all().count(), 5)
         job.delete()
         self.assertEqual(Job.objects.all().count(), 0)
+        self.assertEqual(JobLocation.objects.all().count(), 0)
 
     @patch('urllib2.urlopen')
     def test_job_add_to_solr(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('{"jobs_added": 1}')
-        job_factory(self.company, self.user)
+        job = job_factory(self.company, self.user)
+        job.locations.add(joblocation_factory())
+        job.add_to_solr()
         # add_to_solr() is called in save(), so urlopen should've been
         # called once at this point.
         self.assertEqual(urlopen_mock.call_count, 1)
@@ -89,16 +94,22 @@ class ModelTests(MyJobsBase):
         data = parse_qs(args[0].data)
         data['jobs'] = eval(data['jobs'][0])
         self.assertEqual(data['key'][0], settings.POSTAJOB_API_KEY)
-        del self.request_data['guid']
         for field in self.request_data.keys():
             self.assertEqual(data['jobs'][0][field], self.request_data[field])
+        for field in self.request_location.keys():
+            self.assertEqual(data['jobs'][0][field], self.request_location[field])
+
 
     @patch('urllib2.urlopen')
     def test_job_remove_from_solr(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('{"jobs_deleted": 1}')
-        job = job_factory(self.company, self.user,
-                          guid=self.request_data['guid'])
+        job = job_factory(self.company, self.user)
+        locations = [joblocation_factory() for x in range(0, 2)]
+        job.locations = locations
+        job.save()
         job.remove_from_solr()
+
+        guids = [unicode(location.guid) for location in locations]
 
         # add_to_solr() is called in save(), which is combined with the
         # call to remove_from_solr().
@@ -109,7 +120,7 @@ class ModelTests(MyJobsBase):
         args, _ = urlopen_mock.call_args
         data = parse_qs(args[0].data)
         self.assertEqual(data['key'][0], settings.POSTAJOB_API_KEY)
-        self.assertEqual(data['guids'][0], self.request_data['guid'])
+        self.assertItemsEqual(data['guids'][0].split(','), guids)
 
     @patch('urllib2.urlopen')
     def test_job_generate_guid(self, urlopen_mock):
@@ -117,15 +128,15 @@ class ModelTests(MyJobsBase):
         guid = '1'*32
 
         # Confirm that pre-assigned guids are not being overwritten.
-        job = job_factory(self.company, self.user, guid=guid)
-        self.assertEqual(guid, job.guid)
-        job.delete()
+        location = joblocation_factory(guid=guid)
+        self.assertEqual(guid, location.guid)
+        location.delete()
 
         # Confirm that if a guid isn't assigned one is getting assigned
         # to it properly.
-        job = job_factory(self.company, self.user)
-        self.assertIsNotNone(job.guid)
-        self.assertNotEqual(job.guid, guid)
+        location = joblocation_factory()
+        self.assertIsNotNone(location.guid)
+        self.assertNotEqual(location.guid, guid)
 
     def test_site_package_make_unique_for_site(self):
         package = SitePackage.objects.create(**self.site_package_data)
@@ -195,6 +206,8 @@ class ModelTests(MyJobsBase):
     def test_purchased_job_add_to_solr(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('')
         job = self.create_purchased_job()
+        job.locations.add(joblocation_factory())
+        job.save()
         # Add to solr and delete from solr shouldn't be called until
         # the job is approved.
         self.assertEqual(urlopen_mock.call_count, 0)
