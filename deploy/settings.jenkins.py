@@ -48,11 +48,11 @@ HAYSTACK_CONNECTIONS = {
         'URL': 'http://127.0.0.1:8983/solr/seo',
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password'],
-        },
+    },
     'groups': {
         'ENGINE': 'saved_search.groupsearch.SolrGrpEngine',
         'URL': 'http://127.0.0.1:8983/solr/seo',
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password'],
-        },
+    },
 }
