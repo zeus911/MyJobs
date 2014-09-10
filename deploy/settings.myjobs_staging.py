@@ -61,18 +61,3 @@ POSTAJOB_URLS = {
 CC_AUTH = TESTING_CC_AUTH
 
 ROOT_URLCONF = 'myjobs_urls'
-
-HAYSTACK_CONNECTIONS = {
-    'default': {
-        'ENGINE': 'seo.search_backend.DESolrEngine',
-        'URL': 'http://127.0.0.1:8983/solr/microsites',
-        'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
-        'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
-    },
-    'groups': {
-        'ENGINE': 'saved_search.groupsearch.SolrGrpEngine',
-        'URL': 'http://127.0.0.1:8983/solr/microsites',
-        'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
-        'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
-  }
-}
