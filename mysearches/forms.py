@@ -30,6 +30,11 @@ class SavedSearchForm(BaseUserForm):
         choices = make_choices(self.user)
         self.fields["email"] = ChoiceField(widget=Select(), choices=choices,
                                            initial=choices[0][0])
+        #initial = kwargs.get("instance")
+        #feed_args = {"widget": HiddenInput()}
+        #if initial:
+        #    feed_args["initial"] = initial.feed
+        #self.fields["feed"] = URLField(**feed_args)
 
     feed = URLField(widget=HiddenInput())
     notes = CharField(label=_("Notes and Comments"),

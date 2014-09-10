@@ -1,5 +1,6 @@
 from celery.exceptions import RetryTaskError
 import datetime
+import re
 
 from django.conf import settings
 from django.core import mail
@@ -313,3 +314,38 @@ class PartnerSavedSearchTests(MyJobsBase):
         self.assertTrue(self.user.user_guid in verify_url)
         self.assertTrue('https://secure.my.jobs%s' % verify_url
                         in email.body)
+
+    def test_partner_saved_search_pads_results(self):
+        """
+        If a partner saved search results in less than the desired number of
+        results, it should be padded with additional older results.
+
+        By extension, this also tests that a normal job seeker saved search does
+        not pad results.
+        """
+        # classes and ids may get stripped out when pynliner inlines css.
+        # all jobs contain a default (blank) icon. The number of occurrences
+        # equals the number of jobs.
+        job_icon = 'http://png.nlx.org/100x50/logo.gif'
+        num_jobs = lambda body: [match.start() for match in re.finditer(
+            job_icon, body)]
+
+        # quick sanity checks; searching for a string that doesn't exist
+        # returns an empty list
+        not_found = num_jobs('this is not the string you are looking for')
+        self.assertEqual(not_found, [])
+        # searching for a string that does exist returns all starting indices
+        # for the string
+        found = num_jobs(job_icon)
+        self.assertEqual(found, [0])
+
+        search = SavedSearchFactory(user=self.user)
+        search.send_email()
+        search_email = mail.outbox.pop()
+        job_count = num_jobs(search_email.body)
+        self.assertEqual(len(job_count), 1)
+
+        self.partner_search.send_email()
+        partner_search_email = mail.outbox.pop()
+        job_count = num_jobs(partner_search_email.body)
+        self.assertEqual(len(job_count), 2)

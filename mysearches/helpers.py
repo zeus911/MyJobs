@@ -133,7 +133,8 @@ def get_json(json_url):
 
 
 def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
-               return_items=None, use_json=True, last_sent=None):
+               return_items=None, use_json=True, last_sent=None,
+               ignore_dates=False):
     """
     Parses job data from an RSS feed and returns it as a list of dictionaries.
     The data returned is limited based on the corresponding data range (daily,
@@ -150,6 +151,9 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
     :last_sent: Date that this saved search, if one exists, was sent; used to
         grab jobs during a wider span of time in the event that saved searches
         encounter issues and don't send for a period of time; Default: None
+    :ignore_dates: Boolean that determines if we should ignore job publish
+        dates; :last_sent: will still be used to denote NEW jobs, but filtering
+        based on publish date will be bypassed. Default: False
 
     Outputs:
     :tuple:         First index is a list of :return_items: jobs
@@ -202,7 +206,8 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
                 item.findChild('pubdate').text)
             item_dict['description'] = item.findChild('description').text
 
-        if date_in_range(start, end, item_dict['pubdate'].date()):
+        if ignore_dates or date_in_range(start, end,
+                                         item_dict['pubdate'].date()):
             item_list.append(item_dict)
         else:
             break
