@@ -256,6 +256,45 @@ h1 > small > a:hover {
     margin-top: -35px;
 }
 
+.product-card.tag {
+    width: 31%;
+    margin: 0 1.5% 0 1.5%;
+    display: inline-block;
+}
+
+#tag-holder > div.product-card.tag:nth-of-type(3n + 4),
+#tag-holder > div.product-card.tag:first-of-type {
+    margin-left: 0;
+}
+
+#tag-holder > div.product-card.tag:nth-of-type(3n + 3) {
+    margin-right: 0;
+}
+
+#tag-holder > div.product-card.tag:nth-of-type(n + 4) {
+    margin-top: 10px;
+}
+
+.product-card.tag + .product-card.tag {
+    border-top: 1px solid #E5E5E5;
+}
+
+.product-card.tag > a:hover {
+    text-decoration: underline;
+}
+
+.tag-name{
+    padding: .2em .5em;
+    background-color: #B9B9B9;
+    font-weight: normal;
+    color: #000;
+    border-radius: 5px;
+}
+
+.tag-name.small {
+    font-size: 0.9em;
+}
+
 .sidebar {
     background-color: #F9FAFA;
     border: 1px solid #E5E5E5;
@@ -347,7 +386,7 @@ h1 > small > a:hover {
     padding: 1px 5px;
     border-radius: 5px;
     background-color: #888888;
-    color: #FFF;
+    color: #000;
     font-size: 0.9em;
 }
 
@@ -370,10 +409,10 @@ h1 > small > a:hover {
 .partner-tag.female.button { box-shadow: 2px 2px 0 #2B9CBC; }
 .partner-tag.minority { background-color: #FAA732; }
 .partner-tag.minority.button { box-shadow: 2px 2px 0 #DE860A; }
-.partner-tag.disabled { background-color: #5F6C82; }
-.partner-tag.disabled.button { box-shadow: 2px 2px 0 #45546D; }
-.partner-tag.disabled-veteran { background-color: #477958; }
-.partner-tag.disabled-veteran.button { box-shadow: 2px 2px 0 #2E593D; }
+.partner-tag.disabled { background-color: #808A9A; }
+.partner-tag.disabled.button { box-shadow: 2px 2px 0 #5F6D83; }
+.partner-tag.disabled-veteran { background-color: #659274; }
+.partner-tag.disabled-veteran.button { box-shadow: 2px 2px 0 #467B58; }
 .partner-tag.disabled-tag { background-color: #BCBCC2; }
 .partner-tag.disabled-tag.button { box-shadow: 2px 2px 0 #9696A3; }
 
@@ -419,7 +458,7 @@ h1 > small > a:hover {
     box-shadow: 2px 2px 0 #9696A3;
     padding: 1px 10px;
     border-radius: 5px;
-    color: #FFF;
+    color: #000;
 }
 
 .sort-by:hover {
@@ -570,6 +609,14 @@ h1 > small > a:hover {
 
 #manage-contacts table > tbody > tr > td{
     border-left: 0;
+}
+
+ul.tagit {
+    padding: 1px 5px;
+}
+
+div.tags-field ul.tagit input.ui-widget-content {
+    width: 140px;
 }
 
 .tip-box{

@@ -1,4 +1,40 @@
 $(document).ready(function() {
+    $("#p-tags").hide();
+    $("#p-tags").tagit({
+        allowSpaces: true,
+        tagSource: function(search, showChoices) {
+            var value = $(".tagit-new > input").val(),
+                search = {value: value},
+                that = this;
+            $.ajax({
+                type: "GET",
+                url: "/prm/view/records/get-tags",
+                data: search,
+                success: function(data) {
+                    var jdata = jQuery.parseJSON(data);
+                    showChoices(that._subtractArray(jdata, that.assignedTags()))
+                }
+            });
+        },
+        beforeTagAdded: function(event, ui) {
+            ui.tag.hide();
+            var name = ui.tag.children("span").html();
+            $.ajax({
+                type: "GET",
+                url: "/prm/view/records/get-tag-color",
+                data: {"name": name},
+                success: function(data) {
+                    var jdata = jQuery.parseJSON(data);
+                    if(jdata.length > 0)
+                        ui.tag.css("background-color", "#"+jdata[0]);
+                    ui.tag.show();
+                }
+            })
+        },
+        autocomplete: {delay: 0, minLength: 1, sortResults: true},
+        placeholderText: "Add Tag"
+    });
+
     if($('[id$="url"]').val() == ""){
         disable_fields();
     } else {
@@ -254,10 +290,14 @@ function show_hide_content(status) {
 
 
 function add_refresh_btn() {
-    var field = $('[id$="url"]');
+    var field = $('[id$="url"]'),
+        field_width = 0;
     field.parent().addClass('input-append');
-
-    var field_width = field.width() - 28;
+    if ($(document).width() > 500) {
+        field_width = field.width() - 28 + 100;
+    } else {
+        field_width = 320;
+    }
     field.css("width", String(field_width)+"px");
 
     field.after('<span class="btn add-on refresh"><i class="icon icon-refresh">');
@@ -303,6 +343,8 @@ function disable_fields() {
     $('label[for$="partner_message"]').hide();
     $('[class*="help-block"]').hide();
     $('.primary').hide();
+    $('label[for$="p-tags"]').hide();
+    $('ul.tagit').hide();
 }
 
 function enable_fields() {
@@ -324,4 +366,6 @@ function enable_fields() {
     $('label[for$="partner_message"]').show();
     $('[class*="help-block"]').show();
     $('.primary').show();
+    $('label[for$="p-tags"]').show();
+    $('ul.tagit').show();
 }

@@ -8,10 +8,20 @@ import pytz
 
 from myprofile.forms import generate_custom_widgets
 from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
-                               ADDITION, CHANGE, MAX_ATTACHMENT_MB)
-from mypartners.helpers import log_change, get_attachment_link
+                               ADDITION, CHANGE, MAX_ATTACHMENT_MB, Tag)
+from mypartners.helpers import log_change, get_attachment_link, tag_get_or_create
 from mypartners.widgets import (MultipleFileField,
                                 SplitDateTimeDropDownField, TimeDropDownField)
+
+
+def init_tags(self):
+    if self.instance.id and self.instance.tags:
+        tag_names = ",".join([tag.name for tag in self.instance.tags.all()])
+        self.initial['tags'] = tag_names
+    self.fields['tags'] = forms.CharField(
+        label='Tags', max_length=255, required=False,
+        widget=forms.TextInput(attrs={'id': 'p-tags', 'placeholder': 'Tags'})
+    )
 
 
 class ContactForm(forms.ModelForm):
@@ -24,6 +34,9 @@ class ContactForm(forms.ModelForm):
             label="Name", max_length=255, required=True,
             widget=forms.TextInput(attrs={'placeholder': 'Full Name',
                                           'id': 'id_contact-name'}))
+
+        init_tags(self)
+
         if self.instance.user:
             self.fields['email'].widget.attrs['readonly'] = True
             self.fields['email'].help_text = 'This email address is ' \
@@ -34,7 +47,7 @@ class ContactForm(forms.ModelForm):
     class Meta:
         form_name = "Contact Information"
         model = Contact
-        exclude = ['user', 'partner', 'tags']
+        exclude = ['user', 'partner']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
@@ -44,6 +57,11 @@ class ContactForm(forms.ModelForm):
         if self.instance.user:
             return self.instance.email
         return self.cleaned_data['email']
+
+    def clean_tags(self):
+        data = self.cleaned_data['tags'].split(',')
+        tags = tag_get_or_create(self.data['company_id'], data)
+        return tags
 
     def save(self, user, partner, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
@@ -130,7 +148,11 @@ class NewPartnerForm(forms.ModelForm):
             'partnerurl': forms.URLField(
                 label="Partner URL", max_length=255, required=False,
                 widget=forms.TextInput(attrs={'placeholder': 'Partner URL',
-                                              'id': 'id_partner-partnerurl'}))
+                                              'id': 'id_partner-partnerurl'})),
+            'partner-tags': forms.CharField(
+                label='Tags', max_length=255, required=False,
+                widget=forms.TextInput(attrs={'id': 'p-tags',
+                                              'placeholder': 'Tags'}))
         }
 
         ordered_fields = OrderedDict(new_fields)
@@ -140,7 +162,7 @@ class NewPartnerForm(forms.ModelForm):
     class Meta:
         form_name = "Partner Information"
         model = Contact
-        exclude = ['user', 'partner']
+        exclude = ['user', 'partner', 'tags']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
@@ -161,6 +183,9 @@ class NewPartnerForm(forms.ModelForm):
                                         ['partnername', 'partnerurl',
                                          'csrfmiddlewaretoken', 'company',
                                          'company_id', 'ct'])
+
+
+
         has_data = False
         for value in self.data.itervalues():
             if value != [''] and value != ['USA']:
@@ -169,7 +194,12 @@ class NewPartnerForm(forms.ModelForm):
             self.instance.partner = partner
             instance = super(NewPartnerForm, self).save(commit)
             partner.primary_contact = instance
+            # Tag creation
+            tag_data = self.cleaned_data['partner-tags'].split(',')
+            tags = tag_get_or_create(company_id, tag_data)
+            partner.tags = tags
             partner.save()
+            self.instance.tags = tags
             log_change(instance, self, self.user, partner, instance.name,
                        action_type=ADDITION)
 
@@ -210,11 +240,18 @@ class PartnerForm(forms.ModelForm):
             label="Primary Contact", required=False, initial=choices[0][0],
             choices=choices)
 
+        init_tags(self)
+
     class Meta:
         form_name = "Partner Information"
         model = Partner
-        fields = ['name', 'uri']
+        fields = ['name', 'uri', 'tags']
         widgets = generate_custom_widgets(model)
+
+    def clean_tags(self):
+        data = self.cleaned_data['tags'].split(',')
+        tags = tag_get_or_create(self.data['company_id'], data)
+        return tags
 
     def save(self, user, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
@@ -259,7 +296,7 @@ class ContactRecordForm(forms.ModelForm):
                   'contact_email', 'contact_phone', 'location',
                   'length', 'subject', 'date_time', 'job_id',
                   'job_applications', 'job_interviews', 'job_hires',
-                  'notes', 'attachment')
+                  'tags', 'notes', 'attachment')
         model = ContactRecord
 
     def __init__(self, *args, **kwargs):
@@ -306,6 +343,7 @@ class ContactRecordForm(forms.ModelForm):
                 self.fields["attach_delete"] = forms.MultipleChoiceField(
                     required=False, choices=choices, label="Delete Files",
                     widget=forms.CheckboxSelectMultiple)
+        init_tags(self)
 
     def clean(self):
         contact_type = self.cleaned_data.get('contact_type', None)
@@ -346,12 +384,18 @@ class ContactRecordForm(forms.ModelForm):
         date_time = user_tz.localize(date_time)
         return date_time.astimezone(pytz.utc)
 
+    def clean_tags(self):
+        data = self.cleaned_data['tags'].split(',')
+        tags = tag_get_or_create(self.data['company'], data)
+        return tags
+
     def save(self, user, partner, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
         self.instance.partner = partner
         self.instance.created_by = user
         instance = super(ContactRecordForm, self).save(commit)
 
+        self.instance.tags = self.cleaned_data.get('tags')
         attachments = self.cleaned_data.get('attachment', None)
         for attachment in attachments:
             if attachment:
@@ -379,3 +423,13 @@ class ContactRecordForm(forms.ModelForm):
 
         return instance
 
+
+class TagForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(TagForm, self).__init__(*args, **kwargs)
+
+    class Meta:
+        form_name = "Tag"
+        model = Tag
+        fields = ['name', 'hex_color']
+        widgets = generate_custom_widgets(model)

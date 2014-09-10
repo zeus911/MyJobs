@@ -39,25 +39,31 @@
         </small>
     </div>
     {% endif %}
-    {% if on_page == 'partner_library' %}
     <div class="partner-tags">
-        {% if partner.is_veteran %}
-            <div class="partner-tag veteran">Veteran</div>
-        {% endif %}
-        {% if partner.is_female %}
-            <div class="partner-tag female">Female</div>
-        {% endif %}
-        {% if partner.is_minority %}
-            <div class="partner-tag minority">Minority</div>
-        {% endif %}
-        {% if partner.is_disabled %}
-            <div class="partner-tag disabled">Disabled</div>
-        {% endif %}
-        {% if partner.is_disabled_veteran %}
-            <div class="partner-tag disabled-veteran">Disabled Veteran</div>
+        {% if on_page == 'prm' %}
+            {% for tag in partner.tags.all %}
+                <span class="tag-name small" style="background-color: #{{tag.hex_color}}">{{ tag.name }}</span>
+            {% endfor %}
+        {% elif on_page == 'partner_library' %}
+
+            {% if partner.is_veteran %}
+                <div class="partner-tag veteran">Veteran</div>
+            {% endif %}
+            {% if partner.is_female %}
+                <div class="partner-tag female">Female</div>
+            {% endif %}
+            {% if partner.is_minority %}
+                <div class="partner-tag minority">Minority</div>
+            {% endif %}
+            {% if partner.is_disabled %}
+                <div class="partner-tag disabled">Disabled</div>
+            {% endif %}
+            {% if partner.is_disabled_veteran %}
+                <div class="partner-tag disabled-veteran">Disabled Veteran</div>
+            {% endif %}
+
         {% endif %}
     </div>
-    {% endif %}
     <div class="product-details">
         {% if on_page == 'prm' %}
 

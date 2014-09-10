@@ -23,7 +23,7 @@ import states
 from universal.helpers import (get_domain, get_company, get_company_or_404,
                                OrderedSet)
 from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
-                               CHANGE, Partner, PartnerLibrary)
+                               CHANGE, Partner, PartnerLibrary, Tag)
 from registration.models import ActivationProfile
 
 
@@ -159,10 +159,10 @@ def contact_record_val_to_str(value):
     If the value matches a contact type choice it's translated to the
     verbose form.
     """
-
     value = (value.strftime('%b %d, %Y %I:%M %p') if type(value)
              is datetime else value.strftime('%H hours %M minutes')
              if type(value) is time else force_unicode(value))
+
 
     contact_types = dict(CONTACT_TYPE_CHOICES)
     if value in contact_types:
@@ -415,6 +415,7 @@ def filter_partners(request, partner_library=False):
     sort_by = sort_order + request.REQUEST.get('sort_by', 'name')
     city = request.REQUEST.get('city', '').strip()
     state = request.REQUEST.get('state', '').strip()
+    tags = [tag.strip() for tag in request.REQUEST.get('tag', '').split(',') if tag]
     keywords = [keyword.strip() for keyword in request.REQUEST.get(
         'keywords', '').split(',') if keyword]
 
@@ -467,6 +468,12 @@ def filter_partners(request, partner_library=False):
 
         query &= state_query
 
+    tag_query = Q()
+    for tag in tags:
+        tag_query &= Q(tags__name__icontains=tag)
+
+    query &= tag_query
+
     partners = partners.distinct().filter(query)
 
     # for location, we want to sort by both city and state
@@ -500,11 +507,35 @@ def new_partner_from_library(request):
         raise Http404
     library = get_object_or_404(PartnerLibrary, pk=library_id)
 
+    tags = []
+    if library.is_disabled:
+        disabled, _ = Tag.objects.get_or_create(
+            company=company, name="Disabled", defaults={'hex_color': '808A9A'})
+        tags.append(disabled)
+    if library.is_disabled_veteran:
+        disabled_veteran, _ = Tag.objects.get_or_create(
+            company=company, name="Disabled Veteran",
+            defaults={'hex_color': '659274'})
+        tags.append(disabled_veteran)
+    if library.is_female:
+        female, _ = Tag.objects.get_or_create(company=company, name="Female",
+                                              defaults={'hex_color': '4BB1CF'})
+        tags.append(female)
+    if library.is_minority:
+        minority, _ = Tag.objects.get_or_create(
+            company=company, name="Minority", defaults={'hex_color': 'FAA732'})
+        tags.append(minority)
+    if library.is_veteran:
+        veteran, _ = Tag.objects.get_or_create(
+            company=company, name="Veteran", defaults={'hex_color': '5EB94E'})
+        tags.append(veteran)
+
     partner = Partner.objects.create(
         name=library.name,
         uri=library.uri,
         owner=company,
         library=library)
+    partner.tags = tags
 
     contact = Contact.objects.create(
         partner=partner,
@@ -519,8 +550,19 @@ def new_partner_from_library(request):
         postal_code=library.zip_code,
         notes=("This contact was generated from content in the "
                "OFCCP directory."))
+    contact.tags = tags
+    contact.save()
 
     partner.primary_contact = contact
     partner.save()
 
     return partner
+
+
+def tag_get_or_create(company_id, data):
+    tags = []
+    for tag in data:
+        obj, created = Tag.objects.get_or_create(company_id=company_id, name=tag)
+        tags.append(obj.id)
+
+    return tags

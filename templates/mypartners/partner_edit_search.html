@@ -7,6 +7,10 @@
 {% endblock %}
 {% load i18n %}
 
+{% block meta-extra %}
+<link href="{{ STATIC_URL }}jquery.tagit.css" rel="stylesheet" type="text/css">
+{% endblock %}
+
 {% block content %}
     <h1><a class="mobile_hide" href="{% url 'prm' %}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
     <div class="row">
@@ -78,5 +82,6 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}partner_edit_search.152-08.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}tag-it.min.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}partner_edit_search.156-10.js{{ gz }}"></script>
 {% endblock %}
