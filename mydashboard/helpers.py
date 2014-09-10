@@ -72,8 +72,7 @@ def saved_searches(employer, company, candidate):
         raise Http404
 
     employer_microsites = get_company_microsites(company)[0]
-    candidate_searches = candidate.savedsearch_set.values_list('url', flat=True)
-
+    candidate_searches = candidate.savedsearch_set.values_list('feed', flat=True)
     # Switch all company's microsites and candidate's saved searches to just
     # the domain so they can be easily compared.
     employer_domains = [get_domain(url).lower() for url in employer_microsites]
@@ -87,9 +86,35 @@ def get_analytics_counts(actions):
     return Counter(page_types)
 
 
-def filter_by_microsite(microsites, user_solr=None, facet_solr=None):
+def filter_by_domain(domain, user_solr=None, facet_solr=None):
     """
-    Applies solr filters based on company/microsite.
+    Applies solr filters to SavedSearch.url based on a domain.
+
+    inputs:
+    :domain: The domain to filter the SavedSearches on.
+    :user_solr: A Solr instance used for retrieving SavedSearch documents
+        from solr.
+    :facet_solr: A Solr instance used for retrieving facets based on
+        ProfileUnits data.
+
+    outputs:
+    user_solr and facet_solr filtered by the company.
+
+    """
+    user_solr = Solr() if not user_solr else user_solr
+    facet_solr = Solr() if not facet_solr else facet_solr
+
+    query = 'SavedSearch_feed:*%s*' % domain
+
+    user_solr = user_solr.add_filter_query(query)
+    facet_solr = facet_solr.add_filter_query(query)
+
+    return user_solr, facet_solr
+
+
+def filter_by_microsite(company, user_solr=None, facet_solr=None):
+    """
+    Applies solr filters based on company.
 
     inputs:
     :microsites: A list of the microsites to filter the SavedSearches on.
@@ -99,24 +124,17 @@ def filter_by_microsite(microsites, user_solr=None, facet_solr=None):
         ProfileUnits data.
 
     outputs:
-    user_solr and facet_solr filtered by applicable microsites.
+    user_solr and facet_solr filtered by the company.
 
     """
 
     user_solr = Solr() if not user_solr else user_solr
     facet_solr = Solr() if not facet_solr else facet_solr
 
-    urls = ['(SavedSearch_url:*%s*)' % site.replace('http://', '')
-            for site in microsites]
+    query = 'SavedSearch_company_id:%s' % company.pk
 
-    if not urls:
-        urls = '(-SavedSearch_url:[* TO *])'
-    else:
-        urls = ' OR '.join(urls)
-        urls = '(%s)' % urls
-
-    user_solr = user_solr.add_filter_query(urls)
-    facet_solr = facet_solr.add_query(urls)
+    user_solr = user_solr.add_filter_query(query)
+    facet_solr = facet_solr.add_query(query)
     user_solr = user_solr.add_filter_query('User_opt_in_employers:true')
     facet_solr = facet_solr.add_query('User_opt_in_employers:true')
 
@@ -186,8 +204,7 @@ def filter_by_date(request, field=None):
     return date_range, date_start, date_end, days_delta
 
 
-def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
-                             loc_solr=None):
+def apply_facets_and_filters(request, user_solr=None, facet_solr=None):
     """
     Applies facets to solr based on filters currently applied and creates
     a dictionary of removable terms and the resulting url with the term removed.
@@ -218,27 +235,30 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
     filters = {}
     user_solr = Solr() if not user_solr else user_solr
     facet_solr = Solr() if not facet_solr else facet_solr
-    loc_solr = Solr() if not loc_solr else loc_solr
 
     # The location parameter should be "Country-Region-City". Faceting
     # is determined on what is already in the location parameter.
     # No location facets on country, country parameter facets on state, and
     # country-state facets on city.
     if not 'location' in request.GET:
-        loc_solr = loc_solr.add_facet_field('Address_country_code')
-        loc_solr = loc_solr.add_facet_field('Address_region')
+        facet_solr = facet_solr.add_facet_field('Address_country_code')
+        facet_solr = facet_solr.add_facet_field('Address_region')
     else:
+        fieldname = 'Address_full_location'
+
         term = urllib.unquote(request.GET.get('location'))
         search_term = term.replace("-", "##").replace(" ", "\ ")
         if len(term.split("-")) == 3:
-            q = 'Address_full_location:%s' % search_term
+            q = '%s:%s' % (fieldname, search_term)
         else:
-            q = 'Address_full_location:%s##*' % search_term
+            q = '%s:%s##*' % (fieldname, search_term)
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
 
         term_list = term.split("-")
         term_len = len(term_list)
+
+        prefix = '%s##' % term.replace('-', '##')
         if term_len == 3:
             # Country, Region, City included. No reason to facet on location.
             city = term_list[2] if term_list[2] else 'None'
@@ -253,14 +273,14 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
             country = term_list[0]
             remove_term = "%s, %s" % (region, country)
             filters[remove_term] = update_url_param(url, 'location', term_list[0])
-            loc_solr = loc_solr.add_facet_field('Address_full_location')
-            loc_solr = loc_solr.add_facet_prefix('%s##' % term.replace("-", "##"))
+            facet_solr = facet_solr.add_facet_field(fieldname)
+            facet_solr = facet_solr.add_facet_prefix(prefix, fieldname=fieldname)
         elif term_len == 1:
             # Country included.
             country = country_codes.get(term_list[0], term_list[0])
             filters[country] = remove_param_from_url(url, 'location')
-            loc_solr = loc_solr.add_facet_field('Address_region')
-            loc_solr = loc_solr.add_facet_prefix('%s##' % term.replace("-", "##"))
+            facet_solr = facet_solr.add_facet_field('Address_region')
+            facet_solr = facet_solr.add_facet_prefix(prefix, fieldname=fieldname)
 
     if not 'education' in request.GET:
         facet_solr = facet_solr.add_facet_field('Education_education_level_code')
@@ -272,7 +292,6 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
         q = 'Education_education_level_code:%s' % term
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
-        loc_solr = loc_solr.add_filter_query(q)
 
     if not 'license' in request.GET:
         facet_solr = facet_solr.add_facet_field('License_license_name')
@@ -283,9 +302,8 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None,
         q = 'License_license_name:"%s"' % term
         user_solr = user_solr.add_query(q)
         facet_solr = facet_solr.add_filter_query(q)
-        loc_solr = loc_solr.add_filter_query(q)
 
-    return user_solr, facet_solr, loc_solr, filters
+    return user_solr, facet_solr, filters
 
 
 def update_url_param(url, param, new_val):

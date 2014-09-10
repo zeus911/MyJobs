@@ -134,7 +134,11 @@ class PartnerSavedSearchForm(ModelForm):
         self.fields["partner_message"].label = "Message for Contact"
         self.fields["url_extras"].label = "Source Codes & Campaigns"
 
-    feed = URLField(widget=HiddenInput())
+        initial = kwargs.get("instance")
+        feed_args = {"widget": HiddenInput()}
+        if initial:
+            feed_args["initial"] = initial.feed
+        self.fields["feed"] = URLField(**feed_args)
 
     class Meta:
         model = PartnerSavedSearch
@@ -166,7 +170,7 @@ class PartnerSavedSearchForm(ModelForm):
         user_email = cleaned_data.get('email')
 
         if not user_email:
-            raise ValidationError(_("This field is required."))
+           raise ValidationError(_("This field is required."))
 
         # Get or create the user since they might not exist yet
         created = False

@@ -20,7 +20,6 @@ from mysearches.tests.factories import (SavedSearchFactory,
                                         PartnerSavedSearchFactory)
 from mysearches.tests.test_helpers import return_file
 from registration.models import ActivationProfile
-from registration.tests.helpers import assert_email_inlines_styles
 from tasks import send_search_digests
 
 
@@ -58,6 +57,8 @@ class SavedSearchModelsTests(MyJobsBase):
         self.assertNotEqual(email.body.find(search.url),
                             -1,
                             "Search url was not found in email body")
+        self.assertTrue("Your resume is %s%% complete" %
+                        self.user.profile_completion in email.body)
 
     def test_send_search_digest_email(self):
         SavedSearchDigestFactory(user=self.user)
@@ -96,8 +97,6 @@ class SavedSearchModelsTests(MyJobsBase):
         self.assertEqual("My.jobs New Saved Search" in email.subject, True)
         self.assertTrue("table" in email.body)
         self.assertTrue(email.to[0] in email.body)
-
-        assert_email_inlines_styles(self, email)
 
     def test_send_update_email(self):
         search = SavedSearchFactory(user=self.user, is_active=False,
@@ -291,15 +290,21 @@ class PartnerSavedSearchTests(MyJobsBase):
         self.assertEqual(partner_record.notes, search_record.notes)
         self.assertEqual(partner_email.body, search_email.body)
         self.assertEqual(partner_record.notes, partner_email.body)
+        self.assertFalse("Your resume is %s%% complete" %
+                         self.user.profile_completion in partner_email.body)
 
     def test_send_partner_saved_search_in_digest(self):
         """
         Saved search digests bypass the SavedSearch.send_email method. Ensure
         that partner saved searches are recorded when sent in a digest.
         """
+        SavedSearchFactory(user=self.user)
         self.assertEqual(ContactRecord.objects.count(), 1)
         self.digest.send_email()
         self.assertEqual(ContactRecord.objects.count(), 2)
+        email = mail.outbox[0]
+        self.assertFalse("Your resume is %s%% complete" %
+                         self.user.profile_completion in email.body)
 
     def test_send_partner_saved_search_with_inactive_user(self):
         self.user.is_active = False
