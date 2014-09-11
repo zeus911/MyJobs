@@ -17,7 +17,7 @@ DATABASES = {'default': {'NAME': 'redirect',
             }
 
 TEMPLATE_DIRS = (
-    '/home/web/direct-seo/directseo/templates/',
+    '/home/web/MyJobs/MyJobs/templates/',
 )
 
 SESSION_CACHE_ALIAS = 'sessions'
