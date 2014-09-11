@@ -1,5 +1,6 @@
 from celery.exceptions import RetryTaskError
 import datetime
+import re
 
 from django.conf import settings
 from django.core import mail
@@ -259,6 +260,14 @@ class PartnerSavedSearchTests(MyJobsBase):
 
         self.patcher = patch('urllib2.urlopen', return_file())
         self.mock_urlopen = self.patcher.start()
+        self.num_occurrences = lambda text, search_str: [match.start()
+                                                         for match
+                                                         in re.finditer(
+                                                             search_str, text)]
+        # classes and ids may get stripped out when pynliner inlines css.
+        # all jobs contain a default (blank) icon, so we can search for that if
+        # we want a job count
+        self.job_icon = 'http://png.nlx.org/100x50/logo.gif'
 
     def tearDown(self):
         super(PartnerSavedSearchTests, self).tearDown()
@@ -321,3 +330,55 @@ class PartnerSavedSearchTests(MyJobsBase):
         self.assertTrue(self.user.user_guid in verify_url)
         self.assertTrue('https://secure.my.jobs%s' % verify_url
                         in email.body)
+
+    def test_num_occurrences_instance_method(self):
+        # quick sanity checks; searching for a string that doesn't exist
+        # returns an empty list
+        not_found = self.num_occurrences(
+            'this is not the string you are looking for',
+            self.job_icon)
+        self.assertEqual(not_found, [])
+        # searching for a string that does exist returns all starting indices
+        # for the string
+        found = self.num_occurrences(self.job_icon, self.job_icon)
+        self.assertEqual(found, [0])
+
+    def test_partner_saved_search_pads_results(self):
+        """
+        If a partner saved search results in less than the desired number of
+        results, it should be padded with additional older results.
+
+        By extension, this also tests that a normal job seeker saved search does
+        not pad results.
+        """
+
+        search = SavedSearchFactory(user=self.user)
+        search.send_email()
+        search_email = mail.outbox.pop()
+        job_count = self.num_occurrences(search_email.body, self.job_icon)
+        self.assertEqual(len(job_count), 1)
+
+        self.partner_search.send_email()
+        partner_search_email = mail.outbox.pop()
+        job_count = self.num_occurrences(partner_search_email.body,
+                                         self.job_icon)
+        self.assertEqual(len(job_count), 2)
+
+    def test_saved_search_new_job_indicator(self):
+        """
+        Partner saved searches should include indicators for unseen jobs, while
+        job seeker saved searches should not.
+        """
+        new_job_indicator = '>New! <'
+        search = SavedSearchFactory(user=self.user)
+        search.send_email()
+        search_email = mail.outbox.pop()
+        new_jobs = self.num_occurrences(search_email.body,
+                                        new_job_indicator)
+        self.assertEqual(len(new_jobs), 0)
+
+        self.partner_search.send_email()
+        partner_search_email = mail.outbox.pop()
+        new_jobs = self.num_occurrences(partner_search_email.body,
+                                        new_job_indicator)
+        self.assertEqual(len(new_jobs), 1)
