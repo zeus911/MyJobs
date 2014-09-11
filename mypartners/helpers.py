@@ -468,13 +468,11 @@ def filter_partners(request, partner_library=False):
 
         query &= state_query
 
-    tag_query = Q()
-    for tag in tags:
-        tag_query &= Q(tags__name__icontains=tag)
-
-    query &= tag_query
-
     partners = partners.distinct().filter(query)
+
+    # filter by tags
+    for tag in tags:
+        partners = partners.filter(tags__name__icontains=tag)
 
     # for location, we want to sort by both city and state
     if "location" in sort_by:
@@ -508,27 +506,18 @@ def new_partner_from_library(request):
     library = get_object_or_404(PartnerLibrary, pk=library_id)
 
     tags = []
-    if library.is_disabled:
-        disabled, _ = Tag.objects.get_or_create(
-            company=company, name="Disabled", defaults={'hex_color': '808A9A'})
-        tags.append(disabled)
-    if library.is_disabled_veteran:
-        disabled_veteran, _ = Tag.objects.get_or_create(
-            company=company, name="Disabled Veteran",
-            defaults={'hex_color': '659274'})
-        tags.append(disabled_veteran)
-    if library.is_female:
-        female, _ = Tag.objects.get_or_create(company=company, name="Female",
-                                              defaults={'hex_color': '4BB1CF'})
-        tags.append(female)
-    if library.is_minority:
-        minority, _ = Tag.objects.get_or_create(
-            company=company, name="Minority", defaults={'hex_color': 'FAA732'})
-        tags.append(minority)
-    if library.is_veteran:
-        veteran, _ = Tag.objects.get_or_create(
-            company=company, name="Veteran", defaults={'hex_color': '5EB94E'})
-        tags.append(veteran)
+    for interest, color in  [('disabled', '808A9A'), 
+                             ('disabled_veteran', '659274'),
+                             ('female', '4BB1CF'),
+                             ('minority', 'FAA732'),
+                             ('veteran', '5EB94E')]:
+
+        if getattr(library, 'is_%s' % interest):
+            tag, _ = Tag.objects.get_or_create(
+                company=company, name=interest.replace('_', ' ').title(),
+                defaults={'hex_color': color})
+
+            tags.append(tag)
 
     partner = Partner.objects.create(
         name=library.name,
