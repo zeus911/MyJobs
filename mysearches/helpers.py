@@ -172,14 +172,22 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
     interval = get_interval_from_frequency(frequency)
 
     end = datetime.date.today()
-    start = end + datetime.timedelta(days=interval)
+    new = start = end + datetime.timedelta(days=interval)
     if last_sent is not None:
-        last_sent = last_sent.date()
-        last_sent_diff = last_sent - start
+        last_sent_date = last_sent.date()
+        last_sent_diff = last_sent_date - start
+        # interval is always negative.
+        # last_sent_diff is negative if more than one saved search period
+        #     has passed, or positive otherwise.
         if interval >= last_sent_diff.days:
-            # interval and last_sent_diff are negative for times in the past
-            # (the normal case), so the comparison must be reversed.
-            start = last_sent
+            # interval >= last_sent_diff.days indicates that this search was
+            # last sent more than one interval ago; use last_sent_date as the
+            # new start date
+            start = last_sent_date
+
+        # mark all jobs newer than the last sent date for this search as new
+        new = last_sent_date
+
     item_list = []
 
     feed_url += '%snum_items=%s&offset=%s' % (
@@ -208,6 +216,9 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
 
         if ignore_dates or date_in_range(start, end,
                                          item_dict['pubdate'].date()):
+            if ignore_dates and new <= item_dict['pubdate'].date():
+                item_dict['new'] = True
+
             item_list.append(item_dict)
         else:
             break

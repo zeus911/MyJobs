@@ -32,7 +32,12 @@
         <tr>
             <td style="padding: 8px 8px 0 8px; line-height: 20px; border-top: 1px solid #e5e5e5;">
                 <a href="{{item.link}}" style="text-decoration: none; color: #333;">
-                    <b style="font-size: 1.3em;">{{item.title}}</b><br>
+                    <b style="font-size: 1.3em;">
+                        {% if item.new %}
+                            <i style="color:#00f;">New! </i>
+                        {% endif %}
+                        {{item.title}}
+                    </b><br>
                     {% if item.company %}<i style="font-size:1.2em;">{{item.company}} - {{item.location}}</i><br>{% endif %}
                 </a>
             </td>
