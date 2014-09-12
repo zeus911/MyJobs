@@ -158,7 +158,7 @@ class EditItemTests(MyPartnersTestCase):
             contact=lambda **kwargs: self.request_factory.get(
                 '/prm/view/details/edit', dict({'partner': 1}, **kwargs)))
 
-    def test_add_contat_with_bad_partner_id(self):
+    def test_add_contact_with_bad_partner_id(self):
         """ Invalid partner should always result in a 404. """
 
         fail_msg = "The partner id %s should have raised an Http404 but didnt"

@@ -5,7 +5,7 @@ from StringIO import StringIO
 from myjobs.tests.setup import MyJobsBase
 from mydashboard.tests.factories import CompanyFactory
 from myjobs.tests.factories import UserFactory
-from postajob.models import Job
+from postajob.models import Job, JobLocation
 from tasks import expire_jobs
 
 
@@ -19,13 +19,15 @@ class TaskTests(MyJobsBase):
             'owner': self.company,
             'description': 'sadfljasdfljasdflasdfj',
             'apply_link': 'www.google.com',
+            'created_by': self.user,
+        }
+        self.location_data = {
             'city': 'Indianapolis',
             'state': 'Indiana',
             'state_short': 'IN',
             'country': 'United States of America',
             'country_short': 'USA',
             'zipcode': '46268',
-            'created_by': self.user,
         }
 
     @patch('urllib2.urlopen')
@@ -33,13 +35,15 @@ class TaskTests(MyJobsBase):
         urlopen_mock.return_value = StringIO('')
         # Jobs with expiration dates in the past and future should not get
         # expired.
+        location = JobLocation.objects.create(**self.location_data)
         for x in range(0, 5):
             job = dict(self.job_data)
             job['date_new'] = datetime.datetime.now()
             job['date_updated'] = datetime.datetime.now()
             job['date_expired'] = datetime.date.today() + datetime.timedelta(days=-5)
-            job['guid'] = ('%s' % x)*32
-            Job.objects.create(**job)
+            instance = Job.objects.create(**job)
+            location.jobs.add(instance)
+            instance.save()
         self.assertEqual(Job.objects.all().count(), 5)
         # add_to_solr() should've called urlopen once for each job.
         self.assertEqual(urlopen_mock.call_count, 5)
@@ -48,8 +52,9 @@ class TaskTests(MyJobsBase):
             job['date_new'] = datetime.datetime.now()
             job['date_updated'] = datetime.datetime.now()
             job['date_expired'] = datetime.date.today() + datetime.timedelta(days=-5)
-            job['guid'] = ('%s' % x)*32
-            Job.objects.create(**job)
+            instance = Job.objects.create(**job)
+            location.jobs.add(instance)
+            instance.save()
         self.assertEqual(Job.objects.all().count(), 10)
         self.assertEqual(urlopen_mock.call_count, 10)
         # Only jobs that expire today should be expired in the next
@@ -59,8 +64,9 @@ class TaskTests(MyJobsBase):
             job['date_new'] = datetime.datetime.now()
             job['date_updated'] = datetime.datetime.now()
             job['date_expired'] = datetime.date.today()
-            job['guid'] = ('%s' % x)*32
-            Job.objects.create(**job)
+            instance = Job.objects.create(**job)
+            location.jobs.add(instance)
+            instance.save()
         self.assertEqual(Job.objects.all().count(), 15)
         self.assertEqual(urlopen_mock.call_count, 15)
 
@@ -74,13 +80,15 @@ class TaskTests(MyJobsBase):
     @patch('urllib2.urlopen')
     def test_expire_jobs_with_autorenew(self, urlopen_mock):
         urlopen_mock.return_value = StringIO('')
+        location = JobLocation.objects.create(**self.location_data)
         for x in range(0, 5):
             job = dict(self.job_data)
             job['date_new'] = datetime.datetime.now()
             job['date_updated'] = datetime.datetime.now()
             job['date_expired'] = datetime.date.today() + datetime.timedelta(days=-5)
-            job['guid'] = ('%s' % x)*32
-            Job.objects.create(**job)
+            instance = Job.objects.create(**job)
+            location.jobs.add(instance)
+            instance.save()
         self.assertEqual(Job.objects.all().count(), 5)
         self.assertEqual(urlopen_mock.call_count, 5)
         for x in range(5, 10):
@@ -88,8 +96,9 @@ class TaskTests(MyJobsBase):
             job['date_new'] = datetime.datetime.now()
             job['date_updated'] = datetime.datetime.now()
             job['date_expired'] = datetime.date.today()
-            job['guid'] = ('%s' % x)*32
-            Job.objects.create(**job)
+            instance = Job.objects.create(**job)
+            location.jobs.add(instance)
+            instance.save()
         self.assertEqual(Job.objects.all().count(), 10)
         self.assertEqual(urlopen_mock.call_count, 10)
         for x in range(10, 15):
@@ -97,9 +106,10 @@ class TaskTests(MyJobsBase):
             job['date_new'] = datetime.datetime.now()
             job['date_updated'] = datetime.datetime.now()
             job['date_expired'] = datetime.date.today()
-            job['guid'] = ('%s' % x)*32
             job['autorenew'] = True
-            Job.objects.create(**job)
+            instance = Job.objects.create(**job)
+            location.jobs.add(instance)
+            instance.save()
         self.assertEqual(Job.objects.all().count(), 15)
         self.assertEqual(urlopen_mock.call_count, 15)
 

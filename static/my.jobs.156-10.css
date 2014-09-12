@@ -64,14 +64,16 @@ h1 > small > a:hover {
     display: none;
 }
 
-/*Contact FAQ styles*/
+/*Simple accordion styles*/
 .faq + .faq,
-.row.as + .row.as {
+.row.as + .row.as,
+.simple-accordion + .simple-accordion {
     margin-top: 20px;
 }
 
 .faq-question,
-.as-section {
+.as-section,
+.simple-accordion .header {
     padding: 10px 20px;
     background-color: #f2f2f2;
     border: 1px solid #f2f2f2;
@@ -83,20 +85,23 @@ h1 > small > a:hover {
 }
 
 .faq-question:hover,
-.as-section:hover {
+.as-section:hover,
+.simple-accordion .header:hover {
     cursor: pointer;
     background-color: #fff;
     border: 1px solid #e6e6e6;
 }
 
-.faq-answer {
+.faq-answer,
+.simple-accordion .contents {
     margin-left: 20px;
     padding: 10px;
     border-left: 1px solid #e6e6e6;
     display: none;
 }
 
-.row.faq:first-of-type .faq-answer {
+.row.faq:first-of-type .faq-answer,
+.simple-accordion:first-of-type .contents {
     display: block;
 }
 

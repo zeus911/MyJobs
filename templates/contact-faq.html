@@ -16,8 +16,6 @@
                 <div class="faq-question">
                     {{ f.question }}
                 </div>
-            </div>
-            <div class="span8">
                 <div class="faq-answer">
                     {{ f.answer|safe }}
                 </div>
@@ -34,10 +32,7 @@
 {% block extra-js %}
     <script type="text/javascript">
         $(document).ready(function() {
-            $(".faq-question").on("click", function() {
-                var closest_answer = $(this).parent().next().children();
-                $(closest_answer).slideToggle();
-            });
+            accordion('.faq-question', '.faq-answer');
         });
     </script>
 {% endblock extra-js %}
