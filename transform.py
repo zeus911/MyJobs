@@ -193,7 +193,7 @@ def transform_for_postajob(job):
     return solr_job
 
 
-def hr_xml_to_json(xml, business_unit, create_redirect=True):
+def hr_xml_to_json(xml, business_unit):
     """
     Cleans a job coming from an HR-XML document. This should add any
     required fields, and re-format any fields that are not coming in
