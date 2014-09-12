@@ -173,7 +173,7 @@ class PartnerSavedSearchForm(ModelForm):
 
     def clean_tags(self):
         data = self.cleaned_data['tags'].split(',')
-        tags = tag_get_or_create(self.data['company_id'], data)
+        tags = tag_get_or_create(self.data['company'], data)
         return tags
 
     def clean(self):
@@ -184,12 +184,6 @@ class PartnerSavedSearchForm(ModelForm):
         if not user_email:
            raise ValidationError(_("This field is required."))
 
-    def save(self, commit=True):
-        cleaned_data = self.cleaned_data
-        user_email = cleaned_data.get('email')
-        url = cleaned_data.get('url')
-        tags = cleaned_data.get('tags')
-        self.instance.tags = tags
         # Get or create the user since they might not exist yet
         created = False
         user = User.objects.get_email_owner(email=user_email)
@@ -214,6 +208,22 @@ class PartnerSavedSearchForm(ModelForm):
 
         self.cleaned_data['feed'] = feed
         return cleaned_data
+
+    def save(self, commit=True):
+        #tags = self.cleaned_data.get('tags')
+        #self.instance.tags = tags
+        self.instance.feed = self.cleaned_data.get('feed')
+        is_new_or_change = CHANGE if self.instance.pk else ADDITION
+        instance = super(PartnerSavedSearchForm, self).save(commit)
+        if self.created:
+            send_custom_activation_email(instance)
+        partner = instance.partner
+        contact = Contact.objects.filter(partner=partner,
+                                         user=instance.user)[0]
+        log_change(instance, self, instance.created_by, partner,
+                   contact.email, action_type=is_new_or_change)
+
+        return instance
 
 
 class PartnerSubSavedSearchForm(ModelForm):
