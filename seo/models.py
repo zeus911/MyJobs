@@ -570,7 +570,7 @@ class Company(models.Model):
         ordering = ['name']
 
     def save(self, *args, **kwargs):
-        exists = bool(hasattr(self, 'pk'))
+        exists = str(self.pk).isdigit()
 
         self.company_slug = slugify(self.name)
         super(Company, self).save(*args, **kwargs)

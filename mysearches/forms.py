@@ -11,7 +11,8 @@ from mysearches.models import (SavedSearch, SavedSearchDigest,
                                PartnerSavedSearch)
 from mypartners.forms import PartnerEmailChoices
 from mypartners.models import Contact, ADDITION, CHANGE
-from mypartners.helpers import log_change, tag_get_or_create
+from mypartners.helpers import (log_change, send_custom_activation_email,
+                                tag_get_or_create)
 
 
 class HorizontalRadioRenderer(RadioSelect.renderer):
@@ -172,7 +173,7 @@ class PartnerSavedSearchForm(ModelForm):
         return self.cleaned_data['day_of_month']
 
     def clean_tags(self):
-        data = self.cleaned_data['tags'].split(',')
+        data = filter(bool, self.cleaned_data['tags'].split(','))
         tags = tag_get_or_create(self.data['company'], data)
         return tags
 
@@ -210,8 +211,8 @@ class PartnerSavedSearchForm(ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
-        #tags = self.cleaned_data.get('tags')
-        #self.instance.tags = tags
+        tags = self.cleaned_data.get('tags')
+        self.instance.tags = tags
         self.instance.feed = self.cleaned_data.get('feed')
         is_new_or_change = CHANGE if self.instance.pk else ADDITION
         instance = super(PartnerSavedSearchForm, self).save(commit)

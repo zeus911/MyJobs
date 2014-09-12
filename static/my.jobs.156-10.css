@@ -2360,6 +2360,12 @@ td .gravatar-blank,
     .prm-no-partner .span4 {
         margin-left: 0;
     }
+
+    a.tagit-close {
+        padding: 0;
+        background-color: transparent;
+        border: 0;
+    }
 }
 
 @media screen and (min-width: 501px) {
@@ -2799,6 +2805,38 @@ td .gravatar-blank,
     .product-card a.btn {
         float: none;
         margin-top: 0;
+    }
+
+    .product-card.tag {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 10px 0 0 0;
+        text-align: center;
+        padding-bottom: 10px;
+    }
+
+    .product-card.tag > .tag-name {
+        font-size: 1.3em;
+    }
+
+    #tag-holder > .product-card.tag a.btn-link {
+        float: none;
+        margin-top: 20px;
+        margin-bottom: 0;
+        padding: 6px 25px;
+        border: 1px solid;
+        border-color: rgba(0,0,0,0.15) rgba(0,0,0,0.15) rgba(0,0,0,0.25);
+    }
+
+    a.tagit-close {
+        padding: 0;
+        background-color: transparent;
+        border: 0;
+    }
+
+    form span.tag-name{
+        padding: 5px 10px;
+        font-size: 1.5em;
     }
 
     .sidebar .partner-tag {

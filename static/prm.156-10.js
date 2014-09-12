@@ -271,6 +271,7 @@ $(document).ready(function() {
             $("#state option[value="+ state +"]").attr("selected", "selected");
 
         run_ajax();
+        return false;
     });
 
     // Add check mark icon next to partner-tags then run ajax

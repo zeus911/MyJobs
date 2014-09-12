@@ -112,7 +112,7 @@ class MyPartnerTests(MyJobsBase):
         self.assertFalse(partner_saved_search.is_active)
         self.assertTrue(self.contact.name in partner_saved_search.notes)
 
-    def test_tag_added_to_tagable_models(self):
+    def test_tag_added_to_taggable_models(self):
         tag = TagFactory(company=self.company)
         tag.save()
         tag2 = TagFactory(name="bar", company=self.company)

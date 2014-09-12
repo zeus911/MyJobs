@@ -506,11 +506,11 @@ def new_partner_from_library(request):
     library = get_object_or_404(PartnerLibrary, pk=library_id)
 
     tags = []
-    for interest, color in  [('disabled', '808A9A'), 
-                             ('disabled_veteran', '659274'),
-                             ('female', '4BB1CF'),
-                             ('minority', 'FAA732'),
-                             ('veteran', '5EB94E')]:
+    for interest, color in [('disabled', '808A9A'),
+                            ('disabled_veteran', '659274'),
+                            ('female', '4BB1CF'),
+                            ('minority', 'FAA732'),
+                            ('veteran', '5EB94E')]:
 
         if getattr(library, 'is_%s' % interest):
             tag, _ = Tag.objects.get_or_create(
@@ -551,7 +551,9 @@ def new_partner_from_library(request):
 def tag_get_or_create(company_id, data):
     tags = []
     for tag in data:
-        obj, created = Tag.objects.get_or_create(company_id=company_id, name=tag)
+        obj, created = Tag.objects.get_or_create(
+            company_id=company_id, name__iexact=tag, defaults={"name": tag}
+        )
         tags.append(obj.id)
 
     return tags

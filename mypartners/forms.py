@@ -59,7 +59,7 @@ class ContactForm(forms.ModelForm):
         return self.cleaned_data['email']
 
     def clean_tags(self):
-        data = self.cleaned_data['tags'].split(',')
+        data = filter(bool, self.cleaned_data['tags'].split(','))
         tags = tag_get_or_create(self.data['company_id'], data)
         return tags
 
@@ -249,7 +249,7 @@ class PartnerForm(forms.ModelForm):
         widgets = generate_custom_widgets(model)
 
     def clean_tags(self):
-        data = self.cleaned_data['tags'].split(',')
+        data = filter(bool, self.cleaned_data['tags'].split(','))
         tags = tag_get_or_create(self.data['company_id'], data)
         return tags
 
@@ -385,7 +385,7 @@ class ContactRecordForm(forms.ModelForm):
         return date_time.astimezone(pytz.utc)
 
     def clean_tags(self):
-        data = self.cleaned_data['tags'].split(',')
+        data = filter(bool, self.cleaned_data['tags'].split(','))
         tags = tag_get_or_create(self.data['company'], data)
         return tags
 
@@ -427,6 +427,15 @@ class ContactRecordForm(forms.ModelForm):
 class TagForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(TagForm, self).__init__(*args, **kwargs)
+
+    def clean_name(self):
+        new_tag_name = self.cleaned_data.get('name')
+        already_exists = Tag.objects.get(company=self.instance.company_id,
+                                         name__iexact=new_tag_name)
+
+        if already_exists and already_exists.id != self.instance.id:
+            raise ValidationError("This tag already exists.")
+        return new_tag_name
 
     class Meta:
         form_name = "Tag"

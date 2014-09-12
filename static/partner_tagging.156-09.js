@@ -10,7 +10,7 @@ $(document).ready(function() {
             }
         });
     });
-    
+
     $("#p-tags").hide();
     $("#p-tags").tagit({
         allowSpaces: true,
