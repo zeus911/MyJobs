@@ -567,7 +567,7 @@ class RecordsEditTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
         form = soup.find('fieldset')
 
-        self.assertEqual(len(form(class_='profile-form-input')), 14)
+        self.assertEqual(len(form(class_='profile-form-input')), 15)
         self.assertEqual(len(form.find(id='id_contact_name')('option')), 3)
 
         # Add contact
@@ -590,7 +590,7 @@ class RecordsEditTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
         form = soup.find('fieldset')
 
-        self.assertEqual(len(form(class_='profile-form-input')), 14)
+        self.assertEqual(len(form(class_='profile-form-input')), 15)
         self.assertEqual(len(form.find(id='id_contact_name')('option')), 2)
 
         contact_type = form.find(id='id_contact_type')
