@@ -6,13 +6,13 @@ ABSOLUTE_URL = "/"
 
 DATABASES = {
     'default': {
-        'NAME': '/home/ashley/projects/db',
-        'ENGINE': 'django.db.backends.sqlite3',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',
-        'PORT': '',
-        }
+        'NAME': 'redirect',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': 'de_dbuser',
+        'PASSWORD': PROD_DB_PASSWD,
+        'HOST': 'db-redirectstaging.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
+        'PORT': '3306',
+    },
 }
 SOLR = {
     'all': 'http://127.0.0.1:8983/solr/myjobs_test/',
