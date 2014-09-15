@@ -430,8 +430,11 @@ class TagForm(forms.ModelForm):
 
     def clean_name(self):
         new_tag_name = self.cleaned_data.get('name')
-        already_exists = Tag.objects.get(company=self.instance.company_id,
-                                         name__iexact=new_tag_name)
+        try:
+            already_exists = Tag.objects.get(company=self.instance.company_id,
+                                             name__iexact=new_tag_name)
+        except Tag.DoesNotExist:
+            already_exists = False
 
         if already_exists and already_exists.id != self.instance.id:
             raise ValidationError("This tag already exists.")

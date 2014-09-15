@@ -24,6 +24,7 @@ class ContactFormTests(MyPartnersTestCase):
 
         """
         self.data['email'] = 'not@thecontact.email'
+        self.data['company_id'] = 1
         form = ContactForm(instance=self.contact, data=self.data)
         self.assertTrue(form.is_valid())
         form.save(self.staff_user, self.partner.pk)
