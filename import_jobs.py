@@ -19,7 +19,7 @@ from seo_pysolr import Solr
 from xmlparse import DEv2JobFeed
 from seo.helpers import slices, create_businessunit
 from seo.models import BusinessUnit, Company
-from transform import hr_xml_to_json
+from transform import hr_xml_to_json, make_redirect
 
 
 logger = logging.getLogger(__name__)
@@ -50,6 +50,8 @@ def update_job_source(guid, buid, name):
     if buid not in ["31578", "31094", "23525", "23500"]:
         jobs = filter_current_jobs(jobs)
     jobs = list(hr_xml_to_json(job, bu) for job in jobs)
+    for job in jobs:
+        job['link'] = make_redirect(job, bu).make_link()
     remove_expired_jobs(buid, jobs)
     add_jobs(jobs)
 

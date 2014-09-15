@@ -193,7 +193,7 @@ def transform_for_postajob(job):
     return solr_job
 
 
-def hr_xml_to_json(xml, business_unit, create_redirect=True):
+def hr_xml_to_json(xml, business_unit):
     """
     Cleans a job coming from an HR-XML document. This should add any
     required fields, and re-format any fields that are not coming in
@@ -360,9 +360,6 @@ def hr_xml_to_json(xml, business_unit, create_redirect=True):
     job['text'] = " ".join([force_text((job.get(k)) or "None") for k in
                                   text_fields])
 
-    if create_redirect:
-        job['link'] = make_redirect(job, business_unit).make_link()
-
     return job
 
 
@@ -393,7 +390,10 @@ def make_redirect(job, business_unit):
     # save until new_date is set.
     guid = '{%s}' % str(uuid.UUID(job['guid'])).upper()
     try:
-        return Redirect.objects.get(guid=guid)
+        redirect = Redirect.objects.get(guid=guid)
+        redirect.url = job['link']
+        redirect.save()
+        return redirect
     except Redirect.DoesNotExist:
         logger.debug("Creating new redirect for guid %s", guid)
         redirect = Redirect(guid=guid,

@@ -1856,7 +1856,7 @@ def test_markdown(request):
             # there's no sns message and it's pretty unecessary to force
             # the user to specify the business unit, use the DE one.
             bu = BusinessUnit.objects.get(id=999999)
-            job_json = hr_xml_to_json(xml, bu, create_redirect=False)
+            job_json = hr_xml_to_json(xml, bu)
             job_json['buid'] = bu
             data_dict = {
                 'the_job': TempJob(**job_json)
