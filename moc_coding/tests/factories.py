@@ -15,16 +15,6 @@ class OnetFactory(factory.django.DjangoModelFactory):
     code = "99999999"
 
 
-class MocFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Moc
-    id = 1 
-    code = "01"
-    branch = "coast-guard"
-    title = "General Command and Staff"
-    title_slug = factory.LazyAttribute(lambda x: slugify(x.title))
-    moc_detail_id = factory.SubFactory(MocDetailFactory)
-
-
 class MocDetailFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = MocDetail
 
@@ -33,6 +23,16 @@ class MocDetailFactory(factory.django.DjangoModelFactory):
     service_branch = "c"
     military_description = "General Command and Staff"
     civilian_description = "Business General"
+
+
+class MocFactory(factory.django.DjangoModelFactory):
+    FACTORY_FOR = Moc
+    id = 1 
+    code = "01"
+    branch = "coast-guard"
+    title = "General Command and Staff"
+    title_slug = factory.LazyAttribute(lambda x: slugify(x.title))
+    moc_detail_id = factory.SubFactory(MocDetailFactory)
 
 
 class CustomCareerFactory(factory.django.DjangoModelFactory):
