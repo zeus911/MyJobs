@@ -26,13 +26,12 @@ class ModelAdminWithRequest(admin.ModelAdmin):
 
 class JobAdmin(ModelAdminWithRequest):
     form = JobForm
-    list_display = ('__unicode__', 'guid', )
+    list_display = ('__unicode__', )
     search_fields = ('title', 'owner', 'site_packages__sites__domain', )
 
     fieldsets = (
         ('Job Information', {
             'fields': (('title', ), 'reqid', 'description',
-                       'city', 'state', 'country', 'zipcode',
                        ('date_expired', 'is_expired', 'autorenew', )),
         }),
         ('Application Instructions', {
@@ -43,13 +42,6 @@ class JobAdmin(ModelAdminWithRequest):
             'fields': ('owner', 'post_to', 'site_packages', ),
         }),
     )
-
-    def delete_model(self, request, obj):
-        # Django admin bulk delete doesn't trigger a post_delete signal. This
-        # ensures that the remove_from_solr() usually handled by a delete
-        # signal is called in those cases.
-        obj.remove_from_solr()
-        obj.delete()
 
     def queryset(self, request):
         """
@@ -65,13 +57,12 @@ class JobAdmin(ModelAdminWithRequest):
 
 class PurchasedJobAdmin(ModelAdminWithRequest):
     form = PurchasedJobAdminForm
-    list_display = ('__unicode__', 'guid', )
+    list_display = ('__unicode__', )
     search_fields = ('title', 'owner', )
 
     fieldsets = (
         ('Job Information', {
             'fields': (('title', 'is_approved', ), 'reqid', 'description',
-                       'city', 'state', 'country', 'zipcode',
                        ('date_expired', 'is_expired', 'autorenew', )),
         }),
         ('Application Instructions', {

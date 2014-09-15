@@ -87,13 +87,12 @@ class SavedSearchHelperTests(MyJobsBase):
     def test_parse_feed(self):
         feed_url = 'http://www.my.jobs/feed/rss'
 
-        for use_json in [True, False]:
+        for use_json, count in [(True, 2), (False, 1)]:
             items = parse_feed(feed_url, use_json=use_json)
 
             # The second value in the items list is the total count from a feed,
             # which may not equal the number of items returned
-            self.assertEqual(items[1], 1)
-
+            self.assertEqual(items[1], count)
             item = items[0][0]
             for element in ['pubdate', 'title', 'description', 'link']:
                 self.assertTrue(item[element])

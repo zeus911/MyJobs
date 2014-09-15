@@ -19,18 +19,19 @@ def get_job_links(job, max_sites=3):
     sites = job.on_sites()
     domains = [site.domain for site in sites]
 
-    location = u'{city}, {state}'.format(city=job.city, state=job.state_short)
-    loc_slug = bleach.clean(slugify(location))
     title_slug = bleach.clean(slugify(job.title))
 
     base_url = 'http://{domain}/{loc_slug}/{title_slug}/{guid}/job/'
     href_tag = '<a href="{url}">{domain}</a>'
     urls = []
     for domain in domains:
-        job_url = base_url.format(domain=domain, loc_slug=loc_slug,
-                                  title_slug=title_slug, guid=job.guid)
+        for location in job.locations.all():
+            loc_slug = bleach.clean(slugify(u'{city}, {state}'.format(
+                city=location.city, state=location.state_short)))
+            job_url = base_url.format(domain=domain, loc_slug=loc_slug,
+                                      title_slug=title_slug, guid=location.guid)
 
-        urls.append(href_tag.format(url=job_url, domain=domain))
+            urls.append(href_tag.format(url=job_url, domain=domain))
     url_html = mark_safe("<br/>".join(urls[:max_sites]))
     if max_sites and len(urls) > max_sites:
         url_html = mark_safe("%s <br/>..." % url_html)
@@ -85,3 +86,8 @@ def get_product_names(offline_purchase):
 @register.assignment_tag
 def get_content_type(object):
     return ContentType.objects.get_for_model(object.__class__)
+
+@register.filter
+def get_sites(form):
+    return form.fields['site_packages'].queryset.values_list('domain',
+                                                             flat=True)

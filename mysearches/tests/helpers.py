@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from StringIO import StringIO
 
 import requests
@@ -44,11 +44,14 @@ def return_file(time_=None):
         target += file_
 
         if feed:
+            date_dict = {'old_date': datetime.strftime(datetime.now() -
+                                                       timedelta(days=60),
+                                                       '%c')}
             if time_ is not None:
-                date_dict = {'date': time_}
+                date_dict['date'] = time_
             else:
-                date_dict = {'date': datetime.strftime(datetime.now(),
-                                                       '%c -0300')}
+                date_dict['date'] = datetime.strftime(datetime.now(),
+                                                      '%c -0300')
             contents = open(target).read() % date_dict
             stream = StringIO(contents)
         else:

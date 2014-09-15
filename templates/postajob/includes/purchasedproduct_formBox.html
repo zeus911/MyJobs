@@ -3,7 +3,7 @@
 {% get_jobs purchased_product as jobs %}
 
 <div class="formBox no-padding">
-    <h4>{{ purchased_product.product.name }} <span class="pull-right">Expires: {{ purchased_product.expiration_date }}</span></h4>
+    <h4>{{ purchased_product.product }} <span class="pull-right">Expires: {{ purchased_product.expiration_date }}</span></h4>
     <table id="purchasedproduct-jobs-table" class="table table-bordered table-striped">
         {% if jobs %}
         <thead>
