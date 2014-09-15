@@ -167,7 +167,13 @@ class MultiHostMiddleware:
                 - store them in cache
 
         """
-        host = request.get_host()
+        host = None
+        if request.user.is_authenticated() and request.user.is_staff:
+            host = request.REQUEST.get('domain')
+
+        if host is None:
+            host = request.get_host()
+
         # get rid of any possible port number that comes thru on the host
         # examples:    localhost:80,
         #             127.0.0.1:8000,
