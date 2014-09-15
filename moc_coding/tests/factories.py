@@ -22,7 +22,7 @@ class MocFactory(factory.django.DjangoModelFactory):
     branch = "coast-guard"
     title = "General Command and Staff"
     title_slug = factory.LazyAttribute(lambda x: slugify(x.title))
-    moc_detail_id = 1
+    moc_detail_id = factory.SubFactory(MocDetailFactory)
 
 
 class MocDetailFactory(factory.django.DjangoModelFactory):
