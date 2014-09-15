@@ -17,7 +17,7 @@ DATABASES = {'default': {'NAME': 'redirect',
             }
 
 TEMPLATE_DIRS = (
-    '/home/web/direct-seo/directseo/templates/',
+    '/home/web/MyJobs/MyJobs/templates/',
 )
 
 SESSION_CACHE_ALIAS = 'sessions'
@@ -57,14 +57,14 @@ HAYSTACK_CONNECTIONS = {
         # code is deployed. Check the deployment project in
         # direct_seo/web/conf/hosts and make sure the one in production looks
         # like that.
-        'URL': 'http://solr_server:8983/solr',
+        'URL': 'http://solr_server/solr',
         'TIMEOUT': 300,
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
     },
     'groups': {
         'ENGINE': 'saved_search.groupsearch.SolrGrpEngine',
-        'URL': 'http://solr_server:8983/solr',
+        'URL': 'http://solr_server/solr',
         'TIMEOUT': 300,
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
@@ -88,3 +88,5 @@ SOLR = {
     }
 
 ABSOLUTE_URL = '/'
+
+STATIC_URL = "//d2e48ltfsb5exy.cloudfront.net/content_ms/files/"
