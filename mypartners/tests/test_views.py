@@ -802,7 +802,6 @@ class SearchEditTests(MyPartnersTestCase):
         data = {'label': 'Test',
                 'url': 'http://www.jobs.jobs/jobs',
                 'email': self.contact.user.email,
-                'company': self.company.id,
                 'frequency': 'W',
                 'day_of_week': '3'}
 
