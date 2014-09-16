@@ -767,7 +767,7 @@ class SearchEditTests(MyPartnersTestCase):
         self.search = PartnerSavedSearchFactory(provider=self.company,
                                                 created_by=self.staff_user,
                                                 user=self.contact.user,
-                                                partner=self.partner)
+                                                partner=self.partner,)
 
     def test_render_new_form(self):
         url = self.get_url(company=self.company.id,
@@ -796,12 +796,13 @@ class SearchEditTests(MyPartnersTestCase):
     def test_required_fields(self):
         self.search.delete()
         url = self.get_url('partner_savedsearch_save',
-                          company=self.company.id,
-                          partner=self.partner.id)
+                           company=self.company.id,
+                           partner=self.partner.id)
 
         data = {'label': 'Test',
                 'url': 'http://www.jobs.jobs/jobs',
                 'email': self.contact.user.email,
+                'company': self.company.id,
                 'frequency': 'W',
                 'day_of_week': '3'}
 
@@ -830,12 +831,13 @@ class SearchEditTests(MyPartnersTestCase):
     def test_invalid_urls(self):
         self.search.delete()
         url = self.get_url('partner_savedsearch_save',
-                          company=self.company.id,
-                          partner=self.partner.id)
+                           company=self.company.id,
+                           partner=self.partner.id)
 
         data = {'label': 'Test',
                 'url': 'http://www.google.com',
                 'email': self.contact.user.email,
+                'company': self.company.id,
                 'frequency': 'W',
                 'day_of_week': '3'}
 
@@ -848,8 +850,8 @@ class SearchEditTests(MyPartnersTestCase):
     def test_create_new_saved_search(self):
         self.search.delete()
         url = self.get_url('partner_savedsearch_save',
-                          company=self.company.id,
-                          partner=self.partner.id)
+                           company=self.company.id,
+                           partner=self.partner.id)
 
         data = {'feed': 'http://www.jobs.jobs/jobs/rss/jobs',
                 'label': 'Test',
@@ -880,9 +882,9 @@ class SearchEditTests(MyPartnersTestCase):
 
     def test_update_existing_saved_search(self):
         url = self.get_url('partner_savedsearch_save',
-                          company=self.company.id,
-                          partner=self.partner.id,
-                          id=self.search.id)
+                           company=self.company.id,
+                           partner=self.partner.id,
+                           id=self.search.id)
 
         data = {'feed': 'http://www.jobs.jobs/jobs/rss/jobs',
                 'label': 'Test',
@@ -929,6 +931,7 @@ class SearchEditTests(MyPartnersTestCase):
                 'label': 'Test',
                 'url': 'http://www.jobs.jobs/jobs',
                 'url_extras': '',
+                'company': self.company.id,
                 'email': new_contact.email,
                 'account_activation_message': '',
                 'frequency': 'W',
@@ -1158,8 +1161,8 @@ class EmailTests(MyPartnersTestCase):
             result_dt = record.date_time.replace(second=0, microsecond=0)
             self.assertEqual(str(result_dt), str(expected_dt))
 
-class PartnerLibraryTestCase(MyPartnersTestCase):
 
+class PartnerLibraryTestCase(MyPartnersTestCase):
     @classmethod
     def setUpClass(cls):
         super(PartnerLibraryTestCase, cls).setUpClass()

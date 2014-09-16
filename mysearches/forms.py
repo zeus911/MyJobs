@@ -173,7 +173,7 @@ class PartnerSavedSearchForm(ModelForm):
 
     def clean_tags(self):
         data = filter(bool, self.cleaned_data['tags'].split(','))
-        tags = tag_get_or_create(self.data['company'], data)
+        tags = tag_get_or_create(self.data.get('company'), data)
         return tags
 
     def clean(self):
@@ -210,11 +210,11 @@ class PartnerSavedSearchForm(ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
-        tags = self.cleaned_data.get('tags')
-        self.instance.tags = tags
         self.instance.feed = self.cleaned_data.get('feed')
         is_new_or_change = CHANGE if self.instance.pk else ADDITION
         instance = super(PartnerSavedSearchForm, self).save(commit)
+        tags = self.cleaned_data.get('tags')
+        self.instance.tags = tags
         if self.created:
             send_custom_activation_email(instance)
         partner = instance.partner
