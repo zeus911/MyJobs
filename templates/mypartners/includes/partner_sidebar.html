@@ -12,6 +12,17 @@
         <label>Tag:</label>
         <input id="lib-tag" type="text" placeholder="Tag" {% if request.GET.tag %}value="{{request.GET.tag}}"{% endif %} />
         {% endif %}
+        {% if on_page = "prm" %}
+        <label>Activity:</label>
+        <div class="day-picker btn-group">
+            <button class="btn btn-large">1 Day</button>
+            <button class="btn btn-large">30 Days</button>
+            <button class="btn btn-large">90 Days</button>
+        </div>
+        <input class="datepicker picker-left" id="activity-start-date" type="text" placeholder="Activity Start Date" />
+        <span class="datepicker" id="activity-to-">to</span>
+        <input class="datepicker picker-right" id="activity-end-date" type="text" placeholder="Activity End Date" />
+        {% endif %}
 
         {% if special_interest %}
         <label>Special Interest:</label>

@@ -181,6 +181,10 @@ $(document).ready(function() {
         });
     });
 
+    $(".datepicker").on("click", function(e) {
+        $(this).pickadate();
+    });
+
     $('#item-save').on("click", function(e) {
         // interrupts default functionality of the button with code below
         e.preventDefault();
