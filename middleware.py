@@ -92,7 +92,6 @@ class NewRelic(object):
     Manages New Relic tracking.
 
     """
-
     def process_response(self, request, response):
         newrelic.agent.add_custom_parameter('url', request.META['HTTP_HOST'])
         if hasattr(request, 'user'):
