@@ -92,6 +92,7 @@ class NewRelic(object):
     Manages New Relic tracking.
 
     """
+
     def process_response(self, request, response):
         newrelic.agent.add_custom_parameter('url', request.META['HTTP_HOST'])
         if hasattr(request, 'user'):
@@ -267,17 +268,3 @@ def custom_facets_with_ops(site_facets):
         setattr(cf, 'boolean_operation', site_facet.boolean_operation)
         custom_facets.append(cf)
     return custom_facets
-
-
-class NewRelic(object):
-    """
-    Manages New Relic tracking.
-
-    Checks for newrelic in settings. Should only be used in production.
-    """
-    def process_response(self, request, response):
-        newrelic.agent.add_custom_parameter('url', request.META['HTTP_HOST'])
-        return response
-
-    def process_request(self, request):
-        newrelic.agent.add_custom_parameter('url', request.META['HTTP_HOST'])
