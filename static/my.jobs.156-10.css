@@ -3854,11 +3854,14 @@ body.modal-open {
 .sidebar .partner-tag.days {
     width: 32%;
     margin-bottom: 5px;
+    margin-top: 0;
 }
 
 .sidebar .partner-tag.custom {
     width: 100%;
     text-align: center;
+    margin-top: 0;
+    margin-left: 0;
 }
 
 input.datepicker {
@@ -3870,7 +3873,7 @@ input.datepicker {
 span.datepicker {
     border: 1px solid #BBB;
     margin: -5px;
-    padding: 7px;
+    padding: 6px;
 }
 
 input.picker-left {
