@@ -297,7 +297,8 @@ $(document).ready(function() {
         if ($(this).hasClass("disabled-tag")) {
             $(".partner-tag.days").addClass("disabled-tag");
             $(".partner-tag.days > i.icon-ok").remove();
-            $(".partner-tag.custom").addClass("disabled-tag");
+            $(".partner-tag.custom").addClass("disabled-tag").hide();
+            $(".date-range").show()
             $(".partner-tag.custom > i.icon-ok").remove();
 
             $(this).removeClass("disabled-tag");
@@ -305,7 +306,8 @@ $(document).ready(function() {
                                      .addClass("icon icon-ok"));
         } else {
             $(this).addClass("disabled-tag");
-            $(".partner-tag.days > i.icon-ok").remove();
+            $(".partner-tag.days > i.icon-ok").remove().show();
+            $(".date-range").hide();
             $(".partner-tag.custom > i.icon-ok").remove();
         }
     });
