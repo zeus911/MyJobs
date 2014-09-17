@@ -627,7 +627,8 @@ class SeoSiteTestCase(DirectSEOTestCase):
         custom_onet = moc_factories.OnetFactory.build(code=custom_job['onet'])
         custom_onet.save()
 
-        custom_career = moc_factories.CustomCareerFactory.build(moc_id=moc.id,
+        custom_career = moc_factories.CustomCareerFactory.build(moc=moc,
+                                                                object_id=self.buid_id,
                                                                 onet_id=custom_onet.code)
         custom_career.save()
 
@@ -658,9 +659,9 @@ class SeoSiteTestCase(DirectSEOTestCase):
         self.assertIn(custom_onet.code,
                       resp.context['default_jobs'][0].onet)
 
-        custom_career2 = moc_factories.CustomCareerFactory.build(moc_id=moc.id,
-                                                            object_id=custom_career.object_id+1,
-                                                            onet_id=default_onet.code)
+        custom_career2 = moc_factories.CustomCareerFactory.build(moc=moc,
+                                                                 object_id=self.buid_id,
+                                                                 onet_id=default_onet.code)
         custom_career2.save()
         bu.customcareers = [custom_career, custom_career2]
         bu.save()
@@ -679,8 +680,8 @@ class SeoSiteTestCase(DirectSEOTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(len(resp.context['default_jobs']) == 2)
 
-        moc2 = moc_factories.MocFactory.build(code=moc_code, branch="navy", id=moc.id+1,
-                                              moc_detail_id=moc.moc_detail_id+1)
+        moc2 = moc_factories.MocFactory.build(code=moc_code, branch="navy",
+                                              moc_detail=moc_factories.MocDetailFactory())
         moc2.save()
         custom_career2.moc_id=moc2.id
         custom_career2.onet_id = custom_onet.code
@@ -1711,12 +1712,14 @@ class SeoViewsTestCase(DirectSEOTestCase):
                                                    civilian_description=mocciv)
         mocdetail.save()
         moc = moc_factories.MocFactory.build(code=moccode, branch="navy",
-                                             title=mocmil, moc_detail_id=4105)
+                                             title=mocmil,
+                                             moc_detail=mocdetail)
         moc.save()
         onet2 = moc_factories.OnetFactory.build(title=onet2title,
                                                 code=onet2code)
         onet2.save()
-        customcareer = moc_factories.CustomCareerFactory.build(moc_id=moc.id,
+        customcareer = moc_factories.CustomCareerFactory.build(moc=moc,
+                                                               object_id=self.buid_id,
                                                                onet_id=onet2.code)
         customcareer.save()
         bu = BusinessUnit.objects.get(id=1)
@@ -1738,7 +1741,7 @@ class SeoViewsTestCase(DirectSEOTestCase):
         }
         mocd = moc_factories.MocDetailFactory.build()
         mocd.save()
-        moc = moc_factories.MocFactory.build()
+        moc = moc_factories.MocFactory.build(code='01', moc_detail=mocd)
         moc.save()
         onet = moc_factories.OnetFactory.build()
         onet.save()

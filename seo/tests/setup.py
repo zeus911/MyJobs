@@ -2,6 +2,7 @@ import os.path
 from contextlib import contextmanager
 
 from django.core.cache import cache
+from django.db import connections
 from django.test import TestCase
 
 from seo_pysolr import Solr
@@ -14,6 +15,14 @@ class DirectSEOBase(TestCase):
     def setUp(self):
         from django.conf import settings
         from django.template import context
+
+        db_backend = settings.DATABASES['default']['ENGINE'].split('.')[-1]
+        if db_backend == 'mysql':
+            cursor = connections['default'].cursor()
+            cursor.execute("alter table seo_customfacet convert to character "
+                           "set utf8 collate utf8_unicode_ci")
+            cursor.execute("alter table seo_company convert to character set "
+                           "utf8 collate utf8_unicode_ci")
 
         setattr(settings, 'ROOT_URLCONF', 'dseo_urls')
 
