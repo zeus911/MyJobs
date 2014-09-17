@@ -44,6 +44,8 @@ $(document).ready(function() {
     */
     if(location.search) show_selected();
 
+    $(".date-range").hide()
+
     /*
     Fancy pushState next and previous buttons for everyone
     but IE8 and IE9
@@ -182,7 +184,11 @@ $(document).ready(function() {
     });
 
     $(".datepicker").on("click", function(e) {
-        $(this).pickadate();
+        $(this).pickadate({
+            format: "mm/dd/yyyy",
+            selectYears: true,
+            selectMonths: true,
+        });
     });
 
     $('#item-save').on("click", function(e) {
@@ -291,28 +297,27 @@ $(document).ready(function() {
         run_ajax();
     });
 
-    $(".partner-tag.days, .partner-tag.custom").on("click", function() {
-        var custom = $(".partner-tag.custom");
+    $(".partner-tag.days").on("click", function() {
+        $(".partner-tag.custom").show();
+        $(".date-range").hide();
 
         if ($(this).hasClass("disabled-tag")) {
             $(".partner-tag.days").addClass("disabled-tag");
-            $(".partner-tag.days > i.icon-ok").remove();
-            $(".partner-tag.custom").addClass("disabled-tag").hide();
-            $(".date-range").show()
-            $(".partner-tag.custom > i.icon-ok").remove();
-
+            $(".partner-tag.days").children("i").remove();
             $(this).removeClass("disabled-tag");
-            $(this).append($(document.createElement("i"))
-                                     .addClass("icon icon-ok"));
+            $(this).append("<i class='icon icon-ok'></i>");
         } else {
             $(this).addClass("disabled-tag");
-            $(".partner-tag.days > i.icon-ok").remove().show();
-            $(".date-range").hide();
-            $(".partner-tag.custom > i.icon-ok").remove();
+            $(this).children('i').remove();
         }
     });
 
     $(".partner-tag.custom").on("click", function() {
+        $(".partner-tag.custom").hide();
+        $(".date-range").show();
+
+        $(".partner-tag.days").addClass("disabled-tag");
+        $(".partner-tag.days > i.icon-ok").remove();
     });
 
     // Waits till typing is completed for 1 sec (3 if tablet <) then runs ajax
