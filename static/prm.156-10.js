@@ -278,7 +278,7 @@ $(document).ready(function() {
     });
 
     // Add check mark icon next to partner-tags then run ajax
-    $(".partner-filters .partner-tag").on("click", function() {
+    $(".partner-filters .partner-tag[title='Click to filter']").on("click", function() {
         if ($(this).children('i').hasClass('icon-ok')) {
             $(this).children('i').remove();
             $(this).addClass("disabled-tag");
@@ -289,6 +289,28 @@ $(document).ready(function() {
             $(this).removeClass("disabled-tag");
         }
         run_ajax();
+    });
+
+    $(".partner-tag.days, .partner-tag.custom").on("click", function() {
+        var custom = $(".partner-tag.custom");
+
+        if ($(this).hasClass("disabled-tag")) {
+            $(".partner-tag.days").addClass("disabled-tag");
+            $(".partner-tag.days > i.icon-ok").remove();
+            $(".partner-tag.custom").addClass("disabled-tag");
+            $(".partner-tag.custom > i.icon-ok").remove();
+
+            $(this).removeClass("disabled-tag");
+            $(this).append($(document.createElement("i"))
+                                     .addClass("icon icon-ok"));
+        } else {
+            $(this).addClass("disabled-tag");
+            $(".partner-tag.days > i.icon-ok").remove();
+            $(".partner-tag.custom > i.icon-ok").remove();
+        }
+    });
+
+    $(".partner-tag.custom").on("click", function() {
     });
 
     // Waits till typing is completed for 1 sec (3 if tablet <) then runs ajax
