@@ -50,7 +50,7 @@
                 {% include "mypartners/includes/partner_column.html" with on_page="prm" %}
             </div>
             <div id="sidebar-holder" class="span4">
-                {% include "mypartners/includes/partner_sidebar.html" with filters=True navigation=True filter_tag=True special_interest=False %}
+                {% include "mypartners/includes/partner_sidebar.html" with on_page="prm" filters=True navigation=True filter_tag=True special_interest=False %}
             </div>
         </div>
     {% endif %}
@@ -65,4 +65,8 @@
         location.href="{% url 'partner_overview' %}?partner="+partner_id;
     });
 </script>
+<script src="{{ STATIC_URL }}prm.155-14.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}pickadate/picker.js"></script>
+<script src="{{ STATIC_URL }}pickadate/picker.date.js"></script>
+<script src="{{ STATIC_URL }}pickadate/legacy.js"></script>
 {% endblock %}
