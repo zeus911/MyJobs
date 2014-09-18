@@ -1,9 +1,11 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm
 from django.contrib.auth import authenticate
+from django.core.validators import validate_email
 from django.utils.translation import ugettext_lazy as _
 
 from myjobs.models import User
+from registration.models import Invitation
 
 
 class CustomAuthForm(AuthenticationForm):
@@ -131,3 +133,27 @@ class RegistrationForm(forms.Form):
 
             else:
                 return self.cleaned_data
+
+
+class InvitationForm(forms.ModelForm):
+    class Meta:
+        model = Invitation
+
+    def clean_invitee_email(self):
+        invitee = self.cleaned_data['invitee_email']
+        # validate_email raises a ValidationError if validation fails
+        validate_email(invitee)
+        return invitee
+
+    def clean(self):
+        admin = getattr(self, 'admin_user', None)
+        if admin is not None:
+            if self.cleaned_data.get('inviting_user', None) is None:
+                self.cleaned_data['inviting_user'] = admin
+        return self.cleaned_data
+
+    def save(self, commit=True):
+        instance = super(InvitationForm, self).save(commit=False)
+        instance.inviting_user = self.cleaned_data.get('inviting_user', None)
+        instance.save()
+        return instance

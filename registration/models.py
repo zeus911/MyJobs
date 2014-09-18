@@ -128,3 +128,29 @@ class ActivationProfile(models.Model):
     def expires(self):
         delta = datetime.timedelta(days=settings.ACCOUNT_ACTIVATION_DAYS)
         return self.sent + delta
+
+
+class Invitation(models.Model):
+    """
+    Represents a non-user being invited to create an account on secure.my.jobs.
+
+    Staff can use the admin interface to send generic invitations or
+    invitations that add permissions. Members can use PRM to send generic
+    invitations, access to their company features, or saved searches.
+    """
+    inviting_user = models.ForeignKey('myjobs.User', editable=False,
+                                      related_name='invites_sent')
+    inviting_company = models.ForeignKey('seo.Company', blank=True, null=True,
+                                         related_name='invites_sent')
+    invitee = models.ForeignKey('myjobs.User', related_name='invites',
+                                on_delete=models.SET_NULL, null=True,
+                                editable=False)
+    invitee_email = models.CharField(max_length=255, db_index=True)
+    invited = models.DateTimeField(auto_now_add=True, editable=False)
+    added_permission = models.ForeignKey('auth.Group', blank=True, null=True)
+    added_saved_search = models.ForeignKey('mysearches.SavedSearch',
+                                           blank=True, null=True,
+                                           editable=False)
+    accepted = models.BooleanField(default=False, editable=False,
+                                   help_text='Has the invitee accepted '
+                                             'this invitation')
