@@ -3883,3 +3883,15 @@ input.picker-left {
 input.picker-right {
     border-radius: 0 4px 4px 0;
 }
+
+body {
+    overflow-x: hidden;
+}
+
+.picker__holder {
+    max-width: 29%;
+}
+
+.picker__holder select {
+    padding: 0;
+}
