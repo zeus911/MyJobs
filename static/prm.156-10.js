@@ -622,7 +622,8 @@ function build_data() {
         var days = $(".partner-tag.days").has("i").text().split(" ")[0];
         start_date.setDate(start_date.getDate() - days);
     } else {
-        start_date.setDate(start_date.getDate() - 30);
+        //start of epoch
+        start_date = new Date("11/30/1899");
     }
 
     data.start_date = (start_date.getMonth() + 1) + "/" + start_date.getDate()
