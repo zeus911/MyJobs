@@ -184,4 +184,10 @@ function contactForm(){
     });
 }
 
+function accordion(header, contents) {
+    $(header).on('click', function() {
+        $(this).next($(contents)).slideToggle();
+    });
+}
+
 window.dateFormat = 'dd-M-yy';

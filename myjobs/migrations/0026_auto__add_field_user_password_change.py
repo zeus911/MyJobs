@@ -8,15 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Shared_Sessions.session'
-        db.add_column(u'myjobs_shared_sessions', 'session',
-                      self.gf('django.db.models.fields.TextField')(default='', blank=True),
+        # Adding field 'User.password_change'
+        db.add_column(u'myjobs_user', 'password_change',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting field 'Shared_Sessions.session'
-        db.delete_column(u'myjobs_shared_sessions', 'session')
+        # Deleting field 'User.password_change'
+        db.delete_column(u'myjobs_user', 'password_change')
 
 
     models = {
@@ -93,6 +93,7 @@ class Migration(SchemaMigration):
             'opt_in_employers': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'opt_in_myjobs': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'password': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
+            'password_change': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'profile_completion': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'source': ('django.db.models.fields.CharField', [], {'default': "'https://secure.my.jobs'", 'max_length': '255'}),
             'timezone': ('django.db.models.fields.CharField', [], {'default': "'America/New_York'", 'max_length': '255'}),

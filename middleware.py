@@ -167,7 +167,13 @@ class MultiHostMiddleware:
                 - store them in cache
 
         """
-        host = request.get_host()
+        host = None
+        if request.user.is_authenticated() and request.user.is_staff:
+            host = request.REQUEST.get('domain')
+
+        if host is None:
+            host = request.get_host()
+
         # get rid of any possible port number that comes thru on the host
         # examples:    localhost:80,
         #             127.0.0.1:8000,
@@ -261,17 +267,3 @@ def custom_facets_with_ops(site_facets):
         setattr(cf, 'boolean_operation', site_facet.boolean_operation)
         custom_facets.append(cf)
     return custom_facets
-
-
-class NewRelic(object):
-    """
-    Manages New Relic tracking.
-
-    Checks for newrelic in settings. Should only be used in production.
-    """
-    def process_response(self, request, response):
-        newrelic.agent.add_custom_parameter('url', request.META['HTTP_HOST'])
-        return response
-
-    def process_request(self, request):
-        newrelic.agent.add_custom_parameter('url', request.META['HTTP_HOST'])

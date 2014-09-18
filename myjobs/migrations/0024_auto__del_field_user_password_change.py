@@ -8,15 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Shared_Sessions.session'
-        db.add_column(u'myjobs_shared_sessions', 'session',
-                      self.gf('django.db.models.fields.TextField')(default='', blank=True),
-                      keep_default=False)
+        # Deleting field 'User.password_change'
+        db.delete_column(u'myjobs_user', 'password_change')
 
 
     def backwards(self, orm):
-        # Deleting field 'Shared_Sessions.session'
-        db.delete_column(u'myjobs_shared_sessions', 'session')
+        # Adding field 'User.password_change'
+        db.add_column(u'myjobs_user', 'password_change',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
 
 
     models = {
@@ -64,7 +64,8 @@ class Migration(SchemaMigration):
         u'myjobs.shared_sessions': {
             'Meta': {'object_name': 'Shared_Sessions'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'session': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'mj_session': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'ms_session': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'unique': 'True'})
         },
         u'myjobs.ticket': {

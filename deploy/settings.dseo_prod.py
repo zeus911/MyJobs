@@ -17,7 +17,7 @@ DATABASES = {'default': {'NAME': 'redirect',
             }
 
 TEMPLATE_DIRS = (
-    '/home/web/direct-seo/directseo/templates/',
+    '/home/web/MyJobs/MyJobs/templates/',
 )
 
 SESSION_CACHE_ALIAS = 'sessions'
@@ -88,3 +88,5 @@ SOLR = {
     }
 
 ABSOLUTE_URL = '/'
+
+STATIC_URL = "//d2e48ltfsb5exy.cloudfront.net/content_ms/files/"

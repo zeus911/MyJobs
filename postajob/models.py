@@ -15,6 +15,7 @@ from django.db import models
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_delete
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext_lazy as _
 
 
 class BaseModel(models.Model):
@@ -31,6 +32,41 @@ class BaseModel(models.Model):
         return user in self.owner.admins.all()
 
 
+class JobLocation(models.Model):
+    help_text = {
+        'city': 'The city where the job is located.',
+        'country': 'The country where the job is located.',
+        'state': 'The state where the job is located.',
+        'zipcode': 'The postal code of the job location.',
+    }
+    guid = models.CharField(max_length=255, unique=True, blank=True, default='')
+    city = models.CharField(max_length=255,
+                            help_text=help_text['city'])
+    state = models.CharField(max_length=200,
+                             help_text=help_text['state'],
+                             verbose_name=_('State/Region'))
+    state_short = models.CharField(max_length=3, blank=True)
+    country = models.CharField(max_length=200,
+                               help_text=help_text['country'])
+    country_short = models.CharField(max_length=3, blank=True,
+                                     help_text=help_text['country'])
+    zipcode = models.CharField(max_length=15, blank=True,
+                               help_text=help_text['zipcode'],
+                               verbose_name=_('Postal Code'))
+
+    def save(self, **kwargs):
+        self.generate_guid()
+        super(JobLocation, self).save(**kwargs)
+
+    def generate_guid(self):
+        if not self.guid:
+            guid = uuid4().hex
+            if JobLocation.objects.filter(guid=guid):
+                self.generate_guid()
+            else:
+                self.guid = guid
+
+
 class Job(BaseModel):
     help_text = {
         'apply_email': 'The email address where candidates should send their '
@@ -40,7 +76,6 @@ class Job(BaseModel):
         'apply_type': 'How should applicants submit their application?',
         'autorenew': 'Automatically renew this job for an additional 30 '
                      'days whenever it expires.',
-        'city': 'The city where the job is located.',
         'country': 'The country where the job is located.',
         'date_expired': 'When the job will be automatically removed from '
                         'the site.',
@@ -51,12 +86,8 @@ class Job(BaseModel):
                    'corporate sites. Posting to the network will make this '
                    'job available to all of your microsites.',
         'reqid': 'The Requisition ID from your system, if any.',
-        'state': 'The state where the job is located.',
         'title': 'The title of the job as you want it to appear.',
-        'zipcode': 'The zipcode of the job location.',
     }
-    guid = models.CharField(max_length=255, unique=True)
-
     title = models.CharField(max_length=255, help_text=help_text['title'])
     owner = models.ForeignKey('seo.Company')
     reqid = models.CharField(max_length=50, verbose_name="Requisition ID",
@@ -68,20 +99,12 @@ class Job(BaseModel):
                                   help_text=help_text['apply_link'])
     apply_info = models.TextField(blank=True, verbose_name="Apply Instructions",
                                   help_text=help_text['apply_info'])
-    site_packages = models.ManyToManyField('SitePackage', null=True)
+    site_packages = models.ManyToManyField('SitePackage', blank=True,
+                                           null=True)
     is_syndicated = models.BooleanField(default=False,
                                         verbose_name="Syndicated")
 
-    city = models.CharField(max_length=255,
-                            help_text=help_text['city'])
-    state = models.CharField(max_length=200, verbose_name='State',
-                             help_text=help_text['state'])
-    state_short = models.CharField(max_length=3)
-    country = models.CharField(max_length=200,
-                               help_text=help_text['country'])
-    country_short = models.CharField(max_length=3)
-    zipcode = models.CharField(max_length=15, blank=True,
-                               help_text=help_text['zipcode'])
+    locations = models.ManyToManyField('JobLocation', related_name='jobs')
 
     date_new = models.DateTimeField(auto_now=True)
     date_updated = models.DateTimeField(auto_now_add=True)
@@ -112,29 +135,32 @@ class Job(BaseModel):
             on_sites = ",".join([str(package) for package in package_list])
         else:
             on_sites = '0'
-        job = {
-            'id': self.id,
-            'city': self.city,
-            'company': self.owner.id,
-            'country': self.country,
-            'country_short': self.country_short,
-            # Microsites expects date format '%Y-%m-%d %H:%M:%S.%f' or
-            # '%Y-%m-%d %H:%M:%S'.
-            'date_new': str(self.date_new.replace(tzinfo=None)),
-            'date_updated': str(self.date_updated.replace(tzinfo=None)),
-            'description': self.description,
-            'guid': self.guid,
-            'link': self.apply_link,
-            'apply_info': self.apply_info,
-            'on_sites': on_sites,
-            'state': self.state,
-            'state_short': self.state_short,
-            'reqid': self.reqid,
-            'title': self.title,
-            'uid': self.id,
-            'zipcode': self.zipcode
-        }
-        return job
+
+        jobs = []
+        for location in self.locations.all():
+            jobs.append({
+                'id': self.id,
+                'city': location.city,
+                'company': self.owner.id,
+                'country': location.country,
+                'country_short': location.country_short,
+                # Microsites expects date format '%Y-%m-%d %H:%M:%S.%f' or
+                # '%Y-%m-%d %H:%M:%S'.
+                'date_new': str(self.date_new.replace(tzinfo=None)),
+                'date_updated': str(self.date_updated.replace(tzinfo=None)),
+                'description': self.description,
+                'guid': location.guid,
+                'link': self.apply_link,
+                'apply_info': self.apply_info,
+                'on_sites': on_sites,
+                'state': location.state,
+                'state_short': location.state_short,
+                'reqid': self.reqid,
+                'title': self.title,
+                'uid': self.id,
+                'zipcode': location.zipcode
+            })
+        return jobs
 
     def add_to_solr(self):
         """
@@ -142,18 +168,18 @@ class Job(BaseModel):
         apply_info, city, company (company.id), country, country_short,
         date_new, date_updated, description, guid, link, on_sites, state,
         state_short, reqid, title, uid, and zipcode.
+
         """
-        job = self.solr_dict()
-        data = urlencode({
-            'key': settings.POSTAJOB_API_KEY,
-            'jobs': json.dumps([job])
-        })
-        request = urllib2.Request(settings.POSTAJOB_URLS['post'], data)
-        urllib2.urlopen(request).read()
+        jobs = self.solr_dict()
+        if jobs:
+            data = urlencode({
+                'key': settings.POSTAJOB_API_KEY,
+                'jobs': json.dumps(jobs)
+            })
+            request = urllib2.Request(settings.POSTAJOB_URLS['post'], data)
+            urllib2.urlopen(request).read()
 
     def save(self, **kwargs):
-        self.generate_guid()
-
         if self.is_expired and self.date_expired > date.today():
             self.date_expired = date.today()
 
@@ -163,21 +189,28 @@ class Job(BaseModel):
         else:
             self.remove_from_solr()
 
+    def delete(self, using=None):
+        """
+        Removing via the admin doesn't trigger post-delete signals. Moving
+        the logic here ensures that all of these actions are taken on
+        delete.
+
+        """
+        # Force the evaluation of the queryset now so it can be
+        # used post-delete.
+        locations = list(self.locations.all())
+        self.remove_from_solr()
+        super(Job, self).delete(using)
+        [location.delete() for location in locations]
+
     def remove_from_solr(self):
         data = urlencode({
             'key': settings.POSTAJOB_API_KEY,
-            'guids': self.guid
+            'guids': ','.join(location.guid
+                              for location in self.locations.all())
         })
         request = urllib2.Request(settings.POSTAJOB_URLS['delete'], data)
         urllib2.urlopen(request).read()
-
-    def generate_guid(self):
-        if not self.guid:
-            guid = uuid4().hex
-            if Job.objects.filter(guid=guid):
-                self.generate_guid()
-            else:
-                self.guid = guid
 
     def on_sites(self):
         from seo.models import SeoSite
@@ -216,6 +249,15 @@ class PurchasedJob(Job):
     purchased_product = models.ForeignKey('PurchasedProduct')
     is_approved = models.BooleanField(default=False)
 
+    def delete(self, **kwargs):
+        product = self.purchased_product
+        super(PurchasedJob, self).delete(**kwargs)
+        if product.num_jobs_allowed != 0:
+            # increment jobs_remaining if this job is not part of an unlimited
+            # product
+            product.jobs_remaining += 1
+            product.save(**kwargs)
+
     def save(self, **kwargs):
         if not hasattr(self, 'pk') or not self.pk:
             # Set number of jobs remaining
@@ -227,7 +269,7 @@ class PurchasedJob(Job):
             self.max_expired_date = (date.today() + timedelta(max_job_length))
 
             # If the product dictates that jobs don't require approval,
-            # immidiately approve the job.
+            # immediately approve the job.
             if not self.purchased_product.product.requires_approval:
                 self.is_approved = True
 
@@ -308,7 +350,11 @@ class PackageManager(models.Manager, PackageMixin):
 
 class Package(models.Model):
     name = models.CharField(max_length=255)
+
+    # content_type will usually be that of a Site Package, but this is not
+    # a guarantee
     content_type = models.ForeignKey(ContentType)
+
     # There is also code that makes the assumption that the owner field
     # exists. Because SitePackage doesn't require an owner field (but other
     # package types likely will require an owner field) there's no good
@@ -418,7 +464,7 @@ class SitePackage(Package):
 class PurchasedProduct(BaseModel):
     product = models.ForeignKey('Product')
     offline_purchase = models.ForeignKey('OfflinePurchase', null=True,
-                                        blank=True)
+                                         blank=True)
     invoice = models.ForeignKey('Invoice')
 
     owner = models.ForeignKey('seo.Company')

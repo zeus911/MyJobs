@@ -94,9 +94,14 @@ class SavedSearch(models.Model):
     def get_feed_items(self, num_items=100):
         url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency)
         url_of_feed = update_url_if_protected(url_of_feed, self.user)
-        items = parse_feed(url_of_feed, self.frequency,
-                           num_items=num_items, return_items=5,
-                           last_sent=self.last_sent)
+        parse_feed_args = {
+            'feed_url': url_of_feed, 'frequency': self.frequency,
+            'num_items': num_items, 'return_items': 5,
+            'last_sent': self.last_sent
+        }
+        if hasattr(self, 'partnersavedsearch'):
+            parse_feed_args['ignore_dates'] = True
+        items = parse_feed(**parse_feed_args)
         return items
 
     def send_email(self, custom_msg=None):
