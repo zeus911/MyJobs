@@ -625,9 +625,9 @@ function build_data() {
         start_date.setDate(start_date.getDate() - 30);
     }
 
-    data.start_date = start_date.getMonth() + "/" + start_date.getDate()
+    data.start_date = (start_date.getMonth() + 1) + "/" + start_date.getDate()
                                             + "/" + start_date.getFullYear();
-    data.end_date = end_date.getMonth() + "/" + end_date.getDate()
+    data.end_date = (end_date.getMonth() + 1) + "/" + end_date.getDate()
                                         + "/" + end_date.getFullYear();
 
     var sort_by = $(".sort-by.active").text().toLowerCase();

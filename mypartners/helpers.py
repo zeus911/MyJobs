@@ -417,6 +417,8 @@ def filter_partners(request, partner_library=False):
     tags = [tag.strip() for tag in request.REQUEST.get('tag', '').split(',') if tag]
     keywords = [keyword.strip() for keyword in request.REQUEST.get(
         'keywords', '').split(',') if keyword]
+    start_date = request.REQUEST.get('start_date')
+    end_date = request.REQUEST.get('end_date')
 
     if partner_library:
         special_interest = request.REQUEST.getlist('special_interest')[:]
@@ -467,6 +469,16 @@ def filter_partners(request, partner_library=False):
 
         query &= state_query
 
+    if start_date:
+        user_tz = pytz.timezone(get_current_timezone_name())
+        start_date = user_tz.localize(
+            datetime.strptime(start_date, "%m/%d/%Y"))
+        query &= Q(contactrecord__date_time__gte=start_date)
+    if end_date:
+        user_tz = pytz.timezone(get_current_timezone_name())
+        end_date = user_tz.localize(datetime.strptime(end_date, "%m/%d/%Y"))
+        query &= Q(contactrecord__date_time__lte=end_date)
+
     partners = partners.distinct().filter(query)
 
     # filter by tags
@@ -489,6 +501,8 @@ def filter_partners(request, partner_library=False):
                   [contact_city, contact_state]])
 
         partners = list(OrderedSet(list(partners) + list(incomplete_partners)))
+    elif "activity" in sort_by:
+        partners = partners.order_by(sort_order + "contactrecord__date_time")
     else:
         partners = partners.order_by(*[sort_by] + order_by)
 
