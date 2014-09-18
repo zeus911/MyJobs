@@ -8,6 +8,7 @@ from lxml import etree
 from seo_pysolr import Solr
 import import_jobs
 from seo.tests import factories
+from seo.models import SeoSite
 from seo.search_backend import DESearchQuerySet
 from setup import DirectSEOBase
 
@@ -25,12 +26,12 @@ class SiteTestCase(DirectSEOBase):
         super(SiteTestCase, self).setUp()
         self.conn = Solr('http://127.0.0.1:8983/solr/seo')
         self.conn.delete(q="*:*")        
-        self.businessunit = factories.BusinessUnitFactory.build()
-        self.businessunit.save()
+        self.businessunit = factories.BusinessUnitFactory(id=0)
         self.buid = self.businessunit.id
         self.filepath = os.path.join(import_jobs.DATA_DIR,
                                      'dseo_feed_%s.xml' % self.buid)
-        self.site = factories.SeoSiteFactory()
+        SeoSite.objects.all().delete()
+        self.site = factories.SeoSiteFactory(id=1)
 
         self.configuration = factories.ConfigurationFactory(status=2)
         self.configuration.save()
@@ -43,6 +44,10 @@ class SiteTestCase(DirectSEOBase):
     
     def test_unicode_title(self):
         # Test imports
+        group = factories.GroupFactory()
+        self.site.group = group
+        self.site.business_units.add(self.businessunit)
+        self.site.save()
         import_jobs.update_solr(self.buid, download=False, delete_feed=False,
                                 data_dir='seo/tests/data/')
         solr_jobs = self.conn.search("*:*")
@@ -51,36 +56,36 @@ class SiteTestCase(DirectSEOBase):
 
         # test standard facets against Haystack query
         standard_cf = factories.CustomFacetFactory.build(
-                # default facet will return both jobs
-                name="Keyword Facet",
-                group_id=1,
-                show_production=True)
+            # default facet will return both jobs
+            name="Keyword Facet",
+            group=group,
+            show_production=True)
         standard_cf.save()
         standard_cf.keyword.add(u'Ключевые')
         standard_cf.save()
         standard_site_facet = factories.SeoSiteFacetFactory(
-                                    seosite_id=self.site.id,
-                                    customfacet_id=standard_cf.id,
-                                    facet_type=factories.SeoSiteFacet.STANDARD)
+            seosite=self.site,
+            customfacet=standard_cf,
+            facet_type=factories.SeoSiteFacet.STANDARD)
         standard_site_facet.save()
 
         # test standard facets against Haystack query
         standard_cf2 = factories.CustomFacetFactory.build(
-                # default facet will return both jobs
-                name='Country Facet',
-                country='United States', 
-                group_id=1,
-                show_production=True)
+            # default facet will return both jobs
+            name='Country Facet',
+            country='United States',
+            group=group,
+            show_production=True)
         standard_cf2.save()
         standard_site_facet2 = factories.SeoSiteFacetFactory(
-                                    seosite_id=self.site.id,
-                                    customfacet_id=standard_cf2.id,
-                                    facet_type=factories.SeoSiteFacet.STANDARD)
+            seosite=self.site,
+            customfacet=standard_cf2,
+            facet_type=factories.SeoSiteFacet.STANDARD)
         standard_site_facet2.save()
 
         resp = self.client.get('/keyword-facet/new-jobs/',
                                HTTP_HOST=self.site.domain, follow=True)
-        sqs= DESearchQuerySet().filter(text=u'Ключевые')
+        sqs = DESearchQuerySet().filter(text=u'Ключевые')
         self.assertEqual(len(resp.context['default_jobs']), sqs.count())
         for facet_widget in resp.context['widgets']:
             # Ensure that no standard facet has more results than current
@@ -92,17 +97,18 @@ class SiteTestCase(DirectSEOBase):
         from django.core.cache import cache
         cache.clear()
         default_cf = factories.CustomFacetFactory.build(
-                name="Default Facet",
-                title=u"Специалист",
-                group_id=1,
-                show_production=True)
+            name="Default Facet",
+            title=u"Специалист",
+            group=group,
+            show_production=True)
         default_cf.save()
         default_site_facet = factories.SeoSiteFacetFactory(
-                seosite_id=self.site.id,
-                facet_type=factories.SeoSiteFacet.DEFAULT,
-                customfacet_id=default_cf.id)
+            seosite=self.site,
+            facet_type=factories.SeoSiteFacet.DEFAULT,
+            customfacet=default_cf)
         default_site_facet.save()
-        resp = self.client.get('/jobs/', HTTP_HOST=self.site.domain, follow=True)
+        resp = self.client.get('/jobs/', HTTP_HOST=self.site.domain,
+                               follow=True)
         total_jobs = resp.context['total_jobs_count']
         solr_jobs = self.conn.search(q=u"title:'Специалист'")
         self.assertEqual(total_jobs, solr_jobs.hits)
@@ -110,7 +116,6 @@ class SiteTestCase(DirectSEOBase):
         for facet_widget in resp.context['widgets']:
             for count_tuple in facet_widget.items:
                 self.assertTrue(sqs.count() >= count_tuple[1])
- 
 
         # Feed test
         resp = self.client.get('/feed/json', HTTP_HOST=self.site.domain)
@@ -141,12 +146,13 @@ class SiteTestCase(DirectSEOBase):
             # Get the first daily sitemap
             urlset = etree.fromstring(resp.content)
             # Check each job in daily sitemap - I'm a bot
-            for loc,_,_,_ in urlset:
+            for loc, _, _, _ in urlset:
                 resp = self.client.get(loc.text, HTTP_HOST=self.site.domain)
                 self.assertEqual(resp.status_code, 200)
                 self.assertIn(str(resp.context['the_job'].uid), loc.text)
                 crawled_jobs += 1
-        # This assertion worked when the test was made, but will change with date
-        # self.assertEqual(crawled_jobs, 2) 
+        # This assertion worked when the test was made, but will change with
+        # date
+        # self.assertEqual(crawled_jobs, 2)
         # This assertion should work after date issues have been resolved
         # self.assertEqual(crawled_jobs, total_jobs)
