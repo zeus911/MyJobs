@@ -51,6 +51,9 @@ class SitemapTestCase(DirectSEOBase):
         # that the settings are compatible with actually searching for the
         # jobs we're adding.
         settings.SITE_BUIDS = []
+        site = SeoSite.objects.get(pk=1)
+        site.business_units = []
+        site.save()
 
         # These are kwargs from the actual error that created this error in the
         # first place.
