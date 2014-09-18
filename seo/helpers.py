@@ -51,7 +51,6 @@ def company_thumbnails(companies, use_canonical=True):
         return []
 
 
-
 def build_filter_dict(slug_path):
     """
     Parses out the slug tags and associated values into key/value pairs.
@@ -117,7 +116,7 @@ def build_filter_dict(slug_path):
 
 def canonical_path_from_filter_dict(filters):
     """Builds a canonical url path from a dictionary of filter terms"""
-    term_paths = [''.join([filters[key], slug]) for key,slug in
+    term_paths = [''.join([filters[key], slug]) for key, slug in
                   settings.SLUG_TAGS.items() if slug is not None]
     return ''.join(term_paths)
 
@@ -214,6 +213,7 @@ def parse_location_slug(location_slug):
         
     return locations
 
+
 def parse_moc_slug(moc_slug):
     """
     Return {'moc': <moc_code>} dictionary.
@@ -221,7 +221,8 @@ def parse_moc_slug(moc_slug):
     """
     moc_slug = moc_slug.strip('/').split('/')
     return {'moc': moc_slug[1]}
-    
+
+
 def get_nav_type(filters):
     """
     This method determines which type of primary nav we should build.
@@ -263,6 +264,7 @@ def get_nav_type(filters):
     
     return nav_type
 
+
 def get_bread_box_path(filters=None):
     bread_box_path = {}
 
@@ -285,6 +287,7 @@ def get_bread_box_path(filters=None):
                     bread_box_path[k] = filters[k] + settings.SLUG_TAGS[k]
 
     return bread_box_path
+
 
 def job_breadcrumbs(job, company=False):
     """
@@ -329,7 +332,7 @@ def job_breadcrumbs(job, company=False):
     for i in fields:
         slab = getattr(job, "%s_slab" % i)
         if slab:
-            slab=slab.split("::")
+            slab = slab.split("::")
         else:
             continue
 
@@ -354,6 +357,7 @@ def job_breadcrumbs(job, company=False):
                               'display': display or getattr(job, f)}
     return breadcrumbs
 
+
 def _page_title(crumbs):
     """Generates title for job detail page."""
     locs = filter(lambda x: x, [crumbs.get(loc) for loc in
@@ -367,6 +371,7 @@ def _page_title(crumbs):
         info_part = crumbs['title']['display']
 
     return " in ".join([info_part, loc_part])
+
 
 def get_bread_box_title(filters={}, jobs=None):
     """
@@ -428,14 +433,15 @@ def get_bread_box_title(filters={}, jobs=None):
                             break
                     # still can't find it? Solr query time
                     if not found:
-                        res = conn.search(q=u"title_slug:{0}".format(title_slug),
-                                        fl="title, title_slug", rows=1)
+                        res = conn.search(
+                            q=u"title_slug:{0}".format(title_slug),
+                            fl="title, title_slug", rows=1)
                         if res and res.docs[0].get('title_slug') == title_slug:
                             bread_box_title['title_slug'] = res.docs[0]['title']
                         else:
                             # Title case the slug as a last resort
-                            bread_box_title['title_slug'] = title_slug.replace('-', ' ').title()
-
+                            bread_box_title['title_slug'] = \
+                                title_slug.replace('-', ' ').title()
 
         moc_slug = filters["moc_slug"]
         if moc_slug is not None:
@@ -458,9 +464,10 @@ def get_bread_box_title(filters={}, jobs=None):
 
     return bread_box_title
 
+
 def get_jobs(custom_facets=None, exclude_facets=None, jsids=None, 
-        default_sqs=None, filters={},  fields=None, facet_limit=250, 
-        facet_sort="count", facet_offset=None, mc=1):
+             default_sqs=None, filters={},  fields=None, facet_limit=250,
+             facet_sort="count", facet_offset=None, mc=1):
     """
     Returns 3-tuple containing a DESearchQuerySet object, a set of facet
     counts that have been filtered, and a set of unfiltered facet counts.
@@ -468,8 +475,9 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
     The unfiltered facet count object is used by the primary nav box to
     build items and options.
     Inputs:
-        :custom_facets: A list of saved searches (Custom Facets) to apply to sqs.
-            Defaults to site's default custom facets set in Middleware 
+        :custom_facets: A list of saved searches (Custom Facets) to apply to
+                        sqs. Defaults to site's default custom facets set in
+                        Middleware
         :default_sqs: Starting search query set
         :filters: Dictionary of filter terms in field_name:search_term format
         The following inputs are Solr parameters. 
@@ -485,7 +493,6 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
         sqs = DESearchQuerySet()
     sqs = sqs_apply_custom_facets(custom_facets, sqs, exclude_facets)
     sqs = _sqs_narrow_by_buid_and_site_package(sqs, buids=jsids)
-
 
     #The boost function added to this search query set scales relevancy scores
     #by a factor of 1/2 at ~6 months (1.8e-11 ms) in all future queries
@@ -505,13 +512,15 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
              .facet("moc_slab").facet("title_slab").facet("full_loc")\
              .facet("company_slab").facet("buid").facet("mapped_moc_slab")
 
-    #When get_jobs is called from job_listing_by_slug_tag, sqs already has site default
-    #facets and filters from URL applied. The call to filter_sqs concatenates
-    #the querystring (q=querystring) with itself, adding + operators and causing
-    #parsing errors for more complex custom facets. Can't remove now until we
-    #verify other views don't rely on this call to filter_sqs.
-    #Jason McLaughlin 09-07-2012
+    # When get_jobs is called from job_listing_by_slug_tag, sqs already has site
+    # default facets and filters from URL applied. The call to filter_sqs
+    # concatenates the querystring (q=querystring) with itself,
+    # adding + operators and causing parsing errors for more complex custom
+    # facets. Can't remove now until we verify other views don't rely on
+    # this call to filter_sqs.
+    # Jason McLaughlin 09-07-2012
     return filter_sqs(sqs, filters)
+
 
 def filter_sqs(sqs, filters, site_id=None):
     """
@@ -536,7 +545,7 @@ def filter_sqs(sqs, filters, site_id=None):
     for f in _filters:
         if f == 'location_slug':
             loc = parse_location_slug(filters[f])
-            for k,v in loc.items():
+            for k, v in loc.items():
                 if v:
                     if k == 'country_short':
                         sqs = sqs.narrow('country_short:(%s)' % v.upper())
@@ -544,7 +553,7 @@ def filter_sqs(sqs, filters, site_id=None):
                         if v != 'none':
                             sqs = sqs.narrow("state_slug:(%s)" % v)
                     else:
-                        if v!= 'none':
+                        if v != 'none':
                             sqs = sqs.narrow("city_slug:(%s)" % v)
                         
         elif f == 'moc_slug':
@@ -561,7 +570,8 @@ def filter_sqs(sqs, filters, site_id=None):
             company = BusinessUnit.objects.filter(title_slug=filters[f])
 
             if not company:
-                logging.error("No BusinessUnit found for title_slug %s" % filters[f])
+                logging.error("No BusinessUnit found for title_slug %s" %
+                              filters[f])
                 sqs = sqs.narrow("company:(%s)" % filters[f])
             else:
                 sqs = sqs.narrow('buid:(%s)' % ' OR '.join([str(c.id) for c
@@ -570,6 +580,7 @@ def filter_sqs(sqs, filters, site_id=None):
             t = filters[f]
             sqs = sqs.narrow("title_slug:(%s)" % _clean(t))
     return sqs
+
 
 def get_featured_jobs(*args, **kwargs):
     """
@@ -609,15 +620,15 @@ def featured_default_jobs(f, d, total, percent_f, offset=0):
         (a,b,_,_) = featured_default_jobs()
 
     """
-    if offset>0:
+    if offset > 0:
         f_offset = int(math.ceil(offset*percent_f))
         f = f-f_offset
 
         #if f is negative, we add that many jobs to d_offset
         d_offset = offset - f_offset - min(0, f)
         d = d - d_offset
-        f_offset = f_offset -  min(0, d)
-        f = f + min(0,d)
+        f_offset = f_offset - min(0, d)
+        f = f + min(0, d)
     else:
         f_offset = 0
         d_offset = 0
@@ -625,7 +636,7 @@ def featured_default_jobs(f, d, total, percent_f, offset=0):
     d = max(0, d)
 
     #Fill percent_f of total from f 
-    num_featured_jobs =  min(f, int(math.ceil(total * percent_f)))
+    num_featured_jobs = min(f, int(math.ceil(total * percent_f)))
 
     #Fill remaining total from d
     num_default_jobs = min(total - num_featured_jobs, d)
@@ -640,7 +651,8 @@ def featured_default_jobs(f, d, total, percent_f, offset=0):
 
 def _clean(term):
     return DESearchQuerySet().query.clean(term)
-    
+
+
 def get_solr_facet(site_id, jsids, filters={}, params=None):
     """
     Returns tuples of (custom_facets, result counts) for custom facets
@@ -690,16 +702,13 @@ def get_solr_facet(site_id, jsids, filters={}, params=None):
 
     """
 
-    site_cf_keys = SeoSiteFacet.objects.filter(
-                        seosite__id=settings.SITE_ID
-                   ).filter(
-                        customfacet__show_production=1
-                   ).values_list(
-                        'customfacet__id', flat=True
-                   )
+    site_cf_keys = SeoSiteFacet.objects.filter(seosite__id=settings.SITE_ID).\
+        filter(customfacet__show_production=1).values_list('customfacet__id',
+                                                           flat=True)
+
     #We want to prefetch keyword here, but taggit doesn't support it
-    results = CustomFacet.objects.filter(id__in=site_cf_keys
-                        ).prefetch_related('business_units')
+    results = CustomFacet.objects.filter(id__in=site_cf_keys).\
+        prefetch_related('business_units')
 
     # Short-circuit the function if a site has facets turned on, but either
     # does not have any facets with `show_production` == 1 or has not yet
@@ -724,9 +733,11 @@ def get_solr_facet(site_id, jsids, filters={}, params=None):
         gqs = prepare_sqs_from_search_params(params, sqs=gqs)
 
     result_counts = _result_counts(result_lookup, gqs)
-    ss = [(r, result_counts[r.id]) for r in results.filter(id__in=result_counts)]
+    ss = [(r, result_counts[r.id]) for r in
+          results.filter(id__in=result_counts)]
     ss.sort(key=lambda x: -x[1])
     return ss or []
+
 
 def _build_group_queries(site_id, results):
     """
@@ -761,7 +772,7 @@ def _build_group_queries(site_id, results):
     gqs = GroupQuerySet().using('groups')
     gqs = _sqs_narrow_by_buid_and_site_package(gqs)
 
-    for sq,result in zip(results.get_facet_queries(), results):
+    for sq, result in zip(results.get_facet_queries(), results):
         gq_filter = SolrSearchQuery()
         gq_filter.add_filter(sq)
 
@@ -803,6 +814,7 @@ def _result_counts(result_lookup, gqs):
             else:
                 result_counts[cfid] += gq['hits']
     return result_counts
+
 
 def combine_groups(svd_searches, match_field='name'):
     """
@@ -888,6 +900,7 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
     widgets.sort(key=lambda x: x.precedence)
     return widgets
 
+
 def split_locs(facet):
     for f in facet:
         loc_tuples = f[0].split('@@')
@@ -897,11 +910,14 @@ def split_locs(facet):
 
     return facet
 
+
 def facet_data(jsids):
-    sqs = DESearchQuerySet().facet_limit(-1).facet_sort("count").facet_mincount(1)
+    sqs = DESearchQuerySet().facet_limit(-1).facet_sort("count").\
+        facet_mincount(1)
     sqs = sqs.facet("full_loc").facet("title").facet("country").facet("state")
     sqs = _sqs_narrow_by_buid_and_site_package(sqs)
     return sqs.facet_counts()['fields']
+
 
 def get_abs_url(item, _type, path_dict, *args, **kwargs):
     """
@@ -934,8 +950,8 @@ def get_abs_url(item, _type, path_dict, *args, **kwargs):
 
     results = sorted([(url_atoms[k], slug_order[k]) for k in url_atoms],
                      key=lambda result: result[1])
-    return '/%s/' % '/'.join([i[0] for i in
-                            ifilter(lambda r: r[0], results)])
+    return '/%s/' % '/'.join([i[0] for i in ifilter(lambda r: r[0], results)])
+
 
 def more_custom_facets(custom_facets, filters={}, offset=0, num_items=0):
     """Generates AJAX response for more custom_facets."""
@@ -944,27 +960,25 @@ def more_custom_facets(custom_facets, filters={}, offset=0, num_items=0):
     for i in custom_facets:
         url = i[0].url_slab.split("::")[0]
         name = safe(smart_truncate(facet_text(i[0].url_slab)))
-        items.append({'url':url, 'name':name, 'count':i[1]})
+        items.append({'url': url, 'name': name, 'count': i[1]})
 
     return items
 
 
 def _custom_facet_from_slug_tag(slug, site_id):
     """Return all CustomFacets with name_slug==slug for a given site."""
-    site_cf_keys = SeoSiteFacet.objects.filter(
-                        seosite__id=settings.SITE_ID
-                   ).filter(
-                        customfacet__show_production=1
-                   ).values_list(
-                        'customfacet__id', flat=True
-                   )
-    custom_facets = CustomFacet.objects.filter(id__in=site_cf_keys).filter(name_slug=slug)
+    site_cf_keys = SeoSiteFacet.objects.filter(seosite__id=settings.SITE_ID).\
+        filter(customfacet__show_production=1).\
+        values_list('customfacet__id', flat=True)
+    custom_facets = CustomFacet.objects.filter(id__in=site_cf_keys).\
+        filter(name_slug=slug)
     return custom_facets
 
 
 def sqs_apply_custom_facets(custom_facets, sqs=None, exclude_facets=None):
     """
-    Return a DESearchQuerySet filtered by the input list of saved searches and exclude searches
+    Return a DESearchQuerySet filtered by the input list of saved searches and
+    exclude searches
 
     Inputs:
     :custom_facets: Queryset of CustomFacets to apply to sqs, required
@@ -974,8 +988,9 @@ def sqs_apply_custom_facets(custom_facets, sqs=None, exclude_facets=None):
     """
 
     if sqs is None:
-        sqs=DESearchQuerySet()
-    #Apply SearchQueries for exclude facets and custom facets to our SearchQuerySet
+        sqs = DESearchQuerySet()
+    # Apply SearchQueries for exclude facets and custom facets to our
+    # SearchQuerySet
     if exclude_facets:
         combined_exclude_sq = create_sq(exclude_facets)
         if combined_exclude_sq:
@@ -985,6 +1000,7 @@ def sqs_apply_custom_facets(custom_facets, sqs=None, exclude_facets=None):
         if combined_sq:
             sqs = sqs.narrow(combined_sq.build_query())
     return sqs
+
 
 def create_sq(custom_facets):
     """
@@ -997,8 +1013,8 @@ def create_sq(custom_facets):
     """
     #maps boolean_operation codes to their operator functions. Default is or_
     op_map = [("", operator.or_),
-          ("or", operator.or_),
-          ("and", operator.and_)]
+              ("or", operator.or_),
+              ("and", operator.and_)]
 
     result_sq = SolrSearchQuery()
     facets_by_op = defaultdict(list)
@@ -1009,9 +1025,11 @@ def create_sq(custom_facets):
         op_facets = facets_by_op[op]
         #Create a Search Query for each customfacet in op_list
         if op_facets:
-            op_query_list = [SQ(content=Raw(cf.saved_querystring)) for cf in op_facets if cf.saved_querystring]
+            op_query_list = [SQ(content=Raw(cf.saved_querystring)) for cf in
+                             op_facets if cf.saved_querystring]
             if op_query_list:
-                #Creates a single search query joined by op, for each non-empty SQ
+                # Creates a single search query joined by op, for each
+                # non-empty SQ
                 op_sq = (reduce(op_func, filter(lambda x: x, op_query_list)))
             else:
                 continue
@@ -1089,13 +1107,12 @@ def prepare_sqs_from_search_params(params, sqs=None):
         # has specified any custom MOC-Onet mappings. If they do, we'll search
         # on the jobs mapped_moc* fields
         prefix = 'mapped_' if settings.SITE_BUIDS else ''
-                     
 
         if moc_id_val:
-            moc_filt = SQ(**{'%smocid' % (prefix): moc_id_val})
+            moc_filt = SQ(**{'%smocid' % prefix: moc_id_val})
         else:
-            moc_filt = SQ(SQ(**{'%smoc' % (prefix): moc_val}) |
-                          SQ(**{'%smoc_slab' % (prefix): moc_val})) 
+            moc_filt = SQ(SQ(**{'%smoc' % prefix: moc_val}) |
+                          SQ(**{'%smoc_slab' % prefix: moc_val}))
         sqs = sqs.filter(moc_filt)
 
     return sqs.highlight()
@@ -1137,16 +1154,20 @@ def _sqs_narrow_by_buid_and_site_package(sqs, buids=None, site_packages=None):
 def related_jobs(job):
     return _sqs_narrow_by_buid_and_site_package(DESearchQuerySet()).more_like_this(job)[0:10]
 
+
 def take(n, seq):
     "Return first n items of the seq as a list"
     return list(islice(seq, n))
+
 
 def drop(n, seq):
     "Return seq with the first n items removed."
     return list(islice(seq, n, None, 1))
 
+
 def split_by(n, seq):
     return [take(n, seq), drop(n, seq)]
+
 
 def slices(seq, start=0, end=None, step=2):
     """
@@ -1188,6 +1209,7 @@ def slices(seq, start=0, end=None, step=2):
             start += step
             yield segment[0][0], segment[0][-1]
 
+
 def create_businessunit(buid):
     """
     Create a BusinessUnit instance with the given business unit id
@@ -1221,12 +1243,13 @@ def create_businessunit(buid):
     else:
         return False
 
+
 def make_json(data, host):
-    s = JSONExtraValuesSerializer(
-            publisher_url = "http://%s" % host)
+    s = JSONExtraValuesSerializer(publisher_url="http://%s" % host)
     output = s.serialize(data)
     return output
-    
+
+
 def make_specialcommit_string(special_commits):
     """
     Build the site commitment string here instead of multiple times in the 
@@ -1279,7 +1302,7 @@ def determine_redirect(request, filters):
     if request.path.startswith('/search'):
         needs_redirect = True
     elif '/jobs/' != request.path:
-        slug_tag_paths = [''.join([filters[key], value]) for key,value
+        slug_tag_paths = [''.join([filters[key], value]) for key, value
                           in settings.SLUG_TAGS.items() if filters[key]]
         canonical_url = '/%s' % ''.join(slug_tag_paths)
         if request.path != canonical_url:
@@ -1378,5 +1401,3 @@ def urlencode_path_and_query_string(url):
         result = '{path}?{query_string}'.format(path=result,
                                                 query_string=query_string)
     return result
-
-
