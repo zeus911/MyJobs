@@ -339,7 +339,7 @@ h1 > small > a:hover {
     background-position-x: 97%;
 }
 
-.sidebar select:not(.picker__holder select) {
+.sidebar select {
     width: 100%;
 }
 
@@ -365,6 +365,12 @@ h1 > small > a:hover {
 .sidebar .partner-tag {
     width: 48.5%;
     padding: 5px 10px;
+}
+
+.partner-tag.days {
+    width: 32%;
+    margin-bottom: 5px;
+    margin-top: 0;
 }
 
 .sidebar .partner-tag:nth-child(2n) {
@@ -669,11 +675,6 @@ div.tags-field ul.tagit input.ui-widget-content {
     padding: 0 10px;
 }
 
-.sidebar .partner-tag.days {
-    width: 32%;
-    margin-bottom: 5px;
-    margin-top: 0;
-}
 
 .sidebar .partner-tag.custom {
     width: 100%;
@@ -704,6 +705,14 @@ input.picker-right {
 
 .picker__holder select {
     padding: 0;
+}
+
+.sidebar .picker__select--month {
+    width: 35%;
+}
+
+.sidebar .picker__select--year {
+    width: 22.5%;
 }
 
 .date-picker-widget {
@@ -2462,8 +2471,6 @@ td .gravatar-blank,
         padding: 7px;
         margin-top: 3px;
     }
-    .sidebar .partner-tag.days {
-        width: 32%;
 }
 
 @media screen and (max-width: 500px) {
@@ -2843,6 +2850,10 @@ td .gravatar-blank,
 
     .partner-tags .partner-tag:nth-child(n+5) {
         margin-top: 5px;
+    }
+
+    .sidebar .partner-tag.days {
+        text-align: center;
     }
 
     .product-details {
