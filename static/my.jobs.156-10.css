@@ -339,7 +339,7 @@ h1 > small > a:hover {
     background-position-x: 97%;
 }
 
-.sidebar select {
+.sidebar select:not(.picker__holder select) {
     width: 100%;
 }
 
@@ -667,6 +667,47 @@ div.tags-field ul.tagit input.ui-widget-content {
 
 .tip-box .tip-footer .btn-link{
     padding: 0 10px;
+}
+
+.sidebar .partner-tag.days {
+    width: 32%;
+    margin-bottom: 5px;
+    margin-top: 0;
+}
+
+.sidebar .partner-tag.custom {
+    width: 100%;
+    text-align: center;
+    margin-top: 0;
+    margin-left: 0;
+}
+
+input.datepicker {
+    border: 1px solid #BBB;
+    vertical-align: baseline;
+    width: 45%;
+}
+
+span.datepicker {
+    border: 1px solid #BBB;
+    margin: -5px;
+    padding: 7px;
+}
+
+input.picker-left {
+    border-radius: 5px 0 0 5px;
+}
+
+input.picker-right {
+    border-radius: 0 5px 5px 0;
+}
+
+.picker__holder select {
+    padding: 0;
+}
+
+.date-picker-widget {
+    position: relative;
 }
 
 .info-box {
@@ -2421,6 +2462,8 @@ td .gravatar-blank,
         padding: 7px;
         margin-top: 3px;
     }
+    .sidebar .partner-tag.days {
+        width: 32%;
 }
 
 @media screen and (max-width: 500px) {
@@ -3851,47 +3894,3 @@ body.modal-open {
     font-weight:normal
 }
 
-.sidebar .partner-tag.days {
-    width: 32%;
-    margin-bottom: 5px;
-    margin-top: 0;
-}
-
-.sidebar .partner-tag.custom {
-    width: 100%;
-    text-align: center;
-    margin-top: 0;
-    margin-left: 0;
-}
-
-input.datepicker {
-    border: 1px solid #BBB;
-    width: 45%;
-    vertical-align: baseline;
-}
-
-span.datepicker {
-    border: 1px solid #BBB;
-    margin: -5px;
-    padding: 6px;
-}
-
-input.picker-left {
-    border-radius: 4px 0 0 4px;
-}
-
-input.picker-right {
-    border-radius: 0 4px 4px 0;
-}
-
-body {
-    overflow-x: hidden;
-}
-
-.picker__holder {
-    max-width: 29%;
-}
-
-.picker__holder select {
-    padding: 0;
-}

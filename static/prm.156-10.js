@@ -44,7 +44,7 @@ $(document).ready(function() {
     */
     if(location.search) show_selected();
 
-    $(".date-range").hide()
+    $(".date-picker-widget").hide()
 
     /*
     Fancy pushState next and previous buttons for everyone
@@ -299,7 +299,7 @@ $(document).ready(function() {
 
     $(".partner-tag.days").on("click", function() {
         $(".partner-tag.custom").show();
-        $(".date-range").hide();
+        $(".date-picker-widget").hide();
 
         if ($(this).hasClass("disabled-tag")) {
             $(".partner-tag.days").addClass("disabled-tag");
@@ -314,7 +314,7 @@ $(document).ready(function() {
 
     $(".partner-tag.custom").on("click", function() {
         $(".partner-tag.custom").hide();
-        $(".date-range").show();
+        $(".date-picker-widget").show();
 
         $(".partner-tag.days").addClass("disabled-tag");
         $(".partner-tag.days > i.icon-ok").remove();
