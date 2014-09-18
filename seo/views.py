@@ -1639,7 +1639,6 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     if filters['facet_slug'] and active:
         bread_box_title['facet_slug'] = active[0].name
 
-
     widgets = helpers.get_widgets(request, site_config, facet_counts, search_url_slabs,
                           bread_box_path)
 
