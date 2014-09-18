@@ -188,6 +188,9 @@ $(document).ready(function() {
             format: "mm/dd/yyyy",
             selectYears: true,
             selectMonths: true,
+            onClose: function() {
+                run_ajax();
+            }
         });
     });
 
@@ -310,6 +313,8 @@ $(document).ready(function() {
             $(this).addClass("disabled-tag");
             $(this).children('i').remove();
         }
+
+        run_ajax();
     });
 
     $(".partner-tag.custom").on("click", function() {
@@ -595,7 +600,7 @@ function build_data() {
         start_date = new Date(),
         end_date = new Date();
 
-    $(".partner-filters :input").each(function() {
+    $(".partner-filters label + :input").each(function() {
         if($(this).val()) {
             var data_key = $(this).prev('label').html().replace(":", "").toLowerCase();
             data[data_key] = $(this).val();
