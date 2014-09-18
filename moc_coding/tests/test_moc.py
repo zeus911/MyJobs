@@ -1,6 +1,8 @@
 import os
 
-from seo.models import User
+from django.contrib.contenttypes.models import ContentType
+
+from seo.models import User, BusinessUnit
 from seo.tests.setup import DirectSEOBase
 
 from moc_coding.tests.factories import (CustomCareerFactory, MocFactory,
@@ -13,7 +15,7 @@ class MocTestCase(DirectSEOBase):
         super(MocTestCase, self).setUp()
         self.onet = OnetFactory()
         self.moc = MocFactory()
-        self.mapping = CustomCareerFactory()
+        self.mapping = CustomCareerFactory(object_id=1)
         self.superuser = User.objects.create_superuser(
             password='iam',
             email='sam@sales.com')
@@ -36,16 +38,16 @@ class MocTestCase(DirectSEOBase):
 
     def test_mocs(self):
         new_onet = OnetFactory(code="22222222")
-        new_custom_mapping = CustomCareerFactory(onet_id="22222222")
-        new_moc_detail = MocDetailFactory(id=2)
-        new_moc = MocFactory(id=2, code="2", moc_detail_id=2)
+        new_custom_mapping = CustomCareerFactory(object_id=1, onet_id="22222222")
+        new_moc_detail = MocDetailFactory()
+        new_moc = MocFactory(code="2")
         new_moc.onets = [new_onet]
         new_moc.save()
 
         new_onet = OnetFactory(code="33333333")
-        new_custom_mapping = CustomCareerFactory(onet_id="33333333")
-        new_moc_detail = MocDetailFactory(id=3)
-        new_moc = MocFactory(id=3, code="3", moc_detail_id=3)
+        new_custom_mapping = CustomCareerFactory(object_id=1, onet_id="33333333")
+        new_moc_detail = MocDetailFactory()
+        new_moc = MocFactory(code="3")
         new_moc.onets = [new_onet]
         new_moc.save()
 
@@ -69,10 +71,11 @@ class MocTestCase(DirectSEOBase):
         #superusers should get a JSON 'success' response
         login = self.client.login(email=self.superuser.email,
                                   password='iam')
-        resp =self.client.get(
-            '/mocmaps/newmap/?onet=99999999&'
-            'moc=01&branch=coast-guard&oid=1&ct=21',
-            )
+
+        ct = ContentType.objects.get_for_model(BusinessUnit).pk
+        resp = self.client.get('/mocmaps/newmap/?onet=99999999&moc=%s'
+                               '&branch=coast-guard&ct=%s&oid=5'
+                               % (self.moc.code, ct))
         self.assertEqual(resp.status_code, 200)
         self.assertIn('success', resp.content)
 

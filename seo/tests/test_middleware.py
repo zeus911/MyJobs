@@ -3,7 +3,7 @@ import datetime
 from django.conf import settings
 
 from seo.tests.factories import (SeoSiteFactory, SeoSiteRedirectFactory)
-from seo.models import BusinessUnit
+from seo.models import BusinessUnit, SeoSite
 from setup import DirectSEOBase
 
 
@@ -12,11 +12,11 @@ class SiteRedirectMiddlewareTestCase(DirectSEOBase):
         super(SiteRedirectMiddlewareTestCase, self).setUp()
         self.test_site = SeoSiteFactory.build()
         self.test_site.save()
-        self.ssr1 = SeoSiteRedirectFactory.build(seosite_id=self.test_site.id)
+        self.ssr1 = SeoSiteRedirectFactory.build(seosite=self.test_site)
         self.ssr1.save()
         self.ssr2 = SeoSiteRedirectFactory.build(
                     redirect_url=u'test.%s' % self.test_site.domain,
-                    seosite_id=self.test_site.id)
+                    seosite=self.test_site)
         self.ssr2.save()
 
     def test_host_is_a_redirect(self):
@@ -27,9 +27,9 @@ class SiteRedirectMiddlewareTestCase(DirectSEOBase):
         
         """
         response = self.client.get(
-                '/style/style.css', 
-                HTTP_HOST=u'.'.join([u'www', self.test_site.domain]),
-                follow=True)
+            '/style/style.css',
+            HTTP_HOST=u'.'.join([u'www', self.test_site.domain]),
+            follow=True)
         redirect_url, status_code = response.redirect_chain[0]
         self.assertEqual(status_code, 301)
         self.assertEqual(redirect_url,
@@ -68,21 +68,23 @@ class MultiHostMiddlewareTestCase(DirectSEOBase):
         super(MultiHostMiddlewareTestCase, self).setUp()
         self.bu = BusinessUnit(id=42, date_crawled=datetime.datetime.now(),
                                date_updated=datetime.datetime.now())
-        self.bu.save()
-        self.test_site = SeoSiteFactory.build(
-                            domain=u'buckconsultants.jobs',
-                            name=u'buckconsultants')
-        self.test_site.save()
+        self.test_site = SeoSiteFactory(
+            domain=u'buckconsultants.jobs',
+            name=u'buckconsultants')
 
     def test_existant_site(self):
         # test the site_id, site name, buids, etc
         self.client.get('/', HTTP_HOST=self.test_site.domain)
         self.assertEqual(settings.SITE_ID, self.test_site.id)
-        self.assertEqual(settings.SITE_NAME, self.test_site.name) 
+        self.assertEqual(settings.SITE_NAME, self.test_site.name)
 
     def test_non_existant_site(self):
+        # 1 is the deafult site that we end up getting in middleware,
+        # so use that to compare the results to.
+        site = SeoSite.objects.get(pk=1)
+
         # test that the site returned is the default site
-        response = self.client.get('/', HTTP_HOST=u'booty.jobs')
+        response = self.client.get('/', HTTP_HOST='jklsdasdfj.jobs')
         self.assertEqual(settings.SITE_ID, 1)
-        self.assertEqual(settings.SITE_NAME, u'Default')
-        self.assertEqual(len(settings.SITE_BUIDS), 0)
+        self.assertEqual(settings.SITE_NAME, site.name)
+        self.assertEqual(len(settings.SITE_BUIDS), site.business_units.all().count())

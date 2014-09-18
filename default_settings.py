@@ -442,17 +442,18 @@ SOUTH_MIGRATION_MODULES = {
 }
 
 
+# Default haystack settings. Should be overwritten by settings.py.
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'seo.search_backend.DESolrEngine',
-        'URL': 'http://127.0.0.1:8983/solr/microsites',
+        'URL': 'http://127.0.0.1:8983/solr/seo',
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
-        'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
-    },
+        'HTTP_AUTH_PASSWORD': SOLR_AUTH['password'],
+        },
     'groups': {
         'ENGINE': 'saved_search.groupsearch.SolrGrpEngine',
-        'URL': 'http://127.0.0.1:8983/solr/microsites',
+        'URL': 'http://127.0.0.1:8983/solr/seo',
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
-        'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
-  }
+        'HTTP_AUTH_PASSWORD': SOLR_AUTH['password'],
+        },
 }

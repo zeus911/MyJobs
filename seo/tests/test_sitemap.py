@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import datetime
 
+from django.conf import settings
+
 from seo_pysolr import Solr
 from seo.models import SeoSite
 from seo.tests.solr_settings import SOLR_FIXTURE
@@ -45,6 +47,14 @@ class SitemapTestCase(DirectSEOBase):
         specified in our URL config.
         
         """
+        # Sometimes the site settings are messed up from other tests. Ensure
+        # that the settings are compatible with actually searching for the
+        # jobs we're adding.
+        settings.SITE_BUIDS = []
+        site = SeoSite.objects.get(pk=1)
+        site.business_units = []
+        site.save()
+
         # These are kwargs from the actual error that created this error in the
         # first place.
         kwargs = {

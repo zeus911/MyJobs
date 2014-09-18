@@ -116,23 +116,23 @@ class SeoHelpersDjangoTestCase(DirectSEOBase):
         settings.SITE_ID set so that active_site_facet works correctly.
 
         """
-        site_facet = SeoSiteFacetFactory()
-        mock_active.return_value = site_facet
-
         terms = [unicode(i) for i in range(10)]
         facets = CustomFacet.objects.all()
         self.assertEqual(len(facets), 0)
         facet_ids = [CustomFacetFactory(title=term).id for term in terms]
         facets = CustomFacet.objects.filter(id__in=facet_ids).order_by('title')
-        site_facets = [SeoSiteFacetFactory(customfacet_id=facet_id) for 
-                      facet_id in facet_ids]
+        [SeoSiteFacetFactory(customfacet=facet) for facet in facets]
+
+        site_facet = SeoSiteFacetFactory()
+        mock_active.return_value = site_facet
+
         for split in range(len(terms)):
             cf = facets.filter(title__in=terms[0:split]).order_by('title')
             ef = facets.filter(title__in=terms[split:]).order_by('title')
 
             with self.assertNumQueries(FuzzyInt(1, 10)):
-               sqs = helpers.sqs_apply_custom_facets(custom_facets=cf,
-                        exclude_facets=ef)
+                sqs = helpers.sqs_apply_custom_facets(custom_facets=cf,
+                                                      exclude_facets=ef)
 
             # Narrow_queries is a set of querystrings. Our current
             # backend should build 1 string starting with NOT for exclude facets
