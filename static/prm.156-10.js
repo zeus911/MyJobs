@@ -591,7 +591,9 @@ build data object from all sources on the page.
  */
 function build_data() {
     var data = {},
-        special_interest = [];
+        special_interest = [],
+        start_date = new Date(),
+        end_date = new Date();
 
     $(".partner-filters :input").each(function() {
         if($(this).val()) {
@@ -599,11 +601,29 @@ function build_data() {
             data[data_key] = $(this).val();
         }
     });
-    $(".partner-tag:has(i)").each(function() {
+    $(".partner-tag:has(i):not(.partner-tag.days)").each(function() {
         special_interest.push($(this).text().toLowerCase());
     });
     if(special_interest.length > 0)
         data.special_interest = special_interest;
+    if($(".date-picker-widget").is(":visible")) {
+        start_string = $("#activity-start-date").val();
+        end_string = $("#activity-end-date").val();
+        if(start_string)
+            start_date = new Date(start_string);
+        if(end_string)
+            end_date = new Date(end_string);
+    } else if($(".partner-tag.days").has("i").text()) {
+        var days = $(".partner-tag.days").has("i").text().split(" ")[0];
+        start_date.setDate(start_date.getDate() - days);
+    } else {
+        start_date.setDate(start_date.getDate() - 30);
+    }
+
+    data.start_date = start_date.getMonth() + "/" + start_date.getDate()
+                                            + "/" + start_date.getFullYear();
+    data.end_date = end_date.getMonth() + "/" + end_date.getDate()
+                                        + "/" + end_date.getFullYear();
 
     var sort_by = $(".sort-by.active").text().toLowerCase();
     if(sort_by)
