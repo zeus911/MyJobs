@@ -15,6 +15,7 @@ import sys
 from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
+from django.core.serializers import serialize
 from django.core.files.storage import default_storage
 from django.db.models import Count
 from django.shortcuts import render_to_response, get_object_or_404
@@ -37,9 +38,9 @@ from mysearches.helpers import (url_sort_options, parse_feed,
                                 get_interval_from_frequency)
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
-                              NewPartnerForm, ContactRecordForm)
+                              NewPartnerForm, ContactRecordForm, TagForm)
 from mypartners.models import (Partner, PartnerLibrary, Contact, ContactRecord,
-                               PRMAttachment, ContactLogEntry,
+                               PRMAttachment, ContactLogEntry, Tag,
                                CONTACT_TYPE_CHOICES, ADDITION, DELETION)
 from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
@@ -48,7 +49,7 @@ from mypartners.helpers import (prm_worthy, add_extra_params,
                                 filter_partners,
                                 new_partner_from_library,
                                 send_contact_record_email_response,
-                                find_partner_from_email)
+                                find_partner_from_email, tag_get_or_create)
 
 
 @company_has_access('prm_access')
@@ -373,6 +374,64 @@ def prm_overview(request):
 
 
 @company_has_access('prm_access')
+def partner_tagging(request):
+    company = get_company(request)
+
+    tags = Tag.objects.for_company(company.id).order_by('name')
+
+    ctx = {'company': company,
+           'tags': tags}
+
+    return render_to_response('mypartners/partner_tagging.html', ctx,
+                              RequestContext(request))
+
+
+@company_has_access('prm_access')
+def edit_partner_tag(request):
+    company = get_company(request)
+
+    if request.POST:
+        data = {'id': request.GET.get('id')}
+        tag = Tag.objects.for_company(company.id, **data)[0]
+        form = TagForm(instance=tag, auto_id=False, data=request.POST)
+
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse('partner_tagging'))
+        else:
+            ctx = {
+                'company': company,
+                'form': form,
+                'tag': tag
+            }
+            return render_to_response('mypartners/edit_tag.html', ctx,
+                                      RequestContext(request))
+    else:
+        data = {'id': request.GET.get('id')}
+        tag = Tag.objects.for_company(company.id, **data)[0]
+        form = TagForm(instance=tag, auto_id=False)
+
+        ctx = {
+            'company': company,
+            'tag': tag,
+            'form': form
+        }
+        return render_to_response('mypartners/edit_tag.html', ctx,
+                                  RequestContext(request))
+
+
+@company_has_access('prm_access')
+def delete_partner_tag(request):
+    company = get_company(request)
+
+    data = {'id': request.GET.get('id')}
+    tag = Tag.objects.for_company(company.id, **data)[0]
+    tag.delete()
+
+    return HttpResponseRedirect(reverse('partner_tagging'))
+
+
+@company_has_access('prm_access')
 def prm_saved_searches(request):
     """
     View that lists the Partner's Saved Searches
@@ -486,7 +545,6 @@ def partner_savedsearch_save(request):
 
     if form.is_valid():
         instance = form.instance
-        instance.feed = form.data['feed']
         instance.provider = company
         instance.partner = partner
         instance.created_by = request.user
@@ -693,6 +751,7 @@ def prm_view_records(request):
                 prev_id = records[record_index - 1].id
                 next_id = records[record_index + 1].id
 
+    tags = record.tags.all()
     attachments = PRMAttachment.objects.filter(contact_record=record)
     ct = ContentType.objects.get_for_model(ContactRecord).pk
     record_history = ContactLogEntry.objects.filter(object_id=record_id,
@@ -703,6 +762,7 @@ def prm_view_records(request):
         'record': record,
         'partner': partner,
         'company': company,
+        'tags': tags,
         'attachments': attachments,
         'record_history': record_history,
         'next_id': next_id,
@@ -1194,3 +1254,34 @@ def process_email(request):
                                        attachment_failures, unmatched_contacts,
                                        None, admin_email)
     return HttpResponse(status=200)
+
+
+@company_has_access('prm_access')
+def tag_names(request):
+    if request.method == 'GET':
+        company = get_company(request)
+        value = request.GET.get('value')
+        data = {'name__icontains': value}
+        tag_names = list(Tag.objects.for_company(company, **data).values_list(
+            'name', flat=True))
+        tag_names = sorted(tag_names, key=lambda x: x if not x.startswith(value) else "-" + x)
+        return HttpResponse(json.dumps(tag_names))
+
+
+@company_has_access('prm_access')
+def tag_color(request):
+    if request.method == 'GET':
+        company = get_company(request)
+        name = request.GET.get('name')
+        data = {'name': name}
+        tag_color = list(Tag.objects.for_company(company, **data).values_list(
+            'hex_color', flat=True))
+        return HttpResponse(json.dumps(tag_color))
+
+
+@company_has_access('prm_access')
+def add_tags(request):
+    company = get_company(request)
+    data = request.GET.get('data').split(',')
+    tags = tag_get_or_create(company.id, data)
+    return HttpResponse(json.dumps('success'))

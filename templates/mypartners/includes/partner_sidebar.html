@@ -8,6 +8,10 @@
         {% include "includes/state_dropdown.html" %}
         <label>City:</label>
         <input id="lib-city" type="text" placeholder="City" {% if request.GET.city %}value="{{request.GET.city}}"{% endif %} />
+        {% if filter_tag %}
+        <label>Tag:</label>
+        <input id="lib-tag" type="text" placeholder="Tag" {% if request.GET.tag %}value="{{request.GET.tag}}"{% endif %} />
+        {% endif %}
 
         {% if special_interest %}
         <label>Special Interest:</label>
@@ -33,8 +37,9 @@
         {% else %}
         <h2 class="top">Navigation</h2>
         {% endif %}
-        <a class="btn" href="{% url 'partner_library' %}">Search OFCCP Partner Library</a>
         <a class="btn" href="{% url 'create_partner' %}?ct={{ partner_ct }}">Create New Partner</a>
+        <a class="btn" href="{% url 'partner_library' %}">Search OFCCP Partner Library</a>
+        <a class="btn" href="{% url 'partner_tagging' %}">Tag Management</a>
     </div>
     {% endif %}
 </div>

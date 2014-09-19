@@ -23,7 +23,7 @@ import states
 from universal.helpers import (get_domain, get_company, get_company_or_404,
                                OrderedSet)
 from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
-                               CHANGE, Partner, PartnerLibrary)
+                               CHANGE, Partner, PartnerLibrary, Tag)
 from registration.models import ActivationProfile
 
 
@@ -159,10 +159,10 @@ def contact_record_val_to_str(value):
     If the value matches a contact type choice it's translated to the
     verbose form.
     """
-
     value = (value.strftime('%b %d, %Y %I:%M %p') if type(value)
              is datetime else value.strftime('%H hours %M minutes')
              if type(value) is time else force_unicode(value))
+
 
     contact_types = dict(CONTACT_TYPE_CHOICES)
     if value in contact_types:
@@ -415,6 +415,7 @@ def filter_partners(request, partner_library=False):
     sort_by = sort_order + request.REQUEST.get('sort_by', 'name')
     city = request.REQUEST.get('city', '').strip()
     state = request.REQUEST.get('state', '').strip()
+    tags = [tag.strip() for tag in request.REQUEST.get('tag', '').split(',') if tag]
     keywords = [keyword.strip() for keyword in request.REQUEST.get(
         'keywords', '').split(',') if keyword]
 
@@ -469,6 +470,10 @@ def filter_partners(request, partner_library=False):
 
     partners = partners.distinct().filter(query)
 
+    # filter by tags
+    for tag in tags:
+        partners = partners.filter(tags__name__icontains=tag)
+
     # for location, we want to sort by both city and state
     if "location" in sort_by:
         # the select trick wont work with foreign relationships, so we instead
@@ -500,11 +505,26 @@ def new_partner_from_library(request):
         raise Http404
     library = get_object_or_404(PartnerLibrary, pk=library_id)
 
+    tags = []
+    for interest, color in [('disabled', '808A9A'),
+                            ('disabled_veteran', '659274'),
+                            ('female', '4BB1CF'),
+                            ('minority', 'FAA732'),
+                            ('veteran', '5EB94E')]:
+
+        if getattr(library, 'is_%s' % interest):
+            tag, _ = Tag.objects.get_or_create(
+                company=company, name=interest.replace('_', ' ').title(),
+                defaults={'hex_color': color})
+
+            tags.append(tag)
+
     partner = Partner.objects.create(
         name=library.name,
         uri=library.uri,
         owner=company,
         library=library)
+    partner.tags = tags
 
     contact = Contact.objects.create(
         partner=partner,
@@ -519,8 +539,21 @@ def new_partner_from_library(request):
         postal_code=library.zip_code,
         notes=("This contact was generated from content in the "
                "OFCCP directory."))
+    contact.tags = tags
+    contact.save()
 
     partner.primary_contact = contact
     partner.save()
 
     return partner
+
+
+def tag_get_or_create(company_id, data):
+    tags = []
+    for tag in data:
+        obj, created = Tag.objects.get_or_create(
+            company_id=company_id, name__iexact=tag, defaults={"name": tag}
+        )
+        tags.append(obj.id)
+
+    return tags

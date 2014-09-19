@@ -27,6 +27,7 @@ from moc_coding import models as moc_models
 from social_links import models as social_models
 from seo.search_backend import DESearchQuerySet
 from myjobs.models import User
+from mypartners.models import Tag
 
 import decimal
 
@@ -569,8 +570,21 @@ class Company(models.Model):
         ordering = ['name']
 
     def save(self, *args, **kwargs):
+        exists = str(self.pk).isdigit()
+
         self.company_slug = slugify(self.name)
         super(Company, self).save(*args, **kwargs)
+
+        if not exists:
+            default_tags = [
+                {"name": "Veteran", "hex_color": "5EB94E"},
+                {"name": "Female", "hex_color": "4BB1CF"},
+                {"name": "Minority", "hex_color": "FAA732"},
+                {"name": "Disabled", "hex_color": "808A9A"},
+                {"name": "Disabled Veteran", "hex_color": "659274"}
+            ]
+            for tag in default_tags:
+                Tag.objects.get_or_create(company=self, **tag)
 
     def associated_jobs(self):
         b_units = self.job_source_ids.all()
