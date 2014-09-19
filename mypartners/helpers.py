@@ -453,12 +453,12 @@ def filter_partners(request, partner_library=False):
     else:
         partners = Partner.objects.select_related('contact')
         query = Q(owner=get_company_or_404(request).id)
+        query &= Q(contactrecord__date_time__range=[start_date, end_date])
         contact_city = 'contact__city'
         contact_state = 'contact__state'
         sort_by.replace('city', 'contact__city')
         order_by = []
 
-    query &= Q(contactrecord__date_time__range=[start_date, end_date])
 
     for keyword in keywords:
         query &= (Q(name__icontains=keyword) | Q(uri__icontains=keyword) |
