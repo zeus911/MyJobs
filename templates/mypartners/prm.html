@@ -58,14 +58,13 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}prm.156-10.js{{ gz }}"></script>
 <script>
     $("body").on("click", ".product-card", function() {
         var partner_id = $(this).attr("id").split("-")[1];
         location.href="{% url 'partner_overview' %}?partner="+partner_id;
     });
 </script>
-<script src="{{ STATIC_URL }}prm.155-14.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}prm.156-18.js{{ gz }}"></script>
 <script src="{{ STATIC_URL }}pickadate/picker.js"></script>
 <script src="{{ STATIC_URL }}pickadate/picker.date.js"></script>
 <script src="{{ STATIC_URL }}pickadate/legacy.js"></script>
