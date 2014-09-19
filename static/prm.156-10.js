@@ -188,6 +188,26 @@ $(document).ready(function() {
             format: "mm/dd/yyyy",
             selectYears: true,
             selectMonths: true,
+            onOpen: function() {
+                var start_date = $("#activity-start-date").val(),
+                    end_date = $("#activity-end-date").val();
+
+                if(this.get("id") === "activity-start-date"){
+                    if(end_date) {
+                        max = new Date(end_date);
+                    } else {
+                        max = new Date();
+                    }
+                    this.set("max", max);
+                } else if(this.get("id") === "activity-end-date"){
+                    if(start_date) {
+                        min = new Date(start_date);
+                    } else {
+                        min = new Date("11/30/1899");
+                    }
+                    this.set("min", min);
+                }
+            },
             onClose: function() {
                 run_ajax();
             }
@@ -305,11 +325,22 @@ $(document).ready(function() {
         $(".date-picker-widget").hide();
 
         if ($(this).hasClass("disabled-tag")) {
+            // add dates to input boxes
+            start_date = new Date();
+            start_date.setDate(start_date.getDate() - $(this).data("days"));
+            $("#activity-start-date").val(start_date);
+            $("#activity-end-date").val(new Date());
+
+            // add checkbox
             $(".partner-tag.days").addClass("disabled-tag");
             $(".partner-tag.days").children("i").remove();
             $(this).removeClass("disabled-tag");
             $(this).append("<i class='icon icon-ok'></i>");
         } else {
+            // remove dates from input boxes
+            $("#activity-start-date").val("");
+            $("#activity-end-date").val("");
+            
             $(this).addClass("disabled-tag");
             $(this).children('i').remove();
         }
@@ -628,7 +659,7 @@ function build_data() {
         if(end_string)
             end_date = new Date(end_string);
     } else if($(".partner-tag.days").has("i").text()) {
-        var days = $(".partner-tag.days").has("i").text().split(" ")[0];
+        var days = $(".partner-tag.days").has("i").data('days');
         start_date.setDate(start_date.getDate() - days);
     } else {
         //start of epoch
