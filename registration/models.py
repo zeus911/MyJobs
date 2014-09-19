@@ -6,12 +6,13 @@ import re
 from pynliner import Pynliner
 
 from django.conf import settings
-from django.db import models
 from django.core.mail import EmailMessage
+from django.db import models
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now as datetime_now
 from django.utils.translation import ugettext_lazy as _
+
 
 SHA1_RE = re.compile('^[a-f0-9]{40}$')
 

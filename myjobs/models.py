@@ -96,16 +96,20 @@ class CustomUserManager(BaseUserManager):
                 user_args['password_change'] = True
                 password = self.make_random_password(length=8)
 
+            source = kwargs.get('source')
             request = kwargs.get('request')
-            if request is not None:
-                source = request.GET.get('source')
-                if source is not None:
-                    user_args['source'] = source
-                else:
-                    last_microsite = request.COOKIES.get('lastmicrosite',
-                                                         None)
-                    if last_microsite is not None:
-                        user_args['source'] = last_microsite
+            if source is None:
+                if request is not None:
+                    source = request.GET.get('source')
+                    if source is not None:
+                        user_args['source'] = source
+                    else:
+                        last_microsite = request.COOKIES.get('lastmicrosite',
+                                                             None)
+                        if last_microsite is not None:
+                            user_args['source'] = last_microsite
+            else:
+                user_args['source'] = source
 
             user = self.model(**user_args)
             user.set_password(password)

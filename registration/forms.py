@@ -140,20 +140,33 @@ class InvitationForm(forms.ModelForm):
         model = Invitation
 
     def clean_invitee_email(self):
-        invitee = self.cleaned_data['invitee_email']
+        invitee_email = self.cleaned_data['invitee_email']
         # validate_email raises a ValidationError if validation fails
-        validate_email(invitee)
-        return invitee
+        validate_email(invitee_email)
+        invitee = User.objects.get_email_owner(invitee_email)
+        if invitee is None:
+            invitee = User.objects.create_user(email=invitee_email,
+                                               send_email=False)[0]
+        setattr(self, 'invitee', invitee)
+        return invitee_email
+
+    def clean_inviting_user(self):
+        inviting_user = self.data.get('inviting_user')
+        if inviting_user is None:
+            inviting_user = getattr(self, 'admin_user', None)
+        return inviting_user
 
     def clean(self):
-        admin = getattr(self, 'admin_user', None)
-        if admin is not None:
-            if self.cleaned_data.get('inviting_user', None) is None:
-                self.cleaned_data['inviting_user'] = admin
-        return self.cleaned_data
+        cleaned_data = super(InvitationForm, self).clean()
+        inviting_user = self.clean_inviting_user()
+        cleaned_data['inviting_user'] = inviting_user
+        return cleaned_data
 
     def save(self, commit=True):
         instance = super(InvitationForm, self).save(commit=False)
-        instance.inviting_user = self.cleaned_data.get('inviting_user', None)
+        instance.invitee = getattr(self, 'invitee')
+        for field, value in self.cleaned_data.items():
+            if value is not None:
+                setattr(instance, field, value)
         instance.save()
         return instance
