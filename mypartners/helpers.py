@@ -471,13 +471,10 @@ def filter_partners(request, partner_library=False):
         query &= state_query
 
     if start_date:
-        user_tz = pytz.timezone(get_current_timezone_name())
-        start_date = user_tz.localize(
-            datetime.strptime(start_date, "%m/%d/%Y"))
+        start_date = datetime.strptime(start_date, "%m/%d/%Y").date()
         query &= Q(contactrecord__date_time__gte=start_date)
     if end_date:
-        user_tz = pytz.timezone(get_current_timezone_name())
-        end_date = user_tz.localize(datetime.strptime(end_date, "%m/%d/%Y"))
+        end_date = datetime.strptime(end_date, "%m/%d/%Y").date()
         query &= Q(contactrecord__date_time__lte=end_date)
 
     partners = partners.distinct().filter(query)
