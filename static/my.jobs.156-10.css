@@ -718,6 +718,9 @@ input.picker-right {
 .date-picker-widget {
     position: relative;
 }
+.date-picker-widget input {
+    cursor: pointer;
+}
 
 .info-box {
     width: 100%;
