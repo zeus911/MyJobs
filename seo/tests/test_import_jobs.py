@@ -15,8 +15,7 @@ class ImportJobsTestCase(DirectSEOBase):
 
     def setUp(self):
         super(ImportJobsTestCase, self).setUp()
-        self.businessunit = BusinessUnitFactory.build()
-        self.businessunit.save()
+        self.businessunit = BusinessUnitFactory(id=0)
         self.buid_id = self.businessunit.id        
         self.filepath = os.path.join(DATA_DIR, 'dseo_feed_%s.xml' % self.buid_id)
         self.solr_settings = {
@@ -41,7 +40,7 @@ class ImportJobsTestCase(DirectSEOBase):
         company1.save()
         bu1 = self.businessunit
         bu1.title = "Acme corp"
-        bu2 = BusinessUnitFactory(id=1, title= bu1.title)
+        bu2 = BusinessUnitFactory(title=bu1.title)
         bu2.save()
         self.businessunit.company_set.add(company1)
 

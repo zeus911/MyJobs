@@ -2,6 +2,7 @@ import os.path
 from contextlib import contextmanager
 
 from django.core.cache import cache
+from django.db import connections
 from django.test import TestCase
 
 from seo_pysolr import Solr
@@ -14,6 +15,26 @@ class DirectSEOBase(TestCase):
     def setUp(self):
         from django.conf import settings
         from django.template import context
+
+        db_backend = settings.DATABASES['default']['ENGINE'].split('.')[-1]
+
+        # Set columns that are utf8 in production to utf8
+        if db_backend == 'mysql':
+            cursor = connections['default'].cursor()
+            cursor.execute("alter table seo_customfacet convert to character "
+                           "set utf8 collate utf8_unicode_ci")
+            cursor.execute("alter table seo_seositefacet convert to character "
+                           "set utf8 collate utf8_unicode_ci")
+            cursor.execute("alter table seo_company convert to character set "
+                           "utf8 collate utf8_unicode_ci")
+            cursor.execute("alter table taggit_tag convert to character set "
+                           "utf8 collate utf8_unicode_ci")
+            cursor.execute("alter table taggit_taggeditem convert to character set "
+                           "utf8 collate utf8_unicode_ci")
+            cursor.execute("alter table seo_seositeredirect convert to character set "
+                           "utf8 collate utf8_unicode_ci")
+            cursor.execute("alter table django_redirect convert to character set "
+                           "utf8 collate utf8_unicode_ci")
 
         setattr(settings, 'ROOT_URLCONF', 'dseo_urls')
 
@@ -55,8 +76,7 @@ class DirectSEOTestCase(DirectSEOBase):
         self.feed_uids = [25599525, 25599523, 25611673, 25622522]
         self.feed_numjobs = 4
 
-        self.businessunit = BusinessUnitFactory.build()
-        self.businessunit.save()
+        self.businessunit = BusinessUnitFactory(id=0)
         self.buid_id = self.businessunit.id        
         #Ensure DATA_DIR used by import_jobs.download_feed_file exists
         data_path = DATA_DIR

@@ -1380,9 +1380,7 @@ def moc_index(request):
     args = [_moc_q(term) for term in term_list]
 
     data_set = moc_models.MocDetail.objects.filter(
-                                moc__isnull=False, *args
-                            ).distinct(
-                            ).order_by('primary_value')[:15]
+        moc__isnull=False, *args).distinct().order_by('primary_value')[:15]
 
     res = json.dumps([_moc_json(i) for i in data_set])
     jsonpres = "{jsonp}({res})".format(jsonp=callback, res=res)
@@ -1463,8 +1461,8 @@ def dseo_404(request, the_job=None, job_detail=False):
         'site_heading': settings.SITE_HEADING,
         'site_tags': settings.SITE_TAGS,
         'site_description': settings.SITE_DESCRIPTION,
-        'build_num' : settings.BUILD,
-        'view_source' : settings.VIEW_SOURCE
+        'build_num': settings.BUILD,
+        'view_source': settings.VIEW_SOURCE
     }
 
     if job_detail and the_job:
@@ -1472,8 +1470,8 @@ def dseo_404(request, the_job=None, job_detail=False):
                                      'joblocation': the_job.location})
 
     return HttpResponseNotFound(loader.render_to_string(
-                                    'dseo_404.html', data_dict,
-                                    context_instance=RequestContext(request)))
+        'dseo_404.html', data_dict,
+        context_instance=RequestContext(request)))
 
 
 def dseo_500(request):
@@ -1639,9 +1637,8 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     if filters['facet_slug'] and active:
         bread_box_title['facet_slug'] = active[0].name
 
-
-    widgets = helpers.get_widgets(request, site_config, facet_counts, search_url_slabs,
-                          bread_box_path)
+    widgets = helpers.get_widgets(request, site_config, facet_counts,
+                                  search_url_slabs, bread_box_path)
 
     loc_term = bread_box_title.get('location_slug', request.GET.get('location', '\*'))
     moc_term = bread_box_title.get('moc_slug', request.GET.get('moc', '\*'))

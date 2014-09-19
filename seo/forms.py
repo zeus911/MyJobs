@@ -420,9 +420,9 @@ class CustomFacetForm(SiteRowPermissionsForm):
         for site in sites:
             try:
                 facet, _ = SeoSiteFacet.objects.get_or_create(seosite=site,
-                                customfacet=customfacet,
-                                facet_type=facet_type,
-                                boolean_operation=boolean_operation)
+                                                              customfacet=customfacet,
+                                                              facet_type=facet_type,
+                                                              boolean_operation=boolean_operation)
                 facet.save()
             except SeoSiteFacet.MultipleObjectsReturned:
                 pass
