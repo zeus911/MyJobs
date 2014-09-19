@@ -418,8 +418,14 @@ def filter_partners(request, partner_library=False):
     tags = [tag.strip() for tag in request.REQUEST.get('tag', '').split(',') if tag]
     keywords = [keyword.strip() for keyword in request.REQUEST.get(
         'keywords', '').split(',') if keyword]
-    start_date = request.REQUEST.get('start_date')
-    end_date = request.REQUEST.get('end_date')
+    start_date = datetime.strptime(
+        request.REQUEST.get('start_date', '11/30/1899'), '%m/%d/%Y')
+    end_date = datetime.strptime(
+        request.REQUEST.get('end_date', datetime.now().strftime('%m/%d/%Y')),
+        '%m/%d/%Y')
+    
+    #ensure that start_date is before end_date
+    start_date, end_date = sorted([start_date, end_date])
 
     if partner_library:
         special_interest = request.REQUEST.getlist('special_interest')[:]
@@ -453,6 +459,8 @@ def filter_partners(request, partner_library=False):
         sort_by.replace('city', 'contact__city')
         order_by = []
 
+    query &= Q(contactrecord__date_time__range=[start_date, end_date])
+
     for keyword in keywords:
         query &= (Q(name__icontains=keyword) | Q(uri__icontains=keyword) |
                   (Q(contact_name__icontains=keyword) if partner_library else
@@ -469,13 +477,6 @@ def filter_partners(request, partner_library=False):
             state_query |= Q(**{'%s__iexact' % contact_state: synonym})
 
         query &= state_query
-
-    if start_date:
-        start_date = datetime.strptime(start_date, "%m/%d/%Y").date()
-        query &= Q(contactrecord__date_time__gte=start_date)
-    if end_date:
-        end_date = datetime.strptime(end_date, "%m/%d/%Y").date()
-        query &= Q(contactrecord__date_time__lte=end_date)
 
     partners = partners.distinct().filter(query)
 
