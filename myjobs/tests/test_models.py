@@ -15,7 +15,8 @@ from myprofile.models import SecondaryEmail, Name, Telephone
 
 class UserManagerTests(MyJobsBase):
     user_info = {'password1': 'complicated_password',
-                 'email': 'alice@example.com'}
+                 'email': 'alice@example.com',
+                 'send_email': True}
 
     def test_user_validation(self):
         user_info = {'password1': 'complicated_password',

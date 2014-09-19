@@ -23,7 +23,8 @@ class RegistrationModelTests(MyJobsBase):
     
     """
     user_info = {'password1': 'swordfish',
-                 'email': 'alice@example.com'}
+                 'email': 'alice@example.com',
+                 'send_email': True}
     
     def setUp(self):
         super(RegistrationModelTests, self).setUp()
@@ -63,9 +64,9 @@ class RegistrationModelTests(MyJobsBase):
         send an activation email.
         
         """
+        self.user_info['send_email'] = False
         User.objects.create_user(
             site=Site.objects.get_current(),
-            send_email=False,
             **self.user_info)
         self.assertEqual(len(mail.outbox), 0)
 

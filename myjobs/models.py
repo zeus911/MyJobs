@@ -119,7 +119,7 @@ class CustomUserManager(BaseUserManager):
             user.add_default_group()
             custom_signals.email_created.send(sender=self, user=user,
                                               email=email)
-            send_email = kwargs.get('send_email', True)
+            send_email = kwargs.get('send_email', False)
             if send_email:
                 custom_msg = kwargs.get("custom_msg", None)
                 activation_args = {
