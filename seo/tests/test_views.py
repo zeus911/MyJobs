@@ -86,20 +86,20 @@ class SeoSiteTestCase(DirectSEOTestCase):
                 'text': 'C#',
             },
             {
-                'django_id': '9999',
-                'guid': '9999',
+                'django_id': '7777',
+                'guid': '7777',
                 'django_ct': 'seo.joblisting',
-                'id': 'seo.joblisting.9999',
-                'title': '#C',
-                'title_ac': '#C',
-                'title_exact': '#C',
+                'id': 'seo.joblisting.7777',
+                'title': 'C$',
+                'title_ac': 'C$',
+                'title_exact': 'C$',
                 'title_slab': 'c/jobs-in::c',
                 'title_slab_exact': 'c/jobs-in::c',
                 'title_slug': 'c',
-                'uid': '9999',
+                'uid': '7777',
                 'buid': self.buid_id,
-                'text': '#C',
-                },
+                'text': 'C$',
+            },
             {
                 'django_id': '9998',
                 'id': 'seo.joblisting.9998',
@@ -153,6 +153,10 @@ class SeoSiteTestCase(DirectSEOTestCase):
 
         with connection(connections_info=solr_settings.HAYSTACK_CONNECTIONS):
             resp = self.client.get('/jobs/?q=C#', follow=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(len(resp.context['default_jobs']), 1)
+
+            resp = self.client.get('/jobs/?q=C$', follow=True)
             self.assertEqual(resp.status_code, 200)
             self.assertEqual(len(resp.context['default_jobs']), 1)
 
