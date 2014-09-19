@@ -71,20 +71,35 @@ class SeoSiteTestCase(DirectSEOTestCase):
         self.conn.delete(q='*:*')
         special_jobs = [
             {
-                'django_id': '9999',
-                'guid': '9999',
+                'django_id': '8888',
+                'guid': '8888',
                 'django_ct': 'seo.joblisting',
-                'id': 'seo.joblisting.9999',
+                'id': 'seo.joblisting.8888',
                 'title': 'C#',
                 'title_ac': 'C#',
                 'title_exact': 'C#',
                 'title_slab': 'c/jobs-in::c',
                 'title_slab_exact': 'c/jobs-in::c',
                 'title_slug': 'c',
-                'uid': '9999',
+                'uid': '8888',
                 'buid': self.buid_id,
                 'text': 'C#',
             },
+            {
+                'django_id': '9999',
+                'guid': '9999',
+                'django_ct': 'seo.joblisting',
+                'id': 'seo.joblisting.9999',
+                'title': '#C',
+                'title_ac': '#C',
+                'title_exact': '#C',
+                'title_slab': 'c/jobs-in::c',
+                'title_slab_exact': 'c/jobs-in::c',
+                'title_slug': 'c',
+                'uid': '9999',
+                'buid': self.buid_id,
+                'text': '#C',
+                },
             {
                 'django_id': '9998',
                 'id': 'seo.joblisting.9998',
@@ -124,7 +139,7 @@ class SeoSiteTestCase(DirectSEOTestCase):
                 'title_ac': 'AT Also Has A T',
                 'title_exact': 'AT Also Has A T',
                 'title_slab': 'at-also-has-a-t/jobs-in::at-also-has-a-t',
-                'title_slab_exact': 'at-also-has-a-t/jobs-in::at-also-has-a-t',
+                'title_slab_exact': 'att/jobs-in::at-also-has-a-t',
                 'title_slug': 'at-also-has-a-t',
                 'uid': '9996',
                 'buid': self.buid_id,
@@ -132,21 +147,18 @@ class SeoSiteTestCase(DirectSEOTestCase):
             }
         ]
         self.conn.add(special_jobs)
-
         site = SeoSite.objects.get(id=1)
         site.business_units = [self.buid_id]
         site.save()
 
         with connection(connections_info=solr_settings.HAYSTACK_CONNECTIONS):
-            # resp = self.client.get('/jobs/?q=C%5C%23', follow=True)
-            # self.assertEqual(resp.status_code, 200)
-            # self.assertEqual(len(resp.context['default_jobs']), 1)
+            resp = self.client.get('/jobs/?q=C#', follow=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(len(resp.context['default_jobs']), 1)
 
             resp = self.client.get('/jobs/?q=AT%5C%26T', follow=True)
             self.assertEqual(resp.status_code, 200)
-            print [j.title for j in resp.context['default_jobs']]
             self.assertEqual(len(resp.context['default_jobs']), 1)
-
 
     def test_postajob(self):
         company = factories.CompanyFactory()
