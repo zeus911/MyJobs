@@ -5,12 +5,15 @@ import random
 
 import pytz
 from django.db.models import Min, Max
+from django.utils.timezone import get_current_timezone_name
 
 from tasks import update_partner_library
 from mypartners import helpers, models
 from mypartners.helpers import get_library_partners, new_partner_from_library
 from mypartners.tests.test_views import (MyPartnersTestCase, 
                                          PartnerLibraryTestCase)
+from mypartners.tests.factories import ContactRecordFactory, PartnerFactory
+
 
 
 class HelpersTests(MyPartnersTestCase):
@@ -167,9 +170,46 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
         request.user = self.staff_user
 
         response = helpers.filter_partners(request, partner_library=True)
-        self.assertTrue(len(response) != 0)
+        self.assertTrue(len(response))
 
         for partner in response:
             self.assertEqual(partner.city, 'Monaca')
-    
-    
+
+    def test_date_filters(self):
+        """
+        Filter by activity start and end date.
+
+        """
+        end_date = datetime.now().date()
+
+        # randomly create partners and assign them contact records ranging from
+        # 60 days ago to now.
+        partners = [PartnerFactory(owner=self.company) for i in range(3)]
+        partners.append(self.partner)
+
+        # we want the contact records to exist before the tests, hince the
+        # second for loop
+        for days in [60, 30, 1, 0]:
+            ContactRecordFactory(partner=random.choice(partners),
+                                 date_time=end_date - timedelta(days))
+
+        for days in [60, 30, 1, 0]:
+            start_date = (datetime.now() - timedelta(days)).date()
+
+            request = self.request_factory.get(
+                'prm/view/partner-library', dict(
+                    company=self.company.id,
+                    start_date=start_date.strftime("%m/%d/%Y"),
+                    end_date=end_date.strftime("%m/%d/%Y")))
+            request.user = self.staff_user
+
+            response = helpers.filter_partners(request)
+
+            for partner in response:
+                date_times = [c.date_time.date()
+                              for c in partner.contactrecord_set.all()]
+
+                # ensure that for each partner, at least one contact record is
+                # within range
+                self.assertTrue(
+                    filter(lambda x: start_date <= x <= end_date , date_times))
