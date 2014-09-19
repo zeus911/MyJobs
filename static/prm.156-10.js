@@ -592,6 +592,15 @@ function clear_special_interest(si_list) {
 }
 
 /*
+format a Date object to %m/%d/%Y
+*/
+function format_date(date) {
+    // months are indexed at 0, while date and year are not
+    return (date.getMonth() + 1) + "/" + date.getDate() + "/"
+                                 + date.getFullYear();
+}
+
+/*
 build data object from all sources on the page.
  */
 function build_data() {
@@ -625,11 +634,8 @@ function build_data() {
         //start of epoch
         start_date = new Date("11/30/1899");
     }
-
-    data.start_date = (start_date.getMonth() + 1) + "/" + start_date.getDate()
-                                            + "/" + start_date.getFullYear();
-    data.end_date = (end_date.getMonth() + 1) + "/" + end_date.getDate()
-                                        + "/" + end_date.getFullYear();
+    data.start_date = format_date(start_date);
+    data.end_date = format_date(end_date);
 
     var sort_by = $(".sort-by.active").text().toLowerCase();
     if(sort_by)
