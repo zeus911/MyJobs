@@ -8,12 +8,6 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting field 'Shared_Sessions.ms_session'
-        db.delete_column(u'myjobs_shared_sessions', 'ms_session')
-
-        # Deleting field 'Shared_Sessions.mj_session'
-        db.delete_column(u'myjobs_shared_sessions', 'mj_session')
-
         # Adding field 'Shared_Sessions.session'
         db.add_column(u'myjobs_shared_sessions', 'session',
                       self.gf('django.db.models.fields.TextField')(default='', blank=True),
@@ -21,16 +15,6 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        # Adding field 'Shared_Sessions.ms_session'
-        db.add_column(u'myjobs_shared_sessions', 'ms_session',
-                      self.gf('django.db.models.fields.TextField')(default='', blank=True),
-                      keep_default=False)
-
-        # Adding field 'Shared_Sessions.mj_session'
-        db.add_column(u'myjobs_shared_sessions', 'mj_session',
-                      self.gf('django.db.models.fields.TextField')(default='', blank=True),
-                      keep_default=False)
-
         # Deleting field 'Shared_Sessions.session'
         db.delete_column(u'myjobs_shared_sessions', 'session')
 

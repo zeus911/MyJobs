@@ -1,7 +1,11 @@
 import factory
 import factory.django
+import factory.fuzzy
 from slugify import slugify
 import uuid
+
+from django.contrib.auth.models import Group
+from django.contrib.sites.models import Site
 
 from seo.models import (ATSSourceCode, BillboardImage,
                         BusinessUnit, Company, Configuration, CustomFacet,
@@ -10,10 +14,30 @@ from seo.models import (ATSSourceCode, BillboardImage,
                         User, ViewSource)
 
 
+class GroupFactory(factory.django.DjangoModelFactory):
+    FACTORY_FOR = Group
+
+    name = factory.fuzzy.FuzzyText("Test")
+
+
+class SiteFactory(factory.django.DjangoModelFactory):
+    FACTORY_FOR = Site
+
+    domain = 'buckconsultants.jobs'
+    name = u'buckconsultants.jobs'
+
+
+class GoogleAnalyticsCampaignFactory(factory.django.DjangoModelFactory):
+    FACTORY_FOR = GoogleAnalyticsCampaign
+
+    name = 'Test'
+    group = factory.SubFactory(GroupFactory)
+
+
 class BusinessUnitFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = BusinessUnit
 
-    id = 0
+    id = factory.fuzzy.FuzzyInteger(1, high=99999)
     title = "HSBC"
     title_slug = factory.LazyAttribute(lambda x: slugify(x.title))
     federal_contractor = True
@@ -27,7 +51,7 @@ class GACampaignFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = GoogleAnalyticsCampaign
 
     name = "Test Google Analytics Campaign"
-    group_id = 1
+    group = factory.SubFactory(GroupFactory)
     campaign_source = "google"
     campaign_medium = "cpc"
     campaign_name = "promo code"
@@ -40,7 +64,7 @@ class ATSSourceCodeFactory(factory.django.DjangoModelFactory):
 
     name = "Test Name"
     value = "Test Value"
-    group_id = 1
+    group = factory.SubFactory(GroupFactory)
     ats_name = "Matt's Jumbo ATS House of Horrors"
 
 
@@ -64,21 +88,17 @@ class SpecialCommitmentFactory(factory.django.DjangoModelFactory):
 class SeoSiteFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = SeoSite
 
-    id = 2
-    domain = u'buckconsultants.jobs'
-    google_analytics_campaigns_id = None
-    group_id = 1
-    name = u'buckconsultants.jobs'
+    group = factory.SubFactory(GroupFactory)
     site_heading = "This is the site header."
-    site_ptr_id = 2
+    domain = 'buckconsultants.jobs'
+    name = u'buckconsultants.jobs'
     site_title = "Test Site"
-    view_sources_id = None
 
 
 class CustomFacetFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = CustomFacet
 
-    group_id = 1
+    group = factory.SubFactory(GroupFactory)
     name = "Test CustomFacet"
     name_slug = factory.LazyAttribute(lambda x: slugify(x.name))
     querystring = None
@@ -92,8 +112,8 @@ class CustomFacetFactory(factory.django.DjangoModelFactory):
 class SeoSiteFacetFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = SeoSiteFacet
     
-    customfacet_id = 1
-    seosite_id = 1
+    customfacet = factory.SubFactory(CustomFacetFactory)
+    seosite = factory.SubFactory(SeoSiteFactory)
     facet_type = SeoSiteFacet.STANDARD
 
     
@@ -101,7 +121,7 @@ class SeoSiteRedirectFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = SeoSiteRedirect
 
     redirect_url = 'www.buckconsultants.jobs'
-    seosite_id = 2
+    seosite = factory.SubFactory(SeoSiteFactory)
 
 
 class ConfigurationFactory(factory.django.DjangoModelFactory):
@@ -131,7 +151,7 @@ class ConfigurationFactory(factory.django.DjangoModelFactory):
     facet_tag = "new-jobs"
     fontColor = "666666"
     footer = ""
-    group_id = 1
+    group = factory.SubFactory(GroupFactory)
     header = ""
     home_page_template = 'home_page/home_page_billboard.html'
     location_tag = ""
@@ -149,32 +169,35 @@ class ConfigurationFactory(factory.django.DjangoModelFactory):
     wide_header = ""
     percent_featured = 0.5
 
+
 class CompanyFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Company
+
     name = "Acme Incorporated"
     member = True
     company_slug = factory.LazyAttribute(lambda x: slugify(x.name))
-    
+
+
 class GoogleAnalyticsFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = GoogleAnalytics
     
     web_property_id = "1234"
-    id = "5678"
+
     
 class BillboardImageFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = BillboardImage
+
     title = "Test Image"
-    group_id = 1
     image_url = "http://fakecdn.jobs/img/test.jpg"
     copyright_info = "test image. I don't really exist."
     source_url = "fakecdn.jobs"
     logo_url = "http://fakecdn.jobs/img.jpg"
     sponsor_url = "fakecdn.jobs"
-    id = 1
+
 
 class UserFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = User
-    id = 1
+
     email = 'test@test.zztestzz'
     is_active = True
     gravatar = 'alice@example.com'

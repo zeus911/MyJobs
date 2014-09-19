@@ -30,8 +30,7 @@ class JobFeedTestCase(DirectSEOBase):
 
     def setUp(self):
         super(JobFeedTestCase, self).setUp()
-        self.businessunit = BusinessUnitFactory.build()
-        self.businessunit.save()
+        self.businessunit = BusinessUnitFactory(id=0)
         self.buid_id = self.businessunit.id
         self.numjobs = 4
         self.testdir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 
@@ -56,7 +55,7 @@ class JobFeedTestCase(DirectSEOBase):
         results = DEv2JobFeed(
             'seo/tests/data/dseo_feed_0.xml',
             jsid=self.businessunit.id,
-            company = self.businessunit.company_set.all()[0])
+            company=self.businessunit.company_set.all()[0])
 
         jobs = results.solr_jobs()
         self.assertEqual(jobs[0]['company_canonical_microsite_exact'], None)
@@ -67,7 +66,7 @@ class JobFeedTestCase(DirectSEOBase):
         results = DEv2JobFeed(
             'seo/tests/data/dseo_feed_0.xml',
             jsid=self.businessunit.id,
-            company = self.businessunit.company_set.all()[0])
+            company=self.businessunit.company_set.all()[0])
 
         jobs = results.solr_jobs()
         self.assertEqual(jobs[0]['company_canonical_microsite_exact'],
@@ -78,7 +77,7 @@ class JobFeedTestCase(DirectSEOBase):
         results = DEv2JobFeed(
             'seo/tests/data/dseo_feed_0.xml',
             jsid=self.businessunit.id,
-            company = self.businessunit.company_set.all()[0])
+            company=self.businessunit.company_set.all()[0])
 
         jobs = results.solr_jobs()
         self.assertFalse(jobs[0]['company_enhanced'])
@@ -89,7 +88,7 @@ class JobFeedTestCase(DirectSEOBase):
         results = DEv2JobFeed(
             'seo/tests/data/dseo_feed_0.xml',
             jsid=self.businessunit.id,
-            company = self.businessunit.company_set.all()[0])
+            company=self.businessunit.company_set.all()[0])
 
         jobs = results.solr_jobs()
         self.assertTrue(jobs[0]['company_enhanced'])
@@ -99,7 +98,7 @@ class JobFeedTestCase(DirectSEOBase):
         results = DEv2JobFeed(
             'seo/tests/data/dseo_feed_0.xml',
             jsid=self.businessunit.id,
-            company = self.businessunit.company_set.all()[0])
+            company=self.businessunit.company_set.all()[0])
         jobs = results.solr_jobs()
         self.assertTrue(jobs[0]['company_member'])
 
@@ -109,7 +108,7 @@ class JobFeedTestCase(DirectSEOBase):
         results = DEv2JobFeed(
             'seo/tests/data/dseo_feed_0.xml',
             jsid=self.businessunit.id,
-            company = self.businessunit.company_set.all()[0])
+            company=self.businessunit.company_set.all()[0])
 
         jobs = results.solr_jobs()
         self.assertFalse(jobs[0]['company_member'])
@@ -119,7 +118,7 @@ class JobFeedTestCase(DirectSEOBase):
         results = DEv2JobFeed(
             'seo/tests/data/dseo_feed_0.xml',
             jsid=self.businessunit.id,
-            company = self.businessunit.company_set.all()[0])
+            company=self.businessunit.company_set.all()[0])
 
         jobs = results.solr_jobs()
         self.assertFalse(jobs[0]['company_digital_strategies_customer'])
@@ -130,7 +129,7 @@ class JobFeedTestCase(DirectSEOBase):
         results = DEv2JobFeed(
             'seo/tests/data/dseo_feed_0.xml',
             jsid=self.businessunit.id,
-            company = self.businessunit.company_set.all()[0])
+            company=self.businessunit.company_set.all()[0])
 
         jobs = results.solr_jobs()
         self.assertTrue(jobs[0]['company_digital_strategies_customer'])
@@ -265,7 +264,6 @@ class JobFeedTestCase(DirectSEOBase):
 
         zips_from_feedfile = ["28243", "10095", "90212", "30309"]
         solrzips = [i['zipcode'] for i in solrresults]
-        
         for coll in [solrzips]:
             self.assertItemsEqual(zips_from_feedfile, coll)
 

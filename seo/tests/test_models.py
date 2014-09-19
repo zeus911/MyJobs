@@ -20,10 +20,8 @@ class ModelsTestCase(DirectSEOBase):
         constraint on the SeoSiteRedirect model.
         
         """
-        site = factories.SeoSiteFactory.build()
-        site.save()
-        ssr1 = factories.SeoSiteRedirectFactory.build()
-        ssr1.save()
+        site = factories.SeoSiteFactory()
+        ssr1 = factories.SeoSiteRedirectFactory(seosite=site)
         ssr2 = factories.SeoSiteRedirectFactory.build()
         self.assertRaises(IntegrityError, ssr2.save, ())
 

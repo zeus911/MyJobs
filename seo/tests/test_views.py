@@ -219,33 +219,35 @@ class SeoSiteTestCase(DirectSEOTestCase):
         self.assertEqual(resp.redirect_chain[-1][0], expected)
 
     def test_facet_unicode_title(self):
-        site = factories.SeoSiteFactory.build()
-        site.save()
-        default_cf = factories.CustomFacetFactory.build(
-                #default facet will return both jobs
-                name="Default Facet",
-                title=u'Розничная ассоциированных',
-                group_id=1,
-                show_production=True)
+        group = factories.GroupFactory()
+        site = factories.SeoSiteFactory(group=group)
 
+        default_cf = factories.CustomFacetFactory.build(
+            #default facet will return both jobs
+            name="Default Facet",
+            title=u'Розничная ассоциированных',
+            show_production=True,
+            group=group)
         default_cf.save()
+
         default_site_facet = factories.SeoSiteFacetFactory(
-                                    seosite_id=site.id,
-                                    facet_type=SeoSiteFacet.DEFAULT)
+            customfacet=default_cf,
+            seosite=site,
+            facet_type=SeoSiteFacet.DEFAULT)
         default_site_facet.save()
 
         standard_cf = factories.CustomFacetFactory.build(
-                #default facet will return both jobs
-                name="Standard Facet",
-                querystring=u'text:特殊字符',
-                group_id=1,
-                show_production=True)
-
+            #default facet will return both jobs
+            name="Standard Facet",
+            querystring=u'text:特殊字符',
+            show_production=True,
+            group=group)
         standard_cf.save()
+
         standard_site_facet = factories.SeoSiteFacetFactory(
-                                    seosite_id=site.id,
-                                    customfacet_id=standard_cf.id,
-                                    facet_type=SeoSiteFacet.STANDARD)
+            seosite=site,
+            customfacet=standard_cf,
+            facet_type=SeoSiteFacet.STANDARD)
         standard_site_facet.save()
 
         resp = self.client.get('/standard-facet/new-jobs/',
@@ -257,36 +259,39 @@ class SeoSiteTestCase(DirectSEOTestCase):
         self.assertEqual(resp.context['total_jobs_count'], 1)
 
     def test_facet_non_ascii_description(self):
-        site = factories.SeoSiteFactory.build()
-        site.save()
-        default_cf = factories.CustomFacetFactory.build(
-                #default facet will return both jobs
-                name="Default Facet",
-                querystring=u'text:特殊字符',
-                group_id=1,
-                show_production=True)
+        group = factories.GroupFactory()
+        site = factories.SeoSiteFactory(group=group)
 
+        default_cf = factories.CustomFacetFactory.build(
+            #default facet will return both jobs
+            name="Default Facet",
+            querystring=u'text:特殊字符',
+            show_production=True,
+            group=group)
         default_cf.save()
+
         default_site_facet = factories.SeoSiteFacetFactory(
-                                    seosite_id=site.id,
-                                    facet_type=SeoSiteFacet.DEFAULT)
+            customfacet=default_cf,
+            seosite=site,
+            facet_type=SeoSiteFacet.DEFAULT)
         default_site_facet.save()
 
-        standard_cf = factories.CustomFacetFactory.build(
-                #default facet will return both jobs
-                name="Standard Facet",
-                querystring=u'text:特殊字符',
-                group_id=1,
-                show_production=True)
-
+        standard_cf = factories.CustomFacetFactory(
+            #default facet will return both jobs
+            name="Standard Facet",
+            querystring=u'text:特殊字符',
+            show_production=True,
+            group=group)
         standard_cf.save()
+
         standard_site_facet = factories.SeoSiteFacetFactory(
-                                    seosite_id=site.id,
-                                    customfacet_id=standard_cf.id,
-                                    facet_type=SeoSiteFacet.STANDARD)
+            seosite=site,
+            customfacet=standard_cf,
+            facet_type=SeoSiteFacet.STANDARD)
         standard_site_facet.save()
+
         resp = self.client.get('/standard-facet/new-jobs/',
-                               HTTP_HOST = 'buckconsultants.jobs', follow=True)
+                               HTTP_HOST='buckconsultants.jobs', follow=True)
         self.assertEqual(resp.status_code, 200)
 
         default_jobs = resp.context['default_jobs']
@@ -313,14 +318,11 @@ class SeoSiteTestCase(DirectSEOTestCase):
         default_cf = factories.CustomFacetFactory.build(
                 #default facet will return both jobs
                 name="Default Facet",
-                querystring=u'state_short_exact:IN',
-                group_id=1)
+                querystring=u'state_short_exact:IN')
 
         default_cf.save()
         default_site_facet = factories.SeoSiteFacetFactory(
-                                     
-                                    seosite_id=site.id,
-                                    facet_type=SeoSiteFacet.DEFAULT)
+            seosite=site, facet_type=SeoSiteFacet.DEFAULT)
         default_site_facet.save()
 
         resp = self.client.get('/jobs/',
@@ -341,30 +343,28 @@ class SeoSiteTestCase(DirectSEOTestCase):
         site.save()
 
         default_cf = factories.CustomFacetFactory.build(
-               #default facet will return both jobs
-               name="Default Facet",
-               querystring=
-                   u'id:({i1} OR {i2})'.format(
-                           i1=self.solr_docs[0]['id'],
-                           i2=self.solr_docs[1]['id']),
-               group_id=1)
+            # default facet will return both jobs
+            name="Default Facet",
+            querystring=
+            u'id:({i1} OR {i2})'.format(
+                i1=self.solr_docs[0]['id'],
+                i2=self.solr_docs[1]['id']))
         default_cf.save()
         
-        default_site_facet = factories.SeoSiteFacetFactory(
-                                    customfacet_id=default_cf.id,
-                                    seosite_id=site.id,
-                                    facet_type=SeoSiteFacet.DEFAULT)
+        factories.SeoSiteFacetFactory(
+            customfacet=default_cf,
+            seosite=site,
+            facet_type=SeoSiteFacet.DEFAULT)
 
-        featured_site_facet = factories.SeoSiteFacetFactory(
-                                    customfacet_id=default_cf.id,
-                                    seosite_id=site.id,
-                                    facet_type=SeoSiteFacet.FEATURED)
+        factories.SeoSiteFacetFactory(
+            customfacet=default_cf,
+            seosite=site,
+            facet_type=SeoSiteFacet.FEATURED)
 
-        resp =  self.client.get('/',
-                                HTTP_HOST = 'buckconsultants.jobs', follow=True)
+        resp = self.client.get('/', HTTP_HOST='buckconsultants.jobs',
+                               follow=True)
 
         self.assertEqual(resp.status_code, 200)
-
 
     def test_featured_facets(self):
         """
@@ -372,44 +372,39 @@ class SeoSiteTestCase(DirectSEOTestCase):
         return duplicate jobs.
 
         """
+        group = factories.GroupFactory()
+        site = factories.SeoSiteFactory(group=group)
 
-        site = factories.SeoSiteFactory.build()
-        site.save()
         default_job = self.solr_docs[0]
         featured_job = self.solr_docs[1]
 
         default_cf = factories.CustomFacetFactory.build(
-                #default facet will return both jobs
-                #default facet will return both jobs
-                name="Default Facet",
-                querystring=
-                    u'id:({i1} OR {i2})'.format(
-                            i1=self.solr_docs[0]['id'],
-                            i2=self.solr_docs[1]['id']),
-                group_id=1)
-
+            #default facet will return both jobs
+            name="Default Facet",
+            querystring=u'id:({i1} OR {i2})'.format(
+                i1=self.solr_docs[0]['id'],
+                i2=self.solr_docs[1]['id']),
+            group=group)
         default_cf.save()
 
         featured_cf = factories.CustomFacetFactory.build(
-                #featured facet will return 1 job
-                name="Featured Facet",
-                querystring=
-                    'id:({i1} OR {i2}) AND uid:{u}'.format(
-                    i1=self.solr_docs[0]['id'],
-                    i2=self.solr_docs[1]['id'],
-                    u=featured_job['uid']),
-                group_id=1)
-
+            #featured facet will return 1 job
+            name="Featured Facet",
+            querystring='id:({i1} OR {i2}) AND uid:{u}'.format(
+                i1=self.solr_docs[0]['id'],
+                i2=self.solr_docs[1]['id'],
+                u=featured_job['uid']),
+            group=group)
         featured_cf.save()
  
-        default_site_facet = factories.SeoSiteFacetFactory(
-                                    seosite_id=site.id,
-                                    facet_type=SeoSiteFacet.DEFAULT)
+        factories.SeoSiteFacetFactory(customfacet=default_cf,
+                                      seosite=site,
+                                      facet_type=SeoSiteFacet.DEFAULT)
 
-        featured_site_facet = factories.SeoSiteFacetFactory(
-                                    customfacet_id=2,
-                                    seosite_id=site.id,
-                                    facet_type=SeoSiteFacet.FEATURED)
+        factories.SeoSiteFacetFactory(
+            customfacet=featured_cf,
+            seosite=site,
+            facet_type=SeoSiteFacet.FEATURED)
 
         resp = self.client.get('/jobs/', HTTP_HOST='buckconsultants.jobs')
         self.assertEqual(resp.status_code, 200)
@@ -435,8 +430,8 @@ class SeoSiteTestCase(DirectSEOTestCase):
         self.assertEqual(len(featured_jobs), 1)
         self.assertEqual(str(featured_jobs[0].uid), featured_job['uid'])
 
-        resp =  self.client.get('/ajax/joblisting/?offset=1&num_items=2',
-                                HTTP_HOST = 'buckconsultants.jobs')
+        resp = self.client.get('/ajax/joblisting/?offset=1&num_items=2',
+                               HTTP_HOST='buckconsultants.jobs')
         self.assertEqual(resp.status_code, 200)
 
         default_jobs = resp.context['default_jobs']
@@ -446,8 +441,8 @@ class SeoSiteTestCase(DirectSEOTestCase):
         featured_jobs = resp.context['featured_jobs']
         self.assertEqual(len(featured_jobs), 0)
 
-        resp =  self.client.get('/ajax/joblisting/?offset=0&num_items=1',
-                                HTTP_HOST = 'buckconsultants.jobs')
+        resp = self.client.get('/ajax/joblisting/?offset=0&num_items=1',
+                               HTTP_HOST='buckconsultants.jobs')
         self.assertEqual(resp.status_code, 200)
 
         default_jobs = resp.context['default_jobs']
@@ -458,8 +453,8 @@ class SeoSiteTestCase(DirectSEOTestCase):
 
         #ajax_get_job_search doesn't currently take a num_items argument
         #It defaults to the site config's page size. 10/11/2012
-        resp =  self.client.get('/ajax/moresearch/?offset=1',
-                                HTTP_HOST = 'buckconsultants.jobs')
+        resp = self.client.get('/ajax/moresearch/?offset=1',
+                               HTTP_HOST='buckconsultants.jobs')
         self.assertEqual(resp.status_code, 200)
 
         default_jobs = resp.context['default_jobs']
@@ -467,7 +462,6 @@ class SeoSiteTestCase(DirectSEOTestCase):
 
         featured_jobs = resp.context['featured_jobs']
         self.assertEqual(len(featured_jobs), 0)
- 
 
     def test_default_custom_facets_homepage(self):
         """
@@ -480,23 +474,20 @@ class SeoSiteTestCase(DirectSEOTestCase):
         site_job = self.solr_docs[1]
 
         default_cf = factories.CustomFacetFactory.build(
-                #This querystring should return 1 result for the matching uid
-                querystring=
-                    'id:({i1} OR {i2}) AND uid:{u}'.format(
-                        i1=self.solr_docs[0]['id'],
-                        i2=self.solr_docs[1]['id'],
-                        u=site_job['uid']),
-                group_id=1)
+            # This querystring should return 1 result for the matching uid
+            querystring='id:({i1} OR {i2}) AND uid:{u}'.format(
+                i1=self.solr_docs[0]['id'],
+                i2=self.solr_docs[1]['id'],
+                u=site_job['uid']))
 
         default_cf.save()
 
-        site_facet = factories.SeoSiteFacetFactory(
-                                    customfacet_id=default_cf.group_id,
-                                    seosite_id=site.id,
-                                    facet_type=SeoSiteFacet.DEFAULT)
+        factories.SeoSiteFacetFactory(customfacet=default_cf,
+                                      seosite=site,
+                                      facet_type=SeoSiteFacet.DEFAULT)
         
-        resp =  self.client.get('/jobs/', follow=True,
-                                HTTP_HOST = 'buckconsultants.jobs')
+        resp = self.client.get('/jobs/', follow=True,
+                               HTTP_HOST='buckconsultants.jobs')
 
         self.assertEqual(resp.status_code, 200)
         all_jobs = resp.context['default_jobs']
@@ -506,27 +497,26 @@ class SeoSiteTestCase(DirectSEOTestCase):
 
         #This querystring should return two jobs 
         default_cf.querystring = 'id:({i}) OR uid:{u}'.format(
-                i=self.solr_docs[0]['id'],
-                u=site_job['uid'])
+            i=self.solr_docs[0]['id'],
+            u=site_job['uid'])
         default_cf.save()
-        resp =  self.client.get('/jobs/', follow=True,
-                                HTTP_HOST = 'buckconsultants.jobs')
+        resp = self.client.get('/jobs/', follow=True,
+                               HTTP_HOST='buckconsultants.jobs')
         self.assertEqual(resp.status_code, 200)
         all_jobs = resp.context['default_jobs']
         self.assertEqual(len(all_jobs), 2)
 
         #This querystring should return one job
         default_cf.querystring = '(id:{i} AND uid:{u}) OR uid:{u}'.format(
-                i=self.solr_docs[0]['id'],
-                u=site_job['uid'])
+            i=self.solr_docs[0]['id'],
+            u=site_job['uid'])
         default_cf.save()
-        resp =  self.client.get('/jobs/', follow=True,
-                                HTTP_HOST = 'buckconsultants.jobs')
+        resp = self.client.get('/jobs/', follow=True,
+                               HTTP_HOST='buckconsultants.jobs')
         self.assertEqual(resp.status_code, 200)
         all_jobs = resp.context['default_jobs']
         self.assertEqual(len(all_jobs), 1)
         self.assertEqual(str(all_jobs[0].uid), site_job['uid'])
-
 
     def test_custom_ajax_get_facets(self):
         site = factories.SeoSiteFactory.build()
@@ -534,26 +524,22 @@ class SeoSiteTestCase(DirectSEOTestCase):
         site_job = self.solr_docs[1]
 
         query_strings = [
-                #shoudln't match anything
-                'lksjadfionv', 
-                #testing more complex queries
-                'city:("Indianapolis" OR "Norfolk") AND state:Indiana'
-                ]
+            #shoudln't match anything
+            'lksjadfionv',
+            #testing more complex queries
+            'city:("Indianapolis" OR "Norfolk") AND state:Indiana'
+        ]
 
-        facet_fields=['facets', 'titles', 'cities', 'states', 'mocs',
-                      'countries', 'facets', 'company-facets']
+        facet_fields = ['facets', 'titles', 'cities', 'states', 'mocs',
+                        'countries', 'facets', 'company-facets']
  
         for query in query_strings:
-            default_cf = factories.CustomFacetFactory.build(
-                            querystring=query,
-                            group_id=1)
-
+            default_cf = factories.CustomFacetFactory.build(querystring=query)
             default_cf.save()
 
-            site_facet = factories.SeoSiteFacetFactory(
-                                        customfacet_id=default_cf.group_id,
-                                        seosite_id=site.id,
-                                        facet_type=SeoSiteFacet.DEFAULT)
+            factories.SeoSiteFacetFactory(customfacet=default_cf,
+                                          seosite=site,
+                                          facet_type=SeoSiteFacet.DEFAULT)
 
             site = SeoSite.objects.get(id=1)
             for field in facet_fields:
@@ -627,7 +613,8 @@ class SeoSiteTestCase(DirectSEOTestCase):
         custom_onet = moc_factories.OnetFactory.build(code=custom_job['onet'])
         custom_onet.save()
 
-        custom_career = moc_factories.CustomCareerFactory.build(moc_id=moc.id,
+        custom_career = moc_factories.CustomCareerFactory.build(moc=moc,
+                                                                object_id=self.buid_id,
                                                                 onet_id=custom_onet.code)
         custom_career.save()
 
@@ -658,9 +645,9 @@ class SeoSiteTestCase(DirectSEOTestCase):
         self.assertIn(custom_onet.code,
                       resp.context['default_jobs'][0].onet)
 
-        custom_career2 = moc_factories.CustomCareerFactory.build(moc_id=moc.id,
-                                                            object_id=custom_career.object_id+1,
-                                                            onet_id=default_onet.code)
+        custom_career2 = moc_factories.CustomCareerFactory.build(moc=moc,
+                                                                 object_id=self.buid_id,
+                                                                 onet_id=default_onet.code)
         custom_career2.save()
         bu.customcareers = [custom_career, custom_career2]
         bu.save()
@@ -679,8 +666,8 @@ class SeoSiteTestCase(DirectSEOTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(len(resp.context['default_jobs']) == 2)
 
-        moc2 = moc_factories.MocFactory.build(code=moc_code, branch="navy", id=moc.id+1,
-                                              moc_detail_id=moc.moc_detail_id+1)
+        moc2 = moc_factories.MocFactory.build(code=moc_code, branch="navy",
+                                              moc_detail=moc_factories.MocDetailFactory())
         moc2.save()
         custom_career2.moc_id=moc2.id
         custom_career2.onet_id = custom_onet.code
@@ -870,26 +857,30 @@ class TemplateTestCase(DirectSEOTestCase):
         request = RequestFactory().get('/')
         request.user = AnonymousUser()
         config_obj = factories.ConfigurationFactory.build(id=1)
-        config_obj.wide_header="abcdefg"
-        site = factories.SeoSiteFactory.build()
+        config_obj.wide_header = "abcdefg"
+        site = factories.SeoSiteFactory()
         site.configurations.add(config_obj)
         site.save()
         settings.SITE = site
-        settings.SITE_TITLE = "Acme"        
-        bb = factories.BillboardImageFactory.build(logo_url="",sponsor_url="")
-        bb.save()        
-        settings.SITE.billboard_images.add(bb)        
+        settings.SITE_TITLE = "Acme"
+        settings.SITE_DESCRIPTION = "test"
+        settings.SITE_HEADING = "test"
+        settings.SITE_TAGS = ["network"]
+        settings.VIEW_SOURCE = None
+        bb = factories.BillboardImageFactory(logo_url="", sponsor_url="")
+        site.billboard_images.add(bb)
+        site.save()
         template = Template(
             file("templates/seo_billboard_homepage_base.html", 'r').read())
         resp = template.render(
             TemplateContext(
                 request, {
-                    'widgets':'',
-                    'billboard_images':settings.SITE.billboard_images.all(),
-                    'site_tags':['company'],
-                    }
-                )
+                    'widgets': '',
+                    'billboard_images': settings.SITE.billboard_images.all(),
+                    'site_tags': ['company'],
+                }
             )
+        )
         self.assertNotIn('BuildSponsorLogo(billboard_list[0].logo_url,', resp)
         
     def test_seo_sponsor_logo_company_site(self):
@@ -898,8 +889,8 @@ class TemplateTestCase(DirectSEOTestCase):
         request = RequestFactory().get('/')
         request.user = AnonymousUser()
         config_obj = factories.ConfigurationFactory.build(id=1)
-        config_obj.wide_header="abcdefg"
-        site = factories.SeoSiteFactory.build()
+        config_obj.wide_header = "abcdefg"
+        site = factories.SeoSiteFactory()
         site.configurations.add(config_obj)
         site.save()
         settings.SITE = site
@@ -912,12 +903,12 @@ class TemplateTestCase(DirectSEOTestCase):
         resp = template.render(
             TemplateContext(
                 request, {
-                    'widgets':'',
-                    'billboard_images':settings.SITE.billboard_images.all(),
-                    'site_tags':['company'],
-                    }
-                )
+                    'widgets': '',
+                    'billboard_images': settings.SITE.billboard_images.all(),
+                    'site_tags': ['company'],
+                }
             )
+        )
         self.assertIn('BuildSponsorLogo(billboard_list[0].logo_url,', resp)        
 
     def test_smart_truncate(self):
@@ -1261,12 +1252,13 @@ class SeoViewsTestCase(DirectSEOTestCase):
         ats.save()
         gac = factories.GACampaignFactory.build()
         gac.save()
-        site = factories.SeoSiteFactory.build(google_analytics_campaigns_id=1,
-                                    view_sources_id=1,
-                                    id=1)
+        site = factories.SeoSiteFactory.build(
+            google_analytics_campaigns=gac,
+            view_sources=factories.ViewSourceFactory(id=1),
+            id=1)
         site.save()
-        site.ats_source_codes = [1]
-        site.special_commitments = [1]
+        site.ats_source_codes.add(ats),
+        site.special_commitments.add(factories.SpecialCommitmentFactory(id=1))
         site.save()
         view_source = factories.ViewSourceFactory.build()
         view_source.save()
@@ -1380,28 +1372,27 @@ class SeoViewsTestCase(DirectSEOTestCase):
         field lookups were handled by turning them into SQ objects.
 
         """
+        site = factories.SeoSiteFactory()
         cf1 = factories.CustomFacetFactory.build(querystring="uid:[17000000 TO 17999999]",
-                                      name="Engineering Jobs",
-                                      show_production=True)
+                                                 name="Engineering Jobs",
+                                                 show_production=True)
         cf1.save()
 
-        cf1_site_facet = factories.SeoSiteFacetFactory(customfacet_id = cf1.id,
-                                             seosite_id=1)
+        factories.SeoSiteFacetFactory(customfacet=cf1, seosite=site)
                         
         cf2 = factories.CustomFacetFactory.build(city="Pasadena", state="Texas",
-                                       country="United States",
-                                       name="Pasadena Jobs",
-                                       show_production=True)
+                                                 country="United States",
+                                                 name="Pasadena Jobs",
+                                                 show_production=True)
         cf2.save()
 
-        cf2_site_facet = factories.SeoSiteFacetFactory(customfacet_id=cf2.id,
-                                             seosite_id=1)
+        factories.SeoSiteFacetFactory(customfacet=cf2, seosite=site)
 
         config = factories.ConfigurationFactory.build(id=2)
         config.save()
         resp = self.client.get(
-                '/pasadena/texas/usa/jobs/engineering-jobs/new-jobs/',
-                follow=True)
+            '/pasadena/texas/usa/jobs/engineering-jobs/new-jobs/',
+            follow=True)
         self.assertEqual(resp.status_code, 200)
         
     def test_syndicate_feed_paging(self):
@@ -1667,8 +1658,9 @@ class SeoViewsTestCase(DirectSEOTestCase):
         self.assertEqual(self.conn.search("*:*").hits, 0)
 
     def test_404_error(self):
-        foo=r'(%s)+' % '|'.join(['(?P<{n}>[/\w-]+{s})'.format(n=name, s=slug) 
-            for name,slug in default_settings.SLUG_TAGS.items()])
+        r'(%s)+' % '|'.join(['(?P<{n}>[/\w-]+{s})'.format(n=name, s=slug)
+                             for name, slug in
+                             default_settings.SLUG_TAGS.items()])
         response = self.client.get('/test/test/test/')
         self.assertEqual(response.status_code, 404)
         
@@ -1711,12 +1703,14 @@ class SeoViewsTestCase(DirectSEOTestCase):
                                                    civilian_description=mocciv)
         mocdetail.save()
         moc = moc_factories.MocFactory.build(code=moccode, branch="navy",
-                                             title=mocmil, moc_detail_id=4105)
+                                             title=mocmil,
+                                             moc_detail=mocdetail)
         moc.save()
         onet2 = moc_factories.OnetFactory.build(title=onet2title,
                                                 code=onet2code)
         onet2.save()
-        customcareer = moc_factories.CustomCareerFactory.build(moc_id=moc.id,
+        customcareer = moc_factories.CustomCareerFactory.build(moc=moc,
+                                                               object_id=self.buid_id,
                                                                onet_id=onet2.code)
         customcareer.save()
         bu = BusinessUnit.objects.get(id=1)
@@ -1738,7 +1732,7 @@ class SeoViewsTestCase(DirectSEOTestCase):
         }
         mocd = moc_factories.MocDetailFactory.build()
         mocd.save()
-        moc = moc_factories.MocFactory.build()
+        moc = moc_factories.MocFactory.build(code='01', moc_detail=mocd)
         moc.save()
         onet = moc_factories.OnetFactory.build()
         onet.save()
@@ -1940,8 +1934,8 @@ class SeoViewsTestCase(DirectSEOTestCase):
         self.assertEqual(response.status_code, 200)
         
     def test_static_page_analytics(self):    	    
-        site = factories.SeoSiteFactory.build(id=1,
-                                    domain=u'www.my.jobs',name='www.my.jobs')
+        site = factories.SeoSiteFactory.build(id=1, domain=u'www.my.jobs',
+                                              name='www.my.jobs')
         site.save()
         site_tag = SiteTag(site_tag='network')
         site_tag.save()
@@ -1960,7 +1954,7 @@ class SeoViewsTestCase(DirectSEOTestCase):
         self.assertIn(ga.web_property_id, resp.content)      
         self.assertEqual(resp.content.count(ga.web_property_id), 1)      
         #GA pageview sent in footer
-        self.assertContains(resp, "'g"+ ga.id + ".send', 'pageview'")
+        self.assertContains(resp, "'g"+str(ga.id)+".send', 'pageview'")
         #Check that site is getting default header and footer
         self.assertContains(resp, "direct_dotjobsFooterContent")
         self.assertContains(resp, "direct_dotjobsWideHeader")
