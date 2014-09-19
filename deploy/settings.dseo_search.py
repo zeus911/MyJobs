@@ -19,18 +19,18 @@ DATABASES = {'default': {'NAME': 'redirect',
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'seo.search_backend.DESolrEngine',
-        'URL': 'http://127.0.0.1:8983/solr',
+        'URL': 'http://solr_server:8983/solr',
         'TIMEOUT': 60*3,
         'BATCH_SIZE': 1000
     },
     'groups': {
         'ENGINE': 'saved_search.groupsearch.SolrGrpEngine',
-        'URL': 'http://127.0.0.1:8983/solr'
+        'URL': 'http://solr_server:8983/solr'
     }
 }
 
 TEMPLATE_DIRS = (
-    '/home/web/direct-seo/directseo/templates/',
+    '/home/web/MyJobs/MyJobs/templates/',
 )
 
 SESSION_CACHE_ALIAS = 'sessions'
