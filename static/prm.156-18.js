@@ -571,6 +571,9 @@ function fill_in_history_state(data){
         clear_special_interest(si_list);
         return false
     }
+    if(start_date && end_date)
+        console.log(end_date.getDate() - start_date.getDate() );
+
     if(typeof(data.keywords) != "undefined")
         $(kw_input).val(String(data.keywords));
     else
@@ -662,11 +665,13 @@ function build_data() {
         var days = $(".partner-tag.days").has("i").data('days');
         start_date.setDate(start_date.getDate() - days);
     } else {
-        //start of epoch
-        start_date = new Date("11/30/1899");
+        start_date = false;
+        end_date = false;
     }
-    data.start_date = format_date(start_date);
-    data.end_date = format_date(end_date);
+    if(start_date)
+        data.start_date = format_date(start_date);
+    if(end_date)
+        data.end_date = format_date(end_date);
 
     var sort_by = $(".sort-by.active").text().toLowerCase();
     if(sort_by)

@@ -211,5 +211,6 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
 
                 # ensure that for each partner, at least one contact record is
                 # within range
-                self.assertTrue(
-                    filter(lambda x: start_date <= x <= end_date , date_times))
+                if partner.contactrecord_set.all():
+                    self.assertTrue(filter(
+                        lambda x: start_date <= x <= end_date , date_times))
