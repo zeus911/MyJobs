@@ -445,14 +445,8 @@ def filter_partners(request, partner_library=False):
 
         query = Q(interests | unspecified)
     else:
-        start_date = datetime.strptime(request.REQUEST.get(
-            'start_date', '11/30/1899'), '%m/%d/%Y')
-        end_date = datetime.strptime(request.REQUEST.get(
-            'end_date', datetime.now().strftime('%m/%d/%Y')), '%m/%d/%Y')
-        # can't ignore time in django queries easily, so we max it out instead
-        end_date = end_date.replace(hour=23, minute=59, second=59)
-        # ensure that start_date is before end_date
-        start_date, end_date = sorted([start_date, end_date])
+        start_date = request.REQUEST.get('start_date')
+        end_date = request.REQUEST.get('end_date')
 
         partners = Partner.objects.select_related('contact')
         contact_city = 'contact__city'
@@ -461,8 +455,17 @@ def filter_partners(request, partner_library=False):
         order_by = []
 
         query = Q(owner=get_company_or_404(request).id)
-        query &= (Q(contactrecord__date_time__range=[start_date, end_date]) |
-                  Q(contactrecord__date_time__isnull=True))
+
+        # If both start and end date are passed, we should filter, creating
+        # reasonable bounds for either one if they are missing. Otherwise, we
+        # don't filter by either.
+        if any([start_date, end_date]):
+            start_date = datetime.strptime(
+                start_date or '11/30/1899', '%m/%d/%Y')
+            end_date = datetime.strptime(
+                end_date or datetime.now().strftime('%m/%d/%Y'), '%m/%d/%Y')
+            end_date = end_date.replace(hour=23, minute=59, second=59)
+            query &= Q(contactrecord__date_time__range=[start_date, end_date])
 
     for keyword in keywords:
         query &= (Q(name__icontains=keyword) | Q(uri__icontains=keyword) |
