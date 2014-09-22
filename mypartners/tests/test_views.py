@@ -73,10 +73,20 @@ class MyPartnersTestCase(MyJobsBase):
         args = '&'.join(args)
         return reverse(view) + '?' + args
 
+
 class MyPartnerViewsTests(MyPartnersTestCase):
     """Tests for the /prm/view/ page"""
     def setUp(self):
         super(MyPartnerViewsTests, self).setUp()
+
+    def test_prm_worthy_no_partner(self):
+        """
+        Confirms that the page throws a 404 rather than a 500
+        when the partner id is missing.
+
+        """
+        response = self.client.post(reverse('partner_details'))
+        self.assertEqual(response.status_code, 404)
 
     def test_prm_page_with_no_partners(self):
         """

@@ -3,10 +3,9 @@ from datetime import datetime, time, timedelta
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
-from django.db.models import Count, Min, Max, Q
+from django.db.models import Min, Max, Q
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError, FieldError
 from django.core.mail import EmailMessage
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -21,7 +20,7 @@ import pytz
 import requests
 import states
 from universal.helpers import (get_domain, get_company, get_company_or_404,
-                               OrderedSet)
+                               get_int_or_none, OrderedSet)
 from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
                                CHANGE, Partner, PartnerLibrary)
 from registration.models import ActivationProfile
@@ -36,7 +35,7 @@ def prm_worthy(request):
     if company is None:
         raise Http404
 
-    partner_id = int(request.REQUEST.get('partner'))
+    partner_id = get_int_or_none(request.REQUEST.get('partner'))
     partner = get_object_or_404(company.partner_set, id=partner_id)
 
     return company, partner, request.user
