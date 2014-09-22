@@ -564,15 +564,37 @@ function fill_in_history_state(data){
         ct_input = $("#lib-city");
     var si_list = ["veteran", "female", "minority", "disabled",
                        "disabled veteran", "unspecified"];
+
+    
     if(!data){
         $(kw_input.val(""));
         $("#state option[value='']").attr("selected", "selected");
         $(ct_input).val("");
-        clear_special_interest(si_list);
+        $(".partner-tag").children('i').remove();
+        $(".partner-tag").addClass("disabled-tag");
         return false
     }
-    if(start_date && end_date)
-        console.log(end_date.getDate() - start_date.getDate() );
+
+    // calculate which day buttons should be checked 
+    var start_date = new Date(data.start_date || new Date("11/30/1899")),
+        end_date = new Date(data.end_date || new Date()),
+        days = (end_date.getTime() - start_date.getTime()) /
+               (1000 * 60 * 60 * 24) // msecs, secs, hours, days
+        button = $(".partner-tag.days[data-days='" + days + "']");
+
+    $(".partner-tag").children('i').remove();
+    $(".partner-tag").addClass("disabled-tag");
+    if(button.length) {
+        button.append("<i class='icon icon-ok'></i>").removeClass("disabled-tag");
+        $(".partner-tag.custom").show();
+        $(".date-picker-widget").hide();
+    } else {
+        $("#activity-start-date").val(data.start_date || "");
+        $("#activity-end-date").val(data.end_date || "");
+        $(".partner-tag.custom").hide();
+        $(".date-picker-widget").show();
+    }
+
 
     if(typeof(data.keywords) != "undefined")
         $(kw_input).val(String(data.keywords));
@@ -604,25 +626,7 @@ function fill_in_history_state(data){
             });
         }
     }
-    clear_special_interest(si_list);
     return false
-}
-
-/*
-Reset special interest (all disabled)
- */
-function clear_special_interest(si_list) {
-    for(var x in si_list) {
-        var cl = String(si_list[x]).replace(" ", "-");
-        $(".sidebar .partner-tag").each(function() {
-            if($(this).hasClass(cl)){
-                if ($(this).children('i').hasClass('icon-ok')) {
-                    $(this).children('i').remove();
-                    $(this).addClass("disabled-tag");
-                }
-            }
-        });
-    }
 }
 
 /*
