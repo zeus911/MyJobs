@@ -44,7 +44,8 @@ $(document).ready(function() {
     */
     if(location.search) show_selected();
 
-    $(".date-picker-widget").hide()
+    $(".date-picker-widget").hide();
+    $("#reset-date-range").hide();
 
     /*
     Fancy pushState next and previous buttons for everyone
@@ -188,6 +189,9 @@ $(document).ready(function() {
             format: "mm/dd/yyyy",
             selectYears: true,
             selectMonths: true,
+            today: false,
+            clear: false,
+            close: false,
             onOpen: function() {
                 var start_date = $("#activity-start-date").val(),
                     end_date = $("#activity-end-date").val();
@@ -351,9 +355,23 @@ $(document).ready(function() {
     $(".partner-tag.custom").on("click", function() {
         $(".partner-tag.custom").hide();
         $(".date-picker-widget").show();
+        $("#reset-date-range").show();
 
         $(".partner-tag.days").addClass("disabled-tag");
         $(".partner-tag.days > i.icon-ok").remove();
+    });
+
+    $("#reset-date-range").on("click", function() {
+        // disable all day filters
+        $(".partner-tag.days").addClass("disabled-tag");
+        $(".partner-tag.days > i.icon-ok").remove();
+        // show the custom date range button
+        $(".partner-tag.custom").show();
+        $(".date-picker-widget").hide();
+        // remove dates from date inputs
+        $("#activity-start-date").val("");
+        $("#activity-end-date").val("");
+        run_ajax();
     });
 
     // Waits till typing is completed for 1 sec (3 if tablet <) then runs ajax
@@ -572,6 +590,7 @@ function fill_in_history_state(data){
         $(ct_input).val("");
         $(".partner-tag").children('i').remove();
         $(".partner-tag").addClass("disabled-tag");
+        $("#reset-date-range").hide();
         return false
     }
 
@@ -588,13 +607,14 @@ function fill_in_history_state(data){
         button.append("<i class='icon icon-ok'></i>").removeClass("disabled-tag");
         $(".partner-tag.custom").show();
         $(".date-picker-widget").hide();
+        $("#reset-date-range").show();
     } else {
         $("#activity-start-date").val(data.start_date);
         $("#activity-end-date").val(data.end_date);
         $(".partner-tag.custom").hide();
         $(".date-picker-widget").show();
+        $("#reset-date-range").show();
     }
-
 
     if(typeof(data.keywords) != "undefined")
         $(kw_input).val(String(data.keywords));
@@ -775,6 +795,11 @@ function update_search_url(data) {
             if(i != 0) search_url += "&";
             search_url += key + "=" + value;
         }
+    }
+    if(data.start_date || data.end_date) {
+        $("#reset-date-range").show();
+    } else {
+        $("#reset-date-range").hide();
     }
 
     if (typeof(isIE) == "number" && isIE > 9 || typeof(isIE) == 'boolean' && isIE == false) {

@@ -689,6 +689,10 @@ input.datepicker {
     width: 45%;
 }
 
+.date-picker-widget input {
+    margin-bottom: 0;
+}
+
 span.datepicker {
     border: 1px solid #BBB;
     margin: -5px;
@@ -708,11 +712,11 @@ input.picker-right {
 }
 
 .sidebar .picker__select--month {
-    width: 35%;
+    width: 40%;
 }
 
 .sidebar .picker__select--year {
-    width: 22.5%;
+    width: 25%;
 }
 
 .date-picker-widget {
