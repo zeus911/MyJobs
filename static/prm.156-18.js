@@ -328,8 +328,8 @@ $(document).ready(function() {
             // add dates to input boxes
             start_date = new Date();
             start_date.setDate(start_date.getDate() - $(this).data("days"));
-            $("#activity-start-date").val(start_date);
-            $("#activity-end-date").val(new Date());
+            $("#activity-start-date").val(format_date(start_date));
+            $("#activity-end-date").val(format_date(new Date()));
 
             // add checkbox
             $(".partner-tag.days").addClass("disabled-tag");
@@ -589,8 +589,8 @@ function fill_in_history_state(data){
         $(".partner-tag.custom").show();
         $(".date-picker-widget").hide();
     } else {
-        $("#activity-start-date").val(data.start_date || "");
-        $("#activity-end-date").val(data.end_date || "");
+        $("#activity-start-date").val(data.start_date);
+        $("#activity-end-date").val(data.end_date);
         $(".partner-tag.custom").hide();
         $(".date-picker-widget").show();
     }
