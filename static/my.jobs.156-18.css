@@ -681,6 +681,7 @@ div.tags-field ul.tagit input.ui-widget-content {
     text-align: center;
     margin-top: 0;
     margin-left: 0;
+    margin-bottom: 7px;
 }
 
 input.datepicker {
@@ -721,6 +722,7 @@ input.picker-right {
 
 .date-picker-widget {
     position: relative;
+    margin-bottom: 5px;
 }
 .date-picker-widget input {
     cursor: pointer;
