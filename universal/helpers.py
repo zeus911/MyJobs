@@ -5,6 +5,7 @@ import urllib
 from django.shortcuts import get_object_or_404, Http404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
+
 def build_url(reverse_url, params):
     return '%s?%s' % (reverse_url, urllib.urlencode(params))
 
