@@ -1215,3 +1215,6 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
                     'Female', 'Minority']:
             if getattr(library, 'is_%s' % tag.lower().replace(' ', '_')):
                 self.assertIn(tag, partner.tags.values_list('name', flat=True))
+
+        self.assertIn(
+            "OFCCP Library", partner.tags.values_list('name', flat=True))
