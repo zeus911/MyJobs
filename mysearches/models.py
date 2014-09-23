@@ -381,6 +381,7 @@ class PartnerSavedSearch(SavedSearch):
             contact_type='pssemail',
             contact_name=contact.name,
             contact_email=self.user.email,
+            created_by=self.created_by,
             date_time=datetime.now(),
             subject=subject,
             notes=message,
