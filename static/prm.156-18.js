@@ -45,7 +45,7 @@ $(document).ready(function() {
     if(location.search) show_selected();
 
     $(".date-picker-widget").hide();
-    $("#reset-date-range").hide();
+    $("#reset-date-range").css("visibility", "hidden");
 
     /*
     Fancy pushState next and previous buttons for everyone
@@ -355,7 +355,7 @@ $(document).ready(function() {
     $(".partner-tag.custom").on("click", function() {
         $(".partner-tag.custom").hide();
         $(".date-picker-widget").show();
-        $("#reset-date-range").show();
+        $("#reset-date-range").css("visibility", "visible");
 
         $(".partner-tag.days").addClass("disabled-tag");
         $(".partner-tag.days > i.icon-ok").remove();
@@ -590,7 +590,7 @@ function fill_in_history_state(data){
         $(ct_input).val("");
         $(".partner-tag").children('i').remove();
         $(".partner-tag").addClass("disabled-tag");
-        $("#reset-date-range").hide();
+        $("#reset-date-range").css("visibility", "hidden");
         return false
     }
 
@@ -607,13 +607,13 @@ function fill_in_history_state(data){
         button.append("<i class='icon icon-ok'></i>").removeClass("disabled-tag");
         $(".partner-tag.custom").show();
         $(".date-picker-widget").hide();
-        $("#reset-date-range").show();
+        $("#reset-date-range").css("visibility", "visible");
     } else {
         $("#activity-start-date").val(data.start_date);
         $("#activity-end-date").val(data.end_date);
         $(".partner-tag.custom").hide();
         $(".date-picker-widget").show();
-        $("#reset-date-range").show();
+        $("#reset-date-range").css("visibility", "visible");
     }
 
     if(typeof(data.keywords) != "undefined")
@@ -797,9 +797,9 @@ function update_search_url(data) {
         }
     }
     if(data.start_date || data.end_date) {
-        $("#reset-date-range").show();
+        $("#reset-date-range").css("visibility", "visible");
     } else {
-        $("#reset-date-range").hide();
+        $("#reset-date-range").css("visibility", "hidden");
     }
 
     if (typeof(isIE) == "number" && isIE > 9 || typeof(isIE) == 'boolean' && isIE == false) {
