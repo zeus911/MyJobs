@@ -515,8 +515,10 @@ def new_partner_from_library(request):
             tag, _ = Tag.objects.get_or_create(
                 company=company, name=interest.replace('_', ' ').title(),
                 defaults={'hex_color': color})
-
             tags.append(tag)
+
+    tags.append(Tag.objects.get_or_create(
+        company=company, name='OFCCP Library')[0])
 
     partner = Partner.objects.create(
         name=library.name,
