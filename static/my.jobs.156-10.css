@@ -199,7 +199,8 @@ h1 > small > a:hover {
     margin-bottom: 20px;
 }
 
-#partner-holder {
+#partner-holder,
+.card-wrapper {
     box-shadow: 2px 2px 3px #BBB;
 }
 
@@ -215,8 +216,9 @@ h1 > small > a:hover {
 .product-card {
     background-color: #F9FAFA;
     box-sizing: border-box;
-    padding: 15px 10px;
+    padding: 15px 75px 15px 10px;
     border: 1px solid #E5E5E5;
+    position: relative;
 }
 
 .product-card + .product-card {
@@ -258,7 +260,9 @@ h1 > small > a:hover {
 }
 
 .product-card a.btn {
-    margin-top: -35px;
+    position: absolute;
+    right: 10px;
+    bottom: 15px;
 }
 
 .product-card.tag {
@@ -322,6 +326,10 @@ h1 > small > a:hover {
     box-shadow: 2px 2px 3px #BBB;
 }
 
+.sidebar hr {
+    margin: 10px 0;
+}
+
 .sidebar label,
 .partner-sort label {
     font-weight: 700;
@@ -373,6 +381,10 @@ h1 > small > a:hover {
 
 .sidebar .partner-tag:nth-child(n+3) {
     margin-top: 5px;
+}
+
+.sidebar div.back-to-link {
+    text-align: center;
 }
 
 #partner-sidebar-holder .sidebar .help_text {
@@ -431,7 +443,9 @@ h1 > small > a:hover {
 }
 
 .partner-pagination,
-.partner-sort {
+.partner-sort,
+.wrapper-header,
+.wrapper-footer {
     margin: 0;
     width: 100%;
     box-sizing: border-box;
@@ -520,6 +534,26 @@ h1 > small > a:hover {
     float: left;
     margin-right: 5px;
     margin-top: 2px;
+}
+
+.card-wrapper + .card-wrapper {
+    margin-top: 20px;
+}
+
+.wrapper-header h1,
+.wrapper-header h2,
+.wrapper-header h3,
+.wrapper-header h4,
+.wrapper-header h5,
+.wrapper-header h6 {
+    margin: 0;
+    padding-left: 5px;
+    display: inline-block;
+}
+
+.wrapper-header + .product-card,
+.product-card + .wrapper-footer {
+    border-top: 0;
 }
 
 .prm-no-partner .span4 {

@@ -1,0 +1,17 @@
+<div class="product-card">
+    <div class="big-title">
+        {{ record.subject }} {% if record.contact_name %} {% if record.subject %}for{% endif %} {{record.contact_name}} {% endif %}
+    </div>
+    <div class="sub-title">
+        {{ record.shorten_date_time }} - {{ record.get_human_readable_contact_type }}
+    </div>
+    <div class="partner-tags">
+        {% for tag in record.tags.all %}
+        <span class="tag-name small" style="background-color: #{{tag.hex_color}}">{{ tag.name }}</span>
+        {% endfor %}
+    </div>
+    <div class="product-details">
+        Created by: {{ record.created_by }}
+    </div>
+    <a id="record-{{record.id}}" class="btn" href="{% url 'record_view' %}?partner={{ partner.id }}&id={{ record.id }}&offset={{ forloop.counter0 }}{% if contact_type %}&type={{ contact_type }}{% endif %}{% if contact_name %}&name={{ contact_name }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}{% if admin_id %}&admin={{ admin_id }}{% endif %}">View</a>
+</div>

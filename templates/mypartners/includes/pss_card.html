@@ -1,0 +1,18 @@
+{% load label_tags %}
+<div class="product-card">
+    <div class="big-title">
+        {{ search.label }} {% make_label search.is_active %}
+    </div>
+    <div class="sub-title">
+        Sent to: {{search.email}}
+    </div>
+    <div class="partner-tags">
+        {% for tag in search.tags.all %}
+        <span class="tag-name small" style="background-color: #{{tag.hex_color}}">{{ tag.name }}</span>
+        {% endfor %}
+    </div>
+    <div class="product-details">
+        Last sent: {{search.last_sent}}
+    </div>
+    <a id="savedsearch-{{search.id}}" class="btn" href="{% url 'partner_view_full_feed' %}?partner={{ partner.id }}&id={{ search.id }}">View</a>
+</div>
