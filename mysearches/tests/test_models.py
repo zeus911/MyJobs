@@ -331,6 +331,12 @@ class PartnerSavedSearchTests(MyJobsBase):
         self.assertTrue('https://secure.my.jobs%s' % verify_url
                         in email.body)
 
+    def test_contact_record_created_by(self):
+        ContactRecord.objects.all().delete()
+        self.partner_search.send_initial_email()
+        record = ContactRecord.objects.get()
+        self.assertEqual(record.created_by, self.partner_search.created_by)
+
     def test_num_occurrences_instance_method(self):
         # quick sanity checks; searching for a string that doesn't exist
         # returns an empty list
