@@ -3912,3 +3912,6 @@ body.modal-open {
     font-weight:normal
 }
 
+#reset-date-range {
+    cursor: pointer;
+}
