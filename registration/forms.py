@@ -39,8 +39,9 @@ class CustomAuthForm(AuthenticationForm):
         if username and password:
             self.user_cache = authenticate(username=username, password=password)
             if self.user_cache is None:
-                error_msg = [u"Please enter a correct email.",
-                             u"Please enter a correct password.",]
+                error_msg = [
+                    u"Invalid username or password. Please try again.",
+                    u""]
 
                 self._errors['username'] = self.error_class([error_msg[0]])
                 self._errors['password'] = self.error_class([error_msg[1]])
