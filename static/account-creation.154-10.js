@@ -119,6 +119,7 @@ $(document).on("click", "button#register", function(e) {
 
 $(document).on("click", "button#login", function(e) {
     e.preventDefault();
+    removeRequiredChanges();
     var next = document.getElementsByName('next')[0].value;
     var form = $('form#login-form');
     var json_data = form.serialize()+'&nexturl='+next+'&action=login';
@@ -301,14 +302,8 @@ function setPrimaryName(){
 }
 
 function removeRequiredChanges(){
-    // remove current errors
-    $('[class*=required-border]').css('border', '');
-    $('[class*=required-border]').removeClass('required-border');
-
-    // remove IE specific errors, if IE
-    if($.browser.msie){
-        $('[class*=msieError]').remove();
-    }
+    $(".required").contents().unwrap();
+    $(".msieError i").remove();
 }
 
 function jsonErrors(index, errors){
@@ -325,13 +320,14 @@ function jsonErrors(index, errors){
                 'multidimensional array' {errors:[key][value]}
     */
     var $error = $('[id$="_'+errors[index][0]+'"]');
-    // insert new errors after the relevant inputs
-    if($.browser.msie){
-        field = $error.parent().prev();
-        field.before("<div class='msieError'><i>" + errors[index][1] + "</i></div>");
-    }else{
-        $error.val('');
-        $error.attr("placeholder",errors[index][1]);
-    }
     $error.wrap("<div class='required'></div>");
+    // insert new errors after the relevant inputs
+    if(errors[index][1][0].indexOf("required") != -1){
+        $error.val("");
+        $error.attr("placeholder",errors[index][1]);
+    }else{
+        field = $error.parent().prev();
+        $("#id_password").val("").focus();
+        field.before("<div class='msieError'><i>" + errors[index][1] + "</i></div>");
+    }
 }
