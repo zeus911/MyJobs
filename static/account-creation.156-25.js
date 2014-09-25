@@ -90,7 +90,7 @@ $(document).on("click", "button#register", function(e) {
             outputs a gravatar url, instead of 'valid' or 'success'.
             */
             var json = jQuery.parseJSON(data);
-            $("body").append(json.html);
+            $("#header .row").append(json.html);
             // Check to see if json.gravatar_url is present, in this case, success.
             if (Boolean(json.gravatar_url)){
                 var gravatar_url = json.gravatar_url;
