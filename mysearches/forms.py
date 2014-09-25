@@ -11,8 +11,9 @@ from mysearches.models import (SavedSearch, SavedSearchDigest,
                                PartnerSavedSearch)
 from mypartners.forms import PartnerEmailChoices
 from mypartners.models import Contact, ADDITION, CHANGE
-from mypartners.helpers import log_change, send_custom_activation_email
 from registration.models import Invitation
+from mypartners.helpers import (log_change, send_custom_activation_email,
+                                tag_get_or_create)
 
 
 class HorizontalRadioRenderer(RadioSelect.renderer):
@@ -133,6 +134,13 @@ class PartnerSavedSearchForm(ModelForm):
         self.fields["notes"].label = "Notes and Comments"
         self.fields["partner_message"].label = "Message for Contact"
         self.fields["url_extras"].label = "Source Codes & Campaigns"
+        if self.instance.id and self.instance.tags:
+            tag_names = ",".join([tag.name for tag in self.instance.tags.all()])
+            self.initial['tags'] = tag_names
+        self.fields['tags'] = CharField(
+            label='Tags', max_length=255, required=False,
+            widget=TextInput(attrs={'id': 'p-tags', 'placeholder': 'Tags'})
+        )
 
         initial = kwargs.get("instance")
         feed_args = {"widget": HiddenInput()}
@@ -163,6 +171,11 @@ class PartnerSavedSearchForm(ModelForm):
             if not self.cleaned_data['day_of_month']:
                 raise ValidationError(_("This field is required."))
         return self.cleaned_data['day_of_month']
+
+    def clean_tags(self):
+        data = filter(bool, self.cleaned_data['tags'].split(','))
+        tags = tag_get_or_create(self.data.get('company'), data)
+        return tags
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -201,6 +214,8 @@ class PartnerSavedSearchForm(ModelForm):
         self.instance.feed = self.cleaned_data.get('feed')
         is_new_or_change = CHANGE if self.instance.pk else ADDITION
         instance = super(PartnerSavedSearchForm, self).save(commit)
+        tags = self.cleaned_data.get('tags')
+        self.instance.tags = tags
         invite_args = {
             'invitee_email': instance.email,
             'invitee': instance.user,
@@ -227,7 +242,7 @@ class PartnerSubSavedSearchForm(ModelForm):
         exclude = ('provider', 'url_extras', 'partner_message',
                    'account_activation_message', 'created_by', 'user',
                    'created_on', 'label', 'url', 'feed', 'email', 'notes',
-                   'custom_message', )
+                   'custom_message', 'tags', )
         widgets = {
             'sort_by': RadioSelect(renderer=HorizontalRadioRenderer,
                                    attrs={'id': 'sort_by'}),

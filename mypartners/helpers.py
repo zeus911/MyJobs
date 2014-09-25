@@ -3,10 +3,9 @@ from datetime import datetime, time, timedelta
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
-from django.db.models import Count, Min, Max, Q
+from django.db.models import Min, Max, Q
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError, FieldError
 from django.core.mail import EmailMessage
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -21,9 +20,9 @@ import pytz
 import requests
 import states
 from universal.helpers import (get_domain, get_company, get_company_or_404,
-                               OrderedSet)
+                               get_int_or_none, OrderedSet)
 from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
-                               CHANGE, Partner, PartnerLibrary)
+                               CHANGE, Partner, PartnerLibrary, Tag)
 from registration.models import ActivationProfile
 
 
@@ -36,7 +35,7 @@ def prm_worthy(request):
     if company is None:
         raise Http404
 
-    partner_id = int(request.REQUEST.get('partner'))
+    partner_id = get_int_or_none(request.REQUEST.get('partner'))
     partner = get_object_or_404(company.partner_set, id=partner_id)
 
     return company, partner, request.user
@@ -159,10 +158,10 @@ def contact_record_val_to_str(value):
     If the value matches a contact type choice it's translated to the
     verbose form.
     """
-
     value = (value.strftime('%b %d, %Y %I:%M %p') if type(value)
              is datetime else value.strftime('%H hours %M minutes')
              if type(value) is time else force_unicode(value))
+
 
     contact_types = dict(CONTACT_TYPE_CHOICES)
     if value in contact_types:
@@ -415,6 +414,7 @@ def filter_partners(request, partner_library=False):
     sort_by = sort_order + request.REQUEST.get('sort_by', 'name')
     city = request.REQUEST.get('city', '').strip()
     state = request.REQUEST.get('state', '').strip()
+    tags = [tag.strip() for tag in request.REQUEST.get('tag', '').split(',') if tag]
     keywords = [keyword.strip() for keyword in request.REQUEST.get(
         'keywords', '').split(',') if keyword]
 
@@ -469,6 +469,10 @@ def filter_partners(request, partner_library=False):
 
     partners = partners.distinct().filter(query)
 
+    # filter by tags
+    for tag in tags:
+        partners = partners.filter(tags__name__icontains=tag)
+
     # for location, we want to sort by both city and state
     if "location" in sort_by:
         # the select trick wont work with foreign relationships, so we instead
@@ -500,11 +504,28 @@ def new_partner_from_library(request):
         raise Http404
     library = get_object_or_404(PartnerLibrary, pk=library_id)
 
+    tags = []
+    for interest, color in [('disabled', '808A9A'),
+                            ('disabled_veteran', '659274'),
+                            ('female', '4BB1CF'),
+                            ('minority', 'FAA732'),
+                            ('veteran', '5EB94E')]:
+
+        if getattr(library, 'is_%s' % interest):
+            tag, _ = Tag.objects.get_or_create(
+                company=company, name=interest.replace('_', ' ').title(),
+                defaults={'hex_color': color})
+            tags.append(tag)
+
+    tags.append(Tag.objects.get_or_create(
+        company=company, name='OFCCP Library')[0])
+
     partner = Partner.objects.create(
         name=library.name,
         uri=library.uri,
         owner=company,
         library=library)
+    partner.tags = tags
 
     contact = Contact.objects.create(
         partner=partner,
@@ -519,8 +540,21 @@ def new_partner_from_library(request):
         postal_code=library.zip_code,
         notes=("This contact was generated from content in the "
                "OFCCP directory."))
+    contact.tags = tags
+    contact.save()
 
     partner.primary_contact = contact
     partner.save()
 
     return partner
+
+
+def tag_get_or_create(company_id, data):
+    tags = []
+    for tag in data:
+        obj, created = Tag.objects.get_or_create(
+            company_id=company_id, name__iexact=tag, defaults={"name": tag}
+        )
+        tags.append(obj.id)
+
+    return tags

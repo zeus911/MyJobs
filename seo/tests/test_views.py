@@ -67,6 +67,103 @@ class WidgetsTestCase(DirectSEOTestCase):
 class SeoSiteTestCase(DirectSEOTestCase):
     fixtures = ['seo_views_testdata.json']
 
+    def test_special_characters(self):
+        self.conn.delete(q='*:*')
+        special_jobs = [
+            {
+                'django_id': '8888',
+                'guid': '8888',
+                'django_ct': 'seo.joblisting',
+                'id': 'seo.joblisting.8888',
+                'title': 'C#',
+                'title_ac': 'C#',
+                'title_exact': 'C#',
+                'title_slab': 'c/jobs-in::c',
+                'title_slab_exact': 'c/jobs-in::c',
+                'title_slug': 'c',
+                'uid': '8888',
+                'buid': self.buid_id,
+                'text': 'C#',
+            },
+            {
+                'django_id': '7777',
+                'guid': '7777',
+                'django_ct': 'seo.joblisting',
+                'id': 'seo.joblisting.7777',
+                'title': 'C$',
+                'title_ac': 'C$',
+                'title_exact': 'C$',
+                'title_slab': 'c/jobs-in::c',
+                'title_slab_exact': 'c/jobs-in::c',
+                'title_slug': 'c',
+                'uid': '7777',
+                'buid': self.buid_id,
+                'text': 'C$',
+            },
+            {
+                'django_id': '9998',
+                'id': 'seo.joblisting.9998',
+                'guid': '9998',
+                'django_ct': 'seo.joblisting',
+                'title': 'Just C',
+                'title_ac': 'Just C',
+                'title_exact': 'Just C',
+                'title_slab': 'just-c/jobs-in::just-c',
+                'title_slab_exact': 'just-c/jobs-in::just-c',
+                'title_slug': 'just-c',
+                'uid': '9998',
+                'buid': self.buid_id,
+                'text': 'Just C',
+            },
+            {
+                'django_id': '9997',
+                'id': 'seo.joblisting.9997',
+                'guid': '9997',
+                'django_ct': 'seo.joblisting',
+                'title': 'AT&T',
+                'title_ac': 'AT&T',
+                'title_exact': 'AT&T',
+                'title_slab': 'att/jobs-in::att',
+                'title_slab_exact': 'att/jobs-in::att',
+                'title_slug': 'att',
+                'uid': '9997',
+                'buid': self.buid_id,
+                'text': 'AT&T',
+            },
+            {
+                'django_id': '9996',
+                'id': 'seo.joblisting.9996',
+                'guid': '9996',
+                'django_ct': 'seo.joblisting',
+                'title': 'AT Also Has A T',
+                'title_ac': 'AT Also Has A T',
+                'title_exact': 'AT Also Has A T',
+                'title_slab': 'at-also-has-a-t/jobs-in::at-also-has-a-t',
+                'title_slab_exact': 'att/jobs-in::at-also-has-a-t',
+                'title_slug': 'at-also-has-a-t',
+                'uid': '9996',
+                'buid': self.buid_id,
+                'text': 'AT Also Has A T',
+            }
+        ]
+        self.conn.add(special_jobs)
+        site = SeoSite.objects.get(id=1)
+        site.business_units = [self.buid_id]
+        site.save()
+
+        with connection(connections_info=solr_settings.HAYSTACK_CONNECTIONS):
+            resp = self.client.get('/jobs/?q=C#', follow=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(len(resp.context['default_jobs']), 1)
+
+            resp = self.client.get('/jobs/?q=C$', follow=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(len(resp.context['default_jobs']), 1)
+
+            resp = self.client.get('/jobs/?q=AT%5C%26T', follow=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(len(resp.context['default_jobs']), 1)
+
     def test_postajob(self):
         company = factories.CompanyFactory()
         jobs = []

@@ -328,6 +328,7 @@ class PartnerSavedSearch(SavedSearch):
         blank=True, help_text="Use this field to provide a customized "
                               "greeting that will be sent with each copy "
                               "of this saved search.")
+    tags = models.ManyToManyField('mypartners.Tag', null=True)
     account_activation_message = models.TextField(blank=True)
     created_by = models.ForeignKey(User, editable=False)
 
@@ -380,6 +381,7 @@ class PartnerSavedSearch(SavedSearch):
             contact_type='pssemail',
             contact_name=contact.name,
             contact_email=self.user.email,
+            created_by=self.created_by,
             date_time=datetime.now(),
             subject=subject,
             notes=message,

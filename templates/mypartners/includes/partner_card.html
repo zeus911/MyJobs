@@ -2,11 +2,8 @@
 {% if on_page == 'partner_library' %}
 <div id="library-{{partner.id}}" class="product-card">
 {% else %}
-<div class="product-card">
+<div id="partner-{{partner.id}}" class="product-card">
 {% endif %}
-    {% if on_page == 'prm' %}
-    <a href="{% url 'partner_overview' %}?partner={{ partner.id }}">
-    {% endif %}
     <div class="big-title">
         <b>{{ partner.name }}</b>
     </div>
@@ -39,25 +36,31 @@
         </small>
     </div>
     {% endif %}
-    {% if on_page == 'partner_library' %}
     <div class="partner-tags">
-        {% if partner.is_veteran %}
-            <div class="partner-tag veteran">Veteran</div>
-        {% endif %}
-        {% if partner.is_female %}
-            <div class="partner-tag female">Female</div>
-        {% endif %}
-        {% if partner.is_minority %}
-            <div class="partner-tag minority">Minority</div>
-        {% endif %}
-        {% if partner.is_disabled %}
-            <div class="partner-tag disabled">Disabled</div>
-        {% endif %}
-        {% if partner.is_disabled_veteran %}
-            <div class="partner-tag disabled-veteran">Disabled Veteran</div>
+        {% if on_page == 'prm' %}
+            {% for tag in partner.tags.all %}
+                <span class="tag-name small" style="background-color: #{{tag.hex_color}}">{{ tag.name }}</span>
+            {% endfor %}
+        {% elif on_page == 'partner_library' %}
+
+            {% if partner.is_veteran %}
+                <div class="partner-tag veteran">Veteran</div>
+            {% endif %}
+            {% if partner.is_female %}
+                <div class="partner-tag female">Female</div>
+            {% endif %}
+            {% if partner.is_minority %}
+                <div class="partner-tag minority">Minority</div>
+            {% endif %}
+            {% if partner.is_disabled %}
+                <div class="partner-tag disabled">Disabled</div>
+            {% endif %}
+            {% if partner.is_disabled_veteran %}
+                <div class="partner-tag disabled-veteran">Disabled Veteran</div>
+            {% endif %}
+
         {% endif %}
     </div>
-    {% endif %}
     <div class="product-details">
         {% if on_page == 'prm' %}
 
@@ -97,10 +100,8 @@
     {% if on_page == 'prm' %}
     <a id="partner-{{ partner.id }}" class="btn pull-right" href="{% url 'partner_overview' %}?partner={{ partner.id }}">Open</a>
     {% elif on_page == 'partner_library' %}
-    <a id="partner-{{ partner.id }}" class="btn pull-right" href="#">Add</a>
+    <div class="clearfix"></div>
+    <a id="partner-{{ partner.id }}" class="btn pull-right">Add</a>
     {% endif %}
     <div class="clearfix"></div>
-{% if on_page == 'prm' %}
-</a>
-{% endif %}
 </div>

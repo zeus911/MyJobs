@@ -62,8 +62,8 @@ class Contact(models.Model):
                                     blank=True)
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
-    notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
     tags = models.ManyToManyField('Tag', null=True)
+    notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
 
     class Meta:
         verbose_name_plural = 'contacts'
@@ -445,12 +445,25 @@ class ContactLogEntry(models.Model):
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
 
 
+class TagManager(models.Manager):
+    def for_company(self, company, **kwargs):
+        tag_kwargs = {
+            'company': company,
+        }
+        tag_kwargs.update(kwargs)
+
+        return self.filter(**tag_kwargs)
+
+
 class Tag(models.Model):
     name = models.CharField(max_length=255)
+    hex_color = models.CharField(max_length=6, default="d4d4d4", blank=True)
     company = models.ForeignKey('seo.Company')
 
     created_on = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
+    objects = TagManager()
 
     def __unicode__(self):
         return "%s for %s" % (self.name, self.company.name)
