@@ -139,6 +139,7 @@ $(document).on("click", "button#login", function(e) {
                 for (var index in json.errors) {
                     jsonErrors(index, json.errors);
                 }
+                $("#id_password").val("").focus();
             } else {
                 if(json.url == 'None'){
                     window.location = profile_url;
@@ -319,15 +320,14 @@ function jsonErrors(index, errors){
     :errors:    Parsed json that has the label "errors". Errors is a 
                 'multidimensional array' {errors:[key][value]}
     */
-    var $error = $('[id$="_'+errors[index][0]+'"]');
+    var $error = $('#id_' + errors[index][0]);
     $error.wrap("<div class='required'></div>");
     // insert new errors after the relevant inputs
     if(errors[index][1][0].indexOf("required") != -1){
         $error.val("");
         $error.attr("placeholder",errors[index][1]);
     }else{
-        field = $error.parent().prev();
-        $("#id_password").val("").focus();
+        var field = $error.parents("fieldset");
         field.before("<div class='msieError'><i>" + errors[index][1] + "</i></div>");
     }
 }

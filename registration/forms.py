@@ -123,7 +123,6 @@ class RegistrationForm(forms.Form):
             if self.cleaned_data['password1'] != self.cleaned_data['password2']:
                 error_msg = u"The new password fields did not match."
                 self._errors["password1"] = self.error_class([error_msg])
-                self._errors["password2"] = self.error_class([error_msg])
 
                 # These fields are no longer valid. Remove them from the
                 # cleaned data.
