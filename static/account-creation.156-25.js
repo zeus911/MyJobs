@@ -139,7 +139,6 @@ $(document).on("click", "button#login", function(e) {
                 for (var index in json.errors) {
                     jsonErrors(index, json.errors);
                 }
-                $("#id_password").val("").focus();
             } else {
                 if(json.url == 'None'){
                     window.location = profile_url;
