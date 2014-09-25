@@ -46,7 +46,7 @@
     {% include "mypartners/includes/partner_card.html" with on_page="partner_library" %}
     {% endif %}
 {% endfor %}
-{% if partners|length > 6 and partners.has_previous or partners.has_next %}
+{% if partners.has_previous or partners.has_next %}
 <div class="partner-pagination">
     <span class="step-links">
         {% if partners.has_previous %}

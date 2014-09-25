@@ -1,0 +1,10 @@
+Sitemap: http://{{ host }}/sitemap.xml
+User-agent: *
+Disallow: /admin/
+Disallow: /ajax/
+Disallow: /feed/
+Disallow: /files/
+Disallow: /login/
+Disallow: /logout/
+Disallow: /style/
+

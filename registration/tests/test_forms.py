@@ -1,12 +1,12 @@
 from django.core import mail
-from django.test import TestCase
 
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
 from registration.forms import RegistrationForm, CustomPasswordResetForm
+from myjobs.tests.setup import MyJobsBase
 
 
-class RegistrationFormTests(TestCase):
+class RegistrationFormTests(MyJobsBase):
     """
     Test the default registration forms.
 

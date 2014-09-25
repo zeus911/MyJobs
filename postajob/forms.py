@@ -4,16 +4,18 @@ from datetime import date, timedelta
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
+from django import forms
 from django.forms import (CharField, CheckboxSelectMultiple,
                           HiddenInput, IntegerField, ModelMultipleChoiceField,
                           RadioSelect, Select, TextInput)
+from django.forms.models import modelformset_factory
 
-from mydashboard.models import Company, CompanyUser, SeoSite
+from seo.models import Company, CompanyUser, SeoSite
 from mypartners.widgets import SplitDateDropDownField
 from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
                              OfflineProduct, Package, Product, ProductGrouping,
                              ProductOrder, PurchasedProduct, PurchasedJob,
-                             SitePackage)
+                             SitePackage, JobLocation)
 from postajob.payment import authorize_card, get_card, settle_transaction
 from postajob.widgets import ExpField
 from universal.forms import RequestForm
@@ -22,8 +24,7 @@ from universal.helpers import get_object_or_none
 
 class BaseJobForm(RequestForm):
     class Meta:
-        exclude = ('guid', 'country_short', 'state_short',
-                   'is_syndicated', 'created_by', )
+        exclude = ('is_syndicated', 'created_by', )
 
     class Media:
         css = {
@@ -45,12 +46,6 @@ class BaseJobForm(RequestForm):
                            label='Apply Link',
                            help_text=Job.help_text['apply_link'],
                            widget=TextInput(attrs={'rows': 1, 'size': 50}))
-
-    country = CharField(widget=Select(choices=Job.get_country_choices()),
-                        help_text=Job.help_text['country'],
-                        initial='United States of America')
-    state = CharField(label='State', help_text=Job.help_text['state'],
-                      widget=Select(choices=Job.get_state_choices()))
     date_expired = SplitDateDropDownField(label="Expires On",
                                           help_text=Job.help_text['date_expired'])
 
@@ -120,28 +115,26 @@ class BaseJobForm(RequestForm):
 
     def save(self, commit=True):
         self.instance.created_by = self.request.user
-        job = super(BaseJobForm, self).save(commit)
+        return super(BaseJobForm, self).save(commit)
 
-        country = job.country
-        state = job.state
-        try:
-            job.state_short = Job.get_state_map()[state]
-        except IndexError:
-            job.state_short = None
-        try:
-            job.country_short = Job.get_country_map()[country]
-        except IndexError:
-            job.country_short = None
 
-        return job
+class JobLocationForm(forms.ModelForm):
+    class Meta:
+        fields = ('city', 'state', 'country', 'zipcode')
+        excluded = ('guid', 'state_short', 'country_short')
+        model = JobLocation
+
+
+JobLocationFormSet = modelformset_factory(JobLocation, form=JobLocationForm,
+                                          extra=0, can_delete=True)
 
 
 class JobForm(BaseJobForm):
     class Meta:
-        fields = ('title', 'is_syndicated', 'reqid', 'description', 'city',
-                  'state', 'country', 'zipcode', 'date_expired', 'is_expired',
-                  'autorenew', 'apply_type', 'apply_link', 'apply_email',
-                  'apply_info', 'owner', 'post_to', 'site_packages', )
+        fields = ('title', 'is_syndicated', 'reqid', 'description',
+                  'date_expired', 'is_expired', 'autorenew', 'apply_type',
+                  'apply_link', 'apply_email', 'apply_info', 'owner',
+                  'post_to', 'site_packages')
         model = Job
 
     # For a single job posting by a member company to a microsite
@@ -149,7 +142,7 @@ class JobForm(BaseJobForm):
     # site_package for a site is only created when it's first used,
     # so we use SeoSite as the queryset here instead of SitePackage.
     site_packages_widget = admin.widgets.FilteredSelectMultiple('Sites', False)
-    site_packages = ModelMultipleChoiceField(SeoSite.objects.all(),
+    site_packages = ModelMultipleChoiceField(SeoSite.objects.none(),
                                              help_text="",
                                              label="Site",
                                              required=False,
@@ -163,24 +156,29 @@ class JobForm(BaseJobForm):
 
     def __init__(self, *args, **kwargs):
         super(JobForm, self).__init__(*args, **kwargs)
+        kwargs = {'business_units__company': self.company}
+        if self.request.path.startswith('/admin') or \
+                self.request.user.is_superuser:
+            # If this is on the admin site or the user is a superuser,
+            # get all sites for the current company.
+            user_sites = SeoSite.objects.filter(**kwargs)
+
         if not self.request.path.startswith('/admin'):
+            # Superusers get the list of sites from the previous block, but
+            # also need the widget to be modified in this block. This
+            # necessitates the additional if.
+
             # FilteredSelectMultiple doesn't work outside the admin, so
             # switch to a widget that does work.
             self.fields['site_packages'].help_text = ""
             self.fields['site_packages'].widget = CheckboxSelectMultiple(
                 attrs={'class': 'job-sites-checkbox'})
-            # After changing the widget the queryset also needs reset.
-            self.fields['site_packages'].queryset = SeoSite.objects.all()
-
-        if not self.request.user.is_superuser:
-            # Limit a non-superuser's access to only sites they own.
-            user_sites = self.request.user.get_sites()
-            if not self.request.path.startswith('/admin'):
-                # Outside the admin, also limit the sites to the current
-                # company.
-                kwargs = {'business_units__company': self.company}
+            if not self.request.user.is_superuser:
+                user_sites = self.request.user.get_sites()
+                # Outside the admin, limit the sites to the current company
                 user_sites = user_sites.filter(**kwargs)
-            self.fields['site_packages'].queryset = user_sites
+
+        self.fields['site_packages'].queryset = user_sites
 
         # Since we're not using actual site_packages for the site_packages,
         # the initial data also needs to be manually set.
@@ -189,7 +187,7 @@ class JobForm(BaseJobForm):
             self.initial['site_packages'] = [str(site.pk) for site in
                                              self.instance.on_sites()]
             # If the only site package is the company package, then the
-            # current job must be posted to all cmpany and network sites.
+            # current job must be posted to all company and network sites.
             if (packages.count() == 1 and
                     packages[0] == self.instance.owner.site_package):
                 self.initial['post_to'] = 'network'
@@ -218,6 +216,15 @@ class JobForm(BaseJobForm):
 
         return site_packages
 
+    def get_field_sets(self):
+        field_sets = [
+            [self['title'], self['description'], self['reqid']],
+            [self['apply_type'], self['apply_link'], self['apply_info']],
+            [self['date_expired'], self['is_expired']],
+            [self['post_to'], self['site_packages'], self['is_syndicated']]
+        ]
+        return field_sets
+
     def save(self, commit=True):
         sites = self.cleaned_data['site_packages']
         job = super(JobForm, self).save(commit)
@@ -230,12 +237,11 @@ class JobForm(BaseJobForm):
         return job
 
 
-class PurchasedJobBaseForm(BaseJobForm):
+class PurchasedJobBaseForm(JobForm):
     class Meta:
-        fields = ('title', 'reqid', 'description', 'city',
-                  'state', 'country', 'zipcode', 'date_expired', 'is_expired',
-                  'apply_type', 'apply_link', 'apply_email',
-                  'apply_info', 'owner', )
+        fields = ('title', 'reqid', 'description', 'date_expired',
+                  'is_expired', 'autorenew', 'apply_type', 'apply_link',
+                  'apply_email', 'apply_info', 'owner', 'post_to')
         model = PurchasedJob
         purchased_product = None
 
@@ -268,6 +274,16 @@ class PurchasedJobForm(PurchasedJobBaseForm):
     def __init__(self, *args, **kwargs):
         self.purchased_product = kwargs.pop('product', None)
         super(PurchasedJobForm, self).__init__(*args, **kwargs)
+        self.fields.pop('post_to', None)
+        self.initial['site_packages'] = self.fields['site_packages'].queryset
+
+    def get_field_sets(self):
+        field_sets = [
+            [self['title'], self['description'], self['reqid']],
+            [self['apply_type'], self['apply_link'], self['apply_info']],
+            [self['date_expired'], self['is_expired']],
+        ]
+        return field_sets
 
     def save(self, commit=True):
         self.instance.purchased_product = self.purchased_product

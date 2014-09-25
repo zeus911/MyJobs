@@ -1,13 +1,14 @@
 from authorize import AuthorizeInvalidError, AuthorizeResponseError
 from datetime import date
 
-from django.test import TestCase
 
 from postajob.payment import get_card, charge_card
+from myjobs.tests.setup import MyJobsBase
 
 
-class PaymentTests(TestCase):
+class PaymentTests(MyJobsBase):
     def setUp(self):
+        super(PaymentTests, self).setUp()
         self.card_info = {
             'card_num': 4007000000027,
             'city': 'Indianapolis',
@@ -57,6 +58,7 @@ class PaymentTests(TestCase):
                           70.05, card)
 
     def test_charge_card_invalid_cvn(self):
+        self.card_info['cvn'] = 901
         card = get_card(**self.card_info)
         self.assertRaises(AuthorizeResponseError, charge_card,
-                          70.71, card)
+                          70.02, card)

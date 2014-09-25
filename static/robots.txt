@@ -1,3 +1,4 @@
+Sitemap: http://find.ibm.jobs/sitemap.xml
 User-agent: *
 Disallow: /login/
 Disallow: /logout/
@@ -8,3 +9,9 @@ Disallow: /admin/
 Disallow: /complete/
 Disallow: /admin/
 Disallow: /settings/
+Disallow: /files/
+Disallow: /style/
+Disallow: /openid/
+Disallow: /linkedin/
+Disallow: /twitter/
+Disallow: /setup/

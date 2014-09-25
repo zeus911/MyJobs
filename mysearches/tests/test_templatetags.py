@@ -1,14 +1,15 @@
 from django.core.urlresolvers import reverse
-from django.test import TestCase
 
+from myjobs.tests.setup import MyJobsBase
 from myjobs.tests.factories import UserFactory
 from mysearches.templatetags.email_tags import get_created_url
 from mysearches.tests.factories import SavedSearchFactory
 from registration.models import ActivationProfile
 
 
-class SavedSearchTemplateTagTests(TestCase):
+class SavedSearchTemplateTagTests(MyJobsBase):
     def setUp(self):
+        super(SavedSearchTemplateTagTests, self).setUp()
         self.user = UserFactory(is_active=True)
         self.search = SavedSearchFactory(user=self.user)
 

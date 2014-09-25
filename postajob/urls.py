@@ -2,6 +2,7 @@ from django.conf.urls import *
 
 from postajob import views
 
+
 urlpatterns = patterns(
     '',
 
@@ -62,10 +63,10 @@ urlpatterns = patterns(
     url(r'^job/purchase/add/(?P<product>\d+)/',
         views.PurchasedJobFormView.as_view(),
         name='purchasedjob_add'),
-    url(r'^job/purchase/delete/(?P<pk>\d+)/',
+    url(r'^job/purchase/update/(?P<pk>\d+)/',
         views.PurchasedJobFormView.as_view(),
         name='purchasedjob_update'),
-    url(r'^job/purchase/update/(?P<pk>\d+)/',
+    url(r'^job/purchase/delete/(?P<pk>\d+)/',
         views.PurchasedJobFormView.as_view(),
         name='purchasedjob_delete'),
 
@@ -143,4 +144,6 @@ urlpatterns = patterns(
     url(r'^admin/profile/update/(?P<pk>\d+)/',
         views.CompanyProfileFormView.as_view(),
         name='companyprofile_update'),
+
+    url(r'^list/$', 'product_list'),
 )

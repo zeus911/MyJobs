@@ -1,11 +1,11 @@
-from django.test import TestCase
-
 from myjobs.forms import ChangePasswordForm
 from myjobs.tests.factories import UserFactory
 from myjobs.tests.test_views import TestClient
 from myprofile.tests.factories import PrimaryNameFactory
+from setup import MyJobsBase
 
-class AccountFormTests(TestCase):
+
+class AccountFormTests(MyJobsBase):
     def setUp(self):
         self.user = UserFactory()
         self.name = PrimaryNameFactory(user=self.user)

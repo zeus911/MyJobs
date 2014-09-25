@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-
 from bs4 import BeautifulSoup
 import json
 import re
 from time import sleep
-from itertools import permutations, islice
+from itertools import islice
 import os
 import random
 
@@ -14,13 +13,13 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.core import mail
 from django.http import Http404
-from django.test import TestCase
 from django.test.client import RequestFactory 
 from django.utils.timezone import utc
 
+from myjobs.tests.setup import MyJobsBase
 from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
-from mydashboard.models import CompanyUser
+from seo.models import CompanyUser
 from mydashboard.tests.factories import CompanyFactory, CompanyUserFactory
 from mypartners.tests.factories import (PartnerFactory, ContactFactory,
                                         ContactLogEntryFactory,
@@ -34,7 +33,7 @@ from mypartners.helpers import find_partner_from_email, get_library_partners
 from mysearches.models import PartnerSavedSearch
 
 
-class MyPartnersTestCase(TestCase):
+class MyPartnersTestCase(MyJobsBase):
     def setUp(self):
         super(MyPartnersTestCase, self).setUp()
 
@@ -74,10 +73,20 @@ class MyPartnersTestCase(TestCase):
         args = '&'.join(args)
         return reverse(view) + '?' + args
 
+
 class MyPartnerViewsTests(MyPartnersTestCase):
     """Tests for the /prm/view/ page"""
     def setUp(self):
         super(MyPartnerViewsTests, self).setUp()
+
+    def test_prm_worthy_no_partner(self):
+        """
+        Confirms that the page throws a 404 rather than a 500
+        when the partner id is missing.
+
+        """
+        response = self.client.post(reverse('partner_details'))
+        self.assertEqual(response.status_code, 404)
 
     def test_prm_page_with_no_partners(self):
         """
@@ -159,7 +168,7 @@ class EditItemTests(MyPartnersTestCase):
             contact=lambda **kwargs: self.request_factory.get(
                 '/prm/view/details/edit', dict({'partner': 1}, **kwargs)))
 
-    def test_add_contat_with_bad_partner_id(self):
+    def test_add_contact_with_bad_partner_id(self):
         """ Invalid partner should always result in a 404. """
 
         fail_msg = "The partner id %s should have raised an Http404 but didnt"
@@ -233,7 +242,7 @@ class EditItemTests(MyPartnersTestCase):
             self.assertIn("Add Contact", soup.title.text)
 
     def test_edit_contact_form_loaded(self):
-        request = self.requests['contact'](id=1)
+        request = self.requests['contact'](id=self.contact.pk)
         request.user = self.staff_user
 
         response = views.edit_item(request)
@@ -568,7 +577,7 @@ class RecordsEditTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
         form = soup.find('fieldset')
 
-        self.assertEqual(len(form(class_='profile-form-input')), 14)
+        self.assertEqual(len(form(class_='profile-form-input')), 15)
         self.assertEqual(len(form.find(id='id_contact_name')('option')), 3)
 
         # Add contact
@@ -591,7 +600,7 @@ class RecordsEditTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
         form = soup.find('fieldset')
 
-        self.assertEqual(len(form(class_='profile-form-input')), 14)
+        self.assertEqual(len(form(class_='profile-form-input')), 15)
         self.assertEqual(len(form.find(id='id_contact_name')('option')), 2)
 
         contact_type = form.find(id='id_contact_type')
@@ -768,7 +777,7 @@ class SearchEditTests(MyPartnersTestCase):
         self.search = PartnerSavedSearchFactory(provider=self.company,
                                                 created_by=self.staff_user,
                                                 user=self.contact.user,
-                                                partner=self.partner)
+                                                partner=self.partner,)
 
     def test_render_new_form(self):
         url = self.get_url(company=self.company.id,
@@ -797,8 +806,8 @@ class SearchEditTests(MyPartnersTestCase):
     def test_required_fields(self):
         self.search.delete()
         url = self.get_url('partner_savedsearch_save',
-                          company=self.company.id,
-                          partner=self.partner.id)
+                           company=self.company.id,
+                           partner=self.partner.id)
 
         data = {'label': 'Test',
                 'url': 'http://www.jobs.jobs/jobs',
@@ -831,27 +840,27 @@ class SearchEditTests(MyPartnersTestCase):
     def test_invalid_urls(self):
         self.search.delete()
         url = self.get_url('partner_savedsearch_save',
-                          company=self.company.id,
-                          partner=self.partner.id)
+                           company=self.company.id,
+                           partner=self.partner.id)
 
         data = {'label': 'Test',
                 'url': 'http://www.google.com',
                 'email': self.contact.user.email,
+                'company': self.company.id,
                 'frequency': 'W',
                 'day_of_week': '3'}
 
-        with self.assertRaises(ValueError) as cm:
-            # When an invalid form is submitted, a ValueError is raised, but a
-            # user isn't able to submit an invalid form (except through curl or
-            # similar) since the other form fields are hidden if an invalid
-            # feed URL is given. 
-            response = self.client.post(url, data)
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 200)
+        errors = json.loads(response.content)
+        error_msg = 'That URL does not contain feed information'
+        self.assertIn(error_msg, errors['url'])
 
     def test_create_new_saved_search(self):
         self.search.delete()
         url = self.get_url('partner_savedsearch_save',
-                          company=self.company.id,
-                          partner=self.partner.id)
+                           company=self.company.id,
+                           partner=self.partner.id)
 
         data = {'feed': 'http://www.jobs.jobs/jobs/rss/jobs',
                 'label': 'Test',
@@ -882,9 +891,9 @@ class SearchEditTests(MyPartnersTestCase):
 
     def test_update_existing_saved_search(self):
         url = self.get_url('partner_savedsearch_save',
-                          company=self.company.id,
-                          partner=self.partner.id,
-                          id=self.search.id)
+                           company=self.company.id,
+                           partner=self.partner.id,
+                           id=self.search.id)
 
         data = {'feed': 'http://www.jobs.jobs/jobs/rss/jobs',
                 'label': 'Test',
@@ -931,6 +940,7 @@ class SearchEditTests(MyPartnersTestCase):
                 'label': 'Test',
                 'url': 'http://www.jobs.jobs/jobs',
                 'url_extras': '',
+                'company': self.company.id,
                 'email': new_contact.email,
                 'account_activation_message': '',
                 'frequency': 'W',
@@ -943,16 +953,17 @@ class SearchEditTests(MyPartnersTestCase):
 
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 200)
-
-        # make sure only two emails are sent
         self.assertEqual(len(mail.outbox), 2)
+        for s in [self.staff_user.get_full_name(), str(self.company),
+                  'has created a job search for you']:
+            self.assertIn(s, mail.outbox[1].body)
 
-        # make sure that the first one is the activation email
-        self.assertIn("Your temporary password is", mail.outbox[0].body)
-        self.assertIn(self.company.name, mail.outbox[0].body)
-
-        # make sure the second one is the saved search email
-        self.assertIn("created this saved search", mail.outbox[1].body)
+        body = re.sub(r'\s+', ' ', mail.outbox[0].body)
+        for expected in ['%s created this saved search on your behalf:' % \
+                             (self.staff_user.email, ),
+                         'Saved Search Notification']:
+            self.assertTrue(expected in body)
+        self.assertFalse('delete this saved search' in body)
 
 
 class EmailTests(MyPartnersTestCase):
@@ -1159,8 +1170,8 @@ class EmailTests(MyPartnersTestCase):
             result_dt = record.date_time.replace(second=0, microsecond=0)
             self.assertEqual(str(result_dt), str(expected_dt))
 
-class PartnerLibraryTestCase(MyPartnersTestCase):
 
+class PartnerLibraryTestCase(MyPartnersTestCase):
     @classmethod
     def setUpClass(cls):
         super(PartnerLibraryTestCase, cls).setUpClass()
@@ -1204,4 +1215,18 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
 
         views.create_partner_from_library(request)
 
-        self.assertTrue(Partner.objects.filter(library=library_id).exists())
+        # test that partner was in fact created
+        try:
+            partner = Partner.objects.get(library=library_id)
+        except Partner.DoesNotExist:
+            self.fail("Partner with an ID of %s not created!" % library_id)
+
+        # test that appropriate tags created
+        library = PartnerLibrary.objects.get(id=library_id)
+        for tag in ['Veteran', 'Disabled', 'Disabled Veteran',  
+                    'Female', 'Minority']:
+            if getattr(library, 'is_%s' % tag.lower().replace(' ', '_')):
+                self.assertIn(tag, partner.tags.values_list('name', flat=True))
+
+        self.assertIn(
+            "OFCCP Library", partner.tags.values_list('name', flat=True))

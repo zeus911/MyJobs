@@ -1,0 +1,158 @@
+{% extends "seo_base.html" %}
+{% load i18n %}
+{% load seo_extras %}
+{% load cache %}
+{% cache 600 joblisting %}
+
+{% block directseo_title %}
+    {{site_title}} 
+{% endblock %}
+
+{% block direct_extraHeaderContent %}
+    <link rel="stylesheet" href="/style/def.ui.dotjobs.css" type="text/css">
+    <link rel="stylesheet" href="/style/def.ui.dotjobs.results.css" type="text/css">
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}default_config.css" />
+    <script src="{{ STATIC_URL }}def.ui.dotjobs.153-26.js" type="text/javascript"></script>
+    <style>
+    body{
+        padding-top: 0px;
+    }
+    </style>
+{% endblock %}
+{% block directseo_container %}
+    <div id="direct_header">
+        <h1 id="direct_mobileH1">
+            {% if "network" in site_tags %}
+                {% with site_heading|cut:".jobs" as site_heading_base %}
+                    {%if site_heading_base == site_heading %}
+                        {% with site_heading|cut:" Jobs" as site_heading_base2 %}
+                            {%if site_heading_base2 == site_heading %}
+                                {{site_heading}}
+                            {% else %}
+                                {{site_heading_base2}}<img src="//d2e48ltfsb5exy.cloudfront.net/content_ms/img/dotJobs-logo.145-03.png" id="headerLogo" alt=".jobs" width="135" height="83">
+                            {% endif %}
+                        {% endwith %}
+                    {% else %}
+                        {{site_heading_base}}<img src="//d2e48ltfsb5exy.cloudfront.net/content_ms/img/dotJobs-logo.145-03.png" id="headerLogo" alt=".jobs" width="135" height="83">
+                    {% endif %}
+                {% endwith %}
+            {% else %}
+                {% if site_heading|lower == "default" %}
+                    {{host}}
+                {%else%}
+                    {{site_heading}}
+                {% endif %}    
+            {% endif %}
+        </h1>
+        
+    </div>
+    <div id="mainContent">
+        <div id="SEOcontent">
+            <div id="contentHeader">
+                <h2>{% trans "Dot Jobs Microsites" %}</h2>                
+            </div>
+            <div id="contentContents">
+                <h3>{% trans ".JOBS Domain Setup" %}</h3>
+                <p>{% blocktrans %}
+                    If your company owns a .jobs top-level domain (TLD), then think 
+                    about using this domain for hosting your microsite.{% endblocktrans %}
+                </p>
+                <h4>{% trans "Domain Servers Setup" %}</h4>
+                <p>{% blocktrans %}The preferred setup is for .jobs domains to set the name servers for your domain
+                to the following:{% endblocktrans %}</p>
+                <table class="settingdisplay">
+                <tr>
+                    <td>{% trans "example.jobs." %}</td><td>{% trans "IN NS"%}</td><td>{% trans "ns1.wowemployers.com." %}</td>
+                </tr>
+                <tr>
+                    <td>{% trans "example.jobs." %}</td><td>{% trans "IN NS"%}</td><td>{% trans "ns2.wowemployers.com." %}</td>
+                </tr>
+                </table>
+                
+                <p>{% blocktrans %}
+                    If you choose not to delegate the name servers for your 
+                    .JOBS domain, then you will need to enter both subdomain and 
+                    root domain records. 
+                    Here is an example DNS entry with {% endblocktrans %}<span class="exampleURL">{% trans "www" %}</span> 
+                    {% trans "as the subdomain and " %}<span class="exampleURL">{% trans "domain.jobs" %}</span> 
+                    {% trans "as the root domain." %}
+                </p>
+                <table class="settingdisplay">
+                    <tr>
+                        <td>{% trans "www.example.jobs." %}</td>
+                        <td>IN CNAME</td>
+                        <td>{% trans "domain.jobs." %}</td>
+                    </tr>
+                    <tr>
+                        <td>{% trans "example.jobs." %}</td>
+                        <td>IN A</td>
+                        <td>50.19.241.165</td>
+                    </tr>
+                </table>
+                
+                <h3>{% trans "Non .JOBS Domain Setup" %}</h3>
+                <h4>{% trans "CNAME Setup" %}</h4>
+                <p>{% blocktrans %}
+                    If you are using a non .JOBS domain you can use an 
+                    alias, or canonical name, abbreviated CNAME. This should be 
+                    added to the Domain Name Server (DNS) file for your root domain.{% endblocktrans %}
+                </p>
+                <p>{% blocktrans %}
+                    Here is an example DNS entry for adding the subdomain{% endblocktrans %} 
+                    <span class="exampleURL">{% trans "jobs" %}</span>.
+                </p>
+                <table class="settingdisplay">
+                    <tr>
+                        <td>{% trans "jobs.example.com." %}</td>
+                        <td>IN CNAME</td>
+                        <td>{% trans "domain.jobs." %}</td>
+                    </tr>
+                </table>
+                <p>{% blocktrans %}
+                    The above line tells a web browser to get the IP address for{% endblocktrans %} 
+                    <span class="exampleURL">{% trans "jobs.example.com" %}</span>{% trans "from the" %} 
+                    <span  class="exampleURL">{% trans "domain.jobs" %}</span>{% blocktrans %}DNS record. 
+                    This alias allows DirectEmployers to host your microsite, 
+                    and is a standard method for companies to host third-party 
+                    services - like blogs and RSS feeds - using their branded 
+                    domain. {% endblocktrans %}
+                </p>
+                <p>{% blocktrans %}
+                    Your company has the ultimate ownership and control over where 
+                    your {% endblocktrans %}<span class="exampleURL">{% trans "jobs.example.com" %}</span>{% blocktrans %} hostname 
+                    points, since your network administrator can change this DNS 
+                    record at anytime to point to another service provider or 
+                    internal server. Using a hostname based on your root domain 
+                    should generate the fastest SEO ranking growth, and endear 
+                    trust to the end-user who sees the hostname on a search 
+                    engine results page.{% endblocktrans %}
+                </p>
+                <p>
+                   {% trans "If the " %}<span class="exampleURL">{% trans "jobs" %}</span>{% blocktrans %} subdomain is 
+                    already in use, then think about using another popular search 
+                    phrase, like {% endblocktrans %}<span class="exampleURL">{% trans "jobsearch" %}</span>.
+                </p>
+                <table class="settingdisplay">
+                    <tr>
+                        <td>{% trans "jobsearch.example.com." %}</td>
+                        <td>IN CNAME</td>
+                        <td>{% trans "domain.jobs" %}</td>
+                    </tr>
+                </table>                
+                        
+                <h4>CNAME QA</h4>
+                <p>{% blocktrans %}
+                    If the heading of this page is displaying your hostname instead of {% endblocktrans %} 
+                    <span class="exampleURL">{% trans "domain.jobs" %}</span>{% blocktrans %}, then your DNS is 
+                    setup correctly.{% endblocktrans %}
+                </p>
+            </div>
+        </div>
+            </div>    
+    <div id="direct_footer">
+    {% block directseo_footer %}    
+    {% endblock %}</div>
+    
+{% endblock %}
+
+{% endcache %}

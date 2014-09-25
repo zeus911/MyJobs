@@ -1,9 +1,8 @@
-from django.test import TestCase
-
+from myjobs.tests.setup import MyJobsBase
 from mydashboard.templatetags.humanize_abbr import intabbr
 
 
-class HumanizeAbbrTests(TestCase):
+class HumanizeAbbrTests(MyJobsBase):
     def test_small_numbers(self):
         for in_val in [-1000, -1, 0, 1, 999]:
             self.assertEqual(intabbr(in_val), in_val)

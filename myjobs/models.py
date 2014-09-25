@@ -85,10 +85,11 @@ class CustomUserManager(BaseUserManager):
 
             if user_type == 'superuser':
                 user_args.update({'is_staff': True, 'is_superuser': True})
-                password_field = 'password'
-            else:
-                password_field = 'password1'
-            password = kwargs.get(password_field)
+            password_fields = ['password', 'password1']
+            for password_field in password_fields:
+                password = kwargs.get(password_field)
+                if password:
+                    break
             create_password = False
             if not password:
                 create_password = True
@@ -255,11 +256,25 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     objects = CustomUserManager()
 
+    def __init__(self, *args, **kwargs):
+        super(User, self).__init__(*args, **kwargs)
+        # Get a copy of the original password so we can determine if
+        # it has changed in the save().
+        self.__original_password = getattr(self, 'password', None)
+
     def __unicode__(self):
         return self.email
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
+
+        # If the password has changed, it's not being set for the first time
+        # and it wasn't change to a blank string, don't require them to change
+        # their password again.
+        if ((self.password != self.__original_password)
+                and self.__original_password and (self.password != '')):
+            self.password_change = False
+
         if update_fields is not None and 'is_active' in update_fields:
             if self.is_active:
                 self.deactivate_type = DEACTIVE_TYPES_AND_NONE[0]
@@ -331,7 +346,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         Returns a QuerySet of all the Companies a User has access to.
 
         """
-        from mydashboard.models import Company
+        from seo.models import Company
         return Company.objects.filter(admins=self).distinct()
 
     def get_sites(self):
@@ -339,7 +354,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         Returns a QuerySet of all the SeoSites a User has access to.
 
         """
-        from mydashboard.models import SeoSite
+        from seo.models import SeoSite
         kwargs = {'business_units__company__admins': self}
         return SeoSite.objects.filter(**kwargs).distinct()
 
@@ -364,7 +379,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.save()
 
     def add_default_group(self):
-        group = Group.objects.get(name='Job Seeker')
+        group, _ = Group.objects.get_or_create(name='Job Seeker')
         self.groups.add(group.pk)
 
     def make_guid(self):
@@ -501,20 +516,18 @@ class Ticket(models.Model):
 
 
 class Shared_Sessions(models.Model):
-    # mj_session and ms_session are comma separated list stored as a string
-    # of session keys
-    mj_session = models.TextField(blank=True)
-    ms_session = models.TextField(blank=True)
+    # session is a comma separated list stored as a string of session keys
+    session = models.TextField(blank=True)
     user = models.ForeignKey('User', unique=True)
 
 
 def save_related_session(sender, user, request, **kwargs):
     if user and user.is_authenticated():
         session, _ = Shared_Sessions.objects.get_or_create(user=user)
-        current = session.mj_session.split(",") if session.mj_session else []
+        current = session.session.split(",") if session.session else []
         try:
             current.append(request.session.session_key)
-            session.mj_session = ",".join(current)
+            session.session = ",".join(current)
         except:
             pass
         session.save()
@@ -532,12 +545,12 @@ def delete_related_session(sender, user, request, **kwargs):
         except Shared_Sessions.DoesNotExist:
             return
 
-        ms_sessions = sessions.ms_session.split(",") if \
-            sessions.ms_session else []
+        session_keys = sessions.session.split(",") if \
+            sessions.session else []
         engine = import_module(settings.SESSION_ENGINE)
-        for ms_session in ms_sessions:
+        for key in session_keys:
             try:
-                s = engine.SessionStore(ms_session)
+                s = engine.SessionStore(key)
                 s.delete()
             except:
                 pass

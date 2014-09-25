@@ -1,20 +1,20 @@
 from django.contrib.auth.models import Group
-from django.test import TestCase
 
+from myjobs.tests.setup import MyJobsBase
 from myjobs.tests.factories import UserFactory
 
 from mydashboard.helpers import saved_searches
-from mydashboard.models import CompanyUser
+from seo.models import CompanyUser
 from mydashboard.tests.factories import (BusinessUnitFactory,
                                          CompanyUserFactory, CompanyFactory,
                                          SeoSiteFactory)
 from mysearches.tests.factories import SavedSearchFactory
 
 
-class HelpersTests(TestCase):
+class HelpersTests(MyJobsBase):
     def setUp(self):
         self.staff_user = UserFactory()
-        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
+        group, _ = Group.objects.get_or_create(name=CompanyUser.GROUP_NAME)
         self.staff_user.groups.add(group)
 
         self.business_unit = BusinessUnitFactory()

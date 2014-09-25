@@ -102,6 +102,18 @@
                     {% endif %}
                 </div>
             </div>
+            <div class="tip-box">
+                <h5>Tags</h5>
+                <div class="tip-content">
+                    {% if not tags %}
+                    No tags for this record.
+                    {% else %}
+                        {% for tag in tags %}
+                            <span class="tag-name small" style="background-color: #{{tag.hex_color}}">{{ tag.name }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 {% endblock content %}

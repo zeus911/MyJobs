@@ -6,8 +6,8 @@ import pytz
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.test import TestCase
 
+from myjobs.tests.setup import MyJobsBase
 from mydashboard.tests.factories import CompanyFactory, BusinessUnitFactory
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
@@ -23,11 +23,13 @@ from solr.tests.helpers import MockLog
 from tasks import update_solr_task, parse_log, delete_old_analytics_docs
 
 
-class SolrTests(TestCase):
+class SolrTests(MyJobsBase):
     def setUp(self):
+        super(SolrTests, self).setUp()
         self.test_solr = settings.TEST_SOLR_INSTANCE
 
     def tearDown(self):
+        super(SolrTests, self).tearDown()
         Solr().delete()
 
     def test_adding_and_deleting_signals(self):

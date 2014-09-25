@@ -1,13 +1,13 @@
-from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import Group
 
+from myjobs.tests.setup import MyJobsBase
 from myjobs.tests.factories import UserFactory
 from myjobs.tests.test_views import TestClient
 from mymessages.models import Message, MessageInfo
 
 
-class MessageViewTests(TestCase):
+class MessageViewTests(MyJobsBase):
     def setUp(self):
         self.user = UserFactory()
         self.message = Message(subject='subject',

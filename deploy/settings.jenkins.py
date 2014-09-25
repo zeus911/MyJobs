@@ -1,7 +1,4 @@
 from default_settings import *
-import datetime
-import os
-
 
 DEBUG = True
 
@@ -18,8 +15,8 @@ DATABASES = {
     },
 }
 SOLR = {
-    'all': 'http://ec2-23-20-67-65.compute-1.amazonaws.com:8983/solr/myjobs_test/',
-    'current': 'http://ec2-23-20-67-65.compute-1.amazonaws.com:8983/solr/myjobs_test_current/',
+    'all': 'http://127.0.0.1:8983/solr/myjobs_test/',
+    'current': 'http://127.0.0.1:8983/solr/myjobs_test_current/',
 }
 CACHES = {
     'default': {
@@ -39,3 +36,23 @@ POSTAJOB_URLS = {
     'delete': ''
 }
 CC_AUTH = TESTING_CC_AUTH
+
+
+ALLOWED_HOSTS = ['*', ]
+
+ROOT_URLCONF = 'myjobs_urls'
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'seo.search_backend.DESolrEngine',
+        'URL': 'http://127.0.0.1:8983/solr/seo',
+        'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
+        'HTTP_AUTH_PASSWORD': SOLR_AUTH['password'],
+    },
+    'groups': {
+        'ENGINE': 'saved_search.groupsearch.SolrGrpEngine',
+        'URL': 'http://127.0.0.1:8983/solr/seo',
+        'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
+        'HTTP_AUTH_PASSWORD': SOLR_AUTH['password'],
+    },
+}

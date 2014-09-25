@@ -1,15 +1,15 @@
 import json
 
 from django.core.urlresolvers import reverse
-from django.test import TestCase
 
 from myjobs.tests.factories import UserFactory
 from myjobs.tests.test_views import TestClient
 from mysignon.models import AuthorizedClient
 from mysignon.tests.factories import AuthorizedClientFactory
+from myjobs.tests.setup import MyJobsBase
 
 
-class MySignOn(TestCase):
+class MySignOn(MyJobsBase):
     def setUp(self):
         self.user = UserFactory()
         self.auth_callback_url = 'https://secure.my.jobs/account'

@@ -1,20 +1,23 @@
 import factory
+
 from datetime import datetime
 from django.contrib.contenttypes.models import ContentType
 
-from mypartners.models import Partner, Contact, ContactRecord, ContactLogEntry
+from mypartners.models import (Partner, Contact, ContactRecord,
+                               ContactLogEntry, Tag)
 from mydashboard.tests.factories import CompanyFactory
 
 
-class PartnerFactory(factory.Factory):
+class PartnerFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Partner
 
     name = 'Company'
     uri = 'www.my.jobs'
+
     owner = factory.SubFactory(CompanyFactory)
 
 
-class ContactFactory(factory.Factory):
+class ContactFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Contact
 
     name = 'foo bar'
@@ -23,7 +26,7 @@ class ContactFactory(factory.Factory):
     address_line_one = '5683 Thing Street'
 
 
-class ContactRecordFactory(factory.Factory):
+class ContactRecordFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = ContactRecord
 
     contact_type = 'email'
@@ -33,11 +36,21 @@ class ContactRecordFactory(factory.Factory):
     notes = 'Some notes go here.'
     date_time = datetime.now()
 
+    partner = factory.SubFactory(PartnerFactory)
 
-class ContactLogEntryFactory(factory.Factory):
+
+class ContactLogEntryFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = ContactLogEntry
 
     action_flag = 1
     contact_identifier = "Example Contact Log"
     content_type = factory.LazyAttribute(
                        lambda a: ContentType.objects.get(name='contact'))
+
+
+class TagFactory(factory.Factory):
+    FACTORY_FOR = Tag
+
+    name = "foo"
+
+    company = factory.SubFactory(CompanyFactory)

@@ -1,0 +1,13 @@
+{% extends "seo_base.html" %}
+{% load seo_extras %}
+{% load cache %}
+{% cache 600 joblisting %}
+{% block directseo_title %}
+    {{ flatpage.title}}
+{% endblock %}
+{% block directseo_blurb %}{% endblock %}
+{% block directseo_main_content %}
+    {{ flatpage.content }}
+{% endblock %}
+{% block directseo_right_hand_column %}{% endblock %}
+{% endcache %}

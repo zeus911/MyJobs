@@ -4,7 +4,7 @@ from myjobs.tests.factories import UserFactory
 from myprofile.models import *
 
 
-class SecondaryEmailFactory(factory.Factory):
+class SecondaryEmailFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = SecondaryEmail
 
     user = factory.SubFactory(UserFactory)
@@ -12,7 +12,7 @@ class SecondaryEmailFactory(factory.Factory):
     label = "Personal"
 
 
-class NewNameFactory(factory.Factory):
+class NewNameFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Name
     given_name = "Alice"
     family_name = "Smith"
@@ -20,7 +20,7 @@ class NewNameFactory(factory.Factory):
     user = factory.SubFactory(UserFactory)
     
 
-class PrimaryNameFactory(factory.Factory):
+class PrimaryNameFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Name
 
     given_name = "Alice"
@@ -29,7 +29,7 @@ class PrimaryNameFactory(factory.Factory):
     user = factory.SubFactory(UserFactory)
 
 
-class NewPrimaryNameFactory(factory.Factory):
+class NewPrimaryNameFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Name
 
     given_name = "Alicia"
@@ -38,7 +38,7 @@ class NewPrimaryNameFactory(factory.Factory):
     user = factory.SubFactory(UserFactory)
 
 
-class EducationFactory(factory.Factory):
+class EducationFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Education
 
     organization_name = "College"
@@ -53,7 +53,7 @@ class EducationFactory(factory.Factory):
     user = factory.SubFactory(UserFactory)
 
 
-class AddressFactory(factory.Factory):
+class AddressFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Address
 
     label = "Home"
@@ -66,7 +66,7 @@ class AddressFactory(factory.Factory):
     user = factory.SubFactory(UserFactory)
 
 
-class TelephoneFactory(factory.Factory):
+class TelephoneFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Telephone
 
     use_code = "Home"
@@ -75,7 +75,7 @@ class TelephoneFactory(factory.Factory):
     user = factory.SubFactory(UserFactory)
 
 
-class EmploymentHistoryFactory(factory.Factory):
+class EmploymentHistoryFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = EmploymentHistory
 
     position_title = "Handler"
@@ -85,7 +85,7 @@ class EmploymentHistoryFactory(factory.Factory):
     user = factory.SubFactory(UserFactory)
 
 
-class MilitaryServiceFactory(factory.Factory):
+class MilitaryServiceFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = MilitaryService
 
     country_code = "USA"
@@ -99,7 +99,7 @@ class MilitaryServiceFactory(factory.Factory):
     user = factory.SubFactory(UserFactory)
 
 
-class WebsiteFactory(factory.Factory):
+class WebsiteFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Website
 
     display_text = "My Jobs"
@@ -110,7 +110,7 @@ class WebsiteFactory(factory.Factory):
     user = factory.SubFactory(UserFactory)
 
 
-class LicenseFactory(factory.Factory):
+class LicenseFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = License
     
     license_type = "Type"
@@ -118,7 +118,7 @@ class LicenseFactory(factory.Factory):
     user = factory.SubFactory(UserFactory)
 
 
-class SummaryFactory(factory.Factory):
+class SummaryFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = Summary
 
     headline = 'My Summary'
@@ -126,7 +126,7 @@ class SummaryFactory(factory.Factory):
     user = factory.SubFactory(UserFactory)
 
 
-class VolunteerHistoryFactory(factory.Factory):
+class VolunteerHistoryFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = VolunteerHistory
 
     position_title = "Title"

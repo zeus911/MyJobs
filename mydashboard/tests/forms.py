@@ -1,6 +1,6 @@
 from django.forms import *
 
-from mydashboard.models import CompanyUser
+from seo.models import CompanyUser
 
 class CompanyUserForm(ModelForm):
     """

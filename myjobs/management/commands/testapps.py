@@ -8,5 +8,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for app in PROJECT_APPS:
             self.stdout.write('Testing app: %s' % app)
-            call_command('test', app)
+            call_command('test', app, failfast=True)
             self.stdout.write('\n')

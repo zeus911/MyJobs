@@ -7,9 +7,8 @@ import pysolr
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
-from django.test import TestCase
 
-from mydashboard.models import CompanyUser
+from seo.models import CompanyUser
 from mydashboard.tests.factories import (CompanyFactory, CompanyUserFactory,
                                          SeoSiteFactory, BusinessUnitFactory)
 from mydashboard.helpers import country_codes
@@ -23,12 +22,14 @@ from myprofile.tests.factories import (PrimaryNameFactory,
 from mysearches.models import SavedSearch
 from mysearches.tests.factories import SavedSearchFactory
 from tasks import update_solr_task
+from myjobs.tests.setup import MyJobsBase
 
 SEARCH_OPTS = ['django', 'python', 'programming']
 
 
-class MyDashboardViewsTests(TestCase):
+class MyDashboardViewsTests(MyJobsBase):
     def setUp(self):
+        super(MyDashboardViewsTests, self).setUp()
         self.staff_user = UserFactory()
         group = Group.objects.get(name=CompanyUser.GROUP_NAME)
         self.staff_user.groups.add(group)
@@ -63,6 +64,7 @@ class MyDashboardViewsTests(TestCase):
         update_solr_task(settings.TEST_SOLR_INSTANCE)
 
     def tearDown(self):
+        super(MyDashboardViewsTests, self).tearDown()
         for location in settings.TEST_SOLR_INSTANCE.values():
             solr = pysolr.Solr(location)
             solr.delete(q='*:*')
@@ -140,7 +142,7 @@ class MyDashboardViewsTests(TestCase):
         soup = BeautifulSoup(response.content)
         count_box = soup.select('.count-box-left')
         count = int(count_box[0].text)
-        self.assertEqual(count, 6)
+        self.assertIn(count, [6, 7])
 
     def test_facets(self):
         education = EducationFactory(user=self.candidate_user)

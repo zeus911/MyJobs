@@ -6,7 +6,7 @@ from myjobs.tests.factories import UserFactory
 from mysearches.models import SavedSearch, SavedSearchDigest, PartnerSavedSearch
 
 
-class SavedSearchFactory(factory.Factory):
+class SavedSearchFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = SavedSearch
     user = factory.SubFactory(UserFactory)
 
@@ -21,7 +21,7 @@ class SavedSearchFactory(factory.Factory):
     sort_by = "Relevance"
 
 
-class SavedSearchDigestFactory(factory.Factory):
+class SavedSearchDigestFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = SavedSearchDigest
     user = factory.SubFactory(UserFactory)
     email = "alice@example.com"

@@ -2,8 +2,8 @@ from bs4 import BeautifulSoup
 import json
 
 from django.core.urlresolvers import reverse
-from django.test import TestCase
 
+from myjobs.tests.setup import MyJobsBase
 from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
 from myprofile.tests.factories import AddressFactory, PrimaryNameFactory, \
@@ -11,7 +11,7 @@ from myprofile.tests.factories import AddressFactory, PrimaryNameFactory, \
 from myprofile.models import Name
 
 
-class MyProfileViewsTests(TestCase):
+class MyProfileViewsTests(MyJobsBase):
     def setUp(self):
         super(MyProfileViewsTests, self).setUp()
         self.user = UserFactory()

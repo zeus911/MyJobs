@@ -12,7 +12,6 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from myjobs.models import User
-from mydashboard.models import Company
 
 
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
@@ -63,6 +62,7 @@ class Contact(models.Model):
                                     blank=True)
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
+    tags = models.ManyToManyField('Tag', null=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
 
     class Meta:
@@ -143,9 +143,10 @@ class Partner(models.Model):
                                         on_delete=models.SET_NULL)
     # used if this partner was created by using the partner library
     library = models.ForeignKey('PartnerLibrary', null=True,
-                                   on_delete=models.SET_NULL)
+                                on_delete=models.SET_NULL)
+    tags = models.ManyToManyField('Tag', null=True)
     # owner is the Company that owns this partner.
-    owner = models.ForeignKey(Company)
+    owner = models.ForeignKey('seo.Company')
 
     def __unicode__(self):
         return self.name
@@ -279,6 +280,7 @@ class ContactRecord(models.Model):
                                       blank=True)
     job_hires = models.CharField(max_length=6, verbose_name="Number of Hires",
                                  blank=True)
+    tags = models.ManyToManyField('Tag', null=True)
 
     def __unicode__(self):
         return "%s Contact Record - %s" % (self.contact_type, self.subject)
@@ -441,3 +443,31 @@ class ContactLogEntry(models.Model):
         }
         query_string = urlencode(params)
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
+
+
+class TagManager(models.Manager):
+    def for_company(self, company, **kwargs):
+        tag_kwargs = {
+            'company': company,
+        }
+        tag_kwargs.update(kwargs)
+
+        return self.filter(**tag_kwargs)
+
+
+class Tag(models.Model):
+    name = models.CharField(max_length=255)
+    hex_color = models.CharField(max_length=6, default="d4d4d4", blank=True)
+    company = models.ForeignKey('seo.Company')
+
+    created_on = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
+    objects = TagManager()
+
+    def __unicode__(self):
+        return "%s for %s" % (self.name, self.company.name)
+
+    class Meta:
+        unique_together = ('name', 'company')
+        verbose_name = "tag"

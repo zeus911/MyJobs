@@ -2,9 +2,16 @@ import operator
 import pytz
 
 from django import http
-from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.timezone import activate
+from django.conf import settings
+from django.contrib.sites.models import Site
+from django.core.cache import cache
+from django.shortcuts import redirect
+
+from postajob.models import SitePackage
+from seo.models import SeoSite, SeoSiteRedirect, SeoSiteFacet
+import version
 
 
 if settings.NEW_RELIC_TRACKING:
@@ -14,7 +21,7 @@ if settings.NEW_RELIC_TRACKING:
         pass
 
 
-class RedirectMiddleware:
+class PasswordChangeRedirectMiddleware:
     """
     Redirects a user to the password change form if several conditions are met:
     - A user is logged in
@@ -86,6 +93,7 @@ class NewRelic(object):
 
     """
     def process_response(self, request, response):
+        newrelic.agent.add_custom_parameter('url', request.META['HTTP_HOST'])
         if hasattr(request, 'user'):
             newrelic.agent.add_custom_parameter('user_id', request.user.id)
         else:
@@ -93,6 +101,7 @@ class NewRelic(object):
         return response
 
     def process_request(self, request):
+        newrelic.agent.add_custom_parameter('url', request.META['HTTP_HOST'])
         if hasattr(request, 'user'):
             newrelic.agent.add_custom_parameter('user_id', request.user.id)
         else:
@@ -120,3 +129,141 @@ class TimezoneMiddleware(object):
                 activate(pytz.timezone(request.user.timezone))
             except Exception:
                 activate(pytz.timezone('America/New_York'))
+
+
+class SiteRedirectMiddleware:
+    def process_request(self, request):
+        """
+        Find out if we need to redirect to a different url.
+
+        There's 3 cases we need to handle:
+        1. A site exists and has a redirect.
+        2. A site exists but has no redirect.
+        3. The site doesn't exist at all.
+
+        NOTE: this middleware should probably come first, as if we're going
+              to redirect, why go thru any other unneeded processing
+
+        """
+        host = request.get_host()
+        try:
+            ss = SeoSiteRedirect.objects. \
+                select_related('seosite__domain').get(redirect_url=host)
+            redirect_host = ss.seosite.domain
+            uri = request.path
+            redirect_url = 'http://%s%s' % (redirect_host, uri)
+            return redirect(redirect_url, permanent=True)
+        except SeoSiteRedirect.DoesNotExist:
+            return
+
+
+class MultiHostMiddleware:
+    def process_request(self, request):
+        """
+        get the host name
+        see if we have the settings for the site cached
+            - if so, load those
+            - if not, grab them from that database
+                - store them in cache
+
+        """
+        host = None
+        if request.user.is_authenticated() and request.user.is_staff:
+            host = request.REQUEST.get('domain')
+
+        if host is None:
+            host = request.get_host()
+
+        # get rid of any possible port number that comes thru on the host
+        # examples:    localhost:80,
+        #             127.0.0.1:8000,
+        #             find.ibm.jobs:80
+        host = host.split(":")[0]
+        site_cache_key = '%s:SeoSite' % host
+        MINUTES_TO_CACHE = getattr(settings, 'MINUTES_TO_CACHE', 120)
+        ## REMINDER: make domain a unique field on site model
+        # see if the cache has it
+        my_site = cache.get(site_cache_key)
+        if not my_site:
+            #DO NOT add filters to prefetched objects. Use only with .all()
+            sites = SeoSite.objects.select_related('group',
+                                                   'microsite_carousel',
+                                                   'view_sources',
+                                                   ).prefetch_related('billboard_images',
+                                                                      'business_units',
+                                                                      'featured_companies',
+                                                                      'site_tags',
+                                                                      'google_analytics')
+            # the cache didn't have it, so lets get it and set the cache
+            try:
+                my_site = sites.get(domain=host)
+            except Site.MultipleObjectsReturned:
+                my_site = sites.filter(domain=host)[:1][0]
+            except Site.DoesNotExist:
+                my_site = sites.get(id=1)
+            cache.set(site_cache_key, my_site, MINUTES_TO_CACHE*60)
+        settings.SITE = my_site
+        my_buids = [bu.id for bu in my_site.business_units.all()]
+        settings.SITE_ID = my_site.id
+        settings.SITE_NAME = my_site.name
+        settings.SITE_BUIDS = my_buids
+        settings.SITE_TAGS = [tag.site_tag for tag in my_site.site_tags.all()]
+        # version information
+        settings.VERSION = version.marketing_version
+        settings.BUILD = version.build_calculated
+        settings.FULL_VERSION = version.release_number
+
+        # Place variables that need a non blank default value here
+        if my_site.site_title: # title defaults to site name
+            settings.SITE_TITLE = my_site.site_title
+        else:
+            settings.SITE_TITLE = my_site.name
+        if my_site.site_heading: # heading defaults to site name
+            settings.SITE_HEADING = my_site.site_heading
+        else:
+            settings.SITE_HEADING = my_site.name
+        if my_site.site_description:
+            settings.SITE_DESCRIPTION = my_site.site_description
+        else:
+            settings.SITE_DESCRIPTION = None
+
+        # Default variable loading. Assigns empty string as default
+        site_flags = {
+            'ats_source_codes': 'ATS_SOURCE_CODES',
+            'google_analytics_campaigns': 'GA_CAMPAIGN',
+            'special_commitments': 'COMMITMENTS',
+            'view_sources': 'VIEW_SOURCE'
+        }
+
+        for k, v in site_flags.items():
+            attr = getattr(my_site, k)
+            if attr:
+                setattr(settings, v, attr)
+            else:
+                setattr(settings, v, '')
+
+        settings.CACHE_MIDDLEWARE_KEY_PREFIX = "%s" % (my_site.domain,)
+        default_site_facets = SeoSiteFacet.objects.filter(
+            seosite=my_site).filter(
+            facet_type=SeoSiteFacet.DEFAULT)
+        settings.DEFAULT_FACET = custom_facets_with_ops(default_site_facets)
+
+        featured_site_facets = SeoSiteFacet.objects.filter(
+            seosite=my_site).filter(
+            facet_type=SeoSiteFacet.FEATURED)
+        settings.FEATURED_FACET = custom_facets_with_ops(featured_site_facets)
+        settings.SITE_PACKAGES = [int(site.pk) for site in SitePackage.objects.filter(sites=my_site)]
+
+
+def custom_facets_with_ops(site_facets):
+    """
+    Returns a list of custom facets with boolean_operation attributes set
+    from site facets
+
+    """
+    custom_facets = []
+    for site_facet in site_facets:
+        cf = site_facet.customfacet
+        setattr(cf, 'boolean_operation', site_facet.boolean_operation)
+        custom_facets.append(cf)
+    return custom_facets

@@ -21,7 +21,7 @@ from mydashboard.helpers import (saved_searches, filter_by_microsite,
                                  parse_facets, remove_param_from_url,
                                  get_company_microsites, analytics,
                                  get_analytics_counts, filter_by_domain)
-from mydashboard.models import Company, CompanyUser
+from seo.models import Company, CompanyUser
 from myjobs.models import User
 from myprofile.models import PrimaryNameProfileUnitManager, ProfileUnits
 from mysearches.models import SavedSearch

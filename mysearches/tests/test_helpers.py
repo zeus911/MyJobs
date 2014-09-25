@@ -4,10 +4,10 @@ from urlparse import urlparse, parse_qs
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.test import TestCase
 
 from mock import patch
 
+from myjobs.tests.setup import MyJobsBase
 from mysearches.models import SavedSearch
 from mysearches.helpers import (date_in_range, parse_feed,
                                 update_url_if_protected, url_sort_options,
@@ -17,7 +17,7 @@ from mysearches.tests.helpers import return_file
 from myjobs.tests.factories import UserFactory
 
 
-class SavedSearchHelperTests(TestCase):
+class SavedSearchHelperTests(MyJobsBase):
     def setUp(self):
         super(SavedSearchHelperTests, self).setUp()
         self.user = UserFactory()
@@ -27,6 +27,7 @@ class SavedSearchHelperTests(TestCase):
         self.patcher.start()
 
     def tearDown(self):
+        super(SavedSearchHelperTests, self).tearDown()
         self.patcher.stop()
 
     def test_valid_dotjobs_url(self):
@@ -86,13 +87,12 @@ class SavedSearchHelperTests(TestCase):
     def test_parse_feed(self):
         feed_url = 'http://www.my.jobs/feed/rss'
 
-        for use_json in [True, False]:
+        for use_json, count in [(True, 2), (False, 1)]:
             items = parse_feed(feed_url, use_json=use_json)
 
             # The second value in the items list is the total count from a feed,
             # which may not equal the number of items returned
-            self.assertEqual(items[1], 1)
-
+            self.assertEqual(items[1], count)
             item = items[0][0]
             for element in ['pubdate', 'title', 'description', 'link']:
                 self.assertTrue(item[element])

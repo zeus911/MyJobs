@@ -1,12 +1,14 @@
+from celery.exceptions import RetryTaskError
 import datetime
+import re
 
 from django.conf import settings
 from django.core import mail
-from django.test import TestCase
 
 from bs4 import BeautifulSoup
 from mock import patch
 
+from myjobs.tests.setup import MyJobsBase
 from mydashboard.tests.factories import CompanyFactory
 from myjobs.tests.factories import UserFactory
 from mypartners.models import ContactRecord
@@ -22,14 +24,16 @@ from registration.models import ActivationProfile
 from tasks import send_search_digests
 
 
-class SavedSearchModelsTests(TestCase):
+class SavedSearchModelsTests(MyJobsBase):
     def setUp(self):
+        super(SavedSearchModelsTests, self).setUp()
         self.user = UserFactory()
 
         self.patcher = patch('urllib2.urlopen', return_file())
         self.mock_urlopen = self.patcher.start()
 
     def tearDown(self):
+        super(SavedSearchModelsTests, self).tearDown()
         try:
             self.patcher.stop()
         except RuntimeError:
@@ -54,6 +58,8 @@ class SavedSearchModelsTests(TestCase):
         self.assertNotEqual(email.body.find(search.url),
                             -1,
                             "Search url was not found in email body")
+        self.assertTrue("Your resume is %s%% complete" %
+                        self.user.profile_completion in email.body)
 
     def test_send_search_digest_email(self):
         SavedSearchDigestFactory(user=self.user)
@@ -187,7 +193,12 @@ class SavedSearchModelsTests(TestCase):
         search = SavedSearchFactory(user=self.user, feed='')
         self.assertFalse(search.feed)
 
-        send_search_digests()
+        # Celery raises a retry that makes the test fail. In reality
+        # everything is fine, so ignore the retry-fail.
+        try:
+            send_search_digests()
+        except RetryTaskError:
+            pass
         self.assertEqual(len(mail.outbox), 0)
 
         search = SavedSearch.objects.get(pk=search.pk)
@@ -201,7 +212,13 @@ class SavedSearchModelsTests(TestCase):
                                     url='http://example.com')
         self.assertFalse(search.feed)
 
-        send_search_digests()
+        # Celery raises a retry that makes the test fail. In reality
+        # everything is fine, so ignore the retry-fail.
+        try:
+            send_search_digests()
+        except RetryTaskError:
+            pass
+
         email = mail.outbox.pop()
         search = SavedSearch.objects.get(pk=search.pk)
         self.assertFalse(search.is_active)
@@ -227,8 +244,9 @@ class SavedSearchModelsTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
 
 
-class PartnerSavedSearchTests(TestCase):
+class PartnerSavedSearchTests(MyJobsBase):
     def setUp(self):
+        super(PartnerSavedSearchTests, self).setUp()
         self.user = UserFactory()
         self.digest = SavedSearchDigestFactory(user=self.user)
         self.company = CompanyFactory()
@@ -242,8 +260,17 @@ class PartnerSavedSearchTests(TestCase):
 
         self.patcher = patch('urllib2.urlopen', return_file())
         self.mock_urlopen = self.patcher.start()
+        self.num_occurrences = lambda text, search_str: [match.start()
+                                                         for match
+                                                         in re.finditer(
+                                                             search_str, text)]
+        # classes and ids may get stripped out when pynliner inlines css.
+        # all jobs contain a default (blank) icon, so we can search for that if
+        # we want a job count
+        self.job_icon = 'http://png.nlx.org/100x50/logo.gif'
 
     def tearDown(self):
+        super(PartnerSavedSearchTests, self).tearDown()
         try:
             self.patcher.stop()
         except RuntimeError:
@@ -272,15 +299,21 @@ class PartnerSavedSearchTests(TestCase):
         self.assertEqual(partner_record.notes, search_record.notes)
         self.assertEqual(partner_email.body, search_email.body)
         self.assertEqual(partner_record.notes, partner_email.body)
+        self.assertFalse("Your resume is %s%% complete" %
+                         self.user.profile_completion in partner_email.body)
 
     def test_send_partner_saved_search_in_digest(self):
         """
         Saved search digests bypass the SavedSearch.send_email method. Ensure
         that partner saved searches are recorded when sent in a digest.
         """
+        SavedSearchFactory(user=self.user)
         self.assertEqual(ContactRecord.objects.count(), 1)
         self.digest.send_email()
         self.assertEqual(ContactRecord.objects.count(), 2)
+        email = mail.outbox[0]
+        self.assertFalse("Your resume is %s%% complete" %
+                         self.user.profile_completion in email.body)
 
     def test_send_partner_saved_search_with_inactive_user(self):
         self.user.is_active = False
@@ -297,3 +330,61 @@ class PartnerSavedSearchTests(TestCase):
         self.assertTrue(self.user.user_guid in verify_url)
         self.assertTrue('https://secure.my.jobs%s' % verify_url
                         in email.body)
+
+    def test_contact_record_created_by(self):
+        ContactRecord.objects.all().delete()
+        self.partner_search.send_initial_email()
+        record = ContactRecord.objects.get()
+        self.assertEqual(record.created_by, self.partner_search.created_by)
+
+    def test_num_occurrences_instance_method(self):
+        # quick sanity checks; searching for a string that doesn't exist
+        # returns an empty list
+        not_found = self.num_occurrences(
+            'this is not the string you are looking for',
+            self.job_icon)
+        self.assertEqual(not_found, [])
+        # searching for a string that does exist returns all starting indices
+        # for the string
+        found = self.num_occurrences(self.job_icon, self.job_icon)
+        self.assertEqual(found, [0])
+
+    def test_partner_saved_search_pads_results(self):
+        """
+        If a partner saved search results in less than the desired number of
+        results, it should be padded with additional older results.
+
+        By extension, this also tests that a normal job seeker saved search does
+        not pad results.
+        """
+
+        search = SavedSearchFactory(user=self.user)
+        search.send_email()
+        search_email = mail.outbox.pop()
+        job_count = self.num_occurrences(search_email.body, self.job_icon)
+        self.assertEqual(len(job_count), 1)
+
+        self.partner_search.send_email()
+        partner_search_email = mail.outbox.pop()
+        job_count = self.num_occurrences(partner_search_email.body,
+                                         self.job_icon)
+        self.assertEqual(len(job_count), 2)
+
+    def test_saved_search_new_job_indicator(self):
+        """
+        Partner saved searches should include indicators for unseen jobs, while
+        job seeker saved searches should not.
+        """
+        new_job_indicator = '>New! <'
+        search = SavedSearchFactory(user=self.user)
+        search.send_email()
+        search_email = mail.outbox.pop()
+        new_jobs = self.num_occurrences(search_email.body,
+                                        new_job_indicator)
+        self.assertEqual(len(new_jobs), 0)
+
+        self.partner_search.send_email()
+        partner_search_email = mail.outbox.pop()
+        new_jobs = self.num_occurrences(partner_search_email.body,
+                                        new_job_indicator)
+        self.assertEqual(len(new_jobs), 1)

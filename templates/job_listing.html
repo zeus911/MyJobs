@@ -1,0 +1,87 @@
+{% extends "seo_base.html" %}
+{% load i18n %}
+{% load seo_extras %}
+{% load job_setup %}
+{% load cache %}
+{% cache 600 joblisting %}
+
+{% block directseo_title %}
+{% build_title site_title title_term location_term bread_box_title.company_slug results_heading %}
+{% endblock %}
+{# meta description only on homepage #}
+{% block seo_description %}{% endblock %}
+{% block directseo_bodySchema %}itemscope itemtype="http://schema.org/ItemCollection"{% endblock %}
+{% block direct_extraHeaderContent %}
+<link rel="stylesheet" href="/style/def.ui.dotjobs.results.css" type="text/css">
+{%endblock%}
+
+{% block rss_feed %}
+<link rel="alternate" type="application/rss+xml" title="{% build_title site_title title_term location_term bread_box_title.company_slug results_heading %}" href="{{request.build_absolute_uri|build_rss_link}}">
+{% endblock %}
+
+{% block directseo_blurb %}
+<div id="direct_blurbDiv">
+    {% if facet_blurb %}
+    {% if bread_box_title.facet_slug %}<h3>{{bread_box_title.facet_slug}}</h3>{% endif %}
+    <div id="direct_blurbContents">
+        <p>{{facet_blurb|safe}}</p>
+    </div>    
+    {% else %}
+    {% if site_config.defaultBlurbTitle %}<h3>{{site_config.defaultBlurbTitle}}</h3>{% endif %}
+    <div id="direct_blurbContents">
+        <p>{{site_config.defaultBlurb|safe}}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block directseo_main_content %}
+<a href="#filters" class="direct_mobileJumpLink">{% blocktrans %}Jump to Filters{% endblocktrans %}</a>
+<h3 class="direct_highlightedText">
+{% if not count_heading %}
+    {% blocktrans %}All Jobs{% endblocktrans %}
+{% else %}
+    {% if bread_box_title.company_slug %}
+        <span class="direct_jobListingCompany">{{ bread_box_title.company_slug }} Careers</span>
+    {% endif %}
+    {{ count_heading }}
+{% endif %}
+</h3>
+{% include 'includes/job_list.html' %}
+{% endblock %}
+
+{% block directseo_right_hand_column %}
+{% if company %}
+<div id="direct_companyModule" class="direct_rightColBox" role="menu">
+  {% include 'includes/company_module.html'%}
+</div>
+{% endif %}
+
+{% if default_jobs or featured_jobs %}
+    {% if "network" in site_tags or site_config.show_saved_search_widget %}
+        <script src="//d2e48ltfsb5exy.cloudfront.net/myjobs/tools/def.myjobs.widget.153-05.js"></script>
+        <div id="direct-saved-search-box" class="direct_rightColBox direct-action-box">
+            <div id="de-myjobs-widget"></div>
+        </div>
+    {% endif %}
+    <a name="filters"></a>  
+    <div id="direct_shareDiv" class="direct_rightColBox direct_shareSolo" role="menu">
+        <h3>{% trans "Share" %}</h3>
+        {% include 'includes/add_this.html' %} <!--replace with my.jobs sharing when ready. JPS 10-4-12-->
+    </div>
+<a href="#top" class="direct_mobileJumpLink">{% blocktrans %}Return to top{% endblocktrans %}</a>
+
+
+<div id="direct_disambiguationDiv" class="direct_rightColBox" role="menu">
+    {% if bread_box_path or location_term and location_term != '\*' or title_term and title_term != '\*' or moc_term and moc_term != '\*' %}
+        {% include 'includes/breadbox.html' %}
+    {% endif %}
+{% for widget in widgets %}
+{% if widget.render %}
+{{ widget.render }}
+{% endif %}
+{% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+{% endcache %}

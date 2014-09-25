@@ -9,7 +9,6 @@ from django.core.mail import EmailMessage
 from django.utils.translation import ugettext_lazy as _
 from django.template.loader import render_to_string
 
-from mydashboard.models import Company, SeoSite
 from myjobs.models import User
 from mypartners.models import Contact, ContactRecord, Partner, EMAIL
 from mysearches.helpers import (parse_feed, update_url_if_protected,
@@ -72,7 +71,7 @@ class SavedSearch(models.Model):
         owner of that SeoSite.
 
         """
-
+        from seo.models import SeoSite
         netloc = urlparse(self.feed).netloc
         try:
             site = SeoSite.objects.get(domain__iexact=netloc)
@@ -95,9 +94,14 @@ class SavedSearch(models.Model):
     def get_feed_items(self, num_items=100):
         url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency)
         url_of_feed = update_url_if_protected(url_of_feed, self.user)
-        items = parse_feed(url_of_feed, self.frequency,
-                           num_items=num_items, return_items=5,
-                           last_sent=self.last_sent)
+        parse_feed_args = {
+            'feed_url': url_of_feed, 'frequency': self.frequency,
+            'num_items': num_items, 'return_items': 5,
+            'last_sent': self.last_sent
+        }
+        if hasattr(self, 'partnersavedsearch'):
+            parse_feed_args['ignore_dates'] = True
+        items = parse_feed(**parse_feed_args)
         return items
 
     def send_email(self, custom_msg=None):
@@ -114,7 +118,8 @@ class SavedSearch(models.Model):
                 custom_msg = self.custom_message
 
             context_dict = {'saved_searches': [(self, items, count)],
-                            'custom_msg': custom_msg}
+                            'custom_msg': custom_msg,
+                            'contains_pss': is_pss}
             subject = self.label.strip()
             message = render_to_string('mysearches/email_single.html',
                                        context_dict)
@@ -131,7 +136,8 @@ class SavedSearch(models.Model):
     def send_initial_email(self, custom_msg=None):
         if self.user.opt_in_myjobs:
             context_dict = {'saved_searches': [(self,)],
-                            'custom_msg': custom_msg}
+                            'custom_msg': custom_msg,
+                            'contains_pss': hasattr(self, 'partnersavedsearch')}
             subject = "My.jobs New Saved Search - %s" % self.label.strip()
             message = render_to_string("mysearches/email_initial.html",
                                        context_dict)
@@ -160,6 +166,7 @@ class SavedSearch(models.Model):
             'saved_searches': [(self,)],
             'message': msg,
             'custom_msg': custom_msg,
+            'contains_pss': hasattr(self, 'partnersavedsearch')
         }
         subject = "My.jobs Saved Search Updated - %s" % self.label.strip()
         message = render_to_string("mysearches/email_update.html",
@@ -175,7 +182,6 @@ class SavedSearch(models.Model):
         On creation, check if that same URL exists for the user and raise
         validation if it's a duplicate.
         """
-
 
         duplicates = SavedSearch.objects.filter(user=self.user, url=self.url)
 
@@ -257,6 +263,7 @@ class SavedSearchDigest(models.Model):
     def send_email(self, custom_msg=None):
         saved_searches = self.user.savedsearch_set.filter(is_active=True)
         search_list = []
+        contains_pss = False
         for search in saved_searches:
             items, count = search.get_feed_items()
             pss = None
@@ -266,6 +273,7 @@ class SavedSearchDigest(models.Model):
                 pss = search
 
             if pss is not None:
+                contains_pss = True
                 extras = pss.url_extras
                 if extras:
                     mypartners.helpers.add_extra_params_to_jobs(items, extras)
@@ -278,9 +286,11 @@ class SavedSearchDigest(models.Model):
                           if items]
         if self.user.can_receive_myjobs_email() and saved_searches:
             subject = _('Your Daily Saved Search Digest')
-            context_dict = {'saved_searches': saved_searches,
-                            'digest': self,
-                            'custom_msg': custom_msg,
+            context_dict = {
+                'saved_searches': saved_searches,
+                'digest': self,
+                'custom_msg': custom_msg,
+                'contains_pss': contains_pss
             }
             message = render_to_string('mysearches/email_digest.html',
                                        context_dict)
@@ -307,7 +317,7 @@ class PartnerSavedSearch(SavedSearch):
     User is SavedSearch.partnersavedsearch.
 
     """
-    provider = models.ForeignKey(Company)
+    provider = models.ForeignKey('seo.Company')
     partner = models.ForeignKey(Partner)
     url_extras = models.CharField(max_length=255, blank=True,
                                   help_text="Anything you put here will be "
@@ -318,6 +328,7 @@ class PartnerSavedSearch(SavedSearch):
         blank=True, help_text="Use this field to provide a customized "
                               "greeting that will be sent with each copy "
                               "of this saved search.")
+    tags = models.ManyToManyField('mypartners.Tag', null=True)
     account_activation_message = models.TextField(blank=True)
     created_by = models.ForeignKey(User, editable=False)
 
@@ -356,7 +367,8 @@ class PartnerSavedSearch(SavedSearch):
         custom_msg = self.custom_message if self.custom_message else ''
         context_dict = {
             'saved_searches': [(self, items, count)],
-            'custom_msg': custom_msg
+            'custom_msg': custom_msg,
+            'contains_pss': True
         }
         subject = self.label.strip()
         message = render_to_string('mysearches/email_single.html',
@@ -369,6 +381,7 @@ class PartnerSavedSearch(SavedSearch):
             contact_type='pssemail',
             contact_name=contact.name,
             contact_email=self.user.email,
+            created_by=self.created_by,
             date_time=datetime.now(),
             subject=subject,
             notes=message,

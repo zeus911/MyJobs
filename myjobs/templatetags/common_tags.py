@@ -7,7 +7,7 @@ from django.conf import settings
 from myjobs import version
 from myjobs.models import User
 from myjobs.helpers import get_completion, make_fake_gravatar
-from mydashboard.models import CompanyUser
+from seo.models import CompanyUser
 from universal.helpers import get_company
 
 from django.db.models.loading import get_model

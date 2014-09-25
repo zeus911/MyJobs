@@ -11,7 +11,6 @@ from django.conf import settings
 from django.utils.encoding import smart_str, smart_unicode
 
 from universal.helpers import get_domain
-from mydashboard.models import SeoSite
 
 
 def update_url_if_protected(url, user):
@@ -20,6 +19,8 @@ def update_url_if_protected(url, user):
     if the site is protected and the user has access to the site.
 
     """
+    from seo.models import SeoSite
+
     search_domain = urlparse(url).netloc
     protected_domains = []
     for key in settings.PROTECTED_SITES.keys():
@@ -132,7 +133,8 @@ def get_json(json_url):
 
 
 def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
-               return_items=None, use_json=True, last_sent=None):
+               return_items=None, use_json=True, last_sent=None,
+               ignore_dates=False):
     """
     Parses job data from an RSS feed and returns it as a list of dictionaries.
     The data returned is limited based on the corresponding data range (daily,
@@ -149,6 +151,9 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
     :last_sent: Date that this saved search, if one exists, was sent; used to
         grab jobs during a wider span of time in the event that saved searches
         encounter issues and don't send for a period of time; Default: None
+    :ignore_dates: Boolean that determines if we should ignore job publish
+        dates; :last_sent: will still be used to denote NEW jobs, but filtering
+        based on publish date will be bypassed. Default: False
 
     Outputs:
     :tuple:         First index is a list of :return_items: jobs
@@ -167,14 +172,22 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
     interval = get_interval_from_frequency(frequency)
 
     end = datetime.date.today()
-    start = end + datetime.timedelta(days=interval)
+    new = start = end + datetime.timedelta(days=interval)
     if last_sent is not None:
-        last_sent = last_sent.date()
-        last_sent_diff = last_sent - start
+        last_sent_date = last_sent.date()
+        last_sent_diff = last_sent_date - start
+        # interval is always negative.
+        # last_sent_diff is negative if more than one saved search period
+        #     has passed, or positive otherwise.
         if interval >= last_sent_diff.days:
-            # interval and last_sent_diff are negative for times in the past
-            # (the normal case), so the comparison must be reversed.
-            start = last_sent
+            # interval >= last_sent_diff.days indicates that this search was
+            # last sent more than one interval ago; use last_sent_date as the
+            # new start date
+            start = last_sent_date
+
+        # mark all jobs newer than the last sent date for this search as new
+        new = last_sent_date
+
     item_list = []
 
     feed_url += '%snum_items=%s&offset=%s' % (
@@ -201,7 +214,11 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
                 item.findChild('pubdate').text)
             item_dict['description'] = item.findChild('description').text
 
-        if date_in_range(start, end, item_dict['pubdate'].date()):
+        if ignore_dates or date_in_range(start, end,
+                                         item_dict['pubdate'].date()):
+            if ignore_dates and new <= item_dict['pubdate'].date():
+                item_dict['new'] = True
+
             item_list.append(item_dict)
         else:
             break

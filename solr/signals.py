@@ -21,7 +21,14 @@ def presave_solr(sender, instance, *args, **kwargs):
                      'last_login', 'date_joined']
     setattr(instance, 'solr_update', False)
     if instance.pk:
-        obj = sender.objects.get(pk=instance.pk)
+        # The instance might have a pk but still not actually
+        # exist (eg: loading fixtures).
+        try:
+            obj = sender.objects.get(pk=instance.pk)
+        except sender.DoesNotExist:
+            setattr(instance, 'solr_update', True)
+            return
+
         for field in obj._meta.fields:
             current_val = getattr(obj, field.attname)
             new_val = getattr(instance, field.attname)

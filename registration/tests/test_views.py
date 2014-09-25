@@ -3,8 +3,8 @@ import datetime
 from django.conf import settings
 from django.core import mail
 from django.core.urlresolvers import reverse
-from django.test import TestCase
 
+from myjobs.tests.setup import MyJobsBase
 from myjobs.models import User
 from myjobs.tests.test_views import TestClient
 from mypartners.models import Contact
@@ -14,7 +14,7 @@ from mysearches.models import SavedSearch
 from registration.models import ActivationProfile
 
 
-class RegistrationViewTests(TestCase):
+class RegistrationViewTests(MyJobsBase):
     """
     Test the registration views.
 
@@ -132,7 +132,7 @@ class RegistrationViewTests(TestCase):
         user = User.objects.get(pk=self.user.pk)
         self.assertTrue(user.is_active)
 
-class MergeUserTests(TestCase):
+class MergeUserTests(MyJobsBase):
 
     def setUp(self):
         super(MergeUserTests, self).setUp()

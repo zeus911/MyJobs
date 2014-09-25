@@ -6,12 +6,13 @@ from django.conf import settings
 from myjobs.models import User
 from django.contrib.sites.models import Site
 from django.core import mail
-from django.test import TestCase
 
+from myjobs.tests.setup import MyJobsBase
+from registration.tests.helpers import assert_email_inlines_styles
 from registration.models import ActivationProfile
 
 
-class RegistrationModelTests(TestCase):
+class RegistrationModelTests(MyJobsBase):
     """
     Test the model and manager used in the default backend.
     
@@ -20,10 +21,12 @@ class RegistrationModelTests(TestCase):
                  'email': 'alice@example.com'}
     
     def setUp(self):
+        super(RegistrationModelTests, self).setUp()
         self.old_activation = getattr(settings, 'ACCOUNT_ACTIVATION_DAYS', None)
         settings.ACCOUNT_ACTIVATION_DAYS = 7
 
     def tearDown(self):
+        super(RegistrationModelTests, self).tearDown()
         settings.ACCOUNT_ACTIVATION_DAYS = self.old_activation
 
     def test_profile_creation(self):
@@ -41,17 +44,6 @@ class RegistrationModelTests(TestCase):
         self.assertEqual(unicode(profile),
                          "Registration for alice@example.com")
 
-    def test_activation_email(self):
-        """
-        ``RegistrationProfile.send_activation_email`` sends an
-        email.
-        
-        """
-        new_user, _ = User.objects.create_user(**self.user_info)
-        ActivationProfile.objects.get(user=new_user)
-
-        email = mail.outbox.pop()
-        self.assertEqual(email.to, [self.user_info['email']])
 
     def test_user_creation_email(self):
         """

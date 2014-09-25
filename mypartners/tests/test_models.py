@@ -2,18 +2,19 @@
 from os import path
 
 from django.core.files import File
-from django.test import TestCase
 
+from myjobs.tests.setup import MyJobsBase
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
 from mydashboard.tests.factories import CompanyFactory
-from mypartners.tests.factories import PartnerFactory, ContactFactory
+from mypartners.tests.factories import (PartnerFactory, ContactFactory, 
+                                        TagFactory, ContactRecordFactory)
 from mypartners.models import Partner, Contact, PRMAttachment
 from mysearches.models import PartnerSavedSearch
 from mysearches.tests.factories import PartnerSavedSearchFactory
 
 
-class MyPartnerTests(TestCase):
+class MyPartnerTests(MyJobsBase):
     def setUp(self):
         self.company = CompanyFactory()
         self.partner = PartnerFactory(owner=self.company)
@@ -110,3 +111,27 @@ class MyPartnerTests(TestCase):
             pk=partner_saved_search.pk)
         self.assertFalse(partner_saved_search.is_active)
         self.assertTrue(self.contact.name in partner_saved_search.notes)
+
+    def test_tag_added_to_taggable_models(self):
+        tag = TagFactory(company=self.company)
+        tag.save()
+        tag2 = TagFactory(name="bar", company=self.company)
+        tag2.save()
+        cr = ContactRecordFactory(partner=self.partner)
+
+        # Add tag to models
+        cr.tags.add(tag)
+        self.partner.tags.add(tag)
+        self.partner.save()
+        self.contact.tags.add(tag)
+        self.contact.save()
+
+        # Check to make sure it was added
+        self.assertEquals(1, len(cr.tags.all()))
+        self.assertEquals(1, len(self.partner.tags.all()))
+        self.assertEquals(1, len(self.contact.tags.all()))
+
+        # Add a 2nd tag and check
+        self.partner.tags.add(tag2)
+        self.partner.save()
+        self.assertEquals(2, len(self.partner.tags.all()))

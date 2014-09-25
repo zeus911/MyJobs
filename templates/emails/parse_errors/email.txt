@@ -1,0 +1,3 @@
+The feed file for BUID {{ buid }} has failed validation on line {{ line }}. The message is:
+
+{{ exception }}

@@ -11,8 +11,8 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest
 from django.test.client import Client
-from django.test import TestCase
 
+from setup import MyJobsBase
 from myjobs.models import User, EmailLog, FAQ
 from myjobs.tests.factories import UserFactory
 from myprofile.models import Name, Education
@@ -63,7 +63,7 @@ class TestClient(Client):
         request.session.save()
 
 
-class MyJobsViewsTests(TestCase):
+class MyJobsViewsTests(MyJobsBase):
     def setUp(self):
         super(MyJobsViewsTests, self).setUp()
         self.user = UserFactory()
