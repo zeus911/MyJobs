@@ -6,8 +6,8 @@ login-username.html -- Username/password login form
 <form action="" method="post" id="login-form">
     <fieldset>
     {{ form.as_ul }}
-    {% csrf_token %}
     </fieldset>
+    {% csrf_token %}
     <div class="actions">
         <button type="submit" class="btn primary pull-right" name="login" id="login">{% trans "Login" %}</button>
         <div class="clear"></div>
