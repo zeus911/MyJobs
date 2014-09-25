@@ -319,8 +319,13 @@ function jsonErrors(index, errors){
     :errors:    Parsed json that has the label "errors". Errors is a 
                 'multidimensional array' {errors:[key][value]}
     */
+
     var $error = $('#id_' + errors[index][0]);
     $error.wrap("<div class='required'></div>");
+
+    // clear password fields on error
+    if(errors[index][0].indexOf("password") != -1)
+        $error.val("");
     // insert new errors after the relevant inputs
     if(errors[index][1][0].indexOf("required") != -1){
         $error.val("");
