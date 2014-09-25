@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core import mail
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 
 from myjobs.models import User
@@ -286,3 +287,18 @@ class InvitationModelTests(MyJobsBase):
 
         self.assertEqual(len(users), 2)
         self.assertItemsEqual(users, set(users))
+
+    def test_invitation_model_save_success(self):
+        for args in [{'invitee_email': self.admin.email},
+                     {'invitee': self.admin},
+                     {'invitee_email': 'new_user@example.com'}]:
+            Invitation(**args).save()
+
+    def test_invitation_model_save_failure(self):
+        for args, exception_text in [({'invitee_email': 'new_user@example.com',
+                                       'invitee': self.admin},
+                                      'Invitee information does not match'),
+                                     ({}, 'Invitee not provided')]:
+            with self.assertRaises(ValidationError) as e:
+                Invitation(**args).save()
+            self.assertEqual(e.exception.messages, [exception_text])

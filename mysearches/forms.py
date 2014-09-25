@@ -12,6 +12,7 @@ from mysearches.models import (SavedSearch, SavedSearchDigest,
 from mypartners.forms import PartnerEmailChoices
 from mypartners.models import Contact, ADDITION, CHANGE
 from mypartners.helpers import log_change, send_custom_activation_email
+from registration.models import Invitation
 
 
 class HorizontalRadioRenderer(RadioSelect.renderer):
@@ -169,7 +170,7 @@ class PartnerSavedSearchForm(ModelForm):
         user_email = cleaned_data.get('email')
 
         if not user_email:
-           raise ValidationError(_("This field is required."))
+            raise ValidationError(_("This field is required."))
 
         # Get or create the user since they might not exist yet
         created = False
@@ -200,6 +201,14 @@ class PartnerSavedSearchForm(ModelForm):
         self.instance.feed = self.cleaned_data.get('feed')
         is_new_or_change = CHANGE if self.instance.pk else ADDITION
         instance = super(PartnerSavedSearchForm, self).save(commit)
+        invite_args = {
+            'invitee_email': instance.email,
+            'invitee': instance.user,
+            'inviting_user': instance.created_by,
+            'inviting_company': instance.partner.owner,
+            'added_saved_search': instance,
+        }
+        Invitation(**invite_args).save()
         if self.created:
             send_custom_activation_email(instance)
         partner = instance.partner

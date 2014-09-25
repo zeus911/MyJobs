@@ -11,6 +11,8 @@ from myjobs.tests.test_views import TestClient
 from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch
 from mysearches.tests.helpers import return_file
+from registration.models import Invitation
+from seo.tests import CompanyFactory
 from setup import MyJobsBase
 
 
@@ -56,6 +58,25 @@ class UserResourceTests(MyJobsBase):
             self.assertEqual(response.status_code, 200)
             self.assertFalse(content['user_created'])
             self.assertEqual(content['email'].lower(), 'alice@example.com')
+
+    def test_compliance_emails_create_invitations(self):
+        self.data['custom_msg'] = 'custom message goes here'
+        companies = [CompanyFactory(id=id_,
+                                    name=name)
+                     for id_, name in [(1, 'Company 1'),
+                                       (999999, 'Company 999999')]]
+        company_ids = [company.pk for company in companies]
+
+        self.make_response(self.data)
+        self.assertEqual(Invitation.objects.count(), 1)
+
+        self.data['company'] = 1
+        self.make_response(self.data)
+        self.assertEqual(Invitation.objects.count(), 2)
+
+        inviting_companies = Invitation.objects.values_list('inviting_company',
+                                                            flat=True)
+        self.assertItemsEqual(company_ids, inviting_companies)
 
 
 class SavedSearchResourceTests(MyJobsBase):

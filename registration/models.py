@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import random
 import re
+from django.core.exceptions import ValidationError
 
 from pynliner import Pynliner
 
@@ -140,7 +141,8 @@ class Invitation(models.Model):
     invitations, access to their company features, or saved searches.
     """
     inviting_user = models.ForeignKey('myjobs.User', editable=False,
-                                      related_name='invites_sent')
+                                      related_name='invites_sent',
+                                      blank=True, null=True)
     inviting_company = models.ForeignKey('seo.Company', blank=True, null=True,
                                          related_name='invites_sent')
     invitee = models.ForeignKey('myjobs.User', related_name='invites',
@@ -155,3 +157,23 @@ class Invitation(models.Model):
     accepted = models.BooleanField(default=False, editable=False,
                                    help_text='Has the invitee accepted '
                                              'this invitation')
+
+    def save(self, *args, **kwargs):
+        from myjobs.models import User
+        invitee = [self.invitee_email, self.invitee]
+        if all(invitee):
+            if not User.objects.get_email_owner(
+                    self.invitee_email) == self.invitee:
+                raise ValidationError('Invitee information does not match')
+        elif not any(invitee):
+            raise ValidationError('Invitee not provided')
+        elif self.invitee_email:
+            # Due to how we set up our custom create_user, we can use it to both
+            # check if an email is in use and create a user if it does not.
+            # User.objects.get_or_create does not do the custom user creation
+            # that we do in create_user, so we can't use it.
+            self.invitee = User.objects.create_user(email=self.invitee_email,
+                                                    send_email=False)[0]
+        else:
+            self.invitee_email = self.invitee.email
+        super(Invitation, self).save(*args, **kwargs)

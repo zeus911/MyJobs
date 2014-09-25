@@ -11,7 +11,7 @@ class Migration(SchemaMigration):
         # Adding model 'Invitation'
         db.create_table(u'registration_invitation', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('inviting_user', self.gf('django.db.models.fields.related.ForeignKey')(related_name='invites_sent', to=orm['myjobs.User'])),
+            ('inviting_user', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='invites_sent', null=True, to=orm['myjobs.User'])),
             ('inviting_company', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='invites_sent', null=True, to=orm['seo.Company'])),
             ('invitee', self.gf('django.db.models.fields.related.ForeignKey')(related_name='invites', null=True, on_delete=models.SET_NULL, to=orm['myjobs.User'])),
             ('invitee_email', self.gf('django.db.models.fields.CharField')(max_length=255, db_index=True)),
@@ -124,7 +124,7 @@ class Migration(SchemaMigration):
             'invitee': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'invites'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': u"orm['myjobs.User']"}),
             'invitee_email': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
             'inviting_company': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'invites_sent'", 'null': 'True', 'to': u"orm['seo.Company']"}),
-            'inviting_user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'invites_sent'", 'to': u"orm['myjobs.User']"})
+            'inviting_user': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'invites_sent'", 'null': 'True', 'to': u"orm['myjobs.User']"})
         },
         u'seo.atssourcecode': {
             'Meta': {'object_name': 'ATSSourceCode'},
