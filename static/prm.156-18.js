@@ -314,12 +314,12 @@ $(document).ready(function() {
     });
 
     $(".partner-tag.days").on("click", function() {
-        $(".partner-tag.custom").show();
         $(".date-picker-widget").hide();
+        $(".partner-tag.custom").show();
 
         if ($(this).hasClass("disabled-tag")) {
             // add dates to input boxes
-            start_date = new Date();
+            var start_date = new Date();
             start_date.setDate(start_date.getDate() - $(this).data("days"));
             $("#activity-start-date").val(format_date(start_date));
             $("#activity-end-date").val(format_date(new Date()));
@@ -584,12 +584,13 @@ function fill_in_history_state(data){
     }
 
     // calculate which day buttons should be checked 
-    var start_date = new Date(data.start_date || new Date("11/30/1899")),
+    var start_date = new Date(data.start_date || new Date(0)),
         end_date = new Date(data.end_date || new Date()),
         days = (end_date.getTime() - start_date.getTime()) /
                (1000 * 60 * 60 * 24) // msecs, secs, hours, days
         button = $(".partner-tag.days[data-days='" + days + "']");
 
+    // disable all buttons
     $(".partner-tag").children('i').remove();
     $(".partner-tag").addClass("disabled-tag");
     if(button.length) {
@@ -598,6 +599,7 @@ function fill_in_history_state(data){
         $(".date-picker-widget").hide();
         $("#reset-date-range").css("visibility", "visible");
     } else {
+        // no day button is clicked, so show the date picker widget
         $("#activity-start-date").val(data.start_date);
         $("#activity-end-date").val(data.end_date);
         $(".partner-tag.custom").hide();
