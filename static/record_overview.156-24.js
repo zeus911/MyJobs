@@ -49,6 +49,30 @@ $(document).ready(function() {
     $(".sidebar :input:has(option)").on("change", function() {
         run_ajax();
     });
+
+    /*
+    Fancy pushState next and previous buttons for everyone
+    but IE8 and IE9
+     */
+    if (typeof(isIE) == "number" && isIE > 9 || typeof(isIE) == 'boolean' && isIE == false) {
+        $("body").on("click", "#next_page", function(e) {
+            e.preventDefault();
+            var data = build_data();
+            data.page = get_page(data);
+            data.page++;
+            update_search_url(data);
+            send_filter(data);
+        });
+
+        $("body").on("click", "#previous_page", function(e) {
+            e.preventDefault();
+            var data = build_data();
+            data.page = get_page(data);
+            data.page--;
+            update_search_url(data);
+            send_filter(data);
+        });
+    }
 });
 
 
@@ -71,6 +95,17 @@ function run_ajax() {
     update_search_url(data);
     if (typeof(isIE) == "number" && isIE > 9 || typeof(isIE) == 'boolean' && isIE == false) {
         send_filter(data);
+    }
+}
+
+
+// get page
+function get_page(data) {
+    var page = parseInt(getParameterByName("page"));
+    if(page) {
+        return data.page = parseInt(getParameterByName("page"))
+    } else {
+        return data.page = 1;
     }
 }
 
