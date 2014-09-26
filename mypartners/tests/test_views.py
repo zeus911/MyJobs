@@ -73,10 +73,20 @@ class MyPartnersTestCase(MyJobsBase):
         args = '&'.join(args)
         return reverse(view) + '?' + args
 
+
 class MyPartnerViewsTests(MyPartnersTestCase):
     """Tests for the /prm/view/ page"""
     def setUp(self):
         super(MyPartnerViewsTests, self).setUp()
+
+    def test_prm_worthy_no_partner(self):
+        """
+        Confirms that the page throws a 404 rather than a 500
+        when the partner id is missing.
+
+        """
+        response = self.client.post(reverse('partner_details'))
+        self.assertEqual(response.status_code, 404)
 
     def test_prm_page_with_no_partners(self):
         """
@@ -1205,4 +1215,18 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
 
         views.create_partner_from_library(request)
 
-        self.assertTrue(Partner.objects.filter(library=library_id).exists())
+        # test that partner was in fact created
+        try:
+            partner = Partner.objects.get(library=library_id)
+        except Partner.DoesNotExist:
+            self.fail("Partner with an ID of %s not created!" % library_id)
+
+        # test that appropriate tags created
+        library = PartnerLibrary.objects.get(id=library_id)
+        for tag in ['Veteran', 'Disabled', 'Disabled Veteran',  
+                    'Female', 'Minority']:
+            if getattr(library, 'is_%s' % tag.lower().replace(' ', '_')):
+                self.assertIn(tag, partner.tags.values_list('name', flat=True))
+
+        self.assertIn(
+            "OFCCP Library", partner.tags.values_list('name', flat=True))
