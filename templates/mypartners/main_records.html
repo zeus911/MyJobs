@@ -15,9 +15,7 @@
     {% include "mypartners/includes/prm_header.html" with page_title="Communication Records" back_to="Back to Overview" back_to_url="partner_overview" back_to_string="?partner=" add_partner_to_end=True date_range=True download=True %}
     <div class="row">
         <span class="span8">
-            {% for record in records %}
-            {% include "mypartners/includes/record_card.html" %}
-            {% endfor %}
+            {% include "mypartners/includes/contact_record_column.html" %}
         </span>
 
         <span class="span4">
@@ -35,6 +33,7 @@
                         <option value="{{ contact_type.0 }}">{{ contact_type.1 }}</option>
                     {% endfor %}
                 </select>
+                <input id="p-id" type="hidden" value="{{partner.id}}" />
                 <div class="navigation">
                     <h2>Navigation</h2>
                     <a class="btn" href="{% url 'partner_edit_record' %}?partner={{ partner.id }}">New Record</a>
@@ -46,12 +45,5 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}partner-overview.152-13.js{{ gz }}"></script>
-<script src="{{ STATIC_URL }}record_overview.152-13.js{{ gz }}"></script>
-<script src="{{ STATIC_URL }}partner-reports.154-29.js{{ gz }}"></script>
-<script>
-    var company_id = {{ company.id }};
-    var partner_id = {{ partner.id }};
-    var admin_id = {% if admin_id %}{{ admin_id }}{% else %}'None'{% endif %};
-</script>
+<script src="{{ STATIC_URL }}record_overview.156-24.js{{ gz }}"></script>
 {% endblock %}

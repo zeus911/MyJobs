@@ -11,9 +11,11 @@
     {% include "mypartners/includes/prm_header.html" with page_title="Saved Searches" back_to="Back to Overview" back_to_url="partner_overview" back_to_string="?partner=" add_partner_to_end=True %}
     <div class="row">
         <div class="span8">
+            <div class="card-wrapper">
             {% for search in searches %}
             {% include "mypartners/includes/pss_card.html" %}
             {% endfor %}
+            </div>
         </div>
         <div class="span4">
             <div class="sidebar">

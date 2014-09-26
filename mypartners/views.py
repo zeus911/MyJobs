@@ -601,11 +601,23 @@ def prm_records(request):
 
     """
     company, partner, user = prm_worthy(request)
-    contact_type = request.REQUEST.get('record_type')
+    contact_type = request.REQUEST.get('contact_type')
     contact = request.REQUEST.get('contact')
 
     dt_range, date_str, contact_records = get_records_from_request(request)
-    most_recent_activity = partner.get_logs()
+    paginated_records = add_pagination(request,
+                                       contact_records.order_by('-date_time'))
+
+    if request.is_ajax():
+        ctx = {
+            'records': paginated_records
+        }
+        response = HttpResponse()
+        html = render_to_response(
+            'mypartners/includes/contact_record_column.html', ctx,
+            RequestContext(request))
+        response.content = html.content
+        return response
 
     contact_type_choices = list(CONTACT_TYPE_CHOICES)
     try:
@@ -640,18 +652,13 @@ def prm_records(request):
         'date_display': date_str,
         'date_start': dt_range[0],
         'date_end': dt_range[1],
-        'most_recent_activity': most_recent_activity,
         'partner': partner,
-        'records': contact_records.order_by('-date_time'),
+        'records': paginated_records,
         'view_name': 'PRM',
     }
 
-    if request.path == reverse('prm_report_records'):
-        return render_to_response('mypartners/report_record_view.html', ctx,
-                                  RequestContext(request))
-    else:
-        return render_to_response('mypartners/main_records.html', ctx,
-                                  RequestContext(request))
+    return render_to_response('mypartners/main_records.html', ctx,
+                              RequestContext(request))
 
 
 @company_has_access('prm_access')
