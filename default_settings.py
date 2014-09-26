@@ -114,6 +114,8 @@ CELERY_PREFETCH_MULTIPLIER = 0
 CELERY_IGNORE_RESULTS = True
 CELERY_TIMEZONE = 'US/Eastern'
 CELERYBEAT_PIDFILE = '/var/run/celerybeat.pid'
+CELERY_DEFAULT_EXCHANGE = 'tasks'
+CELERY_DEFAULT_EXCHANGE_TYPE = 'topic'
 CELERY_QUEUES = {
     'dseo': {
         'binding_key': 'dseo.#'
@@ -137,6 +139,10 @@ CELERY_ROUTES = {
     'tasks.etl_to_solr': {
         'queue': 'solr',
         'routing_key': 'solr.update_solr'
+    },
+    'tasks.send_search_digest': {
+        'queue': 'myjobs',
+        'routing_key': 'myjobs.send_search_digest'
     },
     'tasks.send_search_digests': {
         'queue': 'myjobs',
@@ -165,6 +171,10 @@ CELERY_ROUTES = {
     }
 }
 CELERYBEAT_SCHEDULE = {
+    'weekly-partner-library-update': {
+        'task': 'tasks.update_partner_library',
+        'schedule': crontab(day_of_week='sun', hour=0, minute=0),
+    },
     'daily-search-digest': {
         'task': 'tasks.send_search_digests',
         'schedule': crontab(minute=0, hour=10),
