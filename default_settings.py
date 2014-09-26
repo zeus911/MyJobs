@@ -173,7 +173,7 @@ CELERY_ROUTES = {
 CELERYBEAT_SCHEDULE = {
     'weekly-partner-library-update': {
         'task': 'tasks.update_partner_library',
-        'schedule': crontab(day_of_week='sun'),
+        'schedule': crontab(day_of_week='sun', hour=0, minute=0),
     },
     'daily-search-digest': {
         'task': 'tasks.send_search_digests',
