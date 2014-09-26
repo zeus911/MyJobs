@@ -193,23 +193,12 @@ $(document).ready(function() {
             clear: false,
             close: false,
             onOpen: function() {
-                var start_date = $("#activity-start-date").val(),
-                    end_date = $("#activity-end-date").val();
-
                 if(this.get("id") === "activity-start-date"){
-                    if(end_date) {
-                        max = new Date(end_date);
-                    } else {
-                        max = new Date();
-                    }
-                    this.set("max", max);
+                    var end_date = $("#activity-end-date").val();
+                    this.set("max", new Date(end_date || new Date()));
                 } else if(this.get("id") === "activity-end-date"){
-                    if(start_date) {
-                        min = new Date(start_date);
-                    } else {
-                        min = new Date("11/30/1899");
-                    }
-                    this.set("min", min);
+                    var start_date = $("#activity-start-date").val();
+                    this.set("min", new Date(start_date || new Date(0)))
                 }
             },
             onClose: function() {
