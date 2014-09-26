@@ -211,6 +211,7 @@ function update_search_url(data) {
 
 
 function send_filter(data_to_send) {
+    if(data_to_send == null) data_to_send = {partner: $(".sidebar #p-id").val()};
     $.ajaxSettings.traditional = true;
     $.ajax({
         type: 'GET',
