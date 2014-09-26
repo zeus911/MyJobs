@@ -24,7 +24,7 @@
 
 {% block content %}
     {% include "mypartners/includes/prm_header.html" with page_title="Partner Relationship Manager" %}
-    {% if not partners %}
+    {% if not company.partner_set.all %}
         <div class="row">
             <div class="span8 offset2">
                 <div class="row centered">
