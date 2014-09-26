@@ -187,7 +187,7 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
         partners = [PartnerFactory(owner=self.company) for i in range(3)]
         partners.append(self.partner)
 
-        # we want the contact records to exist before the tests, hince the
+        # we want the contact records to exist before the tests, hence the
         # second for loop
         for days in [60, 30, 1, 0]:
             ContactRecordFactory(partner=random.choice(partners),
