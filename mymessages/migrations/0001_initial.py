@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import datetime
+from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
@@ -14,18 +14,20 @@ class Migration(SchemaMigration):
             ('subject', self.gf('django.db.models.fields.CharField')(max_length=200)),
             ('message_type', self.gf('django.db.models.fields.CharField')(max_length=200)),
             ('body', self.gf('django.db.models.fields.TextField')()),
-            ('start_on', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime(2013, 9, 27, 0, 0))),
-            ('expire_at', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime(2013, 10, 11, 0, 0), null=True)),
+            ('start_on', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime(2014, 9, 19, 0, 0))),
+            ('expire_at', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime(2014, 10, 3, 0, 0), null=True)),
+            ('btn_text', self.gf('django.db.models.fields.CharField')(default='Okay', max_length=100)),
         ))
         db.send_create_signal(u'mymessages', ['Message'])
 
         # Adding M2M table for field group on 'Message'
-        db.create_table(u'mymessages_message_group', (
+        m2m_table_name = db.shorten_name(u'mymessages_message_group')
+        db.create_table(m2m_table_name, (
             ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
             ('message', models.ForeignKey(orm[u'mymessages.message'], null=False)),
             ('group', models.ForeignKey(orm[u'auth.group'], null=False))
         ))
-        db.create_unique(u'mymessages_message_group', ['message_id', 'group_id'])
+        db.create_unique(m2m_table_name, ['message_id', 'group_id'])
 
         # Adding model 'MessageInfo'
         db.create_table(u'mymessages_messageinfo', (
@@ -45,7 +47,7 @@ class Migration(SchemaMigration):
         db.delete_table(u'mymessages_message')
 
         # Removing M2M table for field group on 'Message'
-        db.delete_table('mymessages_message_group')
+        db.delete_table(db.shorten_name(u'mymessages_message_group'))
 
         # Deleting model 'MessageInfo'
         db.delete_table(u'mymessages_messageinfo')
@@ -75,31 +77,39 @@ class Migration(SchemaMigration):
         u'myjobs.user': {
             'Meta': {'object_name': 'User'},
             'date_joined': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'deactivate_type': ('django.db.models.fields.CharField', [], {'default': "'none'", 'max_length': '11'}),
             'email': ('django.db.models.fields.EmailField', [], {'unique': 'True', 'max_length': '255', 'db_index': 'True'}),
-            'gravatar': ('django.db.models.fields.EmailField', [], {'db_index': 'True', 'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'groups': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['auth.Group']", 'null': 'True', 'blank': 'True'}),
+            'first_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'gravatar': ('django.db.models.fields.EmailField', [], {'db_index': 'True', 'max_length': '255', 'blank': 'True'}),
+            'groups': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'related_name': "u'user_set'", 'blank': 'True', 'to': u"orm['auth.Group']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'is_disabled': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_staff': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_superuser': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'is_verified': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'last_login': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
+            'last_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'last_response': ('django.db.models.fields.DateField', [], {'default': 'datetime.datetime.now', 'blank': 'True'}),
             'opt_in_employers': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'opt_in_myjobs': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'password': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'password_change': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'profile_completion': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
-            'user_guid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'})
+            'source': ('django.db.models.fields.CharField', [], {'default': "'https://secure.my.jobs'", 'max_length': '255'}),
+            'timezone': ('django.db.models.fields.CharField', [], {'default': "'America/New_York'", 'max_length': '255'}),
+            'user_guid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
+            'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'related_name': "u'user_set'", 'blank': 'True', 'to': u"orm['auth.Permission']"})
         },
         u'mymessages.message': {
             'Meta': {'object_name': 'Message'},
             'body': ('django.db.models.fields.TextField', [], {}),
-            'expire_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2013, 10, 11, 0, 0)', 'null': 'True'}),
+            'btn_text': ('django.db.models.fields.CharField', [], {'default': "'Okay'", 'max_length': '100'}),
+            'expire_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2014, 10, 3, 0, 0)', 'null': 'True'}),
             'group': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Group']", 'symmetrical': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'message_type': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'start_on': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2013, 9, 27, 0, 0)'}),
+            'start_on': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2014, 9, 19, 0, 0)'}),
             'subject': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'users': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myjobs.User']", 'through': u"orm['mymessages.MessageInfo']", 'symmetrical': 'False'})
         },
