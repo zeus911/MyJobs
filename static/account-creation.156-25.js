@@ -200,8 +200,7 @@ $(document).on("click", "button.activation-login", function(e) {
 
 $(document).on("click", "button#save", function(e) {            
     e.preventDefault();
-    var tokens = document.getElementsByName('csrfmiddlewaretoken'),
-        csrf_token = tokens[tokens.length - 1].value;
+    csrf_token = document.getElementsByName('csrfmiddlewaretoken')[0].value;
     setPrimaryName();
     var form = $('form#profile-form');
     // replace on and off with True and False to allow Django to validate 
