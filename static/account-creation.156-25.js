@@ -90,7 +90,7 @@ $(document).on("click", "button#register", function(e) {
             outputs a gravatar url, instead of 'valid' or 'success'.
             */
             var json = jQuery.parseJSON(data);
-            $("body").append(json.html);
+            $("#header .row").append(json.html);
             // Check to see if json.gravatar_url is present, in this case, success.
             if (Boolean(json.gravatar_url)){
                 var gravatar_url = json.gravatar_url;
@@ -200,8 +200,7 @@ $(document).on("click", "button.activation-login", function(e) {
 
 $(document).on("click", "button#save", function(e) {            
     e.preventDefault();
-    var tokens = document.getElementsByName('csrfmiddlewaretoken'),
-        csrf_token = tokens[tokens.length - 1].value;
+    csrf_token = document.getElementsByName('csrfmiddlewaretoken')[0].value;
     setPrimaryName();
     var form = $('form#profile-form');
     // replace on and off with True and False to allow Django to validate 
