@@ -59,6 +59,8 @@ class UserResource(ModelResource):
                       'password1': request.GET.get('password', ''),
                       'custom_msg': request.GET.get('custom_msg'),
                       'request': request}
+            if kwargs['custom_msg']:
+                kwargs['in_reserve'] = True
             # TODO: remove send_email arg when invitation emails are in
             user, created = User.objects.create_user(send_email=True,
                                                      **kwargs)

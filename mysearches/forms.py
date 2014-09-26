@@ -189,9 +189,10 @@ class PartnerSavedSearchForm(ModelForm):
         created = False
         user = User.objects.get_email_owner(email=user_email)
         if user is None:
-            # Don't send a email here, as this is not a typical user creation.
+            # Don't send an email here, as this is not a typical user creation.
             user, created = User.objects.create_user(email=user_email,
-                                                     send_email=False)
+                                                     send_email=False,
+                                                     in_reserve=True)
             self.instance.user = user
             Contact.objects.filter(email=user_email).update(user=user)
         else:
