@@ -694,6 +694,10 @@ input.datepicker {
     margin-bottom: 0;
 }
 
+.sidebar a {
+    cursor: pointer;
+}
+
 span.datepicker {
     border: 1px solid #BBB;
     margin: -5px;
@@ -3914,6 +3918,3 @@ body.modal-open {
     font-weight:normal
 }
 
-#reset-date-range {
-    cursor: pointer;
-}
