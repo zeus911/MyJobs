@@ -42,10 +42,11 @@ $(document).ready(function() {
     If someone loads the page with request.GET info
     (not from ajax) fill page with info
     */
-    if(location.search) show_selected();
 
     $(".date-picker-widget").hide();
     $("#reset-date-range").css("visibility", "hidden");
+
+    if(location.search) show_selected();
 
     /*
     Fancy pushState next and previous buttons for everyone
@@ -806,7 +807,9 @@ If someone loads the page with request.GET info (not from ajax) fill page with i
 function show_selected() {
     var q = location.search,
         params = q.replace("?", "").split("&"),
-        partners = $(".sidebar .partner-tag");
+        partners = $(".sidebar .partner-tag"),
+        start_date = null,
+        end_date = null;
     if (typeof(isIE) == "number" && isIE < 9) {
         if(q === "?") return false;
     }
@@ -815,6 +818,12 @@ function show_selected() {
             key = s[0];
         var value = s[1].replace("%20", "-");
         value = value.replace(" ", "-");
+        if(key == "start_date") {
+            start_date = new Date(value || new Date(0));
+        }
+        if(key == "end_date") {
+            end_date = new Date(value || new Date());
+        }
         if(key == "special_interest") {
             partners.each(function() {
                 if($(this).hasClass(value)) {
@@ -845,6 +854,28 @@ function show_selected() {
         }
         if(key == "per_page") {
             $("#per-page span").text(value);
+        }
+    }
+
+    // disable all buttons
+    $(".partner-tag.days").children('i').remove();
+    $(".partner-tag.days").addClass("disabled-tag");
+    if(start_date && end_date) {
+        var days = (end_date.getTime() - start_date.getTime()) /
+                   (1000 * 60 * 60 * 24) // msecs, secs, hours, days
+            button = $(".partner-tag.days[data-days='" + days + "']");
+        if(button.length) {
+            button.append("<i class='icon icon-ok'></i>").removeClass("disabled-tag");
+            $(".partner-tag.custom").show();
+            $(".date-picker-widget").hide();
+            $("#reset-date-range").css("visibility", "visible");
+        } else {
+            // no day button is clicked, so show the date picker widget
+            $("#activity-start-date").val(format_date(start_date));
+            $("#activity-end-date").val(format_date(end_date));
+            $(".partner-tag.custom").hide();
+            $(".date-picker-widget").show();
+            $("#reset-date-range").css("visibility", "visible");
         }
     }
 }
