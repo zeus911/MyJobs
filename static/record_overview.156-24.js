@@ -51,8 +51,7 @@ $(document).ready(function() {
     });
 
     /*
-    Fancy pushState next and previous buttons for everyone
-    but IE8 and IE9
+    Fancy pushState next and previous buttons for everyone but IE8 and IE9
      */
     if (typeof(isIE) == "number" && isIE > 9 || typeof(isIE) == 'boolean' && isIE == false) {
         $("body").on("click", "#next_page", function(e) {
@@ -73,6 +72,22 @@ $(document).ready(function() {
             send_filter(data);
         });
     }
+
+    $("#record-download").on("click", function() {
+        $(this).children().toggleClass("show-drop");
+    });
+
+    $("#candidate-time-filter").on("click", function() {
+        $(this).children().toggleClass("show-drop");
+    });
+
+    $("#date-range-list li:not(#date-drop)").on("click", function(e) {
+        e.stopPropagation();
+    });
+
+    $("#date-drop").on("click", function() {
+
+    });
 });
 
 

@@ -12,7 +12,7 @@
 {% load i18n %}
 
 {% block content %}
-    {% include "mypartners/includes/prm_header.html" with page_title="Communication Records" back_to="Back to Overview" back_to_url="partner_overview" back_to_string="?partner=" add_partner_to_end=True date_range=True download=True %}
+    {% include "mypartners/includes/prm_header.html" with page_title="Communication Records" back_to="Back to Overview" back_to_url="partner_overview" back_to_string="?partner=" add_partner_to_end=True date_range=False download=True %}
     <div class="row">
         <span class="span8">
             {% include "mypartners/includes/contact_record_column.html" %}
