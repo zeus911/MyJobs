@@ -12,6 +12,10 @@
         <label>Tag:</label>
         <input id="lib-tag" type="text" placeholder="Tag" {% if request.GET.tag %}value="{{request.GET.tag}}"{% endif %} />
         {% endif %}
+        {% if on_page = "prm" %}
+        <label>Last Activity:</label>
+        {% include "mypartners/includes/date_widget.html" %}
+        {% endif %}
 
         {% if special_interest %}
         <label>Special Interest:</label>
@@ -43,3 +47,4 @@
     </div>
     {% endif %}
 </div>
+
