@@ -168,10 +168,8 @@ class Invitation(models.Model):
         elif not any(invitee):
             raise ValidationError('Invitee not provided')
         elif self.invitee_email:
-            # Due to how we set up our custom create_user, we can use it to both
-            # check if an email is in use and create a user if it does not.
-            # User.objects.get_or_create does not do the custom user creation
-            # that we do in create_user, so we can't use it.
+            # create_user first checks if an email is in use and creates an
+            # account if it does not.
             self.invitee = User.objects.create_user(email=self.invitee_email,
                                                     send_email=False)[0]
         else:
