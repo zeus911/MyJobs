@@ -35,6 +35,39 @@ ACTIVITY_TYPES = {
     4: 'sent',
 }
 
+class Location(models.Model):
+    guid = models.CharField(max_length=255, unique=True, blank=True, default='')
+
+    address_line_one = models.CharField(max_length=255,
+                                        verbose_name='Address Line One',
+                                        blank=True)
+    address_line_two = models.CharField(max_length=255,
+                                        verbose_name='Address Line Two',
+                                        blank=True)
+    city = models.CharField(max_length=255, verbose_name='City', blank=True)
+    state = models.CharField(max_length=200, verbose_name='State/Region',
+                             blank=True)
+    country_code = models.CharField(max_length=3, verbose_name='Country',
+                                    blank=True)
+    postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
+                                   blank=True)
+
+    def __unicode__(self):
+        return (", ".join([self.city, self.state]) if self.city and self.state
+                else self.city or self.state)
+
+    def save(self, **kwargs):
+        self.generate_guid()
+        super(Location, self).save(**kwargs)
+
+    def generate_guid(self):
+        if not self.guid:
+            guid = uuid4().hex
+            if Location.objects.filter(guid=guid):
+                self.generate_guid()
+            else:
+                self.guid = guid
+
 
 class Contact(models.Model):
     """
@@ -49,6 +82,7 @@ class Contact(models.Model):
     phone = models.CharField(max_length=30, verbose_name='Phone', blank=True)
     label = models.CharField(max_length=60, verbose_name='Address Label',
                              blank=True)
+    #TODO: remove this after data is safely migrated into locations 
     address_line_one = models.CharField(max_length=255,
                                         verbose_name='Address Line One',
                                         blank=True)
@@ -62,6 +96,8 @@ class Contact(models.Model):
                                     blank=True)
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
+    # -------------------------------------------------------------------------
+    locations = models.ManyToManyField('Location', related_name='contacts')
     tags = models.ManyToManyField('Tag', null=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
 
