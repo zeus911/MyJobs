@@ -21,20 +21,20 @@ SHA1_RE = re.compile('^[a-f0-9]{40}$')
 class RegistrationManager(models.Manager):
     def activate_user(self, activation_key):
         """
-        Searches for activation key in the database. If the key is found and not
-        expired,
+        Searches for activation key in the database. If the key is found and
+        not expired,
 
         Outputs:
         A boolean True and sets the key to 'ALREADY ACTIVATED'.
         Otherwise, returns False to signify the activation failed.
-        
+
         """
         if SHA1_RE.search(activation_key):
             try:
                 profile = self.get(activation_key=activation_key)
             except self.model.DoesNotExist:
                 return False
-            
+
             user = profile.user
             if not user.is_disabled and profile.activation_key_expired():
                 return False
@@ -78,17 +78,17 @@ class ActivationProfile(models.Model):
         return self.activation_key == self.ACTIVATED or \
             (self.sent + expiration_date <= datetime_now())
 
-    def generate_key(self):        
+    def generate_key(self):
         """
         Generates a random string that will be used as the activation key for a
-        registered user.       
+        registered user.
         """
-        
+
         salt = hashlib.sha1(str(random.random())).hexdigest()[:5]
         email = self.email
         if isinstance(email, unicode):
             email = email.encode('utf-8')
-        activation_key = hashlib.sha1(salt+email).hexdigest()
+        activation_key = hashlib.sha1(salt + email).hexdigest()
         return activation_key
 
     def reset_activation(self):
