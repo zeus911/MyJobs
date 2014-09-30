@@ -118,7 +118,7 @@ def update_partner_library(path=None, quiet=False):
         print "%d records added and %d records skipped." % (added, skipped)
 
 
-@task(name='tasks.send_search_digests')
+@task(name='tasks.send_search_digests', ignore_result=True)
 def send_search_digests():
     """
     Daily task to send saved searches. If user opted in for a digest, they
@@ -157,7 +157,7 @@ def send_search_digests():
             send_search_digest.s(search_obj).apply_async()
 
 
-@task(name='task.delete_inactive_activations')
+@task(name='task.delete_inactive_activations', ignore_result=True)
 def delete_inactive_activations():
     """
     Daily task checks if activation keys are expired and deletes them.
@@ -175,7 +175,7 @@ def delete_inactive_activations():
             profile.delete()
 
 
-@task(name='tasks.process_user_events')
+@task(name='tasks.process_user_events', ignore_result=True)
 def process_user_events(email):
     """
     Processes all email events for a given user.
@@ -225,7 +225,7 @@ def process_user_events(email):
     logs.update(processed=True)
 
 
-@task(name='tasks.process_batch_events')
+@task(name='tasks.process_batch_events', ignore_result=True)
 def process_batch_events():
     """
     Processes all events that have accumulated over the last day, sends emails
@@ -263,7 +263,7 @@ def process_batch_events():
         opt_in_myjobs=False)
 
 
-@task(name="tasks.update_solr_from_model")
+@task(name="tasks.update_solr_from_model", ignore_result=True)
 def update_solr_task(solr_location=None):
     """
     Deletes all items scheduled for deletion, and then adds all items
@@ -333,7 +333,7 @@ def split_list(l, list_len, fill_val=None):
     return izip_longest(fillvalue=fill_val, *args)
 
 
-@task(name="tasks.reindex_solr")
+@task(name="tasks.reindex_solr", ignore_result=True)
 def task_reindex_solr(solr_location=None):
     """
     Adds all ProfileUnits, Users, and SavedSearches to solr.
@@ -556,7 +556,7 @@ def parse_log(logs, solr_location):
                 solr.add(subset)
 
 
-@task(name="tasks.delete_old_analytics_docs")
+@task(name="tasks.delete_old_analytics_docs", ignore_result=True)
 def delete_old_analytics_docs():
     """
     Deletes all analytics docs from the "current" collection that are older
@@ -571,7 +571,7 @@ def delete_old_analytics_docs():
         q="doc_type:analytics AND view_date:[* TO NOW/DAY-30DAYS]")
 
 
-@task(name="tasks.update_solr_from_log")
+@task(name="tasks.update_solr_from_log", ignore_result=True)
 def read_new_logs(solr_location=None):
     """
     Reads new logs and stores their contents in solr
@@ -622,7 +622,7 @@ def read_new_logs(solr_location=None):
     delete_old_analytics_docs.delay()
 
 
-@task(name='tasks.expire_jobs')
+@task(name='tasks.expire_jobs', ignore_result=True)
 def expire_jobs():
     jobs = Job.objects.filter(date_expired=date.today(),
                               is_expired=False, autorenew=False)
@@ -657,18 +657,18 @@ def task_etl_to_solr(guid, buid, name):
         raise task_etl_to_solr.retry()
 
 
-@task(name="tasks.task_clear_solr")
+@task(name="tasks.task_clear_solr", ignore_result=True)
 def task_clear_solr(jsid):
     """Delete all jobs for a given Business Unit/Job Source."""
     import_jobs.clear_solr(jsid)
 
 
-@task(name="tasks.task_force_create")
+@task(name="tasks.task_force_create", ignore_result=True)
 def task_force_create(jsid):
     import_jobs.force_create_jobs(jsid.id)
 
 
-@task(name="tasks.task_submit_sitemap")
+@task(name="tasks.task_submit_sitemap", ignore_result=True)
 def task_submit_sitemap(domain):
     """
     Submits yesterday's sitemap to google for the given domain
@@ -678,7 +678,7 @@ def task_submit_sitemap(domain):
     ping_google('http://{d}/sitemap.xml'.format(d=domain))
 
 
-@task(name="tasks.task_submit_all_sitemaps")
+@task(name="tasks.task_submit_all_sitemaps", ignore_result=True)
 def task_submit_all_sitemaps():
     sites = SeoSite.objects.all()
     for site in sites:
