@@ -73,9 +73,10 @@ class ActivationProfile(models.Model):
         return "Registration for %s" % self.user
 
     def activation_key_expired(self):
-        expiration_date = datetime.timedelta(days=settings.ACCOUNT_ACTIVATION_DAYS)
+        expiration_date = datetime.timedelta(
+            days=settings.ACCOUNT_ACTIVATION_DAYS)
         return self.activation_key == self.ACTIVATED or \
-               (self.sent + expiration_date <= datetime_now())
+            (self.sent + expiration_date <= datetime_now())
 
     def generate_key(self):        
         """
@@ -118,7 +119,8 @@ class ActivationProfile(models.Model):
         message = render_to_string('registration/activation_email.html',
                                    ctx_dict)
         message = Pynliner().from_string(message).run()
-        msg = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL, [self.email])
+        msg = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL,
+                           [self.email])
         msg.content_subtype = 'html'
         msg.send()
 
