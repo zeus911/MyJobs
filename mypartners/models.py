@@ -82,7 +82,6 @@ class Contact(models.Model):
     phone = models.CharField(max_length=30, verbose_name='Phone', blank=True)
     label = models.CharField(max_length=60, verbose_name='Address Label',
                              blank=True)
-    #TODO: remove this after data is safely migrated into locations 
     address_line_one = models.CharField(max_length=255,
                                         verbose_name='Address Line One',
                                         blank=True)
@@ -96,7 +95,6 @@ class Contact(models.Model):
                                     blank=True)
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
-    # -------------------------------------------------------------------------
     locations = models.ManyToManyField('Location', related_name='contacts')
     tags = models.ManyToManyField('Tag', null=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
