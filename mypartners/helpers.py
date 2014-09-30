@@ -545,19 +545,23 @@ def new_partner_from_library(request):
         library=library)
     partner.tags = tags
 
-    contact = Contact.objects.create(
-        partner=partner,
-        name=library.contact_name or "Not Available",
-        email=library.email,
-        phone=library.phone,
+    location, _ = Location.objects.get_or_create(
         address_line_one=library.street1,
         address_line_two=library.street2,
         city=library.city,
         state=library.st,
         country_code="USA",
-        postal_code=library.zip_code,
+        postal_code=library.zip_code)
+
+    contact = Contact.objects.create(
+        partner=partner,
+        name=library.contact_name or "Not Available",
+        email=library.email,
+        phone=library.phone,
         notes=("This contact was generated from content in the "
                "OFCCP directory."))
+
+    contact.locations.add(location)
     contact.tags = tags
     contact.save()
 

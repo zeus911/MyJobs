@@ -117,7 +117,8 @@ class Contact(models.Model):
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
 
     def get_location(self):
-        return ", ".join([self.city, self.state]).strip(", ")
+        #TODO: return all locations
+        return self.locations.first()
 
 
 @receiver(pre_delete, sender=Contact, dispatch_uid='pre_delete_contact_signal')
