@@ -2,14 +2,20 @@ import datetime
 import hashlib
 import re
 
+from bs4 import BeautifulSoup
+
 from django.conf import settings
-from myjobs.models import User
 from django.contrib.sites.models import Site
 from django.core import mail
+from django.core.exceptions import ValidationError
+from django.core.urlresolvers import reverse
 
+from myjobs.models import User
+from myjobs.tests.factories import UserFactory
 from myjobs.tests.setup import MyJobsBase
-from registration.tests.helpers import assert_email_inlines_styles
-from registration.models import ActivationProfile
+from registration.forms import InvitationForm
+from registration.models import ActivationProfile, Invitation
+from registration.tests.factories import InvitationFactory
 
 
 class RegistrationModelTests(MyJobsBase):
@@ -18,7 +24,8 @@ class RegistrationModelTests(MyJobsBase):
     
     """
     user_info = {'password1': 'swordfish',
-                 'email': 'alice@example.com'}
+                 'email': 'alice@example.com',
+                 'send_email': True}
     
     def setUp(self):
         super(RegistrationModelTests, self).setUp()
@@ -44,7 +51,6 @@ class RegistrationModelTests(MyJobsBase):
         self.assertEqual(unicode(profile),
                          "Registration for alice@example.com")
 
-
     def test_user_creation_email(self):
         """
         By default, creating a new user sends an activation email.
@@ -59,9 +65,9 @@ class RegistrationModelTests(MyJobsBase):
         send an activation email.
         
         """
+        self.user_info['send_email'] = False
         User.objects.create_user(
             site=Site.objects.get_current(),
-            send_email=False,
             **self.user_info)
         self.assertEqual(len(mail.outbox), 0)
 
@@ -207,3 +213,92 @@ class RegistrationModelTests(MyJobsBase):
             profile = ActivationProfile.objects.get(user=new_user)
             self.assertEqual(profile.activation_key, ActivationProfile.ACTIVATED)
 
+
+class InvitationModelTests(MyJobsBase):
+    def setUp(self):
+        super(InvitationModelTests, self).setUp()
+        self.admin = UserFactory(is_superuser=True, is_staff=True,
+                                 password='pass')
+        self.client.login(username=self.admin.email,
+                          password='pass')
+
+    def test_invitation_admin_cant_edit(self):
+        """
+        Ensures that there is no way to edit an invitation once it is sent
+        """
+        invitation = InvitationFactory()
+        resp = self.client.get(reverse(
+            'admin:registration_invitation_changelist'))
+        contents = BeautifulSoup(resp.content)
+
+        # We can't edit items via action dropdown.
+        bulk_options = contents.select('select[name=action]')[0]
+        for action in bulk_options.select('option'):
+            self.assertNotEqual('edit_selected', action.attrs['value'])
+
+        # We can't click on the first data cell of a table row to edit.
+        # td 0 is a checkbox. td 1 would normally contain the first field
+        # to be shown as well as an edit link.
+        edit_link = contents.select('td')[1]
+        self.assertEqual(edit_link.text, invitation.invitee_email)
+        self.assertEqual(edit_link.select('a'), [])
+
+        resp = self.client.get(reverse(
+            'admin:registration_invitation_change', args=[invitation.pk]))
+        # We can't guess edit links.
+        self.assertTrue(resp['Location'].endswith(
+            reverse('admin:registration_invitation_changelist')))
+
+    def test_invitation_admin_default_inviting_user(self):
+        """
+        When creating an invitation via the admin, the inviting user should
+        default to the administrative user currently logged in
+        """
+        self.client.post(reverse(
+            'admin:registration_invitation_add'),
+            {'invitee_email': 'email@example.com'})
+        invitation = Invitation.objects.get()
+        self.assertEqual(invitation.inviting_user, self.admin)
+
+    def test_invitation_form_creates_invitee(self):
+        """
+        When an invitation is created, set the invitee to the current owner
+        of the email address used or create a new user if one does not exist
+        """
+        data = {
+            'inviting_user': self.admin
+        }
+        User.objects.create_user(email='email@example.com', send_email=False)
+        users = []
+        for email in ['email@example.com', 'email2@example.com']:
+            data['invitee_email'] = email
+            form = InvitationForm(data)
+            self.assertTrue(form.is_valid())
+            invitation = form.save()
+            user = User.objects.get_email_owner(email)
+            users.append(user)
+
+            self.assertIsNotNone(invitation.invitee)
+            self.assertEqual(invitation.invitee_email, email)
+
+            # Users created with invitations should not receive normal user
+            # creation emails
+            self.assertEqual(mail.outbox, [])
+
+        self.assertEqual(len(users), 2)
+        self.assertItemsEqual(users, set(users))
+
+    def test_invitation_model_save_success(self):
+        for args in [{'invitee_email': self.admin.email},
+                     {'invitee': self.admin},
+                     {'invitee_email': 'new_user@example.com'}]:
+            Invitation(**args).save()
+
+    def test_invitation_model_save_failure(self):
+        for args, exception_text in [({'invitee_email': 'new_user@example.com',
+                                       'invitee': self.admin},
+                                      'Invitee information does not match'),
+                                     ({}, 'Invitee not provided')]:
+            with self.assertRaises(ValidationError) as e:
+                Invitation(**args).save()
+            self.assertEqual(e.exception.messages, [exception_text])

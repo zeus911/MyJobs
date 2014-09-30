@@ -11,6 +11,7 @@ from mysearches.models import (SavedSearch, SavedSearchDigest,
                                PartnerSavedSearch)
 from mypartners.forms import PartnerEmailChoices
 from mypartners.models import Contact, ADDITION, CHANGE
+from registration.models import Invitation
 from mypartners.helpers import (log_change, send_custom_activation_email,
                                 tag_get_or_create)
 
@@ -182,7 +183,7 @@ class PartnerSavedSearchForm(ModelForm):
         user_email = cleaned_data.get('email')
 
         if not user_email:
-           raise ValidationError(_("This field is required."))
+            raise ValidationError(_("This field is required."))
 
         # Get or create the user since they might not exist yet
         created = False
@@ -215,6 +216,14 @@ class PartnerSavedSearchForm(ModelForm):
         instance = super(PartnerSavedSearchForm, self).save(commit)
         tags = self.cleaned_data.get('tags')
         self.instance.tags = tags
+        invite_args = {
+            'invitee_email': instance.email,
+            'invitee': instance.user,
+            'inviting_user': instance.created_by,
+            'inviting_company': instance.partner.owner,
+            'added_saved_search': instance,
+        }
+        Invitation(**invite_args).save()
         if self.created:
             send_custom_activation_email(instance)
         partner = instance.partner

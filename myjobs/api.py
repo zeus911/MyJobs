@@ -13,8 +13,10 @@ from tastypie.serializers import Serializer
 from myjobs.models import User
 from mysearches.helpers import validate_dotjobs_url
 from mysearches.models import SavedSearch
+from registration.models import Invitation
+from seo.models import Company
 
-        
+
 class UserResource(ModelResource):
     searches = fields.ToManyField('myjobs.api.SavedSearchResource',
                                   'savedsearch_set')
@@ -57,7 +59,19 @@ class UserResource(ModelResource):
                       'password1': request.GET.get('password', ''),
                       'custom_msg': request.GET.get('custom_msg'),
                       'request': request}
-            user, created = User.objects.create_user(**kwargs)
+            # TODO: remove send_email arg when invitation emails are in
+            user, created = User.objects.create_user(send_email=True,
+                                                     **kwargs)
+
+            if kwargs['custom_msg']:
+                company = Company.objects.get(
+                    id=request.GET.get('company', 999999)
+                )
+                invitation_args = {
+                    'invitee_email': email,
+                    'inviting_company': company
+                }
+                Invitation(**invitation_args).save()
 
             data = {
                 'user_created': created,

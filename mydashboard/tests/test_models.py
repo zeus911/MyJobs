@@ -3,6 +3,7 @@ from mydashboard.tests.factories import CompanyFactory
 from mydashboard.tests.forms import CompanyUserForm
 
 from myjobs.tests.factories import UserFactory
+from registration.models import Invitation
 
 
 class CompanyUserTests(MyJobsBase):
@@ -21,6 +22,7 @@ class CompanyUserTests(MyJobsBase):
         company_user_form = CompanyUserForm(data=self.data)
         self.assertTrue(company_user_form.is_valid())
         company_user_form.save()
+        self.assertEqual(Invitation.objects.count(), 1)
 
         self.assertEqual(self.company.admins.count(), 1)
 

@@ -2,16 +2,18 @@ import datetime
 import hashlib
 import random
 import re
+from django.core.exceptions import ValidationError
 
 from pynliner import Pynliner
 
 from django.conf import settings
-from django.db import models
 from django.core.mail import EmailMessage
+from django.db import models
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now as datetime_now
 from django.utils.translation import ugettext_lazy as _
+
 
 SHA1_RE = re.compile('^[a-f0-9]{40}$')
 
@@ -128,3 +130,50 @@ class ActivationProfile(models.Model):
     def expires(self):
         delta = datetime.timedelta(days=settings.ACCOUNT_ACTIVATION_DAYS)
         return self.sent + delta
+
+
+class Invitation(models.Model):
+    """
+    Represents a non-user being invited to create an account on secure.my.jobs.
+
+    Staff can use the admin interface to send generic invitations or
+    invitations that add permissions. Members can use PRM to send generic
+    invitations, access to their company features, or saved searches.
+    """
+    inviting_user = models.ForeignKey('myjobs.User', editable=False,
+                                      related_name='invites_sent',
+                                      blank=True, null=True)
+    inviting_company = models.ForeignKey('seo.Company', blank=True, null=True,
+                                         related_name='invites_sent')
+    invitee = models.ForeignKey('myjobs.User', related_name='invites',
+                                on_delete=models.SET_NULL, null=True,
+                                editable=False)
+    invitee_email = models.CharField(max_length=255, db_index=True)
+    invited = models.DateTimeField(auto_now_add=True, editable=False)
+    added_permission = models.ForeignKey('auth.Group', blank=True, null=True)
+    added_saved_search = models.ForeignKey('mysearches.SavedSearch',
+                                           blank=True, null=True,
+                                           editable=False)
+    accepted = models.BooleanField(default=False, editable=False,
+                                   help_text='Has the invitee accepted '
+                                             'this invitation')
+
+    def save(self, *args, **kwargs):
+        from myjobs.models import User
+        invitee = [self.invitee_email, self.invitee]
+        if all(invitee):
+            if not User.objects.get_email_owner(
+                    self.invitee_email) == self.invitee:
+                raise ValidationError('Invitee information does not match')
+        elif not any(invitee):
+            raise ValidationError('Invitee not provided')
+        elif self.invitee_email:
+            # Due to how we set up our custom create_user, we can use it to both
+            # check if an email is in use and create a user if it does not.
+            # User.objects.get_or_create does not do the custom user creation
+            # that we do in create_user, so we can't use it.
+            self.invitee = User.objects.create_user(email=self.invitee_email,
+                                                    send_email=False)[0]
+        else:
+            self.invitee_email = self.invitee.email
+        super(Invitation, self).save(*args, **kwargs)
