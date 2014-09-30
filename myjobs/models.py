@@ -499,7 +499,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             return profile.expires() - now
 
     def can_receive_myjobs_email(self):
-        if self.opt_in_myjobs and not self.is_disabled:
+        if self.opt_in_myjobs and not self.is_disabled and not self.in_reserve:
             if self.is_active or self.get_expiration().total_seconds() > 0:
                 return True
         return False

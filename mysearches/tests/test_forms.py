@@ -103,7 +103,6 @@ class PartnerSavedSearchFormTests(MyJobsBase):
         form = PartnerSavedSearchForm(partner=self.partner,
                                       data=self.partner_search_data)
         instance = form.instance
-        #instance.feed = form.data['feed']
         instance.provider = self.company
         instance.partner = self.partner
         instance.created_by = self.user
