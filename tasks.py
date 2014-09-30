@@ -647,7 +647,7 @@ def task_update_solr(jsid, **kwargs):
         raise task_update_solr.retry()
 
 
-@task(name='tasks.etl_to_solr',)
+@task(name='tasks.etl_to_solr', ignore_result=True)
 def task_etl_to_solr(guid, buid, name):
     try:
         import_jobs.update_job_source(guid, buid, name)
