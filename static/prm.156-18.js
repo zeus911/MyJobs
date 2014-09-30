@@ -656,8 +656,8 @@ build data object from all sources on the page.
 function build_data() {
     var data = {},
         special_interest = [],
-        start_date = new Date(),
-        end_date = new Date();
+        start_date = null,
+        end_date = null;
 
     $(".partner-filters label + :input").each(function() {
         if($(this).val()) {
@@ -678,11 +678,10 @@ function build_data() {
         if(end_string)
             end_date = new Date(end_string);
     } else if($(".partner-tag.days").has("i").text()) {
-        var days = $(".partner-tag.days").has("i").data('days');
+        var days = $(".partner-tag.days").has("i").data('days'),
+            start_date = new Date(),
+            end_date = new Date();
         start_date.setDate(start_date.getDate() - days);
-    } else {
-        start_date = false;
-        end_date = false;
     }
     if(start_date)
         data.start_date = format_date(start_date);
