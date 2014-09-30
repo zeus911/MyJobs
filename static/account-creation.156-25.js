@@ -90,6 +90,7 @@ $(document).on("click", "button#register", function(e) {
             outputs a gravatar url, instead of 'valid' or 'success'.
             */
             var json = jQuery.parseJSON(data);
+            $("#header .row").append(json.html);
             // Check to see if json.gravatar_url is present, in this case, success.
             if (Boolean(json.gravatar_url)){
                 var gravatar_url = json.gravatar_url;
@@ -119,6 +120,7 @@ $(document).on("click", "button#register", function(e) {
 
 $(document).on("click", "button#login", function(e) {
     e.preventDefault();
+    removeRequiredChanges();
     var next = document.getElementsByName('next')[0].value;
     var form = $('form#login-form');
     var json_data = form.serialize()+'&nexturl='+next+'&action=login';
@@ -301,14 +303,8 @@ function setPrimaryName(){
 }
 
 function removeRequiredChanges(){
-    // remove current errors
-    $('[class*=required-border]').css('border', '');
-    $('[class*=required-border]').removeClass('required-border');
-
-    // remove IE specific errors, if IE
-    if($.browser.msie){
-        $('[class*=msieError]').remove();
-    }
+    $(".required").contents().unwrap();
+    $(".error-text i").remove();
 }
 
 function jsonErrors(index, errors){
@@ -324,14 +320,19 @@ function jsonErrors(index, errors){
     :errors:    Parsed json that has the label "errors". Errors is a 
                 'multidimensional array' {errors:[key][value]}
     */
-    var $error = $('[id$="_'+errors[index][0]+'"]');
-    // insert new errors after the relevant inputs
-    if($.browser.msie){
-        field = $error.parent().prev();
-        field.before("<div class='msieError'><i>" + errors[index][1] + "</i></div>");
-    }else{
-        $error.val('');
-        $error.attr("placeholder",errors[index][1]);
-    }
+
+    var $error = $('#id_' + errors[index][0]);
     $error.wrap("<div class='required'></div>");
+
+    // clear password fields on error
+    if(errors[index][0].indexOf("password") != -1)
+        $error.val("");
+    // insert new errors after the relevant inputs
+    if(errors[index][1][0].indexOf("required") != -1){
+        $error.val("");
+        $error.attr("placeholder",errors[index][1]);
+    }else{
+        var field = $error.parents("fieldset");
+        field.before("<div class='error-text'><i>" + errors[index][1] + "</i></div>");
+    }
 }

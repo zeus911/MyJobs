@@ -322,7 +322,7 @@ h1 > small > a:hover {
     background-color: #FFF;
     border: 1px solid #d5d4d0;
     padding: 10px 15px;
-    margin: 20px -15px;
+    margin: 10px -15px;
     box-shadow: 2px 2px 3px #BBB;
 }
 
@@ -373,6 +373,12 @@ h1 > small > a:hover {
 .sidebar .partner-tag {
     width: 48.5%;
     padding: 5px 10px;
+}
+
+.partner-tag.days {
+    width: 32%;
+    margin-bottom: 5px;
+    margin-top: 0;
 }
 
 .sidebar .partner-tag:nth-child(2n) {
@@ -701,6 +707,63 @@ div.tags-field ul.tagit input.ui-widget-content {
 
 .tip-box .tip-footer .btn-link{
     padding: 0 10px;
+}
+
+
+.sidebar .partner-tag.custom {
+    width: 100%;
+    text-align: center;
+    margin-top: 0;
+    margin-left: 0;
+    margin-bottom: 7px;
+}
+
+input.datepicker {
+    border: 1px solid #BBB;
+    vertical-align: baseline;
+    width: 45%;
+}
+
+.date-picker-widget input {
+    margin-bottom: 0;
+}
+
+.sidebar a {
+    cursor: pointer;
+}
+
+span.datepicker {
+    border: 1px solid #BBB;
+    margin: -5px;
+    padding: 7px;
+}
+
+input.picker-left {
+    border-radius: 5px 0 0 5px;
+}
+
+input.picker-right {
+    border-radius: 0 5px 5px 0;
+}
+
+.picker__holder select {
+    padding: 0;
+}
+
+.sidebar .picker__select--month {
+    width: 40%;
+}
+
+.sidebar .picker__select--year {
+    width: 25%;
+}
+
+.date-picker-widget {
+    position: relative;
+    margin-bottom: 5px;
+}
+.date-picker-widget input {
+    cursor: pointer;
 }
 
 .info-box {
@@ -2836,6 +2899,10 @@ td .gravatar-blank,
         margin-top: 5px;
     }
 
+    .sidebar .partner-tag.days {
+        text-align: center;
+    }
+
     .product-details {
         margin-top: 5px;
         margin-bottom: 5px;
@@ -3884,3 +3951,4 @@ body.modal-open {
     font-size:66%;
     font-weight:normal
 }
+

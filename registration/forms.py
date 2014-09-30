@@ -39,11 +39,11 @@ class CustomAuthForm(AuthenticationForm):
         if username and password:
             self.user_cache = authenticate(username=username, password=password)
             if self.user_cache is None:
-                error_msg = [u"Please enter a correct email.",
-                             u"Please enter a correct password.",]
+                error_msg = u"Invalid username or password. Please try again."
 
-                self._errors['username'] = self.error_class([error_msg[0]])
-                self._errors['password'] = self.error_class([error_msg[1]])
+                self._errors['username'] = self.error_class([error_msg])
+                # needed to ensure field is wrapped by error class
+                self._errors['password'] = self.error_class([""])
 
                 # These fields are no longer valid. Remove them from the
                 # cleaned data
@@ -122,7 +122,8 @@ class RegistrationForm(forms.Form):
             if self.cleaned_data['password1'] != self.cleaned_data['password2']:
                 error_msg = u"The new password fields did not match."
                 self._errors["password1"] = self.error_class([error_msg])
-                self._errors["password2"] = self.error_class([error_msg])
+                # needed to ensure field is wrapped by error class
+                self._errors["password2"] = self.error_class([""])
 
                 # These fields are no longer valid. Remove them from the
                 # cleaned data.

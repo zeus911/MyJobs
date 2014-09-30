@@ -3,7 +3,9 @@
 user registration form
 {% endcomment %}
 <form action="" method="post" id="registration-form">  
-    {% include "includes/form-error-highlight.html" %}
+    <fieldset>
+    {{ form.as_ul }}
+    </fieldset>
     {% csrf_token %}
     <div class="actions">
         <button class="btn primary pull-right" name="register" id="register">Create Account</button>
