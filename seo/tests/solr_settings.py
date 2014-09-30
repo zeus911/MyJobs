@@ -5,7 +5,7 @@ from settings import *
 
 HAYSTACK_CONNECTIONS = {
     'default': {
-        'ENGINE': 'directseo.seo.search_backend.DESolrEngine',
+        'ENGINE': 'seo.search_backend.DESolrEngine',
         'URL': 'http://127.0.0.1:8983/solr/seo',
         'INCLUDE_SPELLING': True,
     },
