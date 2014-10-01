@@ -500,11 +500,11 @@ def filter_partners(request, partner_library=False):
         # string reprensentation of the first location
         first_location = lambda p: str(locations(p)[0] if locations(p) else [])
 
-        # sort descending
+        # sort descending; [::-1] just reverses a list
         if sort_order:
-            partners = list(reversed(sorted(
+            partners = sorted(
                 (p for p in partners),
-                key=lambda p: (locations(p) != [], first_location(p)))))
+                key=lambda p: (locations(p) != [], first_location(p)))[::-1]
         # sort ascending
         else:
             partners = sorted(
