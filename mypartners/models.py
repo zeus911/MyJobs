@@ -1,3 +1,4 @@
+from itertools import chain
 from os import path
 from re import sub
 from urllib import urlencode
@@ -116,10 +117,6 @@ class Contact(models.Model):
         query_string = urlencode(params)
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
 
-    def get_location(self):
-        #TODO: return all locations
-        return self.locations.first()
-
 
 @receiver(pre_delete, sender=Contact, dispatch_uid='pre_delete_contact_signal')
 def delete_contact(sender, instance, using, **kwargs):
@@ -179,8 +176,8 @@ class Partner(models.Model):
 
     # gets_all_contact_locations_for_partner (City, State)
     def get_contact_locations(self):
-        return [contact.get_location() for contact in self.contact_set.all()
-                if contact.get_location()]
+        return list(chain(*[contact.locations.all() 
+                    for contact in self.contact_set.all()]))
 
     # get_contact_records_for_partner
     def get_contact_records(self, contact_name=None, record_type=None,
@@ -233,6 +230,7 @@ class PartnerLibrary(models.Model):
     fax = models.CharField(max_length=30, blank=True)
     email = models.CharField(max_length=255, blank=True)
 
+    # Location info
     street1 = models.CharField(max_length=255, blank=True)
     street2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=255, blank=True)
@@ -249,7 +247,7 @@ class PartnerLibrary(models.Model):
         'disabled_veteran', default=False)
 
     def __unicode__(self):
-        return self.contact_name
+        return self.name
 
 
 class ContactRecord(models.Model):
