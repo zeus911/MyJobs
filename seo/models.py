@@ -16,6 +16,8 @@ from django.core.validators import (MaxValueValidator, ValidationError,
                                     MinValueValidator)
 from django.db import models
 from django.db.models.query import QuerySet
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 from haystack.inputs import Raw
 from haystack.query import SQ
@@ -1188,3 +1190,13 @@ class CompanyUser(models.Model):
         group, _ = Group.objects.get_or_create(name=self.ADMIN_GROUP_NAME)
         self.group.add(group)
         self.save()
+
+
+@receiver(post_delete, sender=CompanyUser, 
+          dispatch_uid='post_delete_companyuser_signal')
+def remove_user_from_group(sender, instance, **kwargs):
+    # if a user is not associated with any more companies, we should remove
+    # them from the employer group
+    if not CompanyUser.objects.filter(user=instance.user):
+        instance.user.groups.remove(Group.objects.get(name='Employer'))
+        instance.user.save()
