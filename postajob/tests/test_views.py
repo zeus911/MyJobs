@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from mock import patch, Mock
 from StringIO import StringIO
 
+from django.conf import settings
 from django.core import mail
 from django.core.urlresolvers import reverse
 
@@ -29,7 +30,10 @@ class ViewTests(MyJobsBase):
         super(ViewTests, self).setUp()
         self.user = UserFactory()
         self.company = CompanyFactory(product_access=True)
-        CompanyProfile.objects.create(company=self.company)
+        CompanyProfile.objects.create(
+            company=self.company,
+            authorize_net_login=settings.TESTING_CC_AUTH['api_id'],
+            authorize_net_transaction_key=settings.TESTING_CC_AUTH['transaction_key'])
         self.site = SeoSiteFactory()
         self.bu = BusinessUnitFactory()
         self.site.business_units.add(self.bu)

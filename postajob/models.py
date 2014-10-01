@@ -591,26 +591,27 @@ class Product(BaseModel):
     cost = models.DecimalField(max_digits=20, decimal_places=2,
                                verbose_name='Product Price',
                                help_text=help_text['cost'],
-                               validators=[MinValueValidator(Decimal('1.00'))])
-    posting_window_length = models.IntegerField(default=30,
-                                                choices=posting_window_choices,
-                                                help_text=help_text['posting_window_length'],
-                                                verbose_name='Posting Window '
-                                                             'Duration')
-    max_job_length = models.PositiveIntegerField(default=30,
-                                                 choices=max_job_length_choices,
-                                                 help_text=help_text['max_job_length'],
-                                                 verbose_name='Maximum Job '
-                                                              'Duration')
+                               validators=[MinValueValidator(Decimal('0.00'))])
+    posting_window_length = models.IntegerField(
+        default=30, choices=posting_window_choices,
+        help_text=help_text['posting_window_length'],
+        verbose_name='Posting Window Duration'
+    )
+    max_job_length = models.PositiveIntegerField(
+        default=30, choices=max_job_length_choices,
+        help_text=help_text['max_job_length'],
+        verbose_name='Maximum Job Duration'
+    )
     num_jobs_allowed = models.PositiveIntegerField(default=5,
                                                    verbose_name='Number of '
                                                                 'Jobs')
 
     description = models.TextField(verbose_name='Product Description')
     featured = models.BooleanField(default=False)
-    requires_approval = models.BooleanField(help_text=help_text['requires_approval'],
-                                            verbose_name='Requires Approval',
-                                            default=True)
+    requires_approval = models.BooleanField(
+        help_text=help_text['requires_approval'],
+        verbose_name='Requires Approval', default=True
+    )
 
     is_archived = models.BooleanField(help_text=help_text['is_archived'],
                                       verbose_name='Archived', default=False)
