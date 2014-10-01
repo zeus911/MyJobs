@@ -171,15 +171,23 @@ def product_listing(request):
     except SeoSite.DoesNotExist:
         raise Http404
 
+    # Get all site packages and products for a site.
     site_packages = site.sitepackage_set.all()
     products = itertools.chain.from_iterable(site_package.product_set.all()
                                              for site_package in site_packages)
+    # Group products by the site package they belong to.
     groupings = set()
     for product in products:
-        groupings = groupings.union(
-            set(product.productgrouping_set.filter(is_displayed=True,
-                                                   products__isnull=False)))
+        profile = get_object_or_none(CompanyProfile, company=product.owner)
+        if product.cost < 0.01 or (profile and profile.authorize_net_login and
+                                   profile.authorize_net_transaction_key):
+            groupings = groupings.union(
+                set(product.productgrouping_set.filter(is_displayed=True,
+                                                       products__isnull=False)))
+
+    # Sort the grouped packages by the specified display order.
     groupings = sorted(groupings, key=lambda grouping: grouping.display_order)
+
     html = render_to_response('postajob/package_list.html',
                               {'product_groupings': groupings},
                               RequestContext(request))

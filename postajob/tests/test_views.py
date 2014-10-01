@@ -821,3 +821,37 @@ class ViewTests(MyJobsBase):
         self.assertItemsEqual([self.site.domain, site.domain],
                               site_packages)
 
+    def test_product_list(self):
+        grouping = productgrouping_factory(self.company)
+        ProductOrder(product=self.product, group=grouping).save()
+        params = {'site': self.site.pk}
+        url = build_url(reverse('product_list'), params)
+        response = self.client.get(url)
+        self.assertIn(grouping.display_title, response.content)
+        self.assertIn(self.product.name, response.content)
+
+    def test_product_list_no_auth_acct(self):
+        self.company.companyprofile.authorize_net_login = ''
+        self.company.companyprofile.authorize_net_transaction_key = ''
+        self.company.companyprofile.save()
+        grouping = productgrouping_factory(self.company)
+        ProductOrder(product=self.product, group=grouping).save()
+        params = {'site': self.site.pk}
+        url = build_url(reverse('product_list'), params)
+        response = self.client.get(url)
+        self.assertNotIn(grouping.display_title, response.content)
+        self.assertNotIn(self.product.name, response.content)
+
+        self.product.cost = 0
+        self.product.save()
+        self.company.companyprofile.authorize_net_login = ''
+        self.company.companyprofile.authorize_net_transaction_key = ''
+        self.company.companyprofile.save()
+        grouping = productgrouping_factory(self.company)
+        ProductOrder(product=self.product, group=grouping).save()
+        params = {'site': self.site.pk}
+        url = build_url(reverse('product_list'), params)
+        response = self.client.get(url)
+        self.assertIn(grouping.display_title, response.content)
+        self.assertIn(self.product.name, response.content)
+
