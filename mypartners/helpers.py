@@ -491,16 +491,25 @@ def filter_partners(request, partner_library=False):
 
     # for location, we want to sort by both city and state
     if "location" in sort_by:
-        head = lambda l: l[0] if len(l) > 0 else []
+        # QuerySet.extra(select={}) doesn't traverse foreign keys, so we use a
+        # few list transformations in order to sort by location and put empty
+        # locations at the end.
 
+        # shortcut to get locations from a partner
+        locations = lambda p: p.get_contact_locations()
+        # string reprensentation of the first location
+        first_location = lambda p: str(locations(p)[0] if locations(p) else [])
+
+        # sort descending
         if sort_order:
-            partners = sorted((p for p in partners),
-                key=lambda p: (p.get_contact_locations() == [],
-                               str(head(reversed(p.get_contact_locations())))))
+            partners = list(reversed(sorted(
+                (p for p in partners),
+                key=lambda p: (locations(p) != [], first_location(p)))))
+        # sort ascending
         else:
-            partners = sorted((p for p in partners),
-                key=lambda p: (p.get_contact_locations() == [], 
-                               str(head(p.get_contact_locations()))))
+            partners = sorted(
+                (p for p in partners),
+                key=lambda p: (locations(p) == [], first_location(p)))
 
     elif "activity" in sort_by:
         partners = partners.order_by(sort_order + "contactrecord__date_time")
