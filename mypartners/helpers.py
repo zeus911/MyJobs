@@ -448,9 +448,9 @@ def filter_partners(request, partner_library=False):
         end_date = request.REQUEST.get('end_date')
 
         partners = Partner.objects.select_related('contact')
-        contact_city = 'contact__city'
-        contact_state = 'contact__state'
-        sort_by.replace('city', 'contact__city')
+        contact_city = 'contact__locations__city'
+        contact_state = 'contact__locations__state'
+        sort_by.replace('city', 'contact__locations__city')
         order_by = []
 
         query = Q(owner=get_company_or_404(request).id)
