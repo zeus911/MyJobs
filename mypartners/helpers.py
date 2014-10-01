@@ -491,20 +491,17 @@ def filter_partners(request, partner_library=False):
 
     # for location, we want to sort by both city and state
     if "location" in sort_by:
-        # the select trick wont work with foreign relationships, so we instead
-        # create a queryset that doesn't contain blank city/state, and one that
-        # does, then stitch the two together.
-        incomplete_partners = partners.filter(
-            Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
-                *['%s%s' % (sort_order, column) for column in
-                  [contact_city, contact_state]])
+        head = lambda l: l[0] if len(l) > 0 else []
 
-        partners = partners.exclude(
-            Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
-                *['%s%s' % (sort_order, column) for column in
-                  [contact_city, contact_state]])
+        if sort_order:
+            partners = sorted((p for p in partners),
+                key=lambda p: (p.get_contact_locations() == [],
+                               str(head(reversed(p.get_contact_locations())))))
+        else:
+            partners = sorted((p for p in partners),
+                key=lambda p: (p.get_contact_locations() == [], 
+                               str(head(p.get_contact_locations()))))
 
-        partners = list(OrderedSet(list(partners) + list(incomplete_partners)))
     elif "activity" in sort_by:
         partners = partners.order_by(sort_order + "contactrecord__date_time")
     else:
