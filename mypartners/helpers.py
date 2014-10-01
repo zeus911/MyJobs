@@ -22,7 +22,7 @@ import states
 from universal.helpers import (get_domain, get_company, get_company_or_404,
                                get_int_or_none, OrderedSet)
 from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
-                               CHANGE, Partner, PartnerLibrary, Tag)
+                               CHANGE, Location, Partner, PartnerLibrary, Tag)
 from registration.models import ActivationProfile
 
 
@@ -489,30 +489,46 @@ def filter_partners(request, partner_library=False):
     for tag in tags:
         partners = partners.filter(tags__name__icontains=tag)
 
-    # for location, we want to sort by both city and state
     if "location" in sort_by:
-        # QuerySet.extra(select={}) doesn't traverse foreign keys, so we use a
-        # few list transformations in order to sort by location and put empty
-        # locations at the end.
-
-        # shortcut to get locations from a partner
-        locations = lambda p: p.get_contact_locations()
-        # string reprensentation of the first location
-        first_location = lambda p: str(locations(p)[0] if locations(p) else [])
-
-        # sort descending; [::-1] just reverses a list
-        if sort_order:
-            partners = sorted(
-                (p for p in partners),
-                key=lambda p: (locations(p) != [], first_location(p)))[::-1]
-        # sort ascending
+        if partner_library:
+            # no foreign keys, so we can do the "right" thing
+            partners = partners.extra(select={
+                'no_city': "city == ''",
+                'no_state': "state == ''"}).order_by(
+                    *['%s%s' % (sort_order, column) 
+                    for column in ['city', 'state', 'no_city', 'no_state']])
         else:
-            partners = sorted(
-                (p for p in partners),
-                key=lambda p: (locations(p) == [], first_location(p)))
+            # QuerySet.extra(select={}) doesn't traverse foreign keys, so we
+            # use a few list transformations in order to sort by location and
+            # put empty locations at the end.
+
+            # shortcut to get locations from a partner
+            locations = lambda p: p.get_contact_locations()
+            # string reprensentation of the first location
+            first_location = lambda p: str(
+                locations(p)[0] if locations(p) else [])
+
+            # sort descending; [::-1] just reverses a list
+            if sort_order:
+                partners = sorted(
+                    (p for p in partners),
+                    key=lambda p: 
+                        (locations(p) != [], first_location(p)))[::-1]
+            # sort ascending
+            else:
+                partners = sorted(
+                    (p for p in partners),
+                    key=lambda p: (locations(p) == [], first_location(p)))
 
     elif "activity" in sort_by:
-        partners = partners.order_by(sort_order + "contactrecord__date_time")
+        if sort_order:
+            partners = partners.annotate(
+                earliest_activity=Min('contactrecord__date_time')).order_by(
+                    '-earliest_activity')
+        else:
+            partners = partners.annotate(
+                latest_activity=Max('contactrecord__date_time')).order_by(
+                    'latest_activity')
     else:
         partners = partners.order_by(*[sort_by] + order_by)
 
