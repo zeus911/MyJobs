@@ -16,11 +16,12 @@ from myjobs.decorators import user_is_allowed
 from postajob.forms import (CompanyProfileForm, JobForm, OfflinePurchaseForm,
                             OfflinePurchaseRedemptionForm, ProductForm,
                             ProductGroupingForm, PurchasedJobForm,
-                            PurchasedProductForm, JobLocationFormSet)
-from postajob.models import (CompanyProfile, Job, OfflinePurchase, Product,
-                             ProductGrouping, PurchasedJob, PurchasedProduct,
-                             Request, JobLocation)
-from universal.helpers import get_company
+                            PurchasedProductForm,
+                            PurchasedProductNoPurchaseForm, JobLocationFormSet)
+from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
+                             Product, ProductGrouping, PurchasedJob,
+                             PurchasedProduct, Request, JobLocation)
+from universal.helpers import get_company, get_object_or_none
 from universal.views import RequestFormViewBase
 
 
@@ -170,15 +171,23 @@ def product_listing(request):
     except SeoSite.DoesNotExist:
         raise Http404
 
+    # Get all site packages and products for a site.
     site_packages = site.sitepackage_set.all()
     products = itertools.chain.from_iterable(site_package.product_set.all()
                                              for site_package in site_packages)
+    # Group products by the site package they belong to.
     groupings = set()
     for product in products:
-        groupings = groupings.union(
-            set(product.productgrouping_set.filter(is_displayed=True,
-                                                   products__isnull=False)))
+        profile = get_object_or_none(CompanyProfile, company=product.owner)
+        if product.cost < 0.01 or (profile and profile.authorize_net_login and
+                                   profile.authorize_net_transaction_key):
+            groupings = groupings.union(
+                set(product.productgrouping_set.filter(is_displayed=True,
+                                                       products__isnull=False)))
+
+    # Sort the grouped packages by the specified display order.
     groupings = sorted(groupings, key=lambda grouping: grouping.display_order)
+
     html = render_to_response('postajob/package_list.html',
                               {'product_groupings': groupings},
                               RequestContext(request))
@@ -245,36 +254,6 @@ def resend_invoice(request, pk):
 
     product.invoice.send_invoice_email()
     return HttpResponse(json.dumps(True))
-
-
-class PurchaseFormViewBase(RequestFormViewBase):
-    purchase_field = None
-    purchase_model = None
-
-    @method_decorator(user_is_allowed())
-    def dispatch(self, *args, **kwargs):
-        """
-        Determine and set which product is attempting to be purchased.
-
-        """
-        # The add url also has the pk for the product they're attempting
-        # to purchase.
-        if kwargs.get('product'):
-            self.product = get_object_or_404(self.purchase_model,
-                                             pk=kwargs.get('product'))
-        else:
-            obj = get_object_or_404(self.model, pk=kwargs.get('pk'))
-            self.product = getattr(obj, self.purchase_field, None)
-
-        # Set the display name based on the model
-        self.display_name = self.display_name.format(product=self.product)
-
-        return super(PurchaseFormViewBase, self).dispatch(*args, **kwargs)
-
-    def get_form_kwargs(self):
-        kwargs = super(PurchaseFormViewBase, self).get_form_kwargs()
-        kwargs['product'] = self.product
-        return kwargs
 
 
 class PostajobModelFormMixin(object):
@@ -378,8 +357,7 @@ class JobFormView(BaseJobFormView):
         return context
 
 
-class PurchasedJobFormView(BaseJobFormView,
-                           PurchaseFormViewBase):
+class PurchasedJobFormView(BaseJobFormView):
     form_class = PurchasedJobForm
     model = PurchasedJob
     display_name = '{product} Job'
@@ -400,6 +378,31 @@ class PurchasedJobFormView(BaseJobFormView,
             # the user to access the add view.
             raise Http404
         return super(PurchasedJobFormView, self).set_object(*args, **kwargs)
+
+    @method_decorator(user_is_allowed())
+    def dispatch(self, *args, **kwargs):
+        """
+        Determine and set which product is attempting to be purchased.
+
+        """
+        # The add url also has the pk for the product they're attempting
+        # to purchase.
+        if kwargs.get('product'):
+            self.product = get_object_or_404(self.purchase_model,
+                                             pk=kwargs.get('product'))
+        else:
+            obj = get_object_or_404(self.model, pk=kwargs.get('pk'))
+            self.product = getattr(obj, self.purchase_field, None)
+
+        # Set the display name based on the model
+        self.display_name = self.display_name.format(product=self.product)
+
+        return super(PurchasedJobFormView, self).dispatch(*args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super(PurchasedJobFormView, self).get_form_kwargs()
+        kwargs['product'] = self.product
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super(PurchasedJobFormView, self).get_context_data(**kwargs)
@@ -447,7 +450,7 @@ class ProductGroupingFormView(PostajobModelFormMixin, RequestFormViewBase):
         return super(ProductGroupingFormView, self).dispatch(*args, **kwargs)
 
 
-class PurchasedProductFormView(PostajobModelFormMixin, PurchaseFormViewBase):
+class PurchasedProductFormView(PostajobModelFormMixin, RequestFormViewBase):
     form_class = PurchasedProductForm
     model = PurchasedProduct
     # The display name is determined by the product id and set in dispatch().
@@ -460,6 +463,62 @@ class PurchasedProductFormView(PostajobModelFormMixin, PurchaseFormViewBase):
 
     purchase_field = 'product'
     purchase_model = Product
+
+    @method_decorator(user_is_allowed())
+    def dispatch(self, *args, **kwargs):
+        """
+        Determine and set which product is attempting to be purchased.
+
+        """
+        # The add url also has the pk for the product they're attempting
+        # to purchase.
+
+        self.product = get_object_or_404(self.purchase_model,
+                                         pk=kwargs.get('product'))
+
+        # Set the display name based on the model
+        self.display_name = self.display_name.format(product=self.product)
+
+        # If the product is free but the current user has no companies or an
+        # un-filled-out profile, use the product form that only gets company
+        # information.
+        if self.product.cost < 0.01:
+            company = get_company(self.request)
+            profile = get_object_or_none(CompanyProfile, company=company)
+
+            if company and profile and profile.address_line_one:
+                invoice = Invoice.objects.create(
+                    transaction='FREE',
+                    card_last_four='FREE',
+                    card_exp_date=date.today(),
+                    first_name=self.request.user.first_name,
+                    last_name=self.request.user.last_name,
+                    address_line_one=profile.address_line_one,
+                    address_line_two=profile.address_line_two,
+                    city=profile.city,
+                    state=profile.state,
+                    country=profile.country,
+                    zipcode=profile.zipcode,
+                    owner=self.product.owner,
+                )
+                purchase_kwargs = {
+                    'product': self.product,
+                    'invoice': invoice,
+                    'owner': company,
+                    'paid': True,
+                }
+                PurchasedProduct.objects.create(**purchase_kwargs)
+                return redirect(self.success_url)
+            else:
+                self.display_name = self.product
+                self.form_class = PurchasedProductNoPurchaseForm
+
+        return super(PurchasedProductFormView, self).dispatch(*args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super(PurchasedProductFormView, self).get_form_kwargs()
+        kwargs['product'] = self.product
+        return kwargs
 
     def set_object(self, request):
         """
