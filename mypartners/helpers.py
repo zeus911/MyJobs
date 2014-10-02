@@ -420,7 +420,10 @@ def filter_partners(request, partner_library=False):
     
 
     if partner_library:
-        special_interest = request.REQUEST.getlist('special_interest')[:]
+        special_interest = [
+            si for si in request.REQUEST.getlist('special_interest')
+            if si != "disability" else "disabled"]
+
         library_ids = Partner.objects.exclude(
             library__isnull=True).values_list('library', flat=True)
         # hide partners that the user has already added 
@@ -523,8 +526,7 @@ def new_partner_from_library(request):
     library = get_object_or_404(PartnerLibrary, pk=library_id)
 
     tags = []
-    for interest, color in [('disabled', '808A9A'),
-                            ('disabled_veteran', '659274'),
+    for interest, color in [('disabled_veteran', '659274'),
                             ('female', '4BB1CF'),
                             ('minority', 'FAA732'),
                             ('veteran', '5EB94E')]:
@@ -534,6 +536,12 @@ def new_partner_from_library(request):
                 company=company, name=interest.replace('_', ' ').title(),
                 defaults={'hex_color': color})
             tags.append(tag)
+
+    if library.is_disabled:
+        tag, _ = Tag.objects.get_or_create(
+            company=company, name="Disability"
+            defaults={'hex_color': '808A9A'})
+        tags.append(tag)
 
     tags.append(Tag.objects.get_or_create(
         company=company, name='OFCCP Library')[0])
