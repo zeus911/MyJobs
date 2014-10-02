@@ -81,6 +81,7 @@ class CustomUserManager(BaseUserManager):
                          'gravatar': '',
                          'timezone': settings.TIME_ZONE,
                          'is_active': True,
+                         'in_reserve': kwargs.get('in_reserve', False)
                          }
 
             if user_type == 'superuser':
@@ -215,9 +216,15 @@ class User(AbstractBaseUser, PermissionsMixin):
                                       default=False,
                                       help_text=_("User has verified this "
                                                   "address and can access "
-                                                  "most My.jobs features."
+                                                  "most My.jobs features. "
                                                   "Deselect this instead of "
                                                   "deleting accounts."))
+    in_reserve = models.BooleanField(_('reserved'), default=False,
+                                     editable=False,
+                                     help_text=_("This user will be held in "
+                                                 "reserve until any "
+                                                 "invitations associated "
+                                                 "with it are processed."))
 
     # Communication Settings
 
@@ -492,7 +499,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             return profile.expires() - now
 
     def can_receive_myjobs_email(self):
-        if self.opt_in_myjobs and not self.is_disabled:
+        if self.opt_in_myjobs and not self.is_disabled and not self.in_reserve:
             if self.is_active or self.get_expiration().total_seconds() > 0:
                 return True
         return False

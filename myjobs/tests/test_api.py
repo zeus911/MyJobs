@@ -77,6 +77,8 @@ class UserResourceTests(MyJobsBase):
         inviting_companies = Invitation.objects.values_list('inviting_company',
                                                             flat=True)
         self.assertItemsEqual(company_ids, inviting_companies)
+        user = User.objects.get_email_owner(self.data['email'])
+        self.assertTrue(user.in_reserve)
 
 
 class SavedSearchResourceTests(MyJobsBase):

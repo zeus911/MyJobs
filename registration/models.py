@@ -21,20 +21,20 @@ SHA1_RE = re.compile('^[a-f0-9]{40}$')
 class RegistrationManager(models.Manager):
     def activate_user(self, activation_key):
         """
-        Searches for activation key in the database. If the key is found and not
-        expired,
+        Searches for activation key in the database. If the key is found and
+        not expired,
 
         Outputs:
         A boolean True and sets the key to 'ALREADY ACTIVATED'.
         Otherwise, returns False to signify the activation failed.
-        
+
         """
         if SHA1_RE.search(activation_key):
             try:
                 profile = self.get(activation_key=activation_key)
             except self.model.DoesNotExist:
                 return False
-            
+
             user = profile.user
             if not user.is_disabled and profile.activation_key_expired():
                 return False
@@ -73,21 +73,22 @@ class ActivationProfile(models.Model):
         return "Registration for %s" % self.user
 
     def activation_key_expired(self):
-        expiration_date = datetime.timedelta(days=settings.ACCOUNT_ACTIVATION_DAYS)
+        expiration_date = datetime.timedelta(
+            days=settings.ACCOUNT_ACTIVATION_DAYS)
         return self.activation_key == self.ACTIVATED or \
-               (self.sent + expiration_date <= datetime_now())
+            (self.sent + expiration_date <= datetime_now())
 
-    def generate_key(self):        
+    def generate_key(self):
         """
         Generates a random string that will be used as the activation key for a
-        registered user.       
+        registered user.
         """
-        
+
         salt = hashlib.sha1(str(random.random())).hexdigest()[:5]
         email = self.email
         if isinstance(email, unicode):
             email = email.encode('utf-8')
-        activation_key = hashlib.sha1(salt+email).hexdigest()
+        activation_key = hashlib.sha1(salt + email).hexdigest()
         return activation_key
 
     def reset_activation(self):
@@ -118,7 +119,8 @@ class ActivationProfile(models.Model):
         message = render_to_string('registration/activation_email.html',
                                    ctx_dict)
         message = Pynliner().from_string(message).run()
-        msg = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL, [self.email])
+        msg = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL,
+                           [self.email])
         msg.content_subtype = 'html'
         msg.send()
 
@@ -168,10 +170,8 @@ class Invitation(models.Model):
         elif not any(invitee):
             raise ValidationError('Invitee not provided')
         elif self.invitee_email:
-            # Due to how we set up our custom create_user, we can use it to both
-            # check if an email is in use and create a user if it does not.
-            # User.objects.get_or_create does not do the custom user creation
-            # that we do in create_user, so we can't use it.
+            # create_user first checks if an email is in use and creates an
+            # account if it does not.
             self.invitee = User.objects.create_user(email=self.invitee_email,
                                                     send_email=False)[0]
         else:

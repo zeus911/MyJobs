@@ -923,7 +923,7 @@ class SearchEditTests(MyPartnersTestCase):
                              msg="%s != %s for field %s" %
                                  (v, getattr(search, k), k))
 
-    def test__partner_search_for_new_contact_email(self):
+    def test_partner_search_for_new_contact_email(self):
         """Confirms that an email is sent when a new user is created for a 
         contact because a saved search was created on that contact's behalf.
         """
@@ -940,7 +940,6 @@ class SearchEditTests(MyPartnersTestCase):
                 'label': 'Test',
                 'url': 'http://www.jobs.jobs/jobs',
                 'url_extras': '',
-                'company': self.company.id,
                 'email': new_contact.email,
                 'account_activation_message': '',
                 'frequency': 'W',

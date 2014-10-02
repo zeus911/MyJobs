@@ -1,6 +1,7 @@
 from mock import patch
 
 from myjobs.tests.setup import MyJobsBase
+from mypartners.models import Contact
 from mypartners.tests.factories import ContactFactory, PartnerFactory
 from mysearches.forms import SavedSearchForm, PartnerSavedSearchForm
 from mysearches.tests.helpers import return_file
@@ -72,13 +73,9 @@ class PartnerSavedSearchFormTests(MyJobsBase):
         self.user = UserFactory()
         self.company = CompanyFactory()
         self.partner = PartnerFactory(owner=self.company)
-        self.contact = ContactFactory(user=self.user,
-                                      partner=self.partner)
-        self.data = {
-            'user': self.user,
+        self.partner_search_data = {
             'url': 'http://www.my.jobs/jobs',
             'feed': 'http://www.my.jobs/jobs/feed/rss?',
-            'email': self.user.email,
             'frequency': 'D',
             'label': 'All jobs from www.my.jobs',
             'sort_by': 'Relevance'
@@ -96,13 +93,24 @@ class PartnerSavedSearchFormTests(MyJobsBase):
             pass
 
     def test_partner_saved_search_form_creates_invitation(self):
-        form = PartnerSavedSearchForm(partner=self.partner, data=self.data)
+        """
+        Saving a partner saved search form should also create
+        an invitation
+        """
+        contact = ContactFactory(user=None, email='new_user@example.com',
+                                 partner=self.partner)
+        self.partner_search_data['email'] = 'new_user@example.com'
+        form = PartnerSavedSearchForm(partner=self.partner,
+                                      data=self.partner_search_data)
         instance = form.instance
-        instance.feed = form.data['feed']
         instance.provider = self.company
         instance.partner = self.partner
         instance.created_by = self.user
         instance.custom_message = instance.partner_message
-        form.is_valid()
+        self.assertTrue(form.is_valid())
         form.save()
         self.assertEqual(Invitation.objects.count(), 1)
+        invitation = Invitation.objects.get()
+        self.assertTrue(invitation.invitee.in_reserve)
+        contact = Contact.objects.get(pk=contact.pk)
+        self.assertEqual(invitation.invitee, contact.user)
