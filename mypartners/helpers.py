@@ -421,8 +421,9 @@ def filter_partners(request, partner_library=False):
 
     if partner_library:
         special_interest = [
-            si for si in request.REQUEST.getlist('special_interest')
-            if si != "disability" else "disabled"]
+            si if si != "disability" else "disabled" 
+            for si in request.REQUEST.getlist('special_interest')]
+
 
         library_ids = Partner.objects.exclude(
             library__isnull=True).values_list('library', flat=True)
@@ -539,7 +540,7 @@ def new_partner_from_library(request):
 
     if library.is_disabled:
         tag, _ = Tag.objects.get_or_create(
-            company=company, name="Disability"
+            company=company, name="Disability",
             defaults={'hex_color': '808A9A'})
         tags.append(tag)
 
