@@ -144,7 +144,6 @@ class ConfigurationFactory(factory.django.DjangoModelFactory):
     browse_title_order = 1
     browse_title_show = False
     browse_title_text = ""
-    css_body = ""
     defaultBlurb = ""
     defaultBlurbTitle = "Test Blurb"
     directemployers_link = "http://directemployers.org"
@@ -163,7 +162,6 @@ class ConfigurationFactory(factory.django.DjangoModelFactory):
     status = 1
     title = "Default"
     title_tag = ""
-    useCssBody = False
     wide_footer = ""
     wide_header = ""
     percent_featured = 0.5
