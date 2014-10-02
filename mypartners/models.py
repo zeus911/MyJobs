@@ -36,8 +36,6 @@ ACTIVITY_TYPES = {
 }
 
 class Location(models.Model):
-    guid = models.CharField(max_length=255, unique=True, blank=True, default='')
-
     address_line_one = models.CharField(max_length=255,
                                         verbose_name='Address Line One',
                                         blank=True)
@@ -59,14 +57,6 @@ class Location(models.Model):
     def save(self, **kwargs):
         self.generate_guid()
         super(Location, self).save(**kwargs)
-
-    def generate_guid(self):
-        if not self.guid:
-            guid = uuid4().hex
-            if Location.objects.filter(guid=guid):
-                self.generate_guid()
-            else:
-                self.guid = guid
 
 
 class Contact(models.Model):
