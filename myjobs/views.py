@@ -72,9 +72,8 @@ def home(request):
     originally from.
 
     """
-    # TODO - rename using snake case
-    registrationform = RegistrationForm(auto_id=False)
-    loginform = CustomAuthForm(auto_id=False)
+    registration_form = RegistrationForm(auto_id=False)
+    login_form = CustomAuthForm(auto_id=False)
 
     name_form = InitialNameForm(prefix="name")
     education_form = InitialEducationForm(prefix="edu")
@@ -103,8 +102,8 @@ def home(request):
             pass
 
     data_dict = {'num_modules': len(settings.PROFILE_COMPLETION_MODULES),
-                 'registrationform': registrationform,
-                 'loginform': loginform,
+                 'registrationform': registration_form,
+                 'loginform': login_form,
                  'name_form': name_form,
                  'phone_form': phone_form,
                  'address_form': address_form,
@@ -119,14 +118,14 @@ def home(request):
 
     if request.method == "POST":
         if request.POST.get('action') == "register":
-            registrationform = RegistrationForm(request.POST, auto_id=False)
-            if registrationform.is_valid():
+            registration_form = RegistrationForm(request.POST, auto_id=False)
+            if registration_form.is_valid():
                 new_user, created = User.objects.create_user(
                     request=request,
-                    **registrationform.cleaned_data)
+                    **registration_form.cleaned_data)
                 user_cache = authenticate(
-                    username=registrationform.cleaned_data['email'],
-                    password=registrationform.cleaned_data['password1'])
+                    username=registration_form.cleaned_data['email'],
+                    password=registration_form.cleaned_data['password1'])
                 expire_login(request, user_cache)
                 # pass in gravatar url once user is logged in. Image generated
                 # on AJAX success
@@ -137,31 +136,31 @@ def home(request):
                 return response
             else:
                 return HttpResponse(json.dumps(
-                    {'errors': registrationform.errors.items()}))
+                    {'errors': registration_nform.errors.items()}))
 
         elif request.POST.get('action') == "login":
-            loginform = CustomAuthForm(data=request.POST)
-            if loginform.is_valid():
-                expire_login(request, loginform.get_user())
+            login_form = CustomAuthForm(data=request.POST)
+            if login_form.is_valid():
+                expire_login(request, login_form.get_user())
 
                 url = request.POST.get('nexturl')
 
                 # Boolean for activation login page to show initial forms
                 # again or not
                 has_units = False
-                if len(loginform.get_user().profileunits_set.all()) > 0:
+                if len(login_form.get_user().profileunits_set.all()) > 0:
                     has_units = True
 
                 response_data = {'validation': 'valid', 'url': url,
                                  'units': has_units,
-                                 'gravatar_url': loginform.get_user().get_gravatar_url(size=100)}
+                                 'gravatar_url': login_form.get_user().get_gravatar_url(size=100)}
                 response = HttpResponse(json.dumps(response_data))
-                response.set_cookie('myguid', loginform.get_user().user_guid,
+                response.set_cookie('myguid', login_form.get_user().user_guid,
                                     expires=365*24*60*60, domain='.my.jobs')
                 return response
             else:
                 return HttpResponse(json.dumps({'errors':
-                                                loginform.errors.items()}))
+                                                login_form.errors.items()}))
 
         elif request.POST.get('action') == "save_profile":
             name_form = InitialNameForm(request.POST, prefix="name",
