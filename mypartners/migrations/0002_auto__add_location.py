@@ -11,7 +11,6 @@ class Migration(SchemaMigration):
         # Adding model 'Location'
         db.create_table(u'mypartners_location', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('guid', self.gf('django.db.models.fields.CharField')(default='', unique=True, max_length=255, blank=True)),
             ('address_line_one', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('address_line_two', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('city', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
@@ -146,7 +145,6 @@ class Migration(SchemaMigration):
             'address_line_two': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'country_code': ('django.db.models.fields.CharField', [], {'max_length': '3', 'blank': 'True'}),
-            'guid': ('django.db.models.fields.CharField', [], {'default': "''", 'unique': 'True', 'max_length': '255', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'postal_code': ('django.db.models.fields.CharField', [], {'max_length': '12', 'blank': 'True'}),
             'state': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'})
