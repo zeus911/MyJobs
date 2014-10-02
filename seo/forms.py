@@ -571,9 +571,6 @@ class ConfigurationForm(RowPermissionsForm):
             'primaryColor': forms.TextInput(attrs={
                 'name': 'primaryColor_',
                 'class': "color {pickerFaceColor:'#CCC', caps:false}"}),
-            'secondaryColor': forms.TextInput(attrs={
-                'name': 'secondaryColor_',
-                'class': "color {pickerFaceColor:'#CCC', caps:false}"}),
         }
         exclude = [
             'location_tag',

@@ -160,7 +160,6 @@ class ConfigurationFactory(factory.django.DjangoModelFactory):
     num_job_items_to_show = 20
     num_subnav_items_to_show = 5
     primaryColor = "990000"
-    secondaryColor = ""
     status = 1
     title = "Default"
     title_tag = ""

@@ -107,7 +107,6 @@
             "num_filter_items_to_show": 10, 
             "browse_city_text": "City", 
             "browse_state_text": "State", 
-            "secondaryColor": null,
             "group": 1,
             "browse_moc_show": false
         }
@@ -155,7 +154,6 @@
             "num_filter_items_to_show": 10, 
             "browse_city_text": "City", 
             "browse_state_text": "State", 
-            "secondaryColor": null,
             "group": 1,
             "browse_moc_show": false
         }
