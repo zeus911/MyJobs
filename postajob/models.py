@@ -67,11 +67,25 @@ class JobLocation(models.Model):
                 self.guid = guid
 
 
+class JobMixin(object):
+    def filter_by_sites(self, sites):
+        return self.filter(site_packages__seosite__in=sites)
+
+
+class JobQuerySet(QuerySet, JobMixin):
+    pass
+
+
+class JobManager(models.Manager, JobMixin):
+    def get_query_set(self):
+        return PackageQuerySet(self.model, using=self._db)
+
+
 class Job(BaseModel):
     help_text = {
         'apply_email': 'The email address where candidates should send their '
                        'application.',
-        'apply_info': 'Describe how dandidates should apply for this job.',
+        'apply_info': 'Describe how candidates should apply for this job.',
         'apply_link': 'The URL of the application form.',
         'apply_type': 'How should applicants submit their application?',
         'autorenew': 'Automatically renew this job for an additional 30 '
@@ -88,6 +102,9 @@ class Job(BaseModel):
         'reqid': 'The Requisition ID from your system, if any.',
         'title': 'The title of the job as you want it to appear.',
     }
+
+    objects = JobManager()
+
     title = models.CharField(max_length=255, help_text=help_text['title'])
     owner = models.ForeignKey('seo.Company')
     reqid = models.CharField(max_length=50, verbose_name="Requisition ID",
@@ -245,6 +262,8 @@ class Job(BaseModel):
 
 
 class PurchasedJob(Job):
+    objects = JobManager()
+
     max_expired_date = models.DateField(editable=False)
     purchased_product = models.ForeignKey('PurchasedProduct')
     is_approved = models.BooleanField(default=False)

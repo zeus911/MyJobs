@@ -337,3 +337,34 @@ class ModelTests(MyJobsBase):
             offline_purchase.create_purchased_products(self.company)
             self.assertEqual(PurchasedProduct.objects.all().count(), x*2)
 
+    def test_job_filter_by_sites(self):
+        for x in range(8800, 8815):
+            domain = 'testsite-%s.jobs' % x
+            site = SeoSiteFactory(id=x, domain=domain, name=domain)
+            site_package = sitepackage_factory(self.company)
+            site_package.make_unique_for_site(site)
+            for y in range(1, 5):
+                job = job_factory(self.company, self.user)
+                job.site_packages.add(site_package)
+                job.save()
+            self.assertEqual(Job.objects.filter_by_sites([site]).count(), 4)
+
+        self.assertEqual(Job.objects.all().count(), 60)
+
+    def test_purchasedjob_filter_by_sites(self):
+        for x in range(8800, 8815):
+            domain = 'testsite-%s.jobs' % x
+            site = SeoSiteFactory(id=x, domain=domain, name=domain)
+            site_package = sitepackage_factory(self.company)
+            site_package.make_unique_for_site(site)
+            product = product_factory(site_package, self.company)
+            purchased_product = purchasedproduct_factory(product, self.company)
+            for y in range(1, 5):
+                job = purchasedjob_factory(self.company, self.user,
+                                           purchased_product)
+                job.site_packages.add(site_package)
+                job.save()
+            count = PurchasedJob.objects.filter_by_sites([site]).count()
+            self.assertEqual(count, 4)
+
+        self.assertEqual(PurchasedJob.objects.all().count(), 60)
