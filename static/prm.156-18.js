@@ -678,18 +678,10 @@ function build_data() {
         if(end_string)
             end_date = new Date(end_string);
     } else if($(".partner-tag.days").has("i").text()) {
-<<<<<<< HEAD:static/prm.156-18.js
-        var days = $(".partner-tag.days").has("i").data('days');
-        start_date.setDate(start_date.getDate() - days);
-    } else {
-        start_date = false;
-        end_date = false;
-=======
         var days = $(".partner-tag.days").has("i").data('days'),
             start_date = new Date(),
             end_date = new Date();
         start_date.setDate(start_date.getDate() - days);
->>>>>>> contact-location-model:static/prm.156-18.js
     }
     if(start_date)
         data.start_date = format_date(start_date);
