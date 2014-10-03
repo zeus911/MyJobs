@@ -42,6 +42,10 @@ $(document).ready(function() {
     If someone loads the page with request.GET info
     (not from ajax) fill page with info
     */
+
+    $(".date-picker-widget").hide();
+    $("#reset-date-range").css("visibility", "hidden");
+
     if(location.search) show_selected();
 
     /*
@@ -181,6 +185,29 @@ $(document).ready(function() {
         });
     });
 
+    $(".datepicker").on("click", function(e) {
+        $(this).pickadate({
+            format: "mm/dd/yyyy",
+            selectYears: true,
+            selectMonths: true,
+            today: false,
+            clear: false,
+            close: false,
+            onOpen: function() {
+                if(this.get("id") === "activity-start-date"){
+                    var end_date = $("#activity-end-date").val();
+                    this.set("max", new Date(end_date || new Date()));
+                } else if(this.get("id") === "activity-end-date"){
+                    var start_date = $("#activity-start-date").val();
+                    this.set("min", new Date(start_date || new Date(0)))
+                }
+            },
+            onClose: function() {
+                run_ajax();
+            }
+        });
+    });
+
     $('#item-save').on("click", function(e) {
         // interrupts default functionality of the button with code below
         e.preventDefault();
@@ -274,7 +301,7 @@ $(document).ready(function() {
     });
 
     // Add check mark icon next to partner-tags then run ajax
-    $(".partner-filters .partner-tag").on("click", function() {
+    $(".partner-filters .partner-tag[title='Click to filter']").on("click", function() {
         if ($(this).children('i').hasClass('icon-ok')) {
             $(this).children('i').remove();
             $(this).addClass("disabled-tag");
@@ -284,6 +311,56 @@ $(document).ready(function() {
             $(this).append(i);
             $(this).removeClass("disabled-tag");
         }
+        run_ajax();
+    });
+
+    $(".partner-tag.days").on("click", function() {
+        $(".date-picker-widget").hide();
+        $(".partner-tag.custom").show();
+
+        if ($(this).hasClass("disabled-tag")) {
+            // add dates to input boxes
+            var start_date = new Date();
+            start_date.setDate(start_date.getDate() - $(this).data("days"));
+            $("#activity-start-date").val(format_date(start_date));
+            $("#activity-end-date").val(format_date(new Date()));
+
+            // add checkbox
+            $(".partner-tag.days").addClass("disabled-tag");
+            $(".partner-tag.days").children("i").remove();
+            $(this).removeClass("disabled-tag");
+            $(this).append("<i class='icon icon-ok'></i>");
+        } else {
+            // remove dates from input boxes
+            $("#activity-start-date").val("");
+            $("#activity-end-date").val("");
+            
+            $(this).addClass("disabled-tag");
+            $(this).children('i').remove();
+        }
+
+        run_ajax();
+    });
+
+    $(".partner-tag.custom").on("click", function() {
+        $(".partner-tag.custom").hide();
+        $(".date-picker-widget").show();
+        $("#reset-date-range").css("visibility", "visible");
+
+        $(".partner-tag.days").addClass("disabled-tag");
+        $(".partner-tag.days > i.icon-ok").remove();
+    });
+
+    $("#reset-date-range").on("click", function() {
+        // disable all day filters
+        $(".partner-tag.days").addClass("disabled-tag");
+        $(".partner-tag.days > i.icon-ok").remove();
+        // show the custom date range button
+        $(".partner-tag.custom").show();
+        $(".date-picker-widget").hide();
+        // remove dates from date inputs
+        $("#activity-start-date").val("");
+        $("#activity-end-date").val("");
         run_ajax();
     });
 
@@ -495,13 +572,42 @@ function fill_in_history_state(data){
         ct_input = $("#lib-city");
     var si_list = ["veteran", "female", "minority", "disabled",
                        "disabled veteran", "unspecified"];
+
+    
     if(!data){
         $(kw_input.val(""));
         $("#state option[value='']").attr("selected", "selected");
         $(ct_input).val("");
-        clear_special_interest(si_list);
+        $(".partner-tag").children('i').remove();
+        $(".partner-tag").addClass("disabled-tag");
+        $("#reset-date-range").css("visibility", "hidden");
         return false
     }
+
+    // calculate which day buttons should be checked 
+    var start_date = new Date(data.start_date || new Date(0)),
+        end_date = new Date(data.end_date || new Date()),
+        days = (end_date.getTime() - start_date.getTime()) /
+               (1000 * 60 * 60 * 24) // msecs, secs, hours, days
+        button = $(".partner-tag.days[data-days='" + days + "']");
+
+    // disable all buttons
+    $(".partner-tag").children('i').remove();
+    $(".partner-tag").addClass("disabled-tag");
+    if(button.length) {
+        button.append("<i class='icon icon-ok'></i>").removeClass("disabled-tag");
+        $(".partner-tag.custom").show();
+        $(".date-picker-widget").hide();
+        $("#reset-date-range").css("visibility", "visible");
+    } else {
+        // no day button is clicked, so show the date picker widget
+        $("#activity-start-date").val(data.start_date);
+        $("#activity-end-date").val(data.end_date);
+        $(".partner-tag.custom").hide();
+        $(".date-picker-widget").show();
+        $("#reset-date-range").css("visibility", "visible");
+    }
+
     if(typeof(data.keywords) != "undefined")
         $(kw_input).val(String(data.keywords));
     else
@@ -532,25 +638,16 @@ function fill_in_history_state(data){
             });
         }
     }
-    clear_special_interest(si_list);
     return false
 }
 
 /*
-Reset special interest (all disabled)
- */
-function clear_special_interest(si_list) {
-    for(var x in si_list) {
-        var cl = String(si_list[x]).replace(" ", "-");
-        $(".sidebar .partner-tag").each(function() {
-            if($(this).hasClass(cl)){
-                if ($(this).children('i').hasClass('icon-ok')) {
-                    $(this).children('i').remove();
-                    $(this).addClass("disabled-tag");
-                }
-            }
-        });
-    }
+format a Date object to %m/%d/%Y
+*/
+function format_date(date) {
+    // months are indexed at 0, while date and year are not
+    return (date.getMonth() + 1) + "/" + date.getDate() + "/"
+                                 + date.getFullYear();
 }
 
 /*
@@ -558,19 +655,38 @@ build data object from all sources on the page.
  */
 function build_data() {
     var data = {},
-        special_interest = [];
+        special_interest = [],
+        start_date = null,
+        end_date = null;
 
-    $(".partner-filters :input").each(function() {
+    $(".partner-filters label + :input").each(function() {
         if($(this).val()) {
             var data_key = $(this).prev('label').html().replace(":", "").toLowerCase();
             data[data_key] = $(this).val();
         }
     });
-    $(".partner-tag:has(i)").each(function() {
+    $(".partner-tag:has(i):not(.partner-tag.days)").each(function() {
         special_interest.push($(this).text().toLowerCase());
     });
     if(special_interest.length > 0)
         data.special_interest = special_interest;
+    if($(".date-picker-widget").is(":visible")) {
+        start_string = $("#activity-start-date").val();
+        end_string = $("#activity-end-date").val();
+        if(start_string)
+            start_date = new Date(start_string);
+        if(end_string)
+            end_date = new Date(end_string);
+    } else if($(".partner-tag.days").has("i").text()) {
+        var days = $(".partner-tag.days").has("i").data('days'),
+            start_date = new Date(),
+            end_date = new Date();
+        start_date.setDate(start_date.getDate() - days);
+    }
+    if(start_date)
+        data.start_date = format_date(start_date);
+    if(end_date)
+        data.end_date = format_date(end_date);
 
     var sort_by = $(".sort-by.active").text().toLowerCase();
     if(sort_by)
@@ -671,6 +787,11 @@ function update_search_url(data) {
             search_url += key + "=" + value;
         }
     }
+    if(data.start_date || data.end_date) {
+        $("#reset-date-range").css("visibility", "visible");
+    } else {
+        $("#reset-date-range").css("visibility", "hidden");
+    }
 
     if (typeof(isIE) == "number" && isIE > 9 || typeof(isIE) == 'boolean' && isIE == false) {
         history.pushState(data, "filter", search_url);
@@ -685,7 +806,9 @@ If someone loads the page with request.GET info (not from ajax) fill page with i
 function show_selected() {
     var q = location.search,
         params = q.replace("?", "").split("&"),
-        partners = $(".sidebar .partner-tag");
+        partners = $(".sidebar .partner-tag"),
+        start_date = null,
+        end_date = null;
     if (typeof(isIE) == "number" && isIE < 9) {
         if(q === "?") return false;
     }
@@ -694,6 +817,12 @@ function show_selected() {
             key = s[0];
         var value = s[1].replace("%20", "-");
         value = value.replace(" ", "-");
+        if(key == "start_date") {
+            start_date = new Date(value || new Date(0));
+        }
+        if(key == "end_date") {
+            end_date = new Date(value || new Date());
+        }
         if(key == "special_interest") {
             partners.each(function() {
                 if($(this).hasClass(value)) {
@@ -724,6 +853,28 @@ function show_selected() {
         }
         if(key == "per_page") {
             $("#per-page span").text(value);
+        }
+    }
+
+    // disable all buttons
+    $(".partner-tag.days").children('i').remove();
+    $(".partner-tag.days").addClass("disabled-tag");
+    if(start_date && end_date) {
+        var days = (end_date.getTime() - start_date.getTime()) /
+                   (1000 * 60 * 60 * 24) // msecs, secs, hours, days
+            button = $(".partner-tag.days[data-days='" + days + "']");
+        if(button.length) {
+            button.append("<i class='icon icon-ok'></i>").removeClass("disabled-tag");
+            $(".partner-tag.custom").show();
+            $(".date-picker-widget").hide();
+            $("#reset-date-range").css("visibility", "visible");
+        } else {
+            // no day button is clicked, so show the date picker widget
+            $("#activity-start-date").val(format_date(start_date));
+            $("#activity-end-date").val(format_date(end_date));
+            $(".partner-tag.custom").hide();
+            $(".date-picker-widget").show();
+            $("#reset-date-range").css("visibility", "visible");
         }
     }
 }
