@@ -494,7 +494,6 @@ def filter_partners(request, partner_library=False):
         partners = partners.filter(tags__name__icontains=tag)
 
     if "location" in sort_by:
-<<<<<<< HEAD
         if partner_library:
             # no foreign keys, so we can do the "right" thing
             partners = partners.extra(select={
