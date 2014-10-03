@@ -20,6 +20,9 @@ class Migration(SchemaMigration):
         # Deleting field 'Contact.country_code'
         db.delete_column(u'mypartners_contact', 'country_code')
 
+        # Deleting field 'Contact.label'
+        db.delete_column(u'mypartners_contact', 'label')
+
         # Deleting field 'Contact.address_line_one'
         db.delete_column(u'mypartners_contact', 'address_line_one')
 
@@ -46,6 +49,11 @@ class Migration(SchemaMigration):
         # Adding field 'Contact.country_code'
         db.add_column(u'mypartners_contact', 'country_code',
                       self.gf('django.db.models.fields.CharField')(default='', max_length=3, blank=True),
+                      keep_default=False)
+
+        # Adding field 'Contact.label'
+        db.add_column(u'mypartners_contact', 'label',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=60, blank=True),
                       keep_default=False)
 
         # Adding field 'Contact.address_line_one'
@@ -111,7 +119,6 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Contact'},
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '255', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'label': ('django.db.models.fields.CharField', [], {'max_length': '60', 'blank': 'True'}),
             'locations': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'contacts'", 'symmetrical': 'False', 'to': u"orm['mypartners.Location']"}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'notes': ('django.db.models.fields.TextField', [], {'max_length': '1000', 'blank': 'True'}),
@@ -160,8 +167,8 @@ class Migration(SchemaMigration):
             'address_line_two': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'country_code': ('django.db.models.fields.CharField', [], {'max_length': '3', 'blank': 'True'}),
-            'guid': ('django.db.models.fields.CharField', [], {'default': "''", 'unique': 'True', 'max_length': '255', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'label': ('django.db.models.fields.CharField', [], {'max_length': '60', 'blank': 'True'}),
             'postal_code': ('django.db.models.fields.CharField', [], {'max_length': '12', 'blank': 'True'}),
             'state': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'})
         },
