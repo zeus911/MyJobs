@@ -69,7 +69,13 @@ class JobLocation(models.Model):
 
 class JobMixin(object):
     def filter_by_sites(self, sites):
-        return self.filter(site_packages__seosite__in=sites)
+        # Ideally we'd be using only self.filter(site_packages__sites__in=sites)
+        # but we can't use distinct() here.
+
+        jobs = self.filter(site_packages__sites__in=sites)
+        job_ids = jobs.values_list('id', flat=True)
+
+        return self.filter(id__in=job_ids)
 
 
 class JobQuerySet(QuerySet, JobMixin):

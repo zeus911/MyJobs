@@ -368,3 +368,27 @@ class ModelTests(MyJobsBase):
             self.assertEqual(count, 4)
 
         self.assertEqual(PurchasedJob.objects.all().count(), 60)
+
+    def test_job_filter_by_site_multiple_sites(self):
+        site_in_both_packages = SeoSiteFactory(domain='secondsite.jobs', id=7)
+
+        single_site_package = sitepackage_factory(self.company)
+        single_site_package.make_unique_for_site(site_in_both_packages)
+
+        both_sites_package = sitepackage_factory(self.company)
+        both_sites_package.sites.add(site_in_both_packages)
+        both_sites_package.sites.add(self.site)
+        both_sites_package.save()
+
+        job_on_both = job_factory(self.company, self.user)
+        job_on_both.site_packages.add(both_sites_package)
+        job_on_both.save()
+
+        job_on_new_site = job_factory(self.company, self.user)
+        job_on_new_site.site_packages.add(single_site_package)
+        job_on_new_site.save()
+
+        self.assertEqual(Job.objects.all().count(), 2)
+        count = Job.objects.filter_by_sites([site_in_both_packages, self.site]).count()
+        self.assertEqual(count, 2)
+        self.assertEqual(Job.objects.filter_by_sites([self.site]).count(), 1)
