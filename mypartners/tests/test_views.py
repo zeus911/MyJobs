@@ -1229,7 +1229,7 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
                 self.assertIn(tag, partner.tags.values_list('name', flat=True))
 
         if library.is_disabled:
-            self.assertIn(tag, partner.tags.values_list('name', flat=True))
+            self.assertIn('Disability', partner.tags.values_list('name', flat=True))
 
         self.assertIn(
             "OFCCP Library", partner.tags.values_list('name', flat=True))
