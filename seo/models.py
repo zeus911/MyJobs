@@ -580,7 +580,7 @@ class Company(models.Model):
                 {"name": "Veteran", "hex_color": "5EB94E"},
                 {"name": "Female", "hex_color": "4BB1CF"},
                 {"name": "Minority", "hex_color": "FAA732"},
-                {"name": "Disabled", "hex_color": "808A9A"},
+                {"name": "Disability", "hex_color": "808A9A"},
                 {"name": "Disabled Veteran", "hex_color": "659274"}
             ]
             for tag in default_tags:
