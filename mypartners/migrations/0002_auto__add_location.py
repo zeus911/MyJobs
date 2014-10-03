@@ -17,6 +17,7 @@ class Migration(SchemaMigration):
             ('state', self.gf('django.db.models.fields.CharField')(max_length=200, blank=True)),
             ('country_code', self.gf('django.db.models.fields.CharField')(max_length=3, blank=True)),
             ('postal_code', self.gf('django.db.models.fields.CharField')(max_length=12, blank=True)),
+            ('label', self.gf('django.db.models.fields.CharField')(max_length=60, blank=True)),
         ))
         db.send_create_signal(u'mypartners', ['Location'])
 
@@ -146,6 +147,7 @@ class Migration(SchemaMigration):
             'city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'country_code': ('django.db.models.fields.CharField', [], {'max_length': '3', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'label': ('django.db.models.fields.CharField', [], {'max_length': '60', 'blank': 'True'}),
             'postal_code': ('django.db.models.fields.CharField', [], {'max_length': '12', 'blank': 'True'}),
             'state': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'})
         },

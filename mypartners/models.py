@@ -49,6 +49,8 @@ class Location(models.Model):
                                     blank=True)
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
+    label = models.CharField(max_length=60, verbose_name='Address Label',
+                             blank=True)
 
     def __unicode__(self):
         return (", ".join([self.city, self.state]) if self.city and self.state
