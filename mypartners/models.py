@@ -155,6 +155,17 @@ def delete_contact(sender, instance, using, **kwargs):
             pss.save()
 
 
+@receiver(pre_delete, sender=Contact,
+          dispatch_uid='post_delete_contact_signal')
+def delete_contact_locations(sender, instance, **kwargs):
+    """
+    Since locations will more than likely be specific to a contact, we should
+    be able to delete all of a contact's locations when that contact is
+    deleted.
+    """
+    instance.locations.all().delete()
+
+
 class Partner(models.Model):
     """
     Object that this whole app is built around.
