@@ -1180,10 +1180,13 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
 
         # test that appropriate tags created
         library = PartnerLibrary.objects.get(id=library_id)
-        for tag in ['Veteran', 'Disabled', 'Disabled Veteran',  
+        for tag in ['Veteran', 'Disabled Veteran',  
                     'Female', 'Minority']:
             if getattr(library, 'is_%s' % tag.lower().replace(' ', '_')):
                 self.assertIn(tag, partner.tags.values_list('name', flat=True))
+
+        if library.is_disabled:
+            self.assertIn('Disability', partner.tags.values_list('name', flat=True))
 
         self.assertIn(
             "OFCCP Library", partner.tags.values_list('name', flat=True))
