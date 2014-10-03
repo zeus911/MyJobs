@@ -417,9 +417,14 @@ def filter_partners(request, partner_library=False):
     tags = [tag.strip() for tag in request.REQUEST.get('tag', '').split(',') if tag]
     keywords = [keyword.strip() for keyword in request.REQUEST.get(
         'keywords', '').split(',') if keyword]
+    
 
     if partner_library:
-        special_interest = request.REQUEST.getlist('special_interest')[:]
+        special_interest = [
+            si if si != "disability" else "disabled" 
+            for si in request.REQUEST.getlist('special_interest')]
+
+
         library_ids = Partner.objects.exclude(
             library__isnull=True).values_list('library', flat=True)
         # hide partners that the user has already added 
@@ -443,12 +448,27 @@ def filter_partners(request, partner_library=False):
 
         query = Q(interests | unspecified)
     else:
+        start_date = request.REQUEST.get('start_date')
+        end_date = request.REQUEST.get('end_date')
+
         partners = Partner.objects.select_related('contact')
-        query = Q(owner=get_company_or_404(request).id)
         contact_city = 'contact__city'
         contact_state = 'contact__state'
         sort_by.replace('city', 'contact__city')
         order_by = []
+
+        query = Q(owner=get_company_or_404(request).id)
+
+        # If both start and end date are passed, we should filter, creating
+        # reasonable bounds for either one if they are missing. Otherwise, we
+        # don't filter by either.
+        if any([start_date, end_date]):
+            start_date = datetime.strptime(
+                start_date or '11/30/1899', '%m/%d/%Y')
+            end_date = datetime.strptime(
+                end_date or datetime.now().strftime('%m/%d/%Y'), '%m/%d/%Y')
+            end_date = end_date.replace(hour=23, minute=59, second=59)
+            query &= Q(contactrecord__date_time__range=[start_date, end_date])
 
     for keyword in keywords:
         query &= (Q(name__icontains=keyword) | Q(uri__icontains=keyword) |
@@ -489,6 +509,15 @@ def filter_partners(request, partner_library=False):
                   [contact_city, contact_state]])
 
         partners = list(OrderedSet(list(partners) + list(incomplete_partners)))
+    elif "activity" in sort_by:
+        if sort_order:
+            partners = partners.annotate(
+                earliest_activity=Min('contactrecord__date_time')).order_by(
+                    '-earliest_activity')
+        else:
+            partners = partners.annotate(
+                latest_activity=Max('contactrecord__date_time')).order_by(
+                    'latest_activity')
     else:
         partners = partners.order_by(*[sort_by] + order_by)
 
@@ -505,8 +534,7 @@ def new_partner_from_library(request):
     library = get_object_or_404(PartnerLibrary, pk=library_id)
 
     tags = []
-    for interest, color in [('disabled', '808A9A'),
-                            ('disabled_veteran', '659274'),
+    for interest, color in [('disabled_veteran', '659274'),
                             ('female', '4BB1CF'),
                             ('minority', 'FAA732'),
                             ('veteran', '5EB94E')]:
@@ -516,6 +544,12 @@ def new_partner_from_library(request):
                 company=company, name=interest.replace('_', ' ').title(),
                 defaults={'hex_color': color})
             tags.append(tag)
+
+    if library.is_disabled:
+        tag, _ = Tag.objects.get_or_create(
+            company=company, name="Disability",
+            defaults={'hex_color': '808A9A'})
+        tags.append(tag)
 
     tags.append(Tag.objects.get_or_create(
         company=company, name='OFCCP Library')[0])

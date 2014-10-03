@@ -17,11 +17,14 @@
         }
     }
 </style>
-{% endblock meta-extra  %}
+
+<link rel="stylesheet" href="{{STATIC_URL}}pickadate/themes/classic.css" id="theme_base">
+<link rel="stylesheet" href="{{STATIC_URL}}pickadate/themes/classic.date.css" id="theme_date">
+{% endblock meta-extra %}
 
 {% block content %}
     {% include "mypartners/includes/prm_header.html" with page_title="Partner Relationship Manager" %}
-    {% if not partners %}
+    {% if not company.partner_set.all %}
         <div class="row">
             <div class="span8 offset2">
                 <div class="row centered">
@@ -47,7 +50,7 @@
                 {% include "mypartners/includes/partner_column.html" with on_page="prm" %}
             </div>
             <div id="sidebar-holder" class="span4">
-                {% include "mypartners/includes/partner_sidebar.html" with filters=True navigation=True filter_tag=True special_interest=False %}
+                {% include "mypartners/includes/partner_sidebar.html" with on_page="prm" filters=True navigation=True filter_tag=True special_interest=False %}
             </div>
         </div>
     {% endif %}
@@ -55,11 +58,14 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}prm.156-10.js{{ gz }}"></script>
 <script>
     $("body").on("click", ".product-card", function() {
         var partner_id = $(this).attr("id").split("-")[1];
         location.href="{% url 'partner_overview' %}?partner="+partner_id;
     });
 </script>
+<script src="{{ STATIC_URL }}prm.156-18.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}pickadate/picker.js"></script>
+<script src="{{ STATIC_URL }}pickadate/picker.date.js"></script>
+<script src="{{ STATIC_URL }}pickadate/legacy.js"></script>
 {% endblock %}

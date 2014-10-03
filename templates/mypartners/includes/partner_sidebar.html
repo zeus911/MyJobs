@@ -12,6 +12,10 @@
         <label>Tag:</label>
         <input id="lib-tag" type="text" placeholder="Tag" {% if request.GET.tag %}value="{{request.GET.tag}}"{% endif %} />
         {% endif %}
+        {% if on_page = "prm" %}
+        <label>Last Activity:</label>
+        {% include "mypartners/includes/date_widget.html" %}
+        {% endif %}
 
         {% if special_interest %}
         <label>Special Interest:</label>
@@ -19,7 +23,7 @@
             <div class="partner-tag veteran button disabled-tag" title="Click to filter">Veteran</div>
             <div class="partner-tag female button disabled-tag" title="Click to filter">Female</div>
             <div class="partner-tag minority button disabled-tag" title="Click to filter">Minority</div>
-            <div class="partner-tag disabled button disabled-tag" title="Click to filter">Disabled</div>
+            <div class="partner-tag disabled button disabled-tag" title="Click to filter">Disability</div>
             <div class="partner-tag disabled-veteran button disabled-tag" title="Click to filter">Disabled Veteran</div>
             <div class="partner-tag unspecified button disabled-tag" title="Click to filter">Unspecified</div>
         </div>
@@ -43,3 +47,4 @@
     </div>
     {% endif %}
 </div>
+
