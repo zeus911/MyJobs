@@ -209,7 +209,7 @@ def get_records_from_request(request):
         range_start = range_start.astimezone(pytz.utc)
         range_end = range_end.astimezone(pytz.utc)
 
-    date_range = int(date_range or 0)
+    date_range = int(date_range or 30)
     if date_range == 0:
         date_str = "View All"
         range_start = records.aggregate(Min('date_time')).get(
@@ -217,7 +217,7 @@ def get_records_from_request(request):
         range_end = records.aggregate(Max('date_time')).get(
             'date_time__max', now())
     else:
-        date_range = int(date_range)
+        date_range = int(date_range or 30)
         range_start = range_start or now() - timedelta(date_range)
         range_end = range_end or now()
 
