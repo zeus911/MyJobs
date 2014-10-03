@@ -32,7 +32,6 @@ from universal.helpers import get_company, get_int_or_none, add_pagination
 from universal.decorators import company_has_access
 from myjobs.models import User
 from mydashboard.helpers import get_company_microsites
-from seo.models import Company
 from mysearches.models import PartnerSavedSearch
 from mysearches.helpers import (url_sort_options, parse_feed,
                                 get_interval_from_frequency)
@@ -202,7 +201,6 @@ def edit_item(request):
     else:
         raise Http404
 
-
     ctx = {
         'form': form,
         'partner': partner,
@@ -218,7 +216,6 @@ def edit_item(request):
 
 @company_has_access('prm_access')
 def save_init_partner_form(request):
-    company = get_company(request)
     if 'partnername' in request.POST:
         form = NewPartnerForm(user=request.user, data=request.POST)
     else:
@@ -356,7 +353,6 @@ def prm_overview(request):
     most_recent_communication = communication[:3]
     saved_searches = partner.get_searches()
     most_recent_saved_searches = saved_searches[:3]
-
 
     ctx = {'partner': partner,
            'company': company,
@@ -634,9 +630,9 @@ def prm_records(request):
 
     contact_type_choices = list(CONTACT_TYPE_CHOICES)
     try:
+        contact_type_choices.append(('all', 'All'))
         index = [x[0] for x in contact_type_choices].index(contact_type)
         contact_type_choices.insert(0, contact_type_choices.pop(index))
-        contact_type_choices.append(('all', 'All'))
     except ValueError:
         contact_type_choices.insert(0, ('all', 'All'))
     try:
