@@ -630,9 +630,9 @@ def prm_records(request):
 
     contact_type_choices = list(CONTACT_TYPE_CHOICES)
     try:
-        contact_type_choices.append(('all', 'All'))
         index = [x[0] for x in contact_type_choices].index(contact_type)
         contact_type_choices.insert(0, contact_type_choices.pop(index))
+        contact_type_choices.insert(0, ('all', 'All'))
     except ValueError:
         contact_type_choices.insert(0, ('all', 'All'))
     try:
