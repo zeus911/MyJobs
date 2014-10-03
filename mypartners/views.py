@@ -225,14 +225,6 @@ def save_init_partner_form(request):
         form = PartnerInitialForm(user=request.user, data=request.POST)
     if form.is_valid():
         form.save()
-        # TODO: Remove commented code.
-        # form's model is Contact. The only way to access partner information
-        # consistently is to go through cleaned_data as .data will return
-        # just Contact fields.
-        #partner_id = Partner.objects.get(
-        #    name=form.cleaned_data['partnername'], owner=company).id
-        #return HttpResponseRedirect(reverse('partner_overview') +
-        #                            "?partner="+partner_id)
         return HttpResponse(status=200)
     else:
         return HttpResponse(json.dumps(form.errors))
