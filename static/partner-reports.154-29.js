@@ -219,7 +219,7 @@ function submit_date_range_from_li (e) {
         range = 0;
     params = update_query('date_start', '', window.location.search);
     params = update_query('date_end', '', params);
-    window.location = '/prm/view/reports/details' + update_query('date', range, params)
+    window.location = location.pathname + update_query('date', range, params)
 }
 
 
@@ -247,7 +247,7 @@ function dropdown(e) {
 
 
 function go_to_records(e) {
-    url = "/prm/view/reports/details/records/?partner="+String(partner_id)+"&record_type="+ e.currentTarget.id;
+    url = "/prm/view/records?partner="+String(partner_id)+"&contact_type="+ e.currentTarget.id;
     if(admin_id != 'None') {
         url += '&admin=' + admin_id;
     }
@@ -316,7 +316,7 @@ function add_links(chart, json, size){
             date_end = getQueryVariable("date_end"),
             date = getQueryVariable("date");
 
-        button.attr('href', '/prm/view/reports/details/records/?company='
+        button.attr('href', '/prm/view/records?company='
             + String(company_id)
             + '&partner=' + String(partner_id) 
             + '&date_start=' + String(date_start) 
