@@ -55,7 +55,6 @@ class Location(models.Model):
                 else self.city or self.state)
 
     def save(self, **kwargs):
-        self.generate_guid()
         super(Location, self).save(**kwargs)
 
 
