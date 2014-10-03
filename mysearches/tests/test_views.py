@@ -65,6 +65,7 @@ class MySearchViewTests(MyJobsBase):
         self.assertFalse('digest-option' in response.content)
 
         self.assertTrue(self.new_form.is_valid())
+        self.new_form.save()
         response = self.client.get(reverse('saved_search_main'))
         self.assertTrue('Digest Options' in response.content)
         self.assertTrue('digest-option' in response.content)
