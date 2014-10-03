@@ -218,12 +218,21 @@ def edit_item(request):
 
 @company_has_access('prm_access')
 def save_init_partner_form(request):
+    company = get_company(request)
     if 'partnername' in request.POST:
         form = NewPartnerForm(user=request.user, data=request.POST)
     else:
         form = PartnerInitialForm(user=request.user, data=request.POST)
     if form.is_valid():
         form.save()
+        # TODO: Remove commented code.
+        # form's model is Contact. The only way to access partner information
+        # consistently is to go through cleaned_data as .data will return
+        # just Contact fields.
+        #partner_id = Partner.objects.get(
+        #    name=form.cleaned_data['partnername'], owner=company).id
+        #return HttpResponseRedirect(reverse('partner_overview') +
+        #                            "?partner="+partner_id)
         return HttpResponse(status=200)
     else:
         return HttpResponse(json.dumps(form.errors))
@@ -348,6 +357,7 @@ def prm_overview(request):
     range_start, range_end = [now() + timedelta(-30), now()]
     records = partner.get_contact_records(date_start=range_start,
                                           date_end=range_end)
+    total_records = partner.get_contact_records().count()
     communication = records.order_by('-date_time')
     referrals = records.filter(contact_type='job').count()
     records = records.exclude(contact_type='job').count()
@@ -355,8 +365,6 @@ def prm_overview(request):
     saved_searches = partner.get_searches()
     most_recent_saved_searches = saved_searches[:3]
 
-    older_records = partner.get_contact_records()
-    older_records = older_records.exclude(date_time__gte=now() + timedelta(-30))
 
     ctx = {'partner': partner,
            'company': company,
@@ -366,8 +374,7 @@ def prm_overview(request):
            'count': records,
            'referrals': referrals,
            'view_name': 'PRM',
-           'num_older_records': older_records.count(),
-           'num_other_records': saved_searches.count() - 3, }
+           'total_records': total_records}
 
     return render_to_response('mypartners/overview.html', ctx,
                               RequestContext(request))
@@ -439,6 +446,19 @@ def prm_saved_searches(request):
     """
     company, partner, user = prm_worthy(request)
     saved_searches = partner.get_searches()
+    saved_searches = add_pagination(request, saved_searches)
+    if request.is_ajax():
+        ctx = {
+            'partner': partner,
+            'searches': saved_searches
+        }
+        response = HttpResponse()
+        html = render_to_response(
+            'mypartners/includes/searches_column.html', ctx,
+            RequestContext(request))
+        response.content = html.content
+        return response
+
     ctx = {
         'searches': saved_searches,
         'company': company,
@@ -584,8 +604,8 @@ def partner_view_full_feed(request):
         'items': items,
         'view_name': 'Saved Searches',
         'is_pss': True,
-        'partner': partner.id,
-        'company': company.id,
+        'partner': partner,
+        'company': company,
         'start_date': start_date,
         'count': count,
     }
@@ -610,6 +630,7 @@ def prm_records(request):
 
     if request.is_ajax():
         ctx = {
+            'partner': partner,
             'records': paginated_records
         }
         response = HttpResponse()
@@ -682,9 +703,9 @@ def prm_edit_records(request):
                                  partner=partner, instance=instance)
         if form.is_valid():
             form.save(user, partner)
-            return HttpResponseRedirect(reverse('partner_records') +
-                                        '?company=%d&partner=%d' %
-                                        (company.id, partner.id))
+            return HttpResponseRedirect(reverse('record_view') +
+                                        '?partner=%d&id=%d' %
+                                        (partner.id, form.instance.id))
     else:
         form = ContactRecordForm(partner=partner, instance=instance)
 

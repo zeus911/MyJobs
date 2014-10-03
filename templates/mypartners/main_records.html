@@ -6,21 +6,31 @@
 {% block site-title %}
     {% with name_obj=user.full_name %}
         <title>PRM Overview - {{ company.name }}</title>
-        <meta name="title" content="PRM Overview - {{ company.name }}">
+        <meta name="title" content="Communication Records - {{ company.name }}">
     {% endwith %}
 {% endblock %}
 {% load i18n %}
+
+{% block meta-extra %}
+<link rel="stylesheet" href="{{STATIC_URL}}pickadate/themes/classic.css" id="theme_base">
+<link rel="stylesheet" href="{{STATIC_URL}}pickadate/themes/classic.date.css" id="theme_date">
+{% endblock meta-extra %}
 
 {% block content %}
     {% include "mypartners/includes/prm_header.html" with page_title="Communication Records" back_to="Back to Overview" back_to_url="partner_overview" back_to_string="?partner=" add_partner_to_end=True date_range=False download=True %}
     <div class="row">
         <span class="span8">
-            {% include "mypartners/includes/contact_record_column.html" %}
+            {% if records %}
+                {% include "mypartners/includes/contact_record_column.html" %}
+            {% else %}
+                No records available.
+            {% endif %}
         </span>
 
         <span class="span4">
             <div class="sidebar">
                 <h2 class="top">Filters</h2>
+                <input id="p-id" type="hidden" value="{{partner.id}}" />
                 <label>Contact</label>
                 <select id="record_contact" name="record_contact">
                     {% for contact in contact_choices %}
@@ -33,7 +43,8 @@
                         <option value="{{ contact_type.0 }}">{{ contact_type.1 }}</option>
                     {% endfor %}
                 </select>
-                <input id="p-id" type="hidden" value="{{partner.id}}" />
+                <label>Date Range</label>
+                {% include "mypartners/includes/date_widget.html" %}
                 <div class="navigation">
                     <h2>Navigation</h2>
                     <a class="btn" href="{% url 'partner_edit_record' %}?partner={{ partner.id }}">New Record</a>
@@ -45,5 +56,8 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}record_overview.156-24.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}record_overview.157-03.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}pickadate/picker.js"></script>
+<script src="{{ STATIC_URL }}pickadate/picker.date.js"></script>
+<script src="{{ STATIC_URL }}pickadate/legacy.js"></script>
 {% endblock %}

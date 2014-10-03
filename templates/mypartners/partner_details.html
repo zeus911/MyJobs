@@ -54,6 +54,10 @@
             <div class="sidebar">
                 <h2 class="top">Tips</h2>
                 You can only have one primary contact, but you can change it any time.
+                <div class="navigation">
+                    <h2>Navigation</h2>
+                    <a class="btn" href="{% url 'edit_contact' %}?partner={{ partner.id }}&ct={{ contact_ct }}">New Contact</a>
+                </div>
             </div>
         </div>
     </div>
@@ -63,11 +67,17 @@
             <div class="card-wrapper">
                 <div class="wrapper-header">
                     <h4>Manage Contacts</h4>
-                    <a class="pull-right" href="{% url 'edit_contact' %}?partner={{ partner.id }}&ct={{ contact_ct }}">New Contact</a>
+
                 </div>
-                {% for contact in contacts %}
-                {% include "mypartners/includes/contact_card.html" %}
-                {% endfor %}
+                {% if contacts %}
+                    {% for contact in contacts %}
+                    {% include "mypartners/includes/contact_card.html" %}
+                    {% endfor %}
+                {% else %}
+                    <div class="product-card not-clickable">
+                        There are no contacts for {{partner.name}}.
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -75,5 +85,12 @@
 
 {% block extra-js %}
 <script src="{{ STATIC_URL }}tag-it.min.js{{ gz }}"></script>
-<script src="{{ STATIC_URL }}prm.156-18.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}prm.157-03.js{{ gz }}"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    $(".product-card:not(.not-clickable)").on("click", function() {
+       window.location = $(this).find("a").attr("href");
+    });
+});
+</script>
 {% endblock %}

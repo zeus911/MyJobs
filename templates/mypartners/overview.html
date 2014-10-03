@@ -4,8 +4,8 @@
 {% gz as gz %}
 {% block site-title %}
     {% with name_obj=user.full_name %}
-        <title>PRM Overview - {{ company.name }}</title>
-        <meta name="title" content="PRM Overview - {{ company.name }}">
+        <title>Overview - {{ company.name }}</title>
+        <meta name="title" content="Overview - {{ company.name }}">
     {% endwith %}
 {% endblock %}
 {% load i18n %}
@@ -27,10 +27,17 @@
                 <div class="wrapper-header">
                     <h4>Most Recent Communication Records</h4>
                 </div>
-                {% for record in recent_communication %}
-                    {% include "mypartners/includes/record_card.html" %}
-                {% endfor %}
+                {% if recent_communication %}
+                    {% for record in recent_communication %}
+                        {% include "mypartners/includes/record_card.html" %}
+                    {% endfor %}
+                {% else %}
+                    <div class="product-card not-clickable">
+                        No recent communication records.
+                    </div>
+                {% endif %}
                 <div class="wrapper-footer">
+                    {% if total_records > 0 %}Showing {{recent_communication|length}} of {{total_records}} records{% endif %}
                     <a class="pull-right" href="{% url 'partner_records' %}?partner={{partner.id}}">Manage Records</a>
                     <div class="clearfix"></div>
                 </div>
@@ -40,9 +47,15 @@
                 <div class="wrapper-header">
                     <h4>Most Recent Saved Searches</h4>
                 </div>
-                {% for search in recent_ss %}
-                    {% include "mypartners/includes/pss_card.html" %}
-                {% endfor %}
+                {% if recent_ss %}
+                    {% for search in recent_ss %}
+                        {% include "mypartners/includes/pss_card.html" %}
+                    {% endfor %}
+                {% else %}
+                    <div class="product-card not-clickable">
+                        No recent saved searches.
+                    </div>
+                {% endif %}
                 <div class="wrapper-footer">
                     <a class="pull-right" href="{% url 'partner_searches' %}?partner={{ partner.id }}">Manage Searches</a>
                     <div class="clearfix"></div>
@@ -69,11 +82,15 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}partner-overview.152-13.js{{ gz }}"></script>
 <script src="{{ STATIC_URL }}partner-reports.154-29.js{{ gz }}"></script>
 
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
+    $(document).ready(function() {
+        $(".product-card:not(.not-clickable)").on("click", function() {
+           window.location = $(this).find("a").attr("href");
+        });
+    });
     google.load("visualization", "1", {packages:["corechart"]});
     var company_id = {{ company.id }};
     var partner_id = {{ partner.id }};

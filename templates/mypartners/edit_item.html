@@ -60,30 +60,21 @@
             </div>
         </div>{# /delete-confirm #}
         <div class="span4">
-            <div class="tip-box">
-                <h4>Tips</h4>
-                <div class="tip-content">
-                    {% if not partner %}
-                    After creating a Partner, you can add additional contacts from the
-                    Partner Page. This is helpful if you have more than one location
-                    or contact for this partner.
-                    {% else %}
-                    You can filter partner reports based on a contact's city,
-                    but you need to be sure the following fields are completed:
-                    <ul>
-                        <li>- City</li>
-                        <li>- State/Region</li>
-                        <li>- Country</li>
-                    </ul>
-                    {% endif %}
-                </div>
-                <div class="tip-footer">
-                    {% if not partner %}
-                    <a class="btn-link" href="{% url 'prm' %}">Back to Partner Relationship Manager</a>
-                    {% else %}
-                    <a class="btn-link" href="{% url 'partner_details' %}?partner={{ partner.id }}">Back to Partner Details</a>
-                    {% endif %}
-                </div>
+            <div class="sidebar">
+                <h2 class="top">Tips</h2>
+                {% if not partner %}
+                After creating a Partner, you can add additional contacts from the
+                Partner Page. This is helpful if you have more than one location
+                or contact for this partner.
+                {% else %}
+                You can filter partner reports based on a contact's city,
+                but you need to be sure the following fields are completed:
+                <ul>
+                    <li>- City</li>
+                    <li>- State/Region</li>
+                    <li>- Country</li>
+                </ul>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -91,5 +82,5 @@
 
 {% block extra-js %}
 <script src="{{ STATIC_URL }}tag-it.min.js{{ gz }}"></script>
-<script src="{{ STATIC_URL }}prm.156-18.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}prm.157-03.js{{ gz }}"></script>
 {% endblock %}

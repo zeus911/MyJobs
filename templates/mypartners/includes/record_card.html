@@ -1,6 +1,6 @@
 <div class="product-card">
     <div class="big-title">
-        {{ record.subject }} {% if record.contact_name %} {% if record.subject %}for{% endif %} {{record.contact_name}} {% endif %}
+        {{ record.subject }} {% if record.contact_name %} {% if record.subject %}-{% endif %} {{record.contact_name}} {% endif %}
     </div>
     <div class="sub-title">
         {{ record.shorten_date_time }} - {{ record.get_human_readable_contact_type }}
