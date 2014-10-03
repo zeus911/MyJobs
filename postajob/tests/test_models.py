@@ -337,6 +337,18 @@ class ModelTests(MyJobsBase):
             offline_purchase.create_purchased_products(self.company)
             self.assertEqual(PurchasedProduct.objects.all().count(), x*2)
 
+    def test_product_filter_by_sites(self):
+        for x in range(8800, 8815):
+            domain = 'testsite-%s.jobs' % x
+            site = SeoSiteFactory(id=x, domain=domain, name=domain)
+            site_package = sitepackage_factory(self.company)
+            site_package.make_unique_for_site(site)
+            for y in range(1, 5):
+                product_factory(site_package, self.company)
+            self.assertEqual(Product.objects.filter_by_sites([site]).count(), 4)
+
+        self.assertEqual(Product.objects.all().count(), 60)
+
     def test_job_filter_by_sites(self):
         for x in range(8800, 8815):
             domain = 'testsite-%s.jobs' % x
@@ -369,6 +381,37 @@ class ModelTests(MyJobsBase):
 
         self.assertEqual(PurchasedJob.objects.all().count(), 60)
 
+    def test_product_filter_by_site_multiple_sites(self):
+        site_in_both_packages = SeoSiteFactory(domain='secondsite.jobs', id=7)
+
+        single_site_package = sitepackage_factory(self.company)
+        single_site_package.make_unique_for_site(site_in_both_packages)
+
+        both_sites_package = sitepackage_factory(self.company)
+        both_sites_package.sites.add(site_in_both_packages)
+        both_sites_package.sites.add(self.site)
+        both_sites_package.save()
+
+        product_factory(single_site_package, self.company)
+        product_factory(both_sites_package, self.company)
+
+        self.assertEqual(Product.objects.all().count(), 2)
+
+        # Confirm that filtering by both sites gets both jobs.
+        both_sites = [site_in_both_packages, self.site]
+        count = Product.objects.filter_by_sites(both_sites).count()
+        self.assertEqual(count, 2)
+
+        # Confirm that filtering by the site that only has one job only
+        # gets one job.
+        count = Product.objects.filter_by_sites([self.site]).count()
+        self.assertEqual(count, 1)
+
+        # Confirm that filtering by the site the site that has both jobs gets
+        # both jobs.
+        count = Product.objects.filter_by_sites([site_in_both_packages]).count()
+        self.assertEqual(count, 2)
+
     def test_job_filter_by_site_multiple_sites(self):
         site_in_both_packages = SeoSiteFactory(domain='secondsite.jobs', id=7)
 
@@ -389,6 +432,17 @@ class ModelTests(MyJobsBase):
         job_on_new_site.save()
 
         self.assertEqual(Job.objects.all().count(), 2)
-        count = Job.objects.filter_by_sites([site_in_both_packages, self.site]).count()
+
+        # Confirm that filtering by both sites gets both jobs.
+        both_sites = [site_in_both_packages, self.site]
+        count = Job.objects.filter_by_sites(both_sites).count()
         self.assertEqual(count, 2)
+
+        # Confirm that filtering by the site that only has one job only
+        # gets one job.
         self.assertEqual(Job.objects.filter_by_sites([self.site]).count(), 1)
+
+        # Confirm that filtering by the site the site that has both jobs gets
+        # both jobs.
+        count = Job.objects.filter_by_sites([site_in_both_packages]).count()
+        self.assertEqual(count, 2)

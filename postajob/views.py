@@ -2,6 +2,7 @@ from datetime import date
 import itertools
 import json
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import Http404, reverse, reverse_lazy, resolve
 from django.http import HttpResponse
@@ -27,9 +28,13 @@ from universal.views import RequestFormViewBase
 
 @company_has_access('prm_access')
 def jobs_overview(request):
+    if settings.SITE:
+        jobs = Job.objects.filter_by_sites([settings.SITE])
+    else:
+        jobs = Job.objects.all()
     company = get_company(request)
     data = {
-        'jobs': Job.objects.filter(owner=company, purchasedjob__isnull=True),
+        'jobs': jobs.filter(owner=company, purchasedjob__isnull=True),
     }
     return render_to_response('postajob/jobs_overview.html', data,
                               RequestContext(request))
@@ -39,8 +44,12 @@ def jobs_overview(request):
 def purchasedjobs_overview(request):
     company = get_company(request)
     products = PurchasedProduct.objects.filter(owner=company)
+    if settings.SITE:
+        jobs = PurchasedJob.objects.filter_by_sites([settings.SITE])
+    else:
+        jobs = PurchasedJob.objects.all()
     data = {
-        'jobs': PurchasedJob.objects.filter(owner=company),
+        'jobs': jobs.filter(owner=company),
         'active_products': products.filter(expiration_date__gte=date.today()),
         'expired_products': products.filter(expiration_date__lt=date.today()),
     }

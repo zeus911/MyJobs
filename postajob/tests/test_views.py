@@ -194,16 +194,17 @@ class ViewTests(MyJobsBase):
         mock_obj = Mock()
         mock_obj.read.side_effect = self.side_effect
         urlopen_mock.return_value = mock_obj
+
+        resp_url = reverse('jobs_overview')
+
         job = job_factory(self.company, self.user)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_update', kwargs=kwargs),
                                     data=self.job_form_data)
-        self.assertRedirects(response, 'http://testserver/postajob/jobs/',
-                             status_code=302)
+        self.assertRedirects(response, resp_url, status_code=302)
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
-        self.assertRedirects(response, 'http://testserver/postajob/jobs/',
-                             status_code=302)
+        self.assertRedirects(response, resp_url, status_code=302)
 
     @patch('urllib2.urlopen')
     def test_job_add(self, urlopen_mock):

@@ -591,7 +591,26 @@ class ProductOrder(models.Model):
     display_order = models.PositiveIntegerField(default=0)
 
 
+class ProductMixin(object):
+    def filter_by_sites(self, sites):
+        # Ideally we'd be using only self.filter(site_packages__sites__in=sites)
+        # but we can't use distinct() here.
+        products = self.filter(package__sitepackage__sites__in=sites)
+        return self.filter(id__in=products.values_list('id', flat=True))
+
+
+class ProductQuerySet(QuerySet, ProductMixin):
+    pass
+
+
+class ProductManager(models.Manager, ProductMixin):
+    def get_query_set(self):
+        return PackageQuerySet(self.model, using=self._db)
+
+
 class Product(BaseModel):
+    objects = ProductManager()
+
     posting_window_choices = ((30, '30 Days'), (60, '60 Days'),
                               (90, '90 Days'), (365, '1 Year'), )
     max_job_length_choices = ((15, '15 Days'), (30, '30 Days'), (60, '60 Days'),
