@@ -59,29 +59,39 @@
             <h2 class="top">Details {% make_label search.is_active "pull-right"%}</h2>
             <b>Search URL</b>
             <br/>
-            <a href="{{search.url}}" target="_blank">{{search.url|truncatechars:40}}</a>
+            <span>
+                <a href="{{search.url}}" target="_blank">{{search.url|truncatechars:40}}</a>
+            </span>
             <br/><br/>
             <b>Frequency</b>
             <br/>
-            {% if search.frequency == 'D' %}
-            Daily
-            {% elif search.frequency == 'W' %}
-            Weekly on {{search.get_verbose_dow}}
-            {% else %}
-            Monthly on the {{search.day_of_month|ordinal}}
-            {% endif %}
+            <span>
+                {% if search.frequency == 'D' %}
+                Daily
+                {% elif search.frequency == 'W' %}
+                Weekly on {{search.get_verbose_dow}}
+                {% else %}
+                Monthly on the {{search.day_of_month|ordinal}}
+                {% endif %}
+            </span>
             <br/><br/>
             <b>Sort By</b>
             <br/>
-            {{search.sort_by}}
+            <span>
+                {{search.sort_by}}
+            </span>
             <br/><br/>
             <b>Last Sent</b>
             <br/>
-            {% if search.last_sent %}{{search.last_sent}}{% else %}Never{% endif %}
+            <span>
+                {% if search.last_sent %}{{search.last_sent}}{% else %}Never{% endif %}
+            </span>
             <br/><br/>
             <b>Sent To</b>
             <br/>
-            {{search.email}}
+            <span>
+                {{search.email}}
+            </span>
             <br/><br/>
             <b>Tags</b>
             <br/>
@@ -90,16 +100,18 @@
                 <span class="tag-name small" style="background-color: #{{tag.hex_color}}">{{ tag.name }}</span>
                 {% endfor %}
             {% else %}
-            None Provided
+                None Provided
             {% endif %}
             <br/><br/>
             <b>Notes</b>
             <br/>
-            {% if search.notes %}
-            {{ search.notes }}
-            {% else %}
-            None Provided
-            {% endif %}
+            <span>
+                {% if search.notes %}
+                {{ search.notes }}
+                {% else %}
+                None Provided
+                {% endif %}
+            </span>
             <div class="navigation">
                 <h2>Navigation</h2>
                 <a href="{% url 'partner_edit_search' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ search.partnersavedsearch.id }}" class="btn edit">Edit</a>
