@@ -5,6 +5,7 @@ from mypartners.models import Contact, Location
 def add_locations():
     for contact in Contact.objects.all():
         contact.locations.add(Location.objects.create(
+            label=contact.label,
             address_line_one=contact.address_line_one,
             address_line_two=contact.address_line_two,
             city=contact.city,
