@@ -35,6 +35,30 @@ ACTIVITY_TYPES = {
     4: 'sent',
 }
 
+class Location(models.Model):
+    address_line_one = models.CharField(max_length=255,
+                                        verbose_name='Address Line One',
+                                        blank=True)
+    address_line_two = models.CharField(max_length=255,
+                                        verbose_name='Address Line Two',
+                                        blank=True)
+    city = models.CharField(max_length=255, verbose_name='City', blank=True)
+    state = models.CharField(max_length=200, verbose_name='State/Region',
+                             blank=True)
+    country_code = models.CharField(max_length=3, verbose_name='Country',
+                                    blank=True)
+    postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
+                                   blank=True)
+    label = models.CharField(max_length=60, verbose_name='Address Label',
+                             blank=True)
+
+    def __unicode__(self):
+        return (", ".join([self.city, self.state]) if self.city and self.state
+                else self.city or self.state)
+
+    def save(self, **kwargs):
+        super(Location, self).save(**kwargs)
+
 
 class Contact(models.Model):
     """
@@ -62,6 +86,7 @@ class Contact(models.Model):
                                     blank=True)
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
+    locations = models.ManyToManyField('Location', related_name='contacts')
     tags = models.ManyToManyField('Tag', null=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
 
@@ -128,6 +153,17 @@ def delete_contact(sender, instance, using, **kwargs):
                     'has been disabled.').format(name=instance.name)
             pss.notes += note
             pss.save()
+
+
+@receiver(pre_delete, sender=Contact,
+          dispatch_uid='post_delete_contact_signal')
+def delete_contact_locations(sender, instance, **kwargs):
+    """
+    Since locations will more than likely be specific to a contact, we should
+    be able to delete all of a contact's locations when that contact is
+    deleted.
+    """
+    instance.locations.all().delete()
 
 
 class Partner(models.Model):
