@@ -29,11 +29,11 @@
                 <input type="hidden" name="company_id" value="{{ company.id }}">
                 <input type="hidden" name="partner_id" value="{{ partner.id }}">
                 <input type="hidden" name="ct" value="{{ content_id }}">
-                {% if locations %}
-                    <div class="card-wrapper locations">
-                        <div class="wrapper-header">
-                            <h4>Locations</h4>
-                        </div>
+                <div class="card-wrapper locations">
+                    <div class="wrapper-header">
+                        <h4>{% if not contact %}Primary Contact {% endif %}Locations</h4>
+                    </div>
+                    {% if locations %}
                         {% for location in locations %}
                             <div class="product-card">
                                 <div class="big-title">
@@ -49,21 +49,25 @@
                                 <a class="btn pull-right" href="{% url "edit_location" %}">Edit</a>
                             </div>
                         {% endfor %}
-                        <div clss="partner-pagination">
-                            <span class="step-links">
-                                <a class="pull-right">Add Location</a>
-                            </span>
-                            <div class="clearfix"></div> 
+                    {% else %}
+                        <div class="product-card not-clickable">
+                            Please add a new location.
                         </div>
+                    {% endif %}
+                    <div clss="partner-pagination">
+                        <span class="step-links">
+                            <a class="pull-right" href="{% url "edit_location" %}">Add Location</a>
+                        </span>
+                        <div class="clearfix"></div> 
                     </div>
-                {% endif %}
-            <div class="actions pull-right">
-                {% if contact %}<button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
-                <a class="btn" href="{% if partner %}{% url 'partner_details' %}?partner={{ partner.id }}{% else %}{% url 'prm' %}{% endif %}">{% trans 'Cancel' %}</a>
-                <button type="submit" class="btn primary" id="{% if not partner %}init-partner-save{% else %}item-save{% endif %}">{% trans 'Save' %}</button>
-            </div>
+                </div>
+                <div class="actions pull-right">
+                    {% if contact %}<button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
+                    <a class="btn" href="{% if partner %}{% url 'partner_details' %}?partner={{ partner.id }}{% else %}{% url 'prm' %}{% endif %}">{% trans 'Cancel' %}</a>
+                    <button type="submit" class="btn primary" id="{% if not partner %}init-partner-save{% else %}item-save{% endif %}">{% trans 'Save' %}</button>
+                </div>
 
-            <div class="clear"></div>
+                <div class="clear"></div>
             </form>
         </div>
         <div id="delete-confirm" class="modal hide fade row">
