@@ -349,6 +349,20 @@ class ModelTests(MyJobsBase):
 
         self.assertEqual(Product.objects.all().count(), 60)
 
+    def test_purchasedproduct_filter_by_sites(self):
+        for x in range(8800, 8815):
+            domain = 'testsite-%s.jobs' % x
+            site = SeoSiteFactory(id=x, domain=domain, name=domain)
+            site_package = sitepackage_factory(self.company)
+            site_package.make_unique_for_site(site)
+            for y in range(1, 5):
+                product = product_factory(site_package, self.company)
+                purchasedproduct_factory(product, self.company)
+            count = PurchasedProduct.objects.filter_by_sites([site]).count()
+            self.assertEqual(count, 4)
+
+        self.assertEqual(PurchasedProduct.objects.all().count(), 60)
+
     def test_job_filter_by_sites(self):
         for x in range(8800, 8815):
             domain = 'testsite-%s.jobs' % x

@@ -486,7 +486,26 @@ class SitePackage(Package):
         self.save()
 
 
+class PurchasedProductMixin(object):
+    def filter_by_sites(self, sites):
+        # Ideally we'd be using only self.filter(site_packages__sites__in=sites)
+        # but we can't use distinct() here.
+        products = self.filter(product__package__sitepackage__sites__in=sites)
+        return self.filter(id__in=products.values_list('id', flat=True))
+
+
+class PurchasedProductQuerySet(QuerySet, PurchasedProductMixin):
+    pass
+
+
+class PurchasedProductManager(models.Manager, PurchasedProductMixin):
+    def get_query_set(self):
+        return PackageQuerySet(self.model, using=self._db)
+
+
 class PurchasedProduct(BaseModel):
+    objects = PurchasedProductManager()
+
     product = models.ForeignKey('Product')
     offline_purchase = models.ForeignKey('OfflinePurchase', null=True,
                                          blank=True)

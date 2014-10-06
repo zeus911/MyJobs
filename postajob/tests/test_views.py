@@ -856,3 +856,49 @@ class ViewTests(MyJobsBase):
         self.assertIn(grouping.display_title, response.content)
         self.assertIn(self.product.name, response.content)
 
+    def test_limit_purchasedproducts_shown_by_site_id(self):
+        product_name = 'Product Group %s%s'
+
+        for x in range(8800, 8815):
+            domain = 'testsite-%s.jobs' % x
+            site = SeoSiteFactory(id=x, domain=domain, name=domain)
+
+            setattr(settings, 'SITE', site)
+            setattr(settings, 'SITE_ID', site.id)
+
+            site_package = sitepackage_factory(self.company)
+            site_package.make_unique_for_site(site)
+            for y in range(1, 5):
+                product = product_factory(site_package, self.company,
+                                          name=product_name % (x, y))
+                purchasedproduct_factory(product, self.company)
+
+            response = self.client.get(reverse('purchasedjobs_overview'),
+                                       HTTP_HOST=domain)
+            for y in range(1, 5):
+                self.assertEqual(len(response.context['active_products']), 4)
+                self.assertIn(product_name % (x, y), response.content)
+
+    def test_limit_jobs_shown_by_site_id(self):
+        job_title = 'Job %s%s'
+
+        for x in range(8800, 8815):
+            domain = 'testsite-%s.jobs' % x
+            site = SeoSiteFactory(id=x, domain=domain, name=domain)
+
+            setattr(settings, 'SITE', site)
+            setattr(settings, 'SITE_ID', site.id)
+
+            site_package = sitepackage_factory(self.company)
+            site_package.make_unique_for_site(site)
+            for y in range(1, 5):
+                job = job_factory(self.company, self.user,
+                                  title=job_title % (x, y))
+                job.site_packages.add(site_package)
+                job.save()
+
+            response = self.client.get(reverse('jobs_overview'),
+                                       HTTP_HOST=domain)
+            for y in range(1, 5):
+                self.assertEqual(len(response.context['jobs']), 4)
+                self.assertIn(job_title % (x, y), response.content)

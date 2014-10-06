@@ -43,11 +43,13 @@ def jobs_overview(request):
 @company_has_access(None)
 def purchasedjobs_overview(request):
     company = get_company(request)
-    products = PurchasedProduct.objects.filter(owner=company)
     if settings.SITE:
+        products = PurchasedProduct.objects.filter_by_sites([settings.SITE])
         jobs = PurchasedJob.objects.filter_by_sites([settings.SITE])
     else:
+        products = Product.objects.all()
         jobs = PurchasedJob.objects.all()
+    products = products.filter(owner=company)
     data = {
         'jobs': jobs.filter(owner=company),
         'active_products': products.filter(expiration_date__gte=date.today()),
