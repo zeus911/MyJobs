@@ -1001,12 +1001,9 @@ class Configuration(models.Model):
         help_text='Include social footer on job listing pages.')
 
     # stylesheet manytomany relationship
-    css_body = models.TextField(blank=True, null=True)
-    useCssBody = models.BooleanField('Use Advanced CSS')
     backgroundColor = models.CharField(max_length=6, blank=True, null=True)
     fontColor = models.CharField(max_length=6, default='666666')
     primaryColor = models.CharField(max_length=6, default='990000')
-    secondaryColor = models.CharField(max_length=6, blank=True, null=True)
     # manage authorization
     group = models.ForeignKey('auth.Group', null=True)
     # revision field for cache key decorator

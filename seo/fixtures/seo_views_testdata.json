@@ -72,12 +72,10 @@
         "fields": {
             "defaultBlurbTitle": "", 
             "browse_facet_show": false, 
-            "useCssBody": false, 
             "browse_country_show": false, 
             "header": "", 
             "directemployers_link": "http://directemployers.org/", 
             "meta": "<link rel=\"stylesheet\" type=\"text/css\" href=\"//dn9tckvz2rpxv.cloudfront.net/css/default_config.css\" />\r\n<script type=\"text/javascript\" src=\"//dn9tckvz2rpxv.cloudfront.net/jobs.directemployers.org/cufon.js\"></script>\r\n\t\t<script type=\"text/javascript\" src=\"//dn9tckvz2rpxv.cloudfront.net/jobs.directemployers.org/Univers_LT_Std_400.font.js\"></script>\r\n\t\t<script type=\"text/javascript\">\r\n\t\t\tCufon.replace('h2,h4,table');\r\n\t\t</script>", 
-            "css_body": "", 
             "fontColor": "666666", 
             "title_tag": "jobs-in", 
             "browse_facet_order": 5, 
@@ -107,7 +105,6 @@
             "num_filter_items_to_show": 10, 
             "browse_city_text": "City", 
             "browse_state_text": "State", 
-            "secondaryColor": null,
             "group": 1,
             "browse_moc_show": false
         }
@@ -118,14 +115,12 @@
         "fields": {
             "defaultBlurbTitle": "", 
             "browse_facet_show": true, 
-            "useCssBody": false, 
             "browse_country_show": true, 
             "browse_title_show": true, 
             "browse_company_show": true,
             "header": "", 
             "directemployers_link": "http://directemployers.org/", 
 "meta": "<link rel=\"stylesheet\" type=\"text/css\" href=\"//dn9tckvz2rpxv.cloudfront.net/css/default_config.css\" />\r\n<script type=\"text/javascript\" src=\"//dn9tckvz2rpxv.cloudfront.net/jobs.directemployers.org/cufon.js\"></script>\r\n\t\t<script type=\"text/javascript\" src=\"//dn9tckvz2rpxv.cloudfront.net/jobs.directemployers.org/Univers_LT_Std_400.font.js\"></script>\r\n\t\t<script type=\"text/javascript\">\r\n\t\t\tCufon.replace('h2,h4,table');\r\n\t\t</script>", 
-            "css_body": "",
             "fontColor": "666666", 
             "title_tag": "jobs-in", 
             "browse_facet_order": 5, 
@@ -155,7 +150,6 @@
             "num_filter_items_to_show": 10, 
             "browse_city_text": "City", 
             "browse_state_text": "State", 
-            "secondaryColor": null,
             "group": 1,
             "browse_moc_show": false
         }
