@@ -144,7 +144,6 @@ class ConfigurationFactory(factory.django.DjangoModelFactory):
     browse_title_order = 1
     browse_title_show = False
     browse_title_text = ""
-    css_body = ""
     defaultBlurb = ""
     defaultBlurbTitle = "Test Blurb"
     directemployers_link = "http://directemployers.org"
@@ -160,11 +159,9 @@ class ConfigurationFactory(factory.django.DjangoModelFactory):
     num_job_items_to_show = 20
     num_subnav_items_to_show = 5
     primaryColor = "990000"
-    secondaryColor = ""
     status = 1
     title = "Default"
     title_tag = ""
-    useCssBody = False
     wide_footer = ""
     wide_header = ""
     percent_featured = 0.5

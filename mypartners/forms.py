@@ -184,8 +184,6 @@ class NewPartnerForm(forms.ModelForm):
                                          'csrfmiddlewaretoken', 'company',
                                          'company_id', 'ct'])
 
-
-
         has_data = False
         for value in self.data.itervalues():
             if value != [''] and value != ['USA']:
@@ -195,7 +193,8 @@ class NewPartnerForm(forms.ModelForm):
             instance = super(NewPartnerForm, self).save(commit)
             partner.primary_contact = instance
             # Tag creation
-            tag_data = self.cleaned_data['partner-tags'].split(',')
+            tag_data = filter(bool,
+                              self.cleaned_data['partner-tags'].split(','))
             tags = tag_get_or_create(company_id, tag_data)
             partner.tags = tags
             partner.save()
