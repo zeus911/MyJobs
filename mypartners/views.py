@@ -32,7 +32,6 @@ from universal.helpers import get_company, get_int_or_none, add_pagination
 from universal.decorators import company_has_access
 from myjobs.models import User
 from mydashboard.helpers import get_company_microsites
-from seo.models import Company
 from mysearches.models import PartnerSavedSearch
 from mysearches.helpers import (url_sort_options, parse_feed,
                                 get_interval_from_frequency)
@@ -202,7 +201,6 @@ def edit_item(request):
     else:
         raise Http404
 
-
     ctx = {
         'form': form,
         'partner': partner,
@@ -348,15 +346,13 @@ def prm_overview(request):
     range_start, range_end = [now() + timedelta(-30), now()]
     records = partner.get_contact_records(date_start=range_start,
                                           date_end=range_end)
+    total_records = partner.get_contact_records().count()
     communication = records.order_by('-date_time')
     referrals = records.filter(contact_type='job').count()
     records = records.exclude(contact_type='job').count()
     most_recent_communication = communication[:3]
     saved_searches = partner.get_searches()
     most_recent_saved_searches = saved_searches[:3]
-
-    older_records = partner.get_contact_records()
-    older_records = older_records.exclude(date_time__gte=now() + timedelta(-30))
 
     ctx = {'partner': partner,
            'company': company,
@@ -366,8 +362,7 @@ def prm_overview(request):
            'count': records,
            'referrals': referrals,
            'view_name': 'PRM',
-           'num_older_records': older_records.count(),
-           'num_other_records': saved_searches.count() - 3, }
+           'total_records': total_records}
 
     return render_to_response('mypartners/overview.html', ctx,
                               RequestContext(request))
@@ -439,6 +434,19 @@ def prm_saved_searches(request):
     """
     company, partner, user = prm_worthy(request)
     saved_searches = partner.get_searches()
+    saved_searches = add_pagination(request, saved_searches)
+    if request.is_ajax():
+        ctx = {
+            'partner': partner,
+            'searches': saved_searches
+        }
+        response = HttpResponse()
+        html = render_to_response(
+            'mypartners/includes/searches_column.html', ctx,
+            RequestContext(request))
+        response.content = html.content
+        return response
+
     ctx = {
         'searches': saved_searches,
         'company': company,
@@ -584,8 +592,8 @@ def partner_view_full_feed(request):
         'items': items,
         'view_name': 'Saved Searches',
         'is_pss': True,
-        'partner': partner.id,
-        'company': company.id,
+        'partner': partner,
+        'company': company,
         'start_date': start_date,
         'count': count,
     }
@@ -601,17 +609,30 @@ def prm_records(request):
 
     """
     company, partner, user = prm_worthy(request)
-    contact_type = request.REQUEST.get('record_type')
+    contact_type = request.REQUEST.get('contact_type')
     contact = request.REQUEST.get('contact')
 
     dt_range, date_str, contact_records = get_records_from_request(request)
-    most_recent_activity = partner.get_logs()
+    paginated_records = add_pagination(request,
+                                       contact_records.order_by('-date_time'))
+
+    if request.is_ajax():
+        ctx = {
+            'partner': partner,
+            'records': paginated_records
+        }
+        response = HttpResponse()
+        html = render_to_response(
+            'mypartners/includes/contact_record_column.html', ctx,
+            RequestContext(request))
+        response.content = html.content
+        return response
 
     contact_type_choices = list(CONTACT_TYPE_CHOICES)
     try:
         index = [x[0] for x in contact_type_choices].index(contact_type)
         contact_type_choices.insert(0, contact_type_choices.pop(index))
-        contact_type_choices.append(('all', 'All'))
+        contact_type_choices.insert(0, ('all', 'All'))
     except ValueError:
         contact_type_choices.insert(0, ('all', 'All'))
     try:
@@ -640,18 +661,13 @@ def prm_records(request):
         'date_display': date_str,
         'date_start': dt_range[0],
         'date_end': dt_range[1],
-        'most_recent_activity': most_recent_activity,
         'partner': partner,
-        'records': contact_records.order_by('-date_time'),
+        'records': paginated_records,
         'view_name': 'PRM',
     }
 
-    if request.path == reverse('prm_report_records'):
-        return render_to_response('mypartners/report_record_view.html', ctx,
-                                  RequestContext(request))
-    else:
-        return render_to_response('mypartners/main_records.html', ctx,
-                                  RequestContext(request))
+    return render_to_response('mypartners/main_records.html', ctx,
+                              RequestContext(request))
 
 
 @company_has_access('prm_access')
@@ -675,9 +691,9 @@ def prm_edit_records(request):
                                  partner=partner, instance=instance)
         if form.is_valid():
             form.save(user, partner)
-            return HttpResponseRedirect(reverse('partner_records') +
-                                        '?company=%d&partner=%d' %
-                                        (company.id, partner.id))
+            return HttpResponseRedirect(reverse('record_view') +
+                                        '?partner=%d&id=%d' %
+                                        (partner.id, form.instance.id))
     else:
         form = ContactRecordForm(partner=partner, instance=instance)
 

@@ -12,12 +12,15 @@
 {% endblock %}
 
 {% block content %}
-    <h1><a class="mobile_hide" href="{% url 'prm' %}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_details' %}?partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
-    <div class="row">
-        <div class="span12 prm-header">
-            <span>{% if contact %}Edit Contact{% elif partner %}Add Contact{% else %}Add Partner{% endif %}</span>
-        </div>
-    </div>
+    {% if partner %}
+        {% if contact %}
+        {% include "mypartners/includes/prm_header.html" with page_title="Edit Contact" back_to="Back to Partner Details" back_to_url="partner_details" back_to_string="?partner=" add_partner_to_end=True %}
+        {% else %}
+        {% include "mypartners/includes/prm_header.html" with page_title="Add Contact" back_to="Back to Partner Details" back_to_url="partner_details" back_to_string="?partner=" add_partner_to_end=True %}
+        {% endif %}
+    {% else %}
+    {% include "mypartners/includes/prm_header.html" with page_title="Add Partner" back_to="Back to Partner Relationship Manager" back_to_url="prm" %}
+    {% endif %}
     <div class="row">
         <div class="span8">
             <form method="post" action="" id="{% if not partner %}partner-form{% else %}contact-form{% endif %}">
@@ -57,30 +60,21 @@
             </div>
         </div>{# /delete-confirm #}
         <div class="span4">
-            <div class="tip-box">
-                <h4>Tips</h4>
-                <div class="tip-content">
-                    {% if not partner %}
-                    After creating a Partner, you can add additional contacts from the
-                    Partner Page. This is helpful if you have more than one location
-                    or contact for this partner.
-                    {% else %}
-                    You can filter partner reports based on a contact's city,
-                    but you need to be sure the following fields are completed:
-                    <ul>
-                        <li>- City</li>
-                        <li>- State/Region</li>
-                        <li>- Country</li>
-                    </ul>
-                    {% endif %}
-                </div>
-                <div class="tip-footer">
-                    {% if not partner %}
-                    <a class="btn-link" href="{% url 'prm' %}">Back to PRM</a>
-                    {% else %}
-                    <a class="btn-link" href="{% url 'partner_details' %}?partner={{ partner.id }}">Back to Partner Page</a>
-                    {% endif %}
-                </div>
+            <div class="sidebar">
+                <h2 class="top">Tips</h2>
+                {% if not partner %}
+                After creating a Partner, you can add additional contacts from the
+                Partner Page. This is helpful if you have more than one location
+                or contact for this partner.
+                {% else %}
+                You can filter partner reports based on a contact's city,
+                but you need to be sure the following fields are completed:
+                <ul>
+                    <li>- City</li>
+                    <li>- State/Region</li>
+                    <li>- Country</li>
+                </ul>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -88,5 +82,5 @@
 
 {% block extra-js %}
 <script src="{{ STATIC_URL }}tag-it.min.js{{ gz }}"></script>
-<script src="{{ STATIC_URL }}prm.156-18.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}prm.157-03.js{{ gz }}"></script>
 {% endblock %}

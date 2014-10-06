@@ -187,7 +187,7 @@ def get_records_from_request(request):
     contact, contact_type, admin, date_range, range_start, range_end = [
         value if value not in ["all", "undefined", ""] else None for value in [
             request.REQUEST.get(field) for field in [
-                "contact", "record_type", "admin", "date",
+                "contact", "contact_type", "admin", "date",
                 "date_start", "date_end"]]]
 
     records = partner.get_contact_records(
@@ -222,7 +222,7 @@ def get_records_from_request(request):
         range_end = range_end or now()
 
         date_str = (range_end - range_start).days
-        date_str = "%i Day"  % date_str + ("" if date_str == 1 else "s")
+        date_str = "%i Day" % date_str + ("" if date_str == 1 else "s")
 
         records = records.filter(date_time__range=[range_start, range_end])
 
