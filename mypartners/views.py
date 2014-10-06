@@ -209,6 +209,8 @@ def edit_item(request):
         'content_id': content_id,
         'view_name': 'PRM',
     }
+    if item_id:
+        ctx['locations'] = Contact.objects.get(pk=item_id).locations.all()
 
     return render_to_response('mypartners/edit_item.html', ctx,
                               RequestContext(request))
