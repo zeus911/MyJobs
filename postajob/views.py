@@ -63,10 +63,19 @@ def purchasedjobs_overview(request):
 def purchasedmicrosite_admin_overview(request):
     company = get_company(request)
 
+    if settings.SITE:
+        products = Product.objects.filter_by_sites([settings.SITE])
+        purchased = PurchasedProduct.objects.filter_by_sites([settings.SITE])
+        groupings = ProductGrouping.objects.filter_by_sites([settings.SITE])
+    else:
+        products = Product.objects.all()
+        purchased = PurchasedProduct.objects.all()
+        groupings = ProductGrouping.objects.all()
+
     data = {
-        'products': Product.objects.filter(owner=company)[:3],
-        'product_groupings': ProductGrouping.objects.filter(owner=company)[:3],
-        'purchased_products': PurchasedProduct.objects.filter(product__owner=company),
+        'products': products.filter(owner=company)[:3],
+        'product_groupings': groupings.filter(owner=company)[:3],
+        'purchased_products': purchased.filter(product__owner=company),
         'offline_purchases': OfflinePurchase.objects.filter(owner=company)[:3],
         'requests': Request.objects.filter(owner=company)[:3],
         'company': company
@@ -79,8 +88,12 @@ def purchasedmicrosite_admin_overview(request):
 @company_has_access('product_access')
 def admin_products(request):
     company = get_company(request)
+    if settings.SITE:
+        products = Product.objects.filter_by_sites([settings.SITE])
+    else:
+        products = Product.objects.all()
     data = {
-        'products': Product.objects.filter(owner=company),
+        'products': products.filter(owner=company),
         'company': company,
     }
     return render_to_response('postajob/products.html', data,
