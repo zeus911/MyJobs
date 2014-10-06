@@ -8,7 +8,8 @@ import pytz
 
 from myprofile.forms import generate_custom_widgets
 from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
-                               ADDITION, CHANGE, MAX_ATTACHMENT_MB, Tag)
+                               ADDITION, CHANGE, MAX_ATTACHMENT_MB, Tag,
+                               Location)
 from mypartners.helpers import log_change, get_attachment_link, tag_get_or_create
 from mypartners.widgets import (MultipleFileField,
                                 SplitDateTimeDropDownField, TimeDropDownField)
@@ -443,4 +444,11 @@ class TagForm(forms.ModelForm):
         form_name = "Tag"
         model = Tag
         fields = ['name', 'hex_color']
+        widgets = generate_custom_widgets(model)
+
+
+class LocationForm(forms.ModelForm):
+    class Meta:
+        form_name = "Location"
+        model = Location
         widgets = generate_custom_widgets(model)

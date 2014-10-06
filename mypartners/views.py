@@ -37,7 +37,8 @@ from mysearches.helpers import (url_sort_options, parse_feed,
                                 get_interval_from_frequency)
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
-                              NewPartnerForm, ContactRecordForm, TagForm)
+                              NewPartnerForm, ContactRecordForm, TagForm,
+                              LocationForm)
 from mypartners.models import (Partner, PartnerLibrary, Contact, ContactRecord,
                                PRMAttachment, ContactLogEntry, Tag,
                                CONTACT_TYPE_CHOICES, ADDITION, DELETION)
@@ -414,6 +415,25 @@ def edit_partner_tag(request):
             'form': form
         }
         return render_to_response('mypartners/edit_tag.html', ctx,
+                                  RequestContext(request))
+
+
+@company_has_access('prm_access')
+def edit_location(request):
+    company = get_company(request)
+
+    if request.method == 'POST':
+        form = LocationForm
+
+        if form.is_valid():
+            return HTTPResponseRedirect(reverse('edit_contact'))
+    else:
+        form = LocationForm()
+        ctx = {
+            'company': company,
+            'form': form
+        }
+        return render_to_response('mypartners/edit_location.html', ctx,
                                   RequestContext(request))
 
 
