@@ -11,13 +11,13 @@ class Migration(SchemaMigration):
         # Adding model 'Location'
         db.create_table(u'mypartners_location', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('label', self.gf('django.db.models.fields.CharField')(max_length=60, blank=True)),
             ('address_line_one', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('address_line_two', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('city', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('state', self.gf('django.db.models.fields.CharField')(max_length=200, blank=True)),
             ('country_code', self.gf('django.db.models.fields.CharField')(max_length=3, blank=True)),
             ('postal_code', self.gf('django.db.models.fields.CharField')(max_length=12, blank=True)),
-            ('label', self.gf('django.db.models.fields.CharField')(max_length=60, blank=True)),
         ))
         db.send_create_signal(u'mypartners', ['Location'])
 
