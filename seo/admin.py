@@ -177,7 +177,7 @@ class ConfigurationAdmin (admin.ModelAdmin):
                  'num_job_items_to_show')]}),
             ('Stylesheet', {'fields': [('backgroundColor', 'fontColor',
                                         'primaryColor'),
-                                       ('css_body', 'useCssBody')]}),
+                                       ]}),
             ('Template Includes', {'fields': ['meta', 'wide_header', 'header',
                                               'body', 'footer', 'wide_footer']}),
         ]

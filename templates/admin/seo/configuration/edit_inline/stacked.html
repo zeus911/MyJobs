@@ -59,19 +59,11 @@ fieldset.collapsed h2 {
                 $('#Configuration_styleSheets-'+i+' fieldset.module input, #Configuration_styleSheets-'+i+' fieldset.module textarea, #Configuration_styleSheets-'+i+' fieldset.module select[type=checkbox]').attr('name',function(j,a){return a+i});
                 if(i==0){
                   jscolor.init();
-                  importParsedCss(ssId);
                 }
             }
         });    
     }
     
-    function importParsedCss(ssId){
-        $.getJSON("/admin/parsestyle/" + ssId + "/", {},
-        function(j){
-            $('#id_css_body').val(j);
-        });
-    }
-
     $(document).ready(function() {
         //$('div.showBrowseCountry div label[for*="order"], div.showBrowseCountry div label[for*="showBrowse"]').hide();
         {% for sheet in original.styleSheets.all%}getSelectedStylesheets({{sheet.id}}, {{forloop.counter0}});{% endfor %}
@@ -79,15 +71,12 @@ fieldset.collapsed h2 {
             var thisText = $(this).text();
             if ($(this).hasClass("primaryToggle")){
               $(this).text( thisText == "(Advanced)" ? "(Novice)" : "(Advanced)");
-              $(this).parent("h3").siblings("fieldset.module").not("fieldset.hiddenFieldset").children("div.useCssBody, div.backgroundColor").toggle();               
+              $(this).parent("h3").siblings("fieldset.module").not("fieldset.hiddenFieldset").children("div.backgroundColor").toggle();               
             }
             else {
               $(this).text( thisText == "(Show)" ? "(Hide)" : "(Show)");
               $(this).parent("h3").siblings("fieldset.module").not("fieldset.hiddenFieldset").toggle();
             }
-            /*$('#btnImportCss').live('click', function(){
-                importParsedCss();
-                }); */
         });
 
         var rows = "#{{ inline_admin_formset.formset.prefix }}-group .inline-related";
