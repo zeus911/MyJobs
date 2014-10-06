@@ -37,6 +37,8 @@ ACTIVITY_TYPES = {
 }
 
 class Location(models.Model):
+    label = models.CharField(max_length=60, verbose_name='Address Label',
+                             blank=True)
     address_line_one = models.CharField(max_length=255,
                                         verbose_name='Address Line One',
                                         blank=True)
@@ -50,8 +52,6 @@ class Location(models.Model):
                                     blank=True)
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
-    label = models.CharField(max_length=60, verbose_name='Address Label',
-                             blank=True)
 
     def __unicode__(self):
         return (", ".join([self.city, self.state]) if self.city and self.state
@@ -136,6 +136,17 @@ def delete_contact(sender, instance, using, **kwargs):
                     'has been disabled.').format(name=instance.name)
             pss.notes += note
             pss.save()
+
+
+@receiver(pre_delete, sender=Contact,
+          dispatch_uid='post_delete_contact_signal')
+def delete_contact_locations(sender, instance, **kwargs):
+    """
+    Since locations will more than likely be specific to a contact, we should
+    be able to delete all of a contact's locations when that contact is
+    deleted.
+    """
+    instance.locations.all().delete()
 
 
 class Partner(models.Model):
