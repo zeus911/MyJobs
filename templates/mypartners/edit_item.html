@@ -112,6 +112,13 @@
 {% endblock %}
 
 {% block extra-js %}
+<script type="text/javascript">
+    $(document).ready(function() {
+        $(".product-card:not(.not-clickable)").on("click", function() {
+           window.location = $(this).find("a").attr("href");
+        });
+    });
+</script>
 <script src="{{ STATIC_URL }}tag-it.min.js{{ gz }}"></script>
 <script src="{{ STATIC_URL }}prm.157-03.js{{ gz }}"></script>
 {% endblock %}
