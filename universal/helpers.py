@@ -65,21 +65,22 @@ def get_company(request):
     """
     from seo.models import Company, CompanyUser
 
-    # if not request.user or request.user.is_anonymous():
-    #     return None
-    #
-    # # If settings.SITE is set we're on a microsite, so get the company
-    # # based on the microsite we're on instead.
-    # if settings.SITE and settings.SITE.domain != 'secure.my.jobs':
-    #     buids = settings.SITE.business_units.all()
-    #
-    #     kwargs = {
-    #         'user': request.user,
-    #         'company__job_source_ids__in': buids,
-    #     }
-    #     admin_for = CompanyUser.objects.filter(**kwargs)
-    #
-    #     return admin_for[0].company if admin_for else None
+    if not request.user or request.user.is_anonymous():
+        return None
+
+    # If settings.SITE is set we're on a microsite, so get the company
+    # based on the microsite we're on instead.
+    if settings.SITE:
+        buids = settings.SITE.business_units.all()
+
+        kwargs = {
+            'user': request.user,
+            'company__job_source_ids__in': buids,
+        }
+        admin_for = CompanyUser.objects.filter(**kwargs)
+
+        if admin_for:
+            return admin_for[0].company
 
     company = request.COOKIES.get('myjobs_company')
     if company:
