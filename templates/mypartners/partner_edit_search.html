@@ -12,12 +12,11 @@
 {% endblock %}
 
 {% block content %}
-    <h1><a class="mobile_hide" href="{% url 'prm' %}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
-    <div class="row">
-        <div class="span12 prm-header">
-            <span>{% if item_id %}Edit{% else %}New{% endif %} Partner Saved Search</span>
-        </div>
-    </div>
+    {% if item_id %}
+    {% include "mypartners/includes/prm_header.html" with page_title="Edit Partner Saved Search" back_to="Back to Manage Searches" back_to_url="partner_searches" back_to_string="?partner=" add_partner_to_end=True  %}
+    {% else %}
+    {% include "mypartners/includes/prm_header.html" with page_title="New Partner Saved Search" back_to="Back to Manage Searches" back_to_url="partner_searches" back_to_string="?partner=" add_partner_to_end=True  %}
+    {% endif %}
     <div class="row">
         <div class="span8">
             <form method="post" action="" id="partner-saved-search-form">
@@ -56,26 +55,16 @@
             </div>
         </div>{# /delete-confirm #}
         <div class="span4">
-            <div class="tip-box">
-                <h4>Tips</h4>
-                <div class="tip-content">
-                    Use the URL Extra field to attach source codes to each of the links.
-                </div>
-                <div class="tip-footer">
-                    <a class="btn-link" href="{% url 'partner_overview' %}?partner={{ partner.id }}">Back to Overview</a>
-                </div>
-            </div>
-
-            <div class="tip-box">
-                <h4>Your Microsites</h4>
-                <div class="tip-content">
-                    {% for microsite in microsites %}
-                        <a href="http://{{ microsite }}" target="_blank">{{ microsite }}</a><br>
-                    {% endfor %}
-                    <a href="http://my.jobs" target="_blank">www.my.jobs</a><br />
-                    <a href="http://disability.jobs" target="_blank">disability.jobs</a><br />
-                    <a href="http://veterans.jobs" target="_blank">veterans.jobs</a><br />
-                </div>
+            <div class="sidebar">
+                <h2 class="top">Tips</h2>
+                Use the URL Extra field to attach source codes to each of the links.
+                <h2>Your Microsites</h2>
+                {% for microsite in microsites %}
+                    <a href="http://{{ microsite }}" target="_blank">{{ microsite }}</a><br>
+                {% endfor %}
+                <a href="http://my.jobs" target="_blank">www.my.jobs</a><br />
+                <a href="http://disability.jobs" target="_blank">disability.jobs</a><br />
+                <a href="http://veterans.jobs" target="_blank">veterans.jobs</a><br />
             </div>
 
         </div>

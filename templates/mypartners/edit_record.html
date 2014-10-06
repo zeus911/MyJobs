@@ -16,6 +16,7 @@
     <div class="row">
         <div class="span12 prm-header">
             <span>{% if item_id %}Edit{% else %}New{% endif %} Contact Record</span>
+            <a class="mobile_hide" href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}">Back to Communication Records</a>
         </div>
     </div>
     <div class="row">
