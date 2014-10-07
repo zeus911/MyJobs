@@ -28,7 +28,7 @@ from django.utils.datastructures import SortedDict
 from django.views.decorators.csrf import csrf_exempt
 
 from email_parser import build_email_dicts, get_datetime_from_str
-from universal.helpers import get_company, get_int_or_none, add_pagination
+from universal.helpers import get_company_or_404, get_int_or_none, add_pagination
 from universal.decorators import company_has_access
 from myjobs.models import User
 from mydashboard.helpers import get_company_microsites
@@ -59,9 +59,7 @@ def prm(request):
     Partner Relationship Manager
 
     """
-    company = get_company(request)
-    if company is None:
-        raise Http404
+    company = get_company_or_404(request)
 
     if request.is_ajax():
         partners = filter_partners(request)
@@ -97,9 +95,7 @@ def prm(request):
 
 @company_has_access('prm_access')
 def partner_library(request):
-    company = get_company(request)
-    if company is None:
-        raise Http404
+    company = get_company_or_404(request)
 
     if request.is_ajax():
         partners = filter_partners(request, True)
@@ -185,7 +181,7 @@ def edit_item(request):
     except ValueError:
         raise Http404
 
-    company = get_company(request)
+    company = get_company_or_404(request)
     if partner_id and request.path == reverse('edit_contact'):
         partner = get_object_or_404(company.partner_set.all(), id=partner_id)
         if item_id:
@@ -237,7 +233,7 @@ def save_item(request):
     Generic save for Partner and Contact Forms.
 
     """
-    company = get_company(request)
+    company = get_company_or_404(request)
     content_id = int(request.REQUEST.get('ct') or 0)
 
     if content_id == ContentType.objects.get_for_model(Contact).id:
@@ -290,7 +286,7 @@ def delete_prm_item(request):
     Deletes Partners and Contacts
 
     """
-    company = get_company(request)
+    company = get_company_or_404(request)
     partner_id = request.REQUEST.get('partner')
     partner_id = get_int_or_none(partner_id)
 
@@ -374,7 +370,7 @@ def prm_overview(request):
 
 @company_has_access('prm_access')
 def partner_tagging(request):
-    company = get_company(request)
+    company = get_company_or_404(request)
 
     tags = Tag.objects.for_company(company.id).order_by('name')
 
@@ -387,7 +383,7 @@ def partner_tagging(request):
 
 @company_has_access('prm_access')
 def edit_partner_tag(request):
-    company = get_company(request)
+    company = get_company_or_404(request)
 
     if request.POST:
         data = {'id': request.GET.get('id')}
@@ -422,9 +418,15 @@ def edit_partner_tag(request):
 @company_has_access('prm_access')
 def edit_location(request):
     company = get_company_or_404(request)
-    partner = int(request.REQUEST.get('partner', 0))
-    location = int(request.REQUEST.get('location', 0))
-    contact = int(request.REQUEST.get('id', 0))
+
+    try:
+        partner = get_object_or_404(Partner, id=request.REQUEST.get('partner'))
+        contact = get_object_or_404(Contact, id=request.REQUEST.get('id'))
+        location = get_object_or_404(
+            Location, id=request.REQUEST.get('location'))
+    except ValueError:
+        raise Http404
+
 
     if request.method == 'POST':
         form = LocationForm
@@ -432,11 +434,10 @@ def edit_location(request):
         if form.is_valid():
             return HTTPResponseRedirect(reverse('edit_contact'))
     else:
-        location = Location.objects.get(id=location)
         form = LocationForm(instance=location)
         ctx = {
-            'company': company,
             'form': form,
+            'company': company,
             'partner': partner,
             'contact': contact,
             'location': location
@@ -1319,7 +1320,7 @@ def tag_names(request):
 @company_has_access('prm_access')
 def tag_color(request):
     if request.method == 'GET':
-        company = get_company(request)
+        company = get_company_or_404(request)
         name = request.GET.get('name')
         data = {'name': name}
         tag_color = list(Tag.objects.for_company(company, **data).values_list(
