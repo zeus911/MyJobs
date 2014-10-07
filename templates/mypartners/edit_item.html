@@ -46,7 +46,7 @@
                                 <div class="partner-tags">
                                     {{ location.label }}
                                 </div>
-                                <a class="btn pull-right" href="{% url "edit_location" %}">Edit</a>
+                                <a class="btn pull-right" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact }}&location={{ location.id }}">Edit</a>
                             </div>
                         {% endfor %}
                     {% else %}

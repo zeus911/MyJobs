@@ -41,7 +41,8 @@ from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               LocationForm)
 from mypartners.models import (Partner, PartnerLibrary, Contact, ContactRecord,
                                PRMAttachment, ContactLogEntry, Tag,
-                               CONTACT_TYPE_CHOICES, ADDITION, DELETION)
+                               CONTACT_TYPE_CHOICES, ADDITION, DELETION,
+                               Location)
 from mypartners.helpers import (prm_worthy, add_extra_params,
                                 add_extra_params_to_jobs, log_change,
                                 contact_record_val_to_str, retrieve_fields,
@@ -420,7 +421,10 @@ def edit_partner_tag(request):
 
 @company_has_access('prm_access')
 def edit_location(request):
-    company = get_company(request)
+    company = get_company_or_404(request)
+    partner = int(request.REQUEST.get('partner', 0))
+    location = int(request.REQUEST.get('location', 0))
+    contact = int(request.REQUEST.get('id', 0))
 
     if request.method == 'POST':
         form = LocationForm
@@ -428,11 +432,17 @@ def edit_location(request):
         if form.is_valid():
             return HTTPResponseRedirect(reverse('edit_contact'))
     else:
-        form = LocationForm()
+        location = Location.objects.get(id=location)
+        form = LocationForm(instance=location)
         ctx = {
             'company': company,
-            'form': form
+            'form': form,
+            'partner': partner,
+            'contact': contact,
+            'location': location
         }
+
+
         return render_to_response('mypartners/edit_location.html', ctx,
                                   RequestContext(request))
 

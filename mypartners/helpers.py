@@ -20,7 +20,7 @@ import pytz
 import requests
 import states
 from universal.helpers import (get_domain, get_company, get_company_or_404,
-                               get_int_or_none, OrderedSet)
+                               get_int_or_none)
 from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
                                CHANGE, Location, Partner, PartnerLibrary, Tag)
 from registration.models import ActivationProfile

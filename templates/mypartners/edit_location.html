@@ -8,15 +8,7 @@
 {% load i18n %}
 
 {% block content %}
-    {% if partner %}
-        {% if contact %}
-        {% include "mypartners/includes/prm_header.html" with page_title="Edit Locationg" back_to="Back to Location Details" back_to_url="partner_details" back_to_string="?partner=" add_partner_to_end=True %}
-        {% else %}
-        {% include "mypartners/includes/prm_header.html" with page_title="Add Contact" back_to="Back to Location Details" back_to_url="partner_details" back_to_string="?partner=" add_partner_to_end=True %}
-        {% endif %}
-    {% else %}
-    {% include "mypartners/includes/prm_header.html" with page_title="Add Location" back_to="Back to Location Relationship Manager" back_to_url="prm" %}
-    {% endif %}
+    {% include "mypartners/includes/prm_header.html" with page_title="Edit Locationg" back_to="Back to Location Details" back_to_url="partner_details" back_to_string="?partner=" add_partner_to_end=True %}
     <div class="row">
         <div class="span8">
             <form method="post" action="" id="{% if not partner %}partner-form{% else %}contact-form{% endif %}">
