@@ -2,6 +2,7 @@ from datetime import date
 import itertools
 import json
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import Http404, reverse, reverse_lazy, resolve
 from django.http import HttpResponse
@@ -27,9 +28,13 @@ from universal.views import RequestFormViewBase
 
 @company_has_access('prm_access')
 def jobs_overview(request):
+    if settings.SITE:
+        jobs = Job.objects.filter_by_sites([settings.SITE])
+    else:
+        jobs = Job.objects.all()
     company = get_company(request)
     data = {
-        'jobs': Job.objects.filter(owner=company, purchasedjob__isnull=True),
+        'jobs': jobs.filter(owner=company, purchasedjob__isnull=True),
     }
     return render_to_response('postajob/jobs_overview.html', data,
                               RequestContext(request))
@@ -38,9 +43,15 @@ def jobs_overview(request):
 @company_has_access(None)
 def purchasedjobs_overview(request):
     company = get_company(request)
-    products = PurchasedProduct.objects.filter(owner=company)
+    if settings.SITE:
+        products = PurchasedProduct.objects.filter_by_sites([settings.SITE])
+        jobs = PurchasedJob.objects.filter_by_sites([settings.SITE])
+    else:
+        products = Product.objects.all()
+        jobs = PurchasedJob.objects.all()
+    products = products.filter(owner=company)
     data = {
-        'jobs': PurchasedJob.objects.filter(owner=company),
+        'jobs': jobs.filter(owner=company),
         'active_products': products.filter(expiration_date__gte=date.today()),
         'expired_products': products.filter(expiration_date__lt=date.today()),
     }
@@ -52,12 +63,26 @@ def purchasedjobs_overview(request):
 def purchasedmicrosite_admin_overview(request):
     company = get_company(request)
 
+    if settings.SITE:
+        sites = [settings.SITE]
+        products = Product.objects.filter_by_sites(sites)
+        purchased = PurchasedProduct.objects.filter_by_sites(sites)
+        groupings = ProductGrouping.objects.filter_by_sites(sites)
+        offline_purchases = OfflinePurchase.objects.filter_by_sites(sites)
+        requests = Request.objects.filter_by_sites(sites)
+    else:
+        products = Product.objects.all()
+        purchased = PurchasedProduct.objects.all()
+        groupings = ProductGrouping.objects.all()
+        offline_purchases = OfflinePurchase.objects.all()
+        requests = Request.objects.all()
+
     data = {
-        'products': Product.objects.filter(owner=company)[:3],
-        'product_groupings': ProductGrouping.objects.filter(owner=company)[:3],
-        'purchased_products': PurchasedProduct.objects.filter(product__owner=company),
-        'offline_purchases': OfflinePurchase.objects.filter(owner=company)[:3],
-        'requests': Request.objects.filter(owner=company)[:3],
+        'products': products.filter(owner=company)[:3],
+        'product_groupings': groupings.filter(owner=company)[:3],
+        'purchased_products': purchased.filter(product__owner=company),
+        'offline_purchases': offline_purchases.filter(owner=company)[:3],
+        'requests': requests.filter(owner=company)[:3],
         'company': company
     }
 
@@ -68,8 +93,12 @@ def purchasedmicrosite_admin_overview(request):
 @company_has_access('product_access')
 def admin_products(request):
     company = get_company(request)
+    if settings.SITE:
+        products = Product.objects.filter_by_sites([settings.SITE])
+    else:
+        products = Product.objects.all()
     data = {
-        'products': Product.objects.filter(owner=company),
+        'products': products.filter(owner=company),
         'company': company,
     }
     return render_to_response('postajob/products.html', data,
@@ -79,8 +108,12 @@ def admin_products(request):
 @company_has_access('product_access')
 def admin_groupings(request):
     company = get_company(request)
+    if settings.SITE:
+        grouping = ProductGrouping.objects.filter_by_sites([settings.SITE])
+    else:
+        grouping = ProductGrouping.objects.all()
     data = {
-        'product_groupings': ProductGrouping.objects.filter(owner=company),
+        'product_groupings': grouping.filter(owner=company),
         'company': company,
     }
     return render_to_response('postajob/productgrouping.html', data,
@@ -90,8 +123,12 @@ def admin_groupings(request):
 @company_has_access('product_access')
 def admin_offlinepurchase(request):
     company = get_company(request)
+    if settings.SITE:
+        purchases = OfflinePurchase.objects.filter_by_sites([settings.SITE])
+    else:
+        purchases = OfflinePurchase.objects.all()
     data = {
-        'offline_purchases': OfflinePurchase.objects.filter(owner=company),
+        'offline_purchases': purchases.filter(owner=company),
         'company': company,
     }
     return render_to_response('postajob/offlinepurchase.html', data,
@@ -101,9 +138,13 @@ def admin_offlinepurchase(request):
 @company_has_access('product_access')
 def admin_request(request):
     company = get_company(request)
+    if settings.SITE:
+        requests = Request.objects.filter_by_sites([settings.SITE])
+    else:
+        requests = Request.objects.all()
     data = {
         'company': company,
-        'requests': Request.objects.filter(owner=company)
+        'requests': requests.filter(owner=company)
     }
 
     return render_to_response('postajob/request.html', data,
@@ -113,8 +154,11 @@ def admin_request(request):
 @company_has_access('product_access')
 def admin_purchasedproduct(request):
     company = get_company(request)
-    purchases = PurchasedProduct.objects.filter(product__owner=company)
-
+    if settings.SITE:
+        purchases = PurchasedProduct.objects.filter_by_sites([settings.SITE])
+    else:
+        purchases = Request.objects.all()
+    purchases = purchases.filter(product__owner=company)
     data = {
         'company': company,
         'active_products': purchases.filter(expiration_date__gte=date.today()),

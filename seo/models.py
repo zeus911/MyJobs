@@ -145,7 +145,7 @@ def sq_from_terms(terms):
         elif any(vals):
             #Build an SQ that joins non empty items in vals with boolean or
             filt = reduce(operator.or_,
-                      [SQ((u"%s__exact" % sq_attr, i)) for i in vals if i])
+                          [SQ((u"%s__exact" % sq_attr, i)) for i in vals if i])
             results.append(filt)
 
     if results:
@@ -165,16 +165,16 @@ class Redirect(models.Model):
                             help_text='36-character hex string')
     buid = models.IntegerField(default=0,
                                help_text='Business unit ID for a given '
-                                           'job provider')
+                                         'job provider')
     uid = models.IntegerField(unique=True, blank=True, null=True,
                               help_text="Unique id on partner's ATS or "
-                                          "other job repository")
+                                        "other job repository")
     url = models.TextField(help_text='URL being manipulated')
     new_date = models.DateTimeField(help_text='Date that this job was '
-                                                'added')
+                                              'added')
     expired_date = models.DateTimeField(blank=True, null=True,
                                         help_text='Date that this job was '
-                                                    'marked as expired')
+                                                  'marked as expired')
     job_location = models.CharField(max_length=255, blank=True)
     job_title = models.CharField(max_length=255, blank=True)
     company_name = models.TextField(blank=True)
@@ -191,6 +191,7 @@ class Redirect(models.Model):
         # '{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}'
         return "http://my.jobs/%s" % self.guid[1:-1].replace('-', '') + '10'
 
+
 class CustomFacetQuerySet(QuerySet):
     """
     Provides methods for getting a queryset of facets ready for use in
@@ -199,7 +200,8 @@ class CustomFacetQuerySet(QuerySet):
     """
     def get_facet_queries(self):
         """Returns a list of search queries for each facet"""
-        return [SQ(content=Raw(facet.saved_querystring)) for facet in self if facet.saved_querystring]
+        return [SQ(content=Raw(facet.saved_querystring)) for facet in self
+                if facet.saved_querystring]
 
 
 class CustomFacetManager(models.Manager):
@@ -788,7 +790,7 @@ class BillboardImage(models.Model):
     copyright_info = models.CharField('Copyright Info', max_length=200)
     source_url = models.URLField('Source URL', max_length=200)
     logo_url = models.URLField('Logo Image URL',
-                                max_length=200, null=True, blank=True)
+                               max_length=200, null=True, blank=True)
     sponsor_url = models.URLField('Logo Sponsor URL',
                                   max_length=200, null=True, blank=True)
 
@@ -800,11 +802,7 @@ class BillboardImage(models.Model):
         return ", ".join(self.seosite_set.all().values_list("domain",flat=True))
 
     def number_of_hotspots(self):
-        # returns the number of hotspots associated with this billboard.
-        count = 0
-        for hotspot in self.billboardhotspot_set.all():
-            count += 1
-        return count
+        return self.billboardhotspot_set.all().count()
 
     def has_hotspots(self):
         # returns True if the the billboard has hotspots.
@@ -817,7 +815,9 @@ class BillboardHotspot(models.Model):
     title = models.CharField('Title', max_length=50,
                              help_text="Max 50 characters")
     text = models.CharField('Text', max_length=140,
-                             help_text="Max 140 characters.  Use HTML markup for line breaks and formatting.")
+                            help_text="Max 140 characters.  "
+                                      "Use HTML markup for line breaks "
+                                      "and formatting.")
     url = models.URLField('URL', null=True, blank=True)
     display_url = models.TextField('Display URL', null=True, blank=True)
     offset_x = models.IntegerField('Offset X')
@@ -835,19 +835,21 @@ class BillboardHotspot(models.Model):
 class SiteTag(models.Model):
     """
     Defines a tag to help categorize SeoSites. These tags will allow us to
-    arbitrarily group different kinds of sites (members, companies, network sites,
-    etc.)
+    arbitrarily group different kinds of sites (members, companies,
+    network sites, etc.)
     """
-    site_tag = models.CharField('Site Tag',max_length=100, unique=True)
-    tag_navigation = models.BooleanField('Tag can be used for navigation', default=False,
-                        help_text='Tag can be used for navigation by users. Viewable by public.')
+    site_tag = models.CharField('Site Tag', max_length=100, unique=True)
+    tag_navigation = models.BooleanField('Tag can be used for navigation',
+                                         default=False,
+                                         help_text='Tag can be used for '
+                                                   'navigation by users. '
+                                                   'Viewable by public.')
 
     def __unicode__(self):
-        return "%s" %(self.site_tag)
+        return "%s" % self.site_tag
 
     class Meta:
         verbose_name = 'Site Tag'
-
 
 
 class SeoSiteRedirect(models.Model):

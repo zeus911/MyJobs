@@ -42,8 +42,7 @@ v1_api.register(MocResource())
 v1_api.register(MocDetailResource())
 v1_api.register(OnetResource())
 v1_api.register(JobSearchResource())
-v1_api.register(JobResource
-())
+v1_api.register(JobResource())
 
 admin.autodiscover()
 handler404 = 'seo.views.dseo_404'
@@ -83,14 +82,11 @@ urlpatterns += patterns('seo.views',
 
 urlpatterns += patterns('',
     url(r'^admin/', include(admin.site.urls)),
-    url('', include('seo.urls',
-                      app_name='seo')),
-    url('^mocmaps/', include('moc_coding.urls',
-                             app_name='moc_coding')),
+    url('', include('seo.urls', app_name='seo')),
+    url('^mocmaps/', include('moc_coding.urls', app_name='moc_coding')),
     url(r'^logout/$', 'django.contrib.auth.views.logout', {'next_page': '/'},
         name='auth_logout'),
-    url(r'^postajob/', include('postajob.urls',
-                               app_name='postajob')),
+    url(r'^posting/', include('postajob.urls', app_name='postajob')),
 )
 
 

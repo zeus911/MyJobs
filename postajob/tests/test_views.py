@@ -194,16 +194,17 @@ class ViewTests(MyJobsBase):
         mock_obj = Mock()
         mock_obj.read.side_effect = self.side_effect
         urlopen_mock.return_value = mock_obj
+
+        resp_url = reverse('jobs_overview')
+
         job = job_factory(self.company, self.user)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_update', kwargs=kwargs),
                                     data=self.job_form_data)
-        self.assertRedirects(response, 'http://testserver/postajob/jobs/',
-                             status_code=302)
+        self.assertRedirects(response, resp_url, status_code=302)
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
-        self.assertRedirects(response, 'http://testserver/postajob/jobs/',
-                             status_code=302)
+        self.assertRedirects(response, resp_url, status_code=302)
 
     @patch('urllib2.urlopen')
     def test_job_add(self, urlopen_mock):
@@ -855,3 +856,210 @@ class ViewTests(MyJobsBase):
         self.assertIn(grouping.display_title, response.content)
         self.assertIn(self.product.name, response.content)
 
+    def test_filter_by_sites_purchasedjobs_overview(self):
+        product_name = 'Product Group %s%s'
+
+        for x in range(8800, 8815):
+            domain = 'testsite-%s.jobs' % x
+            site = SeoSiteFactory(id=x, domain=domain, name=domain)
+
+            setattr(settings, 'SITE', site)
+            setattr(settings, 'SITE_ID', site.id)
+
+            site_package = sitepackage_factory(self.company)
+            site_package.make_unique_for_site(site)
+            for y in range(1, 5):
+                product = product_factory(site_package, self.company,
+                                          name=product_name % (x, y))
+                purchasedproduct_factory(product, self.company)
+
+            response = self.client.get(reverse('purchasedjobs_overview'),
+                                       HTTP_HOST=domain)
+            for y in range(1, 5):
+                self.assertEqual(len(response.context['active_products']), 4)
+                self.assertIn(product_name % (x, y), response.content)
+
+    def test_filter_by_sites_jobs_overview(self):
+        job_title = 'Job %s%s'
+
+        for x in range(8800, 8815):
+            domain = 'testsite-%s.jobs' % x
+            site = SeoSiteFactory(id=x, domain=domain, name=domain)
+
+            setattr(settings, 'SITE', site)
+            setattr(settings, 'SITE_ID', site.id)
+
+            site_package = sitepackage_factory(self.company)
+            site_package.make_unique_for_site(site)
+            for y in range(1, 5):
+                job = job_factory(self.company, self.user,
+                                  title=job_title % (x, y))
+                job.site_packages.add(site_package)
+                job.save()
+
+            response = self.client.get(reverse('jobs_overview'),
+                                       HTTP_HOST=domain)
+            for y in range(1, 5):
+                self.assertEqual(len(response.context['jobs']), 4)
+                self.assertIn(job_title % (x, y), response.content)
+
+    def test_filter_by_sites_purchasedmicrosite_admin_overview(self):
+        for x in range(8800, 8815):
+            domain = 'testsite-%s.jobs' % x
+            site = SeoSiteFactory(id=x, domain=domain, name=domain)
+
+            setattr(settings, 'SITE', site)
+            setattr(settings, 'SITE_ID', site.id)
+
+            site_package = sitepackage_factory(self.company)
+            site_package.make_unique_for_site(site)
+
+            product = product_factory(site_package, self.company)
+            grouping = productgrouping_factory(self.company)
+            ProductOrder.objects.create(product=product, group=grouping)
+            purchased_product = purchasedproduct_factory(product, self.company)
+            offline_purchase = offlinepurchase_factory(self.company,
+                                                       self.company_user)
+            offlineproduct_factory(product, offline_purchase)
+            purchased_job = purchasedjob_factory(self.company, self.user,
+                                                 purchased_product)
+
+            url = reverse('purchasedmicrosite_admin_overview')
+            response = self.client.get(url, HTTP_HOST=domain)
+            context = response.context
+
+            self.assertEqual(len(context['products']), 1)
+            self.assertEqual(len(context['product_groupings']), 1)
+            self.assertEqual(len(context['purchased_products']), 1)
+            self.assertEqual(len(context['offline_purchases']), 1)
+            self.assertEqual(len(context['requests']), 1)
+
+            self.assertEqual(context['products'][0].pk, product.pk)
+            self.assertEqual(context['product_groupings'][0].pk, grouping.pk)
+            self.assertEqual(context['purchased_products'][0].pk,
+                             purchased_product.pk)
+            self.assertEqual(context['offline_purchases'][0].pk,
+                             offline_purchase.pk)
+            self.assertEqual(context['requests'][0].object_id,
+                             purchased_job.pk)
+
+    def test_filter_by_sites_admin_products(self):
+        product_name = 'Product %s%s'
+
+        for x in range(8800, 8815):
+            domain = 'testsite-%s.jobs' % x
+            site = SeoSiteFactory(id=x, domain=domain, name=domain)
+
+            setattr(settings, 'SITE', site)
+            setattr(settings, 'SITE_ID', site.id)
+
+            site_package = sitepackage_factory(self.company)
+            site_package.make_unique_for_site(site)
+            for y in range(1, 5):
+                product_factory(site_package, self.company,
+                                name=product_name % (x, y))
+
+            response = self.client.get(reverse('product'),
+                                       HTTP_HOST=domain)
+            for y in range(1, 5):
+                self.assertEqual(len(response.context['products']), 4)
+                self.assertIn(product_name % (x, y), response.content)
+
+    def test_filter_by_sites_admin_groupings(self):
+        grouping_name = 'Grouping %s%s'
+
+        for x in range(8800, 8815):
+            domain = 'testsite-%s.jobs' % x
+            site = SeoSiteFactory(id=x, domain=domain, name=domain)
+
+            setattr(settings, 'SITE', site)
+            setattr(settings, 'SITE_ID', site.id)
+
+            site_package = sitepackage_factory(self.company)
+            site_package.make_unique_for_site(site)
+            for y in range(1, 5):
+                product = product_factory(site_package, self.company)
+                grouping = productgrouping_factory(self.company,
+                                                   name=grouping_name % (x, y))
+                ProductOrder.objects.create(product=product, group=grouping)
+
+            response = self.client.get(reverse('productgrouping'),
+                                       HTTP_HOST=domain)
+            for y in range(1, 5):
+                self.assertEqual(len(response.context['product_groupings']), 4)
+                self.assertIn(grouping_name % (x, y), response.content)
+
+    def test_filter_by_sites_admin_offlinepurchase(self):
+        for x in range(8800, 8815):
+            domain = 'testsite-%s.jobs' % x
+            site = SeoSiteFactory(id=x, domain=domain, name=domain)
+
+            setattr(settings, 'SITE', site)
+            setattr(settings, 'SITE_ID', site.id)
+
+            site_package = sitepackage_factory(self.company)
+            site_package.make_unique_for_site(site)
+            uids = []
+            for y in range(1, 5):
+                product = product_factory(site_package, self.company)
+                offline_purchase = offlinepurchase_factory(self.company,
+                                                           self.company_user)
+                offlineproduct_factory(product, offline_purchase)
+                uids.append(offline_purchase.redemption_uid)
+
+            response = self.client.get(reverse('offlinepurchase'),
+                                       HTTP_HOST=domain)
+            for y in range(1, 5):
+                self.assertEqual(len(response.context['offline_purchases']), 4)
+                context_uids = [x.redemption_uid for x in
+                                response.context['offline_purchases']]
+                [self.assertIn(uid, context_uids) for uid in uids]
+
+    def test_filter_by_sites_admin_request(self):
+        for x in range(8800, 8815):
+            domain = 'testsite-%s.jobs' % x
+            site = SeoSiteFactory(id=x, domain=domain, name=domain)
+
+            setattr(settings, 'SITE', site)
+            setattr(settings, 'SITE_ID', site.id)
+
+            site_package = sitepackage_factory(self.company)
+            site_package.make_unique_for_site(site)
+            job_ids = []
+            for y in range(1, 5):
+                product = product_factory(site_package, self.company)
+                purchased_product = purchasedproduct_factory(product,
+                                                             self.company)
+                job = purchasedjob_factory(self.company, self.user,
+                                           purchased_product)
+                job_ids.append(job.id)
+
+            response = self.client.get(reverse('request'), HTTP_HOST=domain)
+            for y in range(1, 5):
+                self.assertEqual(len(response.context['requests']), 4)
+                context_ids = [x.object_id for x in
+                               response.context['requests']]
+                [self.assertIn(uid, job_ids) for uid in context_ids]
+
+    def test_filter_by_sites_admin_purchasedproducts(self):
+        product_name = 'Product %s%s'
+
+        for x in range(8800, 8815):
+            domain = 'testsite-%s.jobs' % x
+            site = SeoSiteFactory(id=x, domain=domain, name=domain)
+
+            setattr(settings, 'SITE', site)
+            setattr(settings, 'SITE_ID', site.id)
+
+            site_package = sitepackage_factory(self.company)
+            site_package.make_unique_for_site(site)
+            for y in range(1, 5):
+                product = product_factory(site_package, self.company,
+                                          name=product_name % (x, y))
+                purchasedproduct_factory(product, self.company)
+
+            response = self.client.get(reverse('purchasedproduct'),
+                                       HTTP_HOST=domain)
+            for y in range(1, 5):
+                self.assertEqual(len(response.context['active_products']), 4)
+                self.assertIn(product_name % (x, y), response.content)

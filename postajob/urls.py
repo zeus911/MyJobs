@@ -18,12 +18,12 @@ urlpatterns = patterns(
         name='product_listing'),
 
     # Posted job management
-    url(r'^jobs/$',
+    url(r'^all/$',
         views.jobs_overview,
         name='jobs_overview'),
 
     # Purchased job management
-    url(r'^purchased/jobs/$',
+    url(r'^purchased-jobs/$',
         views.purchasedjobs_overview,
         name='purchasedjobs_overview'),
 
