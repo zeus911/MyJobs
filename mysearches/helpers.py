@@ -215,7 +215,10 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
             except Company.DoesNotExist:
                 pass
             else:
-                item_dict['company'] = company
+                if company.member:
+                    # All companies have logos specified, but only members
+                    # should have their logos shown
+                    item_dict['company'] = company
         else:
             item_dict = {}
             item_dict['title'] = item.findChild('title').text
