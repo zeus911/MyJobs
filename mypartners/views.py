@@ -427,7 +427,6 @@ def edit_location(request):
     except ValueError:
         raise Http404
 
-
     if request.method == 'POST':
         form = LocationForm
 
@@ -438,9 +437,10 @@ def edit_location(request):
         ctx = {
             'form': form,
             'company': company,
-            'partner': partner,
-            'contact': contact,
-            'location': location
+            # in order for django's `add` filter to work, we need strings
+            'partner': str(partner.id),
+            'contact': str(contact.id),
+            'location': str(location.id),
         }
 
 

@@ -9,18 +9,18 @@
 
 {% block content %}
     {# TODO: either refactor prm_header or include the info directly so that the correct url is used #}
-    {% include "mypartners/includes/prm_header.html" with page_title="Edit Location" back_to="Back to Location Details" back_to_url="partner_details" back_to_string="?partner=" add_partner_to_end=True %}
+    {% include "mypartners/includes/prm_header.html" with page_title="Edit Location" back_to="Back to Contact Details" back_to_url="edit_contact" back_to_string="?partner="|add:partner|add:"&id="|add:contact %}
     <div class="row">
         <div class="span8">
             <form method="post" action="" id="{% if not partner %}partner-form{% else %}contact-form{% endif %}">
                 {% include "includes/form-error-highlight.html" %}
                 {% csrf_token %}
                 <input type="hidden" name="company_id" value="{{ company.id }}">
-                <input type="hidden" name="partner_id" value="{{ partner.id }}">
+                <input type="hidden" name="partner" value="{{ partner }}">
                 <input type="hidden" name="ct" value="{{ content_id }}">
                 <div class="actions pull-right">
                     {% if location %}<button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
-                    <a class="btn" href="{% if contact %}{% url 'edit_contact' %}?partner={{ partner.id }}&id={{ contact.id }}{% else %}{% url 'prm' %}{% endif %}">{% trans 'Cancel' %}</a>
+                    <a class="btn" href="{% if contact %}{% url 'edit_contact' %}?partner={{ partner }}&id={{ contact }}{% else %}{% url 'prm' %}{% endif %}">{% trans 'Cancel' %}</a>
                     <button type="submit" class="btn primary" id="location-save">{% trans 'Save' %}</button>
                 </div>
 
@@ -44,7 +44,7 @@
                 <div class="actions">
                     <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
                     {# TODO: use the correct delete url #}
-                    <a class="btn" href="{% url 'edit_location' %}?partner={{ partner.id }}&ct={{ content_id }}&id={{ contact.id }}&location={{ location.id }}">{% trans 'Delete' %}</a>
+                    <a class="btn" href="{% url 'edit_location' %}?partner={{ partner }}&ct={{ content_id }}&id={{ contact }}&location={{ location }}">{% trans 'Delete' %}</a>
                 </div>
             </div>
         </div>{# /delete-confirm #}

@@ -56,7 +56,7 @@
                     {% endif %}
                     <div clss="partner-pagination">
                         <span class="step-links">
-                            <a class="pull-right" href="{% url "edit_location" %}">Add Location</a>
+                            <a class="pull-right" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact }}">Add Location</a>
                         </span>
                         <div class="clearfix"></div> 
                     </div>
