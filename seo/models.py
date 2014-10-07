@@ -145,7 +145,7 @@ def sq_from_terms(terms):
         elif any(vals):
             #Build an SQ that joins non empty items in vals with boolean or
             filt = reduce(operator.or_,
-                      [SQ((u"%s__exact" % sq_attr, i)) for i in vals if i])
+                          [SQ((u"%s__exact" % sq_attr, i)) for i in vals if i])
             results.append(filt)
 
     if results:
@@ -165,16 +165,16 @@ class Redirect(models.Model):
                             help_text='36-character hex string')
     buid = models.IntegerField(default=0,
                                help_text='Business unit ID for a given '
-                                           'job provider')
+                                         'job provider')
     uid = models.IntegerField(unique=True, blank=True, null=True,
                               help_text="Unique id on partner's ATS or "
-                                          "other job repository")
+                                        "other job repository")
     url = models.TextField(help_text='URL being manipulated')
     new_date = models.DateTimeField(help_text='Date that this job was '
-                                                'added')
+                                              'added')
     expired_date = models.DateTimeField(blank=True, null=True,
                                         help_text='Date that this job was '
-                                                    'marked as expired')
+                                                  'marked as expired')
     job_location = models.CharField(max_length=255, blank=True)
     job_title = models.CharField(max_length=255, blank=True)
     company_name = models.TextField(blank=True)
@@ -191,6 +191,7 @@ class Redirect(models.Model):
         # '{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}'
         return "http://my.jobs/%s" % self.guid[1:-1].replace('-', '') + '10'
 
+
 class CustomFacetQuerySet(QuerySet):
     """
     Provides methods for getting a queryset of facets ready for use in
@@ -199,7 +200,8 @@ class CustomFacetQuerySet(QuerySet):
     """
     def get_facet_queries(self):
         """Returns a list of search queries for each facet"""
-        return [SQ(content=Raw(facet.saved_querystring)) for facet in self if facet.saved_querystring]
+        return [SQ(content=Raw(facet.saved_querystring)) for facet in self
+                if facet.saved_querystring]
 
 
 class CustomFacetManager(models.Manager):
