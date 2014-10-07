@@ -28,7 +28,8 @@ from django.utils.datastructures import SortedDict
 from django.views.decorators.csrf import csrf_exempt
 
 from email_parser import build_email_dicts, get_datetime_from_str
-from universal.helpers import get_company_or_404, get_int_or_none, add_pagination
+from universal.helpers import (get_company_or_404, get_int_or_none, 
+                               add_pagination, get_object_or_none)
 from universal.decorators import company_has_access
 from myjobs.models import User
 from mydashboard.helpers import get_company_microsites
@@ -417,31 +418,36 @@ def edit_partner_tag(request):
 
 @company_has_access('prm_access')
 def edit_location(request):
-    company = get_company_or_404(request)
-
-    try:
-        partner = get_object_or_404(Partner, id=request.REQUEST.get('partner'))
-        contact = get_object_or_404(Contact, id=request.REQUEST.get('id'))
-        location = get_object_or_404(
-            Location, id=request.REQUEST.get('location'))
-    except ValueError:
-        raise Http404
+    company, partner, _ = prm_worthy(request)
+    contact = get_object_or_none(Contact, id=request.REQUEST.get('id'))
 
     if request.method == 'POST':
-        form = LocationForm
+        form = LocationForm(request.POST)
 
         if form.is_valid():
-            return HTTPResponseRedirect(reverse('edit_contact'))
+            if any(form.cleaned_data):
+                location, _ = Location.objects.get_or_create(**form.cleaned_data)
+
+                if location not in contact.locations.all():
+                    contact.locations.add(location)
+                    contact.save()
+
+            return HttpResponseRedirect(
+                reverse('edit_contact') + "?partner=%s&id=%s" % (
+                    partner.id, contact.id))
     else:
+        location = get_object_or_none(
+            Location, id=request.REQUEST.get('location'))
         form = LocationForm(instance=location)
         ctx = {
             'form': form,
             'company': company,
-            # in order for django's `add` filter to work, we need strings
             'partner': str(partner.id),
-            'contact': str(contact.id),
-            'location': str(location.id),
         }
+        if contact:
+            ctx['contact'] = str(contact.id)
+        if location:
+            ctx['location'] = str(location.id)
 
 
         return render_to_response('mypartners/edit_location.html', ctx,
