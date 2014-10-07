@@ -1,0 +1,10 @@
+{% load seo_extras %}
+{% load i18n %}
+<h3>{% trans "Sort by " %}<span class="direct_highlightedText">{{ sort_order|title }}</span></h3>
+<ul id="direct_sortOptions">
+    {% for field in sort_fields %}
+        {% if field != sort_order %}
+            {% url_for_sort_field field%}
+        {% endif %}
+    {% endfor %}
+</ul>

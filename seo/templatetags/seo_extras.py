@@ -1,10 +1,9 @@
 import datetime
 import itertools
-import re 
-import unicodedata
-
 from pysolr import safe_urlencode
+import re
 from slugify import slugify
+import unicodedata
 
 from django import template
 from django.conf import settings
@@ -18,6 +17,7 @@ from django.utils.translation import ugettext
 from django.http import QueryDict
 
 from seo.models import CustomPage, Company, GoogleAnalytics, SiteTag
+from universal.helpers import update_url_param
 
 
 register = template.Library()
@@ -520,3 +520,10 @@ def make_pixel_qs(request, job=None):
     qd.update(qs)
     safe_qs = mark_safe(qd.urlencode())
     return safe_qs
+
+
+@register.simple_tag(takes_context=True)
+def url_for_sort_field(context, field):
+    current_url = context['request'].build_absolute_uri()
+    new_url = update_url_param(current_url, 'sort', field)
+    return mark_safe('<a href=%s>Sort by %s</a>' % (new_url, field.title()))
