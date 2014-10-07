@@ -1656,7 +1656,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
 
     sort_order = request.GET.get('sort', 'relevance')
     if sort_order not in helpers.sort_order_mapper.keys():
-        sort_order = 'relevence'
+        sort_order = 'relevance'
 
     data_dict = {
         'base_path': request.path,
