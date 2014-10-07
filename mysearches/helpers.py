@@ -206,6 +206,13 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
             item['link'] = item.pop('url')
             item['pubdate'] = dateparser.parse(item.pop('date_new'))
             item_dict = item
+            from seo.models import Company
+            try:
+                company = Company.objects.get(name=item_dict['company'])
+            except Company.DoesNotExist:
+                pass
+            else:
+                item_dict['company'] = company
         else:
             item_dict = {}
             item_dict['title'] = item.findChild('title').text
