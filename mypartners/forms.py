@@ -74,8 +74,21 @@ class ContactForm(forms.ModelForm):
     def save(self, user, partner, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
         partner = Partner.objects.get(id=self.data['partner'])
+
         self.instance.partner = partner
         contact = super(ContactForm, self).save(commit)
+        if any(map(self.cleaned_data.get, ['address_line_one', 
+                                           'address_line_two', 'city', 'state', 
+                                           'postal_code'])):
+            location, _ = Location.objects.get_or_create(
+                address_line_one=self.cleaned_data['address_line_one'],
+                address_line_two=self.cleaned_data['address_line_two'],
+                city=self.cleaned_data['city'],
+                state=self.cleaned_data['state'],
+                country_code=self.cleaned_data['country_code'],
+                postal_code=self.cleaned_data['postal_code'])
+            if location not in contact.locations.all():
+                contact.locations.add(location)
 
         log_change(contact, self, user, partner, contact.name,
                    action_type=new_or_change)
@@ -208,6 +221,19 @@ class NewPartnerForm(forms.ModelForm):
             self.instance.partner = partner
             instance = super(NewPartnerForm, self).save(commit)
             partner.primary_contact = instance
+
+            if any(map(self.cleaned_data.get, ['address_line_one', 
+                                               'address_line_two', 'city',
+                                               'state', 'postal_code'])):
+                location, _ = Location.objects.get_or_create(
+                    address_line_one=self.cleaned_data['address_line_one'],
+                    address_line_two=self.cleaned_data['address_line_two'],
+                    city=self.cleaned_data['city'],
+                    state=self.cleaned_data['state'],
+                    country_code=self.cleaned_data['country_code'],
+                    postal_code=self.cleaned_data['postal_code'])
+                if location not in instance.locations.all():
+                    instance.locations.add(location)
             # Tag creation
             tag_data = filter(bool,
                               self.cleaned_data['partner-tags'].split(','))
