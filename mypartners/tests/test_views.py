@@ -25,7 +25,7 @@ from mypartners.tests.factories import (PartnerFactory, ContactFactory,
                                         ContactLogEntryFactory,
                                         ContactRecordFactory)
 from mysearches.tests.factories import PartnerSavedSearchFactory
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from mypartners import views
 from mypartners.models import (Contact, ContactRecord, ContactLogEntry, 
                                Partner, PartnerLibrary, ADDITION)
@@ -179,7 +179,7 @@ class EditItemTests(MyPartnersTestCase):
             with self.assertRaises(Http404) as a:
                 views.edit_item(request)
 
-                if cm.exception != Http404:
+                if a.exception != Http404:
                     print fail_msg % partner
 
     def test_edit_contact_with_bad_item(self):
@@ -315,7 +315,8 @@ class PartnerOverviewTests(MyPartnersTestCase):
 
         for row in container('div', class_="product-card"):
             title = "Test Subject  - example-contact"
-            sub_title = "Oct  3, 2014 - Email"
+            today = date.today()
+            sub_title = today.strftime('%b %e, %Y - Email')
             self.assertIn(title,
                           row('div', class_="big-title")[0].get_text().strip())
             self.assertIn(sub_title,
