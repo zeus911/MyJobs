@@ -1,9 +1,32 @@
 import collections
+from copy import copy
 import re
 import urllib
+from urlparse import parse_qsl, urlparse, urlunparse
 
 from django.shortcuts import get_object_or_404, Http404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+
+def update_url_param(url, param, new_val):
+    """
+    Changes the value for a parameter in a query string. If the parameter
+    wasn't already in the query string, it adds it.
+
+    inputs:
+    :url: The url containing the query string to be updated.
+    :param: The param to be changed.
+    :new_val: The value to update the param with.
+
+    outputs:
+    The new url.
+    """
+    url_parts = list(urlparse(url))
+    parts = copy(url_parts)
+    query = dict(parse_qsl(parts[4]))
+    query[param] = new_val
+    parts[4] = urllib.urlencode(query)
+    return urlunparse(parts)
 
 
 def build_url(reverse_url, params):

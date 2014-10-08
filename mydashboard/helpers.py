@@ -1,9 +1,7 @@
 from collections import Counter
 import urllib
-
 from copy import copy
 from datetime import datetime, timedelta
-from django.http import Http404
 from urlparse import urlparse, urlunparse, parse_qsl
 
 from django.conf import settings
@@ -15,7 +13,7 @@ from seo.models import SeoSite
 from myprofile.models import EDUCATION_LEVEL_CHOICES
 from solr.helpers import format_date, Solr
 from countries import COUNTRIES
-
+from universal.helpers import update_url_param
 
 edu_codes = dict([(x, y) for x, y in EDUCATION_LEVEL_CHOICES])
 country_codes = dict((x, y) for x, y in COUNTRIES)
@@ -304,27 +302,6 @@ def apply_facets_and_filters(request, user_solr=None, facet_solr=None):
         facet_solr = facet_solr.add_filter_query(q)
 
     return user_solr, facet_solr, filters
-
-
-def update_url_param(url, param, new_val):
-    """
-    Changes the value for a parameter in a query string. If the parameter
-    wasn't already in the query string, it adds it.
-
-    inputs:
-    :url: The url containing the query string to be updated.
-    :param: The param to be changed.
-    :new_val: The value to update the param with.
-
-    outputs:
-    The new url.
-    """
-    url_parts = list(urlparse(url))
-    parts = copy(url_parts)
-    query = dict(parse_qsl(parts[4]))
-    query[param] = new_val
-    parts[4] = urllib.urlencode(query)
-    return urlunparse(parts)
 
 
 def remove_param_from_url(url, param):
