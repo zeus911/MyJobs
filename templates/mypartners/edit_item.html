@@ -29,46 +29,16 @@
                 <input type="hidden" name="company_id" value="{{ company.id }}">
                 <input type="hidden" name="partner_id" value="{{ partner.id }}">
                 <input type="hidden" name="ct" value="{{ content_id }}">
-                <div class="card-wrapper locations">
-                    <div class="wrapper-header">
-                        <h4>{% if not contact %}Primary Contact {% endif %}Locations</h4>
-                    </div>
-                    {% if locations %}
-                        {% for location in locations %}
-                            <div class="product-card">
-                                <div class="big-title">
-                                    {% if location.address_line_one %}{{ location.address_line_one }}{% endif %}
-                                    {% if location.address_line_two %}{{ location.address_line_two }}{% endif %}
-                                </div>
-                                <div class="product-details">
-                                    {% if location.city %}{{ location.city }}{% endif %}{% if location.state %}, {{ location.state }}{% endif %}  {% if location.postal_code %}{{ location.postal_code }}{% endif %}
-                                </div>
-                                <div class="partner-tags">
-                                    {{ location.label }}
-                                </div>
-                                <a class="btn pull-right" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact }}&location={{ location.id }}">Edit</a>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="product-card not-clickable">
-                            Please add a new location.
-                        </div>
-                    {% endif %}
-                    <div clss="partner-pagination">
-                        <span class="step-links">
-                            <a class="pull-right" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact }}">Add Location</a>
-                        </span>
-                        <div class="clearfix"></div> 
-                    </div>
-                </div>
+
                 <div class="actions pull-right">
                     {% if contact %}<button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
                     <a class="btn" href="{% if partner %}{% url 'partner_details' %}?partner={{ partner.id }}{% else %}{% url 'prm' %}{% endif %}">{% trans 'Cancel' %}</a>
                     <button type="submit" class="btn primary" id="{% if not partner %}init-partner-save{% else %}item-save{% endif %}">{% trans 'Save' %}</button>
                 </div>
-
                 <div class="clear"></div>
             </form>
+
+
         </div>
         <div id="delete-confirm" class="modal hide fade row">
             <div class="modal-header">
@@ -106,6 +76,41 @@
                     <li>- Country</li>
                 </ul>
                 {% endif %}
+                <div class="navigation">
+                    <h2>Navigation</h2>
+                    <a class="btn" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact }}">Add Location</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span8">
+            <div class="card-wrapper locations">
+                <div class="wrapper-header">
+                    <h4>{% if not contact %}Primary Contact {% endif %}Locations</h4>
+                </div>
+                {% if locations %}
+                    {% for location in locations %}
+                        <div class="product-card">
+                            <div class="big-title">
+                                {% if location.address_line_one %}{{ location.address_line_one }}{% endif %}
+                                {% if location.address_line_two %}{{ location.address_line_two }}{% endif %}
+                            </div>
+                            <div class="product-details">
+                                {% if location.city %}{{ location.city }}{% endif %}{% if location.state %}, {{ location.state }}{% endif %}  {% if location.postal_code %}{{ location.postal_code }}{% endif %}
+                            </div>
+                            <div class="partner-tags">
+                                {{ location.label }}
+                            </div>
+                            <a class="btn pull-right" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact }}&location={{ location.id }}">Edit</a>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="product-card not-clickable">
+                        Please add a new location.
+                    </div>
+                {% endif %}
+                </div>
             </div>
         </div>
     </div>

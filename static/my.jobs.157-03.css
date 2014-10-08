@@ -553,14 +553,6 @@ h1 > small > a:hover {
     margin-top: 20px;
 }
 
-.card-wrapper.locations {
-    margin-bottom: 10px;
-}
-
-.card-wrapper.locations span a {
-    margin-right: 5px;
-}
-
 .wrapper-header h1,
 .wrapper-header h2,
 .wrapper-header h3,
