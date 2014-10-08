@@ -420,13 +420,19 @@ def edit_partner_tag(request):
 def edit_location(request):
     company, partner, _ = prm_worthy(request)
     contact = get_object_or_none(Contact, id=request.REQUEST.get('id'))
+    location = get_object_or_none(
+        Location, id=request.REQUEST.get('location'))
 
     if request.method == 'POST':
         form = LocationForm(request.POST)
 
         if form.is_valid():
-            if any(form.cleaned_data):
-                location, _ = Location.objects.get_or_create(**form.cleaned_data)
+            if location:
+                Location.objects.filter(
+                    id=location.id).update(**form.cleaned_data)
+            else:
+                location, _ = Location.objects.get_or_create(
+                    **form.cleaned_data)
 
                 if location not in contact.locations.all():
                     contact.locations.add(location)
@@ -436,22 +442,35 @@ def edit_location(request):
                 reverse('edit_contact') + "?partner=%s&id=%s" % (
                     partner.id, contact.id))
     else:
-        location = get_object_or_none(
-            Location, id=request.REQUEST.get('location'))
         form = LocationForm(instance=location)
-        ctx = {
-            'form': form,
-            'company': company,
-            'partner': str(partner.id),
-        }
-        if contact:
-            ctx['contact'] = str(contact.id)
-        if location:
-            ctx['location'] = str(location.id)
+
+    ctx = {
+        'form': form,
+        'company': company,
+        'partner': str(partner.id),
+    }
+    if contact:
+        ctx['contact'] = str(contact.id)
+    if location:
+        ctx['location'] = str(location.id)
 
 
-        return render_to_response('mypartners/edit_location.html', ctx,
-                                  RequestContext(request))
+    return render_to_response(
+        'mypartners/edit_location.html', ctx, RequestContext(request))
+
+
+@company_has_access('prm_access')
+def delete_location(request):
+    company, partner, _ = prm_worthy(request)
+    contact = get_object_or_404(Contact, pk=request.REQUEST.get('id', 0))
+    location = get_object_or_404(
+        Location, pk=request.REQUEST.get('location', 0))
+
+    contact.locations.remove(location)
+
+    return HttpResponseRedirect(
+        reverse('edit_contact') + "?partner=%s&id=%s" % (
+            partner.id, contact.id))
 
 
 @company_has_access('prm_access')

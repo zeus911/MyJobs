@@ -44,7 +44,7 @@
                 <div class="actions">
                     <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
                     {# TODO: use the correct delete url #}
-                    <a class="btn" href="{% url 'edit_location' %}?partner={{ partner }}&ct={{ content_id }}&id={{ contact }}&location={{ location }}">{% trans 'Delete' %}</a>
+                    <a class="btn" href="{% url 'delete_location' %}?partner={{ partner }}&id={{ contact }}&location={{ location }}">{% trans 'Delete' %}</a>
                 </div>
             </div>
         </div>{# /delete-confirm #}
