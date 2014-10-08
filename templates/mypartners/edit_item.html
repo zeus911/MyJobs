@@ -56,7 +56,7 @@
             <div class="modal-footer">
                 <div class="actions">
                     <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
-                    <a class="btn" href="{% url 'delete_prm_item' %}?partner={{ partner.id }}&ct={{ content_id }}&id={{ contact }}">{% trans 'Delete' %}</a>
+                    <a class="btn" href="{% url 'delete_prm_item' %}?partner={{ partner.id }}&ct={{ content_id }}&id={{ contact.id }}">{% trans 'Delete' %}</a>
                 </div>
             </div>
         </div>{# /delete-confirm #}
@@ -79,7 +79,7 @@
                 {% if contact %}
                 <div class="navigation">
                     <h2>Navigation</h2>
-                    <a class="btn" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact }}">Add Location</a>
+                    <a class="btn" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact.id }}">Add Location</a>
                 </div>
                 {% endif %}
             </div>
@@ -105,12 +105,12 @@
                             <div class="partner-tags">
                                 {{ location.label }}
                             </div>
-                            <a class="btn pull-right" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact }}&location={{ location.id }}">Edit</a>
+                            <a class="btn pull-right" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact.id }}&location={{ location.id }}">Edit</a>
                         </div>
                     {% endfor %}
                 {% else %}
                     <div class="product-card not-clickable">
-                        Please add a new location.
+                        There are no locations for {{ contact.name }}.
                     </div>
                 {% endif %}
                 </div>

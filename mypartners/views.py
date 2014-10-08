@@ -190,12 +190,14 @@ def edit_item(request):
             form = ContactForm(instance=item, auto_id=False)
         else:
             form = ContactForm()
+            item = None
     elif request.path == reverse('create_partner'):
         partner = None
         if item_id:
             item = get_object_or_404(Partner, pk=item_id)
             form = PartnerForm(instance=item)
         else:
+            item = None
             form = NewPartnerForm()
     else:
         raise Http404
@@ -204,7 +206,7 @@ def edit_item(request):
         'form': form,
         'partner': partner,
         'company': company,
-        'contact': item_id,
+        'contact': item,
         'content_id': content_id,
         'view_name': 'PRM',
     }
