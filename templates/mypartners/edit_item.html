@@ -76,13 +76,16 @@
                     <li>- Country</li>
                 </ul>
                 {% endif %}
+                {% if contact %}
                 <div class="navigation">
                     <h2>Navigation</h2>
                     <a class="btn" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact }}">Add Location</a>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
+    {% if contact %}
     <div class="row">
         <div class="span8">
             <div class="card-wrapper locations">
@@ -114,6 +117,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 {% endblock %}
 
 {% block extra-js %}
