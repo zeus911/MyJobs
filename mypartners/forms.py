@@ -36,6 +36,13 @@ class ContactForm(forms.ModelForm):
             widget=forms.TextInput(attrs={'placeholder': 'Full Name',
                                           'id': 'id_contact-name'}))
 
+        if not self.instance.name:
+            notes = self.fields.pop('notes')
+            self.fields.update(LocationForm().fields)
+            self.fields['notes'] = notes
+            self.fields['city'].required = False
+            self.fields['state'].required = False
+
         init_tags(self)
 
         if self.instance.user:
@@ -134,6 +141,14 @@ class NewPartnerForm(forms.ModelForm):
         """
         self.user = kwargs.pop('user', '')
         super(NewPartnerForm, self).__init__(*args, **kwargs)
+
+        if not self.instance.name:
+            notes = self.fields.pop('notes')
+            self.fields.update(LocationForm().fields)
+            self.fields['notes'] = notes
+            self.fields['city'].required = False
+            self.fields['state'].required = False
+
         for field in self.fields.itervalues():
             field.label = "Primary Contact " + field.label
             # primary contact information isn't required to create a partner
