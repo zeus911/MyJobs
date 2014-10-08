@@ -1530,7 +1530,9 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     site_config = get_site_config(request)
     num_jobs = int(site_config.num_job_items_to_show) * 2
 
-    sqs = helpers.prepare_sqs_from_search_params(request.GET) if query_path else None
+    # Apply any parameters in the querystring to the solr search.
+    sqs = (helpers.prepare_sqs_from_search_params(request.GET) if query_path
+           else None)
     custom_facets = []
 
     if site_config.browse_facet_show:
@@ -1652,6 +1654,10 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     count_heading = helpers.build_results_heading(count_heading_dict)
     results_heading = helpers.build_results_heading(bread_box_title)
 
+    sort_order = request.GET.get('sort', 'relevance')
+    if sort_order not in helpers.sort_order_mapper.keys():
+        sort_order = 'relevance'
+
     data_dict = {
         'base_path': request.path,
         'bread_box_path': bread_box_path,
@@ -1681,6 +1687,8 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         'site_name': settings.SITE_NAME,
         'site_tags': settings.SITE_TAGS,
         'site_title': settings.SITE_TITLE,
+        'sort_fields': helpers.sort_fields,
+        'sort_order': sort_order,
         'title_term': q_term if q_term else '\*',
         'view_source': settings.VIEW_SOURCE,
         'widgets': widgets,
