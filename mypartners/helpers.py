@@ -509,7 +509,7 @@ def filter_partners(request, partner_library=False):
                   [contact_city, contact_state]])
 
         partners = list(OrderedSet(list(partners) + list(incomplete_partners)))
-    elif "activity" in sort_by:
+    elif "activity" in sort_by and not partner_library:
         if sort_order:
             partners = partners.annotate(
                 earliest_activity=Min('contactrecord__date_time')).order_by(
