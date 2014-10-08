@@ -526,4 +526,4 @@ def make_pixel_qs(request, job=None):
 def url_for_sort_field(context, field):
     current_url = context['request'].build_absolute_uri()
     new_url = update_url_param(current_url, 'sort', field)
-    return mark_safe('<a href=%s>Sort by %s</a>' % (new_url, field.title()))
+    return mark_safe('<a href=%s rel="nofollow">Sort by %s</a>' % (new_url, field.title()))
