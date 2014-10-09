@@ -299,16 +299,7 @@ def delete_prm_item(request):
     content_id = request.REQUEST.get('ct')
     content_id = get_int_or_none(content_id)
 
-    if content_id == ContentType.objects.get_for_model(Contact).id:
-        partner = get_object_or_404(Partner, id=partner_id, owner=company)
-        contact = get_object_or_404(Contact, id=contact_id)
-        log_change(contact, None, request.user, partner, contact.name,
-                   action_type=DELETION)
-        contact.delete()
-        return HttpResponseRedirect(reverse('partner_details')+'?company=' +
-                                    str(company.id)+'&partner=' +
-                                    str(partner_id))
-    elif content_id == ContentType.objects.get_for_model(Partner).id:
+    if content_id == ContentType.objects.get_for_model(Partner).id:
         partner = get_object_or_404(Partner, id=partner_id, owner=company)
         Contact.objects.filter(partner=partner).delete()
         log_change(partner, None, request.user, partner, partner.name,
@@ -333,6 +324,15 @@ def delete_prm_item(request):
                    saved_search.email, action_type=DELETION)
         saved_search.delete()
         return HttpResponseRedirect(reverse('partner_searches')+'?company=' +
+                                    str(company.id)+'&partner=' +
+                                    str(partner_id))
+    else:
+        partner = get_object_or_404(Partner, id=partner_id, owner=company)
+        contact = get_object_or_404(Contact, id=contact_id)
+        log_change(contact, None, request.user, partner, contact.name,
+                   action_type=DELETION)
+        contact.delete()
+        return HttpResponseRedirect(reverse('partner_details')+'?company=' +
                                     str(company.id)+'&partner=' +
                                     str(partner_id))
 
