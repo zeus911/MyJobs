@@ -510,6 +510,8 @@ def filter_partners(request, partner_library=False):
 
         partners = list(OrderedSet(list(partners) + list(incomplete_partners)))
     elif "activity" in sort_by and not partner_library:
+        # treat ascending as meaning most recent, not earliest activity
+        sort_order = "" if sort_order else "-"
         if sort_order:
             partners = partners.annotate(
                 earliest_activity=Min('contactrecord__date_time')).order_by(
