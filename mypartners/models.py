@@ -146,7 +146,9 @@ def delete_contact_locations(sender, instance, **kwargs):
     be able to delete all of a contact's locations when that contact is
     deleted.
     """
-    instance.locations.all().delete()
+    for location in instance.locations.all():
+        if not location.contacts.all():
+            location.delete()
 
 
 class Partner(models.Model):
