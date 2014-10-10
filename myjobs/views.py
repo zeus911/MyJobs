@@ -154,9 +154,11 @@ def home(request):
                 if len(login_form.get_user().profileunits_set.all()) > 0:
                     has_units = True
 
-                response_data = {'validation': 'valid', 'url': url,
-                                 'units': has_units,
-                                 'gravatar_url': login_form.get_user().get_gravatar_url(size=100)}
+                response_data = {
+                    'validation': 'valid', 'url': url,
+                    'units': has_units,
+                    'gravatar_url': login_form.get_user().get_gravatar_url(
+                        size=100)}
                 response = HttpResponse(json.dumps(response_data))
                 response.set_cookie('myguid', login_form.get_user().user_guid,
                                     expires=365*24*60*60, domain='.my.jobs')
