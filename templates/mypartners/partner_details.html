@@ -77,6 +77,11 @@
                     <div class="product-card not-clickable">
                         There are no contacts for {{partner.name}}.
                     </div>
+                    <div class="partner-pagination">
+                        <span class="step-links">
+                            <a class="pull-right" href="{% url 'edit_contact' %}?partner={{ partner.id }}&ct={{ contact_ct }}">New Contact</a>
+                        </span>
+                        <div class="clearfix"></div>
                 {% endif %}
             </div>
         </div>
