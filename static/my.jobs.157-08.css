@@ -406,7 +406,7 @@ h1 > small > a:hover {
 
 .row-filler input {
     position: absolute;
-    margin: -160px 0 0 1050px;
+    margin: -160px 0 0 600px;
     opacity: 0.001;
 }
 
@@ -491,9 +491,6 @@ h1 > small > a:hover {
     padding: 1px 10px;
     border-radius: 5px;
     color: #000;
-}
-
-.sort-by:hover {
     cursor: pointer;
 }
 
@@ -2470,6 +2467,10 @@ td .gravatar-blank,
         margin-top: 7px;
     }
 
+    .partner-sort #per-page {
+        cursor: pointer;
+    }
+
     .product-card > a:not(.btn) {
         padding: 0;
         border: 0;
@@ -2728,6 +2729,10 @@ td .gravatar-blank,
     #next,
     #previous {
         margin-top: 0;
+    }
+
+    .partner-sort #per-page {
+        cursor: pointer;
     }
 
     .btn-link{
