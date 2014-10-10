@@ -261,8 +261,8 @@ build data object from all sources on the page.
  */
 function build_data() {
     var data = {},
-        start_date = new Date(),
-        end_date = new Date();
+        start_date = null,
+        end_date = null;
 
     data['partner'] = $(".sidebar #p-id").val();
 
@@ -282,10 +282,9 @@ function build_data() {
             end_date = new Date(end_string);
     } else if($(".partner-tag.days").has("i").text()) {
         var days = $(".partner-tag.days").has("i").data('days');
+        start_date = new Date();
+        end_date = new Date();
         start_date.setDate(start_date.getDate() - days);
-    } else {
-        start_date = false;
-        end_date = false;
     }
     if(start_date)
         data.date_start = format_date(start_date);
@@ -386,10 +385,10 @@ function show_selected() {
         var value = s[1].replace("%20", "-");
         value = value.replace(" ", "-");
 
-        if(key == "date_start") {
+        if(value && (key == "date_start")) {
             start_date = new Date(value || new Date(0));
         }
-        if(key == "date_end") {
+        if(value && (key == "date_end")) {
             end_date = new Date(value || new Date());
         }
         if(key == "contact") {
