@@ -45,11 +45,9 @@ class Location(models.Model):
     address_line_two = models.CharField(max_length=255,
                                         verbose_name='Address Line Two',
                                         blank=True)
-    city = models.CharField(max_length=255, verbose_name='City', blank=True)
-    state = models.CharField(max_length=200, verbose_name='State/Region',
-                             blank=True)
-    country_code = models.CharField(max_length=3, verbose_name='Country',
-                                    blank=True)
+    city = models.CharField(max_length=255, verbose_name='City')
+    state = models.CharField(max_length=200, verbose_name='State/Region')
+    country_code = models.CharField(max_length=3, verbose_name='Country')
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
 
