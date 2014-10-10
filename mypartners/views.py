@@ -608,7 +608,7 @@ def prm_records(request):
     ContactRecord overview and ContactRecord overview from PRM reports.
 
     """
-    company, partner, user = prm_worthy(request)
+    company, partner, _ = prm_worthy(request)
     contact_type = request.REQUEST.get('contact_type')
     contact = request.REQUEST.get('contact')
 
@@ -628,28 +628,14 @@ def prm_records(request):
         response.content = html.content
         return response
 
-    contact_type_choices = list(CONTACT_TYPE_CHOICES)
-    try:
-        index = [x[0] for x in contact_type_choices].index(contact_type)
-        contact_type_choices.insert(0, contact_type_choices.pop(index))
-        contact_type_choices.insert(0, ('all', 'All'))
-    except ValueError:
-        contact_type_choices.insert(0, ('all', 'All'))
-    try:
-        index = [x[0] for x in contact_type_choices].index('pssemail')
-        contact_type_choices.pop(index)
-    except ValueError:
-        pass
+    contact_type_choices = [choice for choice in CONTACT_TYPE_CHOICES
+                            if choice[0] != 'pssemail']
+    contact_type_choices.insert(0, ('all', 'All'))
 
     contacts = ContactRecord.objects.filter(partner=partner)
     contacts = contacts.values('contact_name').distinct()
     contact_choices = [(c['contact_name'], c['contact_name']) for c in contacts]
-    try:
-        index = [x[0] for x in contact_choices].index(contact)
-        contact_choices.insert(0, contact_choices.pop(index))
-        contact_choices.append(('all', 'All'))
-    except ValueError:
-        contact_choices.insert(0, ('all', 'All'))
+    contact_choices.insert(0, ('all', 'All'))
 
     ctx = {
         'admin_id': request.REQUEST.get('admin'),
