@@ -1,19 +1,14 @@
-import datetime
 import operator
-import uuid
-
 from slugify import slugify
 
 from django.conf import settings
-from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
-                                        Group, PermissionsMixin)
+from django.contrib.auth.models import (BaseUserManager, Group)
 from django.contrib.contenttypes import generic
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.contrib.syndication.views import Feed
 from django.core.cache import cache
-from django.core.validators import (MaxValueValidator, ValidationError,
-                                    MinValueValidator)
+from django.core.validators import MaxValueValidator, ValidationError
 from django.db import models
 from django.db.models.query import QuerySet
 
@@ -421,8 +416,7 @@ class jobListing (models.Model):
     titleSlug = models.SlugField(max_length=200, blank=True, null=True,
                                  db_index=True)
     uid = models.IntegerField(db_index=True, unique=True)
-    zipcode = models.CharField(max_length=15, null=True,
-                                  blank=True)
+    zipcode = models.CharField(max_length=15, null=True, blank=True)
 
     objects = models.Manager()
     this_site = JobsByBuidManager()
@@ -455,6 +449,53 @@ class SeoSite(Site):
         verbose_name = 'Seo Site'
         verbose_name_plural = 'Seo Sites'
 
+    def associated_companies(self):
+        buids = self.business_units.all()
+        return Company.objects.filter(job_source_ids__in=buids)
+
+    def network_sites(self):
+        return SeoSite.objects.filter(site_tags__site_tag='network')
+
+    def network_sites_and_this_site(self):
+        query = models.Q(site_tags__site_tag='network') | models.Q(id=self.id)
+        return SeoSite.objects.filter(query)
+
+    def this_site_only(self):
+        # This should return self, but I really want to stay consistent and
+        # return a QuerySet so that all the functions can be used
+        # identically without knowing the value of postajob_filter_type.
+        return SeoSite.objects.filter(id=self.id)
+
+    def company_sites(self):
+        companies = self.associated_companies()
+        company_buids = companies.values_list('job_source_ids', flat=True)
+
+        sites = SeoSite.objects.filter(business_units__in=company_buids)
+        return sites.exclude(site_tags__site_tag='network')
+
+    def network_and_company_sites(self):
+        companies = self.associated_companies()
+        company_buids = companies.values_list('job_source_ids', flat=True)
+
+        query = [models.Q(business_units__in=company_buids),
+                 models.Q(site_tags__site_tag='network')]
+
+        return SeoSite.objects.filter(reduce(operator.or_, query))
+
+    def all_sites(self):
+        return SeoSite.objects.all()
+
+    postajob_filter_options = (
+        (network_sites, 'network sites only'),
+        (network_sites_and_this_site, 'network sites and this site'),
+        (this_site_only, 'this site only'),
+        (network_and_company_sites, 'network sites and sites associated with '
+                                    'the company that owns this site'),
+        (company_sites, 'sites associated with the company that owns this site'),
+        (all_sites, 'all sites'),
+    )
+    postajob_filter_options_dict = {k: v for v, k in postajob_filter_options}
+
     group = models.ForeignKey('auth.Group', null=True)
     facets = models.ManyToManyField('CustomFacet', null=True, blank=True,
                                     through='SeoSiteFacet')
@@ -486,6 +527,14 @@ class SeoSite(Site):
     site_tags = models.ManyToManyField('SiteTag', blank=True, null=True)
     site_package = models.ForeignKey('postajob.SitePackage', null=True,
                                      on_delete=models.SET_NULL)
+    postajob_filter_type = models.CharField(max_length=255,
+                                            choices=postajob_filter_options,
+                                            default='this site only')
+
+    def postajob_site_list(self):
+        filter_function = self.postajob_filter_options_dict.get(
+            self.postajob_filter_type, SeoSite.this_site_only)
+        return filter_function(self)
 
     def clear_cache(self):
         # Increment Configuration revision attribute, which is used
@@ -998,7 +1047,8 @@ class Configuration(models.Model):
     directemployers_link = models.URLField(max_length=200,
                                            default='http://directemployers.org')
     show_social_footer = models.BooleanField('Show Social Footer', default=True,
-        help_text='Include social footer on job listing pages.')
+                                             help_text='Include social footer '
+                                                       'on job listing pages.')
 
     # stylesheet manytomany relationship
     css_body = models.TextField(blank=True, null=True)

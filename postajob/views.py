@@ -29,7 +29,8 @@ from universal.views import RequestFormViewBase
 @company_has_access('prm_access')
 def jobs_overview(request):
     if settings.SITE:
-        jobs = Job.objects.filter_by_sites([settings.SITE])
+        sites = settings.SITE.postajob_site_list()
+        jobs = Job.objects.filter_by_sites(sites)
     else:
         jobs = Job.objects.all()
     company = get_company(request)
@@ -44,8 +45,9 @@ def jobs_overview(request):
 def purchasedjobs_overview(request):
     company = get_company(request)
     if settings.SITE:
-        products = PurchasedProduct.objects.filter_by_sites([settings.SITE])
-        jobs = PurchasedJob.objects.filter_by_sites([settings.SITE])
+        sites = settings.SITE.postajob_site_list()
+        products = PurchasedProduct.objects.filter_by_sites(sites)
+        jobs = PurchasedJob.objects.filter_by_sites(sites)
     else:
         products = Product.objects.all()
         jobs = PurchasedJob.objects.all()
@@ -64,7 +66,7 @@ def purchasedmicrosite_admin_overview(request):
     company = get_company(request)
 
     if settings.SITE:
-        sites = [settings.SITE]
+        sites = settings.SITE.postajob_site_list()
         products = Product.objects.filter_by_sites(sites)
         purchased = PurchasedProduct.objects.filter_by_sites(sites)
         groupings = ProductGrouping.objects.filter_by_sites(sites)
@@ -94,7 +96,8 @@ def purchasedmicrosite_admin_overview(request):
 def admin_products(request):
     company = get_company(request)
     if settings.SITE:
-        products = Product.objects.filter_by_sites([settings.SITE])
+        sites = settings.SITE.postajob_site_list()
+        products = Product.objects.filter_by_sites(sites)
     else:
         products = Product.objects.all()
     data = {
@@ -109,7 +112,8 @@ def admin_products(request):
 def admin_groupings(request):
     company = get_company(request)
     if settings.SITE:
-        grouping = ProductGrouping.objects.filter_by_sites([settings.SITE])
+        sites = settings.SITE.postajob_site_list()
+        grouping = ProductGrouping.objects.filter_by_sites(sites)
     else:
         grouping = ProductGrouping.objects.all()
     data = {
@@ -124,7 +128,8 @@ def admin_groupings(request):
 def admin_offlinepurchase(request):
     company = get_company(request)
     if settings.SITE:
-        purchases = OfflinePurchase.objects.filter_by_sites([settings.SITE])
+        sites = settings.SITE.postajob_site_list()
+        purchases = OfflinePurchase.objects.filter_by_sites(sites)
     else:
         purchases = OfflinePurchase.objects.all()
     data = {
@@ -139,7 +144,8 @@ def admin_offlinepurchase(request):
 def admin_request(request):
     company = get_company(request)
     if settings.SITE:
-        requests = Request.objects.filter_by_sites([settings.SITE])
+        sites = settings.SITE.postajob_site_list()
+        requests = Request.objects.filter_by_sites(sites)
     else:
         requests = Request.objects.all()
     data = {
@@ -155,7 +161,8 @@ def admin_request(request):
 def admin_purchasedproduct(request):
     company = get_company(request)
     if settings.SITE:
-        purchases = PurchasedProduct.objects.filter_by_sites([settings.SITE])
+        sites = settings.SITE.postajob_site_list()
+        purchases = PurchasedProduct.objects.filter_by_sites(sites)
     else:
         purchases = Request.objects.all()
     purchases = purchases.filter(product__owner=company)
