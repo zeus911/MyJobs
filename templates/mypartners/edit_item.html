@@ -112,6 +112,12 @@
                     <div class="product-card not-clickable">
                         There are no locations for {{ contact.name }}.
                     </div>
+                    <div class="partner-pagination">
+                        <span class="step-links">
+                            <a class="pull-right" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact.id }}">Add Location</a>
+                        </span>
+                        <div class="clearfix"></div>
+                    </div>
                 {% endif %}
                 </div>
             </div>
