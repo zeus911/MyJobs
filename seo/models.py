@@ -529,7 +529,7 @@ class SeoSite(Site):
                                      on_delete=models.SET_NULL)
     postajob_filter_type = models.CharField(max_length=255,
                                             choices=postajob_filter_options,
-                                            default='this site only')
+                                            default='this site only', blank=True)
 
     def postajob_site_list(self):
         filter_function = self.postajob_filter_options_dict.get(

@@ -1,0 +1,49 @@
+{% extends "seo_base.html" %}
+
+{% block myblocks_css_extras %}
+<style>
+    .offset1 {
+        margin-left: 80px !important;
+    }
+    .offset2 {
+        margin-left: 140px !important;
+    }
+    .offset3 {
+        margin-left: 200px !important;
+    }
+    .offset4 {
+        margin-left: 260px !important;
+    }
+    .offset5 {
+        margin-left: 320px !important;
+    }
+    .offset6 {
+        margin-left: 380px !important;
+    }
+    .offset7 {
+        margin-left: 440px !important;
+    }
+    .offset8 {
+        margin-left: 500px !important;
+    }
+    .offset9 {
+        margin-left: 560px !important;
+    }
+    .offset10 {
+        margin-left: 620px !important;
+    }
+    .offset11 {
+        margin-left: 680px !important;
+    }
+    .offset12 {
+
+        margin-left: 740px !important;
+    }
+</style>
+{% endblock myblocks_css_extras %}
+
+{% block directseo_main_content %}
+<div class="direct-page {{ page.bootstrap_classes }}" id="direct-page-{{ page.id }}">
+    {{ content }}
+</div>
+{% endblock directseo_main_content %}

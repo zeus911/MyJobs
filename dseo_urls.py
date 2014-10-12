@@ -114,3 +114,8 @@ urlpatterns += patterns(
     'myjobs.views',
     url(r'^edit/$', 'edit_account', name='edit_account'),
 )
+
+urlpatterns += patterns(
+    '',
+    url(r'^block/', include('myblocks.urls')),
+)

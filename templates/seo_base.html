@@ -8,6 +8,8 @@
 
 <html xmlns:fb="http://ogp.me/ns/fb#" lang="en">
 <head>
+{% block myblocks_css_extras %}{% endblock %}
+
 <title>{% block directseo_title %}{% endblock %}</title>
 <meta name="msvalidate.01" content="B9E4E5CC00BB58B097061E7DBFC6FA6B" />
 {% block directseo_css %}{% include "css.html" %}{% endblock %}
@@ -23,7 +25,6 @@
 
 </style>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
-
 
 <script type="text/javascript">
   var pager_num_items = {{ site_config.num_subnav_items_to_show }};
