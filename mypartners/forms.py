@@ -449,7 +449,7 @@ class ContactRecordForm(forms.ModelForm):
     def save(self, user, partner, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
         self.instance.partner = partner
-        if new_or_change == 1:
+        if new_or_change == ADDITION:
             self.instance.created_by = user
         instance = super(ContactRecordForm, self).save(commit)
 
