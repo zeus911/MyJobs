@@ -449,7 +449,8 @@ class ContactRecordForm(forms.ModelForm):
     def save(self, user, partner, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
         self.instance.partner = partner
-        self.instance.created_by = user
+        if new_or_change == ADDITION:
+            self.instance.created_by = user
         instance = super(ContactRecordForm, self).save(commit)
 
         self.instance.tags = self.cleaned_data.get('tags')
