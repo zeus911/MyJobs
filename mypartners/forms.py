@@ -8,7 +8,8 @@ import pytz
 
 from myprofile.forms import generate_custom_widgets
 from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
-                               ADDITION, CHANGE, MAX_ATTACHMENT_MB, Tag)
+                               ADDITION, CHANGE, MAX_ATTACHMENT_MB, Tag,
+                               Location)
 from mypartners.helpers import log_change, get_attachment_link, tag_get_or_create
 from mypartners.widgets import (MultipleFileField,
                                 SplitDateTimeDropDownField, TimeDropDownField)
@@ -28,12 +29,28 @@ class ContactForm(forms.ModelForm):
     """
     Creates a new contact or edits an existing one.
     """
+
+    # used to identify if location info is entered into a form
+    __LOCATION_FIELDS = (
+        'address_line_one', 'address_line_two', 'city', 'state', 'postal_code')
+    # similarly for partner information
+    __PARTNER_FIELDS = ('parnter-tags', 'partner_id', 'partnername')
+
     def __init__(self, *args, **kwargs):
         super(ContactForm, self).__init__(*args, **kwargs)
         self.fields['name'] = forms.CharField(
             label="Name", max_length=255, required=True,
             widget=forms.TextInput(attrs={'placeholder': 'Full Name',
                                           'id': 'id_contact-name'}))
+
+        # add location fields to form if this is a new contact
+        if not self.instance.name:
+            notes = self.fields.pop('notes')
+            self.fields.update(LocationForm().fields)
+            self.fields['city'].required = False
+            self.fields['state'].required = False
+            # move notes field to the end
+            self.fields['notes'] = notes
 
         init_tags(self)
 
@@ -47,7 +64,7 @@ class ContactForm(forms.ModelForm):
     class Meta:
         form_name = "Contact Information"
         model = Contact
-        exclude = ['user', 'partner']
+        exclude = ['user', 'partner', 'locations']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
@@ -66,8 +83,19 @@ class ContactForm(forms.ModelForm):
     def save(self, user, partner, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
         partner = Partner.objects.get(id=self.data['partner'])
+
         self.instance.partner = partner
         contact = super(ContactForm, self).save(commit)
+
+        if any(self.cleaned_data.get(field) 
+               for field in self.__LOCATION_FIELDS
+               if self.cleaned_data.get(field)):
+            location, _ = Location.objects.get_or_create(**{
+                field: self.cleaned_data[field] 
+                for field in self.__LOCATION_FIELDS})
+
+            if location not in contact.locations.all():
+                contact.locations.add(location)
 
         log_change(contact, self, user, partner, contact.name,
                    action_type=new_or_change)
@@ -123,6 +151,13 @@ class PartnerInitialForm(forms.ModelForm):
 
 
 class NewPartnerForm(forms.ModelForm):
+
+    # used to identify if location info is entered into a form
+    __LOCATION_FIELDS = (
+        'address_line_one', 'address_line_two', 'city', 'state', 'postal_code')
+    # similarly for partner information
+    __CONTACT_FIELDS = ('phone', 'email', 'name', 'notes')
+
     def __init__(self, *args, **kwargs):
         """
         This form is used only to create a partner.
@@ -133,6 +168,16 @@ class NewPartnerForm(forms.ModelForm):
         """
         self.user = kwargs.pop('user', '')
         super(NewPartnerForm, self).__init__(*args, **kwargs)
+
+        # add location fields to form if this is a new contact
+        if not self.instance.name:
+            notes = self.fields.pop('notes')
+            self.fields.update(LocationForm().fields)
+            self.fields['city'].required = False
+            self.fields['state'].required = False
+            # move notes field to the end
+            self.fields['notes'] = notes
+
         for field in self.fields.itervalues():
             field.label = "Primary Contact " + field.label
             # primary contact information isn't required to create a partner
@@ -162,7 +207,7 @@ class NewPartnerForm(forms.ModelForm):
     class Meta:
         form_name = "Partner Information"
         model = Contact
-        exclude = ['user', 'partner', 'tags']
+        exclude = ['user', 'partner', 'tags', 'locations']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
@@ -184,14 +229,27 @@ class NewPartnerForm(forms.ModelForm):
                                          'csrfmiddlewaretoken', 'company',
                                          'company_id', 'ct'])
 
-        has_data = False
-        for value in self.data.itervalues():
-            if value != [''] and value != ['USA']:
-                has_data = True
-        if has_data:
+        create_contact = any(self.cleaned_data.get(field)
+                             for field in self.__CONTACT_FIELDS 
+                             if self.cleaned_data.get(field))
+
+        if create_contact:
+            create_location = any(self.cleaned_data.get(field)
+                                  for field in self.__LOCATION_FIELDS
+                                  if self.cleaned_data.get(field))
+
             self.instance.partner = partner
             instance = super(NewPartnerForm, self).save(commit)
             partner.primary_contact = instance
+            
+            if create_location:
+                location, _ = Location.objects.get_or_create(**{
+                    field: self.cleaned_data[field] 
+                    for field in self.__LOCATION_FIELDS})
+
+                if location not in instance.locations.all():
+                    instance.locations.add(location)
+
             # Tag creation
             tag_data = filter(bool,
                               self.cleaned_data['partner-tags'].split(','))
@@ -443,4 +501,11 @@ class TagForm(forms.ModelForm):
         form_name = "Tag"
         model = Tag
         fields = ['name', 'hex_color']
+        widgets = generate_custom_widgets(model)
+
+
+class LocationForm(forms.ModelForm):
+    class Meta:
+        form_name = "Location"
+        model = Location
         widgets = generate_custom_widgets(model)
