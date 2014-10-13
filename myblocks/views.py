@@ -26,7 +26,8 @@ class BlockView(View):
 class LoginView(BlockView):
     def set_page(self, request):
         try:
-            page = Page.objects.filter(site=settings.SITE)[0]
+            page = Page.objects.filter(site=settings.SITE, page_type='login')[2]
+            #page = Page.objects.filter(site=settings.SITE, page_type='job_listing')[0]
         except (Page.DoesNotExist, Page.MultipleObjectsReturned):
             raise Http404
         setattr(self, 'page', page)

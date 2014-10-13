@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
@@ -38,7 +39,8 @@ class Block(models.Model):
         }
 
     def render(self, request):
-        html = render_to_string(self.cast().template(), self.context(request))
+        html = render_to_string(self.cast().template(), self.context(request),
+                                context_instance=RequestContext(request))
         return mark_safe(html)
 
     def save(self, *args, **kwargs):
@@ -135,9 +137,13 @@ class VerticalMultiBlock(Block):
     blocks = models.ManyToManyField('Block', through='VerticalMultiBlockOrder',
                                     related_name='included_blocks')
 
-    def render(self, request):
-        html = ''.join([block.render(request) for block in self.blocks.all()])
-        return mark_safe(html)
+    def context(self, request):
+        html = ''.join([block.cast().render(request) for block in self.blocks.all()])
+        return {
+            'block': self,
+            'content': mark_safe(html),
+            'request': request
+        }
 
     @staticmethod
     def template():
@@ -185,7 +191,7 @@ class Page(models.Model):
     site = models.ForeignKey('seo.SeoSite')
 
     def __unicode__(self):
-        return "%s for %s" % (self.page_type, self.site.name)
+        return "%s for %s: %s" % (self.page_type, self.site.name, self.pk)
 
     def boostrap_classes(self):
         return "span%s" % ('16' if self.boostrap_version == 1 else '12')
@@ -223,3 +229,6 @@ class ColumnOrder(models.Model):
 
     class Meta:
         ordering = ('order', )
+
+    def __unicode__(self):
+        return "Column for page %s" % self.page.pk

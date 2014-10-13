@@ -14,13 +14,9 @@ from seo.models import Company, CustomFacet
 
 
 def get_jobs(request):
-    print 'aslkfjafjasdlfjasd'
     filters = helpers.build_filter_dict(request.path)
     query_path = request.META.get('QUERY_STRING', None)
 
-    redirect_url = helpers.determine_redirect(request, filters)
-    if redirect_url:
-        return redirect_url
 
     active = []
     facet_blurb = ''

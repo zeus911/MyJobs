@@ -7,8 +7,8 @@
         </fieldset>
         {% csrf_token %}
     </form>
-    <div class="actions">
-        <button type="submit" class="btn pull-right" name="login" id="login">Login</button>
+    <div class="actions pull-right">
+        <button type="submit" class="direct-login-btn btn" name="login" id="login">Login</button>
         <div class="clear"></div>
             <span class="pull-right pagination-right">
                 <a href="{% url 'password_reset' %}">lost password</a>

@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from myblocks import models
 
+admin.site.register(models.Block)
 admin.site.register(models.ContentBlock)
 admin.site.register(models.ImageBlock)
 admin.site.register(models.LoginBlock)
