@@ -1,8 +1,9 @@
 from mypartners.models import Contact, Location
 
-# create locations from existing addresses
-
 def add_locations():
+    """
+    Converts contact address information into locations.
+    """
     for contact in Contact.objects.all():
         contact.locations.add(Location.objects.create(
             label=contact.label,
