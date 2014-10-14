@@ -2,7 +2,6 @@ from datetime import date, timedelta
 from decimal import Decimal
 import json
 import operator
-from urllib import urlencode
 import urllib2
 from uuid import uuid4
 
@@ -16,6 +15,9 @@ from django.db.models.query import QuerySet
 from django.db.models.signals import pre_delete
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+
+from import_jobs import add_jobs, delete_by_guid
+from transform import transform_for_postajob
 
 
 class BaseModel(models.Model):
@@ -172,12 +174,8 @@ class Job(BaseModel):
         """
         jobs = self.solr_dict()
         if jobs:
-            data = urlencode({
-                'key': settings.POSTAJOB_API_KEY,
-                'jobs': json.dumps(jobs)
-            })
-            request = urllib2.Request(settings.POSTAJOB_URLS['post'], data)
-            urllib2.urlopen(request).read()
+            jobs = [transform_for_postajob(job) for job in jobs]
+            add_jobs(jobs)
 
     def save(self, **kwargs):
         if self.is_expired and self.date_expired > date.today():
@@ -204,13 +202,11 @@ class Job(BaseModel):
         [location.delete() for location in locations]
 
     def remove_from_solr(self):
-        data = urlencode({
-            'key': settings.POSTAJOB_API_KEY,
-            'guids': ','.join(location.guid
-                              for location in self.locations.all())
-        })
-        request = urllib2.Request(settings.POSTAJOB_URLS['delete'], data)
-        urllib2.urlopen(request).read()
+        guids = [location.guid for location in self.locations.all()]
+        delete_by_guid(guids)
+
+    def guids(self):
+        return [location.guid for location in self.locations.all()]
 
     def on_sites(self):
         from seo.models import SeoSite

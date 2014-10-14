@@ -65,11 +65,6 @@ AWS_STORAGE_BUCKET_NAME = 'my-jobs'
 AWS_CALLING_FORMAT = CallingFormat.SUBDOMAIN
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
 
-POSTAJOB_URLS = {
-    'post': 'http://www.my.jobs/ajax/postajob/',
-    'delete': 'http://www.my.jobs/ajax/deleteajob/'
-}
-
 CC_AUTH = PROD_CC_AUTH
 
 ROOT_URLCONF = 'myjobs_urls'

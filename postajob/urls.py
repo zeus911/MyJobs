@@ -146,4 +146,5 @@ urlpatterns = patterns(
         name='companyprofile_update'),
 
     url(r'^list/$', 'product_list'),
+    url(r'^sites/$', 'site_fsm'),
 )
