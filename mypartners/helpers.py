@@ -525,6 +525,8 @@ def filter_partners(request, partner_library=False):
                     key=lambda p: (locations(p) == [], first_location(p)))
 
     elif "activity" in sort_by:
+        # treat ascending as meaning most recent, not earliest activity
+        sort_order = "" if sort_order else "-"
         if sort_order:
             partners = partners.annotate(
                 earliest_activity=Min('contactrecord__date_time')).order_by(
