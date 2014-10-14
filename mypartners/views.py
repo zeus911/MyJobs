@@ -477,7 +477,7 @@ def delete_location(request):
 
 @company_has_access('prm_access')
 def delete_partner_tag(request):
-    company = get_company(request)
+    company = get_company_or_404(request)
 
     data = {'id': request.GET.get('id')}
     tag = Tag.objects.for_company(company.id, **data)[0]
@@ -1321,7 +1321,7 @@ def process_email(request):
 @company_has_access('prm_access')
 def tag_names(request):
     if request.method == 'GET':
-        company = get_company(request)
+        company = get_company_or_404(request)
         value = request.GET.get('value')
         data = {'name__icontains': value}
         tag_names = list(Tag.objects.for_company(company, **data).values_list(
@@ -1343,7 +1343,7 @@ def tag_color(request):
 
 @company_has_access('prm_access')
 def add_tags(request):
-    company = get_company(request)
+    company = get_company_or_404(request)
     data = request.GET.get('data').split(',')
     tags = tag_get_or_create(company.id, data)
     return HttpResponse(json.dumps('success'))
