@@ -229,11 +229,15 @@ function submit_date_range_from_li (e) {
     else if(days == 'all-days')
         date_start = null
 
-    if(date_start)
+    if(date_start) {
         params = update_query('date_start', format_date(date_start),
                               window.location.search);
+        params = update_query('date_end', format_date(date_end), params);
+    } else {
+        params = update_query('date_start', '', window.location.search);
+        params = update_query('date_end', '', params);
+    }
 
-    params = update_query('date_end', format_date(date_end), params)                   
     window.location = location.pathname + params
 }
 
