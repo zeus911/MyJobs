@@ -72,6 +72,20 @@ class ImageBlock(Block):
         return 'myblocks/blocks/image.html'
 
 
+class RegistrationBlock(Block):
+    def context(self, request):
+        from registration.views import RegistrationForm
+        return {
+            'block': self,
+            'registration_form': RegistrationForm(),
+            'request': request
+        }
+
+    @staticmethod
+    def template():
+        return 'myblocks/blocks/registration.html'
+
+
 class LoginBlock(Block):
     def context(self, request):
         from registration.views import CustomAuthForm
