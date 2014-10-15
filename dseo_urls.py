@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.db.models.loading import cache as model_cache
 from django.views.generic import RedirectView
 
+from registration.views import DseoLogin
 from seo.views import BusinessUnitAdminFilter
 
 
@@ -117,5 +118,6 @@ urlpatterns += patterns(
 
 urlpatterns += patterns(
     '',
-    url(r'^block/', include('myblocks.urls')),
+    url(r'^block_login/', DseoLogin.as_view(), name='dseo_login'),
 )
+

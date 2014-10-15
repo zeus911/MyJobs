@@ -1,18 +1,22 @@
+import datetime
 import json
 
+from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth import logout as log_out
 from django.contrib.auth.decorators import user_passes_test
 from django.http import HttpResponseRedirect, HttpResponse
+from django.core.urlresolvers import resolve
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
 from django.views.generic import TemplateView
 
 from myjobs.decorators import user_is_allowed
 from myjobs.helpers import expire_login
-from myjobs.models import *
 from registration.models import ActivationProfile
 from registration.forms import RegistrationForm, CustomAuthForm
+from myblocks.views import BlockView
+from myjobs.models import User
 from myprofile.models import SecondaryEmail
 from myprofile.forms import (InitialNameForm, InitialAddressForm,
                              InitialPhoneForm, InitialEducationForm,
@@ -139,3 +143,7 @@ def logout(request):
     if 'myguid' in request.COOKIES:
         response.delete_cookie(key='myguid', domain='.my.jobs')
     return response
+
+
+class DseoLogin(BlockView):
+    page_type = 'login'

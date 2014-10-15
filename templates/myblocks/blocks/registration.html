@@ -1,15 +1,15 @@
 {% load i18n %}
 
 <div class="direct-registration-form {{ block.bootstrap_classes }}" id="direct-registration-form-{{ block.id }}">
-    <form action="register" method="post" id="direct-registration-form">
+    <form action="?" method="post" id="direct-registration-form">
         <h3>Sign Up</h3>
         <fieldset>
             {{ registration_form.as_ul }}
         </fieldset>
         {% csrf_token %}
+        <div class="actions pull-right">
+            <button type="submit" class="direct-registration-btn btn" name="{{ block.submit_btn_name }}" id="registration">Create Account</button>
+            <div class="clear"></div>
+        </div>
     </form>
-    <div class="actions pull-right">
-        <button type="submit" class="direct-registration-btn btn" name="create-account" id="create-account">Create Account</button>
-        <div class="clear"></div>
-    </div>
 </div>

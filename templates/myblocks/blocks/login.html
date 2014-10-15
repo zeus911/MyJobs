@@ -1,19 +1,19 @@
 {% load i18n %}
 
 <div class="direct-login-form {{ block.bootstrap_classes }}" id="direct-login-form-{{ block.id }}">
-    <form action="login" method="post" id="direct-login-form">
+    <form action="?" method="post" id="direct-login-form">
         <h3>Sign In</h3>
         <fieldset>
             {{ login_form.as_ul }}
         </fieldset>
         {% csrf_token %}
-    </form>
-    <div class="actions pull-right">
-        <button type="submit" class="direct-login-btn btn" name="login" id="login">Login</button>
-        <div class="clear"></div>
+        <div class="actions pull-right">
+            <button type="submit" class="direct-login-btn btn" value="login" name="{{ block.submit_btn_name }}">Login</button>
+            <div class="clear"></div>
             <span class="pull-right pagination-right">
                 <a href="{% url 'password_reset' %}">lost password</a>
             </span>
-        <div class="clear"></div>
-    </div>
+            <div class="clear"></div>
+        </div>
+    </form>
 </div>
