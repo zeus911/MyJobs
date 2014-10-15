@@ -37,7 +37,7 @@
                     </div>
                 {% endif %}
                 <div class="wrapper-footer">
-                    {% if total_records > 0 %}Showing {{recent_communication|length}} of {{total_records}} records{% endif %}
+                    {% if total_records > 0 %}Showing first of {{total_records}} records{% endif %}
                     <a class="pull-right" href="{% url 'partner_records' %}?partner={{partner.id}}">Manage Records</a>
                     <div class="clearfix"></div>
                 </div>
