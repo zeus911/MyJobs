@@ -11,8 +11,6 @@ class MyJobsBase(TestCase):
         cache.clear()
         self.ms_solr = Solr('http://127.0.0.1:8983/solr/seo')
         self.ms_solr.delete(q='*:*')
-        self.assertEqual(self.ms_solr.search('*:*').hits, 0)
 
     def tearDown(self):
         self.ms_solr.delete(q='*:*')
-        self.assertEqual(self.ms_solr.search('*:*').hits, 0)

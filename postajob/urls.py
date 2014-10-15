@@ -146,5 +146,8 @@ urlpatterns = patterns(
         name='companyprofile_update'),
 
     url(r'^list/$', 'product_list'),
-    url(r'^sites/$', 'site_fsm'),
+
+    url(r'^sites/$',
+        views.SitePackageFilter.as_view(),
+        name='site_fsm'),
 )

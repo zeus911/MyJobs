@@ -16,6 +16,7 @@ from mysearches.tests.factories import PartnerSavedSearchFactory
 
 class MyPartnerTests(MyJobsBase):
     def setUp(self):
+        super(MyPartnerTests, self).setUp()
         self.company = CompanyFactory()
         self.partner = PartnerFactory(owner=self.company)
         self.contact = ContactFactory(partner=self.partner)

@@ -16,9 +16,6 @@ from django.db.models.signals import pre_delete
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-from import_jobs import add_jobs, delete_by_guid
-from transform import transform_for_postajob
-
 
 class BaseModel(models.Model):
     class Meta:
@@ -55,6 +52,12 @@ class JobLocation(models.Model):
     zipcode = models.CharField(max_length=15, blank=True,
                                help_text=help_text['zipcode'],
                                verbose_name=_('Postal Code'))
+
+    def __unicode__(self):
+        if hasattr(self, 'city') and hasattr(self, 'state'):
+            return '{city}, {state}'.format(city=self.city, state=self.state)
+        else:
+            return "Location"
 
     def save(self, **kwargs):
         self.generate_guid()
@@ -118,8 +121,11 @@ class Job(BaseModel):
     created_by = models.ForeignKey('myjobs.User')
 
     def __unicode__(self):
-        return '{company} - {title}'.format(company=self.owner.name,
-                                            title=self.title)
+        if hasattr(self, 'owner') and hasattr(self, 'title'):
+            return '{company} - {title}'.format(company=self.owner.name,
+                                                title=self.title)
+        else:
+            return "Job"
 
     def solr_dict(self):
         if self.site_packages.all():
@@ -172,6 +178,9 @@ class Job(BaseModel):
         state_short, reqid, title, uid, and zipcode.
 
         """
+        from import_jobs import add_jobs
+        from transform import transform_for_postajob
+
         jobs = self.solr_dict()
         if jobs:
             jobs = [transform_for_postajob(job) for job in jobs]
@@ -202,6 +211,8 @@ class Job(BaseModel):
         [location.delete() for location in locations]
 
     def remove_from_solr(self):
+        from import_jobs import delete_by_guid
+
         guids = [location.guid for location in self.locations.all()]
         delete_by_guid(guids)
 
