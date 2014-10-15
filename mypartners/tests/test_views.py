@@ -311,7 +311,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
         container = soup.find(id='recent-communication-records')
         # Include 1 header row
-        self.assertEqual(len(container('div', class_="product-card")), 2)
+        self.assertEqual(len(container('div', class_="product-card")), 1)
 
         for row in container('div', class_="product-card"):
             title = "Test Subject  - example-contact"
@@ -329,7 +329,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
         container = soup.find(id='recent-communication-records')
-        self.assertEqual(len(container('div', class_="product-card")), 3)
+        self.assertEqual(len(container('div', class_="product-card")), 1)
 
     def test_no_recent_saved_searches(self):
         url = self.get_url(company=self.company.id,
@@ -364,7 +364,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
         container = soup.find(id='recent-saved-searches')
 
         # Include 1 header row
-        self.assertEqual(len(container('div', class_="product-card")), 2)
+        self.assertEqual(len(container('div', class_="product-card")), 1)
         for row in container('div', class_="product-card"):
             title_and_status = "All Jobs Active"
             self.assertIn(title_and_status,
@@ -382,7 +382,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
         container = soup.find(id='recent-saved-searches')
-        self.assertEqual(len(container('div', class_="product-card")), 3)
+        self.assertEqual(len(container('div', class_="product-card")), 1)
 
 
 class RecordsOverviewTests(MyPartnersTestCase):
