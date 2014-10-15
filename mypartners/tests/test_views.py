@@ -397,24 +397,13 @@ class RecordsOverviewTests(MyPartnersTestCase):
         self.assertIn('No records available.', soup.get_text().strip())
 
     def test_records_counts(self):
-        for _ in range(5):
-            ContactRecordFactory(partner=self.partner)
+        ContactRecordFactory.create_batch(5, partner=self.partner)
 
-        url = self.get_url(company=self.company.id,
-                           partner=self.partner.id)
+        url = self.get_url(company=self.company.id, partner=self.partner.id)
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
         records = soup.find(class_='card-wrapper')
         self.assertEqual(len(records('div', class_='product-card')), 5)
-
-        # Ensure old records don't show
-        ContactRecordFactory(partner=self.partner,
-                             date_time=datetime.now() - timedelta(days=31))
-        response = self.client.get(url)
-        soup = BeautifulSoup(response.content)
-        records = soup.find(class_='card-wrapper')
-        self.assertEqual(len(records('div', class_='product-card')), 5)
-
 
 class RecordsDetailsTests(MyPartnersTestCase):
     """Tests related to the records detail page, /prm/view/records/view/"""
