@@ -24,9 +24,12 @@ release_number = "%s.%s" % (marketing_version,build_calculated)
 
 if __name__ == '__main__':
     import argparse
+    import sys
 
     parser = argparse.ArgumentParser(
         description='Get version information in different formats.')
+    
+    # parser arguments --------------------------------------------------------
     parser.add_argument(
         '-b', '--build-calculated',
         action='store_true',
@@ -37,6 +40,12 @@ if __name__ == '__main__':
         action='store_true',
         help='Print the current release number')
 
+    # show help if no arguments passed ----------------------------------------
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
+
+    # parse arguments ---------------------------------------------------------
     args = parser.parse_args()
 
     if args.build_calculated:
