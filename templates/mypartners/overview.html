@@ -37,9 +37,7 @@
                     </div>
                 {% endif %}
                 <div class="wrapper-footer">
-                    {% if total_records > 0 %}
-                    <a class="pull-right" href="{% url 'partner_records' %}?partner={{partner.id}}">See Remaining {{ total_records|add:"-1" }} Records</a>
-                    {% endif %}
+                    <a class="pull-right" href="{% url 'partner_records' %}?partner={{partner.id}}">Manage Records</a>
                     <div class="clearfix"></div>
                 </div>
             </div>
