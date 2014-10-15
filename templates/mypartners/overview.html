@@ -25,7 +25,7 @@
         <div class="span8">
             <div id="recent-communication-records" class="card-wrapper">
                 <div class="wrapper-header">
-                    <h4>Most Recent Communication Records</h4>
+                    <h4>Most Recent Communication Record</h4>
                 </div>
                 {% if recent_communication %}
                     {% for record in recent_communication %}
@@ -37,7 +37,7 @@
                     </div>
                 {% endif %}
                 <div class="wrapper-footer">
-                    {% if total_records > 0 %}Showing first of {{total_records}} records{% endif %}
+                    {% if total_records > 0 %}Total of {{total_records}} records{% endif %}
                     <a class="pull-right" href="{% url 'partner_records' %}?partner={{partner.id}}">Manage Records</a>
                     <div class="clearfix"></div>
                 </div>
@@ -45,7 +45,7 @@
 
             <div id="recent-saved-searches" class="card-wrapper">
                 <div class="wrapper-header">
-                    <h4>Most Recent Saved Searches</h4>
+                    <h4>Most Recent Saved Searche</h4>
                 </div>
                 {% if recent_ss %}
                     {% for search in recent_ss %}
