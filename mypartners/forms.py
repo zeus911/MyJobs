@@ -1,5 +1,5 @@
 from django import forms
-from django.core.exceptions import ValidationError, MultipleObjectsReturned
+from django.core.exceptions import ValidationError
 from django.forms.util import ErrorList
 from django.utils.timezone import get_current_timezone_name
 
@@ -90,14 +90,9 @@ class ContactForm(forms.ModelForm):
         if any(self.cleaned_data.get(field) 
                for field in self.__LOCATION_FIELDS
                if self.cleaned_data.get(field)):
-            try:
-                location, _ = Location.objects.get_or_create(**{
-                    field: self.cleaned_data[field] 
-                    for field in self.__LOCATION_FIELDS})
-            except MultipleObjectsReturned:
-                location = Location.objects.get(**{
-                    field: self.cleaned_data[field]
-                    for field in self.__LOCATION_FIELDS})
+            location = Location.objects.create(**{
+                field: self.cleaned_data[field] 
+                for field in self.__LOCATION_FIELDS})
 
             if location not in contact.locations.all():
                 contact.locations.add(location)
@@ -248,14 +243,9 @@ class NewPartnerForm(forms.ModelForm):
             partner.primary_contact = instance
             
             if create_location:
-                try:
-                    location = Location.objects.filter(**{
-                        field: self.cleaned_data[field]
-                        for field in self.__LOCATION_FIELDS})
-                except MultipleObjectsReturned:
-                    location = Location.objects.get(**{
-                        field: self.cleaned_data[field]
-                        for field in self.__LOCATION_FIELDS})
+                location = Location.objects.create(**{
+                    field: self.cleaned_data[field] 
+                    for field in self.__LOCATION_FIELDS})
 
                 if location not in instance.locations.all():
                     instance.locations.add(location)
