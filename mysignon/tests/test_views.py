@@ -11,6 +11,7 @@ from myjobs.tests.setup import MyJobsBase
 
 class MySignOn(MyJobsBase):
     def setUp(self):
+        super(MySignOn, self).setUp()
         self.user = UserFactory()
         self.auth_callback_url = 'https://secure.my.jobs/account'
         self.auth_callback = '?auth_callback=%s' % self.auth_callback_url
