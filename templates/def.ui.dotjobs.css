@@ -1427,8 +1427,6 @@ a#sponsor-dotjobs:hover{
     margin-top: 10px;
     margin-bottom: 10px;
 }
-
-/* ImageBlock styles */
 .direct-image-block {
     margin-top: 15px;
 }
@@ -1440,8 +1438,6 @@ a#sponsor-dotjobs:hover{
 input[title="Submit Search"] {
     text-indent: 999999px;
 }
-
-/* SearchFilterBlock styles */
 .direct-search-filter-block h3 {
     border-bottom: 1px solid #666 !important;
 }
@@ -1459,14 +1455,13 @@ input[title="Submit Search"] {
 .direct-search-filter-block {
     margin-top: 10px;
 }
-/* SavedSearchWidgetBlock styles */
 .direct-saved-search-widget-block {
     background-color: #f2f2f2;
     padding: 10px;
     margin-top: 10px;
     margin-bottom: 10px;
 }
-/* LoginBlock styles */
+.direct-logged-in,
 .direct-registration-form,
 .direct-login-form {
     padding: 15px;
@@ -1475,6 +1470,10 @@ input[title="Submit Search"] {
     border-top-left-radius: 5px;
     background-color: #f2f2f2
 }
+.direct-logged-in .centered {
+    text-align: center;
+}
+.direct-logged-in h3,
 .direct-registration-form h3,
 .direct-login-form h3 {
     background-color: #{{css.backgroundColor}};
@@ -1508,9 +1507,10 @@ input[title="Submit Search"] {
 .direct-login-form input[type="checkbox"] {
     margin-left: 5px;
 }
+.direct-logout-btn,
 .direct-registration-btn,
 .direct-login-btn {
-    background: #{{css.primaryColor}} url("//d2e48ltfsb5exy.cloudfront.net/content_ms/files/bg-gradient.png") bottom repeat-x !important;
+    background: #{{css.primaryColor}} url("{{ STATIC_URL }}bg-gradient.png") bottom repeat-x !important;
     color: #fff !important;
     margin: 8px 0 0;
     padding: 5px 20px;

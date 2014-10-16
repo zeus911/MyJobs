@@ -1,10 +1,16 @@
+import json
+
 from django.conf import settings
-from django.http import Http404
+from django.contrib.auth import authenticate
+from django.http import Http404, HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.generic import View
 
 from myblocks.models import Page
+from myjobs.helpers import expire_login
+from myjobs.models import User
+from registration.forms import CustomAuthForm, RegistrationForm
 
 
 class BlockView(View):
