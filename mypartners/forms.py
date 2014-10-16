@@ -90,7 +90,7 @@ class ContactForm(forms.ModelForm):
         if any(self.cleaned_data.get(field) 
                for field in self.__LOCATION_FIELDS
                if self.cleaned_data.get(field)):
-            location, _ = Location.objects.get_or_create(**{
+            location = Location.objects.create(**{
                 field: self.cleaned_data[field] 
                 for field in self.__LOCATION_FIELDS})
 
@@ -243,7 +243,7 @@ class NewPartnerForm(forms.ModelForm):
             partner.primary_contact = instance
             
             if create_location:
-                location, _ = Location.objects.get_or_create(**{
+                location = Location.objects.create(**{
                     field: self.cleaned_data[field] 
                     for field in self.__LOCATION_FIELDS})
 
