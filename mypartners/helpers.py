@@ -568,7 +568,7 @@ def new_partner_from_library(request):
         library=library)
     partner.tags = tags
 
-    location, _ = Location.objects.get_or_create(
+    location = Location.objects.create(
         address_line_one=library.street1,
         address_line_two=library.street2,
         city=library.city,

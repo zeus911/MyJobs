@@ -431,8 +431,7 @@ def edit_location(request):
                 Location.objects.filter(
                     id=location.id).update(**form.cleaned_data)
             else:
-                location, _ = Location.objects.get_or_create(
-                    **form.cleaned_data)
+                location = Location.objects.create(**form.cleaned_data)
 
                 if location not in contact.locations.all():
                     contact.locations.add(location)
