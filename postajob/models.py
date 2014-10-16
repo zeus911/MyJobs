@@ -62,6 +62,8 @@ class JobLocation(models.Model):
     def save(self, **kwargs):
         self.generate_guid()
         super(JobLocation, self).save(**kwargs)
+        for job in self.jobs.all():
+            job.save()
 
     def generate_guid(self):
         if not self.guid:
