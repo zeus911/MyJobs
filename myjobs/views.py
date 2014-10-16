@@ -139,7 +139,7 @@ def home(request):
                 return response
             else:
                 return HttpResponse(json.dumps(
-                    {'errors': registration_nform.errors.items()}))
+                    {'errors': registration_form.errors.items()}))
 
         elif request.POST.get('action') == "login":
             login_form = CustomAuthForm(data=request.POST)
