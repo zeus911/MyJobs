@@ -41,6 +41,13 @@
             {% for tag in partner.tags.all %}
                 <span class="tag-name small" style="background-color: #{{tag.hex_color}}">{{ tag.name }}</span>
             {% endfor %}
+            {% for contact in partner.contact_set.all %}
+                {% for tag in contact.tags.all %}
+                    {% if tag not in partner.tags.all %}
+                    <span class="tag-name small" style="background-color: #{{tag.hex_color}}">{{ tag.name }}</span>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
         {% elif on_page == 'partner_library' %}
 
             {% if partner.is_veteran %}

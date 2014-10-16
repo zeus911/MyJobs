@@ -481,7 +481,8 @@ def filter_partners(request, partner_library=False):
 
     # filter by tags
     for tag in tags:
-        partners = partners.filter(tags__name__icontains=tag)
+        partners = partners.filter(Q(tags__name__icontains=tag) | 
+                                   Q(contact__tags__name__icontains=tag))
 
     if "location" in sort_by:
         if partner_library:
