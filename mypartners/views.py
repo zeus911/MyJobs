@@ -346,16 +346,14 @@ def prm_overview(request):
     company, partner, user = prm_worthy(request)
 
     most_recent_activity = partner.get_logs()
-    range_start, range_end = [now() + timedelta(-30), now()]
-    records = partner.get_contact_records(date_start=range_start,
-                                          date_end=range_end)
+    records = partner.get_contact_records()
     total_records = partner.get_contact_records().count()
     communication = records.order_by('-date_time')
     referrals = records.filter(contact_type='job').count()
     records = records.exclude(contact_type='job').count()
-    most_recent_communication = communication[:3]
+    most_recent_communication = communication[:1]
     saved_searches = partner.get_searches()
-    most_recent_saved_searches = saved_searches[:3]
+    most_recent_saved_searches = saved_searches[:1]
 
     ctx = {'partner': partner,
            'company': company,
