@@ -252,10 +252,9 @@ class Job(BaseModel):
 
     @staticmethod
     def get_country_map():
-        return {}
-        # data_url = 'https://d2e48ltfsb5exy.cloudfront.net/myjobs/data/countries.json'
-        # data_list = json.loads(urllib2.urlopen(data_url).read())['countries']
-        # return dict([(x['name'], x['code']) for x in data_list])
+        data_url = 'https://d2e48ltfsb5exy.cloudfront.net/myjobs/data/countries.json'
+        data_list = json.loads(urllib2.urlopen(data_url).read())['countries']
+        return dict([(x['name'], x['code']) for x in data_list])
 
     @staticmethod
     def get_state_choices():
@@ -267,12 +266,11 @@ class Job(BaseModel):
 
     @staticmethod
     def get_state_map():
-        return {}
-        # data_url = 'https://d2e48ltfsb5exy.cloudfront.net/myjobs/data/usa_regions.json'
-        # data_list = json.loads(urllib2.urlopen(data_url).read())['regions']
-        # state_map = dict([(x['name'], x['code']) for x in data_list])
-        # state_map['None'] = 'None'
-        # return state_map
+        data_url = 'https://d2e48ltfsb5exy.cloudfront.net/myjobs/data/usa_regions.json'
+        data_list = json.loads(urllib2.urlopen(data_url).read())['regions']
+        state_map = dict([(x['name'], x['code']) for x in data_list])
+        state_map['None'] = 'None'
+        return state_map
 
 
 class PurchasedJob(Job):
