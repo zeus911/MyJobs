@@ -2,7 +2,7 @@
 
 {% if request.user.is_anonymous or not request.user.is_authenticated %}
     <div class="direct-login-form {{ block.bootstrap_classes }}" id="direct-login-form-{{ block.id }}">
-        <form action="{{ block.post_url }}" method="post" id="direct-login-form">
+        <form action="{{ action }}" method="post" id="direct-login-form">
             <h3>Sign In</h3>
             <fieldset>
                 {{ login_form.as_ul }}

@@ -3,8 +3,7 @@ from django.contrib.auth import views as auth_views
 
 from universal.decorators import activate_user
 from registration.forms import CustomPasswordResetForm
-from registration.views import (RegistrationComplete, RegistrationBlockView,
-                                LoginBlockView, activate, merge_accounts,
+from registration.views import (RegistrationComplete, activate, merge_accounts,
                                 resend_activation, logout)
 
 urlpatterns = patterns('',
@@ -29,10 +28,4 @@ urlpatterns = patterns('',
         name='merge_accounts'),
     url(r'^register/resend/$', resend_activation, name='resend_activation'),
     url(r'^logout/$', logout, name='auth_logout'),
-
-    url(r'^action/register$', RegistrationBlockView.as_view(),
-        name='action_register'),
-    url(r'^action/login$', LoginBlockView.as_view(),
-        name='action_login'),
-    url(r'^action/logout$', logout, name='action_logout'),
 )

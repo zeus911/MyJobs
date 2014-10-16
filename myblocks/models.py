@@ -1,12 +1,16 @@
 from django.conf import settings
+from django.contrib.auth import authenticate
 from django.contrib.contenttypes.models import ContentType
-from django.core.urlresolvers import resolve, reverse
+from django.core.urlresolvers import reverse
 from django.db import models
+from django.http import HttpResponseRedirect
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
-from myblocks.helpers import get_jobs
+from myblocks.helpers import get_jobs, success_url
+from myjobs.helpers import expire_login
+from myjobs.models import User
 from registration.forms import CustomAuthForm, RegistrationForm
 
 
@@ -76,25 +80,41 @@ class ImageBlock(Block):
 
 class LoginBlock(Block):
     def context(self, request):
+        querystring = "?%s" % request.META.get('QUERY_STRING')
         if request.POST and self.submit_btn_name() in request.POST:
             return {
+                'action': querystring,
                 'block': self,
                 'login_form': CustomAuthForm(data=request.POST),
                 'request': request,
-                }
+            }
         return {
+            'action': querystring,
             'block': self,
             'login_form': CustomAuthForm(),
             'request': request,
-            }
+        }
+
+    def handle_post(self, request):
+        if not request.POST or self.submit_btn_name() not in request.POST:
+            return None
+
+        form = CustomAuthForm(data=request.POST)
+        if form.is_valid():
+            expire_login(request, form.get_user())
+
+            response = HttpResponseRedirect(success_url(request))
+            response.set_cookie('myguid', form.get_user().user_guid,
+                                expires=365*24*60*60, domain='.my.jobs')
+            return response
+        return None
 
     @staticmethod
     def post_url():
         return reverse('action_login')
 
-    @staticmethod
-    def submit_btn_name():
-        return 'login'
+    def submit_btn_name(self):
+        return 'login-%s' % self.id
 
     @staticmethod
     def template():
@@ -103,26 +123,49 @@ class LoginBlock(Block):
 
 class RegistrationBlock(Block):
     def context(self, request):
+        querystring = request.META.get('QUERY_STRING')
+        print querystring
         if request.POST and self.submit_btn_name() in request.POST:
             return {
+                'action': querystring,
                 'block': self,
+                'qs': querystring,
                 'registration_form': RegistrationForm(request.POST,
                                                       auto_id=False),
                 'request': request,
             }
         return {
+            'action': querystring,
             'block': self,
             'registration_form': RegistrationForm(),
             'request': request,
         }
 
+    def handle_post(self, request):
+        if not request.POST or self.submit_btn_name() not in request.POST:
+            return None
+
+        form = RegistrationForm(request.POST, auto_id=False)
+        if form.is_valid():
+            user, created = User.objects.create_user(request=request,
+                                                     **form.cleaned_data)
+            user_cache = authenticate(
+                username=form.cleaned_data['email'],
+                password=form.cleaned_data['password1'])
+            expire_login(request, user_cache)
+
+            response = HttpResponseRedirect(success_url(request))
+            response.set_cookie('myguid', user.user_guid, expires=365*24*60*60,
+                                domain='.my.jobs')
+            return response
+        return None
+
     @staticmethod
     def post_url():
         return reverse('action_register')
 
-    @staticmethod
-    def submit_btn_name():
-        return 'registration'
+    def submit_btn_name(self):
+        return 'registration-%s' % self.id
 
     @staticmethod
     def template():
@@ -181,7 +224,8 @@ class VerticalMultiBlock(Block):
                                     related_name='included_blocks')
 
     def context(self, request):
-        html = ''.join([block.cast().render(request) for block in self.blocks.all()])
+        html = ''.join([block.cast().render(request) for block in
+                        self.blocks.all()])
         return {
             'block': self,
             'content': mark_safe(html),
@@ -199,7 +243,8 @@ class Column(models.Model):
     def __unicode__(self):
         return ', '.join([block.name for block in self.blocks.all()])
 
-    def boostrap_classes(self):
+    @staticmethod
+    def boostrap_classes():
         return "row"
 
     def context(self, request):
@@ -235,6 +280,15 @@ class Page(models.Model):
 
     def __unicode__(self):
         return "%s for %s: %s" % (self.page_type, self.site.name, self.pk)
+
+    def all_blocks(self):
+        """
+        outputs:
+            A list of all of the blocks included in a page.
+        """
+        query = (models.Q(column__page=self) |
+                 models.Q(verticalmultiblockorder__vertical_multiblock__column__page=self))
+        return [block.cast() for block in Block.objects.filter(query).distinct()]
 
     def boostrap_classes(self):
         return "span%s" % ('16' if self.boostrap_version == 1 else '12')
