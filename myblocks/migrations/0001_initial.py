@@ -11,23 +11,12 @@ class Migration(SchemaMigration):
         # Adding model 'Block'
         db.create_table(u'myblocks_block', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('content_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['contenttypes.ContentType'])),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('offset', self.gf('django.db.models.fields.PositiveIntegerField')()),
             ('span', self.gf('django.db.models.fields.PositiveIntegerField')()),
-            ('content_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['contenttypes.ContentType'])),
         ))
         db.send_create_signal(u'myblocks', ['Block'])
-
-        # Adding model 'VerticalMultiBlock'
-        db.create_table(u'myblocks_verticalmultiblock', (
-            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
-        ))
-        db.send_create_signal(u'myblocks', ['VerticalMultiBlock'])
-
-        # Adding model 'LoginBlock'
-        db.create_table(u'myblocks_loginblock', (
-            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
-        ))
-        db.send_create_signal(u'myblocks', ['LoginBlock'])
 
         # Adding model 'ContentBlock'
         db.create_table(u'myblocks_contentblock', (
@@ -35,6 +24,62 @@ class Migration(SchemaMigration):
             ('content', self.gf('django.db.models.fields.TextField')()),
         ))
         db.send_create_signal(u'myblocks', ['ContentBlock'])
+
+        # Adding model 'ImageBlock'
+        db.create_table(u'myblocks_imageblock', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+            ('image_url', self.gf('django.db.models.fields.URLField')(max_length=200)),
+        ))
+        db.send_create_signal(u'myblocks', ['ImageBlock'])
+
+        # Adding model 'LoginBlock'
+        db.create_table(u'myblocks_loginblock', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+        ))
+        db.send_create_signal(u'myblocks', ['LoginBlock'])
+
+        # Adding model 'RegistrationBlock'
+        db.create_table(u'myblocks_registrationblock', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+        ))
+        db.send_create_signal(u'myblocks', ['RegistrationBlock'])
+
+        # Adding model 'SavedSearchWidgetBlock'
+        db.create_table(u'myblocks_savedsearchwidgetblock', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+        ))
+        db.send_create_signal(u'myblocks', ['SavedSearchWidgetBlock'])
+
+        # Adding model 'SearchBoxBlock'
+        db.create_table(u'myblocks_searchboxblock', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+            ('search_box_template', self.gf('django.db.models.fields.CharField')(max_length=255)),
+        ))
+        db.send_create_signal(u'myblocks', ['SearchBoxBlock'])
+
+        # Adding model 'SearchFilterBlock'
+        db.create_table(u'myblocks_searchfilterblock', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+        ))
+        db.send_create_signal(u'myblocks', ['SearchFilterBlock'])
+
+        # Adding model 'SearchResultBlock'
+        db.create_table(u'myblocks_searchresultblock', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+        ))
+        db.send_create_signal(u'myblocks', ['SearchResultBlock'])
+
+        # Adding model 'ShareBlock'
+        db.create_table(u'myblocks_shareblock', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+        ))
+        db.send_create_signal(u'myblocks', ['ShareBlock'])
+
+        # Adding model 'VerticalMultiBlock'
+        db.create_table(u'myblocks_verticalmultiblock', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+        ))
+        db.send_create_signal(u'myblocks', ['VerticalMultiBlock'])
 
         # Adding model 'Column'
         db.create_table(u'myblocks_column', (
@@ -46,7 +91,7 @@ class Migration(SchemaMigration):
         db.create_table(u'myblocks_page', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('bootstrap_version', self.gf('django.db.models.fields.PositiveIntegerField')()),
-            ('path', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('page_type', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('site', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['seo.SeoSite'])),
         ))
         db.send_create_signal(u'myblocks', ['Page'])
@@ -73,8 +118,8 @@ class Migration(SchemaMigration):
         db.create_table(u'myblocks_columnorder', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('column', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myblocks.Column'])),
-            ('page', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myblocks.Page'])),
             ('order', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('page', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myblocks.Page'])),
         ))
         db.send_create_signal(u'myblocks', ['ColumnOrder'])
 
@@ -83,14 +128,35 @@ class Migration(SchemaMigration):
         # Deleting model 'Block'
         db.delete_table(u'myblocks_block')
 
-        # Deleting model 'VerticalMultiBlock'
-        db.delete_table(u'myblocks_verticalmultiblock')
+        # Deleting model 'ContentBlock'
+        db.delete_table(u'myblocks_contentblock')
+
+        # Deleting model 'ImageBlock'
+        db.delete_table(u'myblocks_imageblock')
 
         # Deleting model 'LoginBlock'
         db.delete_table(u'myblocks_loginblock')
 
-        # Deleting model 'ContentBlock'
-        db.delete_table(u'myblocks_contentblock')
+        # Deleting model 'RegistrationBlock'
+        db.delete_table(u'myblocks_registrationblock')
+
+        # Deleting model 'SavedSearchWidgetBlock'
+        db.delete_table(u'myblocks_savedsearchwidgetblock')
+
+        # Deleting model 'SearchBoxBlock'
+        db.delete_table(u'myblocks_searchboxblock')
+
+        # Deleting model 'SearchFilterBlock'
+        db.delete_table(u'myblocks_searchfilterblock')
+
+        # Deleting model 'SearchResultBlock'
+        db.delete_table(u'myblocks_searchresultblock')
+
+        # Deleting model 'ShareBlock'
+        db.delete_table(u'myblocks_shareblock')
+
+        # Deleting model 'VerticalMultiBlock'
+        db.delete_table(u'myblocks_verticalmultiblock')
 
         # Deleting model 'Column'
         db.delete_table(u'myblocks_column')
@@ -133,11 +199,12 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Block'},
             'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'offset': ('django.db.models.fields.PositiveIntegerField', [], {}),
             'span': ('django.db.models.fields.PositiveIntegerField', [], {})
         },
         u'myblocks.blockorder': {
-            'Meta': {'ordering': "['order']", 'object_name': 'BlockOrder'},
+            'Meta': {'ordering': "('order',)", 'object_name': 'BlockOrder'},
             'block': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myblocks.Block']"}),
             'column': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myblocks.Column']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -149,7 +216,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         u'myblocks.columnorder': {
-            'Meta': {'ordering': "['order']", 'object_name': 'ColumnOrder'},
+            'Meta': {'ordering': "('order',)", 'object_name': 'ColumnOrder'},
             'column': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myblocks.Column']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'order': ('django.db.models.fields.PositiveIntegerField', [], {}),
@@ -160,6 +227,11 @@ class Migration(SchemaMigration):
             u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'}),
             'content': ('django.db.models.fields.TextField', [], {})
         },
+        u'myblocks.imageblock': {
+            'Meta': {'object_name': 'ImageBlock', '_ormbases': [u'myblocks.Block']},
+            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'}),
+            'image_url': ('django.db.models.fields.URLField', [], {'max_length': '200'})
+        },
         u'myblocks.loginblock': {
             'Meta': {'object_name': 'LoginBlock', '_ormbases': [u'myblocks.Block']},
             u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'})
@@ -169,8 +241,33 @@ class Migration(SchemaMigration):
             'bootstrap_version': ('django.db.models.fields.PositiveIntegerField', [], {}),
             'columns': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myblocks.Column']", 'through': u"orm['myblocks.ColumnOrder']", 'symmetrical': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'path': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'page_type': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'site': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.SeoSite']"})
+        },
+        u'myblocks.registrationblock': {
+            'Meta': {'object_name': 'RegistrationBlock', '_ormbases': [u'myblocks.Block']},
+            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'})
+        },
+        u'myblocks.savedsearchwidgetblock': {
+            'Meta': {'object_name': 'SavedSearchWidgetBlock', '_ormbases': [u'myblocks.Block']},
+            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'})
+        },
+        u'myblocks.searchboxblock': {
+            'Meta': {'object_name': 'SearchBoxBlock', '_ormbases': [u'myblocks.Block']},
+            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'}),
+            'search_box_template': ('django.db.models.fields.CharField', [], {'max_length': '255'})
+        },
+        u'myblocks.searchfilterblock': {
+            'Meta': {'object_name': 'SearchFilterBlock', '_ormbases': [u'myblocks.Block']},
+            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'})
+        },
+        u'myblocks.searchresultblock': {
+            'Meta': {'object_name': 'SearchResultBlock', '_ormbases': [u'myblocks.Block']},
+            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'})
+        },
+        u'myblocks.shareblock': {
+            'Meta': {'object_name': 'ShareBlock', '_ormbases': [u'myblocks.Block']},
+            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'})
         },
         u'myblocks.verticalmultiblock': {
             'Meta': {'object_name': 'VerticalMultiBlock', '_ormbases': [u'myblocks.Block']},
@@ -178,7 +275,7 @@ class Migration(SchemaMigration):
             'blocks': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'included_blocks'", 'symmetrical': 'False', 'through': u"orm['myblocks.VerticalMultiBlockOrder']", 'to': u"orm['myblocks.Block']"})
         },
         u'myblocks.verticalmultiblockorder': {
-            'Meta': {'ordering': "['order']", 'object_name': 'VerticalMultiBlockOrder'},
+            'Meta': {'ordering': "('order',)", 'object_name': 'VerticalMultiBlockOrder'},
             'block': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myblocks.Block']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'order': ('django.db.models.fields.PositiveIntegerField', [], {}),
@@ -391,7 +488,7 @@ class Migration(SchemaMigration):
             'google_analytics_campaigns': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.GoogleAnalyticsCampaign']", 'null': 'True', 'blank': 'True'}),
             'group': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.Group']", 'null': 'True'}),
             'microsite_carousel': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['social_links.MicrositeCarousel']", 'null': 'True', 'on_delete': 'models.SET_NULL', 'blank': 'True'}),
-            'postajob_filter_type': ('django.db.models.fields.CharField', [], {'default': "'this site only'", 'max_length': '255'}),
+            'postajob_filter_type': ('django.db.models.fields.CharField', [], {'default': "'this site only'", 'max_length': '255', 'blank': 'True'}),
             'site_description': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '200', 'blank': 'True'}),
             'site_heading': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '200', 'blank': 'True'}),
             'site_package': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.SitePackage']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
