@@ -8,7 +8,6 @@ window.onpopstate = function(event) {
     send_filter(event.state);
 };
 
-
 // isIE is used a lot, so lets make it a variable!
 isIE = isIE();
 
@@ -246,8 +245,8 @@ function fill_in_history_state(data){
         $("#reset-date-range").css("visibility", "visible");
     } else {
         // no day button is clicked, so show the date picker widget
-        $("#activity-start-date").val(data.start_date);
-        $("#activity-end-date").val(data.end_date);
+        $("#activity-start-date").val(data.date_start);
+        $("#activity-end-date").val(data.date_end);
         $(".partner-tag.custom").hide();
         $(".date-picker-widget").show();
         $("#reset-date-range").css("visibility", "visible");

@@ -61,10 +61,10 @@ def prm(request):
 
     """
     company = get_company_or_404(request)
+    partners = filter_partners(request)
+    paginator = add_pagination(request, partners) if partners else None
 
     if request.is_ajax():
-        partners = filter_partners(request)
-        paginator = add_pagination(request, partners)
         ctx = {
             'partners': paginator,
             'on_page': 'prm',
@@ -75,11 +75,6 @@ def prm(request):
                                   ctx, RequestContext(request))
         response.content = html.content
         return response
-    partners = filter_partners(request)
-    if partners:
-        paginator = add_pagination(request, partners)
-    else:
-        paginator = None
 
     ctx = {
         'has_partners': True if partners else False,
@@ -666,10 +661,8 @@ def prm_records(request):
 
     """
     company, partner, _ = prm_worthy(request)
-    contact_type = request.REQUEST.get('contact_type')
-    contact = request.REQUEST.get('contact')
 
-    dt_range, date_str, contact_records = get_records_from_request(request)
+    _, _, contact_records = get_records_from_request(request)
     paginated_records = add_pagination(request,
                                        contact_records.order_by('-date_time'))
 
@@ -689,21 +682,16 @@ def prm_records(request):
                             if choice[0] != 'pssemail']
     contact_type_choices.insert(0, ('all', 'All'))
 
-    contacts = ContactRecord.objects.filter(partner=partner)
-    contacts = contacts.values('contact_name').distinct()
-    contact_choices = [(c['contact_name'], c['contact_name']) for c in contacts]
+    contacts = ContactRecord.objects.distinct().filter(partner=partner)
+    contact_choices = [(c, c) for c in contacts.values_list(
+        'contact_name', flat=True)]
     contact_choices.insert(0, ('all', 'All'))
 
     ctx = {
         'admin_id': request.REQUEST.get('admin'),
         'company': company,
-        'contact': contact,
         'contact_choices': contact_choices,
-        'contact_type': contact_type,
         'contact_type_choices': contact_type_choices,
-        'date_display': date_str,
-        'date_start': dt_range[0],
-        'date_end': dt_range[1],
         'partner': partner,
         'records': paginated_records,
         'view_name': 'PRM',

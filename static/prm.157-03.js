@@ -38,14 +38,13 @@ if (typeof(isIE) == "number" && isIE < 9) {
 }
 
 $(document).ready(function() {
+    $(".date-picker-widget").hide();
+    $("#reset-date-range").css("visibility", "hidden");
+
     /*
     If someone loads the page with request.GET info
     (not from ajax) fill page with info
     */
-
-    $(".date-picker-widget").hide();
-    $("#reset-date-range").css("visibility", "hidden");
-
     if(location.search) show_selected();
 
     /*
