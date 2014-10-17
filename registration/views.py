@@ -5,8 +5,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth import logout as log_out
 from django.contrib.auth.decorators import user_passes_test
-from django.http import HttpResponseRedirect, HttpResponse
-from django.core.urlresolvers import reverse
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
 from django.views.generic import TemplateView
@@ -15,6 +14,7 @@ from myjobs.decorators import user_is_allowed
 from myjobs.helpers import expire_login
 from registration.models import ActivationProfile
 from registration.forms import RegistrationForm, CustomAuthForm
+from myblocks.models import Page
 from myblocks.views import BlockView
 from myjobs.models import User
 from myprofile.models import SecondaryEmail
@@ -147,3 +147,16 @@ def logout(request):
 
 class DseoLogin(BlockView):
     page_type = 'login'
+
+    def set_page(self):
+        """
+        Override set_page to remove default option, allowing us to
+        prevent login on some sites.
+
+        """
+        try:
+            page = Page.objects.filter(site=settings.SITE,
+                                       page_type=self.page_type)[0]
+        except IndexError:
+            raise Http404
+        setattr(self, 'page', page)

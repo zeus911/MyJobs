@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.contenttypes.models import ContentType
-from django.core.urlresolvers import reverse
 from django.db import models
 from django.http import HttpResponseRedirect
 from django.template import RequestContext
@@ -109,10 +108,6 @@ class LoginBlock(Block):
             return response
         return None
 
-    @staticmethod
-    def post_url():
-        return reverse('action_login')
-
     def submit_btn_name(self):
         return 'login-%s' % self.id
 
@@ -159,10 +154,6 @@ class RegistrationBlock(Block):
                                 domain='.my.jobs')
             return response
         return None
-
-    @staticmethod
-    def post_url():
-        return reverse('action_register')
 
     def submit_btn_name(self):
         return 'registration-%s' % self.id
@@ -225,7 +216,7 @@ class VerticalMultiBlock(Block):
 
     def context(self, request):
         html = ''.join([block.cast().render(request) for block in
-                        self.blocks.all()])
+                        self.blocks.all().order_by('verticalmultiblockorder__order')])
         return {
             'block': self,
             'content': mark_safe(html),
@@ -249,7 +240,7 @@ class Column(models.Model):
 
     def context(self, request):
         content = []
-        for block in self.blocks.all():
+        for block in self.blocks.all().order_by('blockorder__order'):
             content.append(block.cast().render(request))
         return {
             'column': self,
@@ -266,14 +257,15 @@ class Column(models.Model):
 class Page(models.Model):
     bootstrap_choices = (
         (1, 'Bootstrap 1.4'),
-        (2, 'Bootstrap 3'),
+        # (2, 'Bootstrap 3'),
     )
     page_type_choices = (
         # ('job_listing', 'Job Listing Page'),
         ('login', 'Login Page'),
     )
 
-    bootstrap_version = models.PositiveIntegerField(choices=bootstrap_choices)
+    bootstrap_version = models.PositiveIntegerField(choices=bootstrap_choices,
+                                                    default=1)
     page_type = models.CharField(choices=page_type_choices, max_length=255)
     columns = models.ManyToManyField('Column', through='ColumnOrder')
     site = models.ForeignKey('seo.SeoSite')
@@ -284,7 +276,7 @@ class Page(models.Model):
     def all_blocks(self):
         """
         outputs:
-            A list of all of the blocks included in a page.
+            A list of every unique block included in a page.
         """
         query = (models.Q(column__page=self) |
                  models.Q(verticalmultiblockorder__vertical_multiblock__column__page=self))
@@ -295,7 +287,7 @@ class Page(models.Model):
 
     def render(self, request):
         content = []
-        for column in self.columns.all():
+        for column in self.columns.all().order_by('columnorder__order'):
             content.append(column.render(request))
         return mark_safe(''.join(content))
 

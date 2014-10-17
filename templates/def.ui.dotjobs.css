@@ -1483,6 +1483,11 @@ input[title="Submit Search"] {
     padding: 5px 20px;
     margin: -10px -10px 10px -10px;
 }
+.direct-registration-form ul.errorlist li,
+.direct-login-form ul.errorlist li{
+    color: #900;
+    margin-left: -25px;
+}
 .direct-registration-form input[type="text"],
 .direct-registration-form input[type="password"],
 .direct-login-form input[type="password"],

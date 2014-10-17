@@ -7,7 +7,6 @@ admin.site.register(models.ContentBlock)
 admin.site.register(models.ImageBlock)
 admin.site.register(models.LoginBlock)
 admin.site.register(models.RegistrationBlock)
-admin.site.register(models.ShareBlock)
 admin.site.register(models.VerticalMultiBlock)
 
 admin.site.register(models.Column)

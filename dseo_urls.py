@@ -118,6 +118,6 @@ urlpatterns += patterns(
 
 urlpatterns += patterns(
     '',
-    url(r'^block_login/', DseoLogin.as_view(), name='dseo_login'),
+    url(r'^login/', DseoLogin.as_view(), name='dseo_login'),
 )
 
