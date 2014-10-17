@@ -28,7 +28,7 @@ class HorizontalRadioRenderer(RadioSelect.renderer):
 class SavedSearchForm(BaseUserForm):
     def __init__(self, *args, **kwargs):
         super(SavedSearchForm, self).__init__(*args, **kwargs)
-        choices = make_choices(self.user)
+        choices = make_choices(self.user) or [[None]]
         self.fields["email"] = ChoiceField(widget=Select(), choices=choices,
                                            initial=choices[0][0])
     feed = URLField(widget=HiddenInput())
@@ -94,7 +94,7 @@ class SavedSearchForm(BaseUserForm):
 class DigestForm(BaseUserForm):
     def __init__(self, *args, **kwargs):
         super(DigestForm, self).__init__(*args, **kwargs)
-        choices = make_choices(self.user)
+        choices = make_choices(self.user) or [[None]]
         self.fields["email"] = ChoiceField(widget=Select(attrs={
                                            'id': 'id_digest_email'}),
                                            choices=choices,

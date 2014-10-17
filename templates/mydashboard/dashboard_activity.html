@@ -1,40 +1,44 @@
 {% load user_ops %}
 {% load common_tags %}
 
-{% if candidates %}
-                
-    {% load endless %}    
-    {% paginate candidates %}    
-                       
-        <table id="row-link-table">
-            {% for candidate in candidates %}
-            <tr class="candidate-activity" onclick="window.open('{% url 'candidate_information' %}{% get_candidate_query_string company_id candidate.User_id %}', '_blank');" >
-                <td>
-                    {% if candidate.User_first_name and candidate.User_last_name %}
-                        <div class="candidate-name">{{ candidate.User_first_name }} {{ candidate.User_last_name }}</div>
-                    {% endif %}
-                    <div class="candidate-email">{{ candidate.User_email }}</div>
-                    <div class="progress activity-progress">
-                        <div class="bar bar-{% completion_level candidate.User_profile_completion %}" style="width: {{ candidate.User_profile_completion }}%"></div>
-                    </div>
-                </td>
-                <td>
-                    {% if candidate.SavedSearch_feed %}
-                        <strong>{% if candidate.SavedSearch_label %}{{candidate.SavedSearch_label}}{% else %}Unlabeled{% endif %}</strong><br>
-                        {{ candidate.SavedSearch_feed|url_domain }}<br>
-                        {% str_to_date candidate.SavedSearch_created_on %}
-                    {% else %}
-                        {% display_activity candidate %}
-                    {% endif %}
-                </td>
-             </tr>
-             {% endfor %}
-         </table>
-         
-         {% show_more %}
+{% if user.is_active and user.is_verified %}
+    {% if candidates %}
+                    
+        {% load endless %}    
+        {% paginate candidates %}    
+                           
+            <table id="row-link-table">
+                {% for candidate in candidates %}
+                <tr class="candidate-activity" onclick="window.open('{% url 'candidate_information' %}{% get_candidate_query_string company_id candidate.User_id %}', '_blank');" >
+                    <td>
+                        {% if candidate.User_first_name and candidate.User_last_name %}
+                            <div class="candidate-name">{{ candidate.User_first_name }} {{ candidate.User_last_name }}</div>
+                        {% endif %}
+                        <div class="candidate-email">{{ candidate.User_email }}</div>
+                        <div class="progress activity-progress">
+                            <div class="bar bar-{% completion_level candidate.User_profile_completion %}" style="width: {{ candidate.User_profile_completion }}%"></div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if candidate.SavedSearch_feed %}
+                            <strong>{% if candidate.SavedSearch_label %}{{candidate.SavedSearch_label}}{% else %}Unlabeled{% endif %}</strong><br>
+                            {{ candidate.SavedSearch_feed|url_domain }}<br>
+                            {% str_to_date candidate.SavedSearch_created_on %}
+                        {% else %}
+                            {% display_activity candidate %}
+                        {% endif %}
+                    </td>
+                 </tr>
+                 {% endfor %}
+             </table>
+             
+             {% show_more %}
 
+    {% else %}
+        <div id="no-activity">
+            <strong>There is no candidate activity between {{date_start.date}} and {{date_end.date}} for {{ site_name|cut:"http://" }}</strong>
+        </div>
+    {% endif %}   
 {% else %}
-    <div id="no-activity">
-        <strong>There is no candidate activity between {{date_start.date}} and {{date_end.date}} for {{ site_name|cut:"http://" }}</strong>
-    </div>
-{% endif %}   
+    {% include 'includes/inactive-user.html' %}
+{% endif %}

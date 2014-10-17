@@ -1,0 +1,23 @@
+{# Error message used for when a user hasn't clicked the activation link #}
+<div class="row">
+    <div class="offset1 span10 formBox">
+        <div class="row">
+            <div class="centered span2">
+                <div>&nbsp;</div>
+                <img src="/files/images/caution-badge.png"></img>
+            </div>
+            <div class="span8">
+                <p>By activating your My.jobs account, you gain access to the following great features:</p>
+                <ul>
+                    <li>Partner Relationship Manager</li>
+                    <li>Saved Searches</li>
+                    <li>Candidate Dashboard</li>
+                </ul>
+            </div>
+        </div>
+        <div class="clear"></div>
+        <div class="action pull-right">
+            <a class='btn' href={% url 'resend_activation' %}>Resend Activation</a>
+        </div>
+    </div>
+</div>
