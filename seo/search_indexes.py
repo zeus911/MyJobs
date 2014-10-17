@@ -15,10 +15,18 @@ class LocationCharField(CharField):
     field_type = 'location_char'
 
 
+class TextAndSymbols(CharField):
+    """
+    Splits only on whitespace, and preserves common symbols.
+
+    """
+    field_type = 'text_and_symbols'
+
+
 class KeywordSearchField(CharField):
     """
-    For exact keyword/tag matching. No stemming, case insensitive, and preserves common
-    tag chacters # and @
+    For exact keyword/tag matching. No stemming, case insensitive,
+    and preserves common tag chacters # and @
     """
     field_type = 'keyword_query'
 
@@ -104,8 +112,8 @@ class JobIndex(indexes.SearchIndex, indexes.Indexable):
                                     null=True)
     state_slab = indexes.CharField(faceted=True)
     state_slug = indexes.CharField(model_attr="stateSlug", stored=False)
-    text = indexes.CharField(document=True, use_template=True, stored=False)
-    title = indexes.CharField(model_attr='title', faceted=True)
+    text = TextAndSymbols(document=True, use_template=True, stored=False)
+    title = TextAndSymbols(model_attr='title', faceted=True)
     title_ac = indexes.EdgeNgramField(model_attr='title', null=True,
                                       stored=False)
     title_slab = indexes.CharField(faceted=True)

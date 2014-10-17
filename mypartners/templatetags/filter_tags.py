@@ -24,7 +24,7 @@ def get_admins(company):
 
 
 @register.simple_tag
-def render_datepicker(name='datechooser', date=now()):
+def render_datepicker(name='datechooser', date=None):
+    date = date or now().date()
     user_tz = pytz.timezone(get_current_timezone_name())
-    date = date.astimezone(user_tz)
     return SplitDateDropDownWidget().render(name, date)

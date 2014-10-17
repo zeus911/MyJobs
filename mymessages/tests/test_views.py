@@ -9,6 +9,7 @@ from mymessages.models import Message, MessageInfo
 
 class MessageViewTests(MyJobsBase):
     def setUp(self):
+        super(MessageViewTests, self).setUp()
         self.user = UserFactory()
         self.message = Message(subject='subject',
                                body='body',

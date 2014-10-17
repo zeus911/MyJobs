@@ -6,76 +6,58 @@
 {% block site-title %}
     {% with name_obj=user.full_name %}
         <title>PRM Overview - {{ company.name }}</title>
-        <meta name="title" content="PRM Overview - {{ company.name }}">
+        <meta name="title" content="Communication Records - {{ company.name }}">
     {% endwith %}
 {% endblock %}
 {% load i18n %}
 
+{% block meta-extra %}
+<link rel="stylesheet" href="{{STATIC_URL}}pickadate/themes/classic.css" id="theme_base">
+<link rel="stylesheet" href="{{STATIC_URL}}pickadate/themes/classic.date.css" id="theme_date">
+{% endblock meta-extra %}
+
 {% block content %}
-    <h1><a href="{% url 'prm' %}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
+    {% include "mypartners/includes/prm_header.html" with page_title="Communication Records" back_to="Back to Overview" back_to_url="partner_overview" back_to_string="?partner=" add_partner_to_end=True date_range=False download=True %}
     <div class="row">
-        <div class="span12 prm-header">
-            <span>Communication Records</span>
-            <a class="mobile_hide" href="{% url 'partner_overview' %}?partner={{ partner.id }}">Back to Overview</a>
-            <span class="pull-right" id="candidate-time-filter">{% include "mypartners/includes/date_range.html" %}</span>
-        </div>
-    </div>
-    <div class="row">
-        <div class="span12">
-            <a class="btn" href="{% url 'partner_edit_record' %}?partner={{ partner.id }}" style="margin-bottom: 20px;">New Record</a>
-            <div class="formBox no-padding profile-mobile" id="view-records">
-                <h4>View Records</h4>
-                {% if records %}
-                <div class="formBox-content">
-                    <div style="width: 330px;" class="span3 form-label pull-left initial">
-                        <label for="record_contact" class="">Contact</label>
-                    </div>
-                    <div>
-                        <select id="record_contact" name="record_contact">
-                            {% for contact in contact_choices %}
-                                <option value="{{ contact.0 }}">{{ contact.1 }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div style="width: 330px;" class="span3 form-label pull-left initial">
-                        <label for="record_contact_type" class="">Contact Type</label>
-                    </div>
-                    <div>
-                        <select id="record_contact_type" name="record_contact_type">
-                            {% for contact_type in contact_type_choices %}
-                                <option value="{{ contact_type.0 }}">{{ contact_type.1 }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+        <span class="span8">
+            {% if records %}
+                {% include "mypartners/includes/contact_record_column.html" %}
+            {% else %}
+                No records available.
+            {% endif %}
+        </span>
+
+        <span class="span4">
+            <div class="sidebar">
+                <h2 class="top">Filters</h2>
+                <input id="p-id" type="hidden" value="{{partner.id}}" />
+                <label>Contact</label>
+                <select id="record_contact" name="record_contact">
+                    {% for contact in contact_choices %}
+                        <option value="{{ contact.0 }}">{{ contact.1 }}</option>
+                    {% endfor %}
+                </select>
+                <label>Contact Type</label>
+                <select id="record_contact_type" name="record_contact_type">
+                    {% for contact_type in contact_type_choices %}
+                        <option value="{{ contact_type.0 }}">{{ contact_type.1 }}</option>
+                    {% endfor %}
+                </select>
+                <label>Date Range</label>
+                {% include "mypartners/includes/date_widget.html" %}
+                <div class="navigation">
+                    <h2>Navigation</h2>
+                    <a class="btn" href="{% url 'partner_edit_record' %}?partner={{ partner.id }}">New Record</a>
                 </div>
-                {% endif %}
-                <table class="table table-bordered table-striped">
-                    {% if records %}
-                    <thead>
-                        <tr>
-                            <th>Date/Time</th>
-                            <th>Type</th>
-                            <th>Contact</th>
-                            <th>Subject</th>
-                            <th>Details</th>
-                        </tr>
-                    </thead>
-                    {% endif %}
-                    {% get_record_block records company partner %}
-                </table>
             </div>
-        </div>
+        </span>
     </div>
     <div class="black-mask" style="display: none;"></div>
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}partner-overview.152-13.js{{ gz }}"></script>
-<script src="{{ STATIC_URL }}record_overview.152-13.js{{ gz }}"></script>
-<script src="{{ STATIC_URL }}partner-reports.154-29.js{{ gz }}"></script>
-<script>
-    var company_id = {{ company.id }};
-    var partner_id = {{ partner.id }};
-    var admin_id = {% if admin_id %}{{ admin_id }}{% else %}'None'{% endif %};
-</script>
+<script src="{{ STATIC_URL }}record_overview.157-03.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}pickadate/picker.js"></script>
+<script src="{{ STATIC_URL }}pickadate/picker.date.js"></script>
+<script src="{{ STATIC_URL }}pickadate/legacy.js"></script>
 {% endblock %}

@@ -76,6 +76,7 @@
     {% if bread_box_path or location_term and location_term != '\*' or title_term and title_term != '\*' or moc_term and moc_term != '\*' %}
         {% include 'includes/breadbox.html' %}
     {% endif %}
+    {% include 'includes/seo_sort.html' %}
 {% for widget in widgets %}
 {% if widget.render %}
 {{ widget.render }}

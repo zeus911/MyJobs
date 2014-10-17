@@ -26,6 +26,18 @@ from serializers import JSONExtraValuesSerializer
 from moc_coding.models import Moc
 
 
+# Because we don't want things like 'salted_date' in the url paramters,
+# the terms we'll accept as a url parameter need to be mapped to the
+# solr fields they're supposed to be sorting by.
+sort_order_mapper = {
+    'relevance': '-score',
+    'date': '-salted_date',
+    'new': '-date_new_exact',
+    'updated': '-date_updated_exact'
+}
+sort_fields = ['relevance', 'date']
+
+
 def company_thumbnails(companies, use_canonical=True):
     """
     Generate company information used in the carousel, company modules,
@@ -850,6 +862,7 @@ def combine_groups(svd_searches, match_field='name'):
     ss.sort(key=lambda x: -x[1])
     return ss or []
 
+
 def get_widgets(request, site_config, facet_counts, custom_facets,
                 path_dict={}, featured=False, search_facets=False):
     """
@@ -1045,8 +1058,11 @@ def prepare_sqs_from_search_params(params, sqs=None):
     moc_id = params.get('moc_id')
     company = params.get('company')
     exact_title = bool(params.get('exact_title'))
+    sort_order = params.get('sort', 'relevance')
     if sqs is None:
         sqs = DESearchQuerySet()
+
+    sqs = sqs.order_by(sort_order_mapper.get(sort_order, '-score'))
 
     # The Haystack API does not allow for boosting terms in individual
     # fields. In this case we want to boost the term represented by

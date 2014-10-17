@@ -6,9 +6,6 @@
                 Export Type
                 <span class="pull-right"><i class="icon icon-download"></i></span>
             </li>
-            <a class="records-excel-export-link" href="{% url 'prm_export' %}?partner={{ partner.id }}{%if contact_type %}&record_type={{contact_type}}{% endif %}{% if contact %}&contact={{contact}}{% endif %}&file_format=xls">
-                <li class="records-excel-export">Excel</li>
-            </a>
             <a class="records-csv-export-link" href="{% url 'prm_export' %}?partner={{ partner.id }}{%if contact_type %}&record_type={{contact_type}}{% endif %}{% if contact %}&contact={{contact}}{% endif %}">
                 <li class="records-csv-export">CSV</li>
             </a>

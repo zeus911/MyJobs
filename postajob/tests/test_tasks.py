@@ -1,6 +1,4 @@
 import datetime
-from mock import patch
-from StringIO import StringIO
 
 from myjobs.tests.setup import MyJobsBase
 from mydashboard.tests.factories import CompanyFactory
@@ -30,33 +28,35 @@ class TaskTests(MyJobsBase):
             'zipcode': '46268',
         }
 
-    @patch('urllib2.urlopen')
-    def test_expire_jobs(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
+    def test_expire_jobs(self):
         # Jobs with expiration dates in the past and future should not get
         # expired.
-        location = JobLocation.objects.create(**self.location_data)
         for x in range(0, 5):
             job = dict(self.job_data)
             job['date_new'] = datetime.datetime.now()
             job['date_updated'] = datetime.datetime.now()
             job['date_expired'] = datetime.date.today() + datetime.timedelta(days=-5)
             instance = Job.objects.create(**job)
-            location.jobs.add(instance)
+            location = JobLocation.objects.create(**self.location_data)
+            instance.locations.add(location)
             instance.save()
         self.assertEqual(Job.objects.all().count(), 5)
-        # add_to_solr() should've called urlopen once for each job.
-        self.assertEqual(urlopen_mock.call_count, 5)
+        self.assertEqual(JobLocation.objects.all().count(), 5)
+        self.assertEqual(self.ms_solr.search('*:*').hits, 5)
+
         for x in range(5, 10):
             job = dict(self.job_data)
             job['date_new'] = datetime.datetime.now()
             job['date_updated'] = datetime.datetime.now()
             job['date_expired'] = datetime.date.today() + datetime.timedelta(days=-5)
             instance = Job.objects.create(**job)
-            location.jobs.add(instance)
+            location = JobLocation.objects.create(**self.location_data)
+            instance.locations.add(location)
             instance.save()
         self.assertEqual(Job.objects.all().count(), 10)
-        self.assertEqual(urlopen_mock.call_count, 10)
+        self.assertEqual(JobLocation.objects.all().count(), 10)
+        self.assertEqual(self.ms_solr.search('*:*').hits, 10)
+
         # Only jobs that expire today should be expired in the next
         # expire_jobs() call.
         for x in range(10, 15):
@@ -65,42 +65,46 @@ class TaskTests(MyJobsBase):
             job['date_updated'] = datetime.datetime.now()
             job['date_expired'] = datetime.date.today()
             instance = Job.objects.create(**job)
-            location.jobs.add(instance)
+            location = JobLocation.objects.create(**self.location_data)
+            instance.locations.add(location)
             instance.save()
         self.assertEqual(Job.objects.all().count(), 15)
-        self.assertEqual(urlopen_mock.call_count, 15)
+        self.assertEqual(self.ms_solr.search('*:*').hits, 15)
 
         expire_jobs()
-        # remove_from_solr() should've called urlopen one time
-        # for each newly expired job.
-        self.assertEqual(urlopen_mock.call_count, 20)
+        # The most recently made jobs should be expired and removed from solr.
+        self.assertEqual(self.ms_solr.search('*:*').hits, 10)
         self.assertEqual(Job.objects.filter(is_expired=True).count(), 5)
         self.assertEqual(Job.objects.filter(is_expired=False).count(), 10)
 
-    @patch('urllib2.urlopen')
-    def test_expire_jobs_with_autorenew(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
-        location = JobLocation.objects.create(**self.location_data)
+    def test_expire_jobs_with_autorenew(self):
+        # Unexpired jobs.
         for x in range(0, 5):
             job = dict(self.job_data)
             job['date_new'] = datetime.datetime.now()
             job['date_updated'] = datetime.datetime.now()
             job['date_expired'] = datetime.date.today() + datetime.timedelta(days=-5)
             instance = Job.objects.create(**job)
-            location.jobs.add(instance)
+            location = JobLocation.objects.create(**self.location_data)
+            instance.locations.add(location)
             instance.save()
         self.assertEqual(Job.objects.all().count(), 5)
-        self.assertEqual(urlopen_mock.call_count, 5)
+        self.assertEqual(self.ms_solr.search('*:*').hits, 5)
+
+        # Jobs that should expire.
         for x in range(5, 10):
             job = dict(self.job_data)
             job['date_new'] = datetime.datetime.now()
             job['date_updated'] = datetime.datetime.now()
             job['date_expired'] = datetime.date.today()
             instance = Job.objects.create(**job)
-            location.jobs.add(instance)
+            location = JobLocation.objects.create(**self.location_data)
+            instance.locations.add(location)
             instance.save()
         self.assertEqual(Job.objects.all().count(), 10)
-        self.assertEqual(urlopen_mock.call_count, 10)
+        self.assertEqual(self.ms_solr.search('*:*').hits, 10)
+
+        # Autorenew jobs.
         for x in range(10, 15):
             job = dict(self.job_data)
             job['date_new'] = datetime.datetime.now()
@@ -108,12 +112,16 @@ class TaskTests(MyJobsBase):
             job['date_expired'] = datetime.date.today()
             job['autorenew'] = True
             instance = Job.objects.create(**job)
-            location.jobs.add(instance)
+            location = JobLocation.objects.create(**self.location_data)
+            instance.locations.add(location)
             instance.save()
         self.assertEqual(Job.objects.all().count(), 15)
-        self.assertEqual(urlopen_mock.call_count, 15)
+        self.assertEqual(self.ms_solr.search('*:*').hits, 15)
 
         expire_jobs()
+        # 5 Jobs set to expire should have been removed from solr. The
+        # un-expired jobs and autorenew jobs remain.
+        self.assertEqual(self.ms_solr.search('*:*').hits, 10)
 
         autorenew_jobs = Job.objects.filter(autorenew=True, is_expired=False)
         new_expire_date = datetime.date.today() + datetime.timedelta(days=30)

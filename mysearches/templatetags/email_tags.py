@@ -2,6 +2,7 @@ from django import template
 from django.core.urlresolvers import reverse
 
 from registration.models import ActivationProfile
+from universal.helpers import update_url_param
 
 register = template.Library()
 
@@ -37,7 +38,9 @@ def get_all_jobs_link(saved_search):
     if url.startswith('http://my.jobs'):
         feed = saved_search.feed
         if feed:
-            return feed.replace('/feed/rss', '')
+            url = feed.replace('/feed/rss', '')
+
+    url = update_url_param(url, 'sort', 'date')
 
     return url
 
