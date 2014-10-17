@@ -117,7 +117,7 @@ urlpatterns += patterns(
 )
 
 urlpatterns += patterns(
-    '',
+    'registration.views',
     url(r'^login/', DseoLogin.as_view(), name='dseo_login'),
 )
 
