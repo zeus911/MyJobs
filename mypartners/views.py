@@ -1148,7 +1148,8 @@ def prm_export(request):
                     value = ', '.join([val.name for val in value.all() if val])
 
                 xml.text = contact_record_val_to_str(value)
-        response = HttpResponse(etree.tostring(root, pretty_print=True),
+        response = HttpResponse(etree.tostring(root, pretty_print=True,
+                                               xml_declaration=True),
                                 mimetype='application/force-download')
     elif file_format == 'printer_friendly':
         ctx = {
