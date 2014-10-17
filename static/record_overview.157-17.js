@@ -237,16 +237,16 @@ function fill_in_history_state(data){
     $(".partner-tag").addClass("disabled-tag");
     if(button.length) {
         button.append("<i class='icon icon-ok'></i>").removeClass("disabled-tag");
-        $(".partner-tag.custom").show();
-        $(".date-picker-widget").hide();
+        $(".partner-tag.custom").hide();
+        $(".date-picker-widget").show();
         $("#reset-date-range").css("visibility", "visible");
     } else {
         // no day button is clicked, so show the date picker widget
         $("#activity-start-date").val(data.date_start);
         $("#activity-end-date").val(data.date_end);
-        $(".partner-tag.custom").hide();
-        $(".date-picker-widget").show();
-        $("#reset-date-range").css("visibility", "visible");
+        $(".partner-tag.custom").show();
+        $(".date-picker-widget").hide();
+        $("#reset-date-range").css("visibility", "hidden");
     }
     return false
 }
