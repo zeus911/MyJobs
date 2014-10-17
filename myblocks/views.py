@@ -27,14 +27,25 @@ class BlockView(View):
     def post(self, request):
         self.set_page()
         for block in self.page.all_blocks():
+            # Checks to see if any blocks need to do any special handling of
+            # posts.
             if hasattr(block, 'handle_post'):
                 response = block.handle_post(request)
+                # Some blocks redirect after appropriately handling posted
+                # data. Allow the blocks to successfully redirect if they do.
                 if response is not None:
                     return response
 
         return self.handle_request(request)
 
     def set_page(self):
+        """
+        Trys to set the page for this site by:
+            1. Getting a page for the specific site matching page_type.
+            2. Getting a page for the default site matching this page_type.
+            3. Giving up and returning a 404.
+
+        """
         try:
             page = Page.objects.filter(site=settings.SITE,
                                        page_type=self.page_type)[0]

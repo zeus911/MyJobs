@@ -35,6 +35,11 @@ class Block(models.Model):
         return self.offset + self.span
 
     def cast(self):
+        """
+        Casts the block to the appropriate subclass.
+
+        """
+
         return self.content_type.get_object_for_this_type(pk=self.pk)
 
     def context(self, request):
@@ -44,12 +49,19 @@ class Block(models.Model):
         }
 
     def render(self, request):
+        """
+        Generates the html corresponding to the block.
+
+        """
+
         html = render_to_string(self.cast().template(), self.context(request),
                                 context_instance=RequestContext(request))
         return mark_safe(html)
 
     def save(self, *args, **kwargs):
         if not self.id:
+            # Set content_type so the object can later be cast back to
+            # its subclass.
             self.content_type = self._get_real_type()
         super(Block, self).save(*args, **kwargs)
 
@@ -81,6 +93,8 @@ class LoginBlock(Block):
     def context(self, request):
         querystring = "?%s" % request.META.get('QUERY_STRING')
         if request.POST and self.submit_btn_name() in request.POST:
+            # If data is being posted to this specific block, give the form
+            # the opportunity to render any errors.
             return {
                 'action': querystring,
                 'block': self,
@@ -95,11 +109,14 @@ class LoginBlock(Block):
         }
 
     def handle_post(self, request):
+        # Confirm that the requst is a post, and that this form is
+        # the intended recipient of the posted data.
         if not request.POST or self.submit_btn_name() not in request.POST:
             return None
 
         form = CustomAuthForm(data=request.POST)
         if form.is_valid():
+            # Log in the user and redirect based on the success_url rules.
             expire_login(request, form.get_user())
 
             response = HttpResponseRedirect(success_url(request))
@@ -120,6 +137,8 @@ class RegistrationBlock(Block):
     def context(self, request):
         querystring = request.META.get('QUERY_STRING')
         if request.POST and self.submit_btn_name() in request.POST:
+            # If data is being posted to this specific block, give the form
+            # the opportunity to render any errors.
             return {
                 'action': querystring,
                 'block': self,
@@ -136,11 +155,15 @@ class RegistrationBlock(Block):
         }
 
     def handle_post(self, request):
+        # Confirm that the requst is a post, and that this form is
+        # the intended recipient of the posted data.
         if not request.POST or self.submit_btn_name() not in request.POST:
             return None
 
         form = RegistrationForm(request.POST, auto_id=False)
         if form.is_valid():
+            # Create a user, log them in, and redirect based on the
+            # success_url rules.
             user, created = User.objects.create_user(request=request,
                                                      **form.cleaned_data)
             user_cache = authenticate(
@@ -274,8 +297,8 @@ class Page(models.Model):
 
     def all_blocks(self):
         """
-        outputs:
-            A list of every unique block included in a page.
+        Gets a list of every unique block included in a page.
+        
         """
         query = (models.Q(column__page=self) |
                  models.Q(verticalmultiblockorder__vertical_multiblock__column__page=self))
