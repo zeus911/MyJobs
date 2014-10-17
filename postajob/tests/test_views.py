@@ -188,7 +188,7 @@ class ViewTests(MyJobsBase):
         self.assertEqual(Job.objects.all().count(), 1)
 
     def test_job_access_allowed(self):
-		resp_url = reverse('jobs_overview')
+        resp_url = reverse('jobs_overview')
 
         job = job_factory(self.company, self.user)
         kwargs = {'pk': job.pk}
