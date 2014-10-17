@@ -29,7 +29,7 @@ class BlockView(View):
         for block in self.page.all_blocks():
             if hasattr(block, 'handle_post'):
                 response = block.handle_post(request)
-                if response:
+                if response is None:
                     return response
 
         return self.handle_request(request)

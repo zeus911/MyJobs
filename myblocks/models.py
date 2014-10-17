@@ -119,7 +119,6 @@ class LoginBlock(Block):
 class RegistrationBlock(Block):
     def context(self, request):
         querystring = request.META.get('QUERY_STRING')
-        print querystring
         if request.POST and self.submit_btn_name() in request.POST:
             return {
                 'action': querystring,
