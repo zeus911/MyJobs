@@ -9,13 +9,13 @@
 {% endblock %}
 
 {% block content %}
-{% if user.is_active and user.is_verified %}
 <div class="row">
     <div class="span12">
         <h1>{% trans "Your" %} <small>{% trans "Saved Searches" %}</small></h1>
     </div>
 </div>
 
+{% if user.is_active and user.is_verified %}
 <div class="row">
     <div class="span12">
 
