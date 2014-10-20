@@ -1986,6 +1986,10 @@ fieldset textarea,
     line-height: 0;
 }
 
+.alert {
+    margin: 0;
+}
+
 .alert-message ul {
     list-style: none;
     padding: 5px 0 0 0;
