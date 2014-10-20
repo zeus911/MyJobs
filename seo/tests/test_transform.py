@@ -12,7 +12,7 @@ class TransformJobs(DirectSEOBase):
     fixtures = ['import_jobs_testdata.json']
 
     def test_transform_for_postajob(self):
-        company = CompanyFactory()
+        company = CompanyFactory(name='Acme Incorporated')
 
         result = {
             'city_slug': u'indianapolis',
