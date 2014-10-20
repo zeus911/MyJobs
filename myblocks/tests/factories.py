@@ -32,12 +32,12 @@ class RegistrationBlockFactory(BlockFactory):
     FACTORY_FOR = models.RegistrationBlock
 
 
-class VerticalMultiBlockFactory(BlockFactory):
-    FACTORY_FOR = models.VerticalMultiBlock
+class ColumnBlockFactory(BlockFactory):
+    FACTORY_FOR = models.ColumnBlock
 
 
-class ColumnFactory(django.DjangoModelFactory):
-    FACTORY_FOR = models.Column
+class RowFactory(django.DjangoModelFactory):
+    FACTORY_FOR = models.Row
 
 
 class PageFactory(django.DjangoModelFactory):

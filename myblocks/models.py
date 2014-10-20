@@ -232,13 +232,13 @@ class ShareBlock(Block):
         return 'myblocks/blocks/share.html'
 
 
-class VerticalMultiBlock(Block):
-    blocks = models.ManyToManyField('Block', through='VerticalMultiBlockOrder',
+class ColumnBlock(Block):
+    blocks = models.ManyToManyField('Block', through='ColumnBlockOrder',
                                     related_name='included_blocks')
 
     def context(self, request):
         html = ''.join([block.cast().render(request) for block in
-                        self.blocks.all().order_by('verticalmultiblockorder__order')])
+                        self.blocks.all().order_by('columnblockorder__order')])
         return {
             'block': self,
             'content': mark_safe(html),
@@ -247,10 +247,10 @@ class VerticalMultiBlock(Block):
 
     @staticmethod
     def template():
-        return 'myblocks/blocks/verticalmultiblock.html'
+        return 'myblocks/blocks/columnblock.html'
 
 
-class Column(models.Model):
+class Row(models.Model):
     blocks = models.ManyToManyField('Block', through='BlockOrder')
 
     def __unicode__(self):
@@ -265,13 +265,13 @@ class Column(models.Model):
         for block in self.blocks.all().order_by('blockorder__order'):
             content.append(block.cast().render(request))
         return {
-            'column': self,
+            'row': self,
             'content': mark_safe(''.join(content)),
             'request': request,
         }
 
     def render(self, request):
-        html = render_to_string('myblocks/column_base.html',
+        html = render_to_string('myblocks/row_base.html',
                                 self.context(request))
         return mark_safe(html)
 
@@ -285,12 +285,18 @@ class Page(models.Model):
         # ('job_listing', 'Job Listing Page'),
         ('login', 'Login Page'),
     )
+    page_status_choices = (
+        ('staging', 'Staging'),
+        ('production', 'Production'),
+    )
 
     bootstrap_version = models.PositiveIntegerField(choices=bootstrap_choices,
                                                     default=1)
     page_type = models.CharField(choices=page_type_choices, max_length=255)
-    columns = models.ManyToManyField('Column', through='ColumnOrder')
+    rows = models.ManyToManyField('Row', through='RowOrder')
     site = models.ForeignKey('seo.SeoSite')
+    status = models.CharField(choices=page_status_choices, max_length=255,
+                              default='production')
 
     def __unicode__(self):
         return "%s for %s: %s" % (self.page_type, self.site.name, self.pk)
@@ -298,10 +304,10 @@ class Page(models.Model):
     def all_blocks(self):
         """
         Gets a list of every unique block included in a page.
-        
+
         """
-        query = (models.Q(column__page=self) |
-                 models.Q(verticalmultiblockorder__vertical_multiblock__column__page=self))
+        query = (models.Q(row__page=self) |
+                 models.Q(columnblockorder__column_block__row__page=self))
         return [block.cast() for block in Block.objects.filter(query).distinct()]
 
     def boostrap_classes(self):
@@ -309,32 +315,32 @@ class Page(models.Model):
 
     def render(self, request):
         content = []
-        for column in self.columns.all().order_by('columnorder__order'):
-            content.append(column.render(request))
+        for row in self.rows.all().order_by('roworder__order'):
+            content.append(row.render(request))
         return mark_safe(''.join(content))
 
 
 class BlockOrder(models.Model):
     block = models.ForeignKey('Block')
-    column = models.ForeignKey('Column')
+    row = models.ForeignKey('Row')
     order = models.PositiveIntegerField()
 
     class Meta:
         ordering = ('order', )
 
 
-class VerticalMultiBlockOrder(models.Model):
+class ColumnBlockOrder(models.Model):
     block = models.ForeignKey('Block')
-    vertical_multiblock = models.ForeignKey('VerticalMultiBlock',
-                                            related_name='included_multiblocks')
+    column_block = models.ForeignKey('ColumnBlock',
+                                     related_name='included_column_blocks')
     order = models.PositiveIntegerField()
 
     class Meta:
         ordering = ('order', )
 
 
-class ColumnOrder(models.Model):
-    column = models.ForeignKey('Column')
+class RowOrder(models.Model):
+    row = models.ForeignKey('Row')
     order = models.PositiveIntegerField()
     page = models.ForeignKey('Page')
 
@@ -342,4 +348,4 @@ class ColumnOrder(models.Model):
         ordering = ('order', )
 
     def __unicode__(self):
-        return "Column for page %s" % self.page.pk
+        return "Row for page %s" % self.page.pk

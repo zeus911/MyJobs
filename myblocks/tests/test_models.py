@@ -23,23 +23,23 @@ class ModelsTests(DirectSEOBase):
         blocks = []
         [blocks.append(factories.ContentBlockFactory()) for x in range(0, 5)]
 
-        column = factories.ColumnFactory()
-        [models.BlockOrder.objects.create(column=column, block=block,
+        row = factories.RowFactory()
+        [models.BlockOrder.objects.create(row=row, block=block,
                                           order=block.id)
          for block in blocks]
 
         [blocks.append(factories.LoginBlockFactory()) for x in range(0, 5)]
 
-        column2 = factories.ColumnFactory()
-        [models.BlockOrder.objects.create(column=column2, block=block,
+        row2 = factories.RowFactory()
+        [models.BlockOrder.objects.create(row=row2, block=block,
                                           order=block.id)
          for block in blocks]
 
         page = factories.PageFactory()
-        models.ColumnOrder.objects.create(page=page, column=column,
-                                          order=column.id)
-        models.ColumnOrder.objects.create(page=page, column=column2,
-                                          order=column2.id)
+        models.RowOrder.objects.create(page=page, row=row,
+                                          order=row.id)
+        models.RowOrder.objects.create(page=page, row=row2,
+                                          order=row2.id)
 
         all_blocks = page.all_blocks()
         all_blocks_ids = [block.id for block in all_blocks]

@@ -75,24 +75,25 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'myblocks', ['ShareBlock'])
 
-        # Adding model 'VerticalMultiBlock'
-        db.create_table(u'myblocks_verticalmultiblock', (
+        # Adding model 'ColumnBlock'
+        db.create_table(u'myblocks_columnblock', (
             (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
         ))
-        db.send_create_signal(u'myblocks', ['VerticalMultiBlock'])
+        db.send_create_signal(u'myblocks', ['ColumnBlock'])
 
-        # Adding model 'Column'
-        db.create_table(u'myblocks_column', (
+        # Adding model 'Row'
+        db.create_table(u'myblocks_row', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
         ))
-        db.send_create_signal(u'myblocks', ['Column'])
+        db.send_create_signal(u'myblocks', ['Row'])
 
         # Adding model 'Page'
         db.create_table(u'myblocks_page', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('bootstrap_version', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('bootstrap_version', self.gf('django.db.models.fields.PositiveIntegerField')(default=1)),
             ('page_type', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('site', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['seo.SeoSite'])),
+            ('status', self.gf('django.db.models.fields.CharField')(default='production', max_length=255)),
         ))
         db.send_create_signal(u'myblocks', ['Page'])
 
@@ -100,28 +101,28 @@ class Migration(SchemaMigration):
         db.create_table(u'myblocks_blockorder', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('block', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myblocks.Block'])),
-            ('column', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myblocks.Column'])),
+            ('row', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myblocks.Row'])),
             ('order', self.gf('django.db.models.fields.PositiveIntegerField')()),
         ))
         db.send_create_signal(u'myblocks', ['BlockOrder'])
 
-        # Adding model 'VerticalMultiBlockOrder'
-        db.create_table(u'myblocks_verticalmultiblockorder', (
+        # Adding model 'ColumnBlockOrder'
+        db.create_table(u'myblocks_columnblockorder', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('block', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myblocks.Block'])),
-            ('vertical_multiblock', self.gf('django.db.models.fields.related.ForeignKey')(related_name='included_multiblocks', to=orm['myblocks.VerticalMultiBlock'])),
+            ('column_block', self.gf('django.db.models.fields.related.ForeignKey')(related_name='included_column_blocks', to=orm['myblocks.ColumnBlock'])),
             ('order', self.gf('django.db.models.fields.PositiveIntegerField')()),
         ))
-        db.send_create_signal(u'myblocks', ['VerticalMultiBlockOrder'])
+        db.send_create_signal(u'myblocks', ['ColumnBlockOrder'])
 
-        # Adding model 'ColumnOrder'
-        db.create_table(u'myblocks_columnorder', (
+        # Adding model 'RowOrder'
+        db.create_table(u'myblocks_roworder', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('column', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myblocks.Column'])),
+            ('row', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myblocks.Row'])),
             ('order', self.gf('django.db.models.fields.PositiveIntegerField')()),
             ('page', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myblocks.Page'])),
         ))
-        db.send_create_signal(u'myblocks', ['ColumnOrder'])
+        db.send_create_signal(u'myblocks', ['RowOrder'])
 
 
     def backwards(self, orm):
@@ -155,11 +156,11 @@ class Migration(SchemaMigration):
         # Deleting model 'ShareBlock'
         db.delete_table(u'myblocks_shareblock')
 
-        # Deleting model 'VerticalMultiBlock'
-        db.delete_table(u'myblocks_verticalmultiblock')
+        # Deleting model 'ColumnBlock'
+        db.delete_table(u'myblocks_columnblock')
 
-        # Deleting model 'Column'
-        db.delete_table(u'myblocks_column')
+        # Deleting model 'Row'
+        db.delete_table(u'myblocks_row')
 
         # Deleting model 'Page'
         db.delete_table(u'myblocks_page')
@@ -167,11 +168,11 @@ class Migration(SchemaMigration):
         # Deleting model 'BlockOrder'
         db.delete_table(u'myblocks_blockorder')
 
-        # Deleting model 'VerticalMultiBlockOrder'
-        db.delete_table(u'myblocks_verticalmultiblockorder')
+        # Deleting model 'ColumnBlockOrder'
+        db.delete_table(u'myblocks_columnblockorder')
 
-        # Deleting model 'ColumnOrder'
-        db.delete_table(u'myblocks_columnorder')
+        # Deleting model 'RowOrder'
+        db.delete_table(u'myblocks_roworder')
 
 
     models = {
@@ -206,21 +207,21 @@ class Migration(SchemaMigration):
         u'myblocks.blockorder': {
             'Meta': {'ordering': "('order',)", 'object_name': 'BlockOrder'},
             'block': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myblocks.Block']"}),
-            'column': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myblocks.Column']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'order': ('django.db.models.fields.PositiveIntegerField', [], {})
-        },
-        u'myblocks.column': {
-            'Meta': {'object_name': 'Column'},
-            'blocks': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myblocks.Block']", 'through': u"orm['myblocks.BlockOrder']", 'symmetrical': 'False'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
-        },
-        u'myblocks.columnorder': {
-            'Meta': {'ordering': "('order',)", 'object_name': 'ColumnOrder'},
-            'column': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myblocks.Column']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'order': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'page': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myblocks.Page']"})
+            'row': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myblocks.Row']"})
+        },
+        u'myblocks.columnblock': {
+            'Meta': {'object_name': 'ColumnBlock', '_ormbases': [u'myblocks.Block']},
+            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'}),
+            'blocks': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'included_blocks'", 'symmetrical': 'False', 'through': u"orm['myblocks.ColumnBlockOrder']", 'to': u"orm['myblocks.Block']"})
+        },
+        u'myblocks.columnblockorder': {
+            'Meta': {'ordering': "('order',)", 'object_name': 'ColumnBlockOrder'},
+            'block': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myblocks.Block']"}),
+            'column_block': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'included_column_blocks'", 'to': u"orm['myblocks.ColumnBlock']"}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'order': ('django.db.models.fields.PositiveIntegerField', [], {})
         },
         u'myblocks.contentblock': {
             'Meta': {'object_name': 'ContentBlock', '_ormbases': [u'myblocks.Block']},
@@ -238,15 +239,28 @@ class Migration(SchemaMigration):
         },
         u'myblocks.page': {
             'Meta': {'object_name': 'Page'},
-            'bootstrap_version': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'columns': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myblocks.Column']", 'through': u"orm['myblocks.ColumnOrder']", 'symmetrical': 'False'}),
+            'bootstrap_version': ('django.db.models.fields.PositiveIntegerField', [], {'default': '1'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'page_type': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'site': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.SeoSite']"})
+            'rows': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myblocks.Row']", 'through': u"orm['myblocks.RowOrder']", 'symmetrical': 'False'}),
+            'site': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.SeoSite']"}),
+            'status': ('django.db.models.fields.CharField', [], {'default': "'production'", 'max_length': '255'})
         },
         u'myblocks.registrationblock': {
             'Meta': {'object_name': 'RegistrationBlock', '_ormbases': [u'myblocks.Block']},
             u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'})
+        },
+        u'myblocks.row': {
+            'Meta': {'object_name': 'Row'},
+            'blocks': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myblocks.Block']", 'through': u"orm['myblocks.BlockOrder']", 'symmetrical': 'False'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+        },
+        u'myblocks.roworder': {
+            'Meta': {'ordering': "('order',)", 'object_name': 'RowOrder'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'order': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'page': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myblocks.Page']"}),
+            'row': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myblocks.Row']"})
         },
         u'myblocks.savedsearchwidgetblock': {
             'Meta': {'object_name': 'SavedSearchWidgetBlock', '_ormbases': [u'myblocks.Block']},
@@ -268,18 +282,6 @@ class Migration(SchemaMigration):
         u'myblocks.shareblock': {
             'Meta': {'object_name': 'ShareBlock', '_ormbases': [u'myblocks.Block']},
             u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'})
-        },
-        u'myblocks.verticalmultiblock': {
-            'Meta': {'object_name': 'VerticalMultiBlock', '_ormbases': [u'myblocks.Block']},
-            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'}),
-            'blocks': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'included_blocks'", 'symmetrical': 'False', 'through': u"orm['myblocks.VerticalMultiBlockOrder']", 'to': u"orm['myblocks.Block']"})
-        },
-        u'myblocks.verticalmultiblockorder': {
-            'Meta': {'ordering': "('order',)", 'object_name': 'VerticalMultiBlockOrder'},
-            'block': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myblocks.Block']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'order': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'vertical_multiblock': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'included_multiblocks'", 'to': u"orm['myblocks.VerticalMultiBlock']"})
         },
         u'myjobs.user': {
             'Meta': {'object_name': 'User'},
