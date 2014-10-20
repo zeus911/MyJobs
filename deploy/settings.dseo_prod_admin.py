@@ -2,7 +2,6 @@ import datetime
 from S3 import CallingFormat
 
 from default_settings import *
-from dseo_celery import *
 from secrets import PROD_DB_PASSWD, SOLR_AUTH
 
 
@@ -57,14 +56,14 @@ HAYSTACK_CONNECTIONS = {
         # code is deployed. Check the deployment project in
         # direct_seo/web/conf/hosts and make sure the one in production looks
         # like that.
-        'URL': 'http://solr_server/solr',
+        'URL': 'http://solr_server:8983/solr',
         'TIMEOUT': 300,
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
     },
     'groups': {
         'ENGINE': 'saved_search.groupsearch.SolrGrpEngine',
-        'URL': 'http://solr_server/solr',
+        'URL': 'http://solr_server:8983/solr',
         'TIMEOUT': 300,
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
@@ -90,3 +89,34 @@ SOLR = {
 ABSOLUTE_URL = '/'
 
 STATIC_URL = "//d2e48ltfsb5exy.cloudfront.net/content_ms/files/"
+
+BROKER_HOST = '204.236.236.123'
+BROKER_PORT = 5672
+BROKER_USER = 'celery'
+BROKER_VHOST = 'dseo-vhost'
+
+CELERY_DEFAULT_EXCHANGE = 'tasks'
+CELERY_DEFAULT_EXCHANGE_TYPE = 'topic'
+CELERY_DEFAULT_ROUTING_KEY = 'dseo.default'
+CELERY_QUEUES = {
+    'dseo': {
+        'binding_key': 'dseo.#'
+    },
+    'solr': {
+        'binding_key': 'solr.#'
+    }
+}
+CELERY_ROUTES = {
+    'tasks.task_update_solr': {
+        'queue': 'solr',
+        'routing_key': 'solr.update_solr'
+    },
+    'tasks.task_clear_solr': {
+        'queue': 'solr',
+        'routing_key': 'solr.clear_solr'
+    },
+    'tasks.etl_to_solr': {
+        'queue': 'solr',
+        'routing_key': 'solr.update_solr'
+    },
+}

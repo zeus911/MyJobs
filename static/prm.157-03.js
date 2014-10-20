@@ -151,7 +151,6 @@ $(document).ready(function() {
             url: '/prm/view/save',
             data: serialized_data,
             success: function(data, status) {
-
                 if (data == ''){
                     if (status != 'prevent-redirect') {
                         window.location = '/prm/view';
@@ -177,7 +176,7 @@ $(document).ready(function() {
                         // insert new errors after the relevant inputs
                         $error.wrap('<div class="required" />');
                         $error.attr("placeholder",json[index][0]);
-                        $error.val('')
+                        $error.val('');
                         $labelOfError.addClass('error-text');
                     }
                 }
@@ -588,8 +587,8 @@ function fill_in_history_state(data){
     var start_date = new Date(data.start_date || new Date(0)),
         end_date = new Date(data.end_date || new Date()),
         days = (end_date.getTime() - start_date.getTime()) /
-               (1000 * 60 * 60 * 24) // msecs, secs, hours, days
-        button = $(".partner-tag.days[data-days='" + days + "']");
+               (1000 * 60 * 60 * 24); // msecs, secs, hours, days
+        var button = $(".partner-tag.days[data-days='" + days + "']");
 
     // disable all buttons
     $(".partner-tag").children('i').remove();
@@ -678,9 +677,9 @@ function build_data() {
         if(end_string)
             end_date = new Date(end_string);
     } else if($(".partner-tag.days").has("i").text()) {
-        var days = $(".partner-tag.days").has("i").data('days'),
-            start_date = new Date(),
-            end_date = new Date();
+        var days = $(".partner-tag.days").has("i").data('days');
+        start_date = new Date();
+        end_date = new Date();
         start_date.setDate(start_date.getDate() - days);
     }
     if(start_date)
@@ -861,8 +860,8 @@ function show_selected() {
     $(".partner-tag.days").addClass("disabled-tag");
     if(start_date && end_date) {
         var days = (end_date.getTime() - start_date.getTime()) /
-                   (1000 * 60 * 60 * 24) // msecs, secs, hours, days
-            button = $(".partner-tag.days[data-days='" + days + "']");
+                   (1000 * 60 * 60 * 24); // msecs, secs, hours, days
+            var button = $(".partner-tag.days[data-days='" + days + "']");
         if(button.length) {
             button.append("<i class='icon icon-ok'></i>").removeClass("disabled-tag");
             $(".partner-tag.custom").show();

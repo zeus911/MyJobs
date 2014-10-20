@@ -14,6 +14,7 @@ from django.template import Template, Context
 from django.template import RequestContext as TemplateContext
 from django.test.client import RequestFactory
 from django.utils.http import urlquote
+from django.core.urlresolvers import reverse
 
 from BeautifulSoup import BeautifulSoup
 from lxml import etree
@@ -1026,6 +1027,41 @@ class TemplateTestCase(DirectSEOTestCase):
 class SeoViewsTestCase(DirectSEOTestCase):
     fixtures = ['seo_views_testdata.json']
 
+    def test_sort(self):
+        """
+        Confirm that Sort by links are showing up on the search results
+        pages.
+
+        """
+        site = factories.SeoSiteFactory()
+        site.business_units.add(self.buid_id)
+        site.save()
+
+        response = self.client.get('/jobs/', HTTP_HOST=site.domain)
+        self.assertIn('?sort=date', response.content)
+
+        response = self.client.get('/jobs/?sort=date', HTTP_HOST=site.domain)
+        self.assertIn('?sort=relevance', response.content)
+
+    def test_sort_jobs(self):
+        """
+        Confirm that sorting is actually being applied and works as desired.
+
+        """
+        site = factories.SeoSiteFactory()
+        site.business_units.add(self.buid_id)
+        site.save()
+
+        response = self.client.get('/jobs/?q=Retail Associate',
+                                   HTTP_HOST=site.domain)
+        jobs = response.context['default_jobs']
+        self.assertEqual(jobs[0].pk, '2')
+
+        response = self.client.get('/jobs/?q=Retail Associate&sort=date',
+                                   HTTP_HOST=site.domain)
+        jobs = response.context['default_jobs']
+        self.assertEqual(jobs[0].pk, '1')
+
     def test_xss_job_listing(self):
         resp = self.client.get(
                 '/jobs/?q=%27%22%3E%3Cimg+src%3Dx+onerror%3Dalert%28document.cookie%29%3E' +
@@ -1043,18 +1079,19 @@ class SeoViewsTestCase(DirectSEOTestCase):
         config.status = 2
         config.save()
         site.configurations.add(config)
-        removed_characters = ('**', '<br>', '##', '<testh1>', '</testh1>', '<p>', )
-        preserved_strings = ('#hashtag', '* asterisks', '= equals', u'特殊字符',)
-        # Test that markdown businessunits do not have newlines converted to breaks
-        results = DEv2JobFeed(
-                    'seo/tests/data/dseo_feed_0.xml', 
-                    jsid=self.businessunit.id,
-                    markdown = self.businessunit.enable_markdown) 
+        removed_characters = ('**', '<br>', '##', '<testh1>',
+                              '</testh1>', '<p>', )
+        preserved_strings = ('#hashtag', '* asterisks', '= equals',
+                             u'特殊字符', )
+        # Test that markdown businessunits do not have newlines converted to
+        # breaks
+        results = DEv2JobFeed('seo/tests/data/dseo_feed_0.xml',
+                              jsid=self.businessunit.id,
+                              markdown=self.businessunit.enable_markdown)
         job = results.solr_jobs()[1]
         self.conn.add([job])
-        resp = self.client.get(
-                '/jobs/?q=bold_markdown',
-                HTTP_HOST='buckconsultants.jobs')
+        resp = self.client.get('/jobs/?q=bold_markdown',
+                               HTTP_HOST='buckconsultants.jobs')
         soup = BeautifulSoup(resp.content)
         resp.content = soup.find('div', {'class': 'directseo_jobsnippet'})
         for mark in removed_characters:
@@ -1066,21 +1103,19 @@ class SeoViewsTestCase(DirectSEOTestCase):
         site = factories.SeoSiteFactory.build()
         site.save()
         config = factories.ConfigurationFactory.build()
-        config.status=2
+        config.status = 2
         config.save()
         site.configurations.add(config)
-        resp = self.client.get(
-                '/usa/jobs/?P=\"><script>524199182',
-                HTTP_HOST='buckconsultants.jobs')
+        resp = self.client.get('/usa/jobs/?P=\"><script>524199182',
+                               HTTP_HOST='buckconsultants.jobs')
         self.assertEqual(resp.content.find('<script>524199182'), -1)
         self.assertContains(resp, 'script%3E524199182')
         resp = self.client.get(
-                '/indianapolis/indiana/usa/jobs/?P=\"><script>120341734',
-                HTTP_HOST='buckconsultants.jobs')
+            '/indianapolis/indiana/usa/jobs/?P=\"><script>120341734',
+            HTTP_HOST='buckconsultants.jobs')
         self.assertEqual(resp.content.find('<script>120341734'), -1)
         self.assertContains(resp,
-          '"loc_up_bread_box" href="/indiana/usa/jobs/?P=%22%3E%3Cscript%3E120341734"')
-
+                            '"loc_up_bread_box" href="/indiana/usa/jobs/?P=%22%3E%3Cscript%3E120341734"')
 
     def test_location_redirect(self):
         """

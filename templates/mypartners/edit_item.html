@@ -12,12 +12,15 @@
 {% endblock %}
 
 {% block content %}
-    <h1><a class="mobile_hide" href="{% url 'prm' %}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_details' %}?partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
-    <div class="row">
-        <div class="span12 prm-header">
-            <span>{% if contact %}Edit Contact{% elif partner %}Add Contact{% else %}Add Partner{% endif %}</span>
-        </div>
-    </div>
+    {% if partner %}
+        {% if contact %}
+        {% include "mypartners/includes/prm_header.html" with page_title="Edit Contact" back_to="Back to Partner Details" back_to_url="partner_details" back_to_string="?partner=" add_partner_to_end=True %}
+        {% else %}
+        {% include "mypartners/includes/prm_header.html" with page_title="Add Contact" back_to="Back to Partner Details" back_to_url="partner_details" back_to_string="?partner=" add_partner_to_end=True %}
+        {% endif %}
+    {% else %}
+    {% include "mypartners/includes/prm_header.html" with page_title="Add Partner" back_to="Back to Partner Relationship Manager" back_to_url="prm" %}
+    {% endif %}
     <div class="row">
         <div class="span8">
             <form method="post" action="" id="{% if not partner %}partner-form{% else %}contact-form{% endif %}">
@@ -26,15 +29,16 @@
                 <input type="hidden" name="company_id" value="{{ company.id }}">
                 <input type="hidden" name="partner_id" value="{{ partner.id }}">
                 <input type="hidden" name="ct" value="{{ content_id }}">
-            <div class="form-label pull-left">&nbsp;</div>
-            <div class="actions pull-right">
-                {% if contact %}<button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
-                <a class="btn" href="{% if partner %}{% url 'partner_details' %}?partner={{ partner.id }}{% else %}{% url 'prm' %}{% endif %}">{% trans 'Cancel' %}</a>
-                <button type="submit" class="btn primary" id="{% if not partner %}init-partner-save{% else %}item-save{% endif %}">{% trans 'Save' %}</button>
-            </div>
 
-            <div class="clear"></div>
+                <div class="actions pull-right">
+                    {% if contact %}<button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
+                    <a class="btn" href="{% if partner %}{% url 'partner_details' %}?partner={{ partner.id }}{% else %}{% url 'prm' %}{% endif %}">{% trans 'Cancel' %}</a>
+                    <button type="submit" class="btn primary" id="{% if not partner %}init-partner-save{% else %}item-save{% endif %}">{% trans 'Save' %}</button>
+                </div>
+                <div class="clear"></div>
             </form>
+
+
         </div>
         <div id="delete-confirm" class="modal hide fade row">
             <div class="modal-header">
@@ -52,41 +56,84 @@
             <div class="modal-footer">
                 <div class="actions">
                     <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
-                    <a class="btn" href="{% url 'delete_prm_item' %}?partner={{ partner.id }}&ct={{ content_id }}&id={{ contact }}">{% trans 'Delete' %}</a>
+                    <a class="btn" href="{% url 'delete_prm_item' %}?partner={{ partner.id }}&ct={{ content_id }}&id={{ contact.id }}">{% trans 'Delete' %}</a>
                 </div>
             </div>
         </div>{# /delete-confirm #}
         <div class="span4">
-            <div class="tip-box">
-                <h4>Tips</h4>
-                <div class="tip-content">
-                    {% if not partner %}
-                    After creating a Partner, you can add additional contacts from the
-                    Partner Page. This is helpful if you have more than one location
-                    or contact for this partner.
-                    {% else %}
-                    You can filter partner reports based on a contact's city,
-                    but you need to be sure the following fields are completed:
-                    <ul>
-                        <li>- City</li>
-                        <li>- State/Region</li>
-                        <li>- Country</li>
-                    </ul>
-                    {% endif %}
+            <div class="sidebar">
+                <h2 class="top">Tips</h2>
+                {% if not partner %}
+                After creating a Partner, you can add additional contacts from the
+                Partner Page. This is helpful if you have more than one location
+                or contact for this partner.
+                {% else %}
+                You can filter partner reports based on a contact's city,
+                but you need to be sure the following fields are completed:
+                <ul>
+                    <li>- City</li>
+                    <li>- State/Region</li>
+                    <li>- Country</li>
+                </ul>
+                {% endif %}
+                {% if contact %}
+                <div class="navigation">
+                    <h2>Navigation</h2>
+                    <a class="btn" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact.id }}">Add Location</a>
                 </div>
-                <div class="tip-footer">
-                    {% if not partner %}
-                    <a class="btn-link" href="{% url 'prm' %}">Back to PRM</a>
-                    {% else %}
-                    <a class="btn-link" href="{% url 'partner_details' %}?partner={{ partner.id }}">Back to Partner Page</a>
-                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% if contact %}
+    <div class="row">
+        <div class="span8">
+            <div class="card-wrapper locations">
+                <div class="wrapper-header">
+                    <h4>{% if not contact %}Primary Contact {% endif %}Manage Locations</h4>
+                </div>
+                {% if locations %}
+                    {% for location in locations %}
+                        <div class="product-card">
+                            <div class="big-title">
+                                {% if location.address_line_one %}{{ location.address_line_one }}{% endif %}
+                                {% if location.address_line_two %}{{ location.address_line_two }}{% endif %}
+                            </div>
+                            <div class="product-details">
+                                {% if location.city %}{{ location.city }}{% endif %}{% if location.state %}, {{ location.state }}{% endif %}  {% if location.postal_code %}{{ location.postal_code }}{% endif %}
+                            </div>
+                            <div class="partner-tags">
+                                {{ location.label }}
+                            </div>
+                            <a class="btn pull-right" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact.id }}&location={{ location.id }}">Edit</a>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="product-card not-clickable">
+                        There are no locations for {{ contact.name }}.
+                    </div>
+                    <div class="partner-pagination">
+                        <span class="step-links">
+                            <a class="pull-right" href="{% url "edit_location" %}?partner={{ partner.id }}&id={{ contact.id }}">Add Location</a>
+                        </span>
+                        <div class="clearfix"></div>
+                    </div>
+                {% endif %}
                 </div>
             </div>
         </div>
     </div>
+    {% endif %}
 {% endblock %}
 
 {% block extra-js %}
+<script type="text/javascript">
+    $(document).ready(function() {
+        $(".product-card:not(.not-clickable)").on("click", function() {
+           window.location = $(this).find("a").attr("href");
+        });
+    });
+</script>
 <script src="{{ STATIC_URL }}tag-it.min.js{{ gz }}"></script>
-<script src="{{ STATIC_URL }}prm.156-18.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}prm.157-03.js{{ gz }}"></script>
 {% endblock %}

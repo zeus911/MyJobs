@@ -1,9 +1,9 @@
 from django.contrib import admin
 
-from postajob.forms import (JobForm, ProductForm, ProductGroupingForm,
+from postajob.forms import (JobForm, JobLocationForm, ProductForm, ProductGroupingForm,
                             PurchasedProductForm, PurchasedJobAdminForm,
                             SitePackageForm)
-from postajob.models import (Job, Product, ProductGrouping, PurchasedProduct,
+from postajob.models import (Job, JobLocation, Product, ProductGrouping, PurchasedProduct,
                              PurchasedJob, SitePackage)
 
 
@@ -22,6 +22,16 @@ class ModelAdminWithRequest(admin.ModelAdmin):
                 kwargs['request'] = request
                 return ModelForm(*args, **kwargs)
         return ModelFormMetaClass
+
+
+class JobLocationsInline(admin.TabularInline):
+    model = Job.locations.through
+    max_num = 1
+
+
+class JobLocationAdmin(admin.ModelAdmin):
+    form = JobLocationForm
+    inlines = (JobLocationsInline, )
 
 
 class JobAdmin(ModelAdminWithRequest):
@@ -164,3 +174,4 @@ admin.site.register(SitePackage, SitePackageAdmin)
 admin.site.register(Product, ProductFormAdmin)
 admin.site.register(ProductGrouping, ProductGroupingFormAdmin)
 admin.site.register(PurchasedProduct, PurchasedProductFormAdmin)
+admin.site.register(JobLocation, JobLocationAdmin)

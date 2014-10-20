@@ -122,8 +122,6 @@ class SavedSearchModelsTests(MyJobsBase):
         # link
         self.assertFalse(search.url.startswith('http://my.jobs'))
         self.assertNotEqual(email.body.find(search.url), -1)
-        self.assertEqual(email.body.find(search.feed.replace('/feed/rss', '')),
-                         -1)
 
         # When search.url starts with my.jobs, strip /feed/rss from search.feed
         # if it exists and use that as the all jobs link

@@ -53,11 +53,28 @@ AWS_STORAGE_BUCKET_NAME = 'my-jobs'
 AWS_CALLING_FORMAT = CallingFormat.SUBDOMAIN
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
 
-POSTAJOB_URLS = {
-    'post': 'http://50.19.231.150/ajax/postajob/',
-    'delete': 'http://50.19.231.150/ajax/deleteajob/'
-}
-
 CC_AUTH = TESTING_CC_AUTH
 
 ROOT_URLCONF = 'myjobs_urls'
+
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'seo.search_backend.DESolrEngine',
+        # 'solr_server' must be defined in /etc/hosts on the server where this
+        # code is deployed. Check the deployment project in
+        # direct_seo/web/conf/hosts and make sure the one in production looks
+        # like that.
+        'URL': 'http://solr_server:8983/solr',
+        'TIMEOUT': 300,
+        'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
+        'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
+    },
+    'groups': {
+        'ENGINE': 'saved_search.groupsearch.SolrGrpEngine',
+        'URL': 'http://solr_server:8983/solr',
+        'TIMEOUT': 300,
+        'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
+        'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
+    }
+}

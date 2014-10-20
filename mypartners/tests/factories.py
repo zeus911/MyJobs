@@ -1,4 +1,7 @@
 import factory
+from factory import fuzzy
+from factory import django
+import string
 
 from datetime import datetime
 from django.contrib.contenttypes.models import ContentType
@@ -23,7 +26,15 @@ class ContactFactory(factory.django.DjangoModelFactory):
     name = 'foo bar'
     email = 'fake@email.com'
     phone = '84104391'
-    address_line_one = '5683 Thing Street'
+
+    @factory.post_generation
+    def locations(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            for location in extracted:
+                self.locations.add(location)
 
 
 class ContactRecordFactory(factory.django.DjangoModelFactory):
@@ -54,3 +65,14 @@ class TagFactory(factory.Factory):
     name = "foo"
 
     company = factory.SubFactory(CompanyFactory)
+
+
+class LocationFactory(django.DjangoModelFactory):
+    class Meta:
+        model = "mypartners.Location"
+
+    label = "Home"
+    address_line_one = factory.Sequence(lambda n: "%d Fake St" % n)
+    city = fuzzy.FuzzyText()
+    state = fuzzy.FuzzyText(length=2, chars=string.ascii_uppercase)
+    postal_code = fuzzy.FuzzyInteger(10000, 99999)

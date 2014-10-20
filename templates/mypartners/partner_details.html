@@ -12,12 +12,7 @@
 {% endblock %}
 
 {% block content %}
-    <h1><a class="mobile_hide" href="{% url 'prm' %}">{{ company.name }}</a> <small><a href="{% url 'partner_overview' %}?partner={{ partner.id }}">{{ partner.name }}</a></small></h1>
-    <div class="row">
-        <div class="span12 prm-header">
-            <span>Partner Details</span>
-        </div>
-    </div>
+    {% include "mypartners/includes/prm_header.html" with page_title="Partner Details" back_to="Back to Overview" back_to_url="partner_overview" back_to_string="?partner=" add_partner_to_end=True %}
     <div class="row">
         <div class="span8">
             <form method="post" action="" id="partner-form">
@@ -56,14 +51,12 @@
             </div>
         </div>{# /delete-confirm #}
         <div class="span4">
-            <div class="tip-box mobile_hide">
-                <h4>Tips</h4>
-                <div class="tip-content">
-                    You can only have one primary contact, but you can change
-                    it any time.
-                </div>
-                <div class="tip-footer">
-                    <a class="btn-link" href="{% url 'partner_overview' %}?partner={{ partner.id }}">Back to Overview</a>
+            <div class="sidebar">
+                <h2 class="top">Tips</h2>
+                You can only have one primary contact, but you can change it any time.
+                <div class="navigation">
+                    <h2>Navigation</h2>
+                    <a class="btn" href="{% url 'edit_contact' %}?partner={{ partner.id }}&ct={{ contact_ct }}">Add Contact</a>
                 </div>
             </div>
         </div>
@@ -71,23 +64,25 @@
 
     <div class="row">
         <div class="span8">
-            <div class="formBox profile-mobile" id="manage-contacts">
-                <h4>Manage Contacts</h4>
+            <div class="card-wrapper">
+                <div class="wrapper-header">
+                    <h4>Manage Contacts</h4>
+
+                </div>
                 {% if contacts %}
-                <table class="table table-striped table-bordered">
-                    <tbody>
                     {% for contact in contacts %}
-                        <tr>
-                            <td>{{ contact.name }}</td>
-                            <td>{% if contact.email %}{{ contact.email }}{% endif %}</td>
-                            <td><a class="btn-link pull-right" href="{% url 'edit_contact' %}?partner={{ partner.id }}&id={{ contact.id }}&ct={{ contact_ct }}">Edit</a></td>
-                        </tr>
+                    {% include "mypartners/includes/contact_card.html" %}
                     {% endfor %}
-                    </tbody>
-                </table>
+                {% else %}
+                    <div class="product-card not-clickable">
+                        There are no contacts for {{partner.name}}.
+                    </div>
+                    <div class="partner-pagination">
+                        <span class="step-links">
+                            <a class="pull-right" href="{% url 'edit_contact' %}?partner={{ partner.id }}&ct={{ contact_ct }}">Add Contact</a>
+                        </span>
+                        <div class="clearfix"></div>
                 {% endif %}
-                <a class="pull-right btn mobile-btn" href="{% url 'edit_contact' %}?partner={{ partner.id }}&ct={{ contact_ct }}">New Contact</a>
-                <div class="clear"></div>
             </div>
         </div>
     </div>
@@ -95,5 +90,12 @@
 
 {% block extra-js %}
 <script src="{{ STATIC_URL }}tag-it.min.js{{ gz }}"></script>
-<script src="{{ STATIC_URL }}prm.156-18.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}prm.157-03.js{{ gz }}"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    $(".product-card:not(.not-clickable)").on("click", function() {
+       window.location = $(this).find("a").attr("href");
+    });
+});
+</script>
 {% endblock %}

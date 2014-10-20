@@ -2,7 +2,6 @@ from datetime import date, timedelta
 from decimal import Decimal
 import json
 import operator
-from urllib import urlencode
 import urllib2
 from uuid import uuid4
 
@@ -80,9 +79,17 @@ class JobLocation(models.Model):
                                help_text=help_text['zipcode'],
                                verbose_name=_('Postal Code'))
 
+    def __unicode__(self):
+        if hasattr(self, 'city') and hasattr(self, 'state'):
+            return '{city}, {state}'.format(city=self.city, state=self.state)
+        else:
+            return "Location"
+
     def save(self, **kwargs):
         self.generate_guid()
         super(JobLocation, self).save(**kwargs)
+        for job in self.jobs.all():
+            job.save()
 
     def generate_guid(self):
         if not self.guid:
@@ -145,8 +152,11 @@ class Job(BaseModel):
     created_by = models.ForeignKey('myjobs.User')
 
     def __unicode__(self):
-        return '{company} - {title}'.format(company=self.owner.name,
-                                            title=self.title)
+        if hasattr(self, 'owner') and hasattr(self, 'title'):
+            return '{company} - {title}'.format(company=self.owner.name,
+                                                title=self.title)
+        else:
+            return "Job"
 
     def solr_dict(self):
         if self.site_packages.all():
@@ -199,14 +209,13 @@ class Job(BaseModel):
         state_short, reqid, title, uid, and zipcode.
 
         """
+        from import_jobs import add_jobs
+        from transform import transform_for_postajob
+
         jobs = self.solr_dict()
         if jobs:
-            data = urlencode({
-                'key': settings.POSTAJOB_API_KEY,
-                'jobs': json.dumps(jobs)
-            })
-            request = urllib2.Request(settings.POSTAJOB_URLS['post'], data)
-            urllib2.urlopen(request).read()
+            jobs = [transform_for_postajob(job) for job in jobs]
+            add_jobs(jobs)
 
     def save(self, **kwargs):
         if self.is_expired and self.date_expired > date.today():
@@ -233,13 +242,13 @@ class Job(BaseModel):
         [location.delete() for location in locations]
 
     def remove_from_solr(self):
-        data = urlencode({
-            'key': settings.POSTAJOB_API_KEY,
-            'guids': ','.join(location.guid
-                              for location in self.locations.all())
-        })
-        request = urllib2.Request(settings.POSTAJOB_URLS['delete'], data)
-        urllib2.urlopen(request).read()
+        from import_jobs import delete_by_guid
+
+        guids = [location.guid for location in self.locations.all()]
+        delete_by_guid(guids)
+
+    def guids(self):
+        return [location.guid for location in self.locations.all()]
 
     def on_sites(self):
         from seo.models import SeoSite
