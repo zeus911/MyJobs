@@ -593,7 +593,7 @@ class OfflinePurchaseForm(RequestForm):
         instance.save()
 
         company = get_object_or_none(
-           Company, pk=self.cleaned_data.get('purchasing_company'))
+            Company, pk=self.cleaned_data.get('purchasing_company'))
         if company:
             instance.redeemed_on = date.today()
             instance.create_purchased_products(company)
@@ -610,7 +610,6 @@ class OfflinePurchaseRedemptionForm(RequestForm):
     as well.
 
     """
-
     class Meta:
         model = OfflinePurchase
         exclude = ('created_by', 'created_on', 'redeemed_by', 'redeemed_on',
@@ -618,7 +617,7 @@ class OfflinePurchaseRedemptionForm(RequestForm):
 
     redemption_id = CharField(label='Redemption ID')
 
-    def  clean_redemption_id(self):
+    def clean_redemption_id(self):
         redemption_id = self.cleaned_data.get('redemption_id')
         offline_purchase = get_object_or_none(OfflinePurchase,
                                               redemption_uid=redemption_id,
@@ -628,7 +627,6 @@ class OfflinePurchaseRedemptionForm(RequestForm):
             raise ValidationError('The redemption id you entered is invalid.')
 
         return offline_purchase
-
 
     def save(self, commit=True):
         self.instance = self.cleaned_data.get('redemption_id')
