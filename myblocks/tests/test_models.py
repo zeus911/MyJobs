@@ -14,6 +14,7 @@ class ModelsTests(DirectSEOBase):
                          'offset3 span7')
 
     def test_block_cast(self):
+        models.Block.objects.all().delete()
         factories.LoginBlockFactory()
         block = models.Block.objects.get()
         self.assertIsInstance(block, models.Block)
