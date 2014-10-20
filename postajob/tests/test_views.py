@@ -194,17 +194,8 @@ class ViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Job.objects.all().count(), 1)
 
-<<<<<<< HEAD
-    @patch('urllib2.urlopen')
-    def test_job_update(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
-        job = JobFactory(owner=self.company, created_by=self.user)
-=======
     def test_job_update(self):
         job = JobFactory(owner=self.company, created_by=self.user)
->>>>>>> master
         kwargs = {'pk': job.pk}
 
         self.assertNotEqual(job.title, self.job_form_data['title'])
