@@ -7,6 +7,7 @@ from setup import MyJobsBase
 
 class AccountFormTests(MyJobsBase):
     def setUp(self):
+        super(AccountFormTests, self).setUp()
         self.user = UserFactory()
         self.name = PrimaryNameFactory(user=self.user)
         self.client = TestClient()

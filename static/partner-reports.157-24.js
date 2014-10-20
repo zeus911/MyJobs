@@ -205,21 +205,40 @@ function draw_chart() {
     });
 }
 
+/*
+format a Date object to %m/%d/%Y
+*/
+function format_date(date) {
+    // months are indexed at 0, while date and year are not
+    return (date.getMonth() + 1) + "/" + date.getDate() + "/"
+                                 + date.getFullYear();
+}
+
 
 function submit_date_range_from_li (e) {
-    days = e.currentTarget.id;
-    var range;
+    var date_start = new Date(),
+        date_end = new Date(),
+        days = e.currentTarget.id;
+    
     if(days == 'today')
-        range = 1;
+        date_start.setDate(date_start.getDate() - 1);
     else if(days == 'thirty-days')
-        range = 30;
+        date_start.setDate(date_start.getDate() - 30);
     else if(days == 'ninety-days')
-        range = 90;
+        date_start.setDate(date_start.getDate() - 90);
     else if(days == 'all-days')
-        range = 0;
-    params = update_query('date_start', '', window.location.search);
-    params = update_query('date_end', '', params);
-    window.location = location.pathname + update_query('date', range, params)
+        date_start = null
+
+    if(date_start) {
+        params = update_query('date_start', format_date(date_start),
+                              window.location.search);
+        params = update_query('date_end', format_date(date_end), params);
+    } else {
+        params = update_query('date_start', '', window.location.search);
+        params = update_query('date_end', '', params);
+    }
+
+    window.location = location.pathname + params
 }
 
 
@@ -313,15 +332,13 @@ function add_links(chart, json, size){
     if(size === 'big'){
         var button = $('#reports-view-all'),
             date_start = getQueryVariable("date_start"),
-            date_end = getQueryVariable("date_end"),
-            date = getQueryVariable("date");
+            date_end = getQueryVariable("date_end");
 
         button.attr('href', '/prm/view/records?company='
             + String(company_id)
             + '&partner=' + String(partner_id) 
             + '&date_start=' + String(date_start) 
-            + '&date_end=' + String(date_end) 
-            + '&date=' + String(date));
+            + '&date_end=' + String(date_end)) 
     }
 }
 

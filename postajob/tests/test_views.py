@@ -163,9 +163,7 @@ class ViewTests(MyJobsBase):
         response = self.client.post(reverse('job_update', kwargs={'pk': 1}))
         self.assertEqual(response.status_code, 404)
 
-    @patch('urllib2.urlopen')
-    def test_job_access_not_for_company(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
+    def test_job_access_not_for_company(self):
         new_company = CompanyFactory(name='Another Company', pk=1000)
         job = JobFactory(owner=new_company, created_by=self.user)
         kwargs = {'pk': job.pk}
@@ -178,11 +176,7 @@ class ViewTests(MyJobsBase):
         # Make sure that the call to job_delete didn't delete the job
         self.assertEqual(Job.objects.all().count(), 1)
 
-    @patch('urllib2.urlopen')
-    def test_job_access_allowed(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
+    def test_job_access_allowed(self):
         job = JobFactory(owner=self.company, created_by=self.user)
         kwargs = {'pk': job.pk}
 
@@ -193,23 +187,24 @@ class ViewTests(MyJobsBase):
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
         self.assertRedirects(response, 'http://testserver/postajob/jobs/',
                              status_code=302)
-
-    @patch('urllib2.urlopen')
-    def test_job_add(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
+    
+    def test_job_add(self):
         response = self.client.post(reverse('job_add'), data=self.job_form_data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Job.objects.all().count(), 1)
 
+<<<<<<< HEAD
     @patch('urllib2.urlopen')
     def test_job_update(self, urlopen_mock):
         mock_obj = Mock()
         mock_obj.read.side_effect = self.side_effect
         urlopen_mock.return_value = mock_obj
         job = JobFactory(owner=self.company, created_by=self.user)
+=======
+    def test_job_update(self):
+        job = JobFactory(owner=self.company, created_by=self.user)
+>>>>>>> master
         kwargs = {'pk': job.pk}
 
         self.assertNotEqual(job.title, self.job_form_data['title'])
@@ -221,9 +216,7 @@ class ViewTests(MyJobsBase):
         job = Job.objects.get()
         self.assertEqual(job.title, self.job_form_data['title'])
 
-    @patch('urllib2.urlopen')
-    def test_job_delete(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
+    def test_job_delete(self):
         job = JobFactory(owner=self.company, created_by=self.user)
         kwargs = {'pk': job.pk}
 
@@ -231,12 +224,7 @@ class ViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Job.objects.all().count(), 0)
 
-    @patch('urllib2.urlopen')
-    def test_purchasedjob_add(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
-
+    def test_purchasedjob_add(self):
         product = PurchasedProductFactory(
             product=self.product, owner=self.company)
         kwargs = {'product': product.pk}
@@ -247,13 +235,8 @@ class ViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(PurchasedJob.objects.all().count(), 1)
         self.assertEqual(Request.objects.all().count(), 1)
-
-    @patch('urllib2.urlopen')
-    def test_purchasedjob_update(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
-
+    
+    def test_purchasedjob_update(self):
         product = PurchasedProductFactory(
             product=self.product, owner=self.company)
         job = PurchasedJobFactory(
@@ -272,10 +255,7 @@ class ViewTests(MyJobsBase):
         job = Job.objects.get()
         self.assertEqual(job.title, self.job_form_data['title'])
 
-    @patch('urllib2.urlopen')
-    def test_purchasedjob_delete(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
-
+    def test_purchasedjob_delete(self):
         product = PurchasedProductFactory(
             product=self.product, owner=self.company)
         job = PurchasedJobFactory(
@@ -289,12 +269,7 @@ class ViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(PurchasedJob.objects.all().count(), 0)
 
-    @patch('urllib2.urlopen')
-    def test_purchasedjob_add_too_many(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
-
+    def test_purchasedjob_add_too_many(self):
         product = PurchasedProductFactory(
             product=self.product, owner=self.company)
         product.jobs_remaining = 1
@@ -311,11 +286,7 @@ class ViewTests(MyJobsBase):
                                     data=self.purchasedjob_form_data)
         self.assertEqual(response.status_code, 404)
 
-    @patch('urllib2.urlopen')
-    def test_job_add_network(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
+    def test_job_add_network(self):
         response = self.client.post(reverse('job_add'), data=self.job_form_data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
@@ -323,11 +294,7 @@ class ViewTests(MyJobsBase):
         self.assertItemsEqual(job.site_packages.all(),
                               [job.owner.site_package])
 
-    @patch('urllib2.urlopen')
-    def test_job_add_site(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
+    def test_job_add_site(self):
         package = SitePackage.objects.create(name='')
         package.make_unique_for_site(self.site)
         self.job_form_data['post_to'] = 'site'
@@ -345,12 +312,7 @@ class ViewTests(MyJobsBase):
         self.assertIn(package.pk,
                       job.site_packages.all().values_list('pk', flat=True))
 
-    @patch('urllib2.urlopen')
-    def test_job_invalid_apply(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
-
+    def test_job_invalid_apply(self):
         # All three
         test_data = dict(self.job_form_data)
         test_data['apply_email'] = 'email@email.email'
@@ -704,13 +666,8 @@ class ViewTests(MyJobsBase):
             # include elements from the relevant ProductGrouping and Product
             # instances
             self.assertTrue(text in response.content)
-
-    @patch('urllib2.urlopen')
-    def test_job_add_and_remove_locations(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
-
+    
+    def test_job_add_and_remove_locations(self):
         location = {
             'form-0-city': 'Indianapolis',
             'form-0-state': 'Indiana',
@@ -737,9 +694,7 @@ class ViewTests(MyJobsBase):
         self.client.post(reverse('job_update', args=[job.pk]),
                          data=self.job_form_data, follow=True)
 
-    @patch('urllib2.urlopen')
-    def test_purchasedjob_form(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
+    def test_purchasedjob_form(self):
         purchased_product = PurchasedProductFactory(
             product=self.product, owner=self.company)
 

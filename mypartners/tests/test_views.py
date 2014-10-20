@@ -311,7 +311,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
         container = soup.find(id='recent-communication-records')
         # Include 1 header row
-        self.assertEqual(len(container('div', class_="product-card")), 2)
+        self.assertEqual(len(container('div', class_="product-card")), 1)
 
         for row in container('div', class_="product-card"):
             title = "Test Subject  - example-contact"
@@ -329,7 +329,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
         container = soup.find(id='recent-communication-records')
-        self.assertEqual(len(container('div', class_="product-card")), 3)
+        self.assertEqual(len(container('div', class_="product-card")), 1)
 
     def test_no_recent_saved_searches(self):
         url = self.get_url(company=self.company.id,
@@ -351,20 +351,17 @@ class PartnerOverviewTests(MyPartnersTestCase):
         self.contact.user = user
         self.contact.save()
 
-        for _ in range(2):
-            PartnerSavedSearchFactory(user=self.contact.user,
-                                      provider=self.company,
-                                      created_by=self.staff_user,
-                                      partner=self.partner)
+        PartnerSavedSearchFactory.create_batch(
+            2, user=self.contact.user, provider=self.company,
+            created_by=self.staff_user, partner=self.partner)
 
-        url = self.get_url(company=self.company.id,
-                           partner=self.partner.id)
+        url = self.get_url(company=self.company.id, partner=self.partner.id)
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
         container = soup.find(id='recent-saved-searches')
 
         # Include 1 header row
-        self.assertEqual(len(container('div', class_="product-card")), 2)
+        self.assertEqual(len(container('div', class_="product-card")), 1)
         for row in container('div', class_="product-card"):
             title_and_status = "All Jobs Active"
             self.assertIn(title_and_status,
@@ -372,17 +369,15 @@ class PartnerOverviewTests(MyPartnersTestCase):
             self.assertIn("Sent to: alice@example.com",
                           row('div', class_="sub-title")[0].get_text().strip())
 
-        # Test that only a maximum of 3 records are displayed.
-        for _ in range(4):
-            PartnerSavedSearchFactory(user=self.contact.user,
-                                      provider=self.company,
-                                      created_by=self.staff_user,
-                                      partner=self.partner)
+        # Test that only the first record is displayed.
+        PartnerSavedSearchFactory.create_batch(
+            4, user=self.contact.user, provider=self.company,
+            created_by=self.staff_user, partner=self.partner)
 
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
         container = soup.find(id='recent-saved-searches')
-        self.assertEqual(len(container('div', class_="product-card")), 3)
+        self.assertEqual(len(container('div', class_="product-card")), 1)
 
 
 class RecordsOverviewTests(MyPartnersTestCase):
@@ -402,24 +397,13 @@ class RecordsOverviewTests(MyPartnersTestCase):
         self.assertIn('No records available.', soup.get_text().strip())
 
     def test_records_counts(self):
-        for _ in range(5):
-            ContactRecordFactory(partner=self.partner)
+        ContactRecordFactory.create_batch(5, partner=self.partner)
 
-        url = self.get_url(company=self.company.id,
-                           partner=self.partner.id)
+        url = self.get_url(company=self.company.id, partner=self.partner.id)
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
         records = soup.find(class_='card-wrapper')
         self.assertEqual(len(records('div', class_='product-card')), 5)
-
-        # Ensure old records don't show
-        ContactRecordFactory(partner=self.partner,
-                             date_time=datetime.now() - timedelta(days=31))
-        response = self.client.get(url)
-        soup = BeautifulSoup(response.content)
-        records = soup.find(class_='card-wrapper')
-        self.assertEqual(len(records('div', class_='product-card')), 5)
-
 
 class RecordsDetailsTests(MyPartnersTestCase):
     """Tests related to the records detail page, /prm/view/records/view/"""
@@ -672,15 +656,12 @@ class SearchesOverviewTests(MyPartnersTestCase):
         self.assertIn("No searches available.", searches.get_text().strip())
 
     def test_render_search_list(self):
-        for _ in range(10):
-            PartnerSavedSearchFactory(user=self.contact.user,
-                                      provider=self.company,
-                                      created_by=self.staff_user,
-                                      partner=self.partner)
+        PartnerSavedSearchFactory.create_batch(
+            10, user=self.contact.user, provider=self.company,
+            created_by=self.staff_user, partner=self.partner)
 
         # Get the page
-        url = self.get_url(company=self.company.id,
-                           partner=self.partner.id)
+        url = self.get_url(company=self.company.id, partner=self.partner.id)
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
         searches = soup.find(class_='span8')
@@ -694,10 +675,9 @@ class SearchFeedTests(MyPartnersTestCase):
         super(SearchFeedTests, self).setUp()
 
         self.default_view = 'partner_view_full_feed'
-        self.search = PartnerSavedSearchFactory(provider=self.company,
-                                                created_by=self.staff_user,
-                                                user=self.contact.user,
-                                                partner=self.partner)
+        self.search = PartnerSavedSearchFactory(
+            provider=self.company, created_by=self.staff_user,
+            user=self.contact.user, partner=self.partner)
 
         # Create a TestClient
         self.client = TestClient()

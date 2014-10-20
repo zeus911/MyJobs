@@ -1,8 +1,10 @@
 from authorize import AuthorizeInvalidError, AuthorizeResponseError
 from datetime import date, timedelta
+from fsm.widget import FSM
 
 from django.contrib import admin
 from django.core.exceptions import ValidationError
+from django.core.urlresolvers import reverse_lazy
 from django.core.validators import validate_email, URLValidator
 from django import forms
 from django.forms import (CharField, CheckboxSelectMultiple,
@@ -28,7 +30,7 @@ class BaseJobForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.153-10.css', )
+            'all': ('postajob.157-16.css', )
         }
         js = ('postajob.153-05.js', )
 
@@ -141,7 +143,7 @@ class JobForm(BaseJobForm):
     # we consider each site an individual site package but the
     # site_package for a site is only created when it's first used,
     # so we use SeoSite as the queryset here instead of SitePackage.
-    site_packages_widget = admin.widgets.FilteredSelectMultiple('Sites', False)
+    site_packages_widget = FSM('Sites', reverse_lazy('site_fsm'), async=True)
     site_packages = ModelMultipleChoiceField(SeoSite.objects.none(),
                                              help_text="",
                                              label="Site",
@@ -156,27 +158,13 @@ class JobForm(BaseJobForm):
 
     def __init__(self, *args, **kwargs):
         super(JobForm, self).__init__(*args, **kwargs)
-        kwargs = {'business_units__company': self.company}
-        if self.request.path.startswith('/admin') or \
-                self.request.user.is_superuser:
-            # If this is on the admin site or the user is a superuser,
-            # get all sites for the current company.
-            user_sites = SeoSite.objects.filter(**kwargs)
-
-        if not self.request.path.startswith('/admin'):
-            # Superusers get the list of sites from the previous block, but
-            # also need the widget to be modified in this block. This
-            # necessitates the additional if.
-
-            # FilteredSelectMultiple doesn't work outside the admin, so
-            # switch to a widget that does work.
-            self.fields['site_packages'].help_text = ""
-            self.fields['site_packages'].widget = CheckboxSelectMultiple(
-                attrs={'class': 'job-sites-checkbox'})
-            if not self.request.user.is_superuser:
-                user_sites = self.request.user.get_sites()
-                # Outside the admin, limit the sites to the current company
-                user_sites = user_sites.filter(**kwargs)
+        self.fields['site_packages'].help_text = ''
+        if self.request.user.is_superuser:
+            user_sites = SeoSite.objects.all()
+        else:
+            kwargs = {'business_units__company': self.company}
+            user_sites = self.request.user.get_sites()
+            user_sites = user_sites.filter(**kwargs)
 
         self.fields['site_packages'].queryset = user_sites
 
@@ -328,7 +316,7 @@ class ProductForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.153-10.css', )
+            'all': ('postajob.157-16.css', )
         }
         js = ('postajob.153-05.js', )
 
@@ -377,7 +365,7 @@ class ProductGroupingForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.153-10.css', )
+            'all': ('postajob.157-16.css', )
         }
 
     products_widget = CheckboxSelectMultiple()
@@ -436,7 +424,7 @@ class PurchasedProductForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.153-10.css', )
+            'all': ('postajob.157-16.css', )
         }
 
     card_number = CharField(label='Credit Card Number')
@@ -554,7 +542,7 @@ class OfflinePurchaseForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.153-10.css', )
+            'all': ('postajob.157-16.css', )
         }
         js = ('postajob.153-05.js', )
 
@@ -659,7 +647,7 @@ class CompanyProfileForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.153-10.css', )
+            'all': ('postajob.157-16.css', )
         }
 
     customer_of_choices = Company.objects.filter(product_access=True)

@@ -62,14 +62,7 @@ class ModelTests(MyJobsBase):
             'name': 'Test Site Package',
         }
 
-        self.choices_data = ('{"countries":[{"code":"USA", '
-                             '"name":"United States of America"}], '
-                             '"regions":[{"code":"IN", "name":"Indiana"}] }')
-        self.side_effect = [self.choices_data for x in range(0, 50)]
-
-    @patch('urllib2.urlopen')
-    def test_job_creation_and_deletion(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('{"jobs_deleted": 1}')
+    def test_job_creation_and_deletion(self):
         locations = JobLocationFactory.create_batch(5)
         job = JobFactory(owner=self.company, created_by=self.user)
         job.locations = locations
@@ -80,53 +73,27 @@ class ModelTests(MyJobsBase):
         self.assertEqual(Job.objects.all().count(), 0)
         self.assertEqual(JobLocation.objects.all().count(), 0)
 
-    @patch('urllib2.urlopen')
-    def test_job_add_to_solr(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('{"jobs_added": 1}')
+    def test_job_add_to_solr(self):
         job = JobFactory(owner=self.company, created_by=self.user)
         job.locations.add(JobLocationFactory())
         job.add_to_solr()
-        # add_to_solr() is called in save(), so urlopen should've been
-        # called once at this point.
-        self.assertEqual(urlopen_mock.call_count, 1)
 
-        # Determine what is being sent to microsites by parsing the
-        # Request object passed to urlopen().
-        args, _ = urlopen_mock.call_args
-        data = parse_qs(args[0].data)
-        data['jobs'] = eval(data['jobs'][0])
-        self.assertEqual(data['key'][0], settings.POSTAJOB_API_KEY)
-        for field in self.request_data.keys():
-            self.assertEqual(data['jobs'][0][field], self.request_data[field])
-        for field in self.request_location.keys():
-            self.assertEqual(data['jobs'][0][field], self.request_location[field])
+        guids = " OR ".join(job.guids())
+        query = "guid:%s" % guids
+        self.assertEqual(self.ms_solr.search(query).hits, 1)
 
-
-    @patch('urllib2.urlopen')
-    def test_job_remove_from_solr(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('{"jobs_deleted": 1}')
+    def test_job_remove_from_solr(self):
         job = JobFactory(owner=self.company, created_by=self.user)
         locations = JobLocationFactory.create_batch(2)
         job.locations = locations
         job.save()
         job.remove_from_solr()
 
-        guids = [unicode(location.guid) for location in locations]
+        guids = " OR ".join(job.guids())
+        query = "guid:%s" % guids
+        self.assertEqual(self.ms_solr.search(query).hits, 0)
 
-        # add_to_solr() is called in save(), which is combined with the
-        # call to remove_from_solr().
-        self.assertEqual(urlopen_mock.call_count, 2)
-
-        # Determine what is being sent to microsites by parsing the
-        # Request object passed to urlopen().
-        args, _ = urlopen_mock.call_args
-        data = parse_qs(args[0].data)
-        self.assertEqual(data['key'][0], settings.POSTAJOB_API_KEY)
-        self.assertItemsEqual(data['guids'][0].split(','), guids)
-
-    @patch('urllib2.urlopen')
-    def test_job_generate_guid(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
+    def test_job_generate_guid(self):
         guid = '1'*32
 
         # Confirm that pre-assigned guids are not being overwritten.
@@ -195,9 +162,7 @@ class ModelTests(MyJobsBase):
             owner=self.company, created_by=self.user, 
             purchased_product=self.purchased_product, pk=pk)
 
-    @patch('urllib2.urlopen')
-    def test_purchased_job_add(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
+    def test_purchased_job_add(self):
         self.create_purchased_job()
         self.assertEqual(PurchasedJob.objects.all().count(), 1)
         self.assertEqual(SitePackage.objects.all().count(), 1)
@@ -206,23 +171,26 @@ class ModelTests(MyJobsBase):
         job = PurchasedJob.objects.get()
         self.assertItemsEqual(job.site_packages.all(), [package])
 
-    @patch('urllib2.urlopen')
-    def test_purchased_job_add_to_solr(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
+    def test_purchased_job_add_to_solr(self):
         job = self.create_purchased_job()
         job.locations.add(JobLocationFactory())
         job.save()
         # Add to solr and delete from solr shouldn't be called until
         # the job is approved.
-        self.assertEqual(urlopen_mock.call_count, 0)
+        guids = " OR ".join(job.guids())
+        query = "guid:%s" % guids
+        self.assertEqual(self.ms_solr.search(query).hits, 0)
         job.is_approved = True
+
         # Jobs won't be added/deleted until it's confirmed that the
         # purchased product is paid for as well.
         job.purchased_product.paid = True
         job.purchased_product.save()
         job.save()
         # Now that the job is approved, it should've been sent to solr.
-        self.assertEqual(urlopen_mock.call_count, 1)
+        guids = " OR ".join(job.guids())
+        query = "guid:%s" % guids
+        self.assertEqual(self.ms_solr.search(query).hits, 1)
 
     def test_purchased_product_jobs_remaining(self):
         num_jobs_allowed = Product._meta.get_field_by_name('num_jobs_allowed')
@@ -291,12 +259,7 @@ class ModelTests(MyJobsBase):
         self.assertEqual(ProductGrouping.objects.all().count(), 0)
         self.assertEqual(ProductOrder.objects.all().count(), 0)
 
-    @patch('urllib2.urlopen')
-    def test_request_generation(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
-
+    def test_request_generation(self):
         cu = CompanyUserFactory(user=self.user, company=self.company)
         cu.make_purchased_microsite_admin()
 

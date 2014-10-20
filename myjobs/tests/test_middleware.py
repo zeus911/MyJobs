@@ -9,6 +9,7 @@ from myjobs.tests.factories import UserFactory
 
 class RedirectMiddlewareTests(MyJobsBase):
     def setUp(self):
+        super(RedirectMiddlewareTests, self).setUp()
         self.user = UserFactory()
         self.redirect_middleware = PasswordChangeRedirectMiddleware()
         self.request_factory = RequestFactory()
