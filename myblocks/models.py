@@ -237,11 +237,13 @@ class ColumnBlock(Block):
                                     related_name='included_blocks')
 
     def context(self, request):
-        html = ''.join([block.cast().render(request) for block in
-                        self.blocks.all().order_by('columnblockorder__order')])
+        row = '<div class="row">%s</div>'
+
+        html = [row % block.cast().render(request) for
+                block in self.blocks.all().order_by('columnblockorder__order')]
         return {
             'block': self,
-            'content': mark_safe(html),
+            'content': mark_safe(''.join(html)),
             'request': request
         }
 
