@@ -59,6 +59,17 @@ class MySearchViewTests(MyJobsBase):
         self.failUnless(isinstance(response.context['add_form'],
                                    forms.SavedSearchForm))
 
+    def test_saved_search_digest_options(self):
+        response = self.client.get(reverse('saved_search_main'))
+        self.assertTrue('Digest Options' in response.content)
+        self.assertFalse('digest-option' in response.content)
+
+        self.assertTrue(self.new_form.is_valid())
+        self.new_form.save()
+        response = self.client.get(reverse('saved_search_main'))
+        self.assertTrue('Digest Options' in response.content)
+        self.assertTrue('digest-option' in response.content)
+
     def test_save_new_search_form(self):
         response = self.client.post(reverse('save_search_form'),
                                     data=self.new_form_data,

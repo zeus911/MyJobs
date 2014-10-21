@@ -24,13 +24,20 @@
         {% if request.GET.sort_by == "name" %}
         <div class="sort-by active {% if request.GET.desc %}descending{%else%}ascending{%endif%}" title="Click to change sort">Name</div>
         <div class="sort-by" title="Click to change sort">Location</div>
+        {% if on_page == "prm"%}<div class="sort-by" title="Click to change sort">Activity</div>{% endif %}
+        {% elif request.GET.sort_by == "activity" %}
+        <div class="sort-by" title="Click to change sort">Name</div>
+        <div class="sort-by" title="Click to change sort">Location</div>
+        {% if on_page == "prm"%}<div class="sort-by active {% if request.GET.desc %}descending{%else%}ascending{%endif%}" title="Click to change sort">Activity</div>{% endif %}
         {% else %}
         <div class="sort-by" title="Click to change sort">Name</div>
         <div class="sort-by active {% if request.GET.desc %}descending{%else%}ascending{%endif%}" title="Click to change sort">Location</div>
+        {% if on_page == "prm"%}<div class="sort-by" title="Click to change sort">Activity</div>{% endif %}
         {% endif %}
     {% else %}
     <div class="sort-by active ascending" title="Click to change sort">Name</div>
     <div class="sort-by" title="Click to change sort">Location</div>
+    {% if on_page == "prm"%}<div class="sort-by" title="Click to change sort">Activity</div>{% endif %}
     {% endif %}
     <div id="per-page" class="pull-right">
         <span title="Click to edit">{% if request.GET.per_page %}{{ request.GET.per_page }}{% else %}10{% endif %}</span>

@@ -10,13 +10,14 @@ from myjobs.tests.setup import MyJobsBase
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          CompanyUserFactory, SeoSiteFactory)
 from myjobs.tests.factories import UserFactory
-from postajob.tests.factories import (product_factory, job_factory,
-                                      offlinepurchase_factory,
-                                      offlineproduct_factory,
-                                      productgrouping_factory,
-                                      purchasedjob_factory,
-                                      purchasedproduct_factory,
-                                      sitepackage_factory)
+from postajob.tests.factories import (ProductFactory,
+                                      OfflinePurchaseFactory,
+                                      OfflineProductFactory,
+                                      ProductGroupingFactory,
+                                      JobFactory,
+                                      PurchasedJobFactory,
+                                      PurchasedProductFactory,
+                                      SitePackageFactory)
 from postajob.models import (CompanyProfile, Job, OfflinePurchase, Package,
                              Product, ProductGrouping, PurchasedJob,
                              PurchasedProduct, Request, SitePackage,
@@ -38,11 +39,11 @@ class ViewTests(MyJobsBase):
         self.company.save()
         self.company_user = CompanyUserFactory(user=self.user,
                                                company=self.company)
-        sitepackage_factory(self.company)
+        SitePackageFactory(owner=self.company)
         self.package = Package.objects.get()
         self.sitepackage = SitePackage.objects.get()
         self.site.sitepackage_set.add(self.sitepackage)
-        self.product = product_factory(self.package, self.company)
+        self.product = ProductFactory(package=self.package, owner=self.company)
 
         self.login_user()
 
@@ -162,11 +163,9 @@ class ViewTests(MyJobsBase):
         response = self.client.post(reverse('job_update', kwargs={'pk': 1}))
         self.assertEqual(response.status_code, 404)
 
-    @patch('urllib2.urlopen')
-    def test_job_access_not_for_company(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
+    def test_job_access_not_for_company(self):
         new_company = CompanyFactory(name='Another Company', pk=1000)
-        job = job_factory(new_company, self.user)
+        job = JobFactory(owner=new_company, created_by=self.user)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
@@ -177,12 +176,8 @@ class ViewTests(MyJobsBase):
         # Make sure that the call to job_delete didn't delete the job
         self.assertEqual(Job.objects.all().count(), 1)
 
-    @patch('urllib2.urlopen')
-    def test_job_access_allowed(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
-        job = job_factory(self.company, self.user)
+    def test_job_access_allowed(self):
+        job = JobFactory(owner=self.company, created_by=self.user)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_update', kwargs=kwargs),
@@ -192,23 +187,15 @@ class ViewTests(MyJobsBase):
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
         self.assertRedirects(response, 'http://testserver/postajob/jobs/',
                              status_code=302)
-
-    @patch('urllib2.urlopen')
-    def test_job_add(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
+    
+    def test_job_add(self):
         response = self.client.post(reverse('job_add'), data=self.job_form_data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Job.objects.all().count(), 1)
 
-    @patch('urllib2.urlopen')
-    def test_job_update(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
-        job = job_factory(self.company, self.user)
+    def test_job_update(self):
+        job = JobFactory(owner=self.company, created_by=self.user)
         kwargs = {'pk': job.pk}
 
         self.assertNotEqual(job.title, self.job_form_data['title'])
@@ -220,23 +207,17 @@ class ViewTests(MyJobsBase):
         job = Job.objects.get()
         self.assertEqual(job.title, self.job_form_data['title'])
 
-    @patch('urllib2.urlopen')
-    def test_job_delete(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
-        job = job_factory(self.company, self.user)
+    def test_job_delete(self):
+        job = JobFactory(owner=self.company, created_by=self.user)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Job.objects.all().count(), 0)
 
-    @patch('urllib2.urlopen')
-    def test_purchasedjob_add(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
-
-        product = purchasedproduct_factory(self.product, self.company)
+    def test_purchasedjob_add(self):
+        product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
         kwargs = {'product': product.pk}
 
         response = self.client.post(reverse('purchasedjob_add', kwargs=kwargs),
@@ -245,15 +226,13 @@ class ViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(PurchasedJob.objects.all().count(), 1)
         self.assertEqual(Request.objects.all().count(), 1)
-
-    @patch('urllib2.urlopen')
-    def test_purchasedjob_update(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
-
-        product = purchasedproduct_factory(self.product, self.company)
-        job = purchasedjob_factory(self.company, self.user, product)
+    
+    def test_purchasedjob_update(self):
+        product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
+        job = PurchasedJobFactory(
+            owner=self.company, created_by=self.user, 
+            purchased_product=product)
         kwargs = {'pk': job.pk}
 
         self.assertNotEqual(job.title, self.job_form_data['title'])
@@ -267,12 +246,13 @@ class ViewTests(MyJobsBase):
         job = Job.objects.get()
         self.assertEqual(job.title, self.job_form_data['title'])
 
-    @patch('urllib2.urlopen')
-    def test_purchasedjob_delete(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
-
-        product = purchasedproduct_factory(self.product, self.company)
-        job = purchasedjob_factory(self.company, self.user, product)
+    def test_purchasedjob_delete(self):
+        product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
+        job = PurchasedJobFactory(
+            owner=self.company,
+            created_by=self.user,
+            purchased_product=product)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('purchasedjob_delete',
@@ -280,13 +260,9 @@ class ViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(PurchasedJob.objects.all().count(), 0)
 
-    @patch('urllib2.urlopen')
-    def test_purchasedjob_add_too_many(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
-
-        product = purchasedproduct_factory(self.product, self.company)
+    def test_purchasedjob_add_too_many(self):
+        product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
         product.jobs_remaining = 1
         product.save()
         kwargs = {'product': product.pk}
@@ -301,11 +277,7 @@ class ViewTests(MyJobsBase):
                                     data=self.purchasedjob_form_data)
         self.assertEqual(response.status_code, 404)
 
-    @patch('urllib2.urlopen')
-    def test_job_add_network(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
+    def test_job_add_network(self):
         response = self.client.post(reverse('job_add'), data=self.job_form_data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
@@ -313,11 +285,7 @@ class ViewTests(MyJobsBase):
         self.assertItemsEqual(job.site_packages.all(),
                               [job.owner.site_package])
 
-    @patch('urllib2.urlopen')
-    def test_job_add_site(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
+    def test_job_add_site(self):
         package = SitePackage.objects.create(name='')
         package.make_unique_for_site(self.site)
         self.job_form_data['post_to'] = 'site'
@@ -335,12 +303,7 @@ class ViewTests(MyJobsBase):
         self.assertIn(package.pk,
                       job.site_packages.all().values_list('pk', flat=True))
 
-    @patch('urllib2.urlopen')
-    def test_job_invalid_apply(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
-
+    def test_job_invalid_apply(self):
         # All three
         test_data = dict(self.job_form_data)
         test_data['apply_email'] = 'email@email.email'
@@ -452,7 +415,7 @@ class ViewTests(MyJobsBase):
         self.assertEqual(ProductGrouping.objects.all().count(), 1)
 
     def test_productgrouping_update(self):
-        group = productgrouping_factory(self.company)
+        group = ProductGroupingFactory(owner=self.company)
         self.productgrouping_form_data['name'] = 'New Title'
         kwargs = {'pk': group.pk}
 
@@ -468,7 +431,7 @@ class ViewTests(MyJobsBase):
         self.assertEqual(group.name, self.productgrouping_form_data['name'])
 
     def test_productgrouping_delete(self):
-        group = productgrouping_factory(self.company)
+        group = ProductGroupingFactory(owner=self.company)
         self.product_form_data['name'] = 'New Title'
         kwargs = {'pk': group.pk}
 
@@ -515,7 +478,8 @@ class ViewTests(MyJobsBase):
         self.assertEqual(PurchasedProduct.objects.all().count(), 0)
 
     def test_purchasedproduct_update(self):
-        purchased_product = purchasedproduct_factory(self.product, self.company)
+        purchased_product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
         kwargs = {'pk': purchased_product.pk}
 
         response = self.client.post(reverse('purchasedproduct_update',
@@ -523,7 +487,9 @@ class ViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 404)
 
     def test_purchasedproduct_delete(self):
-        purchased_product = purchasedproduct_factory(self.product, self.company)
+        purchased_product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
+    
         kwargs = {'pk': purchased_product.pk}
 
         response = self.client.post(reverse('purchasedproduct_delete',
@@ -566,12 +532,16 @@ class ViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 404)
 
     def test_offlinepurchase_redeem(self):
-        offline_purchase = offlinepurchase_factory(self.company,
-                                                   self.company_user)
-        offlineproduct_factory(self.product, offline_purchase,
-                               product_quantity=3)
+        from postajob.models import OfflineProduct
+        offline_purchase = OfflinePurchaseFactory(
+            owner=self.company, created_by=self.company_user)
+        OfflineProductFactory(
+            product=self.product, offline_purchase=offline_purchase,
+            product_quantity=3)
+
 
         data = {'redemption_id': offline_purchase.redemption_uid}
+        print data['redemption_id']
         current_product_count = PurchasedProduct.objects.all().count()
         response = self.client.post(reverse('offlinepurchase_redeem'),
                                     data=data, follow=True)
@@ -594,12 +564,13 @@ class ViewTests(MyJobsBase):
                          PurchasedProduct.objects.all().count())
 
     def test_offlinepurchase_redeem_already_redeemed(self):
-        offline_purchase = offlinepurchase_factory(
-            self.company, self.company_user, redeemed_on=date.today(),
-            redeemed_by=self.company_user
-        )
-        offlineproduct_factory(self.product, offline_purchase,
-                               product_quantity=7)
+        offline_purchase = OfflinePurchaseFactory(
+            owner=self.company, created_by=self.company_user,
+            redeemed_on=date.today(), redeemed_by=self.company_user)
+        OfflineProductFactory(
+            product=self.product,
+            offline_purchase=offline_purchase,
+            product_quantity=7)
 
         data = {'redemption_id': offline_purchase.redemption_uid}
         current_product_count = PurchasedProduct.objects.all().count()
@@ -630,8 +601,8 @@ class ViewTests(MyJobsBase):
         self.assertIsNotNone(offline_purchase.redeemed_on)
 
     def test_offlinepurchase_update(self):
-        offline_purchase = offlinepurchase_factory(self.company,
-                                                   self.company_user)
+        offline_purchase = OfflinePurchaseFactory(
+            owner=self.company, created_by=self.company_user)
         kwargs = {'pk': offline_purchase.pk}
 
         response = self.client.post(reverse('offlinepurchase_update',
@@ -639,8 +610,8 @@ class ViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 404)
 
     def test_offlinepurchase_delete(self):
-        offline_purchase = offlinepurchase_factory(self.company,
-                                                   self.company_user)
+        offline_purchase = OfflinePurchaseFactory(
+            owner=self.company, created_by=self.company_user)
         kwargs = {'pk': offline_purchase.pk}
 
         response = self.client.post(reverse('offlinepurchase_delete',
@@ -674,7 +645,7 @@ class ViewTests(MyJobsBase):
         self.assertTrue('There are no products configured for purchase'
                         in response.content)
 
-        productgrouping = productgrouping_factory(company=self.company)
+        productgrouping = ProductGroupingFactory(owner=self.company)
         ProductOrder(product=self.product, group=productgrouping).save()
 
         response = self.client.get(reverse('product_listing') +
@@ -686,13 +657,8 @@ class ViewTests(MyJobsBase):
             # include elements from the relevant ProductGrouping and Product
             # instances
             self.assertTrue(text in response.content)
-
-    @patch('urllib2.urlopen')
-    def test_job_add_and_remove_locations(self, urlopen_mock):
-        mock_obj = Mock()
-        mock_obj.read.side_effect = self.side_effect
-        urlopen_mock.return_value = mock_obj
-
+    
+    def test_job_add_and_remove_locations(self):
         location = {
             'form-0-city': 'Indianapolis',
             'form-0-state': 'Indiana',
@@ -719,16 +685,14 @@ class ViewTests(MyJobsBase):
         self.client.post(reverse('job_update', args=[job.pk]),
                          data=self.job_form_data, follow=True)
 
-    @patch('urllib2.urlopen')
-    def test_purchasedjob_form(self, urlopen_mock):
-        urlopen_mock.return_value = StringIO('')
-        purchasedproduct = purchasedproduct_factory(self.product,
-                                                    self.company)
+    def test_purchasedjob_form(self):
+        purchased_product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
 
         site = SeoSiteFactory(domain='indiana.jobs', id=3)
         site.business_units.add(self.bu)
         site.sitepackage_set.add(self.sitepackage)
-        product = {'product': purchasedproduct.pk}
+        product = {'product': purchased_product.pk}
         response = self.client.get(reverse('purchasedjob_add',
                                            kwargs=product))
         soup = BeautifulSoup(response.content)

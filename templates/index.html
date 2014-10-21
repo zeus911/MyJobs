@@ -45,14 +45,6 @@
                         </p>
 
                         {% endif %}
-                        {% if not user.is_active %}
-
-                        <div class="alert-message info">
-                            <p>{% trans "Your account doesn't have full access to My.jobs features! Please activate it using the activation link sent to your email. "%} <a href="{% url 'resend_activation' %}">{% trans "Resend my activation email." %}</a></p>
-                        </div>
-
-                        {% endif %}
-
                         <a class="btn primary" href="{% url 'auth_logout' %}">Log Out</a>
                     </div>
                 
@@ -71,10 +63,9 @@
             </div>
         </div>
     </div>
-    {% include "includes/account-page-2.html" %}
 {% endblock %}
 
 {% block extra-js %}
 <script> var num_modules = {{ num_modules }}; </script>
-<script type="text/javascript" src="{{STATIC_URL}}account-creation.154-10.js{{ gz }}"></script>
+<script type="text/javascript" src="{{STATIC_URL}}account-creation.156-25.js{{ gz }}"></script>
 {% endblock %}

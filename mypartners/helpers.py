@@ -20,9 +20,9 @@ import pytz
 import requests
 import states
 from universal.helpers import (get_domain, get_company, get_company_or_404,
-                               get_int_or_none, OrderedSet)
+                               get_int_or_none)
 from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
-                               CHANGE, Partner, PartnerLibrary, Tag)
+                               CHANGE, Location, Partner, PartnerLibrary, Tag)
 from registration.models import ActivationProfile
 
 
@@ -184,47 +184,37 @@ def get_records_from_request(request):
     _, partner, _ = prm_worthy(request)
 
     # extract reelvant values from the request object
-    contact, contact_type, admin, date_range, range_start, range_end = [
+    contact, contact_type, admin, range_start, range_end = [
         value if value not in ["all", "undefined", ""] else None for value in [
             request.REQUEST.get(field) for field in [
-                "contact", "record_type", "admin", "date",
+                "contact", "contact_type", "admin",
                 "date_start", "date_end"]]]
 
-    records = partner.get_contact_records(
-        contact_name=contact, record_type=contact_type, created_by=admin)
+    records = partner.get_contact_records(contact_name=contact,
+        record_type=contact_type, created_by=admin)
 
-    if not date_range and all([range_start, range_end]):
-        range_start = datetime.strptime(range_start, "%m/%d/%Y")
-        range_end = datetime.strptime(range_end, "%m/%d/%Y")
-        # Make range from 12:01 AM on start date to 11:59 PM on end date.
-        range_start = datetime.combine(range_start, time.min)
-        range_end = datetime.combine(range_end, time.max)
-        if range_start > range_end:
-            range_start, range_end = range_end, range_start
-        # Assume that the date range is implying the user's time zone.
-        # Transfer from the user's time zone to utc.
-        user_tz = pytz.timezone(get_current_timezone_name())
-        range_start = user_tz.localize(range_start)
-        range_end = user_tz.localize(range_end)
-        range_start = range_start.astimezone(pytz.utc)
-        range_end = range_end.astimezone(pytz.utc)
-
-    date_range = int(date_range or 30)
-    if date_range == 0:
+    if not range_start and not range_end:
         date_str = "View All"
         range_start = records.aggregate(Min('date_time')).get(
             'date_time__min', now())
         range_end = records.aggregate(Max('date_time')).get(
             'date_time__max', now())
     else:
-        date_range = int(date_range or 30)
-        range_start = range_start or now() - timedelta(date_range)
-        range_end = range_end or now()
+        if range_start:
+            range_start = datetime.strptime(range_start, '%m/%d/%Y').date()
+        else:
+            range_start = records.aggregate(Min('date_time')).get(
+                'date_time__min', now()).date()
 
-        date_str = (range_end - range_start).days
-        date_str = "%i Day"  % date_str + ("" if date_str == 1 else "s")
+        if range_end:
+            range_end = datetime.strptime(range_end, '%m/%d/%Y').date()
+        else:
+            range_end = now().date()
 
-        records = records.filter(date_time__range=[range_start, range_end])
+        days = (range_end - range_start).days
+        date_str = '%i Day%s' % (days, '' if days == 1 else 's')
+
+    records = records.filter(date_time__range=[range_start, range_end])
 
     return (range_start, range_end), date_str, records
 
@@ -417,9 +407,14 @@ def filter_partners(request, partner_library=False):
     tags = [tag.strip() for tag in request.REQUEST.get('tag', '').split(',') if tag]
     keywords = [keyword.strip() for keyword in request.REQUEST.get(
         'keywords', '').split(',') if keyword]
+    
 
     if partner_library:
-        special_interest = request.REQUEST.getlist('special_interest')[:]
+        special_interest = [
+            si if si != "disability" else "disabled" 
+            for si in request.REQUEST.getlist('special_interest')]
+
+
         library_ids = Partner.objects.exclude(
             library__isnull=True).values_list('library', flat=True)
         # hide partners that the user has already added 
@@ -443,12 +438,27 @@ def filter_partners(request, partner_library=False):
 
         query = Q(interests | unspecified)
     else:
+        start_date = request.REQUEST.get('start_date')
+        end_date = request.REQUEST.get('end_date')
+
         partners = Partner.objects.select_related('contact')
-        query = Q(owner=get_company_or_404(request).id)
-        contact_city = 'contact__city'
-        contact_state = 'contact__state'
-        sort_by.replace('city', 'contact__city')
+        contact_city = 'contact__locations__city'
+        contact_state = 'contact__locations__state'
+        sort_by.replace('city', 'contact__locations__city')
         order_by = []
+
+        query = Q(owner=get_company_or_404(request).id)
+
+        # If both start and end date are passed, we should filter, creating
+        # reasonable bounds for either one if they are missing. Otherwise, we
+        # don't filter by either.
+        if any([start_date, end_date]):
+            start_date = datetime.strptime(
+                start_date or '11/30/1899', '%m/%d/%Y')
+            end_date = datetime.strptime(
+                end_date or datetime.now().strftime('%m/%d/%Y'), '%m/%d/%Y')
+            end_date = end_date.replace(hour=23, minute=59, second=59)
+            query &= Q(contactrecord__date_time__range=[start_date, end_date])
 
     for keyword in keywords:
         query &= (Q(name__icontains=keyword) | Q(uri__icontains=keyword) |
@@ -473,22 +483,48 @@ def filter_partners(request, partner_library=False):
     for tag in tags:
         partners = partners.filter(tags__name__icontains=tag)
 
-    # for location, we want to sort by both city and state
     if "location" in sort_by:
-        # the select trick wont work with foreign relationships, so we instead
-        # create a queryset that doesn't contain blank city/state, and one that
-        # does, then stitch the two together.
-        incomplete_partners = partners.filter(
-            Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
-                *['%s%s' % (sort_order, column) for column in
-                  [contact_city, contact_state]])
+        if partner_library:
+            # no foreign keys, so we can do the "right" thing
+            partners = partners.extra(select={
+                'no_city': "city == ''",
+                'no_state': "state == ''"}).order_by(
+                    *['%s%s' % (sort_order, column) 
+                    for column in ['city', 'state', 'no_city', 'no_state']])
+        else:
+            # QuerySet.extra(select={}) doesn't traverse foreign keys, so we
+            # use a few list transformations in order to sort by location and
+            # put empty locations at the end.
 
-        partners = partners.exclude(
-            Q(**{contact_city: ''}) | Q(**{contact_state: ''})).order_by(
-                *['%s%s' % (sort_order, column) for column in
-                  [contact_city, contact_state]])
+            # shortcut to get locations from a partner
+            locations = lambda p: p.get_contact_locations()
+            # string reprensentation of the first location
+            first_location = lambda p: str(
+                locations(p)[0] if locations(p) else [])
 
-        partners = list(OrderedSet(list(partners) + list(incomplete_partners)))
+            # sort descending; [::-1] just reverses a list
+            if sort_order:
+                partners = sorted(
+                    (p for p in partners),
+                    key=lambda p: 
+                        (locations(p) != [], first_location(p)))[::-1]
+            # sort ascending
+            else:
+                partners = sorted(
+                    (p for p in partners),
+                    key=lambda p: (locations(p) == [], first_location(p)))
+
+    elif "activity" in sort_by:
+        # treat ascending as meaning most recent, not earliest activity
+        sort_order = "" if sort_order else "-"
+        if sort_order:
+            partners = partners.annotate(
+                earliest_activity=Min('contactrecord__date_time')).order_by(
+                    '-earliest_activity')
+        else:
+            partners = partners.annotate(
+                latest_activity=Max('contactrecord__date_time')).order_by(
+                    'latest_activity')
     else:
         partners = partners.order_by(*[sort_by] + order_by)
 
@@ -505,8 +541,7 @@ def new_partner_from_library(request):
     library = get_object_or_404(PartnerLibrary, pk=library_id)
 
     tags = []
-    for interest, color in [('disabled', '808A9A'),
-                            ('disabled_veteran', '659274'),
+    for interest, color in [('disabled_veteran', '659274'),
                             ('female', '4BB1CF'),
                             ('minority', 'FAA732'),
                             ('veteran', '5EB94E')]:
@@ -516,6 +551,12 @@ def new_partner_from_library(request):
                 company=company, name=interest.replace('_', ' ').title(),
                 defaults={'hex_color': color})
             tags.append(tag)
+
+    if library.is_disabled:
+        tag, _ = Tag.objects.get_or_create(
+            company=company, name="Disability",
+            defaults={'hex_color': '808A9A'})
+        tags.append(tag)
 
     tags.append(Tag.objects.get_or_create(
         company=company, name='OFCCP Library')[0])
@@ -527,19 +568,23 @@ def new_partner_from_library(request):
         library=library)
     partner.tags = tags
 
-    contact = Contact.objects.create(
-        partner=partner,
-        name=library.contact_name or "Not Available",
-        email=library.email,
-        phone=library.phone,
+    location = Location.objects.create(
         address_line_one=library.street1,
         address_line_two=library.street2,
         city=library.city,
         state=library.st,
         country_code="USA",
-        postal_code=library.zip_code,
+        postal_code=library.zip_code)
+
+    contact = Contact.objects.create(
+        partner=partner,
+        name=library.contact_name or "Not Available",
+        email=library.email,
+        phone=library.phone,
         notes=("This contact was generated from content in the "
                "OFCCP directory."))
+
+    contact.locations.add(location)
     contact.tags = tags
     contact.save()
 

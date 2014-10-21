@@ -1,3 +1,4 @@
+from itertools import chain
 from os import path
 from re import sub
 from urllib import urlencode
@@ -35,6 +36,28 @@ ACTIVITY_TYPES = {
     4: 'sent',
 }
 
+class Location(models.Model):
+    label = models.CharField(max_length=60, verbose_name='Address Label',
+                             blank=True)
+    address_line_one = models.CharField(max_length=255,
+                                        verbose_name='Address Line One',
+                                        blank=True)
+    address_line_two = models.CharField(max_length=255,
+                                        verbose_name='Address Line Two',
+                                        blank=True)
+    city = models.CharField(max_length=255, verbose_name='City')
+    state = models.CharField(max_length=200, verbose_name='State/Region')
+    country_code = models.CharField(max_length=3, verbose_name='Country')
+    postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
+                                   blank=True)
+
+    def __unicode__(self):
+        return (", ".join([self.city, self.state]) if self.city and self.state
+                else self.city or self.state)
+
+    def save(self, **kwargs):
+        super(Location, self).save(**kwargs)
+
 
 class Contact(models.Model):
     """
@@ -48,21 +71,7 @@ class Contact(models.Model):
     name = models.CharField(max_length=255, verbose_name='Full Name')
     email = models.EmailField(max_length=255, verbose_name='Email', blank=True)
     phone = models.CharField(max_length=30, verbose_name='Phone', blank=True)
-    label = models.CharField(max_length=60, verbose_name='Address Label',
-                             blank=True)
-    address_line_one = models.CharField(max_length=255,
-                                        verbose_name='Address Line One',
-                                        blank=True)
-    address_line_two = models.CharField(max_length=255,
-                                        verbose_name='Address Line Two',
-                                        blank=True)
-    city = models.CharField(max_length=255, verbose_name='City', blank=True)
-    state = models.CharField(max_length=5, verbose_name='State/Region',
-                             blank=True)
-    country_code = models.CharField(max_length=3, verbose_name='Country',
-                                    blank=True)
-    postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
-                                   blank=True)
+    locations = models.ManyToManyField('Location', related_name='contacts')
     tags = models.ManyToManyField('Tag', null=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
 
@@ -105,9 +114,6 @@ class Contact(models.Model):
         query_string = urlencode(params)
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
 
-    def get_location(self):
-        return ", ".join([self.city, self.state]).strip(", ")
-
 
 @receiver(pre_delete, sender=Contact, dispatch_uid='pre_delete_contact_signal')
 def delete_contact(sender, instance, using, **kwargs):
@@ -129,6 +135,19 @@ def delete_contact(sender, instance, using, **kwargs):
                     'has been disabled.').format(name=instance.name)
             pss.notes += note
             pss.save()
+
+
+@receiver(pre_delete, sender=Contact,
+          dispatch_uid='post_delete_contact_signal')
+def delete_contact_locations(sender, instance, **kwargs):
+    """
+    Since locations will more than likely be specific to a contact, we should
+    be able to delete all of a contact's locations when that contact is
+    deleted.
+    """
+    for location in instance.locations.all():
+        if not location.contacts.all():
+            location.delete()
 
 
 class Partner(models.Model):
@@ -167,8 +186,8 @@ class Partner(models.Model):
 
     # gets_all_contact_locations_for_partner (City, State)
     def get_contact_locations(self):
-        return [contact.get_location() for contact in self.contact_set.all()
-                if contact.get_location()]
+        return list(chain(
+            *[contact.locations.all() for contact in self.contact_set.all()]))
 
     # get_contact_records_for_partner
     def get_contact_records(self, contact_name=None, record_type=None,
@@ -221,6 +240,7 @@ class PartnerLibrary(models.Model):
     fax = models.CharField(max_length=30, blank=True)
     email = models.CharField(max_length=255, blank=True)
 
+    # Location info
     street1 = models.CharField(max_length=255, blank=True)
     street2 = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=255, blank=True)
@@ -237,7 +257,7 @@ class PartnerLibrary(models.Model):
         'disabled_veteran', default=False)
 
     def __unicode__(self):
-        return self.contact_name
+        return self.name
 
 
 class ContactRecord(models.Model):

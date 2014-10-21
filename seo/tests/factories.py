@@ -8,10 +8,10 @@ from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
 
 from seo.models import (ATSSourceCode, BillboardImage,
-                        BusinessUnit, Company, Configuration, CustomFacet,
-                        GoogleAnalytics, GoogleAnalyticsCampaign, SeoSite,
-                        SeoSiteFacet, SeoSiteRedirect, SpecialCommitment,
-                        User, ViewSource)
+                        BusinessUnit, Company, CompanyUser, Configuration,
+                        CustomFacet, GoogleAnalytics, GoogleAnalyticsCampaign,
+                        SeoSite, SeoSiteFacet, SeoSiteRedirect,
+                        SpecialCommitment, User, ViewSource)
 
 
 class GroupFactory(factory.django.DjangoModelFactory):
@@ -144,7 +144,6 @@ class ConfigurationFactory(factory.django.DjangoModelFactory):
     browse_title_order = 1
     browse_title_show = False
     browse_title_text = ""
-    css_body = ""
     defaultBlurb = ""
     defaultBlurbTitle = "Test Blurb"
     directemployers_link = "http://directemployers.org"
@@ -160,20 +159,19 @@ class ConfigurationFactory(factory.django.DjangoModelFactory):
     num_job_items_to_show = 20
     num_subnav_items_to_show = 5
     primaryColor = "990000"
-    secondaryColor = ""
     status = 1
     title = "Default"
     title_tag = ""
-    useCssBody = False
     wide_footer = ""
     wide_header = ""
     percent_featured = 0.5
 
 
 class CompanyFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Company
+    class Meta:
+        model = 'seo.Company'
 
-    name = "Acme Incorporated"
+    name = factory.Sequence(lambda n: "Acme Incorporated %d" % n)
     member = True
     company_slug = factory.LazyAttribute(lambda x: slugify(x.name))
 
@@ -196,10 +194,18 @@ class BillboardImageFactory(factory.django.DjangoModelFactory):
 
 
 class UserFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = User
+    class Meta:
+        model = User
 
-    email = 'test@test.zztestzz'
+    email = factory.Sequence(lambda n: 'test_%d@test.zztestzz' % n)
     is_active = True
     gravatar = 'alice@example.com'
     password = 'secret'
-    user_guid = factory.LazyAttribute(lambda n: '{0}'.format(uuid.uuid4()))
+    user_guid = uuid.uuid4()
+
+
+class CompanyUserFactory(factory.django.DjangoModelFactory):
+    FACTORY_FOR = CompanyUser
+
+    user = factory.SubFactory(UserFactory)
+    company = factory.SubFactory(CompanyFactory)

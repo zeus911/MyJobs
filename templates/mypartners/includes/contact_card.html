@@ -1,0 +1,20 @@
+<div class="product-card">
+    <div class="big-title">
+        {{ contact.name }}
+    </div>
+    {% if contact.get_location %}
+    <div class="sub-title">
+        {{contact.get_location}}
+    </div>
+    {% endif %}
+    <div class="partner-tags">
+        {% for tag in contact.tags.all %}
+        <span class="tag-name small" style="background-color: #{{tag.hex_color}}">{{ tag.name }}</span>
+        {% endfor %}
+    </div>
+    <div class="product-details">
+        {% if contact.email %} {{contact.email}} {% endif %}
+        {% if contact.phone %} {% if contact.email %} &#8226; {% endif %} &#9742;{{contact.phone}} {% endif %}
+    </div>
+    <a id="contact-{{contact.id}}" class="btn" href="{% url 'edit_contact' %}?partner={{ partner.id }}&id={{ contact.id }}&ct={{ contact_ct }}">Edit</a>
+</div>

@@ -25,7 +25,7 @@ from mypartners.tests.factories import (PartnerFactory, ContactFactory,
                                         ContactLogEntryFactory,
                                         ContactRecordFactory)
 from mysearches.tests.factories import PartnerSavedSearchFactory
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from mypartners import views
 from mypartners.models import (Contact, ContactRecord, ContactLogEntry, 
                                Partner, PartnerLibrary, ADDITION)
@@ -130,8 +130,7 @@ class MyPartnerViewsTests(MyPartnersTestCase):
                                     '&partner=' + str(self.partner.id))
         self.assertEqual(response.status_code, 200)
         soup = BeautifulSoup(response.content)
-
-        self.assertTrue(soup.select('table'))
+        self.assertTrue(soup.select('div.card-wrapper'))
 
         x = 0
         while x < 9:
@@ -144,7 +143,7 @@ class MyPartnerViewsTests(MyPartnersTestCase):
         self.assertEqual(response.status_code, 200)
         soup = BeautifulSoup(response.content)
 
-        self.assertEqual(len(soup.select('tr')), 10)
+        self.assertEqual(len(soup.select('div.product-card')), 10)
 
 
         
@@ -180,7 +179,7 @@ class EditItemTests(MyPartnersTestCase):
             with self.assertRaises(Http404) as a:
                 views.edit_item(request)
 
-                if cm.exception != Http404:
+                if a.exception != Http404:
                     print fail_msg % partner
 
     def test_edit_contact_with_bad_item(self):
@@ -282,57 +281,6 @@ class PartnerOverviewTests(MyPartnersTestCase):
         self.assertIn(self.primary_contact.name, container.get_text())
         self.assertIn(self.primary_contact.email, container.get_text())
 
-    def test_no_recent_activity(self):
-
-        url = self.get_url(company=self.company.id,
-                           partner=self.partner.id)
-        response = self.client.get(url)
-
-        # Assert we return a 200 response.
-        self.assertEqual(response.status_code, 200)
-
-        # Assert details about the Organization Infobox
-        soup = BeautifulSoup(response.content)
-        container = soup.find(id='recent-activity')
-        self.assertEqual(len(container('tr')), 0)
-
-    def test_recent_activity(self):
-        # Add recent activity
-        user = UserFactory(email="temp@user.com")
-        for i in range(1, 4):
-            ContactLogEntryFactory(partner=self.partner, action_flag=i,
-                                   user=user)
-            sleep(1)
-
-        url = self.get_url(company=self.company.id,
-                           partner=self.partner.id)
-        response = self.client.get(url)
-
-        # Assert we return a 200 response.
-        self.assertEqual(response.status_code, 200)
-
-        # Assert details about the Organization Infobox
-        soup = BeautifulSoup(response.content)
-        container = soup.find(id='recent-activity')
-        self.assertEqual(len(container('tr')), 3)
-
-        # Assert the correct messages were displayed
-        delete_msg = "deleted a contact for Example Contact Log"
-        self.assertIn(delete_msg, container('tr')[0].get_text())
-        update_msg = "updated a contact for Example Contact Log"
-        self.assertIn(update_msg, container('tr')[1].get_text())
-        add_msg = "added a contact for Example Contact Log"
-        self.assertIn(add_msg, container('tr')[2].get_text())
-
-        # Test that only a maximum of 10 records are displayed.
-        for _ in range(12):
-            ContactLogEntryFactory(partner=self.partner,
-                                   user=user)
-        response = self.client.get(url)
-        soup = BeautifulSoup(response.content)
-        container = soup.find(id='recent-activity')
-        self.assertEqual(len(container('tr')), 10)
-
     def test_no_recent_communication_records(self):
         url = self.get_url(company=self.company.id,
                            partner=self.partner.id)
@@ -340,11 +288,13 @@ class PartnerOverviewTests(MyPartnersTestCase):
 
         # Assert details about the Organization Infobox
         soup = BeautifulSoup(response.content)
-        container = soup.find(id='recent-communications-records')
+        container = soup.find(id='recent-communication-records')
         # Include 1 header row
-        self.assertEqual(len(container('tr')), 2)
-        no_records_msg = "No Recent Communication Records"
-        self.assertIn(no_records_msg, container('tr')[1].get_text())
+        self.assertEqual(len(container('div', class_="not-clickable")), 1)
+        no_records_msg = "No recent communication records."
+        self.assertIn(no_records_msg,
+                      container('div', class_="not-clickable")[0]
+                      .get_text().strip())
 
     def test_recent_communication_records(self):
         for _ in range(2):
@@ -359,14 +309,18 @@ class PartnerOverviewTests(MyPartnersTestCase):
 
         # Assert details about the Organization Infobox
         soup = BeautifulSoup(response.content)
-        container = soup.find(id='recent-communications-records')
+        container = soup.find(id='recent-communication-records')
         # Include 1 header row
-        self.assertEqual(len(container('tr')), 3)
+        self.assertEqual(len(container('div', class_="product-card")), 1)
 
-        contact_msg = "Email\nexample-contact\nTest Subject\nSome notes go here.\n"
-        for row in container('tr')[1:]:
-            self.assertIn(contact_msg, row.get_text())
-            self.assertIn('Test Subject', row.get_text())
+        for row in container('div', class_="product-card"):
+            title = "Test Subject  - example-contact"
+            today = date.today()
+            sub_title = today.strftime('%b %e, %Y - Email')
+            self.assertIn(title,
+                          row('div', class_="big-title")[0].get_text().strip())
+            self.assertIn(sub_title,
+                          row('div', class_="sub-title")[0].get_text().strip())
 
         # Test that only a maximum of 3 records are displayed.
         for _ in range(4):
@@ -374,8 +328,8 @@ class PartnerOverviewTests(MyPartnersTestCase):
 
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
-        container = soup.find(id='recent-communications-records')
-        self.assertEqual(len(container('tr')), 4)
+        container = soup.find(id='recent-communication-records')
+        self.assertEqual(len(container('div', class_="product-card")), 1)
 
     def test_no_recent_saved_searches(self):
         url = self.get_url(company=self.company.id,
@@ -386,44 +340,44 @@ class PartnerOverviewTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
         container = soup.find(id='recent-saved-searches')
         # Include 1 header row
-        self.assertEqual(len(container('tr')), 2)
-        no_records_msg = "No Recent Saved Searches"
-        self.assertIn(no_records_msg, container('tr')[1].get_text())
+        self.assertEqual(len(container('div', class_="not-clickable")), 1)
+        no_records_msg = "No recent saved searches."
+        self.assertIn(no_records_msg,
+                      container('div', class_="not-clickable")[0]
+                      .get_text().strip())
 
     def test_recent_saved_searches(self):
         user = UserFactory(email="alice@email.com")
         self.contact.user = user
         self.contact.save()
 
-        for _ in range(2):
-            PartnerSavedSearchFactory(user=self.contact.user,
-                                      provider=self.company,
-                                      created_by=self.staff_user,
-                                      partner=self.partner)
+        PartnerSavedSearchFactory.create_batch(
+            2, user=self.contact.user, provider=self.company,
+            created_by=self.staff_user, partner=self.partner)
 
-        url = self.get_url(company=self.company.id,
-                           partner=self.partner.id)
+        url = self.get_url(company=self.company.id, partner=self.partner.id)
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
         container = soup.find(id='recent-saved-searches')
 
         # Include 1 header row
-        self.assertEqual(len(container('tr')), 3)
-        for row in container('tr')[1:]:
-            self.assertIn("All Jobs", row('td')[0].get_text())
-            self.assertIn("alice@example.com", row('td')[1].get_text())
+        self.assertEqual(len(container('div', class_="product-card")), 1)
+        for row in container('div', class_="product-card"):
+            title_and_status = "All Jobs Active"
+            self.assertIn(title_and_status,
+                          row('div', class_="big-title")[0].get_text().strip())
+            self.assertIn("Sent to: alice@example.com",
+                          row('div', class_="sub-title")[0].get_text().strip())
 
-        # Test that only a maximum of 3 records are displayed.
-        for _ in range(4):
-            PartnerSavedSearchFactory(user=self.contact.user,
-                                      provider=self.company,
-                                      created_by=self.staff_user,
-                                      partner=self.partner)
+        # Test that only the first record is displayed.
+        PartnerSavedSearchFactory.create_batch(
+            4, user=self.contact.user, provider=self.company,
+            created_by=self.staff_user, partner=self.partner)
 
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
         container = soup.find(id='recent-saved-searches')
-        self.assertEqual(len(container('tr')), 4)
+        self.assertEqual(len(container('div', class_="product-card")), 1)
 
 
 class RecordsOverviewTests(MyPartnersTestCase):
@@ -439,28 +393,17 @@ class RecordsOverviewTests(MyPartnersTestCase):
                            partner=self.partner.id)
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
-        soup = soup.find(id='view-records')
-        self.assertIn('No records available.', soup.get_text())
+        soup = soup.find(class_='span8')
+        self.assertIn('No records available.', soup.get_text().strip())
 
     def test_records_counts(self):
-        for _ in range(5):
-            ContactRecordFactory(partner=self.partner)
+        ContactRecordFactory.create_batch(5, partner=self.partner)
 
-        url = self.get_url(company=self.company.id,
-                           partner=self.partner.id)
+        url = self.get_url(company=self.company.id, partner=self.partner.id)
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
-        records = soup.find(id='view-records')
-        self.assertEqual(len(records('tr')), 6)
-
-        # Ensure old records don't show
-        ContactRecordFactory(partner=self.partner,
-                             date_time=datetime.now() - timedelta(days=31))
-        response = self.client.get(url)
-        soup = BeautifulSoup(response.content)
-        records = soup.find(id='view-records')
-        self.assertEqual(len(records('tr')), 6)
-
+        records = soup.find(class_='card-wrapper')
+        self.assertEqual(len(records('div', class_='product-card')), 5)
 
 class RecordsDetailsTests(MyPartnersTestCase):
     """Tests related to the records detail page, /prm/view/records/view/"""
@@ -706,27 +649,24 @@ class SearchesOverviewTests(MyPartnersTestCase):
 
     def test_no_searches(self):
         url = self.get_url(company=self.company.id,
-                     partner=self.partner.id)
-        response = self.client.get(url)
-        soup = BeautifulSoup(response.content)
-        self.assertIn("Currently %s has no Saved Searches" % self.partner.name,
-                      soup.get_text())
-
-    def test_render_search_list(self):
-        for _ in range(10):
-            PartnerSavedSearchFactory(user=self.contact.user,
-                                      provider=self.company,
-                                      created_by=self.staff_user,
-                                      partner=self.partner)
-
-        # Get the page
-        url = self.get_url(company=self.company.id,
                            partner=self.partner.id)
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
-        searches = soup.find(id='searches')
+        searches = soup.find(class_='span8')
+        self.assertIn("No searches available.", searches.get_text().strip())
 
-        self.assertEqual(len(searches('tr')), 11)
+    def test_render_search_list(self):
+        PartnerSavedSearchFactory.create_batch(
+            10, user=self.contact.user, provider=self.company,
+            created_by=self.staff_user, partner=self.partner)
+
+        # Get the page
+        url = self.get_url(company=self.company.id, partner=self.partner.id)
+        response = self.client.get(url)
+        soup = BeautifulSoup(response.content)
+        searches = soup.find(class_='span8')
+
+        self.assertEqual(len(searches('div', class_='product-card')), 10)
 
 
 class SearchFeedTests(MyPartnersTestCase):
@@ -735,10 +675,9 @@ class SearchFeedTests(MyPartnersTestCase):
         super(SearchFeedTests, self).setUp()
 
         self.default_view = 'partner_view_full_feed'
-        self.search = PartnerSavedSearchFactory(provider=self.company,
-                                                created_by=self.staff_user,
-                                                user=self.contact.user,
-                                                partner=self.partner)
+        self.search = PartnerSavedSearchFactory(
+            provider=self.company, created_by=self.staff_user,
+            user=self.contact.user, partner=self.partner)
 
         # Create a TestClient
         self.client = TestClient()
@@ -753,8 +692,7 @@ class SearchFeedTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
 
         self.assertEqual(response.status_code, 200)
-        details = soup.find(id="saved-search-listing-details")
-
+        details = soup.find(class_="sidebar")
         self.assertIn('Active', details.find('h2').get_text())
         texts = ['http://www.my.jobs/jobs',
                  'Weekly on Monday',
@@ -762,9 +700,9 @@ class SearchFeedTests(MyPartnersTestCase):
                  'Never',
                  'alice@example.com',
                  'All jobs from www.my.jobs']
-        details = details('div', recursive=False)
+        details = details('span', recursive=False)
         for i, text in enumerate(texts):
-            self.assertIn(text, details[i].get_text())
+            self.assertIn(text, details[i].get_text().strip())
 
 
 class SearchEditTests(MyPartnersTestCase):
@@ -1222,10 +1160,13 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
 
         # test that appropriate tags created
         library = PartnerLibrary.objects.get(id=library_id)
-        for tag in ['Veteran', 'Disabled', 'Disabled Veteran',  
+        for tag in ['Veteran', 'Disabled Veteran',  
                     'Female', 'Minority']:
             if getattr(library, 'is_%s' % tag.lower().replace(' ', '_')):
                 self.assertIn(tag, partner.tags.values_list('name', flat=True))
+
+        if library.is_disabled:
+            self.assertIn('Disability', partner.tags.values_list('name', flat=True))
 
         self.assertIn(
             "OFCCP Library", partner.tags.values_list('name', flat=True))

@@ -206,6 +206,19 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
             item['link'] = item.pop('url')
             item['pubdate'] = dateparser.parse(item.pop('date_new'))
             item_dict = item
+            from seo.models import Company
+            try:
+                # The json feed provides company name, while the rss feed does
+                # not; only try retrieving a company if we're pulling the
+                # json feed
+                company = Company.objects.get(name=item_dict['company'])
+            except Company.DoesNotExist:
+                pass
+            else:
+                if company.member:
+                    # All companies have logos specified, but only members
+                    # should have their logos shown
+                    item_dict['company'] = company
         else:
             item_dict = {}
             item_dict['title'] = item.findChild('title').text

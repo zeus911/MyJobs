@@ -10,6 +10,7 @@ from mymessages.models import Message, MessageInfo
 
 class MessageTests(MyJobsBase):
     def setUp(self):
+        super(MessageTests, self).setUp()
         self.user = UserFactory()
         self.message = Message(subject='subject',
                                body='body',
@@ -72,6 +73,7 @@ class MessageTests(MyJobsBase):
 
 class MessageManagerTests(MyJobsBase):
     def setUp(self):
+        super(MessageManagerTests, self).setUp()
         self.user = UserFactory()
         self.user.groups.add(Group.objects.get(pk=1))
 
