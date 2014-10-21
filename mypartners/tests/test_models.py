@@ -7,15 +7,17 @@ from myjobs.tests.setup import MyJobsBase
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
 from mydashboard.tests.factories import CompanyFactory
-from mypartners.tests.factories import (PartnerFactory, ContactFactory, 
-                                        TagFactory, ContactRecordFactory)
-from mypartners.models import Partner, Contact, PRMAttachment
+from mypartners.tests.factories import (ContactFactory, ContactRecordFactory,
+                                        LocationFactory, PartnerFactory,
+                                        TagFactory)
+from mypartners.models import Contact, Location, Partner, PRMAttachment
 from mysearches.models import PartnerSavedSearch
 from mysearches.tests.factories import PartnerSavedSearchFactory
 
 
 class MyPartnerTests(MyJobsBase):
     def setUp(self):
+        super(MyPartnerTests, self).setUp()
         self.company = CompanyFactory()
         self.partner = PartnerFactory(owner=self.company)
         self.contact = ContactFactory(partner=self.partner)
@@ -59,6 +61,25 @@ class MyPartnerTests(MyJobsBase):
 
         contact = Contact.objects.get(name=self.contact.name)
         self.assertIsNone(contact.user)
+
+    def test_location_to_contact_relationship(self):
+        """
+        Tests adding a Location to Contact. 
+        """
+        location = LocationFactory()
+
+        # make sure that we can add a location to a contact
+        self.contact.locations.add(location)
+        self.contact.save()
+        self.assertTrue(len(self.contact.locations.all()) > 0)
+
+        # ensure that we can remove a location
+        self.contact.locations.remove(location)
+        self.assertTrue(len(self.contact.locations.all()) == 0)
+
+        # make sure that removing a location from a contact doesn't delete that
+        # location entirely
+        self.assertIn(location, Location.objects.all())
 
     def test_bad_filename(self):
         """

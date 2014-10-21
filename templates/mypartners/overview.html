@@ -4,20 +4,15 @@
 {% gz as gz %}
 {% block site-title %}
     {% with name_obj=user.full_name %}
-        <title>PRM Overview - {{ company.name }}</title>
-        <meta name="title" content="PRM Overview - {{ company.name }}">
+        <title>Overview - {{ company.name }}</title>
+        <meta name="title" content="Overview - {{ company.name }}">
     {% endwith %}
 {% endblock %}
 {% load i18n %}
 {% load label_tags %}
 
 {% block content %}
-    <h1><a href="{% url 'prm' %}">{{ company.name }}</a> <small>{{ partner.name }}</small></h1>
-    <div class="row">
-        <div class="span12 prm-header">
-            <span>Overview</span>
-        </div>
-    </div>
+    {% include "mypartners/includes/prm_header.html" with page_title="Overview" back_to="Back to Partner Relationship Manager" back_to_url="prm" %}
     <div class="row desktop_hide" id="prm-mobile-row-buttons">
         <div class="span12">
             <a class="btn" href="{% url 'partner_records' %}?partner={{ partner.id }}">Communication Records</a>
@@ -28,100 +23,45 @@
     </div>
     <div class="row">
         <div class="span8">
-            <div id="recent-activity" class="formBox no-padding">
-                <h4>Most Recent Activity <small id="activity-num" class="pull-right"></small></h4>
-                {% if recent_activity %}
-
-                {# display: none, because before load all tr show. JS will show after hiding rest of tr #}
-                <table id="activity-table" class="table table-striped" style="display: none;">
-                    {% for activity in recent_activity %}
-                        {% get_activity_block activity %}
-                    {% endfor %}
-                </table>
-                <div class="formBox-footer">
-                    <button id="next" class="btn pull-right"><span id="prm-arrow-right"></span></button>
-                    <button id="previous" class="btn pull-right"><span id="prm-arrow-left"></span></button>
-                    <div class="clear"></div>
+            <div id="recent-communication-records" class="card-wrapper">
+                <div class="wrapper-header">
+                    <h4>Most Recent Communication Record</h4>
                 </div>
-
+                {% if recent_communication %}
+                    {% for record in recent_communication %}
+                        {% include "mypartners/includes/record_card.html" %}
+                    {% endfor %}
                 {% else %}
-
-                <div class="formBox-content">
-                    No Recent Activity
-                </div>
-
-                <div class="formBox-footer">
-                    <button class="btn pull-right" disabled><span id="prm-arrow-right"></span></button>
-                    <button class="btn pull-right" disabled><span id="prm-arrow-left"></span></button>
-                    <div class="clear"></div>
-                </div>
-
+                    <div class="product-card not-clickable">
+                        No recent communication records.
+                    </div>
                 {% endif %}
-            </div>
-
-            <div id="recent-communications-records" class="formBox no-padding mobile_hide">
-                <h4>Most Recent Communication Records</h4>
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <td>Date/Time</td>
-                            <td>Type</td>
-                            <td>Contact</td>
-                            <td>Subject</td>
-                            <td>Details</td>
-                        </tr>
-                    </thead>
-                    {% if recent_communication %}
-                        {% get_record_block recent_communication company partner %}
-                    {% else %}
-                    <tr>
-                        <td colspan=5>No Recent Communication Records.</td>
-                    </tr>
-                    {% endif %}
-                </table>
-                <div class="formBox-footer">
-                    <span class="pull-left">
-                        {% if num_other_records > 0 %}{{ num_other_records }} more record{{ num_other_records|pluralize }} from the past 30 days - <a href="{% url 'partner_records' %}?partner={{ partner.id }}&date=30">View these records</a><br/>{% endif %}
-                        {% if num_older_records > 0 %}{{ num_older_records }} record{{ num_older_records|pluralize }} older than 30 days - <a href="{% url 'partner_records' %}?partner={{ partner.id }}&date=0">View all records</a>{% endif %}
-                    </span>
-                    <a class="btn pull-right" href="{% url 'partner_records' %}?company={{ company.id }}&partner={{ partner.id }}">Manage Records</a>
-                    <div class="clear"></div>
+                <div class="wrapper-footer">
+                    <a class="pull-right" href="{% url 'partner_records' %}?partner={{partner.id}}">Manage Records</a>
+                    <div class="clearfix"></div>
                 </div>
             </div>
 
-            <div id="recent-saved-searches" class="formBox no-padding mobile_hide">
-                <h4>Most Recent Saved Searches</h4>
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <td>Label</td>
-                            <td>Contact</td>
-                            <td>Status</td>
-                        </tr>
-                    </thead>
-                    {% if recent_ss %}
-                    {% for ss in recent_ss %}
-                        <tr>
-                            <td>{{ ss.label }}</td>
-                            <td>{{ ss.email }}</td>
-                            <td>{% make_label ss.is_active "pull-right" %}</td>
-                        </tr>
+            <div id="recent-saved-searches" class="card-wrapper">
+                <div class="wrapper-header">
+                    <h4>Most Recent Saved Search</h4>
+                </div>
+                {% if recent_ss %}
+                    {% for search in recent_ss %}
+                        {% include "mypartners/includes/pss_card.html" %}
                     {% endfor %}
-                    {% else %}
-                    <tbody>
-                        <tr>
-                            <td>No Recent Saved Searches</td>
-                            <td></td><td></td>
-                        </tr>
-                    </tbody>
-                    {% endif %}
-                </table>
-                <div class="formBox-footer">
-                    <a class="btn pull-right" href="{% url 'partner_searches' %}?partner={{ partner.id }}">Manage Searches</a>
-                    <div class="clear"></div>
+                {% else %}
+                    <div class="product-card not-clickable">
+                        No recent saved searches.
+                    </div>
+                {% endif %}
+                <div class="wrapper-footer">
+                    <a class="pull-right" href="{% url 'partner_searches' %}?partner={{ partner.id }}">Manage Searches</a>
+                    <div class="clearfix"></div>
                 </div>
             </div>
         </div>
+
         <div class="span4 mobile_hide">
             <div class="info-box">
                 <div id="donut-box">
@@ -141,11 +81,15 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}partner-overview.152-13.js{{ gz }}"></script>
-<script src="{{ STATIC_URL }}partner-reports.154-29.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}partner-reports.157-24.js{{ gz }}"></script>
 
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
+    $(document).ready(function() {
+        $(".product-card:not(.not-clickable)").on("click", function() {
+           window.location = $(this).find("a").attr("href");
+        });
+    });
     google.load("visualization", "1", {packages:["corechart"]});
     var company_id = {{ company.id }};
     var partner_id = {{ partner.id }};

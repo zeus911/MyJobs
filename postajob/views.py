@@ -1,4 +1,5 @@
 from datetime import date
+from fsm.views import FSMView
 import itertools
 import json
 
@@ -678,3 +679,26 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
 
     def delete(self):
         return
+
+
+class SitePackageFilter(FSMView):
+    model = SeoSite
+    fields = ('domain__icontains', )
+
+    def get(self, request):
+        self.request = request
+        return super(SitePackageFilter, self).get(request)
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            # If this is on the admin site or the user is a superuser,
+            # get all sites for the current company.
+            user_sites = SeoSite.objects.all()
+        else:
+            kwargs = {'business_units__company': get_company(self.request)}
+            user_sites = self.request.user.get_sites()
+            # Outside the admin, limit the sites to the current company
+            user_sites = user_sites.filter(**kwargs)
+        print len(user_sites)
+        print self.request.user.is_superuser
+        return user_sites

@@ -13,6 +13,7 @@ from mysearches.tests.factories import SavedSearchFactory
 
 class HelpersTests(MyJobsBase):
     def setUp(self):
+        super(HelpersTests, self).setUp()
         self.staff_user = UserFactory()
         group, _ = Group.objects.get_or_create(name=CompanyUser.GROUP_NAME)
         self.staff_user.groups.add(group)

@@ -30,13 +30,7 @@ JENKINS_TEST_RUNNER = 'silent_testrunner.SilentTestRunner'
 TEST_SOLR_INSTANCE = SOLR
 CELERY_ALWAYS_EAGER = True
 
-
-POSTAJOB_URLS = {
-    'post': '',
-    'delete': ''
-}
 CC_AUTH = TESTING_CC_AUTH
-
 
 ALLOWED_HOSTS = ['*', ]
 

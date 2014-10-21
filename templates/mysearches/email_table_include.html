@@ -38,13 +38,13 @@
                         {% endif %}
                         {{item.title}}
                     </b><br>
-                    {% if item.company %}<i style="font-size:1.2em;">{{item.company}} - {{item.location}}</i><br>{% endif %}
+                    {% if item.company %}<i style="font-size:1.2em;">{% if item.company.name %}{{item.company.name}}{% else %}{{ item.company }}{% endif %} - {{item.location}}</i><br>{% endif %}
                 </a>
             </td>
             <td style="border-top: 1px solid #e5e5e5; width: 1%;">
                 <a href="{{item.link}}" style="text-decoration: none; color: #333;">
-                    <img src="http://png.nlx.org/100x50/logo.gif"
-                         style="{% if item.company %}background-image: url(http://png.nlx.org/100x50/seo/{{item.company|slugify}}.gif); background-repeat: no-repeat;{% endif %} margin: 8px;">
+                    <img src="{% if item.company.logo_url %}{{ item.company.logo_url }}{% else %}http://png.nlx.org/100x50/logo.gif{% endif %}"
+                         style="margin: 8px;">
                 </a>
             </td>
         </tr>
