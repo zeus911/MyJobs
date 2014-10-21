@@ -1174,6 +1174,7 @@ def prm_export(request):
             ]
             # Remove the HTML and reformat.
             values = [bleach.clean(v, [], strip=True) for v in values]
+            # replaces multiple occurences of space by a single sapce.
             values = [' '.join(filter(bool, v.split(' '))) for v in values]
             values = [re.sub('\s+\n\s+', '\n', v) for v in values]
             writer.writerow(values)
