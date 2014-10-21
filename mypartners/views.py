@@ -1168,8 +1168,8 @@ def prm_export(request):
         for record in records:
             values = [getattr(record, field, '') for field in fields]
             values = [
-                contact_record_val_to_str(v) 
-                if not hasattr(v, 'all') else 
+                contact_record_val_to_str(v)
+                if not hasattr(v, 'all') else
                 ', '.join([val.name for val in v.all() if val]) for v in values
             ]
             # Remove the HTML and reformat.
