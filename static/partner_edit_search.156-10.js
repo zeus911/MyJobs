@@ -290,17 +290,12 @@ function show_hide_content(status) {
 
 
 function add_refresh_btn() {
-    var field = $('[id$="url"]'),
-        field_width = 0;
-    field.parent().addClass('input-append');
-    if ($(document).width() > 500) {
-        field_width = field.width() - 28 + 100;
-    } else {
-        field_width = 320;
-    }
-    field.css("width", String(field_width)+"px");
+    var url_field = $('#id_url'),
+        field_width = $('#id_label').width(); 
 
-    field.after('<span class="btn add-on refresh"><i class="icon icon-refresh">');
+    url_field.parent().addClass('input-append');
+    url_field.after('<span class="btn add-on refresh"><i class="icon icon-refresh">');
+    url_field.width(field_width - $('span.refresh').outerWidth());
 }
 
 function show_dates(){
