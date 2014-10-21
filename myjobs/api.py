@@ -33,10 +33,6 @@ class UserResource(ModelResource):
                                 content_types={'json': 'application/json',
                                                'jsonp': 'text/javascript'})
 
-    def build_filters(self, filters=None):
-        filters.pop('source', '')
-        return super(UserResource, self).build_filters(filters)
-
     def create_response(self, request, data, response_class=HttpResponse,
                         **response_kwargs):
         """
@@ -61,19 +57,8 @@ class UserResource(ModelResource):
                       'request': request}
             if kwargs['custom_msg']:
                 kwargs['in_reserve'] = True
-            # TODO: remove send_email arg when invitation emails are in
             user, created = User.objects.create_user(send_email=True,
                                                      **kwargs)
-
-            if kwargs['custom_msg']:
-                company = Company.objects.get(
-                    id=request.GET.get('company', 999999)
-                )
-                invitation_args = {
-                    'invitee_email': email,
-                    'inviting_company': company
-                }
-                Invitation(**invitation_args).save()
 
             data = {
                 'user_created': created,
