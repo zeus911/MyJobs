@@ -1,4 +1,7 @@
+from seo_pysolr import Solr
+
 from django.core.cache import cache
+from django.core.urlresolvers import clear_url_caches
 from django.test import TestCase
 
 
