@@ -38,6 +38,7 @@ def delete_saved_search(request, user=None):
 
 
 @user_is_allowed()
+@user_passes_test(User.objects.is_verified)
 @user_passes_test(User.objects.not_disabled)
 def saved_search_main(request):
     # instantiate the form if the digest object exists
