@@ -211,7 +211,7 @@ class Partner(models.Model):
         """
         Returns unique tags for the partner and all of its contacts.
         """
-        return set(chain(*[c.tags.distinct().all() | self.tags.distinct().all() 
+        return set(chain(*[c.tags.distinct().all() | self.tags.distinct().all()
              for c in self.contact_set.all()]))
 
 
