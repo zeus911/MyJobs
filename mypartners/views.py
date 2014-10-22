@@ -1130,6 +1130,7 @@ def partner_get_referrals(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_export(request):
+    #TODO: investigate using django's builtin serialization for XML
     company, partner, user = prm_worthy(request)
     file_format = request.REQUEST.get('file_format', 'csv')
     fields = retrieve_fields(ContactRecord)
@@ -1141,8 +1142,14 @@ def prm_export(request):
             xml_record = etree.SubElement(root, "record")
             for field in fields:
                 xml = etree.SubElement(xml_record, field)
-                xml.text = contact_record_val_to_str(getattr(record, field, ""))
-        response = HttpResponse(etree.tostring(root, pretty_print=True),
+                value = getattr(record, field, '')
+
+                if hasattr(value, 'all'):
+                    value = ', '.join([val.name for val in value.all() if val])
+
+                xml.text = contact_record_val_to_str(value)
+        response = HttpResponse(etree.tostring(root, pretty_print=True,
+                                               xml_declaration=True),
                                 mimetype='application/force-download')
     elif file_format == 'printer_friendly':
         ctx = {
@@ -1160,10 +1167,15 @@ def prm_export(request):
         writer.writerow(fields)
         for record in records:
             values = [getattr(record, field, '') for field in fields]
-            values = [contact_record_val_to_str(v) for v in values]
+            values = [
+                contact_record_val_to_str(v)
+                if not hasattr(v, 'all') else
+                ', '.join([val.name for val in v.all() if val]) for v in values
+            ]
             # Remove the HTML and reformat.
             values = [bleach.clean(v, [], strip=True) for v in values]
-            values = [re.sub(' +', ' ', v) for v in values]
+            # replaces multiple occurences of space by a single sapce.
+            values = [' '.join(filter(bool, v.split(' '))) for v in values]
             values = [re.sub('\s+\n\s+', '\n', v) for v in values]
             writer.writerow(values)
 
