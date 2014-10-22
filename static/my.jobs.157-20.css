@@ -1986,10 +1986,6 @@ fieldset textarea,
     line-height: 0;
 }
 
-.message-box-content, .message-box-text {
-    padding-top: 20px;
-}
-
 .alert-message ul {
     list-style: none;
     padding: 5px 0 0 0;
@@ -2775,6 +2771,11 @@ td .gravatar-blank,
 
     .mobile-btn {
         float: none;
+    }
+
+    .message-box > .mobile-img {
+        display: block;
+        margin: auto;
     }
 
     fieldset textarea,
@@ -3570,9 +3571,14 @@ td .gravatar-blank,
     margin: 0;
 }
 
-.settings-nav li h4 {
+.settings-nav li h4,
+.message-box {
     margin: 0;
     padding: 20px;
+}
+
+.message-box > img, .message-box > p {
+    display: inline-block;
 }
 
 .settings-nav li:hover {
