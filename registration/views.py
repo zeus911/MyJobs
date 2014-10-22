@@ -148,14 +148,22 @@ def logout(request):
 class DseoLogin(BlockView):
     page_type = 'login'
 
-    def set_page(self):
+    def set_page(self, request):
         """
         Override set_page to remove default option, allowing us to
         prevent login on some sites.
 
         """
+        if request.user.is_authenticated() and request.user.is_staff:
+            try:
+                page = Page.objects.filter(site=settings.SITE, status='staging',
+                                           page_type=self.page_type)[0]
+                setattr(self, 'page', page)
+            except IndexError:
+                pass
+
         try:
-            page = Page.objects.filter(site=settings.SITE,
+            page = Page.objects.filter(site=settings.SITE, status='production',
                                        page_type=self.page_type)[0]
         except IndexError:
             raise Http404

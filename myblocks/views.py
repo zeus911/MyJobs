@@ -16,7 +16,7 @@ class BlockView(View):
 
     def handle_request(self, request):
         if not self.page:
-            self.set_page()
+            self.set_page(request)
         context = {
             'content': self.page.render(request),
             'page': self.page
@@ -25,7 +25,7 @@ class BlockView(View):
                                   context_instance=RequestContext(request))
 
     def post(self, request):
-        self.set_page()
+        self.set_page(request)
         for block in self.page.all_blocks():
             # Checks to see if any blocks need to do any special handling of
             # posts.
@@ -38,14 +38,24 @@ class BlockView(View):
 
         return self.handle_request(request)
 
-    def set_page(self):
+    def set_page(self, request):
         """
         Trys to set the page for this site by:
-            1. Getting a page for the specific site matching page_type.
-            2. Getting a page for the default site matching this page_type.
-            3. Giving up and returning a 404.
+            1. If the user is staff, getting a staging page for the specific
+                site matching the page_type.
+            2. Getting a page for the specific site matching page_type.
+            3. Getting a page for the default site matching this page_type.
+            4. Giving up and returning a 404.
 
         """
+        if request.user.is_authenticated() and request.user.is_staff:
+            try:
+                page = Page.objects.filter(site=settings.SITE, status='staging',
+                                           page_type=self.page_type)[0]
+                setattr(self, 'page', page)
+            except IndexError:
+                pass
+
         try:
             page = Page.objects.filter(site=settings.SITE,
                                        page_type=self.page_type)[0]

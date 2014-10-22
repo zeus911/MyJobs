@@ -18,6 +18,7 @@ class Block(models.Model):
     name = models.CharField(max_length=255)
     offset = models.PositiveIntegerField()
     span = models.PositiveIntegerField()
+    template = models.TextField()
 
     def __unicode__(self):
         return self.name
@@ -54,7 +55,7 @@ class Block(models.Model):
 
         """
 
-        html = render_to_string(self.cast().template(), self.context(request),
+        html = render_to_string(self.cast().template, self.context(request),
                                 context_instance=RequestContext(request))
         return mark_safe(html)
 
@@ -66,11 +67,31 @@ class Block(models.Model):
         super(Block, self).save(*args, **kwargs)
 
 
+class ColumnBlock(Block):
+    blocks = models.ManyToManyField('Block', through='ColumnBlockOrder',
+                                    related_name='included_blocks')
+
+    def context(self, request):
+        row = '<div class="row">%s</div>'
+
+        html = [row % block.cast().render(request) for
+                block in self.blocks.all().order_by('columnblockorder__order')]
+        return {
+            'block': self,
+            'content': mark_safe(''.join(html)),
+            'request': request
+        }
+
+    @staticmethod
+    def base_template():
+        return 'myblocks/blocks/columnblock.html'
+
+
 class ContentBlock(Block):
     content = models.TextField()
 
     @staticmethod
-    def template():
+    def base_template():
         return 'myblocks/blocks/content.html'
 
 
@@ -85,7 +106,7 @@ class ImageBlock(Block):
         }
 
     @staticmethod
-    def template():
+    def base_template():
         return 'myblocks/blocks/image.html'
 
 
@@ -129,7 +150,7 @@ class LoginBlock(Block):
         return 'login-%s' % self.id
 
     @staticmethod
-    def template():
+    def base_template():
         return 'myblocks/blocks/login.html'
 
 
@@ -181,27 +202,20 @@ class RegistrationBlock(Block):
         return 'registration-%s' % self.id
 
     @staticmethod
-    def template():
+    def base_template():
         return 'myblocks/blocks/registration.html'
 
 
 class SavedSearchWidgetBlock(Block):
     @staticmethod
-    def template():
+    def base_template():
         return 'myblocks/blocks/savedsearchwidget.html'
 
 
 class SearchBoxBlock(Block):
-    search_box_templates = (
-        ('myblocks/blocks/searchbox.html', 'Basic Search Box'),
-        ('myblocks/blocks/veteransearchbox.html', 'Veteran Search Box'),
-    )
-
-    search_box_template = models.CharField(max_length=255,
-                                           choices=search_box_templates)
-
-    def template(self):
-        return self.search_box_template
+    @staticmethod
+    def base_template():
+        return 'myblocks/blocks/searchbox.html'
 
 
 class SearchFilterBlock(Block):
@@ -211,8 +225,14 @@ class SearchFilterBlock(Block):
         return data
 
     @staticmethod
-    def template():
+    def base_template():
         return 'myblocks/blocks/searchfilter.html'
+
+
+class VeteranSearchBox(Block):
+    @staticmethod
+    def base_template():
+        return 'myblocks/blocks/veteransearchbox.html'
 
 
 class SearchResultBlock(Block):
@@ -222,34 +242,14 @@ class SearchResultBlock(Block):
         return data
 
     @staticmethod
-    def template():
+    def base_template():
         return 'myblocks/blocks/searchresult.html'
 
 
 class ShareBlock(Block):
     @staticmethod
-    def template():
+    def base_template():
         return 'myblocks/blocks/share.html'
-
-
-class ColumnBlock(Block):
-    blocks = models.ManyToManyField('Block', through='ColumnBlockOrder',
-                                    related_name='included_blocks')
-
-    def context(self, request):
-        row = '<div class="row">%s</div>'
-
-        html = [row % block.cast().render(request) for
-                block in self.blocks.all().order_by('columnblockorder__order')]
-        return {
-            'block': self,
-            'content': mark_safe(''.join(html)),
-            'request': request
-        }
-
-    @staticmethod
-    def template():
-        return 'myblocks/blocks/columnblock.html'
 
 
 class Row(models.Model):

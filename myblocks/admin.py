@@ -3,12 +3,12 @@ from django.contrib import admin
 from myblocks import models
 
 
-class BlockOrderIndline(admin.TabularInline):
+class BlockOrderInline(admin.TabularInline):
     model = models.Row.blocks.through
 
 
 class RowAdmin(admin.ModelAdmin):
-    inlines = (BlockOrderIndline, )
+    inlines = (BlockOrderInline, )
 
 
 class RowOrderInline(admin.TabularInline):
