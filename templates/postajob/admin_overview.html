@@ -16,7 +16,7 @@ Admin Overview
 {% block postajob_content %}
 <div class="row">
     <div class="span8">
-        {% include "postajob/includes/product_formBox.html" with formBox_title="Recent Products" formBox_footer=True %}
+        {% include "postajob/includes/product_formBox.html" with wrapper_title="Recent Products" wrapper_footer=True %}
         {% include "postajob/includes/productgroup_formBox.html" with formBox_title="Top Groupings" order=False formBox_footer=True %}
         {% include "postajob/includes/offlinepurchase_formBox.html" with formBox_title="Recent Offline Purchases" formBox_footer=True %}
         {% include "postajob/includes/request_formBox.html" with formBox_title="Recent Requests" formBox_footer=True %}
