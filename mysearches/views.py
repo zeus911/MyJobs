@@ -112,7 +112,6 @@ def more_feed_results(request):
                                   {'items': items}, RequestContext(request))
 
 
-@user_passes_test(User.objects.is_verified)
 @user_passes_test(User.objects.not_disabled)
 def validate_url(request):
     if request.is_ajax():
