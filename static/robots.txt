@@ -15,8 +15,4 @@ Disallow: /openid/
 Disallow: /linkedin/
 Disallow: /twitter/
 Disallow: /setup/
-Disallow: /*xml$
-Disallow: /*rss$
-Disallow: /*atom$
-Disallow: /*json$
-Disallow: /*indeed$ 
+Disallow: /feed/
