@@ -178,8 +178,6 @@ def get_records_from_request(request):
     outputs:
     The date range filtered on, A string "X Day(s)" representing the
     date filtered on, and the filtered records.
-
-
     """
     _, partner, _ = prm_worthy(request)
 
