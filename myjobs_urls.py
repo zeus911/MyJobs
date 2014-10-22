@@ -17,6 +17,7 @@ v1_api.register(SavedSearchResource())
 
 handler500 = "myjobs.views.error_500"
 
+
 urlpatterns = patterns(
     '',
     url('', include('myjobs.urls')),
@@ -30,13 +31,6 @@ urlpatterns = patterns(
     url(r'^prm/', include('mypartners.urls')),
     url(r'^postajob/', include('postajob.urls')),
 )
-
-if settings.DEBUG:
-    import debug_toolbar
-
-    urlpatterns += patterns('',
-        url(r'^__debug__/', include(debug_toolbar.urls)),
-    )
 
 
 urlpatterns += patterns(

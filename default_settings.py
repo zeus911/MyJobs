@@ -24,8 +24,6 @@ TEMPLATE_DEBUG = DEBUG
 WILDCARD_REDIRECT = True
 NEVER_REDIRECT = ['amazonaws', ]
 
-DEBUG_TOOLBAR_PATCH_SETTINGS = False
-
 # NOTE: ADMINS and MANAGERS in local_settings.py or deploy_settings.py
 # NOTE: Databse in local_settings.py or deploy_settings.py
 
@@ -81,7 +79,6 @@ TEMPLATE_LOADERS = (
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.gzip.GZipMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.common.CommonMiddleware',
     'middleware.SiteRedirectMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
