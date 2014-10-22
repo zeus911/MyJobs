@@ -62,20 +62,13 @@ def prm(request):
     """
     company = get_company_or_404(request)
     partners = filter_partners(request)
-    # get all unique tags between partners and contacts. I didn't want to make
-    # a second pass through the partners, hence the scary looking list
-    # comprehension
-    tags = Tag.objects.filter(pk__in=set(chain(
-        *[list(p.contact_set.distinct().values_list('tags', flat=True))
-          +list(p.tags.values_list('pk', flat=True)) for p in partners])))
-
+    # get unique tags from partners and contacts
     if request.is_ajax():
         paginator = add_pagination(request, partners)
         ctx = {
             'partners': paginator,
             'on_page': 'prm',
             'ajax': 'true',
-            'tags': tags
         }
         response = HttpResponse()
         html = render_to_response('mypartners/includes/partner_column.html',
@@ -94,7 +87,6 @@ def prm(request):
         'user': request.user,
         'partner_ct': ContentType.objects.get_for_model(Partner).id,
         'view_name': 'PRM',
-        'tags': tags
     }
 
     return render_to_response('mypartners/prm.html', ctx,
