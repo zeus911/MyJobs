@@ -82,6 +82,10 @@ class ColumnBlock(Block):
             'request': request
         }
 
+    def __init__(self, *args, **kwargs):
+        super(ColumnBlock, self).__init__(*args, **kwargs)
+        self._meta.get_field('template').default = ''
+
     @staticmethod
     def base_template():
         return 'myblocks/blocks/columnblock.html'
