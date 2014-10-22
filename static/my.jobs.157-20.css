@@ -1986,6 +1986,10 @@ fieldset textarea,
     line-height: 0;
 }
 
+.message-box-content, .message-box-text {
+    padding-top: 20px;
+}
+
 .alert-message ul {
     list-style: none;
     padding: 5px 0 0 0;
@@ -3973,4 +3977,3 @@ body.modal-open {
     font-size:66%;
     font-weight:normal
 }
-

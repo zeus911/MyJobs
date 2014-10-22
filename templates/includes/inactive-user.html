@@ -1,18 +1,18 @@
 {# Error message used for when a user hasn't clicked the activation link #}
 <div class="row">
     <div class="offset1 span10 formBox">
-        <div class="row">
-            <div class="centered span2">
-                <div>&nbsp;</div>
+        <div class="message-box-content row">
+            <div class="offset1 span2">
                 <img src="/files/images/caution-badge.png"></img>
             </div>
-            <div class="span8">
+            <div class="message-box-text span7">
                 <p>This feature is disabled because you have yet to activate your account.</p>
             </div>
         </div>
-        <div class="clear"></div>
-        <div class="action pull-right">
-            <a class='btn' href={% url 'resend_activation' %}>Resend Activation</a>
+        <div class="row">
+            <div class="action pull-right">
+                <a class='btn' href={% url 'resend_activation' %}>Resend Activation</a>
+            </div>
         </div>
     </div>
 </div>
