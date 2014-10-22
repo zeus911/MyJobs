@@ -62,11 +62,12 @@ def prm(request):
     """
     company = get_company_or_404(request)
     partners = filter_partners(request)
-    # can't use flat=True because we are using more than one column
+    # get all unique tags between partners and contacts. I didn't want to make
+    # a second pass through the partners, hence the scary looking list
+    # comprehension
     tags = Tag.objects.filter(pk__in=set(chain(
         *[list(p.contact_set.distinct().values_list('tags', flat=True))
-        +list(p.tags.values_list('pk', flat=True))
-        for p in partners])))
+          +list(p.tags.values_list('pk', flat=True)) for p in partners])))
 
     if request.is_ajax():
         paginator = add_pagination(request, partners)
