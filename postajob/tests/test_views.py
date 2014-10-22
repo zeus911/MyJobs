@@ -11,13 +11,14 @@ from myjobs.tests.setup import MyJobsBase
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          CompanyUserFactory, SeoSiteFactory)
 from myjobs.tests.factories import UserFactory
-from postajob.tests.factories import (product_factory, job_factory,
-                                      offlinepurchase_factory,
-                                      offlineproduct_factory,
-                                      productgrouping_factory,
-                                      purchasedjob_factory,
-                                      purchasedproduct_factory,
-                                      sitepackage_factory)
+from postajob.tests.factories import (ProductFactory,
+                                      OfflinePurchaseFactory,
+                                      OfflineProductFactory,
+                                      ProductGroupingFactory,
+                                      JobFactory,
+                                      PurchasedJobFactory,
+                                      PurchasedProductFactory,
+                                      SitePackageFactory)
 from postajob.models import (CompanyProfile, Job, OfflinePurchase, Package,
                              Product, ProductGrouping, PurchasedJob,
                              PurchasedProduct, Request, SitePackage,
@@ -48,11 +49,11 @@ class ViewTests(MyJobsBase):
         self.company.save()
         self.company_user = CompanyUserFactory(user=self.user,
                                                company=self.company)
-        sitepackage_factory(self.company)
+        SitePackageFactory(owner=self.company)
         self.package = Package.objects.get()
         self.sitepackage = SitePackage.objects.get()
         self.site.sitepackage_set.add(self.sitepackage)
-        self.product = product_factory(self.package, self.company)
+        self.product = ProductFactory(package=self.package, owner=self.company)
 
         self.login_user()
 
@@ -152,12 +153,10 @@ class ViewTests(MyJobsBase):
         for form_data in [self.job_form_data, self.purchasedjob_form_data]:
             form_data.update(self.location_management_form_data)
 
-    def login_user(self, user=None):
-        if not user:
-            user = self.user
+    def login_user(self):
         self.client.post(reverse('home'),
                          data={
-                             'username': user.email,
+                             'username': self.user.email,
                              'password': 'secret',
                              'action': 'login',
                          })
@@ -176,7 +175,7 @@ class ViewTests(MyJobsBase):
 
     def test_job_access_not_for_company(self):
         new_company = CompanyFactory(name='Another Company', pk=1000)
-        job = job_factory(new_company, self.user)
+        job = JobFactory(owner=new_company, created_by=self.user)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
@@ -190,7 +189,7 @@ class ViewTests(MyJobsBase):
     def test_job_access_allowed(self):
         resp_url = reverse('jobs_overview')
 
-        job = job_factory(self.company, self.user)
+        job = JobFactory(owner=self.company, created_by=self.user)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_update', kwargs=kwargs),
@@ -206,7 +205,7 @@ class ViewTests(MyJobsBase):
         self.assertEqual(Job.objects.all().count(), 1)
 
     def test_job_update(self):
-        job = job_factory(self.company, self.user)
+        job = JobFactory(owner=self.company, created_by=self.user)
         kwargs = {'pk': job.pk}
 
         self.assertNotEqual(job.title, self.job_form_data['title'])
@@ -219,7 +218,7 @@ class ViewTests(MyJobsBase):
         self.assertEqual(job.title, self.job_form_data['title'])
 
     def test_job_delete(self):
-        job = job_factory(self.company, self.user)
+        job = JobFactory(owner=self.company, created_by=self.user)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
@@ -227,7 +226,8 @@ class ViewTests(MyJobsBase):
         self.assertEqual(Job.objects.all().count(), 0)
 
     def test_purchasedjob_add(self):
-        product = purchasedproduct_factory(self.product, self.company)
+        product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
         kwargs = {'product': product.pk}
 
         response = self.client.post(reverse('purchasedjob_add', kwargs=kwargs),
@@ -238,8 +238,11 @@ class ViewTests(MyJobsBase):
         self.assertEqual(Request.objects.all().count(), 1)
     
     def test_purchasedjob_update(self):
-        product = purchasedproduct_factory(self.product, self.company)
-        job = purchasedjob_factory(self.company, self.user, product)
+        product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
+        job = PurchasedJobFactory(
+            owner=self.company, created_by=self.user, 
+            purchased_product=product)
         kwargs = {'pk': job.pk}
 
         self.assertNotEqual(job.title, self.job_form_data['title'])
@@ -254,8 +257,12 @@ class ViewTests(MyJobsBase):
         self.assertEqual(job.title, self.job_form_data['title'])
 
     def test_purchasedjob_delete(self):
-        product = purchasedproduct_factory(self.product, self.company)
-        job = purchasedjob_factory(self.company, self.user, product)
+        product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
+        job = PurchasedJobFactory(
+            owner=self.company,
+            created_by=self.user,
+            purchased_product=product)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('purchasedjob_delete',
@@ -264,7 +271,8 @@ class ViewTests(MyJobsBase):
         self.assertEqual(PurchasedJob.objects.all().count(), 0)
 
     def test_purchasedjob_add_too_many(self):
-        product = purchasedproduct_factory(self.product, self.company)
+        product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
         product.jobs_remaining = 1
         product.save()
         kwargs = {'product': product.pk}
@@ -438,7 +446,7 @@ class ViewTests(MyJobsBase):
         self.assertEqual(ProductGrouping.objects.all().count(), 1)
 
     def test_productgrouping_update(self):
-        group = productgrouping_factory(self.company)
+        group = ProductGroupingFactory(owner=self.company)
         self.productgrouping_form_data['name'] = 'New Title'
         kwargs = {'pk': group.pk}
 
@@ -454,7 +462,7 @@ class ViewTests(MyJobsBase):
         self.assertEqual(group.name, self.productgrouping_form_data['name'])
 
     def test_productgrouping_delete(self):
-        group = productgrouping_factory(self.company)
+        group = ProductGroupingFactory(owner=self.company)
         self.product_form_data['name'] = 'New Title'
         kwargs = {'pk': group.pk}
 
@@ -551,7 +559,8 @@ class ViewTests(MyJobsBase):
         self.assertEqual(PurchasedProduct.objects.all().count(), 0)
 
     def test_purchasedproduct_update(self):
-        purchased_product = purchasedproduct_factory(self.product, self.company)
+        purchased_product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
         kwargs = {'pk': purchased_product.pk}
 
         response = self.client.post(reverse('purchasedproduct_update',
@@ -559,7 +568,9 @@ class ViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 404)
 
     def test_purchasedproduct_delete(self):
-        purchased_product = purchasedproduct_factory(self.product, self.company)
+        purchased_product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
+    
         kwargs = {'pk': purchased_product.pk}
 
         response = self.client.post(reverse('purchasedproduct_delete',
@@ -602,10 +613,13 @@ class ViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 404)
 
     def test_offlinepurchase_redeem(self):
-        offline_purchase = offlinepurchase_factory(self.company,
-                                                   self.company_user)
-        offlineproduct_factory(self.product, offline_purchase,
-                               product_quantity=3)
+        from postajob.models import OfflineProduct
+        offline_purchase = OfflinePurchaseFactory(
+            owner=self.company, created_by=self.company_user)
+        OfflineProductFactory(
+            product=self.product, offline_purchase=offline_purchase,
+            product_quantity=3)
+
 
         data = {'redemption_id': offline_purchase.redemption_uid}
         current_product_count = PurchasedProduct.objects.all().count()
@@ -630,12 +644,13 @@ class ViewTests(MyJobsBase):
                          PurchasedProduct.objects.all().count())
 
     def test_offlinepurchase_redeem_already_redeemed(self):
-        offline_purchase = offlinepurchase_factory(
-            self.company, self.company_user, redeemed_on=date.today(),
-            redeemed_by=self.company_user
-        )
-        offlineproduct_factory(self.product, offline_purchase,
-                               product_quantity=7)
+        offline_purchase = OfflinePurchaseFactory(
+            owner=self.company, created_by=self.company_user,
+            redeemed_on=date.today(), redeemed_by=self.company_user)
+        OfflineProductFactory(
+            product=self.product,
+            offline_purchase=offline_purchase,
+            product_quantity=7)
 
         data = {'redemption_id': offline_purchase.redemption_uid}
         current_product_count = PurchasedProduct.objects.all().count()
@@ -666,8 +681,8 @@ class ViewTests(MyJobsBase):
         self.assertIsNotNone(offline_purchase.redeemed_on)
 
     def test_offlinepurchase_update(self):
-        offline_purchase = offlinepurchase_factory(self.company,
-                                                   self.company_user)
+        offline_purchase = OfflinePurchaseFactory(
+            owner=self.company, created_by=self.company_user)
         kwargs = {'pk': offline_purchase.pk}
 
         response = self.client.post(reverse('offlinepurchase_update',
@@ -675,8 +690,8 @@ class ViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 404)
 
     def test_offlinepurchase_delete(self):
-        offline_purchase = offlinepurchase_factory(self.company,
-                                                   self.company_user)
+        offline_purchase = OfflinePurchaseFactory(
+            owner=self.company, created_by=self.company_user)
         kwargs = {'pk': offline_purchase.pk}
 
         response = self.client.post(reverse('offlinepurchase_delete',
@@ -710,7 +725,7 @@ class ViewTests(MyJobsBase):
         self.assertTrue('There are no products configured for purchase'
                         in response.content)
 
-        productgrouping = productgrouping_factory(company=self.company)
+        productgrouping = ProductGroupingFactory(owner=self.company)
         ProductOrder(product=self.product, group=productgrouping).save()
 
         response = self.client.get(reverse('product_listing') +
@@ -751,13 +766,13 @@ class ViewTests(MyJobsBase):
                          data=self.job_form_data, follow=True)
 
     def test_purchasedjob_form(self):
-        purchasedproduct = purchasedproduct_factory(self.product,
-                                                    self.company)
+        purchased_product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
 
         site = SeoSiteFactory(domain='indiana.jobs', id=3)
         site.business_units.add(self.bu)
         site.sitepackage_set.add(self.sitepackage)
-        product = {'product': purchasedproduct.pk}
+        product = {'product': purchased_product.pk}
         response = self.client.get(reverse('purchasedjob_add',
                                            kwargs=product))
         soup = BeautifulSoup(response.content)
