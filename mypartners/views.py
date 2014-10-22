@@ -61,21 +61,25 @@ def prm(request):
 
     """
     company = get_company_or_404(request)
+    partners = filter_partners(request)
+    # can't use flat=True because we are using more than one column
+    tags = Tag.objects.filter(
+        pk__in=set(tag[0] for tag in
+                   partners.values_list('tags', 'contact__tags')))
 
     if request.is_ajax():
-        partners = filter_partners(request)
         paginator = add_pagination(request, partners)
         ctx = {
             'partners': paginator,
             'on_page': 'prm',
-            'ajax': 'true'
+            'ajax': 'true',
+            'tags': tags
         }
         response = HttpResponse()
         html = render_to_response('mypartners/includes/partner_column.html',
                                   ctx, RequestContext(request))
         response.content = html.content
         return response
-    partners = filter_partners(request)
     if partners:
         paginator = add_pagination(request, partners)
     else:
@@ -88,6 +92,7 @@ def prm(request):
         'user': request.user,
         'partner_ct': ContentType.objects.get_for_model(Partner).id,
         'view_name': 'PRM',
+        'tags': tags
     }
 
     return render_to_response('mypartners/prm.html', ctx,
