@@ -100,27 +100,6 @@ class UserManagerTests(MyJobsBase):
         resp = client.get(reverse('view_profile'))
         self.assertRedirects(resp, "http://testserver/?next=/profile/view/")
 
-    def test_is_active(self):
-        """
-        A user with is_active set to False should be redirected to the home
-        page, while a user with is_active set to True should proceed to their
-        destination.
-        """
-        client = TestClient()
-        user = UserFactory()
-
-        # Active user
-        client.login_user(user)
-        resp = client.get(reverse('saved_search_main'))
-        self.assertTrue(resp.status_code, 200)
-
-        # Inactive user
-        user.is_verified= False
-        user.save()
-        resp = client.get(reverse('saved_search_main'))
-        self.assertRedirects(resp,
-                             "http://testserver/?next=/saved-search/view/")
-
     def test_group_status(self):
         """
         Should return True if user.groups contains the group specified and
