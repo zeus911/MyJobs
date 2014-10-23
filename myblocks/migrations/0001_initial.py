@@ -15,13 +15,19 @@ class Migration(SchemaMigration):
             ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('offset', self.gf('django.db.models.fields.PositiveIntegerField')()),
             ('span', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('template', self.gf('django.db.models.fields.TextField')()),
         ))
         db.send_create_signal(u'myblocks', ['Block'])
+
+        # Adding model 'ColumnBlock'
+        db.create_table(u'myblocks_columnblock', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+        ))
+        db.send_create_signal(u'myblocks', ['ColumnBlock'])
 
         # Adding model 'ContentBlock'
         db.create_table(u'myblocks_contentblock', (
             (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
-            ('content', self.gf('django.db.models.fields.TextField')()),
         ))
         db.send_create_signal(u'myblocks', ['ContentBlock'])
 
@@ -53,7 +59,6 @@ class Migration(SchemaMigration):
         # Adding model 'SearchBoxBlock'
         db.create_table(u'myblocks_searchboxblock', (
             (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
-            ('search_box_template', self.gf('django.db.models.fields.CharField')(max_length=255)),
         ))
         db.send_create_signal(u'myblocks', ['SearchBoxBlock'])
 
@@ -62,6 +67,12 @@ class Migration(SchemaMigration):
             (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
         ))
         db.send_create_signal(u'myblocks', ['SearchFilterBlock'])
+
+        # Adding model 'VeteranSearchBox'
+        db.create_table(u'myblocks_veteransearchbox', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+        ))
+        db.send_create_signal(u'myblocks', ['VeteranSearchBox'])
 
         # Adding model 'SearchResultBlock'
         db.create_table(u'myblocks_searchresultblock', (
@@ -75,15 +86,10 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'myblocks', ['ShareBlock'])
 
-        # Adding model 'ColumnBlock'
-        db.create_table(u'myblocks_columnblock', (
-            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
-        ))
-        db.send_create_signal(u'myblocks', ['ColumnBlock'])
-
         # Adding model 'Row'
         db.create_table(u'myblocks_row', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('template', self.gf('django.db.models.fields.TextField')()),
         ))
         db.send_create_signal(u'myblocks', ['Row'])
 
@@ -129,6 +135,9 @@ class Migration(SchemaMigration):
         # Deleting model 'Block'
         db.delete_table(u'myblocks_block')
 
+        # Deleting model 'ColumnBlock'
+        db.delete_table(u'myblocks_columnblock')
+
         # Deleting model 'ContentBlock'
         db.delete_table(u'myblocks_contentblock')
 
@@ -150,14 +159,14 @@ class Migration(SchemaMigration):
         # Deleting model 'SearchFilterBlock'
         db.delete_table(u'myblocks_searchfilterblock')
 
+        # Deleting model 'VeteranSearchBox'
+        db.delete_table(u'myblocks_veteransearchbox')
+
         # Deleting model 'SearchResultBlock'
         db.delete_table(u'myblocks_searchresultblock')
 
         # Deleting model 'ShareBlock'
         db.delete_table(u'myblocks_shareblock')
-
-        # Deleting model 'ColumnBlock'
-        db.delete_table(u'myblocks_columnblock')
 
         # Deleting model 'Row'
         db.delete_table(u'myblocks_row')
@@ -202,7 +211,8 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'offset': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'span': ('django.db.models.fields.PositiveIntegerField', [], {})
+            'span': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'template': ('django.db.models.fields.TextField', [], {})
         },
         u'myblocks.blockorder': {
             'Meta': {'ordering': "('order',)", 'object_name': 'BlockOrder'},
@@ -225,8 +235,7 @@ class Migration(SchemaMigration):
         },
         u'myblocks.contentblock': {
             'Meta': {'object_name': 'ContentBlock', '_ormbases': [u'myblocks.Block']},
-            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'}),
-            'content': ('django.db.models.fields.TextField', [], {})
+            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'})
         },
         u'myblocks.imageblock': {
             'Meta': {'object_name': 'ImageBlock', '_ormbases': [u'myblocks.Block']},
@@ -253,7 +262,8 @@ class Migration(SchemaMigration):
         u'myblocks.row': {
             'Meta': {'object_name': 'Row'},
             'blocks': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myblocks.Block']", 'through': u"orm['myblocks.BlockOrder']", 'symmetrical': 'False'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'template': ('django.db.models.fields.TextField', [], {})
         },
         u'myblocks.roworder': {
             'Meta': {'ordering': "('order',)", 'object_name': 'RowOrder'},
@@ -268,8 +278,7 @@ class Migration(SchemaMigration):
         },
         u'myblocks.searchboxblock': {
             'Meta': {'object_name': 'SearchBoxBlock', '_ormbases': [u'myblocks.Block']},
-            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'}),
-            'search_box_template': ('django.db.models.fields.CharField', [], {'max_length': '255'})
+            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'})
         },
         u'myblocks.searchfilterblock': {
             'Meta': {'object_name': 'SearchFilterBlock', '_ormbases': [u'myblocks.Block']},
@@ -281,6 +290,10 @@ class Migration(SchemaMigration):
         },
         u'myblocks.shareblock': {
             'Meta': {'object_name': 'ShareBlock', '_ormbases': [u'myblocks.Block']},
+            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'})
+        },
+        u'myblocks.veteransearchbox': {
+            'Meta': {'object_name': 'VeteranSearchBox', '_ormbases': [u'myblocks.Block']},
             u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'})
         },
         u'myjobs.user': {
@@ -405,7 +418,6 @@ class Migration(SchemaMigration):
             'browse_title_show': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'browse_title_text': ('django.db.models.fields.CharField', [], {'default': "'Title'", 'max_length': '50'}),
             'company_tag': ('django.db.models.fields.CharField', [], {'default': "'careers'", 'max_length': '50'}),
-            'css_body': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'defaultBlurb': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'defaultBlurbTitle': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'directemployers_link': ('django.db.models.fields.URLField', [], {'default': "'http://directemployers.org'", 'max_length': '200'}),
@@ -426,7 +438,6 @@ class Migration(SchemaMigration):
             'primaryColor': ('django.db.models.fields.CharField', [], {'default': "'990000'", 'max_length': '6'}),
             'publisher': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'revision': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
-            'secondaryColor': ('django.db.models.fields.CharField', [], {'max_length': '6', 'null': 'True', 'blank': 'True'}),
             'show_home_microsite_carousel': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'show_home_social_footer': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'show_saved_search_widget': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -434,7 +445,6 @@ class Migration(SchemaMigration):
             'status': ('django.db.models.fields.IntegerField', [], {'default': '1', 'null': 'True', 'db_index': 'True', 'blank': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True'}),
             'title_tag': ('django.db.models.fields.CharField', [], {'default': "'jobs-in'", 'max_length': '50'}),
-            'useCssBody': ('django.db.models.fields.BooleanField', [], {}),
             'view_all_jobs_detail': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'wide_footer': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'wide_header': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'})
