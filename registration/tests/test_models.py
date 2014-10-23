@@ -281,9 +281,11 @@ class InvitationModelTests(MyJobsBase):
             self.assertIsNotNone(invitation.invitee)
             self.assertEqual(invitation.invitee_email, email)
 
-            # Users created with invitations should not receive normal user
-            # creation emails
-            self.assertEqual(mail.outbox, [])
+            # Users created with invitations should receive an invitation
+            # but not a normal user creation email
+            self.assertEqual(len(mail.outbox), 1)
+            email = mail.outbox.pop()
+            self.assertTrue('reserved' in email.body)
 
         self.assertEqual(len(users), 2)
         self.assertItemsEqual(users, set(users))

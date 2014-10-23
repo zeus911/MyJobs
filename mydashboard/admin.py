@@ -57,7 +57,6 @@ class CompanyUserAdmin(ForeignKeyAutocompleteAdmin):
 
     search_fields = ['company__name', 'user__email']
 
-
     list_display = [get_companyuser_pk, get_user_cell, get_company_cell]
 
     class Meta:
@@ -65,6 +64,11 @@ class CompanyUserAdmin(ForeignKeyAutocompleteAdmin):
 
     class Media:
         js = ('django_extensions/js/jquery-1.7.2.min.js', )
+
+    def save_model(self, request, obj, form, change):
+        # request isn't really accessible from forms; set inviting_user here
+        obj.inviting_user = request.user
+        obj.save()
 
 
 admin.site.register(CompanyUser, CompanyUserAdmin)

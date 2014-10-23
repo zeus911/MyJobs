@@ -1177,7 +1177,9 @@ class CompanyUser(models.Model):
         """
         group = Group.objects.get(name=self.GROUP_NAME)
         self.user.groups.add(group)
-        Invitation(invitee=self.user, inviting_company=self.company).save()
+        if not self.pk:
+            Invitation(invitee=self.user, inviting_company=self.company,
+                       added_permission=group).save()
 
         return super(CompanyUser, self).save(*args, **kwargs)
 

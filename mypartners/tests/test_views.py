@@ -49,8 +49,11 @@ class MyPartnersTestCase(MyJobsBase):
         # Create a company
         self.company = CompanyFactory()
         self.company.save()
+        self.assertEqual(len(mail.outbox), 0)
         self.admin = CompanyUserFactory(user=self.staff_user,
                                         company=self.company)
+        self.assertEqual(len(mail.outbox), 1)
+        mail.outbox = []
         self.client = TestClient()
         self.client.login_user(self.staff_user)
 
@@ -404,6 +407,7 @@ class RecordsOverviewTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
         records = soup.find(class_='card-wrapper')
         self.assertEqual(len(records('div', class_='product-card')), 5)
+
 
 class RecordsDetailsTests(MyPartnersTestCase):
     """Tests related to the records detail page, /prm/view/records/view/"""
@@ -890,10 +894,10 @@ class SearchEditTests(MyPartnersTestCase):
 
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(len(mail.outbox), 3)
         for s in [self.staff_user.get_full_name(), str(self.company),
                   'has created a job search for you']:
-            self.assertIn(s, mail.outbox[1].body)
+            self.assertIn(s, mail.outbox[2].body)
 
         body = re.sub(r'\s+', ' ', mail.outbox[0].body)
         for expected in ['%s created this saved search on your behalf:' % \

@@ -166,14 +166,25 @@ class Invitation(models.Model):
         if all(invitee):
             if not User.objects.get_email_owner(
                     self.invitee_email) == self.invitee:
+                # ValidationErrors aren't appropriate, but nothing else fits
+                # either; these are unrecoverable
                 raise ValidationError('Invitee information does not match')
         elif not any(invitee):
             raise ValidationError('Invitee not provided')
         elif self.invitee_email:
             # create_user first checks if an email is in use and creates an
             # account if it does not.
-            self.invitee = User.objects.create_user(email=self.invitee_email,
-                                                    send_email=False)[0]
+            self.invitee = User.objects.create_user(email=self.invitee_email)[0]
         else:
             self.invitee_email = self.invitee.email
         super(Invitation, self).save(*args, **kwargs)
+
+        ap = ActivationProfile.objects.get_or_create(user=self.invitee,
+                                                     email=self.invitee_email)[0]
+
+        body = render_to_string('registration/invitations/invitation_email.html',
+                                {'invitation': self,
+                                 'key': ap.activation_key})
+        body = Pynliner().from_string(body).run()
+
+        self.invitee.email_user('subject', body, 'from')
