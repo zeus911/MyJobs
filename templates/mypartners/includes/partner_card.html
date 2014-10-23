@@ -38,7 +38,7 @@
     {% endif %}
     <div class="partner-tags">
         {% if on_page == 'prm' %}
-            {% for tag in partner.tags.all %}
+            {% for tag in partner.get_nested_tags %}
                 <span class="tag-name small" style="background-color: #{{tag.hex_color}}">{{ tag.name }}</span>
             {% endfor %}
         {% elif on_page == 'partner_library' %}

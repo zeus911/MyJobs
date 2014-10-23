@@ -68,7 +68,7 @@ def prm(request):
         ctx = {
             'partners': paginator,
             'on_page': 'prm',
-            'ajax': 'true'
+            'ajax': 'true',
         }
         response = HttpResponse()
         html = render_to_response('mypartners/includes/partner_column.html',
