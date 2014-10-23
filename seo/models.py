@@ -487,16 +487,17 @@ class SeoSite(Site):
     def all_sites(self):
         return SeoSite.objects.all()
 
-    postajob_filter_options = (
-        (network_sites, 'network sites only'),
-        (network_sites_and_this_site, 'network sites and this site'),
-        (this_site_only, 'this site only'),
-        (network_and_company_sites, 'network sites and sites associated with '
-                                    'the company that owns this site'),
-        (company_sites, 'sites associated with the company that owns this site'),
-        (all_sites, 'all sites'),
-    )
-    postajob_filter_options_dict = {k: v for v, k in postajob_filter_options}
+    postajob_filter_options_dict = {
+        'network sites only': network_sites,
+        'network sites and this site': network_sites_and_this_site,
+        'this site only': this_site_only,
+        'network sites and sites associated '
+        'with the company that owns this site': network_and_company_sites,
+        'sites associated with the company that owns this site': company_sites,
+        'all sites': all_sites,
+    }
+    postajob_filter_options = tuple([(k, k) for k in
+                                     postajob_filter_options_dict.keys()])
 
     group = models.ForeignKey('auth.Group', null=True)
     facets = models.ManyToManyField('CustomFacet', null=True, blank=True,
