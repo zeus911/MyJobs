@@ -197,10 +197,6 @@ class SavedSearch(models.Model):
         if not SavedSearchDigest.objects.filter(user=self.user):
             SavedSearchDigest.objects.create(user=self.user, email=self.email)
 
-        if self.user.in_reserve:
-            self.user.in_reserve = False
-            self.user.save()
-
         super(SavedSearch, self).save(*args, **kwargs)
 
     def __unicode__(self):

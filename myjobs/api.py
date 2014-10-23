@@ -64,6 +64,10 @@ class UserResource(ModelResource):
             data = {
                 'user_created': created,
                 'email': email}
+            if not created and user.in_reserve:
+                user.in_reserve = False
+                user.save()
+                # TODO: accept all invitations and send password email?
         except IntegrityError:
             data = {'email': 'That username already exists'}
 
