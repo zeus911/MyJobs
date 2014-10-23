@@ -179,38 +179,35 @@ def get_records_from_request(request):
     The date range filtered on, A string "X Day(s)" representing the
     date filtered on, and the filtered records.
     """
+    sort_types = {
+        'name': 'contact_name', 'date': 'date_time', None: 'date_time'}
     _, partner, _ = prm_worthy(request)
-
     # extract reelvant values from the request object
-    contact, contact_type, admin, range_start, range_end = [
+    contact, contact_type, admin, range_start, range_end, sort_by = [
         request.REQUEST.get(field) for field in [
-            'contact', 'contact_type', 'admin', 'date_start', 'date_end']]
+            'contact', 'contact_type', 'admin', 'date_start', 'date_end',
+            'sort_by']]
 
-    records = partner.get_contact_records(contact_name=contact,
-        record_type=contact_type, created_by=admin)
 
-    if not range_start and not range_end:
-        date_str = "View All"
-        range_start = records.aggregate(Min('date_time')).get(
-            'date_time__min', now())
-        range_end = records.aggregate(Max('date_time')).get(
-            'date_time__max', now())
-    else:
-        if range_start:
-            range_start = datetime.strptime(range_start, '%m/%d/%Y').date()
-        else:
-            range_start = records.aggregate(Min('date_time')).get(
-                'date_time__min', now()).date()
+    desc = '-' if bool(request.REQUEST.get('desc')) else ''
 
-        if range_end:
-            range_end = datetime.strptime(range_end, '%m/%d/%Y').date()
-        else:
-            range_end = now().date()
+    if range_start:
+        range_start = datetime.strptime(range_start, '%m/%d/%Y').date()
 
-        days = (range_end - range_start).days
+    if range_end:
+        range_end = datetime.strptime(range_end, '%m/%d/%Y').date()
+
+    records = partner.get_contact_records(
+        contact_name=contact, record_type=contact_type, created_by=admin,
+        order_by=desc + sort_types[sort_by], date_start=range_start,
+        date_end=range_end)
+
+    if range_start or range_end:
+        days = ((range_end or now().date()) -
+                (range_start or now().date())).days
         date_str = '%i Day%s' % (days, '' if days == 1 else 's')
-
-    records = records.filter(date_time__range=[range_start, range_end])
+    else:
+        date_str = 'View All'
 
     return (range_start, range_end), date_str, records
 
