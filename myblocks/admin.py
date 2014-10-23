@@ -3,8 +3,14 @@ from django.contrib import admin
 from myblocks import forms, models
 
 
+class ColumnBlockOrderInline(admin.TabularInline):
+    model = models.ColumnBlockOrder
+    fk_name = 'column_block'
+
+
 class ColumnBlockAdmin(admin.ModelAdmin):
     form = forms.ColumnBlockForm
+    inlines = (ColumnBlockOrderInline, )
 
 
 class ContentBlockAdmin(admin.ModelAdmin):

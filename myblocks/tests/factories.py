@@ -15,8 +15,6 @@ class BlockFactory(django.DjangoModelFactory):
 class ContentBlockFactory(BlockFactory):
     FACTORY_FOR = models.ContentBlock
 
-    content = 'Test content.'
-
 
 class ImageBlockFactory(BlockFactory):
     FACTORY_FOR = models.ImageBlock

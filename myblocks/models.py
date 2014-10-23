@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.http import HttpResponseRedirect
-from django.template import Context, RequestContext, Template
+from django.template import Context, Template
 from django.template.loaders.filesystem import Loader
 from django.utils.safestring import mark_safe
 
@@ -36,8 +36,7 @@ class Block(models.Model):
     def bootstrap_classes(self):
         offset = "offset%s" % self.offset if self.offset else ''
         span = "span%s" % self.span if self.span else ''
-
-        return "%s %s" % (offset, span)
+        return " ".join([offset, span])
 
     def block_size(self):
         return self.offset + self.span
@@ -61,7 +60,7 @@ class Block(models.Model):
 
         """
         template = Template(self.template)
-        html = template.render(Context(self.context(request)))
+        html = template.render(Context(self.cast().context(request)))
         return mark_safe(html)
 
     def save(self, *args, **kwargs):
@@ -80,9 +79,8 @@ class ColumnBlock(Block):
 
     def context(self, request):
         row = '<div class="row">%s</div>'
-
-        html = [row % block.cast().render(request) for
-                block in self.blocks.all().order_by('columnblockorder__order')]
+        blocks = self.blocks.all().order_by('columnblockorder__order')
+        html = [row % block.cast().render(request) for block in blocks]
         return {
             'block': self,
             'content': mark_safe(''.join(html)),
@@ -250,7 +248,6 @@ class Row(models.Model):
         content = []
         for block in self.blocks.all().order_by('blockorder__order'):
             content.append(block.cast().render(request))
-        print content
         return {
             'row': self,
             'content': mark_safe(''.join(content)),
@@ -297,16 +294,15 @@ class Page(models.Model):
                  models.Q(columnblockorder__column_block__row__page=self))
         return [block.cast() for block in Block.objects.filter(query).distinct()]
 
-    def boostrap_classes(self):
-        return "span%s" % ('16' if self.boostrap_version == 1 else '12')
+    def bootstrap_classes(self):
+        return "span%s" % ('16' if self.bootstrap_version == 1 else '12')
 
     def raw_base_template(self):
         return raw_base_template(self)
 
     def render(self, request):
-        content = []
-        for row in self.rows.all().order_by('roworder__order'):
-            content.append(row.render(request))
+        rows = self.rows.all().order_by('roworder__order')
+        content = [row.render(request) for row in rows]
         return mark_safe(''.join(content))
 
 

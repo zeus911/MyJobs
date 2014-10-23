@@ -1,6 +1,12 @@
 {% extends "seo_base.html" %}
 
 {% block myblocks_css_extras %}
+
+{% if page.bootstrap_version == 1 %}
+    <link rel="stylesheet" type="text/css" href="//d2e48ltfsb5exy.cloudfront.net/framework/css/code/def.ui.bootstrap.1.4.preservation.min.css">
+{% else %}
+{% endif %}
+
 <style>
     .offset1 {
         margin-left: 80px !important;
@@ -41,6 +47,11 @@
     }
     .row {
         margin-left: -20px !important;
+    }
+    .row > [class*="span"] {
+        display: inline;
+        float: left;
+        margin-left: 20px;
     }
 </style>
 {% endblock myblocks_css_extras %}
