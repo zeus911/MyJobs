@@ -36,6 +36,7 @@ ACTIVITY_TYPES = {
     4: 'sent',
 }
 
+
 class Location(models.Model):
     label = models.CharField(max_length=60, verbose_name='Address Label',
                              blank=True)

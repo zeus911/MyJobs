@@ -67,8 +67,7 @@ class CompanyUserAdmin(ForeignKeyAutocompleteAdmin):
 
     def save_model(self, request, obj, form, change):
         # request isn't really accessible from forms; set inviting_user here
-        obj.inviting_user = request.user
-        obj.save()
+        obj.save(inviting_user=request.user)
 
 
 admin.site.register(CompanyUser, CompanyUserAdmin)

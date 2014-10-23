@@ -891,20 +891,9 @@ class SearchEditTests(MyPartnersTestCase):
                 'notes': '',
                 'company': self.company.id,
                 'partner': self.partner.id}
-
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(mail.outbox), 3)
-        for s in [self.staff_user.get_full_name(), str(self.company),
-                  'has created a job search for you']:
-            self.assertIn(s, mail.outbox[2].body)
-
-        body = re.sub(r'\s+', ' ', mail.outbox[0].body)
-        for expected in ['%s created this saved search on your behalf:' % \
-                             (self.staff_user.email, ),
-                         'Saved Search Notification']:
-            self.assertTrue(expected in body)
-        self.assertFalse('delete this saved search' in body)
+        self.assertEqual(len(mail.outbox), 1)
 
 
 class EmailTests(MyPartnersTestCase):

@@ -197,6 +197,10 @@ class SavedSearch(models.Model):
         if not SavedSearchDigest.objects.filter(user=self.user):
             SavedSearchDigest.objects.create(user=self.user, email=self.email)
 
+        if self.user.in_reserve:
+            self.user.in_reserve = False
+            self.user.save()
+
         super(SavedSearch, self).save(*args, **kwargs)
 
     def __unicode__(self):
@@ -341,7 +345,7 @@ class PartnerSavedSearch(SavedSearch):
     def save(self, *args, **kwargs):
         created = False if self.pk else True
         super(PartnerSavedSearch, self).save(*args, **kwargs)
-        if created:
+        if created and self.user.can_receive_myjobs_email():
             self.send_initial_email()
 
     def send_initial_email(self, custom_msg=None):
