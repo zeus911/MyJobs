@@ -19,7 +19,7 @@
     {% block meta-extra %}{% endblock %}
 
     <link href="{{ STATIC_URL }}def.ui.152-21.css{{ gz }}" rel="stylesheet" type="text/css">
-    <link href="{{ STATIC_URL }}my.jobs.157-13.css{{ gz }}" rel="stylesheet" type="text/css">
+    <link href="{{ STATIC_URL }}my.jobs.157-17.css{{ gz }}" rel="stylesheet" type="text/css">
     <!--[if IE]>
     <link href="{{ STATIC_URL }}my.jobs.ie.155-14.css{{ gz }}" rel="stylesheet" type="text/css">
     <![endif]-->
@@ -49,10 +49,9 @@
                     <div class="row">
                         {% block activation_message %}
                         {% if user.is_authenticated %}
-                            {% if not user.is_active %}
+                            {% if not user.is_active or not user.is_verified %}
 
                             <div class="alert alert-error hide-mobile">
-                                <button type="button" class="close" data-dismiss="alert">&times;</button>
                                 Please activate your account using the activation link sent to your email. <a href="{% url 'resend_activation' %}">Click here to resend the activation email.</a>
                             </div>
 

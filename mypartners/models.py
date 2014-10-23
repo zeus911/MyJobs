@@ -192,7 +192,8 @@ class Partner(models.Model):
     def get_contact_records(self, contact_name=None, record_type=None,
                             created_by=None, date_start=None, date_end=None):
 
-        records = ContactRecord.objects.filter(partner=self)
+        records = ContactRecord.objects.filter(partner=self).prefetch_related(
+            'tags')
         if contact_name:
             records = records.filter(contact_name=contact_name)
         if date_start and date_end:

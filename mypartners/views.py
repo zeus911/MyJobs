@@ -62,9 +62,9 @@ def prm(request):
     """
     company = get_company_or_404(request)
     partners = filter_partners(request)
-    # get unique tags from partners and contacts
+    paginator = add_pagination(request, partners) if partners else None
+
     if request.is_ajax():
-        paginator = add_pagination(request, partners)
         ctx = {
             'partners': paginator,
             'on_page': 'prm',
@@ -75,10 +75,6 @@ def prm(request):
                                   ctx, RequestContext(request))
         response.content = html.content
         return response
-    if partners:
-        paginator = add_pagination(request, partners)
-    else:
-        paginator = None
 
     ctx = {
         'has_partners': True if partners else False,
@@ -665,10 +661,8 @@ def prm_records(request):
 
     """
     company, partner, _ = prm_worthy(request)
-    contact_type = request.REQUEST.get('contact_type')
-    contact = request.REQUEST.get('contact')
 
-    dt_range, date_str, contact_records = get_records_from_request(request)
+    _, _, contact_records = get_records_from_request(request)
     paginated_records = add_pagination(request,
                                        contact_records.order_by('-date_time'))
 
@@ -688,21 +682,16 @@ def prm_records(request):
                             if choice[0] != 'pssemail']
     contact_type_choices.insert(0, ('all', 'All'))
 
-    contacts = ContactRecord.objects.filter(partner=partner)
-    contacts = contacts.values('contact_name').distinct()
-    contact_choices = [(c['contact_name'], c['contact_name']) for c in contacts]
+    contacts = ContactRecord.objects.distinct().filter(partner=partner)
+    contact_choices = [(c, c) for c in contacts.values_list(
+        'contact_name', flat=True)]
     contact_choices.insert(0, ('all', 'All'))
 
     ctx = {
         'admin_id': request.REQUEST.get('admin'),
         'company': company,
-        'contact': contact,
         'contact_choices': contact_choices,
-        'contact_type': contact_type,
         'contact_type_choices': contact_type_choices,
-        'date_display': date_str,
-        'date_start': dt_range[0],
-        'date_end': dt_range[1],
         'partner': partner,
         'records': paginated_records,
         'view_name': 'PRM',
@@ -1129,6 +1118,7 @@ def partner_get_referrals(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_export(request):
+    #TODO: investigate using django's builtin serialization for XML
     company, partner, user = prm_worthy(request)
     file_format = request.REQUEST.get('file_format', 'csv')
     fields = retrieve_fields(ContactRecord)
@@ -1140,8 +1130,14 @@ def prm_export(request):
             xml_record = etree.SubElement(root, "record")
             for field in fields:
                 xml = etree.SubElement(xml_record, field)
-                xml.text = contact_record_val_to_str(getattr(record, field, ""))
-        response = HttpResponse(etree.tostring(root, pretty_print=True),
+                value = getattr(record, field, '')
+
+                if hasattr(value, 'all'):
+                    value = ', '.join([val.name for val in value.all() if val])
+
+                xml.text = contact_record_val_to_str(value)
+        response = HttpResponse(etree.tostring(root, pretty_print=True,
+                                               xml_declaration=True),
                                 mimetype='application/force-download')
     elif file_format == 'printer_friendly':
         ctx = {
@@ -1159,10 +1155,15 @@ def prm_export(request):
         writer.writerow(fields)
         for record in records:
             values = [getattr(record, field, '') for field in fields]
-            values = [contact_record_val_to_str(v) for v in values]
+            values = [
+                contact_record_val_to_str(v)
+                if not hasattr(v, 'all') else
+                ', '.join([val.name for val in v.all() if val]) for v in values
+            ]
             # Remove the HTML and reformat.
             values = [bleach.clean(v, [], strip=True) for v in values]
-            values = [re.sub(' +', ' ', v) for v in values]
+            # replaces multiple occurences of space by a single sapce.
+            values = [' '.join(filter(bool, v.split(' '))) for v in values]
             values = [re.sub('\s+\n\s+', '\n', v) for v in values]
             writer.writerow(values)
 
