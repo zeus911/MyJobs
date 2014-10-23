@@ -40,10 +40,22 @@
                 {% for field in fields %}
                     {% get_attr record field as value %}
                     {% if value %}
+                        {% if field == "tags" %}
+                        <tr>
+                            <td class="field">{% get_human_readable_field_name field %}</td>
+                            <td class="value">
+                                {# needed to access the name only, so didn't use the join filter #}
+                                {% for tag in record.tags.all %}
+                                    {{ tag.name }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% else %}
                         <tr>
                             <td class="field">{% get_human_readable_field_name field %}</td>
                             <td class="value">{{ value|bleach_clean }}</td>
                         </tr>
+                        {% endif %}
                     {% endif %}
                 {% endfor %}
             </table><br/>
