@@ -66,7 +66,9 @@ class CompanyUserAdmin(ForeignKeyAutocompleteAdmin):
         js = ('django_extensions/js/jquery-1.7.2.min.js', )
 
     def save_model(self, request, obj, form, change):
-        # request isn't really accessible from forms; set inviting_user here
+        # request isn't really accessible from forms; pass inviting user to
+        # CompanyUser.save() so that it can be added to an Invitation if one
+        # is generated
         obj.save(inviting_user=request.user)
 
 
