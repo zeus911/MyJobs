@@ -13,5 +13,5 @@
     <div class="product-details">
         Created by: {{ record.created_by }}
     </div>
-    <a id="record-{{record.id}}" class="btn" href="{% url 'record_view' %}?partner={{ partner.id }}&id={{ record.id }}&offset={{ forloop.counter0 }}{% if contact_type %}&type={{ contact_type }}{% endif %}{% if contact_name %}&name={{ contact_name }}{% endif %}{% if date_start %}&date_start={{ date_start|date:'m/d/Y' }}{% endif %}{% if date_end %}&date_end={{ date_end|date:'m/d/Y' }}{% endif %}{% if admin_id %}&admin={{ admin_id }}{% endif %}">View</a>
+    <a class="btn" href="{% url 'record_view' %}?{% for key, values in request.GET.iterlists %}{% ifnotequal key 'page' %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}">View</a>
 </div>
