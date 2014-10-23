@@ -72,6 +72,59 @@ $(document).ready(function() {
         });
     }
 
+    // Removes span and adds input ready to be edited
+    $("body").on("click", "#per-page span", function() {
+        $(this).remove();
+        var value = $(this).text();
+        var input = document.createElement("input");
+        input.setAttribute("id", "per-page-input");
+        input.setAttribute("type", "text");
+        input.setAttribute("value", value);
+        var pp = document.getElementById("per-page");
+        pp.insertBefore(input, pp.firstChild);
+        $("#per-page-input").focus().select();
+    });
+
+    // New input from clicking #per-page span if user hits enter remove this
+    $("body").on("keypress", "#per-page-input", function(e) {
+        if(e.which == 13) {
+            $(this).hide();
+            if($(this).is(":focus")) $(this).focusout();
+        }
+    });
+
+    /*
+    When the user stops focusing or if this input is removed
+    add back the span to #per-page with new info
+    */
+    $("body").one("blur", "#per-page-input", function() {
+        if($(this).is(":visible")) $(this).hide();
+        if(!$("#per-page span").length > 0) {
+            var value = $(this).val();
+            var span = document.createElement("span");
+            var span_node = document.createTextNode(value);
+            span.appendChild(span_node);
+            var pp = document.getElementById("per-page");
+            pp.insertBefore(span, pp.firstChild);
+            run_ajax();
+        }
+    });
+
+    // switch sort status and run ajax
+    $("body").on("click", ".sort-by", function() {
+        if($(this).hasClass("active")) {
+            if($(this).hasClass("ascending")) {
+                $(this).removeClass("ascending").addClass("descending");
+            } else {
+                $(this).removeClass("descending").addClass("ascending");
+            }
+        } else {
+            $(".sort-by.active").removeClass("active descending ascending");
+            $(this).addClass("active ascending");
+        }
+        run_ajax();
+    });
+
     $(document).on("click", ".product-card:not(.not-clickable)", function() {
        window.location = $(this).find("a").attr("href");
     });
@@ -287,6 +340,17 @@ function build_data() {
     if(end_date)
         data.date_end = format_date(end_date);
 
+    var sort_by = $(".sort-by.active").text().toLowerCase();
+    if(sort_by)
+        data.sort_by = sort_by;
+    if($(".sort-by.active").hasClass("descending"))
+        data.desc = 1;
+
+    var per_page = $("#per-page span").text();
+    if(per_page && per_page != "10") {
+        data.per_page = per_page;
+    }
+
     return data
 }
 
@@ -398,6 +462,21 @@ function show_selected() {
                 if($(this).val() == value)
                     $(this).attr("selected", "selected");
             });
+        }
+        if(key == "sort_by") {
+            $(".sort-by").each(function() {
+                if(value == $(this).text().toLowerCase()) {
+                    $(this).addClass("active ascending");
+                } else {
+                    $(this).removeClass("active descending ascending");
+                }
+            });
+        }
+        if(key == "desc") {
+            $(".sort-by.active").removeClass("ascending").addClass("descending");
+        }
+        if(key == "per_page") {
+            $("#per-page span").text(value);
         }
     }
     // disable all buttons
