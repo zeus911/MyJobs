@@ -53,10 +53,7 @@ class UserResource(ModelResource):
         try:
             kwargs = {'email': email,
                       'password1': request.GET.get('password', ''),
-                      'custom_msg': request.GET.get('custom_msg'),
                       'request': request}
-            if kwargs['custom_msg']:
-                kwargs['in_reserve'] = True
             user, created = User.objects.create_user(send_email=True,
                                                      **kwargs)
 
