@@ -49,8 +49,8 @@ class HelpersTests(MyPartnersTestCase):
                     partner=self.partner.id,
                     record_type=record_type,
                     date=date,
-                    )
                 )
+            )
             request.user = self.staff_user
 
             response = helpers.get_records_from_request(request)
