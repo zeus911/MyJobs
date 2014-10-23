@@ -183,13 +183,16 @@ def get_records_from_request(request):
         'name': 'contact_name', 'date': 'date_time', None: 'date_time'}
     _, partner, _ = prm_worthy(request)
     # extract reelvant values from the request object
-    contact, contact_type, admin, range_start, range_end, sort_by = [
+    contact, contact_type, admin, range_start, range_end, sort_by, desc = [
         request.REQUEST.get(field) for field in [
             'contact', 'contact_type', 'admin', 'date_start', 'date_end',
-            'sort_by']]
+            'sort_by', 'desc']]
 
-
-    desc = '-' if bool(request.REQUEST.get('desc')) else ''
+    if not sort_by and not desc:
+        sort_by = 'date'
+        desc = '-'
+    else:
+        desc = '-' if desc else ''
 
     if range_start:
         range_start = datetime.strptime(range_start, '%m/%d/%Y').date()
@@ -508,8 +511,6 @@ def filter_partners(request, partner_library=False):
                     key=lambda p: (locations(p) == [], first_location(p)))
 
     elif "activity" in sort_by:
-        # treat ascending as meaning most recent, not earliest activity
-        sort_order = "" if sort_order else "-"
         if sort_order:
             partners = partners.annotate(
                 earliest_activity=Min('contactrecord__date_time')).order_by(
