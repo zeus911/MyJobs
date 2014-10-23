@@ -183,10 +183,8 @@ def get_records_from_request(request):
 
     # extract reelvant values from the request object
     contact, contact_type, admin, range_start, range_end = [
-        value if value not in ["all", "undefined", ""] else None for value in [
-            request.REQUEST.get(field) for field in [
-                "contact", "contact_type", "admin",
-                "date_start", "date_end"]]]
+        request.REQUEST.get(field) for field in [
+            'contact', 'contact_type', 'admin', 'date_start', 'date_end']]
 
     records = partner.get_contact_records(contact_name=contact,
         record_type=contact_type, created_by=admin)
