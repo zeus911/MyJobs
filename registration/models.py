@@ -180,7 +180,6 @@ class Invitation(models.Model):
                                                     in_reserve=True)[0]
         else:
             self.invitee_email = self.invitee.email
-        super(Invitation, self).save(*args, **kwargs)
 
         if not self.pk:
             ap = ActivationProfile.objects.get_or_create(user=self.invitee,
@@ -202,3 +201,5 @@ class Invitation(models.Model):
                 from_=from_), body, settings.DEFAULT_FROM_EMAIL)
             ap.sent = datetime_now()
             ap.save()
+
+        super(Invitation, self).save(*args, **kwargs)
