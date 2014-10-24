@@ -13,9 +13,12 @@ from django.core.urlresolvers import reverse
 from myjobs.models import User
 from myjobs.tests.factories import UserFactory
 from myjobs.tests.setup import MyJobsBase
+from myprofile.tests.factories import PrimaryNameFactory
 from registration.forms import InvitationForm
 from registration.models import ActivationProfile, Invitation
 from registration.tests.factories import InvitationFactory
+from seo.models import CompanyUser
+from seo.tests import CompanyFactory
 
 
 class RegistrationModelTests(MyJobsBase):
@@ -312,3 +315,74 @@ class InvitationModelTests(MyJobsBase):
             with self.assertRaises(ValidationError) as e:
                 Invitation(**args).save()
             self.assertEqual(e.exception.messages, [exception_text])
+
+    def test_invitation_emails_existing_user(self):
+        company = CompanyFactory()
+        user = UserFactory(email='companyuser@company.com',
+                           is_verified=False)
+
+        self.assertEqual(len(mail.outbox), 0)
+        self.client.post(reverse('admin:seo_companyuser_add'),
+                         {'user': user.pk,
+                          'company': company.pk})
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox.pop()
+        self.assertTrue('invitation' in email.subject)
+        self.assertEqual(email.from_email, settings.DEFAULT_FROM_EMAIL)
+        self.assertTrue(self.admin.email in email.body)
+        self.assertTrue(company.name in email.body)
+
+        ap = ActivationProfile.objects.get(email=user.email)
+
+        body = BeautifulSoup(email.body)
+        activation_href = body.select('a')[0].attrs['href']
+        activation_href = activation_href.replace('https://secure.my.jobs', '')
+        self.assertEqual(activation_href.split('?')[0],
+                         reverse('invitation_activate',
+                                 args=[ap.activation_key]))
+
+        self.client.logout()
+        self.client.get(activation_href)
+
+        user = User.objects.get(pk=user.pk)
+        self.assertTrue(user.is_verified)
+
+    def test_invitation_emails_new_user(self):
+        self.assertEqual(len(mail.outbox), 0)
+        Invitation(invitee_email='prm_user@company.com',
+                   inviting_user=self.admin).save()
+        self.assertEqual(len(mail.outbox), 1)
+
+        user = User.objects.get(email='prm_user@company.com')
+        self.assertTrue(user.in_reserve)
+        self.assertFalse(user.is_verified)
+        email = mail.outbox.pop()
+        self.assertTrue('invitation' in email.subject)
+        self.assertEqual(email.from_email, settings.DEFAULT_FROM_EMAIL)
+        self.assertTrue(self.admin.email in email.body)
+
+        ap = ActivationProfile.objects.get(email=user.email)
+
+        body = BeautifulSoup(email.body)
+        activation_href = body.select('a')[0].attrs['href']
+        activation_href = activation_href.replace('https://secure.my.jobs', '')
+        self.assertEqual(activation_href.split('?')[0],
+                         reverse('invitation_activate',
+                                 args=[ap.activation_key]))
+
+        self.client.logout()
+        response = self.client.get(activation_href)
+        self.assertTrue('Your temporary password is ' in response.content)
+
+        user = User.objects.get(pk=user.pk)
+        self.assertFalse(user.in_reserve)
+        self.assertTrue(user.is_verified)
+
+    def test_invitation_email_with_name(self):
+        PrimaryNameFactory(user=self.admin)
+
+        Invitation(invitee_email='prm_user@company.com',
+                   inviting_user=self.admin).save()
+
+        email = mail.outbox.pop()
+        self.assertTrue(self.admin.get_full_name() in email.body)

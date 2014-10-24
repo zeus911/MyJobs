@@ -5,7 +5,7 @@
 {% with invitation.inviting_user.get_full_name as inviting_user_name %}
     Dear {% if invitation.invitee.get_full_name %}{{ invitation.invitee.get_full_name }}{% else %}{{ invitation.invitee_email }}{% endif %},
 
-    {% url 'registration_activate' activation_key as url %}
+    {% url 'invitation_activate' activation_key as url %}
     {% if invitation.added_saved_search %}
         <p>
             {% if inviting_user_name %}
@@ -20,7 +20,7 @@
 
         <p>Please click on the Activate Account button below to get started.</p>
 
-        <a href="https://secure.my.jobs{{ url }}" class="btn">Activate Account</a>
+        <p><a href="https://secure.my.jobs{{ url }}?verify={{ invitation.invitee.user_guid}}" class="btn">Activate Account</a></p>
 
         Sincerely,<br />
         My.jobs on behalf of
@@ -30,28 +30,6 @@
             {{ invitation.inviting_user.email }}
         {% endif %}
     {% elif invitation.added_permission %}
-        <p>
-            Your colleague
-            {% if inviting_user_name %}
-                {{ inviting_user_name }}
-            {% else %}
-                {{ invitation.inviting_user.email }}
-            {% endif %}
-            has reserved a spot for you to join My.jobs in order to access and
-            administer your job board.
-        </p>
-
-        <p>To participate please click the Activate Account button below to get started.</p>
-
-        <a href="https://secure.my.jobs{{ url }}" class="btn">Activate Account</a>
-
-        Sincerely,<br />
-        {% if inviting_user_name %}
-            {{ inviting_user_name }}
-        {% else %}
-            {{ invitation.inviting_user.email }}
-        {% endif %}
-    {% else %}
         <p>
             {% if inviting_user_name %}
                 {{ inviting_user_name }}
@@ -65,7 +43,29 @@
 
         <p>To participate please click on the Activate Account button below to get started.</p>
 
-        <a href="https://secure.my.jobs{{ url }}" class="btn">Activate Account</a>
+        <p><a href="https://secure.my.jobs{{ url }}?verify={{ invitation.invitee.user_guid}}" class="btn">Activate Account</a></p>
+
+        Sincerely,<br />
+        {% if inviting_user_name %}
+            {{ inviting_user_name }}
+        {% else %}
+            {{ invitation.inviting_user.email }}
+        {% endif %}
+    {% else %}
+        <p>
+            Your colleague
+            {% if inviting_user_name %}
+                {{ inviting_user_name }}
+            {% else %}
+                {{ invitation.inviting_user.email }}
+            {% endif %}
+            has reserved a spot for you to join My.jobs in order to access and
+            administer your job board.
+        </p>
+
+        <p>To participate please click the Activate Account button below to get started.</p>
+
+        <p><a href="https://secure.my.jobs{{ url }}?verify={{ invitation.invitee.user_guid}}" class="btn">Activate Account</a></p>
 
         Sincerely,<br />
         {% if inviting_user_name %}
