@@ -105,9 +105,8 @@ def ajax_get_facets(request, filter_path, facet_type):
                                        request.META.get('QUERY_STRING', ''))
         custom_facets_count_tuples = cache.get(cust_key)
         if custom_facets_count_tuples is None:
-            custom_facets_count_tuples = helpers.get_solr_facet(settings.SITE_ID,
-                                                                settings.SITE_BUIDS,
-                                                                filters)
+            custom_facets_count_tuples = helpers.get_solr_facet(
+                settings.SITE_ID, settings.SITE_BUIDS, filters)
             cache.set(cust_key, custom_facets_count_tuples)
 
         items = helpers.more_custom_facets(custom_facets_count_tuples, filters,
