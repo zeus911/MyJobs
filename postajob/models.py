@@ -560,10 +560,6 @@ class ProductGrouping(BaseModel):
             next_order = next_order.aggregate(models.Max('display_order'))
             self.display_order = ((next_order['display_order__max'] + 1)
                                   if next_order['display_order__max'] else 1)
-        elif not self.is_displayed:
-            # Force the display order to 0 if the ProductGrouping isn't
-            # supposed to be displayed.
-            self.display_order = 0
         super(ProductGrouping, self).save(**kwargs)
 
 
