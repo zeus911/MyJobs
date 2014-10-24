@@ -144,7 +144,7 @@ class Invitation(models.Model):
     """
     inviting_user = models.ForeignKey('myjobs.User', editable=False,
                                       related_name='invites_sent',
-                                      blank=True, null=True)
+                                      null=True)
     inviting_company = models.ForeignKey('seo.Company', blank=True, null=True,
                                          related_name='invites_sent')
     invitee = models.ForeignKey('myjobs.User', related_name='invites',
@@ -187,4 +187,9 @@ class Invitation(models.Model):
                                  'key': ap.activation_key})
         body = Pynliner().from_string(body).run()
 
-        self.invitee.email_user('subject', body, 'from')
+        if self.inviting_user:
+            from_ = self.inviting_user.email
+        else:
+            from_ = self.inviting_company.name
+        self.invitee.email_user('My.jobs invitation from {from_}'.format(
+            from_=from_), body, settings.DEFAULT_FROM_EMAIL)

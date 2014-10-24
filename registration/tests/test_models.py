@@ -291,12 +291,20 @@ class InvitationModelTests(MyJobsBase):
         self.assertItemsEqual(users, set(users))
 
     def test_invitation_model_save_success(self):
+        self.assertEqual(User.objects.count(), 1)
         for args in [{'invitee_email': self.admin.email},
                      {'invitee': self.admin},
                      {'invitee_email': 'new_user@example.com'}]:
+            args.update({'inviting_user': self.admin})
             Invitation(**args).save()
+        self.assertEqual(User.objects.count(), 2)
 
     def test_invitation_model_save_failure(self):
+        """
+        When we try to create an invitation with no invitee or we provide a
+        mismatched User instance and email address, we should raise an
+        exception
+        """
         for args, exception_text in [({'invitee_email': 'new_user@example.com',
                                        'invitee': self.admin},
                                       'Invitee information does not match'),
