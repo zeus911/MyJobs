@@ -745,22 +745,36 @@ def prm_view_records(request):
     """
     company, partner, _ = prm_worthy(request)
     _, _, contact_records = get_records_from_request(request)
+    try:
+        page = int(request.GET.get('page', 1))
+    except ValueError:
+        page = 1
     # change number of objects per page
     paginated_records = add_pagination(request, contact_records, 1)
 
+    if len(paginated_records.object_list) > 1:
+        record = paginated_records.object_list[page - 1]
+    else:
+        record = paginated_records.object_list[0]
+
+    attachments = record.prmattachment_set.all()
+    record_history = ContactLogEntry.objects.filter(
+        object_id=record.pk, content_type_id=ContentType.objects.get_for_model(
+            ContactRecord).pk)
+
     ctx = {
+        'record': record,
         'records': paginated_records,
         'partner': partner,
         'company': company,
-        'attachments': None,
-        'record_history': None,
+        'attachments': attachments,
+        'record_history': record_history,
         'view_name': 'PRM',
-
+        'page': page
     }
 
     return render_to_response('mypartners/view_record.html', ctx,
                               RequestContext(request))
-
 
 @company_has_access('prm_access')
 def get_contact_information(request):
@@ -769,7 +783,7 @@ def get_contact_information(request):
     phone number if they have one.
 
     """
-    company, partner, user = prm_worthy(request)
+    _, partner, _ = prm_worthy(request)
 
     contact_id = request.REQUEST.get('contact_name')
     try:

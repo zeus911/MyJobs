@@ -8,7 +8,6 @@
 {% endblock %}
 
 {% block content %}
-    {% with records.object_list.0 as record %}
     <h1><a href="{% url 'prm' %}">{{ company.name }}</a> {% if partner %}<small><a href="{% url 'partner_overview' %}?partner={{ partner.id }}">{{ partner.name }}</a></small>{% endif %}</h1>
     <div class="row">
         <div class="span12 prm-header">
@@ -118,5 +117,4 @@
             </div>
         </div>
     </div>
-    {% endwith %}
 {% endblock content %}

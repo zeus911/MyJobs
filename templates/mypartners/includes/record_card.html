@@ -13,5 +13,5 @@
     <div class="product-details">
         Created by: {{ record.created_by }}
     </div>
-    <a class="btn" href="{% url 'record_view' %}?{% for key, values in request.GET.iterlists %}{% ifnotequal key 'page' %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}">View</a>
+    <a class="btn" href="{% url 'record_view' %}?{% for key, values in request.GET.iterlists %}{% ifnotequal key 'page' %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ index }}">View</a>
 </div>
