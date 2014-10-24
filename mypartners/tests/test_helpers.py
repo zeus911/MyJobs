@@ -93,9 +93,9 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
         request = self.request_factory.get(
             'prm/view/partner-library/', dict(company=self.company.id))
 
-        response = helpers.filter_partners(request, partner_library=True)
+        partners = helpers.filter_partners(request, partner_library=True)
 
-        self.assertEqual(len(response), partner_count)
+        self.assertEqual(len(partners), partner_count)
 
     def test_ofccp_duplicates_ignored(self):
         """
@@ -131,10 +131,10 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
                 keywords='center, .org'))
         request.user = self.staff_user
 
-        response = helpers.filter_partners(request, partner_library=True)
-        self.assertTrue(len(response) != 0)
+        partners = helpers.filter_partners(request, partner_library=True)
+        self.assertTrue(partners)
 
-        for partner in response:
+        for partner in partners:
             searchable_fields = " ".join(
                 [partner.name, partner.uri, partner.contact_name]).lower()
 
@@ -152,10 +152,10 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
                 state='PA'))
         request.user = self.staff_user
 
-        response = helpers.filter_partners(request, partner_library=True)
-        self.assertTrue(len(response) != 0)
+        partners = helpers.filter_partners(request, partner_library=True)
+        self.assertTrue(partners)
 
-        for partner in response:
+        for partner in partners:
             self.assertEqual(partner.st, 'PA')
 
     def test_city_filter(self):
@@ -169,10 +169,10 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
                 city='Monaca'))
         request.user = self.staff_user
 
-        response = helpers.filter_partners(request, partner_library=True)
-        self.assertTrue(len(response))
+        partners = helpers.filter_partners(request, partner_library=True)
+        self.assertTrue(partners)
 
-        for partner in response:
+        for partner in partners:
             self.assertEqual(partner.city, 'Monaca')
 
     def test_date_filters(self):
@@ -203,9 +203,9 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
                     end_date=end_date.strftime("%m/%d/%Y")))
             request.user = self.staff_user
 
-            response = helpers.filter_partners(request)
+            partners = helpers.filter_partners(request)
 
-            for partner in response:
+            for partner in partners:
                 date_times = [c.date_time.date()
                               for c in partner.contactrecord_set.all()]
 
