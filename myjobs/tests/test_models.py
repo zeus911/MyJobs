@@ -114,7 +114,6 @@ class UserManagerTests(MyJobsBase):
         resp = client.get(reverse('saved_search_main'))
         self.assertIn('Saved Search', resp.content)
 
-
         # Inactive user
         user.is_verified= False
         user.save()
