@@ -94,6 +94,8 @@ function send_info(data, table) {
         success: function(html) {
             $(".product-card").each(function() { $(this).remove() });
             $(".card-wrapper").append(html);
+            $("#group-"+data['a']+"").effect("highlight", {}, 1000);
+            $("#group-"+data['b']+"").effect("highlight", {}, 1000);
             edit_order_setup(table);
         }
     });

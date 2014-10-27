@@ -20,7 +20,7 @@ Offline Purchase
     <div class="span8">
         <a href="{% url 'offlinepurchase_add' %}" class="btn">Add an Offline Purchase</a>
         <br /><br />
-        {% include "postajob/includes/offlinepurchase_formBox.html" with formBox_title="Offline Purchases" formBox_footer=False %}
+        {% include "postajob/includes/offlinepurchase_formBox.html" with wrapper_title="Offline Purchases" %}
     </div>
     <div class="span4">
         {% include "postajob/includes/postajob_navigation.html" %}
