@@ -51,21 +51,6 @@ class ApiTestCase(DirectSEOTestCase):
         self.assertEqual(len(self.deserialize(resp)['objects']), 1)
         self.assertEqual(resp.status_code, 200)
         self.serializer.from_json(resp.content)
-        
-    def test_get_detail_json(self):
-        resp = self.client.get("/api/v1/seosite/1/%s&format=json" % (self.auth_qs))
-        self.assertEqual(resp.status_code, 200)
-        self.serializer.from_json(resp.content)
-        self.assertEqual(sorted(self.deserialize(resp).keys()),
-                        sorted(['ats_source_codes','business_units',
-                                'special_commitments','google_analytics',
-                                'site_title', 'resource_uri',
-                                'billboard_images', 'group', 'name',
-                                'view_sources', 'facets', 'site_heading',
-                                'domain', 'site_description','id',
-                                'configurations']))
-        self.assertEqual(self.deserialize(resp)['name'], 'Test')
-
 
     def test_get_detail_xml(self):
         resp = self.client.get("/api/v1/seosite/1/%s&format=xml" % (self.auth_qs))

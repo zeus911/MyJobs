@@ -6,6 +6,7 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse_lazy
 from django.core.validators import validate_email, URLValidator
+from django.core.urlresolvers import reverse_lazy
 from django import forms
 from django.forms import (CharField, CheckboxSelectMultiple,
                           HiddenInput, IntegerField, ModelMultipleChoiceField,
@@ -349,10 +350,31 @@ class ProductForm(RequestForm):
         if self.instance.pk and self.instance.num_jobs_allowed != 0:
             self.initial['job_limit'] = 'specific'
 
+        profile = get_object_or_none(CompanyProfile, company=self.company)
+        if (not profile or not
+            (profile.authorize_net_login and
+             profile.authorize_net_transaction_key)):
+            self.initial['cost'] = 0
+            self.fields['cost'].widget.attrs['readonly'] = True
+            self.fields['cost'].help_text = ('You cannot charge for '
+                                             'jobs until you <a href=%s>'
+                                             'add your Authorize.net account '
+                                             'information</a>.' %
+                                             reverse_lazy('companyprofile_add'))
+            setattr(self, 'no_payment_info', True)
+
     def clean(self):
-        num_jobs_selector = self.cleaned_data.get('job_limit')
+        data = self.cleaned_data
+
+        num_jobs_selector = data.get('job_limit')
         if num_jobs_selector == 'unlimited':
             self.cleaned_data['num_jobs_allowed'] = 0
+
+        if hasattr(self, 'no_payment_info') and not data['requires_approval']:
+            msg = 'Free jobs require approval.'
+            self._errors['requires_approval'] = self.error_class([msg])
+            raise ValidationError(msg)
+
         return self.cleaned_data
 
 
@@ -415,6 +437,90 @@ class ProductGroupingForm(RequestForm):
         return instance
 
 
+def make_company_from_purchased_product(product_form_instance):
+    cleaned_data = product_form_instance.cleaned_data
+    company_name = cleaned_data.get('company_name')
+    product_form_instance.company = Company.objects.create(name=company_name)
+    cu = CompanyUser.objects.create(user=product_form_instance.request.user,
+                                    company=product_form_instance.company)
+    profile = CompanyProfile.objects.create(
+        company=product_form_instance.company,
+        address_line_one=cleaned_data.get('address_line_one'),
+        address_line_two=cleaned_data.get('address_line_two'),
+        city=cleaned_data.get('city'),
+        country=cleaned_data.get('country'),
+        state=cleaned_data.get('state'),
+        zipcode=cleaned_data.get('zipcode'),
+    )
+    profile.customer_of.add(product_form_instance.product.owner)
+    profile.save()
+    cu.make_purchased_microsite_admin()
+
+
+class PurchasedProductNoPurchaseForm(RequestForm):
+    class Meta:
+        model = PurchasedProduct
+        fields = ('address_line_one', 'address_line_two', 'city', 'state',
+                  'country', 'zipcode')
+
+    class Media:
+        css = {
+            'all': ('postajob.153-10.css', )
+        }
+
+    address_line_one = CharField(label='Address Line One')
+    address_line_two = CharField(label='Address Line Two',
+                                 required=False)
+    city = CharField(label='City')
+    state = CharField(label='State')
+    country = CharField(label='Country')
+    zipcode = CharField(label='Zip Code')
+
+    def __init__(self, *args, **kwargs):
+        self.product = kwargs.pop('product', None)
+        super(PurchasedProductNoPurchaseForm, self).__init__(*args, **kwargs)
+        if not self.company:
+            self.fields['company_name'] = CharField(label='Company Name')
+            self.fields.keyOrder.insert(0, self.fields.keyOrder.pop())
+
+    def clean(self):
+        if not self.company:
+            company_name = self.cleaned_data.get('company_name')
+            msg = clean_company_name(company_name, None)
+            if msg:
+                self._errors['company_name'] = self.error_class([msg])
+                raise ValidationError(msg)
+
+        return self.cleaned_data
+
+    def save(self, commit=True):
+        if not self.company:
+            make_company_from_purchased_product(self)
+
+        invoice = Invoice.objects.create(
+            address_line_one=self.cleaned_data.get('address_line_one'),
+            address_line_two=self.cleaned_data.get('address_line_two'),
+            card_exp_date=date.today(),
+            card_last_four='FREE',
+            city=self.cleaned_data.get('city'),
+            country=self.cleaned_data.get('country'),
+            first_name=self.request.user.first_name,
+            last_name=self.request.user.last_name,
+            owner=self.product.owner,
+            state=self.cleaned_data.get('state'),
+            transaction='FREE',
+            zipcode=self.cleaned_data.get('zipcode'),
+        )
+        self.instance.invoice = invoice
+        self.instance.product = self.product
+        self.instance.owner = self.company
+
+        super(PurchasedProductNoPurchaseForm, self).save(commit)
+
+        invoice.save()
+        invoice.send_invoice_email([self.request.user.email])
+
+
 class PurchasedProductForm(RequestForm):
     class Meta:
         model = PurchasedProduct
@@ -474,6 +580,8 @@ class PurchasedProductForm(RequestForm):
                             address, self.cleaned_data.get('city'),
                             self.cleaned_data.get('state'),
                             self.cleaned_data.get('zip_code'),
+                            self.product.owner.companyprofile.authorize_net_login,
+                            self.product.owner.companyprofile.authorize_net_transaction_key,
                             self.cleaned_data.get('country'))
         except AuthorizeInvalidError, e:
             self._errors['card_number'] = self.error_class([e.message])
@@ -490,11 +598,7 @@ class PurchasedProductForm(RequestForm):
 
     def save(self, commit=True):
         if not self.company:
-            company_name = self.cleaned_data.get('company_name')
-            self.company = Company.objects.create(name=company_name)
-            cu = CompanyUser.objects.create(user=self.request.user,
-                                            company=self.company)
-            cu.make_purchased_microsite_admin()
+            make_company_from_purchased_product()
 
         invoice = Invoice.objects.create(
             address_line_one=self.cleaned_data.get('address_line_one'),

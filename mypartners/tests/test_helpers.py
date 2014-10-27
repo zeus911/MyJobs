@@ -117,7 +117,7 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
         request.user = self.staff_user
         library = helpers.filter_partners(request, partner_library=True)
 
-        self.assertFalse(library.filter(id=partner.library.id).exists())
+        self.assertFalse(partner.library.id in [p.id for p in library])
 
     def test_keyword_filter(self):
         """
