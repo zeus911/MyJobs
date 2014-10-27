@@ -29,7 +29,7 @@ urlpatterns = patterns(
     url(r'^authorize/', include('mysignon.urls')),
     url(r'^message/', include('mymessages.urls')),
     url(r'^prm/', include('mypartners.urls')),
-    url(r'^postajob/', include('postajob.urls')),
+    url(r'^posting/', include('postajob.urls')),
 )
 
 

@@ -1,8 +1,7 @@
 from datetime import date, timedelta
 from bs4 import BeautifulSoup
-from mock import patch, Mock
-from StringIO import StringIO
 
+from django.conf import settings
 from django.core import mail
 from django.core.urlresolvers import reverse
 
@@ -22,6 +21,7 @@ from postajob.models import (CompanyProfile, Job, OfflinePurchase, Package,
                              Product, ProductGrouping, PurchasedJob,
                              PurchasedProduct, Request, SitePackage,
                              ProductOrder, JobLocation)
+from seo.models import Company
 from universal.helpers import build_url
 
 
@@ -30,7 +30,15 @@ class ViewTests(MyJobsBase):
         super(ViewTests, self).setUp()
         self.user = UserFactory()
         self.company = CompanyFactory(product_access=True)
-        CompanyProfile.objects.create(company=self.company)
+        CompanyProfile.objects.create(
+            company=self.company,
+            address_line_one='123 Somewhere Rd',
+            city='Indianapolis',
+            state='IN',
+            country='USA',
+            zipcode='46268',
+            authorize_net_login=settings.TESTING_CC_AUTH['api_id'],
+            authorize_net_transaction_key=settings.TESTING_CC_AUTH['transaction_key'])
         self.site = SeoSiteFactory()
         self.bu = BusinessUnitFactory()
         self.site.business_units.add(self.bu)
@@ -143,10 +151,12 @@ class ViewTests(MyJobsBase):
         for form_data in [self.job_form_data, self.purchasedjob_form_data]:
             form_data.update(self.location_management_form_data)
 
-    def login_user(self):
+    def login_user(self, user=None):
+        if not user:
+            user = self.user
         self.client.post(reverse('home'),
                          data={
-                             'username': self.user.email,
+                             'username': user.email,
                              'password': 'secret',
                              'action': 'login',
                          })
@@ -177,17 +187,17 @@ class ViewTests(MyJobsBase):
         self.assertEqual(Job.objects.all().count(), 1)
 
     def test_job_access_allowed(self):
+        resp_url = reverse('jobs_overview')
+
         job = JobFactory(owner=self.company, created_by=self.user)
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_update', kwargs=kwargs),
                                     data=self.job_form_data)
-        self.assertRedirects(response, 'http://testserver/postajob/jobs/',
-                             status_code=302)
+        self.assertRedirects(response, resp_url, status_code=302)
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
-        self.assertRedirects(response, 'http://testserver/postajob/jobs/',
-                             status_code=302)
-    
+        self.assertRedirects(response, resp_url, status_code=302)
+
     def test_job_add(self):
         response = self.client.post(reverse('job_add'), data=self.job_form_data,
                                     follow=True)
@@ -370,6 +380,27 @@ class ViewTests(MyJobsBase):
         # Should get the product just added + self.product
         self.assertEqual(Product.objects.all().count(), 2)
 
+    def test_product_add_no_authorize_acct(self):
+        self.company.companyprofile.authorize_net_transaction_key = ''
+        self.company.companyprofile.authorize_net_login = ''
+        self.company.companyprofile.save()
+
+        response = self.client.post(reverse('product_add'),
+                                    data=self.product_form_data,
+                                    follow=True)
+        self.assertIn('You cannot charge for jobs', response.content)
+
+        data = dict(self.product_form_data)
+        data['cost'] = 0
+        data['requires_approval'] = False
+        response = self.client.post(reverse('product_add'), data=data,
+                                    follow=True)
+        self.assertIn('Free jobs require approval', response.content)
+
+        data['requires_approval'] = True
+        self.client.post(reverse('product_add'), data=data, follow=True)
+        self.assertEqual(Product.objects.all().count(), 2)
+
     def test_product_update(self):
         self.product_form_data['name'] = 'New Title'
         kwargs = {'pk': self.product.pk}
@@ -461,6 +492,56 @@ class ViewTests(MyJobsBase):
         self.assertEqual(purchase.expiration_date, exp_date)
         self.assertEqual(len(mail.outbox), 1)
 
+    def test_purchasedproduct_add_free_product_existing_company_with_address(self):
+        self.assertEqual(PurchasedProduct.objects.all().count(), 0)
+        self.product.cost = 0
+        self.product.save()
+        product = {'product': self.product.pk}
+        response = self.client.get(reverse('purchasedproduct_add',
+                                           kwargs=product),
+                                   follow=True)
+        url = reverse('purchasedjobs_overview')
+        self.assertTrue(response.redirect_chain[-1][0].endswith(url))
+        self.assertEqual(PurchasedProduct.objects.all().count(), 1)
+
+    def test_purchasedproduct_add_free_product_existing_company_no_address(self):
+        self.assertEqual(PurchasedProduct.objects.all().count(), 0)
+        self.product.cost = 0
+        self.product.save()
+        self.company.companyprofile.delete()
+        product = {'product': self.product.pk}
+        data = dict(self.purchasedproduct_form_data)
+        del data['card_number']
+        del data['cvv']
+        del data['exp_date_0']
+        del data['exp_date_1']
+        self.client.post(reverse('purchasedproduct_add',
+                                 kwargs=product),
+                         data=data,
+                         follow=True)
+        self.assertEqual(PurchasedProduct.objects.all().count(), 1)
+
+    def test_purchasedproduct_add_free_product_no_company(self):
+        new_user = UserFactory(email='test@test.test')
+        self.login_user(user=new_user)
+        self.assertEqual(PurchasedProduct.objects.all().count(), 0)
+        self.product.cost = 0
+        self.product.save()
+        self.company.companyprofile.delete()
+        product = {'product': self.product.pk}
+        data = dict(self.purchasedproduct_form_data)
+        del data['card_number']
+        del data['cvv']
+        del data['exp_date_0']
+        del data['exp_date_1']
+        data['company_name'] = 'Test New Company'
+        self.client.post(reverse('purchasedproduct_add',
+                                 kwargs=product),
+                         data=data,
+                         follow=True)
+        Company.objects.get(name=data['company_name'])
+        self.assertEqual(PurchasedProduct.objects.all().count(), 1)
+
     def test_purchasedproduct_add_card_declined(self):
         # Change the card number so it doesn't artificially get declined
         # due to duplicate transactions.
@@ -532,7 +613,6 @@ class ViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 404)
 
     def test_offlinepurchase_redeem(self):
-        from postajob.models import OfflineProduct
         offline_purchase = OfflinePurchaseFactory(
             owner=self.company, created_by=self.company_user)
         OfflineProductFactory(
@@ -541,7 +621,6 @@ class ViewTests(MyJobsBase):
 
 
         data = {'redemption_id': offline_purchase.redemption_uid}
-        print data['redemption_id']
         current_product_count = PurchasedProduct.objects.all().count()
         response = self.client.post(reverse('offlinepurchase_redeem'),
                                     data=data, follow=True)
