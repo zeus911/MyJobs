@@ -341,9 +341,9 @@ def compare(a, b):
 @register.assignment_tag(takes_context=True)
 def flatpage_site_heading(context):
     """
-     Returns site heading for pages where the context variable isn't loaded
+    Returns site heading for pages where the context variable isn't loaded
 
-     """
+    """
     return context.get('site_heading', settings.SITE_HEADING)
 
 
