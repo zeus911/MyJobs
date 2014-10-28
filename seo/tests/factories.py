@@ -85,7 +85,7 @@ class SpecialCommitmentFactory(factory.django.DjangoModelFactory):
     commit = "TestCommit"
 
 
-class SeoSiteFactory(factory.django.DjangoModelFactory):
+class SeoSiteFactory(SiteFactory):
     FACTORY_FOR = SeoSite
 
     group = factory.SubFactory(GroupFactory)

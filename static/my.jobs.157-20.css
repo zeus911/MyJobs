@@ -2779,6 +2779,11 @@ td .gravatar-blank,
         float: none;
     }
 
+    .message-box > .mobile-img {
+        display: block;
+        margin: auto;
+    }
+
     fieldset textarea,
     .profile-form-input input[type="text"],
     .profile-form-input input[type="password"] {
@@ -3572,9 +3577,14 @@ td .gravatar-blank,
     margin: 0;
 }
 
-.settings-nav li h4 {
+.settings-nav li h4,
+.message-box {
     margin: 0;
     padding: 20px;
+}
+
+.message-box > img, .message-box > p {
+    display: inline-block;
 }
 
 .settings-nav li:hover {
@@ -3979,4 +3989,3 @@ body.modal-open {
     font-size:66%;
     font-weight:normal
 }
-
