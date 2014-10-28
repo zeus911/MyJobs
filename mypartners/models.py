@@ -209,8 +209,7 @@ class Partner(models.Model):
         return records
 
     def get_contact_tags(self):
-        return Tag.objects.filter(id__in=self.contact_set.exclude(
-            tags__isnull=True).values_list('tags', flat=True).distinct())
+        return chain(*[c.tags.all() for c in self.contact_set.all()])
 
     def get_all_tags(self):
         tags = set(self.tags.all())
