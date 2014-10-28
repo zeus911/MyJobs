@@ -208,12 +208,14 @@ class Partner(models.Model):
 
         return records
 
-    def get_nested_tags(self):
-        """
-        Returns unique tags for the partner and all of its contacts.
-        """
-        return set(chain(*[c.tags.distinct().all() | self.tags.distinct().all()
-             for c in self.contact_set.all()]))
+    def get_contact_tags(self):
+        return Tag.objects.filter(id__in=self.contact_set.exclude(
+            tags__isnull=True).values_list('tags', flat=True).distinct())
+
+    def get_all_tags(self):
+        tags = set(self.tags.all())
+        tags.update(self.get_contact_tags())
+        return tags
 
 
 class PartnerLibrary(models.Model):
