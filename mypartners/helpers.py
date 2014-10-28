@@ -487,10 +487,10 @@ def filter_partners(request, partner_library=False):
         if partner_library:
             # no foreign keys, so we can do the "right" thing
             partners = partners.extra(select={
-                'no_city': "city == ''",
-                'no_state': "state == ''"}).order_by(
+                'no_city': "LENGTH(state) = 0",
+                'no_state': "LENGTH(city) = 0"}).order_by(
                     *['%s%s' % (sort_order, column) 
-                    for column in ['city', 'state', 'no_city', 'no_state']])
+                    for column in ['state', 'city', 'no_state', 'no_city']])
         else:
             # QuerySet.extra(select={}) doesn't traverse foreign keys, so we
             # use a few list transformations in order to sort by location and
