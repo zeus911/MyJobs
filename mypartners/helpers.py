@@ -439,7 +439,8 @@ def filter_partners(request, partner_library=False):
         start_date = request.REQUEST.get('start_date')
         end_date = request.REQUEST.get('end_date')
 
-        partners = Partner.objects.select_related('contact').prefetch_related(
+        partners = Partner.objects.prefetch_related(
+            'contact_set', 'contact_set__tags', 'contact_set__locations',
             'tags')
         contact_city = 'contact__locations__city'
         contact_state = 'contact__locations__state'
