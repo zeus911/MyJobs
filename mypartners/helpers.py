@@ -437,7 +437,8 @@ def filter_partners(request, partner_library=False):
         start_date = request.REQUEST.get('start_date')
         end_date = request.REQUEST.get('end_date')
 
-        partners = Partner.objects.select_related('contact')
+        partners = Partner.objects.select_related('contact').prefetch_related(
+            'tags')
         contact_city = 'contact__locations__city'
         contact_state = 'contact__locations__state'
         sort_by.replace('city', 'contact__locations__city')
@@ -477,16 +478,17 @@ def filter_partners(request, partner_library=False):
 
     # filter by tags
     for tag in tags:
-        partners = partners.filter(tags__name__icontains=tag)
+        partners = partners.filter(Q(tags__name__icontains=tag) | 
+                                   Q(contact__tags__name__icontains=tag))
 
     if "location" in sort_by:
         if partner_library:
             # no foreign keys, so we can do the "right" thing
             partners = partners.extra(select={
-                'no_city': "city == ''",
-                'no_state': "state == ''"}).order_by(
+                'no_city': "LENGTH(state) = 0",
+                'no_state': "LENGTH(city) = 0"}).order_by(
                     *['%s%s' % (sort_order, column) 
-                    for column in ['city', 'state', 'no_city', 'no_state']])
+                    for column in ['state', 'city', 'no_state', 'no_city']])
         else:
             # QuerySet.extra(select={}) doesn't traverse foreign keys, so we
             # use a few list transformations in order to sort by location and
@@ -498,12 +500,11 @@ def filter_partners(request, partner_library=False):
             first_location = lambda p: str(
                 locations(p)[0] if locations(p) else [])
 
-            # sort descending; [::-1] just reverses a list
             if sort_order:
                 partners = sorted(
                     (p for p in partners),
-                    key=lambda p: 
-                        (locations(p) != [], first_location(p)))[::-1]
+                    key=lambda p:
+                    (locations(p) != [], first_location(p)), reverse=True)
             # sort ascending
             else:
                 partners = sorted(
@@ -522,7 +523,7 @@ def filter_partners(request, partner_library=False):
     else:
         partners = partners.order_by(*[sort_by] + order_by)
 
-    return partners
+    return list(partners)
 
 
 def new_partner_from_library(request):

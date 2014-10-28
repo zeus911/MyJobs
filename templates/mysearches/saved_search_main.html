@@ -15,6 +15,7 @@
     </div>
 </div>
 
+{% if user.is_active and user.is_verified %}
 <div class="row">
     <div class="span12">
 
@@ -78,6 +79,9 @@
         </p>
     {% endif %}
 </div>
+{% else %}
+{% include 'includes/inactive-user.html' %}
+{% endif %}
 {% endblock content %}
 
 {% block extra-js %}

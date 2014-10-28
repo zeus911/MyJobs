@@ -1,8 +1,8 @@
-    $('#id_group').live('change', function(){
+    $('#id_group').on('change', function(){
 	    var val = $(this).val();
 	    if(val){
             // set the value from group ddl to GroupPermission.groupId
-            GroupPermission.setGroupId(val)
+            GroupPermission.setGroupId(val);
 	    	// check if we already have this ajax call's output cached and use it
 	        if(GroupPermission.getDataCacheEntry(val)){
 	            GroupPermission.setSelectsByGroup(GroupPermission.getDataCacheEntry(val));

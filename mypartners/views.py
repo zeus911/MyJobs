@@ -68,7 +68,7 @@ def prm(request):
         ctx = {
             'partners': paginator,
             'on_page': 'prm',
-            'ajax': 'true'
+            'ajax': 'true',
         }
         response = HttpResponse()
         html = render_to_response('mypartners/includes/partner_column.html',
@@ -1241,6 +1241,7 @@ def process_email(request):
                                               contact_name=contact.name,
                                               contact_email=contact.email,
                                               contact_phone=contact.phone,
+                                              created_by=admin_user,
                                               date_time=date_time,
                                               subject=subject,
                                               notes=force_text(email_text))

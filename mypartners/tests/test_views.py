@@ -101,6 +101,7 @@ class MyPartnerViewsTests(MyPartnersTestCase):
 
     def test_prm_page_with_a_partner(self):
         response = self.client.post('/prm/view')
+        self.assertEqual(response.status_code, 200)
         soup = BeautifulSoup(response.content)
 
         # 1 tr is dedicated to header, 1 tr for partner.
