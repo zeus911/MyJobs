@@ -19,11 +19,6 @@
     </div>
     <div class="row">
         <div class="span12">
-            {% if not user.is_active %}
-            <div class="alert alert-error">
-                <p>{% trans "Your account doesn't have full access to My.jobs features! Please activate it using the activation link sent to your email. "%} <a href="{% url 'resend_activation' %}">{% trans "Resend my activation email." %}</a></p>
-            </div>
-            {% endif %}
             {% if user.password_change %}
                 <div class="alert alert-error">
                     <p>Welcome to My.jobs. Before doing anything else, you need to change your password from the one we created for you.</p>
