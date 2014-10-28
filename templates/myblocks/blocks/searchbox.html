@@ -1,0 +1,43 @@
+{% load i18n %}
+{% load humanize %}
+{% load seo_extras %}
+
+<div class="direct-search-box-block {{ block.bootstrap_classes }}" id="direct-search-box-block-{{ block.id}}">
+    <form id="standardSearch" action={% if search_url %}"{{ search_url }}"{% else %}"/jobs/"{% endif %}>
+        <div class="row standard">
+            <div class="searchHeader" role="search">
+                <div class="searchTab">
+                    <label for="location">{% trans 'Where' %}</label>
+                    <input title="Search Location" type="text" name="location" id="location" class="micrositeLocationField" value={% if location_term != "\*" %}"{{ location_term }}"{% else %}""{% endif %} />
+                    <span class="helptext" id="where">{% blocktrans %}city, state, country{% endblocktrans %}</span>
+
+                </div>
+                <div class="searchTab">
+                    <label for="q">{% trans 'What' %}</label>
+                    <input title="Search Phrase" type="text" name="q" id="q" class="micrositeTitleField" value={% if title_term != "\*" %}"{{ title_term }}"{% else %}""{% endif %} />
+                    <span class="helptext" id="what">{% blocktrans %}job title, keywords{% endblocktrans %}</span>
+                </div>
+
+                <div class="stub">
+                    <div class="pull-right">
+                        <input title="Submit Search" type="submit" class="btn primary" value="search" />
+                    </div>
+                </div>
+            </div><!-- .searchHeader -->
+            <div class="clear"></div>
+        </div>
+        <div class="row">
+
+            <div class="searchFooter">
+                <a href="/" class="homeLink">{% blocktrans %}Home{% endblocktrans %}</a>
+                <a href="/jobs/" class="viewAllLink">
+                    {% view_all_jobs_label site_config.view_all_jobs_detail %}
+            <span class="totaljobs">
+                <span>(</span>{{total_jobs_count|intcomma}}<span>)</span>
+            </span>
+                </a>
+                <div style="clear:both"></div>
+            </div>
+        </div>
+    </form>
+</div>

@@ -2,6 +2,7 @@ import os.path
 from contextlib import contextmanager
 
 from django.core.cache import cache
+from django.core.urlresolvers import clear_url_caches
 from django.db import connections
 from django.test import TestCase
 
@@ -29,14 +30,16 @@ class DirectSEOBase(TestCase):
                            "utf8 collate utf8_unicode_ci")
             cursor.execute("alter table taggit_tag convert to character set "
                            "utf8 collate utf8_unicode_ci")
-            cursor.execute("alter table taggit_taggeditem convert to character set "
+            cursor.execute("alter table taggit_taggeditem convert to "
+                           "character set "
                            "utf8 collate utf8_unicode_ci")
-            cursor.execute("alter table seo_seositeredirect convert to character set "
-                           "utf8 collate utf8_unicode_ci")
-            cursor.execute("alter table django_redirect convert to character set "
-                           "utf8 collate utf8_unicode_ci")
+            cursor.execute("alter table seo_seositeredirect convert to "
+                           "character set utf8 collate utf8_unicode_ci")
+            cursor.execute("alter table django_redirect convert to "
+                           "character set utf8 collate utf8_unicode_ci")
 
         setattr(settings, 'ROOT_URLCONF', 'dseo_urls')
+        clear_url_caches()
 
         self.base_middleware_classes = settings.MIDDLEWARE_CLASSES
         middleware_classes = self.base_middleware_classes + (

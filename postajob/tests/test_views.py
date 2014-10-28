@@ -1,7 +1,5 @@
 from datetime import date, timedelta
 from bs4 import BeautifulSoup
-from mock import patch, Mock
-from StringIO import StringIO
 
 from django.conf import settings
 from django.core import mail
@@ -153,10 +151,12 @@ class ViewTests(MyJobsBase):
         for form_data in [self.job_form_data, self.purchasedjob_form_data]:
             form_data.update(self.location_management_form_data)
 
-    def login_user(self):
+    def login_user(self, user=None):
+        if not user:
+            user = self.user
         self.client.post(reverse('home'),
                          data={
-                             'username': self.user.email,
+                             'username': user.email,
                              'password': 'secret',
                              'action': 'login',
                          })
@@ -613,7 +613,6 @@ class ViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 404)
 
     def test_offlinepurchase_redeem(self):
-        from postajob.models import OfflineProduct
         offline_purchase = OfflinePurchaseFactory(
             owner=self.company, created_by=self.company_user)
         OfflineProductFactory(

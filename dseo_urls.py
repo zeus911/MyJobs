@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.db.models.loading import cache as model_cache
 from django.views.generic import RedirectView
 
+from registration.views import DseoLogin
 from seo.views import BusinessUnitAdminFilter
 
 
@@ -114,3 +115,9 @@ urlpatterns += patterns(
     'myjobs.views',
     url(r'^edit/$', 'edit_account', name='edit_account'),
 )
+
+urlpatterns += patterns(
+    'registration.views',
+    url(r'^login/', DseoLogin.as_view(), name='dseo_login'),
+)
+

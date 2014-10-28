@@ -105,9 +105,8 @@ def ajax_get_facets(request, filter_path, facet_type):
                                        request.META.get('QUERY_STRING', ''))
         custom_facets_count_tuples = cache.get(cust_key)
         if custom_facets_count_tuples is None:
-            custom_facets_count_tuples = helpers.get_solr_facet(settings.SITE_ID,
-                                                                settings.SITE_BUIDS,
-                                                                filters)
+            custom_facets_count_tuples = helpers.get_solr_facet(
+                settings.SITE_ID, settings.SITE_BUIDS, filters)
             cache.set(cust_key, custom_facets_count_tuples)
 
         items = helpers.more_custom_facets(custom_facets_count_tuples, filters,
@@ -320,7 +319,7 @@ def job_detail_by_title_slug_job_id(request, job_id, title_slug=None,
     else:
         if settings.SITE_BUIDS and the_job.buid not in settings.SITE_BUIDS:
             if the_job.on_sites and not (set(settings.SITE_PACKAGES) & set(the_job.on_sites)):
-                return redirect('nav_home')
+                return redirect('home')
 
     breadbox_path = helpers.job_breadcrumbs(the_job,
                                             site_config.browse_company_show)
@@ -1174,7 +1173,7 @@ def v2_redirect(request, v2_redirect=None, country=None, state=None, city=None, 
                                   'country_short': country.lower()}
             url = 'nav_city_slug'
         else:
-            url = 'nav_home'
+            url = 'home'
             LOG.debug("V2 redirect to home page", extra={
                 'view': 'v2_redirect',
                 'data': {
@@ -1182,7 +1181,7 @@ def v2_redirect(request, v2_redirect=None, country=None, state=None, city=None, 
                 }
             })
     except IndexError:
-        url = 'nav_home'
+        url = 'home'
         LOG.debug("V2 redirect to home page from IndexError", extra={
             'view': 'v2_redirect',
             'data': {
@@ -1875,3 +1874,4 @@ def test_markdown(request):
         }
         return render_to_response('seo/basic_form.html', data_dict,
                                   context_instance=RequestContext(request))
+

@@ -1,0 +1,8 @@
+{% load i18n %}
+
+<div class="direct-share-block {{ block.bootstrap_classes }}" id="direct-share-block-{{ block.id }}>">
+    <div id="direct_shareDiv" class="direct_rightColBox direct_shareSolo" role="menu">
+        <h3>{% trans "Share" %}</h3>
+        {% include 'includes/add_this.html' %}
+    </div>
+</div>

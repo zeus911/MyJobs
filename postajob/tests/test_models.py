@@ -1,9 +1,5 @@
 from datetime import date, timedelta
-from mock import patch, Mock
-from StringIO import StringIO
-from urlparse import parse_qs
 
-from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core import mail
 
@@ -11,7 +7,8 @@ from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          SeoSiteFactory)
 from seo.tests.factories import CompanyUserFactory
 from myjobs.models import User
-from postajob.models import (CompanyProfile, Job, JobLocation, OfflineProduct,
+from postajob.models import (CompanyProfile, Invoice, Job, JobLocation,
+                             OfflineProduct, OfflinePurchase, Package,
                              Product, ProductGrouping, ProductOrder,
                              PurchasedJob, PurchasedProduct, Request,
                              SitePackage)
@@ -20,6 +17,7 @@ from postajob.tests.factories import (JobFactory,
                                       OfflineProductFactory,
                                       OfflinePurchaseFactory,
                                       ProductFactory,
+                                      ProductGroupingFactory,
                                       PurchasedJobFactory,
                                       PurchasedProductFactory,
                                       SitePackageFactory)
@@ -305,21 +303,21 @@ class ModelTests(MyJobsBase):
                                   offline_purchase=offline_purchase,
                                   product_quantity=x)
             OfflineProductFactory(product=product_two,
-                                   offline_purchase=offline_purchase,
-                                   product_quantity=x)
+                                  offline_purchase=offline_purchase,
+                                  product_quantity=x)
             offline_purchase.create_purchased_products(self.company)
             self.assertEqual(PurchasedProduct.objects.all().count(), x*2)
 
     def test_offlinepurchase_filter_by_sites(self):
-        cu = CompanyUser.objects.create(company=self.company, user=self.user)
+        cu = CompanyUserFactory(user=self.user, company=self.company)
         for x in range(8800, 8815):
             domain = 'testsite-%s.jobs' % x
             site = SeoSiteFactory(id=x, domain=domain, name=domain)
-            site_package = sitepackage_factory(self.company)
+            site_package = SitePackageFactory(owner=self.company)
             site_package.make_unique_for_site(site)
-            product = product_factory(site_package, self.company)
+            product = ProductFactory(package=site_package, owner=self.company)
             for y in range(1, 5):
-                purchase = offlinepurchase_factory(self.company, cu)
+                purchase = OfflinePurchaseFactory(owner=self.company, created_by=cu)
                 OfflineProduct.objects.create(product=product,
                                               offline_purchase=purchase)
             count = OfflinePurchase.objects.filter_by_sites([site]).count()
@@ -328,25 +326,25 @@ class ModelTests(MyJobsBase):
         self.assertEqual(OfflinePurchase.objects.all().count(), 60)
 
     def test_invoice_filter_by_sites(self):
-        cu = CompanyUser.objects.create(company=self.company, user=self.user)
+        cu = CompanyUserFactory(user=self.user, company=self.company)
         for x in range(8800, 8815):
             domain = 'testsite-%s.jobs' % x
             site = SeoSiteFactory(id=x, domain=domain, name=domain)
-            site_package = sitepackage_factory(self.company)
+            site_package = SitePackageFactory(owner=self.company)
             site_package.make_unique_for_site(site)
-            product = product_factory(site_package, self.company)
+            product = ProductFactory(package=site_package, owner=self.company)
             for y in range(1, 5):
-                # offlinepurchase_factory() automatically creates the invoice.
-                purchase = offlinepurchase_factory(self.company, cu)
+                # OfflinePurchaseFactory() automatically creates the invoice.
+                purchase = OfflinePurchaseFactory(owner=self.company, created_by=cu)
                 OfflineProduct.objects.create(product=product,
                                               offline_purchase=purchase)
             # Confirm it correctly picks up Invoices associated with
             # OfflinePurchases.
             self.assertEqual(Invoice.objects.filter_by_sites([site]).count(), 4)
             for y in range(1, 5):
-                # purchasedproduct_factory() also automatically creates
+                # PurchasedProductFactory() also automatically creates
                 # the invoice.
-                purchasedproduct_factory(product, self.company)
+                PurchasedProductFactory(product=product, owner=self.company)
             # Confirm it correctly picks up Invoices associated with
             # PurchasedProducts.
             self.assertEqual(Invoice.objects.filter_by_sites([site]).count(), 8)
@@ -357,10 +355,10 @@ class ModelTests(MyJobsBase):
         for x in range(8800, 8815):
             domain = 'testsite-%s.jobs' % x
             site = SeoSiteFactory(id=x, domain=domain, name=domain)
-            site_package = sitepackage_factory(self.company)
+            site_package = SitePackageFactory(owner=self.company)
             site_package.make_unique_for_site(site)
             for y in range(1, 5):
-                product_factory(site_package, self.company)
+                ProductFactory(package=site_package, owner=self.company)
             self.assertEqual(Product.objects.filter_by_sites([site]).count(), 4)
 
         self.assertEqual(Product.objects.all().count(), 60)
@@ -369,13 +367,15 @@ class ModelTests(MyJobsBase):
         for x in range(8800, 8815):
             domain = 'testsite-%s.jobs' % x
             site = SeoSiteFactory(id=x, domain=domain, name=domain)
-            site_package = sitepackage_factory(self.company)
+            site_package = SitePackageFactory(owner=self.company)
             site_package.make_unique_for_site(site)
-            product = product_factory(site_package, self.company)
-            purchased_product = purchasedproduct_factory(product, self.company)
+            product = ProductFactory(package=site_package, owner=self.company)
+            purchased_product = PurchasedProductFactory(product=product,
+                                                        owner=self.company)
             for y in range(1, 5):
                 # Unapproved purchased jobs should create Requests.
-                purchasedjob_factory(self.company, self.user, purchased_product)
+                PurchasedJobFactory(owner=self.company, created_by=self.user,
+                                    purchased_product=purchased_product)
             self.assertEqual(Request.objects.filter_by_sites([site]).count(), 4)
 
         self.assertEqual(Request.objects.all().count(), 60)
@@ -384,11 +384,11 @@ class ModelTests(MyJobsBase):
         for x in range(8800, 8815):
             domain = 'testsite-%s.jobs' % x
             site = SeoSiteFactory(id=x, domain=domain, name=domain)
-            site_package = sitepackage_factory(self.company)
+            site_package = SitePackageFactory(owner=self.company)
             site_package.make_unique_for_site(site)
             for y in range(1, 5):
-                product = product_factory(site_package, self.company)
-                purchasedproduct_factory(product, self.company)
+                product = ProductFactory(package=site_package, owner=self.company)
+                PurchasedProductFactory(product=product, owner=self.company)
             count = PurchasedProduct.objects.filter_by_sites([site]).count()
             self.assertEqual(count, 4)
 
@@ -398,10 +398,10 @@ class ModelTests(MyJobsBase):
         for x in range(8800, 8815):
             domain = 'testsite-%s.jobs' % x
             site = SeoSiteFactory(id=x, domain=domain, name=domain)
-            site_package = sitepackage_factory(self.company)
+            site_package = SitePackageFactory(owner=self.company)
             site_package.make_unique_for_site(site)
             for y in range(1, 5):
-                job = job_factory(self.company, self.user)
+                job = JobFactory(owner=self.company, created_by=self.user)
                 job.site_packages.add(site_package)
                 job.save()
             self.assertEqual(Job.objects.filter_by_sites([site]).count(), 4)
@@ -412,13 +412,15 @@ class ModelTests(MyJobsBase):
         for x in range(8800, 8815):
             domain = 'testsite-%s.jobs' % x
             site = SeoSiteFactory(id=x, domain=domain, name=domain)
-            site_package = sitepackage_factory(self.company)
+            site_package = SitePackageFactory(owner=self.company)
             site_package.make_unique_for_site(site)
-            product = product_factory(site_package, self.company)
-            purchased_product = purchasedproduct_factory(product, self.company)
+            product = ProductFactory(package=site_package, owner=self.company)
+            purchased_product = PurchasedProductFactory(product=product,
+                                                        owner=self.company)
             for y in range(1, 5):
-                job = purchasedjob_factory(self.company, self.user,
-                                           purchased_product)
+                job = PurchasedJobFactory(owner=self.company,
+                                          created_by=self.user,
+                                          purchased_product=purchased_product)
                 job.site_packages.add(site_package)
                 job.save()
             count = PurchasedJob.objects.filter_by_sites([site]).count()
@@ -430,12 +432,12 @@ class ModelTests(MyJobsBase):
         for x in range(8800, 8815):
             domain = 'testsite-%s.jobs' % x
             site = SeoSiteFactory(id=x, domain=domain, name=domain)
-            site_package = sitepackage_factory(self.company)
+            site_package = SitePackageFactory(owner=self.company)
             site_package.make_unique_for_site(site)
-            product = product_factory(site_package, self.company)
+            product = ProductFactory(package=site_package, owner=self.company)
             for y in range(1, 5):
-                grouping = productgrouping_factory(self.company,
-                                                   display_order=y)
+                grouping = ProductGroupingFactory(owner=self.company,
+                                                  display_order=y)
                 ProductOrder.objects.create(product=product, group=grouping,
                                             display_order=y)
             count = ProductGrouping.objects.filter_by_sites([site]).count()
@@ -448,7 +450,7 @@ class ModelTests(MyJobsBase):
             domain = 'testsite-%s.jobs' % x
             site = SeoSiteFactory(id=x, domain=domain, name=domain)
             for y in range(1, 5):
-                site_package = sitepackage_factory(self.company)
+                site_package = SitePackageFactory(owner=self.company)
                 site_package.sites.add(site)
                 site_package.save()
             count = SitePackage.objects.filter_by_sites([site]).count()
@@ -462,16 +464,16 @@ class ModelTests(MyJobsBase):
     def test_product_filter_by_site_multiple_sites(self):
         site_in_both_packages = SeoSiteFactory(domain='secondsite.jobs', id=7)
 
-        single_site_package = sitepackage_factory(self.company)
+        single_site_package = SitePackageFactory(owner=self.company)
         single_site_package.make_unique_for_site(site_in_both_packages)
 
-        both_sites_package = sitepackage_factory(self.company)
+        both_sites_package = SitePackageFactory(owner=self.company)
         both_sites_package.sites.add(site_in_both_packages)
         both_sites_package.sites.add(self.site)
         both_sites_package.save()
 
-        product_factory(single_site_package, self.company)
-        product_factory(both_sites_package, self.company)
+        ProductFactory(package=single_site_package, owner=self.company)
+        ProductFactory(package=both_sites_package, owner=self.company)
 
         self.assertEqual(Product.objects.all().count(), 2)
 
@@ -493,19 +495,19 @@ class ModelTests(MyJobsBase):
     def test_job_filter_by_site_multiple_sites(self):
         site_in_both_packages = SeoSiteFactory(domain='secondsite.jobs', id=7)
 
-        single_site_package = sitepackage_factory(self.company)
+        single_site_package = SitePackageFactory(owner=self.company)
         single_site_package.make_unique_for_site(site_in_both_packages)
 
-        both_sites_package = sitepackage_factory(self.company)
+        both_sites_package = SitePackageFactory(owner=self.company)
         both_sites_package.sites.add(site_in_both_packages)
         both_sites_package.sites.add(self.site)
         both_sites_package.save()
 
-        job_on_both = job_factory(self.company, self.user)
+        job_on_both = JobFactory(owner=self.company, created_by=self.user)
         job_on_both.site_packages.add(both_sites_package)
         job_on_both.save()
 
-        job_on_new_site = job_factory(self.company, self.user)
+        job_on_new_site = JobFactory(owner=self.company, created_by=self.user)
         job_on_new_site.site_packages.add(single_site_package)
         job_on_new_site.save()
 
@@ -528,19 +530,19 @@ class ModelTests(MyJobsBase):
     def test_purchasedproduct_filter_by_site_multiple_sites(self):
         site_in_both_packages = SeoSiteFactory(domain='secondsite.jobs', id=7)
 
-        single_site_package = sitepackage_factory(self.company)
+        single_site_package = SitePackageFactory(owner=self.company)
         single_site_package.make_unique_for_site(site_in_both_packages)
 
-        both_sites_package = sitepackage_factory(self.company)
+        both_sites_package = SitePackageFactory(owner=self.company)
         both_sites_package.sites.add(site_in_both_packages)
         both_sites_package.sites.add(self.site)
         both_sites_package.save()
 
-        single_site_product = product_factory(single_site_package, self.company)
-        purchasedproduct_factory(single_site_product, self.company)
+        single_site_product = ProductFactory(package=single_site_package, owner=self.company)
+        PurchasedProductFactory(product=single_site_product, owner=self.company)
 
-        both_sites_product = product_factory(both_sites_package, self.company)
-        purchasedproduct_factory(both_sites_product, self.company)
+        both_sites_product = ProductFactory(package=both_sites_package, owner=self.company)
+        PurchasedProductFactory(product=both_sites_product, owner=self.company)
 
         self.assertEqual(PurchasedProduct.objects.all().count(), 2)
 
@@ -556,33 +558,34 @@ class ModelTests(MyJobsBase):
 
         # Confirm that filtering by the site the site that has both products
         #  gets both jobs.
-        count = PurchasedProduct.objects.filter_by_sites([site_in_both_packages]).count()
+        objs = PurchasedProduct.objects.filter_by_sites([site_in_both_packages])
+        count = objs.count()
         self.assertEqual(count, 2)
 
     def test_purchasedjob_filter_by_site_multiple_sites(self):
         site_in_both_packages = SeoSiteFactory(domain='secondsite.jobs', id=7)
 
-        single_site_package = sitepackage_factory(self.company)
+        single_site_package = SitePackageFactory(owner=self.company)
         single_site_package.make_unique_for_site(site_in_both_packages)
 
-        both_sites_package = sitepackage_factory(self.company)
+        both_sites_package = SitePackageFactory(owner=self.company)
         both_sites_package.sites.add(site_in_both_packages)
         both_sites_package.sites.add(self.site)
         both_sites_package.save()
 
-        single_site_product = product_factory(single_site_package, self.company)
-        single_site_purchasedproduct = purchasedproduct_factory(
-            single_site_product, self.company)
+        single_site_product = ProductFactory(package=single_site_package, owner=self.company)
+        single_site_purchasedproduct = PurchasedProductFactory(
+            product=single_site_product, owner=self.company)
 
-        both_sites_product = product_factory(both_sites_package, self.company)
-        both_sites_purchasedproduct = purchasedproduct_factory(
-            both_sites_product, self.company
+        both_sites_product = ProductFactory(package=both_sites_package, owner=self.company)
+        both_sites_purchasedproduct = PurchasedProductFactory(
+            product=both_sites_product, owner=self.company
         )
 
-        purchasedjob_factory(self.company, self.user,
-                             single_site_purchasedproduct)
-        purchasedjob_factory(self.company, self.user,
-                             both_sites_purchasedproduct)
+        PurchasedJobFactory(owner=self.company, created_by=self.user,
+                            purchased_product=single_site_purchasedproduct)
+        PurchasedJobFactory(owner=self.company, created_by=self.user,
+                            purchased_product=both_sites_purchasedproduct)
 
         self.assertEqual(PurchasedJob.objects.all().count(), 2)
 
@@ -598,16 +601,17 @@ class ModelTests(MyJobsBase):
 
         # Confirm that filtering by the site the site that has both jobs gets
         # both jobs.
-        count = PurchasedJob.objects.filter_by_sites([site_in_both_packages]).count()
+        objs = PurchasedJob.objects.filter_by_sites([site_in_both_packages])
+        count = objs.count()
         self.assertEqual(count, 2)
 
     def test_sitepackage_filter_by_site_multiple_sites(self):
         site_in_both_packages = SeoSiteFactory(domain='secondsite.jobs', id=7)
 
-        single_site_package = sitepackage_factory(self.company)
+        single_site_package = SitePackageFactory(owner=self.company)
         single_site_package.make_unique_for_site(site_in_both_packages)
 
-        both_sites_package = sitepackage_factory(self.company)
+        both_sites_package = SitePackageFactory(owner=self.company)
         both_sites_package.sites.add(site_in_both_packages)
         both_sites_package.sites.add(self.site)
         both_sites_package.save()
@@ -631,7 +635,8 @@ class ModelTests(MyJobsBase):
 
         # Confirm that filtering by the site the site that has both packages
         # gets both packages.
-        count = SitePackage.objects.filter_by_sites([site_in_both_packages]).count()
+        objs = SitePackage.objects.filter_by_sites([site_in_both_packages])
+        count = objs.count()
         self.assertEqual(count, 2)
         count = Package.objects.filter_by_sites([site_in_both_packages]).count()
         self.assertEqual(count, 2)
@@ -639,21 +644,21 @@ class ModelTests(MyJobsBase):
     def test_productgrouping_filter_by_site_multiple_sites(self):
         site_in_both_packages = SeoSiteFactory(domain='secondsite.jobs', id=7)
 
-        single_site_package = sitepackage_factory(self.company)
+        single_site_package = SitePackageFactory(owner=self.company)
         single_site_package.make_unique_for_site(site_in_both_packages)
 
-        both_sites_package = sitepackage_factory(self.company)
+        both_sites_package = SitePackageFactory(owner=self.company)
         both_sites_package.sites.add(site_in_both_packages)
         both_sites_package.sites.add(self.site)
         both_sites_package.save()
 
-        single_site_product = product_factory(single_site_package, self.company)
-        single_site_grouping = productgrouping_factory(self.company)
+        single_site_product = ProductFactory(package=single_site_package, owner=self.company)
+        single_site_grouping = ProductGroupingFactory(owner=self.company)
         ProductOrder.objects.create(product=single_site_product,
                                     group=single_site_grouping)
 
-        both_sites_product = product_factory(both_sites_package, self.company)
-        both_sites_grouping = productgrouping_factory(self.company)
+        both_sites_product = ProductFactory(package=both_sites_package, owner=self.company)
+        both_sites_grouping = ProductGroupingFactory(owner=self.company)
         ProductOrder.objects.create(product=both_sites_product,
                                     group=both_sites_grouping)
 
@@ -669,28 +674,29 @@ class ModelTests(MyJobsBase):
 
         # Confirm that filtering by the site the site that has both jobs gets
         # both jobs.
-        count = ProductGrouping.objects.filter_by_sites([site_in_both_packages]).count()
+        objs = ProductGrouping.objects.filter_by_sites([site_in_both_packages])
+        count = objs.count()
         self.assertEqual(count, 2)
 
     def test_offlinepurchase_filter_by_site_multiple_sites(self):
-        cu = CompanyUser.objects.create(user=self.user, company=self.company)
+        cu = CompanyUserFactory(user=self.user, company=self.company)
         site_in_both_packages = SeoSiteFactory(domain='secondsite.jobs', id=7)
 
-        single_site_package = sitepackage_factory(self.company)
+        single_site_package = SitePackageFactory(owner=self.company)
         single_site_package.make_unique_for_site(site_in_both_packages)
 
-        both_sites_package = sitepackage_factory(self.company)
+        both_sites_package = SitePackageFactory(owner=self.company)
         both_sites_package.sites.add(site_in_both_packages)
         both_sites_package.sites.add(self.site)
         both_sites_package.save()
 
-        single_site_product = product_factory(single_site_package, self.company)
-        single_site_purchase = offlinepurchase_factory(self.company, cu)
+        single_site_product = ProductFactory(package=single_site_package, owner=self.company)
+        single_site_purchase = OfflinePurchaseFactory(owner=self.company, created_by=cu)
         OfflineProduct.objects.create(product=single_site_product,
                                       offline_purchase=single_site_purchase)
 
-        both_sites_product = product_factory(both_sites_package, self.company)
-        both_sites_purchase = offlinepurchase_factory(self.company, cu)
+        both_sites_product = ProductFactory(package=both_sites_package, owner=self.company)
+        both_sites_purchase = OfflinePurchaseFactory(owner=self.company, created_by=cu)
         OfflineProduct.objects.create(product=both_sites_product,
                                       offline_purchase=both_sites_purchase)
 
@@ -706,28 +712,29 @@ class ModelTests(MyJobsBase):
 
         # Confirm that filtering by the site the site that has both jobs gets
         # both jobs.
-        count = OfflinePurchase.objects.filter_by_sites([site_in_both_packages]).count()
+        objs = OfflinePurchase.objects.filter_by_sites([site_in_both_packages])
+        count = objs.count()
         self.assertEqual(count, 2)
 
     def test_invoice_from_offlinepurchase_filter_by_site_multiple_sites(self):
-        cu = CompanyUser.objects.create(user=self.user, company=self.company)
+        cu = CompanyUserFactory(user=self.user, company=self.company)
         site_in_both_packages = SeoSiteFactory(domain='secondsite.jobs', id=7)
 
-        single_site_package = sitepackage_factory(self.company)
+        single_site_package = SitePackageFactory(owner=self.company)
         single_site_package.make_unique_for_site(site_in_both_packages)
 
-        both_sites_package = sitepackage_factory(self.company)
+        both_sites_package = SitePackageFactory(owner=self.company)
         both_sites_package.sites.add(site_in_both_packages)
         both_sites_package.sites.add(self.site)
         both_sites_package.save()
 
-        single_site_product = product_factory(single_site_package, self.company)
-        single_site_purchase = offlinepurchase_factory(self.company, cu)
+        single_site_product = ProductFactory(package=single_site_package, owner=self.company)
+        single_site_purchase = OfflinePurchaseFactory(owner=self.company, created_by=cu)
         OfflineProduct.objects.create(product=single_site_product,
                                       offline_purchase=single_site_purchase)
 
-        both_sites_product = product_factory(both_sites_package, self.company)
-        both_sites_purchase = offlinepurchase_factory(self.company, cu)
+        both_sites_product = ProductFactory(package=both_sites_package, owner=self.company)
+        both_sites_purchase = OfflinePurchaseFactory(owner=self.company, created_by=cu)
         OfflineProduct.objects.create(product=both_sites_product,
                                       offline_purchase=both_sites_purchase)
 
@@ -749,19 +756,19 @@ class ModelTests(MyJobsBase):
     def test_invoice_from_purchasedproduct_filter_by_site_multiple_sites(self):
         site_in_both_packages = SeoSiteFactory(domain='secondsite.jobs', id=7)
 
-        single_site_package = sitepackage_factory(self.company)
+        single_site_package = SitePackageFactory(owner=self.company)
         single_site_package.make_unique_for_site(site_in_both_packages)
 
-        both_sites_package = sitepackage_factory(self.company)
+        both_sites_package = SitePackageFactory(owner=self.company)
         both_sites_package.sites.add(site_in_both_packages)
         both_sites_package.sites.add(self.site)
         both_sites_package.save()
 
-        single_site_product = product_factory(single_site_package, self.company)
-        purchasedproduct_factory(single_site_product, self.company)
+        single_site_product = ProductFactory(package=single_site_package, owner=self.company)
+        PurchasedProductFactory(product=single_site_product, owner=self.company)
 
-        both_sites_product = product_factory(both_sites_package, self.company)
-        purchasedproduct_factory(both_sites_product, self.company)
+        both_sites_product = ProductFactory(package=both_sites_package, owner=self.company)
+        PurchasedProductFactory(product=both_sites_product, owner=self.company)
 
         self.assertEqual(Invoice.objects.all().count(), 2)
 
@@ -783,26 +790,26 @@ class ModelTests(MyJobsBase):
     def test_request_filter_by_site_multiple_sites(self):
         site_in_both_packages = SeoSiteFactory(domain='secondsite.jobs', id=7)
 
-        single_site_package = sitepackage_factory(self.company)
+        single_site_package = SitePackageFactory(owner=self.company)
         single_site_package.make_unique_for_site(site_in_both_packages)
 
-        both_sites_package = sitepackage_factory(self.company)
+        both_sites_package = SitePackageFactory(owner=self.company)
         both_sites_package.sites.add(site_in_both_packages)
         both_sites_package.sites.add(self.site)
         both_sites_package.save()
 
-        single_site_product = product_factory(single_site_package, self.company)
-        single_site_purchasedproduct = purchasedproduct_factory(
-            single_site_product, self.company)
+        single_site_product = ProductFactory(package=single_site_package, owner=self.company)
+        single_site_purchasedproduct = PurchasedProductFactory(
+            product=single_site_product, owner=self.company)
         # Unapproved PurchasedJobs generate Requests.
-        purchasedjob_factory(self.company, self.user,
-                             single_site_purchasedproduct)
+        PurchasedJobFactory(owner=self.company, created_by=self.user,
+                            purchased_product=single_site_purchasedproduct)
 
-        both_sites_product = product_factory(both_sites_package, self.company)
-        both_sites_purchasedproduct = purchasedproduct_factory(
-            both_sites_product, self.company)
-        purchasedjob_factory(self.company, self.user,
-                             both_sites_purchasedproduct)
+        both_sites_product = ProductFactory(package=both_sites_package, owner=self.company)
+        both_sites_purchasedproduct = PurchasedProductFactory(
+            product=both_sites_product, owner=self.company)
+        PurchasedJobFactory(owner=self.company, created_by=self.user,
+                            purchased_product=both_sites_purchasedproduct)
 
         self.assertEqual(Request.objects.all().count(), 2)
 

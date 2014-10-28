@@ -4,6 +4,8 @@ from django.conf import settings
 from django.core import mail
 from django.core.urlresolvers import reverse
 
+from myblocks.models import LoginBlock, RegistrationBlock
+from myjobs.tests.factories import UserFactory
 from myjobs.tests.setup import MyJobsBase
 from myjobs.models import User
 from myjobs.tests.test_views import TestClient
@@ -12,6 +14,8 @@ from mypartners.tests.factories import PartnerFactory
 from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch
 from registration.models import ActivationProfile
+from seo.tests.setup import DirectSEOBase
+from universal.helpers import build_url
 
 
 class RegistrationViewTests(MyJobsBase):
@@ -257,3 +261,102 @@ class MergeUserTests(MyJobsBase):
         for search in SavedSearch.objects.all():
             self.assertEqual(search.user, self.existing,
                 msg="The contacts were not moved to the existing contact")
+
+
+class DseoLoginTests(DirectSEOBase):
+    fixtures = (settings.PROJ_ROOT + '/myblocks/fixtures/login_page.json', )
+
+    def test_login(self):
+        password = 'secret'
+        user = UserFactory(password=password)
+        block = LoginBlock.objects.get()
+        data = {
+            'username': user.email,
+            'password': password,
+            block.submit_btn_name(): ''
+        }
+        response = self.client.post(reverse('dseo_login'), data=data,
+                                    follow=True)
+        self.assertTrue(response.context['request'].user.is_authenticated())
+        last_redirect = response.redirect_chain[-1][0]
+        self.assertTrue(last_redirect.endswith(reverse('home')))
+
+    def test_login_fail(self):
+        password = 'secret'
+        user = UserFactory(password=password)
+        block = LoginBlock.objects.get()
+        data = {
+            'username': user.email,
+            'password': 'bad_password',
+            block.submit_btn_name(): ''
+        }
+        response = self.client.post(reverse('dseo_login'), data=data,
+                                    follow=True)
+        self.assertFalse(response.context['request'].user.is_authenticated())
+
+    def test_login_with_next(self):
+        password = 'secret'
+        user = UserFactory(password=password)
+        block = LoginBlock.objects.get()
+        data = {
+            'username': user.email,
+            'password': password,
+            block.submit_btn_name(): ''
+        }
+        next_url = {
+            'next': '/test/'
+        }
+        response = self.client.post(build_url(reverse('dseo_login'), next_url),
+                                    data=data, follow=True)
+        self.assertTrue(response.context['request'].user.is_authenticated())
+        last_redirect = response.redirect_chain[-1][0]
+        self.assertTrue(last_redirect.endswith(next_url['next']))
+
+    def test_register(self):
+        email = 'test@registration.block'
+        block = RegistrationBlock.objects.get()
+        data = {
+            'email': email,
+            'password1': 'secret',
+            'password2': 'secret',
+            block.submit_btn_name(): '',
+        }
+        response = self.client.post(reverse('dseo_login'), data=data,
+                                    follow=True)
+        User.objects.get(email=email)
+        self.assertTrue(response.context['request'].user.is_authenticated())
+        last_redirect = response.redirect_chain[-1][0]
+        self.assertTrue(last_redirect.endswith(reverse('home')))
+
+    def test_register_fail(self):
+        email = 'test@registration.block'
+        block = RegistrationBlock.objects.get()
+        data = {
+            'email': email,
+            'password1': '',
+            'password2': 'secret',
+            block.submit_btn_name(): '',
+        }
+        response = self.client.post(reverse('dseo_login'), data=data,
+                                    follow=True)
+        self.assertFalse(User.objects.filter(email=email).exists())
+        self.assertFalse(response.context['request'].user.is_authenticated())
+
+    def test_register_with_next(self):
+        email = 'test@registration.block'
+        block = RegistrationBlock.objects.get()
+        data = {
+            'email': email,
+            'password1': 'secret',
+            'password2': 'secret',
+            block.submit_btn_name(): '',
+        }
+        next_url = {
+            'next': '/test/'
+        }
+        response = self.client.post(build_url(reverse('dseo_login'), next_url),
+                                    data=data, follow=True)
+        User.objects.get(email=email)
+        self.assertTrue(response.context['request'].user.is_authenticated())
+        last_redirect = response.redirect_chain[-1][0]
+        self.assertTrue(last_redirect.endswith(next_url['next']))
