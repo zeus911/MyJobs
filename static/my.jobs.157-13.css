@@ -596,6 +596,10 @@ h1 > small > a:hover {
     border-top: 0;
 }
 
+.wrapper-footer a {
+    text-decoration: underline;
+}
+
 .prm-no-partner .span4 {
     box-sizing: border-box;
     padding: 10px;
