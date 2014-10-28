@@ -806,7 +806,13 @@ input.picker-right {
 .date-picker-widget {
     position: relative;
     margin-bottom: 5px;
+    display: none;
 }
+
+.date-picker-widget + div > a {
+    visibility: hidden;
+}
+
 .date-picker-widget input {
     cursor: pointer;
 }

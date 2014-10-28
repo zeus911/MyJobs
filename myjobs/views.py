@@ -422,11 +422,13 @@ def batch_message_digest(request):
                         # dicts if using V3 but will be a dict for V1 and V2.
                         if type(event_list) != list:
                             event_list = [event_list]
+                    to_create = []
                     for event in event_list:
-                        EmailLog(email=event['email'], event=event['event'],
-                                 received=datetime.date.fromtimestamp(
-                                     float(event['timestamp'])
-                                 )).save()
+                        to_create.append(EmailLog(
+                            email=event['email'], event=event['event'],
+                            received=datetime.date.fromtimestamp(
+                                float(event['timestamp'])
+                            )))
                         if event['event'] == 'bounce' and \
                                 event.get('category', '') == \
                                 'My.jobs email redirect':
@@ -445,6 +447,7 @@ def batch_message_digest(request):
                             }
                             log_to_jira(subject, body,
                                         issue_dict, event['email'])
+                    EmailLog.objects.bulk_create(to_create)
                     return HttpResponse(status=200)
     return HttpResponse(status=403)
 

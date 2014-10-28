@@ -8,7 +8,6 @@ window.onpopstate = function(event) {
     send_filter(event.state);
 };
 
-
 // isIE is used a lot, so lets make it a variable!
 isIE = isIE();
 
@@ -40,9 +39,6 @@ if (typeof(isIE) == "number" && isIE < 9) {
 
 
 $(document).ready(function() {
-    $(".date-picker-widget").hide();
-    $("#reset-date-range").css("visibility", "hidden");
-
     /*
     If someone loads the page with request.GET info
     (not from ajax) fill page with info
@@ -241,16 +237,16 @@ function fill_in_history_state(data){
     $(".partner-tag").addClass("disabled-tag");
     if(button.length) {
         button.append("<i class='icon icon-ok'></i>").removeClass("disabled-tag");
-        $(".partner-tag.custom").show();
-        $(".date-picker-widget").hide();
-        $("#reset-date-range").css("visibility", "visible");
-    } else {
-        // no day button is clicked, so show the date picker widget
-        $("#activity-start-date").val(data.start_date);
-        $("#activity-end-date").val(data.end_date);
         $(".partner-tag.custom").hide();
         $(".date-picker-widget").show();
         $("#reset-date-range").css("visibility", "visible");
+    } else {
+        // no day button is clicked, so show the date picker widget
+        $("#activity-start-date").val(data.date_start);
+        $("#activity-end-date").val(data.date_end);
+        $(".partner-tag.custom").show();
+        $(".date-picker-widget").hide();
+        $("#reset-date-range").css("visibility", "hidden");
     }
     return false
 }
