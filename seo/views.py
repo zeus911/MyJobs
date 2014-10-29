@@ -837,10 +837,10 @@ def ajax_filter_carousel(request):
 
     widgets = helpers.get_widgets(request, site_config, facet_counts,
                                   search_url_slabs, bread_box_path)
-
-    return render_to_response('filter-carousel.html',
-                              filter_carousel({'widgets': widgets}),
-                              context_instance=RequestContext(request))
+    html = loader.render_to_string('filter-carousel.html',
+                                   filter_carousel({'widgets': widgets}))
+    return HttpResponse(json.dumps(html),
+                        content_type='text/javascript')
 
 
 def ajax_cities(request):
