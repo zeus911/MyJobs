@@ -52,6 +52,8 @@ class SavedSearch(models.Model):
     frequency = models.CharField(max_length=2, choices=FREQUENCY_CHOICES,
                                  default='W',
                                  verbose_name=_("Frequency"))
+    jobs_per_email = models.IntegerField(default=5,
+                                         verbose_name=_("Jobs per Email"))
     day_of_month = models.IntegerField(choices=DOM_CHOICES,
                                        blank=True, null=True,
                                        verbose_name=_("on"))
@@ -91,12 +93,13 @@ class SavedSearch(models.Model):
             if choice[0] == self.day_of_week:
                 return choice[1]
 
-    def get_feed_items(self, num_items=100):
+    def get_feed_items(self, num_items=None):
+        num_items = num_items or self.jobs_per_email
         url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency)
         url_of_feed = update_url_if_protected(url_of_feed, self.user)
         parse_feed_args = {
             'feed_url': url_of_feed, 'frequency': self.frequency,
-            'num_items': num_items, 'return_items': 5,
+            'return_items': num_items,
             'last_sent': self.last_sent
         }
         if hasattr(self, 'partnersavedsearch'):
