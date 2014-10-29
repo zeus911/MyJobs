@@ -116,7 +116,12 @@ $(document).ready(function() {
             }
         } else {
             $(".sort-by.active").removeClass("active descending ascending");
-            $(this).addClass("active ascending");
+            // clicking sorts ascending by default unless sorting activity
+            if($(this).text() == 'Activity'){
+                $(this).addClass("active descending");
+            } else {
+                $(this).addClass("active ascending");
+            }
         }
         run_ajax();
     });

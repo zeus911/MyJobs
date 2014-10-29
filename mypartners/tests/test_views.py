@@ -479,10 +479,10 @@ class RecordsDetailsTests(MyPartnersTestCase):
 
         """
         notes = '<script>alert("test!");</script>'
-        record = ContactRecordFactory(notes=notes, partner=self.partner)
+        self.contact_record.notes = notes
+        self.contact_record.save()
         url = self.get_url(partner=self.partner.id,
-                           company=self.company.id,
-                           id=record.id)
+                           company=self.company.id)
         response = self.client.get(url)
         self.assertNotIn(notes, response.content)
         self.assertIn('alert("test!");', response.content)
