@@ -1202,6 +1202,8 @@ class City(models.Model):
 
 class CustomPage(FlatPage):
     group = models.ForeignKey(Group, blank=True, null=True)
+    meta = models.TextField(blank=True)
+    meta_description = models.CharField(max_length=255, blank=True)
 
     class Meta:
         verbose_name = 'Custom Page'

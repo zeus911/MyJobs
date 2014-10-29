@@ -17,7 +17,7 @@ from django.utils.translation import ugettext
 from django.http import QueryDict
 
 from seo.models import CustomPage, Company, GoogleAnalytics, SiteTag
-from universal.helpers import update_url_param
+from universal.helpers import get_object_or_none, update_url_param
 
 
 register = template.Library()
@@ -29,11 +29,13 @@ def case_insensitive_cut(value, args):
     args = re.compile(re.escape(args), re.IGNORECASE)
     return args.sub('', value)
 
+
 @register.filter
 @stringfilter
 def replace(value, args):
     args = args.split('~')
-    return value.replace(args[0],args[1])
+    return value.replace(args[0], args[1])
+
 
 @register.filter
 @stringfilter
@@ -43,6 +45,7 @@ def append(value, arg):
     else:
         return ''
 
+
 @register.filter
 @stringfilter
 def is_in(value, args):
@@ -51,10 +54,12 @@ def is_in(value, args):
     else:
         return False
 
+
 @register.filter
 @stringfilter       
 def smart_truncate(content, length=32, suffix='...'):
-    if isinstance(content, unicode): # reduce length by 1 for each wide char
+    if isinstance(content, unicode):
+        # reduce length by 1 for each wide char
         for c in content:
             if unicodedata.east_asian_width(c) == "W":
                 length -= 1
@@ -69,7 +74,8 @@ def need_column(counter, num_subnav_items_to_show):
         return True
     else:
         return False
-    
+
+
 @register.filter
 def get_moc_branch(value):
     branches = {
@@ -81,6 +87,7 @@ def get_moc_branch(value):
     }
     return branches[value]
 
+
 @register.filter
 @stringfilter
 def build_rss_link(val):
@@ -88,6 +95,7 @@ def build_rss_link(val):
     split = val.rsplit('?', 1)
     split[0] = split[0].rstrip('/') + '/feed/rss'
     return '?'.join(split)
+
 
 @register.filter
 @stringfilter  
@@ -100,6 +108,7 @@ def facet_text(val):
     pieces = val.split("::")
     return pieces[1]
 
+
 @register.filter
 @stringfilter  
 def facet_url(val):
@@ -110,6 +119,7 @@ def facet_url(val):
     """
     pieces = val.split("::")
     return pieces[0]
+
 
 @register.simple_tag
 def canonicalize_url(filters, slug, facet_type):
@@ -151,8 +161,8 @@ def canonicalize_url(filters, slug, facet_type):
             # that off of the passed in title slug and set it
             location_part = sliced[1]
             slug = sliced[0]
-            location_slug = location_part.split(settings\
-                                                .SLUG_TAGS["location_slug"])[0]
+            location_slug = location_part.split(
+                settings.SLUG_TAGS["location_slug"])[0]
         title_slug = slug
     elif facet_type == "facet":
         sliced = slug.split(settings.SLUG_TAGS["location_slug"])
@@ -180,6 +190,7 @@ def canonicalize_url(filters, slug, facet_type):
 
     return url
 
+
 @register.tag
 def calculate_microsite_tags(parser, token):
     """
@@ -196,6 +207,7 @@ def calculate_microsite_tags(parser, token):
         raise template.TemplateSyntaxError("%r tag requires a single argument" %
                                            token.contents.split()[0])
     return VariableCycleNode(parser.compile_filter(cycle_string))
+
 
 class VariableCycleNode(template.defaulttags.CycleNode):
     """
@@ -216,7 +228,8 @@ class VariableCycleNode(template.defaulttags.CycleNode):
         if self.variable_name:
             context[self.variable_name] = value
         return value
-    
+
+
 @register.filter
 @stringfilter
 def multiply_value(value, arg):
@@ -225,16 +238,19 @@ def multiply_value(value, arg):
     else:
         return ''
 
+
 @register.filter
 def joblist_url(job):
     loc_slug = slugify(job.location)
     title_slug = slugify(job.title)
     return '/' + loc_slug + '/' + title_slug + '/' + job.guid + '/job/'
 
+
 @register.filter
 def merge_snippets(hl):
     snippets = hl['text']
     return ' ... '.join([i for i in snippets]) + ' ... '
+
 
 @register.filter
 def timedelta(value, arg=None):
@@ -242,18 +258,19 @@ def timedelta(value, arg=None):
         return ''
 
     if arg:
-        cmp = arg
+        default = arg
     else:
-        cmp = datetime.datetime.now()
+        default = datetime.datetime.now()
 
-    ts = timesince(cmp, value)
+    ts = timesince(default, value)
         
-    if value > cmp:
+    if value > default:
         retval = "in %s" % ts
     else:
         retval = "%s ago" % ts
 
     return retval
+
 
 @register.simple_tag
 def append_search_querystring(request, feed_path):
@@ -264,9 +281,11 @@ def append_search_querystring(request, feed_path):
 
     return feed_path+qs    
 
+
 @register.filter
 def subtract(value, arg):
     return value - arg
+
 
 @register.assignment_tag(takes_context=True)
 def custom_page_navigation(context):
@@ -276,11 +295,12 @@ def custom_page_navigation(context):
 
     if html is None:
         links = CustomPage.objects.filter(
-                     sites=settings.SITE_ID).values_list('url','title')
+            sites=settings.SITE_ID).values_list('url', 'title')
         html = "".join(["<a href='%s'>%s</a>" % (url, title) 
                         for (url, title) in links])
         cache.set(cache_key, html, timeout)
     return html
+
 
 @register.inclusion_tag('logo-carousel.html', takes_context=True)
 def logo_carousel(context):
@@ -288,8 +308,9 @@ def logo_carousel(context):
         num_of_cos = len(context['company_images'])
     else:
         num_of_cos = 0
+    displayed = context['site_config'].browse_company_show and bool(num_of_cos)
     return {
-        'displayed': context['site_config'].browse_company_show and bool(num_of_cos),
+        'displayed': displayed,
         'num_of_cos': num_of_cos 
     }
 
@@ -305,29 +326,44 @@ def filter_carousel(context):
             break
     return {'widgets': widgets, 'has_widgets': has_widgets}
 
+
 @register.filter
 @stringfilter
 def to_slug(co_slab):
     return co_slab.split("::")[0].split("/")[0]
 
+
 @register.filter
 def compare(a, b):
     return a == b
 
+
 @register.assignment_tag(takes_context=True)
 def flatpage_site_heading(context):
-    """ Returns site heading for pages where the context variable isn't loaded"""
+    """
+    Returns site heading for pages where the context variable isn't loaded
+
+    """
     return context.get('site_heading', settings.SITE_HEADING)
+
 
 @register.assignment_tag(takes_context=True)
 def flatpage_site_tags(context):
-    """ Returns site tags for pages where the context variable isn't loaded"""
+    """
+    Returns site tags for pages where the context variable isn't loaded
+
+    """
     return context.get('site_tags', settings.SITE_TAGS)
+
 
 @register.assignment_tag(takes_context=True)
 def flatpage_site_description(context):
-    """ Returns site description for pages where the context variable isn't loaded"""
+    """
+    Returns site description for pages where the context variable isn't loaded
+
+     """
     return context.get('site_description', settings.SITE_DESCRIPTION)
+
 
 @register.assignment_tag(takes_context=True)
 def flatpage_site_title(context, *args, **kwargs):
@@ -335,12 +371,14 @@ def flatpage_site_title(context, *args, **kwargs):
     Returns site title for pages where the context variable isn't loaded
 
     CustomPage calls flatpage_site_title with an extra blank string as an
-    argument, args=('', ''), so we're catching args and kwargs to to prevent an error.
-    There are no obvious places we're calling flatpage_site_title or site_title with an
-    extra space, so this may be related to the "as" renaming we do in seo_base.html.
+    argument, args=('', ''), so we're catching args and kwargs to to
+    prevent an error. There are no obvious places we're calling
+    flatpage_site_title or site_title with an extra space, so this may be
+    related to the "as" renaming we do in seo_base.html.
 
     """
     return context.get('site_title', settings.SITE_TITLE)
+
 
 def get_ga_context():
     """
@@ -364,18 +402,23 @@ def get_ga_context():
         "build_num": build_num
     }
 
+
 @register.assignment_tag
 def all_site_tags():
-    tags = SiteTag.objects.exclude(tag_navigation=False).values_list('site_tag', flat=True)
+    tags = SiteTag.objects.exclude(tag_navigation=False).values_list('site_tag',
+                                                                     flat=True)
     return tags
+
 
 @register.inclusion_tag('ga.html', takes_context=False)
 def flatpage_ga():
     return get_ga_context()    
-    
+
+
 @register.inclusion_tag('wide_footer.html', takes_context=False)
 def flatpage_footer_ga():
     return get_ga_context()
+
 
 @register.simple_tag
 def view_all_jobs_label(view_all_jobs_detail):
@@ -397,18 +440,19 @@ def view_all_jobs_label(view_all_jobs_detail):
         cos = settings.SITE.business_units.all()
         if cos:
             # strip "Jobs" from the end
-            label = settings.SITE_TITLE.replace("Jobs","")
+            label = settings.SITE_TITLE.replace("Jobs", "")
             for company in cos:
                 # strip any phrases that match the company title. This will
                 # leave only phrases from the title that reflect the desired
                 # facet info
                 if company.title is not None:
-                    label = label.replace(company.title,"")
+                    label = label.replace(company.title, "")
             # assemble the final string and then defrag any spaces (for testing)
             label = "View All %s Jobs" % label
-            label = ugettext(re.sub(r"([ ])+"," ",label))
+            label = ugettext(re.sub(r"([ ])+", " ", label))
             
     return label
+
 
 @register.simple_tag
 def breadbox_url(base_url, query_string):
@@ -423,6 +467,7 @@ def breadbox_url(base_url, query_string):
            if query_string else base_url)
     return urlencode_path_and_query_string(smart_str(url))
 
+
 @register.simple_tag
 def breadbox_location_url(base_url, loc_up, query_string):
     from seo.helpers import urlencode_path_and_query_string
@@ -433,11 +478,13 @@ def breadbox_location_url(base_url, loc_up, query_string):
         if query_string else "%s%s" % (base_url, loc_up)
     return urlencode_path_and_query_string(smart_str(url))
 
+
 @register.simple_tag
 def breadbox_qs(qs, remove_param):
     qs = QueryDict(qs).copy()
     del qs[remove_param]
     return "?%s" % qs.urlencode() if qs.urlencode() else ''
+
 
 @register.simple_tag
 def build_title(site_title, search_q, location_q, breadbox, heading):
@@ -470,6 +517,7 @@ def build_title(site_title, search_q, location_q, breadbox, heading):
         title += "in " + location_q
 
     return escape(title)
+
 
 @register.filter
 def make_pixel_qs(request, job=None):
@@ -526,4 +574,10 @@ def make_pixel_qs(request, job=None):
 def url_for_sort_field(context, field):
     current_url = context['request'].build_absolute_uri()
     new_url = update_url_param(current_url, 'sort', field)
-    return mark_safe('<a href=%s rel="nofollow">Sort by %s</a>' % (new_url, field.title()))
+    return mark_safe('<a href=%s rel="nofollow">Sort by %s</a>' %
+                     (new_url, field.title()))
+
+
+@register.assignment_tag
+def get_custom_page(flatpage):
+    return get_object_or_none(CustomPage, pk=flatpage.pk)

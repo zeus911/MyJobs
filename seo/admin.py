@@ -555,11 +555,12 @@ class CustomPageAdmin(RowPermissionsAdmin):
     filter_horizontal = ('sites',)
     list_display = ('url', 'title', 'group')
     fieldsets = (
-        (None, {'fields': [('url', 'group'), 'title', 'content', 'sites']}),
+        (None, {'fields': [('url', 'group'), ('title', 'meta_description'),
+                           'content', 'sites']}),
         ('Advanced options', {'classes': ('collapse',),
                               'fields': ('enable_comments',
                                          'registration_required',
-                                         'template_name')}),
+                                         'template_name', 'meta')}),
     ) 
     list_filter = (GroupListFilter, 'enable_comments', 'registration_required')
     search_fields = ('url', 'title')
