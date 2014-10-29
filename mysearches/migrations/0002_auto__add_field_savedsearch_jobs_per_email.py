@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'SavedSearch.jobs_per_email'
         db.add_column(u'mysearches_savedsearch', 'jobs_per_email',
-                      self.gf('django.db.models.fields.IntegerField')(default=5),
+                      self.gf('django.db.models.fields.PositiveSmallIntegerField')(default=5),
                       keep_default=False)
 
 
@@ -157,7 +157,7 @@ class Migration(SchemaMigration):
             'frequency': ('django.db.models.fields.CharField', [], {'default': "'W'", 'max_length': '2'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'jobs_per_email': ('django.db.models.fields.IntegerField', [], {'default': '5'}),
+            'jobs_per_email': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '5'}),
             'label': ('django.db.models.fields.CharField', [], {'max_length': '60'}),
             'last_sent': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'notes': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
