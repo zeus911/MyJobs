@@ -52,14 +52,14 @@ class SavedSearch(models.Model):
     frequency = models.CharField(max_length=2, choices=FREQUENCY_CHOICES,
                                  default='W',
                                  verbose_name=_("Frequency"))
-    jobs_per_email = models.IntegerField(default=5,
-                                         verbose_name=_("Jobs per Email"))
     day_of_month = models.IntegerField(choices=DOM_CHOICES,
                                        blank=True, null=True,
                                        verbose_name=_("on"))
     day_of_week = models.CharField(max_length=2, choices=DOW_CHOICES,
                                    blank=True, null=True,
                                    verbose_name=_("on"))
+    jobs_per_email = models.IntegerField(default=5,
+                                         verbose_name=_("Jobs per Email"))
     notes = models.TextField(blank=True, null=True,
                              verbose_name=_("Comments"))
     last_sent = models.DateTimeField(blank=True, null=True, editable=False)
