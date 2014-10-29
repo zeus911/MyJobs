@@ -143,7 +143,7 @@ def get_object_or_none(model, **kwargs):
         return None
 
 
-def add_pagination(request, object_list):
+def add_pagination(request, object_list, per_page=None):
     """
     Basic Django Pagination -- Pass a list of objects you wish to paginate.
     That listing will be wrapped by the Paginator object then the listing will
@@ -152,6 +152,7 @@ def add_pagination(request, object_list):
 
     Inputs:
     :object_list:   A list (or Queryset) of an object you wish to paginate.
+    :per_page:      Number of objects per page. 
 
     Outputs:
         Returns a Paginator Object. Paginator acts as a wrapper for the object
@@ -165,7 +166,7 @@ def add_pagination(request, object_list):
     except ValueError:
         objects_per_page = 10
     page = request.GET.get('page')
-    paginator = Paginator(object_list, objects_per_page)
+    paginator = Paginator(object_list, per_page or objects_per_page)
 
     try:
         pagination = paginator.page(page)

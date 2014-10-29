@@ -196,8 +196,10 @@ class Partner(models.Model):
         records = self.contactrecord_set.prefetch_related('tags').all()
         if contact_name:
             records = records.filter(contact_name=contact_name)
-        if date_start and date_end:
-            records = records.filter(date_time__range=[date_start, date_end])
+        if date_start:
+            records = records.filter(date_time__gte=date_start)
+        if date_end:
+            records = records.filter(date_time__lte=date_end)
         if record_type:
             if record_type == 'email':
                 records = records.filter(contact_type__in=['email', 'pssemail'])
