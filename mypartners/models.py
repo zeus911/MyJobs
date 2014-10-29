@@ -215,6 +215,14 @@ class Partner(models.Model):
 
         return records
 
+    def get_contact_tags(self):
+        return chain(*[c.tags.all() for c in self.contact_set.all()])
+
+    def get_all_tags(self):
+        tags = set(self.tags.all())
+        tags.update(self.get_contact_tags())
+        return tags
+
 
 class PartnerLibrary(models.Model):
     """
