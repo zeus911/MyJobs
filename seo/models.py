@@ -1175,9 +1175,13 @@ class CompanyUser(models.Model):
         If the user is already a member of the Employer group, the Group app
         is smart enough to not add it a second time.
         """
+        inviting_user = kwargs.pop('inviting_user', None)
         group = Group.objects.get(name=self.GROUP_NAME)
         self.user.groups.add(group)
-        Invitation(invitee=self.user, inviting_company=self.company).save()
+        if not self.pk:
+            Invitation(invitee=self.user, inviting_company=self.company,
+                       added_permission=group,
+                       inviting_user=inviting_user).save()
 
         return super(CompanyUser, self).save(*args, **kwargs)
 

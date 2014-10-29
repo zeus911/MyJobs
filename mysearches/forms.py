@@ -217,16 +217,15 @@ class PartnerSavedSearchForm(ModelForm):
         instance = super(PartnerSavedSearchForm, self).save(commit)
         tags = self.cleaned_data.get('tags')
         self.instance.tags = tags
-        invite_args = {
-            'invitee_email': instance.email,
-            'invitee': instance.user,
-            'inviting_user': instance.created_by,
-            'inviting_company': instance.partner.owner,
-            'added_saved_search': instance,
-        }
-        Invitation(**invite_args).save()
-        if self.created:
-            send_custom_activation_email(instance)
+        if is_new_or_change == ADDITION:
+            invite_args = {
+                'invitee_email': instance.email,
+                'invitee': instance.user,
+                'inviting_user': instance.created_by,
+                'inviting_company': instance.partner.owner,
+                'added_saved_search': instance,
+            }
+            Invitation(**invite_args).save()
         partner = instance.partner
         contact = Contact.objects.filter(partner=partner,
                                          user=instance.user)[0]

@@ -57,27 +57,17 @@ class UserResource(ModelResource):
         try:
             kwargs = {'email': email,
                       'password1': request.GET.get('password', ''),
-                      'custom_msg': request.GET.get('custom_msg'),
                       'request': request}
-            if kwargs['custom_msg']:
-                kwargs['in_reserve'] = True
-            # TODO: remove send_email arg when invitation emails are in
             user, created = User.objects.create_user(send_email=True,
                                                      **kwargs)
-
-            if kwargs['custom_msg']:
-                company = Company.objects.get(
-                    id=request.GET.get('company', 999999)
-                )
-                invitation_args = {
-                    'invitee_email': email,
-                    'inviting_company': company
-                }
-                Invitation(**invitation_args).save()
 
             data = {
                 'user_created': created,
                 'email': email}
+            if not created and user.in_reserve:
+                user.in_reserve = False
+                user.save()
+                # TODO: accept all invitations and send password email?
         except IntegrityError:
             data = {'email': 'That username already exists'}
 

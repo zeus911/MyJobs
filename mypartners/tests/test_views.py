@@ -42,15 +42,15 @@ class MyPartnersTestCase(MyJobsBase):
 
         # Create a user to login as
         self.staff_user = UserFactory()
-        group = Group.objects.get(name=CompanyUser.GROUP_NAME)
-        self.staff_user.groups.add(group)
-        self.staff_user.save()
 
         # Create a company
         self.company = CompanyFactory()
         self.company.save()
+        self.assertEqual(len(mail.outbox), 0)
         self.admin = CompanyUserFactory(user=self.staff_user,
                                         company=self.company)
+        self.assertEqual(len(mail.outbox), 1)
+        mail.outbox = []
         self.client = TestClient()
         self.client.login_user(self.staff_user)
 
@@ -404,6 +404,7 @@ class RecordsOverviewTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
         records = soup.find(class_='card-wrapper')
         self.assertEqual(len(records('div', class_='product-card')), 5)
+
 
 class RecordsDetailsTests(MyPartnersTestCase):
     """Tests related to the records detail page, /prm/view/records/view/"""
@@ -887,20 +888,9 @@ class SearchEditTests(MyPartnersTestCase):
                 'notes': '',
                 'company': self.company.id,
                 'partner': self.partner.id}
-
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(mail.outbox), 2)
-        for s in [self.staff_user.get_full_name(), str(self.company),
-                  'has created a job search for you']:
-            self.assertIn(s, mail.outbox[1].body)
-
-        body = re.sub(r'\s+', ' ', mail.outbox[0].body)
-        for expected in ['%s created this saved search on your behalf:' % \
-                             (self.staff_user.email, ),
-                         'Saved Search Notification']:
-            self.assertTrue(expected in body)
-        self.assertFalse('delete this saved search' in body)
+        self.assertEqual(len(mail.outbox), 1)
 
 
 class EmailTests(MyPartnersTestCase):
@@ -908,7 +898,7 @@ class EmailTests(MyPartnersTestCase):
         # Allows for comparing datetimes
         super(EmailTests, self).setUp()
         self.data = {
-            'from': self.admin.user.email,
+            'from': self.staff_user.email,
             'subject': 'Test Email Subject',
             'text': 'Test email body',
             'key': settings.EMAIL_KEY,
@@ -932,7 +922,7 @@ class EmailTests(MyPartnersTestCase):
         expected_str = "No contacts or contact records could be created for " \
                        "the following email addresses."
         self.assertEqual(email.from_email, settings.PRM_EMAIL)
-        self.assertEqual(email.to, [self.admin.user.email])
+        self.assertEqual(email.to, [self.staff_user.email])
         self.assertTrue(expected_str in email.body)
         self.assert_contact_info_in_email(email)
 
@@ -952,7 +942,7 @@ class EmailTests(MyPartnersTestCase):
         unexpected_str = "No contacts or contact records could be created " \
                          "for the following email addresses."
         self.assertEqual(email.from_email, settings.PRM_EMAIL)
-        self.assertEqual(email.to, [self.admin.user.email])
+        self.assertEqual(email.to, [self.staff_user.email])
         self.assertTrue(expected_str in email.body)
         self.assertFalse(unexpected_str in email.body)
         self.assert_contact_info_in_email(email)
@@ -962,14 +952,14 @@ class EmailTests(MyPartnersTestCase):
         self.assertEqual(self.data['subject'], self.data['subject'])
         log_entry = ContactLogEntry.objects.get(object_id=record.pk)
         self.assertEqual(log_entry.action_flag, ADDITION)
-        self.assertEqual(log_entry.user, self.admin.user)
+        self.assertEqual(log_entry.user, self.staff_user)
 
         record = ContactRecord.objects.get(contact_email=new_contact.email)
         self.assertEqual(record.notes, self.data['text'])
         self.assertEqual(self.data['subject'], self.data['subject'])
         log_entry = ContactLogEntry.objects.get(object_id=record.pk)
         self.assertEqual(log_entry.action_flag, ADDITION)
-        self.assertEqual(log_entry.user, self.admin.user)
+        self.assertEqual(log_entry.user, self.staff_user)
 
     def test_create_new_contact(self):
         new_email = 'test@my.jobs'
@@ -986,7 +976,7 @@ class EmailTests(MyPartnersTestCase):
         expected_str = "Contacts have been created for the following email " \
                        "addresses:"
         self.assertEqual(email.from_email, settings.PRM_EMAIL)
-        self.assertEqual(email.to, [self.admin.user.email])
+        self.assertEqual(email.to, [self.staff_user.email])
         self.assertTrue(expected_str in email.body)
         self.assert_contact_info_in_email(email)
 

@@ -44,6 +44,8 @@ class RegistrationManager(models.Manager):
                                        email=profile.email)
                 profile.activation_key = self.model.ACTIVATED
                 profile.save()
+                Invitation.objects.filter(invitee=user,
+                                          accepted=False).update(accepted=True)
                 return user
         return False
 
@@ -144,7 +146,7 @@ class Invitation(models.Model):
     """
     inviting_user = models.ForeignKey('myjobs.User', editable=False,
                                       related_name='invites_sent',
-                                      blank=True, null=True)
+                                      null=True)
     inviting_company = models.ForeignKey('seo.Company', blank=True, null=True,
                                          related_name='invites_sent')
     invitee = models.ForeignKey('myjobs.User', related_name='invites',
@@ -166,6 +168,8 @@ class Invitation(models.Model):
         if all(invitee):
             if not User.objects.get_email_owner(
                     self.invitee_email) == self.invitee:
+                # ValidationErrors aren't appropriate, but nothing else fits
+                # either; these are unrecoverable
                 raise ValidationError('Invitee information does not match')
         elif not any(invitee):
             raise ValidationError('Invitee not provided')
@@ -173,7 +177,29 @@ class Invitation(models.Model):
             # create_user first checks if an email is in use and creates an
             # account if it does not.
             self.invitee = User.objects.create_user(email=self.invitee_email,
-                                                    send_email=False)[0]
+                                                    in_reserve=True)[0]
         else:
             self.invitee_email = self.invitee.email
+
+        if not self.pk:
+            ap = ActivationProfile.objects.get_or_create(user=self.invitee,
+                                                         email=self.invitee_email)[0]
+            if ap.activation_key_expired():
+                ap.reset_activation()
+                ap = ActivationProfile.objects.get(pk=ap.pk)
+
+            body = render_to_string('registration/invitation_email.html',
+                                    {'invitation': self,
+                                     'activation_key': ap.activation_key})
+            body = Pynliner().from_string(body).run()
+
+            if self.inviting_user:
+                from_ = self.inviting_user.email
+            else:
+                from_ = self.inviting_company.name
+            self.invitee.email_user('My.jobs invitation from {from_}'.format(
+                from_=from_), body, settings.DEFAULT_FROM_EMAIL)
+            ap.sent = datetime_now()
+            ap.save()
+
         super(Invitation, self).save(*args, **kwargs)

@@ -59,27 +59,6 @@ class UserResourceTests(MyJobsBase):
             self.assertFalse(content['user_created'])
             self.assertEqual(content['email'].lower(), 'alice@example.com')
 
-    def test_compliance_emails_create_invitations(self):
-        self.data['custom_msg'] = 'custom message goes here'
-        companies = [CompanyFactory(id=id_,
-                                    name=name)
-                     for id_, name in [(1, 'Company 1'),
-                                       (999999, 'Company 999999')]]
-        company_ids = [company.pk for company in companies]
-
-        self.make_response(self.data)
-        self.assertEqual(Invitation.objects.count(), 1)
-
-        self.data['company'] = 1
-        self.make_response(self.data)
-        self.assertEqual(Invitation.objects.count(), 2)
-
-        inviting_companies = Invitation.objects.values_list('inviting_company',
-                                                            flat=True)
-        self.assertItemsEqual(company_ids, inviting_companies)
-        user = User.objects.get_email_owner(self.data['email'])
-        self.assertTrue(user.in_reserve)
-
 
 class SavedSearchResourceTests(MyJobsBase):
     def setUp(self):
