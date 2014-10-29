@@ -17,6 +17,30 @@
         </span>
     </div>
     {% endif %}
+    {% if records.paginator.count > 0 %}
+    <div class="partner-sort">
+        <label>Sort by:</label>
+        {% if request.GET.sort_by %}
+            {% if request.GET.sort_by == "name" %}
+            <div class="sort-by active {% if request.GET.desc %}descending{%else%}ascending{%endif%}" title="Click to change sort">Name</div>
+            <div class="sort-by" title="Click to change sort">Date</div>
+            {% elif request.GET.sort_by == "date" %}
+            <div class="sort-by" title="Click to change sort">Name</div>
+            <div class="sort-by active {% if request.GET.desc %}descending{%else%}ascending{%endif%}" title="Click to change sort">Date</div>
+            {% else %}
+            <div class="sort-by" title="Click to change sort">Name</div>
+            <div class="sort-by" title="Click to change sort">Date</div>
+            {% endif %}
+        {% else %}
+            <div class="sort-by" title="Click to change sort">Name</div>
+            <div class="sort-by active descending" title="Click to change sort">Date</div>
+        {% endif %}
+        <div id="per-page" class="pull-right">
+            <span title="Click to edit">{% if request.GET.per_page %}{{ request.GET.per_page }}{% else %}10{% endif %}</span>
+            <label>Per Page</label>
+        </div>
+    </div>
+    {% endif %}
     {% for record in records %}
         {% include "mypartners/includes/record_card.html" %}
     {% endfor %}

@@ -190,10 +190,10 @@ class Partner(models.Model):
 
     # get_contact_records_for_partner
     def get_contact_records(self, contact_name=None, record_type=None,
-                            created_by=None, date_start=None, date_end=None):
+                            created_by=None, date_start=None, date_end=None,
+                            order_by=None):
 
-        records = ContactRecord.objects.filter(partner=self).prefetch_related(
-            'tags')
+        records = self.contactrecord_set.prefetch_related('tags').all()
         if contact_name:
             records = records.filter(contact_name=contact_name)
         if date_start and date_end:
@@ -205,6 +205,11 @@ class Partner(models.Model):
                 records = records.filter(contact_type=record_type)
         if created_by:
             records = records.filter(created_by=created_by)
+
+        if order_by:
+            records = records.order_by(order_by)
+        else:
+            records = records.order_by('-date_time')
 
         return records
 

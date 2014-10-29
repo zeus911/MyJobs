@@ -663,8 +663,8 @@ def prm_records(request):
     company, partner, _ = prm_worthy(request)
 
     _, _, contact_records = get_records_from_request(request)
-    paginated_records = add_pagination(request,
-                                       contact_records.order_by('-date_time'))
+
+    paginated_records = add_pagination(request, contact_records)
 
     if request.is_ajax():
         ctx = {
@@ -682,9 +682,9 @@ def prm_records(request):
                             if choice[0] != 'pssemail']
     contact_type_choices.insert(0, ('all', 'All'))
 
-    contacts = ContactRecord.objects.distinct().filter(partner=partner)
-    contact_choices = [(c, c) for c in contacts.values_list(
-        'contact_name', flat=True)]
+    contact_choices = [
+        (c, c) for c in contact_records.order_by(
+            'contact_name').distinct().values_list('contact_name', flat=True)]
     contact_choices.insert(0, ('all', 'All'))
 
     ctx = {
