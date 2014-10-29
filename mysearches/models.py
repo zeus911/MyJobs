@@ -99,7 +99,7 @@ class SavedSearch(models.Model):
         url_of_feed = update_url_if_protected(url_of_feed, self.user)
         parse_feed_args = {
             'feed_url': url_of_feed, 'frequency': self.frequency,
-            'return_items': num_items,
+            'num_items': 100, 'return_items': num_items,
             'last_sent': self.last_sent
         }
         if hasattr(self, 'partnersavedsearch'):

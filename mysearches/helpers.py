@@ -159,8 +159,7 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
     :tuple:         First index is a list of :return_items: jobs
                     Second index is the total job count
     """
-    if return_items is None:
-        return_items = num_items
+    return_items = min(return_items or num_items, num_items)
     if feed_url.find('?') > -1:
         separator = '&'
     else:
