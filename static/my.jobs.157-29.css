@@ -241,7 +241,7 @@ h1 > small > a:hover {
     border-top: 0;
 }
 
-.product-card:not(.not-clickable):hover {
+.product-card:not(.no-highlight):hover {
     background: #D5FACF;
     cursor: pointer;
 }

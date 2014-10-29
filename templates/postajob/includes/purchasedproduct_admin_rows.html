@@ -2,7 +2,7 @@
 
 {% if purchased_products %}
     {% for product in purchased_products %}
-    <div id="request-{{ request.id }}" class="product-card not-clickable">
+    <div id="request-{{ request.id }}" class="product-card no-highlight">
         <div class="big-title">{{ product.product.name }}</div>
         <div class="sub-title">{{ product.owner.name }}</div>
         <div class="product-details">
@@ -12,7 +12,7 @@
     </div>
     {% endfor %}
 {% else %}
-<div class="product-card not-clickable">
+<div class="product-card no-highlight">
     You currently have no purchased products.
 </div>
 {% endif %}

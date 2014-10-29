@@ -216,8 +216,7 @@ def approve_admin_request(request, content_type, pk):
 
 
 def product_listing(request):
-    site_id = request.REQUEST.get('site')
-    callback = request.REQUEST.get('callback')
+    site_id = settings.SITE_ID
     try:
         site = SeoSite.objects.get(pk=site_id)
     except SeoSite.DoesNotExist:
@@ -240,11 +239,9 @@ def product_listing(request):
     # Sort the grouped packages by the specified display order.
     groupings = sorted(groupings, key=lambda grouping: grouping.display_order)
 
-    html = render_to_response('postajob/package_list.html',
+    return render_to_response('postajob/package_list.html',
                               {'product_groupings': groupings},
                               RequestContext(request))
-    return HttpResponse('%s(%s)' % (callback, json.dumps(html.content)),
-                        content_type='text/javascript')
 
 
 @company_has_access('product_access')

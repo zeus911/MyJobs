@@ -2,7 +2,7 @@
 
 {% if offline_purchases %}
     {% for purchase in offline_purchases %}
-    <div class="product-card not-clickable">
+    <div class="product-card no-highlight">
         <div class="big-title">{% get_product_names purchase %}</div>
         {% if purchase.redeemed_on %}<div class="sub-title">{{ purchase.redeemed_on }}</div>{% endif %}
         <div class="product-details">{{ purchase.redemption_uid }} - Redeemed by: {% get_redeemer purchase %}</div>
@@ -10,7 +10,7 @@
     </div>
     {% endfor %}
 {% else %}
-<div class="product-card not-clickable">
+<div class="product-card no-highlight">
     You currently have no offline purchases.
 </div>
 {% endif %}

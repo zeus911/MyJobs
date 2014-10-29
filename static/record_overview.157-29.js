@@ -72,7 +72,7 @@ $(document).ready(function() {
         });
     }
 
-    $(document).on("click", ".product-card:not(.not-clickable)", function() {
+    $(document).on("click", ".product-card:not(.no-highlight)", function() {
        window.location = $(this).find("a").attr("href");
     });
 

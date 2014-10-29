@@ -109,7 +109,7 @@
                         </div>
                     {% endfor %}
                 {% else %}
-                    <div class="product-card not-clickable">
+                    <div class="product-card no-highlight">
                         There are no locations for {{ contact.name }}.
                     </div>
                     <div class="partner-pagination">
@@ -129,7 +129,7 @@
 {% block extra-js %}
 <script type="text/javascript">
     $(document).ready(function() {
-        $(".product-card:not(.not-clickable)").on("click", function() {
+        $(".product-card:not(.no-highlight)").on("click", function() {
            window.location = $(this).find("a").attr("href");
         });
     });
