@@ -16,6 +16,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.template.loader import render_to_string
 from django.utils.importlib import import_module
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
@@ -261,12 +262,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         # Get a copy of the original password so we can determine if
         # it has changed in the save().
         self.__original_password = getattr(self, 'password', None)
+        self.__original_opt_in_myjobs = self.opt_in_myjobs
 
     def __unicode__(self):
         return self.email
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
+
+        if (self.__original_opt_in_myjobs != self.opt_in_myjobs
+                and not self.opt_in_myjobs):
+            self.send_opt_out_notification()
 
         # If the password has changed, it's not being set for the first time
         # and it wasn't change to a blank string, don't require them to change
@@ -492,6 +498,20 @@ class User(AbstractBaseUser, PermissionsMixin):
             if self.is_active or self.get_expiration().total_seconds() > 0:
                 return True
         return False
+
+    def send_opt_out_notification(self):
+        """
+        Notify saved search creators that a user has opted out of their emails.
+        """
+        emails = self.partnersavedsearch_set.values_list(
+            'created_by__email', flat=True).distinct()
+        message = render_to_string(
+            "mysearches/email_opt_out.html", {'user': self})
+        subject = "My.jobs Partner Saved Search Update"
+        msg = EmailMessage(
+            subject, message, settings.SAVED_SEARCH_EMAIL, emails)
+        msg.content_subtype = 'html'
+        msg.send()
 
 
 class EmailLog(models.Model):
