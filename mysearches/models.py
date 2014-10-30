@@ -30,6 +30,8 @@ DOW_CHOICES = (('1', _('Monday')),
                ('6', _('Saturday')),
                ('7', _('Sunday')))
 
+JOBS_PER_EMAIL_CHOICES = [(5, 5)] + [(i, i) for i in range(10, 101, 10)]
+
 
 class SavedSearch(models.Model):
 
@@ -58,8 +60,9 @@ class SavedSearch(models.Model):
     day_of_week = models.CharField(max_length=2, choices=DOW_CHOICES,
                                    blank=True, null=True,
                                    verbose_name=_("on"))
-    jobs_per_email = models.PositiveSmallIntegerField(default=5,
-                                         verbose_name=_("Jobs per Email"))
+    jobs_per_email = models.PositiveSmallIntegerField(
+        default=5, choices=JOBS_PER_EMAIL_CHOICES,
+        verbose_name=_("Jobs per Email"))
     notes = models.TextField(blank=True, null=True,
                              verbose_name=_("Comments"))
     last_sent = models.DateTimeField(blank=True, null=True, editable=False)
