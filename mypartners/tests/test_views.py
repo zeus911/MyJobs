@@ -810,6 +810,7 @@ class SearchEditTests(MyPartnersTestCase):
                 'frequency': 'W',
                 'day_of_month': '',
                 'day_of_week': '3',
+                'jobs_per_email': 5,
                 'partner_message': '',
                 'notes': ''}
         post = data.copy()
@@ -843,6 +844,7 @@ class SearchEditTests(MyPartnersTestCase):
                 'frequency': 'W',
                 'day_of_month': '',
                 'day_of_week': '3',
+                'jobs_per_email': 5,
                 'partner_message': '',
                 'notes': ''}
         post = data.copy()
@@ -885,6 +887,7 @@ class SearchEditTests(MyPartnersTestCase):
                 'frequency': 'W',
                 'day_of_month': '',
                 'day_of_week': '3',
+                'jobs_per_email': 10,
                 'partner_message': '',
                 'notes': '',
                 'company': self.company.id,
