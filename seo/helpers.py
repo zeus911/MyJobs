@@ -1263,7 +1263,7 @@ def _build_facet_queries(custom_facets):
     for query, facet in zip(custom_facet_queries, custom_facets):
         tagged_facets[query] = {
             'custom_facet': facet,
-            }
+        }
         sqs = sqs.query_facet(query)
     return tagged_facets, sqs
 
@@ -1273,6 +1273,9 @@ def _facet_query_result_counts(tagged_facets, sqs):
     Map query results back to their originating CustomFacet instances.
 
     """
+    fields = ['django_ct', 'django_id', 'score', 'id']
+    sqs.query.fields = fields
+    sqs.query.end_offset = 0
     facet_results = sqs.facet_counts()
     if not facet_results:
         return []
