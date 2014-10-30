@@ -2,7 +2,7 @@
 
 {% if product_groupings %}
 {% for group in product_groupings %}
-<div id="group-{{group.id}}" class="product-card {% if order %}left-gutter{% endif %} {% if not group.is_displayed %}muted{% endif %}">
+<div id="group-{{group.id}}" class="product-card no-highlight {% if order %}left-gutter{% endif %} {% if not group.is_displayed %}muted{% endif %}">
     {% if order %}
     <div class="product-group-order">
         <a class="btn"><i class="icon icon-arrow-up"></i></a>

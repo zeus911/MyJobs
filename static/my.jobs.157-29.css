@@ -653,6 +653,7 @@ h1 > small > a:hover {
 .prm-header > a {
     font-weight: normal;
     font-size: .8em;
+    line-height: 16px;
 }
 
 .prm-header > span + span.pull-right {

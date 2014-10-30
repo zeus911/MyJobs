@@ -2,7 +2,7 @@
 
 {% if requests %}
     {% for request in requests %}
-    <div id="request-{{ request.id }}" class="product-card">
+    <div id="request-{{ request.id }}" class="product-card no-highlight">
         <div class="big-title">{{ request.model_name }}</div>
         <div class="sub-title">Requested on: {{ request.made_on }}</div>
         <div class="product-details">
