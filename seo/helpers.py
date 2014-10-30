@@ -665,90 +665,64 @@ def _clean(term):
     return DESearchQuerySet().query.clean(term)
 
 
-def get_solr_facet(site_id, jsids, filters={}, params=None):
+def _build_facet_queries(custom_facets):
+    tagged_facets = {}
+    sqs = DESearchQuerySet()
+    custom_facet_queries = custom_facets.get_raw_facet_queries()
+    for query, facet in zip(custom_facet_queries, custom_facets):
+        tagged_facets[query] = {
+            'custom_facet': facet,
+        }
+        sqs = sqs.query_facet(query)
+    return tagged_facets, sqs
+
+
+def _facet_query_result_counts(tagged_facets, sqs):
     """
-    Returns tuples of (custom_facets, result counts) for custom facets
-    in a site
-    Inputs:
-    :site_id:site that matches each Custom Facet's site field
-    :jsids: Site job source ids to filter facet counts by
-
-    The logic for handling CustomFacets can be a little confusing so I
-    will try to make the docstrings for the process as comprehensive
-    as possible.
-
-    Ultimately, the view which calls this function will be returned a
-    list of 2-tuples, each consisting of a saved_search.models.CustomFacet
-    instance and a count of the DESearchQuerySet results from that instance,
-    e.g.:
-
-    (<CustomFacet: Camber Instructors>, 25)
-
-    To get to that point, however, we need to take the input -- a
-    CustomFacet instance -- and process the query it represents (let's
-    call it "P") with our search engine, then take the results (let's
-    call that "R") and match the number of results in R with P.
-
-    However, when we pass P off to our engine, it doesn't know anything
-    about CustomFacets or Django or Python; all it knows is its index and
-    the QueryParser syntax it uses. So for all intents and purposes, we
-    may as well be chucking P in a bottomless pit, never to be seen again.
-
-    To overcome this, we have to add extra information to each group query
-    so we can connect P <-> R. Fortunately, Lucene provides syntax to
-    append arbitrary tags to group queries: {!tag="<some tag>"}. Our
-    tag is created by MD5 hashing a couple of attributes of P:
-
-    1. The string representation of the `SQ` object which encapsulates the
-       tree defined by P
-    2. The SeoSite ID of the site given in the `request` object.
-
-    This of course operates on the assumption that a site will not
-    have multiple CustomFacets that represent the exact same query. But
-    even if that happens, it wouldn't matter except when it comes to the
-    length of the query passed to Solr.
-
-    All of this tagging logic is encapsulated by `_build_group_queries`.
-    The logic that reconnects R with P on the post-query "side" of the
-    connection is encapsulated by `_result_counts`.
+    Map query results back to their originating CustomFacet instances.
 
     """
+    facet_results = sqs.facet_counts()
+    if not facet_results:
+        return []
 
-    site_cf_keys = SeoSiteFacet.objects.filter(seosite__id=settings.SITE_ID).\
-        filter(customfacet__show_production=1).values_list('customfacet__id',
-                                                           flat=True)
+    counts = []
+    for query, count in facet_results['queries'].iteritems():
+        counts.append((tagged_facets[query]['custom_facet'], count))
+    return counts
 
-    #We want to prefetch keyword here, but taggit doesn't support it
-    results = CustomFacet.objects.filter(id__in=site_cf_keys).\
-        prefetch_related('business_units')
+
+def get_solr_facet(site_id, jsids, filters=None, params=None):
+    custom_facets = CustomFacet.objects.prod_facets_for_current_site()
+    custom_facets = custom_facets.prefetch_related('business_units')
 
     # Short-circuit the function if a site has facets turned on, but either
     # does not have any facets with `show_production` == 1 or has not yet
     # created any facets.
-    if not results:
+    if not custom_facets:
         return []
 
-    result_lookup, gqs = _build_group_queries(site_id, results)
+    tagged_facets, sqs = _build_facet_queries(custom_facets)
+
     # If this function is called from seo.views.job_listing_by_slug_tag,
     # it is passed the additional "filters" parameter, which is the output
     # from helper.build_filter_dict(request.path).
-    gqs = filter_sqs(gqs, filters, site_id=site_id)
+    if filters:
+        sqs = filter_sqs(sqs, filters, site_id=settings.SITE_ID)
 
     # Intersect the CustomFacet object's query parameters with those of
     # the site's default facet, if it has one.
     if settings.DEFAULT_FACET:
-        gqs = sqs_apply_custom_facets(settings.DEFAULT_FACET, gqs)
+        sqs = sqs_apply_custom_facets(settings.DEFAULT_FACET, sqs)
 
-    sqs = _sqs_narrow_by_buid_and_site_package(gqs, buids=jsids)
+    sqs = _sqs_narrow_by_buid_and_site_package(sqs, buids=jsids)
 
     if params:
-        gqs = prepare_sqs_from_search_params(params, sqs=gqs)
+        sqs = prepare_sqs_from_search_params(params, sqs=sqs)
 
-    result_counts = _result_counts(result_lookup, gqs)
-    ss = [(r, result_counts[r.id]) for r in
-          results.filter(id__in=result_counts)]
-    ss.sort(key=lambda x: -x[1])
-    return ss or []
+    result_counts = _facet_query_result_counts(tagged_facets, sqs)
+    result_counts.sort(key=lambda x: -x[1])
+    return result_counts
 
 
 def _build_group_queries(site_id, results):
@@ -811,9 +785,7 @@ def _result_counts(result_lookup, gqs):
     result_counts = {}
 
     # These fields will populate the fl field for the searches.
-    # Uses -* to remove all extra fields
-    # because only the result counts and required fields are needed.
-    fields = '*, django_ct, django_id, score, id'
+    fields = 'django_ct, django_id, score, id'
     for gq in gqs.query.get_results(fields=fields):
         # The group_query implementation adds a space at the end of
         # the tag string to allow for this kind of splitting.

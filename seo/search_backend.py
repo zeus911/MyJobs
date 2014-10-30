@@ -145,8 +145,16 @@ class DESearchQuerySet(SearchQuerySet):
                 subqueries.append(SQ(**kwargs))
             query_bits.append(reduce(operator.and_, subqueries))
 
-
         return clone.filter(reduce(operator.or_, query_bits))
+
+    def query_facet(self, query):
+        """
+        Adds a custom facet.query.
+
+        """
+        clone = self._clone()
+        clone.query.add_query_facet(query)
+        return clone
 
 
 class DESolrSearchQuery(SolrSearchQuery):
@@ -162,28 +170,9 @@ class DESolrSearchQuery(SolrSearchQuery):
         self.fields = None
         self.bf = None
 
-    def run(self, spelling_query=None, **kwargs):
-        """Builds and executes the query. Returns a list of search results."""
-        #This is now a direct copy of BaseSearchQuery.run().
-        #TODO, use super(SolrSearchQuery).run() or remove. If we remove run() will the
-        #inherited BaseSearchQuery.run() call the correct DESolrSearchQuery.build_params?
-        #Jason McLaughlin 09/27/2012
-
-        final_query = self.build_query()
-        search_kwargs = self.build_params(spelling_query=spelling_query)
-
-        if kwargs:
-            search_kwargs.update(kwargs)
-
-        results = self.backend.search(final_query, **search_kwargs)
-        self._results = results.get('results', [])
-        self._hit_count = results.get('hits', 0)
-        self._facet_counts = self.post_process_facets(results)
-        self._spelling_suggestion = results.get('spelling_suggestion', None)
-        
     def build_params(self, *args, **kwargs):
-
-        search_kwargs = super(DESolrSearchQuery, self).build_params(*args, **kwargs)
+        search_kwargs = super(DESolrSearchQuery, self).build_params(*args,
+                                                                    **kwargs)
         """
         build_params logic was copied out into run(). dwithin, within, models, and
         distance_point were left out. I'm not sure if they were left out for a
@@ -196,8 +185,8 @@ class DESolrSearchQuery(SolrSearchQuery):
             if kwarg in search_kwargs:
                 del search_kwargs[kwarg]
 
-        attr_to_copy = ['facet_mincount', 'facet_limit', 'facet_prefix', 'facet_sort',
-                'facet_offset', 'bf']
+        attr_to_copy = ['facet_mincount', 'facet_limit', 'facet_prefix',
+                        'facet_sort', 'facet_offset', 'bf']
         attr_to_copy.extend(self.search_parameters)
 
         #Copy attributes from Search query to search_kwargs
@@ -254,7 +243,11 @@ class DESolrSearchQuery(SolrSearchQuery):
         clone.bf = self.bf
         for param in self.search_parameters:
             setattr(clone, param, getattr(self, param, ""))
+
         return clone
+
+    def add_query_facet(self, query):
+        self.query_facets.append(query)
 
 
 class DESolrSearchBackend(SolrSearchBackend):
@@ -266,10 +259,10 @@ class DESolrSearchBackend(SolrSearchBackend):
 
         """
         super(DESolrSearchBackend, self).__init__(connection_alias,
-                                                **connection_options)
+                                                  **connection_options)
         user = connection_options.get("HTTP_AUTH_USERNAME")
         passwd = connection_options.get("HTTP_AUTH_PASSWORD")
-        self.conn = Solr(connection_options['URL'], auth=(user,passwd),
+        self.conn = Solr(connection_options['URL'], auth=(user, passwd),
                          timeout=self.timeout)
 
     @log_query
@@ -299,27 +292,29 @@ class DESolrSearchBackend(SolrSearchBackend):
                 fields = " ".join(fields)
             kwargs['fl'] = fields
 
-#        This code was causing sort_by to break, but we're keeping it as a
-#        reference in case we want to enable geographic sorting in the future.
-#        Haystack does have an order_by_distance function, so this code might
-#        not be necessary
-#        Jason McLaughlin 10/30/2012
-#        geo_sort = False
-#        if sort_by is not None:
-#            if sort_by in ['distance asc', 'distance desc'] and distance_point:
-#                # Do the geo-enabled sort.
-#                lng, lat = distance_point['point'].get_coords()
-#                kwargs['sfield'] = distance_point['field']
-#                kwargs['pt'] = '%s,%s' % (lat, lng)
-#                geo_sort = True
-#
-#                if sort_by == 'distance asc':
-#                    kwargs['sort'] = 'geodist() asc'
-#                else:
-#                    kwargs['sort'] = 'geodist() desc'
-#            else:
-#                if sort_by.startswith('distance '):
-#                    warnings.warn("In order to sort by distance, you must call the '.distance(...)' method.")
+       # This code was causing sort_by to break, but we're keeping it as a
+       # reference in case we want to enable geographic sorting in the future.
+       # Haystack does have an order_by_distance function, so this code might
+       # not be necessary
+       # Jason McLaughlin 10/30/2012
+       # geo_sort = False
+       # if sort_by is not None:
+       #     if sort_by in ['distance asc', 'distance desc'] and distance_point:
+       #         # Do the geo-enabled sort.
+       #         lng, lat = distance_point['point'].get_coords()
+       #         kwargs['sfield'] = distance_point['field']
+       #         kwargs['pt'] = '%s,%s' % (lat, lng)
+       #         geo_sort = True
+       #
+       #         if sort_by == 'distance asc':
+       #             kwargs['sort'] = 'geodist() asc'
+       #         else:
+       #             kwargs['sort'] = 'geodist() desc'
+       #     else:
+       #         if sort_by.startswith('distance '):
+       #              warnings.warn("In order to sort by distance, "
+       #                            "you must call the '.distance(...)' "
+       #                            "method.")
 
         if sort_by is not None:
             # Regular sorting.
@@ -396,7 +391,7 @@ class DESolrSearchBackend(SolrSearchBackend):
 
         if query_facets is not None:
             kwargs['facet'] = 'on'
-            kwargs['facet.query'] = ["%s:%s" % (field, value) for field, value in query_facets]
+            kwargs['facet.query'] = query_facets
 
         if limit_to_registered_models is None:
             limit_to_registered_models = getattr(settings, 'HAYSTACK_LIMIT_TO_REGISTERED_MODELS', True)
@@ -451,7 +446,8 @@ class DESolrSearchBackend(SolrSearchBackend):
             self.log.error("Failed to query Solr using '%s': %s", query_string, e)
             raw_results = EmptyResults()
 
-        return self._process_results(raw_results, highlight=highlight, result_class=result_class)
+        return self._process_results(raw_results, highlight=highlight,
+                                     result_class=result_class)
 
     def build_schema(self, fields):
         content_field_name = ''
@@ -541,7 +537,8 @@ def get_identifier(obj_or_string):
     """
     if isinstance(obj_or_string, basestring):
         if not IDENTIFIER_REGEX.match(obj_or_string):
-            raise AttributeError("Provided string '%s' is not a valid identifier." % obj_or_string)
+            raise AttributeError("Provided string '%s' is not a "
+                                 "valid identifier." % obj_or_string)
         
         return obj_or_string
     
