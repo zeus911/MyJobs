@@ -32,6 +32,7 @@ class MySearchViewTests(MyJobsBase):
             'email': self.user.email,
             'frequency': 'D',
             'is_active': 'True',
+            'jobs_per_email': 5,
             'sort_by': 'Relevance',
         }
         self.new_digest_data = {
@@ -84,7 +85,7 @@ class MySearchViewTests(MyJobsBase):
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(json.loads(response.content).keys(),
-                         ['frequency'])
+                         ['frequency', 'jobs_per_email'])
 
     def test_get_edit_page(self):
         self.assertTrue(self.new_form.is_valid())
