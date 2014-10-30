@@ -665,66 +665,6 @@ def _clean(term):
     return DESearchQuerySet().query.clean(term)
 
 
-def _build_facet_queries(custom_facets):
-    tagged_facets = {}
-    sqs = DESearchQuerySet()
-    custom_facet_queries = custom_facets.get_raw_facet_queries()
-    for query, facet in zip(custom_facet_queries, custom_facets):
-        tagged_facets[query] = {
-            'custom_facet': facet,
-        }
-        sqs = sqs.query_facet(query)
-    return tagged_facets, sqs
-
-
-def _facet_query_result_counts(tagged_facets, sqs):
-    """
-    Map query results back to their originating CustomFacet instances.
-
-    """
-    facet_results = sqs.facet_counts()
-    if not facet_results:
-        return []
-
-    counts = []
-    for query, count in facet_results['queries'].iteritems():
-        counts.append((tagged_facets[query]['custom_facet'], count))
-    return counts
-
-
-def get_solr_facet(site_id, jsids, filters=None, params=None):
-    custom_facets = CustomFacet.objects.prod_facets_for_current_site()
-    custom_facets = custom_facets.prefetch_related('business_units')
-
-    # Short-circuit the function if a site has facets turned on, but either
-    # does not have any facets with `show_production` == 1 or has not yet
-    # created any facets.
-    if not custom_facets:
-        return []
-
-    tagged_facets, sqs = _build_facet_queries(custom_facets)
-
-    # If this function is called from seo.views.job_listing_by_slug_tag,
-    # it is passed the additional "filters" parameter, which is the output
-    # from helper.build_filter_dict(request.path).
-    if filters:
-        sqs = filter_sqs(sqs, filters, site_id=settings.SITE_ID)
-
-    # Intersect the CustomFacet object's query parameters with those of
-    # the site's default facet, if it has one.
-    if settings.DEFAULT_FACET:
-        sqs = sqs_apply_custom_facets(settings.DEFAULT_FACET, sqs)
-
-    sqs = _sqs_narrow_by_buid_and_site_package(sqs, buids=jsids)
-
-    if params:
-        sqs = prepare_sqs_from_search_params(params, sqs=sqs)
-
-    result_counts = _facet_query_result_counts(tagged_facets, sqs)
-    result_counts.sort(key=lambda x: -x[1])
-    return result_counts
-
-
 def _build_group_queries(site_id, results):
     """
     This function builds out the tree of `group.query` parameters via the
@@ -1389,3 +1329,63 @@ def urlencode_path_and_query_string(url):
         result = '{path}?{query_string}'.format(path=result,
                                                 query_string=query_string)
     return result
+
+
+def _build_facet_queries(custom_facets):
+    tagged_facets = {}
+    sqs = DESearchQuerySet()
+    custom_facet_queries = custom_facets.get_raw_facet_queries()
+    for query, facet in zip(custom_facet_queries, custom_facets):
+        tagged_facets[query] = {
+            'custom_facet': facet,
+            }
+        sqs = sqs.query_facet(query)
+    return tagged_facets, sqs
+
+
+def _facet_query_result_counts(tagged_facets, sqs):
+    """
+    Map query results back to their originating CustomFacet instances.
+
+    """
+    facet_results = sqs.facet_counts()
+    if not facet_results:
+        return []
+
+    counts = []
+    for query, count in facet_results['queries'].iteritems():
+        counts.append((tagged_facets[query]['custom_facet'], count))
+    return counts
+
+
+def get_solr_facet(site_id, jsids, filters=None, params=None):
+    custom_facets = CustomFacet.objects.prod_facets_for_current_site()
+    custom_facets = custom_facets.prefetch_related('business_units')
+
+    # Short-circuit the function if a site has facets turned on, but either
+    # does not have any facets with `show_production` == 1 or has not yet
+    # created any facets.
+    if not custom_facets:
+        return []
+
+    tagged_facets, sqs = _build_facet_queries(custom_facets)
+
+    # If this function is called from seo.views.job_listing_by_slug_tag,
+    # it is passed the additional "filters" parameter, which is the output
+    # from helper.build_filter_dict(request.path).
+    if filters:
+        sqs = filter_sqs(sqs, filters, site_id=settings.SITE_ID)
+
+    # Intersect the CustomFacet object's query parameters with those of
+    # the site's default facet, if it has one.
+    if settings.DEFAULT_FACET:
+        sqs = sqs_apply_custom_facets(settings.DEFAULT_FACET, sqs)
+
+    sqs = _sqs_narrow_by_buid_and_site_package(sqs, buids=jsids)
+
+    if params:
+        sqs = prepare_sqs_from_search_params(params, sqs=sqs)
+
+    result_counts = _facet_query_result_counts(tagged_facets, sqs)
+    result_counts.sort(key=lambda x: -x[1])
+    return result_counts
