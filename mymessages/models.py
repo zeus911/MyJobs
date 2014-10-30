@@ -6,7 +6,6 @@ from django.db.models import Q
 from django.utils import timezone
 from django.contrib.auth.models import Group
 
-from myjobs.models import User
 
 
 def start_default():
@@ -80,7 +79,7 @@ class Message(models.Model):
         ('success', 'Success'),
     )
     group = models.ManyToManyField(Group)
-    users = models.ManyToManyField(User, through='MessageInfo')
+    users = models.ManyToManyField('myjobs.User', through='MessageInfo')
     subject = models.CharField("Subject", max_length=200)
     message_type = models.CharField("Type of message", choices=TYPE_OF_MESSAGES,
                                     max_length=200)
@@ -103,7 +102,7 @@ class MessageInfo(models.Model):
     """
     Through model for Message.
     """
-    user = models.ForeignKey(User)
+    user = models.ForeignKey('myjobs.User')
     message = models.ForeignKey(Message)
     read = models.BooleanField(default=False, db_index=True)
     read_at = models.DateTimeField('read at', null=True)
