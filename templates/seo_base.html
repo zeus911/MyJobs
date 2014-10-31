@@ -12,6 +12,7 @@
 <html xmlns:fb="http://ogp.me/ns/fb#" lang="en">
 <head>
     {% block myblocks_css_extras %}{% endblock %}
+
     <title>{% block directseo_title %}{% endblock %}</title>
 
     <meta name="msvalidate.01" content="B9E4E5CC00BB58B097061E7DBFC6FA6B" />
@@ -60,9 +61,6 @@
         <meta name="robots" content="nofollow">
     {% endif %}
 
-{% if "network" in site_tags %}
-    {% block direct_extraHeaderContent %}{% endblock %} 
-{% endif %}
 
     <script src="{{ STATIC_URL }}military_family_loc.json"></script>
 
@@ -234,4 +232,5 @@
 {% block directseo_quantcast2 %}{% include "quantcast2.html" %}{% endblock %}
 </body>
 </html>
+
 
