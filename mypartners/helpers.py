@@ -396,6 +396,8 @@ def filter_partners(request, partner_library=False):
             only 'location'-- which sorts by city and state-- and name -- which
             sorts by partner name -- are allowed.
     """
+    company = get_company_or_404(request)
+
     sort_order = "-" if request.REQUEST.get("desc", False) else ""
     sort_by = sort_order + request.REQUEST.get('sort_by', 'name')
     city = request.REQUEST.get('city', '').strip()
@@ -410,8 +412,7 @@ def filter_partners(request, partner_library=False):
             si if si != "disability" else "disabled" 
             for si in request.REQUEST.getlist('special_interest')]
 
-
-        library_ids = Partner.objects.exclude(
+        library_ids = Partner.objects.filter(owner=company).exclude(
             library__isnull=True).values_list('library', flat=True)
         # hide partners that the user has already added 
         partners = PartnerLibrary.objects.exclude(id__in=library_ids)
@@ -445,7 +446,7 @@ def filter_partners(request, partner_library=False):
         sort_by.replace('city', 'contact__locations__city')
         order_by = []
 
-        query = Q(owner=get_company_or_404(request).id)
+        query = Q(owner=company.id)
 
         # If both start and end date are passed, we should filter, creating
         # reasonable bounds for either one if they are missing. Otherwise, we

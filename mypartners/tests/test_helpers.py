@@ -84,7 +84,7 @@ class HelpersTests(MyPartnersTestCase):
 
 class PartnerLibraryFilterTests(PartnerLibraryTestCase):
 
-    def test_all_offcp_partners_available(self):
+    def test_all_ofccp_partners_available(self):
         """
         When a company doesn't have any OFCCP partners, they should all be
         available to choose from in the partner library search.
@@ -92,6 +92,7 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
         partner_count = self.partner_library.count()
         request = self.request_factory.get(
             'prm/view/partner-library/', dict(company=self.company.id))
+        request.user = self.staff_user
 
         partners = helpers.filter_partners(request, partner_library=True)
 
