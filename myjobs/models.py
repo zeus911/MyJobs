@@ -510,20 +510,22 @@ class User(AbstractBaseUser, PermissionsMixin):
             user = self.email
         msg = "%s has opted out of receiving saved search emails." % user
         message = render_to_string(
-            "mysearches/email_opt_out.html", {'msg': msg}) 
+            "mysearches/email_opt_out.html", {'msg': msg})
         subject = "My.jobs Partner Saved Search Update"
-        creators, emails = zip(
-            *[(pss.created_by, pss.created_by.email)
-              for pss in self.partnersavedsearch_set.distinct()])
+        creators, emails = zip(*[
+            (pss.created_by, pss.created_by.email)
+            for pss in self.partnersavedsearch_set.distinct()
+        ]) or (None, None)
 
-        # send notification email
-        email = EmailMessage(
-            subject, message, settings.SAVED_SEARCH_EMAIL, emails)
-        email.content_subtype = 'html'
-        email.send()
+        if creators and emails:
+            # send notification email
+            email = EmailMessage(
+                subject, message, settings.SAVED_SEARCH_EMAIL, emails)
+            email.content_subtype = 'html'
+            email.send()
 
-        # create PRM message
-        Message.objects.create_message(subject, msg, users=creators)
+            # create PRM message
+            Message.objects.create_message(subject, msg, users=creators)
 
 class EmailLog(models.Model):
     email = models.EmailField(max_length=254)
