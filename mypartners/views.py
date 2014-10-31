@@ -61,25 +61,20 @@ def prm(request):
 
     """
     company = get_company_or_404(request)
+    partners = filter_partners(request)
+    paginator = add_pagination(request, partners) if partners else None
 
     if request.is_ajax():
-        partners = filter_partners(request)
-        paginator = add_pagination(request, partners)
         ctx = {
             'partners': paginator,
             'on_page': 'prm',
-            'ajax': 'true'
+            'ajax': 'true',
         }
         response = HttpResponse()
         html = render_to_response('mypartners/includes/partner_column.html',
                                   ctx, RequestContext(request))
         response.content = html.content
         return response
-    partners = filter_partners(request)
-    if partners:
-        paginator = add_pagination(request, partners)
-    else:
-        paginator = None
 
     ctx = {
         'has_partners': True if partners else False,
@@ -666,12 +661,8 @@ def prm_records(request):
 
     """
     company, partner, _ = prm_worthy(request)
-    contact_type = request.REQUEST.get('contact_type')
-    contact = request.REQUEST.get('contact')
-
-    dt_range, date_str, contact_records = get_records_from_request(request)
-    paginated_records = add_pagination(request,
-                                       contact_records.order_by('-date_time'))
+    _, _, contact_records = get_records_from_request(request)
+    paginated_records = add_pagination(request, contact_records)
 
     if request.is_ajax():
         ctx = {
@@ -689,21 +680,16 @@ def prm_records(request):
                             if choice[0] != 'pssemail']
     contact_type_choices.insert(0, ('all', 'All'))
 
-    contacts = ContactRecord.objects.filter(partner=partner)
-    contacts = contacts.values('contact_name').distinct()
-    contact_choices = [(c['contact_name'], c['contact_name']) for c in contacts]
+    contact_choices = [
+        (c, c) for c in contact_records.order_by(
+            'contact_name').distinct().values_list('contact_name', flat=True)]
     contact_choices.insert(0, ('all', 'All'))
 
     ctx = {
         'admin_id': request.REQUEST.get('admin'),
         'company': company,
-        'contact': contact,
         'contact_choices': contact_choices,
-        'contact_type': contact_type,
         'contact_type_choices': contact_type_choices,
-        'date_display': date_str,
-        'date_start': dt_range[0],
-        'date_end': dt_range[1],
         'partner': partner,
         'records': paginated_records,
         'view_name': 'PRM',
@@ -758,83 +744,37 @@ def prm_view_records(request):
 
     """
     company, partner, _ = prm_worthy(request)
-    record_id = request.GET.get('id')
-    offset = request.GET.get('offset', 0)
-    record_type = request.GET.get('type')
-    name = request.GET.get('name')
-    range_start = request.REQUEST.get('date_start')
-    range_end = request.REQUEST.get('date_end')
+    _, _, contact_records = get_records_from_request(request)
     try:
-        range_start = datetime.strptime(range_start, "%m/%d/%Y")
-        range_end = datetime.strptime(range_end, "%m/%d/%Y")
-        range_end = datetime(range_end.year, range_end.month,
-                             range_end.day, 23, 59, 59)
-    except (AttributeError, TypeError):
-        range_start = None
-        range_end = None
+        page = int(request.GET.get('page', 1))
+    except ValueError:
+        page = 1
+    # change number of objects per page
+    paginated_records = add_pagination(request, contact_records, 1)
 
-    try:
-        record_id = int(record_id)
-        offset = int(offset)
-    except (TypeError, ValueError):
-        raise Http404
+    if len(paginated_records.object_list) > 1:
+        record = paginated_records.object_list[page - 1]
+    else:
+        record = paginated_records.object_list[0]
 
-    # we convert to a list so that we can do negative indexing
-    record = get_object_or_404(ContactRecord, pk=record_id)
+    attachments = record.prmattachment_set.all()
+    record_history = ContactLogEntry.objects.filter(
+        object_id=record.pk, content_type_id=ContentType.objects.get_for_model(
+            ContactRecord).pk)
 
-    records = list(partner.get_contact_records(
-        contact_name=name, record_type=record_type,
-        date_start=range_start, date_end=range_end).order_by("-date_time"))
-    next_id = prev_id = None
-    if len(records) > 1:
-        ids = [r.id for r in records]
-        try:
-            record_index = ids.index(record_id)
-        except Exception:
-            # Log the error in new relic so we know there is some reaosn
-            # that the next and previous aren't populating correctly, but
-            # don't allow that to prevent the user from seeing the requested
-            # record.
-            newrelic.agent.record_exception(*sys.exc_info())
-        else:
-            record = records[record_index]
-
-            if record_index == len(ids) - 1:
-                # we're at the end of the list
-                prev_id = records[record_index - 1].id
-            elif record_index == 0:
-                # we're at the beginning of the list
-                next_id = records[record_index + 1].id
-            else:
-                # we're somewhere in the middle
-                prev_id = records[record_index - 1].id
-                next_id = records[record_index + 1].id
-
-    tags = record.tags.all()
-    attachments = PRMAttachment.objects.filter(contact_record=record)
-    ct = ContentType.objects.get_for_model(ContactRecord).pk
-    record_history = ContactLogEntry.objects.filter(object_id=record_id,
-                                                    content_type_id=ct)
     ctx = {
-        'date_start': range_start,
-        'date_end': range_end,
         'record': record,
+        'records': paginated_records,
         'partner': partner,
         'company': company,
-        'tags': tags,
         'attachments': attachments,
         'record_history': record_history,
-        'next_id': next_id,
-        'prev_id': prev_id,
-        'contact_type': record_type,
-        'contact_name': name,
         'view_name': 'PRM',
-
+        'page': page
     }
 
     return render_to_response('mypartners/view_record.html', ctx,
                               RequestContext(request))
-
 
 @company_has_access('prm_access')
 def get_contact_information(request):
@@ -843,7 +783,7 @@ def get_contact_information(request):
     phone number if they have one.
 
     """
-    company, partner, user = prm_worthy(request)
+    _, partner, _ = prm_worthy(request)
 
     contact_id = request.REQUEST.get('contact_name')
     try:
@@ -1130,6 +1070,7 @@ def partner_get_referrals(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_export(request):
+    #TODO: investigate using django's builtin serialization for XML
     company, partner, user = prm_worthy(request)
     file_format = request.REQUEST.get('file_format', 'csv')
     fields = retrieve_fields(ContactRecord)
@@ -1141,8 +1082,14 @@ def prm_export(request):
             xml_record = etree.SubElement(root, "record")
             for field in fields:
                 xml = etree.SubElement(xml_record, field)
-                xml.text = contact_record_val_to_str(getattr(record, field, ""))
-        response = HttpResponse(etree.tostring(root, pretty_print=True),
+                value = getattr(record, field, '')
+
+                if hasattr(value, 'all'):
+                    value = ', '.join([val.name for val in value.all() if val])
+
+                xml.text = contact_record_val_to_str(value)
+        response = HttpResponse(etree.tostring(root, pretty_print=True,
+                                               xml_declaration=True),
                                 mimetype='application/force-download')
     elif file_format == 'printer_friendly':
         ctx = {
@@ -1160,10 +1107,15 @@ def prm_export(request):
         writer.writerow(fields)
         for record in records:
             values = [getattr(record, field, '') for field in fields]
-            values = [contact_record_val_to_str(v) for v in values]
+            values = [
+                contact_record_val_to_str(v)
+                if not hasattr(v, 'all') else
+                ', '.join([val.name for val in v.all() if val]) for v in values
+            ]
             # Remove the HTML and reformat.
             values = [bleach.clean(v, [], strip=True) for v in values]
-            values = [re.sub(' +', ' ', v) for v in values]
+            # replaces multiple occurences of space by a single sapce.
+            values = [' '.join(filter(bool, v.split(' '))) for v in values]
             values = [re.sub('\s+\n\s+', '\n', v) for v in values]
             writer.writerow(values)
 
@@ -1289,6 +1241,7 @@ def process_email(request):
                                               contact_name=contact.name,
                                               contact_email=contact.email,
                                               contact_phone=contact.phone,
+                                              created_by=admin_user,
                                               date_time=date_time,
                                               subject=subject,
                                               notes=force_text(email_text))
