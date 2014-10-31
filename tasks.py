@@ -13,7 +13,6 @@ import uuid
 from celery import group
 from celery.task import task
 
-
 from django.conf import settings
 from django.contrib.sitemaps import ping_google
 from django.contrib.contenttypes.models import ContentType
@@ -25,8 +24,6 @@ from django.db.models import Q
 from seo.models import Company, SeoSite
 from myjobs.models import EmailLog, User, STOP_SENDING, BAD_EMAIL
 from mymessages.models import Message
-from mypartners.models import PartnerLibrary
-from mypartners.helpers import get_library_partners
 from mysearches.models import SavedSearch, SavedSearchDigest
 from mypartners.models import PartnerLibrary
 from mypartners.helpers import get_library_partners
@@ -45,6 +42,7 @@ sys.path.insert(0, os.path.join(BASE_DIR))
 sys.path.insert(0, os.path.join(BASE_DIR, '../'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 FEED_FILE_PREFIX = "dseo_feed_"
+
 
 @task(name='tasks.send_search_digest', ignore_result=True,
       default_retry_delay=180, max_retries=2, bind=True)
@@ -65,6 +63,7 @@ def send_search_digest(self, search):
             # After the initial try and two retries, disable the offending
             # saved search
             search.disable_or_fix()
+
 
 @task(name='tasks.update_partner_library', ignore_result=True,
       default_retry_delay=180, max_retries=2)
@@ -213,7 +212,8 @@ def process_user_events(email):
             """.format(email=stop_sending[0].email)
         body = body.format(settings_url=reverse_lazy('edit_account'))
         Message.objects.create_message(users=user, subject='', body=body)
-        update_fields.extend(['deactivate_type', 'is_verified', 'opt_in_myjobs'])
+        update_fields.extend(['deactivate_type', 'is_verified',
+                              'opt_in_myjobs'])
 
     if user and user.last_response < newest_log.received:
         user.last_response = newest_log.received
@@ -435,13 +435,13 @@ def parse_log(logs, solr_location):
                     update_dict = {
                         'view_date': line[0],
                         'doc_type': 'analytics',
-                        }
+                    }
 
                     # Make sure the value for a given key is only a list if
                     # there are multiple elements
                     qs = dict((k, v if len(v) > 1 else v[0])
                               for k, v in urlparse.parse_qs(
-                        line[4]).iteritems())
+                                  line[4]).iteritems())
 
                     if 'redirect' in log.key:
                         aguid = qs.get('jcnlx.aguid', '')
@@ -552,8 +552,13 @@ def parse_log(logs, solr_location):
         for location in solr_location.values():
             solr = pysolr.Solr(location)
             for subset in subsets:
-                subset = filter(None, subset)
-                solr.add(subset)
+                try:
+                    subset = filter(None, subset)
+                    solr.add(subset)
+                except pysolr.SolrError:
+                    # There is something wrong with this chunk of data. It's
+                    # better to lose 500 documents than the entire file
+                    pass
 
 
 @task(name="tasks.delete_old_analytics_docs", ignore_result=True)
@@ -637,6 +642,7 @@ def expire_jobs():
         job.date_expired = date.today() + timedelta(days=30)
         # Saving will trigger job.add_to_solr().
         job.save()
+
 
 @task(name="tasks.task_update_solr", acks_late=True, ignore_result=True)
 def task_update_solr(jsid, **kwargs):
