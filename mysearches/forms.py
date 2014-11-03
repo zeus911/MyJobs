@@ -150,8 +150,8 @@ class PartnerSavedSearchForm(ModelForm):
     class Meta:
         model = PartnerSavedSearch
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
-                  'account_activation_message', 'frequency', 'day_of_month',
-                  'day_of_week', 'partner_message', 'notes')
+                'account_activation_message', 'frequency', 'day_of_month',
+                'day_of_week', 'jobs_per_email', 'partner_message', 'notes')
         exclude = ('provider', 'sort_by', )
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),

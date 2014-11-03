@@ -32,6 +32,7 @@ class MySearchViewTests(MyJobsBase):
             'email': self.user.email,
             'frequency': 'D',
             'is_active': 'True',
+            'jobs_per_email': 5,
             'sort_by': 'Relevance',
         }
         self.new_digest_data = {

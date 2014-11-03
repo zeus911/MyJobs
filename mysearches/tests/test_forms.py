@@ -14,6 +14,7 @@ class SavedSearchFormTests(MyJobsBase):
                      'feed': 'http://www.my.jobs/jobs/feed/rss?',
                      'email': 'alice@example.com',
                      'frequency': 'D',
+                     'jobs_per_email': 5,
                      'label': 'All jobs from www.my.jobs',
                      'sort_by': 'Relevance'}
 
