@@ -507,8 +507,16 @@ class User(AbstractBaseUser, PermissionsMixin):
         subject = "My.jobs Partner Saved Search Update"
         saved_searches = self.partnersavedsearch_set.distinct()
 
+        # MySQL doesn't support passing a column to distinct, and I don't want
+        # to deal with dictionaries returned by values, so I just keep track of
+        # unique contacts manually.
+        contacts = []
         # need the partner name, so can't send a batch email or message
         for pss in saved_searches:
+            if (pss.email, pss.partner) not in contacts:
+                contacts.append((pss.email, pss.partner))
+            else:
+                continue
             # send notification email
             message = render_to_string(
                 "mysearches/email_opt_out.html",
