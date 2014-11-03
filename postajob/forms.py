@@ -352,15 +352,26 @@ class ProductForm(RequestForm):
 
         profile = get_object_or_none(CompanyProfile, company=self.company)
         if (not profile or not
-            (profile.authorize_net_login and
-             profile.authorize_net_transaction_key)):
-            self.initial['cost'] = 0
-            self.fields['cost'].widget.attrs['readonly'] = True
-            self.fields['cost'].help_text = ('You cannot charge for '
-                                             'jobs until you <a href=%s>'
-                                             'add your Authorize.net account '
-                                             'information</a>.' %
-                                             reverse_lazy('companyprofile_add'))
+                (profile.authorize_net_login and
+                 profile.authorize_net_transaction_key)):
+            if self.request.user.is_superuser:
+                # Superusers should know better than to break things
+                self.fields["cost"].help_text = ("This member needs to "
+                                                 "have added Authorize.net "
+                                                 "account information "
+                                                 "before we can safely "
+                                                 "charge for posting. If "
+                                                 "that hasn't been added, "
+                                                 "bad things may happen.")
+            else:
+                self.fields['cost'].help_text = ('You cannot charge for '
+                                                 'jobs until you '
+                                                 '<a href=%s>add your '
+                                                 'Authorize.net account '
+                                                 'information</a>.' %
+                                                 reverse_lazy('companyprofile_add'))
+                self.initial['cost'] = 0
+                self.fields['cost'].widget.attrs['readonly'] = True
             setattr(self, 'no_payment_info', True)
 
     def clean(self):
