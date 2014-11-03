@@ -19,7 +19,7 @@
     {% block meta-extra %}{% endblock %}
 
     <link href="{{ STATIC_URL }}def.ui.152-21.css{{ gz }}" rel="stylesheet" type="text/css">
-    <link href="{{ STATIC_URL }}my.jobs.157-13.css{{ gz }}" rel="stylesheet" type="text/css">
+    <link href="{{ STATIC_URL }}my.jobs.157-20.css{{ gz }}" rel="stylesheet" type="text/css">
     <!--[if IE]>
     <link href="{{ STATIC_URL }}my.jobs.ie.155-14.css{{ gz }}" rel="stylesheet" type="text/css">
     <![endif]-->
@@ -52,7 +52,8 @@
                             {% if not user.is_active or not user.is_verified %}
 
                             <div class="alert alert-error hide-mobile">
-                                Please activate your account using the activation link sent to your email. <a href="{% url 'resend_activation' %}">Click here to resend the activation email.</a>
+                                Your account doesn't have full access to My.jobs features! Please activate it using the activation link sent to your email. <br />
+                                <a href="{% url 'resend_activation' %}">Resend my activation email.</a>
                             </div>
 
                             {% endif %}

@@ -178,43 +178,39 @@ def get_records_from_request(request):
     outputs:
     The date range filtered on, A string "X Day(s)" representing the
     date filtered on, and the filtered records.
-
-
     """
+    sort_types = {
+        'name': 'contact_name', 'date': 'date_time', None: 'date_time'}
     _, partner, _ = prm_worthy(request)
-
     # extract reelvant values from the request object
-    contact, contact_type, admin, range_start, range_end = [
-        value if value not in ["all", "undefined", ""] else None for value in [
-            request.REQUEST.get(field) for field in [
-                "contact", "contact_type", "admin",
-                "date_start", "date_end"]]]
+    contact, contact_type, admin, range_start, range_end, sort_by, desc = [
+        request.REQUEST.get(field) for field in [
+            'contact', 'contact_type', 'admin', 'date_start', 'date_end',
+            'sort_by', 'desc']]
 
-    records = partner.get_contact_records(contact_name=contact,
-        record_type=contact_type, created_by=admin)
-
-    if not range_start and not range_end:
-        date_str = "View All"
-        range_start = records.aggregate(Min('date_time')).get(
-            'date_time__min', now())
-        range_end = records.aggregate(Max('date_time')).get(
-            'date_time__max', now())
+    if not sort_by and not desc:
+        sort_by = 'date'
+        desc = '-'
     else:
-        if range_start:
-            range_start = datetime.strptime(range_start, '%m/%d/%Y').date()
-        else:
-            range_start = records.aggregate(Min('date_time')).get(
-                'date_time__min', now()).date()
+        desc = '-' if desc else ''
 
-        if range_end:
-            range_end = datetime.strptime(range_end, '%m/%d/%Y').date()
-        else:
-            range_end = now().date()
+    if range_start:
+        range_start = datetime.strptime(range_start, '%m/%d/%Y').date()
 
-        days = (range_end - range_start).days
+    if range_end:
+        range_end = datetime.strptime(range_end, '%m/%d/%Y').date()
+
+    records = partner.get_contact_records(
+        contact_name=contact, record_type=contact_type, created_by=admin,
+        order_by=desc + sort_types[sort_by], date_start=range_start,
+        date_end=range_end)
+
+    if range_start or range_end:
+        days = ((range_end or now().date()) -
+                (range_start or now().date())).days
         date_str = '%i Day%s' % (days, '' if days == 1 else 's')
-
-    records = records.filter(date_time__range=[range_start, range_end])
+    else:
+        date_str = 'View All'
 
     return (range_start, range_end), date_str, records
 
@@ -441,7 +437,9 @@ def filter_partners(request, partner_library=False):
         start_date = request.REQUEST.get('start_date')
         end_date = request.REQUEST.get('end_date')
 
-        partners = Partner.objects.select_related('contact')
+        partners = Partner.objects.prefetch_related(
+            'contact_set', 'contact_set__tags', 'contact_set__locations',
+            'tags')
         contact_city = 'contact__locations__city'
         contact_state = 'contact__locations__state'
         sort_by.replace('city', 'contact__locations__city')
@@ -481,16 +479,17 @@ def filter_partners(request, partner_library=False):
 
     # filter by tags
     for tag in tags:
-        partners = partners.filter(tags__name__icontains=tag)
+        partners = partners.filter(Q(tags__name__icontains=tag) | 
+                                   Q(contact__tags__name__icontains=tag))
 
     if "location" in sort_by:
         if partner_library:
             # no foreign keys, so we can do the "right" thing
             partners = partners.extra(select={
-                'no_city': "city == ''",
-                'no_state': "state == ''"}).order_by(
+                'no_city': "LENGTH(state) = 0",
+                'no_state': "LENGTH(city) = 0"}).order_by(
                     *['%s%s' % (sort_order, column) 
-                    for column in ['city', 'state', 'no_city', 'no_state']])
+                    for column in ['state', 'city', 'no_state', 'no_city']])
         else:
             # QuerySet.extra(select={}) doesn't traverse foreign keys, so we
             # use a few list transformations in order to sort by location and
@@ -502,12 +501,11 @@ def filter_partners(request, partner_library=False):
             first_location = lambda p: str(
                 locations(p)[0] if locations(p) else [])
 
-            # sort descending; [::-1] just reverses a list
             if sort_order:
                 partners = sorted(
                     (p for p in partners),
-                    key=lambda p: 
-                        (locations(p) != [], first_location(p)))[::-1]
+                    key=lambda p:
+                    (locations(p) != [], first_location(p)), reverse=True)
             # sort ascending
             else:
                 partners = sorted(
@@ -515,8 +513,6 @@ def filter_partners(request, partner_library=False):
                     key=lambda p: (locations(p) == [], first_location(p)))
 
     elif "activity" in sort_by:
-        # treat ascending as meaning most recent, not earliest activity
-        sort_order = "" if sort_order else "-"
         if sort_order:
             partners = partners.annotate(
                 earliest_activity=Min('contactrecord__date_time')).order_by(
@@ -528,7 +524,7 @@ def filter_partners(request, partner_library=False):
     else:
         partners = partners.order_by(*[sort_by] + order_by)
 
-    return partners
+    return list(partners)
 
 
 def new_partner_from_library(request):

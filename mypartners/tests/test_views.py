@@ -101,6 +101,7 @@ class MyPartnerViewsTests(MyPartnersTestCase):
 
     def test_prm_page_with_a_partner(self):
         response = self.client.post('/prm/view')
+        self.assertEqual(response.status_code, 200)
         soup = BeautifulSoup(response.content)
 
         # 1 tr is dedicated to header, 1 tr for partner.
@@ -478,10 +479,10 @@ class RecordsDetailsTests(MyPartnersTestCase):
 
         """
         notes = '<script>alert("test!");</script>'
-        record = ContactRecordFactory(notes=notes, partner=self.partner)
+        self.contact_record.notes = notes
+        self.contact_record.save()
         url = self.get_url(partner=self.partner.id,
-                           company=self.company.id,
-                           id=record.id)
+                           company=self.company.id)
         response = self.client.get(url)
         self.assertNotIn(notes, response.content)
         self.assertIn('alert("test!");', response.content)

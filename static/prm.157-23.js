@@ -42,10 +42,6 @@ $(document).ready(function() {
     If someone loads the page with request.GET info
     (not from ajax) fill page with info
     */
-
-    $(".date-picker-widget").hide();
-    $("#reset-date-range").css("visibility", "hidden");
-
     if(location.search) show_selected();
 
     /*
@@ -120,7 +116,12 @@ $(document).ready(function() {
             }
         } else {
             $(".sort-by.active").removeClass("active descending ascending");
-            $(this).addClass("active ascending");
+            // clicking sorts ascending by default unless sorting activity
+            if($(this).text() == 'Activity'){
+                $(this).addClass("active descending");
+            } else {
+                $(this).addClass("active ascending");
+            }
         }
         run_ajax();
     });

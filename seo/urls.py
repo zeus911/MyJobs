@@ -95,6 +95,7 @@ urlpatterns += patterns('seo.views',
     url(r'^data/buids$', 'ajax_buids'),
     url(r'^ajax/ac/$', 'solr_ac'),
     url(r'^ajax/moresearch/$', 'ajax_get_jobs_search'),
+    url(r'^ajax/filtercarousel/$', 'ajax_filter_carousel'),
     # These urls aren't ajax, they're just there to prevent bots
     url(r'^ajax/postajob/$', 'post_a_job'),
     url(r'^ajax/deleteajob/$', 'delete_a_job'),
