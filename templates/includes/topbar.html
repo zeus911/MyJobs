@@ -38,6 +38,7 @@
                             {% endif %}
                             {% if company.product_access %}
                                 <li><a id="purchasedmicrosite-tab" href="{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Partner Microsite" %}</a></li>
+                                <li><a id="purchasedproducts-tab" href="{% url 'purchasedproduct' %}">{% trans "Purchased Products" %}</a></li>
                             {% endif %}
                             <li><a id="posted-jobs-tab" href="{% url 'jobs_overview' %}">{% trans "Posted Jobs" %}</a></li>
                         </ul>
@@ -105,6 +106,7 @@
                                         {% endif %}
                                         {% if company.product_access %}
                                             <li><a id="purchased-microsite-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Partner Microsite" %}</a></li>
+                                            <li><a id="purchasedproducts-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL}}{% url 'purchasedproduct' %}">{% trans "Purchased Products" %}</a></li>
                                         {% endif %}
                                 <li><a id="purchased-microsite-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}{% url 'jobs_overview' %}">{% trans "Posted Jobs" %}</a></li>
                                     {% endif %}
