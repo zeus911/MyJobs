@@ -758,6 +758,10 @@ class CompanyProfileForm(RequestForm):
 
     def __init__(self, *args, **kwargs):
         super(CompanyProfileForm, self).__init__(*args, **kwargs)
+        if not self.instance.company.product_access:
+            self.fields.pop('authorize_net_login', None)
+            self.fields.pop('authorize_net_transaction_key', None)
+
         if self.instance.company.user_created:
             self.fields['company_name'] = CharField(
                 initial=self.instance.company.name, label='Company Name')
