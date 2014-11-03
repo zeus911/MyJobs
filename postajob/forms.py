@@ -440,7 +440,8 @@ class ProductGroupingForm(RequestForm):
 def make_company_from_purchased_product(product_form_instance):
     cleaned_data = product_form_instance.cleaned_data
     company_name = cleaned_data.get('company_name')
-    product_form_instance.company = Company.objects.create(name=company_name)
+    product_form_instance.company = Company.objects.create(name=company_name,
+                                                           user_created=True)
     cu = CompanyUser.objects.create(user=product_form_instance.request.user,
                                     company=product_form_instance.company)
     profile = CompanyProfile.objects.create(
