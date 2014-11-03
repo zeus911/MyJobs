@@ -23,7 +23,7 @@
 {% endblock meta-extra %}
 
 {% block content %}
-        {% include "mypartners/includes/prm_header.html" with page_title="Partner Relationship Manager" %}
+        {% include "mypartners/includes/prm_header.html" with page_title="Partner Relationship Manager" download=True %}
         {% if user.is_active and user.is_verified %}
             {% if not company.partner_set.all %}
                 <div class="row">
