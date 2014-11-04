@@ -506,7 +506,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         # unique contacts manually.
         contacts = []
         # need the partner name, so can't send a batch email or message
-        messages = []
         for pss in saved_searches:
             if (pss.email, pss.partner) not in contacts:
                 contacts.append((pss.email, pss.partner))
