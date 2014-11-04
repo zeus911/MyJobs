@@ -412,7 +412,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         Output:
         :messages:  A list of Messages to be shown to the User.
         """
-        messages = get_messages(self).filter(messageinfo__isnull=True)
+        messages = get_messages(self).exclude(users=self)
         new_message_infos = [
             MessageInfo(user=self, message=message) for message in messages]
 
@@ -506,6 +506,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         # unique contacts manually.
         contacts = []
         # need the partner name, so can't send a batch email or message
+        messages = []
         for pss in saved_searches:
             if (pss.email, pss.partner) not in contacts:
                 contacts.append((pss.email, pss.partner))

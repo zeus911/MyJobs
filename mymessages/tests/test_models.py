@@ -96,7 +96,6 @@ class MessageManagerTests(MyJobsBase):
         self.assertEqual(infos[0].message, message)
 
     def test_create_message_with_users_and_groups(self):
-        import ipdb; ipdb.set_trace()
         new_user = UserFactory(email='second@example.com')
         message = Message.objects.create_message(
             users=new_user, subject='subject', body='message body',

@@ -164,7 +164,7 @@ def get_messages(user):
                         time and expires after the current time. 'active'
                         messages.
     """
-    now = timezone.now()
+    now = timezone.now().date()
     messages = Message.objects.prefetch_related('messageinfo_set').filter(
         Q(group__in=user.groups.all()) | Q(users=user),
         Q(expire_at__isnull=True) | Q(expire_at__gte=now)).distinct()
