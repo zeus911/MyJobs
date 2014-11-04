@@ -551,7 +551,7 @@ def make_pixel_qs(request, job=None):
         qs['pc'] = 'home'
     elif job:
         qs['pc'] = 'listing'
-        qs['jvb'] = job.buid
+        qs['jvb'] = job.buid if job.buid else 0
         qs['jvg'] = job.guid
         qs['jvt'] = job.title_exact
         qs['jvc'] = job.company_exact
