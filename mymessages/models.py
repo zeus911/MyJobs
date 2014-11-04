@@ -165,10 +165,8 @@ def get_messages(user):
                         messages.
     """
     now = timezone.now()
-    groups = Group.objects.filter(user=user)
-    expires_query = Q(expire_at__isnull=True) | Q(expire_at__gt=now)
-    messages = set(Message.objects.filter(
-        expires_query,
-        group__in=groups, start_on__lte=now)).union(
-            set(Message.objects.filter(users=user)))
+    messages = Message.objects.prefetch_related('messageinfo_set').filter(
+        Q(group__in=user.groups.all()) | Q(users=user),
+        Q(expire_at__isnull=True) | Q(expire_at__gte=now)).distinct()
+
     return messages
