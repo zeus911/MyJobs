@@ -31,38 +31,40 @@ class SavedSearchFormTests(MyJobsBase):
         self.patcher.stop()
 
     def test_successful_form(self):
-        form = SavedSearchForm(user=self.user,data=self.data)
+        form = SavedSearchForm(user=self.user, data=self.data)
         self.assertTrue(form.is_valid())
 
     def test_invalid_url(self):
         self.data['url'] = 'http://google.com'
-        form = SavedSearchForm(user=self.user,data=self.data)
+        form = SavedSearchForm(user=self.user, data=self.data)
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors['url'][0], 'This URL is not valid.')
 
     def test_day_of_week(self):
         self.data['frequency'] = 'W'
-        form = SavedSearchForm(user=self.user,data=self.data)
+        form = SavedSearchForm(user=self.user, data=self.data)
         self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors['day_of_week'][0], 'This field is required.')
+        self.assertEqual(form.errors['day_of_week'][0],
+                         'This field is required.')
 
         self.data['day_of_week'] = '1'
-        form = SavedSearchForm(user=self.user,data=self.data)        
+        form = SavedSearchForm(user=self.user, data=self.data)
         self.assertTrue(form.is_valid())
 
     def test_day_of_month(self):
         self.data['frequency'] = 'M'
-        form = SavedSearchForm(user=self.user,data=self.data)
+        form = SavedSearchForm(user=self.user, data=self.data)
         self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors['day_of_month'][0], 'This field is required.')
+        self.assertEqual(form.errors['day_of_month'][0],
+                         'This field is required.')
 
         self.data['day_of_month'] = '1'
-        form = SavedSearchForm(user=self.user,data=self.data)        
+        form = SavedSearchForm(user=self.user, data=self.data)
         self.assertTrue(form.is_valid())
 
     def test_duplicate_url(self):
-        original = SavedSearchFactory(user=self.user)
-        form = SavedSearchForm(user=self.user,data=self.data)
+        SavedSearchFactory(user=self.user)
+        form = SavedSearchForm(user=self.user, data=self.data)
 
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors['url'][0], 'URL must be unique.')
@@ -79,7 +81,8 @@ class PartnerSavedSearchFormTests(MyJobsBase):
             'feed': 'http://www.my.jobs/jobs/feed/rss?',
             'frequency': 'D',
             'label': 'All jobs from www.my.jobs',
-            'sort_by': 'Relevance'
+            'sort_by': 'Relevance',
+            'jobs_per_email': 5,
         }
 
         self.patcher = patch('urllib2.urlopen', return_file())
