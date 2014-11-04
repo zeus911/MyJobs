@@ -467,3 +467,10 @@ HAYSTACK_CONNECTIONS = {
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password'],
         },
 }
+
+# Password settings
+PASSWORD_COMPLEXITY = {
+    'UPPER': 1,
+    'LOWER': 1,
+    'DIGITS': 1
+}

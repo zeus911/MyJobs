@@ -1,4 +1,5 @@
 from django import forms
+from passwords.fields import PasswordField
 from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm
 from django.contrib.auth import authenticate
 from django.utils.translation import ugettext_lazy as _
@@ -86,13 +87,11 @@ class RegistrationForm(forms.Form):
                                  'id':'id_email',
                                  'autocomplete':'off'}),
                              max_length=255)
-    password1 = forms.CharField(error_messages={'required':'Password is required.'},
-                                label=_("Password"), required=True,
-                                widget=forms.PasswordInput(attrs={
-                                    'placeholder':_('Password'),
-                                    'id':'id_password1',
-                                    'autocomplete':'off'},
-                                    render_value=False))
+    password1 = PasswordField(label=('Password'),
+                              widget=forms.PasswordInput(attrs={
+                                  'placeholder':_('Password'),
+                                  'id': 'id_password1',
+                                  'autocomplete': 'off'}))
     password2 = forms.CharField(error_messages={'required':'Password (again) is required.'},
                                 label=_("Password (again)"), required=True,
                                 widget=forms.PasswordInput(attrs={
