@@ -23,7 +23,7 @@ from postajob.forms import (CompanyProfileForm, JobForm, OfflinePurchaseForm,
 from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
                              Product, ProductGrouping, PurchasedJob,
                              PurchasedProduct, Request, JobLocation)
-from universal.helpers import get_company, get_object_or_none
+from universal.helpers import get_company, get_object_or_none, get_company_or_404
 from universal.views import RequestFormViewBase
 
 
@@ -254,7 +254,7 @@ def order_postajob(request):
         'groupings': ProductGrouping
     }
 
-    company = get_company(request)
+    company = get_company_or_404(request)
     obj_type = request.GET.get('obj_type')
     # Variables
 
@@ -667,9 +667,7 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
         Every add is actually an edit.
 
         """
-        company = get_company(self.request)
-        if not company:
-            raise Http404
+        company = get_company_or_404(self.request)
         kwargs = {'company': company}
         self.object, _ = self.model.objects.get_or_create(**kwargs)
         return self.object

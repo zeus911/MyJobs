@@ -1,7 +1,5 @@
 $(document).ready(function() {
-    if(window.location.pathname == "/postajob/admin/product/group/") {
-        var container = $(".card-wrapper");
-    }
+    var container = $(".card-wrapper");
     edit_order_setup(container);
 });
 
@@ -84,11 +82,12 @@ function disable_buttons() {
 
 function send_info(data, table) {
     // AJAX that sends info for order switch
-    data['company'] = read_cookie();
     data['obj_type'] = "groupings";
+    var url = "/postajob/order";
+    if(location.pathname.indexOf("posting")) url = "/posting/order";
     $.ajax({
         type: "GET",
-        url: "/postajob/order/",
+        url: url,
         data: data,
         global: false,
         success: function(html) {
@@ -99,17 +98,4 @@ function send_info(data, table) {
             edit_order_setup(table);
         }
     });
-}
-
-function read_cookie() {
-    var nameEQ = "myjobs_company=";
-    var ca = document.cookie.split(';');
-    for (var i=0; i< ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0) === ' ')
-            c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) === 0)
-            return c.substring(nameEQ.length, c.length);
-    }
-    return null;
 }
