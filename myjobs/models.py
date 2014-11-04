@@ -27,8 +27,10 @@ from mymessages.models import Message
 BAD_EMAIL = ['dropped', 'bounce']
 STOP_SENDING = ['unsubscribe', 'spamreport']
 DEACTIVE_TYPES_AND_NONE = ['none'] + BAD_EMAIL + STOP_SENDING
-# characters used for passwor generation with ambiguous ones ignored
-VALID_CHARS = string.printable.strip("""iloILO01!"'`,.:;-_\t\n\r\x0b\x0c """)
+# Characters used for passwor generation with ambiguous ones ignored.
+# string.strip() doesn't play nicely with quote characters...
+ALLOWED_CHARS = string.printable.translate(
+    None, """iloILO01!{}()[]|^"'`,.:;~-_/\\\t\n\r\x0b\x0c """)
 
 
 class CustomUserManager(BaseUserManager):
@@ -99,8 +101,16 @@ class CustomUserManager(BaseUserManager):
             if not password:
                 create_password = True
                 user_args['password_change'] = True
-                password = self.make_random_password(
-                    length=8, allowed_chars=VALID_CHARS)
+
+                # keep generating a password until a valid one is created
+                password = ""
+
+                while not all(set(password).intersection(
+                        getattr(string, category)) for category in [
+                            'ascii_lowercase', 'ascii_uppercase',
+                            'digits', 'punctuation']):
+                    password = self.make_random_password(
+                        length=8, allowed_chars=ALLOWED_CHARS)
 
             request = kwargs.get('request')
             if request is not None:
