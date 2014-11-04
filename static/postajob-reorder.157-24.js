@@ -3,12 +3,14 @@ $(document).ready(function() {
     edit_order_setup(container);
 });
 
+
 function edit_order_setup(container) {
     // Run functions that are needed to set up editing order
 
     disable_first_up_last_down(container);
     add_event_listeners(container);
 }
+
 
 function disable_first_up_last_down(container) {
     /* Variables */
@@ -20,6 +22,7 @@ function disable_first_up_last_down(container) {
     first_row.children("div.product-group-order").children("a:first-child").addClass("disabled");
     last_row.children("div.product-group-order").children("a:last-child").addClass("disabled");
 }
+
 
 function add_event_listeners(container) {
     /* Variables */
@@ -68,6 +71,7 @@ function add_event_listeners(container) {
     });
 }
 
+
 function disable_buttons() {
     // Disables arrows to prohibit multiple actions.
     var up_arrows = $("[class*='icon-arrow-up']"),
@@ -80,14 +84,13 @@ function disable_buttons() {
     });
 }
 
+
 function send_info(data, table) {
     // AJAX that sends info for order switch
     data['obj_type'] = "groupings";
-    var url = "/postajob/order";
-    if(location.pathname.indexOf("posting")) url = "/posting/order";
     $.ajax({
         type: "GET",
-        url: url,
+        url: "/posting/order",
         data: data,
         global: false,
         success: function(html) {
