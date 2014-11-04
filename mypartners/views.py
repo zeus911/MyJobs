@@ -661,10 +661,8 @@ def prm_records(request):
 
     """
     company, partner, _ = prm_worthy(request)
-
     _, _, contact_records = get_records_from_request(request)
-    paginated_records = add_pagination(request,
-                                       contact_records.order_by('-date_time'))
+    paginated_records = add_pagination(request, contact_records)
 
     if request.is_ajax():
         ctx = {
@@ -682,9 +680,9 @@ def prm_records(request):
                             if choice[0] != 'pssemail']
     contact_type_choices.insert(0, ('all', 'All'))
 
-    contacts = ContactRecord.objects.distinct().filter(partner=partner)
-    contact_choices = [(c, c) for c in contacts.values_list(
-        'contact_name', flat=True)]
+    contact_choices = [
+        (c, c) for c in contact_records.order_by(
+            'contact_name').distinct().values_list('contact_name', flat=True)]
     contact_choices.insert(0, ('all', 'All'))
 
     ctx = {
@@ -746,83 +744,37 @@ def prm_view_records(request):
 
     """
     company, partner, _ = prm_worthy(request)
-    record_id = request.GET.get('id')
-    offset = request.GET.get('offset', 0)
-    record_type = request.GET.get('type')
-    name = request.GET.get('name')
-    range_start = request.REQUEST.get('date_start')
-    range_end = request.REQUEST.get('date_end')
+    _, _, contact_records = get_records_from_request(request)
     try:
-        range_start = datetime.strptime(range_start, "%m/%d/%Y")
-        range_end = datetime.strptime(range_end, "%m/%d/%Y")
-        range_end = datetime(range_end.year, range_end.month,
-                             range_end.day, 23, 59, 59)
-    except (AttributeError, TypeError):
-        range_start = None
-        range_end = None
+        page = int(request.GET.get('page', 1))
+    except ValueError:
+        page = 1
+    # change number of objects per page
+    paginated_records = add_pagination(request, contact_records, 1)
 
-    try:
-        record_id = int(record_id)
-        offset = int(offset)
-    except (TypeError, ValueError):
-        raise Http404
+    if len(paginated_records.object_list) > 1:
+        record = paginated_records.object_list[page - 1]
+    else:
+        record = paginated_records.object_list[0]
 
-    # we convert to a list so that we can do negative indexing
-    record = get_object_or_404(ContactRecord, pk=record_id)
+    attachments = record.prmattachment_set.all()
+    record_history = ContactLogEntry.objects.filter(
+        object_id=record.pk, content_type_id=ContentType.objects.get_for_model(
+            ContactRecord).pk)
 
-    records = list(partner.get_contact_records(
-        contact_name=name, record_type=record_type,
-        date_start=range_start, date_end=range_end).order_by("-date_time"))
-    next_id = prev_id = None
-    if len(records) > 1:
-        ids = [r.id for r in records]
-        try:
-            record_index = ids.index(record_id)
-        except Exception:
-            # Log the error in new relic so we know there is some reaosn
-            # that the next and previous aren't populating correctly, but
-            # don't allow that to prevent the user from seeing the requested
-            # record.
-            newrelic.agent.record_exception(*sys.exc_info())
-        else:
-            record = records[record_index]
-
-            if record_index == len(ids) - 1:
-                # we're at the end of the list
-                prev_id = records[record_index - 1].id
-            elif record_index == 0:
-                # we're at the beginning of the list
-                next_id = records[record_index + 1].id
-            else:
-                # we're somewhere in the middle
-                prev_id = records[record_index - 1].id
-                next_id = records[record_index + 1].id
-
-    tags = record.tags.all()
-    attachments = PRMAttachment.objects.filter(contact_record=record)
-    ct = ContentType.objects.get_for_model(ContactRecord).pk
-    record_history = ContactLogEntry.objects.filter(object_id=record_id,
-                                                    content_type_id=ct)
     ctx = {
-        'date_start': range_start,
-        'date_end': range_end,
         'record': record,
+        'records': paginated_records,
         'partner': partner,
         'company': company,
-        'tags': tags,
         'attachments': attachments,
         'record_history': record_history,
-        'next_id': next_id,
-        'prev_id': prev_id,
-        'contact_type': record_type,
-        'contact_name': name,
         'view_name': 'PRM',
-
+        'page': page
     }
 
     return render_to_response('mypartners/view_record.html', ctx,
                               RequestContext(request))
-
 
 @company_has_access('prm_access')
 def get_contact_information(request):
@@ -831,7 +783,7 @@ def get_contact_information(request):
     phone number if they have one.
 
     """
-    company, partner, user = prm_worthy(request)
+    _, partner, _ = prm_worthy(request)
 
     contact_id = request.REQUEST.get('contact_name')
     try:
@@ -1289,6 +1241,7 @@ def process_email(request):
                                               contact_name=contact.name,
                                               contact_email=contact.email,
                                               contact_phone=contact.phone,
+                                              created_by=admin_user,
                                               date_time=date_time,
                                               subject=subject,
                                               notes=force_text(email_text))

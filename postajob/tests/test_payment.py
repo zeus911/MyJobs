@@ -1,6 +1,7 @@
 from authorize import AuthorizeInvalidError, AuthorizeResponseError
 from datetime import date
 
+from django.conf import settings
 
 from postajob.payment import get_card, charge_card
 from myjobs.tests.setup import MyJobsBase
@@ -21,6 +22,8 @@ class PaymentTests(MyJobsBase):
             'street': '123 Street Rd.',
             'state': 'Indiana',
             'zipcode': 46268,
+            'authorize_id': settings.TESTING_CC_AUTH['api_id'],
+            'authorize_key': settings.TESTING_CC_AUTH['transaction_key']
         }
 
     def test_get_card(self):

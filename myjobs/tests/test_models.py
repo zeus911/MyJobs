@@ -101,11 +101,11 @@ class UserManagerTests(MyJobsBase):
         resp = client.get(reverse('view_profile'))
         self.assertRedirects(resp, "http://testserver/?next=/profile/view/")
 
-    def test_is_active(self):
+    def test_inactive_user_sees_message(self):
         """
-        A user with is_active set to False should be redirected to the home
-        page, while a user with is_active set to True should proceed to their
-        destination.
+        A user with is_verified or is_active set to False should see an
+        activation message instead of the content they were originally meaning
+        to see.
         """
         client = TestClient()
         user = UserFactory()
@@ -113,14 +113,13 @@ class UserManagerTests(MyJobsBase):
         # Active user
         client.login_user(user)
         resp = client.get(reverse('saved_search_main'))
-        self.assertTrue(resp.status_code, 200)
+        self.assertIn('Saved Search', resp.content)
 
         # Inactive user
         user.is_verified= False
         user.save()
         resp = client.get(reverse('saved_search_main'))
-        self.assertRedirects(resp,
-                             "http://testserver/?next=/saved-search/view/")
+        self.assertIn('unavailable', resp.content)
 
     def test_group_status(self):
         """

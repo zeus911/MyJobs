@@ -336,7 +336,7 @@ def update_solr(buid, download=True, force=True, set_title=False,
         update_chunk = add_docs[tup[1][0]:tup[1][1] + 1]
 
         if update_chunk:
-            logging.info("BUID:%s - SOLR - Update chunk: %s" %
+            logging.debug("BUID:%s - SOLR - Update chunk: %s" %
                          (buid, [i['uid'] for i in update_chunk]))
             # Pass 'commitWithin' so that Solr doesn't try to commit the new
             # docs right away. This will help relieve some of the resource
@@ -350,7 +350,7 @@ def update_solr(buid, download=True, force=True, set_title=False,
         if delete_chunk:
             # Post-a-job jobs should not be deleted during import
             delete_chunk = "(%s) AND -is_posted:true" % delete_chunk
-            logging.info("BUID:%s - SOLR - Delete chunk: %s" %
+            logging.debug("BUID:%s - SOLR - Delete chunk: %s" %
                          (buid, list(solr_del_uids)))
             conn.delete(q=delete_chunk)
 

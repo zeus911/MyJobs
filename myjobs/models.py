@@ -16,10 +16,12 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.template.loader import render_to_string
 from django.utils.importlib import import_module
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
+from mymessages.models import Message
 
 BAD_EMAIL = ['dropped', 'bounce']
 STOP_SENDING = ['unsubscribe', 'spamreport']
@@ -272,12 +274,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         # Get a copy of the original password so we can determine if
         # it has changed in the save().
         self.__original_password = getattr(self, 'password', None)
+        self.__original_opt_in_myjobs = self.opt_in_myjobs
 
     def __unicode__(self):
         return self.email
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
+
+        if (self.__original_opt_in_myjobs != self.opt_in_myjobs
+                and not self.opt_in_myjobs):
+            self.send_opt_out_notification()
 
         # If the password has changed, it's not being set for the first time
         # and it wasn't change to a blank string, don't require them to change
@@ -516,6 +523,39 @@ class User(AbstractBaseUser, PermissionsMixin):
                 return True
         return False
 
+    def send_opt_out_notification(self):
+        """
+        Notify saved search creators that a user has opted out of their emails.
+        """
+        subject = "My.jobs Partner Saved Search Update"
+        saved_searches = self.partnersavedsearch_set.distinct()
+
+        # MySQL doesn't support passing a column to distinct, and I don't want
+        # to deal with dictionaries returned by values, so I just keep track of
+        # unique contacts manually.
+        contacts = []
+        # need the partner name, so can't send a batch email or message
+        for pss in saved_searches:
+            if (pss.email, pss.partner) not in contacts:
+                contacts.append((pss.email, pss.partner))
+            else:
+                continue
+            # send notification email
+            message = render_to_string(
+                "mysearches/email_opt_out.html",
+                {'user': self, 'partner': pss.partner})
+            email = EmailMessage(
+                subject, message, settings.SAVED_SEARCH_EMAIL,
+                [pss.created_by.email])
+            email.content_subtype = 'html'
+            email.send()
+
+            # create PRM message
+            body = render_to_string(
+                "mysearches/email_opt_out_message.html",
+                {'user': self, 'partner': pss.partner})
+            Message.objects.create_message(
+                subject, body, users=[pss.created_by])
 
 class EmailLog(models.Model):
     email = models.EmailField(max_length=254)

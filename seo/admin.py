@@ -43,6 +43,7 @@ from seo.signals import check_message_queue
 
 csrf_protect_m = method_decorator(csrf_protect)
 
+
 class GroupListFilter(admin.SimpleListFilter):
     """
     Limits group filter selection and results to only groups the user is a
@@ -317,9 +318,8 @@ class GoogleAnalyticsForm(forms.ModelForm):
             ga.seosite_set = added_sites
         return ga
 
-        
     class Meta:
-        model= GoogleAnalytics
+        model = GoogleAnalytics
 
         
 class GoogleAnalyticsAdmin(admin.ModelAdmin):
@@ -555,11 +555,12 @@ class CustomPageAdmin(RowPermissionsAdmin):
     filter_horizontal = ('sites',)
     list_display = ('url', 'title', 'group')
     fieldsets = (
-        (None, {'fields': [('url', 'group'), 'title', 'content', 'sites']}),
+        (None, {'fields': [('url', 'group'), ('title', 'meta_description'),
+                           'content', 'sites']}),
         ('Advanced options', {'classes': ('collapse',),
                               'fields': ('enable_comments',
                                          'registration_required',
-                                         'template_name')}),
+                                         'template_name', 'meta')}),
     ) 
     list_filter = (GroupListFilter, 'enable_comments', 'registration_required')
     search_fields = ('url', 'title')
@@ -573,8 +574,9 @@ class BillboardHotspotInline(admin.StackedInline):
         (None, {'fields': [('title', 'url', 'display_url'), 'text']}),
         (None, {'fields': [('offset_x', 'offset_y')]}),
         (None, {'fields': [('primary_color', 'font_color',
-                              'border_color')]}),
+                            'border_color')]}),
     )
+
     def formfield_for_dbfield(self, db_field, **kwargs):
         attrs = {}
 
@@ -595,7 +597,7 @@ class BillboardHotspotInline(admin.StackedInline):
                          'class': "color {pickerFaceColor:'#CCC', caps:false}"}
             kwargs['widget'] = forms.TextInput(attrs=attrs)
         return super(BillboardHotspotInline, self).formfield_for_dbfield(
-            db_field,**kwargs)
+            db_field, **kwargs)
 
 
 class BillboardImageAdmin(RowPermissionsAdmin):
@@ -813,8 +815,7 @@ class BillboardImageAdmin(RowPermissionsAdmin):
             'app_label': opts.app_label,
         }
         context.update(extra_context or {})
-        return self.render_change_form(request, context, change=True, obj=obj)    
-
+        return self.render_change_form(request, context, change=True, obj=obj)
 
     
 class SeoSiteRedirectAdmin(admin.ModelAdmin):
@@ -841,10 +842,12 @@ class SeoSiteRedirectAdmin(admin.ModelAdmin):
         else:
             return False
 
+
 class UnorderedChangeList(ChangeList):
     def get_ordering(self, *args, **kwargs):
         return []
-    
+
+
 class SeoSiteFacetAdmin(admin.ModelAdmin):
     model = SeoSiteFacet
     list_select_related = True
@@ -858,7 +861,8 @@ class SeoSiteFacetAdmin(admin.ModelAdmin):
         Returns the ChangeList class for use on the changelist page.
         """
         return UnorderedChangeList 
-    
+
+
 class SeoSiteAdmin(admin.ModelAdmin):
     form = SeoSiteForm
     save_on_top = True
@@ -870,7 +874,8 @@ class SeoSiteAdmin(admin.ModelAdmin):
     list_filter = ['site_tags', 'special_commitments', 'group', ]
     search_fields = ['name', 'domain', ]
     fieldsets = [
-        ('Basics', {'fields': [('domain', 'name', 'group')]}),
+        ('Basics', {'fields': [('domain', 'name', 'group',
+                                'postajob_filter_type')]}),
         ('Site Title and Page Headline', {'fields': [('site_title',
                                                      'site_heading',
                                                      'site_description')]}),
@@ -1106,6 +1111,7 @@ class SeoSiteAdmin(admin.ModelAdmin):
     def save_model(self, *args, **kwargs):
         super(SeoSiteAdmin, self).save_model(*args, **kwargs)
 
+
 class CompanyAdmin(admin.ModelAdmin):
     form = CompanyForm
     save_on_top = True
@@ -1123,6 +1129,7 @@ class CompanyAdmin(admin.ModelAdmin):
         ('Featured on', {'fields': ['sites']}),
     ]
 
+
 class SpecialCommitmentAdmin(admin.ModelAdmin):
     form = SpecialCommitmentForm
     save_on_top = True
@@ -1134,13 +1141,15 @@ class SpecialCommitmentAdmin(admin.ModelAdmin):
         ('Sites Commited', {'fields': ['sites']}),
     ]
 
+
 class SiteTagAdmin(admin.ModelAdmin):
     form = SiteTagForm 
     save_on_top = True
     fieldsets = [
         (None, {'fields': ['site_tag', 'tag_navigation']}),
     ]
-    
+
+
 class GoogleAnalyticsCampaignAdmin(admin.ModelAdmin):
     form = GoogleAnalyticsCampaignForm
     save_on_top = True
@@ -1152,7 +1161,8 @@ class GoogleAnalyticsCampaignAdmin(admin.ModelAdmin):
                                'campaign_term', 'campaign_content']}),
         ('Sites', {'fields': ['sites']}),
     ]
-    
+
+
 class ATSSourceCodeAdmin(admin.ModelAdmin):
     form = ATSSourceCodeForm
     save_on_top = True
@@ -1162,7 +1172,8 @@ class ATSSourceCodeAdmin(admin.ModelAdmin):
         ('Basics', {'fields': ['name','value','group','ats_name']}),
         ('Sites', {'fields': ['sites']}),
     ]
-    
+
+
 class ViewSourceAdmin(admin.ModelAdmin):
     form = ViewSourceForm
     save_on_top = True

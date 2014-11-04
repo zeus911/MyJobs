@@ -78,9 +78,9 @@ $(function() {
         validate(e);
     });
 
-    $('[id$="email"]').on("change", function(e) {
+    $('#id_email').on("change", function(e) {
         var csrf_token = document.getElementsByName('csrfmiddlewaretoken')[0].value;
-        var user_email = $('[id$="email"]').val();
+        var user_email = $('#id_email').val();
         verifying_contact('validating...');
         $.ajax({
             type: "POST",
@@ -92,7 +92,7 @@ $(function() {
                 var json = jQuery.parseJSON(data);
                 var status = json.status;
                 var message = json.message;
-                var help_span = $('[id$="email"]').next().next();
+                var help_span = $('#id_email').next().next();
                 if(status == 'verified' || status == 'None') {
                     verifying_contact(status);
                     show_hide_content('hide');
@@ -241,7 +241,7 @@ function verifying_contact(status) {
     } else {
         verified_label = 'label-important';
     }
-    var email_div = $('[id$="email"]');
+    var email_div = $('#id_email');
     if($('#verified-contact').length) {
         var vc = $('#verified-contact');
         vc.removeClass('label-success');
@@ -268,7 +268,7 @@ function verifying_contact(status) {
 }
 
 function calc_select_width(label_width) {
-    var email_div = $('[id$="email"]');
+    var email_div = $('id_email');
     if ($(document).width() > 500) {
         return 262 - label_width - 5;
     } else {

@@ -17,11 +17,37 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
 
+class BaseManagerMixin(object):
+    def filter_by_sites(self, sites):
+        # Filters an object that inherits off of the BaseModel on a list
+        # of sites that it should appear on. Typically the sites that an object
+        # should appear on are determined by the sites in the SitePackage that
+        # the object is mostly closesly related to.
+        if not self.model.FILTER_BY_SITES_KWARGS:
+            return NotImplemented
+
+        kwargs = {self.model.FILTER_BY_SITES_KWARGS: sites}
+        matches = self.filter(**kwargs)
+        return self.filter(id__in=matches.values_list('pk', flat=True))
+
+
+class BaseQuerySet(QuerySet, BaseManagerMixin):
+    pass
+
+
+class BaseManager(models.Manager, BaseManagerMixin):
+    def get_query_set(self):
+        return BaseQuerySet(self.model, using=self._db)
+
+
 class BaseModel(models.Model):
-    class Meta:
-        abstract = True
+    objects = BaseManager()
 
     ADMIN_GROUP_NAME = 'Partner Microsite Admin'
+    FILTER_BY_SITES_KWARGS = None
+
+    class Meta:
+        abstract = True
 
     def user_has_access(self, user):
         """
@@ -78,7 +104,7 @@ class Job(BaseModel):
     help_text = {
         'apply_email': 'The email address where candidates should send their '
                        'application.',
-        'apply_info': 'Describe how dandidates should apply for this job.',
+        'apply_info': 'Describe how candidates should apply for this job.',
         'apply_link': 'The URL of the application form.',
         'apply_type': 'How should applicants submit their application?',
         'autorenew': 'Automatically renew this job for an additional 30 '
@@ -95,6 +121,9 @@ class Job(BaseModel):
         'reqid': 'The Requisition ID from your system, if any.',
         'title': 'The title of the job as you want it to appear.',
     }
+
+    FILTER_BY_SITES_KWARGS = 'site_packages__sites__in'
+
     title = models.CharField(max_length=255, help_text=help_text['title'])
     owner = models.ForeignKey('seo.Company')
     reqid = models.CharField(max_length=50, verbose_name="Requisition ID",
@@ -287,9 +316,11 @@ class PurchasedJob(Job):
         if not self.is_approved:
             product_owner = self.purchased_product.product.owner
             content_type = ContentType.objects.get_for_model(PurchasedJob)
-            Request.objects.get_or_create(content_type=content_type,
-                                          object_id=self.pk,
-                                          owner=product_owner)
+            request, _ = Request.objects.get_or_create(content_type=content_type,
+                                                       object_id=self.pk,
+                                                       owner=product_owner)
+            [request.related_sites.add(site) for site in self.on_sites()]
+            request.save()
 
     def add_to_solr(self):
         if self.is_approved and self.purchased_product.paid:
@@ -347,6 +378,10 @@ class PackageMixin(object):
         result = self.filter(reduce(operator.or_, q_list))
         return result
 
+    def filter_by_sites(self, sites):
+        matches = self.filter(sitepackage__sites__in=sites)
+        return self.filter(id__in=matches.values_list('pk', flat=True))
+
 
 class PackageQuerySet(QuerySet, PackageMixin):
     pass
@@ -358,19 +393,17 @@ class PackageManager(models.Manager, PackageMixin):
 
 
 class Package(models.Model):
-    name = models.CharField(max_length=255)
+    objects = PackageManager()
 
+    name = models.CharField(max_length=255)
     # content_type will usually be that of a Site Package, but this is not
     # a guarantee
     content_type = models.ForeignKey(ContentType)
-
     # There is also code that makes the assumption that the owner field
     # exists. Because SitePackage doesn't require an owner field (but other
     # package types likely will require an owner field) there's no good
     # way to force the existance of this field.
     # owner = models.ForeignKey('seo.Company')
-
-    objects = PackageManager()
 
     def __unicode__(self):
         name = "{content_type} - {name}"
@@ -397,7 +430,7 @@ class Package(models.Model):
         return related_attrs
 
 
-class SitePackageManager(models.Manager):
+class SitePackageMixin(object):
     def user_available(self):
         """
         Filters out anything that shouldn't be available to the user.
@@ -408,6 +441,19 @@ class SitePackageManager(models.Manager):
             'company__isnull': True,
         }
         return self.filter(**sitepackage_kwargs)
+
+    def filter_by_sites(self, sites):
+        matches = self.filter(sites__in=sites)
+        return self.filter(id__in=matches.values_list('pk', flat=True))
+
+
+class SitePackageQuerySet(QuerySet, SitePackageMixin):
+    pass
+
+
+class SitePackageManager(models.Manager, SitePackageMixin):
+    def get_query_set(self):
+        return SitePackageQuerySet(self.model, using=self._db)
 
 
 class SitePackage(Package):
@@ -471,6 +517,8 @@ class SitePackage(Package):
 
 
 class PurchasedProduct(BaseModel):
+    FILTER_BY_SITES_KWARGS = 'product__package__sitepackage__sites__in'
+
     product = models.ForeignKey('Product')
     offline_purchase = models.ForeignKey('OfflinePurchase', null=True,
                                          blank=True)
@@ -515,9 +563,6 @@ class PurchasedProduct(BaseModel):
 
 
 class ProductGrouping(BaseModel):
-    class Meta:
-        ordering = ['display_order']
-
     help_text = {
         'explanation': 'The explanation of the grouping as it will be '
                        'displayed to the user.',
@@ -532,6 +577,8 @@ class ProductGrouping(BaseModel):
         'is_displayed': 'If "checked" this group will be displayed to the '
                         'customer on the product group page.'
     }
+
+    FILTER_BY_SITES_KWARGS = 'products__package__sitepackage__sites__in'
 
     products = models.ManyToManyField('Product', null=True,
                                       through='ProductOrder',
@@ -548,6 +595,9 @@ class ProductGrouping(BaseModel):
     is_displayed = models.BooleanField(default=True,
                                        help_text=help_text['is_displayed'],
                                        verbose_name="Is Displayed")
+
+    class Meta:
+        ordering = ['display_order']
 
     def __unicode__(self):
         return self.name
@@ -576,6 +626,8 @@ class ProductOrder(models.Model):
 
 
 class Product(BaseModel):
+    FILTER_BY_SITES_KWARGS = 'package__sitepackage__sites__in'
+
     posting_window_choices = ((30, '30 Days'), (60, '60 Days'),
                               (90, '90 Days'), (365, '1 Year'), )
     max_job_length_choices = ((15, '15 Days'), (30, '30 Days'), (60, '60 Days'),
@@ -600,26 +652,27 @@ class Product(BaseModel):
     cost = models.DecimalField(max_digits=20, decimal_places=2,
                                verbose_name='Product Price',
                                help_text=help_text['cost'],
-                               validators=[MinValueValidator(Decimal('1.00'))])
-    posting_window_length = models.IntegerField(default=30,
-                                                choices=posting_window_choices,
-                                                help_text=help_text['posting_window_length'],
-                                                verbose_name='Posting Window '
-                                                             'Duration')
-    max_job_length = models.PositiveIntegerField(default=30,
-                                                 choices=max_job_length_choices,
-                                                 help_text=help_text['max_job_length'],
-                                                 verbose_name='Maximum Job '
-                                                              'Duration')
+                               validators=[MinValueValidator(Decimal('0.00'))])
+    posting_window_length = models.IntegerField(
+        default=30, choices=posting_window_choices,
+        help_text=help_text['posting_window_length'],
+        verbose_name='Posting Window Duration'
+    )
+    max_job_length = models.PositiveIntegerField(
+        default=30, choices=max_job_length_choices,
+        help_text=help_text['max_job_length'],
+        verbose_name='Maximum Job Duration'
+    )
     num_jobs_allowed = models.PositiveIntegerField(default=5,
                                                    verbose_name='Number of '
                                                                 'Jobs')
 
     description = models.TextField(verbose_name='Product Description')
     featured = models.BooleanField(default=False)
-    requires_approval = models.BooleanField(help_text=help_text['requires_approval'],
-                                            verbose_name='Requires Approval',
-                                            default=True)
+    requires_approval = models.BooleanField(
+        help_text=help_text['requires_approval'],
+        verbose_name='Requires Approval', default=True
+    )
 
     is_archived = models.BooleanField(help_text=help_text['is_archived'],
                                       verbose_name='Archived', default=False)
@@ -673,11 +726,14 @@ class CompanyProfile(models.Model):
 
 
 class Request(BaseModel):
+    FILTER_BY_SITES_KWARGS = 'related_sites__in'
+
     content_type = models.ForeignKey(ContentType)
     object_id = models.IntegerField()
     action_taken = models.BooleanField(default=False)
     made_on = models.DateField(auto_now_add=True)
     owner = models.ForeignKey('seo.Company')
+    related_sites = models.ManyToManyField('seo.SeoSite', null=True)
 
     def template(self):
         model = self.content_type.model
@@ -746,6 +802,8 @@ class OfflineProduct(models.Model):
 
 
 class OfflinePurchase(BaseModel):
+    FILTER_BY_SITES_KWARGS = 'products__package__sitepackage__sites__in'
+
     products = models.ManyToManyField('Product', through='OfflineProduct')
     owner = models.ForeignKey('seo.Company')
     invoice = models.ForeignKey('Invoice', null=True)
@@ -787,7 +845,26 @@ class OfflinePurchase(BaseModel):
                 PurchasedProduct.objects.create(**kwargs)
 
 
+class InvoiceMixin(object):
+    def filter_by_sites(self, sites):
+        query = [models.Q(offlinepurchase__products__package__sitepackage__sites__in=sites),
+                 models.Q(purchasedproduct__product__package__sitepackage__sites__in=sites)]
+        matches = self.filter(reduce(operator.or_, query))
+        return self.filter(id__in=matches.values_list('pk', flat=True))
+
+
+class InvoiceQuerySet(QuerySet, InvoiceMixin):
+    pass
+
+
+class InvoiceManager(models.Manager, InvoiceMixin):
+    def get_query_set(self):
+        return InvoiceQuerySet(self.model, using=self._db)
+
+
 class Invoice(BaseModel):
+    objects = InvoiceManager()
+
     # Either the Authorize.Net transaction id or the id of the
     # OfflinePurchase.
     transaction = models.CharField(max_length=255)

@@ -38,7 +38,6 @@ def delete_saved_search(request, user=None):
 
 
 @user_is_allowed()
-@user_passes_test(User.objects.is_verified)
 @user_passes_test(User.objects.not_disabled)
 def saved_search_main(request):
     # instantiate the form if the digest object exists
@@ -51,12 +50,17 @@ def saved_search_main(request):
     saved_searches = list(SavedSearch.objects.filter(user=request.user))
     partner_saved_searches = []
     # Check to see if any searches are PartnerSavedSearches
-    for saved_search in saved_searches:
+    for saved_search in saved_searches[:]:
         if hasattr(saved_search, 'partnersavedsearch'):
             partner_saved_searches.append(
                 saved_searches.pop(saved_searches.index(saved_search)))
-    form = DigestForm(user=request.user, instance=digest_obj)
-    add_form = SavedSearchForm(user=request.user)
+
+    if request.user.is_verified:
+        form = DigestForm(user=request.user, instance=digest_obj)
+        add_form = SavedSearchForm(user=request.user)
+    else:
+        form = None
+        add_form = None
     return render_to_response('mysearches/saved_search_main.html',
                               {'saved_searches': saved_searches,
                                'partner_saved_searches': partner_saved_searches,
