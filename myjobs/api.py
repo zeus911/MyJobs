@@ -13,8 +13,6 @@ from tastypie.serializers import Serializer
 from myjobs.models import User
 from mysearches.helpers import validate_dotjobs_url
 from mysearches.models import SavedSearch
-from registration.models import Invitation
-from seo.models import Company
 
 
 class UserResource(ModelResource):
