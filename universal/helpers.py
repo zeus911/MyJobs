@@ -105,6 +105,11 @@ def get_company(request):
         if admin_for:
             return admin_for[0].company
 
+    # If the current hit is for a non-microsite admin, we don't know what
+    # company we should be using; don't guess.
+    if request.get_full_path().startswith('/admin/'):
+        return None
+
     company = request.COOKIES.get('myjobs_company')
     if company:
         company = get_object_or_404(Company, pk=company)

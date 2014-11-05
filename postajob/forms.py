@@ -352,16 +352,41 @@ class ProductForm(RequestForm):
 
         profile = get_object_or_none(CompanyProfile, company=self.company)
         if (not profile or not
-            (profile.authorize_net_login and
-             profile.authorize_net_transaction_key)):
-            self.initial['cost'] = 0
-            self.fields['cost'].widget.attrs['readonly'] = True
-            self.fields['cost'].help_text = ('You cannot charge for '
-                                             'jobs until you <a href=%s>'
-                                             'add your Authorize.net account '
-                                             'information</a>.' %
-                                             reverse_lazy('companyprofile_add'))
-            setattr(self, 'no_payment_info', True)
+                (profile.authorize_net_login and
+                 profile.authorize_net_transaction_key)):
+            if self.request.user.is_superuser:
+                # Superusers should know better than to break things
+                self.fields["cost"].help_text = ("This member needs to "
+                                                 "have added Authorize.net "
+                                                 "account information "
+                                                 "before we can safely "
+                                                 "charge for posting. If "
+                                                 "that hasn't been added, "
+                                                 "bad things may happen.")
+            else:
+                self.fields['cost'].help_text = ('You cannot charge for '
+                                                 'jobs until you '
+                                                 '<a href=%s>add your '
+                                                 'Authorize.net account '
+                                                 'information</a>.' %
+                                                 reverse_lazy('companyprofile_add'))
+                self.initial['cost'] = 0
+                self.fields['cost'].widget.attrs['readonly'] = True
+                setattr(self, 'no_payment_info', True)
+
+    def clean_cost(self):
+        cost = self.cleaned_data.get('cost')
+        profile = get_object_or_none(CompanyProfile,
+                                     company=self.cleaned_data.get('owner'))
+
+        # cost comes through as a Decimal, which has a handy is_zero method;
+        # cost is required, so we don't have to worry about None
+        if not cost.is_zero() and (not profile or
+                                   not (profile.authorize_net_login and
+                                        profile.authorize_net_transaction_key)):
+            raise ValidationError('This company does not have Authorize.net '
+                                  'credentials defined - product must be free')
+        return cost
 
     def clean(self):
         data = self.cleaned_data
