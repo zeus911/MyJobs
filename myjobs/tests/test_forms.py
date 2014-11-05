@@ -18,7 +18,7 @@ class AccountFormTests(MyJobsBase):
                        'new_password1': 'newpassword',
                        'new_password2': 'newpassword'},
               u'errors': [['password', [u"Wrong password."]]]},
-            { 'data': {'password': 'secret',
+            { 'data': {'password': '5UuYquA@',
                        'new_password1': 'newpassword',
                        'new_password2': 'notnewpassword'},
                 u'errors':
@@ -34,7 +34,7 @@ class AccountFormTests(MyJobsBase):
             self.assertEqual(form.errors[item[u'errors'][0][0]],
                              item[u'errors'][0][1])
 
-        form = ChangePasswordForm(user=self.user,data={'password': 'secret',
+        form = ChangePasswordForm(user=self.user,data={'password': '5UuYquA@',
                                                        'new_password1': 'anothersecret',
                                                        'new_password2': 'anothersecret'})
         

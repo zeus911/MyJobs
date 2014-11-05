@@ -84,7 +84,7 @@ class RegistrationViewTests(MyJobsBase):
 
     def test_resend_activation(self):
         x, created = User.objects.create_user(
-            **{'email': 'alice@example.com', 'password1': 'secret'})
+            **{'email': 'alice@example.com', 'password1': '5UuYquA@'})
         self.client.login_user(x)
         self.assertEqual(len(mail.outbox), 1)
         resp = self.client.get(reverse('resend_activation'))
@@ -94,7 +94,7 @@ class RegistrationViewTests(MyJobsBase):
 
     def test_resend_activation_with_secondary_emails(self):
         user, created = User.objects.create_user(
-            **{'email': 'alice@example.com', 'password1': 'secret'})
+            **{'email': 'alice@example.com', 'password1': '5UuYquA@'})
         self.assertEqual(ActivationProfile.objects.count(), 1)
 
         self.client.login_user(user)

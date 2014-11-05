@@ -15,7 +15,7 @@ class MyJobsHelpersTests(MyJobsBase):
         self.client = TestClient()
 
         self.login_params = {'username': 'alice@example.com',
-                             'password': 'secret',
+                             'password': '5UuYquA@',
                              'action': 'login'}
 
     def test_login_dont_remember_me(self):

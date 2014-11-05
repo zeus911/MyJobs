@@ -157,7 +157,7 @@ class ViewTests(MyJobsBase):
         self.client.post(reverse('home'),
                          data={
                              'username': user.email,
-                             'password': 'secret',
+                             'password': '5UuYquA@',
                              'action': 'login',
                          })
 
