@@ -34,7 +34,7 @@
 </head>
 <body>
     <div class="content">
-        <h1>Contact Records for {{ partner.name }}</h1>
+        <h1>Contact Records for {% if partner %}{{ partner.name }}{% else %}{{ company.name }}{% endif %}</h1>
         {% for record in records %}
             <table class="printer-friendly-table">
                 {% for field in fields %}
@@ -59,6 +59,12 @@
                     {% endif %}
                 {% endfor %}
             </table><br/>
+        {% empty %}
+            {% if partner %}
+            No contact records for {{ partner.name }}.
+            {% else %}
+            No contact records for {{ company.name }}.
+            {% endif %}
         {% endfor %}
     </div>
 </body>

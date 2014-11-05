@@ -1071,10 +1071,16 @@ def partner_get_referrals(request):
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_export(request):
     #TODO: investigate using django's builtin serialization for XML
-    company, partner, user = prm_worthy(request)
+    if request.GET.get('on_page') == 'prm':
+        company = get_company_or_404(request)
+        records = ContactRecord.objects.filter(partner__owner=company)
+        partner = None
+    else:
+        company, partner, user = prm_worthy(request)
+        _, _, records = get_records_from_request(request)
+
     file_format = request.REQUEST.get('file_format', 'csv')
     fields = retrieve_fields(ContactRecord)
-    _, _, records = get_records_from_request(request)
 
     if file_format == 'xml':
         root = etree.Element("contact_records")
@@ -1124,7 +1130,6 @@ def prm_export(request):
                                       % file_format
 
     return response
-
 
 @csrf_exempt
 def process_email(request):

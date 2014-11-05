@@ -877,4 +877,30 @@ function show_selected() {
             $("#reset-date-range").css("visibility", "visible");
         }
     }
+
+    $(".header-menu").on("click", function(e) {
+        dropdown(e);
+    });
+}
+
+function dropdown(e) {
+    $('[class*=header-menu]').each(function() {
+        if($(this).attr('id') != $(e.currentTarget).attr('id')){
+            if($(this).hasClass('show-drop')){
+                $(this).removeClass('show-drop');
+            }
+        }
+    });
+    if(!$(e.currentTarget).hasClass('show-drop')){
+        $(e.currentTarget).addClass('show-drop');
+        if($(window).width() < 500){
+            $('.black-mask').show();
+            disable_scroll('true');
+        }
+    } else {
+        $(e.currentTarget).removeClass('show-drop');
+        if($(window).width() < 500){
+            $('.black-mask').hide();
+        }
+    }
 }
