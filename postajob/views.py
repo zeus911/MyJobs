@@ -185,7 +185,8 @@ def view_request(request, content_type, pk):
     data = {
         'company': company,
         'content_type': content_type,
-        'object': get_object_or_404(content_type.model_class(), pk=pk)
+        'object': get_object_or_404(content_type.model_class(), pk=pk),
+        'request_obj': get_object_or_none(Request, pk=pk),
     }
 
     if not data['object'].user_has_access(request.user):
@@ -196,10 +197,11 @@ def view_request(request, content_type, pk):
 
 
 @company_has_access('product_access')
-def approve_admin_request(request, content_type, pk):
+def process_admin_request(request, content_type, pk, approve=True,
+                          block=False):
     """
-    Marks a Request as action taken on it and sets corresponding object
-    to approved. Assumes the object has an is_approved field.
+    Marks a Request as action taken on it and sets corresponding object's
+    approval status. Assumes the object has an is_approved field.
 
     """
     content_type = ContentType.objects.get(pk=content_type)
@@ -207,10 +209,16 @@ def approve_admin_request(request, content_type, pk):
 
     request_object = request_made.request_object()
     if request_object and request_object.user_has_access(request.user):
-        request_object.is_approved = True
+        request_object.is_approved = approve
         request_object.save()
         request_made.action_taken = True
         request_made.save()
+
+        if block and request_object.requesting_user:
+            profile = CompanyProfile.objects.get_or_create(
+                company=request_object.owner)
+            #TODO: prevent blocked users from submitting requests
+            profile.blocked_users.add(request_object.requesting_user)
 
     return redirect('request')
 

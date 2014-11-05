@@ -45,8 +45,17 @@ urlpatterns = patterns(
         views.view_request,
         name='view_request'),
     url(r'^admin/request/approve/(?P<content_type>\d+)/(?P<pk>\d+)/$',
-        views.approve_admin_request,
+        views.process_admin_request,
         name='approve_admin_request'),
+    url(r'^admin/request/deny/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+        views.process_admin_request,
+        {'approve': False},
+        name='deny_admin_request'),
+    url(r'^admin/request/block/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+        views.process_admin_request,
+        {'block': True,
+         'approve': False},
+        name='block_admin_request'),
 
     # Job
     url(r'^job/add/',

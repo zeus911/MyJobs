@@ -234,8 +234,11 @@ class ViewTests(MyJobsBase):
                                     data=self.purchasedjob_form_data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(PurchasedJob.objects.all().count(), 1)
-        self.assertEqual(Request.objects.all().count(), 1)
+        self.assertEqual(PurchasedJob.objects.count(), 1)
+        self.assertEqual(Request.objects.count(), 1)
+
+        job = PurchasedJob.objects.get()
+        self.assertEqual(job.requesting_user, self.user)
     
     def test_purchasedjob_update(self):
         product = PurchasedProductFactory(
