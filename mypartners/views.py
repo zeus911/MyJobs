@@ -1073,7 +1073,9 @@ def prm_export(request):
     #TODO: investigate using django's builtin serialization for XML
     if request.GET.get('on_page') == 'prm':
         company = get_company_or_404(request)
-        records = ContactRecord.objects.filter(partner__owner=company)
+        partners = filter_partners(request)
+        records = ContactRecord.objects.filter(partner__in=partners,
+                                               partner__owner=company)
         partner = None
     else:
         company, partner, user = prm_worthy(request)

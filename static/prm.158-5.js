@@ -55,6 +55,7 @@ $(document).ready(function() {
             data.page = get_page(data);
             data.page++;
             update_search_url(data);
+            update_download_links();
             send_filter(data);
         });
 
@@ -64,6 +65,7 @@ $(document).ready(function() {
             data.page = get_page(data);
             data.page--;
             update_search_url(data);
+            update_download_links();
             send_filter(data);
         });
     }
@@ -555,6 +557,7 @@ Build data, update the URL (pushState or refresh page), run ajax if not IE 9 or 
 function run_ajax() {
     var data = build_data();
     update_search_url(data);
+    update_download_links();
     if (typeof(isIE) == "number" && isIE > 9 || typeof(isIE) == 'boolean' && isIE == false) {
         send_filter(data);
     }
@@ -801,6 +804,21 @@ function update_search_url(data) {
 }
 
 /*
+Updates the Links under the Download dropdown in order to respect user's 
+filterin choices.
+*/
+function update_download_links() {
+    $("a[href^='/prm/export/']").each(function() {
+        $(this).prop("href", "/prm/export"
+                    + window.location.search
+                    + "&on_page=prm&file_format=" 
+                    + $(this).children("li").text()
+                                            .toLowerCase()
+                                            .replace(" ", "_"));
+    });
+}
+
+/*
 If someone loads the page with request.GET info (not from ajax) fill page with info
 */
 function show_selected() {
@@ -904,3 +922,4 @@ function dropdown(e) {
         }
     }
 }
+
