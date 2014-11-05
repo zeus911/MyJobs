@@ -1070,8 +1070,8 @@ def partner_get_referrals(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_export(request):
-    import ipdb; ipdb.set_trace()
     #TODO: investigate using django's builtin serialization for XML
+    #      work out why primary contact isn't printing when exporting from prm
     if request.GET.get('on_page') == 'prm':
         company = get_company_or_404(request)
         partners = filter_partners(request)
@@ -1092,10 +1092,11 @@ def prm_export(request):
             xml_record = etree.SubElement(root, "record")
             for field in fields:
                 xml = etree.SubElement(xml_record, field)
-                value = getattr(record, field, '')
+                value = getattr(record, field, '') or ''
 
                 if hasattr(value, 'all'):
-                    value = ', '.join([val.name for val in value.all() if val])
+                    value = ', '.join([str(val).replace(company.name, '') 
+                                      for val in value.all() if val])
 
                 xml.text = contact_record_val_to_str(value)
         response = HttpResponse(etree.tostring(root, pretty_print=True,
@@ -1116,12 +1117,11 @@ def prm_export(request):
         writer = unicodecsv.writer(response, encoding='utf-8')
         writer.writerow(fields)
         for record in records:
-            values = [getattr(record, field, '') for field in fields]
-            values = [
-                contact_record_val_to_str(v)
-                if not hasattr(v, 'all') else
-                ', '.join([val.name for val in v.all() if val]) for v in values
-            ]
+            values = [getattr(record, field, '') or '' for field in fields]
+            values = [contact_record_val_to_str(v) 
+                      if not hasattr(v, 'all')
+                      else ', '.join([str(val).replace(company.name, '') 
+                      for val in v.all() if val]) for v in values]
             # Remove the HTML and reformat.
             values = [bleach.clean(v, [], strip=True) for v in values]
             # replaces multiple occurences of space by a single sapce.
