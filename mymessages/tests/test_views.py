@@ -25,10 +25,11 @@ class MessageViewTests(MyJobsBase):
         self.client.login_user(self.user)
 
     def test_user_post_mark_message_read(self):
-        resp = self.client.post(reverse('read'),
-                                data={'name': 'message-'+str(self.message.id)
-                                              + '-'+str(self.user.id)},
-                                follow=True)
+        resp = self.client.get(reverse('read'),
+                               data={'name': 'message-'+str(self.message.id)
+                                             + '-'+str(self.user.id)},
+                               follow=True,
+                               HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         m = MessageInfo.objects.get(user=self.user, message=self.message)
         self.assertTrue(m.read)
         self.assertTrue(m.read_at)
