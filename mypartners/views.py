@@ -1070,19 +1070,21 @@ def partner_get_referrals(request):
 
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_export(request):
+    import ipdb; ipdb.set_trace()
     #TODO: investigate using django's builtin serialization for XML
     if request.GET.get('on_page') == 'prm':
         company = get_company_or_404(request)
         partners = filter_partners(request)
-        records = ContactRecord.objects.filter(partner__in=partners,
-                                               partner__owner=company)
+        records = Contact.objects.filter(
+            partner__in=partners, partner__owner=company)
         partner = None
+        fields = retrieve_fields(Contact)
     else:
         company, partner, user = prm_worthy(request)
         _, _, records = get_records_from_request(request)
+        fields = retrieve_fields(ContactRecord)
 
     file_format = request.REQUEST.get('file_format', 'csv')
-    fields = retrieve_fields(ContactRecord)
 
     if file_format == 'xml':
         root = etree.Element("contact_records")
