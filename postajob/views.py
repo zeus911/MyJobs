@@ -201,9 +201,11 @@ def view_request(request, content_type, pk):
 def process_admin_request(request, content_type, pk, approve=True,
                           block=False):
     """
-    Marks a Request as action taken on it and sets corresponding object's
+    Marks a Request as action taken on it and sets the corresponding object's
     approval status. Assumes the object has an is_approved field.
 
+    Adds the requesting user (if one exists) to the company's block list
+    if the block parameter is True.
     """
     content_type = ContentType.objects.get(pk=content_type)
     request_made = Request.objects.get(content_type=content_type, object_id=pk)
