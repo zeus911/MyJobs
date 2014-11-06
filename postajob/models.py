@@ -286,9 +286,6 @@ class PurchasedJob(Job):
     max_expired_date = models.DateField(editable=False)
     purchased_product = models.ForeignKey('PurchasedProduct')
     is_approved = models.BooleanField(default=False)
-    requesting_user = models.ForeignKey('myjobs.User',
-                                        null=True,
-                                        on_delete=models.SET_NULL)
 
     def delete(self, **kwargs):
         product = self.purchased_product

@@ -254,8 +254,6 @@ class PurchasedJobBaseForm(JobForm):
         return super(PurchasedJobBaseForm, self).clean()
 
     def save(self, commit=True):
-        if not self.instance.pk and not self.instance.requesting_user:
-            self.instance.requesting_user = self.request.user
         job = super(PurchasedJobBaseForm, self).save(commit)
         job.add_to_solr()
         return job

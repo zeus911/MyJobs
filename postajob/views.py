@@ -217,10 +217,10 @@ def process_admin_request(request, content_type, pk, approve=True,
         request_made.action_taken = True
         request_made.save()
 
-        if block and request_object.requesting_user:
+        if block and request_object.created_by:
             profile = CompanyProfile.objects.get_or_create(
                 company=request_object.owner)[0]
-            profile.blocked_users.add(request_object.requesting_user)
+            profile.blocked_users.add(request_object.created_by)
 
     return redirect('request')
 
