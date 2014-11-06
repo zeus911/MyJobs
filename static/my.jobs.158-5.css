@@ -1709,6 +1709,10 @@ fieldset textarea,
     border-radius: 5px;
 }
 
+input[placeholder="Password (again)"] {
+    margin-top: 10px;
+}
+
 .formBox h2,
 .formBox h3,
 .formBox h4,
@@ -3788,6 +3792,7 @@ body.modal-open {
 .required-label,
 .error-text {
     color: #900;
+    margin-bottom: 5px;
 }
 
 .required-border {

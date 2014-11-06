@@ -87,11 +87,14 @@ class RegistrationForm(forms.Form):
                                  'id':'id_email',
                                  'autocomplete':'off'}),
                              max_length=255)
-    password1 = PasswordField(label=('Password'),
+    password1 = PasswordField(label=('Password'), required=True,
                               widget=forms.PasswordInput(attrs={
                                   'placeholder':_('Password'),
                                   'id': 'id_password1',
-                                  'autocomplete': 'off'}))
+                                  'autocomplete': 'off'}),
+                              help_text="<small><em>Must contain an uppercase "
+                                        "letter, lowercase letter, digit, and "
+                                        "special character.</em></small>")
     password2 = forms.CharField(error_messages={'required':'Password (again) is required.'},
                                 label=_("Password (again)"), required=True,
                                 widget=forms.PasswordInput(attrs={
