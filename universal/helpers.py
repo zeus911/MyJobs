@@ -78,7 +78,7 @@ def sequence_to_dict(from_):
     Output:
         Dictionary created from the input sequence
     """
-    return dict(zip(*[iter(from_)]*2))
+    return dict(zip(*[iter(from_)] * 2))
 
 
 def get_company(request):
@@ -157,7 +157,7 @@ def add_pagination(request, object_list, per_page=None):
 
     Inputs:
     :object_list:   A list (or Queryset) of an object you wish to paginate.
-    :per_page:      Number of objects per page. 
+    :per_page:      Number of objects per page.
 
     Outputs:
         Returns a Paginator Object. Paginator acts as a wrapper for the object
