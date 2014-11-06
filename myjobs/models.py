@@ -12,6 +12,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import EmailMessage
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
@@ -21,7 +22,7 @@ from django.utils.importlib import import_module
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
-from mymessages.models import Message
+from mymessages.models import Message, MessageInfo, get_messages
 
 BAD_EMAIL = ['dropped', 'bounce']
 STOP_SENDING = ['unsubscribe', 'spamreport']
@@ -409,22 +410,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         already or is expired, ignore it, otherwise add it to 'message_infos'.
 
         Output:
-        :message_infos:  A list of Messages to be shown to the User.
+        :messages:  A list of Messages to be shown to the User.
         """
-        from mymessages.models import get_messages, MessageInfo
-        messages = get_messages(self)
-        message_infos = []
-        for message in messages:
-            m, created = MessageInfo.objects.get_or_create(user=self,
-                                                           message=message)
-            if not created:
-                if m.read or m.expired_time():
-                    continue
-                else:
-                    message_infos.append(m)
-            else:
-                message_infos.append(m)
-        return message_infos
+        messages = get_messages(self).exclude(users=self)
+        new_message_infos = [
+            MessageInfo(user=self, message=message) for message in messages]
+
+        MessageInfo.objects.bulk_create(new_message_infos)
+
+        return self.messageinfo_set.filter(read=False, expired=False)
 
     def get_full_name(self, default=""):
         """
