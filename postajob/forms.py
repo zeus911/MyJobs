@@ -134,7 +134,7 @@ JobLocationFormSet = modelformset_factory(JobLocation, form=JobLocationForm,
 
 class JobForm(BaseJobForm):
     class Meta:
-        fields = ('title', 'is_syndicated', 'reqid', 'description',
+        fields = ('title', 'reqid', 'description',
                   'date_expired', 'is_expired', 'autorenew', 'apply_type',
                   'apply_link', 'apply_email', 'apply_info', 'owner',
                   'post_to', 'site_packages')
@@ -210,7 +210,7 @@ class JobForm(BaseJobForm):
             [self['title'], self['description'], self['reqid']],
             [self['apply_type'], self['apply_link'], self['apply_info']],
             [self['date_expired'], self['is_expired']],
-            [self['post_to'], self['site_packages'], self['is_syndicated']]
+            [self['post_to'], self['site_packages']]
         ]
         return field_sets
 
@@ -352,16 +352,41 @@ class ProductForm(RequestForm):
 
         profile = get_object_or_none(CompanyProfile, company=self.company)
         if (not profile or not
-            (profile.authorize_net_login and
-             profile.authorize_net_transaction_key)):
-            self.initial['cost'] = 0
-            self.fields['cost'].widget.attrs['readonly'] = True
-            self.fields['cost'].help_text = ('You cannot charge for '
-                                             'jobs until you <a href=%s>'
-                                             'add your Authorize.net account '
-                                             'information</a>.' %
-                                             reverse_lazy('companyprofile_add'))
-            setattr(self, 'no_payment_info', True)
+                (profile.authorize_net_login and
+                 profile.authorize_net_transaction_key)):
+            if self.request.user.is_superuser:
+                # Superusers should know better than to break things
+                self.fields["cost"].help_text = ("This member needs to "
+                                                 "have added Authorize.net "
+                                                 "account information "
+                                                 "before we can safely "
+                                                 "charge for posting. If "
+                                                 "that hasn't been added, "
+                                                 "bad things may happen.")
+            else:
+                self.fields['cost'].help_text = ('You cannot charge for '
+                                                 'jobs until you '
+                                                 '<a href=%s>add your '
+                                                 'Authorize.net account '
+                                                 'information</a>.' %
+                                                 reverse_lazy('companyprofile_add'))
+                self.initial['cost'] = 0
+                self.fields['cost'].widget.attrs['readonly'] = True
+                setattr(self, 'no_payment_info', True)
+
+    def clean_cost(self):
+        cost = self.cleaned_data.get('cost')
+        profile = get_object_or_none(CompanyProfile,
+                                     company=self.cleaned_data.get('owner'))
+
+        # cost comes through as a Decimal, which has a handy is_zero method;
+        # cost is required, so we don't have to worry about None
+        if not cost.is_zero() and (not profile or
+                                   not (profile.authorize_net_login and
+                                        profile.authorize_net_transaction_key)):
+            raise ValidationError('This company does not have Authorize.net '
+                                  'credentials defined - product must be free')
+        return cost
 
     def clean(self):
         data = self.cleaned_data
@@ -440,7 +465,8 @@ class ProductGroupingForm(RequestForm):
 def make_company_from_purchased_product(product_form_instance):
     cleaned_data = product_form_instance.cleaned_data
     company_name = cleaned_data.get('company_name')
-    product_form_instance.company = Company.objects.create(name=company_name)
+    product_form_instance.company = Company.objects.create(name=company_name,
+                                                           user_created=True)
     cu = CompanyUser.objects.create(user=product_form_instance.request.user,
                                     company=product_form_instance.company)
     profile = CompanyProfile.objects.create(
