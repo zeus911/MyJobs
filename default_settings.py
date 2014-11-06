@@ -469,6 +469,7 @@ HAYSTACK_CONNECTIONS = {
 }
 
 # Password settings
+PASSWORD_MIN_LENGTH = 8
 PASSWORD_COMPLEXITY = {
     'UPPER': 1,
     'LOWER': 1,

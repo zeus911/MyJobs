@@ -1,12 +1,71 @@
 from django import forms
 from passwords.fields import PasswordField
-from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm
+from django.contrib.auth.forms import (AuthenticationForm, PasswordResetForm,
+                                       SetPasswordForm)
 from django.contrib.auth import authenticate
 from django.core.validators import validate_email
 from django.utils.translation import ugettext_lazy as _
 
 from myjobs.models import User
 from registration.models import Invitation
+
+
+class CustomSetPasswordForm(SetPasswordForm):
+    """
+    Custom password form based on Django's default set password form. This 
+    allows us to enforce the new password rules.
+    """
+    new_password1 = PasswordField(error_messages={'required':
+                                              'Password is required.'},
+                              label=('Password'), required=True,
+                              widget=forms.PasswordInput(attrs={
+                                  'placeholder':_('Password'),
+                                  'id': 'id_password1',
+                                  'autocomplete': 'off'}),
+                              help_text="<small><em>Must contain an uppercase "
+                                        "letter, lowercase letter, digit, and "
+                                        "special character.</em></small>")
+
+    new_password2 = forms.CharField(error_messages={'required':
+                                                'Password is required.'},
+                                label=_("Password (again)"), required=True,
+                                widget=forms.PasswordInput(
+                                    attrs={'placeholder': _('Password (again)'),
+                                           'id': 'id_password2',
+                                           'autocomplete':'off'},
+                                    render_value=False))
+
+    def clean(self):
+        """
+        Verify that the values entered into the two password fields
+        match.
+        
+        """
+        if 'password1' in self._errors:
+            self._errors['password1'] = [
+                error if error.endswith('.') else 'Password Error: ' + error
+                for error in self._errors['password1'][:]]
+
+        if 'password2' in self._errors:
+            self._errors['password1'] = [
+                error if error.endswith('.') else 'Password Error: ' + error
+                for error in self._errors['password2'][:]]
+
+        if 'password1' in self.cleaned_data and 'password2' in self.cleaned_data:
+            if self.cleaned_data['password1'] != self.cleaned_data['password2']:
+                error_msg = u"The new password fields did not match."
+                self._errors["password1"] = self.error_class([error_msg])
+                # needed to ensure field is wrapped by error class
+                self._errors["password2"] = self.error_class([""])
+
+                # These fields are no longer valid. Remove them from the
+                # cleaned data.
+                del self.cleaned_data["password1"]
+                del self.cleaned_data["password2"]
+
+            else:
+                return self.cleaned_data
+
 
 
 class CustomAuthForm(AuthenticationForm):
@@ -125,6 +184,16 @@ class RegistrationForm(forms.Form):
         match.
         
         """
+        if 'password1' in self._errors:
+            self._errors['password1'] = [
+                error if error.endswith('.') else 'Password Error: ' + error
+                for error in self._errors['password1'][:]]
+
+        if 'password2' in self._errors:
+            self._errors['password1'] = [
+                error if error.endswith('.') else 'Password Error: ' + error
+                for error in self._errors['password2'][:]]
+
         if 'password1' in self.cleaned_data and 'password2' in self.cleaned_data:
             if self.cleaned_data['password1'] != self.cleaned_data['password2']:
                 error_msg = u"The new password fields did not match."
