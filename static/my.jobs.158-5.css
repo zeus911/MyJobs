@@ -1709,7 +1709,7 @@ fieldset textarea,
     border-radius: 5px;
 }
 
-input[placeholder="Password (again)"] {
+input[name="password2"] {
     margin-top: 10px;
 }
 

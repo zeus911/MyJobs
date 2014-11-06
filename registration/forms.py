@@ -85,11 +85,13 @@ class RegistrationForm(forms.Form):
     email = forms.EmailField(error_messages={'required':'Email is required.'},
                              label=_("Email"), required=True,
                              widget=forms.TextInput(attrs={
-                                 'placeholder': _('Email'), 
+                                 'placeholder': _('Email'),
                                  'id':'id_email',
                                  'autocomplete':'off'}),
                              max_length=255)
-    password1 = PasswordField(label=('Password'), required=True,
+    password1 = PasswordField(error_messages={'required':
+                                              'Password is required.'},
+                              label=('Password'), required=True,
                               widget=forms.PasswordInput(attrs={
                                   'placeholder':_('Password'),
                                   'id': 'id_password1',
@@ -97,13 +99,14 @@ class RegistrationForm(forms.Form):
                               help_text="<small><em>Must contain an uppercase "
                                         "letter, lowercase letter, digit, and "
                                         "special character.</em></small>")
-    password2 = forms.CharField(error_messages={'required':'Password (again) is required.'},
+    password2 = forms.CharField(error_messages={'required':
+                                                'Password is required.'},
                                 label=_("Password (again)"), required=True,
-                                widget=forms.PasswordInput(attrs={
-                                    'placeholder': _('Password (again)'),
-                                    'id': 'id_password2',
-                                    'autocomplete':'off'}, 
-                                render_value=False))
+                                widget=forms.PasswordInput(
+                                    attrs={'placeholder': _('Password (again)'),
+                                           'id': 'id_password2',
+                                           'autocomplete':'off'},
+                                    render_value=False))
 
     def clean_email(self):
         """
