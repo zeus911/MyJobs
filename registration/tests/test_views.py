@@ -94,8 +94,8 @@ class RegistrationViewTests(MyJobsBase):
         self.assertEqual(len(mail.outbox), 2)
 
     def test_resend_activation_with_secondary_emails(self):
-        user, created = User.objects.create_user(
-            **{'email': 'alice@example.com', 'password1': '5UuYquA@'})
+        user, _ = User.objects.create_user(
+            email='alice@example.com', password1='5UuYquA@',
             create_user=True)
         self.assertEqual(ActivationProfile.objects.count(), 1)
 
