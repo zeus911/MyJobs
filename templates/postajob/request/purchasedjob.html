@@ -74,7 +74,6 @@ Purchased Job Request
         <div class="span3 form-label pull-left purchasedjob-request-label"><b>On Sites</b></div>
         <div class="profile-form-input purchasedjob-request-field">{% get_job_links object max_sites=None %}</div>
         <div class="clear"></div>
-
         {% if not request_obj.action_taken %}
             {% if not object.is_approved %}
                 <form action="{% url 'approve_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">

@@ -186,7 +186,8 @@ def view_request(request, content_type, pk):
         'company': company,
         'content_type': content_type,
         'object': get_object_or_404(content_type.model_class(), pk=pk),
-        'request_obj': get_object_or_none(Request, pk=pk),
+        'request_obj': get_object_or_none(Request, content_type=content_type,
+                                          object_id=pk),
     }
 
     if not data['object'].user_has_access(request.user):
@@ -216,8 +217,7 @@ def process_admin_request(request, content_type, pk, approve=True,
 
         if block and request_object.requesting_user:
             profile = CompanyProfile.objects.get_or_create(
-                company=request_object.owner)
-            #TODO: prevent blocked users from submitting requests
+                company=request_object.owner)[0]
             profile.blocked_users.add(request_object.requesting_user)
 
     return redirect('request')
@@ -432,11 +432,20 @@ class PurchasedJobFormView(BaseJobFormView):
     purchase_model = PurchasedProduct
 
     def set_object(self, *args, **kwargs):
-        if (not self.product.can_post_more()
-                and resolve(self.request.path).url_name == self.add_name):
-            # If more jobs can't be posted to the project, don't allow
-            # the user to access the add view.
-            raise Http404
+        if resolve(self.request.path).url_name == self.add_name:
+            if not self.product.can_post_more():
+                # If more jobs can't be posted to the project, don't allow
+                # the user to access the add view.
+                raise Http404
+            else:
+                company = get_company(self.request)
+                if company and company.companyprofile:
+                    if self.request.user in company.companyprofile.blocked_users.all():
+                        # If the current user has been blocked by the company
+                        # that we are trying to post a job to, don't allow
+                        # the user to access the add view.
+                        raise Http404
+
         return super(PurchasedJobFormView, self).set_object(*args, **kwargs)
 
     @method_decorator(user_is_allowed())
