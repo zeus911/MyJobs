@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.db.models.loading import cache as model_cache
 from django.views.generic import RedirectView
 
-from seo.views import BusinessUnitAdminFilter
+from seo.views.search_views import BusinessUnitAdminFilter
 
 
 # This is a bit of code pulled from a Django TRAC ticket describing a problem
@@ -45,8 +45,8 @@ v1_api.register(JobSearchResource())
 v1_api.register(JobResource())
 
 admin.autodiscover()
-handler404 = 'seo.views.dseo_404'
-handler500 = 'seo.views.dseo_500'
+handler404 = 'seo.views.search_views.dseo_404'
+handler500 = 'seo.views.search_views.dseo_500'
 
 
 # API endpoints
@@ -75,7 +75,7 @@ urlpatterns += patterns('',
     )
 
 # Custom Admin URLs
-urlpatterns += patterns('seo.views',
+urlpatterns += patterns('seo.views.search_views',
     url(r'^admin/groupsites/$', 'get_group_sites'),
     url(r'^admin/grouprelationships/$', 'get_group_relationships'),
 )

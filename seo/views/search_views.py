@@ -210,7 +210,7 @@ def ajax_get_jobs(request, filter_path):
         setattr(job, 'text', " ".join(text))
 
     # Build the site commitment string
-    sitecommit_str = helpers.\
+    sitecommit_str = helpers. \
         make_specialcommit_string(settings.COMMITMENTS.all())
     data_dict = {
         'default_jobs':
@@ -282,9 +282,9 @@ def ajax_get_jobs_search(request):
 def robots_txt(request):
     host = str(request.META["HTTP_HOST"])
     return render_to_response(
-            'robots.txt', {
+        'robots.txt', {
             'host': host},
-            content_type="text/plain")
+        content_type="text/plain")
 
 
 @protected_site
@@ -383,7 +383,7 @@ def job_detail_by_title_slug_job_id(request, job_id, title_slug=None,
     # in the url, then we want whoever clicks the link to be directed to the
     # canonical (and correctly spelled/no typo) version.
     if (title_slug == the_job.title_slug and
-            location_slug == slugify(the_job.location)) \
+                location_slug == slugify(the_job.location)) \
             and not search_type == 'uid':
         ga = settings.SITE.google_analytics.all()
         host = 'foo'
@@ -461,7 +461,7 @@ def job_detail_by_title_slug_job_id(request, job_id, title_slug=None,
         # Render the response, but don't return it yet--we need to add an
         # additional canonical url header to the response.
         the_response = render_to_response('job_detail.html', data_dict,
-                                  context_instance=RequestContext(request))
+                                          context_instance=RequestContext(request))
 
         # The test described in MS-481 was considered a success and the code
         # is now in a more general form (MS-604). Companies with a microsite use
@@ -529,9 +529,9 @@ def stylesheet(request, cid=None, css_file="stylesheet.css"):
     else:
         selected_stylesheet = get_site_config(request)
     return render_to_response(css_file, {
-                            'css': selected_stylesheet},
-                            context_instance=RequestContext(request),
-                            content_type="text/css",)
+        'css': selected_stylesheet},
+                              context_instance=RequestContext(request),
+                              content_type="text/css",)
 
 
 @custom_cache_page
@@ -859,7 +859,7 @@ def ajax_cities(request):
     state = request.GET.get('state', "[* TO *]")
     slab_state = state.lower().replace(" ", "")
     results = sqs.narrow(u"state:({0})".format(state)
-              ).facet('city_slab').facet_counts().get('fields').get('city_slab')
+    ).facet('city_slab').facet_counts().get('fields').get('city_slab')
 
     output = []
     for result in results:
@@ -886,7 +886,7 @@ def ajax_sites(request):
     except:
         tag = ""
     tag_sites = SeoSite.objects.filter(
-                   site_tags__site_tag=tag)
+        site_tags__site_tag=tag)
 
     data_dict = {
         'sites': tag_sites
@@ -979,9 +979,9 @@ def home_page(request):
     featured_jobs = helpers.get_featured_jobs()
 
     (num_featured_jobs, num_default_jobs,_,_) = helpers.featured_default_jobs(
-                                         featured_jobs.count(),
-                                         default_jobs.count(),
-                                         num_jobs, site_config.percent_featured)
+        featured_jobs.count(),
+        default_jobs.count(),
+        num_jobs, site_config.percent_featured)
 
     featured = settings.SITE.featured_companies.all()
     # Because we're getting the featured company information from the SQL database
@@ -1018,7 +1018,7 @@ def home_page(request):
     # The carousel displays the featured companies if there are any, otherwise
     # it displays companies that were returned in the Solr query and are members
     if (home_page_template == 'home_page/home_page_billboard.html' or
-        home_page_template == 'home_page/home_page_billboard_icons_top.html'):
+                home_page_template == 'home_page/home_page_billboard_icons_top.html'):
 
         billboard_images = (settings.SITE.billboard_images.all())
         company_images = helpers.company_thumbnails(featured) if featured else \
@@ -1081,20 +1081,20 @@ def company_listing(request, alpha=None, group=None):
     site_config = get_site_config(request)
     jobs_count = get_total_jobs_count()
     custom_facets = settings.DEFAULT_FACET
-    featured = SeoSite.objects.get(id=settings.SITE_ID).\
-               featured_companies.all()
+    featured = SeoSite.objects.get(id=settings.SITE_ID). \
+        featured_companies.all()
 
     if group == 'featured':
         companies = featured
     else:
         sqs = helpers.sqs_apply_custom_facets(custom_facets)
         sqs = helpers._sqs_narrow_by_buid_and_site_package(sqs)
-        counts = sqs.facet("buid").facet_limit(-1).fields(['buid']).\
-                 facet_mincount(1).facet_counts()
+        counts = sqs.facet("buid").facet_limit(-1).fields(['buid']). \
+            facet_mincount(1).facet_counts()
         buids = [item[0] for item in counts['fields']['buid']]
 
         # Some companies are associated with multiple BUIDs, so we use distinct()
-        companies = Company.objects.filter(job_source_ids__in=buids).\
+        companies = Company.objects.filter(job_source_ids__in=buids). \
             exclude(company_slug='').distinct()
 
         if group=='member':
@@ -1107,7 +1107,7 @@ def company_listing(request, alpha=None, group=None):
         if (len(alpha_filters)==27):
             break
         alpha_filters.add(co.company_slug[0] if co.company_slug[0].isalpha()
-                             else '0-9')
+                          else '0-9')
 
     # Move the '0-9' filter to the back of the list if it is present. This does
     # two things--a letter will always be selected on the root page, and the 0-9
@@ -1218,23 +1218,23 @@ def v2_redirect(request, v2_redirect=None, country=None, state=None, city=None, 
             url = 'nav_country_slug'
         elif v2_redirect == 'state' and state:
             slugs = jobs.filter(stateSlug=slugify(state.replace(
-                                            '_','-')))\
-                                        .values('stateSlug', 'country_short')[0]
+                '_','-'))) \
+                .values('stateSlug', 'country_short')[0]
             v2_redirect_kwargs = {'state_slug': slugs['stateSlug'],
-                                  'country_short': slugs['country_short']\
-                                                   .lower()}
+                                  'country_short': slugs['country_short'] \
+                                      .lower()}
             url = 'nav_state_slug'
         elif v2_redirect == 'city' and state and city:
             slugs = jobs.filter(stateSlug=slugify(state.replace(
-                                            '_','-')))\
-                                        .filter(citySlug=slugify(city.replace(
-                                            '_','-')))\
-                                        .values('citySlug', 'stateSlug',
-                                                'country_short')[0]
+                '_','-'))) \
+                .filter(citySlug=slugify(city.replace(
+                '_','-'))) \
+                .values('citySlug', 'stateSlug',
+                        'country_short')[0]
             v2_redirect_kwargs = {'city_slug': slugs['citySlug'],
                                   'state_slug': slugs['stateSlug'],
-                                  'country_short': slugs['country_short']\
-                                                   .lower()}
+                                  'country_short': slugs['country_short'] \
+                                      .lower()}
             url = 'nav_city_slug'
         elif v2_redirect == 'city-country' and country and city:
             v2_redirect_kwargs = {'city_slug': slugify(city.replace('_','-')),
@@ -1303,7 +1303,7 @@ def new_sitemap_index(request):
     dates = [latest_datetime - datetime.timedelta(days=i) for i in xrange(history)]
     earliest_day = (latest_datetime - datetime.timedelta(days=history)).date()
     datecounts = DateSitemap().numpages(startdate=earliest_day,
-            enddate=latest_datetime)
+                                        enddate=latest_datetime)
     sitemaps = {}
 
     for date in dates:
@@ -1323,7 +1323,7 @@ def new_sitemap_index(request):
         if pages > 1:
             for page in xrange(2, pages+1):
                 sites_dates.append(('%s://%s%s?p=%s' % (protocol, current_site.domain,
-                                                 sitemap_url, page),
+                                                        sitemap_url, page),
                                     date))
 
     xml = loader.render_to_string('sitemaps/sitemap_index_lastmod.xml', {'sitemaps': sites_dates})
@@ -1359,8 +1359,8 @@ def get_group_sites(request):
     if request.method == u'GET':
         GET = request.GET
         group_id = GET.__getitem__(u'groupId')
-        sites = SeoSite.objects.filter(group__id__exact=group_id)\
-                               .values('id', 'domain')
+        sites = SeoSite.objects.filter(group__id__exact=group_id) \
+            .values('id', 'domain')
         json = simplejson.dumps(list(sites))
         return HttpResponse(json, content_type='application/json')
 
@@ -1387,10 +1387,10 @@ def get_group_relationships(request):
 
         site = get_object_or_404(SeoSite, id=obj_id)
         # QuerySets can't be JSON serialized so we'll coerce this to a list
-        configs = list(Configuration.objects.filter(group__id=group_id)\
-                                            .values('id', 'title'))
-        ga_qs = GoogleAnalytics.objects.filter(group__id=group_id)\
-                                       .values('id', 'web_property_id')
+        configs = list(Configuration.objects.filter(group__id=group_id) \
+                       .values('id', 'title'))
+        ga_qs = GoogleAnalytics.objects.filter(group__id=group_id) \
+            .values('id', 'web_property_id')
         google_analytics = [{'id': g['id'], 'title': g['web_property_id']}
                             for g in ga_qs]
 
@@ -1403,10 +1403,10 @@ def get_group_relationships(request):
             }
         else:
             selected = {
-                'configurations': [c for c in site.configurations\
-                                                  .values_list('id', flat=True)],
-                'google_analytics': [g for g in site.google_analytics\
-                                                    .values_list('id', flat=True)]
+                'configurations': [c for c in site.configurations \
+                    .values_list('id', flat=True)],
+                'google_analytics': [g for g in site.google_analytics \
+                    .values_list('id', flat=True)]
             }
 
         view_data = {
@@ -1569,8 +1569,8 @@ def dseo_500(request):
         'view_source' : settings.VIEW_SOURCE
     }
     return HttpResponseServerError(loader.render_to_string(
-                                   'dseo_500.html', data_dict,
-                                   context_instance=RequestContext(request)))
+        'dseo_500.html', data_dict,
+        context_instance=RequestContext(request)))
 
 
 @home_page_check
@@ -1760,7 +1760,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         'title_term': q_term if q_term else '\*',
         'view_source': settings.VIEW_SOURCE,
         'widgets': widgets,
-    }
+        }
 
     return render_to_response('job_listing.html', data_dict,
                               context_instance=RequestContext(request))
@@ -1791,7 +1791,7 @@ def post_a_job(request):
     if settings.POSTAJOB_API_KEY != key:
         resp = {
             'error': 'Unauthorized',
-        }
+            }
         resp = json.dumps(resp)
         return HttpResponse(resp, content_type='application/json', status=401)
 
@@ -1812,7 +1812,7 @@ def delete_a_job(request):
     if settings.POSTAJOB_API_KEY != key:
         resp = {
             'error': 'Unauthorized',
-        }
+            }
         resp = json.dumps(resp)
         return HttpResponse(resp, content_type='application/json', status=401)
 
@@ -1940,6 +1940,6 @@ def test_markdown(request):
         form = UploadJobFileForm()
         data_dict = {
             'form': form,
-        }
+            }
         return render_to_response('seo/basic_form.html', data_dict,
                                   context_instance=RequestContext(request))
