@@ -51,6 +51,7 @@
                 {% else %}
                     {% if show_registration %}
                         <h3>Sign Up</h3>
+                        <div class="error-box"></div>
                         {% include "includes/widget-user-registration.html" with form=registrationform%}
                     {% endif %}
                     <div class="clear"></div>                                                

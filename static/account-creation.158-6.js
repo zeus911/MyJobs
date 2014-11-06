@@ -332,11 +332,12 @@ function jsonErrors(index, errors){
         $error.val("");
         $error.attr("placeholder",errors[index][1]);
     }else{
-        var field = $error.parents("fieldset");
+        var field = $error.parents("fieldset"),
+            error_box = $(".error-box");
 
-        field.before("<div class='error-box'></div>");
+        error_box.empty();
         $.each(errors[index][1], function(index, value){
-            $(".error-box").append("<div class='error-text'><small><em>" + value + "</em></small></div>");
+            error_box.append("<div class='error-text'><small><em>" + value + "</em></small></div>");
         });
     }
 }
