@@ -30,6 +30,11 @@ Used to check if registration was successful.
             {% else %}
             {% trans "Your account has been successfully activated, but you need to login before you use it."%}
             {% endif %}
+            {% if password %}
+                {% blocktrans %}
+                    Your temporary password is {{ password }}. Please change it at your convenience.
+                {% endblocktrans %}
+            {% endif %}
             </p>
         </div>
 

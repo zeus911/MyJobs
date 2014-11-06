@@ -33,7 +33,8 @@ class RegistrationViewTests(MyJobsBase):
             settings.ACCOUNT_ACTIVATION_DAYS = 7  # pragma: no cover
 
         self.data = {'email': 'alice@example.com',
-                     'password1': 'swordfish'}
+                     'password1': 'swordfish',
+                     'send_email': True}
         self.user, _ = User.objects.create_user(**self.data)
 
     def test_valid_activation(self):
@@ -95,6 +96,7 @@ class RegistrationViewTests(MyJobsBase):
     def test_resend_activation_with_secondary_emails(self):
         user, created = User.objects.create_user(
             **{'email': 'alice@example.com', 'password1': '5UuYquA@'})
+            create_user=True)
         self.assertEqual(ActivationProfile.objects.count(), 1)
 
         self.client.login_user(user)

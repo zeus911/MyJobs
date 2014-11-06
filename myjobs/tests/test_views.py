@@ -195,7 +195,7 @@ class MyJobsViewsTests(MyJobsBase):
         completely
         """
         self.assertEqual(User.objects.count(), 2)
-        resp = self.client.get(reverse('delete_account'), follow=True)
+        self.client.get(reverse('delete_account'), follow=True)
         self.assertEqual(User.objects.count(), 1)
 
     def test_disable_account(self):
@@ -212,7 +212,7 @@ class MyJobsViewsTests(MyJobsBase):
         profile = ActivationProfile.objects.get(user=self.user)
         self.assertEqual(profile.activation_key, 'ALREADY ACTIVATED')
 
-        resp = self.client.get(reverse('disable_account'), follow=True)
+        self.client.get(reverse('disable_account'), follow=True)
         user = User.objects.get(id=self.user.id)
         profile = ActivationProfile.objects.get(user=user)
         self.assertNotEqual(profile.activation_key, 'ALREADY ACTIVATED')
@@ -346,7 +346,6 @@ class MyJobsViewsTests(MyJobsBase):
                                                  user=self.user,
                                                  email=self.user.email)
 
-        now = date.today()
         month_ago = date.today() - timedelta(days=30)
         self.user.last_response = month_ago - timedelta(days=1)
         self.user.save()
@@ -641,8 +640,8 @@ class MyJobsViewsTests(MyJobsBase):
 
         # Navigating to the unsubscribe page while logged out
         # and with the correct email address...
-        response = self.client.get(reverse('unsubscribe_all') +
-                                   '?verify=%s' % self.user.user_guid)
+        self.client.get(reverse('unsubscribe_all') +
+                        '?verify=%s' % self.user.user_guid)
         self.user = User.objects.get(id=self.user.id)
         # should result in the user's :opt_in_myjobs: attribute being
         # set to False
@@ -651,7 +650,7 @@ class MyJobsViewsTests(MyJobsBase):
     def test_unsubscribe_all_myjobs_emails(self):
         self.assertTrue(self.user.opt_in_myjobs)
 
-        response = self.client.get(reverse('unsubscribe_all'))
+        self.client.get(reverse('unsubscribe_all'))
         self.user = User.objects.get(id=self.user.id)
         self.assertFalse(self.user.opt_in_myjobs)
 
@@ -769,3 +768,14 @@ class MyJobsViewsTests(MyJobsBase):
         content = BeautifulSoup(response.content)
         title = content.select('div#title')[0]
         self.assertTrue('The new OFCCP regulations' in title.text)
+
+    def test_manual_account_creation(self):
+        self.client.logout()
+        self.assertEqual(len(mail.outbox), 0)
+        self.client.post(reverse('home'), data={'email': 'new@example.com',
+                                                'password1': 'secret',
+                                                'password2': 'secret',
+                                                'action': 'register'})
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject,
+                         'Account activation for My.jobs')
