@@ -26,6 +26,7 @@ from social_links import models as social_models
 from seo.search_backend import DESearchQuerySet
 from myjobs.models import User
 from mypartners.models import Tag
+from universal.helpers import get_domain
 
 import decimal
 
@@ -544,6 +545,24 @@ class SeoSite(Site):
     postajob_filter_type = models.CharField(max_length=255,
                                             choices=postajob_filter_options,
                                             default='this site only')
+    canonical_company = models.ForeignKey('Company', null=True,
+                                          on_delete=models.SET_NULL,
+                                          related_name='canonical_company')
+    email_domain = models.CharField(max_length=255, default='my.jobs')
+
+    def clean_email_domain(self):
+        # Determine if the company actually has permission to use the domain.
+        domains = self.canonical_company.get_seo_sites().values_list('domain',
+                                                                     flat=True)
+        domains = [get_domain(domain) for domain in domains]
+        domains.append('my.jobs')
+        if self.email_domain not in domains:
+            raise ValidationError('You can only send emails from a domain '
+                                  'that you own.')
+
+        # Ensure that we have an MX record for the domain.
+        # raise ValidationError('You do not currently have the ability '
+        #                       'to send emails from this domain.')
 
     def postajob_site_list(self):
         filter_function = self.postajob_filter_options_dict.get(
