@@ -122,6 +122,7 @@ def home(request):
             if registration_form.is_valid():
                 new_user, created = User.objects.create_user(
                     request=request,
+                    send_email=True,
                     **registration_form.cleaned_data)
                 user_cache = authenticate(
                     username=registration_form.cleaned_data['email'],

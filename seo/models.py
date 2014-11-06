@@ -21,6 +21,7 @@ from saved_search.models import BaseSavedSearch, SOLR_ESCAPE_CHARS
 from taggit.managers import TaggableManager
 
 from moc_coding import models as moc_models
+from registration.models import Invitation
 from social_links import models as social_models
 from seo.search_backend import DESearchQuerySet
 from myjobs.models import User
@@ -1239,8 +1240,13 @@ class CompanyUser(models.Model):
         If the user is already a member of the Employer group, the Group app
         is smart enough to not add it a second time.
         """
+        inviting_user = kwargs.pop('inviting_user', None)
         group = Group.objects.get(name=self.GROUP_NAME)
         self.user.groups.add(group)
+        if not self.pk:
+            Invitation(invitee=self.user, inviting_company=self.company,
+                       added_permission=group,
+                       inviting_user=inviting_user).save()
 
         return super(CompanyUser, self).save(*args, **kwargs)
 
