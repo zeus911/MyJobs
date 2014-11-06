@@ -70,31 +70,29 @@
                     </fieldset>
                 </div>
             </div>
-            {% if not item.pk %}
-                <div class="simple-accordion">
-                    <div class="header">
-                        Posting Location
-                    </div>
-                    <div class="contents">
-                        {% if form.get_field_sets.3 %}
-                            <fieldset>
-                                {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.3 %}
-                            </fieldset>
-                        {% else %}
-                            <div class="span3 form-label pull-left initial site-label">
-                                <label>Site</label>
-                            </div>
-                            <div class="profile-form-input site-field">
-                                <ul id="id_site_packages">
-                                    {% for site in form|get_sites %}
-                                        <li>{{ site }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        {% endif %}
-                    </div>
+            <div class="simple-accordion">
+                <div class="header">
+                    Posting Location
                 </div>
-            {% endif %}
+                <div class="contents">
+                    {% if form.get_field_sets.3 %}
+                        <fieldset>
+                            {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.3 %}
+                        </fieldset>
+                    {% else %}
+                        <div class="span3 form-label pull-left initial site-label">
+                            <label>Site</label>
+                        </div>
+                        <div class="profile-form-input site-field">
+                            <ul id="id_site_packages">
+                                {% for site in form|get_sites %}
+                                    <li>{{ site }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
         <div class="actions">
             <div class="form-label pull-left">&nbsp;</div>

@@ -134,7 +134,7 @@ JobLocationFormSet = modelformset_factory(JobLocation, form=JobLocationForm,
 
 class JobForm(BaseJobForm):
     class Meta:
-        fields = ('title', 'is_syndicated', 'reqid', 'description',
+        fields = ('title', 'reqid', 'description',
                   'date_expired', 'is_expired', 'autorenew', 'apply_type',
                   'apply_link', 'apply_email', 'apply_info', 'owner',
                   'post_to', 'site_packages')
@@ -210,7 +210,7 @@ class JobForm(BaseJobForm):
             [self['title'], self['description'], self['reqid']],
             [self['apply_type'], self['apply_link'], self['apply_info']],
             [self['date_expired'], self['is_expired']],
-            [self['post_to'], self['site_packages'], self['is_syndicated']]
+            [self['post_to'], self['site_packages']]
         ]
         return field_sets
 
