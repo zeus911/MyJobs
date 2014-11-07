@@ -815,7 +815,6 @@ class PurchasedJobActionTests(PostajobTestBase):
         job = PurchasedJob.objects.get()
         self.assertTrue(request.action_taken)
         self.assertTrue(job.is_approved)
-        #self.assertFalse(self.user in self.company.companyprofile.blocked_users.all())
 
     def test_purchasedjob_deny(self):
         self.client.get(reverse('deny_admin_request',
@@ -825,7 +824,6 @@ class PurchasedJobActionTests(PostajobTestBase):
         job = PurchasedJob.objects.get()
         self.assertTrue(request.action_taken)
         self.assertFalse(job.is_approved)
-        #self.assertFalse(self.user in self.company.companyprofile.blocked_users.all())
 
     def test_purchasedjob_block(self):
         self.client.get(reverse('block_admin_request',
@@ -835,7 +833,8 @@ class PurchasedJobActionTests(PostajobTestBase):
         job = PurchasedJob.objects.get()
         self.assertTrue(request.action_taken)
         self.assertFalse(job.is_approved)
-        self.assertTrue(self.user in self.company.companyprofile.blocked_users.all())
+        company = Company.objects.get(pk=self.company.pk)
+        self.assertTrue(self.user in company.companyprofile.blocked_users.all())
         response = self.client.get(reverse('purchasedjob_add',
                                            kwargs={'product': self.product.pk}))
         self.assertEqual(response.status_code, 404)
