@@ -49,7 +49,7 @@ from seo.templatetags.seo_extras import facet_text, smart_truncate
 from seo.cache import get_facet_count_key, get_site_config, get_total_jobs_count
 from seo.search_backend import DESearchQuerySet
 from seo import helpers
-from seo.forms import UploadJobFileForm
+from seo.forms.admin_forms import UploadJobFileForm
 from seo.models import (BusinessUnit, Company, Configuration, Country,
                         CustomFacet, GoogleAnalytics, JobFeed, SeoSite, SiteTag)
 from seo.decorators import (sns_json_message, custom_cache_page, protected_site,
