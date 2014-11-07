@@ -63,8 +63,7 @@ class CustomSetPasswordForm(SetPasswordForm):
                 del self.cleaned_data["password1"]
                 del self.cleaned_data["password2"]
 
-            else:
-                return self.cleaned_data
+        return self.cleaned_data
 
 
 
@@ -206,8 +205,7 @@ class RegistrationForm(forms.Form):
                 del self.cleaned_data["password1"]
                 del self.cleaned_data["password2"]
 
-            else:
-                return self.cleaned_data
+        return self.cleaned_data
 
 
 class InvitationForm(forms.ModelForm):

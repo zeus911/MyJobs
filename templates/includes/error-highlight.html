@@ -7,7 +7,9 @@
 {% if field.errors %}
     <span class="required">
     <div class="span3 form-label pull-left initial form-spacer"></div>
-    <div class="error-text">{{ field.errors.as_text }}</div>
+    <div class="error-box">
+        <div class="error-text">{{ field.errors.as_text }}</div>
+    </div>
 {% endif %}
 
 {% if 'country_code' in field.html_name %}
