@@ -141,9 +141,6 @@ class ChangePasswordForm(Form):
     password = CharField(label="Password",
                          widget=PasswordInput(
                              attrs={'placeholder': 'Password'}))
-    new_password1 = CharField(label="New Password",
-                              widget=PasswordInput(
-                                  attrs={'placeholder': 'New Password'}))
     new_password1 = PasswordField(label=('New Password'),
                               widget=PasswordInput(
                                   attrs={'placeholder':('New Password')}))
