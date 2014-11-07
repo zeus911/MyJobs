@@ -520,7 +520,8 @@ class DESolrSearchBackend(SolrSearchBackend):
             if not self.silently_fail:
                 raise
 
-            self.log.error("Failed to remove document '%s' from Solr: %s", solr_id, e)
+            self.log.error("Failed to remove document '%s' from Solr: %s",
+                           solr_id, e)
 
         
 class DESolrEngine(SolrEngine):
