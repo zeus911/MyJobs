@@ -44,21 +44,21 @@ class PasswordChangeRedirectMiddleware:
                                   for url in urls])
 
             if (not url_matches and request.user.password_change):
-                return http.HttpResponseRedirect(reverse('edit_account')+'#as-password')
+                return http.HttpResponseRedirect(reverse('edit_account')
+                                                 + '#as-password')
 
         elif request.is_ajax() and bool(request.REQUEST.get('next')):
             return http.HttpResponse(status=403)
 
 
 XS_SHARING_ALLOWED_ORIGINS = '*'
-XS_SHARING_ALLOWED_METHODS = ['POST','GET','OPTIONS', 'PUT', 'DELETE']
+XS_SHARING_ALLOWED_METHODS = ['POST', 'GET', 'OPTIONS', 'PUT', 'DELETE']
 XS_SHARING_ALLOWED_HEADERS = 'Content-Type'
 
 
 class XsSharing(object):
     """
         This middleware allows cross-domain XHR using the html5 postMessage API.
-         
 
         Access-Control-Allow-Origin: http://foo.example
         Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE
@@ -67,10 +67,11 @@ class XsSharing(object):
 
         if 'HTTP_ACCESS_CONTROL_REQUEST_METHOD' in request.META:
             response = http.HttpResponse()
-            response['Access-Control-Allow-Origin']  = XS_SHARING_ALLOWED_ORIGINS 
-            response['Access-Control-Allow-Headers']  = XS_SHARING_ALLOWED_HEADERS
-            response['Access-Control-Allow-Methods'] = ",".join( XS_SHARING_ALLOWED_METHODS ) 
-            
+            response['Access-Control-Allow-Origin'] = XS_SHARING_ALLOWED_ORIGINS
+            response['Access-Control-Allow-Headers'] = XS_SHARING_ALLOWED_HEADERS
+            response['Access-Control-Allow-Methods'] = ",".join(
+                XS_SHARING_ALLOWED_METHODS)
+
             return response
 
         return None
@@ -82,9 +83,10 @@ class XsSharing(object):
 
         response['Access-Control-Allow-Origin'] = XS_SHARING_ALLOWED_ORIGINS
         response['Access-Control-Allow-Headers'] = XS_SHARING_ALLOWED_HEADERS
-        response['Access-Control-Allow-Methods'] = ",".join( XS_SHARING_ALLOWED_METHODS )
+        response['Access-Control-Allow-Methods'] = ",".join(
+            XS_SHARING_ALLOWED_METHODS)
 
-        return response 
+        return response
 
 
 class NewRelic(object):
@@ -111,7 +113,7 @@ class NewRelic(object):
 class CompactP3PMiddleware(object):
     """
     Adds a compact privacy policy to site headers
-    
+
     """
     def process_response(self, request, response):
         response['P3P'] = 'CP="ALL DSP COR CURa IND PHY UNR"'
@@ -214,11 +216,11 @@ class MultiHostMiddleware:
         settings.FULL_VERSION = version.release_number
 
         # Place variables that need a non blank default value here
-        if my_site.site_title: # title defaults to site name
+        if my_site.site_title:  # title defaults to site name
             settings.SITE_TITLE = my_site.site_title
         else:
             settings.SITE_TITLE = my_site.name
-        if my_site.site_heading: # heading defaults to site name
+        if my_site.site_heading:  # heading defaults to site name
             settings.SITE_HEADING = my_site.site_heading
         else:
             settings.SITE_HEADING = my_site.name
@@ -245,14 +247,16 @@ class MultiHostMiddleware:
         settings.CACHE_MIDDLEWARE_KEY_PREFIX = "%s" % (my_site.domain,)
         default_site_facets = SeoSiteFacet.objects.filter(
             seosite=my_site).filter(
-            facet_type=SeoSiteFacet.DEFAULT)
+                facet_type=SeoSiteFacet.DEFAULT)
         settings.DEFAULT_FACET = custom_facets_with_ops(default_site_facets)
 
         featured_site_facets = SeoSiteFacet.objects.filter(
             seosite=my_site).filter(
-            facet_type=SeoSiteFacet.FEATURED)
+                facet_type=SeoSiteFacet.FEATURED)
         settings.FEATURED_FACET = custom_facets_with_ops(featured_site_facets)
-        settings.SITE_PACKAGES = [int(site.pk) for site in SitePackage.objects.filter(sites=my_site)]
+        settings.SITE_PACKAGES = [int(site.pk)
+                                  for site in SitePackage.objects.filter(
+                                      sites=my_site)]
 
 
 def custom_facets_with_ops(site_facets):

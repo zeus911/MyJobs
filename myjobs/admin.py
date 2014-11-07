@@ -3,7 +3,6 @@ from django.contrib.sites.models import Site
 
 from myjobs.models import User, CustomHomepage, EmailLog, FAQ
 from myjobs.forms import UserAdminForm
-from registration.models import ActivationProfile
 
 
 class EmailLogAdmin(admin.ModelAdmin):
@@ -49,7 +48,6 @@ class FAQAdmin(admin.ModelAdmin):
     search_fields = ['question', ]
 
 admin.site.register(User, UserAdmin)
-admin.site.register(ActivationProfile)
 admin.site.register(CustomHomepage)
 admin.site.register(EmailLog, EmailLogAdmin)
 admin.site.register(FAQ, FAQAdmin)
