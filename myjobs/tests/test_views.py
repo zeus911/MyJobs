@@ -773,8 +773,8 @@ class MyJobsViewsTests(MyJobsBase):
         self.client.logout()
         self.assertEqual(len(mail.outbox), 0)
         self.client.post(reverse('home'), data={'email': 'new@example.com',
-                                                'password1': 'secret',
-                                                'password2': 'secret',
+                                                'password1': '5UuYquA@',
+                                                'password2': '5UuYquA@',
                                                 'action': 'register'})
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject,
