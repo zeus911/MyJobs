@@ -43,7 +43,8 @@ class EmailDomainFormView(View):
     def post(self, request):
         form = settings_forms.EmailDomainForm(request.POST, request=request)
         if form.is_valid():
-            HttpResponseRedirect(self.success_url())
+            form.save()
+            return HttpResponseRedirect(self.success_url())
         kwargs = dict(self.base_template_context)
         kwargs.update({
             'form': form,

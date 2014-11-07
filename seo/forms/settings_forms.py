@@ -14,15 +14,21 @@ class EmailDomainForm(forms.Form):
     def __init__(self, *args, **kwargs):
         request = kwargs.pop('request')
         company = get_company_or_404(request)
-        sites = SeoSite.objects.filter(canonical_company=company)
+        self.sites = SeoSite.objects.filter(canonical_company=company)
         super(EmailDomainForm, self).__init__(*args, **kwargs)
-        email_domain_field = SeoSite._meta.get_field('email_domain')
-        for site in sites:
-            print site.email_domain_choices()
+        print self.errors
+        for site in self.sites:
             field_kwargs = {
                 'widget': forms.Select(),
                 'choices': site.email_domain_choices(),
-                'initial': email_domain_field.get_default(),
+                'initial': site.email_domain,
                 'label': 'Email Domain For %s' % site.domain,
             }
             self.fields[str(site.pk)] = forms.ChoiceField(**field_kwargs)
+
+    def save(self):
+        for site in self.sites:
+            if str(site.pk) in self.cleaned_data:
+                new_domain = self.cleaned_data[str(site.pk)]
+                site.email_domain = new_domain
+                site.save()
