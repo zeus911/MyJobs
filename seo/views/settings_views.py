@@ -6,7 +6,6 @@ from django.views.generic import View
 
 from seo.forms import settings_forms
 from seo.models import SeoSite
-from universal.helpers import get_company_or_404
 from universal.views import RequestFormViewBase
 
 
@@ -29,15 +28,11 @@ class EmailDomainFormView(View):
         'display_name': 'Email Domains'
     }
 
-    def sites(self, request):
-        company = get_company_or_404(request)
-        return SeoSite.objects.filter(canonical_company=company)
-
     def success_url(self):
         return reverse('purchasedmicrosite_admin_overview')
 
     def get(self, request):
-        form = settings_forms.EmailDomainForm()
+        form = settings_forms.EmailDomainForm(request=request)
         kwargs = dict(self.base_template_context)
         kwargs.update({
             'form': form,
@@ -46,7 +41,7 @@ class EmailDomainFormView(View):
                                   context_instance=RequestContext(request))
 
     def post(self, request):
-        form = settings_forms.EmailDomainForm(request.POST)
+        form = settings_forms.EmailDomainForm(request.POST, request=request)
         if form.is_valid():
             HttpResponseRedirect(self.success_url())
         kwargs = dict(self.base_template_context)

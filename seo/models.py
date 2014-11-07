@@ -26,7 +26,7 @@ from social_links import models as social_models
 from seo.search_backend import DESearchQuerySet
 from myjobs.models import User
 from mypartners.models import Tag
-from universal.helpers import get_domain
+from universal.helpers import get_domain, get_object_or_none
 
 import decimal
 
@@ -545,7 +545,7 @@ class SeoSite(Site):
     postajob_filter_type = models.CharField(max_length=255,
                                             choices=postajob_filter_options,
                                             default='this site only')
-    canonical_company = models.ForeignKey('Company', null=True,
+    canonical_company = models.ForeignKey('Company', blank=True, null=True,
                                           on_delete=models.SET_NULL,
                                           related_name='canonical_company')
     email_domain = models.CharField(max_length=255, default='my.jobs')
@@ -584,6 +584,20 @@ class SeoSite(Site):
         buid_cache_key = '%s:buids' % site_cache_key
         social_cache_key = '%s:social_links' % self.domain
         cache.delete_many([site_cache_key, buid_cache_key, social_cache_key])
+
+    def email_domain_choices(self,):
+        from postajob.models import CompanyProfile
+        profile = get_object_or_none(CompanyProfile,
+                                     company=self.canonical_company)
+        email_domain_field = SeoSite._meta.get_field('email_domain')
+        choices = [
+            (email_domain_field.get_default(), email_domain_field.get_default()),
+            (self.domain, self.domain),
+        ]
+        if profile and profile.outgoing_email_domain:
+            choices.append((profile.outgoing_email_domain,
+                            profile.outgoing_email_domain))
+        return choices
 
     def save(self, *args, **kwargs):
         super(SeoSite, self).save(*args, **kwargs)

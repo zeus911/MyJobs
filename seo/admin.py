@@ -876,7 +876,8 @@ class SeoSiteAdmin(admin.ModelAdmin):
     search_fields = ['name', 'domain', ]
     fieldsets = [
         ('Basics', {'fields': [('domain', 'name', 'group',
-                                'postajob_filter_type')]}),
+                                'postajob_filter_type',
+                               'canonical_company')]}),
         ('Site Title and Page Headline', {'fields': [('site_title',
                                                      'site_heading',
                                                      'site_description')]}),
