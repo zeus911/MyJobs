@@ -212,15 +212,32 @@ def process_admin_request(request, content_type, pk, approve=True,
 
     request_object = request_made.request_object()
     if request_object and request_object.user_has_access(request.user):
-        request_object.is_approved = approve
-        request_object.save()
-        request_made.action_taken = True
-        request_made.save()
-
         if block and request_object.created_by:
             profile = CompanyProfile.objects.get_or_create(
                 company=request_object.owner)[0]
             profile.blocked_users.add(request_object.created_by)
+
+            # Since Requests and the objects associated with them are related
+            # using a fake foreign key, we have to do multiple queries. We
+            # could potentially get away with only the first two, but the last
+            # one is included just to be safe.
+            request_objects = content_type.model_class().objects.filter(
+                created_by=request_object.created_by,
+                owner=request_object.owner,
+                is_approved=False)
+            requests = Request.objects.filter(
+                object_id__in=request_objects.values_list('pk', flat=True),
+                action_taken=False)
+            request_objects = request_objects.filter(
+                pk__in=[r.object_id for r in requests])
+
+            requests.update(action_taken=True)
+            request_objects.update(is_approved=False)
+        else:
+            request_object.is_approved = approve
+            request_object.save()
+            request_made.action_taken = True
+            request_made.save()
 
     return redirect('request')
 
