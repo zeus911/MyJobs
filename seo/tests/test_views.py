@@ -68,6 +68,21 @@ class WidgetsTestCase(DirectSEOTestCase):
 class SeoSiteTestCase(DirectSEOTestCase):
     fixtures = ['seo_views_testdata.json']
 
+    def test_update_email_domain(self):
+        company = factories.CompanyFactory()
+        site = factories.SeoSiteFactory(canonical_company=company)
+        site2 = factories.SeoSiteFactory(canonical_company=company)
+
+        data = {
+            str(site.pk): site.domain,
+            str(site2.pk): site2.domain,
+        }
+
+        resp = self.client.post(reverse('seosites_settings_email_domain_edit'),
+                                data=data)
+
+        self.assertEqual(resp.status_code, 200)
+
     def test_special_characters(self):
         self.conn.delete(q='*:*')
         special_jobs = [
