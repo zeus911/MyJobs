@@ -69,3 +69,5 @@ SOLR = {
     }
 
 ABSOLUTE_URL = '/'
+
+STATIC_URL = "//d2e48ltfsb5exy.cloudfront.net/content_ms/files/"
