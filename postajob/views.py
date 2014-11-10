@@ -229,9 +229,9 @@ def process_admin_request(request, content_type, pk, approve=True,
                 is_approved=False)
             requests = Request.objects.filter(
                 object_id__in=request_objects.values_list('pk', flat=True),
-                action_taken=False)
+                action_taken=False).values_list('object_id', flat=True)
             request_objects = request_objects.filter(
-                pk__in=[r.object_id for r in requests])
+                pk__in=requests)
 
             requests.update(action_taken=True)
             request_objects.update(is_approved=False)
