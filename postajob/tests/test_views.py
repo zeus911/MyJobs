@@ -489,7 +489,7 @@ class ViewTests(PostajobTestBase):
                                     data=self.purchasedproduct_form_data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(PurchasedProduct.objects.all().count(), 1)
+        self.assertEqual(PurchasedProduct.objects.count(), 1)
         purchase = PurchasedProduct.objects.get()
         self.assertTrue(purchase.paid)
         self.assertEqual(purchase.invoice.card_last_four,
@@ -500,7 +500,7 @@ class ViewTests(PostajobTestBase):
                          self.purchasedproduct_form_data['exp_date_1'])
         exp_date = date.today() + timedelta(self.product.posting_window_length)
         self.assertEqual(purchase.expiration_date, exp_date)
-        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(len(mail.outbox), 2)
 
     def test_purchasedproduct_add_free_product_existing_company_with_address(self):
         self.assertEqual(PurchasedProduct.objects.all().count(), 0)

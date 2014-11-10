@@ -436,7 +436,7 @@ class DEv2JobFeed(DEJobFeed):
     """
     def __init__(self, *args, **kwargs):
         self.schema = etree.XMLSchema(etree.parse("feed_schema.xsd"))
-        kwargs.update({'js_field': 'company'})
+        kwargs.update({'js_field': 'job_source_name'})
         kwargs.update({'schema': self.schema})
         try:
             super(DEv2JobFeed, self).__init__(*args, **kwargs)

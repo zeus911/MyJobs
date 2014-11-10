@@ -347,7 +347,7 @@ class PartnerSavedSearch(SavedSearch):
     def save(self, *args, **kwargs):
         created = False if self.pk else True
         super(PartnerSavedSearch, self).save(*args, **kwargs)
-        if created:
+        if created and self.user.can_receive_myjobs_email():
             self.send_initial_email()
 
     def send_initial_email(self, custom_msg=None):

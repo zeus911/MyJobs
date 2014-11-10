@@ -624,7 +624,7 @@ class PurchasedProductForm(RequestForm):
 
     def save(self, commit=True):
         if not self.company:
-            make_company_from_purchased_product()
+            make_company_from_purchased_product(self)
 
         invoice = Invoice.objects.create(
             address_line_one=self.cleaned_data.get('address_line_one'),

@@ -1,4 +1,5 @@
 import json
+from django.core import mail
 from django.core.urlresolvers import reverse
 
 
@@ -11,6 +12,8 @@ from myjobs.tests.test_views import TestClient
 from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch
 from mysearches.tests.helpers import return_file
+from registration.models import Invitation
+from seo.tests import CompanyFactory
 from setup import MyJobsBase
 
 
@@ -30,7 +33,11 @@ class UserResourceTests(MyJobsBase):
         return response
 
     def test_create_new_user(self):
+        self.assertEqual(len(mail.outbox), 0)
         response = self.make_response(self.data)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject,
+                         'Account activation for My.jobs')
         content = json.loads(response.content)
         self.assertEqual(content, 
                          {'user_created': True,
@@ -108,7 +115,7 @@ class SavedSearchResourceTests(MyJobsBase):
         self.assertEqual(SavedSearch.objects.filter(user=self.user).count(), 2)
 
         self.data['url'] = 'http://www.my.jobs/jobs'
-        response = self.make_response(self.data)
+        self.make_response(self.data)
 
         for search in SavedSearch.objects.all():
             self.assertTrue('www.my.jobs' in search.notes)
