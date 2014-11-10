@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import user_passes_test
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 
 from myjobs.decorators import user_is_allowed
 from myjobs.models import User
@@ -14,3 +14,4 @@ def read(request):
         m = MessageInfo.objects.get(user=user, message__id=message)
         m.mark_read()
         return HttpResponse('')
+    raise Http404

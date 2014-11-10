@@ -36,6 +36,7 @@ ACTIVITY_TYPES = {
     4: 'sent',
 }
 
+
 class Location(models.Model):
     label = models.CharField(max_length=60, verbose_name='Address Label',
                              blank=True)
@@ -65,7 +66,8 @@ class Contact(models.Model):
     object there is Contact.partner_set and .partners_set
 
     """
-    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, blank=True, null=True,
+                             on_delete=models.SET_NULL)
     partner = models.ForeignKey('Partner')
     name = models.CharField(max_length=255, verbose_name='Full Name')
     email = models.EmailField(max_length=255, verbose_name='Email', blank=True)

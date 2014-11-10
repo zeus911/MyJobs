@@ -143,12 +143,14 @@ def send_search_digests():
         monthly = qs.filter(frequency='M', day_of_month=today.day)
         return chain(daily, weekly, monthly)
 
-    digests = SavedSearchDigest.objects.filter(is_active=True)
+    digests = SavedSearchDigest.objects.filter(is_active=True,
+                                               user__in_reserve=False)
     digests = filter_by_time(digests)
     for obj in digests:
         send_search_digest.s(obj).apply_async()
 
-    not_digest = SavedSearchDigest.objects.filter(is_active=False)
+    not_digest = SavedSearchDigest.objects.filter(is_active=False,
+                                                  user__in_reserve=False)
     for item in not_digest:
         saved_searches = item.user.savedsearch_set.filter(is_active=True)
         saved_searches = filter_by_time(saved_searches)

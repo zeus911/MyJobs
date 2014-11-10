@@ -12,6 +12,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import EmailMessage
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
@@ -21,7 +22,7 @@ from django.utils.importlib import import_module
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
-from mymessages.models import Message
+from mymessages.models import Message, MessageInfo, get_messages
 
 BAD_EMAIL = ['dropped', 'bounce']
 STOP_SENDING = ['unsubscribe', 'spamreport']
@@ -83,6 +84,7 @@ class CustomUserManager(BaseUserManager):
                          'gravatar': '',
                          'timezone': settings.TIME_ZONE,
                          'is_active': True,
+                         'in_reserve': kwargs.get('in_reserve', False)
                          }
 
             if user_type == 'superuser':
@@ -98,16 +100,20 @@ class CustomUserManager(BaseUserManager):
                 user_args['password_change'] = True
                 password = self.make_random_password(length=8)
 
+            source = kwargs.get('source')
             request = kwargs.get('request')
-            if request is not None:
-                source = request.GET.get('source')
-                if source is not None:
-                    user_args['source'] = source
-                else:
-                    last_microsite = request.COOKIES.get('lastmicrosite',
-                                                         None)
-                    if last_microsite is not None:
-                        user_args['source'] = last_microsite
+            if source is None:
+                if request is not None:
+                    source = request.GET.get('source')
+                    if source is not None:
+                        user_args['source'] = source
+                    else:
+                        last_microsite = request.COOKIES.get('lastmicrosite',
+                                                             None)
+                        if last_microsite is not None:
+                            user_args['source'] = last_microsite
+            else:
+                user_args['source'] = source
 
             user = self.model(**user_args)
             user.set_password(password)
@@ -117,7 +123,7 @@ class CustomUserManager(BaseUserManager):
             user.add_default_group()
             custom_signals.email_created.send(sender=self, user=user,
                                               email=email)
-            send_email = kwargs.get('send_email', True)
+            send_email = kwargs.get('send_email', False)
             if send_email:
                 custom_msg = kwargs.get("custom_msg", None)
                 activation_args = {
@@ -213,9 +219,15 @@ class User(AbstractBaseUser, PermissionsMixin):
                                       default=False,
                                       help_text=_("User has verified this "
                                                   "address and can access "
-                                                  "most My.jobs features."
+                                                  "most My.jobs features. "
                                                   "Deselect this instead of "
                                                   "deleting accounts."))
+    in_reserve = models.BooleanField(_('reserved'), default=False,
+                                     editable=False,
+                                     help_text=_("This user will be held in "
+                                                 "reserve until any "
+                                                 "invitations associated "
+                                                 "with it are processed."))
 
     # Communication Settings
 
@@ -409,22 +421,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         already or is expired, ignore it, otherwise add it to 'message_infos'.
 
         Output:
-        :message_infos:  A list of Messages to be shown to the User.
+        :messages:  A list of Messages to be shown to the User.
         """
-        from mymessages.models import get_messages, MessageInfo
-        messages = get_messages(self)
-        message_infos = []
-        for message in messages:
-            m, created = MessageInfo.objects.get_or_create(user=self,
-                                                           message=message)
-            if not created:
-                if m.read or m.expired_time():
-                    continue
-                else:
-                    message_infos.append(m)
-            else:
-                message_infos.append(m)
-        return message_infos
+        messages = get_messages(self).exclude(users=self)
+        new_message_infos = [
+            MessageInfo(user=self, message=message) for message in messages]
+
+        MessageInfo.objects.bulk_create(new_message_infos)
+
+        return self.messageinfo_set.filter(read=False, expired=False)
 
     def get_full_name(self, default=""):
         """
@@ -494,9 +499,21 @@ class User(AbstractBaseUser, PermissionsMixin):
             now = datetime.datetime.now(tz=pytz.UTC)
             return profile.expires() - now
 
-    def can_receive_myjobs_email(self):
+    def can_receive_myjobs_email(self, ignore_reserve=False):
+        """
+        Determines if this user can receive My.jobs email
+
+        Inputs:
+        :ignore_reserve: Ignores reserve status of this user; reserved users
+            shouldn't receive emails, but we can ignore that for invitations;
+            default: False
+        """
         if self.opt_in_myjobs and not self.is_disabled:
             if self.is_active or self.get_expiration().total_seconds() > 0:
+                if self.in_reserve:
+                    if ignore_reserve:
+                        return True
+                    return False
                 return True
         return False
 
