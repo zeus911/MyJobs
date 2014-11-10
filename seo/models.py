@@ -238,7 +238,8 @@ class CustomFacet(BaseSavedSearch):
 
     """
     group = models.ForeignKey(Group, blank=True, null=True)
-    business_units = models.ManyToManyField('BusinessUnit', blank=True, null=True)
+    business_units = models.ManyToManyField('BusinessUnit', blank=True,
+                                            null=True)
     country = models.CharField(max_length=800, null=True, blank=True)
     state = models.CharField(max_length=800, null=True, blank=True)
     city = models.CharField(max_length=800, null=True, blank=True)
@@ -785,7 +786,8 @@ class SpecialCommitment(models.Model):
         return self.name
 
     def committed_sites(self):
-        return ", ".join(self.seosite_set.all().values_list("domain", flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     class Meta:
         verbose_name = "Special Commitment"
@@ -801,7 +803,7 @@ class GoogleAnalyticsCampaign(models.Model):
     If there is ever a need for a non-google analytics model, create a base
     class for this model first.
     """
-    name = models.CharField(max_length=200,default='')
+    name = models.CharField(max_length=200, default='')
     group = models.ForeignKey('auth.group', null=True)
     campaign_source = models.CharField(
         help_text=" (referrer: google, citysearch, newsletter4)",
@@ -823,7 +825,8 @@ class GoogleAnalyticsCampaign(models.Model):
         return "Google Analytics Campaign - %s" % self.campaign_name
 
     def sites(self):
-        return ", ".join(self.seosite_set.all().values_list("domain", flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     class Meta:
         verbose_name = "Google Analytics Campaign"
@@ -895,7 +898,8 @@ class BillboardImage(models.Model):
         verbose_name_plural = 'Billboard Images'
 
     def on_sites(self):
-        return ", ".join(self.seosite_set.all().values_list("domain",flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     def number_of_hotspots(self):
         return self.billboardhotspot_set.all().count()
@@ -993,7 +997,8 @@ class Configuration(models.Model):
         # in directseo.seo.decorators.custom_cache_page because the
         # configuration revision referenced in the key_prefix has changed.
         cache.delete_many(["%s:config:%s" % (domain, self.status) for domain in
-                           self.seosite_set.all().values_list('domain', flat=True)])
+                           self.seosite_set.all().values_list('domain',
+                                                              flat=True)])
         cache.delete_many(["jobs_count::%s" % pk for pk in 
                            self.seosite_set.all().values_list('id', flat=True)])
 
@@ -1031,7 +1036,8 @@ class Configuration(models.Model):
     defaultBlurb = models.TextField('Blurb Text', blank=True, null=True)
     defaultBlurbTitle = models.CharField('Blurb Title', max_length=100,
                                          blank=True, null=True)
-    #default_blurb_always_show = models.BooleanField('Always Show', default=False)
+    #default_blurb_always_show = models.BooleanField('Always Show',
+    #                                                default=False)
     browse_country_show = models.BooleanField('Show', default=True)
     browse_state_show = models.BooleanField('Show', default=True)
     browse_city_show = models.BooleanField('Show', default=True)
@@ -1120,10 +1126,10 @@ class Configuration(models.Model):
 
     #Value from 0 to 1 showing what percent of featured jobs to display per page
     percent_featured = models.DecimalField(
-                        max_digits=3, decimal_places=2,
-                        default=decimal.Decimal('.5'),
-                        validators=[MaxValueValidator(decimal.Decimal('1.00'))],
-                        verbose_name="Featured Jobs Maximum Percentage")
+        max_digits=3, decimal_places=2,
+        default=decimal.Decimal('.5'),
+        validators=[MaxValueValidator(decimal.Decimal('1.00'))],
+        verbose_name="Featured Jobs Maximum Percentage")
 
     show_saved_search_widget = models.BooleanField(default=False,
                                                    help_text='Show saved '
@@ -1152,11 +1158,13 @@ class GoogleAnalytics (models.Model):
 
 class JobFeed(Feed):
     link = ""
+
     def __init__(self, type):
         self.type = type
 
     def item_title(self, item):
-        #Creates a location description string from locations fields if they exist
+        # Creates a location description string from locations fields if
+        # they exist
         loc_list = [item[key] for key in
             ['country_short', 'state_short', 'city'] if item.get(key)]
         title_loc = "-".join(loc_list)
@@ -1165,11 +1173,11 @@ class JobFeed(Feed):
     def item_description(self, item):
         return item['description']
 
-    def item_link(self,item):
+    def item_link(self, item):
         vs = settings.FEED_VIEW_SOURCES.get(self.type, 20)
         return '/%s%s' % (item['guid'], vs)
 
-    def item_pubdate(self,item):
+    def item_pubdate(self, item):
         return item['date_new']
 
 
