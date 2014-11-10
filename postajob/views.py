@@ -213,6 +213,8 @@ def process_admin_request(request, content_type, pk, approve=True,
     request_object = request_made.request_object()
     if request_object and request_object.user_has_access(request.user):
         if block and request_object.created_by:
+            # Block the user that initiated this request
+            # and deny all of that user's outstanding requests
             profile = CompanyProfile.objects.get_or_create(
                 company=request_object.owner)[0]
             profile.blocked_users.add(request_object.created_by)
