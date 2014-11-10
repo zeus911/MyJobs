@@ -309,7 +309,6 @@ class CustomFacet(BaseSavedSearch):
         self.saved_querystring = sqs.query.build_query()
         super(CustomFacet, self).save()
 
-
     def _attr_dict(self):
         # Any new additions to the custom field that will be searched on must
         # be added to the return value of this method.
@@ -693,7 +692,8 @@ class Company(models.Model):
         return job_count
 
     def featured_on(self):
-        return ", ".join(self.seosite_set.all().values_list("domain", flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     admins = models.ManyToManyField(User, through='CompanyUser')
     name = models.CharField('Name', max_length=200, unique=True)
@@ -723,8 +723,7 @@ class Company(models.Model):
                                            object_id_field='id',
                                            content_type_field='content_type')
     digital_strategies_customer = models.BooleanField(
-                                             'Digital Strategies Customer',
-                                             default=False)
+        'Digital Strategies Customer', default=False)
     enhanced = models.BooleanField('Enhanced', default=False)
     site_package = models.ForeignKey('postajob.SitePackage', null=True,
                                      on_delete=models.SET_NULL)
@@ -855,7 +854,8 @@ class ATSSourceCode(URINameValuePair):
     ats_name = models.CharField(max_length=200,default='')
 
     def sites(self):
-        return ", ".join(self.seosite_set.all().values_list("domain",flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     class Meta:
         verbose_name = 'ATS Source Code'
@@ -872,7 +872,8 @@ class ViewSource(models.Model):
         return "%s (%s)" % (self.name, self.view_source)
 
     def sites(self):
-        return ", ".join(self.seosite_set.all().values_list("domain",flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     class Meta:
         verbose_name = "View Source"
@@ -1026,7 +1027,8 @@ class Configuration(models.Model):
             return "%s: rev.%s" % (self.status_title(), str(self.id))
 
     def show_sites(self):
-        return ", ".join(self.seosite_set.all().values_list("domain",flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     title = models.CharField(max_length=50, null=True)
     # version control
@@ -1194,7 +1196,8 @@ class BusinessUnit(models.Model):
         super(BusinessUnit, self).save(*args, **kwargs)
 
     def show_sites(self):
-        return ", ".join(self.seosite_set.all().values_list("domain",flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     id = models.IntegerField('Business Unit Id', max_length=10,
                              primary_key=True)
