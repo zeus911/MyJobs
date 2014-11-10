@@ -16,7 +16,6 @@ class EmailDomainForm(forms.Form):
         company = get_company_or_404(request)
         self.sites = SeoSite.objects.filter(canonical_company=company)
         super(EmailDomainForm, self).__init__(*args, **kwargs)
-        print self.errors
         for site in self.sites:
             field_kwargs = {
                 'widget': forms.Select(),
