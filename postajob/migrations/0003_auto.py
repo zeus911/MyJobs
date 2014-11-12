@@ -78,7 +78,7 @@ class Migration(SchemaMigration):
             'address_line_two': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'authorize_net_login': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'authorize_net_transaction_key': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'blocked_users': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['myjobs.User']", 'null': 'True', 'blank': 'True'}),
+            'blocked_users': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myjobs.User']", 'symmetrical': 'False', 'blank': 'True'}),
             'city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'company': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['seo.Company']", 'unique': 'True'}),
             'country': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
