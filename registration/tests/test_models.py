@@ -335,6 +335,7 @@ class InvitationModelTests(MyJobsBase):
         ap = ActivationProfile.objects.get(email=user.email)
 
         body = BeautifulSoup(email.body)
+        self.assertEqual(len(body.select('a')), 1)
         activation_href = body.select('a')[0].attrs['href']
         activation_href = activation_href.replace('https://secure.my.jobs', '')
         self.assertEqual(activation_href.split('?')[0],
