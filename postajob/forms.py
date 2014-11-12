@@ -33,7 +33,7 @@ class BaseJobForm(RequestForm):
         css = {
             'all': ('postajob.157-16.css', )
         }
-        js = ('postajob.153-05.js', )
+        js = ('postajob.158-12.js', )
 
     apply_choices = [('link', "Link"), ('email', 'Email'),
                      ('instructions', 'Instructions')]
@@ -319,7 +319,7 @@ class ProductForm(RequestForm):
         css = {
             'all': ('postajob.157-16.css', )
         }
-        js = ('postajob.153-05.js', )
+        js = ('postajob.158-12.js', )
 
     job_limit_choices = [('unlimited', "Unlimited"),
                          ('specific', 'A Specific Number'), ]
@@ -674,7 +674,7 @@ class OfflinePurchaseForm(RequestForm):
         css = {
             'all': ('postajob.157-16.css', )
         }
-        js = ('postajob.153-05.js', )
+        js = ('postajob.158-12.js', )
 
     def __init__(self, *args, **kwargs):
         super(OfflinePurchaseForm, self).__init__(*args, **kwargs)
