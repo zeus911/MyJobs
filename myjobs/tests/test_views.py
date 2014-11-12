@@ -120,6 +120,66 @@ class MyJobsViewsTests(MyJobsBase):
         response_errors = resp.context['password_form'].errors
         self.assertItemsEqual(response_errors, errors)
 
+    def test_password_without_lowercase_failure(self):
+        resp = self.client.post(reverse('edit_account')+'?password',
+                                data={'password': '5UuYquA@',
+                                      'new_password1': 'SECRET',
+                                      'new_password2': 'SECRET'}, follow=True)
+        
+        errors = {'new_password1': [
+            u'Invalid Length (Must be 8 characters or more)',
+            u'Based on a common sequence of characters',
+            u'Must be more complex (Must contain 1 or more lowercase '
+            u'characters)']}
+
+        response_errors = resp.context['password_form'].errors
+        self.assertItemsEqual(response_errors, errors)
+
+    def test_password_without_uppercase_failure(self):
+        resp = self.client.post(reverse('edit_account')+'?password',
+                                data={'password': '5UuYquA@',
+                                      'new_password1': 'secret',
+                                      'new_password2': 'secret'}, follow=True)
+        
+        errors = {'new_password1': [
+            u'Invalid Length (Must be 8 characters or more)',
+            u'Based on a common sequence of characters',
+            u'Must be more complex (Must contain 1 or more uppercase '
+            u'characers)']}
+
+        response_errors = resp.context['password_form'].errors
+        self.assertItemsEqual(response_errors, errors)
+
+    def test_password_without_digit_failure(self):
+        resp = self.client.post(reverse('edit_account')+'?password',
+                                data={'password': '5UuYquA@',
+                                      'new_password1': 'Secret',
+                                      'new_password2': 'Secret'}, follow=True)
+        
+        errors = {'new_password1': [
+            u'Invalid Length (Must be 8 characters or more)',
+            u'Based on a common sequence of characters',
+            u'Must be more complex (Must contain 1 or more digits)']}
+
+        response_errors = resp.context['password_form'].errors
+        self.assertItemsEqual(response_errors, errors)
+
+
+    def test_password_without_punctuation_failure(self):
+        resp = self.client.post(reverse('edit_account')+'?password',
+                                data={'password': '5UuYquA@',
+                                      'new_password1': 'S3cr37',
+                                      'new_password2': 'S3cr37'}, follow=True)
+        
+        errors = {'new_password1': [
+            u'Invalid Length (Must be 8 characters or more)',
+            u'Based on a common sequence of characters',
+            u'Must be more complex (Must contain 1 or more punctuation '
+            u'character)']}
+
+        response_errors = resp.context['password_form'].errors
+        self.assertItemsEqual(response_errors, errors)
+
     def test_partial_successful_profile_form(self):
         resp = self.client.post(reverse('home'),
                                 data={'name-given_name': 'Alice',
