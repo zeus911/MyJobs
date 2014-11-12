@@ -25,14 +25,15 @@ from celery import current_app
 from djcelery.admin_utils import action
 
 import tasks
-from seo.forms import (ConfigurationForm, CustomFacetForm,
-                       CustomPageForm, RowPermissionsForm,
-                       BillboardImageForm, MyModelChoiceField,
-                       MyModelMultipleChoiceField, SeoSiteForm,
-                       BusinessUnitForm, GoogleAnalyticsCampaignForm,
-                       SpecialCommitmentForm, CompanyForm,
-                       ATSSourceCodeForm, ViewSourceForm,
-                       SiteTagForm)
+from seo.forms.admin_forms import (ConfigurationForm, CustomFacetForm,
+                                   CustomPageForm, RowPermissionsForm,
+                                   BillboardImageForm, MyModelChoiceField,
+                                   MyModelMultipleChoiceField, SeoSiteForm,
+                                   BusinessUnitForm,
+                                   GoogleAnalyticsCampaignForm,
+                                   SpecialCommitmentForm, CompanyForm,
+                                   ATSSourceCodeForm, ViewSourceForm,
+                                   SiteTagForm)
 from seo.models import (ATSSourceCode, BillboardHotspot, BillboardImage,
                         BusinessUnit, Company, Configuration, CustomFacet,
                         CustomPage, FlatPage, GoogleAnalytics,
@@ -875,7 +876,8 @@ class SeoSiteAdmin(admin.ModelAdmin):
     search_fields = ['name', 'domain', ]
     fieldsets = [
         ('Basics', {'fields': [('domain', 'name', 'group',
-                                'postajob_filter_type')]}),
+                                'postajob_filter_type',
+                               'canonical_company')]}),
         ('Site Title and Page Headline', {'fields': [('site_title',
                                                      'site_heading',
                                                      'site_description')]}),

@@ -1106,8 +1106,8 @@ def make_json(data, host):
 def make_specialcommit_string(special_commits):
     """
     Build the site commitment string here instead of multiple times in the 
-    template. Called from seo.views.job_listing_by_slug_tag and
-    seo.views.
+    template. Called from seo.views.search_views.job_listing_by_slug_tag and
+    seo.views.search_views.
     [10-8-12 JPSOLE]
     
     Inputs:
@@ -1298,8 +1298,9 @@ def get_solr_facet(site_id, jsids, filters=None, params=None):
 
     tagged_facets, sqs = _build_facet_queries(custom_facets)
 
-    # If this function is called from seo.views.job_listing_by_slug_tag,
-    # it is passed the additional "filters" parameter, which is the output
+    # If this function is called from
+    # seo.views.search_views.job_listing_by_slug_tag, it is passed the
+    #  additional "filters" parameter, which is the output
     # from helper.build_filter_dict(request.path).
     if filters:
         sqs = filter_sqs(sqs, filters, site_id=settings.SITE_ID)
