@@ -86,7 +86,7 @@ def get_current_jobs(guid):
 
     # Download the zipfile
     url = 'http://jobsfs.directemployers.org/%s/ActiveDirectory_%s.zip' % \
-            (guid, guid)
+        (guid, guid)
     req = urllib2.Request(url)
     authheader = "Basic %s" % base64.encodestring('%s:%s' % ('microsites',
                                                              'di?dsDe4'))
