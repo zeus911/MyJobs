@@ -222,8 +222,8 @@ class MergeUserTests(MyJobsBase):
         response = self.client.get(merge_url)
 
         self.assertEqual(response.status_code, 200,
-            msg=("The page should have returned a 200 code." \
-            "Instead received %s" % response.status_code))
+                         msg=("The page should have returned a 200 code."
+                              "Instead received %s" % response.status_code))
 
         # Assert the correct text is displayed.
         phrases = [
