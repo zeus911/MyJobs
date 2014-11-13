@@ -62,7 +62,7 @@ def update_job_source(guid, buid, name):
 
 
 def filter_current_jobs(jobs):
-    """Given a iterator/generator of jobs, filter the list, removing jobs that 
+    """Given a iterator/generator of jobs, filter the list, removing jobs that
        should not be indexed for microsites.
        
        Returns: a generator of jobs which pass validation for indexing."""
