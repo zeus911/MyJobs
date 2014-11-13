@@ -1,6 +1,7 @@
 import pytz
 
 from django.forms import *
+from passwords.fields import PasswordField
 from django.core.validators import ValidationError
 
 from myjobs.models import User
@@ -140,9 +141,9 @@ class ChangePasswordForm(Form):
     password = CharField(label="Password",
                          widget=PasswordInput(
                              attrs={'placeholder': 'Password'}))
-    new_password1 = CharField(label="New Password",
+    new_password1 = PasswordField(label=('New Password'),
                               widget=PasswordInput(
-                                  attrs={'placeholder': 'New Password'}))
+                                  attrs={'placeholder':('New Password')}))
     new_password2 = CharField(label="New Password (again)",
                               widget=PasswordInput(
                                   attrs={'placeholder':

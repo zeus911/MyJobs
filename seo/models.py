@@ -21,10 +21,12 @@ from saved_search.models import BaseSavedSearch, SOLR_ESCAPE_CHARS
 from taggit.managers import TaggableManager
 
 from moc_coding import models as moc_models
+from registration.models import Invitation
 from social_links import models as social_models
 from seo.search_backend import DESearchQuerySet
 from myjobs.models import User
 from mypartners.models import Tag
+from universal.helpers import get_domain, get_object_or_none
 
 import decimal
 
@@ -190,15 +192,25 @@ class Redirect(models.Model):
 
 
 class CustomFacetQuerySet(QuerySet):
-    """
-    Provides methods for getting a queryset of facets ready for use in
-    Haystack
-
-    """
     def get_facet_queries(self):
-        """Returns a list of search queries for each facet"""
+        """
+        Returns a list of search queries for each facet
+
+        """
         return [SQ(content=Raw(facet.saved_querystring)) for facet in self
                 if facet.saved_querystring]
+
+    def get_raw_facet_queries(self):
+        return [facet.saved_querystring for facet in self
+                if facet.saved_querystring]
+
+    def prod_facets_for_current_site(self):
+        kwargs = {
+            'seositefacet__seosite__id': settings.SITE_ID,
+            'show_production': 1,
+
+        }
+        return self.filter(**kwargs)
 
 
 class CustomFacetManager(models.Manager):
@@ -226,7 +238,8 @@ class CustomFacet(BaseSavedSearch):
 
     """
     group = models.ForeignKey(Group, blank=True, null=True)
-    business_units = models.ManyToManyField('BusinessUnit', blank=True, null=True)
+    business_units = models.ManyToManyField('BusinessUnit', blank=True,
+                                            null=True)
     country = models.CharField(max_length=800, null=True, blank=True)
     state = models.CharField(max_length=800, null=True, blank=True)
     city = models.CharField(max_length=800, null=True, blank=True)
@@ -532,7 +545,25 @@ class SeoSite(Site):
                                      on_delete=models.SET_NULL)
     postajob_filter_type = models.CharField(max_length=255,
                                             choices=postajob_filter_options,
-                                            default='this site only', blank=True)
+                                            default='this site only')
+    canonical_company = models.ForeignKey('Company', blank=True, null=True,
+                                          on_delete=models.SET_NULL,
+                                          related_name='canonical_company')
+    email_domain = models.CharField(max_length=255, default='my.jobs')
+
+    def clean_email_domain(self):
+        # Determine if the company actually has permission to use the domain.
+        domains = self.canonical_company.get_seo_sites().values_list('domain',
+                                                                     flat=True)
+        domains = [get_domain(domain) for domain in domains]
+        domains.append('my.jobs')
+        if self.email_domain not in domains:
+            raise ValidationError('You can only send emails from a domain '
+                                  'that you own.')
+
+        # Ensure that we have an MX record for the domain.
+        # raise ValidationError('You do not currently have the ability '
+        #                       'to send emails from this domain.')
 
     def postajob_site_list(self):
         filter_function = self.postajob_filter_options_dict.get(
@@ -554,6 +585,20 @@ class SeoSite(Site):
         buid_cache_key = '%s:buids' % site_cache_key
         social_cache_key = '%s:social_links' % self.domain
         cache.delete_many([site_cache_key, buid_cache_key, social_cache_key])
+
+    def email_domain_choices(self,):
+        from postajob.models import CompanyProfile
+        profile = get_object_or_none(CompanyProfile,
+                                     company=self.canonical_company)
+        email_domain_field = SeoSite._meta.get_field('email_domain')
+        choices = [
+            (email_domain_field.get_default(), email_domain_field.get_default()),
+            (self.domain, self.domain),
+        ]
+        if profile and profile.outgoing_email_domain:
+            choices.append((profile.outgoing_email_domain,
+                            profile.outgoing_email_domain))
+        return choices
 
     def save(self, *args, **kwargs):
         super(SeoSite, self).save(*args, **kwargs)
@@ -648,7 +693,8 @@ class Company(models.Model):
         return job_count
 
     def featured_on(self):
-        return ", ".join(self.seosite_set.all().values_list("domain", flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     admins = models.ManyToManyField(User, through='CompanyUser')
     name = models.CharField('Name', max_length=200, unique=True)
@@ -678,8 +724,7 @@ class Company(models.Model):
                                            object_id_field='id',
                                            content_type_field='content_type')
     digital_strategies_customer = models.BooleanField(
-                                             'Digital Strategies Customer',
-                                             default=False)
+        'Digital Strategies Customer', default=False)
     enhanced = models.BooleanField('Enhanced', default=False)
     site_package = models.ForeignKey('postajob.SitePackage', null=True,
                                      on_delete=models.SET_NULL)
@@ -741,7 +786,8 @@ class SpecialCommitment(models.Model):
         return self.name
 
     def committed_sites(self):
-        return ", ".join(self.seosite_set.all().values_list("domain", flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     class Meta:
         verbose_name = "Special Commitment"
@@ -757,7 +803,7 @@ class GoogleAnalyticsCampaign(models.Model):
     If there is ever a need for a non-google analytics model, create a base
     class for this model first.
     """
-    name = models.CharField(max_length=200,default='')
+    name = models.CharField(max_length=200, default='')
     group = models.ForeignKey('auth.group', null=True)
     campaign_source = models.CharField(
         help_text=" (referrer: google, citysearch, newsletter4)",
@@ -779,7 +825,8 @@ class GoogleAnalyticsCampaign(models.Model):
         return "Google Analytics Campaign - %s" % self.campaign_name
 
     def sites(self):
-        return ", ".join(self.seosite_set.all().values_list("domain", flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     class Meta:
         verbose_name = "Google Analytics Campaign"
@@ -808,7 +855,8 @@ class ATSSourceCode(URINameValuePair):
     ats_name = models.CharField(max_length=200,default='')
 
     def sites(self):
-        return ", ".join(self.seosite_set.all().values_list("domain",flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     class Meta:
         verbose_name = 'ATS Source Code'
@@ -825,7 +873,8 @@ class ViewSource(models.Model):
         return "%s (%s)" % (self.name, self.view_source)
 
     def sites(self):
-        return ", ".join(self.seosite_set.all().values_list("domain",flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     class Meta:
         verbose_name = "View Source"
@@ -851,7 +900,8 @@ class BillboardImage(models.Model):
         verbose_name_plural = 'Billboard Images'
 
     def on_sites(self):
-        return ", ".join(self.seosite_set.all().values_list("domain",flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     def number_of_hotspots(self):
         return self.billboardhotspot_set.all().count()
@@ -949,7 +999,8 @@ class Configuration(models.Model):
         # in directseo.seo.decorators.custom_cache_page because the
         # configuration revision referenced in the key_prefix has changed.
         cache.delete_many(["%s:config:%s" % (domain, self.status) for domain in
-                           self.seosite_set.all().values_list('domain', flat=True)])
+                           self.seosite_set.all().values_list('domain',
+                                                              flat=True)])
         cache.delete_many(["jobs_count::%s" % pk for pk in 
                            self.seosite_set.all().values_list('id', flat=True)])
 
@@ -977,7 +1028,8 @@ class Configuration(models.Model):
             return "%s: rev.%s" % (self.status_title(), str(self.id))
 
     def show_sites(self):
-        return ", ".join(self.seosite_set.all().values_list("domain",flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     title = models.CharField(max_length=50, null=True)
     # version control
@@ -987,7 +1039,8 @@ class Configuration(models.Model):
     defaultBlurb = models.TextField('Blurb Text', blank=True, null=True)
     defaultBlurbTitle = models.CharField('Blurb Title', max_length=100,
                                          blank=True, null=True)
-    #default_blurb_always_show = models.BooleanField('Always Show', default=False)
+    #default_blurb_always_show = models.BooleanField('Always Show',
+    #                                                default=False)
     browse_country_show = models.BooleanField('Show', default=True)
     browse_state_show = models.BooleanField('Show', default=True)
     browse_city_show = models.BooleanField('Show', default=True)
@@ -1076,10 +1129,10 @@ class Configuration(models.Model):
 
     #Value from 0 to 1 showing what percent of featured jobs to display per page
     percent_featured = models.DecimalField(
-                        max_digits=3, decimal_places=2,
-                        default=decimal.Decimal('.5'),
-                        validators=[MaxValueValidator(decimal.Decimal('1.00'))],
-                        verbose_name="Featured Jobs Maximum Percentage")
+        max_digits=3, decimal_places=2,
+        default=decimal.Decimal('.5'),
+        validators=[MaxValueValidator(decimal.Decimal('1.00'))],
+        verbose_name="Featured Jobs Maximum Percentage")
 
     show_saved_search_widget = models.BooleanField(default=False,
                                                    help_text='Show saved '
@@ -1108,11 +1161,13 @@ class GoogleAnalytics (models.Model):
 
 class JobFeed(Feed):
     link = ""
+
     def __init__(self, type):
         self.type = type
 
     def item_title(self, item):
-        #Creates a location description string from locations fields if they exist
+        # Creates a location description string from locations fields if
+        # they exist
         loc_list = [item[key] for key in
             ['country_short', 'state_short', 'city'] if item.get(key)]
         title_loc = "-".join(loc_list)
@@ -1121,11 +1176,11 @@ class JobFeed(Feed):
     def item_description(self, item):
         return item['description']
 
-    def item_link(self,item):
+    def item_link(self, item):
         vs = settings.FEED_VIEW_SOURCES.get(self.type, 20)
         return '/%s%s' % (item['guid'], vs)
 
-    def item_pubdate(self,item):
+    def item_pubdate(self, item):
         return item['date_new']
 
 
@@ -1142,7 +1197,8 @@ class BusinessUnit(models.Model):
         super(BusinessUnit, self).save(*args, **kwargs)
 
     def show_sites(self):
-        return ", ".join(self.seosite_set.all().values_list("domain",flat=True))
+        return ", ".join(self.seosite_set.all().values_list("domain",
+                                                            flat=True))
 
     id = models.IntegerField('Business Unit Id', max_length=10,
                              primary_key=True)
@@ -1229,8 +1285,13 @@ class CompanyUser(models.Model):
         If the user is already a member of the Employer group, the Group app
         is smart enough to not add it a second time.
         """
+        inviting_user = kwargs.pop('inviting_user', None)
         group = Group.objects.get(name=self.GROUP_NAME)
         self.user.groups.add(group)
+        if not self.pk:
+            Invitation(invitee=self.user, inviting_company=self.company,
+                       added_permission=group,
+                       inviting_user=inviting_user).save()
 
         return super(CompanyUser, self).save(*args, **kwargs)
 

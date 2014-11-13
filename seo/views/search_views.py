@@ -49,7 +49,7 @@ from seo.templatetags.seo_extras import facet_text, smart_truncate
 from seo.cache import get_facet_count_key, get_site_config, get_total_jobs_count
 from seo.search_backend import DESearchQuerySet
 from seo import helpers
-from seo.forms import UploadJobFileForm
+from seo.forms.admin_forms import UploadJobFileForm
 from seo.models import (BusinessUnit, Company, Configuration, Country,
                         CustomFacet, GoogleAnalytics, JobFeed, SeoSite, SiteTag)
 from seo.decorators import (sns_json_message, custom_cache_page, protected_site,
@@ -1249,7 +1249,7 @@ def v2_redirect(request, v2_redirect=None, country=None, state=None, city=None, 
                 }
             })
     except IndexError:
-        url = 'home'
+        url = 'nav_home'
         LOG.debug("V2 redirect to home page from IndexError", extra={
             'view': 'v2_redirect',
             'data': {
@@ -1942,4 +1942,3 @@ def test_markdown(request):
         }
         return render_to_response('seo/basic_form.html', data_dict,
                                   context_instance=RequestContext(request))
-

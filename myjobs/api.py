@@ -14,7 +14,7 @@ from myjobs.models import User
 from mysearches.helpers import validate_dotjobs_url
 from mysearches.models import SavedSearch
 
-        
+
 class UserResource(ModelResource):
     searches = fields.ToManyField('myjobs.api.SavedSearchResource',
                                   'savedsearch_set')
@@ -55,13 +55,17 @@ class UserResource(ModelResource):
         try:
             kwargs = {'email': email,
                       'password1': request.GET.get('password', ''),
-                      'custom_msg': request.GET.get('custom_msg'),
                       'request': request}
-            user, created = User.objects.create_user(**kwargs)
+            user, created = User.objects.create_user(send_email=True,
+                                                     **kwargs)
 
             data = {
                 'user_created': created,
                 'email': email}
+            if not created and user.in_reserve:
+                user.in_reserve = False
+                user.save()
+                # TODO: accept all invitations and send password email?
         except IntegrityError:
             data = {'email': 'That username already exists'}
 

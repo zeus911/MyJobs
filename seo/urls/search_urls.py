@@ -9,7 +9,7 @@ from seo.models import CustomFacet
 #Lazily matches any repition of alphanumeric characters, /, or -
 SLUG_RE = '[/\w-]+?'
 
-urlpatterns = patterns('seo.views',
+urlpatterns = patterns('seo.views.search_views',
     # static files
     url(r'^style/style.css$',
         'stylesheet',
@@ -38,7 +38,7 @@ urlpatterns = patterns('seo.views',
     (r'^robots.txt$', 'robots_txt'),
 )
 
-urlpatterns += patterns('seo.views',
+urlpatterns += patterns('seo.views.search_views',
     ## V2 redirect for browse by occupation put here so it's not caught by nav_cc3_location_home
     url(r'(?P<onet>\d+)/jobs/$',
         'v2_redirect', {'v2_redirect': 'occupation'}, name="v2_occupation")
@@ -49,7 +49,7 @@ for val in settings.SLUG_TAGS.values():
     stripped_slugs.append(val.strip('/'))
 
 
-urlpatterns += patterns('seo.views',
+urlpatterns += patterns('seo.views.search_views',
     # rss feed
     url(r'^(?P<filter_path>[/\w-]*)feed/(?P<feed_type>json|rss|xml|atom|indeed|jsonp)$',
         'syndication_feed', name="feed"),
@@ -126,7 +126,7 @@ urlpatterns += patterns('',
 )
 
 # version 2.0 redirects - at end of urls.py as final catch all
-urlpatterns += patterns('seo.views',
+urlpatterns += patterns('seo.views.search_views',
     # locations
     url(r'(?P<country>[A-Z]{3})/\w+/jobs$',
         'v2_redirect', {'v2_redirect': 'country'}, name="v2_country"),
@@ -143,7 +143,7 @@ urlpatterns += patterns('seo.updates',
                         # to prevent bots.
                         url(r'^ajax/update_buid/$', 'update_businessunit'))
 
-urlpatterns += patterns('seo.views',
+urlpatterns += patterns('seo.views.search_views',
     url(r'sns_confirmation$', 'send_sns_confirm'),
     url(r'load_job_source', 'confirm_load_jobs_from_etl'),
     url(r'^(?P<guid>[0-9A-Fa-f]{32})(?P<vsid>\d+)?(?P<debug>\+)?$',

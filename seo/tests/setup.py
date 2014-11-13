@@ -57,6 +57,7 @@ class DirectSEOBase(TestCase):
         self.conn = Solr('http://127.0.0.1:8983/solr/seo')
         self.conn.delete(q="*:*")
         cache.clear()
+        clear_url_caches()
 
     def tearDown(self):
         from django.conf import settings

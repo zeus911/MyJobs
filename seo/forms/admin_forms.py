@@ -117,6 +117,7 @@ class RowPermissionsForm(forms.ModelForm):
         if user and not user.is_superuser and len(grp_qs) <= 1:
             self.fields['group'].empty_label = None
 
+
 class SeoSiteReverseForm(forms.ModelForm):
     """
     This form is a template class used for models that need to provide mapping
@@ -597,9 +598,11 @@ class SpecialCommitmentForm(SeoSiteReverseForm):
     class Meta:
         model = SpecialCommitment
 
+
 class SiteTagForm(RowPermissionsForm):
     class Meta:
         model = SiteTag
+
 
 class GoogleAnalyticsCampaignForm(SeoSiteReverseForm):        
     class Meta:

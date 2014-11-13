@@ -50,7 +50,7 @@ def saved_search_main(request):
     saved_searches = list(SavedSearch.objects.filter(user=request.user))
     partner_saved_searches = []
     # Check to see if any searches are PartnerSavedSearches
-    for saved_search in saved_searches:
+    for saved_search in saved_searches[:]:
         if hasattr(saved_search, 'partnersavedsearch'):
             partner_saved_searches.append(
                 saved_searches.pop(saved_searches.index(saved_search)))

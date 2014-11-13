@@ -6,7 +6,6 @@ from django.db.models import Q
 from django.utils import timezone
 from django.contrib.auth.models import Group
 
-from myjobs.models import User
 
 
 def start_default():
@@ -80,7 +79,7 @@ class Message(models.Model):
         ('success', 'Success'),
     )
     group = models.ManyToManyField(Group)
-    users = models.ManyToManyField(User, through='MessageInfo')
+    users = models.ManyToManyField('myjobs.User', through='MessageInfo')
     subject = models.CharField("Subject", max_length=200)
     message_type = models.CharField("Type of message", choices=TYPE_OF_MESSAGES,
                                     max_length=200)
@@ -91,7 +90,7 @@ class Message(models.Model):
                                      null=True,
                                      help_text="Default is two weeks " +
                                                "after message is sent.")
-    btn_text = models.CharField('Button Text', max_length=100, default='Okay')
+    btn_text = models.CharField('Button Text', max_length=100, default='OK')
 
     objects = MessageManager()
 
@@ -103,7 +102,7 @@ class MessageInfo(models.Model):
     """
     Through model for Message.
     """
-    user = models.ForeignKey(User)
+    user = models.ForeignKey('myjobs.User')
     message = models.ForeignKey(Message)
     read = models.BooleanField(default=False, db_index=True)
     read_at = models.DateTimeField('read at', null=True)
@@ -165,11 +164,9 @@ def get_messages(user):
                         time and expires after the current time. 'active'
                         messages.
     """
-    now = timezone.now()
-    groups = Group.objects.filter(user=user)
-    expires_query = Q(expire_at__isnull=True) | Q(expire_at__gt=now)
-    messages = set(Message.objects.filter(
-        expires_query,
-        group__in=groups, start_on__lte=now)).union(
-            set(Message.objects.filter(users=user)))
+    now = timezone.now().date()
+    messages = Message.objects.prefetch_related('messageinfo_set').filter(
+        Q(group__in=user.groups.all()) | Q(users=user),
+        Q(expire_at__isnull=True) | Q(expire_at__gte=now)).distinct()
+
     return messages

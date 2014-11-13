@@ -1,5 +1,6 @@
 import datetime
 import hashlib
+import string
 import urllib
 import uuid
 
@@ -12,14 +13,17 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import EmailMessage
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.template.loader import render_to_string
 from django.utils.importlib import import_module
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
+from mymessages.models import Message, MessageInfo, get_messages
 
 BAD_EMAIL = ['dropped', 'bounce']
 STOP_SENDING = ['unsubscribe', 'spamreport']
@@ -27,6 +31,11 @@ DEACTIVE_TYPES_AND_NONE = ['none'] + BAD_EMAIL + STOP_SENDING
 
 
 class CustomUserManager(BaseUserManager):
+    # Characters used for passwor generation with ambiguous ones ignored.
+    # string.strip() doesn't play nicely with quote characters...
+    ALLOWED_CHARS = string.printable.translate(
+        None, """iloILO01!<>{}()[]|^"'`,.:;~-_/\\\t\n\r\x0b\x0c """)
+
     def get_email_owner(self, email):
         """
         Tests if the specified email is already in use.
@@ -46,6 +55,22 @@ class CustomUserManager(BaseUserManager):
             except User.DoesNotExist:
                 user = None
         return user
+
+    def make_random_password(self, length=8, allowed_chars=None):
+        """
+        Like django's built-in `make_random_password`, but with a default of
+        8 characters, a larger character set, and validation.
+        """
+        password = ''
+        allowed_chars = allowed_chars or self.ALLOWED_CHARS
+        # continue to generate a new password until all constriants are met
+        while not all(set(password).intersection(getattr(string, category))
+                      for category in ['ascii_lowercase', 'ascii_uppercase',
+                                       'digits', 'punctuation']):
+            password = super(CustomUserManager, self).make_random_password(
+                length=length, allowed_chars=allowed_chars)
+
+        return password
 
     def create_user_by_type(self, **kwargs):
         """
@@ -81,6 +106,7 @@ class CustomUserManager(BaseUserManager):
                          'gravatar': '',
                          'timezone': settings.TIME_ZONE,
                          'is_active': True,
+                         'in_reserve': kwargs.get('in_reserve', False)
                          }
 
             if user_type == 'superuser':
@@ -94,18 +120,22 @@ class CustomUserManager(BaseUserManager):
             if not password:
                 create_password = True
                 user_args['password_change'] = True
-                password = self.make_random_password(length=8)
+                password = self.make_random_password()
 
+            source = kwargs.get('source')
             request = kwargs.get('request')
-            if request is not None:
-                source = request.GET.get('source')
-                if source is not None:
-                    user_args['source'] = source
-                else:
-                    last_microsite = request.COOKIES.get('lastmicrosite',
-                                                         None)
-                    if last_microsite is not None:
-                        user_args['source'] = last_microsite
+            if source is None:
+                if request is not None:
+                    source = request.GET.get('source')
+                    if source is not None:
+                        user_args['source'] = source
+                    else:
+                        last_microsite = request.COOKIES.get('lastmicrosite',
+                                                             None)
+                        if last_microsite is not None:
+                            user_args['source'] = last_microsite
+            else:
+                user_args['source'] = source
 
             user = self.model(**user_args)
             user.set_password(password)
@@ -115,7 +145,7 @@ class CustomUserManager(BaseUserManager):
             user.add_default_group()
             custom_signals.email_created.send(sender=self, user=user,
                                               email=email)
-            send_email = kwargs.get('send_email', True)
+            send_email = kwargs.get('send_email', False)
             if send_email:
                 custom_msg = kwargs.get("custom_msg", None)
                 activation_args = {
@@ -211,9 +241,15 @@ class User(AbstractBaseUser, PermissionsMixin):
                                       default=False,
                                       help_text=_("User has verified this "
                                                   "address and can access "
-                                                  "most My.jobs features."
+                                                  "most My.jobs features. "
                                                   "Deselect this instead of "
                                                   "deleting accounts."))
+    in_reserve = models.BooleanField(_('reserved'), default=False,
+                                     editable=False,
+                                     help_text=_("This user will be held in "
+                                                 "reserve until any "
+                                                 "invitations associated "
+                                                 "with it are processed."))
 
     # Communication Settings
 
@@ -261,12 +297,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         # Get a copy of the original password so we can determine if
         # it has changed in the save().
         self.__original_password = getattr(self, 'password', None)
+        self.__original_opt_in_myjobs = self.opt_in_myjobs
 
     def __unicode__(self):
         return self.email
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
+
+        if (self.__original_opt_in_myjobs != self.opt_in_myjobs
+                and not self.opt_in_myjobs):
+            self.send_opt_out_notification()
 
         # If the password has changed, it's not being set for the first time
         # and it wasn't change to a blank string, don't require them to change
@@ -402,22 +443,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         already or is expired, ignore it, otherwise add it to 'message_infos'.
 
         Output:
-        :message_infos:  A list of Messages to be shown to the User.
+        :messages:  A list of Messages to be shown to the User.
         """
-        from mymessages.models import get_messages, MessageInfo
-        messages = get_messages(self)
-        message_infos = []
-        for message in messages:
-            m, created = MessageInfo.objects.get_or_create(user=self,
-                                                           message=message)
-            if not created:
-                if m.read or m.expired_time():
-                    continue
-                else:
-                    message_infos.append(m)
-            else:
-                message_infos.append(m)
-        return message_infos
+        messages = get_messages(self).exclude(users=self)
+        new_message_infos = [
+            MessageInfo(user=self, message=message) for message in messages]
+
+        MessageInfo.objects.bulk_create(new_message_infos)
+
+        return self.messageinfo_set.filter(read=False, expired=False)
 
     def get_full_name(self, default=""):
         """
@@ -487,12 +521,57 @@ class User(AbstractBaseUser, PermissionsMixin):
             now = datetime.datetime.now(tz=pytz.UTC)
             return profile.expires() - now
 
-    def can_receive_myjobs_email(self):
+    def can_receive_myjobs_email(self, ignore_reserve=False):
+        """
+        Determines if this user can receive My.jobs email
+
+        Inputs:
+        :ignore_reserve: Ignores reserve status of this user; reserved users
+            shouldn't receive emails, but we can ignore that for invitations;
+            default: False
+        """
         if self.opt_in_myjobs and not self.is_disabled:
             if self.is_active or self.get_expiration().total_seconds() > 0:
+                if self.in_reserve:
+                    if ignore_reserve:
+                        return True
+                    return False
                 return True
         return False
 
+    def send_opt_out_notification(self):
+        """
+        Notify saved search creators that a user has opted out of their emails.
+        """
+        subject = "My.jobs Partner Saved Search Update"
+        saved_searches = self.partnersavedsearch_set.distinct()
+
+        # MySQL doesn't support passing a column to distinct, and I don't want
+        # to deal with dictionaries returned by values, so I just keep track of
+        # unique contacts manually.
+        contacts = []
+        # need the partner name, so can't send a batch email or message
+        for pss in saved_searches:
+            if (pss.email, pss.partner) not in contacts:
+                contacts.append((pss.email, pss.partner))
+            else:
+                continue
+            # send notification email
+            message = render_to_string(
+                "mysearches/email_opt_out.html",
+                {'user': self, 'partner': pss.partner})
+            email = EmailMessage(
+                subject, message, settings.SAVED_SEARCH_EMAIL,
+                [pss.created_by.email])
+            email.content_subtype = 'html'
+            email.send()
+
+            # create PRM message
+            body = render_to_string(
+                "mysearches/email_opt_out_message.html",
+                {'user': self, 'partner': pss.partner})
+            Message.objects.create_message(
+                subject, body, users=[pss.created_by])
 
 class EmailLog(models.Model):
     email = models.EmailField(max_length=254)
