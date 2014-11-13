@@ -66,7 +66,7 @@ def filter_current_jobs(jobs):
        should not be indexed for microsites.
 
        Returns: a generator of jobs which pass validation for indexing."""
-       
+
     hr_xml_include_in_index = ".//*[@schemeName='dbextras.tempjobwrappingjobs.includeinindex']"
     for job in jobs:
         # Written using continues to allow easily adding multiple conditions to 
