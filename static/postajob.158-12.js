@@ -5,15 +5,7 @@ if(typeof jQuery == 'undefined') {
     document.getElementsByTagName('head')[0].appendChild(script);
 }
 
-if(typeof(window.onload == 'function'){
-    var on_load = window.onload;
-} else {
-    var on_load = function(){ return false};
-}
-
-
-window.onload = function(){
-    on_load();
+var load_event = function(){
     update_apply_fields();
     update_site_fields();
     update_job_limit_fields();
@@ -53,6 +45,13 @@ window.onload = function(){
         resend_invoice(id_array[id_array.length - 1]);
     });
 };
+
+if(window.addEventListener) {
+    window.addEventListener('load', load_event, false);
+} else if (window.attachEvent) {
+    // becaue IE is awesome
+    window.attachEvent('onload', load_event);
+}
 
 
 function hide_field(field_name) {
