@@ -69,7 +69,7 @@ def filter_current_jobs(jobs):
 
     hr_xml_include_in_index = ".//*[@schemeName='dbextras.tempjobwrappingjobs.includeinindex']"
     for job in jobs:
-        # Written using continues to allow easily adding multiple conditions to 
+        # Written using continues to allow easily adding multiple conditions to
         # remove jobs.
         if job.find(hr_xml_include_in_index).text == '0':
             continue
