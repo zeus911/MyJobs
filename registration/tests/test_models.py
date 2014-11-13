@@ -175,7 +175,7 @@ class RegistrationModelTests(MyJobsBase):
         """
         User.objects.create_user(**self.user_info)
         expired_user, created = User.objects.create_user(
-            password1='secret', email='bob@example.com')
+            password1='5UuYquA@', email='bob@example.com')
 
         profile = ActivationProfile.objects.get(user=expired_user)
         profile.sent -= datetime.timedelta(days=settings.ACCOUNT_ACTIVATION_DAYS + 1)

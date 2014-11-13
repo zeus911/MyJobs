@@ -28,7 +28,7 @@ class MySignOn(MyJobsBase):
         is returned and the redirect takes place via JavaScript otherwise.
         """
         login_data = {'username': self.user.email,
-                      'password': 'secret',
+                      'password': '5UuYquA@',
                       'auth_callback': self.auth_callback_url,
                       'action': 'login'}
 

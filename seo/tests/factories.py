@@ -200,7 +200,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     email = factory.Sequence(lambda n: 'test_%d@test.zztestzz' % n)
     is_active = True
     gravatar = 'alice@example.com'
-    password = 'secret'
+    password = '5UuYquA@'
     user_guid = uuid.uuid4()
 
 
