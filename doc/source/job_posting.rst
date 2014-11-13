@@ -4,7 +4,7 @@ Job Posting
 
 Overview
 ========
-The new job posting feature allows purchaed microsite owners to create and sell
+The new job posting feature allows purchased microsite owners to create and sell
 products individually or in groups. Any My.jobs user, then has the ability to
 purchase these products to post job listings, subject to a moderator's
 approval. The only prerequisite to using the job posting feature is the
@@ -47,15 +47,12 @@ grouping.
 
 Create an offline purchase
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-   Bar
 
 Distribute purchase UID(s)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-   Baz
 
 Moderate products
 ~~~~~~~~~~~~~~~~~
-   Buzz
 
 .. [#] Future versions of this feature will deprecate the use of product
        groupings, which should streamline the entire process.
