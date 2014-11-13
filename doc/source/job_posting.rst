@@ -30,6 +30,7 @@ Create a product
 ~~~~~~~~~~~~~~~~
 .. note:: Pricing a product requires that a purchased microsite owner have an
           Authorize.net account.
+
 Creating a product is simply a matter of deciding which site-package it is
 a part of, determining which company it belongs to, the price of the
 product, and various details about the types of jobs that can be created
@@ -47,12 +48,19 @@ grouping.
 
 Create an offline purchase
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Distribute purchase UID(s)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+An offline purchase represents an order that may or may not have been
+fulfilled. If a purchasing company is specified, then the selected products
+will appear in that company's purchased products list. If a purchasing company
+is not specified, the offline purchase's redemption code may be used later to
+claim the purchase.
 
 Moderate products
 ~~~~~~~~~~~~~~~~~
+By this point, a user now has the ability to post jobs using their purchased
+products. Each job posting that is moderated may be accepted, rejected, or in
+cases where it is deemed necessary, the company can be blocked from creating
+future postings. If a moderated job is later edited, it will be sent for review
+again before being published. 
 
 .. [#] Future versions of this feature will deprecate the use of product
        groupings, which should streamline the entire process.

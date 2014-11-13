@@ -3,11 +3,11 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build2
+SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = build
 
-# User-friendly check for sphinx-build2
+# User-friendly check for sphinx-build
 ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
 $(error The '$(SPHINXBUILD)' command was not found. Make sure you have Sphinx installed, then set the SPHINXBUILD environment variable to point to the full path of the '$(SPHINXBUILD)' executable. Alternatively you can add the directory with the executable to your PATH. If you don't have Sphinx installed, grab it from http://sphinx-doc.org/)
 endif
@@ -85,17 +85,17 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/MyJobs.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/Myjobs.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/MyJobs.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/Myjobs.qhc"
 
 devhelp:
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/MyJobs"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/MyJobs"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/Myjobs"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/Myjobs"
 	@echo "# devhelp"
 
 epub:
