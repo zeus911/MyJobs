@@ -5,15 +5,13 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth import logout as log_out
 from django.contrib.auth.decorators import user_passes_test
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
 from django.views.generic import TemplateView
-
 from myjobs.decorators import user_is_allowed
 from myjobs.helpers import expire_login
-from myjobs.models import *
-from registration.models import ActivationProfile, Invitation
+from registration.models import ActivationProfile
 from registration.forms import RegistrationForm, CustomAuthForm
 from myblocks.models import Page
 from myblocks.views import BlockView

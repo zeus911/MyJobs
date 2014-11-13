@@ -319,8 +319,8 @@ class DseoLoginTests(DirectSEOBase):
         block = RegistrationBlock.objects.get()
         data = {
             'email': email,
-            'password1': 'secret',
-            'password2': 'secret',
+            'password1': 'Secret555!',
+            'password2': 'Secret555!',
             block.submit_btn_name(): '',
         }
         response = self.client.post(reverse('dseo_login'), data=data,
@@ -349,8 +349,8 @@ class DseoLoginTests(DirectSEOBase):
         block = RegistrationBlock.objects.get()
         data = {
             'email': email,
-            'password1': 'secret',
-            'password2': 'secret',
+            'password1': 'Secret555!',
+            'password2': 'Secret555!',
             block.submit_btn_name(): '',
         }
         next_url = {
