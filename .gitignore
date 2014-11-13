@@ -53,3 +53,6 @@ newrelic.ini
 
 local_settings.py
 settings.py
+
+# Documentation
+doc/build
