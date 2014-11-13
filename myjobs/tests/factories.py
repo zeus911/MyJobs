@@ -6,7 +6,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = User
     email = 'alice@example.com'
     gravatar = 'alice@example.com'
-    password = 'secret'
+    password = '5UuYquA@'
     user_guid = factory.LazyAttribute(lambda n: '{0}'.format(uuid.uuid4()))
     is_active = True
     is_verified = True
