@@ -5,11 +5,11 @@ Job Posting
 Overview
 ========
 The new job posting feature allows purchaed microsite owners to create and sell
-products individually or in groups. As a My.jobs users, you then have the
-ability to purchase these products to post job listings, subject to a
-moderator's approval. The only prerequisite to using the job posting feature is
-the existence of a site-package, which may be created by a DirectEmployers
-staff member.
+products individually or in groups. Any My.jobs user, then has the ability to
+purchase these products to post job listings, subject to a moderator's
+approval. The only prerequisite to using the job posting feature is the
+existence of a site-package, which may be created by a DirectEmployers staff
+member.
 
 Product Life Cycle
 ==================
@@ -20,17 +20,42 @@ life cycle broken down by a user's role.
 
 Purchased Microsite Owner
 -------------------------
-.. note:: 
-    Before a purchased microsite owner may create and sell products, they must
-    first hve a site-package to add that product to. Currently, requests for
-    site-packages are fielded by DirectEmployers staff.
+A purchased microsite owner can create and sell products as well as moderate
+the use of those products. Before doing so, they must first have a site-package
+to add that product to. Currently, requests for site-packages are fielded by
+DirectEmployers staff. After fulfilling the site-package requirement, the
+process of selling and managing products is pretty straight forward.
 
-As a purchased microsite owner, you can create and sell products as well as
-moderate the use of those products. 
-
-Product Creation
+Create a product
 ~~~~~~~~~~~~~~~~
-.. note:: Future versions of this feature will deprecate the use of product
-          groupings, which should streamline the entire process.
+.. note:: Pricing a product requires that a purchased microsite owner have an
+          Authorize.net account.
+Creating a product is simply a matter of deciding which site-package it is
+a part of, determining which company it belongs to, the price of the
+product, and various details about the types of jobs that can be created
+with the product.  If a purchased microsite owner wants finer grained
+control over which jobs may be posted, they should ensure that the product
+requires approval. 
 
+Create a product grouping [#]_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In order for products to be viewable by a user, they must first be a part of a
+product grouping. In the simplest case, a product grouping will consist of a
+single product, but they may be leveraged to prioritize and organize products.
+For intance, it is entirely reasonable to create a "Featured Products" product
+grouping.
 
+Create an offline purchase
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+   Bar
+
+Distribute purchase UID(s)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+   Baz
+
+Moderate products
+~~~~~~~~~~~~~~~~~
+   Buzz
+
+.. [#] Future versions of this feature will deprecate the use of product
+       groupings, which should streamline the entire process.
