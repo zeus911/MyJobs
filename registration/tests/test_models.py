@@ -175,7 +175,7 @@ class RegistrationModelTests(MyJobsBase):
         """
         User.objects.create_user(**self.user_info)
         expired_user, created = User.objects.create_user(
-            password1='secret', email='bob@example.com')
+            password1='5UuYquA@', email='bob@example.com')
 
         profile = ActivationProfile.objects.get(user=expired_user)
         profile.sent -= datetime.timedelta(days=settings.ACCOUNT_ACTIVATION_DAYS + 1)
@@ -335,6 +335,7 @@ class InvitationModelTests(MyJobsBase):
         ap = ActivationProfile.objects.get(email=user.email)
 
         body = BeautifulSoup(email.body)
+        self.assertEqual(len(body.select('a')), 1)
         activation_href = body.select('a')[0].attrs['href']
         activation_href = activation_href.replace('https://secure.my.jobs', '')
         self.assertEqual(activation_href.split('?')[0],

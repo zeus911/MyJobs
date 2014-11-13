@@ -8,8 +8,9 @@ from seo import cache
 from seo import models
 from seo.tests.setup import DirectSEOTestCase, patch_settings
 from seo.tests import factories
-from seo import views
+from seo.views import search_views as views
 from seo.templatetags import seo_extras
+
 
 class LocalCacheTestCase(DirectSEOTestCase):
     fixtures = ['seo_views_testdata.json']
@@ -34,8 +35,7 @@ class LocalCacheTestCase(DirectSEOTestCase):
         for cache_patch in self.cache_patches:
             cache_patch.start()
         get_cache_patch = patch.object(django.core.cache, 'get_cache', 
-                                       Mock(return_value = self.locmem_cache))
-
+                                       Mock(return_value=self.locmem_cache))
 
     def tearDown(self):
         super(DirectSEOTestCase, self).tearDown()
@@ -80,7 +80,6 @@ class LocalCacheTestCase(DirectSEOTestCase):
             config.save()
             self.assertContains(response, config.meta) 
             self.assertNotContains(response, 'initial meta')
-
 
     def test_expire_site_on_save(self):
         """
@@ -151,7 +150,7 @@ class LocalCacheTestCase(DirectSEOTestCase):
             no_job_buid.save()
             site.business_units = [no_job_buid]
 
-            site.save();
+            site.save()
 
             # One buid with no jobs attached to the site
             response = self.client.get('/',
@@ -161,7 +160,7 @@ class LocalCacheTestCase(DirectSEOTestCase):
             self.assertEqual(len(response.context['default_jobs']), 0)
 
             site.business_units.add(self.businessunit)
-            site.save();
+            site.save()
 
             # Cache should be refreshed and this buid should return jobs
             response = self.client.get('/',

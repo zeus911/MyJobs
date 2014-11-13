@@ -1,5 +1,6 @@
 import datetime
 import hashlib
+import string
 import urllib
 import uuid
 
@@ -30,6 +31,11 @@ DEACTIVE_TYPES_AND_NONE = ['none'] + BAD_EMAIL + STOP_SENDING
 
 
 class CustomUserManager(BaseUserManager):
+    # Characters used for passwor generation with ambiguous ones ignored.
+    # string.strip() doesn't play nicely with quote characters...
+    ALLOWED_CHARS = string.printable.translate(
+        None, """iloILO01!<>{}()[]|^"'`,.:;~-_/\\\t\n\r\x0b\x0c """)
+
     def get_email_owner(self, email):
         """
         Tests if the specified email is already in use.
@@ -49,6 +55,22 @@ class CustomUserManager(BaseUserManager):
             except User.DoesNotExist:
                 user = None
         return user
+
+    def make_random_password(self, length=8, allowed_chars=None):
+        """
+        Like django's built-in `make_random_password`, but with a default of
+        8 characters, a larger character set, and validation.
+        """
+        password = ''
+        allowed_chars = allowed_chars or self.ALLOWED_CHARS
+        # continue to generate a new password until all constriants are met
+        while not all(set(password).intersection(getattr(string, category))
+                      for category in ['ascii_lowercase', 'ascii_uppercase',
+                                       'digits', 'punctuation']):
+            password = super(CustomUserManager, self).make_random_password(
+                length=length, allowed_chars=allowed_chars)
+
+        return password
 
     def create_user_by_type(self, **kwargs):
         """
@@ -98,7 +120,7 @@ class CustomUserManager(BaseUserManager):
             if not password:
                 create_password = True
                 user_args['password_change'] = True
-                password = self.make_random_password(length=8)
+                password = self.make_random_password()
 
             source = kwargs.get('source')
             request = kwargs.get('request')

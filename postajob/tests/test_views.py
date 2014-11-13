@@ -29,7 +29,7 @@ from universal.helpers import build_url
 class PostajobTestBase(MyJobsBase):
     def setUp(self):
         super(PostajobTestBase, self).setUp()
-        self.user = UserFactory()
+        self.user = UserFactory(password='5UuYquA@')
         self.company = CompanyFactory(product_access=True)
 
         self.site = SeoSiteFactory()
@@ -54,7 +54,7 @@ class PostajobTestBase(MyJobsBase):
         self.client.post(reverse('home'),
                          data={
                              'username': user.email,
-                             'password': 'secret',
+                             'password': '5UuYquA@',
                              'action': 'login',
                              })
 
