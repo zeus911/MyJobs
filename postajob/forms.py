@@ -462,15 +462,20 @@ class ProductGroupingForm(RequestForm):
         return instance
 
 
-def make_company_from_purchased_product(product_form_instance):
-    cleaned_data = product_form_instance.cleaned_data
+def make_company_from_form(form_instance):
+    """
+    Makes a Company, CompanyUser, and CompanyProfile from a form instance.
+    Form instance must have a new company_name in form_instance.cleaned_data.
+    """
+
+    cleaned_data = form_instance.cleaned_data
     company_name = cleaned_data.get('company_name')
-    product_form_instance.company = Company.objects.create(name=company_name,
-                                                           user_created=True)
-    cu = CompanyUser.objects.create(user=product_form_instance.request.user,
-                                    company=product_form_instance.company)
+    form_instance.company = Company.objects.create(name=company_name,
+                                                   user_created=True)
+    cu = CompanyUser.objects.create(user=form_instance.request.user,
+                                    company=form_instance.company)
     profile = CompanyProfile.objects.create(
-        company=product_form_instance.company,
+        company=form_instance.company,
         address_line_one=cleaned_data.get('address_line_one'),
         address_line_two=cleaned_data.get('address_line_two'),
         city=cleaned_data.get('city'),
@@ -478,7 +483,8 @@ def make_company_from_purchased_product(product_form_instance):
         state=cleaned_data.get('state'),
         zipcode=cleaned_data.get('zipcode'),
     )
-    profile.customer_of.add(product_form_instance.product.owner)
+    if hasattr(form_instance, 'product'):
+        profile.customer_of.add(form_instance.product.owner)
     profile.save()
     cu.make_purchased_microsite_admin()
 
@@ -521,7 +527,7 @@ class PurchasedProductNoPurchaseForm(RequestForm):
 
     def save(self, commit=True):
         if not self.company:
-            make_company_from_purchased_product(self)
+            make_company_from_form(self)
 
         invoice = Invoice.objects.create(
             address_line_one=self.cleaned_data.get('address_line_one'),
@@ -624,7 +630,7 @@ class PurchasedProductForm(RequestForm):
 
     def save(self, commit=True):
         if not self.company:
-            make_company_from_purchased_product(self)
+            make_company_from_form(self)
 
         invoice = Invoice.objects.create(
             address_line_one=self.cleaned_data.get('address_line_one'),
@@ -747,6 +753,26 @@ class OfflinePurchaseRedemptionForm(RequestForm):
 
     redemption_id = CharField(label='Redemption ID')
 
+    def __init__(self, *args, **kwargs):
+        super(OfflinePurchaseRedemptionForm, self).__init__(*args, **kwargs)
+        if not self.company:
+            self.fields['company_name'] = CharField(label='Company Name')
+            self.fields['address_line_one'] = CharField(label='Address Line One')
+            self.fields['address_line_two'] = CharField(label='Address Line Two',
+                                                        required=False)
+            self.fields['city'] = CharField(label='City')
+            self.fields['state'] = CharField(label='State')
+            self.fields['country'] = CharField(label='Country')
+            self.fields['zipcode'] = CharField(label='Zip Code')
+
+    def clean_company_name(self):
+        company_name = self.cleaned_data.get('company_name')
+        msg = clean_company_name(company_name, None)
+        if msg:
+            self._errors['company_name'] = self.error_class([msg])
+            raise ValidationError(msg)
+        return company_name
+
     def clean_redemption_id(self):
         redemption_id = self.cleaned_data.get('redemption_id')
         offline_purchase = get_object_or_none(OfflinePurchase,
@@ -759,6 +785,9 @@ class OfflinePurchaseRedemptionForm(RequestForm):
         return offline_purchase
 
     def save(self, commit=True):
+        if not self.company:
+            make_company_from_form(self)
+
         self.instance = self.cleaned_data.get('redemption_id')
         self.instance.redeemed_by = CompanyUser.objects.get(
             user=self.request.user, company=self.company)
