@@ -743,7 +743,12 @@ class SitePackageFilter(FSMView):
         return user_sites
 
 
+@company_has_access('product_access')
 def blocked_user_management(request):
+    """
+    Displays blocked users (if any) for the current company as well as
+    an unblock link.
+    """
     company = get_company(request)
     if not company:
         raise Http404
@@ -757,7 +762,14 @@ def blocked_user_management(request):
                               RequestContext(request))
 
 
+@company_has_access('product_access')
 def unblock_user(request, pk):
+    """
+    Unblocks a given user that has previously been blocked from posting jobs.
+
+    Inputs:
+    :pk: ID of user that has been blocked
+    """
     company = get_company(request)
     if not company:
         raise Http404
