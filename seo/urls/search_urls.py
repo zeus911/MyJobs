@@ -59,7 +59,7 @@ urlpatterns += patterns('seo.views.search_views',
     url(r'^[/\w-]+?/(%s)/$' % ('|'.join(stripped_slugs)),
         'search_by_results_and_slugs', name="search_by_results_and_slugs"),
     # home page
-    url(r'^$', 'home_page', name="nav_home"),
+    url(r'^$', 'home_page', name="home"),
     # all companies page
     url(r'^all-companies/$', 'company_listing',{'group':'all'},
         name='all-companies_home'),

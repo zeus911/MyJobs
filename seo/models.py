@@ -309,6 +309,7 @@ class CustomFacet(BaseSavedSearch):
         self.saved_querystring = sqs.query.build_query()
         super(CustomFacet, self).save()
 
+
     def _attr_dict(self):
         # Any new additions to the custom field that will be searched on must
         # be added to the return value of this method.

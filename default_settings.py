@@ -257,7 +257,7 @@ CAPTCHA_AJAX = True
 PROJECT_APPS = ('myjobs', 'myprofile', 'mysearches', 'registration',
                 'mydashboard', 'mysignon', 'mymessages', 'mypartners',
                 'solr', 'postajob', 'moc_coding', 'seo', 'social_links',
-                'wildcard', )
+                'wildcard', 'myblocks', )
 
 INSTALLED_APPS += PROJECT_APPS
 
