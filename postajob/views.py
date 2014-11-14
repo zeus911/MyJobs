@@ -185,7 +185,9 @@ def view_request(request, content_type, pk):
     data = {
         'company': company,
         'content_type': content_type,
-        'object': get_object_or_404(content_type.model_class(), pk=pk)
+        'object': get_object_or_404(content_type.model_class(), pk=pk),
+        'request_obj': get_object_or_none(Request, content_type=content_type,
+                                          object_id=pk),
     }
 
     if not data['object'].user_has_access(request.user):
@@ -196,21 +198,48 @@ def view_request(request, content_type, pk):
 
 
 @company_has_access('product_access')
-def approve_admin_request(request, content_type, pk):
+def process_admin_request(request, content_type, pk, approve=True,
+                          block=False):
     """
-    Marks a Request as action taken on it and sets corresponding object
-    to approved. Assumes the object has an is_approved field.
+    Marks a Request as action taken on it and sets the corresponding object's
+    approval status. Assumes the object has an is_approved field.
 
+    Adds the requesting user (if one exists) to the company's block list
+    if the block parameter is True.
     """
     content_type = ContentType.objects.get(pk=content_type)
     request_made = Request.objects.get(content_type=content_type, object_id=pk)
 
     request_object = request_made.request_object()
     if request_object and request_object.user_has_access(request.user):
-        request_object.is_approved = True
-        request_object.save()
-        request_made.action_taken = True
-        request_made.save()
+        if block and request_object.created_by:
+            # Block the user that initiated this request
+            # and deny all of that user's outstanding requests
+            profile = CompanyProfile.objects.get_or_create(
+                company=request_object.owner)[0]
+            profile.blocked_users.add(request_object.created_by)
+
+            # Since Requests and the objects associated with them are related
+            # using a fake foreign key, we have to do multiple queries. We
+            # could potentially get away with only the first two, but the last
+            # one is included just to be safe.
+            request_objects = content_type.model_class().objects.filter(
+                created_by=request_object.created_by,
+                owner=request_object.owner,
+                is_approved=False)
+            requests = Request.objects.filter(
+                object_id__in=request_objects.values_list('pk', flat=True),
+                action_taken=False).values_list('object_id', flat=True)
+            request_objects = request_objects.filter(
+                pk__in=requests)
+
+            requests.update(action_taken=True)
+            request_objects.update(is_approved=False)
+        else:
+            request_object.is_approved = approve
+            request_object.save()
+            request_made.action_taken = True
+            request_made.save()
 
     return redirect('request')
 
@@ -424,11 +453,20 @@ class PurchasedJobFormView(BaseJobFormView):
     purchase_model = PurchasedProduct
 
     def set_object(self, *args, **kwargs):
-        if (not self.product.can_post_more()
-                and resolve(self.request.path).url_name == self.add_name):
-            # If more jobs can't be posted to the project, don't allow
-            # the user to access the add view.
-            raise Http404
+        if resolve(self.request.path).url_name == self.add_name:
+            if not self.product.can_post_more():
+                # If more jobs can't be posted to the project, don't allow
+                # the user to access the add view.
+                raise Http404
+            else:
+                company = get_company(self.request)
+                if company and company.companyprofile:
+                    if self.request.user in company.companyprofile.blocked_users.all():
+                        # If the current user has been blocked by the company
+                        # that we are trying to post a job to, don't allow
+                        # the user to access the add view.
+                        raise Http404
+
         return super(PurchasedJobFormView, self).set_object(*args, **kwargs)
 
     @method_decorator(user_is_allowed())

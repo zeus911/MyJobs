@@ -25,6 +25,10 @@ Purchased Job Request
         <div class="profile-form-input purchasedjob-request-field">{{ object.owner.name }}</div>
         <div class="clear"></div>
 
+        <div class="span3 form-label pull-left purchasedjob-request-label"><b>Posting User</b></div>
+        <div class="profile-form-input purchasedjob-request-field">{% if object.created_by %}{{ object.created_by.email }}{% else %}User deleted{% endif %}</div>
+        <div class="clear"></div>
+
         <div class="span3 form-label pull-left purchasedjob-request-label"><b>Requisition ID</b></div>
         <div class="profile-form-input purchasedjob-request-field">{{ object.reqid }}</div>
         <div class="clear"></div>
@@ -70,12 +74,25 @@ Purchased Job Request
         <div class="span3 form-label pull-left purchasedjob-request-label"><b>On Sites</b></div>
         <div class="profile-form-input purchasedjob-request-field">{% get_job_links object max_sites=None %}</div>
         <div class="clear"></div>
-
-        {% if not object.is_approved %}
-            <form action="{% url 'approve_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn primary pull-right" id="profile-save">{% trans 'Approve This Job' %}</button>
-            </form>
+        {% if not request_obj.action_taken %}
+            {% if not object.is_approved %}
+                <form action="{% url 'approve_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn primary pull-right">{% trans 'Approve This Job' %}</button>
+                </form>
+                <div class="clear"></div>
+                <form action="{% url 'deny_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn primary pull-right">{% trans 'Deny This Job' %}</button>
+                </form>
+                {% if object.created_by %}
+                    <div class="clear"></div>
+                    <form action="{% url 'block_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn primary pull-right">{% trans 'Block Submissions From User' %}</button>
+                    </form>
+                {% endif %}
+            {% endif %}
         {% endif %}
 
     </div>

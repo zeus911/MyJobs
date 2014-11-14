@@ -724,6 +724,9 @@ class CompanyProfile(models.Model):
     customer_of = models.ManyToManyField('seo.Company', null=True,
                                          blank=True, related_name='customer')
 
+    blocked_users = models.ManyToManyField('myjobs.User',
+                                           blank=True)
+
 
 class Request(BaseModel):
     FILTER_BY_SITES_KWARGS = 'related_sites__in'

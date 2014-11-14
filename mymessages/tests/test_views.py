@@ -27,7 +27,7 @@ class MessageViewTests(MyJobsBase):
     def test_user_post_mark_message_read(self):
         self.client.get(reverse('read'),
                         data={'name': 'message-'+str(self.message.id)
-                                     + '-'+str(self.user.id)},
+                                      + '-'+str(self.user.id)},
                         follow=True,
                         HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         m = MessageInfo.objects.get(user=self.user, message=self.message)
