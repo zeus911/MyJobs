@@ -1,0 +1,32 @@
+{% extends "postajob/postajob_template.html" %}
+{% load i18n %}
+
+{% block site-title %}
+<title>Blocked Users Overview - My.jobs</title>
+<meta name="title" content="Blocked Users Overview - My.jobs">
+{% endblock %}
+{% load i18n %}
+
+{% block page_title %}
+Blocked Users
+{% endblock page_title %}
+
+{% block goback_link %}
+<a href="{% url 'purchasedmicrosite_admin_overview' %}">Back to Admin Overview</a>
+{% endblock %}
+
+{% block postajob_content %}
+<div class="row">
+    <div class="span8">
+        {% include "postajob/includes/blocked_user_formBox.html" with formBox_title="Blocked Users" formBox_footer=False %}
+    </div>
+    <div class="span4">
+        {% include "postajob/includes/postajob_navigation.html" %}
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extra-js %}
+
+{% endblock %}

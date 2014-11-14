@@ -157,6 +157,14 @@ urlpatterns = patterns(
         views.CompanyProfileFormView.as_view(),
         name='companyprofile_update'),
 
+    # User management
+    url(r'^admin/blocked-users/$',
+        views.blocked_user_management,
+        name='blocked_user_management'),
+    url(r'^admin/blocked-users/unblock/(?P<pk>\d+)/$',
+        views.unblock_user,
+        name='unblock_user'),
+
     url(r'^list/$', 'product_list'),
 
     url(r'^sites/$',

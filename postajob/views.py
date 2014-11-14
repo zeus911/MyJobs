@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404, redirect, render_to_response
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from myjobs.models import User
 
 from universal.decorators import company_has_access
 from seo.models import CompanyUser, SeoSite
@@ -740,3 +741,32 @@ class SitePackageFilter(FSMView):
         print len(user_sites)
         print self.request.user.is_superuser
         return user_sites
+
+
+def blocked_user_management(request):
+    company = get_company(request)
+    if not company:
+        raise Http404
+    profile = CompanyProfile.objects.get_or_create(company=company)[0]
+    blocked_users = profile.blocked_users.all()
+    data = {
+        'company': company,
+        'blocked_users': blocked_users
+    }
+    return render_to_response('postajob/blocked_user_management.html', data,
+                              RequestContext(request))
+
+
+def unblock_user(request, pk):
+    company = get_company(request)
+    if not company:
+        raise Http404
+    profile = company.companyprofile
+    if profile:
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            pass
+        else:
+            profile.blocked_users.remove(user)
+    return redirect(reverse('blocked_user_management'))

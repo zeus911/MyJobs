@@ -838,3 +838,22 @@ class PurchasedJobActionTests(PostajobTestBase):
         response = self.client.get(reverse('purchasedjob_add',
                                            kwargs={'product': self.product.pk}))
         self.assertEqual(response.status_code, 404)
+
+    def test_unblock_user(self):
+        response = self.client.get(reverse('blocked_user_management'))
+        self.assertTrue("You currently have not blocked any users"
+                        in response.content)
+        profile = CompanyProfile.objects.get(company=self.company)
+        self.assertFalse(self.user in profile.blocked_users.all())
+
+        profile.blocked_users.add(self.user)
+        response = self.client.get(reverse('blocked_user_management'))
+        contents = BeautifulSoup(response.content)
+        emails = contents.select('td.blocked_user-blocked_user-email')
+        self.assertEqual(self.user.email,
+                         emails[0].text)
+
+        unblock_href = contents.select('td.blocked_user-actions')[0]
+        unblock_href = unblock_href.select('a')[0].attrs['href']
+        self.client.get(unblock_href)
+        self.assertFalse(self.user in profile.blocked_users.all())
