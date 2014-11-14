@@ -4,7 +4,6 @@ from fsm.widget import FSM
 
 from django.contrib import admin
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse_lazy
 from django.core.validators import validate_email, URLValidator
 from django.core.urlresolvers import reverse_lazy
 from django import forms
@@ -23,6 +22,12 @@ from postajob.payment import authorize_card, get_card, settle_transaction
 from postajob.widgets import ExpField
 from universal.forms import RequestForm
 from universal.helpers import get_object_or_none
+
+
+def is_superuser_in_admin(request):
+    if request.path.startswith('/admin') and request.user.is_superuser:
+        return True
+    return False
 
 
 class BaseJobForm(RequestForm):
@@ -63,15 +68,8 @@ class BaseJobForm(RequestForm):
             # that uses mailto:
             self.initial['apply_type'] = 'link'
 
-        if not self.request.user.is_superuser:
-            # Limit a non-superuser's access to only companies they own.
-            if self.request.path.startswith('/admin'):
-                user_companies = self.request.user.get_companies()
-                self.fields['owner'].queryset = user_companies
-
-        # Since we're using the myjobs_company cookie outside the admin,
-        # remove the option to set the company.
-        if not self.request.path.startswith('/admin'):
+        if not is_superuser_in_admin(self.request):
+            # Remove the option to set the company.
             self.fields['owner'].widget = HiddenInput()
             self.initial['owner'] = self.company
 
@@ -160,7 +158,7 @@ class JobForm(BaseJobForm):
     def __init__(self, *args, **kwargs):
         super(JobForm, self).__init__(*args, **kwargs)
         self.fields['site_packages'].help_text = ''
-        if self.request.user.is_superuser:
+        if is_superuser_in_admin(self.request):
             user_sites = SeoSite.objects.all()
         else:
             kwargs = {'business_units__company': self.company}
@@ -299,8 +297,7 @@ class SitePackageForm(RequestForm):
 
     def __init__(self, *args, **kwargs):
         super(SitePackageForm, self).__init__(*args, **kwargs)
-
-        if not self.request.user.is_superuser:
+        if not is_superuser_in_admin(self.request):
             # Limit a user's access to only sites they own.
             self.fields['sites'].queryset = self.request.user.get_sites()
 
@@ -330,22 +327,15 @@ class ProductForm(RequestForm):
 
     def __init__(self, *args, **kwargs):
         super(ProductForm, self).__init__(*args, **kwargs)
-        if not self.request.user.is_superuser:
+        if not is_superuser_in_admin(self.request):
             # Update querysets based on what the user should have
             # access to.
-            user_companies = self.request.user.get_companies()
-            if not self.request.path.startswith('/admin'):
-                # Owner. Based on myjobs_company cookie.
-                self.fields['owner'].widget = HiddenInput()
-                self.initial['owner'] = self.company
+            self.fields['owner'].widget = HiddenInput()
+            self.initial['owner'] = self.company
 
-                self.fields['package'].queryset = \
-                    Package.objects.user_available().filter_company([self.company])
-            else:
-                # Owner
-                self.fields['owner'].queryset = user_companies
-                self.fields['package'].queryset = \
-                    Package.objects.user_available().filter_company(user_companies)
+            packages = Package.objects.user_available()
+            packages = packages.filter_company([self.company])
+            self.fields['package'].queryset = packages
 
         if self.instance.pk and self.instance.num_jobs_allowed != 0:
             self.initial['job_limit'] = 'specific'
@@ -354,7 +344,7 @@ class ProductForm(RequestForm):
         if (not profile or not
                 (profile.authorize_net_login and
                  profile.authorize_net_transaction_key)):
-            if self.request.user.is_superuser:
+            if is_superuser_in_admin(self.request):
                 # Superusers should know better than to break things
                 self.fields["cost"].help_text = ("This member needs to "
                                                  "have added Authorize.net "
@@ -422,30 +412,13 @@ class ProductGroupingForm(RequestForm):
     def __init__(self, *args, **kwargs):
         super(ProductGroupingForm, self).__init__(*args, **kwargs)
 
-        if not self.request.user.is_superuser:
-            # Update querysets based on what the user should have
-            # access to.
-            user_companies = self.request.user.get_companies()
-            if self.request.path.startswith('/admin'):
-                # Products
-                kwargs = {'owner__admins': self.request.user}
-                self.fields['products'].queryset = \
-                    self.fields['products'].queryset.filter(**kwargs)
+        if not is_superuser_in_admin(self.request):
+            kwargs = {'owner': self.company}
+            self.fields['products'].queryset = \
+                self.fields['products'].queryset.filter(**kwargs)
 
-                # Owner
-                self.fields['owner'].queryset = user_companies
-
-            # If they're not in the admin they should only be able to work
-            # with the current company.
-            else:
-                # Products
-                kwargs = {'owner': self.company}
-                self.fields['products'].queryset = \
-                    self.fields['products'].queryset.filter(**kwargs)
-
-                # Owner
-                self.initial['owner'] = self.company
-                self.fields['owner'].widget = HiddenInput()
+            self.initial['owner'] = self.company
+            self.fields['owner'].widget = HiddenInput()
 
     def save(self, commit=True):
         products = self.cleaned_data.pop('products')
