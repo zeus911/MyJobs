@@ -9,9 +9,9 @@ class ModelsTests(DirectSEOBase):
         block2 = factories.BlockFactory(offset=3, span=7)
 
         self.assertEqual(block.bootstrap_classes(),
-                         'offset5 span3')
+                         'col-md-offset-5 col-md-3')
         self.assertEqual(block2.bootstrap_classes(),
-                         'offset3 span7')
+                         'col-md-offset-3 col-md-7')
 
     def test_block_cast(self):
         models.Block.objects.all().delete()
