@@ -1,7 +1,8 @@
-from registration import models 
+from registration import models
 from django.dispatch import Signal, receiver
 
 email_created = Signal(providing_args=["user", "email"])
+
 
 @receiver(email_created)
 def create_activation_profile(sender, **kwargs):
@@ -18,13 +19,14 @@ def create_activation_profile(sender, **kwargs):
 send_activation = Signal(providing_args=["user", "email", "password",
                                          "custom_msg"])
 
+
 @receiver(send_activation)
 def send_activation_email(sender, **kwargs):
     """
     Triggers an email that has the activation link automatically when a user
     creates an account or a secondary email.
     """
-    
+
     user = kwargs.get("user")
     email = kwargs.get("email")
     password = kwargs.get("password")
@@ -35,6 +37,7 @@ def send_activation_email(sender, **kwargs):
     activation.send_activation_email(primary, password, custom_msg=custom_msg)
 
 user_disabled = Signal(providing_args=["user", "email"])
+
 
 @receiver(user_disabled)
 def reset_activation_profile(sender, **kwargs):

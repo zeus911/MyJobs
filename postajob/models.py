@@ -369,7 +369,16 @@ class PackageMixin(object):
         return self.filter(**sitepackage_kwargs)
 
     def filter_company(self, company_list):
+        """
+        Filters packages by a list of companies.
+
+        """
         attributes = Package.get_related_attributes()
+        # Using {field}__owner_id should work because every subclass of
+        # package should have an owner.
+        # The requirement for owner really should've gone on package itself,
+        # making the query substantially easier, but it was too late by the
+        # time this became necessary.
         key = '{field}__owner_id'
         q_list = []
         for company in company_list:

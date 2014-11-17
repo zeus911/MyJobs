@@ -257,7 +257,7 @@ CAPTCHA_AJAX = True
 PROJECT_APPS = ('myjobs', 'myprofile', 'mysearches', 'registration',
                 'mydashboard', 'mysignon', 'mymessages', 'mypartners',
                 'solr', 'postajob', 'moc_coding', 'seo', 'social_links',
-                'wildcard', )
+                'wildcard', 'myblocks', )
 
 INSTALLED_APPS += PROJECT_APPS
 
@@ -466,4 +466,13 @@ HAYSTACK_CONNECTIONS = {
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password'],
         },
+}
+
+# Password settings
+PASSWORD_MIN_LENGTH = 8
+PASSWORD_COMPLEXITY = {
+    'UPPER': 1,
+    'LOWER': 1,
+    'DIGITS': 1,
+    'PUNCTUATION': 1
 }

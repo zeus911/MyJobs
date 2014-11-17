@@ -1,18 +1,21 @@
+import datetime
 import json
 
+from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth import logout as log_out
 from django.contrib.auth.decorators import user_passes_test
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
 from django.views.generic import TemplateView
-
 from myjobs.decorators import user_is_allowed
 from myjobs.helpers import expire_login
-from myjobs.models import *
 from registration.models import ActivationProfile
 from registration.forms import RegistrationForm, CustomAuthForm
+from myblocks.models import Page
+from myblocks.views import BlockView
+from myjobs.models import User
 from myprofile.models import SecondaryEmail
 from myprofile.forms import (InitialNameForm, InitialAddressForm,
                              InitialPhoneForm, InitialEducationForm,
@@ -54,7 +57,7 @@ def resend_activation(request):
 
 
 @user_is_allowed()
-def activate(request, activation_key):
+def activate(request, activation_key, invitation=False):
     """
     Activates user and returns a boolean to activated. Activated is passed
     into the template to display an appropriate message if the activation
@@ -85,6 +88,16 @@ def activate(request, activation_key):
            'work_form': work_form,
            'education_form': education_form,
            'num_modules': len(settings.PROFILE_COMPLETION_MODULES)}
+
+    if invitation:
+        if activated is not False:
+            if activated.in_reserve:
+                activated.in_reserve = False
+                password = User.objects.make_random_password()
+                activated.set_password(password)
+                activated.save()
+                ctx['password'] = password
+
     return render_to_response('registration/activate.html',
                               ctx, context_instance=RequestContext(request))
 
@@ -139,3 +152,30 @@ def logout(request):
     if 'myguid' in request.COOKIES:
         response.delete_cookie(key='myguid', domain='.my.jobs')
     return response
+
+
+class DseoLogin(BlockView):
+    page_type = Page.LOGIN
+
+    def set_page(self, request):
+        """
+        Override set_page to remove default option, allowing us to
+        prevent login on some sites.
+
+        """
+        if request.user.is_authenticated() and request.user.is_staff:
+            try:
+                page = Page.objects.filter(site=settings.SITE,
+                                           status=Page.STAGING,
+                                           page_type=self.page_type)[0]
+                setattr(self, 'page', page)
+            except IndexError:
+                pass
+
+        try:
+            page = Page.objects.filter(site=settings.SITE,
+                                       status=Page.PRODUCTION,
+                                       page_type=self.page_type)[0]
+        except IndexError:
+            raise Http404
+        setattr(self, 'page', page)

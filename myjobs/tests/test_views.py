@@ -101,21 +101,81 @@ class MyJobsViewsTests(MyJobsBase):
 
     def test_change_password_success(self):
         resp = self.client.post(reverse('edit_account')+'?password',
-                                data={'password': 'secret',
-                                      'new_password1': 'new',
-                                      'new_password2': 'new'}, follow=True)
+                                data={'password': '5UuYquA@',
+                                      'new_password1': '7dY=Ybtk',
+                                      'new_password2': '7dY=Ybtk'}, follow=True)
         user = User.objects.get(id=self.user.id)
         self.assertEqual(resp.status_code, 200)
-        self.assertTrue(user.check_password('new'))
+        self.assertTrue(user.check_password('7dY=Ybtk'))
 
     def test_change_password_failure(self):
         resp = self.client.post(reverse('edit_account')+'?password',
-                                data={'password': 'secret',
-                                      'new_password1': 'new',
+                                data={'password': '5UuYquA@',
+                                      'new_password1': '7dY=Ybtk',
                                       'new_password2': 'notNew'}, follow=True)
         
         errors = {'new_password2': [u'The new password fields did not match.'],
                   'new_password1': [u'The new password fields did not match.']}
+
+        response_errors = resp.context['password_form'].errors
+        self.assertItemsEqual(response_errors, errors)
+
+    def test_password_without_lowercase_failure(self):
+        resp = self.client.post(reverse('edit_account')+'?password',
+                                data={'password': '5UuYquA@',
+                                      'new_password1': 'SECRET',
+                                      'new_password2': 'SECRET'}, follow=True)
+        
+        errors = {'new_password1': [
+            u'Invalid Length (Must be 8 characters or more)',
+            u'Based on a common sequence of characters',
+            u'Must be more complex (Must contain 1 or more lowercase '
+            u'characters)']}
+
+        response_errors = resp.context['password_form'].errors
+        self.assertItemsEqual(response_errors, errors)
+
+    def test_password_without_uppercase_failure(self):
+        resp = self.client.post(reverse('edit_account')+'?password',
+                                data={'password': '5UuYquA@',
+                                      'new_password1': 'secret',
+                                      'new_password2': 'secret'}, follow=True)
+        
+        errors = {'new_password1': [
+            u'Invalid Length (Must be 8 characters or more)',
+            u'Based on a common sequence of characters',
+            u'Must be more complex (Must contain 1 or more uppercase '
+            u'characers)']}
+
+        response_errors = resp.context['password_form'].errors
+        self.assertItemsEqual(response_errors, errors)
+
+    def test_password_without_digit_failure(self):
+        resp = self.client.post(reverse('edit_account')+'?password',
+                                data={'password': '5UuYquA@',
+                                      'new_password1': 'Secret',
+                                      'new_password2': 'Secret'}, follow=True)
+        
+        errors = {'new_password1': [
+            u'Invalid Length (Must be 8 characters or more)',
+            u'Based on a common sequence of characters',
+            u'Must be more complex (Must contain 1 or more digits)']}
+
+        response_errors = resp.context['password_form'].errors
+        self.assertItemsEqual(response_errors, errors)
+
+
+    def test_password_without_punctuation_failure(self):
+        resp = self.client.post(reverse('edit_account')+'?password',
+                                data={'password': '5UuYquA@',
+                                      'new_password1': 'S3cr37',
+                                      'new_password2': 'S3cr37'}, follow=True)
+        
+        errors = {'new_password1': [
+            u'Invalid Length (Must be 8 characters or more)',
+            u'Based on a common sequence of characters',
+            u'Must be more complex (Must contain 1 or more punctuation '
+            u'character)']}
 
         response_errors = resp.context['password_form'].errors
         self.assertItemsEqual(response_errors, errors)
@@ -195,7 +255,7 @@ class MyJobsViewsTests(MyJobsBase):
         completely
         """
         self.assertEqual(User.objects.count(), 2)
-        resp = self.client.get(reverse('delete_account'), follow=True)
+        self.client.get(reverse('delete_account'), follow=True)
         self.assertEqual(User.objects.count(), 1)
 
     def test_disable_account(self):
@@ -212,7 +272,7 @@ class MyJobsViewsTests(MyJobsBase):
         profile = ActivationProfile.objects.get(user=self.user)
         self.assertEqual(profile.activation_key, 'ALREADY ACTIVATED')
 
-        resp = self.client.get(reverse('disable_account'), follow=True)
+        self.client.get(reverse('disable_account'), follow=True)
         user = User.objects.get(id=self.user.id)
         profile = ActivationProfile.objects.get(user=user)
         self.assertNotEqual(profile.activation_key, 'ALREADY ACTIVATED')
@@ -248,7 +308,7 @@ class MyJobsViewsTests(MyJobsBase):
                                     content_type="text/json",
                                     HTTP_AUTHORIZATION='BASIC %s' %
                                     base64.b64encode(
-                                        'accounts%40my.jobs:secret'))
+                                        'accounts%40my.jobs:5UuYquA@'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         process_batch_events()
@@ -280,7 +340,7 @@ class MyJobsViewsTests(MyJobsBase):
                                     content_type="text/json",
                                     HTTP_AUTHORIZATION='BASIC %s' %
                                     base64.b64encode(
-                                        'accounts%40my.jobs:secret'))
+                                        'accounts%40my.jobs:5UuYquA@'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         process_batch_events()
@@ -307,7 +367,7 @@ class MyJobsViewsTests(MyJobsBase):
                                         content_type='text/json',
                                         HTTP_AUTHORIZATION='BASIC %s' %
                                         base64.b64encode(
-                                            'accounts%40my.jobs:secret'))
+                                            'accounts%40my.jobs:5UuYquA@'))
             self.assertEqual(response.status_code, 200)
         process_batch_events()
         self.assertEqual(EmailLog.objects.count(), 2)
@@ -324,7 +384,7 @@ class MyJobsViewsTests(MyJobsBase):
                                     content_type='text/json',
                                     HTTP_AUTHORIZATION='BASIC %s' %
                                     base64.b64encode(
-                                        'accounts%40my.jobs:secret'))
+                                        'accounts%40my.jobs:5UuYquA@'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox.pop()
@@ -346,7 +406,6 @@ class MyJobsViewsTests(MyJobsBase):
                                                  user=self.user,
                                                  email=self.user.email)
 
-        now = date.today()
         month_ago = date.today() - timedelta(days=30)
         self.user.last_response = month_ago - timedelta(days=1)
         self.user.save()
@@ -360,7 +419,7 @@ class MyJobsViewsTests(MyJobsBase):
                                     content_type="text/json",
                                     HTTP_AUTHORIZATION='BASIC %s' %
                                     base64.b64encode(
-                                        'accounts%40my.jobs:secret'))
+                                        'accounts%40my.jobs:5UuYquA@'))
         self.assertTrue(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         self.assertEqual(
@@ -395,7 +454,7 @@ class MyJobsViewsTests(MyJobsBase):
                                     content_type="text/json",
                                     HTTP_AUTHORIZATION='BASIC %s' %
                                     base64.b64encode(
-                                        'accounts%40my.jobs:secret'))
+                                        'accounts%40my.jobs:5UuYquA@'))
         self.assertTrue(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         self.assertEqual(
@@ -430,7 +489,7 @@ class MyJobsViewsTests(MyJobsBase):
                                     content_type="text/json",
                                     HTTP_AUTHORIZATION='BASIC %s' %
                                     base64.b64encode(
-                                        'accounts%40my.jobs:secret'))
+                                        'accounts%40my.jobs:5UuYquA@'))
         self.assertTrue(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         self.assertEqual(
@@ -451,7 +510,7 @@ class MyJobsViewsTests(MyJobsBase):
                                     content_type="text/json",
                                     HTTP_AUTHORIZATION='BASIC %s' %
                                     base64.b64encode(
-                                        'accounts%40my.jobs:secret'))
+                                        'accounts%40my.jobs:5UuYquA@'))
         self.assertEqual(response.status_code, 400)
 
     def test_invalid_user(self):
@@ -530,9 +589,9 @@ class MyJobsViewsTests(MyJobsBase):
         self.assertEqual(response.status_code, 200)
 
         response = self.client.post(reverse('edit_account')+'?password',
-                                    data={'password': 'secret',
-                                          'new_password1': 'secret2',
-                                          'new_password2': 'secret2'})
+                                    data={'password': '5UuYquA@',
+                                          'new_password1': '7dY=Ybtk',
+                                          'new_password2': '7dY=Ybtk'})
 
         # When models are updated, instances still reference old data
         self.user = User.objects.get(email=self.user.email)
@@ -585,7 +644,7 @@ class MyJobsViewsTests(MyJobsBase):
         for email in [self.user.email, self.user.email.upper()]:
             response = self.client.post(reverse('home'),
                                         data={'username': email,
-                                              'password': 'secret',
+                                              'password': '5UuYquA@',
                                               'action': 'login'})
 
             self.assertEqual(response.status_code, 200)
@@ -605,7 +664,7 @@ class MyJobsViewsTests(MyJobsBase):
         """
         response = self.client.post(reverse('home'),
                                     data={'username': self.user.email,
-                                          'password': 'secret',
+                                          'password': '5UuYquA@',
                                           'action': 'login'})
 
         self.assertTrue(response.cookies['myguid'])
@@ -641,8 +700,8 @@ class MyJobsViewsTests(MyJobsBase):
 
         # Navigating to the unsubscribe page while logged out
         # and with the correct email address...
-        response = self.client.get(reverse('unsubscribe_all') +
-                                   '?verify=%s' % self.user.user_guid)
+        self.client.get(reverse('unsubscribe_all') +
+                        '?verify=%s' % self.user.user_guid)
         self.user = User.objects.get(id=self.user.id)
         # should result in the user's :opt_in_myjobs: attribute being
         # set to False
@@ -651,7 +710,7 @@ class MyJobsViewsTests(MyJobsBase):
     def test_unsubscribe_all_myjobs_emails(self):
         self.assertTrue(self.user.opt_in_myjobs)
 
-        response = self.client.get(reverse('unsubscribe_all'))
+        self.client.get(reverse('unsubscribe_all'))
         self.user = User.objects.get(id=self.user.id)
         self.assertFalse(self.user.opt_in_myjobs)
 
@@ -710,8 +769,8 @@ class MyJobsViewsTests(MyJobsBase):
         self.client.post(reverse('home'),
                          {'action': 'register',
                           'email': 'default@example.com',
-                          'password1': 'secret',
-                          'password2': 'secret'})
+                          'password1': '5UuYquA@',
+                          'password2': '5UuYquA@'})
         user = User.objects.get(email='default@example.com')
         self.assertEqual(user.source, 'https://secure.my.jobs')
 
@@ -725,8 +784,8 @@ class MyJobsViewsTests(MyJobsBase):
         self.client.post(reverse('home'),
                          {'action': 'register',
                           'email': 'microsite@example.com',
-                          'password1': 'secret',
-                          'password2': 'secret'})
+                          'password1': '5UuYquA@',
+                          'password2': '5UuYquA@'})
 
         user = User.objects.get(email='microsite@example.com')
         self.assertEqual(user.source, last_site)
@@ -769,3 +828,14 @@ class MyJobsViewsTests(MyJobsBase):
         content = BeautifulSoup(response.content)
         title = content.select('div#title')[0]
         self.assertTrue('The new OFCCP regulations' in title.text)
+
+    def test_manual_account_creation(self):
+        self.client.logout()
+        self.assertEqual(len(mail.outbox), 0)
+        self.client.post(reverse('home'), data={'email': 'new@example.com',
+                                                'password1': '5UuYquA@',
+                                                'password2': '5UuYquA@',
+                                                'action': 'register'})
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject,
+                         'Account activation for My.jobs')

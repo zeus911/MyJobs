@@ -30,9 +30,9 @@
 
     function getSelectsByGroup(group) {
         /**
-        Call to seo.views.get_group-relationships. The return value is
-        a JSON-serialized string containing querysets filtered by group
-        'group'.
+        Call to seo.views.search_views.get_group-relationships.
+        The return value is a JSON-serialized string containing querysets
+        filtered by group 'group'.
 
         Is the callback really necessary here? Can't this just be a simple
         'if not (dataCache[group]) { $.getJSON <...> }

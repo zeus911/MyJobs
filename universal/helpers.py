@@ -78,7 +78,7 @@ def sequence_to_dict(from_):
     Output:
         Dictionary created from the input sequence
     """
-    return dict(zip(*[iter(from_)]*2))
+    return dict(zip(*[iter(from_)] * 2))
 
 
 def get_company(request):
@@ -104,6 +104,11 @@ def get_company(request):
 
         if admin_for:
             return admin_for[0].company
+
+    # If the current hit is for a non-microsite admin, we don't know what
+    # company we should be using; don't guess.
+    if request.get_full_path().startswith('/admin/'):
+        return None
 
     company = request.COOKIES.get('myjobs_company')
     if company:
@@ -143,7 +148,7 @@ def get_object_or_none(model, **kwargs):
         return None
 
 
-def add_pagination(request, object_list):
+def add_pagination(request, object_list, per_page=None):
     """
     Basic Django Pagination -- Pass a list of objects you wish to paginate.
     That listing will be wrapped by the Paginator object then the listing will
@@ -152,6 +157,7 @@ def add_pagination(request, object_list):
 
     Inputs:
     :object_list:   A list (or Queryset) of an object you wish to paginate.
+    :per_page:      Number of objects per page.
 
     Outputs:
         Returns a Paginator Object. Paginator acts as a wrapper for the object
@@ -165,7 +171,7 @@ def add_pagination(request, object_list):
     except ValueError:
         objects_per_page = 10
     page = request.GET.get('page')
-    paginator = Paginator(object_list, objects_per_page)
+    paginator = Paginator(object_list, per_page or objects_per_page)
 
     try:
         pagination = paginator.page(page)

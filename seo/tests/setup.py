@@ -2,6 +2,7 @@ import os.path
 from contextlib import contextmanager
 
 from django.core.cache import cache
+from django.core.urlresolvers import clear_url_caches
 from django.db import connections
 from django.test import TestCase
 
@@ -38,6 +39,7 @@ class DirectSEOBase(TestCase):
                            "character set utf8 collate utf8_unicode_ci")
 
         setattr(settings, 'ROOT_URLCONF', 'dseo_urls')
+        clear_url_caches()
 
         self.base_middleware_classes = settings.MIDDLEWARE_CLASSES
         middleware_classes = self.base_middleware_classes + (
@@ -55,6 +57,7 @@ class DirectSEOBase(TestCase):
         self.conn = Solr('http://127.0.0.1:8983/solr/seo')
         self.conn.delete(q="*:*")
         cache.clear()
+        clear_url_caches()
 
     def tearDown(self):
         from django.conf import settings

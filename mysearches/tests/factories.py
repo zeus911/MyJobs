@@ -17,6 +17,7 @@ class SavedSearchFactory(factory.django.DjangoModelFactory):
     email = "alice@example.com"
     frequency = "W"
     day_of_week = "1"
+    jobs_per_email = 5
     notes = "All jobs from www.my.jobs"
     sort_by = "Relevance"
 

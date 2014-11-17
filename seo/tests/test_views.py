@@ -23,6 +23,7 @@ from import_jobs import clear_solr, download_feed_file, update_solr
 from xmlparse import DEv2JobFeed
 from moc_coding import models as moc_models
 from moc_coding.tests import factories as moc_factories
+from myjobs.tests.factories import UserFactory
 from postajob.models import SitePackage
 from seo import helpers
 from seo.tests.setup import (connection, DirectSEOBase, DirectSEOTestCase,
@@ -67,6 +68,53 @@ class WidgetsTestCase(DirectSEOTestCase):
 
 class SeoSiteTestCase(DirectSEOTestCase):
     fixtures = ['seo_views_testdata.json']
+
+    def test_update_email_domain_no_access(self):
+        # Not logged in
+        resp = self.client.get(reverse('seosites_settings_email_domain_edit'))
+        self.assertEqual(resp.status_code, 404)
+
+        password = 'abcdef123456!!!!!!'
+        user = UserFactory(password=password)
+        credentials = {
+            'username': user.email,
+            'password': password
+        }
+        self.assertTrue(self.client.login(**credentials))
+
+        # No company
+        resp = self.client.get(reverse('seosites_settings_email_domain_edit'))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_update_email_domain(self):
+        company = factories.CompanyFactory(product_access=True)
+        site = factories.SeoSiteFactory(canonical_company=company)
+        site2 = factories.SeoSiteFactory(canonical_company=company)
+
+        data = {
+            str(site.pk): site.domain,
+            str(site2.pk): site2.domain,
+        }
+        self.assertNotEqual(data[str(site.pk)], site.email_domain)
+        self.assertNotEqual(data[str(site2.pk)], site2.email_domain)
+
+        password = 'abcdef123456!!!!!!'
+        user = UserFactory(password=password)
+        factories.CompanyUserFactory(user=user, company=company)
+        credentials = {
+            'username': user.email,
+            'password': password
+        }
+        self.assertTrue(self.client.login(**credentials))
+
+        resp = self.client.post(reverse('seosites_settings_email_domain_edit'),
+                                data=data, follow=True)
+
+        self.assertEqual(resp.status_code, 200)
+        site = SeoSite.objects.get(pk=site.pk)
+        site2 = SeoSite.objects.get(pk=site2.pk)
+        self.assertEqual(data[str(site.pk)], site.email_domain)
+        self.assertEqual(data[str(site2.pk)], site2.email_domain)
 
     def test_special_characters(self):
         self.conn.delete(q='*:*')

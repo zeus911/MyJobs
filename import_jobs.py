@@ -62,14 +62,14 @@ def update_job_source(guid, buid, name):
 
 
 def filter_current_jobs(jobs):
-    """Given a iterator/generator of jobs, filter the list, removing jobs that 
+    """Given a iterator/generator of jobs, filter the list, removing jobs that
        should not be indexed for microsites.
-       
+
        Returns: a generator of jobs which pass validation for indexing."""
-       
+
     hr_xml_include_in_index = ".//*[@schemeName='dbextras.tempjobwrappingjobs.includeinindex']"
     for job in jobs:
-        # Written using continues to allow easily adding multiple conditions to 
+        # Written using continues to allow easily adding multiple conditions to
         # remove jobs.
         if job.find(hr_xml_include_in_index).text == '0':
             continue
@@ -86,7 +86,7 @@ def get_current_jobs(guid):
 
     # Download the zipfile
     url = 'http://jobsfs.directemployers.org/%s/ActiveDirectory_%s.zip' % \
-            (guid, guid)
+        (guid, guid)
     req = urllib2.Request(url)
     authheader = "Basic %s" % base64.encodestring('%s:%s' % ('microsites',
                                                              'di?dsDe4'))
@@ -161,7 +161,8 @@ def add_company(bu):
 
     # Attempt to look up the company by the name of the BusinessUnit title
     try:
-        existing_company = Company.objects.get(name=bu.title)
+        existing_company = Company.objects.get(user_created=False,
+                                               name=bu.title)
     except Company.DoesNotExist:
         existing_company = False
 
@@ -179,8 +180,7 @@ def add_company(bu):
     if co and bu.title and co.name != bu.title:
         if co.job_source_ids.all().count() == 1:
             logger.warn("Changing name of Company '%s' to BusinessUnit title"
-                        " '%s'",
-                        co, bu.title)
+                        " '%s'", co, bu.title)
             # change the name of the company related to the BusinessUnit object
             co.name = bu.title
             co.save()
@@ -195,14 +195,13 @@ def add_company(bu):
         # Remove existing relationships from business unit
         # Create the company
         slug = slugify(bu.title)
-        co = Company(name=bu.title,
-                     company_slug=slug,
-                     logo_url="//d2e48ltfsb5exy.cloudfront.net/100x50/seo/%s.gif" % slug)
+        logo_url = '//d2e48ltfsb5exy.cloudfront.net/100x50/seo/%s.gif'
+        co = Company(name=bu.title, company_slug=slug, logo_url=logo_url % slug)
         try:
             co.save()
         except IntegrityError:
-            logging.error("Failed to add BUID %s to Company object with title,\
-                          %s. Company already exists." % (bu.id, bu.title))
+            logging.error("Failed to add BUID %s to Company object with title, "
+                          "%s. Company already exists." % (bu.id, bu.title))
         else:
             bu.company_set = [co]
             return co
@@ -336,7 +335,7 @@ def update_solr(buid, download=True, force=True, set_title=False,
         update_chunk = add_docs[tup[1][0]:tup[1][1] + 1]
 
         if update_chunk:
-            logging.info("BUID:%s - SOLR - Update chunk: %s" %
+            logging.debug("BUID:%s - SOLR - Update chunk: %s" %
                          (buid, [i['uid'] for i in update_chunk]))
             # Pass 'commitWithin' so that Solr doesn't try to commit the new
             # docs right away. This will help relieve some of the resource
@@ -350,7 +349,7 @@ def update_solr(buid, download=True, force=True, set_title=False,
         if delete_chunk:
             # Post-a-job jobs should not be deleted during import
             delete_chunk = "(%s) AND -is_posted:true" % delete_chunk
-            logging.info("BUID:%s - SOLR - Delete chunk: %s" %
+            logging.debug("BUID:%s - SOLR - Delete chunk: %s" %
                          (buid, list(solr_del_uids)))
             conn.delete(q=delete_chunk)
 

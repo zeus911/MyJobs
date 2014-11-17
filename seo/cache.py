@@ -17,6 +17,7 @@ future.
 #Time to cache data affected by regular job updates
 MINUTES_TO_CACHE_JOB_DATA = 10 
 
+
 def cache_page_prefix(request):
     """Returns the key prefix based on the input request"""
     config = get_site_config(request)
@@ -31,6 +32,7 @@ def expire_site_view(host, path):
     if cache.has_key(key):
         cache.delete(key)
 
+
 def site_item_key(item_key):
     """
     Returns a key to cache an object
@@ -39,6 +41,7 @@ def site_item_key(item_key):
 
     """
     return "%s::%s" % (item_key, settings.SITE_ID)
+
 
 def get_total_jobs_count():
     """Returns the job count for the current site's default job view"""
@@ -49,6 +52,7 @@ def get_total_jobs_count():
                               jsids=settings.SITE_BUIDS).count()
         cache.set(jobs_count_key, jobs_count, MINUTES_TO_CACHE_JOB_DATA*60)
     return jobs_count
+
 
 def get_facet_count_key(filters='', query_string=''):
     """
@@ -65,7 +69,23 @@ def get_facet_count_key(filters='', query_string=''):
 
 
 def get_site_config(request):
-    """Returns the currently active site configuration for the input request"""
+    """
+    Returns the currently active site configuration for the input request
+
+    """
+    # If the user is logged in/staff and specifying a different domain,
+    # allow them to get the config for the requested domain, but don't
+    # cache it.
+    if request.user.is_staff and 'domain' in request.REQUEST:
+        host = request.REQUEST.get('domain')
+        try:
+            return Configuration.objects.get(status=2, seosite__domain=host)
+        except Configuration.DoesNotExist:
+            try:
+                return Configuration.objects.get(status=1, seosite__domain=host)
+            except Configuration.DoesNotExist:
+                pass
+
     # Check if user should see staging/production configuration
     # Status 1 is staging, status 2 is production.
     config_status = 1 if request.user.is_staff else 2
@@ -81,14 +101,17 @@ def get_site_config(request):
     else:
         if request.user.is_staff:
             try:
-                # if you are logged in as staff, try to grab the staging configuration
+                # if you are logged in as staff, try to grab the staging
+                # configuration
                 site_config = Configuration.this_site.get(status=1)
             except Configuration.DoesNotExist:
                 try:
-                    # if there is no staging configuration, just grab the production one
+                    # if there is no staging configuration, just grab the
+                    # production one
                     site_config = Configuration.this_site.get(status=2)
                 except Configuration.DoesNotExist:
-                    # neither staging or production configs exist for this site so go to the
+                    # neither staging or production configs exist for this
+                    # site so go to the
                     # default staging configuration
                     site_config = Configuration.objects.get(id=1)
         elif request.user.is_anonymous:

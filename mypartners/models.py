@@ -36,6 +36,7 @@ ACTIVITY_TYPES = {
     4: 'sent',
 }
 
+
 class Location(models.Model):
     label = models.CharField(max_length=60, verbose_name='Address Label',
                              blank=True)
@@ -65,7 +66,8 @@ class Contact(models.Model):
     object there is Contact.partner_set and .partners_set
 
     """
-    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, blank=True, null=True,
+                             on_delete=models.SET_NULL)
     partner = models.ForeignKey('Partner')
     name = models.CharField(max_length=255, verbose_name='Full Name')
     email = models.EmailField(max_length=255, verbose_name='Email', blank=True)
@@ -190,14 +192,16 @@ class Partner(models.Model):
 
     # get_contact_records_for_partner
     def get_contact_records(self, contact_name=None, record_type=None,
-                            created_by=None, date_start=None, date_end=None):
+                            created_by=None, date_start=None, date_end=None,
+                            order_by=None):
 
-        records = ContactRecord.objects.filter(partner=self).prefetch_related(
-            'tags')
+        records = self.contactrecord_set.prefetch_related('tags').all()
         if contact_name:
             records = records.filter(contact_name=contact_name)
-        if date_start and date_end:
-            records = records.filter(date_time__range=[date_start, date_end])
+        if date_start:
+            records = records.filter(date_time__gte=date_start)
+        if date_end:
+            records = records.filter(date_time__lte=date_end)
         if record_type:
             if record_type == 'email':
                 records = records.filter(contact_type__in=['email', 'pssemail'])
@@ -206,14 +210,20 @@ class Partner(models.Model):
         if created_by:
             records = records.filter(created_by=created_by)
 
+        if order_by:
+            records = records.order_by(order_by)
+        else:
+            records = records.order_by('-date_time')
+
         return records
 
-    def get_nested_tags(self):
-        """
-        Returns unique tags for the partner and all of its contacts.
-        """
-        return set(chain(*[c.tags.distinct().all() | self.tags.distinct().all()
-             for c in self.contact_set.all()]))
+    def get_contact_tags(self):
+        return chain(*[c.tags.all() for c in self.contact_set.all()])
+
+    def get_all_tags(self):
+        tags = set(self.tags.all())
+        tags.update(self.get_contact_tags())
+        return tags
 
 
 class PartnerLibrary(models.Model):

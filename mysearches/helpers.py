@@ -132,8 +132,8 @@ def get_json(json_url):
         return []
 
 
-def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
-               return_items=None, use_json=True, last_sent=None,
+def parse_feed(feed_url, frequency='W', num_items=100, offset=0,
+               return_items=5, use_json=True, last_sent=None,
                ignore_dates=False):
     """
     Parses job data from an RSS feed and returns it as a list of dictionaries.
@@ -159,8 +159,6 @@ def parse_feed(feed_url, frequency='W', num_items=20, offset=0,
     :tuple:         First index is a list of :return_items: jobs
                     Second index is the total job count
     """
-    if return_items is None:
-        return_items = num_items
     if feed_url.find('?') > -1:
         separator = '&'
     else:

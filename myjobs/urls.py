@@ -11,8 +11,15 @@ accountpatterns = patterns('myjobs.views',
         RedirectView.as_view(url='/account/edit/')),
 )
 
-urlpatterns = patterns('myjobs.views',
+urlpatterns = patterns(
+    'myjobs.views',
+
     url(r'^$', 'home', name='home'),
+    # Url is duplicated so that we can also easily refer to it as the
+    # login url. This might mess with things if you try to resolve a url
+    # and use url_name, since it could be either home or login.
+    url(r'^$', 'home', name='login'),
+
     url(r'^about/$', About.as_view(), name='about'),
     url(r'^about/testimonials/$', Testimonials.as_view(), name='testimonials'),
     url(r'^privacy/$', Privacy.as_view(), name='privacy'),

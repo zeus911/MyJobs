@@ -45,7 +45,6 @@ class JobFeed(object):
     datetime_pattern -- A string specifying the format of the datetime
     data in the feed. Should conform to the specification outlined here:
     http://docs.python.org/library/time.html#time.strftime
-    
     """
     def __init__(self, filepath, js_field=None, crawl_field=None, node_tag=None,
                  datetime_pattern=None, jsid=None, schema=None, markdown=True,
@@ -436,7 +435,7 @@ class DEv2JobFeed(DEJobFeed):
     """
     def __init__(self, *args, **kwargs):
         self.schema = etree.XMLSchema(etree.parse("feed_schema.xsd"))
-        kwargs.update({'js_field': 'company'})
+        kwargs.update({'js_field': 'job_source_name'})
         kwargs.update({'schema': self.schema})
         try:
             super(DEv2JobFeed, self).__init__(*args, **kwargs)
