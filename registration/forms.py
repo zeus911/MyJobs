@@ -22,9 +22,9 @@ class CustomSetPasswordForm(SetPasswordForm):
                                       'placeholder': _('Password'),
                                       'id': 'id_password1',
                                       'autocomplete': 'off'}),
-                                  help_text="<small><em>Must contain an uppercase "
-                                            "letter, lowercase letter, number, and "
-                                            "special character.</em></small>")
+                                  help_text="Must contain an uppercase "
+                                            "letter, lowercase letter, "
+                                            "number, and special character.")
 
     new_password2 = forms.CharField(error_messages={'required':
                                                 'Password is required.'},
@@ -154,9 +154,9 @@ class RegistrationForm(forms.Form):
                                   'placeholder': _('Password'),
                                   'id': 'id_password1',
                                   'autocomplete': 'off'}),
-                              help_text="<small><em>Must contain an uppercase "
+                              help_text="Must contain an uppercase "
                                         "letter, lowercase letter, digit, and "
-                                        "special character.</em></small>")
+                                        "special character.")
     password2 = forms.CharField(error_messages={'required':
                                                 'Password is required.'},
                                 label=_("Password (again)"), required=True,
