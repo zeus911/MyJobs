@@ -145,8 +145,8 @@ class ChangePasswordForm(Form):
                               widget=PasswordInput(
                                   attrs={'placeholder':('New Password')}),
                               help_text="<small><em>Must contain an uppercase "
-                                        "letter, lowercase letter, digit, and "
-                                        "special character.</em></small>")
+                                        "letter, lowercase letter, number, "
+                                        "and special character.</em></small>")
     new_password2 = CharField(label="New Password (again)",
                               widget=PasswordInput(
                                   attrs={'placeholder':

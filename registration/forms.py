@@ -23,7 +23,7 @@ class CustomSetPasswordForm(SetPasswordForm):
                                       'id': 'id_password1',
                                       'autocomplete': 'off'}),
                                   help_text="<small><em>Must contain an uppercase "
-                                            "letter, lowercase letter, digit, and "
+                                            "letter, lowercase letter, number, and "
                                             "special character.</em></small>")
 
     new_password2 = forms.CharField(error_messages={'required':
