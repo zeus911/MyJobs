@@ -1,67 +1,10 @@
-{% extends "seo_base.html" %}
-
-{% block myblocks_css_extras %}
-
-{% if page.bootstrap_version == 1 %}
-    <link rel="stylesheet" type="text/css" href="//d2e48ltfsb5exy.cloudfront.net/framework/css/code/def.ui.bootstrap.1.4.preservation.min.css">
-{% else %}
-{% endif %}
-
-<style>
-    .offset1 {
-        margin-left: 80px !important;
-    }
-    .offset2 {
-        margin-left: 140px !important;
-    }
-    .offset3 {
-        margin-left: 200px !important;
-    }
-    .offset4 {
-        margin-left: 260px !important;
-    }
-    .offset5 {
-        margin-left: 320px !important;
-    }
-    .offset6 {
-        margin-left: 380px !important;
-    }
-    .offset7 {
-        margin-left: 440px !important;
-    }
-    .offset8 {
-        margin-left: 500px !important;
-    }
-    .offset9 {
-        margin-left: 560px !important;
-    }
-    .offset10 {
-        margin-left: 620px !important;
-    }
-    .offset11 {
-        margin-left: 680px !important;
-    }
-    .offset12 {
-
-        margin-left: 740px !important;
-    }
-    .row {
-        margin-left: -20px !important;
-    }
-    .row > [class*="span"] {
-        display: inline;
-        float: left;
-        margin-left: 20px;
-    }
-</style>
-{% endblock myblocks_css_extras %}
-
-{% block directseo_searchbox %}{% endblock directseo_searchbox %}
-
-{% block directseo_main_content %}
-<div class="direct-page {{ page.bootstrap_classes }}" id="direct-page-{{ page.id }}">
-    {{ content }}
-</div>
-{% endblock directseo_main_content %}
-
-{% block directseo_off_site_links %}{% endblock directseo_off_site_links %}
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}bootstrap.min.css">
+    </head>
+    <body>
+        <div class="direct-page {{ page.bootstrap_classes }}" id="direct-page-{{ page.id }}">
+            {{ content }}
+        </div>
+    </body>
+</html>

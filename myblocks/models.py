@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.http import HttpResponseRedirect
-from django.template import Context, Template
+from django.template import Template, RequestContext
 from django.template.loaders.filesystem import Loader
 from django.utils.safestring import mark_safe
 
@@ -34,8 +34,8 @@ class Block(models.Model):
         return ContentType.objects.get_for_model(type(self))
 
     def bootstrap_classes(self):
-        offset = "offset%s" % self.offset if self.offset else ''
-        span = "span%s" % self.span if self.span else ''
+        offset = "col-md-offset-%s" % self.offset if self.offset else ''
+        span = "col-md-%s" % self.span if self.span else ''
         return " ".join([offset, span])
 
     def block_size(self):
@@ -51,7 +51,6 @@ class Block(models.Model):
     def context(self, request):
         return {
             'block': self,
-            'request': request
         }
 
     def render(self, request):
@@ -60,7 +59,8 @@ class Block(models.Model):
 
         """
         template = Template(self.template)
-        html = template.render(Context(self.cast().context(request)))
+        context = RequestContext(request, self.cast().context(request))
+        html = template.render(context)
         return mark_safe(html)
 
     def save(self, *args, **kwargs):
@@ -84,7 +84,6 @@ class ColumnBlock(Block):
         return {
             'block': self,
             'content': mark_safe(''.join(html)),
-            'request': request
         }
 
 
@@ -117,13 +116,11 @@ class LoginBlock(Block):
                 'action': querystring,
                 'block': self,
                 'login_form': CustomAuthForm(data=request.POST),
-                'request': request,
             }
         return {
             'action': querystring,
             'block': self,
             'login_form': CustomAuthForm(),
-            'request': request,
         }
 
     def handle_post(self, request):
@@ -151,7 +148,7 @@ class RegistrationBlock(Block):
     base_template = 'myblocks/blocks/registration.html'
 
     def context(self, request):
-        querystring = request.META.get('QUERY_STRING')
+        querystring = "?%s" % request.META.get('QUERY_STRING')
         if request.POST and self.submit_btn_name() in request.POST:
             # If data is being posted to this specific block, give the form
             # the opportunity to render any errors.
@@ -161,13 +158,11 @@ class RegistrationBlock(Block):
                 'qs': querystring,
                 'registration_form': RegistrationForm(request.POST,
                                                       auto_id=False),
-                'request': request,
             }
         return {
             'action': querystring,
             'block': self,
             'registration_form': RegistrationForm(),
-            'request': request,
         }
 
     def handle_post(self, request):
@@ -175,7 +170,6 @@ class RegistrationBlock(Block):
         # the intended recipient of the posted data.
         if not request.POST or self.submit_btn_name() not in request.POST:
             return None
-
         form = RegistrationForm(request.POST, auto_id=False)
         if form.is_valid():
             # Create a user, log them in, and redirect based on the
@@ -251,31 +245,33 @@ class Row(models.Model):
         return {
             'row': self,
             'content': mark_safe(''.join(content)),
-            'request': request,
         }
 
     def render(self, request):
         template = Template(self.template)
-        html = template.render(Context(self.context(request)))
+        context = RequestContext(request, self.context(request))
+        html = template.render(context)
         return mark_safe(html)
 
 
 class Page(models.Model):
-    bootstrap_choices = (
-        (1, 'Bootstrap 1.4'),
-        # (2, 'Bootstrap 3'),
-    )
+    HOME_PAGE = 'home_page'
+    JOB_LISTING = 'job_listing'
+    LOGIN = 'login'
+
+    PRODUCTION = 'production'
+    STAGING = 'staging'
+
     page_type_choices = (
-        # ('job_listing', 'Job Listing Page'),
-        ('login', 'Login Page'),
+        # (HOME_PAGE, 'Home Page'),
+        # (JOB_LISTING, 'Job Listing Page'),
+        (LOGIN, 'Login Page'),
     )
     page_status_choices = (
-        ('staging', 'Staging'),
-        ('production', 'Production'),
+        (STAGING, 'Staging'),
+        (PRODUCTION, 'Production'),
     )
 
-    bootstrap_version = models.PositiveIntegerField(choices=bootstrap_choices,
-                                                    default=1)
     page_type = models.CharField(choices=page_type_choices, max_length=255)
     rows = models.ManyToManyField('Row', through='RowOrder')
     site = models.ForeignKey('seo.SeoSite')
@@ -295,7 +291,7 @@ class Page(models.Model):
         return [block.cast() for block in Block.objects.filter(query).distinct()]
 
     def bootstrap_classes(self):
-        return "span%s" % ('16' if self.bootstrap_version == 1 else '12')
+        return "col-md-12"
 
     def raw_base_template(self):
         return raw_base_template(self)

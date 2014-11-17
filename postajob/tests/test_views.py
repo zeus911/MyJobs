@@ -612,13 +612,82 @@ class ViewTests(MyJobsBase):
         response = self.client.post(url)
         self.assertEqual(response.status_code, 404)
 
+    def test_offlinepurchase_redeem_not_logged_in(self):
+        self.client.logout()
+        response = self.client.get(reverse('offlinepurchase_redeem'),
+                                   follow=True)
+        self.assertEqual(response.request['PATH_INFO'], reverse('login'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_offlinepurchase_redeem_new_company(self):
+        offline_purchase = OfflinePurchaseFactory(
+            owner=self.company, created_by=self.company_user)
+        OfflineProductFactory(
+            product=self.product, offline_purchase=offline_purchase,
+            product_quantity=3)
+        self.client.logout()
+        self.login_user(UserFactory(email='newemail@test.test'))
+
+        data = {
+            'company_name': 'A new company',
+            'address_line_one': '123 Place Road',
+            'address_line_two': 'Suite 1',
+            'city': 'Indianapolis',
+            'state': 'IN',
+            'country': 'USA',
+            'zipcode': '46268',
+            'redemption_id': offline_purchase.redemption_uid
+        }
+        current_product_count = PurchasedProduct.objects.all().count()
+        response = self.client.post(reverse('offlinepurchase_redeem'),
+                                    data=data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(current_product_count + 3,
+                         PurchasedProduct.objects.all().count())
+
+        # Make sure we're working with the most recent copy of the object.
+        offline_purchase = OfflinePurchase.objects.get()
+        self.assertIsNotNone(offline_purchase.redeemed_on)
+        self.assertIsNotNone(offline_purchase.redeemed_by)
+
+        new_company = offline_purchase.redeemed_by.company
+        self.assertEqual(new_company.name, data['company_name'])
+        self.assertTrue(new_company, 'companyprofile')
+
+    def test_offlinepurchase_redeem_duplicate_company_name(self):
+        offline_purchase = OfflinePurchaseFactory(
+            owner=self.company, created_by=self.company_user)
+        OfflineProductFactory(
+            product=self.product, offline_purchase=offline_purchase,
+            product_quantity=3)
+        self.client.logout()
+        self.login_user(UserFactory(email='newemail@test.test'))
+
+        data = {
+            'company_name': self.company.name,
+            'address_line_one': '123 Place Road',
+            'address_line_two': 'Suite 1',
+            'city': 'Indianapolis',
+            'state': 'IN',
+            'country': 'USA',
+            'zipcode': '46268',
+            'redemption_id': offline_purchase.redemption_uid
+        }
+        current_product_count = PurchasedProduct.objects.all().count()
+        response = self.client.post(reverse('offlinepurchase_redeem'),
+                                    data=data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(current_product_count,
+                         PurchasedProduct.objects.all().count())
+        self.assertEqual(response.request['PATH_INFO'],
+                         reverse('offlinepurchase_redeem'))
+
     def test_offlinepurchase_redeem(self):
         offline_purchase = OfflinePurchaseFactory(
             owner=self.company, created_by=self.company_user)
         OfflineProductFactory(
             product=self.product, offline_purchase=offline_purchase,
             product_quantity=3)
-
 
         data = {'redemption_id': offline_purchase.redemption_uid}
         current_product_count = PurchasedProduct.objects.all().count()

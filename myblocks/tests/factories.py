@@ -41,6 +41,5 @@ class RowFactory(django.DjangoModelFactory):
 class PageFactory(django.DjangoModelFactory):
     FACTORY_FOR = models.Page
 
-    bootstrap_version = 1
     page_type = 'login'
     site = SubFactory(SeoSiteFactory)

@@ -277,7 +277,7 @@ class DseoLoginTests(DirectSEOBase):
             'password': password,
             block.submit_btn_name(): ''
         }
-        response = self.client.post(reverse('dseo_login'), data=data,
+        response = self.client.post(reverse('login'), data=data,
                                     follow=True)
         self.assertTrue(response.context['request'].user.is_authenticated())
         last_redirect = response.redirect_chain[-1][0]
@@ -292,7 +292,7 @@ class DseoLoginTests(DirectSEOBase):
             'password': 'bad_password',
             block.submit_btn_name(): ''
         }
-        response = self.client.post(reverse('dseo_login'), data=data,
+        response = self.client.post(reverse('login'), data=data,
                                     follow=True)
         self.assertFalse(response.context['request'].user.is_authenticated())
 
@@ -308,7 +308,7 @@ class DseoLoginTests(DirectSEOBase):
         next_url = {
             'next': '/test/'
         }
-        response = self.client.post(build_url(reverse('dseo_login'), next_url),
+        response = self.client.post(build_url(reverse('login'), next_url),
                                     data=data, follow=True)
         self.assertTrue(response.context['request'].user.is_authenticated())
         last_redirect = response.redirect_chain[-1][0]
@@ -323,7 +323,7 @@ class DseoLoginTests(DirectSEOBase):
             'password2': 'Secret555!',
             block.submit_btn_name(): '',
         }
-        response = self.client.post(reverse('dseo_login'), data=data,
+        response = self.client.post(reverse('login'), data=data,
                                     follow=True)
         User.objects.get(email=email)
         self.assertTrue(response.context['request'].user.is_authenticated())
@@ -339,7 +339,7 @@ class DseoLoginTests(DirectSEOBase):
             'password2': 'secret',
             block.submit_btn_name(): '',
         }
-        response = self.client.post(reverse('dseo_login'), data=data,
+        response = self.client.post(reverse('login'), data=data,
                                     follow=True)
         self.assertFalse(User.objects.filter(email=email).exists())
         self.assertFalse(response.context['request'].user.is_authenticated())
@@ -356,7 +356,7 @@ class DseoLoginTests(DirectSEOBase):
         next_url = {
             'next': '/test/'
         }
-        response = self.client.post(build_url(reverse('dseo_login'), next_url),
+        response = self.client.post(build_url(reverse('login'), next_url),
                                     data=data, follow=True)
         User.objects.get(email=email)
         self.assertTrue(response.context['request'].user.is_authenticated())
