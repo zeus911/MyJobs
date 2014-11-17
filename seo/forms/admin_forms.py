@@ -139,10 +139,12 @@ class SeoSiteReverseForm(forms.ModelForm):
                         is subclassed.
     
     """
+    sites_widget = FSM(
+        'Site', reverse_lazy('site_admin_fsm'), lazy=True, async=True)
     sites = forms.ModelMultipleChoiceField(
         SeoSite.objects.all(),
         required=False,
-        widget=admin.widgets.FilteredSelectMultiple('Sites', False)
+        widget=sites_widget
     )
     
     def __init__(self, *args, **kwargs):
