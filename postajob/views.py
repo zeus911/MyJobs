@@ -58,7 +58,24 @@ def purchasedjobs_overview(request):
         'active_products': products.filter(expiration_date__gte=date.today()),
         'expired_products': products.filter(expiration_date__lt=date.today()),
     }
-    return render_to_response('postajob/purchasedjobs_overview.html', data,
+    return render_to_response('postajob/purchasedjob_overview.html',
+                              data, RequestContext(request))
+
+
+def admin_purchasedjobs(request, purchased_product):
+    """
+    Normally we would need to filter by settings.SITE for objects in postajob
+    but this is already done from a previous view.
+    """
+    company = get_company_or_404(request)
+    product = PurchasedProduct.objects.get(pk=purchased_product)
+    jobs = PurchasedJob.objects.filter(purchased_product=purchased_product)
+    data = {
+        'company': company,
+        'product': product,
+        'jobs': jobs,
+    }
+    return render_to_response('postajob/purchasedjobs_admin_overview.html', data,
                               RequestContext(request))
 
 
@@ -578,6 +595,14 @@ class PurchasedProductFormView(PostajobModelFormMixin, RequestFormViewBase):
         self.object = None
         if not resolve(request.path).url_name.endswith('_add'):
             raise Http404
+
+    def get_context_data(self, **kwargs):
+        context = super(PurchasedProductFormView, self).get_context_data(**kwargs)
+        context['submit_btn_name'] = 'Buy'
+        context['submit_text'] = 'Your card will be charged when you click \"Buy\"'
+        context['sidebar'] = True
+        context['product'] = self.product
+        return context
 
 
 class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):

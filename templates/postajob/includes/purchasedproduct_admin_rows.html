@@ -3,7 +3,7 @@
 {% if purchased_products %}
     {% for product in purchased_products %}
     <div id="request-{{ request.id }}" class="product-card no-highlight">
-        <div class="big-title">{{ product.product.name }}</div>
+        <div class="big-title">{{ product.product }}</div>
         <div class="sub-title">{{ product.owner.name }}</div>
         <div class="product-details">
             {% if product.can_post_more and product.jobs_remaining > 0 %}{{ product.jobs_remaining }}{% elif product.can_post_more %}Unlimited{% else %}0{% endif %}

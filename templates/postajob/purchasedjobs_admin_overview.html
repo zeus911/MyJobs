@@ -1,0 +1,69 @@
+{% extends "postajob/postajob_template.html" %}
+{% load postajob_tags %}
+{% load i18n %}
+
+{% block site-title %}
+    <title>Purchased Jobs Overview - My.jobs</title>
+    <meta name="title" content="Purchased Jobs Overview - My.jobs">
+{% endblock %}
+
+{% block page_title %}
+Purchased Jobs
+{% endblock page_title %}
+
+{% block goback_link %}
+<a href="{% url 'purchasedproduct' %}">Back to Purchased Products</a>
+{% endblock %}
+
+{% block postajob_content %}
+    <div class="row">
+        <div class="span8">
+            <div class="card-wrapper">
+                <div class="wrapper-header">
+                    <h4>Purchased Jobs for {{ product.product }}</h4>
+                </div>
+                {% if jobs %}
+                {% for job in jobs %}
+                <div class="product-card no-highlight">
+                    <div class="big-title">
+                        {{ job.title }}
+                    </div>
+                    <div class="product-details">
+                        {% if job.reqid %}Requisition ID: <b>{{ job.reqid }}</b>{% else %}No job requisition ID{% endif %}
+                    </div>
+                    <div class="product-details">
+                        Expires: <b>{{ job.date_expired }}</b>
+                    </div>
+                    {% get_content_type job as content_type %}
+                    <a class="btn" href="{% url 'view_request' content_type=content_type.pk pk=job.pk %}">View</a>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="product-card no-highlight">
+                    You currently have no jobs for <b>{{ product.product }}</b>.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="span4">
+            <div class="sidebar">
+                <h2 class="top">
+                    Product Details
+                </h2>
+                <label>Job Limit:</label>
+                <b>{% if product.num_jobs_allowed == 0 %}Unlimited{%else%}{{ product.num_jobs_allowed }} ({{product.jobs_remaining}} left){%endif%}</b>
+                <label>Purchase Date:</label>
+                <b>{{ product.purchase_date }}</b>
+                <label>Expires:</label>
+                <b>{{ product.expiration_date }}</b>
+                <div class="navigation">
+                    <h2>Navigation</h2>
+                    <a class="btn" href="{% url 'purchasedjob_add' product=product.id %}">Post New Job</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock postajob_content %}
+
+{% block extra-js %}
+{% endblock %}

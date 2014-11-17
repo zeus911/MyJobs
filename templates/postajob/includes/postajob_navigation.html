@@ -1,6 +1,9 @@
 <div class="sidebar">
     <div class="navigation">
         <h2 class="top">Navigation</h2>
+        {% if primary_btn %}
+            <a class="btn primary" href="{{url_name}}">{{ btn_name }}</a>
+        {% endif %}
         <a class="btn" href="{% url 'companyprofile_add' %}">Company Profile</a>
         <a class="btn" href="{% url 'productgrouping' %}">Groupings</a>
         <a class="btn" href="{% url 'offlinepurchase' %}">Offline Purchases</a>

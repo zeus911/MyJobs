@@ -18,12 +18,10 @@ Groupings
 {% block postajob_content %}
 <div class="row">
     <div class="span8">
-        <a id="add-grouping" href="{% url 'productgrouping_add' %}" class="btn">Add Grouping</a>
-        <br /><br />
         {% include "postajob/includes/productgroup_formBox.html" with wrapper_title="Groupings" order=True %}
     </div>
     <div class="span4">
-        {% include "postajob/includes/postajob_navigation.html" %}
+        {% include "postajob/includes/postajob_navigation.html" with primary_btn=True url_name="add" btn_name="Add Grouping" %}
     </div>
 </div>
 {% endblock %}

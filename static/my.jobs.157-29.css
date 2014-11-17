@@ -365,6 +365,12 @@ h1 > small > a:hover {
 .partner-sort label {
     font-weight: 700;
     color: #5e6c82;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+.sidebar label:first-of-type {
+    margin-top: 0;
 }
 
 .sidebar input {
