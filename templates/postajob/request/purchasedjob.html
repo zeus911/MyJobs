@@ -81,16 +81,46 @@ Purchased Job Request
                     <button type="submit" class="btn primary pull-right">{% trans 'Approve This Job' %}</button>
                 </form>
                 <div class="clear"></div>
-                <form action="{% url 'deny_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn primary pull-right">{% trans 'Deny This Job' %}</button>
-                </form>
+                <button id="deny" type="button" data-toggle="modal" data-target="#deny-confirm" class="btn primary pull-right">{% trans 'Deny This Job' %}</button>
+                <div id="deny-confirm" class="modal hide fade row">
+                    <div class="modal-header">{% trans 'Really Deny?' %}</div>
+                    <div class="modal-body">{% blocktrans %}Are you sure you want to deny this job posting?{% endblocktrans %}</div>
+                    <div class="modal-footer">
+                        <div class="actions">
+                            <form action="{% url 'deny_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
+                                {% csrf_token %}
+                                Why is this request being denied?
+                                <div class="clear"></div>
+                                <input type="text" id="deny-reason" name="deny-reason">
+                                <div class="clear"></div>
+                                <button type="submit" class="btn primary pull-right" disabled="disabled">{% trans 'Deny This Job' %}</button>
+                            </form>
+                            <div class="clear"></div>
+                            <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
+                        </div>
+                    </div>
+                </div>
                 {% if object.created_by %}
                     <div class="clear"></div>
-                    <form action="{% url 'block_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
-                        {% csrf_token %}
-                        <button type="submit" class="btn primary pull-right">{% trans 'Block Submissions From User' %}</button>
-                    </form>
+                    <button id="block" type="button" data-toggle="modal" data-target="#block-confirm" class="btn primary pull-right">{% trans 'Block Submissions From User' %}</button>
+                    <div id="block-confirm" class="modal hide fade row">
+                        <div class="modal-header">{% trans 'Really Block?' %}</div>
+                        <div class="modal-body">{% blocktrans %}Are you sure you want to block this user from posting further jobs?{% endblocktrans %}</div>
+                        <div class="modal-footer">
+                            <div class="actions">
+                                <form action="{% url 'block_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
+                                    {% csrf_token %}
+                                    Why is this request being denied?
+                                    <div class="clear"></div>
+                                    <input type="text" id="block-reason" name="block-reason">
+                                    <div class="clear"></div>
+                                    <button type="submit" class="btn primary pull-right" disabled="disabled">{% trans 'Block Submissions From User' %}</button>
+                                </form>
+                                <div class="clear"></div>
+                                <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
+                            </div>
+                        </div>
+                    </div>
                 {% endif %}
             {% endif %}
         {% endif %}
@@ -105,5 +135,8 @@ Purchased Job Request
 
 
 {% block extra-js %}
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}postajob.157-16.css{{ gz }}"></style>
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}postajob.157-16.css{{ gz }}">
+    <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}postajob.158-18.js"></script>
 {% endblock %}

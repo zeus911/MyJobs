@@ -152,7 +152,7 @@ def admin_request(request):
         requests = Request.objects.all()
     data = {
         'company': company,
-        'requests': requests.filter(owner=company)
+        'requests': requests.filter(owner=company),
     }
 
     return render_to_response('postajob/request.html', data,
@@ -234,11 +234,15 @@ def process_admin_request(request, content_type, pk, approve=True,
             request_objects = request_objects.filter(
                 pk__in=requests)
 
-            requests.update(action_taken=True)
+            reason = request.REQUEST.get('block-reason', '')
+            requests.update(action_taken=True, deny_reason=reason)
             request_objects.update(is_approved=False)
         else:
             request_object.is_approved = approve
             request_object.save()
+            if not approve:
+                request_made.deny_reason = request.REQUEST.get('deny-reason',
+                                                               '')
             request_made.action_taken = True
             request_made.save()
 

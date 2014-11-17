@@ -22,7 +22,7 @@ from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
 from postajob.payment import authorize_card, get_card, settle_transaction
 from postajob.widgets import ExpField
 from universal.forms import RequestForm
-from universal.helpers import get_object_or_none
+from universal.helpers import get_object_or_none, get_company
 
 
 class BaseJobForm(RequestForm):
@@ -33,7 +33,7 @@ class BaseJobForm(RequestForm):
         css = {
             'all': ('postajob.157-16.css', )
         }
-        js = ('postajob.153-05.js', )
+        js = ('postajob.158-18.js', )
 
     apply_choices = [('link', "Link"), ('email', 'Email'),
                      ('instructions', 'Instructions')]
@@ -319,7 +319,7 @@ class ProductForm(RequestForm):
         css = {
             'all': ('postajob.157-16.css', )
         }
-        js = ('postajob.153-05.js', )
+        js = ('postajob.158-18.js', )
 
     job_limit_choices = [('unlimited', "Unlimited"),
                          ('specific', 'A Specific Number'), ]
@@ -491,7 +491,7 @@ class PurchasedProductNoPurchaseForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.153-10.css', )
+            'all': ('postajob.158-18.css', )
         }
 
     address_line_one = CharField(label='Address Line One')
@@ -674,7 +674,7 @@ class OfflinePurchaseForm(RequestForm):
         css = {
             'all': ('postajob.157-16.css', )
         }
-        js = ('postajob.153-05.js', )
+        js = ('postajob.158-18.js', )
 
     def __init__(self, *args, **kwargs):
         super(OfflinePurchaseForm, self).__init__(*args, **kwargs)

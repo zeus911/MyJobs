@@ -737,6 +737,8 @@ class Request(BaseModel):
     made_on = models.DateField(auto_now_add=True)
     owner = models.ForeignKey('seo.Company')
     related_sites = models.ManyToManyField('seo.SeoSite', null=True)
+    deny_reason = models.TextField(_('Reason for denying this request'),
+                                   blank=True)
 
     def template(self):
         model = self.content_type.model
