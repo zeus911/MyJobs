@@ -1,7 +1,7 @@
 .. note::
 
     Pardon for the often vague terminology It is my understanding that such
-    phrasing is yet to be finalized, hence it's usage. T
+    phrasing is yet to be finalized, hence it's usage.
 
     The purpose of this document is to catalog the functionality made
     available by the postajob application. As such, no attempt is made to
