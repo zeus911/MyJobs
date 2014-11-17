@@ -121,3 +121,9 @@ urlpatterns += patterns(
     url(r'^login', registration_views.DseoLogin.as_view(), name='login'),
 )
 
+# This feature does not exist...
+urlpatterns += patterns(
+    '',
+    url(r'^message/', include('mymessages.urls'))
+)
+
