@@ -161,7 +161,8 @@ def add_company(bu):
 
     # Attempt to look up the company by the name of the BusinessUnit title
     try:
-        existing_company = Company.objects.get(name=bu.title)
+        existing_company = Company.objects.get(user_created=False,
+                                               name=bu.title)
     except Company.DoesNotExist:
         existing_company = False
 
@@ -179,8 +180,7 @@ def add_company(bu):
     if co and bu.title and co.name != bu.title:
         if co.job_source_ids.all().count() == 1:
             logger.warn("Changing name of Company '%s' to BusinessUnit title"
-                        " '%s'",
-                        co, bu.title)
+                        " '%s'", co, bu.title)
             # change the name of the company related to the BusinessUnit object
             co.name = bu.title
             co.save()
@@ -195,14 +195,13 @@ def add_company(bu):
         # Remove existing relationships from business unit
         # Create the company
         slug = slugify(bu.title)
-        co = Company(name=bu.title,
-                     company_slug=slug,
-                     logo_url="//d2e48ltfsb5exy.cloudfront.net/100x50/seo/%s.gif" % slug)
+        logo_url = '//d2e48ltfsb5exy.cloudfront.net/100x50/seo/%s.gif'
+        co = Company(name=bu.title, company_slug=slug, logo_url=logo_url % slug)
         try:
             co.save()
         except IntegrityError:
-            logging.error("Failed to add BUID %s to Company object with title,\
-                          %s. Company already exists." % (bu.id, bu.title))
+            logging.error("Failed to add BUID %s to Company object with title, "
+                          "%s. Company already exists." % (bu.id, bu.title))
         else:
             bu.company_set = [co]
             return co
