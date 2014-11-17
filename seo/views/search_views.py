@@ -911,6 +911,7 @@ class BusinessUnitAdminFilter(FSMView):
 
 class SeoSiteAdminFilter(FSMView):
     model = SeoSite
+    fields = ('domain__icontains', )
 
     @method_decorator(login_required(login_url='/admin/'))
     def dispatch(self, *args, **kwargs):

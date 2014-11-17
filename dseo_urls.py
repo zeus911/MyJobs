@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.db.models.loading import cache as model_cache
 from django.views.generic import RedirectView
 
-from seo.views.search_views import BusinessUnitAdminFilter
+from seo.views.search_views import BusinessUnitAdminFilter, SeoSiteAdminFilter
 from registration import views as registration_views
 
 # This is a bit of code pulled from a Django TRAC ticket describing a problem
@@ -94,8 +94,11 @@ urlpatterns += patterns('',
 urlpatterns += patterns(
     '',
     # Filtering urls
-    url(r'^data/filter/business_units/$', BusinessUnitAdminFilter.as_view(),
+    url(r'^ajax/data/filter/business_units/$',
+        BusinessUnitAdminFilter.as_view(),
         name='buid_admin_fsm'),
+    url(r'^ajax/data/filter/sites/$', SeoSiteAdminFilter.as_view(),
+        name='site_admin_fsm')
 )
 
 
