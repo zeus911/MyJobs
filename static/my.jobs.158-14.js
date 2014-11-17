@@ -88,10 +88,9 @@ $(document).ready(function(){
 function readMessage(button){
     var message_box = $(button);
     var name = $(button).attr('class').split(' ').pop();
-    var csrf_token = document.getElementsByName('csrfmiddlewaretoken')[0].value;
-    var data = "name="+name+"&csrfmiddlewaretoken="+csrf_token;
+    var data = "name="+name;
     $.ajax({
-        type: 'POST',
+        type: 'GET',
         url: '/message/',
         data: data,
         dataType: 'json',

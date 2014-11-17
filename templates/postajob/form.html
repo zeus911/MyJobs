@@ -5,7 +5,7 @@
 {% gz as gz %}
 
 {% block site-title %}
-    <title>{% get_form_action %} {{ display_name }} - My.jobs</title>
+    <title>{% if not custom_action %}{% get_form_action %}{% else %}{{ custom_action }}{% endif %} {{ display_name }} - My.jobs</title>
     <meta name="title" content="{{ display_name }} - My.jobs">
 {% endblock site-title %}
 
@@ -14,7 +14,7 @@
     <div class="row">
         <div class="span12">
             <h1>
-                {% get_form_action %}
+                {% if not custom_action %}{% get_form_action %}{% else %}{{ custom_action }}{% endif %}
                 <small>{{ display_name }}</small>
             </h1>
         </div>

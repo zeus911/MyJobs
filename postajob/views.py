@@ -657,6 +657,16 @@ class OfflinePurchaseRedemptionFormView(PostajobModelFormMixin,
     update_name = None
     delete_name = None
 
+    @method_decorator(user_is_allowed())
+    def dispatch(self, *args, **kwargs):
+        """
+        Decorators on this function will be run on every request that
+        goes through this class.
+
+        """
+        return super(OfflinePurchaseRedemptionFormView, self).dispatch(*args,
+                                                                       **kwargs)
+
     def set_object(self, request):
         """
         OfflinePurchases can only be redeemed (added) by generic users.

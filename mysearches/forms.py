@@ -11,6 +11,7 @@ from mysearches.models import (SavedSearch, SavedSearchDigest,
                                PartnerSavedSearch)
 from mypartners.forms import PartnerEmailChoices
 from mypartners.models import Contact, ADDITION, CHANGE
+from registration.models import Invitation
 from mypartners.helpers import (log_change, send_custom_activation_email,
                                 tag_get_or_create)
 
@@ -150,8 +151,8 @@ class PartnerSavedSearchForm(ModelForm):
     class Meta:
         model = PartnerSavedSearch
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
-                  'account_activation_message', 'frequency', 'day_of_month',
-                  'day_of_week', 'partner_message', 'notes')
+                'account_activation_message', 'frequency', 'day_of_month',
+                'day_of_week', 'jobs_per_email', 'partner_message', 'notes')
         exclude = ('provider', 'sort_by', )
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
@@ -182,15 +183,16 @@ class PartnerSavedSearchForm(ModelForm):
         user_email = cleaned_data.get('email')
 
         if not user_email:
-           raise ValidationError(_("This field is required."))
+            raise ValidationError(_("This field is required."))
 
         # Get or create the user since they might not exist yet
         created = False
         user = User.objects.get_email_owner(email=user_email)
         if user is None:
-            # Don't send a email here, as this is not a typical user creation.
+            # Don't send an email here, as this is not a typical user creation.
             user, created = User.objects.create_user(email=user_email,
-                                                     send_email=False)
+                                                     send_email=False,
+                                                     in_reserve=True)
             self.instance.user = user
             Contact.objects.filter(email=user_email).update(user=user)
         else:
@@ -215,8 +217,15 @@ class PartnerSavedSearchForm(ModelForm):
         instance = super(PartnerSavedSearchForm, self).save(commit)
         tags = self.cleaned_data.get('tags')
         self.instance.tags = tags
-        if self.created:
-            send_custom_activation_email(instance)
+        if is_new_or_change == ADDITION:
+            invite_args = {
+                'invitee_email': instance.email,
+                'invitee': instance.user,
+                'inviting_user': instance.created_by,
+                'inviting_company': instance.partner.owner,
+                'added_saved_search': instance,
+            }
+            Invitation(**invite_args).save()
         partner = instance.partner
         contact = Contact.objects.filter(partner=partner,
                                          user=instance.user)[0]

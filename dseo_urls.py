@@ -3,8 +3,8 @@ from django.contrib import admin
 from django.db.models.loading import cache as model_cache
 from django.views.generic import RedirectView
 
-from seo.views import BusinessUnitAdminFilter
-
+from seo.views.search_views import BusinessUnitAdminFilter
+from registration import views as registration_views
 
 # This is a bit of code pulled from a Django TRAC ticket describing a problem
 # I was seeing when working with the inline model forms:
@@ -45,8 +45,8 @@ v1_api.register(JobSearchResource())
 v1_api.register(JobResource())
 
 admin.autodiscover()
-handler404 = 'seo.views.dseo_404'
-handler500 = 'seo.views.dseo_500'
+handler404 = 'seo.views.search_views.dseo_404'
+handler500 = 'seo.views.search_views.dseo_500'
 
 
 # API endpoints
@@ -75,14 +75,15 @@ urlpatterns += patterns('',
     )
 
 # Custom Admin URLs
-urlpatterns += patterns('seo.views',
+urlpatterns += patterns('seo.views.search_views',
     url(r'^admin/groupsites/$', 'get_group_sites'),
     url(r'^admin/grouprelationships/$', 'get_group_relationships'),
 )
 
 urlpatterns += patterns('',
     url(r'^admin/', include(admin.site.urls)),
-    url('', include('seo.urls', app_name='seo')),
+    url('', include('seo.urls.search_urls', app_name='seo')),
+    url('settings/', include('seo.urls.settings_urls')),
     url('^mocmaps/', include('moc_coding.urls', app_name='moc_coding')),
     url(r'^logout/$', 'django.contrib.auth.views.logout', {'next_page': '/'},
         name='auth_logout'),
@@ -114,3 +115,9 @@ urlpatterns += patterns(
     'myjobs.views',
     url(r'^edit/$', 'edit_account', name='edit_account'),
 )
+
+urlpatterns += patterns(
+    'registration.views',
+    url(r'^login', registration_views.DseoLogin.as_view(), name='login'),
+)
+
