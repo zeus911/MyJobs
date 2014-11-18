@@ -1,27 +1,14 @@
 {% load postajob_tags %}
 
-<tbody id="posted-jobs">
-    {% if jobs %}
-        {% for job in jobs %}
-            {% get_content_type job as content_type %}
-            <tr class="posted-job-tr {% if job.is_expired %}muted{% endif %}">
-                <td class="purchased-job-title">{{ job.title }}</td>
-                <td class="purchased-job-company">{{ job.owner.name }}</td>
-                <td class="mobile_hide purchased-job-reqid">{{ job.reqid }}</td>
-                <td class="purchased-job-is-expired">{{ job.is_expired }}</td>
-                <td class="mobile-hide purchased-job-date-expired">
-                    {{ job.date_expired }}
-                    {% if job.is_expired %}
-                        <div class="label label-default pull-right">Expired</div>
-                    {% endif %}
-                </td>
-                <td class="mobile_hide">{% get_job_links job %}</td>
-                <td class="purchased-job-actions">{% if not job.is_past_max_expiration_date %}<a href="{% url 'view_request' content_type=content_type.pk pk=job.pk %}">View</a>{% endif %}</td>
-            </tr>
-        {% endfor %}
-    {% else %}
-        <tr>
-            <td colspan=5>You currently have no posted jobs for this product.</td>
-        </tr>
-    {% endif %}
-</tbody>
+<div class="product-card no-highlight">
+    <div class="big-title">
+        {{ purchased_product.product }}
+    </div>
+    <div class="product-details">
+        Jobs: <b>{{purchased_product.job_amount_posted}} / {%if purchased_product.num_jobs_allowed == 0%}Unlimited{%else%}{{purchased_product.num_jobs_allowed}}{%endif%}</b>
+    </div>
+    <div class="product-details">
+        Expires: <b>{{ purchased_product.expiration_date }}</b>
+    </div>
+    <a id="product-{{ purchased_product.id }}" class="btn" href="{% url 'purchasedjobs' purchased_product=purchased_product.pk %}">View Jobs</a>
+</div>

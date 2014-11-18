@@ -1,16 +1,12 @@
-<div class="formBox no-padding">
-    <h4>{{ formBox_title }}</h4>
-    <table id="group-table-{{ company.id }}" class="table table-bordered table-striped">
-        {% if order %}
-        {% include "postajob/includes/productgroup_rows.html" with order=True %}
-        {% else %}
-        {% include "postajob/includes/productgroup_rows.html" %}
-        {% endif %}
-    </table>
-    {% if formBox_footer %}
-    <div class="formBox-footer">
-        <a href="{% url 'productgrouping' %}" class="btn pull-right">Manage Groupings</a>
-        <div class="clear"></div>
+<div class="card-wrapper">
+    <div class="wrapper-header">
+        <h4>{{ wrapper_title }}</h4>
+    </div>
+    {% include "postajob/includes/productgroup_rows.html" %}
+    {% if wrapper_footer %}
+    <div class="wrapper-footer">
+        <a class="pull-right" href="{% url 'productgrouping' %}">Manage Groupings</a>
+        <div class="clearfix"></div>
     </div>
     {% endif %}
 </div>

@@ -552,11 +552,10 @@ class PurchasedProduct(BaseModel):
         return self.product.name
 
     def save(self, **kwargs):
-        length = self.product.posting_window_length
         self.num_jobs_allowed = self.product.num_jobs_allowed
         if not hasattr(self, 'pk') or not self.pk:
             self.purchase_amount = self.product.cost
-            self.expiration_date = date.today() + timedelta(length)
+            self.expiration_date = self.product.expiration_date()
             self.max_job_length = self.product.max_job_length
             self.jobs_remaining = self.num_jobs_allowed
         super(PurchasedProduct, self).save(**kwargs)
@@ -569,6 +568,9 @@ class PurchasedProduct(BaseModel):
             # Product allows for unlimited jobs.
             return True
         return bool(self.jobs_remaining > 0)
+
+    def job_amount_posted(self):
+        return self.num_jobs_allowed - self.jobs_remaining
 
 
 class ProductGrouping(BaseModel):
@@ -619,10 +621,6 @@ class ProductGrouping(BaseModel):
             next_order = next_order.aggregate(models.Max('display_order'))
             self.display_order = ((next_order['display_order__max'] + 1)
                                   if next_order['display_order__max'] else 1)
-        elif not self.is_displayed:
-            # Force the display order to 0 if the ProductGrouping isn't
-            # supposed to be displayed.
-            self.display_order = 0
         super(ProductGrouping, self).save(**kwargs)
 
 
@@ -695,6 +693,14 @@ class Product(BaseModel):
         else:
             return '%s-day job posting - $%s' % (self.posting_window_length,
                                                  self.cost)
+
+    def expiration_date(self):
+        return date.today() + timedelta(self.posting_window_length)
+
+    def seosite(self):
+        if hasattr(self.package, "sitepackage"):
+            return self.package.sitepackage.sites.values_list("domain", flat=True)
+        return []
 
 
 class CompanyProfile(models.Model):

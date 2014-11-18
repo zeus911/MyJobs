@@ -1,19 +1,16 @@
 {% load postajob_tags %}
 
-<tbody id="product-jobs">
 {% if offline_purchases %}
-{% for purchase in offline_purchases %}
-<tr class="offlinepurchase-tr">
-    <td class="offlinepurchase-products">{% get_product_names purchase %}</td>
-    <td class="offlinepurchase-redemption-code">{{ purchase.redemption_uid }}</td>
-    <td class="offlinepurchase-redeemed-by">{% get_redeemer purchase %}</td>
-    <td class="offlinepurchase-redeemed-on">{% if purchase.redeemed_on %}{{ purchase.redeemed_on }}{% endif %}</td>
-    <td><a href="{% url 'offlinepurchase_delete' pk=purchase.pk %}" class="btn-link">Delete</a></td>
-</tr>
-{% endfor %}
+    {% for purchase in offline_purchases %}
+    <div class="product-card no-highlight">
+        <div class="big-title">{% get_product_names purchase %}</div>
+        {% if purchase.redeemed_on %}<div class="sub-title">{{ purchase.redeemed_on }}</div>{% endif %}
+        <div class="product-details">{{ purchase.redemption_uid }} - Redeemed by: {% get_redeemer purchase %}</div>
+        <a id="product-{{ product.id }}" class="btn" href="{% url 'offlinepurchase_delete' pk=purchase.pk %}">Delete</a>
+    </div>
+    {% endfor %}
 {% else %}
-<tr>
-    <td colspan=2>You currently have no offline purchases.</td>
-</tr>
+<div class="product-card no-highlight">
+    You currently have no offline purchases.
+</div>
 {% endif %}
-</tbody>

@@ -133,6 +133,9 @@ urlpatterns = patterns(
     url(r'^admin/purchased/product$',
         views.admin_purchasedproduct,
         name='purchasedproduct'),
+    url(r'^admin/purchased/product/(?P<purchased_product>\d+)/',
+        views.admin_purchasedjobs,
+        name="purchasedjobs"),
 
     # CompanyProfile
     url(r'^admin/profile/',
