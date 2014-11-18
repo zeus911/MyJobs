@@ -72,7 +72,6 @@ $(document).ready(function() {
         });
     }
 
-    $(document).on("click", ".product-card:not(.no-highlight)", function() {
     // Removes span and adds input ready to be edited
     $("body").on("click", "#per-page span", function() {
         $(this).remove();
@@ -128,7 +127,8 @@ $(document).ready(function() {
         }
         run_ajax();
     });
-
+    
+    $(document).on("click", ".product-card:not(.no-highlight)", function() {
        window.location = $(this).find("a").attr("href");
     });
 
