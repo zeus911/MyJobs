@@ -21,7 +21,7 @@ from postajob.models import (CompanyProfile, Job, OfflinePurchase, Package,
                              Product, ProductGrouping, PurchasedJob,
                              PurchasedProduct, Request, SitePackage,
                              ProductOrder, JobLocation)
-from seo.models import Company
+from seo.models import Company, SeoSite
 from universal.helpers import build_url
 
 
@@ -784,21 +784,20 @@ class ViewTests(MyJobsBase):
                          self.companyprofile_form_data['company_name'])
 
     def test_list_products_jsonp(self):
-        response = self.client.get(reverse('product_listing') +
-                                   '?site=%s&callback=callback' %
-                                   (self.site.pk, ))
-        self.assertTrue(response.content.startswith('callback("'))
+        response = self.client.get(reverse('product_listing'))
         # When an item in the chain of objects from SeoSite->ProductGrouping
         # is missing, we return text stating that there is nothing to purchase
         self.assertTrue('There are no products configured for purchase'
                         in response.content)
-
+        site_package = SitePackageFactory()
+        site_package.sites.add(SeoSite.objects.get(id=1))
+        site_package.save()
+        self.product.package = site_package
+        self.product.save()
         productgrouping = ProductGroupingFactory(owner=self.company)
         ProductOrder(product=self.product, group=productgrouping).save()
 
-        response = self.client.get(reverse('product_listing') +
-                                   '?site=%s&callback=callback' %
-                                   (self.site.pk, ))
+        response = self.client.get(reverse('product_listing'))
         for text in [productgrouping.display_title, productgrouping.explanation,
                      unicode(self.product)]:
             # When the entire chain of objects exists, the return HTML should

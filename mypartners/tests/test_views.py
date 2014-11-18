@@ -291,10 +291,10 @@ class PartnerOverviewTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
         container = soup.find(id='recent-communication-records')
         # Include 1 header row
-        self.assertEqual(len(container('div', class_="not-clickable")), 1)
+        self.assertEqual(len(container('div', class_="no-highlight")), 1)
         no_records_msg = "No recent communication records."
         self.assertIn(no_records_msg,
-                      container('div', class_="not-clickable")[0]
+                      container('div', class_="no-highlight")[0]
                       .get_text().strip())
 
     def test_recent_communication_records(self):
@@ -341,10 +341,10 @@ class PartnerOverviewTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
         container = soup.find(id='recent-saved-searches')
         # Include 1 header row
-        self.assertEqual(len(container('div', class_="not-clickable")), 1)
+        self.assertEqual(len(container('div', class_="no-highlight")), 1)
         no_records_msg = "No recent saved searches."
         self.assertIn(no_records_msg,
-                      container('div', class_="not-clickable")[0]
+                      container('div', class_="no-highlight")[0]
                       .get_text().strip())
 
     def test_recent_saved_searches(self):
