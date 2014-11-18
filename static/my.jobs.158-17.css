@@ -4035,3 +4035,8 @@ body.modal-open {
     font-size:66%;
     font-weight:normal
 }
+
+span.helptext {
+    font-size: 0.9em;
+    font-style: italic;
+}
