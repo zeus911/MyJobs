@@ -321,7 +321,8 @@ class User(AbstractBaseUser, PermissionsMixin):
                 self.deactivate_type = DEACTIVE_TYPES_AND_NONE[0]
                 if 'deactivate_type' not in update_fields:
                     update_fields.append('deactivate_type')
-        super(User, self).save(force_insert, force_update, using, update_fields)
+        super(User, self).save(force_insert, force_update, using,
+                               update_fields)
 
     def email_user(self, subject, message, from_email):
         msg = EmailMessage(subject, message, from_email, [self.email])
