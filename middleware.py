@@ -36,7 +36,8 @@ class PasswordChangeRedirectMiddleware:
     """
     def process_request(self, request):
         if request.user.is_authenticated():
-            urls = [reverse('edit_account'),
+            urls = [reverse('read'),
+                    reverse('edit_account'),
                     reverse('auth_logout'),
                     reverse('registration_activate', args=['a'])[0:-2]]
             url_matches = reduce(operator.or_,
