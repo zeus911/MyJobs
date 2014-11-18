@@ -8,30 +8,31 @@
 {% load i18n %}
 
 {% block content %}
-
-    <h1>Post a Job</h1>
     <div class="row">
         <div class="span12">
-            <a class="btn" href="{% url 'job_add' %}">Post a New Job</a>
-            <br/><br/>
-            <div class="formBox no-padding">
-                <h4>Jobs</h4>
-                <table class="table table-bordered table-striped">
-                    {% if jobs %}
-                    <thead>
-                        <tr>
-                            <td>Job Title</td>
-                            <td>Company</td>
-                            <td class="mobile_hide">Req ID</td>
-                            <td>Expired</td>
-                            <td class="mobile-hide">Expiration Date</td>
-                            <td class="mobile_hide">Job URL</td>
-                            <td></td>
-                        </tr>
-                    </thead>
-                    {% endif %}
-                    {% include "postajob/includes/job_rows.html" %}
-                </table>
+            <h1>{{ company.name }}</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12 prm-header">
+            <span>Post a Job</span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span8">
+            <div class="card-wrapper">
+                <div class="wrapper-header">
+                    <h2>Jobs</h2>
+                </div>
+                {% include "postajob/includes/job_rows.html" %}
+            </div>
+        </div>
+        <div class="span4">
+            <div class="sidebar">
+                <div class="navigation">
+                    <h2 class="top">Navigation</h2>
+                    <a class="btn" href="{% url 'job_add' %}">Post a New Job</a>
+                </div>
             </div>
         </div>
     </div>

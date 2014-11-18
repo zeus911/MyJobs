@@ -1,39 +1,27 @@
 {% load postajob_tags %}
+
 {% if product_groupings %}
-<thead>
-    <tr>
-        {% if order %}
-        <td>Display Order</td>
-        {% endif %}
-        <td>Group</td>
-        <td>Products</td>
-        <td></td>
-    </tr>
-</thead>
-{% endif %}
-<tbody id="product-groups">
-    {% if product_groupings %}
-    {% for group in product_groupings %}
-        <tr id="product-group-tr-{{ group.pk }}" {% if not group.is_displayed %}class="muted"{% endif %}>
-            {% if order %}
-            <td class="product-group-order">
-                <a class="btn"><i class="icon icon-arrow-up"></i></a>
-                <a class="btn"><i class="icon icon-arrow-down"></i></a>
-            </td>
-            {% endif %}
-            <td class="product-group-name">
-                {{ group.name }}
-                {% if not group.is_displayed %}
-                    <div class="label label-default pull-right">Not Displayed</div>
-                {% endif %}
-            </td>
-            <td class="product-group-products">{{ group.products.all|join:", " }}</td>
-            <td class="product-edit"><a href="{% url 'productgrouping_update' pk=group.pk %}" class="btn-link">Edit</a></td>
-        </tr>
-    {% endfor %}
-    {% else %}
-    <tr>
-        <td colspan=3>You currently have no product groups.</td>
-    </tr>
+{% for group in product_groupings %}
+<div id="group-{{group.id}}" class="product-card no-highlight {% if order %}left-gutter{% endif %} {% if not group.is_displayed %}muted{% endif %}">
+    {% if order %}
+    <div class="product-group-order">
+        <a class="btn"><i class="icon icon-arrow-up"></i></a>
+        <a class="btn"><i class="icon icon-arrow-down"></i></a>
+    </div>
     {% endif %}
-</tbody>
+    <div class="big-title" title="Group name">
+        {{ group.name }}
+        {% if not group.is_displayed %}
+        <div class="label label-default">Not Displayed</div>
+        {% endif %}
+    </div>
+    <div class="sub-title" title="Product name(s)">{{ group.products.all|join:", " }}</div>
+    <div class="product-details">{{ group.explanation }}</div>
+    <a class="btn" href="{% url 'productgrouping_update' pk=group.pk %}"> Edit</a>
+</div>
+{% endfor %}
+{% else %}
+<div class="product-card no-highlight">
+    You currently have no product groups.
+</div>
+{% endif %}

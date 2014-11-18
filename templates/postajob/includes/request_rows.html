@@ -1,19 +1,18 @@
 {% load postajob_tags %}
 
-<tbody id="posted-jobs">
 {% if requests %}
-{% for request in requests %}
-<tr class="posted-job-tr">
-    <td class="request-request-type">{{ request.model_name }}</td>
-    <td class="request-requested-on">{{ request.requesting_company }}</td>
-    <td class="request-requested-on">{{ request.made_on }}</td>
-    <td class="request-requested-on">{{ request.action_taken }}</td>
-    <td class="request-actions"><a href="{% url 'view_request' content_type=request.content_type_id pk=request.object_id %}">View</a></td>
-</tr>
-{% endfor %}
+    {% for request in requests %}
+    <div id="request-{{ request.id }}" class="product-card no-highlight">
+        <div class="big-title">{{ request.model_name }}</div>
+        <div class="sub-title">Requested on: {{ request.made_on }}</div>
+        <div class="product-details">
+            Requested by: {{ request.requesting_company }} - Action taken: {{ request.action_taken }}
+        </div>
+        <a class="btn" href="{% url 'view_request' content_type=request.content_type_id pk=request.object_id %}">View</a>
+    </div>
+    {% endfor %}
 {% else %}
-<tr>
-    <td colspan=5>You currently have no requests.</td>
-</tr>
+<div class="product-card no-highlight">
+    You currently have no requests.
+</div>
 {% endif %}
-</tbody>

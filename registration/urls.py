@@ -1,6 +1,5 @@
 from django.conf.urls import patterns, url
 from django.contrib.auth import views as auth_views
-from django.core.urlresolvers import reverse_lazy
 
 from universal.decorators import activate_user
 from registration.forms import CustomPasswordResetForm, CustomSetPasswordForm

@@ -22,7 +22,7 @@ from postajob.models import (CompanyProfile, Job, OfflinePurchase, Package,
                              Product, ProductGrouping, PurchasedJob,
                              PurchasedProduct, Request, SitePackage,
                              ProductOrder, JobLocation)
-from seo.models import Company
+from seo.models import Company, SeoSite
 from universal.helpers import build_url
 
 
@@ -622,13 +622,82 @@ class ViewTests(PostajobTestBase):
         response = self.client.post(url)
         self.assertEqual(response.status_code, 404)
 
+    def test_offlinepurchase_redeem_not_logged_in(self):
+        self.client.logout()
+        response = self.client.get(reverse('offlinepurchase_redeem'),
+                                   follow=True)
+        self.assertEqual(response.request['PATH_INFO'], reverse('login'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_offlinepurchase_redeem_new_company(self):
+        offline_purchase = OfflinePurchaseFactory(
+            owner=self.company, created_by=self.company_user)
+        OfflineProductFactory(
+            product=self.product, offline_purchase=offline_purchase,
+            product_quantity=3)
+        self.client.logout()
+        self.login_user(UserFactory(email='newemail@test.test'))
+
+        data = {
+            'company_name': 'A new company',
+            'address_line_one': '123 Place Road',
+            'address_line_two': 'Suite 1',
+            'city': 'Indianapolis',
+            'state': 'IN',
+            'country': 'USA',
+            'zipcode': '46268',
+            'redemption_id': offline_purchase.redemption_uid
+        }
+        current_product_count = PurchasedProduct.objects.all().count()
+        response = self.client.post(reverse('offlinepurchase_redeem'),
+                                    data=data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(current_product_count + 3,
+                         PurchasedProduct.objects.all().count())
+
+        # Make sure we're working with the most recent copy of the object.
+        offline_purchase = OfflinePurchase.objects.get()
+        self.assertIsNotNone(offline_purchase.redeemed_on)
+        self.assertIsNotNone(offline_purchase.redeemed_by)
+
+        new_company = offline_purchase.redeemed_by.company
+        self.assertEqual(new_company.name, data['company_name'])
+        self.assertTrue(new_company, 'companyprofile')
+
+    def test_offlinepurchase_redeem_duplicate_company_name(self):
+        offline_purchase = OfflinePurchaseFactory(
+            owner=self.company, created_by=self.company_user)
+        OfflineProductFactory(
+            product=self.product, offline_purchase=offline_purchase,
+            product_quantity=3)
+        self.client.logout()
+        self.login_user(UserFactory(email='newemail@test.test'))
+
+        data = {
+            'company_name': self.company.name,
+            'address_line_one': '123 Place Road',
+            'address_line_two': 'Suite 1',
+            'city': 'Indianapolis',
+            'state': 'IN',
+            'country': 'USA',
+            'zipcode': '46268',
+            'redemption_id': offline_purchase.redemption_uid
+        }
+        current_product_count = PurchasedProduct.objects.all().count()
+        response = self.client.post(reverse('offlinepurchase_redeem'),
+                                    data=data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(current_product_count,
+                         PurchasedProduct.objects.all().count())
+        self.assertEqual(response.request['PATH_INFO'],
+                         reverse('offlinepurchase_redeem'))
+
     def test_offlinepurchase_redeem(self):
         offline_purchase = OfflinePurchaseFactory(
             owner=self.company, created_by=self.company_user)
         OfflineProductFactory(
             product=self.product, offline_purchase=offline_purchase,
             product_quantity=3)
-
 
         data = {'redemption_id': offline_purchase.redemption_uid}
         current_product_count = PurchasedProduct.objects.all().count()
@@ -725,21 +794,20 @@ class ViewTests(PostajobTestBase):
                          self.companyprofile_form_data['company_name'])
 
     def test_list_products_jsonp(self):
-        response = self.client.get(reverse('product_listing') +
-                                   '?site=%s&callback=callback' %
-                                   (self.site.pk, ))
-        self.assertTrue(response.content.startswith('callback("'))
+        response = self.client.get(reverse('product_listing'))
         # When an item in the chain of objects from SeoSite->ProductGrouping
         # is missing, we return text stating that there is nothing to purchase
         self.assertTrue('There are no products configured for purchase'
                         in response.content)
-
+        site_package = SitePackageFactory()
+        site_package.sites.add(SeoSite.objects.get(id=1))
+        site_package.save()
+        self.product.package = site_package
+        self.product.save()
         productgrouping = ProductGroupingFactory(owner=self.company)
         ProductOrder(product=self.product, group=productgrouping).save()
 
-        response = self.client.get(reverse('product_listing') +
-                                   '?site=%s&callback=callback' %
-                                   (self.site.pk, ))
+        response = self.client.get(reverse('product_listing'))
         for text in [productgrouping.display_title, productgrouping.explanation,
                      unicode(self.product)]:
             # When the entire chain of objects exists, the return HTML should
