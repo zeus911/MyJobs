@@ -68,8 +68,9 @@ def admin_purchasedjobs(request, purchased_product):
     but this is already done from a previous view.
     """
     company = get_company_or_404(request)
-    product = PurchasedProduct.objects.get(pk=purchased_product)
-    jobs = PurchasedJob.objects.filter(purchased_product=purchased_product)
+    product = PurchasedProduct.objects.prefetch_related('purchasedjob_set')\
+        .get(pk=purchased_product)
+    jobs = product.purchasedjob_set.all()
     data = {
         'company': company,
         'product': product,
@@ -100,7 +101,7 @@ def purchasedmicrosite_admin_overview(request):
     data = {
         'products': products.filter(owner=company)[:3],
         'product_groupings': groupings.filter(owner=company)[:3],
-        'purchased_products': purchased.filter(product__owner=company),
+        'purchased_products': purchased.filter(product__owner=company)[:3],
         'offline_purchases': offline_purchases.filter(owner=company)[:3],
         'requests': requests.filter(owner=company)[:3],
         'company': company
