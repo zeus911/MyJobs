@@ -90,6 +90,10 @@ def activate(request, activation_key, invitation=False):
            'num_modules': len(settings.PROFILE_COMPLETION_MODULES)}
 
     if invitation:
+        if activated is False and not request.user.is_anonymous():
+            activated = request.user
+            ctx['activated'] = activated
+
         if activated is not False:
             if activated.in_reserve:
                 activated.in_reserve = False

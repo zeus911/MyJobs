@@ -23,7 +23,7 @@ from postajob.forms import (CompanyProfileForm, JobForm, OfflinePurchaseForm,
 from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
                              Product, ProductGrouping, PurchasedJob,
                              PurchasedProduct, Request, JobLocation)
-from universal.helpers import get_company, get_object_or_none
+from universal.helpers import get_company, get_object_or_none, get_company_or_404
 from universal.views import RequestFormViewBase
 
 
@@ -58,7 +58,25 @@ def purchasedjobs_overview(request):
         'active_products': products.filter(expiration_date__gte=date.today()),
         'expired_products': products.filter(expiration_date__lt=date.today()),
     }
-    return render_to_response('postajob/purchasedjobs_overview.html', data,
+    return render_to_response('postajob/purchasedjob_overview.html',
+                              data, RequestContext(request))
+
+
+def admin_purchasedjobs(request, purchased_product):
+    """
+    Normally we would need to filter by settings.SITE for objects in postajob
+    but this is already done from a previous view.
+    """
+    company = get_company_or_404(request)
+    product = PurchasedProduct.objects.prefetch_related('purchasedjob_set')\
+        .get(pk=purchased_product)
+    jobs = product.purchasedjob_set.all()
+    data = {
+        'company': company,
+        'product': product,
+        'jobs': jobs,
+    }
+    return render_to_response('postajob/purchasedjobs_admin_overview.html', data,
                               RequestContext(request))
 
 
@@ -83,7 +101,7 @@ def purchasedmicrosite_admin_overview(request):
     data = {
         'products': products.filter(owner=company)[:3],
         'product_groupings': groupings.filter(owner=company)[:3],
-        'purchased_products': purchased.filter(product__owner=company),
+        'purchased_products': purchased.filter(product__owner=company)[:3],
         'offline_purchases': offline_purchases.filter(owner=company)[:3],
         'requests': requests.filter(owner=company)[:3],
         'company': company
@@ -216,8 +234,7 @@ def approve_admin_request(request, content_type, pk):
 
 
 def product_listing(request):
-    site_id = request.REQUEST.get('site')
-    callback = request.REQUEST.get('callback')
+    site_id = settings.SITE_ID
     try:
         site = SeoSite.objects.get(pk=site_id)
     except SeoSite.DoesNotExist:
@@ -240,11 +257,9 @@ def product_listing(request):
     # Sort the grouped packages by the specified display order.
     groupings = sorted(groupings, key=lambda grouping: grouping.display_order)
 
-    html = render_to_response('postajob/package_list.html',
+    return render_to_response('postajob/package_list.html',
                               {'product_groupings': groupings},
                               RequestContext(request))
-    return HttpResponse('%s(%s)' % (callback, json.dumps(html.content)),
-                        content_type='text/javascript')
 
 
 @company_has_access('product_access')
@@ -257,7 +272,7 @@ def order_postajob(request):
         'groupings': ProductGrouping
     }
 
-    company = get_company(request)
+    company = get_company_or_404(request)
     obj_type = request.GET.get('obj_type')
     # Variables
 
@@ -582,6 +597,14 @@ class PurchasedProductFormView(PostajobModelFormMixin, RequestFormViewBase):
         if not resolve(request.path).url_name.endswith('_add'):
             raise Http404
 
+    def get_context_data(self, **kwargs):
+        context = super(PurchasedProductFormView, self).get_context_data(**kwargs)
+        context['submit_btn_name'] = 'Buy'
+        context['submit_text'] = 'Your card will be charged when you click \"Buy\"'
+        context['sidebar'] = True
+        context['product'] = self.product
+        return context
+
 
 class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
     form_class = OfflinePurchaseForm
@@ -680,9 +703,7 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
         Every add is actually an edit.
 
         """
-        company = get_company(self.request)
-        if not company:
-            raise Http404
+        company = get_company_or_404(self.request)
         kwargs = {'company': company}
         self.object, _ = self.model.objects.get_or_create(**kwargs)
         return self.object

@@ -1,19 +1,18 @@
 {% load postajob_tags %}
 
-<tbody id="product-jobs">
-    {% if purchased_products %}
-        {% for product in purchased_products %}
-            <tr class="product-tr">
-                <td class="purchasedproduct-name">{{ product.product.name }}</td>
-                <td class="purchasedproduct-package">{{ product.owner.name }}</td>
-                <td class="purchasedproduct-jobs-remaining">{% if product.can_post_more and product.jobs_remaining > 0 %}{{ product.jobs_remaining }}{% elif product.can_post_more %}Unlimited{% else %}0{% endif %}</td>
-                <td class="purchasedproduct-actions"><a href="#" id="resend-invoice-{{ product.pk }}">Resend Invoice</a>
-                </td>
-            </tr>
-        {% endfor %}
-    {% else %}
-        <tr>
-            <td colspan=2>You currently have no purchased products.</td>
-        </tr>
-    {% endif %}
-</tbody>
+{% if purchased_products %}
+    {% for product in purchased_products %}
+    <div id="request-{{ request.id }}" class="product-card no-highlight">
+        <div class="big-title">{{ product.product }}</div>
+        <div class="sub-title">{{ product.owner.name }}</div>
+        <div class="product-details">
+            {% if product.can_post_more and product.jobs_remaining > 0 %}{{ product.jobs_remaining }}{% elif product.can_post_more %}Unlimited{% else %}0{% endif %}
+        </div>
+        <a id="resend-invoice-{{ product.pk }}" class="btn" href="">Resend Invoice</a>
+    </div>
+    {% endfor %}
+{% else %}
+<div class="product-card no-highlight">
+    You currently have no purchased products.
+</div>
+{% endif %}

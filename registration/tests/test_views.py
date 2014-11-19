@@ -13,7 +13,8 @@ from mypartners.models import Contact
 from mypartners.tests.factories import PartnerFactory
 from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch
-from registration.models import ActivationProfile
+from registration.models import ActivationProfile, Invitation
+from registration.tests.factories import InvitationFactory
 from seo.tests.setup import DirectSEOBase
 from universal.helpers import build_url
 
@@ -137,6 +138,32 @@ class RegistrationViewTests(MyJobsBase):
         self.client.post(reverse('password_reset'), {'email': self.user.email})
         user = User.objects.get(pk=self.user.pk)
         self.assertTrue(user.is_active)
+
+    def test_accept_invitation_already_activated(self):
+        """
+        Since invitations use the same keys as activations, we should ensure
+        that invitation acceptance doesn't show an error message when the link
+        has already been used.
+        """
+        invitation = InvitationFactory(invitee_email=self.user.email)
+        self.assertFalse(invitation.accepted)
+        profile = self.user.activationprofile_set.all()[0]
+        key = profile.activation_key
+        self.user.in_reserve = True
+        self.user.save()
+
+        # Quickly activate and ensure that activation was successful
+        self.assertEqual(ActivationProfile.objects.activate_user(key),
+                         self.user)
+
+        self.client.login_user(self.user)
+        response = self.client.get(reverse('invitation_activate', args=[key]))
+        self.assertTrue('Thanks for registering!' in response.content)
+        invitation = Invitation.objects.get()
+        self.assertTrue(invitation.accepted)
+        user = User.objects.get(pk=self.user.pk)
+        self.assertFalse(user.in_reserve)
+
 
 class MergeUserTests(MyJobsBase):
 

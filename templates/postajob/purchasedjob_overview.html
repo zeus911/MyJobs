@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block site-title %}
+<title>Purchased Jobs Overview - My.jobs</title>
+<meta name="title" content="Purchased Product Overview - My.jobs">
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="span12">
+            <h1>{{ company.name }}</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12 prm-header">
+            <span>Post a Job</span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <h4>Active Products</h4>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            {% if active_products %}
+            {% for product in active_products %}
+                {% include "postajob/includes/purchasedproduct_formBox.html" with purchased_product=product %}
+            {% endfor %}
+            {% else %}
+            <div class="card-wrapper">
+                <div class="product-cards no-highlight">
+                    You currently have no active products.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="span12">
+            <h4>Expired Products</h4>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            {% if expired_products %}
+            {% for product in expired_products %}
+                {% include "postajob/includes/purchasedproduct_formBox.html" with purchased_product=product %}
+            {% endfor %}
+            {% else %}
+            <div class="card-wrapper">
+                <div class="product-cards no-highlight">
+                    You currently have no expired products.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block extra-js %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}postajob.157-16.css{{ gz }}">
+{% endblock %}
