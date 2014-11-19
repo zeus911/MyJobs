@@ -143,7 +143,11 @@ class ChangePasswordForm(Form):
                              attrs={'placeholder': 'Password'}))
     new_password1 = PasswordField(label=('New Password'),
                               widget=PasswordInput(
-                                  attrs={'placeholder':('New Password')}),
+                                  attrs={
+                                      'placeholder': 'New Password',
+                                      # so broken :-(
+                                      'class': 'broken'
+                                  }),
                               help_text="Must contain an uppercase "
                                         "letter, lowercase letter, number, "
                                         "and special character.")

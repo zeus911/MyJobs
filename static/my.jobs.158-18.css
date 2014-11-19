@@ -4040,3 +4040,10 @@ span.helptext {
     font-size: 0.9em;
     font-style: italic;
 }
+
+.broken + span.help-block {
+    /* because the help text on the account settings change password form hates
+     * me.
+     */
+    text-indent: 60px;
+}
