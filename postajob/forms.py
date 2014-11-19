@@ -310,7 +310,8 @@ class ProductForm(RequestForm):
         model = Product
         fields = ('name', 'package', 'owner', 'cost',
                   'posting_window_length', 'max_job_length',
-                  'job_limit', 'num_jobs_allowed', 'requires_approval', )
+                  'job_limit', 'num_jobs_allowed', 'requires_approval',
+                  'is_displayed', )
 
     class Media:
         css = {
