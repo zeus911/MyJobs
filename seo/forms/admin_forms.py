@@ -138,15 +138,16 @@ class SeoSiteReverseForm(forms.ModelForm):
     :model_object:      saved model object. Which model depends on how this form
                         is subclassed.
     """
+
     sites_widget = FSM(
-        'Site', reverse_lazy('site_admin_fsm'), async=True)
+        'Site', reverse_lazy('site_admin_fsm'), lazy=True)
     sites = forms.ModelMultipleChoiceField(
         SeoSite.objects.order_by('domain'),
         required=False,
         widget=sites_widget
     )
     job_source_ids_widget = FSM('Job Sources', reverse_lazy('buid_admin_fsm'),
-                                async=True)
+                                lazy=True)
     job_source_ids = MyModelMultipleChoiceField(BusinessUnit.objects.all(),
                                                 my_model=BusinessUnit,
                                                 required=False,
