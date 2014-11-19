@@ -147,24 +147,6 @@ class SeoSiteReverseForm(forms.ModelForm):
         widget=sites_widget
     )
     
-    def __init__(self, *args, **kwargs):
-        super(SeoSiteReverseForm, self).__init__(*args, **kwargs)
-        initial = {}
-        sites = SeoSite.objects.all().order_by('domain')
-        dictionary = {
-            'queryset': sites,
-            'widget': admin.widgets.FilteredSelectMultiple('Sites', False),
-            'initial': initial, 
-            'required': False
-        }
-        if 'instance' in kwargs:
-            # modified the loop statement to not loop all 10k seo site domains
-            # J. Sole 12-11-12
-            for site in kwargs['instance'].seosite_set.all():
-                initial[str(site.id)] = 'selected'
-            dictionary['initial'] = initial
-        self.fields['sites'] = forms.ModelMultipleChoiceField(**dictionary)
-
     def save(self, commit=True):
         added_sites = set()
         model_object = forms.ModelForm.save(self, commit)
