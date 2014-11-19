@@ -61,7 +61,7 @@ class RegistrationViewTests(MyJobsBase):
         """
         Test that the ``activate`` view properly handles activation
         when the user to be activated is not currently logged in. The
-        page should also contain a login form with an appropriate action.
+        page should also contain a login link.
         """
         self.client.post(reverse('auth_logout'))
         profile = ActivationProfile.objects.get(user__email=self.user.email)
@@ -72,9 +72,11 @@ class RegistrationViewTests(MyJobsBase):
         self.assertContains(response, self.data['email'])
 
         contents = BeautifulSoup(response.content)
-        form = contents.find('form')
-        self.assertEqual(form.attrs['action'],
-                         reverse('login'))
+        bank = contents.find(id='moduleBank')
+        anchors = bank.findAll('a')
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].attrs['href'], '/')
+        self.assertEqual(anchors[0].text, 'Login')
 
     def test_invalid_activation(self):
         """

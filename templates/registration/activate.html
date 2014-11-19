@@ -58,18 +58,17 @@ Used to check if registration was successful.
         </div> {# /span4 #}
 
         {% else %}
-        <style>
-        .formBox input{
-            width: 100%;
-        }
-        </style>
-        <div class="span4" id="active-login">
-            <div class="loginBox formBox">
-                <h3>Sign In</h3>
-                {% include "includes/widget-login-username.html" with form=loginform %}
+
+        <div class="span4">
+            <div class="formBox" id="moduleBank">
+                <h2>What now:</h2>
+                <table class="table table-bordered tables-striped">
+                    <tr class="profile-section">
+                        <td><a href="/">Login</a></td>
+                    </tr>
+                </table>
             </div>
         </div>
-        <input type="hidden" name="next" value="None">
 
         {% endif %}
 
