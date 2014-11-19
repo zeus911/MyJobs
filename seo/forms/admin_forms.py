@@ -139,8 +139,7 @@ class SeoSiteReverseForm(forms.ModelForm):
                         is subclassed.
     """
 
-    sites_widget = FSM(
-        'Site', reverse_lazy('site_admin_fsm'), lazy=True)
+    sites_widget = FSM('Site', reverse_lazy('site_admin_fsm'), lazy=True)
     sites = forms.ModelMultipleChoiceField(
         SeoSite.objects.order_by('domain'),
         required=False,

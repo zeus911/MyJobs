@@ -1127,7 +1127,7 @@ class CompanyAdmin(admin.ModelAdmin):
         ('Company Info',{'fields':[('logo_url'),('linkedin_id'),
                                    ('canonical_microsite'),
                                    ('og_img')]}),
-        #('Job Sources', {'fields': ['job_source_ids']}),
+        ('Job Sources', {'fields': ['job_source_ids']}),
         ('Featured on', {'fields': ['sites']}),
     ]
 
