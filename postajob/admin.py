@@ -29,7 +29,7 @@ class JobLocationsInline(admin.TabularInline):
     max_num = 1
 
 
-class JobLocationAdmin(admin.ModelAdmin):
+class JobLocationAdmin(ModelAdminWithRequest):
     form = JobLocationForm
     inlines = (JobLocationsInline, )
 

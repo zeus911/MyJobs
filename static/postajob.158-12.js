@@ -9,6 +9,7 @@ var load_event = function(){
     update_apply_fields();
     update_site_fields();
     update_job_limit_fields();
+    update_state_selection();
 
     // Job Form
     $(document).on("change", '#id_apply_type_0', function(){
@@ -25,6 +26,9 @@ var load_event = function(){
     });
     $(document).on("change", '#post-to-selector_1', function() {
         update_site_fields();
+    });
+    $(document).on("change", 'select[id$="-country"]', function () {
+        update_state_selection();
     });
 
     // Product Form
@@ -155,26 +159,33 @@ function resend_invoice(id) {
 // This is also verified server-side; checking in JS just cuts down on the
 // number of requests we have to do.
 var fields = ['input[id$=-city]',
-    'input[id$=-state]',
-    'input[id$=-country]'];
+    'select[id$=-country]'];
 
 function add_location(location) {
     /*
-    Creates condensed location tags for a given location.
+     Creates condensed location tags for a given location.
      */
 
+    var country = location.find('select[id$=-country]').val();
+    if (country == 'United States' || country == 'Canada') {
+        var region = location.find('select[id$=-state]').val();
+    }
+    else {
+        var region = location.find('input[id$=-region]').val();
+    }
     // All added locations will follow the same template, with the city,
     // region, country, and loc_num placeholders replaced with the actual values
     // for the relevant location
     var location_tag = '<div class="location-display"><div>city, region country</div><div><a href="?" id="remove-location-loc_num">Remove</a></div></div>',
+
         location_map = {
             city: location.find('input[id$=-city]').val(),
-            region: location.find('input[id$=-state]').val(),
-            country: location.find('input[id$=-country]').val()
+            region: region,
+            country: country
         },
-        // We need to find out which form on the page is for this location. The
-        // form input ids have the structure id_form-#-field, so we can get the
-        // form number by grabbing an input and splitting the number from its id.
+    // We need to find out which form on the page is for this location. The
+    // form input ids have the structure id_form-#-field, so we can get the
+    // form number by grabbing an input and splitting the number from its id.
         field_id = location.find('input[id$=-id]').attr('id'),
         display_container = $('#job-location-display');
     location_map['loc_num'] = field_id.split('-')[1];
@@ -216,6 +227,44 @@ function copy_forms(from, to) {
             valid = false;
         }
     });
+
+
+    if (valid) {
+        var country = from.find('select[id$=-country]').val();
+        if (country === 'United States' || country === 'Canada') {
+            var element = from.find('select[id$=-state]');
+            var from_input = from.find(element),
+                from_value = from_input.val();
+            if (from_value) {
+                to.find(element).val(from_value);
+                if (from_input.parents('.required').length > 0) {
+                    from_input.parent().unwrap();
+                }
+            } else {
+                if (from_input.parents('.required').length == 0) {
+                    from_input.parent('.profile-form-input').wrap('<div class="required">');
+                }
+                valid = false;
+            }
+        }
+        else {
+            var element = 'input[id$=-region]';
+            var from_input = from.find(element),
+                from_value = from_input.val();
+            if (from_value) {
+                to.find(element).val(from_value);
+                if (from_input.parents('.required').length > 0) {
+                    from_input.parent().unwrap();
+                }
+            } else {
+                if (from_input.parents('.required').length == 0) {
+                    from_input.parent('.profile-form-input').wrap('<div class="required">');
+                }
+                valid = false;
+            }
+        }
+    }
+
     if (valid) {
         // Zip codes are optional and shouldn't affect the validity of a
         // location. If the form is valid, copy the zip code from it as well.
@@ -238,6 +287,7 @@ function clear_form(form) {
     fields.forEach(function(element) {
         form.find(element).val('');
     });
+    form.find('#id_form-__prefix__-region').val('');
     form.find('input[name$=-zipcode]').val('');
 }
 
@@ -308,4 +358,22 @@ function expand_errors(contents) {
             parent_accordion.slideToggle();
         }
     });
+}
+
+function update_state_selection() {
+    var country =  $('#id_form-__prefix__-country').val();
+    if (country == 'United States' || country == 'Canada') {
+        $('#id_form-__prefix__-region').hide();
+        $('label[for="id_form-__prefix__-region"]').hide();
+
+        $('#id_form-__prefix__-state').show();
+        $('label[for="id_form-__prefix__-state"]').show();
+    }
+    else {
+        $('#id_form-__prefix__-region').show();
+        $('label[for="id_form-__prefix__-region"]').show();
+
+        $('#id_form-__prefix__-state').hide();
+        $('label[for="id_form-__prefix__-state"]').hide();
+    }
 }

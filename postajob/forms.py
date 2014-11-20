@@ -14,6 +14,7 @@ from django.forms.models import modelformset_factory
 
 from seo.models import Company, CompanyUser, SeoSite
 from mypartners.widgets import SplitDateDropDownField
+from postajob.fields import NoValidationChoiceField
 from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
                              OfflineProduct, Package, Product, ProductGrouping,
                              ProductOrder, PurchasedProduct, PurchasedJob,
@@ -120,10 +121,29 @@ class BaseJobForm(RequestForm):
 
 
 class JobLocationForm(forms.ModelForm):
+    state = NoValidationChoiceField(choices=JobLocation.state_choices)
+    region = CharField(max_length=255, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(JobLocationForm, self).__init__(*args, **kwargs)
+        print self.errors
+
     class Meta:
-        fields = ('city', 'state', 'country', 'zipcode')
+        fields = ('city', 'state', 'region', 'country', 'zipcode')
         excluded = ('guid', 'state_short', 'country_short')
         model = JobLocation
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        print cleaned_data.get('country')
+        if cleaned_data.get('country') not in ["United States", "Canada"]:
+            region = cleaned_data.get('region')
+            print region
+            if region:
+                cleaned_data['state'] = region
+            else:
+                raise ValidationError('State or region is required.')
+        return cleaned_data
 
 
 JobLocationFormSet = modelformset_factory(JobLocation, form=JobLocationForm,
