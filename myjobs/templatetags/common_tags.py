@@ -205,9 +205,10 @@ def paginated_index(index, page, per_page=None):
     New index which takes pagination into consideration.
     """
 
-    per_page = per_page or 10
-    page -= 1
-    return int(page) * int(per_page) + int(index)
+    per_page = int(per_page or 10)
+    page = int(page or 1) - 1
+    index = int(index or 1)
+    return page * per_page + index
 
 @register.assignment_tag(takes_context=True)
 def gz(context):
