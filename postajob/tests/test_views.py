@@ -419,8 +419,7 @@ class ViewTests(MyJobsBase):
         kwargs = {'pk': self.product.pk}
 
         response = self.client.post(reverse('product_delete', kwargs=kwargs))
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(Job.objects.all().count(), 0)
+        self.assertEqual(response.status_code, 404)
 
     def test_product_update_job_limit(self):
         self.product_form_data['name'] = 'New Title'

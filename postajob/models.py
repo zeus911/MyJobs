@@ -643,7 +643,7 @@ class Product(BaseModel):
     help_text = {
         'cost': 'How much this product should cost.',
         'is_archived': '',
-        'is_displayed': 'Products should not show up in the online '
+        'is_displayed': 'Products should show up in the online '
                         'product lists.',
         'max_job_length': 'Number of days each job may appear.',
         'num_jobs_allowed': 'The number of jobs that can be posted.',

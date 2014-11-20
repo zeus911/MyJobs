@@ -481,11 +481,15 @@ class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):
     form_class = ProductForm
     model = Product
     display_name = 'Product'
+    prevent_delete = True
 
     success_url = reverse_lazy('product')
     add_name = 'product_add'
     update_name = 'product_update'
     delete_name = 'product_delete'
+
+    def delete(self):
+        raise Http404
 
     @method_decorator(company_has_access('product_access'))
     def dispatch(self, *args, **kwargs):
@@ -709,7 +713,7 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
         return self.object
 
     def delete(self):
-        return
+        raise Http404
 
 
 class SitePackageFilter(FSMView):
