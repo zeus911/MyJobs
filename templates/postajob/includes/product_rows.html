@@ -1,17 +1,15 @@
 {% load postajob_tags %}
 
-<tbody id="product-jobs">
-    {% if products %}
+{% if products %}
     {% for product in products %}
-        <tr class="product-tr">
-            <td class="product-name">{{ product }}</td>
-            <td class="product-package">{{ product.package.name }}</td>
-            <td class="product-edit"><a href="{% url 'product_update' pk=product.pk %}" class="btn-link">Edit</a></td>
-        </tr>
+    <div class="product-card no-highlight">
+        <div class="big-title">{{ product }}</div>
+        <div class="product-details">{{ product.package.name }}</div>
+        <a id="product-{{ product.id }}" class="btn" href="{% url 'product_update' pk=product.pk %}">Edit</a>
+    </div>
     {% endfor %}
-    {% else %}
-    <tr>
-        <td colspan=2>You currently have no products.</td>
-    </tr>
-    {% endif %}
-</tbody>
+{% else %}
+<div class="product-card no-highlight">
+    You currently have no products.
+</div>
+{% endif %}

@@ -1,0 +1,10 @@
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}bootstrap.min.css">
+    </head>
+    <body>
+        <div class="direct-page {{ page.bootstrap_classes }}" id="direct-page-{{ page.id }}">
+            {{ content }}
+        </div>
+    </body>
+</html>

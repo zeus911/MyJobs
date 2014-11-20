@@ -18,12 +18,10 @@ Products
 {% block postajob_content %}
 <div class="row">
     <div class="span8">
-        <a href="{% url 'product_add' %}" class="btn">Add Product</a>
-        <br /><br />
-        {% include "postajob/includes/product_formBox.html" with formBox_title="Products" formBox_footer=False %}
+        {% include "postajob/includes/product_formBox.html" with wrapper_title="Products" %}
     </div>
     <div class="span4">
-        {% include "postajob/includes/postajob_navigation.html" %}
+        {% include "postajob/includes/postajob_navigation.html" with primary_btn=True url_name="add" btn_name="Add Product" %}
     </div>
 </div>
 {% endblock %}

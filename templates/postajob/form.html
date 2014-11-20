@@ -19,31 +19,59 @@
             </h1>
         </div>
     </div>
+
     {% block form %}
-    <form action="?" method="post">
-        {% include "includes/form-error-highlight.html" %}
-        {% csrf_token %}
-        <div class="clear"></div>
-        <div class="actions">
-            <div class="form-label pull-left">&nbsp;</div>
-            {% if item.pk and not prevent_delete %}
-                <button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>
-                <div id="delete-confirm" class="modal hide fade row">
-                    <div class="modal-header">{% trans 'Really Delete?' %}</div>
-                    <div class="modal-body">{% blocktrans %}Are you sure you want to delete this {{verbose}}?{% endblocktrans %}</div>
-                    <div class="modal-footer">
-                        <div class="actions">
-                            <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
-                            <a class="btn pull-right" href="{{ delete_url }}">{% trans 'Delete' %}</a>
-                        </div>{# /actions #}
-                    </div>{# /modal=footer #}
-                </div>{# /delete-confirm #}
-            {% endif %}
-            <a href="{{ success_url }}" class="btn">{% trans 'Cancel' %}</a>
-            <button type="submit" class="btn primary" id="profile-save">{% trans 'Save' %}</button>
-        </div>{# /actions #}
-    </form>
+    <div class="row">
+        <div class="span8">
+            <form action="?" method="post">
+                {% include "includes/form-error-highlight.html" %}
+                {% csrf_token %}
+                <div class="clear"></div>
+                <div class="actions">
+                    <div class="form-label pull-left">&nbsp;</div>
+                    {% if item.pk and not prevent_delete %}
+                        <button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>
+                        <div id="delete-confirm" class="modal hide fade row">
+                            <div class="modal-header">{% trans 'Really Delete?' %}</div>
+                            <div class="modal-body">{% blocktrans %}Are you sure you want to delete this {{verbose}}?{% endblocktrans %}</div>
+                            <div class="modal-footer">
+                                <div class="actions">
+                                    <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
+                                    <a class="btn pull-right" href="{{ delete_url }}">{% trans 'Delete' %}</a>
+                                </div>{# /actions #}
+                            </div>{# /modal=footer #}
+                        </div>{# /delete-confirm #}
+                    {% endif %}
+                    <a href="{{ success_url }}" class="btn">{% trans 'Cancel' %}</a>
+                    <button type="submit" class="btn primary" id="profile-save">{%if submit_btn_name%}{{submit_btn_name}}{%else%}{% trans 'Save' %}{%endif%}</button>
+                    <br />
+                    <div class="span3 form-label pull-left initial billing-zip-code-label"></div>
+                    {% if submit_text %}{{ submit_text }}{% endif %}
+                </div>{# /actions #}
+            </form>
+        </div>
     {% endblock form %}
+
+        {% if sidebar %}
+        <div class="span4">
+            <div class="sidebar">
+                <h2 class="top">Product Details</h2>
+                <label>Site(s):</label>
+                <b>{{ product.seosite|join:', ' }}</b>
+                <label>Job Limit:</label>
+                <b>{% if product.num_jobs_allowed == 0 %}Unlimited{%else%}{{ product.num_jobs_allowed }}{%endif%}</b>
+                <label>Expires:</label>
+                <b>{{ product.expiration_date }}</b>
+                <br />
+                <small>Based on today's date of {% now "M j\, Y" %}</small>
+            </div>
+        </div>
+
+    </div> {# .row #}
+        {% else %}
+    </div> {# .row #}
+        {% endif %}
+
 {% endblock content %}
 
 {% block extra-js %}

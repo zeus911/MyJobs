@@ -1,28 +1,17 @@
 {% load postajob_tags %}
 
-{% get_jobs purchased_product as jobs %}
-
-<div class="formBox no-padding">
-    <h4>{{ purchased_product.product }} <span class="pull-right">Expires: {{ purchased_product.expiration_date }}</span></h4>
-    <table id="purchasedproduct-jobs-table" class="table table-bordered table-striped">
-        {% if jobs %}
-            <thead>
-            <tr>
-                <td>Job Title</td>
-                <td>Company</td>
-                <td class="mobile_hide">Req ID</td>
-                <td>Expired</td>
-                <td class="mobile-hide">Expiration Date</td>
-                <td class="mobile_hide">Job URL</td>
-                <td></td>
-            </tr>
-            </thead>
-        {% endif %}
-        {% include "postajob/includes/purchasedjob_admin_rows.html" with jobs=jobs %}
-    </table>
-    <div class="formBox-footer">
-        <span class="pull-left">{% if purchased_product.can_post_more and purchased_product.jobs_remaining > 0 %}Jobs remaining: {{ purchased_product.jobs_remaining }} {% elif purchased_product.can_post_more %}Jobs remaining: Unlimited{% endif %}</span>
-        <a href="#" id="resend-invoice-{{ purchased_product.pk }}" class="btn pull-right">Resend Invoice</a>
-        <div class="clear"></div>
+<div class="card-wrapper">
+    <div class="wrapper-header">
+        <h4>{{ wrapper_title }}</h4>
     </div>
+    {% if purchased_products %}
+        {% for purchased_product in purchased_products %}
+            {% get_jobs purchased_product as jobs %}
+            {% include "postajob/includes/purchasedjob_admin_rows.html" with jobs=jobs %}
+        {% endfor %}
+    {% else %}
+        <div class="product-card no-highlight">
+            You currently have no {{ wrapper_title|lower }}.
+        </div>
+    {% endif %}
 </div>

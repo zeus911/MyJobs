@@ -32,7 +32,7 @@
                         {% include "mypartners/includes/record_card.html" %}
                     {% endfor %}
                 {% else %}
-                    <div class="product-card not-clickable">
+                    <div class="product-card no-highlight">
                         No recent communication records.
                     </div>
                 {% endif %}
@@ -51,7 +51,7 @@
                         {% include "mypartners/includes/pss_card.html" %}
                     {% endfor %}
                 {% else %}
-                    <div class="product-card not-clickable">
+                    <div class="product-card no-highlight">
                         No recent saved searches.
                     </div>
                 {% endif %}
@@ -86,7 +86,7 @@
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
     $(document).ready(function() {
-        $(".product-card:not(.not-clickable)").on("click", function() {
+        $(".product-card:not(.no-highlight)").on("click", function() {
            window.location = $(this).find("a").attr("href");
         });
     });

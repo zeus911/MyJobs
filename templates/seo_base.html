@@ -11,6 +11,8 @@
 
 <html xmlns:fb="http://ogp.me/ns/fb#" lang="en">
 <head>
+    {% block myblocks_css_extras %}{% endblock %}
+
     <title>{% block directseo_title %}{% endblock %}</title>
 
     <meta name="msvalidate.01" content="B9E4E5CC00BB58B097061E7DBFC6FA6B" />
@@ -230,4 +232,5 @@
 {% block directseo_quantcast2 %}{% include "quantcast2.html" %}{% endblock %}
 </body>
 </html>
+
 

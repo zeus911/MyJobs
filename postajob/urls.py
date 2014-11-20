@@ -145,6 +145,9 @@ urlpatterns = patterns(
     url(r'^admin/purchased/product$',
         views.admin_purchasedproduct,
         name='purchasedproduct'),
+    url(r'^admin/purchased/product/(?P<purchased_product>\d+)/',
+        views.admin_purchasedjobs,
+        name="purchasedjobs"),
 
     # CompanyProfile
     url(r'^admin/profile/',
@@ -156,6 +159,14 @@ urlpatterns = patterns(
     url(r'^admin/profile/update/(?P<pk>\d+)/',
         views.CompanyProfileFormView.as_view(),
         name='companyprofile_update'),
+
+    # User management
+    url(r'^admin/blocked-users/$',
+        views.blocked_user_management,
+        name='blocked_user_management'),
+    url(r'^admin/blocked-users/unblock/(?P<pk>\d+)/$',
+        views.unblock_user,
+        name='unblock_user'),
 
     url(r'^list/$', 'product_list'),
 

@@ -4,7 +4,6 @@ from fsm.widget import FSM
 
 from django.contrib import admin
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse_lazy
 from django.core.validators import validate_email, URLValidator
 from django.core.urlresolvers import reverse_lazy
 from django import forms
@@ -22,7 +21,13 @@ from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
 from postajob.payment import authorize_card, get_card, settle_transaction
 from postajob.widgets import ExpField
 from universal.forms import RequestForm
-from universal.helpers import get_object_or_none
+from universal.helpers import get_object_or_none, get_company
+
+
+def is_superuser_in_admin(request):
+    if request.path.startswith('/admin') and request.user.is_superuser:
+        return True
+    return False
 
 
 class BaseJobForm(RequestForm):
@@ -33,7 +38,7 @@ class BaseJobForm(RequestForm):
         css = {
             'all': ('postajob.157-16.css', )
         }
-        js = ('postajob.153-05.js', )
+        js = ('postajob.158-18.js', )
 
     apply_choices = [('link', "Link"), ('email', 'Email'),
                      ('instructions', 'Instructions')]
@@ -63,15 +68,8 @@ class BaseJobForm(RequestForm):
             # that uses mailto:
             self.initial['apply_type'] = 'link'
 
-        if not self.request.user.is_superuser:
-            # Limit a non-superuser's access to only companies they own.
-            if self.request.path.startswith('/admin'):
-                user_companies = self.request.user.get_companies()
-                self.fields['owner'].queryset = user_companies
-
-        # Since we're using the myjobs_company cookie outside the admin,
-        # remove the option to set the company.
-        if not self.request.path.startswith('/admin'):
+        if not is_superuser_in_admin(self.request):
+            # Remove the option to set the company.
             self.fields['owner'].widget = HiddenInput()
             self.initial['owner'] = self.company
 
@@ -160,7 +158,7 @@ class JobForm(BaseJobForm):
     def __init__(self, *args, **kwargs):
         super(JobForm, self).__init__(*args, **kwargs)
         self.fields['site_packages'].help_text = ''
-        if self.request.user.is_superuser:
+        if is_superuser_in_admin(self.request):
             user_sites = SeoSite.objects.all()
         else:
             kwargs = {'business_units__company': self.company}
@@ -299,8 +297,7 @@ class SitePackageForm(RequestForm):
 
     def __init__(self, *args, **kwargs):
         super(SitePackageForm, self).__init__(*args, **kwargs)
-
-        if not self.request.user.is_superuser:
+        if not is_superuser_in_admin(self.request):
             # Limit a user's access to only sites they own.
             self.fields['sites'].queryset = self.request.user.get_sites()
 
@@ -319,7 +316,7 @@ class ProductForm(RequestForm):
         css = {
             'all': ('postajob.157-16.css', )
         }
-        js = ('postajob.153-05.js', )
+        js = ('postajob.158-18.js', )
 
     job_limit_choices = [('unlimited', "Unlimited"),
                          ('specific', 'A Specific Number'), ]
@@ -330,22 +327,15 @@ class ProductForm(RequestForm):
 
     def __init__(self, *args, **kwargs):
         super(ProductForm, self).__init__(*args, **kwargs)
-        if not self.request.user.is_superuser:
+        if not is_superuser_in_admin(self.request):
             # Update querysets based on what the user should have
             # access to.
-            user_companies = self.request.user.get_companies()
-            if not self.request.path.startswith('/admin'):
-                # Owner. Based on myjobs_company cookie.
-                self.fields['owner'].widget = HiddenInput()
-                self.initial['owner'] = self.company
+            self.fields['owner'].widget = HiddenInput()
+            self.initial['owner'] = self.company
 
-                self.fields['package'].queryset = \
-                    Package.objects.user_available().filter_company([self.company])
-            else:
-                # Owner
-                self.fields['owner'].queryset = user_companies
-                self.fields['package'].queryset = \
-                    Package.objects.user_available().filter_company(user_companies)
+            packages = Package.objects.user_available()
+            packages = packages.filter_company([self.company])
+            self.fields['package'].queryset = packages
 
         if self.instance.pk and self.instance.num_jobs_allowed != 0:
             self.initial['job_limit'] = 'specific'
@@ -354,7 +344,7 @@ class ProductForm(RequestForm):
         if (not profile or not
                 (profile.authorize_net_login and
                  profile.authorize_net_transaction_key)):
-            if self.request.user.is_superuser:
+            if is_superuser_in_admin(self.request):
                 # Superusers should know better than to break things
                 self.fields["cost"].help_text = ("This member needs to "
                                                  "have added Authorize.net "
@@ -422,30 +412,13 @@ class ProductGroupingForm(RequestForm):
     def __init__(self, *args, **kwargs):
         super(ProductGroupingForm, self).__init__(*args, **kwargs)
 
-        if not self.request.user.is_superuser:
-            # Update querysets based on what the user should have
-            # access to.
-            user_companies = self.request.user.get_companies()
-            if self.request.path.startswith('/admin'):
-                # Products
-                kwargs = {'owner__admins': self.request.user}
-                self.fields['products'].queryset = \
-                    self.fields['products'].queryset.filter(**kwargs)
+        if not is_superuser_in_admin(self.request):
+            kwargs = {'owner': self.company}
+            self.fields['products'].queryset = \
+                self.fields['products'].queryset.filter(**kwargs)
 
-                # Owner
-                self.fields['owner'].queryset = user_companies
-
-            # If they're not in the admin they should only be able to work
-            # with the current company.
-            else:
-                # Products
-                kwargs = {'owner': self.company}
-                self.fields['products'].queryset = \
-                    self.fields['products'].queryset.filter(**kwargs)
-
-                # Owner
-                self.initial['owner'] = self.company
-                self.fields['owner'].widget = HiddenInput()
+            self.initial['owner'] = self.company
+            self.fields['owner'].widget = HiddenInput()
 
     def save(self, commit=True):
         products = self.cleaned_data.pop('products')
@@ -462,15 +435,20 @@ class ProductGroupingForm(RequestForm):
         return instance
 
 
-def make_company_from_purchased_product(product_form_instance):
-    cleaned_data = product_form_instance.cleaned_data
+def make_company_from_form(form_instance):
+    """
+    Makes a Company, CompanyUser, and CompanyProfile from a form instance.
+    Form instance must have a new company_name in form_instance.cleaned_data.
+    """
+
+    cleaned_data = form_instance.cleaned_data
     company_name = cleaned_data.get('company_name')
-    product_form_instance.company = Company.objects.create(name=company_name,
-                                                           user_created=True)
-    cu = CompanyUser.objects.create(user=product_form_instance.request.user,
-                                    company=product_form_instance.company)
+    form_instance.company = Company.objects.create(name=company_name,
+                                                   user_created=True)
+    cu = CompanyUser.objects.create(user=form_instance.request.user,
+                                    company=form_instance.company)
     profile = CompanyProfile.objects.create(
-        company=product_form_instance.company,
+        company=form_instance.company,
         address_line_one=cleaned_data.get('address_line_one'),
         address_line_two=cleaned_data.get('address_line_two'),
         city=cleaned_data.get('city'),
@@ -478,7 +456,8 @@ def make_company_from_purchased_product(product_form_instance):
         state=cleaned_data.get('state'),
         zipcode=cleaned_data.get('zipcode'),
     )
-    profile.customer_of.add(product_form_instance.product.owner)
+    if hasattr(form_instance, 'product'):
+        profile.customer_of.add(form_instance.product.owner)
     profile.save()
     cu.make_purchased_microsite_admin()
 
@@ -491,7 +470,7 @@ class PurchasedProductNoPurchaseForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.153-10.css', )
+            'all': ('postajob.158-18.css', )
         }
 
     address_line_one = CharField(label='Address Line One')
@@ -521,7 +500,7 @@ class PurchasedProductNoPurchaseForm(RequestForm):
 
     def save(self, commit=True):
         if not self.company:
-            make_company_from_purchased_product(self)
+            make_company_from_form(self)
 
         invoice = Invoice.objects.create(
             address_line_one=self.cleaned_data.get('address_line_one'),
@@ -624,7 +603,7 @@ class PurchasedProductForm(RequestForm):
 
     def save(self, commit=True):
         if not self.company:
-            make_company_from_purchased_product(self)
+            make_company_from_form(self)
 
         invoice = Invoice.objects.create(
             address_line_one=self.cleaned_data.get('address_line_one'),
@@ -674,7 +653,7 @@ class OfflinePurchaseForm(RequestForm):
         css = {
             'all': ('postajob.157-16.css', )
         }
-        js = ('postajob.153-05.js', )
+        js = ('postajob.158-18.js', )
 
     def __init__(self, *args, **kwargs):
         super(OfflinePurchaseForm, self).__init__(*args, **kwargs)
@@ -747,6 +726,26 @@ class OfflinePurchaseRedemptionForm(RequestForm):
 
     redemption_id = CharField(label='Redemption ID')
 
+    def __init__(self, *args, **kwargs):
+        super(OfflinePurchaseRedemptionForm, self).__init__(*args, **kwargs)
+        if not self.company:
+            self.fields['company_name'] = CharField(label='Company Name')
+            self.fields['address_line_one'] = CharField(label='Address Line One')
+            self.fields['address_line_two'] = CharField(label='Address Line Two',
+                                                        required=False)
+            self.fields['city'] = CharField(label='City')
+            self.fields['state'] = CharField(label='State')
+            self.fields['country'] = CharField(label='Country')
+            self.fields['zipcode'] = CharField(label='Zip Code')
+
+    def clean_company_name(self):
+        company_name = self.cleaned_data.get('company_name')
+        msg = clean_company_name(company_name, None)
+        if msg:
+            self._errors['company_name'] = self.error_class([msg])
+            raise ValidationError(msg)
+        return company_name
+
     def clean_redemption_id(self):
         redemption_id = self.cleaned_data.get('redemption_id')
         offline_purchase = get_object_or_none(OfflinePurchase,
@@ -759,6 +758,9 @@ class OfflinePurchaseRedemptionForm(RequestForm):
         return offline_purchase
 
     def save(self, commit=True):
+        if not self.company:
+            make_company_from_form(self)
+
         self.instance = self.cleaned_data.get('redemption_id')
         self.instance.redeemed_by = CompanyUser.objects.get(
             user=self.request.user, company=self.company)

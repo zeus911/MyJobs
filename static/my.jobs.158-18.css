@@ -221,11 +221,27 @@ h1 > small > a:hover {
     position: relative;
 }
 
+.product-card.tag {
+    width: 31%;
+    margin: 0 1.5% 0 1.5%;
+    display: inline-block;
+    padding: 15px 10px;
+}
+
+.product-card.muted {
+    color: #777;
+}
+
+.product-card.left-gutter {
+    padding-left: 50px;
+    min-height: 80px;
+}
+
 .product-card + .product-card {
     border-top: 0;
 }
 
-.product-card:not(.not-clickable):hover {
+.product-card:not(.no-highlight):hover {
     background: #D5FACF;
     cursor: pointer;
 }
@@ -233,6 +249,10 @@ h1 > small > a:hover {
 .product-card .big-title {
     font-size: 1.3em;
     font-weight: 700;
+}
+
+.product-card .big-title .label {
+    vertical-align: middle;
 }
 
 .product-card .sub-title {
@@ -265,11 +285,21 @@ h1 > small > a:hover {
     bottom: 15px;
 }
 
-.product-card.tag {
-    width: 31%;
-    margin: 0 1.5% 0 1.5%;
-    display: inline-block;
-    padding: 15px 10px;
+.product-card .product-group-order a {
+    right: initial;
+    bottom: initial;
+    padding: 3px 8px;
+}
+
+.product-card .product-group-order a:first-of-type {
+    left: 10px;
+    top: 15px;
+}
+
+.product-card .product-group-order a:last-of-type {
+    left: 10px;
+    top: 46px;
+    margin-left: 0;
 }
 
 #tag-holder > div.product-card.tag:nth-of-type(3n + 4),
@@ -335,6 +365,12 @@ h1 > small > a:hover {
 .partner-sort label {
     font-weight: 700;
     color: #5e6c82;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+.sidebar label:first-of-type {
+    margin-top: 0;
 }
 
 .sidebar input {
@@ -566,6 +602,10 @@ h1 > small > a:hover {
     border-top: 0;
 }
 
+.wrapper-footer a {
+    text-decoration: underline;
+}
+
 .prm-no-partner .span4 {
     box-sizing: border-box;
     padding: 10px;
@@ -619,6 +659,7 @@ h1 > small > a:hover {
 .prm-header > a {
     font-weight: normal;
     font-size: .8em;
+    line-height: 16px;
 }
 
 .prm-header > span + span.pull-right {
@@ -3993,4 +4034,9 @@ body.modal-open {
 .small-text {
     font-size:66%;
     font-weight:normal
+}
+
+span.helptext {
+    font-size: 0.9em;
+    font-style: italic;
 }

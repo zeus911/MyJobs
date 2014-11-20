@@ -4,7 +4,7 @@ from django.db.models.loading import cache as model_cache
 from django.views.generic import RedirectView
 
 from seo.views.search_views import BusinessUnitAdminFilter
-
+from registration import views as registration_views
 
 # This is a bit of code pulled from a Django TRAC ticket describing a problem
 # I was seeing when working with the inline model forms:
@@ -115,3 +115,15 @@ urlpatterns += patterns(
     'myjobs.views',
     url(r'^edit/$', 'edit_account', name='edit_account'),
 )
+
+urlpatterns += patterns(
+    'registration.views',
+    url(r'^login', registration_views.DseoLogin.as_view(), name='login'),
+)
+
+# This feature does not exist...
+urlpatterns += patterns(
+    '',
+    url(r'^message/', include('mymessages.urls'))
+)
+

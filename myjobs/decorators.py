@@ -43,7 +43,7 @@ def user_is_allowed(model=None, pk_name=None, pass_user=False):
                 path = request.path
                 qs = request.META.get('QUERY_STRING')
                 next_url = "%s?%s" % (path, qs) if qs else path
-                return HttpResponseRedirect(reverse('home')+'?next='+next_url)
+                return HttpResponseRedirect(reverse('login')+'?next='+next_url)
 
             if email:
                 user = User.objects.get_email_owner(email)
@@ -51,13 +51,13 @@ def user_is_allowed(model=None, pk_name=None, pass_user=False):
                     # :verify-email: was provided but no user exists
                     # Log out the user and redirect to login page
                     logout(request)
-                    return HttpResponseRedirect(reverse('home'))
+                    return HttpResponseRedirect(reverse('login'))
             elif guid:
                 try:
                     user = User.objects.get(user_guid=guid)
                 except User.DoesNotExist:
                     logout(request)
-                    return HttpResponseRedirect(reverse('home'))
+                    return HttpResponseRedirect(reverse('login'))
 
             if not request.user.is_anonymous():
                 if user:
@@ -66,7 +66,7 @@ def user_is_allowed(model=None, pk_name=None, pass_user=False):
                         # provided email address, log out the user and
                         # redirect to login page
                         logout(request)
-                        return HttpResponseRedirect(reverse('home'))
+                        return HttpResponseRedirect(reverse('login'))
                 else:
                     # If user was not set previously, set it to the currently
                     # logged in user.

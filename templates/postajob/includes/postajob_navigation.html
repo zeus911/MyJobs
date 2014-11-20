@@ -1,23 +1,15 @@
-<div class="formBox" id="moduleBank">
-    <h4>Navigation</h4>
-    <table class="table table-bordered tables-striped">
-        <tr class="profile-section">
-            <td><a href="{% url 'companyprofile_add' %}">Company Profile</a></td>
-        </tr>
-        <tr class="profile-section">
-            <td><a href="{% url 'productgrouping' %}">Groupings</a></td>
-        </tr>
-        <tr class="profile-section">
-            <td><a href="{% url 'offlinepurchase' %}">Offline Purchases</a></td>
-        </tr>
-        <tr class="profile-section">
-            <td><a href="{% url 'product' %}">Products</a></td>
-        </tr>
-        <tr class="profile-section">
-            <td><a href="{% url 'purchasedproduct' %}">Purchased Products</a></td>
-        </tr>
-        <tr class="profile-section">
-            <td><a href="{% url 'request' %}">Requests</a></td>
-        </tr>
-    </table>
+<div class="sidebar">
+    <div class="navigation">
+        <h2 class="top">Navigation</h2>
+        {% if primary_btn %}
+            <a class="btn primary" href="{{url_name}}">{{ btn_name }}</a>
+        {% endif %}
+        <a class="btn" href="{% url 'blocked_user_management' %}">Blocked Users</a>
+        <a class="btn" href="{% url 'companyprofile_add' %}">Company Profile</a>
+        <a class="btn" href="{% url 'productgrouping' %}">Groupings</a>
+        <a class="btn" href="{% url 'offlinepurchase' %}">Offline Purchases</a>
+        <a class="btn" href="{% url 'product' %}">Products</a>
+        <a class="btn" href="{% url 'purchasedproduct' %}">Purchased Products</a>
+        <a class="btn" href="{% url 'request' %}">Requests</a>
+    </div>
 </div>

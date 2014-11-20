@@ -309,6 +309,7 @@ class CustomFacet(BaseSavedSearch):
         self.saved_querystring = sqs.query.build_query()
         super(CustomFacet, self).save()
 
+
     def _attr_dict(self):
         # Any new additions to the custom field that will be searched on must
         # be added to the return value of this method.
@@ -666,6 +667,7 @@ class Company(models.Model):
         verbose_name = 'Company'
         verbose_name_plural = 'Companies'
         ordering = ['name']
+        unique_together = ('name', 'user_created')
 
     def save(self, *args, **kwargs):
         exists = str(self.pk).isdigit()
@@ -696,7 +698,7 @@ class Company(models.Model):
                                                             flat=True))
 
     admins = models.ManyToManyField(User, through='CompanyUser')
-    name = models.CharField('Name', max_length=200, unique=True)
+    name = models.CharField('Name', max_length=200)
     company_slug = models.SlugField('Company Slug', max_length=200, null=True,
                                     blank=True)
     job_source_ids = models.ManyToManyField('BusinessUnit')

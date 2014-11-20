@@ -16,11 +16,11 @@ Admin Overview
 {% block postajob_content %}
 <div class="row">
     <div class="span8">
-        {% include "postajob/includes/product_formBox.html" with formBox_title="Recent Products" formBox_footer=True %}
-        {% include "postajob/includes/productgroup_formBox.html" with formBox_title="Top Groupings" order=False formBox_footer=True %}
-        {% include "postajob/includes/offlinepurchase_formBox.html" with formBox_title="Recent Offline Purchases" formBox_footer=True %}
-        {% include "postajob/includes/request_formBox.html" with formBox_title="Recent Requests" formBox_footer=True %}
-        {% include "postajob/includes/purchasedproduct_admin_formBox.html" with formBox_title="Recent Purchased Products" formBox_footer=True %}
+        {% include "postajob/includes/product_formBox.html" with wrapper_title="Recent Products" wrapper_footer=True %}
+        {% include "postajob/includes/productgroup_formBox.html" with wrapper_title="Top Groupings" order=False wrapper_footer=True %}
+        {% include "postajob/includes/offlinepurchase_formBox.html" with wrapper_title="Recent Offline Purchases" wrapper_footer=True %}
+        {% include "postajob/includes/request_formBox.html" with wrapper_title="Recent Requests" wrapper_footer=True %}
+        {% include "postajob/includes/purchasedproduct_admin_formBox.html" with wrapper_title="Recent Purchased Products" wrapper_footer=True %}
     </div>
     <div class="span4">
         {% include "postajob/includes/postajob_navigation.html" %}
@@ -30,5 +30,5 @@ Admin Overview
 
 
 {% block extra-js %}
-    <script src="{{ STATIC_URL }}postajob.153-05.js"></script>
+    <script src="{{ STATIC_URL }}postajob.1580-18.js"></script>
 {% endblock %}

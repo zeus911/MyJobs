@@ -5,7 +5,7 @@ if(typeof jQuery == 'undefined') {
     document.getElementsByTagName('head')[0].appendChild(script);
 }
 
-window.onload = function(){
+var load_event = function(){
     update_apply_fields();
     update_site_fields();
     update_job_limit_fields();
@@ -44,7 +44,27 @@ window.onload = function(){
         var id_array = $(this).attr('id').split("-");
         resend_invoice(id_array[id_array.length - 1]);
     });
+
+    $.each(["#deny-reason", "#block-reason"], function(index, value) {
+        console.log(index);
+        console.log(value);
+        $(value).on("keyup", function() {
+            var next_button = $(value + "~button");
+            if ($(this).val() == "") {
+                next_button.attr("disabled", "disabled");
+            } else {
+                next_button.removeAttr("disabled");
+            }
+        });
+    });
 };
+
+if(window.addEventListener) {
+    window.addEventListener('load', load_event, false);
+} else if (window.attachEvent) {
+    // becaue IE is awesome
+    window.attachEvent('onload', load_event);
+}
 
 
 function hide_field(field_name) {

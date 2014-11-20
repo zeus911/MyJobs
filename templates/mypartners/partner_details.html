@@ -74,7 +74,7 @@
                     {% include "mypartners/includes/contact_card.html" %}
                     {% endfor %}
                 {% else %}
-                    <div class="product-card not-clickable">
+                    <div class="product-card no-highlight">
                         There are no contacts for {{partner.name}}.
                     </div>
                     <div class="partner-pagination">
@@ -93,7 +93,7 @@
 <script src="{{ STATIC_URL }}prm.157-23.js{{ gz }}"></script>
 <script type="text/javascript">
 $(document).ready(function() {
-    $(".product-card:not(.not-clickable)").on("click", function() {
+    $(".product-card:not(.no-highlight)").on("click", function() {
        window.location = $(this).find("a").attr("href");
     });
 });

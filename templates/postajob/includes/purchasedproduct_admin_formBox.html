@@ -1,22 +1,12 @@
-<div class="formBox no-padding">
-    <h4>{{ formBox_title }}</h4>
-    <table id="product-table-{{ company.id }}" class="table table-bordered table-striped">
-        {% if purchased_products %}
-            <thead>
-            <tr>
-                <td>Product</td>
-                <td>Purchaser</td>
-                <td>Jobs Remaining</td>
-                <td></td>
-            </tr>
-            </thead>
-        {% endif %}
-        {% include "postajob/includes/purchasedproduct_admin_rows.html" %}
-    </table>
-    {% if formBox_footer %}
-        <div class="formBox-footer">
-            <a href="{% url 'purchasedproduct' %}" class="btn pull-right">View Purchased Products</a>
-            <div class="clear"></div>
-        </div>
+<div class="card-wrapper">
+    <div class="wrapper-header">
+        <h4>{{ wrapper_title }}</h4>
+    </div>
+    {% include "postajob/includes/purchasedproduct_admin_rows.html" %}
+    {% if wrapper_footer %}
+    <div class="wrapper-footer">
+        <a class="pull-right" href="{% url 'purchasedproduct' %}">View Purchased Products</a>
+        <div class="clearfix"></div>
+    </div>
     {% endif %}
 </div>

@@ -1,23 +1,12 @@
-<div class="formBox no-padding">
-    <h4>{{ formBox_title }}</h4>
-    <table id="product-table-{{ company.id }}" class="table table-bordered table-striped">
-        {% if offline_purchases %}
-        <thead>
-        <tr>
-            <td>Products</td>
-            <td>Redemption Code</td>
-            <td>Redeemed By</td>
-            <td>Redeemed On</td>
-            <td></td>
-        </tr>
-        </thead>
-        {% endif %}
-        {% include "postajob/includes/offlinepurchase_rows.html" %}
-    </table>
-    {% if formBox_footer %}
-    <div class="formBox-footer">
-        <a href="{% url 'offlinepurchase' %}" class="btn pull-right">Manage Offline Purchases</a>
-        <div class="clear"></div>
+<div class="card-wrapper">
+    <div class="wrapper-header">
+        <h4>{{ wrapper_title }}</h4>
+    </div>
+    {% include "postajob/includes/offlinepurchase_rows.html" %}
+    {% if wrapper_footer %}
+    <div class="wrapper-footer">
+        <a class="pull-right" href="{% url 'offlinepurchase' %}">Manage Offline Purchases</a>
+        <div class="clearfix"></div>
     </div>
     {% endif %}
 </div>
