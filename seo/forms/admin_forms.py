@@ -145,12 +145,6 @@ class SeoSiteReverseForm(forms.ModelForm):
         required=False,
         widget=sites_widget
     )
-    job_source_ids_widget = FSM('Job Sources', reverse_lazy('buid_admin_fsm'),
-                                lazy=True)
-    job_source_ids = MyModelMultipleChoiceField(BusinessUnit.objects.all(),
-                                                my_model=BusinessUnit,
-                                                required=False,
-                                                widget=job_source_ids_widget)
 
     def save(self, commit=True):
         added_sites = set()
@@ -579,6 +573,12 @@ class BusinessUnitForm(SeoSiteReverseForm):
 
         
 class CompanyForm(SeoSiteReverseForm):    
+    job_source_ids_widget = FSM('Job Sources', reverse_lazy('buid_admin_fsm'),
+                                lazy=True)
+    job_source_ids = MyModelMultipleChoiceField(BusinessUnit.objects.all(),
+                                                my_model=BusinessUnit,
+                                                required=False,
+                                                widget=job_source_ids_widget)
     class Meta:
         model = Company
         
