@@ -42,7 +42,7 @@
     </div>
     {% endif %}
     {% for record in records %}
-        {% include "mypartners/includes/record_card.html" with index=forloop.counter %}
+        {% include "mypartners/includes/record_card.html" with index=forloop.counter page=records.number %}
     {% endfor %}
     {% if records.has_previous or records.has_next %}
     <div class="partner-pagination">

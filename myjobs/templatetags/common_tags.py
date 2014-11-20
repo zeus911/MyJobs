@@ -190,6 +190,25 @@ def to_string(value):
 def get_attr(obj, attr):
     return obj.get(attr)
 
+@register.simple_tag
+def paginated_index(index, page, per_page=None):
+    """
+    Given an index, page number, and number of items per page, returns a proper
+    index.
+
+    inputs:
+    :index: The index you are converting from. Should be less than `per_page`.
+    :page: The page for which you want to calculate the new index
+    :per_page: Number of records per page
+
+    outputs:
+    New index which takes pagination into consideration.
+    """
+
+    per_page = int(per_page or 10)
+    page = int(page or 1) - 1
+    index = int(index or 1)
+    return page * per_page + index
 
 @register.assignment_tag(takes_context=True)
 def gz(context):
