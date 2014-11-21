@@ -17,7 +17,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.serializers import serialize
 from django.core.files.storage import default_storage
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
@@ -61,8 +61,20 @@ def prm(request):
 
     """
     company = get_company_or_404(request)
-    partners = filter_partners(request)
-    paginator = add_pagination(request, partners) if partners else None
+
+    query = request.GET.copy()
+    query.pop('page', None)
+    query.pop('per_page', None)
+
+    if prm.cache['request'] == query:
+        paginator = add_pagination(request, prm.cache['partners'])
+    else:
+        partners = filter_partners(request)
+        paginator = add_pagination(request, partners) if partners else None
+        prm.cache['request'] = query
+        prm.cache['partners'] = partners
+
+    tags = [partner.tags.all() for partner in paginator]
 
     if request.is_ajax():
         ctx = {
@@ -77,7 +89,7 @@ def prm(request):
         return response
 
     ctx = {
-        'has_partners': True if partners else False,
+        'has_partners': True if paginator else False,
         'partners': paginator,
         'company': company,
         'user': request.user,
@@ -87,6 +99,8 @@ def prm(request):
 
     return render_to_response('mypartners/prm.html', ctx,
                               RequestContext(request))
+# cache calls to prm view function to save us the trouble of calling queries
+prm.cache = {'request': None, 'partners': None}
 
 
 @company_has_access('prm_access')

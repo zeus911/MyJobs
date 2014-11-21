@@ -9,6 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
 from django.core.urlresolvers import reverse
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
@@ -216,15 +217,6 @@ class Partner(models.Model):
             records = records.order_by('-date_time')
 
         return records
-
-    def get_contact_tags(self):
-        return chain(*[c.tags.all() for c in self.contact_set.all()])
-
-    def get_all_tags(self):
-        tags = set(self.tags.all())
-        tags.update(self.get_contact_tags())
-        return tags
-
 
 class PartnerLibrary(models.Model):
     """
