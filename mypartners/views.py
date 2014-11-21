@@ -74,8 +74,6 @@ def prm(request):
         prm.cache['request'] = query
         prm.cache['partners'] = partners
 
-    tags = [partner.tags.all() for partner in paginator]
-
     if request.is_ajax():
         ctx = {
             'partners': paginator,
@@ -381,6 +379,8 @@ def prm_overview(request):
 @company_has_access('prm_access')
 def partner_tagging(request):
     company = get_company_or_404(request)
+
+    tags = Tag.objects.for_company(company.id).order_by('name')
 
     ctx = {'company': company,
            'tags': tags}
