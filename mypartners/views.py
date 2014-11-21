@@ -17,7 +17,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.serializers import serialize
 from django.core.files.storage import default_storage
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
