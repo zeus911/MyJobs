@@ -382,8 +382,6 @@ def prm_overview(request):
 def partner_tagging(request):
     company = get_company_or_404(request)
 
-    tags = Tag.objects.for_company(company.id).order_by('name')
-
     ctx = {'company': company,
            'tags': tags}
 
