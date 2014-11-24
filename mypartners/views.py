@@ -62,17 +62,8 @@ def prm(request):
     """
     company = get_company_or_404(request)
 
-    query = request.GET.copy()
-    query.pop('page', None)
-    query.pop('per_page', None)
-
-    if prm.cache['request'] == query:
-        paginator = add_pagination(request, prm.cache['partners'])
-    else:
-        partners = filter_partners(request)
-        paginator = add_pagination(request, partners) if partners else None
-        prm.cache['request'] = query
-        prm.cache['partners'] = partners
+    partners = filter_partners(request)
+    paginator = add_pagination(request, partners) if partners else None
 
     if request.is_ajax():
         ctx = {
@@ -97,8 +88,6 @@ def prm(request):
 
     return render_to_response('mypartners/prm.html', ctx,
                               RequestContext(request))
-# cache calls to prm view function to save us the trouble of calling queries
-prm.cache = {'request': None, 'partners': None}
 
 
 @company_has_access('prm_access')
