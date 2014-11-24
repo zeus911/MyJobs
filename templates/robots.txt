@@ -7,4 +7,4 @@ Disallow: /files/
 Disallow: /login/
 Disallow: /logout/
 Disallow: /style/
-Disallow: /feed/
+Disallow: /*feed/
