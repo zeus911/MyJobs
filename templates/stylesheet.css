@@ -1282,10 +1282,7 @@ input[title="Submit Search"] {
     border-bottom: none !important;
     display: inline;
 }
-.direct_highlightedText {
-    border-bottom: none !important;
-    display: inline !important;
-}
+
 .direct-search-filter-block {
     margin-top: 10px;
 }
