@@ -493,7 +493,7 @@ def filter_partners(request, partner_library=False):
             null_locations = (Q(contact__locations__state='') |
                               Q(contact__locations__isnull=True))
 
-            with_locations = partners = partners.exclude(
+            with_locations = partners.exclude(
                 null_locations).order_by(
                     '%scontact__locations__state' % sort_order,
                     '%scontact__locations__city' % sort_order,
