@@ -291,7 +291,8 @@ class SavedSearchDigest(models.Model):
             search_list.append((search, items, count))
 
         saved_searches = [(search, items, count)
-                          for search, items, count in search_list if items]
+                          for search, items, count in search_list
+                          if (items or hasattr(search, 'partnersavedsearch'))]
 
         if self.user.can_receive_myjobs_email() and saved_searches:
             subject = _('Your Daily Saved Search Digest')
