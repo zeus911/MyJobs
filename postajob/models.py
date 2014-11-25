@@ -739,6 +739,9 @@ class CompanyProfile(models.Model):
     customer_of = models.ManyToManyField('seo.Company', null=True,
                                          blank=True, related_name='customer')
 
+    blocked_users = models.ManyToManyField('myjobs.User',
+                                           blank=True)
+
 
 class Request(BaseModel):
     FILTER_BY_SITES_KWARGS = 'related_sites__in'
@@ -749,6 +752,8 @@ class Request(BaseModel):
     made_on = models.DateField(auto_now_add=True)
     owner = models.ForeignKey('seo.Company')
     related_sites = models.ManyToManyField('seo.SeoSite', null=True)
+    deny_reason = models.TextField(_('Reason for denying this request'),
+                                   blank=True)
 
     def template(self):
         model = self.content_type.model

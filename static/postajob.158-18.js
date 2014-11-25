@@ -44,6 +44,19 @@ var load_event = function(){
         var id_array = $(this).attr('id').split("-");
         resend_invoice(id_array[id_array.length - 1]);
     });
+
+    $.each(["#deny-reason", "#block-reason"], function(index, value) {
+        console.log(index);
+        console.log(value);
+        $(value).on("keyup", function() {
+            var next_button = $(value + "~button");
+            if ($(this).val() == "") {
+                next_button.attr("disabled", "disabled");
+            } else {
+                next_button.removeAttr("disabled");
+            }
+        });
+    });
 };
 
 if(window.addEventListener) {
