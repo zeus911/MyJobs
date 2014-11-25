@@ -66,9 +66,17 @@ class SavedSearchModelsTests(MyJobsBase):
         send_search_digests()
         self.assertEqual(len(mail.outbox), 0)
 
-        SavedSearchFactory(user=self.user)
+        search1 = SavedSearchFactory(user=self.user)
+        self.assertIsNone(SavedSearch.objects.get(pk=search1.pk).last_sent)
         send_search_digests()
+        self.assertIsNotNone(SavedSearch.objects.get(pk=search1.pk).last_sent)
         self.assertEqual(len(mail.outbox), 1)
+
+        search2 = SavedSearchFactory(user=self.user)
+        self.assertIsNone(SavedSearch.objects.get(pk=search2.pk).last_sent)
+        send_search_digests()
+        self.assertIsNotNone(SavedSearch.objects.get(pk=search2.pk).last_sent)
+        self.assertEqual(len(mail.outbox), 2)
 
         email = mail.outbox.pop()
         self.assertEqual(email.from_email, settings.SAVED_SEARCH_EMAIL)
