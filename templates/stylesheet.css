@@ -46,7 +46,7 @@ li.ui-menu-item {
 
 .ui-menu-item a, .ui-menu-item-alternate a {
     cursor: pointer;
-    margin: 0px;
+    margin: 0;
     display: block;
     width: 100%;
     height: 100%;
@@ -177,54 +177,59 @@ li .direct_joblocation {
 }
 
 a.direct_optionsMore {
-    color:#{{css.primaryColor}} !important;
-    font-weight:bold !important;
+    color: #{{css.primaryColor}} !important;
+    font-weight: bold !important;
     margin-right: 6px;
-    padding:0px 16px 0 8px;
-	background:url("{{ STATIC_URL }}plus.png") right no-repeat transparent !important; }
+    padding: 0 16px 0 8px;
+	background: url("{{ STATIC_URL }}plus.png") right no-repeat transparent !important;
+}
 
 a.direct_optionsLess {
     display:none;
-    color:#{{css.primaryColor}} !important;
-    font-weight:bold;
-    margin-right:6px;
-    padding:0px 16px 0 8px;
-	background:url("{{ STATIC_URL }}minus.png") right no-repeat transparent !important; }
+    color: #{{css.primaryColor}} !important;
+    font-weight: bold;
+    margin-right: 6px;
+    padding: 0 16px 0 8px;
+	background:url("{{ STATIC_URL }}minus.png") right no-repeat transparent !important;
+}
 
 a.direct_optionsMore:hover, a.direct_optionsLess:hover {
-        color:#{{css.fontColor}}; }
+        color:#{{css.fontColor}};
+}
 
 #direct_controlBar {
     background-color:#f2f2f2;
     margin-bottom:4px;
     padding:4px 0;  
-    overflow: auto; }
+    overflow: auto;
+}
 
 #direct_selected {
     background-color:#{{css.primaryColor}};
     margin-left:6px;
     padding:2px 8px; 
-    float:left; }
+    float: left;
+}
 
 #direct_searchOptions li a,
 #direct-whereBox a {
     background: url("{{ STATIC_URL }}remove.png") 2px 2px no-repeat #{{css.primaryColor}};
     color:#fff;
     font-weight:bold;
-    padding:2px 13px 1px 18px;
+    padding: 2px 13px 1px 18px;
     display: inline-block;
 }
 
 #direct_searchOptions li a:hover,
 #direct-whereBox a:hover {
     background: url("{{ STATIC_URL }}remove.png") 2px 2px no-repeat #{{css.fontColor}};
-    color:#fff;
-    font-weight:bold;
-    padding:2px 13px 1px 18px;
+    color: #fff;
+    font-weight: bold;
+    padding: 2px 13px 1px 18px;
 }    
     
 #direct_searchOptions li {
-    margin-bottom:4px;
+    margin-bottom: 4px;
 }
 
 #direct_alpha,
@@ -234,7 +239,7 @@ a.direct_optionsMore:hover, a.direct_optionsLess:hover {
 	font-weight: bold;
     float: right;
 	border-left: #fff solid 4px;
-	padding:0px 16px 0 8px;
+	padding: 0 16px 0 8px;
 }
 
 #direct_alpha,
@@ -244,7 +249,7 @@ a.direct_optionsMore:hover, a.direct_optionsLess:hover {
 	font-weight: bold;
     float: right;
 	border-left: #fff solid 4px;
-	padding:0px 16px 0 8px;
+	padding:0 16px 0 8px;
 }
 
 #direct_alpha, #direct_numeric{
@@ -331,7 +336,7 @@ body {
 	width: 900px;
 	margin: 0 auto;
 	background-color: #FFF;
-	border: 0px solid #333;
+	border: 0 solid #333;
 	padding: 1px 30px; }
  
 #direct_navigation { padding: 18px 0 0 0; }
@@ -375,7 +380,7 @@ body {
  
 #direct_listingDiv {
 	margin: 18px 0 0;
-	padding: 0 14px 0 0px;
+	padding: 0 14px 0 0;
 	width: 520px;
 	float: left; }
 #listing-microsite-carousel {
@@ -436,7 +441,7 @@ h3.direct_highlightedText {
 }
 #direct_disambiguationDiv h3 span{
     display: inline;
-    border-bottom: 0px;
+    border-bottom: 0;
 } 
 #direct_clearDiv { 
 	clear: both; 
@@ -453,9 +458,7 @@ h3.direct_highlightedText {
 #direct_colophon a:hover {
 	color: #{{css.primaryColor}} !important;
 	font-weight: bold;
-	background: none; }
- 
-.direct_offsiteTileDiv {
+	background: none;
 }
 
 #direct_colophon div.direct_offsiteContainer:hover {
@@ -480,7 +483,7 @@ h3.direct_highlightedText {
 }
 
 #direct_deBadgeContainer {
-	margin-right: 0px;
+	margin-right: 0;
 }
 
 #direct_deBadge {
@@ -489,7 +492,7 @@ h3.direct_highlightedText {
 	background-image: url("{{ STATIC_URL }}de-badge.png");
 	background-repeat: no-repeat;
 	background-position: center center;
-	margin-right:0px;
+	margin-right:0;
 }
 
 #direct_deBadge {
@@ -514,7 +517,7 @@ div.direct_offsiteHoverDiv {
 	border: 2px solid #{{css.primaryColor}};
 	color: #{{css.primaryColor}} !important;
  	border-bottom: none;
-        display:none;
+    display:none;
 	position:absolute;
 	margin-top:-93px;
 	width:218px;
@@ -557,7 +560,6 @@ div.direct_offsiteHoverDiv div {
 	background-image: url("{{ STATIC_URL }}company-social-icon.png");
 	background-repeat: no-repeat;
 	background-position: 10px 50%;
-	
 }
 
 /*pls-tailleft modifies arrow from Google Plus bubble*/
@@ -573,9 +575,9 @@ img.pls-dropTR {
 #addThis {
 	float: left;
 	padding: 12px 0 0 42px;
-	text-align: center; }
- 
-	#addThis a:hover { background: none; }
+	text-align: center;
+}
+#addThis a:hover { background: none; }
 
 /* details.html page */
 #direct_jobDescriptionText p {
@@ -636,7 +638,7 @@ img.pls-dropTR {
 
 #direct_companyModule ul {
     padding: 0;
-    margin: 0px;
+    margin: 0;
 }
 #direct_companyModule li {
     padding-top: 4px;
@@ -657,9 +659,9 @@ img.pls-dropTR {
 
 #direct_shareDiv {
 	border-top: 1px solid #999;
-	margin: 60px auto 0px;
+	margin: 60px auto 0;
 	width: 300px;
-	padding: 12px 0px;
+	padding: 12px 0;
 	color: #{{css.fontColor}};
 	font-size: 1.6em;
 	text-align: center; 
@@ -685,7 +687,7 @@ img.pls-dropTR {
 }
 #direct_disambiguationDiv h3 span{
     display: inline;
-    border-bottom: 0px;
+    border-bottom: 0;
 } 
 
 /* FROM INLINE HEADER CSS ON CSS.HTML */
@@ -767,7 +769,6 @@ img.pls-dropTR {
 	width: 760px;
 
 	/* custom decorations */
-	border:1px solid #ccc;
 	border: none;
 }
 
@@ -821,7 +822,7 @@ a.browse {
 	display:block;
 	width:30px;
 	float:left;
-	margin:0px 10px;
+	margin:0 10px;
 	cursor:pointer;
 	font-size:1px;
 }
@@ -830,7 +831,7 @@ a.browse {
 a.right{
     background: url(//dn9tckvz2rpxv.cloudfront.net/img/carousel-right.png) center no-repeat; 
     clear:right; 
-    margin-right: 0px;
+    margin-right: 0;
 }
 
 a.right:hover{
@@ -848,7 +849,7 @@ a.right:active{
 a.left{ 
     background: url(//dn9tckvz2rpxv.cloudfront.net/img/carousel-left.png) center no-repeat; 
     clear:right; 
-    margin-left: 0px;
+    margin-left: 0;
 }
 
 a.left:hover{ 
@@ -922,7 +923,7 @@ a.down:active{
 
 #browsable ul {
 	list-style-type: none;
-	padding-left: 0px;
+	padding-left: 0;
 	width: 237px;
 	margin-right: 20px;
 }
@@ -954,7 +955,7 @@ a.down:active{
 }
 
 #direct_container .row .searchTab{
-    margin: 0px;
+    margin: 0;
     float: left;
 	padding-right: 14px;
 }
@@ -1091,7 +1092,7 @@ a.down:active{
 
 #direct_container .searchFooter span.companyLink{
     font-weight: bold;
-    padding-right: 0px;
+    padding-right: 0;
     padding-top: 1px;
     color: #000;
 }
@@ -1229,7 +1230,7 @@ b.ac-highlight{
     width: auto;
 } 
 .row{
-    margin-left: 0px;
+    margin-left: 0;
 }
 .share_links {
     /*padding-top: 7px;*//*removed temprarily until my.jobs social sharing is ready*/
@@ -1312,11 +1313,11 @@ input[title="Submit Search"] {
 .direct-registration-form h3,
 .direct-login-form h3 {
     background-color: #{{css.backgroundColor}};
-border: 1px solid #d5d4d0;
-border-top-right-radius: 5px;
-border-top-left-radius: 5px;
-padding: 5px 20px;
-margin: -10px -10px 10px -10px;
+    border: 1px solid #d5d4d0;
+    border-top-right-radius: 5px;
+    border-top-left-radius: 5px;
+    padding: 5px 20px;
+    margin: -10px -10px 10px -10px;
 }
 .direct-registration-form ul.errorlist li,
 .direct-login-form ul.errorlist li{
@@ -1351,7 +1352,63 @@ margin: -10px -10px 10px -10px;
 .direct-registration-btn,
 .direct-login-btn {
     background: #{{css.primaryColor}} url("{{ STATIC_URL }}bg-gradient.png") bottom repeat-x !important;
-color: #fff !important;
-margin: 8px 0 0;
-padding: 5px 20px;
+    color: #fff !important;
+    margin: 8px 0 0;
+    padding: 5px 20px;
+}
+
+/* posting styles */
+.product-card {
+    border: 1px solid #eee;
+    border-top: none;
+    box-sizing: border-box;
+    padding: 10px 70px 10px 10px;
+    position: relative;
+    width: 100%;
+}
+
+.product-card:first-of-type {
+    border-top: 1px solid #eee;
+}
+
+.product-card .big-title {
+    color: #{{css.fontColor}};
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.product-card a.card-btn {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    background: #{{css.primaryColor}} url("{{ STATIC_URL }}bg-gradient.png") bottom repeat-x !important;
+    color: #fff !important;
+    margin: 8px 0 0;
+    padding: 5px 10px;
+}
+
+ul.product-tabs {
+    height: 24px;
+}
+
+ul.product-tabs li:first-of-type {
+    margin-left: 5px;
+}
+
+ul.product-tabs li {
+    cursor: pointer;
+    border: 1px solid #eee;
+    border-bottom: 0;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    display: inline;
+    padding: 7px 10px;
+    margin-bottom: 10px;
+    text-decoration: underline;
+}
+
+ul.product-tabs li.active {
+    font-weight: bold;
+    cursor: default;
+    text-decoration: none;
 }

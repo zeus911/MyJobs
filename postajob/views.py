@@ -58,7 +58,7 @@ def purchasedjobs_overview(request):
         'active_products': products.filter(expiration_date__gte=date.today()),
         'expired_products': products.filter(expiration_date__lt=date.today()),
     }
-    return render_to_response('postajob/purchasedjob_overview.html',
+    return render_to_response('postajob/dseo/purchasedproduct.html',
                               data, RequestContext(request))
 
 
