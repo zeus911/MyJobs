@@ -3,7 +3,7 @@
 login-username.html -- Username/password login form
 {% endcomment %}
 
-<form action="" method="post" id="login-form">
+<form action="{% url 'login' %}" method="post" id="login-form">
     <fieldset>
     {{ form.as_ul }}
     </fieldset>

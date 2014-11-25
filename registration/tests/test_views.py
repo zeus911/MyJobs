@@ -1,4 +1,5 @@
 import datetime
+from bs4 import BeautifulSoup
 
 from django.conf import settings
 from django.core import mail
@@ -59,7 +60,8 @@ class RegistrationViewTests(MyJobsBase):
     def test_anonymous_activation(self):
         """
         Test that the ``activate`` view properly handles activation
-        when the user to be activated is not currently logged in.
+        when the user to be activated is not currently logged in. The
+        page should also contain a login link.
         """
         self.client.post(reverse('auth_logout'))
         profile = ActivationProfile.objects.get(user__email=self.user.email)
@@ -68,6 +70,13 @@ class RegistrationViewTests(MyJobsBase):
                                    '?verify=%s' % self.user.user_guid)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.data['email'])
+
+        contents = BeautifulSoup(response.content)
+        bank = contents.find(id='moduleBank')
+        anchors = bank.findAll('a')
+        self.assertEqual(len(anchors), 1)
+        self.assertEqual(anchors[0].attrs['href'], '/')
+        self.assertEqual(anchors[0].text, 'Login')
 
     def test_invalid_activation(self):
         """

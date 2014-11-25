@@ -71,8 +71,6 @@ def activate(request, activation_key, invitation=False):
         logged_in = False
     activated = ActivationProfile.objects.activate_user(activation_key)
 
-    loginform = CustomAuthForm(auto_id=False)
-
     name_form = InitialNameForm(prefix="name")
     education_form = InitialEducationForm(prefix="edu")
     phone_form = InitialPhoneForm(prefix="ph")
@@ -81,7 +79,6 @@ def activate(request, activation_key, invitation=False):
 
     ctx = {'activated': activated,
            'logged_in': logged_in,
-           'loginform': loginform,
            'name_form': name_form,
            'phone_form': phone_form,
            'address_form': address_form,

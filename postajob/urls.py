@@ -45,8 +45,20 @@ urlpatterns = patterns(
         views.view_request,
         name='view_request'),
     url(r'^admin/request/approve/(?P<content_type>\d+)/(?P<pk>\d+)/$',
-        views.approve_admin_request,
+        views.process_admin_request,
+        {'approve': True,
+         'block': False},
         name='approve_admin_request'),
+    url(r'^admin/request/deny/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+        views.process_admin_request,
+        {'approve': False,
+         'block': False},
+        name='deny_admin_request'),
+    url(r'^admin/request/block/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+        views.process_admin_request,
+        {'approve': False,
+         'block': True},
+        name='block_admin_request'),
 
     # Job
     url(r'^job/add/',
@@ -147,6 +159,14 @@ urlpatterns = patterns(
     url(r'^admin/profile/update/(?P<pk>\d+)/',
         views.CompanyProfileFormView.as_view(),
         name='companyprofile_update'),
+
+    # User management
+    url(r'^admin/blocked-users/$',
+        views.blocked_user_management,
+        name='blocked_user_management'),
+    url(r'^admin/blocked-users/unblock/(?P<pk>\d+)/$',
+        views.unblock_user,
+        name='unblock_user'),
 
     url(r'^list/$', 'product_list'),
 
