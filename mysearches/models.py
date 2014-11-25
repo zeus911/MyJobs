@@ -98,7 +98,7 @@ class SavedSearch(models.Model):
 
     def get_feed_items(self, num_items=None):
         num_items = num_items or self.jobs_per_email
-        url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency)
+        url_of_feed = url_sort_options(self.feed, self.sort_by)
         url_of_feed = update_url_if_protected(url_of_feed, self.user)
         parse_feed_args = {
             'feed_url': url_of_feed,
@@ -114,8 +114,8 @@ class SavedSearch(models.Model):
 
     def send_email(self, custom_msg=None):
         items, count = self.get_feed_items()
-        if self.user.can_receive_myjobs_email() and items:
-            is_pss = hasattr(self, 'partnersavedsearch')
+        is_pss = hasattr(self, 'partnersavedsearch')
+        if self.user.can_receive_myjobs_email() and (items or is_pss):
             if is_pss:
                 extras = self.partnersavedsearch.url_extras
                 if extras:

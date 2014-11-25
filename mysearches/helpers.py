@@ -191,6 +191,9 @@ def parse_feed(feed_url, frequency='W', num_items=100, offset=0,
     feed_url += '%snum_items=%s&offset=%s' % (
         separator, str(num_items), str(offset))
 
+    if 'days_ago=' not in feed_url and last_sent is not None:
+        feed_url += '&days_ago=%s' % -last_sent_diff
+
     is_json = 'feed/json' in feed_url
     if is_json:
         items = get_json(feed_url)
@@ -267,8 +270,8 @@ def url_sort_options(feed_url, sort_by, frequency=None):
     if sort_by == "Relevance":
         query.update({'date_sort': 'False'})
 
+    if frequency:
         interval = -get_interval_from_frequency(frequency)
-
         query.update({'days_ago': interval})
 
     unparsed_feed = unparsed_feed._replace(query=urlencode(query, True))
