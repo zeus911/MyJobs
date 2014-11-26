@@ -193,9 +193,15 @@ class Invitation(models.Model):
             ap.reset_activation()
             ap = ActivationProfile.objects.get(pk=ap.pk)
 
+        context = {'invitation': self,
+                   'activation_key': ap.activation_key}
+
+        if self.added_saved_search:
+            initial_email = self.added_saved_search.initial_email(send=False)
+            context['initial_search_email'] = initial_email
+
         body = render_to_string('registration/invitation_email.html',
-                                {'invitation': self,
-                                 'activation_key': ap.activation_key})
+                                context)
         body = Pynliner().from_string(body).run()
 
         if self.inviting_user:

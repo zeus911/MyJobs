@@ -159,7 +159,7 @@ class SavedSearchResource(ModelResource):
         except SavedSearch.DoesNotExist:
             search = SavedSearch(**search_args)
             search.save()
-            search.send_initial_email()
+            search.initial_email()
             new_search = True
 
         data = {'email': email,
