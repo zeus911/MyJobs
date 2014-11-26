@@ -147,6 +147,9 @@ class SeoSiteReverseForm(forms.ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
+        """
+        Make sure we prepopulate the SeoSites that have already been selected.
+        """
         super(SeoSiteReverseForm, self).__init__(*args, **kwargs)
         instance = kwargs.get('instance', None)
 
