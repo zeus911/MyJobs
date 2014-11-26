@@ -191,7 +191,8 @@ def parse_feed(feed_url, frequency='W', num_items=100, offset=0,
     feed_url += '%snum_items=%s&offset=%s' % (
         separator, str(num_items), str(offset))
 
-    if 'days_ago=' not in feed_url and last_sent is not None:
+    if (('days_ago=' not in feed_url) and (last_sent is not None)
+            and (not ignore_dates)):
         feed_url += '&days_ago=%s' % -last_sent_diff
 
     is_json = 'feed/json' in feed_url
