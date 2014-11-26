@@ -137,31 +137,27 @@ class SeoSiteReverseForm(forms.ModelForm):
     Returns:
     :model_object:      saved model object. Which model depends on how this form
                         is subclassed.
-    
     """
+
+    sites_widget = FSM('Site', reverse_lazy('site_admin_fsm'), lazy=True)
     sites = forms.ModelMultipleChoiceField(
-        SeoSite.objects.all(),
+        SeoSite.objects.order_by('domain'),
         required=False,
-        widget=admin.widgets.FilteredSelectMultiple('Sites', False)
+        widget=sites_widget
     )
-    
+
     def __init__(self, *args, **kwargs):
+        """
+        Make sure we prepopulate the SeoSites that have already been selected.
+        """
         super(SeoSiteReverseForm, self).__init__(*args, **kwargs)
-        initial = {}
-        sites = SeoSite.objects.all().order_by('domain')
-        dictionary = {
-            'queryset': sites,
-            'widget': admin.widgets.FilteredSelectMultiple('Sites', False),
-            'initial': initial, 
-            'required': False
-        }
-        if 'instance' in kwargs:
-            # modified the loop statement to not loop all 10k seo site domains
-            # J. Sole 12-11-12
-            for site in kwargs['instance'].seosite_set.all():
-                initial[str(site.id)] = 'selected'
-            dictionary['initial'] = initial
-        self.fields['sites'] = forms.ModelMultipleChoiceField(**dictionary)
+        instance = kwargs.get('instance', None)
+
+        if instance:
+            self.fields['sites'].initial = {
+                # Our FSM widget uses integer keys instead of strings
+                site.id: 'selected' for site in instance.seosite_set.all()
+            }
 
     def save(self, commit=True):
         added_sites = set()
@@ -590,6 +586,12 @@ class BusinessUnitForm(SeoSiteReverseForm):
 
         
 class CompanyForm(SeoSiteReverseForm):    
+    job_source_ids_widget = FSM('Job Sources', reverse_lazy('buid_admin_fsm'),
+                                lazy=True)
+    job_source_ids = MyModelMultipleChoiceField(BusinessUnit.objects.all(),
+                                                my_model=BusinessUnit,
+                                                required=False,
+                                                widget=job_source_ids_widget)
     class Meta:
         model = Company
         
