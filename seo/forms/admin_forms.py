@@ -146,6 +146,18 @@ class SeoSiteReverseForm(forms.ModelForm):
         widget=sites_widget
     )
 
+    def __init__(self, *args, **kwargs):
+        super(SeoSiteReverseForm, self).__init__(*args, **kwargs)
+        instance = kwargs.get('instance', None)
+
+        if instance:
+            initial = {
+                str(site.id): 'selected' 
+                for site in instance.seosite_set.all()}
+
+            self.fields['sites'].initial = initial
+
+
     def save(self, commit=True):
         added_sites = set()
         model_object = forms.ModelForm.save(self, commit)
