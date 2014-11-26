@@ -249,6 +249,22 @@ class SavedSearchModelsTests(MyJobsBase):
         search.send_email()
         self.assertEqual(len(mail.outbox), 1)
 
+    def test_saved_search_no_jobs(self):
+        search = SavedSearchFactory(feed='http://google.com', user=self.user)
+        search.send_email()
+
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_saved_search_digest_no_jobs(self):
+        self.digest = SavedSearchDigestFactory(user=self.user, is_active=True)
+
+        for x in range(0, 5):
+            SavedSearchFactory(user=self.user, feed='http://google.com')
+
+        self.digest.send_email()
+
+        self.assertEqual(len(mail.outbox), 0)
+
 
 class PartnerSavedSearchTests(MyJobsBase):
     def setUp(self):
@@ -394,3 +410,44 @@ class PartnerSavedSearchTests(MyJobsBase):
         new_jobs = self.num_occurrences(partner_search_email.body,
                                         new_job_indicator)
         self.assertEqual(len(new_jobs), 1)
+
+    def test_partner_saved_search_no_jobs(self):
+        self.partner_search.feed = 'http://google.com'
+        self.partner_search.save()
+        self.partner_search.send_email()
+
+        email = mail.outbox.pop()
+        self.assertIn('There are no results for today!', email.body)
+
+        # Confirm last_sent was updated even though there were no jobs.
+        updated_search = SavedSearch.objects.get(pk=self.partner_search.pk)
+        new_last_sent = updated_search.last_sent.replace(tzinfo=None)
+        self.assertNotEqual(self.partner_search.last_sent, new_last_sent)
+
+    def test_partner_saved_search_digest_no_jobs(self):
+        self.digest.is_active = True
+        self.digest.save()
+
+        self.partner_search.feed = 'http://google.com'
+        self.partner_search.save()
+        self.partner_search.send_email()
+
+        for x in range(1, 5):
+            PartnerSavedSearchFactory(user=self.user, created_by=self.user,
+                                      provider=self.company,
+                                      feed='http://google.com',
+                                      partner=self.partner)
+
+        self.digest.send_email()
+
+        email = mail.outbox.pop()
+        self.assertEqual(email.body.count('There are no results for today!'), 5)
+
+        # Confirm last_sent was updated on all searches even though there were
+        # no jobs.
+        kwargs = {
+            'user': self.user,
+            'last_sent__isnull': True,
+        }
+        self.assertEqual(SavedSearch.objects.filter(**kwargs).count(), 0)
+
