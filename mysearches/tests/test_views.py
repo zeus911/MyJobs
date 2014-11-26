@@ -336,8 +336,3 @@ class MySearchViewTests(MyJobsBase):
             reverse('edit_search'), search.pk)
         self.assertTrue(edit_url in response.content)
 
-    def test_partner_saved_search_jobs_by_last_sent(self):
-        patcher = patch('urllib2.urlopen', return_file())
-        patcher.start()
-
-        patcher.stop()

@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core import mail
 
 from bs4 import BeautifulSoup
-from mock import patch
+from mock import patch, Mock
 
 from myjobs.tests.setup import MyJobsBase
 from mydashboard.tests.factories import CompanyFactory
@@ -16,6 +16,7 @@ from mypartners.tests.factories import PartnerFactory, ContactFactory
 from myprofile.tests.factories import PrimaryNameFactory
 from mysearches.models import SavedSearch
 from mysearches.templatetags.email_tags import get_activation_link
+from mysearches.tests.local.fake_feed_data import jobs, no_jobs
 from mysearches.tests.factories import (SavedSearchFactory,
                                         SavedSearchDigestFactory,
                                         PartnerSavedSearchFactory)
@@ -451,3 +452,126 @@ class PartnerSavedSearchTests(MyJobsBase):
         }
         self.assertEqual(SavedSearch.objects.filter(**kwargs).count(), 0)
 
+
+class SavedSearchSendingTests(MyJobsBase):
+    def setUp(self):
+        super(SavedSearchSendingTests, self).setUp()
+        self.feed = 'http://rushenterprises-veterans.jobs/alabama/usa/jobs/feed/rss'
+        self.user = UserFactory()
+        self.saved_search = SavedSearchFactory(user=self.user, feed=self.feed,
+                                               frequency='D')
+        self.company = CompanyFactory()
+        self.partner = PartnerFactory(owner=self.company)
+        self.contact = ContactFactory(user=self.user,
+                                      partner=self.partner)
+        self.partner_search = PartnerSavedSearchFactory(user=self.user,
+                                                        feed=self.feed,
+                                                        frequency='D',
+                                                        created_by=self.user,
+                                                        provider=self.company,
+                                                        partner=self.partner)
+        mail.outbox = []
+
+    @patch('urllib2.urlopen')
+    def test_all_jobs_new(self, urlopen_mock):
+        mock_obj = Mock()
+        mock_obj.read.side_effect = [jobs, jobs, jobs]
+        urlopen_mock.return_value = mock_obj
+
+        three_days_ago = datetime.datetime.now() - datetime.timedelta(days=365)
+        self.partner_search.last_sent = three_days_ago
+        self.saved_search.last_sent = three_days_ago
+        self.partner_search.save()
+        self.saved_search.save()
+
+        # All of the jobs were sent within the past year, so if we set
+        # last_sent to one year ago all of the jobs should be old.
+        self.saved_search.send_email()
+        email = mail.outbox.pop()
+        self.assertIn('Showing 3 of  3 total jobs', email.body)
+
+        self.partner_search.send_email()
+        email = mail.outbox.pop()
+        self.assertIn('Showing 3 of  3 total jobs', email.body)
+
+    @patch('urllib2.urlopen')
+    def test_some_jobs_new(self, urlopen_mock):
+        mock_obj = Mock()
+        mock_obj.read.side_effect = [jobs, jobs, jobs]
+        urlopen_mock.return_value = mock_obj
+
+        three_days_ago = datetime.datetime.now() - datetime.timedelta(days=3)
+        self.partner_search.last_sent = three_days_ago
+        self.saved_search.last_sent = three_days_ago
+        self.partner_search.save()
+        self.saved_search.save()
+
+        # One job was sent within the past 3 days, so if we set last_sent to
+        # three days ago one of the jobs should be old.
+        self.saved_search.send_email()
+        email = mail.outbox.pop()
+        self.assertIn('Showing 1 of  3 total jobs', email.body)
+
+        self.partner_search.send_email()
+        email = mail.outbox.pop()
+        self.assertIn('Showing 3 of  3 total jobs', email.body)
+
+    @patch('urllib2.urlopen')
+    def test_no_jobs_new(self, urlopen_mock):
+        mock_obj = Mock()
+        mock_obj.read.side_effect = [jobs, jobs, jobs]
+        urlopen_mock.return_value = mock_obj
+
+        self.partner_search.last_sent = datetime.datetime.now()
+        self.saved_search.last_sent = datetime.datetime.now()
+        self.partner_search.save()
+        self.saved_search.save()
+
+        # All jobs were sent over 2 days ago, so if we set last_sent to
+        # today none of the jobs should be old.
+        self.saved_search.send_email()
+        self.assertEqual(len(mail.outbox), 0)
+
+        self.partner_search.send_email()
+        email = mail.outbox.pop()
+        self.assertIn('Showing 3 of  3 total jobs', email.body)
+
+    @patch('urllib2.urlopen')
+    def test_partner_saved_search_backfill(self, urlopen_mock):
+        mock_obj = Mock()
+        mock_obj.read.side_effect = [jobs, jobs, jobs, jobs, jobs, jobs]
+        urlopen_mock.return_value = mock_obj
+
+        # Make it so there should be no new jobs.
+        self.partner_search.last_sent = datetime.datetime.now()
+        self.partner_search.save()
+
+        # jobs_per_email is default, so all 3 should get sent.
+        self.partner_search.send_email()
+        email = mail.outbox.pop()
+        self.assertIn('Showing 3 of  3 total jobs', email.body)
+
+        self.partner_search.jobs_per_email = 2
+        self.partner_search.save()
+        self.partner_search.send_email()
+        email = mail.outbox.pop()
+        self.assertIn('Showing 2 of  3 total jobs', email.body)
+
+        self.partner_search.jobs_per_email = 1
+        self.partner_search.save()
+        self.partner_search.send_email()
+        email = mail.outbox.pop()
+        self.assertIn('Showing 1 of  3 total jobs', email.body)
+
+    @patch('urllib2.urlopen')
+    def test_no_jobs(self, urlopen_mock):
+        mock_obj = Mock()
+        mock_obj.read.side_effect = [no_jobs, no_jobs, no_jobs]
+        urlopen_mock.return_value = mock_obj
+
+        self.saved_search.send_email()
+        self.assertEqual(len(mail.outbox), 0)
+
+        self.partner_search.send_email()
+        email = mail.outbox.pop()
+        self.assertIn('There are no results for today!', email.body)
