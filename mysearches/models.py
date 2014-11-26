@@ -98,11 +98,13 @@ class SavedSearch(models.Model):
 
     def get_feed_items(self, num_items=None):
         num_items = num_items or self.jobs_per_email
-        url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency)
+        url_of_feed = url_sort_options(self.feed, self.sort_by)
         url_of_feed = update_url_if_protected(url_of_feed, self.user)
         parse_feed_args = {
-            'feed_url': url_of_feed, 'frequency': self.frequency,
-            'num_items': 100, 'return_items': num_items,
+            'feed_url': url_of_feed,
+            'frequency': self.frequency,
+            'num_items': 100,
+            'return_items': num_items,
             'last_sent': self.last_sent
         }
         if hasattr(self, 'partnersavedsearch'):
@@ -112,8 +114,8 @@ class SavedSearch(models.Model):
 
     def send_email(self, custom_msg=None):
         items, count = self.get_feed_items()
-        if self.user.can_receive_myjobs_email() and items:
-            is_pss = hasattr(self, 'partnersavedsearch')
+        is_pss = hasattr(self, 'partnersavedsearch')
+        if self.user.can_receive_myjobs_email() and (items or is_pss):
             if is_pss:
                 extras = self.partnersavedsearch.url_extras
                 if extras:
@@ -303,9 +305,11 @@ class SavedSearchDigest(models.Model):
                                                                      extras)
                 pss.create_record(custom_msg)
             search_list.append((search, items, count))
+
         saved_searches = [(search, items, count)
                           for search, items, count in search_list
-                          if items]
+                          if (items or hasattr(search, 'partnersavedsearch'))]
+
         if self.user.can_receive_myjobs_email() and saved_searches:
             subject = _('Your Daily Saved Search Digest')
             context_dict = {
@@ -320,6 +324,12 @@ class SavedSearchDigest(models.Model):
                                [self.email])
             msg.content_subtype = 'html'
             msg.send()
+
+        sent_search_kwargs = {
+            'pk__in': [search[0].pk for search in saved_searches]
+        }
+        searches_sent = SavedSearch.objects.filter(**sent_search_kwargs)
+        searches_sent.update(last_sent=datetime.now())
 
     def disable_or_fix(self):
         """
