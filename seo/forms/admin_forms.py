@@ -143,7 +143,7 @@ class SeoSiteReverseForm(forms.ModelForm):
     sites = forms.ModelMultipleChoiceField(
         SeoSite.objects.order_by('domain'),
         required=False,
-        widget=sites_widget
+        widget=admin.widgets.FilteredSelectMultiple('Sites', False)
     )
 
     def __init__(self, *args, **kwargs):
@@ -151,12 +151,9 @@ class SeoSiteReverseForm(forms.ModelForm):
         instance = kwargs.get('instance', None)
 
         if instance:
-            initial = {
+            self.fields['sites'].initial = {
                 str(site.id): 'selected' 
                 for site in instance.seosite_set.all()}
-
-            self.fields['sites'].initial = initial
-
 
     def save(self, commit=True):
         added_sites = set()
