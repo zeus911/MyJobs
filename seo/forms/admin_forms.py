@@ -152,8 +152,8 @@ class SeoSiteReverseForm(forms.ModelForm):
 
         if instance:
             self.fields['sites'].initial = {
-                str(site.id): 'selected' 
-                for site in instance.seosite_set.all()}
+                site.id: 'selected' for site in instance.seosite_set.all()
+            }
 
     def save(self, commit=True):
         added_sites = set()
