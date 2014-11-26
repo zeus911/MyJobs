@@ -522,21 +522,16 @@ class User(AbstractBaseUser, PermissionsMixin):
             now = datetime.datetime.now(tz=pytz.UTC)
             return profile.expires() - now
 
-    def can_receive_myjobs_email(self, ignore_reserve=False):
+    def can_receive_myjobs_email(self):
         """
         Determines if this user can receive My.jobs email
-
-        Inputs:
-        :ignore_reserve: Ignores reserve status of this user; reserved users
-            shouldn't receive emails, but we can ignore that for invitations;
-            default: False
         """
         if self.opt_in_myjobs and not self.is_disabled:
-            if self.is_active or self.get_expiration().total_seconds() > 0:
-                if self.in_reserve:
-                    if ignore_reserve:
-                        return True
-                    return False
+            expiration = self.get_expiration()
+            if expiration is not None:
+                if expiration.total_seconds() > 0:
+                    return True
+            else:
                 return True
         return False
 

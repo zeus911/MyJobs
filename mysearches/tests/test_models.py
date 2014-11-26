@@ -20,7 +20,7 @@ from mysearches.tests.factories import (SavedSearchFactory,
                                         SavedSearchDigestFactory,
                                         PartnerSavedSearchFactory)
 from mysearches.tests.test_helpers import return_file
-from registration.models import ActivationProfile
+from registration.models import ActivationProfile, Invitation
 from tasks import send_search_digests
 
 
@@ -86,10 +86,10 @@ class SavedSearchModelsTests(MyJobsBase):
         send_search_digests()
         self.assertEqual(len(mail.outbox), 1)
     
-    def test_send_initial_email(self):
+    def test_initial_email(self):
         search = SavedSearchFactory(user=self.user, is_active=False,
                                     url='www.my.jobs/search?q=new+search')
-        search.send_initial_email()
+        search.initial_email()
         self.assertEqual(len(mail.outbox), 1)
 
         email = mail.outbox.pop()
@@ -241,6 +241,14 @@ class SavedSearchModelsTests(MyJobsBase):
         search.send_email()
         self.assertEqual(len(mail.outbox), 1)
 
+    def test_inactive_user_receives_saved_search(self):
+        self.assertEqual(len(mail.outbox), 0)
+        self.user.is_active = False
+        self.user.save()
+        saved_search = SavedSearchFactory(user=self.user)
+        saved_search.send_email()
+        self.assertEqual(len(mail.outbox), 1)
+
 
 class PartnerSavedSearchTests(MyJobsBase):
     def setUp(self):
@@ -255,6 +263,14 @@ class PartnerSavedSearchTests(MyJobsBase):
                                                         created_by=self.user,
                                                         provider=self.company,
                                                         partner=self.partner)
+        # Partner searches are normally created with a form, which creates
+        # invitations as a side effect. We're not testing the form, so we
+        # can fake an invitation here.
+        Invitation(invitee_email=self.partner_search.email,
+                   invitee=self.partner_search.user,
+                   inviting_user=self.partner_search.created_by,
+                   inviting_company=self.partner_search.partner.owner,
+                   added_saved_search=self.partner_search).save()
 
         self.patcher = patch('urllib2.urlopen', return_file())
         self.mock_urlopen = self.patcher.start()
@@ -317,7 +333,7 @@ class PartnerSavedSearchTests(MyJobsBase):
         self.user.is_active = False
         self.user.save()
         mail.outbox = []
-        self.partner_search.send_initial_email()
+        self.partner_search.initial_email()
         email = mail.outbox.pop()
         self.assertTrue('Your account is not currently active.' in email.body)
 
@@ -331,7 +347,7 @@ class PartnerSavedSearchTests(MyJobsBase):
 
     def test_contact_record_created_by(self):
         ContactRecord.objects.all().delete()
-        self.partner_search.send_initial_email()
+        self.partner_search.initial_email()
         record = ContactRecord.objects.get()
         self.assertEqual(record.created_by, self.partner_search.created_by)
 

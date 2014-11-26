@@ -13,7 +13,7 @@
             {% else %}
                 {{ invitation.inviting_user.email }}
             {% endif %}
-            has invited you to join My.jobs in order to begin receiving
+            of {{ invitation.inviting_company.name }} has invited you to join My.jobs in order to begin receiving
             {{ invitation.inviting_company.name }}'s available job opportunities on
             a regular basis.
         </p>
@@ -51,5 +51,10 @@
         {{ inviting_user_name }}
     {% else %}
         {{ invitation.inviting_user.email }}
+    {% endif %}
+
+    {% if invitation.added_saved_search %}
+        <hr />
+        {{ initial_search_email|safe }}
     {% endif %}
 {% endwith %}

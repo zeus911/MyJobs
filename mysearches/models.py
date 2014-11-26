@@ -139,20 +139,36 @@ class SavedSearch(models.Model):
             if is_pss:
                 self.partnersavedsearch.create_record(custom_msg)
 
-    def send_initial_email(self, custom_msg=None):
+    def initial_email(self, custom_msg=None, send=True):
+        """
+        Generates the body for an initial saved search notification and returns
+        it or sends it in an email based on the opt in status of the user.
+
+        Inputs:
+        :custom_msg: Custom message to be added when manually resending an
+            initial email
+        :send: Denotes if we should send the generated email (True) or return
+            the body (False). Default: True
+
+        Outputs:
+        :message: Generated email body (if :send: is False) or None
+        """
         if self.user.opt_in_myjobs:
             context_dict = {'saved_searches': [(self,)],
                             'custom_msg': custom_msg,
                             'contains_pss': hasattr(self, 'partnersavedsearch')}
-            subject = "My.jobs New Saved Search - %s" % self.label.strip()
             message = render_to_string("mysearches/email_initial.html",
                                        context_dict)
             message = Pynliner().from_string(message).run()
 
-            msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
-                               [self.email])
-            msg.content_subtype = 'html'
-            msg.send()
+            if send:
+                subject = "My.jobs New Saved Search - %s" % self.label.strip()
+                msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
+                                   [self.email])
+                msg.content_subtype = 'html'
+                msg.send()
+            else:
+                return message
     
     def send_update_email(self, msg, custom_msg=None):
         """
@@ -344,41 +360,50 @@ class PartnerSavedSearch(SavedSearch):
         else:
             return "Saved Search %s for %s" % (self.url, self.user.email)
 
-    def save(self, *args, **kwargs):
-        created = False if self.pk else True
-        super(PartnerSavedSearch, self).save(*args, **kwargs)
-        if created and self.user.can_receive_myjobs_email():
-            self.send_initial_email()
-
-    def send_initial_email(self, custom_msg=None):
-        super(PartnerSavedSearch, self).send_initial_email(custom_msg)
+    def initial_email(self, custom_msg=None, send=True):
+        """
+        Calls the base initial_email function and then creates a record of it.
+        """
+        body = super(PartnerSavedSearch, self).initial_email(custom_msg,
+                                                             send)
         change_msg = "Automatic sending of initial partner saved search."
-        self.create_record(change_msg)
+        self.create_record(change_msg, body)
+        return body
 
     def send_update_email(self, msg, custom_msg=None):
         super(PartnerSavedSearch, self).send_update_email(msg, custom_msg)
         change_msg = "Automatic sending of updated partner saved search."
         self.create_record(change_msg)
 
-    def create_record(self, change_msg=None):
-        items, count = self.get_feed_items()
+    def create_record(self, change_msg=None, body=None):
+        """
+        Creates a record of this saved search being sent. Records the contents
+        of :body: if present, otherwise generates the body for a single saved
+        search and records it.
+
+        Inputs:
+        :change_msg: Custom message to be added on manual send. Default: None
+        :body: Text to be added to this record. Default: None
+        """
+        subject = self.label.strip()
         if change_msg is None:
             change_msg = "Automatic sending of partner saved search."
 
-        extras = self.partnersavedsearch.url_extras
-        if extras:
-            mypartners.helpers.add_extra_params_to_jobs(items, extras)
-            self.url = mypartners.helpers.add_extra_params(self.url, extras)
+        if not body:
+            items, count = self.get_feed_items()
+            extras = self.partnersavedsearch.url_extras
+            if extras:
+                mypartners.helpers.add_extra_params_to_jobs(items, extras)
+                self.url = mypartners.helpers.add_extra_params(self.url, extras)
 
-        custom_msg = self.custom_message if self.custom_message else ''
-        context_dict = {
-            'saved_searches': [(self, items, count)],
-            'custom_msg': custom_msg,
-            'contains_pss': True
-        }
-        subject = self.label.strip()
-        message = render_to_string('mysearches/email_single.html',
-                                   context_dict)
+            custom_msg = self.custom_message if self.custom_message else ''
+            context_dict = {
+                'saved_searches': [(self, items, count)],
+                'custom_msg': custom_msg,
+                'contains_pss': True
+            }
+            body = render_to_string('mysearches/email_single.html',
+                                    context_dict)
 
         contact = Contact.objects.filter(partner=self.partner,
                                          user=self.user)[0]
@@ -390,7 +415,7 @@ class PartnerSavedSearch(SavedSearch):
             created_by=self.created_by,
             date_time=datetime.now(),
             subject=subject,
-            notes=message,
+            notes=body,
         )
         mypartners.helpers.log_change(record, None, None, self.partner,
                                       self.user.email, action_type=EMAIL,
