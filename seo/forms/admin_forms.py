@@ -143,7 +143,7 @@ class SeoSiteReverseForm(forms.ModelForm):
     sites = forms.ModelMultipleChoiceField(
         SeoSite.objects.order_by('domain'),
         required=False,
-        widget=admin.widgets.FilteredSelectMultiple('Sites', False)
+        widget=sites_widget
     )
 
     def __init__(self, *args, **kwargs):
