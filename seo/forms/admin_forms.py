@@ -152,6 +152,7 @@ class SeoSiteReverseForm(forms.ModelForm):
 
         if instance:
             self.fields['sites'].initial = {
+                # Our FSM widget uses integer keys instead of strings
                 site.id: 'selected' for site in instance.seosite_set.all()
             }
 
