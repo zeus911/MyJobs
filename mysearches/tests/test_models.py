@@ -241,6 +241,14 @@ class SavedSearchModelsTests(MyJobsBase):
         search.send_email()
         self.assertEqual(len(mail.outbox), 1)
 
+    def test_inactive_user_receives_saved_search(self):
+        self.assertEqual(len(mail.outbox), 0)
+        self.user.is_active = False
+        self.user.save()
+        saved_search = SavedSearchFactory(user=self.user)
+        saved_search.send_email()
+        self.assertEqual(len(mail.outbox), 1)
+
 
 class PartnerSavedSearchTests(MyJobsBase):
     def setUp(self):
