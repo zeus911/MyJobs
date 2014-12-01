@@ -305,9 +305,12 @@ function create_location_events() {
             checked = delete_input.attr('checked') == 'checked';
         if (checked) {
             delete_input.removeAttr('checked');
+            $(this).parent('.product-card').css('text-decoration', 'none')
             $(this).text('Remove');
         } else {
             delete_input.attr('checked', 'checked');
+            $(this).parent('.product-card').css('text-decoration',
+                                                'line-through')
             $(this).text('Re-add');
         }
     });
