@@ -909,6 +909,20 @@ class BusinessUnitAdminFilter(FSMView):
         return super(BusinessUnitAdminFilter, self).dispatch(*args, **kwargs)
 
 
+class SeoSiteAdminFilter(FSMView):
+    model = SeoSite
+    fields = ('domain__icontains', 'pk__icontains')
+
+    @method_decorator(login_required(login_url='/admin/'))
+    def dispatch(self, *args, **kwargs):
+        """
+        Decorators on this function will be run on every request that
+        goes through this class.
+
+        """
+        return super(SeoSiteAdminFilter, self).dispatch(*args, **kwargs)
+
+
 @login_required(login_url='/admin/')
 def ajax_buids(request):
     """

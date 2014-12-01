@@ -84,7 +84,7 @@ def view_full_feed(request):
     if request.user == saved_search.user:
         url_of_feed = url_sort_options(saved_search.feed,
                                        saved_search.sort_by,
-                                       saved_search.frequency)
+                                       frequency=saved_search.frequency)
         # We don't care about the count; discard it
         items, count = parse_feed(url_of_feed, saved_search.frequency)
         start_date = date.today() + timedelta(get_interval_from_frequency(
@@ -109,7 +109,7 @@ def more_feed_results(request):
     if request.is_ajax():
         url_of_feed = url_sort_options(request.GET['feed'],
                                        request.GET['sort_by'],
-                                       request.GET['frequency'])
+                                       frequency=request.GET['frequency'])
         items = parse_feed(url_of_feed, request.GET['frequency'],
                            offset=request.GET['offset'])[0]
         return render_to_response('mysearches/feed_page.html',

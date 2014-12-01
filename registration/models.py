@@ -182,24 +182,33 @@ class Invitation(models.Model):
             self.invitee_email = self.invitee.email
 
         if not self.pk:
-            ap = ActivationProfile.objects.get_or_create(user=self.invitee,
-                                                         email=self.invitee_email)[0]
-            if ap.activation_key_expired():
-                ap.reset_activation()
-                ap = ActivationProfile.objects.get(pk=ap.pk)
-
-            body = render_to_string('registration/invitation_email.html',
-                                    {'invitation': self,
-                                     'activation_key': ap.activation_key})
-            body = Pynliner().from_string(body).run()
-
-            if self.inviting_user:
-                from_ = self.inviting_user.email
-            else:
-                from_ = self.inviting_company.name
-            self.invitee.email_user('My.jobs invitation from {from_}'.format(
-                from_=from_), body, settings.DEFAULT_FROM_EMAIL)
-            ap.sent = datetime_now()
-            ap.save()
+            self.send()
 
         super(Invitation, self).save(*args, **kwargs)
+
+    def send(self):
+        ap = ActivationProfile.objects.get_or_create(user=self.invitee,
+                                                     email=self.invitee_email)[0]
+        if ap.activation_key_expired():
+            ap.reset_activation()
+            ap = ActivationProfile.objects.get(pk=ap.pk)
+
+        context = {'invitation': self,
+                   'activation_key': ap.activation_key}
+
+        if self.added_saved_search:
+            initial_email = self.added_saved_search.initial_email(send=False)
+            context['initial_search_email'] = initial_email
+
+        body = render_to_string('registration/invitation_email.html',
+                                context)
+        body = Pynliner().from_string(body).run()
+
+        if self.inviting_user:
+            from_ = self.inviting_user.email
+        else:
+            from_ = self.inviting_company.name
+        self.invitee.email_user('My.jobs invitation from {from_}'.format(
+            from_=from_), body, settings.DEFAULT_FROM_EMAIL)
+        ap.sent = datetime_now()
+        ap.save()
