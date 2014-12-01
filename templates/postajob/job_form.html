@@ -26,7 +26,6 @@
                             </div>
                         {% endfor %}
                     </div>
-                    <div id="job-location-display"></div>
                     <div id="empty-form">
                         {% include 'includes/form-error-highlight.html' with form=formset.empty_form %}
                     </div>
@@ -36,14 +35,11 @@
                         <a class="btn" href="?" id="add-location">Add</a>
                     </div>
                     <div class="offset3 span9">
-                        <div class="card-wrapper">
+                        <div id="job-location-display" class="card-wrapper">
                             <div class="wrapper-header">
                                 <h4>Locations</h4>
                             </div>
-                            <div class="product-card no-highlight">
-                                Springfield, MO
-                                <a class="pull-right" href="#">Remove</a>
-                            </div>
+                            <div id="no-locations" class="product-card no-highlight">Please add locations using the form above.</div>
                         </div>
                     </div>
                 </fieldset>
