@@ -10,6 +10,9 @@ var load_event = function(){
     update_site_fields();
     update_job_limit_fields();
 
+    if($(".product-card").length > 1)
+        $("#no-locations").remove();
+
     // Job Form
     $(document).on("change", '#id_apply_type_0', function(){
         update_apply_fields();
