@@ -626,7 +626,6 @@ class PurchasedProductFormView(PostajobModelFormMixin, RequestFormViewBase):
             else:
                 self.display_name = self.product
                 self.form_class = PurchasedProductNoPurchaseForm
-
         return super(PurchasedProductFormView, self).dispatch(*args, **kwargs)
 
     def get_form_kwargs(self):
@@ -651,7 +650,6 @@ class PurchasedProductFormView(PostajobModelFormMixin, RequestFormViewBase):
         context['sidebar'] = True
         context['product'] = self.product
         return context
-
 
 class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
     form_class = OfflinePurchaseForm

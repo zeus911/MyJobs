@@ -3,10 +3,12 @@ import bleach
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import resolve
 from django.template import Library
+from django.template.loader import render_to_string
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 
 from postajob.models import PurchasedJob, PurchasedProduct
+from universal.helpers import get_company
 
 register = Library()
 
@@ -92,3 +94,19 @@ def get_content_type(object):
 def get_sites(form):
     return form.fields['site_packages'].queryset.values_list('domain',
                                                              flat=True)
+
+
+@register.simple_tag(takes_context=True)
+def get_purchasedjob_add_link(context):
+    company = get_company(context['request'])
+    context['blocked'] = context['request'].user in company.companyprofile.blocked_users.all()
+    if 'purchased_product' not in context:
+        context['purchased_product'] = context['product']
+    if context['request'].path.startswith('/posting/admin/'):
+        class_ = 'btn'
+    else:
+        class_ = 'pull-right'
+    context['class'] = class_
+    link = render_to_string('postajob/includes/purchasedjob_add_link.html',
+                            context)
+    return mark_safe(link)
