@@ -15,7 +15,7 @@ class PaymentTests(MyJobsBase):
             'city': 'Indianapolis',
             'country': 'USA',
             'cvn': 123,
-            'exp_month': date.today().month + 1,
+            'exp_month': (date.today().month + 1) % 12 or 12,
             'exp_year': date.today().year + 5,
             'fname': 'John',
             'lname': 'Smith',
