@@ -586,6 +586,11 @@ h1 > small > a:hover {
     margin-top: 20px;
 }
 
+fieldset > div > .card-wrapper {
+    margin-left: 20px;
+    margin-top: 15px;
+}
+
 .wrapper-header h1,
 .wrapper-header h2,
 .wrapper-header h3,

@@ -8,90 +8,81 @@
     <form action="?" method="post">
         {% csrf_token %}
         {{ form.owner }}
-        <div> {# accordion container #}
-            <div class="simple-accordion">
-                <div class="header">
-                    Job Details
-                </div>
-                <div class="contents">
-                    <fieldset>
-                        {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.0 %}
-                    </fieldset>
-                </div>
+        <div> <!-- wraps all forms -->
+            <div class="contents">
+                <fieldset>
+                    <legend>Job Details</legend>
+                    {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.0 %}
+                </fieldset>
             </div>
-            <div class="simple-accordion">
-                <div class="header">
-                    Job Locations
-                </div>
-                <div class="contents">
-                    <fieldset>
-                        <div id="job-location-forms" class="no-show">
-                            <p>This will be hidden</p>
-                            {% for formset_form in formset.forms %}
-                                <div class="formset-form">
-                                    {{ formset_form }}
-                                </div>
-                            {% endfor %}
+            <div class="contents">
+                <fieldset>
+                    <legend>Job Locations</legend>
+                    <div id="job-location-forms" class="no-show">
+                        <p>This will be hidden</p>
+                        {% for formset_form in formset.forms %}
+                            <div class="formset-form">
+                                {{ formset_form }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div id="job-location-display"></div>
+                    <div id="empty-form">
+                        {% include 'includes/form-error-highlight.html' with form=formset.empty_form %}
+                    </div>
+                    {{ formset.management_form }}
+                    <div class="actions">
+                        <div class="form-label pull-left">&nbsp;</div>
+                        <a class="btn" href="?" id="add-location">Add</a>
+                    </div>
+                    <div class="offset3 span9">
+                        <div class="card-wrapper">
+                            <div class="wrapper-header">
+                                <h4>Locations</h4>
+                            </div>
+                            <div class="product-card no-highlight">
+                                Springfield, MO
+                                <a class="pull-right" href="#">Remove</a>
+                            </div>
                         </div>
-                        <div id="job-location-display"></div>
-                        <div id="empty-form">
-                            {% include 'includes/form-error-highlight.html' with form=formset.empty_form %}
-                        </div>
-                        {{ formset.management_form }}
-                        <div class="actions">
-                            <div class="form-label pull-left">&nbsp;</div>
-                            <a class="btn" href="?" id="add-location">Add</a>
-                        </div>
-                    </fieldset>
-                </div>
+                    </div>
+                </fieldset>
             </div>
-            <div class="simple-accordion">
-                <div class="header">
-                        Application Instructions
-                </div>
-                <div class="contents">
-                    <fieldset>
-                        {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.1 %}
-                    </fieldset>
-                </div>
+            <div class="contents">
+                <fieldset>
+                    <legend>Application Instructions</legend>
+                    {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.1 %}
+                </fieldset>
             </div>
-            <div class="simple-accordion">
-                <div class="header">
-                    Job Expiration
-                </div>
-                <div class="contents">
-                    <fieldset>
-                        {% if item %}
-                        {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.2 %}
-                        {% else %}
-                        {% comment %}Remove the is_expired box if we are creating a new job{% endcomment %}
-                        {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.2|slice:":-1" %}
-                        {% endif %}
-                    </fieldset>
-                </div>
-            </div>
-            <div class="simple-accordion">
-                <div class="header">
-                    Posting Location
-                </div>
-                <div class="contents">
-                    {% if form.get_field_sets.3 %}
-                        <fieldset>
-                            {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.3 %}
-                        </fieldset>
+            <div class="contents">
+                <fieldset>
+                    <legend>Job Expiration</legend>
+                    {% if item %}
+                    {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.2 %}
                     {% else %}
-                        <div class="span3 form-label pull-left initial site-label">
-                            <label>Site</label>
-                        </div>
-                        <div class="profile-form-input site-field">
-                            <ul id="id_site_packages">
-                                {% for site in form|get_sites %}
-                                    <li>{{ site }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
+                    {% comment %}Remove the is_expired box if we are creating a new job{% endcomment %}
+                    {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.2|slice:":-1" %}
                     {% endif %}
-                </div>
+                </fieldset>
+            </div>
+            <div class="contents">
+                {% if form.get_field_sets.3 %}
+                    <fieldset>
+                        <legend>Posting Location</legend>
+                        {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.3 %}
+                    </fieldset>
+                {% else %}
+                    <div class="span3 form-label pull-left initial site-label">
+                        <label>Site</label>
+                    </div>
+                    <div class="profile-form-input site-field">
+                        <ul id="id_site_packages">
+                            {% for site in form|get_sites %}
+                                <li>{{ site }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
             </div>
         </div>
         <div class="actions">
