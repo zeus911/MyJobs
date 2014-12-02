@@ -142,7 +142,7 @@ class ViewTests(PostajobTestBase):
             'city': 'Indianapolis',
             'country': 'USA',
             'cvv': '123',
-            'exp_date_0': date.today().month + 1,
+            'exp_date_0': (date.today().month + 1) % 12 or 12,
             'exp_date_1': date.today().year + 5,
             'first_name': 'John',
             'last_name': 'Smith',
