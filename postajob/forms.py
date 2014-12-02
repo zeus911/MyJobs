@@ -457,8 +457,6 @@ def make_company_from_form(form_instance):
         state=cleaned_data.get('state'),
         zipcode=cleaned_data.get('zipcode'),
     )
-    if hasattr(form_instance, 'product'):
-        profile.customer_of.add(form_instance.product.owner)
     profile.save()
     cu.make_purchased_microsite_admin()
 
@@ -661,15 +659,6 @@ class OfflinePurchaseForm(RequestForm):
 
         self.products = Product.objects.filter(owner=self.company)
 
-        # Create select box of available companies.
-        profiles = CompanyProfile.objects.filter(customer_of=self.company)
-        company_choices = [(x.company.pk, x.company.name) for x in profiles]
-        company_choices.insert(0, ('', 'None'))
-        self.fields['purchasing_company'] = CharField(
-            label='Purchasing Company', widget=Select(choices=company_choices),
-            required=False, help_text="Only companies that have specified "
-                                      "that they are a customer will be in "
-                                      "this list.")
         # Create the Product list.
         for product in self.products:
             label = '{name}'.format(name=product.name)
@@ -774,16 +763,12 @@ class OfflinePurchaseRedemptionForm(RequestForm):
 class CompanyProfileForm(RequestForm):
     class Meta:
         model = CompanyProfile
-        exclude = ('company', )
+        exclude = ('company', 'customemr_of', 'blocked_users')
 
     class Media:
         css = {
             'all': ('postajob.157-16.css', )
         }
-
-    customer_of_choices = Company.objects.filter(product_access=True)
-    customer_of = ModelMultipleChoiceField(customer_of_choices, required=False,
-                                           widget=CheckboxSelectMultiple())
 
     def __init__(self, *args, **kwargs):
         super(CompanyProfileForm, self).__init__(*args, **kwargs)
