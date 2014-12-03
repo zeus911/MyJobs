@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'CompanyProfile.description'
         db.add_column(u'postajob_companyprofile', 'description',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
+                      self.gf('django.db.models.fields.TextField')(default='', max_length=255, blank=True),
                       keep_default=False)
 
 
@@ -79,7 +79,7 @@ class Migration(SchemaMigration):
             'company': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['seo.Company']", 'unique': 'True'}),
             'country': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'customer_of': ('django.db.models.fields.related.ManyToManyField', [], {'blank': 'True', 'related_name': "'customer'", 'null': 'True', 'symmetrical': 'False', 'to': u"orm['seo.Company']"}),
-            'description': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'description': ('django.db.models.fields.TextField', [], {'max_length': '255', 'blank': 'True'}),
             'email_on_request': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'outgoing_email_domain': ('django.db.models.fields.CharField', [], {'default': "'my.jobs'", 'max_length': '255'}),

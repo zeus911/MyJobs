@@ -711,7 +711,7 @@ class CompanyProfile(models.Model):
     }
 
     company = models.OneToOneField('seo.Company')
-    description = models.CharField(max_length=255, blank=True,
+    description = models.TextField(max_length=255, blank=True,
                                    verbose_name='Company Description')
     address_line_one = models.CharField(max_length=255, blank=True,
                                         verbose_name='Address Line One')
