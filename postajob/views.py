@@ -700,7 +700,6 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
         return context
 
 
-
 class OfflinePurchaseRedemptionFormView(PostajobModelFormMixin,
                                         RequestFormViewBase):
     form_class = OfflinePurchaseRedemptionForm
