@@ -88,3 +88,7 @@
         margin-top: 5px;
     }
 }
+
+form#job-approval .btn {
+    margin-left: 10px;
+}
