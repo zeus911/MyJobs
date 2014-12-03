@@ -98,14 +98,31 @@ def get_sites(form):
 
 @register.simple_tag(takes_context=True)
 def get_purchasedjob_add_link(context):
-    company = get_company(context['request'])
-    context['blocked'] = context['request'].user in company.companyprofile.blocked_users.all()
+    """
+    Generates add links for creating PurchasedJobs. If the user is blocked, the
+    link is replaced with a modal telling them so.
+    """
+    request = context['request']
+    company = get_company(request)
+
+    # Add 'blocked' context variable; determines if we are going to add a real
+    # link or a modal when rendering the template.
+    context['blocked'] = request.user in company.companyprofile.blocked_users.all()
+
     if 'purchased_product' not in context:
+        # This is called from both the company owner side and the job poster
+        # side. The context variable for the current purchased product is
+        # different between the two.
         context['purchased_product'] = context['product']
-    if context['request'].path.startswith('/posting/admin/'):
+
+    if request.path.startswith('/posting/admin/'):
+        # On the administrative screen, the "add a job" link is styled like
+        # a button...
         class_ = 'btn'
     else:
+        # ... while on the job posting side, it's a normal float:right anchor.
         class_ = 'pull-right'
+
     context['class'] = class_
     link = render_to_string('postajob/includes/purchasedjob_add_link.html',
                             context)
