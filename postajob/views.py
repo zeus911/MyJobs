@@ -651,6 +651,7 @@ class PurchasedProductFormView(PostajobModelFormMixin, RequestFormViewBase):
         context['product'] = self.product
         return context
 
+
 class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
     form_class = OfflinePurchaseForm
     model = OfflinePurchase
