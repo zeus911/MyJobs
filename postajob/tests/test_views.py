@@ -158,6 +158,7 @@ class ViewTests(PostajobTestBase):
         }
 
         self.companyprofile_form_data = {
+            'company_name': self.company.name,
             'address_line_one': '123 Street Rd.',
             'city': 'Indianapolis',
             'country': 'USA',
