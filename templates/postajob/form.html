@@ -24,6 +24,11 @@
     <div class="row">
         <div class="span8">
             <form action="?" method="post">
+                {% if show_product_labels %}
+                <div class="clear"></div>
+                <div class="span3 form-label pull-left initial header"><b>Product</b></div><div class="profile-form-input header"><b>Quantity</b></div>
+
+                {% endif %}
                 {% include "includes/form-error-highlight.html" %}
                 {% csrf_token %}
                 <div class="clear"></div>
