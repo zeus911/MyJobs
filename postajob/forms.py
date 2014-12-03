@@ -791,11 +791,15 @@ class CompanyProfileForm(RequestForm):
             self.fields.pop('authorize_net_login', None)
             self.fields.pop('authorize_net_transaction_key', None)
 
-        if self.instance.company.user_created:
-            self.fields['company_name'] = CharField(
-                initial=self.instance.company.name, label='Company Name')
+        self.fields['company_name'] = CharField(
+            initial=self.instance.company.name, label='Company Name')
+        self.fields.keyOrder.insert(0, self.fields.keyOrder.pop())
 
-            self.fields.keyOrder.insert(0, self.fields.keyOrder.pop())
+        # companies pulled from content aquisition should be read-only
+        if not self.instance.company.user_created:
+            self.fields['company_name'].widget.attrs['readonly'] = True
+            self.fields['description'].widget.attrs['readonly'] = True
+
 
     def clean(self):
         if self.instance.company.user_created:
