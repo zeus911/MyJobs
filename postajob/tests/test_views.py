@@ -924,3 +924,14 @@ class PurchasedJobActionTests(PostajobTestBase):
         unblock_href = unblock_href.select('a')[0].attrs['href']
         self.client.get(unblock_href)
         self.assertFalse(self.user in profile.blocked_users.all())
+
+    def test_blocked_user_sees_modal(self):
+        profile = CompanyProfile.objects.create(company=self.company)
+        profile.blocked_users.add(self.user)
+        add_job_link = reverse('purchasedjob_add',
+                               args=[self.purchased_product.pk])
+        for url in [reverse('purchasedjobs', args=[self.purchased_product.pk]),
+                    reverse('purchasedjobs_overview')]:
+            response = self.client.get(url, HTTP_HOST='test.jobs')
+            self.assertFalse(add_job_link in response.content)
+            self.assertTrue('id="block-modal"' in response.content)
