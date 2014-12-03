@@ -15,6 +15,11 @@ Company Profile
 {% endblock page_title %}
 
 
+{% block goback_link %}
+<a href="{% url 'purchasedmicrosite_admin_overview' %}">Back to Admin Overview</a>
+{% endblock %}
+
+
 {% block postajob_content %}
     {% block form %}
     <div class="row">
