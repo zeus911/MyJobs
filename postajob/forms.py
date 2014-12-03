@@ -763,7 +763,7 @@ class OfflinePurchaseRedemptionForm(RequestForm):
 class CompanyProfileForm(RequestForm):
     class Meta:
         model = CompanyProfile
-        exclude = ('company', )
+        exclude = ('company', 'blocked_users', 'customer_of')
 
     class Media:
         css = {
