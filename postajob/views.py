@@ -765,6 +765,14 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
     def delete(self):
         raise Http404
 
+    def get_context_data(self, **kwargs):
+        context = super(CompanyProfileFormView, self).get_context_data(
+            **kwargs)
+        company = get_company(self.request)
+        context.setdefault('company', company)
+
+        return context
+
 
 class SitePackageFilter(FSMView):
     model = SeoSite

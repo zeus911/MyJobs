@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "postajob/postajob_template.html" %}
 {% load i18n %}
 {% load common_tags %}
 {% load postajob_tags %}
@@ -10,16 +10,12 @@
 {% endblock site-title %}
 
 
-{% block content %}
-    <div class="row">
-        <div class="span12">
-            <h1>
-                {% if not custom_action %}{% get_form_action %}{% else %}{{ custom_action }}{% endif %}
-                <small>{{ display_name }}</small>
-            </h1>
-        </div>
-    </div>
+{% block page_title %}
+Company Profile
+{% endblock page_title %}
 
+
+{% block postajob_content %}
     {% block form %}
     <div class="row">
         <div class="span8">
@@ -55,6 +51,10 @@
                 </div>{# /actions #}
             </form>
         </div>
+        <div class="span4">
+            {% include "postajob/includes/postajob_navigation.html" %}
+        </div>
+
     {% endblock form %}
 
         {% if sidebar %}
@@ -77,7 +77,7 @@
     </div> {# .row #}
         {% endif %}
 
-{% endblock content %}
+{% endblock %}
 
 {% block extra-js %}
     {{ form.media }}
