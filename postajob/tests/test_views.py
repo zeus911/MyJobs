@@ -1,5 +1,7 @@
-from datetime import date, timedelta
 from bs4 import BeautifulSoup
+from datetime import date, timedelta
+from unittest import skip
+
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -746,6 +748,7 @@ class ViewTests(PostajobTestBase):
         offline_purchase = OfflinePurchase.objects.get()
         self.assertIn(offline_purchase.redemption_uid, response.content)
 
+    @skip('Feature disabled for now.')
     def test_offlinepurchase_add_with_company(self):
         self.offlinepurchase_form_data['purchasing_company'] = str(self.company.pk)
         response = self.client.post(reverse('offlinepurchase_add'),
