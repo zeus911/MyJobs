@@ -11,6 +11,9 @@ var load_event = function(){
     update_job_limit_fields();
     update_state_selection();
 
+    if($(".product-card").length > 1)
+        $("#no-locations").remove();
+
     // Job Form
     $(document).on("change", '#id_apply_type_0', function(){
         update_apply_fields();
@@ -47,6 +50,19 @@ var load_event = function(){
     $('[id^="resend-invoice"]').on("click", function(e) {
         var id_array = $(this).attr('id').split("-");
         resend_invoice(id_array[id_array.length - 1]);
+    });
+
+    $.each(["#deny-reason", "#block-reason"], function(index, value) {
+        console.log(index);
+        console.log(value);
+        $(value).on("keyup", function() {
+            var next_button = $(value + "~button");
+            if ($(this).val() == "") {
+                next_button.attr("disabled", "disabled");
+            } else {
+                next_button.removeAttr("disabled");
+            }
+        });
     });
 };
 
@@ -306,6 +322,9 @@ function create_location_events() {
         and adds a display for added locations.
          */
         e.preventDefault();
+
+        // remove the card that appears when no locations are present
+        $("#no-locations").remove();
         // form_count holds the current number of location forms on the page.
         // The form numbers start at 0, so form_count also represents the next
         // available form number.
@@ -338,9 +357,12 @@ function create_location_events() {
             checked = delete_input.attr('checked') == 'checked';
         if (checked) {
             delete_input.removeAttr('checked');
+            $(this).parent('.product-card').css('text-decoration', 'none')
             $(this).text('Remove');
         } else {
             delete_input.attr('checked', 'checked');
+            $(this).parent('.product-card').css('text-decoration',
+                                                'line-through')
             $(this).text('Re-add');
         }
     });

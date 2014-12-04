@@ -14,7 +14,7 @@
 {% endblock seo_description %}
 
 {% block flatpage_meta %}
-    {{ custom_page.meta }}
+    {{ custom_page.meta|safe }}
 {% endblock flatpage_meta %}
 
 {% block directseo_title %}

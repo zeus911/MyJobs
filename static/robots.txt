@@ -15,4 +15,4 @@ Disallow: /openid/
 Disallow: /linkedin/
 Disallow: /twitter/
 Disallow: /setup/
-Disallow: /feed/
+Disallow: /*feed/

@@ -17,7 +17,10 @@ class TaskTests(MyJobsBase):
 
             u = User.objects.get(pk=u.pk)
             self.assertEqual(u.deactivate_type, event)
-            self.assertFalse(u.is_verified)
+            # Users start this test case with is_verified=True
+            # is_verified should only change if the modifying event
+            # is a block or drop
+            self.assertEqual(u.is_verified, event in STOP_SENDING)
             self.assertFalse(u.opt_in_myjobs)
 
             infos = u.messages_unread()

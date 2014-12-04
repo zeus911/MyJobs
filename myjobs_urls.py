@@ -7,6 +7,7 @@ from django.core.files.storage import default_storage
 from tastypie.api import Api
 
 from myjobs.api import UserResource, SavedSearchResource
+from seo.views.search_views import BusinessUnitAdminFilter, SeoSiteAdminFilter
 
 admin.autodiscover()
 
@@ -36,6 +37,16 @@ urlpatterns = patterns(
 urlpatterns += patterns(
     '',
     url(r'^accounts/', include('registration.urls')),
+)
+
+# Filtering URLs
+urlpatterns += patterns(
+    '',
+    url(r'^ajax/data/filter/business_units/$',
+        BusinessUnitAdminFilter.as_view(),
+        name='buid_admin_fsm'),
+    url(r'^data/filter/sites/$', SeoSiteAdminFilter.as_view(),
+        name='site_admin_fsm')
 )
 
 if repr(getattr(default_storage, 'connection', '')) != 'S3Connection:s3.amazonaws.com':

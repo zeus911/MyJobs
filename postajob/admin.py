@@ -120,6 +120,7 @@ class SitePackageAdmin(ModelAdminWithRequest):
 
 
 class ProductFormAdmin(ModelAdminWithRequest):
+    actions = None
     form = ProductForm
     list_display = ('owner', 'package', )
 
@@ -139,6 +140,9 @@ class ProductFormAdmin(ModelAdminWithRequest):
         if not request.user.is_superuser:
             products = products.filter(owner__admins=request.user)
         return products
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class ProductGroupingFormAdmin(ModelAdminWithRequest):

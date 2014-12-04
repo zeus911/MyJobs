@@ -438,9 +438,7 @@ def filter_partners(request, partner_library=False):
         start_date = request.REQUEST.get('start_date')
         end_date = request.REQUEST.get('end_date')
 
-        partners = Partner.objects.prefetch_related(
-            'contact_set', 'contact_set__tags', 'contact_set__locations',
-            'tags')
+        partners = Partner.objects.select_related('contact')
         contact_city = 'contact__locations__city'
         contact_state = 'contact__locations__state'
         sort_by.replace('city', 'contact__locations__city')
@@ -480,7 +478,7 @@ def filter_partners(request, partner_library=False):
 
     # filter by tags
     for tag in tags:
-        partners = partners.filter(Q(tags__name__icontains=tag) | 
+        partners = partners.filter(Q(tags__name__icontains=tag) |
                                    Q(contact__tags__name__icontains=tag))
 
     if "location" in sort_by:
@@ -489,29 +487,22 @@ def filter_partners(request, partner_library=False):
             partners = partners.extra(select={
                 'no_city': "LENGTH(state) = 0",
                 'no_state': "LENGTH(city) = 0"}).order_by(
-                    *['%s%s' % (sort_order, column) 
-                    for column in ['state', 'city', 'no_state', 'no_city']])
+                    *['%s%s' % (sort_order, column)
+                      for column in ['state', 'city', 'no_state', 'no_city']])
         else:
-            # QuerySet.extra(select={}) doesn't traverse foreign keys, so we
-            # use a few list transformations in order to sort by location and
-            # put empty locations at the end.
+            null_locations = (Q(contact__locations__state='') |
+                              Q(contact__locations__isnull=True))
 
-            # shortcut to get locations from a partner
-            locations = lambda p: p.get_contact_locations()
-            # string reprensentation of the first location
-            first_location = lambda p: str(
-                locations(p)[0] if locations(p) else [])
+            with_locations = partners.exclude(
+                null_locations).order_by(
+                    '%scontact__locations__state' % sort_order,
+                    '%scontact__locations__city' % sort_order,
+                    '%sname' % sort_order)
 
-            if sort_order:
-                partners = sorted(
-                    (p for p in partners),
-                    key=lambda p:
-                    (locations(p) != [], first_location(p)), reverse=True)
-            # sort ascending
-            else:
-                partners = sorted(
-                    (p for p in partners),
-                    key=lambda p: (locations(p) == [], first_location(p)))
+            without_locations = partners.filter(
+                null_locations).order_by('%sname' % sort_order)
+
+            partners = list(with_locations) + list(without_locations)
 
     elif "activity" in sort_by:
         if sort_order:

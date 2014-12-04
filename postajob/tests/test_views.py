@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from bs4 import BeautifulSoup
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.core import mail
 from django.core.urlresolvers import reverse
 
@@ -25,20 +26,12 @@ from seo.models import Company, SeoSite
 from universal.helpers import build_url
 
 
-class ViewTests(MyJobsBase):
+class PostajobTestBase(MyJobsBase):
     def setUp(self):
-        super(ViewTests, self).setUp()
-        self.user = UserFactory()
+        super(PostajobTestBase, self).setUp()
+        self.user = UserFactory(password='5UuYquA@')
         self.company = CompanyFactory(product_access=True)
-        CompanyProfile.objects.create(
-            company=self.company,
-            address_line_one='123 Somewhere Rd',
-            city='Indianapolis',
-            state='IN',
-            country='USA',
-            zipcode='46268',
-            authorize_net_login=settings.TESTING_CC_AUTH['api_id'],
-            authorize_net_transaction_key=settings.TESTING_CC_AUTH['transaction_key'])
+
         self.site = SeoSiteFactory()
         self.bu = BusinessUnitFactory()
         self.site.business_units.add(self.bu)
@@ -54,6 +47,30 @@ class ViewTests(MyJobsBase):
         self.product = ProductFactory(package=self.package, owner=self.company)
 
         self.login_user()
+
+    def login_user(self, user=None):
+        if not user:
+            user = self.user
+        self.client.post(reverse('home'),
+                         data={
+                             'username': user.email,
+                             'password': '5UuYquA@',
+                             'action': 'login',
+                             })
+
+
+class ViewTests(PostajobTestBase):
+    def setUp(self):
+        super(ViewTests, self).setUp()
+        CompanyProfile.objects.create(
+            company=self.company,
+            address_line_one='123 Somewhere Rd',
+            city='Indianapolis',
+            state='IN',
+            country='USA',
+            zipcode='46268',
+            authorize_net_login=settings.TESTING_CC_AUTH['api_id'],
+            authorize_net_transaction_key=settings.TESTING_CC_AUTH['transaction_key'])
 
         self.choices_data = ('{"countries":[{"code":"USA", '
                              '"name":"United States of America"}], '
@@ -125,7 +142,7 @@ class ViewTests(MyJobsBase):
             'city': 'Indianapolis',
             'country': 'USA',
             'cvv': '123',
-            'exp_date_0': date.today().month + 1,
+            'exp_date_0': (date.today().month + 1) % 12 or 12,
             'exp_date_1': date.today().year + 5,
             'first_name': 'John',
             'last_name': 'Smith',
@@ -150,16 +167,6 @@ class ViewTests(MyJobsBase):
 
         for form_data in [self.job_form_data, self.purchasedjob_form_data]:
             form_data.update(self.location_management_form_data)
-
-    def login_user(self, user=None):
-        if not user:
-            user = self.user
-        self.client.post(reverse('home'),
-                         data={
-                             'username': user.email,
-                             'password': '5UuYquA@',
-                             'action': 'login',
-                         })
 
     def test_job_access_not_company_user(self):
         self.company_user.delete()
@@ -234,8 +241,11 @@ class ViewTests(MyJobsBase):
                                     data=self.purchasedjob_form_data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(PurchasedJob.objects.all().count(), 1)
-        self.assertEqual(Request.objects.all().count(), 1)
+        self.assertEqual(PurchasedJob.objects.count(), 1)
+        self.assertEqual(Request.objects.count(), 1)
+
+        job = PurchasedJob.objects.get()
+        self.assertEqual(job.created_by, self.user)
     
     def test_purchasedjob_update(self):
         product = PurchasedProductFactory(
@@ -419,8 +429,7 @@ class ViewTests(MyJobsBase):
         kwargs = {'pk': self.product.pk}
 
         response = self.client.post(reverse('product_delete', kwargs=kwargs))
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(Job.objects.all().count(), 0)
+        self.assertEqual(response.status_code, 404)
 
     def test_product_update_job_limit(self):
         self.product_form_data['name'] = 'New Title'
@@ -848,3 +857,81 @@ class ViewTests(MyJobsBase):
         self.assertEqual(len(site_packages), 2)
         self.assertItemsEqual([self.site.domain, site.domain],
                               site_packages)
+
+
+class PurchasedJobActionTests(PostajobTestBase):
+    def setUp(self):
+        super(PurchasedJobActionTests, self).setUp()
+        self.purchased_product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
+        self.job = PurchasedJobFactory(
+            owner=self.company, created_by=self.user,
+            purchased_product=self.purchased_product)
+        content_type = ContentType.objects.get_for_model(PurchasedJob)
+        self.view_kwargs = {'pk': self.job.pk,
+                            'content_type': content_type.pk}
+        request = Request.objects.get()
+        self.assertFalse(request.action_taken)
+        self.assertFalse(self.job.is_approved)
+
+    def test_purchasedjob_accept(self):
+        self.client.get(reverse('approve_admin_request',
+                                kwargs=self.view_kwargs))
+
+        request = Request.objects.get()
+        job = PurchasedJob.objects.get()
+        self.assertTrue(request.action_taken)
+        self.assertTrue(job.is_approved)
+
+    def test_purchasedjob_deny(self):
+        self.client.get(reverse('deny_admin_request',
+                                kwargs=self.view_kwargs))
+
+        request = Request.objects.get()
+        job = PurchasedJob.objects.get()
+        self.assertTrue(request.action_taken)
+        self.assertFalse(job.is_approved)
+
+    def test_purchasedjob_block(self):
+        self.client.get(reverse('block_admin_request',
+                                kwargs=self.view_kwargs))
+
+        request = Request.objects.get()
+        job = PurchasedJob.objects.get()
+        self.assertTrue(request.action_taken)
+        self.assertFalse(job.is_approved)
+        company = Company.objects.get(pk=self.company.pk)
+        self.assertTrue(self.user in company.companyprofile.blocked_users.all())
+        response = self.client.get(reverse('purchasedjob_add',
+                                           kwargs={'product': self.product.pk}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_unblock_user(self):
+        response = self.client.get(reverse('blocked_user_management'))
+        self.assertTrue("You currently have not blocked any users"
+                        in response.content)
+        profile = CompanyProfile.objects.get(company=self.company)
+        self.assertFalse(self.user in profile.blocked_users.all())
+
+        profile.blocked_users.add(self.user)
+        response = self.client.get(reverse('blocked_user_management'))
+        contents = BeautifulSoup(response.content)
+        emails = contents.select('td.blocked_user-blocked_user-email')
+        self.assertEqual(self.user.email,
+                         emails[0].text)
+
+        unblock_href = contents.select('td.blocked_user-actions')[0]
+        unblock_href = unblock_href.select('a')[0].attrs['href']
+        self.client.get(unblock_href)
+        self.assertFalse(self.user in profile.blocked_users.all())
+
+    def test_blocked_user_sees_modal(self):
+        profile = CompanyProfile.objects.create(company=self.company)
+        profile.blocked_users.add(self.user)
+        add_job_link = reverse('purchasedjob_add',
+                               args=[self.purchased_product.pk])
+        for url in [reverse('purchasedjobs', args=[self.purchased_product.pk]),
+                    reverse('purchasedjobs_overview')]:
+            response = self.client.get(url, HTTP_HOST='test.jobs')
+            self.assertFalse(add_job_link in response.content)
+            self.assertTrue('id="block-modal"' in response.content)

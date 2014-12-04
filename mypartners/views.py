@@ -61,6 +61,7 @@ def prm(request):
 
     """
     company = get_company_or_404(request)
+
     partners = filter_partners(request)
     paginator = add_pagination(request, partners) if partners else None
 
@@ -77,7 +78,7 @@ def prm(request):
         return response
 
     ctx = {
-        'has_partners': True if partners else False,
+        'has_partners': True if paginator else False,
         'partners': paginator,
         'company': company,
         'user': request.user,

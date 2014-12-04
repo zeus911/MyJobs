@@ -13,6 +13,7 @@ from myjobs.tests.factories import UserFactory
 from mypartners.tests.factories import PartnerFactory, ContactFactory
 
 from mysearches import forms, models
+from mysearches.tests.local.fake_feed_data import jobs, no_jobs
 from mysearches.tests.test_helpers import return_file
 from mysearches.tests.factories import (SavedSearchDigestFactory,
                                         SavedSearchFactory,
@@ -334,3 +335,4 @@ class MySearchViewTests(MyJobsBase):
         edit_url = '\\"https://secure.my.jobs%s?id=%s&pss=True\\"' % (
             reverse('edit_search'), search.pk)
         self.assertTrue(edit_url in response.content)
+

@@ -76,8 +76,6 @@ class MyPartnersTestCase(MyJobsBase):
 
 class MyPartnerViewsTests(MyPartnersTestCase):
     """Tests for the /prm/view/ page"""
-    def setUp(self):
-        super(MyPartnerViewsTests, self).setUp()
 
     def test_prm_worthy_no_partner(self):
         """
@@ -104,12 +102,10 @@ class MyPartnerViewsTests(MyPartnersTestCase):
         self.assertEqual(response.status_code, 200)
         soup = BeautifulSoup(response.content)
 
-        # 1 tr is dedicated to header, 1 tr for partner.
         self.assertEqual(len(soup.select('.product-card')), 1)
 
         for _ in range(9):
-            partner = PartnerFactory(owner=self.company)
-            partner.save()
+            PartnerFactory(owner=self.company)
 
         response = self.client.post('/prm/view')
         soup = BeautifulSoup(response.content)
