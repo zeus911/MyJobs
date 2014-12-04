@@ -168,8 +168,6 @@ urlpatterns = patterns(
         views.unblock_user,
         name='unblock_user'),
 
-    url(r'^list/$', 'product_list'),
-
     url(r'^sites/$',
         views.SitePackageFilter.as_view(),
         name='site_fsm'),
