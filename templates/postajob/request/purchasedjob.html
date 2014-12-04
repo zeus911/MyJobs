@@ -85,11 +85,13 @@ Purchased Job Request
             {% if not object.is_approved %}
                 <form id="job-approval" action="{% url 'approve_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
                     {% csrf_token %}
-                    {% if object.created_by %}
-                        <button id="block" type="button" data-toggle="modal" data-target="#block-confirm" class="btn primary pull-right">{% trans 'Block User' %}</button>
-                    {% endif %}
-                    <button id="deny" type="button" data-toggle="modal" data-target="#deny-confirm" class="btn primary pull-right">{% trans 'Deny' %}</button>
-                    <button type="submit" class="btn primary pull-right">{% trans 'Approve' %}</button>
+                    <div class="actions">
+                        {% if object.created_by %}
+                            <button id="block" type="button" data-toggle="modal" data-target="#block-confirm" class="btn primary pull-right">{% trans 'Block User' %}</button>
+                        {% endif %}
+                        <button id="deny" type="button" data-toggle="modal" data-target="#deny-confirm" class="btn primary pull-right">{% trans 'Deny' %}</button>
+                        <button type="submit" class="btn primary pull-right">{% trans 'Approve' %}</button>
+                    </div>
                 </form>
                 <div id="deny-confirm" class="modal hide fade row">
                     <div class="modal-header">{% trans 'Really Deny?' %}</div>
