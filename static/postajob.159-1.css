@@ -88,3 +88,12 @@
         margin-top: 5px;
     }
 }
+
+fieldset > div > .card-wrapper {
+    margin-left: 20px;
+    margin-top: 15px;
+}
+
+fieldset > div > .card-wrapper > .product-card {
+    padding-right: 10px;
+}

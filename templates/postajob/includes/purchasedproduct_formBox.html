@@ -14,7 +14,7 @@
     {% endif %}
     <div class="wrapper-footer">
         <span class="pull-left">{% if purchased_product.can_post_more and purchased_product.jobs_remaining > 0 %}Jobs remaining: {{ purchased_product.jobs_remaining }} {% elif purchased_product.can_post_more %}Jobs remaining: Unlimited{% endif %}</span>
-        {% if purchased_product.can_post_more %}<a href="{% url 'purchasedjob_add' product=purchased_product.pk%}" class="pull-right">Add a Job</a>{% endif %}
+        {% get_purchasedjob_add_link %}
         <div class="clear"></div>
     </div>
 </div>

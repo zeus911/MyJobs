@@ -36,7 +36,7 @@ class BaseJobForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.157-16.css', )
+            'all': ('postajob.159-1.css', )
         }
         js = ('postajob.158-18.js', )
 
@@ -326,7 +326,7 @@ class ProductForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.157-16.css', )
+            'all': ('postajob.159-1.css', )
         }
         js = ('postajob.158-18.js', )
 
@@ -414,7 +414,7 @@ class ProductGroupingForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.157-16.css', )
+            'all': ('postajob.159-1.css', )
         }
 
     products_widget = CheckboxSelectMultiple()
@@ -547,7 +547,7 @@ class PurchasedProductForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.157-16.css', )
+            'all': ('postajob.159-1.css', )
         }
 
     card_number = CharField(label='Credit Card Number')
@@ -663,7 +663,7 @@ class OfflinePurchaseForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.157-16.css', )
+            'all': ('postajob.159-1.css', )
         }
         js = ('postajob.158-18.js', )
 
@@ -789,7 +789,7 @@ class CompanyProfileForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.157-16.css', )
+            'all': ('postajob.159-1.css', )
         }
 
     customer_of_choices = Company.objects.filter(product_access=True)
