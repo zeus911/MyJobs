@@ -867,9 +867,10 @@ class ViewTests(PostajobTestBase):
         job = PurchasedJobFactory(owner=company, created_by=user,
                                   purchased_product=product)
 
-        response = self.client.get(reverse('view_request',
-                                           args=[ContentType.objects.get_for_model(PurchasedJob).pk,
-                                                 job.pk]))
+        response = self.client.get(
+            reverse('view_request',
+                    args=[ContentType.objects.get_for_model(PurchasedJob).pk,
+                          job.pk]))
         self.assertFalse(self.user in company.admins.all())
         self.assertEqual(response.status_code, 200)
 
