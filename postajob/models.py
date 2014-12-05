@@ -720,6 +720,8 @@ class CompanyProfile(models.Model):
     }
 
     company = models.OneToOneField('seo.Company')
+    description = models.TextField(max_length=255, blank=True,
+                                   verbose_name='Company Description')
     address_line_one = models.CharField(max_length=255, blank=True,
                                         verbose_name='Address Line One')
     address_line_two = models.CharField(max_length=255, blank=True,
@@ -732,7 +734,10 @@ class CompanyProfile(models.Model):
 
     # Only used for Partner Microsites.
     authorize_net_login = models.CharField(
-        max_length=255, blank=True, verbose_name="Authorize.net Login")
+        max_length=255, blank=True, verbose_name="Authorize.net Login",
+        help_text="<a href='https://www.authorize.net' target='blank_'>"
+                  "Create Authorize.net account"
+                  "</a>")
     authorize_net_transaction_key = models.CharField(
         max_length=255, blank=True,
         verbose_name="Authorize.net Transaction Key"

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "postajob/postajob_template.html" %}
 {% load i18n %}
 {% load common_tags %}
 {% load postajob_tags %}
@@ -10,20 +10,26 @@
 {% endblock site-title %}
 
 
-{% block content %}
-    <div class="row">
-        <div class="span12">
-            <h1>
-                {% if not custom_action %}{% get_form_action %}{% else %}{{ custom_action }}{% endif %}
-                <small>{{ display_name }}</small>
-            </h1>
-        </div>
-    </div>
+{% block page_title %}
+Company Profile
+{% endblock page_title %}
 
+
+{% block goback_link %}
+<a href="{% url 'purchasedmicrosite_admin_overview' %}">Back to Admin Overview</a>
+{% endblock %}
+
+
+{% block postajob_content %}
     {% block form %}
     <div class="row">
         <div class="span8">
             <form action="?" method="post">
+                {% if show_product_labels %}
+                <div class="clear"></div>
+                <div class="span3 form-label pull-left initial header"><b>Product</b></div><div class="profile-form-input header"><b>Quantity</b></div>
+
+                {% endif %}
                 {% include "includes/form-error-highlight.html" %}
                 {% csrf_token %}
                 <div class="clear"></div>
@@ -50,6 +56,10 @@
                 </div>{# /actions #}
             </form>
         </div>
+        <div class="span4">
+            {% include "postajob/includes/postajob_navigation.html" %}
+        </div>
+
     {% endblock form %}
 
         {% if sidebar %}
@@ -72,7 +82,7 @@
     </div> {# .row #}
         {% endif %}
 
-{% endblock content %}
+{% endblock %}
 
 {% block extra-js %}
     {{ form.media }}
