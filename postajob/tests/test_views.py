@@ -858,6 +858,22 @@ class ViewTests(PostajobTestBase):
         self.assertItemsEqual([self.site.domain, site.domain],
                               site_packages)
 
+    def test_view_request_posted_by_unrelated_company(self):
+        company = CompanyFactory(id=2, name='new company')
+        user = UserFactory(email='new_company_user@email.com')
+        CompanyUserFactory(user=user, company=company)
+        product = PurchasedProductFactory(
+            product=self.product, owner=company)
+        job = PurchasedJobFactory(owner=company, created_by=user,
+                                  purchased_product=product)
+
+        response = self.client.get(
+            reverse('view_request',
+                    args=[ContentType.objects.get_for_model(PurchasedJob).pk,
+                          job.pk]))
+        self.assertFalse(self.user in company.admins.all())
+        self.assertEqual(response.status_code, 200)
+
 
 class PurchasedJobActionTests(PostajobTestBase):
     def setUp(self):
