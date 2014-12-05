@@ -10,6 +10,9 @@ var load_event = function(){
     update_site_fields();
     update_job_limit_fields();
 
+    if($(".product-card").length > 1)
+        $("#no-locations").remove();
+
     // Job Form
     $(document).on("change", '#id_apply_type_0', function(){
         update_apply_fields();
@@ -173,9 +176,9 @@ function add_location(location) {
      */
 
     // All added locations will follow the same template, with the city,
-    // region, country, and loc_num placeholders replaced with the actual values
-    // for the relevant location
-    var location_tag = '<div class="location-display"><div>city, region country</div><div><a href="?" id="remove-location-loc_num">Remove</a></div></div>',
+    // region, country, and loc_num placeholders replaced with the actual
+    // values for the relevant location
+    var location_tag = '<div class="product-card no-highlight">city, region country<a id="remove-locations-loc_num" class="pull-right" href="?">Remove</a></div>',
         location_map = {
             city: location.find('input[id$=-city]').val(),
             region: location.find('input[id$=-state]').val(),
@@ -183,7 +186,8 @@ function add_location(location) {
         },
         // We need to find out which form on the page is for this location. The
         // form input ids have the structure id_form-#-field, so we can get the
-        // form number by grabbing an input and splitting the number from its id.
+        // form number by grabbing an input and splitting the number from its
+        // id.
         field_id = location.find('input[id$=-id]').attr('id'),
         display_container = $('#job-location-display');
     location_map['loc_num'] = field_id.split('-')[1];
@@ -265,6 +269,9 @@ function create_location_events() {
         and adds a display for added locations.
          */
         e.preventDefault();
+
+        // remove the card that appears when no locations are present
+        $("#no-locations").remove();
         // form_count holds the current number of location forms on the page.
         // The form numbers start at 0, so form_count also represents the next
         // available form number.
@@ -297,9 +304,12 @@ function create_location_events() {
             checked = delete_input.attr('checked') == 'checked';
         if (checked) {
             delete_input.removeAttr('checked');
+            $(this).parent('.product-card').css('text-decoration', 'none')
             $(this).text('Remove');
         } else {
             delete_input.attr('checked', 'checked');
+            $(this).parent('.product-card').css('text-decoration',
+                                                'line-through')
             $(this).text('Re-add');
         }
     });

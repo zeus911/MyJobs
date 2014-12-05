@@ -83,12 +83,16 @@ Purchased Job Request
 
         {% if not request_obj.action_taken %}
             {% if not object.is_approved %}
-                <form action="{% url 'approve_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
+                <form id="job-approval" action="{% url 'approve_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
                     {% csrf_token %}
-                    <button type="submit" class="btn primary pull-right">{% trans 'Approve This Job' %}</button>
+                    <div class="actions">
+                        {% if object.created_by %}
+                            <button id="block" type="button" data-toggle="modal" data-target="#block-confirm" class="btn primary pull-right">{% trans 'Block User' %}</button>
+                        {% endif %}
+                        <button id="deny" type="button" data-toggle="modal" data-target="#deny-confirm" class="btn primary pull-right">{% trans 'Deny' %}</button>
+                        <button type="submit" class="btn primary pull-right">{% trans 'Approve' %}</button>
+                    </div>
                 </form>
-                <div class="clear"></div>
-                <button id="deny" type="button" data-toggle="modal" data-target="#deny-confirm" class="btn primary pull-right">{% trans 'Deny This Job' %}</button>
                 <div id="deny-confirm" class="modal hide fade row">
                     <div class="modal-header">{% trans 'Really Deny?' %}</div>
                     <div class="modal-body">{% blocktrans %}Are you sure you want to deny this job posting?{% endblocktrans %}</div>
@@ -100,16 +104,13 @@ Purchased Job Request
                                 <div class="clear"></div>
                                 <input type="text" id="deny-reason" name="deny-reason">
                                 <div class="clear"></div>
-                                <button type="submit" class="btn primary pull-right" disabled="disabled">{% trans 'Deny This Job' %}</button>
+                                <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
+                                <button type="submit" class="btn primary" disabled="disabled">{% trans 'Deny' %}</button>
                             </form>
-                            <div class="clear"></div>
-                            <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
                         </div>
                     </div>
                 </div>
                 {% if object.created_by %}
-                    <div class="clear"></div>
-                    <button id="block" type="button" data-toggle="modal" data-target="#block-confirm" class="btn primary pull-right">{% trans 'Block Submissions From User' %}</button>
                     <div id="block-confirm" class="modal hide fade row">
                         <div class="modal-header">{% trans 'Really Block?' %}</div>
                         <div class="modal-body">{% blocktrans %}Are you sure you want to block this user from posting further jobs?{% endblocktrans %}</div>
@@ -121,10 +122,9 @@ Purchased Job Request
                                     <div class="clear"></div>
                                     <input type="text" id="block-reason" name="block-reason">
                                     <div class="clear"></div>
-                                    <button type="submit" class="btn primary pull-right" disabled="disabled">{% trans 'Block Submissions From User' %}</button>
+                                    <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
+                                    <button type="submit" class="btn primary pull-right" disabled="disabled">{% trans 'Block User' %}</button>
                                 </form>
-                                <div class="clear"></div>
-                                <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
                             </div>
                         </div>
                     </div>
@@ -142,7 +142,7 @@ Purchased Job Request
 
 
 {% block extra-js %}
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}postajob.157-16.css{{ gz }}">
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}postajob.159-04.css{{ gz }}">
     <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}postajob.159-3.js"></script>

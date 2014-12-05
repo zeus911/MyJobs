@@ -3,16 +3,20 @@ import bleach
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import resolve
 from django.template import Library
+from django.template.loader import render_to_string
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 
 from postajob.models import PurchasedJob, PurchasedProduct
+from universal.helpers import get_company
 
 register = Library()
 
 
 @register.simple_tag
 def get_job_links(job, max_sites=3):
+    locations = job.locations.all()
+
     if hasattr(job, 'is_approved') and not job.is_approved:
         return ''
 
@@ -25,7 +29,7 @@ def get_job_links(job, max_sites=3):
     href_tag = '<a href="{url}">{domain}</a>'
     urls = []
     for domain in domains:
-        for location in job.locations.all():
+        for location in locations:
             loc_slug = bleach.clean(slugify(u'{city}, {state}'.format(
                 city=location.city, state=location.state_short)))
             job_url = base_url.format(domain=domain, loc_slug=loc_slug,
@@ -92,3 +96,36 @@ def get_content_type(object):
 def get_sites(form):
     return form.fields['site_packages'].queryset.values_list('domain',
                                                              flat=True)
+
+
+@register.simple_tag(takes_context=True)
+def get_purchasedjob_add_link(context):
+    """
+    Generates add links for creating PurchasedJobs. If the user is blocked, the
+    link is replaced with a modal telling them so.
+    """
+    request = context['request']
+    company = get_company(request)
+
+    # Add 'blocked' context variable; determines if we are going to add a real
+    # link or a modal when rendering the template.
+    context['blocked'] = request.user in company.companyprofile.blocked_users.all()
+
+    if 'purchased_product' not in context:
+        # This is called from both the company owner side and the job poster
+        # side. The context variable for the current purchased product is
+        # different between the two.
+        context['purchased_product'] = context['product']
+
+    if request.path.startswith('/posting/admin/'):
+        # On the administrative screen, the "add a job" link is styled like
+        # a button...
+        class_ = 'btn'
+    else:
+        # ... while on the job posting side, it's a normal float:right anchor.
+        class_ = 'pull-right'
+
+    context['class'] = class_
+    link = render_to_string('postajob/includes/purchasedjob_add_link.html',
+                            context)
+    return mark_safe(link)

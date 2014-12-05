@@ -338,6 +338,15 @@ class PurchasedJob(Job):
     def is_past_max_expiration_date(self):
         return bool(self.max_expired_date < date.today())
 
+    def user_has_access(self, user):
+        """
+        Overrides the base user_has_access to ensure that the provided user is
+        an admin for either the posting company or the company being posted to.
+        """
+        is_posting_admin = super(PurchasedJob, self).user_has_access(user)
+        is_owner_admin = user in self.purchased_product.product.owner.admins.all()
+        return is_posting_admin or is_owner_admin
+
 
 def on_delete(sender, instance, **kwargs):
     """
@@ -868,6 +877,11 @@ class OfflinePurchase(BaseModel):
             kwargs['product'] = offline_product.product
             for x in range(0, offline_product.product_quantity):
                 PurchasedProduct.objects.create(**kwargs)
+
+    def user_has_access(self, user):
+        is_posting_admin = super(OfflinePurchase, self).user_has_access(user)
+        is_owner_admin = user in self.created_by.company.admins.all()
+        return is_posting_admin or is_owner_admin
 
 
 class InvoiceMixin(object):

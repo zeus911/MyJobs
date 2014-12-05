@@ -862,6 +862,22 @@ class ViewTests(PostajobTestBase):
         self.assertItemsEqual([self.site.domain, site.domain],
                               site_packages)
 
+    def test_view_request_posted_by_unrelated_company(self):
+        company = CompanyFactory(id=2, name='new company')
+        user = UserFactory(email='new_company_user@email.com')
+        CompanyUserFactory(user=user, company=company)
+        product = PurchasedProductFactory(
+            product=self.product, owner=company)
+        job = PurchasedJobFactory(owner=company, created_by=user,
+                                  purchased_product=product)
+
+        response = self.client.get(
+            reverse('view_request',
+                    args=[ContentType.objects.get_for_model(PurchasedJob).pk,
+                          job.pk]))
+        self.assertFalse(self.user in company.admins.all())
+        self.assertEqual(response.status_code, 200)
+
 
 class PurchasedJobActionTests(PostajobTestBase):
     def setUp(self):
@@ -928,3 +944,14 @@ class PurchasedJobActionTests(PostajobTestBase):
         unblock_href = unblock_href.select('a')[0].attrs['href']
         self.client.get(unblock_href)
         self.assertFalse(self.user in profile.blocked_users.all())
+
+    def test_blocked_user_sees_modal(self):
+        profile = CompanyProfile.objects.create(company=self.company)
+        profile.blocked_users.add(self.user)
+        add_job_link = reverse('purchasedjob_add',
+                               args=[self.purchased_product.pk])
+        for url in [reverse('purchasedjobs', args=[self.purchased_product.pk]),
+                    reverse('purchasedjobs_overview')]:
+            response = self.client.get(url, HTTP_HOST='test.jobs')
+            self.assertFalse(add_job_link in response.content)
+            self.assertTrue('id="block-modal"' in response.content)
