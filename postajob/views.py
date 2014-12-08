@@ -480,7 +480,7 @@ class PurchasedJobFormView(BaseJobFormView):
                 raise Http404
             else:
                 company = get_company(self.request)
-                if company and company.companyprofile:
+                if company and hasattr(company, 'companyprofile'):
                     if self.request.user in company.companyprofile.blocked_users.all():
                         # If the current user has been blocked by the company
                         # that we are trying to post a job to, don't allow
