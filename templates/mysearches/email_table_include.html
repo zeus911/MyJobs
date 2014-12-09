@@ -12,7 +12,7 @@
 			        	<div style="padding-left: 10px;">
                         {% get_all_jobs_link saved_search.0 as all_jobs_link %}
 				    	{% if saved_search.1 %}
-				        <b>Showing {{ saved_search.1|length }} of {% if saved_search.2 == 100 %}or more{% endif %} {{ saved_search.2 }} total jobs</b> - <a href="{{ all_jobs_link }}">View All Jobs</a>
+				        <b>Showing {{ saved_search.1|length }} of {% if saved_search.2 >= saved_search.1.jobs_per_email %} more than {% endif %} {{ saved_search.2 }} total jobs</b> - <a href="{{ all_jobs_link }}">View All Jobs</a>
 				        {% else %}
 				        <b>No jobs for the selected time</b> - <a href="{{ all_jobs_link }}">View your search anyway</a>
 				        {% endif %}
