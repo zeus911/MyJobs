@@ -4,71 +4,98 @@ from django.utils.text import slugify
 
 from moc_coding.models import *
 
-reader = csv.DictReader(open("onets1.csv"))
-# Maps MOC code and Branch as keys, sine they are defined as unique together in
-# django.
-mocs = {}
-branches = {
-    'A': u'army',
-    'C': u'coast-guard',
-    'F': u'air-force',
-    'M': u'marines',
-    'N': u'navy'
-}
-
-for row in reader:
-    code = row['MOC Code']
-    branch = branches[row['SVC']]
-    onet = {
-        'code': ''.join([c for c in row['O*NET-SOC Code'] if c.isdigit()]),
-        'title': row['O*NET-SOC Title']
+def get_mocs_from_csv(filename, columns):
+    # Maps MOC code and Branch as keys, since they are defined as unique
+    # together in django.
+    mocs = {}
+    branches = {
+        'A': u'army',
+        'C': u'coast-guard',
+        'F': u'air-force',
+        'M': u'marines',
+        'N': u'navy'
     }
 
-    if (code, branch) in mocs:
-        # Makes sure we don't add duplicate onets to an already existing MOC
-        if onet not in mocs[(code, branch)]['onets']:
-            mocs[(code, branch)]['onets'].append(onet)
-    else:
-        mocs[(code, branch)] = {
-            'code': row['MOC Code'],
-            'branch': branch,
-            'title': row['MOC Title'],
-            'title_slug': slugify(unicode(row['MOC Title'])),
-            'onets': [onet],
-            # Redundant, but this is how the moc_coding models are laid out
-            'moc_detail': {
-                'primary_value': row['MOC Code'],
-                'service_branch': row['SVC'].lower(),
-                'military_description': row['MOC Title']
-            }
-        }
+    with open(filename, "r") as csvfile:
+        reader = csv.DictReader(csvfile)
 
-def run():
-    for key, moc in mocs.items():
+        for row in reader:
+            code = row[columns['moc_code']]
+            branch = row[columns['svc']]
+            title = row[columns['moc_title']]
+            onet = {
+                'code': ''.join(
+                    [c for c in row[columns['onet_code']] if c.isdigit()]),
+                'title': row[columns['onet_title']]
+            }
+
+            if (code, branches[branch]) in mocs:
+                # Makes sure we don't add duplicate onets to an already
+                # existing MOC
+                if onet not in mocs[(code, branches[branch])]['onets']:
+                    mocs[(code, branches[branch])]['onets'].append(onet)
+            else:
+                mocs[(code, branches[branch])] = {
+                    'code': code,
+                    'branch': branches[branch],
+                    'title': title,
+                    'title_slug': slugify(unicode(title)),
+                    'onets': [onet],
+                    # Redundant, but this is how the moc_coding models are laid
+                    # out
+                    'moc_detail': {
+                        'primary_value': code,
+                        'service_branch': branch.lower(),
+                        'military_description': title
+                    }
+                }
+
+    return mocs
+
+
+def run(filename, cols=None):
+    # Not all Excel sheets use the same column names
+    columns = {
+        'svc': 'SVC',
+        'moc_code': 'MOC Code',
+        'moc_title': 'MOC Title',
+        'onet_code': 'O*NET-SOC Code',
+        'onet_title': 'O*NET-SOC Title'
+    }
+    columns.update(cols or {})
+    mocs = get_mocs_from_csv(filename, columns)
+
+    for moc in mocs.values():
         moc_detail = moc.pop('moc_detail')
         onets = moc.pop('onets')
 
-        detail_exists = MocDetail.objects.filter(**moc_detail).exists()
-        if detail_exists:
-            moc_detail_record = MocDetail.objects.get(**moc_detail)
-        else:
-            moc_detail_record = MocDetail.objects.create(**moc_detail)
+        moc_detail_record, _ = MocDetail.objects.get_or_create(**moc_detail)
 
-        moc_exists = Moc.objects.filter(
-            code=moc['code'], branch=moc['branch']).exists()
-        if moc_exists:
-            moc_record = Moc.objects.filter(
-                code=moc['code'], branch=moc['branch'])
-            moc_record.update(**moc)
-        else:
-            moc = Moc.objects.create(moc_detail=moc_detail_record, **moc)
+        moc_record, created = Moc.objects.get_or_create(
+            code=moc['code'], branch=moc['branch'])
 
-        onet_records = []
+        if created:
+            moc_record.title = moc['title']
+            moc_record.title_slug = moc['title_slug']
+            moc_record.moc_detail = moc_detail_record
+            moc_record.save()
+
+        onet_records = set()
         for onet in onets:
-            onet_exists = Onet.objects.filter(code=onet['code']).exists()
+            onet_record, created = Onet.objects.get_or_create(
+                code=onet['code'])
 
-            if onet_exists:
-                onet_records.append(Onet.objects.get(code=onet['code']))
-            else:
-                onet_records.append(Onetobjects.create(**onet))
+            if created:
+                onet_record.title = onet['title']
+                onet_record.save()
 
+            onet_records.update([onet_record])
+
+        moc_record.onets.add(*onet_records)
+
+if __name__ == '__main__': 
+    import sys
+
+    for filename in sys.argv[1:]:
+        run(filename)
+    
