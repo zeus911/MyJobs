@@ -24,7 +24,8 @@ from postajob.forms import (CompanyProfileForm, JobForm, OfflinePurchaseForm,
 from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
                              Product, ProductGrouping, PurchasedJob,
                              PurchasedProduct, Request, JobLocation)
-from universal.helpers import get_company, get_object_or_none, get_company_or_404
+from universal.helpers import (get_company, get_object_or_none,
+                               get_company_or_404)
 from universal.views import RequestFormViewBase
 
 
@@ -77,7 +78,8 @@ def admin_purchasedjobs(request, purchased_product):
         'product': product,
         'jobs': jobs,
     }
-    return render_to_response('postajob/purchasedjobs_admin_overview.html', data,
+    return render_to_response('postajob/purchasedjobs_admin_overview.html',
+                              data,
                               RequestContext(request))
 
 
@@ -480,7 +482,7 @@ class PurchasedJobFormView(BaseJobFormView):
                 raise Http404
             else:
                 company = get_company(self.request)
-                if company and company.companyprofile:
+                if company and hasattr(company, 'companyprofile'):
                     if self.request.user in company.companyprofile.blocked_users.all():
                         # If the current user has been blocked by the company
                         # that we are trying to post a job to, don't allow
