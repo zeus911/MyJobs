@@ -229,14 +229,10 @@ def parse_feed(feed_url, frequency='W', num_items=100, offset=0,
                 item.findChild('pubdate').text)
             item_dict['description'] = item.findChild('description').text
 
-        if ignore_dates or date_in_range(start, end,
-                                         item_dict['pubdate'].date()):
-            if ignore_dates and new <= item_dict['pubdate'].date():
-                item_dict['new'] = True
+        if ignore_dates and new <= item_dict['pubdate'].date():
+            item_dict['new'] = True
 
-            item_list.append(item_dict)
-        else:
-            break
+        item_list.append(item_dict)
 
         if len(item_list) == return_items:
             break
@@ -270,7 +266,6 @@ def url_sort_options(feed_url, sort_by, frequency=None):
 
     if sort_by == "Relevance":
         query.update({'date_sort': 'False'})
-
     if frequency:
         interval = -get_interval_from_frequency(frequency)
         query.update({'days_ago': interval})
