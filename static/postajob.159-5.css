@@ -107,3 +107,17 @@ fieldset > div > .card-wrapper > .product-card {
     white-space: nowrap;
     overflow: hidden;
 }
+
+.site-field > ul {
+    display: block;
+    float: left;
+    width: 600px;
+    height: 300px;
+    overflow-x: scroll;
+    margin-left: 0;
+    border: 1px solid #ddd;
+}
+
+.site-field > ul > li {
+    display: block;
+}
