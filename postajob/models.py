@@ -142,8 +142,8 @@ class Job(BaseModel):
 
     locations = models.ManyToManyField('JobLocation', related_name='jobs')
 
-    date_new = models.DateTimeField(auto_now=True)
-    date_updated = models.DateTimeField(auto_now_add=True)
+    date_new = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
     date_expired = models.DateField(help_text=help_text['date_expired'])
     is_expired = models.BooleanField(default=False, verbose_name="Expired",
                                      help_text=help_text['is_expired'])
