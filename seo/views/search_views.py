@@ -645,8 +645,7 @@ def syndication_feed(request, filter_path, feed_type):
     else:
         sqs = helpers._sqs_narrow_by_buid_and_site_package(
             helpers.sqs_apply_custom_facets(settings.DEFAULT_FACET))
-
-    sort_order = 'new' if date_sort else 'relevance'
+    sort_order = 'new' if date_sort == 'True' else 'relevance'
     jobs = helpers.get_jobs(default_sqs=sqs,
                             custom_facets=settings.DEFAULT_FACET,
                             jsids=settings.SITE_BUIDS,
