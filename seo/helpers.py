@@ -479,7 +479,8 @@ def get_bread_box_title(filters={}, jobs=None):
 
 def get_jobs(custom_facets=None, exclude_facets=None, jsids=None, 
              default_sqs=None, filters={},  fields=None, facet_limit=250,
-             facet_sort="count", facet_offset=None, mc=1):
+             facet_sort="count", facet_offset=None, mc=1,
+             sort_order='relevance'):
     """
     Returns 3-tuple containing a DESearchQuerySet object, a set of facet
     counts that have been filtered, and a set of unfiltered facet counts.
@@ -505,6 +506,9 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
         sqs = DESearchQuerySet()
     sqs = sqs_apply_custom_facets(custom_facets, sqs, exclude_facets)
     sqs = _sqs_narrow_by_buid_and_site_package(sqs, buids=jsids)
+
+
+    sqs = sqs.order_by(sort_order_mapper.get(sort_order, '-score'))
 
     #The boost function added to this search query set scales relevancy scores
     #by a factor of 1/2 at ~6 months (1.8e-11 ms) in all future queries
@@ -895,11 +899,8 @@ def prepare_sqs_from_search_params(params, sqs=None):
     moc_id = params.get('moc_id')
     company = params.get('company')
     exact_title = bool(params.get('exact_title'))
-    sort_order = params.get('sort', 'relevance')
     if sqs is None:
         sqs = DESearchQuerySet()
-
-    sqs = sqs.order_by(sort_order_mapper.get(sort_order, '-score'))
 
     # The Haystack API does not allow for boosting terms in individual
     # fields. In this case we want to boost the term represented by
