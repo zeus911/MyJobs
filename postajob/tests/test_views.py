@@ -32,7 +32,7 @@ class PostajobTestBase(MyJobsBase):
     def setUp(self):
         super(PostajobTestBase, self).setUp()
         self.user = UserFactory(password='5UuYquA@')
-        self.company = CompanyFactory(product_access=True)
+        self.company = CompanyFactory(product_access=True, posting_access=True)
 
         self.site = SeoSiteFactory()
         self.bu = BusinessUnitFactory()
