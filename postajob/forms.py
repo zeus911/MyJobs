@@ -66,7 +66,7 @@ class BaseJobForm(RequestForm):
         # Set the starting date expired option
         if self.instance and self.instance.date_expired:
             date_new = getattr(
-                self.instance.job_ptr, 'date_new', datetime.now()).date()
+                self.instance, 'date_new', datetime.now()).date()
             days = (self.instance.date_expired - date_new).days
             self.initial['date_expired'] = days
         else:
@@ -103,15 +103,6 @@ class BaseJobForm(RequestForm):
             URLValidator(apply_link)
         return apply_link
 
-    def clean_date_expired(self):
-        try:
-            date_new = self.instance.job_ptr.date_new
-        except Job.DoesNotExist:
-            # We are adding a job, not editing one
-            date_new = datetime.now()
-
-        date_expired = self.cleaned_data['date_expired']
-        return date_new + timedelta(date_expired)
 
     def clean(self):
         apply_info = self.cleaned_data.get('apply_info')
@@ -214,6 +205,12 @@ class JobForm(BaseJobForm):
                     packages[0] == self.instance.owner.site_package):
                 self.initial['post_to'] = 'network'
 
+    def clean_date_expired(self):
+        date_new = self.instance.date_new or datetime.now()
+
+        date_expired = self.cleaned_data['date_expired']
+        return date_new + timedelta(date_expired)
+
     def clean_site_packages(self):
         """
         Convert from SeoSite or network sites to a SitePackage.
@@ -266,6 +263,16 @@ class PurchasedJobBaseForm(JobForm):
                   'apply_email', 'apply_info', 'owner', 'post_to')
         model = PurchasedJob
         purchased_product = None
+
+    def clean_date_expired(self):
+        try:
+            date_new = self.instance.job_ptr.date_new
+        except Job.DoesNotExist:
+            # We are adding a job, not editing one
+            date_new = datetime.now()
+
+        date_expired = self.cleaned_data['date_expired']
+        return date_new + timedelta(date_expired)
 
     def clean(self):
         date_expired = self.cleaned_data.get('date_expired').date()
