@@ -54,8 +54,9 @@ class BaseJobForm(RequestForm):
                            label='Apply Link',
                            help_text=Job.help_text['apply_link'],
                            widget=TextInput(attrs={'rows': 1, 'size': 50}))
-    #TODO: Change the help text
     date_expired = IntegerField(label='Expires On',
+                                help_text="The length of time before the job "
+                                          "expires.",
                                 widget=Select(
                                     choices=Product.max_job_length_choices))
 
