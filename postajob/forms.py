@@ -62,15 +62,6 @@ class BaseJobForm(RequestForm):
     def __init__(self, *args, **kwargs):
         super(BaseJobForm, self).__init__(*args, **kwargs)
 
-        # Restrict choices for date expiration to those determined by the
-        # product
-        max_job_length = self.purchased_product.max_job_length
-        job_length_index = [
-            choice[0] for choice in 
-            self.fields['date_expired'].widget.choices].index(max_job_length)
-
-        self.fields['date_expired'].widget.choices = self.fields[
-            'date_expired'].widget.choices[:job_length_index+1]
 
         # Set the starting date expired option
         if self.instance and self.instance.date_expired:
@@ -308,6 +299,16 @@ class PurchasedJobForm(PurchasedJobBaseForm):
         super(PurchasedJobForm, self).__init__(*args, **kwargs)
         self.fields.pop('post_to', None)
         self.initial['site_packages'] = self.fields['site_packages'].queryset
+
+        # Restrict choices for date expiration to those determined by the
+        # product
+        max_job_length = self.purchased_product.max_job_length
+        job_length_index = [
+            choice[0] for choice in 
+            self.fields['date_expired'].widget.choices].index(max_job_length)
+
+        self.fields['date_expired'].widget.choices = self.fields[
+            'date_expired'].widget.choices[:job_length_index+1]
 
     def get_field_sets(self):
         field_sets = [
