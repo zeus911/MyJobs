@@ -193,7 +193,7 @@ def parse_feed(feed_url, frequency='W', num_items=100, offset=0,
 
     if (('days_ago=' not in feed_url) and (last_sent is not None)
             and (not ignore_dates)):
-        feed_url += '&days_ago=%s' % -last_sent_diff
+        feed_url += '&days_ago=%s' % -last_sent_diff.days
 
     is_json = 'feed/json' in feed_url
     if is_json:
@@ -201,7 +201,6 @@ def parse_feed(feed_url, frequency='W', num_items=100, offset=0,
     else:
         rss_soup = get_rss_soup(feed_url)
         items = rss_soup.find_all('item')
-    count = len(items)
 
     for item in items:
         if is_json:
@@ -235,13 +234,11 @@ def parse_feed(feed_url, frequency='W', num_items=100, offset=0,
                 item_dict['new'] = True
 
             item_list.append(item_dict)
-        else:
-            break
 
         if len(item_list) == return_items:
             break
 
-    return item_list, count
+    return item_list, len(item_list)
 
 
 def date_in_range(start, end, x):
