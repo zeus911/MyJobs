@@ -96,7 +96,7 @@ def ajax_get_facets(request, filter_path, facet_type):
     filters = helpers.build_filter_dict(filter_path)
 
     sqs = helpers.prepare_sqs_from_search_params(GET)
-
+    sort_order = request.REQUEST.get('sort', 'relevance')
     offset = int(GET.get('offset', site_config.num_filter_items_to_show*2))
     num_items = int(GET.get('num_items', DEFAULT_PAGE_SIZE))
 
@@ -119,13 +119,15 @@ def ajax_get_facets(request, filter_path, facet_type):
                                         jsids=settings.SITE_BUIDS,
                                         filters=filters,
                                         facet_limit=num_items,
-                                        facet_offset=offset)
+                                        facet_offset=offset,
+                                        sort_order=sort_order)
 
         featured_jobs = helpers.get_featured_jobs(default_sqs=sqs,
                                                   jsids=settings.SITE_BUIDS,
                                                   filters=filters,
                                                   facet_limit=num_items,
-                                                  facet_offset=offset)
+                                                  facet_offset=offset,
+                                                  sort_order=sort_order)
 
 
         #TODO: This may throw off num_items and offset. Add slicing to each
@@ -186,14 +188,17 @@ def ajax_get_jobs(request, filter_path):
     custom_facets = settings.DEFAULT_FACET
     path = request.META.get('HTTP_REFERER')
     sqs = helpers.prepare_sqs_from_search_params(GET)
+    sort_order = request.REQUEST.get('sort', 'relevance')
     default_jobs = helpers.get_jobs(default_sqs=sqs,
                                     custom_facets=custom_facets,
                                     exclude_facets=settings.FEATURED_FACET,
                                     jsids=settings.SITE_BUIDS,
-                                    filters=filters)
+                                    filters=filters,
+                                    sort_order=sort_order)
     featured_jobs = helpers.get_featured_jobs(default_sqs=sqs,
                                               jsids=settings.SITE_BUIDS,
-                                              filters=filters)
+                                              filters=filters,
+                                              sort_order=sort_order)
     (num_featured_jobs, num_default_jobs, featured_offset, default_offset) = \
         helpers.featured_default_jobs(featured_jobs.count(),
                                       default_jobs.count(),
@@ -245,15 +250,17 @@ def ajax_get_jobs_search(request):
         pagesize = int(site_config.num_job_items_to_show)
     except ValueError:
         pagesize = 0
+    sort_order = request.REQUEST.get('sort', 'relevance')
     default_jobs = helpers.get_jobs(default_sqs=sqs,
                                     custom_facets=settings.DEFAULT_FACET,
                                     exclude_facets=settings.FEATURED_FACET,
                                     jsids=settings.SITE_BUIDS,
-                                    facet_limit=pagesize)
+                                    facet_limit=pagesize, sort_order=sort_order)
 
     featured_jobs = helpers.get_featured_jobs(default_sqs=sqs,
                                               jsids=settings.SITE_BUIDS,
-                                              facet_limit=pagesize)
+                                              facet_limit=pagesize,
+                                              sort_order=sort_order)
 
     (num_featured_jobs, num_default_jobs, featured_offset, default_offset) = \
         helpers.featured_default_jobs(featured_jobs.count(),
@@ -546,9 +553,10 @@ def job_listing_nav_redirect(request, home=None, cc3=None):
     path_part = request.path
     filters = helpers.build_filter_dict(path_part)
     url = 'location'
+    sort_order = request.REQUEST.get('sort', 'relevance')
     jobs = helpers.get_jobs(custom_facets=settings.DEFAULT_FACET,
                             jsids=settings.SITE_BUIDS,
-                            filters=filters)
+                            filters=filters, sort_order=sort_order)
     facet_counts = jobs.facet_counts()['fields']
 
     if not cc3:
@@ -638,13 +646,12 @@ def syndication_feed(request, filter_path, feed_type):
         sqs = helpers._sqs_narrow_by_buid_and_site_package(
             helpers.sqs_apply_custom_facets(settings.DEFAULT_FACET))
 
+    sort_order = 'new' if date_sort else 'relevance'
     jobs = helpers.get_jobs(default_sqs=sqs,
                             custom_facets=settings.DEFAULT_FACET,
                             jsids=settings.SITE_BUIDS,
-                            filters=filters)
+                            filters=filters, sort_order=sort_order)
 
-    if date_sort == 'True':
-        jobs = jobs.order_by(u'-date_new')
     if days_ago:
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=days_ago)
@@ -820,16 +827,17 @@ def ajax_filter_carousel(request):
                     name=active[0].name,
                     seosite__id=settings.SITE_ID)
                 sqs = helpers.sqs_apply_custom_facets(custom_facets, sqs=sqs)
-
+    sort_order = request.REQUEST.get('sort', 'relevance')
     default_jobs = helpers.get_jobs(default_sqs=sqs,
                                     custom_facets=settings.DEFAULT_FACET,
                                     exclude_facets=settings.FEATURED_FACET,
                                     jsids=settings.SITE_BUIDS, filters=filters,
-                                    facet_limit=num_jobs)
+                                    facet_limit=num_jobs, sort_order=sort_order)
     featured_jobs = helpers.get_featured_jobs(default_sqs=sqs,
                                               filters=filters,
                                               jsids=settings.SITE_BUIDS,
-                                              facet_limit=num_jobs)
+                                              facet_limit=num_jobs,
+                                              sort_order=sort_order)
     facet_counts = default_jobs.add_facet_count(featured_jobs).get('fields')
 
     bread_box_path = helpers.get_bread_box_path(filters)
@@ -1610,7 +1618,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         settings.COMMITMENTS.all())
     site_config = get_site_config(request)
     num_jobs = int(site_config.num_job_items_to_show) * 2
-
+    sort_order = request.REQUEST.get('sort', 'relevance')
     # Apply any parameters in the querystring to the solr search.
     sqs = (helpers.prepare_sqs_from_search_params(request.GET) if query_path
            else None)
@@ -1652,12 +1660,13 @@ def search_by_results_and_slugs(request, *args, **kwargs):
                                     custom_facets=settings.DEFAULT_FACET,
                                     exclude_facets=settings.FEATURED_FACET,
                                     jsids=settings.SITE_BUIDS, filters=filters,
-                                    facet_limit=num_jobs)
+                                    facet_limit=num_jobs, sort_order=sort_order)
     jobs_count = get_total_jobs_count()
     featured_jobs = helpers.get_featured_jobs(default_sqs=sqs,
                                               filters=filters,
                                               jsids=settings.SITE_BUIDS,
-                                              facet_limit=num_jobs)
+                                              facet_limit=num_jobs,
+                                              sort_order=sort_order)
     facet_counts = default_jobs.add_facet_count(featured_jobs).get('fields')
 
     (num_featured_jobs, num_default_jobs, _, _) = helpers.featured_default_jobs(
