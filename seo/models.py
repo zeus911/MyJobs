@@ -26,6 +26,7 @@ from social_links import models as social_models
 from seo.search_backend import DESearchQuerySet
 from myjobs.models import User
 from mypartners.models import Tag
+from postajob.models import PurchasedProduct
 from universal.helpers import get_domain, get_object_or_none
 
 import decimal
@@ -733,6 +734,7 @@ class Company(models.Model):
     # Permissions
     prm_access = models.BooleanField(default=True)
     product_access = models.BooleanField(default=False)
+    posting_access = models.BooleanField(default=False)
     user_created = models.BooleanField(default=False)
 
     def slugified_name(self):
@@ -760,6 +762,9 @@ class Company(models.Model):
         for the Company.
         """
         return user in self.admins.all()
+
+    def has_purchased_products(self):
+        return PurchasedProduct.objects.filter(owner=self).exists()
 
 
 class FeaturedCompany(models.Model):
