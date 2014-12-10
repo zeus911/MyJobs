@@ -1,0 +1,61 @@
+{% extends "postajob/dseo/dseo_posting_base.html" %}
+{% load i18n %}
+{% load common_tags %}
+{% load postajob_tags %}
+
+{% block directseo_css %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}/bootstrap/bootstrap-modal.css">
+{% endblock directseo_css %}
+
+{% block directseo_main_content %}
+{{ block.super }}
+<div id="direct_listingDiv">
+    <form action="?" method="post">
+        {% include "includes/form-error-highlight.html" %}
+        {% csrf_token %}
+        <div class="clear"></div>
+        <div class="actions">
+            <div class="form-label pull-left">&nbsp;</div>
+            {% if item.pk and not prevent_delete %}
+                <button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>
+                <div id="delete-confirm" class="modal hide fade row">
+                    <div class="modal-header">{% trans 'Really Delete?' %}</div>
+                    <div class="modal-body">{% blocktrans %}Are you sure you want to delete this {{verbose}}?{% endblocktrans %}</div>
+                    <div class="modal-footer">
+                        <div class="actions">
+                            <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
+                            <a class="btn pull-right" href="{{ delete_url }}">{% trans 'Delete' %}</a>
+                        </div>{# /actions #}
+                    </div>{# /modal=footer #}
+                </div>{# /delete-confirm #}
+            {% endif %}
+            <a href="{{ success_url }}" class="btn">{% trans 'Cancel' %}</a>
+            <button type="submit" class="btn primary" id="profile-save">{%if submit_btn_name%}{{submit_btn_name}}{%else%}{% trans 'Save' %}{%endif%}</button>
+            <br />
+            <div class="span3 form-label pull-left initial billing-zip-code-label"></div>
+            {% if submit_text %}{{ submit_text }}{% endif %}
+        </div>{# /actions #}
+    </form>
+</div>
+{% if sidebar %}
+<div class="direct_rightColBox">
+    <div class="sidebar">
+        <h2 class="top">Product Details</h2>
+        <label>Site(s):</label>
+        <b>{{ product.seosite|join:', ' }}</b>
+        <label>Job Limit:</label>
+        <b>{% if product.num_jobs_allowed == 0 %}Unlimited{%else%}{{ product.num_jobs_allowed }}{%endif%}</b>
+        <label>Expires:</label>
+        <b>{{ product.expiration_date }}</b>
+        <br />
+        <small>Based on today's date of {% now "M j\, Y" %}</small>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra-js %}
+<script type="text/javascript" src="{{STATIC_URL}}/bootstrap/bootstrap-modalmanager.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}/bootstrap/bootstrap-modal.js"></script>
+{% endblock extra-js %}

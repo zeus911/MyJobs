@@ -1,0 +1,11 @@
+{% extends "postajob/dseo/dseo_posting_base.html" %}
+
+{% block directseo_main_content %}
+{{ block.super }}
+<div id="direct_listingDiv">
+    {% include "postajob/includes/request_formBox.html" with wrapper_title="Requests" %}
+</div>
+<div class="direct_rightColBox">
+    {% include "postajob/includes/postajob_navigation.html" %}
+</div>
+{% endblock %}

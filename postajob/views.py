@@ -39,7 +39,7 @@ def jobs_overview(request):
     data = {
         'jobs': jobs.filter(owner=company, purchasedjob__isnull=True),
     }
-    return render_to_response('postajob/jobs_overview.html', data,
+    return render_to_response('postajob/dseo/jobs_overview.html', data,
                               RequestContext(request))
 
 
@@ -59,7 +59,7 @@ def purchasedjobs_overview(request):
         'active_products': products.filter(expiration_date__gte=date.today()),
         'expired_products': products.filter(expiration_date__lt=date.today()),
     }
-    return render_to_response('postajob/dseo/purchasedproduct.html',
+    return render_to_response('postajob/dseo/purchasedjob_overview.html',
                               data, RequestContext(request))
 
 
@@ -77,7 +77,7 @@ def admin_purchasedjobs(request, purchased_product):
         'product': product,
         'jobs': jobs,
     }
-    return render_to_response('postajob/purchasedjobs_admin_overview.html', data,
+    return render_to_response('postajob/dseo/purchasedjobs_admin_overview.html', data,
                               RequestContext(request))
 
 
@@ -108,7 +108,7 @@ def purchasedmicrosite_admin_overview(request):
         'company': company
     }
 
-    return render_to_response('postajob/admin_overview.html', data,
+    return render_to_response('postajob/dseo/admin_overview.html', data,
                               RequestContext(request))
 
 
@@ -124,7 +124,7 @@ def admin_products(request):
         'products': products.filter(owner=company),
         'company': company,
     }
-    return render_to_response('postajob/products.html', data,
+    return render_to_response('postajob/dseo/products.html', data,
                               RequestContext(request))
 
 
@@ -140,7 +140,7 @@ def admin_groupings(request):
         'product_groupings': grouping.filter(owner=company),
         'company': company,
     }
-    return render_to_response('postajob/productgrouping.html', data,
+    return render_to_response('postajob/dseo/productgrouping.html', data,
                               RequestContext(request))
 
 
@@ -156,7 +156,7 @@ def admin_offlinepurchase(request):
         'offline_purchases': purchases.filter(owner=company),
         'company': company,
     }
-    return render_to_response('postajob/offlinepurchase.html', data,
+    return render_to_response('postajob/dseo/offlinepurchase.html', data,
                               RequestContext(request))
 
 
@@ -173,7 +173,7 @@ def admin_request(request):
         'requests': requests.filter(owner=company),
     }
 
-    return render_to_response('postajob/request.html', data,
+    return render_to_response('postajob/dseo/request.html', data,
                               RequestContext(request))
 
 
@@ -192,13 +192,13 @@ def admin_purchasedproduct(request):
         'expired_products': purchases.filter(expiration_date__lt=date.today()),
     }
 
-    return render_to_response('postajob/purchasedproduct.html', data,
+    return render_to_response('postajob/dseo/purchasedproduct.html', data,
                               RequestContext(request))
 
 
 @company_has_access('product_access')
 def view_request(request, content_type, pk):
-    template = 'postajob/request/{model}.html'
+    template = 'postajob/dseo/request/{model}.html'
     company = get_company(request)
     content_type = ContentType.objects.get(pk=content_type)
     data = {
@@ -291,7 +291,7 @@ def product_listing(request):
     # Sort the grouped packages by the specified display order.
     groupings = sorted(groupings, key=lambda grouping: grouping.display_order)
 
-    return render_to_response('postajob/package_list.html',
+    return render_to_response('postajob/dseo/package_list.html',
                               {'product_groupings': groupings},
                               RequestContext(request))
 
@@ -365,7 +365,7 @@ class PostajobModelFormMixin(object):
     """
     model = None
     prevent_delete = False
-    template_name = 'postajob/form.html'
+    template_name = 'postajob/dseo/form.html'
 
     def get_queryset(self, request):
         kwargs = {'owner__in': request.user.get_companies()}

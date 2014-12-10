@@ -1,0 +1,11 @@
+{% extends "postajob/dseo/dseo_posting_base.html" %}
+
+{% block directseo_main_content %}
+{{ block.super }}
+<div id="direct_listingDiv">
+    {% include "postajob/includes/offlinepurchase_formBox.html" with wrapper_title="Offline Purchases" %}
+</div>
+<div class="direct_rightColBox">
+    {% include "postajob/includes/postajob_navigation.html" with primary_btn=True url_name="add" btn_name="Add an Offline Purchase" %}
+</div>
+{% endblock %}

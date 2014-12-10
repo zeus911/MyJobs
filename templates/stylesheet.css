@@ -1374,14 +1374,91 @@ input[title="Submit Search"] {
     font-weight: bold;
 }
 
-.product-card a.card-btn {
-    position: absolute;
-    right: 10px;
-    bottom: 10px;
+.product-card a.card-btn,
+.product-card a.btn {
     background: #{{css.primaryColor}} url("{{ STATIC_URL }}bg-gradient.png") bottom repeat-x !important;
+    bottom: 10px;
     color: #fff !important;
     margin: 8px 0 0;
     padding: 5px 10px;
+    position: absolute;
+    right: 10px;
+}
+
+.wrapper-header,
+.wrapper-footer {
+    border: 1px solid #eee;
+    padding: 3px 10px;
+}
+
+.wrapper-footer {
+    border-top: none;
+}
+
+.wrapper-footer a {
+    color: #{{css.primaryColor}};
+    float: right;
+}
+
+.clearfix {
+    clear: both;
+}
+
+.card-wrapper + .card-wrapper {
+    margin-top: 20px;
+}
+
+.navigation a.btn {
+    display: block;
+}
+
+.product-grouping {
+    width: 280px;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid #eee;
+    display: inline-block;
+    margin-right: 10px;
+    vertical-align: top;
+}
+.product-grouping + .product-grouping {
+    margin-left: 10px;
+}
+
+.product-grouping .heading {
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: 700;
+}
+
+.product-grouping .heading,
+.product-grouping .group-description {
+    margin-bottom: 10px;
+}
+
+.product-grouping .product-listing {
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+ul#ul-posting-nav li {
+    float:left;
+    width: 25%;
+    box-sizing: border-box;
+    background-color: #eee;
+    border-bottom: 1px solid #ddd;
+    border-left: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+    text-align: center;
+}
+
+ul#ul-posting-nav li:last-of-type {
+    border-right: 1px solid #ddd;
+}
+
+ul#ul-posting-nav a {
+    display: block;
+    padding: 10px;
 }
 
 ul.product-tabs {

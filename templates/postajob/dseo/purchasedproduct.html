@@ -1,45 +1,13 @@
 {% extends "postajob/dseo/dseo_posting_base.html" %}
 
 {% block directseo_main_content %}
-    <div id="direct_listingDiv">
-        <ul class="product-tabs">
-            <li id="activity-tab" class="active">Active Products</li>
-            <li id="expired-tab">Expired Products</li>
-        </ul>
-        <div id="tab-content">
-            <div id="content-active-products">
-                {% if active_products %}
+{{ block.super }}
+<div id="direct_listingDiv">
+    {% include "postajob/includes/purchasedproduct_purchasedjob_admin_formBox.html" with wrapper_title="Active Products" purchased_products=active_products %}
 
-                {% for product in active_products %}
-                <div class="product-card">
-                    <div class="big-title">{{ product.product }}</div>
-                    Jobs: <b>{{product.job_amount_posted}} / {%if product.num_jobs_allowed == 0%}Unlimited{%else%}{{product.num_jobs_allowed}}{%endif%}</b>
-                    <span style="float: right;">Expires: <b>{{ product.expiration_date }}</b></span>
-
-                    <a class="card-btn" href="{% url 'purchasedjobs' purchased_product=product.pk %}">View</a>
-                </div>
-                {% endfor %}
-                {% else %}
-                    You have no active products
-                {% endif %}
-            </div>
-            <div id="content-expired-products" style="display: none;">
-                {% if expired_products %}
-                {% for product in expired_products %}
-                    {{ product.product }}
-                {% endfor %}
-                {% else %}
-                    You have no expired products
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    <div class="direct_rightColBox">
-        <h3>Navigation</h3>
-        <ul>
-            <li>
-                <a href="#">Company Profile</a>
-            </li>
-        </ul>
-    </div>
+            {% include "postajob/includes/purchasedproduct_purchasedjob_admin_formBox.html" with wrapper_title="Expired Products" purchased_products=expired_products %}
+</div>
+<div class="direct_rightColBox">
+    {% include "postajob/includes/postajob_navigation.html" %}
+</div>
 {% endblock %}
