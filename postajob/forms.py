@@ -54,7 +54,7 @@ class BaseJobForm(RequestForm):
                            label='Apply Link',
                            help_text=Job.help_text['apply_link'],
                            widget=TextInput(attrs={'rows': 1, 'size': 50}))
-    date_expired = IntegerField(label='Expires On',
+    date_expired = IntegerField(label='Expires In',
                                 help_text="The length of time before the job "
                                           "expires.",
                                 widget=Select(
@@ -62,18 +62,6 @@ class BaseJobForm(RequestForm):
 
     def __init__(self, *args, **kwargs):
         super(BaseJobForm, self).__init__(*args, **kwargs)
-
-
-        # Set the starting date expired option
-        if self.instance and self.instance.date_expired:
-            date_new = getattr(
-                self.instance, 'date_new', datetime.now()).date()
-            days = (self.instance.date_expired - date_new).days
-            self.initial['date_expired'] = days
-        else:
-            # Select the longest duration
-            self.initial['date_expired'] = self.fields[
-                'date_expired'].widget.choices[-1][0]
 
         # Set the starting apply option.
         if self.instance and self.instance.apply_info:
@@ -193,6 +181,18 @@ class JobForm(BaseJobForm):
             user_sites = user_sites.filter(**kwargs)
 
         self.fields['site_packages'].queryset = user_sites
+
+        # Set the starting date expired option
+        if self.instance and self.instance.date_expired:
+            date_new = getattr(
+                self.instance, 'date_new', datetime.now()).date()
+            days = (self.instance.date_expired - date_new).days
+            self.initial['date_expired'] = days
+        else:
+            # Select the longest duration
+            self.initial['date_expired'] = self.fields[
+                'date_expired'].widget.choices[-1][0]
+
 
         # Since we're not using actual site_packages for the site_packages,
         # the initial data also needs to be manually set.
@@ -317,6 +317,18 @@ class PurchasedJobForm(PurchasedJobBaseForm):
 
         self.fields['date_expired'].widget.choices = self.fields[
             'date_expired'].widget.choices[:job_length_index+1]
+
+        # Set the starting date expired option
+        if self.instance and self.instance.date_expired:
+            date_new = getattr(
+                self.instance, 'date_new', datetime.now()).date()
+            days = (self.instance.date_expired - date_new).days
+            self.initial['date_expired'] = days
+        else:
+            # Select the longest duration
+            self.initial['date_expired'] = self.fields[
+                'date_expired'].widget.choices[-1][0]
+
 
     def get_field_sets(self):
         field_sets = [
