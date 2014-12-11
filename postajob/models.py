@@ -287,15 +287,6 @@ class PurchasedJob(Job):
     purchased_product = models.ForeignKey('PurchasedProduct')
     is_approved = models.BooleanField(default=False)
 
-    def delete(self, **kwargs):
-        product = self.purchased_product
-        super(PurchasedJob, self).delete(**kwargs)
-        if product.num_jobs_allowed != 0:
-            # increment jobs_remaining if this job is not part of an unlimited
-            # product
-            product.jobs_remaining += 1
-            product.save(**kwargs)
-
     def save(self, **kwargs):
         if not hasattr(self, 'pk') or not self.pk:
             # Set number of jobs remaining
