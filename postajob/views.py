@@ -29,7 +29,7 @@ from universal.helpers import (get_company, get_object_or_none,
 from universal.views import RequestFormViewBase
 
 
-@company_has_access('prm_access')
+@company_has_access('posting_access')
 def jobs_overview(request):
     if settings.SITE:
         sites = settings.SITE.postajob_site_list()
@@ -439,7 +439,7 @@ class JobFormView(BaseJobFormView):
     update_name = 'job_update'
     delete_name = 'job_delete'
 
-    @method_decorator(company_has_access('prm_access'))
+    @method_decorator(company_has_access('posting_access'))
     def dispatch(self, *args, **kwargs):
         """
         Decorators on this function will be run on every request that
@@ -792,8 +792,6 @@ class SitePackageFilter(FSMView):
             user_sites = self.request.user.get_sites()
             # Outside the admin, limit the sites to the current company
             user_sites = user_sites.filter(**kwargs)
-        print len(user_sites)
-        print self.request.user.is_superuser
         return user_sites
 
 

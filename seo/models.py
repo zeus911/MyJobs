@@ -733,6 +733,7 @@ class Company(models.Model):
     # Permissions
     prm_access = models.BooleanField(default=True)
     product_access = models.BooleanField(default=False)
+    posting_access = models.BooleanField(default=False)
     user_created = models.BooleanField(default=False)
 
     def slugified_name(self):

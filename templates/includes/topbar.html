@@ -38,7 +38,11 @@
                             {% endif %}
                             {% if company.product_access %}
                                 <li><a id="purchasedmicrosite-tab" href="{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Partner Microsite" %}</a></li>
+                            {% endif %}
+                            {% if company.purchasedproduct_set.exists %}
                                 <li><a id="purchasedproducts-tab" href="{% url 'purchasedjobs_overview' %}">{% trans "Purchased Products" %}</a></li>
+                            {% endif %}
+                            {% if company.posting_access %}
                                 <li><a id="posted-jobs-tab" href="{% url 'jobs_overview' %}">{% trans "Posted Jobs" %}</a></li>
                             {% endif %}
                         </ul>
@@ -106,8 +110,12 @@
                                         {% endif %}
                                         {% if company.product_access %}
                                             <li><a id="purchased-microsite-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Partner Microsite" %}</a></li>
+                                        {% endif %}
+                                        {% if company.has_purchased_products %}
                                             <li><a id="purchasedproducts-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL}}{% url 'purchasedproduct' %}">{% trans "Purchased Products" %}</a></li>
-                                            <li><a id="purchased-microsite-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}{% url 'jobs_overview' %}">{% trans "Posted Jobs" %}</a></li>
+                                        {% endif %}
+                                        {% if company.posting_access %}
+                                            <li><a id="purchased-microsite-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}{% url 'jobs_overview' %}">{% trans "Posted Jobz" %}</a></li>
                                         {% endif %}
                                     {% endif %}
                                     <li><a id="account-link" href="{{ ABSOLUTE_URL }}account/edit">{% trans "Account Settings" %}</a></li>
