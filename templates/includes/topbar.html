@@ -39,7 +39,7 @@
                             {% if company.product_access %}
                                 <li><a id="purchasedmicrosite-tab" href="{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Partner Microsite" %}</a></li>
                             {% endif %}
-                            {% if company.has_purchased_products %}
+                            {% if company.purchasedproduct_set.exists %}
                                 <li><a id="purchasedproducts-tab" href="{% url 'purchasedjobs_overview' %}">{% trans "Purchased Products" %}</a></li>
                             {% endif %}
                             {% if company.posting_access %}
