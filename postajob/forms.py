@@ -684,22 +684,6 @@ class OfflinePurchaseForm(RequestForm):
 
         instance = super(OfflinePurchaseForm, self).save(commit)
 
-        invoice = Invoice.objects.create(
-            card_exp_date=date.today(),
-            card_last_four='XXXX',
-            address_line_one='',
-            city='',
-            state='',
-            zipcode='',
-            country='',
-            first_name='',
-            last_name='',
-            owner=self.company,
-            transaction_type=Invoice.OFFLINE_PURCHASE,
-            transaction=instance.pk,
-        )
-        instance.invoice = invoice
-
         for product in self.products:
             product_quantity = self.cleaned_data.get(str(product.pk))
             if product_quantity:
@@ -707,7 +691,6 @@ class OfflinePurchaseForm(RequestForm):
                     product=product, offline_purchase=instance,
                     product_quantity=product_quantity
                 )
-
         instance.save()
 
         company = get_object_or_none(
@@ -769,8 +752,26 @@ class OfflinePurchaseRedemptionForm(RequestForm):
     def save(self, commit=True):
         if not self.company:
             make_company_from_form(self)
-
         self.instance = self.cleaned_data.get('redemption_id')
+
+        invoice_kwargs = {
+            'first_name': self.request.user.first_name,
+            'last_name': self.request.user.last_name,
+            'owner': self.company,
+            'transaction_type': Invoice.OFFLINE_PURCHASE,
+            'transaction': self.instance.redemption_uid,
+        }
+        if hasattr(self.company, 'companyprofile'):
+            profile = self.company.companyprofile
+            invoice_kwargs['address_line_one'] = profile.address_line_one
+            invoice_kwargs['address_line_two'] = profile.address_line_two
+            invoice_kwargs['city'] = profile.city
+            invoice_kwargs['state'] = profile.state
+            invoice_kwargs['country'] = profile.country
+            invoice_kwargs['zipcode'] = profile.zipcode
+        invoice = Invoice.objects.create(**invoice_kwargs)
+
+        self.instance.invoice = invoice
         self.instance.redeemed_by = CompanyUser.objects.get(
             user=self.request.user, company=self.company)
         self.instance.redeemed_on = date.today()
@@ -803,7 +804,6 @@ class CompanyProfileForm(RequestForm):
         if not self.instance.company.user_created:
             self.fields['company_name'].widget.attrs['readonly'] = True
             self.fields['description'].widget.attrs['readonly'] = True
-
 
     def clean(self):
         if self.instance.company.user_created:
