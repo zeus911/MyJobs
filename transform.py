@@ -253,9 +253,9 @@ def hr_xml_to_json(xml, business_unit):
     # Use dateutil here because datetime.strptime does not support this format.
     try:
         date_new = data.get('validFrom')
-        job['date_new'] = date_parse(date_new).replace(tzinfo=None)
-        updated = date_parse(app.find('.//CreationDateTime').text)
-        job['date_updated'] = updated.replace(tzinfo=None)
+        job['date_new'] = date_parse(date_new)
+        job['date_updated'] = date_parse(app.find('.//CreationDateTime').text)
+        
     except ValueError:
         logger.error("Unable to parse string %s as a date", date_new)
         raise

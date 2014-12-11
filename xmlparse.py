@@ -7,6 +7,7 @@ import datetime
 import markdown2
 import random
 import time
+import pytz
 from collections import namedtuple
 from HTMLParser import HTMLParser
 from lxml import etree
@@ -249,7 +250,7 @@ class DEJobFeed(JobFeed):
         """
         oneday = datetime.timedelta(hours=23, minutes=59, seconds=59)
         # midnight last night
-        lastnight = datetime.datetime(date.year, date.month, date.day)
+        lastnight = datetime.datetime(date.year, date.month, date.day, tzinfo=pytz.UTC)
         # midnight tonight
         tonight = lastnight + oneday
         # seconds since midnight last night
