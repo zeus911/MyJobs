@@ -1486,3 +1486,7 @@ ul.product-tabs li.active {
     cursor: default;
     text-decoration: none;
 }
+
+#grouping-list {
+    margin-top: 18px;
+}
