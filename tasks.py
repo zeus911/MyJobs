@@ -144,13 +144,15 @@ def send_search_digests():
         return chain(daily, weekly, monthly)
 
     digests = SavedSearchDigest.objects.filter(is_active=True,
-                                               user__in_reserve=False)
+                                               user__opt_in_myjobs=True,
+                                               user__is_disabled=False)
     digests = filter_by_time(digests)
     for obj in digests:
         send_search_digest.s(obj).apply_async()
 
     not_digest = SavedSearchDigest.objects.filter(is_active=False,
-                                                  user__in_reserve=False)
+                                                  user__opt_in_myjobs=True,
+                                                  user__is_disabled=False)
     for item in not_digest:
         saved_searches = item.user.savedsearch_set.filter(is_active=True)
         saved_searches = filter_by_time(saved_searches)
@@ -196,10 +198,11 @@ def process_user_events(email):
     stop_sending = filter_by_event(STOP_SENDING)
     update_fields = []
     if user and (deactivate or stop_sending) and user.opt_in_myjobs:
-        user.is_verified = False
         user.opt_in_myjobs = False
         if deactivate:
+            user.is_verified = False
             user.deactivate_type = deactivate[0].event
+            update_fields.append('is_verified')
             body = """
             <b>Warning</b>: Attempts to send messages to {email} have failed.
             Please check your email address in your <a href="{{settings_url}}">
@@ -214,7 +217,7 @@ def process_user_events(email):
             """.format(email=stop_sending[0].email)
         body = body.format(settings_url=reverse_lazy('edit_account'))
         Message.objects.create_message(users=user, subject='', body=body)
-        update_fields.extend(['deactivate_type', 'is_verified',
+        update_fields.extend(['deactivate_type',
                               'opt_in_myjobs'])
 
     if user and user.last_response < newest_log.received:
@@ -631,14 +634,14 @@ def read_new_logs(solr_location=None):
 
 @task(name='tasks.expire_jobs', ignore_result=True)
 def expire_jobs():
-    jobs = Job.objects.filter(date_expired=date.today(),
+    jobs = Job.objects.filter(date_expired__lt=date.today(),
                               is_expired=False, autorenew=False)
     for job in jobs:
         # Setting is_expired to True will trigger job.remove_from_solr()
         job.is_expired = True
         job.save()
 
-    jobs = Job.objects.filter(date_expired=date.today(),
+    jobs = Job.objects.filter(date_expired__lt=date.today(),
                               is_expired=False, autorenew=True)
     for job in jobs:
         job.date_expired = date.today() + timedelta(days=30)

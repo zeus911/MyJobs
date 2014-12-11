@@ -92,7 +92,7 @@ class SavedSearchHelperTests(MyJobsBase):
 
             # The second value in the items list is the total count from a feed,
             # which may not equal the number of items returned
-            self.assertEqual(items[1], count)
+            self.assertEqual(items[1], len(items[0]))
             item = items[0][0]
             for element in ['pubdate', 'title', 'description', 'link']:
                 self.assertTrue(item[element])
@@ -105,14 +105,27 @@ class SavedSearchHelperTests(MyJobsBase):
         feed_url = url_sort_options(feed, "Relevance")
         parsed = urlparse(feed_url)
         query = parse_qs(parsed.query)
-
         self.assertEquals(parsed.path, "/jobs/feed/rss")
         self.assertEquals(query['date_sort'], [u'False'])
-        int(query['days_ago'][0])
+        # If a frequency isn't specified, days_ago should be missing from
+        # the url.
+        self.assertNotIn('days_ago', query)
     
         # Test to make sure sort by "Date" doesn't have anything added
         feed_url = url_sort_options(feed, "Date")
         self.assertEquals(feed_url, "http://www.my.jobs/jobs/feed/rss")
+
+        # Test to make sure that passing in a frequency does in fact
+        # add the frequency to the feed url.
+        feed_url = url_sort_options(feed, "Relevance", frequency='D')
+        query = parse_qs(urlparse(feed_url).query)
+        self.assertEquals(query['days_ago'][0], '1')
+        feed_url = url_sort_options(feed, "Relevance", frequency='W')
+        query = parse_qs(urlparse(feed_url).query)
+        self.assertEquals(query['days_ago'][0], '7')
+        feed_url = url_sort_options(feed, "Relevance", frequency='M')
+        query = parse_qs(urlparse(feed_url).query)
+        self.assertEqual(query['days_ago'][0], '30')
 
     def test_unicode_in_search(self):
         search = SavedSearch(url=u"http://www.my.jobs/search?q=%E2%80%93",
@@ -127,12 +140,9 @@ class SavedSearchHelperTests(MyJobsBase):
         new = parse_qs(urlparse(feed_url).query)
 
         self.assertFalse(old.get('date_sort'))
-        self.assertFalse(old.get('days_ago'))
         self.assertTrue(new['date_sort'][0])
-        self.assertTrue(new['days_ago'][0])
 
         del new['date_sort']
-        del new['days_ago']
         self.assertEqual(new, old)
 
     def test_feed_on_protected_site_no_access(self):

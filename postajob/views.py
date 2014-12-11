@@ -24,11 +24,12 @@ from postajob.forms import (CompanyProfileForm, JobForm, OfflinePurchaseForm,
 from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
                              Product, ProductGrouping, PurchasedJob,
                              PurchasedProduct, Request, JobLocation)
-from universal.helpers import get_company, get_object_or_none, get_company_or_404
+from universal.helpers import (get_company, get_object_or_none,
+                               get_company_or_404)
 from universal.views import RequestFormViewBase
 
 
-@company_has_access('prm_access')
+@company_has_access('posting_access')
 def jobs_overview(request):
     if settings.SITE:
         sites = settings.SITE.postajob_site_list()
@@ -77,8 +78,8 @@ def admin_purchasedjobs(request, purchased_product):
         'product': product,
         'jobs': jobs,
     }
-    return render_to_response('postajob/dseo/purchasedjobs_admin_overview.html', data,
-                              RequestContext(request))
+    return render_to_response('postajob/dseo/purchasedjobs_admin_overview.html',
+                              data, RequestContext(request))
 
 
 @company_has_access('product_access')
@@ -437,7 +438,7 @@ class JobFormView(BaseJobFormView):
     update_name = 'job_update'
     delete_name = 'job_delete'
 
-    @method_decorator(company_has_access('prm_access'))
+    @method_decorator(company_has_access('posting_access'))
     def dispatch(self, *args, **kwargs):
         """
         Decorators on this function will be run on every request that
@@ -480,7 +481,7 @@ class PurchasedJobFormView(BaseJobFormView):
                 raise Http404
             else:
                 company = get_company(self.request)
-                if company and company.companyprofile:
+                if company and hasattr(company, 'companyprofile'):
                     if self.request.user in company.companyprofile.blocked_users.all():
                         # If the current user has been blocked by the company
                         # that we are trying to post a job to, don't allow
@@ -626,7 +627,6 @@ class PurchasedProductFormView(PostajobModelFormMixin, RequestFormViewBase):
             else:
                 self.display_name = self.product
                 self.form_class = PurchasedProductNoPurchaseForm
-
         return super(PurchasedProductFormView, self).dispatch(*args, **kwargs)
 
     def get_form_kwargs(self):
@@ -693,6 +693,12 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
             raise Http404
         return super(OfflinePurchaseFormView, self).set_object(request)
 
+    def get_context_data(self, **kwargs):
+        context = super(OfflinePurchaseFormView, self).get_context_data(**kwargs)
+        context['show_product_labels'] = True
+        
+        return context
+
 
 class OfflinePurchaseRedemptionFormView(PostajobModelFormMixin,
                                         RequestFormViewBase):
@@ -758,6 +764,14 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
     def delete(self):
         raise Http404
 
+    def get_context_data(self, **kwargs):
+        context = super(CompanyProfileFormView, self).get_context_data(
+            **kwargs)
+        company = get_company(self.request)
+        context.setdefault('company', company)
+
+        return context
+
 
 class SitePackageFilter(FSMView):
     model = SeoSite
@@ -777,8 +791,6 @@ class SitePackageFilter(FSMView):
             user_sites = self.request.user.get_sites()
             # Outside the admin, limit the sites to the current company
             user_sites = user_sites.filter(**kwargs)
-        print len(user_sites)
-        print self.request.user.is_superuser
         return user_sites
 
 

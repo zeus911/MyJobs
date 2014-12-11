@@ -8,15 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Request.deny_reason'
-        db.add_column(u'postajob_request', 'deny_reason',
-                      self.gf('django.db.models.fields.TextField')(default='', blank=True),
+        # Adding field 'Company.posting_access'
+        db.add_column(u'seo_company', 'posting_access',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting field 'Request.deny_reason'
-        db.delete_column(u'postajob_request', 'deny_reason')
+        # Deleting field 'Company.posting_access'
+        db.delete_column(u'seo_company', 'posting_access')
 
 
     models = {
@@ -39,6 +39,17 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
+        },
+        u'flatpages.flatpage': {
+            'Meta': {'ordering': "(u'url',)", 'object_name': 'FlatPage', 'db_table': "u'django_flatpage'"},
+            'content': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'enable_comments': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'registration_required': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'sites': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['sites.Site']", 'symmetrical': 'False'}),
+            'template_name': ('django.db.models.fields.CharField', [], {'max_length': '70', 'blank': 'True'}),
+            'title': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'url': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'})
         },
         u'myjobs.user': {
             'Meta': {'object_name': 'User'},
@@ -68,163 +79,11 @@ class Migration(SchemaMigration):
             'user_guid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'related_name': "u'user_set'", 'blank': 'True', 'to': u"orm['auth.Permission']"})
         },
-        u'postajob.companyprofile': {
-            'Meta': {'object_name': 'CompanyProfile'},
-            'address_line_one': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'address_line_two': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'authorize_net_login': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'authorize_net_transaction_key': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'blocked_users': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myjobs.User']", 'symmetrical': 'False', 'blank': 'True'}),
-            'city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'company': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['seo.Company']", 'unique': 'True'}),
-            'country': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'customer_of': ('django.db.models.fields.related.ManyToManyField', [], {'blank': 'True', 'related_name': "'customer'", 'null': 'True', 'symmetrical': 'False', 'to': u"orm['seo.Company']"}),
-            'email_on_request': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'outgoing_email_domain': ('django.db.models.fields.CharField', [], {'default': "'my.jobs'", 'max_length': '255'}),
-            'phone': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'state': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'zipcode': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'})
-        },
-        u'postajob.invoice': {
-            'Meta': {'object_name': 'Invoice'},
-            'address_line_one': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'address_line_two': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'card_exp_date': ('django.db.models.fields.DateField', [], {}),
-            'card_last_four': ('django.db.models.fields.CharField', [], {'max_length': '5'}),
-            'city': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'country': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'first_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'last_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'owner': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'owner'", 'to': u"orm['seo.Company']"}),
-            'state': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'transaction': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'zipcode': ('django.db.models.fields.CharField', [], {'max_length': '255'})
-        },
-        u'postajob.job': {
-            'Meta': {'object_name': 'Job'},
-            'apply_info': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            'apply_link': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            'autorenew': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'created_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"}),
-            'date_expired': ('django.db.models.fields.DateField', [], {}),
-            'date_new': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'date_updated': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'description': ('django.db.models.fields.TextField', [], {}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'is_expired': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_syndicated': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'locations': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'jobs'", 'symmetrical': 'False', 'to': u"orm['postajob.JobLocation']"}),
-            'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
-            'reqid': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
-            'site_packages': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['postajob.SitePackage']", 'null': 'True', 'blank': 'True'}),
-            'title': ('django.db.models.fields.CharField', [], {'max_length': '255'})
-        },
-        u'postajob.joblocation': {
-            'Meta': {'object_name': 'JobLocation'},
-            'city': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'country': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'country_short': ('django.db.models.fields.CharField', [], {'max_length': '3', 'blank': 'True'}),
-            'guid': ('django.db.models.fields.CharField', [], {'default': "''", 'unique': 'True', 'max_length': '255', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'state': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'state_short': ('django.db.models.fields.CharField', [], {'max_length': '3', 'blank': 'True'}),
-            'zipcode': ('django.db.models.fields.CharField', [], {'max_length': '15', 'blank': 'True'})
-        },
-        u'postajob.offlineproduct': {
-            'Meta': {'object_name': 'OfflineProduct'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'offline_purchase': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.OfflinePurchase']"}),
-            'product': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.Product']"}),
-            'product_quantity': ('django.db.models.fields.PositiveIntegerField', [], {'default': '1'})
-        },
-        u'postajob.offlinepurchase': {
-            'Meta': {'object_name': 'OfflinePurchase'},
-            'created_by': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created'", 'to': u"orm['seo.CompanyUser']"}),
-            'created_on': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'invoice': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.Invoice']", 'null': 'True'}),
-            'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
-            'products': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['postajob.Product']", 'through': u"orm['postajob.OfflineProduct']", 'symmetrical': 'False'}),
-            'redeemed_by': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'redeemed'", 'null': 'True', 'to': u"orm['seo.CompanyUser']"}),
-            'redeemed_on': ('django.db.models.fields.DateField', [], {'null': 'True', 'blank': 'True'}),
-            'redemption_uid': ('django.db.models.fields.CharField', [], {'max_length': '255'})
-        },
         u'postajob.package': {
             'Meta': {'object_name': 'Package'},
             'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'})
-        },
-        u'postajob.product': {
-            'Meta': {'object_name': 'Product'},
-            'cost': ('django.db.models.fields.DecimalField', [], {'max_digits': '20', 'decimal_places': '2'}),
-            'description': ('django.db.models.fields.TextField', [], {}),
-            'featured': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'is_archived': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_displayed': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'max_job_length': ('django.db.models.fields.PositiveIntegerField', [], {'default': '30'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'notes': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            'num_jobs_allowed': ('django.db.models.fields.PositiveIntegerField', [], {'default': '5'}),
-            'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
-            'package': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.Package']"}),
-            'posting_window_length': ('django.db.models.fields.IntegerField', [], {'default': '30'}),
-            'requires_approval': ('django.db.models.fields.BooleanField', [], {'default': 'True'})
-        },
-        u'postajob.productgrouping': {
-            'Meta': {'ordering': "['display_order']", 'object_name': 'ProductGrouping'},
-            'display_order': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
-            'display_title': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'explanation': ('django.db.models.fields.TextField', [], {}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'is_displayed': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
-            'products': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['postajob.Product']", 'null': 'True', 'through': u"orm['postajob.ProductOrder']", 'symmetrical': 'False'})
-        },
-        u'postajob.productorder': {
-            'Meta': {'unique_together': "(('product', 'group'),)", 'object_name': 'ProductOrder'},
-            'display_order': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
-            'group': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.ProductGrouping']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'product': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.Product']"})
-        },
-        u'postajob.purchasedjob': {
-            'Meta': {'object_name': 'PurchasedJob', '_ormbases': [u'postajob.Job']},
-            'is_approved': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            u'job_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['postajob.Job']", 'unique': 'True', 'primary_key': 'True'}),
-            'max_expired_date': ('django.db.models.fields.DateField', [], {}),
-            'purchased_product': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.PurchasedProduct']"})
-        },
-        u'postajob.purchasedproduct': {
-            'Meta': {'object_name': 'PurchasedProduct'},
-            'expiration_date': ('django.db.models.fields.DateField', [], {}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'invoice': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.Invoice']"}),
-            'is_approved': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'jobs_remaining': ('django.db.models.fields.IntegerField', [], {}),
-            'max_job_length': ('django.db.models.fields.IntegerField', [], {}),
-            'num_jobs_allowed': ('django.db.models.fields.IntegerField', [], {}),
-            'offline_purchase': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.OfflinePurchase']", 'null': 'True', 'blank': 'True'}),
-            'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
-            'paid': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'product': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.Product']"}),
-            'purchase_amount': ('django.db.models.fields.DecimalField', [], {'max_digits': '20', 'decimal_places': '2'}),
-            'purchase_date': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'})
-        },
-        u'postajob.request': {
-            'Meta': {'object_name': 'Request'},
-            'action_taken': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
-            'deny_reason': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'made_on': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'object_id': ('django.db.models.fields.IntegerField', [], {}),
-            'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
-            'related_sites': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['seo.SeoSite']", 'null': 'True', 'symmetrical': 'False'})
         },
         u'postajob.sitepackage': {
             'Meta': {'object_name': 'SitePackage', '_ormbases': [u'postajob.Package']},
@@ -239,6 +98,20 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '200'}),
             'value': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '200'})
+        },
+        u'seo.billboardhotspot': {
+            'Meta': {'object_name': 'BillboardHotspot'},
+            'billboard_image': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.BillboardImage']"}),
+            'border_color': ('django.db.models.fields.CharField', [], {'default': "'FFFFFF'", 'max_length': '6'}),
+            'display_url': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'font_color': ('django.db.models.fields.CharField', [], {'default': "'FFFFFF'", 'max_length': '6'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'offset_x': ('django.db.models.fields.IntegerField', [], {}),
+            'offset_y': ('django.db.models.fields.IntegerField', [], {}),
+            'primary_color': ('django.db.models.fields.CharField', [], {'default': "'5A6D81'", 'max_length': '6'}),
+            'text': ('django.db.models.fields.CharField', [], {'max_length': '140'}),
+            'title': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'url': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'})
         },
         u'seo.billboardimage': {
             'Meta': {'object_name': 'BillboardImage'},
@@ -262,8 +135,14 @@ class Migration(SchemaMigration):
             'title': ('django.db.models.fields.CharField', [], {'max_length': '500', 'null': 'True', 'blank': 'True'}),
             'title_slug': ('django.db.models.fields.SlugField', [], {'max_length': '500', 'null': 'True', 'blank': 'True'})
         },
+        u'seo.city': {
+            'Meta': {'object_name': 'City'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
+            'nation': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Country']"})
+        },
         u'seo.company': {
-            'Meta': {'ordering': "['name']", 'object_name': 'Company'},
+            'Meta': {'ordering': "['name']", 'unique_together': "(('name', 'user_created'),)", 'object_name': 'Company'},
             'admins': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myjobs.User']", 'through': u"orm['seo.CompanyUser']", 'symmetrical': 'False'}),
             'canonical_microsite': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
             'company_slug': ('django.db.models.fields.SlugField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
@@ -274,8 +153,9 @@ class Migration(SchemaMigration):
             'linkedin_id': ('django.db.models.fields.CharField', [], {'max_length': '20', 'null': 'True', 'blank': 'True'}),
             'logo_url': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
             'member': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '200'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'og_img': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
+            'posting_access': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'prm_access': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'product_access': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'site_package': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.SitePackage']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
@@ -346,6 +226,13 @@ class Migration(SchemaMigration):
             'wide_footer': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'wide_header': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'})
         },
+        u'seo.country': {
+            'Meta': {'object_name': 'Country'},
+            'abbrev': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'null': 'True', 'blank': 'True'}),
+            'abbrev_short': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'null': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'})
+        },
         u'seo.customfacet': {
             'Meta': {'object_name': 'CustomFacet'},
             'always_show': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -368,6 +255,20 @@ class Migration(SchemaMigration):
             'title': ('django.db.models.fields.CharField', [], {'max_length': '800', 'null': 'True', 'blank': 'True'}),
             'url_slab': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'})
         },
+        u'seo.custompage': {
+            'Meta': {'ordering': "(u'url',)", 'object_name': 'CustomPage', '_ormbases': [u'flatpages.FlatPage']},
+            u'flatpage_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['flatpages.FlatPage']", 'unique': 'True', 'primary_key': 'True'}),
+            'group': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.Group']", 'null': 'True', 'blank': 'True'}),
+            'meta': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'meta_description': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'})
+        },
+        u'seo.featuredcompany': {
+            'Meta': {'object_name': 'FeaturedCompany'},
+            'company': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_featured': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'seosite': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.SeoSite']"})
+        },
         u'seo.googleanalytics': {
             'Meta': {'object_name': 'GoogleAnalytics'},
             'group': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.Group']", 'null': 'True'}),
@@ -384,6 +285,41 @@ class Migration(SchemaMigration):
             'group': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.Group']", 'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '200'})
+        },
+        u'seo.joblisting': {
+            'Meta': {'object_name': 'jobListing'},
+            'city': ('django.db.models.fields.CharField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
+            'citySlug': ('django.db.models.fields.SlugField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
+            'country': ('django.db.models.fields.CharField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
+            'countrySlug': ('django.db.models.fields.SlugField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
+            'country_short': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '3', 'null': 'True', 'blank': 'True'}),
+            'date_new': ('django.db.models.fields.DateTimeField', [], {}),
+            'date_updated': ('django.db.models.fields.DateTimeField', [], {}),
+            'description': ('django.db.models.fields.TextField', [], {}),
+            'hitkey': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'link': ('django.db.models.fields.URLField', [], {'max_length': '200'}),
+            'location': ('django.db.models.fields.CharField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
+            'reqid': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
+            'state': ('django.db.models.fields.CharField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
+            'stateSlug': ('django.db.models.fields.SlugField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
+            'state_short': ('django.db.models.fields.CharField', [], {'max_length': '3', 'null': 'True', 'blank': 'True'}),
+            'title': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'titleSlug': ('django.db.models.fields.SlugField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
+            'uid': ('django.db.models.fields.IntegerField', [], {'unique': 'True', 'db_index': 'True'}),
+            'zipcode': ('django.db.models.fields.CharField', [], {'max_length': '15', 'null': 'True', 'blank': 'True'})
+        },
+        u'seo.redirect': {
+            'Meta': {'object_name': 'Redirect', 'db_table': "'redirect_redirect'"},
+            'buid': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'company_name': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'expired_date': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            'guid': ('django.db.models.fields.CharField', [], {'max_length': '38', 'primary_key': 'True'}),
+            'job_location': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'job_title': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'new_date': ('django.db.models.fields.DateTimeField', [], {}),
+            'uid': ('django.db.models.fields.IntegerField', [], {'unique': 'True', 'null': 'True', 'blank': 'True'}),
+            'url': ('django.db.models.fields.TextField', [], {})
         },
         u'seo.seosite': {
             'Meta': {'ordering': "(u'domain',)", 'object_name': 'SeoSite', '_ormbases': [u'sites.Site']},
@@ -417,6 +353,12 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'seosite': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.SeoSite']"})
         },
+        u'seo.seositeredirect': {
+            'Meta': {'unique_together': "(['redirect_url', 'seosite'],)", 'object_name': 'SeoSiteRedirect'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'redirect_url': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
+            'seosite': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.SeoSite']"})
+        },
         u'seo.sitetag': {
             'Meta': {'object_name': 'SiteTag'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -428,6 +370,12 @@ class Migration(SchemaMigration):
             'commit': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'})
+        },
+        u'seo.state': {
+            'Meta': {'unique_together': "(('name', 'nation'),)", 'object_name': 'State'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
+            'nation': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Country']"})
         },
         u'seo.viewsource': {
             'Meta': {'object_name': 'ViewSource'},
@@ -453,4 +401,4 @@ class Migration(SchemaMigration):
         }
     }
 
-    complete_apps = ['postajob']
+    complete_apps = ['seo']

@@ -1,5 +1,7 @@
-from datetime import date, timedelta
 from bs4 import BeautifulSoup
+from datetime import date, timedelta
+from unittest import skip
+
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -30,7 +32,7 @@ class PostajobTestBase(MyJobsBase):
     def setUp(self):
         super(PostajobTestBase, self).setUp()
         self.user = UserFactory(password='5UuYquA@')
-        self.company = CompanyFactory(product_access=True)
+        self.company = CompanyFactory(product_access=True, posting_access=True)
 
         self.site = SeoSiteFactory()
         self.bu = BusinessUnitFactory()
@@ -78,9 +80,12 @@ class ViewTests(PostajobTestBase):
         self.side_effect = [self.choices_data for x in range(0, 50)]
 
         self.location_management_form_data = {
-            'form-TOTAL_FORMS': 0,
-            'form-INITIAL_FORMS': 0,
-            'form-MAX_NUM_FORMS': 5,
+            'form-TOTAL_FORMS': '1',
+            'form-INITIAL_FORMS': '0',
+            'form-MAX_NUM_FORMS': '5',
+            'form-0-city': 'Indianapolis',
+            'form-0-state': 'IN',
+            'form-0-country': 'USA'
         }
 
         # Form data
@@ -142,7 +147,7 @@ class ViewTests(PostajobTestBase):
             'city': 'Indianapolis',
             'country': 'USA',
             'cvv': '123',
-            'exp_date_0': date.today().month + 1,
+            'exp_date_0': (date.today().month + 1) % 12 or 12,
             'exp_date_1': date.today().year + 5,
             'first_name': 'John',
             'last_name': 'Smith',
@@ -156,6 +161,7 @@ class ViewTests(PostajobTestBase):
         }
 
         self.companyprofile_form_data = {
+            'company_name': self.company.name,
             'address_line_one': '123 Street Rd.',
             'city': 'Indianapolis',
             'country': 'USA',
@@ -746,6 +752,7 @@ class ViewTests(PostajobTestBase):
         offline_purchase = OfflinePurchase.objects.get()
         self.assertIn(offline_purchase.redemption_uid, response.content)
 
+    @skip('Feature disabled for now.')
     def test_offlinepurchase_add_with_company(self):
         self.offlinepurchase_form_data['purchasing_company'] = str(self.company.pk)
         response = self.client.post(reverse('offlinepurchase_add'),
@@ -858,6 +865,22 @@ class ViewTests(PostajobTestBase):
         self.assertItemsEqual([self.site.domain, site.domain],
                               site_packages)
 
+    def test_view_request_posted_by_unrelated_company(self):
+        company = CompanyFactory(id=2, name='new company')
+        user = UserFactory(email='new_company_user@email.com')
+        CompanyUserFactory(user=user, company=company)
+        product = PurchasedProductFactory(
+            product=self.product, owner=company)
+        job = PurchasedJobFactory(owner=company, created_by=user,
+                                  purchased_product=product)
+
+        response = self.client.get(
+            reverse('view_request',
+                    args=[ContentType.objects.get_for_model(PurchasedJob).pk,
+                          job.pk]))
+        self.assertFalse(self.user in company.admins.all())
+        self.assertEqual(response.status_code, 200)
+
 
 class PurchasedJobActionTests(PostajobTestBase):
     def setUp(self):
@@ -924,3 +947,14 @@ class PurchasedJobActionTests(PostajobTestBase):
         unblock_href = unblock_href.select('a')[0].attrs['href']
         self.client.get(unblock_href)
         self.assertFalse(self.user in profile.blocked_users.all())
+
+    def test_blocked_user_sees_modal(self):
+        profile = CompanyProfile.objects.create(company=self.company)
+        profile.blocked_users.add(self.user)
+        add_job_link = reverse('purchasedjob_add',
+                               args=[self.purchased_product.pk])
+        for url in [reverse('purchasedjobs', args=[self.purchased_product.pk]),
+                    reverse('purchasedjobs_overview')]:
+            response = self.client.get(url, HTTP_HOST='test.jobs')
+            self.assertFalse(add_job_link in response.content)
+            self.assertTrue('id="block-modal"' in response.content)

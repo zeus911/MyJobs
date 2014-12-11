@@ -8,15 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Request.deny_reason'
-        db.add_column(u'postajob_request', 'deny_reason',
-                      self.gf('django.db.models.fields.TextField')(default='', blank=True),
+        # Adding field 'CompanyProfile.description'
+        db.add_column(u'postajob_companyprofile', 'description',
+                      self.gf('django.db.models.fields.TextField')(default='', max_length=255, blank=True),
                       keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting field 'Request.deny_reason'
-        db.delete_column(u'postajob_request', 'deny_reason')
+        # Deleting field 'CompanyProfile.description'
+        db.delete_column(u'postajob_companyprofile', 'description')
 
 
     models = {
@@ -79,6 +79,7 @@ class Migration(SchemaMigration):
             'company': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['seo.Company']", 'unique': 'True'}),
             'country': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'customer_of': ('django.db.models.fields.related.ManyToManyField', [], {'blank': 'True', 'related_name': "'customer'", 'null': 'True', 'symmetrical': 'False', 'to': u"orm['seo.Company']"}),
+            'description': ('django.db.models.fields.TextField', [], {'max_length': '255', 'blank': 'True'}),
             'email_on_request': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'outgoing_email_domain': ('django.db.models.fields.CharField', [], {'default': "'my.jobs'", 'max_length': '255'}),
@@ -263,7 +264,7 @@ class Migration(SchemaMigration):
             'title_slug': ('django.db.models.fields.SlugField', [], {'max_length': '500', 'null': 'True', 'blank': 'True'})
         },
         u'seo.company': {
-            'Meta': {'ordering': "['name']", 'object_name': 'Company'},
+            'Meta': {'ordering': "['name']", 'unique_together': "(('name', 'user_created'),)", 'object_name': 'Company'},
             'admins': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myjobs.User']", 'through': u"orm['seo.CompanyUser']", 'symmetrical': 'False'}),
             'canonical_microsite': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
             'company_slug': ('django.db.models.fields.SlugField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
@@ -274,7 +275,7 @@ class Migration(SchemaMigration):
             'linkedin_id': ('django.db.models.fields.CharField', [], {'max_length': '20', 'null': 'True', 'blank': 'True'}),
             'logo_url': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
             'member': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '200'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'og_img': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
             'prm_access': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'product_access': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),

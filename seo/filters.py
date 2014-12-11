@@ -80,7 +80,7 @@ class FacetListWidget(Widget):
                                     }
                                  })
                 continue
-            if item_name == 'None' or item_name.startswith("Virtual"):
+            if item_name in ('None', '') or item_name.startswith("Virtual"):
                 continue
                 
             item_url = self.get_abs_url(item)
