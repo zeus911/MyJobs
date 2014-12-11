@@ -864,7 +864,7 @@ class OfflinePurchase(BaseModel):
         in this list.
         """
         products = []
-        offline_products = self.offlineproducts.all()
+        offline_products = self.offlineproduct_set.all()
         for offline_product in offline_products:
             for x in range(0, offline_product.product_quantity):
                 products.append(offline_product.product)
@@ -887,7 +887,7 @@ class OfflinePurchase(BaseModel):
             'paid': True,
         }
         products_created = []
-        offline_products = self.offlineproducts.all()
+        offline_products = self.offlineproduct_set.all()
         for offline_product in offline_products:
             kwargs['product'] = offline_product.product
             for x in range(0, offline_product.product_quantity):
@@ -922,7 +922,11 @@ class Invoice(BaseModel):
     AUTHORIZE_NET = 1
     FREE = 2
     OFFLINE_PURCHASE = 3
-    transaction_type_choices = [AUTHORIZE_NET, FREE, OFFLINE_PURCHASE]
+    transaction_type_choices = (
+        (AUTHORIZE_NET, 'Authorize.Net'),
+        (FREE, 'Free'),
+        (OFFLINE_PURCHASE, 'Offline Purchase'),
+    )
 
     objects = InvoiceManager()
 
@@ -964,7 +968,7 @@ class Invoice(BaseModel):
             'invoice': self,
             'purchases': self.invoiced_products.all(),
             'AUTHORIZE_NET': Invoice.AUTHORIZE_NET,
-            'FREE': Invoice.Free,
+            'FREE': Invoice.FREE,
             'OFFLINE_PURCHASE': Invoice.OFFLINE_PURCHASE,
         }
 

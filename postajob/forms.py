@@ -513,6 +513,11 @@ class PurchasedProductNoPurchaseForm(RequestForm):
         if not self.company:
             make_company_from_form(self)
 
+        self.instance.product = self.product
+        self.instance.owner = self.company
+
+        instance = super(PurchasedProductNoPurchaseForm, self).save(False)
+
         invoice_kwargs = {
             'address_line_one': self.cleaned_data.get('address_line_one'),
             'address_line_two': self.cleaned_data.get('address_line_two'),
@@ -525,16 +530,12 @@ class PurchasedProductNoPurchaseForm(RequestForm):
             'transaction_type': Invoice.FREE,
             'zipcode': self.cleaned_data.get('zipcode'),
         }
-        invoice = helpers.create_invoice_for_purchased_products([self.instance],
+        invoice = helpers.create_invoice_for_purchased_products([instance],
                                                                 **invoice_kwargs)
-        self.instance.invoice = invoice
-        self.instance.product = self.product
-        self.instance.owner = self.company
-
-        super(PurchasedProductNoPurchaseForm, self).save(commit)
-
-        invoice.save()
+        instance.invoice = invoice
+        instance.save()
         invoice.send_invoice_email([self.request.user.email])
+        return instance
 
 
 class PurchasedProductForm(RequestForm):
@@ -616,6 +617,11 @@ class PurchasedProductForm(RequestForm):
         if not self.company:
             make_company_from_form(self)
 
+        self.instance.product = self.product
+        self.instance.owner = self.company
+
+        instance = super(PurchasedProductForm, self).save(False)
+
         invoice_kwargs = {
             'address_line_one': self.cleaned_data.get('address_line_one'),
             'address_line_two': self.cleaned_data.get('address_line_two'),
@@ -631,18 +637,15 @@ class PurchasedProductForm(RequestForm):
             'transaction_type': Invoice.AUTHORIZE_NET,
             'zipcode': self.cleaned_data.get('zipcode'),
         }
-        invoice = helpers.create_invoice_for_purchased_products([self.instance],
+        invoice = helpers.create_invoice_for_purchased_products([instance],
                                                                 **invoice_kwargs)
-        self.instance.invoice = invoice
-        self.instance.product = self.product
-        self.instance.owner = self.company
-
-        super(PurchasedProductForm, self).save(commit)
+        instance.invoice = invoice
+        instance.save()
         try:
             settled_transaction = settle_transaction(self.transaction)
             invoice.transaction = settled_transaction.uid
-            self.instance.paid = True
-            self.instance.save()
+            instance.paid = True
+            instance.save()
             invoice.save()
         except AuthorizeResponseError:
             pass
@@ -685,15 +688,7 @@ class OfflinePurchaseForm(RequestForm):
         self.instance.created_by = CompanyUser.objects.get(
             company=self.company, user=self.request.user)
 
-        instance = super(OfflinePurchaseForm, self).save(commit)
-        for product in self.products:
-            product_quantity = self.cleaned_data.get(str(product.pk))
-            if product_quantity:
-                OfflineProduct.objects.create(
-                    product=product, offline_purchase=instance,
-                    product_quantity=product_quantity
-                )
-        instance.save()
+        instance = super(OfflinePurchaseForm, self).save(False)
 
         company = get_object_or_none(
             Company, pk=self.cleaned_data.get('purchasing_company'))
@@ -702,7 +697,7 @@ class OfflinePurchaseForm(RequestForm):
                 'owner': self.company,
                 'transaction_type': Invoice.OFFLINE_PURCHASE,
                 'transaction': instance.redemption_uid,
-            }
+                }
             if hasattr(company, 'companyprofile'):
                 profile = company.companyprofile
                 invoice_kwargs['address_line_one'] = profile.address_line_one
@@ -713,10 +708,19 @@ class OfflinePurchaseForm(RequestForm):
                 invoice_kwargs['country'] = profile.phone
             invoice = helpers.create_invoice_for_purchased_products([instance],
                                                                     **invoice_kwargs)
-            instance.invoice = invoice
-            instance.redeemed_on = date.today()
-            instance.create_purchased_products(company)
-            instance.save()
+
+        instance.invoice = invoice
+        instance.redeemed_on = date.today()
+        instance.create_purchased_products(company)
+        instance.save()
+
+        for product in self.products:
+            product_quantity = self.cleaned_data.get(str(product.pk))
+            if product_quantity:
+                OfflineProduct.objects.create(
+                    product=product, offline_purchase=instance,
+                    product_quantity=product_quantity
+                )
 
         return instance
 
@@ -789,7 +793,8 @@ class OfflinePurchaseRedemptionForm(RequestForm):
             invoice_kwargs['state'] = profile.state
             invoice_kwargs['zipcode'] = profile.zipcode
             invoice_kwargs['country'] = profile.phone
-        invoice = helpers.create_invoice_for_products(self.associated_products,
+        associated_products = self.instance.associated_products()
+        invoice = helpers.create_invoice_for_products(associated_products,
                                                       **invoice_kwargs)
         self.instance.invoice = invoice
 
