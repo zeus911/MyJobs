@@ -567,6 +567,15 @@ class PurchasedProduct(BaseModel):
             self.expiration_date = self.product.expiration_date()
             self.max_job_length = self.product.max_job_length
             self.jobs_remaining = self.num_jobs_allowed
+            product_kwargs = {
+                'product_name': self.product.name,
+                'product_expiration_date': self.expiration_date,
+                'num_jobs_allowed': self.num_jobs_allowed,
+                'purchase_amount': self.purchase_amount
+            }
+            invoice_product = InvoiceProduct.objects.create(**product_kwargs)
+            self.invoice.invoiced_products.add(invoice_product)
+            self.invoice.save()
         super(PurchasedProduct, self).save(**kwargs)
 
     def can_post_more(self):

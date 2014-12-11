@@ -523,7 +523,7 @@ class PurchasedProductNoPurchaseForm(RequestForm):
             last_name=self.request.user.last_name,
             owner=self.product.owner,
             state=self.cleaned_data.get('state'),
-            transaction='FREE',
+            transaction_type=Invoice.FREE,
             zipcode=self.cleaned_data.get('zipcode'),
         )
         self.instance.invoice = invoice
@@ -626,6 +626,7 @@ class PurchasedProductForm(RequestForm):
             last_name=self.cleaned_data.get('last_name'),
             owner=self.product.owner,
             state=self.cleaned_data.get('state'),
+            transaction_type=Invoice.AUTHORIZE_NET,
             transaction=self.transaction.uid,
             zipcode=self.cleaned_data.get('zipcode'),
         )
@@ -684,10 +685,17 @@ class OfflinePurchaseForm(RequestForm):
         instance = super(OfflinePurchaseForm, self).save(commit)
 
         invoice = Invoice.objects.create(
-            card_exp_date=date.today(), card_last_four='XXXX',
-            address_line_one='', city='', state='', zipcode='', country='',
-            first_name='', last_name='',
+            card_exp_date=date.today(),
+            card_last_four='XXXX',
+            address_line_one='',
+            city='',
+            state='',
+            zipcode='',
+            country='',
+            first_name='',
+            last_name='',
             owner=self.company,
+            transaction_type=Invoice.OFFLINE_PURCHASE,
             transaction=instance.pk,
         )
         instance.invoice = invoice

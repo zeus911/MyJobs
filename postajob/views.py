@@ -604,9 +604,7 @@ class PurchasedProductFormView(PostajobModelFormMixin, RequestFormViewBase):
 
             if company and profile and profile.address_line_one:
                 invoice = Invoice.objects.create(
-                    transaction='FREE',
-                    card_last_four='FREE',
-                    card_exp_date=date.today(),
+                    transaction_type=Invoice.FREE,
                     first_name=self.request.user.first_name,
                     last_name=self.request.user.last_name,
                     address_line_one=profile.address_line_one,
