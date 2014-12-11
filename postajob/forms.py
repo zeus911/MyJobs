@@ -9,12 +9,12 @@ from django.core.urlresolvers import reverse_lazy
 from django import forms
 from django.forms import (CharField, CheckboxSelectMultiple,
                           HiddenInput, IntegerField, ModelMultipleChoiceField,
-                          RadioSelect, Select, TextInput)
+                          RadioSelect, Select, TextInput, ChoiceField)
 from django.forms.models import modelformset_factory
 
 from seo.models import Company, CompanyUser, SeoSite
 from mypartners.widgets import SplitDateDropDownField
-from postajob.fields import NoValidationChoiceField
+from postajob.fields import NoValidationChoiceField, SelectWithOptionClasses
 from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
                              OfflineProduct, Package, Product, ProductGrouping,
                              ProductOrder, PurchasedProduct, PurchasedJob,
@@ -121,7 +121,9 @@ class BaseJobForm(RequestForm):
 
 
 class JobLocationForm(forms.ModelForm):
-    state = NoValidationChoiceField(choices=JobLocation.state_choices)
+    state = NoValidationChoiceField(choices=JobLocation.state_choices,
+                                    widget=SelectWithOptionClasses())
+    country = ChoiceField(choices=JobLocation.country_choices)
     region = CharField(max_length=255, required=False)
 
     def __init__(self, *args, **kwargs):
@@ -135,10 +137,9 @@ class JobLocationForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        print cleaned_data.get('country')
-        if cleaned_data.get('country') not in ["United States", "Canada"]:
+        if cleaned_data.get('country') not in ["United States", "Canada"] \
+                and not self.instance.pk:
             region = cleaned_data.get('region')
-            print region
             if region:
                 cleaned_data['state'] = region
             else:

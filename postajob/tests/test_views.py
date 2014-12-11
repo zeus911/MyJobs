@@ -818,7 +818,7 @@ class ViewTests(PostajobTestBase):
         location = {
             'form-0-city': 'Indianapolis',
             'form-0-state': 'Indiana',
-            'form-0-country': 'US'
+            'form-0-country': 'United States'
         }
         self.job_form_data['form-TOTAL_FORMS'] = 1
         self.job_form_data.update(location)
@@ -830,16 +830,24 @@ class ViewTests(PostajobTestBase):
         self.assertEqual(JobLocation.objects.count(), 1)
 
         job = Job.objects.get()
+        location = job.locations.first()
         self.job_form_data['id'] = job.pk
         self.job_form_data['form-TOTAL_FORMS'] = 2
         self.job_form_data.update({
-            'form-0-DELETE': 'ok',
+            'form-0-id': location.pk,
+            'form-0-DELETE': 'on',
             'form-1-city': 'Muncie',
             'form-1-state': 'Indiana',
-            'form-1-country': 'US'
+            'form-1-country': 'United States'
         })
+        print JobLocation.objects.count()
         self.client.post(reverse('job_update', args=[job.pk]),
                          data=self.job_form_data, follow=True)
+        print JobLocation.objects.count()
+        print job.locations.all()
+        job = Job.objects.get()
+        print job.locations.all()
+        self.assertFalse(True)
 
     def test_purchasedjob_form(self):
         purchased_product = PurchasedProductFactory(

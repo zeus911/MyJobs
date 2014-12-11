@@ -8,13 +8,13 @@ from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import EmailMessage
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import models, DEFAULT_DB_ALIAS
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_delete
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-from location_data import country_long_to_short, state_long_to_short
+from location_data import countries, states, country_list, state_list
 
 
 class BaseManagerMixin(object):
@@ -64,8 +64,8 @@ class JobLocation(models.Model):
         'state': 'The state where the job is located.',
         'zipcode': 'The postal code of the job location.',
     }
-    country_choices = [(x, x) for x in sorted(country_long_to_short.keys())]
-    state_choices = [(x, x) for x in sorted(state_long_to_short.keys())]
+    country_choices = country_list()
+    state_choices = state_list()
 
     guid = models.CharField(max_length=255, unique=True, blank=True, default='')
     city = models.CharField(max_length=255, help_text=help_text['city'])
@@ -86,16 +86,15 @@ class JobLocation(models.Model):
         else:
             return "Location"
 
-    def delete(self, using=None):
+    def delete(self, using=DEFAULT_DB_ALIAS):
         jobs = self.jobs.all()
         super(JobLocation, self).delete(using)
         [job.save() for job in jobs]
 
     def save(self, **kwargs):
         self.generate_guid()
-        self.state_short = state_long_to_short.get(self.state, self.state)
-        self.country_short = country_long_to_short.get(self.country,
-                                                       self.country)
+        self.state_short = states.inv.get(self.state, self.state)
+        self.country_short = countries.inv.get(self.country, self.country)
         super(JobLocation, self).save(**kwargs)
         for job in self.jobs.all():
             job.save()

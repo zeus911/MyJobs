@@ -9,7 +9,7 @@ var load_event = function(){
     update_apply_fields();
     update_site_fields();
     update_job_limit_fields();
-    update_state_selection();
+    update_state_selection($('select[id$="__prefix__-country"]').val());
 
     if($(".product-card").length > 1)
         $("#no-locations").remove();
@@ -31,7 +31,7 @@ var load_event = function(){
         update_site_fields();
     });
     $(document).on("change", 'select[id$="-country"]', function () {
-        update_state_selection();
+        update_state_selection($(this).val());
     });
 
     // Product Form
@@ -53,8 +53,6 @@ var load_event = function(){
     });
 
     $.each(["#deny-reason", "#block-reason"], function(index, value) {
-        console.log(index);
-        console.log(value);
         $(value).on("keyup", function() {
             var next_button = $(value + "~button");
             if ($(this).val() == "") {
@@ -182,12 +180,13 @@ function add_location(location) {
      Creates condensed location tags for a given location.
      */
 
-    var country = location.find('select[id$=-country]').val();
+    var country = location.find('select[id$=-country]').val(),
+        region;
     if (country == 'United States' || country == 'Canada') {
-        var region = location.find('select[id$=-state]').val();
+        region = location.find('select[id$=-state]').val();
     }
     else {
-        var region = location.find('input[id$=-region]').val();
+        region = location.find('input[id$=-region]').val();
     }
     // All added locations will follow the same template, with the city,
     // region, country, and loc_num placeholders replaced with the actual values
@@ -246,11 +245,12 @@ function copy_forms(from, to) {
 
 
     if (valid) {
-        var country = from.find('select[id$=-country]').val();
+        var country = from.find('select[id$=-country]').val(),
+            element, from_input, from_value;
         if (country === 'United States' || country === 'Canada') {
-            var element = from.find('select[id$=-state]');
-            var from_input = from.find(element),
-                from_value = from_input.val();
+            element = 'select[id$=-state]';
+            from_input = from.find(element);
+            from_value = from_input.val();
             if (from_value) {
                 to.find(element).val(from_value);
                 if (from_input.parents('.required').length > 0) {
@@ -264,9 +264,9 @@ function copy_forms(from, to) {
             }
         }
         else {
-            var element = 'input[id$=-region]';
-            var from_input = from.find(element),
-                from_value = from_input.val();
+            element = 'input[id$=-region]';
+            from_input = from.find(element);
+            from_value = from_input.val();
             if (from_value) {
                 to.find(element).val(from_value);
                 if (from_input.parents('.required').length > 0) {
@@ -357,12 +357,12 @@ function create_location_events() {
             checked = delete_input.attr('checked') == 'checked';
         if (checked) {
             delete_input.removeAttr('checked');
-            $(this).parent('.product-card').css('text-decoration', 'none')
+            $(this).parent('.product-card').css('text-decoration', 'none');
             $(this).text('Remove');
         } else {
             delete_input.attr('checked', 'checked');
             $(this).parent('.product-card').css('text-decoration',
-                                                'line-through')
+                                                'line-through');
             $(this).text('Re-add');
         }
     });
@@ -382,20 +382,29 @@ function expand_errors(contents) {
     });
 }
 
-function update_state_selection() {
-    var country =  $('#id_form-__prefix__-country').val();
+function update_state_selection(country) {
+    var region = $('#id_form-__prefix__-region'),
+        state = $('#id_form-__prefix__-state');
     if (country == 'United States' || country == 'Canada') {
-        $('#id_form-__prefix__-region').hide();
+        region.hide();
         $('label[for="id_form-__prefix__-region"]').hide();
 
-        $('#id_form-__prefix__-state').show();
+        state.show();
         $('label[for="id_form-__prefix__-state"]').show();
+
+        country = country.replace(' ', '.');
+        var hidden = $('#hidden-options'),
+            this_country = hidden.find('option.' + country),
+            other_country = state.find('option:not(.' + country + ')');
+        this_country.appendTo(state);
+        other_country.appendTo(hidden);
+        state.val(state.find('option:first_of_type').val());
     }
     else {
-        $('#id_form-__prefix__-region').show();
+        region.show();
         $('label[for="id_form-__prefix__-region"]').show();
 
-        $('#id_form-__prefix__-state').hide();
+        state.hide();
         $('label[for="id_form-__prefix__-state"]').hide();
     }
 }

@@ -12,6 +12,7 @@ from django.template import RequestContext
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from myjobs.models import User
+from postajob.location_data import state_list
 
 from universal.decorators import company_has_access
 from seo.models import CompanyUser, SeoSite
@@ -437,6 +438,10 @@ class JobFormView(BaseJobFormView):
     update_name = 'job_update'
     delete_name = 'job_delete'
 
+    def post(self, request, *args, **kwargs):
+        print request.REQUEST
+        return super(JobFormView, self).post(request, *args, **kwargs)
+
     @method_decorator(company_has_access('prm_access'))
     def dispatch(self, *args, **kwargs):
         """
@@ -808,6 +813,7 @@ def unblock_user(request, pk):
     Inputs:
     :pk: ID of user that has been blocked
     """
+    import ipdb; ipdb.set_trace()
     company = get_company(request)
     if not company:
         raise Http404
@@ -820,3 +826,10 @@ def unblock_user(request, pk):
         else:
             profile.blocked_users.remove(user)
     return redirect(reverse('blocked_user_management'))
+
+
+def ajax_regions(request):
+    if request.is_ajax() and 'country' in request.GET:
+        country = request.GET.get('country')
+        states = state_list(country)
+        return HttpResponse(json.dumps(states))
