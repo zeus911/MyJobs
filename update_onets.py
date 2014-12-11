@@ -65,6 +65,7 @@ def run(filename, cols=None):
     columns.update(cols or {})
     mocs = get_mocs_from_csv(filename, columns)
 
+    new_mocs = []
     for moc in mocs.values():
         moc_detail = moc.pop('moc_detail')
         onets = moc.pop('onets')
@@ -79,6 +80,9 @@ def run(filename, cols=None):
             moc_record.title_slug = moc['title_slug']
             moc_record.moc_detail = moc_detail_record
             moc_record.save()
+            
+            # log change
+            new_mocs.append(moc_record)
 
         onet_records = set()
         for onet in onets:
@@ -93,9 +97,13 @@ def run(filename, cols=None):
 
         moc_record.onets.add(*onet_records)
 
+    return new_mocs
+
 if __name__ == '__main__': 
     import sys
 
     for filename in sys.argv[1:]:
-        run(filename)
+        new_mocs = run(filename)
+
+        print new_mocs
     
