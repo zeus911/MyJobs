@@ -9,11 +9,12 @@ from django.core.urlresolvers import reverse_lazy
 from django import forms
 from django.forms import (CharField, CheckboxSelectMultiple,
                           HiddenInput, IntegerField, ModelMultipleChoiceField,
-                          RadioSelect, Select, TextInput)
+                          RadioSelect, TextInput)
 from django.forms.models import modelformset_factory, BaseModelFormSet
 
 from seo.models import Company, CompanyUser, SeoSite
 from mypartners.widgets import SplitDateDropDownField
+from postajob import helpers
 from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
                              OfflineProduct, Package, Product, ProductGrouping,
                              ProductOrder, PurchasedProduct, PurchasedJob,
@@ -21,7 +22,7 @@ from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
 from postajob.payment import authorize_card, get_card, settle_transaction
 from postajob.widgets import ExpField
 from universal.forms import RequestForm
-from universal.helpers import get_object_or_none, get_company
+from universal.helpers import get_object_or_none
 
 
 def is_superuser_in_admin(request):
@@ -512,20 +513,20 @@ class PurchasedProductNoPurchaseForm(RequestForm):
         if not self.company:
             make_company_from_form(self)
 
-        invoice = Invoice.objects.create(
-            address_line_one=self.cleaned_data.get('address_line_one'),
-            address_line_two=self.cleaned_data.get('address_line_two'),
-            card_exp_date=date.today(),
-            card_last_four='FREE',
-            city=self.cleaned_data.get('city'),
-            country=self.cleaned_data.get('country'),
-            first_name=self.request.user.first_name,
-            last_name=self.request.user.last_name,
-            owner=self.product.owner,
-            state=self.cleaned_data.get('state'),
-            transaction='FREE',
-            zipcode=self.cleaned_data.get('zipcode'),
-        )
+        invoice_kwargs = {
+            'address_line_one': self.cleaned_data.get('address_line_one'),
+            'address_line_two': self.cleaned_data.get('address_line_two'),
+            'city': self.cleaned_data.get('city'),
+            'country': self.cleaned_data.get('country'),
+            'first_name': self.request.user.first_name,
+            'last_name': self.request.user.last_name,
+            'owner': self.product.owner,
+            'state': self.cleaned_data.get('state'),
+            'transaction_type': Invoice.FREE,
+            'zipcode': self.cleaned_data.get('zipcode'),
+        }
+        invoice = helpers.create_invoice_for_purchased_products([self.instance],
+                                                                **invoice_kwargs)
         self.instance.invoice = invoice
         self.instance.product = self.product
         self.instance.owner = self.company
@@ -615,20 +616,23 @@ class PurchasedProductForm(RequestForm):
         if not self.company:
             make_company_from_form(self)
 
-        invoice = Invoice.objects.create(
-            address_line_one=self.cleaned_data.get('address_line_one'),
-            address_line_two=self.cleaned_data.get('address_line_two'),
-            card_exp_date=self.cleaned_data.get('exp_date'),
-            card_last_four=self.cleaned_data.get('card_number')[-4:],
-            city=self.cleaned_data.get('city'),
-            country=self.cleaned_data.get('country'),
-            first_name=self.cleaned_data.get('first_name'),
-            last_name=self.cleaned_data.get('last_name'),
-            owner=self.product.owner,
-            state=self.cleaned_data.get('state'),
-            transaction=self.transaction.uid,
-            zipcode=self.cleaned_data.get('zipcode'),
-        )
+        invoice_kwargs = {
+            'address_line_one': self.cleaned_data.get('address_line_one'),
+            'address_line_two': self.cleaned_data.get('address_line_two'),
+            'card_exp_date': self.cleaned_data.get('exp_date'),
+            'card_last_four': self.cleaned_data.get('card_number')[-4:],
+            'city': self.cleaned_data.get('city'),
+            'country': self.cleaned_data.get('country'),
+            'first_name': self.cleaned_data.get('first_name'),
+            'last_name': self.cleaned_data.get('last_name'),
+            'owner': self.product.owner,
+            'state': self.cleaned_data.get('state'),
+            'transaction': self.transaction.uid,
+            'transaction_type': Invoice.AUTHORIZE_NET,
+            'zipcode': self.cleaned_data.get('zipcode'),
+        }
+        invoice = helpers.create_invoice_for_purchased_products([self.instance],
+                                                                **invoice_kwargs)
         self.instance.invoice = invoice
         self.instance.product = self.product
         self.instance.owner = self.company
@@ -682,14 +686,6 @@ class OfflinePurchaseForm(RequestForm):
             company=self.company, user=self.request.user)
 
         instance = super(OfflinePurchaseForm, self).save(commit)
-
-        invoice = Invoice.objects.create(
-            address_line_one='', city='', state='', zipcode='', country='',
-            first_name='', last_name='', owner=self.company,
-            transaction_type=Invoice.OFFLINE_PURCHASE,
-            transaction=instance.pk,
-        )
-        instance.invoice = invoice
         for product in self.products:
             product_quantity = self.cleaned_data.get(str(product.pk))
             if product_quantity:
@@ -702,6 +698,22 @@ class OfflinePurchaseForm(RequestForm):
         company = get_object_or_none(
             Company, pk=self.cleaned_data.get('purchasing_company'))
         if company:
+            invoice_kwargs = {
+                'owner': self.company,
+                'transaction_type': Invoice.OFFLINE_PURCHASE,
+                'transaction': instance.redemption_uid,
+            }
+            if hasattr(company, 'companyprofile'):
+                profile = company.companyprofile
+                invoice_kwargs['address_line_one'] = profile.address_line_one
+                invoice_kwargs['address_line_two'] = profile.address_line_two
+                invoice_kwargs['city'] = profile.city
+                invoice_kwargs['state'] = profile.state
+                invoice_kwargs['zipcode'] = profile.zipcode
+                invoice_kwargs['country'] = profile.phone
+            invoice = helpers.create_invoice_for_purchased_products([instance],
+                                                                    **invoice_kwargs)
+            instance.invoice = invoice
             instance.redeemed_on = date.today()
             instance.create_purchased_products(company)
             instance.save()
@@ -763,6 +775,24 @@ class OfflinePurchaseRedemptionForm(RequestForm):
         self.instance.redeemed_by = CompanyUser.objects.get(
             user=self.request.user, company=self.company)
         self.instance.redeemed_on = date.today()
+
+        invoice_kwargs = {
+            'owner': self.company,
+            'transaction_type': Invoice.OFFLINE_PURCHASE,
+            'transaction': self.instance.redemption_uid,
+        }
+        if hasattr(self.company, 'companyprofile'):
+            profile = self.company.companyprofile
+            invoice_kwargs['address_line_one'] = profile.address_line_one
+            invoice_kwargs['address_line_two'] = profile.address_line_two
+            invoice_kwargs['city'] = profile.city
+            invoice_kwargs['state'] = profile.state
+            invoice_kwargs['zipcode'] = profile.zipcode
+            invoice_kwargs['country'] = profile.phone
+        invoice = helpers.create_invoice_for_products(self.associated_products,
+                                                      **invoice_kwargs)
+        self.instance.invoice = invoice
+
         instance = super(OfflinePurchaseRedemptionForm, self).save(commit)
         instance.create_purchased_products(self.company)
         return instance
@@ -792,7 +822,6 @@ class CompanyProfileForm(RequestForm):
         if not self.instance.company.user_created:
             self.fields['company_name'].widget.attrs['readonly'] = True
             self.fields['description'].widget.attrs['readonly'] = True
-
 
     def clean(self):
         if self.instance.company.user_created:

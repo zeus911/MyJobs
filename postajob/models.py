@@ -856,6 +856,20 @@ class OfflinePurchase(BaseModel):
         self.generate_redemption_uid()
         super(OfflinePurchase, self).save(**kwargs)
 
+    def associated_products(self):
+        """
+        Gets a list of all of the offline products associated with this
+        offline purchase. This is not a set - if a multiple instances of a
+        product were purchased there will be multiple instances of the product
+        in this list.
+        """
+        products = []
+        offline_products = self.offlineproducts.all()
+        for offline_product in offline_products:
+            for x in range(0, offline_product.product_quantity):
+                products.append(offline_product.product)
+        return products
+
     def generate_redemption_uid(self):
         if not self.redemption_uid:
             uid = uuid4().hex
@@ -872,11 +886,14 @@ class OfflinePurchase(BaseModel):
             'owner': company,
             'paid': True,
         }
-        offline_products = OfflineProduct.objects.filter(offline_purchase=self)
+        products_created = []
+        offline_products = self.offlineproducts.all()
         for offline_product in offline_products:
             kwargs['product'] = offline_product.product
             for x in range(0, offline_product.product_quantity):
-                PurchasedProduct.objects.create(**kwargs)
+                product = PurchasedProduct.objects.create(**kwargs)
+                products_created.append(product)
+        return products_created
 
     def user_has_access(self, user):
         is_posting_admin = super(OfflinePurchase, self).user_has_access(user)
