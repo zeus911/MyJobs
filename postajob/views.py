@@ -440,10 +440,6 @@ class JobFormView(BaseJobFormView):
     update_name = 'job_update'
     delete_name = 'job_delete'
 
-    def post(self, request, *args, **kwargs):
-        print request.REQUEST
-        return super(JobFormView, self).post(request, *args, **kwargs)
-
     @method_decorator(company_has_access('posting_access'))
     def dispatch(self, *args, **kwargs):
         """
@@ -827,7 +823,6 @@ def unblock_user(request, pk):
     Inputs:
     :pk: ID of user that has been blocked
     """
-    import ipdb; ipdb.set_trace()
     company = get_company(request)
     if not company:
         raise Http404
