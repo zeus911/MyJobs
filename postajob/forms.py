@@ -684,14 +684,12 @@ class OfflinePurchaseForm(RequestForm):
         instance = super(OfflinePurchaseForm, self).save(commit)
 
         invoice = Invoice.objects.create(
-            card_exp_date=date.today(), card_last_four='XXXX',
             address_line_one='', city='', state='', zipcode='', country='',
-            first_name='', last_name='',
-            owner=self.company,
+            first_name='', last_name='', owner=self.company,
+            transaction_type=Invoice.OFFLINE_PURCHASE,
             transaction=instance.pk,
         )
         instance.invoice = invoice
-
         for product in self.products:
             product_quantity = self.cleaned_data.get(str(product.pk))
             if product_quantity:
@@ -699,7 +697,6 @@ class OfflinePurchaseForm(RequestForm):
                     product=product, offline_purchase=instance,
                     product_quantity=product_quantity
                 )
-
         instance.save()
 
         company = get_object_or_none(
