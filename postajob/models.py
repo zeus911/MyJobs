@@ -319,6 +319,15 @@ class PurchasedJob(Job):
     def is_past_max_expiration_date(self):
         return bool(self.max_expired_date < date.today())
 
+    def user_has_access(self, user):
+        """
+        Overrides the base user_has_access to ensure that the provided user is
+        an admin for either the posting company or the company being posted to.
+        """
+        is_posting_admin = super(PurchasedJob, self).user_has_access(user)
+        is_owner_admin = user in self.purchased_product.product.owner.admins.all()
+        return is_posting_admin or is_owner_admin
+
 
 def on_delete(sender, instance, **kwargs):
     """
@@ -692,6 +701,8 @@ class CompanyProfile(models.Model):
     }
 
     company = models.OneToOneField('seo.Company')
+    description = models.TextField(max_length=255, blank=True,
+                                   verbose_name='Company Description')
     address_line_one = models.CharField(max_length=255, blank=True,
                                         verbose_name='Address Line One')
     address_line_two = models.CharField(max_length=255, blank=True,
@@ -704,7 +715,10 @@ class CompanyProfile(models.Model):
 
     # Only used for Partner Microsites.
     authorize_net_login = models.CharField(
-        max_length=255, blank=True, verbose_name="Authorize.net Login")
+        max_length=255, blank=True, verbose_name="Authorize.net Login",
+        help_text="<a href='https://www.authorize.net' target='blank_'>"
+                  "Create Authorize.net account"
+                  "</a>")
     authorize_net_transaction_key = models.CharField(
         max_length=255, blank=True,
         verbose_name="Authorize.net Transaction Key"
@@ -844,6 +858,11 @@ class OfflinePurchase(BaseModel):
             kwargs['product'] = offline_product.product
             for x in range(0, offline_product.product_quantity):
                 PurchasedProduct.objects.create(**kwargs)
+
+    def user_has_access(self, user):
+        is_posting_admin = super(OfflinePurchase, self).user_has_access(user)
+        is_owner_admin = user in self.created_by.company.admins.all()
+        return is_posting_admin or is_owner_admin
 
 
 class InvoiceMixin(object):

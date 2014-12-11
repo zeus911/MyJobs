@@ -42,10 +42,6 @@ var load_event = function(){
         update_job_limit_fields();
     });
 
-    // Fake headers on OfflinePurchase Form
-    var header_html = '<div class="clear"></div><div class="span3 form-label pull-left initial header"><b>Product</b></div><div class="profile-form-input header"><b>Quantity</b></div>';
-    $(header_html).insertAfter('.purchasing-company-field');
-
     //PurchasedProduct admin, Partner Microsite admin overview
     $('[id^="resend-invoice"]').on("click", function(e) {
         var id_array = $(this).attr('id').split("-");

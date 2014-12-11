@@ -15,6 +15,8 @@ register = Library()
 
 @register.simple_tag
 def get_job_links(job, max_sites=3):
+    locations = job.locations.all()
+
     if hasattr(job, 'is_approved') and not job.is_approved:
         return ''
 
@@ -27,7 +29,7 @@ def get_job_links(job, max_sites=3):
     href_tag = '<a href="{url}">{domain}</a>'
     urls = []
     for domain in domains:
-        for location in job.locations.all():
+        for location in locations:
             loc_slug = bleach.clean(slugify(u'{city}, {state}'.format(
                 city=location.city, state=location.state_short)))
             job_url = base_url.format(domain=domain, loc_slug=loc_slug,

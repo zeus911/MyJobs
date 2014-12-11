@@ -103,7 +103,7 @@ class SavedSearch(models.Model):
         parse_feed_args = {
             'feed_url': url_of_feed,
             'frequency': self.frequency,
-            'num_items': 100,
+            'num_items': num_items,
             'return_items': num_items,
             'last_sent': self.last_sent
         }
@@ -113,9 +113,12 @@ class SavedSearch(models.Model):
         return items
 
     def send_email(self, custom_msg=None):
+        if not self.user.can_receive_myjobs_email():
+            return
+
         items, count = self.get_feed_items()
         is_pss = hasattr(self, 'partnersavedsearch')
-        if self.user.can_receive_myjobs_email() and (items or is_pss):
+        if items or is_pss:
             if is_pss:
                 extras = self.partnersavedsearch.url_extras
                 if extras:

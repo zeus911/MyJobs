@@ -89,6 +89,10 @@
     }
 }
 
+form#job-approval .btn {
+    margin-left: 0px;
+}
+
 fieldset > div > .card-wrapper {
     margin-left: 20px;
     margin-top: 15px;
@@ -96,4 +100,10 @@ fieldset > div > .card-wrapper {
 
 fieldset > div > .card-wrapper > .product-card {
     padding-right: 10px;
+}
+
+.site-label > label {
+    text-indent: 100%;
+    white-space: nowrap;
+    overflow: hidden;
 }

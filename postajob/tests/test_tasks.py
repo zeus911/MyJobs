@@ -29,13 +29,13 @@ class TaskTests(MyJobsBase):
         }
 
     def test_expire_jobs(self):
-        # Jobs with expiration dates in the past and future should not get
-        # expired.
+        # Jobs with expiration dates in greater than or equal to today should
+        # not expire.
         for x in range(0, 5):
             job = dict(self.job_data)
             job['date_new'] = datetime.datetime.now()
             job['date_updated'] = datetime.datetime.now()
-            job['date_expired'] = datetime.date.today() + datetime.timedelta(days=-5)
+            job['date_expired'] = datetime.date.today() + datetime.timedelta(days=5)
             instance = Job.objects.create(**job)
             location = JobLocation.objects.create(**self.location_data)
             instance.locations.add(location)
@@ -48,7 +48,7 @@ class TaskTests(MyJobsBase):
             job = dict(self.job_data)
             job['date_new'] = datetime.datetime.now()
             job['date_updated'] = datetime.datetime.now()
-            job['date_expired'] = datetime.date.today() + datetime.timedelta(days=-5)
+            job['date_expired'] = datetime.date.today()
             instance = Job.objects.create(**job)
             location = JobLocation.objects.create(**self.location_data)
             instance.locations.add(location)
@@ -57,13 +57,13 @@ class TaskTests(MyJobsBase):
         self.assertEqual(JobLocation.objects.all().count(), 10)
         self.assertEqual(self.ms_solr.search('*:*').hits, 10)
 
-        # Only jobs that expire today should be expired in the next
+        # Only jobs that expire before today should be expired in the next
         # expire_jobs() call.
         for x in range(10, 15):
             job = dict(self.job_data)
             job['date_new'] = datetime.datetime.now()
             job['date_updated'] = datetime.datetime.now()
-            job['date_expired'] = datetime.date.today()
+            job['date_expired'] = datetime.date.today() + datetime.timedelta(days=-2)
             instance = Job.objects.create(**job)
             location = JobLocation.objects.create(**self.location_data)
             instance.locations.add(location)
@@ -109,7 +109,7 @@ class TaskTests(MyJobsBase):
             job = dict(self.job_data)
             job['date_new'] = datetime.datetime.now()
             job['date_updated'] = datetime.datetime.now()
-            job['date_expired'] = datetime.date.today()
+            job['date_expired'] = datetime.date.today() + datetime.timedelta(days=-1)
             job['autorenew'] = True
             instance = Job.objects.create(**job)
             location = JobLocation.objects.create(**self.location_data)
