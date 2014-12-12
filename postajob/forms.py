@@ -170,13 +170,11 @@ class JobForm(BaseJobForm):
         super(JobForm, self).__init__(*args, **kwargs)
         self.fields['site_packages'].help_text = ''
         if is_superuser_in_admin(self.request):
-            user_sites = SeoSite.objects.all()
+            sites = SeoSite.objects.all()
         else:
-            kwargs = {'business_units__company': self.company}
-            user_sites = self.request.user.get_sites()
-            user_sites = user_sites.filter(**kwargs)
+            sites = self.company.get_seo_sites()
 
-        self.fields['site_packages'].queryset = user_sites
+        self.fields['site_packages'].queryset = sites
 
         # Since we're not using actual site_packages for the site_packages,
         # the initial data also needs to be manually set.
