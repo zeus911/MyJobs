@@ -438,12 +438,14 @@ class ProductGroupingForm(RequestForm):
         if not instance.pk:
             instance.save()
 
+        delete_orders = ProductOrder.objects.filter(group=instance)
+        delete_orders = delete_orders.exclude(product__in=products)
         for product in products:
             ordered_product, _ = ProductOrder.objects.get_or_create(
                 product=product, group=instance)
             ordered_product.display_order = 0
             ordered_product.save()
-
+        delete_orders.delete()
         return instance
 
 
