@@ -32,7 +32,7 @@ class PostajobTestBase(MyJobsBase):
     def setUp(self):
         super(PostajobTestBase, self).setUp()
         self.user = UserFactory(password='5UuYquA@')
-        self.company = CompanyFactory(product_access=True)
+        self.company = CompanyFactory(product_access=True, posting_access=True)
 
         self.site = SeoSiteFactory()
         self.bu = BusinessUnitFactory()
@@ -80,9 +80,12 @@ class ViewTests(PostajobTestBase):
         self.side_effect = [self.choices_data for x in range(0, 50)]
 
         self.location_management_form_data = {
-            'form-TOTAL_FORMS': 0,
-            'form-INITIAL_FORMS': 0,
-            'form-MAX_NUM_FORMS': 5,
+            'form-TOTAL_FORMS': '1',
+            'form-INITIAL_FORMS': '0',
+            'form-MAX_NUM_FORMS': '5',
+            'form-0-city': 'Indianapolis',
+            'form-0-state': 'IN',
+            'form-0-country': 'USA'
         }
 
         # Form data

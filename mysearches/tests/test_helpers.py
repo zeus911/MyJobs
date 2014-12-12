@@ -92,7 +92,7 @@ class SavedSearchHelperTests(MyJobsBase):
 
             # The second value in the items list is the total count from a feed,
             # which may not equal the number of items returned
-            self.assertEqual(items[1], count)
+            self.assertEqual(items[1], len(items[0]))
             item = items[0][0]
             for element in ['pubdate', 'title', 'description', 'link']:
                 self.assertTrue(item[element])

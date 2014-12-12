@@ -18,6 +18,10 @@
             <div class="contents">
                 <fieldset>
                     <legend>Job Locations</legend>
+                    {% for error in formset.non_form_errors %}
+                        <div class="span3 form-label pull-left initial form-spacer"></div>
+                        <div class="error-text">{{ error }}</div>
+                    {% endfor %}
                     <div id="job-location-forms" class="no-show">
                         {# This will be hidden #}
                         {% for formset_form in formset.forms %}

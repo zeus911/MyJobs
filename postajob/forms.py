@@ -10,7 +10,7 @@ from django import forms
 from django.forms import (CharField, CheckboxSelectMultiple,
                           HiddenInput, IntegerField, ModelMultipleChoiceField,
                           RadioSelect, Select, TextInput)
-from django.forms.models import modelformset_factory
+from django.forms.models import modelformset_factory, BaseModelFormSet
 
 from seo.models import Company, CompanyUser, SeoSite
 from mypartners.widgets import SplitDateDropDownField
@@ -126,7 +126,18 @@ class JobLocationForm(forms.ModelForm):
         model = JobLocation
 
 
+class BaseJobLocationFormSet(BaseModelFormSet):
+    def clean(self):
+        if any(self.errors):
+            return
+
+        if not self.forms or not all(form.has_changed for form in self.forms):
+            raise ValidationError("Job postings must have at least one "
+                                  "location")
+
+
 JobLocationFormSet = modelformset_factory(JobLocation, form=JobLocationForm,
+                                          formset=BaseJobLocationFormSet,
                                           extra=0, can_delete=True)
 
 
@@ -427,12 +438,14 @@ class ProductGroupingForm(RequestForm):
         if not instance.pk:
             instance.save()
 
+        delete_orders = ProductOrder.objects.filter(group=instance)
+        delete_orders = delete_orders.exclude(product__in=products)
         for product in products:
             ordered_product, _ = ProductOrder.objects.get_or_create(
                 product=product, group=instance)
             ordered_product.display_order = 0
             ordered_product.save()
-
+        delete_orders.delete()
         return instance
 
 

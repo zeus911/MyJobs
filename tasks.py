@@ -144,13 +144,15 @@ def send_search_digests():
         return chain(daily, weekly, monthly)
 
     digests = SavedSearchDigest.objects.filter(is_active=True,
-                                               user__in_reserve=False)
+                                               user__opt_in_myjobs=True,
+                                               user__is_disabled=False)
     digests = filter_by_time(digests)
     for obj in digests:
         send_search_digest.s(obj).apply_async()
 
     not_digest = SavedSearchDigest.objects.filter(is_active=False,
-                                                  user__in_reserve=False)
+                                                  user__opt_in_myjobs=True,
+                                                  user__is_disabled=False)
     for item in not_digest:
         saved_searches = item.user.savedsearch_set.filter(is_active=True)
         saved_searches = filter_by_time(saved_searches)
@@ -632,14 +634,14 @@ def read_new_logs(solr_location=None):
 
 @task(name='tasks.expire_jobs', ignore_result=True)
 def expire_jobs():
-    jobs = Job.objects.filter(date_expired=date.today(),
+    jobs = Job.objects.filter(date_expired__lt=date.today(),
                               is_expired=False, autorenew=False)
     for job in jobs:
         # Setting is_expired to True will trigger job.remove_from_solr()
         job.is_expired = True
         job.save()
 
-    jobs = Job.objects.filter(date_expired=date.today(),
+    jobs = Job.objects.filter(date_expired__lt=date.today(),
                               is_expired=False, autorenew=True)
     for job in jobs:
         job.date_expired = date.today() + timedelta(days=30)
