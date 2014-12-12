@@ -479,7 +479,7 @@ class PurchasedJobFormView(BaseJobFormView):
     add_name = 'purchasedjob_add'
     update_name = 'purchasedjob_update'
     delete_name = 'purchasedjob_delete'
-    template_name = 'postajob/job_form.html'
+    template_name = 'postajob/%s/job_form.html' % settings.PROJECT
 
     purchase_field = 'purchased_product'
     purchase_model = PurchasedProduct
