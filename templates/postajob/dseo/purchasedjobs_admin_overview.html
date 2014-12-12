@@ -17,7 +17,7 @@
                 Expires: <b>{{ job.date_expired }}</b>
             </div>
             {% get_content_type job as content_type %}
-            <a class="card-btn" href="{% url 'view_request' content_type=content_type.pk pk=job.pk %}">View</a>
+            <a class="btn" href="{% url 'view_request' content_type=content_type.pk pk=job.pk %}">View</a>
         </div>
         {% endfor %}
         {% else %}
@@ -35,6 +35,9 @@
         <br/><label>Expires:</label>
         <b>{{ product.expiration_date }}</b>
         <br />
-        <a class="btn" href="{% url 'purchasedjob_add' product=product.id %}">Post New Job</a>
+        <div class="navigation">
+            <a class="btn" href="{% url 'purchasedjob_add' product=product.id %}">Post New Job</a>
+        </div>
     </div>
+<div class="clearfix"></div>
 {% endblock %}

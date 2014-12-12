@@ -3,10 +3,10 @@
 {% block directseo_main_content %}
 {{ block.super }}
 <div id="direct_listingDiv">
-    {% include "postajob/includes/product_formBox.html" with wrapper_title="Products" %}
+    {% include "postajob/includes/blocked_user_formBox.html" with formBox_title="Blocked Users" formBox_footer=False %}
 </div>
 <div class="direct_rightColBox">
-    {% include "postajob/includes/postajob_navigation.html" with primary_btn=True url_name="add" btn_name="Add Product" %}
+    {% include "postajob/includes/postajob_navigation.html" %}
 </div>
 <div class="clearfix"></div>
 {% endblock %}

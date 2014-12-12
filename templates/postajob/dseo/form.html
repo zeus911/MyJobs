@@ -31,7 +31,7 @@
                 </div>{# /delete-confirm #}
             {% endif %}
             <a href="{{ success_url }}" class="btn">{% trans 'Cancel' %}</a>
-            <button type="submit" class="btn primary" id="profile-save">{%if submit_btn_name%}{{submit_btn_name}}{%else%}{% trans 'Save' %}{%endif%}</button>
+            <button type="submit" class="btn" id="profile-save">{%if submit_btn_name%}{{submit_btn_name}}{%else%}{% trans 'Save' %}{%endif%}</button>
             <br />
             <div class="span3 form-label pull-left initial billing-zip-code-label"></div>
             {% if submit_text %}{{ submit_text }}{% endif %}
@@ -53,6 +53,7 @@
     </div>
 </div>
 {% endif %}
+<div class="clearfix"></div>
 {% endblock %}
 
 {% block extra-js %}
