@@ -697,3 +697,7 @@ form input[type='checkbox'] {
 .direct_rightColBox label {
     display: inline-block;
 }
+
+.no-show {
+    display: none;
+}
