@@ -1899,7 +1899,7 @@ ul.ui-autocomplete {
 
 form select,
 input#id_attachment {
-    width: 262px;
+    width: 256px;
     margin-bottom: 10px;
 }
 
@@ -1910,10 +1910,12 @@ input#id_attachment {
 
 .profile-form-input {
     display: inline-block;
+    width: 256px;
 }
 
 fieldset textarea,
 .profile-form-input input[type="text"],
+.profile-form-input input[type="number"],
 .profile-form-input input[type="password"] {
     width: 242px;
 }
@@ -1980,7 +1982,7 @@ div + .help-block,
 div > .help-block{
     display: block;
     max-width: 96%;
-    margin: -12px 0 5px 280px;
+    margin: -12px 0 5px 0;
     color: #555;
     font-size: .85em;
     font-style: italic;

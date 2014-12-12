@@ -208,7 +208,7 @@ def admin_purchasedproduct(request):
 
 @company_has_access('product_access')
 def view_request(request, content_type, pk):
-    template = 'postajob/{proejct}/request/{model}.html'
+    template = 'postajob/{project}/request/{model}.html'
     company = get_company(request)
     content_type = ContentType.objects.get(pk=content_type)
     data = {
