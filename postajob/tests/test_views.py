@@ -84,8 +84,8 @@ class ViewTests(PostajobTestBase):
             'form-INITIAL_FORMS': '0',
             'form-MAX_NUM_FORMS': '5',
             'form-0-city': 'Indianapolis',
-            'form-0-state': 'IN',
-            'form-0-country': 'USA'
+            'form-0-state': 'Indiana',
+            'form-0-country': 'United States'
         }
 
         # Form data
@@ -825,7 +825,8 @@ class ViewTests(PostajobTestBase):
         location = {
             'form-0-city': 'Indianapolis',
             'form-0-state': 'Indiana',
-            'form-0-country': 'United States'
+            'form-0-country': 'United States',
+            'form-0-zipcode': '12345',
         }
         self.job_form_data['form-TOTAL_FORMS'] = 1
         self.job_form_data.update(location)
@@ -847,14 +848,9 @@ class ViewTests(PostajobTestBase):
             'form-1-state': 'Indiana',
             'form-1-country': 'United States'
         })
-        print JobLocation.objects.count()
         self.client.post(reverse('job_update', args=[job.pk]),
                          data=self.job_form_data, follow=True)
-        print JobLocation.objects.count()
-        print job.locations.all()
-        job = Job.objects.get()
-        print job.locations.all()
-        self.assertFalse(True)
+        self.assertEqual(JobLocation.objects.count(), 1)
 
     def test_purchasedjob_form(self):
         purchased_product = PurchasedProductFactory(
@@ -872,6 +868,45 @@ class ViewTests(PostajobTestBase):
         self.assertEqual(len(site_packages), 2)
         self.assertItemsEqual([self.site.domain, site.domain],
                               site_packages)
+
+    def test_purchasedjob_locations(self):
+        purchased_product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
+
+        site = SeoSiteFactory(domain='indiana.jobs', id=3)
+        site.business_units.add(self.bu)
+        site.sitepackage_set.add(self.sitepackage)
+        location = {
+            'form-0-city': 'Indianapolis',
+            'form-0-state': 'Indiana',
+            'form-0-country': 'United States',
+            'form-0-zipcode': '12345',
+        }
+        self.job_form_data['form-TOTAL_FORMS'] = 1
+        self.job_form_data.update(location)
+        self.assertEqual(Job.objects.count(), 0)
+        self.assertEqual(JobLocation.objects.count(), 0)
+        self.client.post(reverse('purchasedjob_add',
+                                 args=[purchased_product.pk]),
+                         data=self.job_form_data, follow=True)
+        self.assertEqual(PurchasedJob.objects.count(), 1)
+        self.assertEqual(JobLocation.objects.count(), 1)
+        print PurchasedJob.objects.count()
+        job = PurchasedJob.objects.get()
+        location = job.locations.first()
+        self.job_form_data['id'] = job.pk
+        self.job_form_data['form-TOTAL_FORMS'] = 2
+        self.job_form_data.update({
+            'form-0-id': location.pk,
+            'form-0-DELETE': 'on',
+            'form-1-city': 'Muncie',
+            'form-1-state': 'Indiana',
+            'form-1-country': 'United States'
+        })
+        self.client.post(reverse('purchasedjob_update', args=[job.pk]),
+                         data=self.job_form_data, follow=True)
+        self.assertEqual(JobLocation.objects.count(), 1)
+
 
     def test_view_request_posted_by_unrelated_company(self):
         company = CompanyFactory(id=2, name='new company')

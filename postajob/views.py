@@ -408,6 +408,7 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
             context['delete'] = delete
         else:
             context['formset'] = JobLocationFormSet(queryset=formset_qs)
+        #import ipdb; ipdb.set_trace()
         return context
 
     def form_valid(self, form):
@@ -416,17 +417,24 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
         if form.is_valid():
             if joblocation_formset.is_valid():
                 job = form.save()
-                locations = [location_form.save()
-                             for location_form in joblocation_formset.forms]
+                locations = joblocation_formset.save()
+                #locations = [location_form.save()
+                #             for location_form in joblocation_formset.forms]
                 for location in locations:
                     location.jobs.add(job)
+                #import ipdb; ipdb.set_trace()
                 delete = context.get('delete')
                 if delete:
                     for to_delete in sorted(delete, reverse=True):
+                        print locations[to_delete]
                         locations[to_delete].delete()
                 job.save()
                 return redirect(self.success_url)
         return self.render_to_response(self.get_context_data(form=form))
+
+    def post(self, request, *args, **kwargs):
+        #import ipdb; ipdb.set_trace()
+        return super(BaseJobFormView, self).post(request, *args, **kwargs)
 
 
 class JobFormView(BaseJobFormView):
