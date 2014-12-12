@@ -1386,6 +1386,16 @@ input[title="Submit Search"] {
     cursor: pointer;
 }
 
+.product-card .btn.disabled {
+    background: #999 url("{{ STATIC_URL }}bg-gradient.png") bottom repeat-x !important;
+    color: #fff !important;
+    width: auto;
+    height: auto;
+    margin: 8px 0 0;
+    padding: 5px 10px;
+    cursor: default;
+}
+
 #direct_container .btn.primary {
     font-weight: 700;
 }
@@ -1394,6 +1404,49 @@ input[title="Submit Search"] {
     bottom: 10px;
     position: absolute;
     right: 10px;
+}
+
+.product-card.left-gutter {
+    padding-left: 50px;
+    min-height: 80px;
+}
+
+.product-card .product-group-order a.btn {
+    right: initial;
+    bottom: initial;
+    padding: 3px 8px;
+}
+
+.product-card .product-group-order a:first-of-type {
+    left: 10px;
+    top: 5px;
+}
+
+.product-group-order a i {
+    width: 0;
+    height: 0;
+    font-size: 0;
+    line-height: 0;
+    display: block;
+    margin: 3px 0;
+}
+
+.product-group-order a:first-of-type i {
+    border-right: 8px solid transparent;
+    border-left: 8px solid transparent;
+    border-bottom: 12px solid #FFF;
+}
+
+.product-card .product-group-order a:last-of-type {
+    left: 10px;
+    top: 35px;
+    margin-left: 0;
+}
+
+.product-group-order a:last-of-type i {
+    border-right: 8px solid transparent;
+    border-left: 8px solid transparent;
+    border-top: 12px solid #FFF;
 }
 
 .wrapper-header,
