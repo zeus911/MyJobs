@@ -3,6 +3,7 @@ from fsm.views import FSMView
 import itertools
 import json
 
+from django.db.models import Q
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import Http404, reverse, reverse_lazy, resolve
@@ -278,8 +279,8 @@ def product_listing(request):
 
     # Get all site packages and products for a site.
     site_packages = site.sitepackage_set.all()
-    products = itertools.chain.from_iterable(site_package.product_set.all()
-                                             for site_package in site_packages)
+    products = Product.objects.filter(package__sitepackage__in=site_packages)
+
     # Group products by the site package they belong to.
     groupings = set()
     for product in products:
