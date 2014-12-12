@@ -48,8 +48,8 @@ class BaseJobForm(RequestForm):
 
     apply_email = CharField(required=False, max_length=255,
                             label='Apply Email',
-                            widget=TextInput(attrs={'size': 50}),
-                            help_text=Job.help_text['apply_email'])
+                            help_text=Job.help_text['apply_email'],
+                            widget=TextInput(attrs={'rows': 1, 'size': 50}))
     apply_link = CharField(required=False, max_length=255,
                            label='Apply Link',
                            help_text=Job.help_text['apply_link'],
