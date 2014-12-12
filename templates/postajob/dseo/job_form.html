@@ -117,7 +117,6 @@
         var form_count = {{ formset.total_form_count }};
         var form = '{{ formset.empty_form|escapejs }}';
         $(document).ready(function() {
-            accordion('.header', '.contents');
             expand_errors('.contents');
             add_locations();
             create_location_events();
