@@ -46,6 +46,21 @@ def jobs_overview(request):
 
 
 @company_has_access(None)
+def view_job(request, purchased_product, pk):
+    company = get_company_or_404(request)
+    product = PurchasedProduct.objects.get(pk=purchased_product)
+    if not product.owner == company:
+        raise Http404
+    data = {
+        'company': company,
+        'product': product,
+        'job': PurchasedJob.objects.get(pk=pk)
+    }
+    return render_to_response('postajob/%s/view_job.html' % settings.PROJECT,
+                              data, RequestContext(request))
+
+
+@company_has_access(None)
 def purchasedjobs_overview(request):
     company = get_company(request)
     if settings.SITE:

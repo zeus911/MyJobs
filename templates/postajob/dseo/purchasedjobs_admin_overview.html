@@ -17,7 +17,7 @@
                 Expires: <b>{{ job.date_expired }}</b>
             </div>
             {% get_content_type job as content_type %}
-            <a class="btn" href="{% url 'view_request' content_type=content_type.pk pk=job.pk %}">View</a>
+            <a class="btn" href="{% url 'view_job' purchased_product=product.pk pk=job.pk %}">View</a>
         </div>
         {% endfor %}
         {% else %}

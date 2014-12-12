@@ -26,6 +26,12 @@ urlpatterns = patterns(
     url(r'^purchased-jobs/$',
         views.purchasedjobs_overview,
         name='purchasedjobs_overview'),
+    url(r'purchased-jobs/product/(?P<purchased_product>\d+)/view/(?P<pk>\d+)$',
+        views.view_job,
+        name='view_job'),
+    url(r'^purchased-jobs/product/(?P<purchased_product>\d+)/',
+        views.admin_purchasedjobs,
+        name='purchasedjobs_product_view'),
 
     # Purchased microsite management
     url(r'^admin/$',
