@@ -235,8 +235,8 @@ class ViewTests(PostajobTestBase):
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('job_delete', kwargs=kwargs))
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(Job.objects.all().count(), 0)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(Job.objects.all().count(), 1)
 
     def test_purchasedjob_add(self):
         product = PurchasedProductFactory(

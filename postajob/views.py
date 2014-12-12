@@ -387,6 +387,11 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
     A mixin for job purchase formviews. JobFormView and PurchasedJobFormView
     share this exact functionality.
     """
+    prevent_delete = True
+
+    def delete(self):
+        raise Http404
+
     def get_context_data(self, **kwargs):
         context = super(BaseJobFormView, self).get_context_data(**kwargs)
         if context.get('item', None):
@@ -464,7 +469,6 @@ class PurchasedJobFormView(BaseJobFormView):
     form_class = PurchasedJobForm
     model = PurchasedJob
     display_name = '{product} Job'
-    prevent_delete = True
 
     success_url = reverse_lazy('purchasedjobs_overview')
     add_name = 'purchasedjob_add'
@@ -475,8 +479,6 @@ class PurchasedJobFormView(BaseJobFormView):
     purchase_field = 'purchased_product'
     purchase_model = PurchasedProduct
 
-    def delete(self):
-        raise Http404
 
     def set_object(self, *args, **kwargs):
         if resolve(self.request.path).url_name == self.add_name:
