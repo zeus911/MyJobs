@@ -49,7 +49,7 @@ class BaseJobForm(RequestForm):
     apply_email = CharField(required=False, max_length=255,
                             label='Apply Email',
                             help_text=Job.help_text['apply_email'],
-                            widget=TextInput(attrs={'rows': 1, 'size': 50}))
+                            widget=TextInput(attrs={'size': 50}))
     apply_link = CharField(required=False, max_length=255,
                            label='Apply Link',
                            help_text=Job.help_text['apply_link'],
@@ -217,7 +217,8 @@ class JobForm(BaseJobForm):
     def get_field_sets(self):
         field_sets = [
             [self['title'], self['description'], self['reqid']],
-            [self['apply_type'], self['apply_link'], self['apply_info']],
+            [self['apply_type'], self['apply_link'], self['apply_email'],
+             self['apply_info']],
             [self['date_expired'], self['is_expired']],
             [self['post_to'], self['site_packages']]
         ]
