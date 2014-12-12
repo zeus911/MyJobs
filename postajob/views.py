@@ -208,7 +208,7 @@ def admin_purchasedproduct(request):
 
 @company_has_access('product_access')
 def view_request(request, content_type, pk):
-    template = 'postajob/%s/request/{model}.html' % settings.PROJECT
+    template = 'postajob/{proejct}/request/{model}.html'
     company = get_company(request)
     content_type = ContentType.objects.get(pk=content_type)
     data = {
@@ -222,8 +222,9 @@ def view_request(request, content_type, pk):
     if not data['object'].user_has_access(request.user):
         raise Http404
 
-    return render_to_response(template.format(model=content_type.model), data,
-                              RequestContext(request))
+    return render_to_response(template.format(project=settings.PROJECT,
+                                              model=content_type.model),
+                              data, RequestContext(request))
 
 
 @company_has_access('product_access')
