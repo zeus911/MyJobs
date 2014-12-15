@@ -93,7 +93,7 @@ class JobLocation(models.Model):
 
     def save(self, **kwargs):
         self.generate_guid()
-        self.state_short = all_regions.inv.get(self.state, self.state)
+        self.state_short = all_regions.inv.get(self.state, self.state[:3])
         self.country_short = countries.inv.get(self.country, self.country)
         super(JobLocation, self).save(**kwargs)
         for job in self.jobs.all():
