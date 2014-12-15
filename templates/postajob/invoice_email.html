@@ -1,17 +1,17 @@
 {% load postajob_tags %}
 <table width="400">
     <tr><td align="center">
-        {{ purchase.product.owner.name }}
-        {% if purchase.product.owner.companyprofile %}
-            <br/>{{ purchase.product.owner.companyprofile.address_line_one }}
-            {% if purchase.product.owner.companyprofile.address_line_two %}<br/>{{ purchase.product.owner.companyprofile.address_line_two }}{% endif %}
-            <br/>{{ purchase.product.owner.companyprofile.city}}, {{ purchase.product.owner.companyprofile.state }} {{ purchase.product.owner.companyprofile.zipcode }} {{ purchase.product.owner.companyprofile.country }}
-            {% if purchase.product.owner.companyprofile.phone %}<br/>{{ purchase.product.owner.companyprofile.phone }}{% endif %}
+        {{ invoice.owner.name }}
+        {% if invoice.owner.companyprofile %}
+            <br/>{{ invoice.owner.companyprofile.address_line_one }}
+            {% if invoice.owner.companyprofile.address_line_two %}<br/>{{ invoice.owner.companyprofile.address_line_two }}{% endif %}
+            <br/>{{ invoice.owner.companyprofile.city}}, {{ invoice.owner.companyprofile.state }} {{ invoice.owner.companyprofile.zipcode }} {{ invoice.owner.companyprofile.country }}
+            {% if invoice.owner.companyprofile.phone %}<br/>{{ invoice.owner.companyprofile.phone }}{% endif %}
         {% endif %}
     </td></tr>
     <tr><td align="right">
-        Invoice No: {{ invoice.transaction }}
-        <br/>Date: {{ purchase_date }}
+        Invoice No: {{ invoice.pk }}
+        <br/>Date: {{ invoice.date_created }}
     </td></tr>
 </table>
 
@@ -33,7 +33,7 @@
     </tr>
     {% for purchase in purchases %}
         <tr>
-            <td colspan="2">{{ purchase.product.name }}</td>
+            <td colspan="2">{{ purchase.product_name }}</td>
             <td colspan="2">${{ purchase.purchase_amount }}</td>
         </tr>
     {% endfor %}
@@ -52,16 +52,19 @@
     </tr>
 </table>
 
-<table>
-    <tr><td><b>Payment Details</b></td></tr>
-    <tr><td>
-        {% if invoice.first_name and invoice.last_name %}
-            Credit Card Number: *************{{ purchase.card_last_four }}
-            <br/>Expiration: {{ invoice.card_exp_date.month }}/{{ invoice.card_exp_date.year }}
-            <br/>Name on Credit Card: {{ invoice.first_name }} {{ invoice.last_name }}
-            <br/>Amount Charged: ${{ total }}
-        {% else %}
-            Redemption Code: {{ purchases.0.redemption_uid }}
-        {% endif %}
-    </td></tr>
-</table>
+{% if invoice.transaction_type != FREE %}
+    <table>
+        <tr><td><b>Payment Details</b></td></tr>
+        <tr><td>
+            {% if invoice.transaction_type == AUTHORIZE_NET %}
+                Credit Card Number: *************{{ invoice.card_last_four }}
+                <br/>Expiration: {{ invoice.card_exp_date.month }}/{{ invoice.card_exp_date.year }}
+                <br/>Name on Credit Card: {{ invoice.first_name }} {{ invoice.last_name }}
+                <br/>Amount Charged: ${{ total }}
+            {% else %}
+                {# transaction_type == OFFLINE_PURCHASE #}
+                Redemption Code: {{ invoice.transcation }}
+            {% endif %}
+        </td></tr>
+    </table>
+{% endif %}
