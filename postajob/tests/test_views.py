@@ -208,8 +208,6 @@ class ViewTests(PostajobTestBase):
         response = self.client.post(reverse('job_update', kwargs=kwargs),
                                     data=self.job_form_data)
         self.assertRedirects(response, resp_url, status_code=302)
-        response = self.client.post(reverse('job_delete', kwargs=kwargs))
-        self.assertRedirects(response, resp_url, status_code=302)
 
     def test_job_add(self):
         response = self.client.post(reverse('job_add'), data=self.job_form_data,
