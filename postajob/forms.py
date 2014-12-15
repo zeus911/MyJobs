@@ -1,5 +1,5 @@
 from authorize import AuthorizeInvalidError, AuthorizeResponseError
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from fsm.widget import FSM
 
 from django.contrib import admin
@@ -54,8 +54,11 @@ class BaseJobForm(RequestForm):
                            label='Apply Link',
                            help_text=Job.help_text['apply_link'],
                            widget=TextInput(attrs={'rows': 1, 'size': 50}))
-    date_expired = SplitDateDropDownField(label="Expires On",
-                                          help_text=Job.help_text['date_expired'])
+    date_expired = IntegerField(label='Expires In',
+                                help_text="The length of time before the job "
+                                          "expires.",
+                                widget=Select(
+                                    choices=Product.max_job_length_choices))
 
     def __init__(self, *args, **kwargs):
         super(BaseJobForm, self).__init__(*args, **kwargs)
@@ -88,6 +91,7 @@ class BaseJobForm(RequestForm):
         if apply_link:
             URLValidator(apply_link)
         return apply_link
+
 
     def clean(self):
         apply_info = self.cleaned_data.get('apply_info')
@@ -178,6 +182,18 @@ class JobForm(BaseJobForm):
 
         self.fields['site_packages'].queryset = user_sites
 
+        # Set the starting date expired option
+        if self.instance and self.instance.date_expired:
+            date_new = getattr(
+                self.instance, 'date_new', datetime.now()).date()
+            days = (self.instance.date_expired - date_new).days
+            self.initial['date_expired'] = days
+        else:
+            # Select the longest duration
+            self.initial['date_expired'] = self.fields[
+                'date_expired'].widget.choices[-1][0]
+
+
         # Since we're not using actual site_packages for the site_packages,
         # the initial data also needs to be manually set.
         if self.instance.pk and self.instance.site_packages:
@@ -189,6 +205,12 @@ class JobForm(BaseJobForm):
             if (packages.count() == 1 and
                     packages[0] == self.instance.owner.site_package):
                 self.initial['post_to'] = 'network'
+
+    def clean_date_expired(self):
+        date_new = self.instance.date_new or datetime.now()
+
+        date_expired = self.cleaned_data['date_expired']
+        return date_new + timedelta(date_expired)
 
     def clean_site_packages(self):
         """
@@ -243,8 +265,19 @@ class PurchasedJobBaseForm(JobForm):
         model = PurchasedJob
         purchased_product = None
 
+    def clean_date_expired(self):
+        try:
+            date_new = self.instance.job_ptr.date_new
+        except Job.DoesNotExist:
+            # We are adding a job, not editing one
+            date_new = datetime.now()
+
+        date_expired = self.cleaned_data['date_expired']
+        return date_new + timedelta(date_expired)
+
     def clean(self):
         date_expired = self.cleaned_data.get('date_expired').date()
+
         if not hasattr(self, 'purchased_product'):
             self.purchased_product = self.cleaned_data.get('purchased_product')
 
@@ -274,6 +307,28 @@ class PurchasedJobForm(PurchasedJobBaseForm):
         super(PurchasedJobForm, self).__init__(*args, **kwargs)
         self.fields.pop('post_to', None)
         self.initial['site_packages'] = self.fields['site_packages'].queryset
+
+        # Restrict choices for date expiration to those determined by the
+        # product
+        max_job_length = self.purchased_product.max_job_length
+        job_length_index = [
+            choice[0] for choice in 
+            self.fields['date_expired'].widget.choices].index(max_job_length)
+
+        self.fields['date_expired'].widget.choices = self.fields[
+            'date_expired'].widget.choices[:job_length_index+1]
+
+        # Set the starting date expired option
+        if self.instance and self.instance.date_expired:
+            date_new = getattr(
+                self.instance, 'date_new', datetime.now()).date()
+            days = (self.instance.date_expired - date_new).days
+            self.initial['date_expired'] = days
+        else:
+            # Select the longest duration
+            self.initial['date_expired'] = self.fields[
+                'date_expired'].widget.choices[-1][0]
+
 
     def get_field_sets(self):
         field_sets = [
