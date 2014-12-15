@@ -475,8 +475,8 @@ class DEv2JobFeed(DEJobFeed):
         jobs = self.doc.find(self.node_tag).iterchildren()
 
         for job in jobs:
-            attr = job.find('uid')
-            jobdict = {'uid': self.unescape(attr.text)}
+            jobdict = {'uid': self.unescape(job.find('uid').text),
+                       'link': job.find('link').text}
             joblist.append(jobdict)
         return joblist
 

@@ -261,7 +261,7 @@ def update_solr(buid, download=True, force=True, set_title=False,
     jobs = jobfeed.jobparse()
 
     # Build a set of all the UIDs for all those instances.
-    job_ids = set([long(i.get('link')) for i in jobs if i.get('link')])
+    job_ids = set([i.get('link') for i in jobs if i.get('link')])
     conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
     step1 = 1024
 
