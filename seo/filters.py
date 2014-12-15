@@ -194,9 +194,9 @@ class FacetListWidget(Widget):
         # value and the ordering data from self.slug_order. Then sort
         # them based on that ordering data. Finally, join all values
         # from this sorted list to create the canonical URL.
-        results = sorted([(url_atoms[k], self.slug_order['company']\
-                        if k=='featured' else self.slug_order[k])\
-                        for k in url_atoms], key=lambda result: result[1])
+        results = sorted([(url_atoms[k], self.slug_order['company']
+                         if k == 'featured' else self.slug_order[k])
+                         for k in url_atoms], key=lambda result: result[1])
         url = '/%s/' % '/'.join([i[0] for i in
                                 ifilter(lambda r: r[0], results)])
 
