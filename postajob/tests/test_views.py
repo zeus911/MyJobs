@@ -121,9 +121,7 @@ class ViewTests(PostajobTestBase):
             'apply_email': '',
             'apply_type': 'link',
             'post_to': 'network',
-            'date_expired_1': '04',
-            'date_expired_0': 'Jun',
-            'date_expired_2': '2014',
+            'date_expired': '15'
         }
 
         self.purchasedjob_form_data = {
@@ -136,9 +134,7 @@ class ViewTests(PostajobTestBase):
             'apply_email': '',
             'apply_type': 'link',
             'post_to': 'network',
-            'date_expired_1': '04',
-            'date_expired_0': 'Jun',
-            'date_expired_2': '2014',
+            'date_expired': '15'
         }
 
         self.purchasedproduct_form_data = {

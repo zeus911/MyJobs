@@ -66,13 +66,13 @@
                 </fieldset>
             </div>
             <div class="contents">
+                <legend>Posting Location</legend>
                 {% if form.get_field_sets.3 %}
                     <fieldset>
-                        <legend>Posting Location</legend>
                         {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.3 %}
                     </fieldset>
                 {% else %}
-                    <div class="span3 form-label pull-left initial site-label">
+                    <div class="span3 form-label pull-left initial">
                         <label>Job will be visible on these sites:</label>
                     </div>
                     <div class="profile-form-input site-field">

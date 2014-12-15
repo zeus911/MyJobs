@@ -1,5 +1,5 @@
 from authorize import AuthorizeInvalidError, AuthorizeResponseError
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from fsm.widget import FSM
 
 from django.contrib import admin
@@ -36,7 +36,7 @@ class BaseJobForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.159-5.css', )
+            'all': ('postajob.159-9.css', )
         }
         js = ('postajob.159-3.js', )
 
@@ -54,8 +54,11 @@ class BaseJobForm(RequestForm):
                            label='Apply Link',
                            help_text=Job.help_text['apply_link'],
                            widget=TextInput(attrs={'rows': 1, 'size': 50}))
-    date_expired = SplitDateDropDownField(label="Expires On",
-                                          help_text=Job.help_text['date_expired'])
+    date_expired = IntegerField(label='Expires In',
+                                help_text="The length of time before the job "
+                                          "expires.",
+                                widget=Select(
+                                    choices=Product.max_job_length_choices))
 
     def __init__(self, *args, **kwargs):
         super(BaseJobForm, self).__init__(*args, **kwargs)
@@ -88,6 +91,7 @@ class BaseJobForm(RequestForm):
         if apply_link:
             URLValidator(apply_link)
         return apply_link
+
 
     def clean(self):
         apply_info = self.cleaned_data.get('apply_info')
@@ -178,6 +182,18 @@ class JobForm(BaseJobForm):
 
         self.fields['site_packages'].queryset = user_sites
 
+        # Set the starting date expired option
+        if self.instance and self.instance.date_expired:
+            date_new = getattr(
+                self.instance, 'date_new', datetime.now()).date()
+            days = (self.instance.date_expired - date_new).days
+            self.initial['date_expired'] = days
+        else:
+            # Select the longest duration
+            self.initial['date_expired'] = self.fields[
+                'date_expired'].widget.choices[-1][0]
+
+
         # Since we're not using actual site_packages for the site_packages,
         # the initial data also needs to be manually set.
         if self.instance.pk and self.instance.site_packages:
@@ -189,6 +205,12 @@ class JobForm(BaseJobForm):
             if (packages.count() == 1 and
                     packages[0] == self.instance.owner.site_package):
                 self.initial['post_to'] = 'network'
+
+    def clean_date_expired(self):
+        date_new = self.instance.date_new or datetime.now()
+
+        date_expired = self.cleaned_data['date_expired']
+        return date_new + timedelta(date_expired)
 
     def clean_site_packages(self):
         """
@@ -243,8 +265,19 @@ class PurchasedJobBaseForm(JobForm):
         model = PurchasedJob
         purchased_product = None
 
+    def clean_date_expired(self):
+        try:
+            date_new = self.instance.job_ptr.date_new
+        except Job.DoesNotExist:
+            # We are adding a job, not editing one
+            date_new = datetime.now()
+
+        date_expired = self.cleaned_data['date_expired']
+        return date_new + timedelta(date_expired)
+
     def clean(self):
         date_expired = self.cleaned_data.get('date_expired').date()
+
         if not hasattr(self, 'purchased_product'):
             self.purchased_product = self.cleaned_data.get('purchased_product')
 
@@ -274,6 +307,28 @@ class PurchasedJobForm(PurchasedJobBaseForm):
         super(PurchasedJobForm, self).__init__(*args, **kwargs)
         self.fields.pop('post_to', None)
         self.initial['site_packages'] = self.fields['site_packages'].queryset
+
+        # Restrict choices for date expiration to those determined by the
+        # product
+        max_job_length = self.purchased_product.max_job_length
+        job_length_index = [
+            choice[0] for choice in 
+            self.fields['date_expired'].widget.choices].index(max_job_length)
+
+        self.fields['date_expired'].widget.choices = self.fields[
+            'date_expired'].widget.choices[:job_length_index+1]
+
+        # Set the starting date expired option
+        if self.instance and self.instance.date_expired:
+            date_new = getattr(
+                self.instance, 'date_new', datetime.now()).date()
+            days = (self.instance.date_expired - date_new).days
+            self.initial['date_expired'] = days
+        else:
+            # Select the longest duration
+            self.initial['date_expired'] = self.fields[
+                'date_expired'].widget.choices[-1][0]
+
 
     def get_field_sets(self):
         field_sets = [
@@ -326,7 +381,7 @@ class ProductForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.159-5.css', )
+            'all': ('postajob.159-9.css', )
         }
         js = ('postajob.159-3.js', )
 
@@ -414,7 +469,7 @@ class ProductGroupingForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.159-5.css', )
+            'all': ('postajob.159-9.css', )
         }
 
     products_widget = CheckboxSelectMultiple()
@@ -438,12 +493,14 @@ class ProductGroupingForm(RequestForm):
         if not instance.pk:
             instance.save()
 
+        delete_orders = ProductOrder.objects.filter(group=instance)
+        delete_orders = delete_orders.exclude(product__in=products)
         for product in products:
             ordered_product, _ = ProductOrder.objects.get_or_create(
                 product=product, group=instance)
             ordered_product.display_order = 0
             ordered_product.save()
-
+        delete_orders.delete()
         return instance
 
 
@@ -523,7 +580,7 @@ class PurchasedProductNoPurchaseForm(RequestForm):
             last_name=self.request.user.last_name,
             owner=self.product.owner,
             state=self.cleaned_data.get('state'),
-            transaction='FREE',
+            transaction_type=Invoice.FREE,
             zipcode=self.cleaned_data.get('zipcode'),
         )
         self.instance.invoice = invoice
@@ -545,7 +602,7 @@ class PurchasedProductForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.159-5.css', )
+            'all': ('postajob.159-9.css', )
         }
 
     card_number = CharField(label='Credit Card Number')
@@ -626,6 +683,7 @@ class PurchasedProductForm(RequestForm):
             last_name=self.cleaned_data.get('last_name'),
             owner=self.product.owner,
             state=self.cleaned_data.get('state'),
+            transaction_type=Invoice.AUTHORIZE_NET,
             transaction=self.transaction.uid,
             zipcode=self.cleaned_data.get('zipcode'),
         )
@@ -661,7 +719,7 @@ class OfflinePurchaseForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.159-5.css', )
+            'all': ('postajob.159-9.css', )
         }
         js = ('postajob.159-3.js', )
 
@@ -683,15 +741,6 @@ class OfflinePurchaseForm(RequestForm):
 
         instance = super(OfflinePurchaseForm, self).save(commit)
 
-        invoice = Invoice.objects.create(
-            card_exp_date=date.today(), card_last_four='XXXX',
-            address_line_one='', city='', state='', zipcode='', country='',
-            first_name='', last_name='',
-            owner=self.company,
-            transaction=instance.pk,
-        )
-        instance.invoice = invoice
-
         for product in self.products:
             product_quantity = self.cleaned_data.get(str(product.pk))
             if product_quantity:
@@ -699,7 +748,6 @@ class OfflinePurchaseForm(RequestForm):
                     product=product, offline_purchase=instance,
                     product_quantity=product_quantity
                 )
-
         instance.save()
 
         company = get_object_or_none(
@@ -761,8 +809,26 @@ class OfflinePurchaseRedemptionForm(RequestForm):
     def save(self, commit=True):
         if not self.company:
             make_company_from_form(self)
-
         self.instance = self.cleaned_data.get('redemption_id')
+
+        invoice_kwargs = {
+            'first_name': self.request.user.first_name,
+            'last_name': self.request.user.last_name,
+            'owner': self.company,
+            'transaction_type': Invoice.OFFLINE_PURCHASE,
+            'transaction': self.instance.redemption_uid,
+        }
+        if hasattr(self.company, 'companyprofile'):
+            profile = self.company.companyprofile
+            invoice_kwargs['address_line_one'] = profile.address_line_one
+            invoice_kwargs['address_line_two'] = profile.address_line_two
+            invoice_kwargs['city'] = profile.city
+            invoice_kwargs['state'] = profile.state
+            invoice_kwargs['country'] = profile.country
+            invoice_kwargs['zipcode'] = profile.zipcode
+        invoice = Invoice.objects.create(**invoice_kwargs)
+
+        self.instance.invoice = invoice
         self.instance.redeemed_by = CompanyUser.objects.get(
             user=self.request.user, company=self.company)
         self.instance.redeemed_on = date.today()
@@ -778,7 +844,7 @@ class CompanyProfileForm(RequestForm):
 
     class Media:
         css = {
-            'all': ('postajob.159-5.css', )
+            'all': ('postajob.159-9.css', )
         }
 
     def __init__(self, *args, **kwargs):
@@ -795,7 +861,6 @@ class CompanyProfileForm(RequestForm):
         if not self.instance.company.user_created:
             self.fields['company_name'].widget.attrs['readonly'] = True
             self.fields['description'].widget.attrs['readonly'] = True
-
 
     def clean(self):
         if self.instance.company.user_created:
