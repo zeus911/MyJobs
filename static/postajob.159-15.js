@@ -187,8 +187,7 @@ function add_location(location) {
     // All added locations will follow the same template, with the city,
     // region, country, and loc_num placeholders replaced with the actual values
     // for the relevant location
-    var location_tag = '<div class="location-display"><div>city, region country</div><div><a href="?" id="remove-location-loc_num">Remove</a></div></div>',
-
+    var location_tag = '<div class="product-card no-highlight">city, region country<a id="remove-locations-loc_num" class="pull-right" href="?">Remove</a></div>',
         location_map = {
             city: location.find('input[id$=-city]').val(),
             region: region,
@@ -241,9 +240,18 @@ function copy_forms(from, to) {
 
 
     if (valid) {
+        /*
+            country: currently-selected country
+            element: selector for the relevant region input
+            from_input: Result of selecting element
+            from_value: value in from_input
+         */
         var country = from.find('select[id$=-country]').val(),
             element, from_input, from_value;
         if (country === 'United States' || country === 'Canada') {
+            // My.jobs currently supports region selects for the US and Canada.
+            // The options for these two sets of regions reside in the same
+            // select, named as follows.
             element = 'select[id$=-state]';
             from_input = from.find(element);
             from_value = from_input.val();
@@ -260,6 +268,8 @@ function copy_forms(from, to) {
             }
         }
         else {
+            // The selected country isn't the US or Canada. Use the open-ended
+            // input for regions.
             element = 'input[id$=-region]';
             from_input = from.find(element);
             from_value = from_input.val();
@@ -379,6 +389,10 @@ function expand_errors(contents) {
 }
 
 function update_state_selection(country) {
+    /*
+        region: open-ended input
+        state: select box for US/Canadian states, provinces, and territories
+     */
     var region = $('#id_form-__prefix__-region'),
         state = $('#id_form-__prefix__-state');
     if (country == 'United States' || country == 'Canada') {

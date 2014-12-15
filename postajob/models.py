@@ -87,9 +87,10 @@ class JobLocation(models.Model):
             return "Location"
 
     def delete(self, using=DEFAULT_DB_ALIAS):
-        jobs = self.jobs.all()
-        super(JobLocation, self).delete(using)
-        [job.save() for job in jobs]
+        if self.pk:
+            jobs = self.jobs.all()
+            super(JobLocation, self).delete(using)
+            [job.save() for job in jobs]
 
     def save(self, **kwargs):
         self.generate_guid()

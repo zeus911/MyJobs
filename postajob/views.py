@@ -395,17 +395,16 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
         else:
             formset_qs = JobLocation.objects.none()
         if self.request.POST:
-            pruned_post = {key: value
-                           for key, value in self.request.POST.items()
-                           if '__prefix__' not in key}
-            delete = False
-            for key in pruned_post.keys():
-                if key.endswith('DELETE'):
+            delete = []
+            for key in self.request.POST.keys():
+                # JobLocationFormSet has a custom save that accepts the indices
+                # of forms to be deleted; The following constructs that list.
+                if key.endswith('DELETE') and '__prefix__' not in key:
                     location_num = int(key.split('-')[1])
-                    delete = True
-            context['formset'] = JobLocationFormSet(pruned_post,
-                                                    queryset=formset_qs)
+                    delete.append(location_num)
             context['delete'] = delete
+            context['formset'] = JobLocationFormSet(self.request.POST,
+                                                    queryset=formset_qs)
         else:
             context['formset'] = JobLocationFormSet(queryset=formset_qs)
         return context
@@ -416,13 +415,9 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
         if form.is_valid():
             if joblocation_formset.is_valid():
                 job = form.save()
-                locations = joblocation_formset.save()
+                locations = joblocation_formset.save(delete=context['delete'])
                 for location in locations:
                     location.jobs.add(job)
-                delete = context.get('delete')
-                if delete:
-                    for location in locations:
-                        location.delete()
                 job.save()
                 return redirect(self.success_url)
         return self.render_to_response(self.get_context_data(form=form))
