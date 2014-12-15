@@ -466,7 +466,7 @@ class SeoSite(Site):
 
     def associated_companies(self):
         buids = self.business_units.all()
-        return Company.objects.filter(job_source_ids__id__in=buids)
+        return Company.objects.filter(job_source_ids__in=buids)
 
     def network_sites(self):
         return SeoSite.objects.filter(site_tags__site_tag='network')
