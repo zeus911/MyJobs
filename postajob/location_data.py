@@ -73,6 +73,11 @@ states = bidict({
     'WY': 'Wyoming',
 })
 
+
+all_regions = states.copy()
+all_regions.update(provinces)
+
+
 countries = bidict({
     'ABW': 'Aruba',
     'AFG': 'Afghanistan',
@@ -308,7 +313,12 @@ def state_list(short=False, include_country=False):
     us = get_list(states, short)
     can = get_list(provinces, short)
 
+    add_country = lambda regions, country: [(region, country)
+                                            for region in regions]
     us = [(x, y, 'United States') for x, y in us]
     can = [(x, y, 'Canada') for x, y in can]
+    if include_country:
+        us = add_country(us, 'United States')
+        can = add_country(can, 'Canada')
 
     return us + can
