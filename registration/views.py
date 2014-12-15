@@ -170,6 +170,7 @@ class DseoLogin(BlockView):
                                            status=Page.STAGING,
                                            page_type=self.page_type)[0]
                 setattr(self, 'page', page)
+                return page
             except IndexError:
                 pass
 
@@ -180,3 +181,4 @@ class DseoLogin(BlockView):
         except IndexError:
             raise Http404
         setattr(self, 'page', page)
+        return page
