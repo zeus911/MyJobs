@@ -75,7 +75,7 @@ class ViewTests(PostajobTestBase):
             authorize_net_transaction_key=settings.TESTING_CC_AUTH['transaction_key'])
 
         self.choices_data = ('{"countries":[{"code":"USA", '
-                             '"name":"United States of America"}], '
+                             '"name":"United States"}], '
                              '"regions":[{"code":"IN", "name":"Indiana"}] }')
         self.side_effect = [self.choices_data for x in range(0, 50)]
 
@@ -846,7 +846,7 @@ class ViewTests(PostajobTestBase):
             'form-0-DELETE': 'on',
             'form-1-city': 'Muncie',
             'form-1-state': 'Indiana',
-            'form-1-country': 'United States'
+            'form-1-country': 'United States',
         })
         self.client.post(reverse('job_update', args=[job.pk]),
                          data=self.job_form_data, follow=True)
