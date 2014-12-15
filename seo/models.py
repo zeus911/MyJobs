@@ -751,8 +751,7 @@ class Company(models.Model):
         Outputs:
         :microsites: List of microsites
         """
-        job_source_ids = self.job_source_ids.all()
-        buids = job_source_ids.values_list('id', flat=True)
+        buids = self.job_source_ids.all()
 
         microsites = SeoSite.objects.filter(models.Q(business_units__in=buids)
                                             | models.Q(canonical_company=self))
