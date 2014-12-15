@@ -567,6 +567,15 @@ class PurchasedProduct(BaseModel):
             self.expiration_date = self.product.expiration_date()
             self.max_job_length = self.product.max_job_length
             self.jobs_remaining = self.num_jobs_allowed
+            product_kwargs = {
+                'product_name': self.product.name,
+                'product_expiration_date': self.expiration_date,
+                'num_jobs_allowed': self.num_jobs_allowed,
+                'purchase_amount': self.purchase_amount
+            }
+            invoice_product = InvoiceProduct.objects.create(**product_kwargs)
+            self.invoice.invoiced_products.add(invoice_product)
+            self.invoice.save()
         super(PurchasedProduct, self).save(**kwargs)
 
     def can_post_more(self):
@@ -856,6 +865,20 @@ class OfflinePurchase(BaseModel):
         self.generate_redemption_uid()
         super(OfflinePurchase, self).save(**kwargs)
 
+    def associated_products(self):
+        """
+        Gets a list of all of the offline products associated with this
+        offline purchase. This is not a set - if a multiple instances of a
+        product were purchased there will be multiple instances of the product
+        in this list.
+        """
+        products = []
+        offline_products = self.offlineproduct_set.all()
+        for offline_product in offline_products:
+            for x in range(0, offline_product.product_quantity):
+                products.append(offline_product.product)
+        return products
+
     def generate_redemption_uid(self):
         if not self.redemption_uid:
             uid = uuid4().hex
@@ -872,11 +895,14 @@ class OfflinePurchase(BaseModel):
             'owner': company,
             'paid': True,
         }
-        offline_products = OfflineProduct.objects.filter(offline_purchase=self)
+        products_created = []
+        offline_products = self.offlineproduct_set.all()
         for offline_product in offline_products:
             kwargs['product'] = offline_product.product
             for x in range(0, offline_product.product_quantity):
-                PurchasedProduct.objects.create(**kwargs)
+                product = PurchasedProduct.objects.create(**kwargs)
+                products_created.append(product)
+        return products_created
 
     def user_has_access(self, user):
         is_posting_admin = super(OfflinePurchase, self).user_has_access(user)
@@ -902,14 +928,26 @@ class InvoiceManager(models.Manager, InvoiceMixin):
 
 
 class Invoice(BaseModel):
+    AUTHORIZE_NET = 1
+    FREE = 2
+    OFFLINE_PURCHASE = 3
+    transaction_type_choices = (
+        (AUTHORIZE_NET, 'Authorize.Net'),
+        (FREE, 'Free'),
+        (OFFLINE_PURCHASE, 'Offline Purchase'),
+    )
+
     objects = InvoiceManager()
+
+    date_created = models.DateTimeField(auto_now_add=True)
 
     # Either the Authorize.Net transaction id or the id of the
     # OfflinePurchase.
-    transaction = models.CharField(max_length=255)
+    transaction_type = models.IntegerField(choices=transaction_type_choices)
+    transaction = models.CharField(max_length=255, blank=True)
 
-    card_last_four = models.CharField(max_length=5)
-    card_exp_date = models.DateField()
+    card_last_four = models.CharField(max_length=5, blank=True)
+    card_exp_date = models.DateField(blank=True, null=True)
     first_name = models.CharField(max_length=255, verbose_name='First Name')
     last_name = models.CharField(max_length=255, verbose_name='Last Name')
     address_line_one = models.CharField(max_length=255,
@@ -920,6 +958,7 @@ class Invoice(BaseModel):
     state = models.CharField(max_length=255)
     country = models.CharField(max_length=255)
     zipcode = models.CharField(max_length=255)
+    invoiced_products = models.ManyToManyField('InvoiceProduct')
 
     # Owner is the Company that owns the Products.
     owner = models.ForeignKey('seo.Company', related_name='owner')
@@ -934,15 +973,12 @@ class Invoice(BaseModel):
 
         other_recipients = [] if not other_recipients else other_recipients
 
-        purchases = OfflinePurchase.objects.filter(invoice=self)
-        if not purchases:
-            purchases = PurchasedProduct.objects.filter(invoice=self)
-
         data = {
             'invoice': self,
-            'purchase_date': (purchases[0].purchase_date if purchases
-                              else date.today()),
-            'purchases': purchases,
+            'purchases': self.invoiced_products.all(),
+            'AUTHORIZE_NET': Invoice.AUTHORIZE_NET,
+            'FREE': Invoice.FREE,
+            'OFFLINE_PURCHASE': Invoice.OFFLINE_PURCHASE,
         }
 
         owner = self.owner
@@ -962,3 +998,10 @@ class Invoice(BaseModel):
                                list(recipients))
             msg.content_subtype = 'html'
             msg.send()
+
+
+class InvoiceProduct(models.Model):
+    product_name = models.CharField(max_length=255)
+    product_expiration_date = models.DateField()
+    num_jobs_allowed = models.IntegerField()
+    purchase_amount = models.DecimalField(max_digits=20, decimal_places=2)
