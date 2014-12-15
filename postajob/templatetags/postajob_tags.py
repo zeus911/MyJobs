@@ -117,7 +117,6 @@ def get_purchasedjob_add_link(context):
         # different between the two.
         context['purchased_product'] = context['product']
 
-    context['class'] = 'btn'
     link = render_to_string('postajob/includes/purchasedjob_add_link.html',
                             context)
     return mark_safe(link)
