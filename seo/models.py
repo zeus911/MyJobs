@@ -466,7 +466,7 @@ class SeoSite(Site):
 
     def associated_companies(self):
         buids = self.business_units.all()
-        return Company.objects.filter(job_source_ids__in=buids)
+        return Company.objects.filter(job_source_ids__id__in=buids)
 
     def network_sites(self):
         return SeoSite.objects.filter(site_tags__site_tag='network')
@@ -485,14 +485,14 @@ class SeoSite(Site):
         companies = self.associated_companies()
         company_buids = companies.values_list('job_source_ids', flat=True)
 
-        sites = SeoSite.objects.filter(business_units__in=company_buids)
+        sites = SeoSite.objects.filter(business_units__id__in=company_buids)
         return sites.exclude(site_tags__site_tag='network')
 
     def network_and_company_sites(self):
         companies = self.associated_companies()
         company_buids = companies.values_list('job_source_ids', flat=True)
 
-        query = [models.Q(business_units__in=company_buids),
+        query = [models.Q(business_units__id__in=company_buids),
                  models.Q(site_tags__site_tag='network')]
 
         return SeoSite.objects.filter(reduce(operator.or_, query))
