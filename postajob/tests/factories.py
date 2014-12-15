@@ -47,6 +47,7 @@ class InvoiceFactory(factory.django.DjangoModelFactory):
     owner = factory.SubFactory(CompanyFactory)
     state = 'Indiana'
     transaction = '123456'
+    transaction_type = 0
     zipcode = '46268'
 
 

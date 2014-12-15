@@ -239,6 +239,31 @@ class ModelTests(MyJobsBase):
         self.assertItemsEqual(mail.outbox[0].from_email,
                               'invoice@test.domain')
 
+    def test_invoice_unchanged_after_purchased_product_deletion(self):
+        self.create_purchased_job()
+        invoice = self.purchased_product.invoice
+        invoice.send_invoice_email(['this@isa.test'])
+        old_email = mail.outbox.pop()
+
+        self.purchased_product.delete()
+        invoice.send_invoice_email(['this@isa.test'])
+        new_email = mail.outbox.pop()
+
+        self.assertEqual(old_email.body, new_email.body)
+
+    def test_invoice_unchanged_after_product_changed(self):
+        self.create_purchased_job()
+        invoice = self.purchased_product.invoice
+        invoice.send_invoice_email(['this@isa.test'])
+        old_email = mail.outbox.pop()
+
+        self.purchased_product.product.name = 'new name'
+        self.purchased_product.product.save()
+        invoice.send_invoice_email(['this@isa.test'])
+        new_email = mail.outbox.pop()
+
+        self.assertEqual(old_email.body, new_email.body)
+
     def test_productgrouping_add_delete(self):
         self.create_purchased_job()
         ProductGrouping.objects.create(display_title='Test Grouping',
