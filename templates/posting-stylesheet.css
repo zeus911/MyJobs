@@ -159,6 +159,10 @@
     text-decoration: underline;
 }
 
+ul#ul-posting-nav {
+    margin: 0;
+}
+
 ul#ul-posting-nav li {
     float:left;
     width: 25%;
@@ -181,6 +185,7 @@ ul#ul-posting-nav a {
 
 ul.product-tabs {
     height: 24px;
+    margin: 0;
 }
 
 ul.product-tabs li:first-of-type {
@@ -205,7 +210,8 @@ ul.product-tabs li.active {
     text-decoration: none;
 }
 
-#grouping-list {
+/* posting because */
+#posting-grouping-list {
     margin-top: 18px;
 }
 
