@@ -92,7 +92,7 @@ def admin_purchasedjobs(request, purchased_product):
     jobs = product.purchasedjob_set.all()
     data = {
         'company': company,
-        'product': product,
+        'purchased_product': product,
         'jobs': jobs,
     }
     return render_to_response('postajob/%s/purchasedjobs_admin_overview.html'

@@ -5,7 +5,8 @@
 
 {% block directseo_main_content %}
 {{ block.super }}
-<div>
+{{ form.media }}
+<div id="job-form">
     <form action="?" method="post">
         {% csrf_token %}
         {{ form.owner }}
@@ -112,7 +113,6 @@
 {% block extra-js %}
     <script type="text/javascript" src="{{STATIC_URL}}/bootstrap/bootstrap-modalmanager.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}/bootstrap/bootstrap-modal.js"></script>
-    {{ form.media }}
     <script type="text/javascript">
         var form_count = {{ formset.total_form_count }};
         var form = '{{ formset.empty_form|escapejs }}';

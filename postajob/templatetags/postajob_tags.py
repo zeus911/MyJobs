@@ -117,15 +117,7 @@ def get_purchasedjob_add_link(context):
         # different between the two.
         context['purchased_product'] = context['product']
 
-    if request.path.startswith('/posting/admin/'):
-        # On the administrative screen, the "add a job" link is styled like
-        # a button...
-        class_ = 'btn'
-    else:
-        # ... while on the job posting side, it's a normal float:right anchor.
-        class_ = 'pull-right'
-
-    context['class'] = class_
+    context['class'] = 'btn'
     link = render_to_string('postajob/includes/purchasedjob_add_link.html',
                             context)
     return mark_safe(link)
