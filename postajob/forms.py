@@ -64,9 +64,15 @@ class BaseJobForm(RequestForm):
         if self.instance and self.instance.apply_info:
             self.initial['apply_type'] = 'instructions'
         else:
-            # This works because apply_email is actually a link
-            # that uses mailto:
-            self.initial['apply_type'] = 'link'
+            # convert apply_link to email
+            if self.instance.apply_link.startswith("mailto:"):
+                self.initial['apply_email'] = self.instance.apply_link.split(
+                    'mailto:')[1]
+                self.initial['apply_type'] = 'email'
+            else:
+                # This works because apply_email is actually a link
+                # that uses mailto:
+                self.initial['apply_type'] = 'link'
 
         if not is_superuser_in_admin(self.request):
             # Remove the option to set the company.
