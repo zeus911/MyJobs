@@ -261,7 +261,7 @@ def update_solr(buid, download=True, force=True, set_title=False,
     jobs = jobfeed.jobparse()
 
     # Build a set of all the UIDs for all those instances.
-    job_uids = set([long(i.get('uid')) for i in jobs if i.get('uid')])
+    job_ids = set([long(i.get('link')) for i in jobs if i.get('link')])
     conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
     step1 = 1024
 
@@ -284,15 +284,15 @@ def update_solr(buid, download=True, force=True, set_title=False,
     # issue.
     job_slices = slices(range(hits), step=step1)
     results = [_solr_results_chunk(tup, buid, step1) for tup in job_slices]
-    solr_uids = reduce(lambda x, y: x | y, results) if results else set()
+    solr_ids = reduce(lambda x, y: x | y, results) if results else set()
     # Return the job UIDs that are in the Solr index but not in the feed
     # file.
-    solr_del_uids = solr_uids.difference(job_uids)
+    solr_del_uids = solr_ids.difference(job_ids)
 
     if not force:
         # Return the job UIDs that are in the feed file but not in the Solr
         # index.
-        solr_add_uids = job_uids.difference(solr_uids)
+        solr_add_uids = job_ids.difference(solr_ids)
         # ``jobfeed.solr_jobs()`` yields a list of dictionaries. We want to
         # filter out any dictionaries whose "uid" key is not in
         # ``solr_add_uids``. This is because by default we only want to add
@@ -315,7 +315,7 @@ def update_solr(buid, download=True, force=True, set_title=False,
         # templates/search_configuration/solr.xml). At the very bottom you'll
         # see <uniqueKey>id</uniqueKey>. This serves as the equivalent of the pk
         # (i.e. globally unique) in a database.
-        solr_add_uids = job_uids
+        solr_add_uids = job_ids
         add_docs = jobfeed.solr_jobs()
 
     # Slice up ``add_docs`` in chunks of 4096. This is because the
@@ -389,7 +389,7 @@ def _solr_results_chunk(tup, buid, step):
     results = conn.search("*:*", fq="buid:%s" % buid, fl="uid",
                           rows=step, start=tup[0], facet="false",
                           mlt="false").docs
-    return set([i['uid'] for i in results])
+    return set([i['link'] for i in results])
 
 
 def _job_filter(job):
