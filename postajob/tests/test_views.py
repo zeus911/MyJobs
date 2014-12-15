@@ -949,7 +949,7 @@ class PurchasedJobActionTests(PostajobTestBase):
         profile.blocked_users.add(self.user)
         add_job_link = reverse('purchasedjob_add',
                                args=[self.purchased_product.pk])
-        for url in [reverse('purchasedjobs_product_view',
+        for url in [reverse('purchasedjobs_overview',
                             args=[self.purchased_product.pk])]:
             response = self.client.get(url, HTTP_HOST='test.jobs')
             self.assertFalse(add_job_link in response.content)

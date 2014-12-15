@@ -17,7 +17,7 @@
                     Jobs: <b>{{product.job_amount_posted}} / {%if product.num_jobs_allowed == 0%}Unlimited{%else%}{{product.num_jobs_allowed}}{%endif%}</b>
                     <span style="float: right;">Expires: <b>{{ product.expiration_date }}</b></span>
 
-                    <a class="btn" href="{% url 'purchasedjobs_product_view' purchased_product=product.pk %}">View</a>
+                    <a class="btn" href="{% url 'purchasedjobs_overview' purchased_product=product.pk %}">View</a>
                 </div>
                 {% endfor %}
                 {% else %}
@@ -32,7 +32,7 @@
                         Jobs: <b>{{product.job_amount_posted}} / {%if product.num_jobs_allowed == 0%}Unlimited{%else%}{{product.num_jobs_allowed}}{%endif%}</b>
                         <span style="float: right;">Expired on: <b>{{ product.expiration_date }}</b></span>
 
-                        <a class="btn" href="{% url 'purchasedjobs_product_view' purchased_product=product.pk %}">View</a>
+                        <a class="btn" href="{% url 'purchasedjobs_overview' purchased_product=product.pk %}">View</a>
                     </div>
                 {% endfor %}
                 {% else %}

@@ -13,5 +13,8 @@
     {% if purchased_product.can_post_more %}
         <a href="{% url 'purchasedjob_add' product=purchased_product.pk%}" class="btn">Post New Job</a>
         <div class="clear"></div>
+    {% else %}
+        <a href="#" class="btn disabled" title="This product has expired">Post New Job</a>
+        <div class="clear"></div>
     {% endif %}
 {% endif %}

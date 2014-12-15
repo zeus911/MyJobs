@@ -34,6 +34,15 @@
         <b>{{ purchased_product.purchase_date }}</b>
         <br/><label>Expires:</label>
         <b>{{ purchased_product.expiration_date }}</b>
+        <br />
+        <div class="navigation">
+            {% get_purchasedjob_add_link %}
+        </div>
     </div>
 <div class="clearfix"></div>
+{% endblock %}
+
+{% block extra-js %}
+    <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
 {% endblock %}

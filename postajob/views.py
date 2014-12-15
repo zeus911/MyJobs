@@ -38,6 +38,7 @@ def jobs_overview(request):
         jobs = Job.objects.all()
     company = get_company(request)
     data = {
+        'company' : company,
         'jobs': jobs.filter(owner=company, purchasedjob__isnull=True),
     }
     return render_to_response('postajob/%s/jobs_overview.html'
@@ -61,7 +62,7 @@ def view_job(request, purchased_product, pk):
 
 
 @company_has_access(None)
-def purchasedjobs_overview(request):
+def purchasedproducts_overview(request):
     company = get_company(request)
     if settings.SITE:
         sites = settings.SITE.postajob_site_list()
@@ -72,16 +73,17 @@ def purchasedjobs_overview(request):
         jobs = PurchasedJob.objects.all()
     products = products.filter(owner=company)
     data = {
+        'company': company,
         'jobs': jobs.filter(owner=company),
         'active_products': products.filter(expiration_date__gte=date.today()),
         'expired_products': products.filter(expiration_date__lt=date.today()),
     }
-    return render_to_response('postajob/%s/purchasedjob_overview.html'
+    return render_to_response('postajob/%s/purchasedproducts_overview.html'
                               % settings.PROJECT,
                               data, RequestContext(request))
 
 
-def admin_purchasedjobs(request, purchased_product):
+def purchasedjobs_overview(request, purchased_product, admin):
     """
     Normally we would need to filter by settings.SITE for objects in postajob
     but this is already done from a previous view.
@@ -95,7 +97,12 @@ def admin_purchasedjobs(request, purchased_product):
         'purchased_product': product,
         'jobs': jobs,
     }
-    return render_to_response('postajob/%s/purchasedjobs_admin_overview.html'
+    if admin:
+        return render_to_response('postajob/%s/purchasedjobs_admin_overview.html'
+                                  % settings.PROJECT,
+                                  data, RequestContext(request))
+    else:
+        return render_to_response('postajob/%s/purchasedjobs_overview.html'
                               % settings.PROJECT,
                               data, RequestContext(request))
 
@@ -490,7 +497,7 @@ class PurchasedJobFormView(BaseJobFormView):
     model = PurchasedJob
     display_name = '{product} Job'
 
-    success_url = reverse_lazy('purchasedjobs_overview')
+    success_url = reverse_lazy('purchasedproducts_overview')
     add_name = 'purchasedjob_add'
     update_name = 'purchasedjob_update'
     delete_name = 'purchasedjob_delete'
@@ -597,7 +604,7 @@ class PurchasedProductFormView(PostajobModelFormMixin, RequestFormViewBase):
     # The display name is determined by the product id and set in dispatch().
     display_name = '{product} - Billing Information'
 
-    success_url = reverse_lazy('purchasedjobs_overview')
+    success_url = reverse_lazy('purchasedproducts_overview')
     add_name = 'purchasedproduct_add'
     update_name = 'purchasedproduct_update'
     delete_name = 'purchasedproduct_delete'
@@ -730,7 +737,7 @@ class OfflinePurchaseRedemptionFormView(PostajobModelFormMixin,
     model = OfflinePurchase
     display_name = 'Offline Purchase'
 
-    success_url = reverse_lazy('purchasedjobs_overview')
+    success_url = reverse_lazy('purchasedproducts_overview')
     add_name = 'offlinepurchase_redeem'
     update_name = None
     delete_name = None
