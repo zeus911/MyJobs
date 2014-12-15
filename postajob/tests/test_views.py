@@ -891,7 +891,6 @@ class ViewTests(PostajobTestBase):
                          data=self.job_form_data, follow=True)
         self.assertEqual(PurchasedJob.objects.count(), 1)
         self.assertEqual(JobLocation.objects.count(), 1)
-        print PurchasedJob.objects.count()
         job = PurchasedJob.objects.get()
         location = job.locations.first()
         self.job_form_data['id'] = job.pk
@@ -906,7 +905,6 @@ class ViewTests(PostajobTestBase):
         self.client.post(reverse('purchasedjob_update', args=[job.pk]),
                          data=self.job_form_data, follow=True)
         self.assertEqual(JobLocation.objects.count(), 1)
-
 
     def test_view_request_posted_by_unrelated_company(self):
         company = CompanyFactory(id=2, name='new company')

@@ -126,10 +126,6 @@ class JobLocationForm(forms.ModelForm):
     country = ChoiceField(choices=JobLocation.country_choices)
     region = CharField(max_length=255, required=False)
 
-    def __init__(self, *args, **kwargs):
-        super(JobLocationForm, self).__init__(*args, **kwargs)
-        print self.errors
-
     class Meta:
         fields = ('city', 'state', 'region', 'country', 'zipcode')
         excluded = ('guid', 'state_short', 'country_short')
@@ -137,8 +133,8 @@ class JobLocationForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        if cleaned_data.get('country') not in ["United States", "Canada"] \
-                and not self.instance.pk:
+        if (cleaned_data.get('country') not in ["United States", "Canada"]
+                and not self.instance.pk):
             region = cleaned_data.get('region')
             if region:
                 cleaned_data['state'] = region
