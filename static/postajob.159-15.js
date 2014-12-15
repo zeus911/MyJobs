@@ -6,10 +6,19 @@ if(typeof jQuery == 'undefined') {
 }
 
 var load_event = function(){
-    /* Intentionally global */
-    apply_link = $('#id_apply_link').val(),
-    apply_email = $('#id_apply_email').val(),
+    /* intentionally global */
+    apply_link = $('#id_apply_link').val();
+    apply_email = $('#id_apply_email').val();
     apply_info = $('#id_apply_info').val();
+
+    /* don't mistake apply links for emails and vice versa */
+    if(apply_link.indexOf('mailto:') == 0){
+        apply_link = '';
+        $('#id_apply_link').val('');
+    } else {
+        apply_email = '';
+        $('#id_apply_email').val('');
+    }
 
     update_apply_fields();
     update_site_fields();
