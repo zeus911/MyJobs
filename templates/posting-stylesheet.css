@@ -28,6 +28,13 @@
     margin: 8px 0 0;
     padding: 5px 10px;
     cursor: pointer;
+    border: 0;
+    font-size: 14px;
+    line-height: 16px;
+}
+
+#direct_listingDiv a.btn {
+    font-weight: normal;
 }
 
 .product-card .btn.disabled {
@@ -213,6 +220,12 @@ ul.product-tabs li.active {
 /* posting because */
 #posting-grouping-list {
     margin-top: 18px;
+}
+
+input[readonly="True"],
+textarea[readonly="True"] {
+    background-color: #eee !important;
+    cursor: not-allowed !important;
 }
 
 /*!
