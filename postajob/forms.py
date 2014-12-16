@@ -25,9 +25,7 @@ from universal.helpers import get_object_or_none, get_company
 
 
 def is_superuser_in_admin(request):
-    if request.path.startswith('/admin') and request.user.is_superuser:
-        return True
-    return False
+    return request.path.startswith('/admin') and request.user.is_superuser
 
 
 class BaseJobForm(RequestForm):
