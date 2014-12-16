@@ -75,9 +75,9 @@ class FacetListWidget(Widget):
                 # access to all the slabs in any given message.
                 logging.critical('IndexError while splitting slabs',
                                  extra={
-                                    'data': {
-                                        'slab_items': items
-                                    }
+                                     'data': {
+                                         'slab_items': items
+                                     }
                                  })
                 continue
             if item_name in ('None', '') or item_name.startswith("Virtual"):
@@ -88,7 +88,7 @@ class FacetListWidget(Widget):
                 li_class = ""
             else:
                 li_class = "direct_hiddenOption"
-                hidden_options=True
+                hidden_options = True
             
             # build item_count using humanized. This is usally called inside the
             # django template, but this widget doesn't use a specific template
@@ -194,9 +194,9 @@ class FacetListWidget(Widget):
         # value and the ordering data from self.slug_order. Then sort
         # them based on that ordering data. Finally, join all values
         # from this sorted list to create the canonical URL.
-        results = sorted([(url_atoms[k], self.slug_order['company']\
-                        if k=='featured' else self.slug_order[k])\
-                        for k in url_atoms], key=lambda result: result[1])
+        results = sorted([(url_atoms[k], self.slug_order['company']
+                         if k == 'featured' else self.slug_order[k])
+                         for k in url_atoms], key=lambda result: result[1])
         url = '/%s/' % '/'.join([i[0] for i in
                                 ifilter(lambda r: r[0], results)])
 

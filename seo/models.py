@@ -485,14 +485,14 @@ class SeoSite(Site):
         companies = self.associated_companies()
         company_buids = companies.values_list('job_source_ids', flat=True)
 
-        sites = SeoSite.objects.filter(business_units__in=company_buids)
+        sites = SeoSite.objects.filter(business_units__id__in=company_buids)
         return sites.exclude(site_tags__site_tag='network')
 
     def network_and_company_sites(self):
         companies = self.associated_companies()
         company_buids = companies.values_list('job_source_ids', flat=True)
 
-        query = [models.Q(business_units__in=company_buids),
+        query = [models.Q(business_units__id__in=company_buids),
                  models.Q(site_tags__site_tag='network')]
 
         return SeoSite.objects.filter(reduce(operator.or_, query))
@@ -751,8 +751,7 @@ class Company(models.Model):
         Outputs:
         :microsites: List of microsites
         """
-        job_source_ids = self.job_source_ids.all()
-        buids = job_source_ids.values_list('id', flat=True)
+        buids = self.job_source_ids.all()
 
         microsites = SeoSite.objects.filter(models.Q(business_units__in=buids)
                                             | models.Q(canonical_company=self))
