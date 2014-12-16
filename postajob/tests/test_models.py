@@ -51,7 +51,7 @@ class ModelTests(MyJobsBase):
             'city': 'Indianapolis',
             'state': 'Indiana',
             'state_short': 'IN',
-            'country': 'United States of America',
+            'country': 'United States',
             'country_short': 'USA',
             'zipcode': '46268',
         }

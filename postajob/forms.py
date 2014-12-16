@@ -9,11 +9,12 @@ from django.core.urlresolvers import reverse_lazy
 from django import forms
 from django.forms import (CharField, CheckboxSelectMultiple,
                           HiddenInput, IntegerField, ModelMultipleChoiceField,
-                          RadioSelect, Select, TextInput)
+                          RadioSelect, Select, TextInput, ChoiceField)
 from django.forms.models import modelformset_factory, BaseModelFormSet
 
 from seo.models import Company, CompanyUser, SeoSite
 from mypartners.widgets import SplitDateDropDownField
+from postajob.fields import NoValidationChoiceField, SelectWithOptionClasses
 from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
                              OfflineProduct, Package, Product, ProductGrouping,
                              ProductOrder, PurchasedProduct, PurchasedJob,
@@ -38,7 +39,7 @@ class BaseJobForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.159-3.js', )
+        js = ('postajob.159-15.js', )
 
     apply_choices = [('link', "Link"), ('email', 'Email'),
                      ('instructions', 'Instructions')]
@@ -124,10 +125,27 @@ class BaseJobForm(RequestForm):
 
 
 class JobLocationForm(forms.ModelForm):
+    state = NoValidationChoiceField(choices=JobLocation.state_choices,
+                                    widget=SelectWithOptionClasses())
+    country = ChoiceField(choices=JobLocation.country_choices,
+                          initial='United States')
+    region = CharField(max_length=255, required=False)
+
     class Meta:
-        fields = ('city', 'state', 'country', 'zipcode')
+        fields = ('city', 'state', 'region', 'country', 'zipcode')
         excluded = ('guid', 'state_short', 'country_short')
         model = JobLocation
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        if (cleaned_data.get('country') not in ["United States", "Canada"]
+                and not self.instance.pk):
+            region = cleaned_data.get('region')
+            if region:
+                cleaned_data['state'] = region
+            else:
+                raise ValidationError('State or region is required.')
+        return cleaned_data
 
 
 class BaseJobLocationFormSet(BaseModelFormSet):
@@ -141,6 +159,37 @@ class BaseJobLocationFormSet(BaseModelFormSet):
         if not self.forms or not has_locations:
             raise ValidationError("Job postings must have at least one "
                                   "location")
+
+    def save(self, commit=True, delete=None):
+        """
+        Overrides BaseModelFormSet.save to add an additional parameter for which
+        forms are to be deleted
+
+        Inputs:
+        :commit: Commit changes to database
+        :delete: Form indices to be deleted; Defaults to None
+
+        Outputs:
+        :saved: List of saved items
+        """
+        # This represents new locations that were removed before saving,
+        # meaning they didn't have ids when the page was loaded.
+        # We can fake deleting these by just not saving them.
+        delete = delete or []
+        saved = []
+
+        # Filter out blank strings from the list of ids to be deleted
+        deleted_ids = filter(lambda x: bool(x),
+                             [deleted['id'].value()
+                              for deleted in self.deleted_forms])
+        for index, form in enumerate(self.forms):
+            id_ = form['id'].value()
+            if id_ in deleted_ids or index in delete:
+                if id_ and commit:
+                    JobLocation.objects.get(pk=id_).delete()
+            else:
+                saved.append(form.save(commit))
+        return saved
 
 
 JobLocationFormSet = modelformset_factory(JobLocation, form=JobLocationForm,
@@ -384,7 +433,7 @@ class ProductForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.159-3.js', )
+        js = ('postajob.159-15.js', )
 
     job_limit_choices = [('unlimited', "Unlimited"),
                          ('specific', 'A Specific Number'), ]
@@ -722,7 +771,7 @@ class OfflinePurchaseForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.159-3.js', )
+        js = ('postajob.159-15.js', )
 
     def __init__(self, *args, **kwargs):
         super(OfflinePurchaseForm, self).__init__(*args, **kwargs)

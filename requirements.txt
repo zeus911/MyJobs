@@ -45,3 +45,4 @@ python-memcached==1.48
 requests==2.3.0
 selenium==2.42.1
 unicodecsv==0.9.4
+bidict==0.3.1

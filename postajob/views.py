@@ -13,6 +13,7 @@ from django.template import RequestContext
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from myjobs.models import User
+from postajob.location_data import state_list
 
 from universal.decorators import company_has_access
 from seo.models import CompanyUser, SeoSite
@@ -423,17 +424,16 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
         else:
             formset_qs = JobLocation.objects.none()
         if self.request.POST:
-            pruned_post = {key: value
-                           for key, value in self.request.POST.items()
-                           if '__prefix__' not in key}
             delete = []
-            for key in pruned_post.keys():
-                if key.endswith('DELETE'):
+            for key in self.request.POST.keys():
+                # JobLocationFormSet has a custom save that accepts the indices
+                # of forms to be deleted; The following constructs that list.
+                if key.endswith('DELETE') and '__prefix__' not in key:
                     location_num = int(key.split('-')[1])
                     delete.append(location_num)
-            context['formset'] = JobLocationFormSet(pruned_post,
-                                                    queryset=formset_qs)
             context['delete'] = delete
+            context['formset'] = JobLocationFormSet(self.request.POST,
+                                                    queryset=formset_qs)
         else:
             context['formset'] = JobLocationFormSet(queryset=formset_qs)
         return context
@@ -444,14 +444,9 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
         if form.is_valid():
             if joblocation_formset.is_valid():
                 job = form.save()
-                locations = [location_form.save()
-                             for location_form in joblocation_formset.forms]
+                locations = joblocation_formset.save(delete=context['delete'])
                 for location in locations:
                     location.jobs.add(job)
-                delete = context.get('delete')
-                if delete:
-                    for to_delete in sorted(delete, reverse=True):
-                        locations[to_delete].delete()
                 job.save()
                 return redirect(self.success_url)
         return self.render_to_response(self.get_context_data(form=form))
@@ -860,3 +855,10 @@ def unblock_user(request, pk):
         else:
             profile.blocked_users.remove(user)
     return redirect(reverse('blocked_user_management'))
+
+
+def ajax_regions(request):
+    if request.is_ajax() and 'country' in request.GET:
+        country = request.GET.get('country')
+        states = state_list(country)
+        return HttpResponse(json.dumps(states))
