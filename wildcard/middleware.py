@@ -51,6 +51,5 @@ class WildcardMiddleware:
             if root_domain in settings.NEVER_REDIRECT:
                 return
             tld = host_root[-1]
-            redirect_url = "http://%s.%s" % (root_domain,tld)
+            redirect_url = "http://%s.%s" % (root_domain, tld)
             return redirect(redirect_url, permanent=True)
-        
