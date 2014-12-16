@@ -1,8 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
-import json
 import operator
-import urllib2
 from uuid import uuid4
 
 from django.conf import settings
@@ -10,11 +8,13 @@ from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import EmailMessage
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import models, DEFAULT_DB_ALIAS
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_delete
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+
+from location_data import countries, all_regions, country_list, state_list
 
 
 class BaseManagerMixin(object):
@@ -64,14 +64,15 @@ class JobLocation(models.Model):
         'state': 'The state where the job is located.',
         'zipcode': 'The postal code of the job location.',
     }
+    country_choices = country_list()
+    state_choices = state_list(include_country=True)
+
     guid = models.CharField(max_length=255, unique=True, blank=True, default='')
-    city = models.CharField(max_length=255,
-                            help_text=help_text['city'])
-    state = models.CharField(max_length=200,
-                             help_text=help_text['state'],
+    city = models.CharField(max_length=255, help_text=help_text['city'])
+    state = models.CharField(max_length=200, help_text=help_text['state'],
                              verbose_name=_('State/Region'))
     state_short = models.CharField(max_length=3, blank=True)
-    country = models.CharField(max_length=200,
+    country = models.CharField(max_length=200, choices=country_choices,
                                help_text=help_text['country'])
     country_short = models.CharField(max_length=3, blank=True,
                                      help_text=help_text['country'])
@@ -85,8 +86,16 @@ class JobLocation(models.Model):
         else:
             return "Location"
 
+    def delete(self, using=DEFAULT_DB_ALIAS):
+        if self.pk:
+            jobs = self.jobs.all()
+            super(JobLocation, self).delete(using)
+            [job.save() for job in jobs]
+
     def save(self, **kwargs):
         self.generate_guid()
+        self.state_short = all_regions.inv.get(self.state, self.state[:3])
+        self.country_short = countries.inv.get(self.country, self.country[:3])
         super(JobLocation, self).save(**kwargs)
         for job in self.jobs.all():
             job.save()
@@ -253,33 +262,6 @@ class Job(BaseModel):
     def on_sites(self):
         from seo.models import SeoSite
         return SeoSite.objects.filter(sitepackage__job=self)
-
-    @staticmethod
-    def get_country_choices():
-        country_dict = Job.get_country_map()
-        return [(x, x) for x in sorted(country_dict.keys())]
-
-    @staticmethod
-    def get_country_map():
-        data_url = 'https://d2e48ltfsb5exy.cloudfront.net/myjobs/data/countries.json'
-        data_list = json.loads(urllib2.urlopen(data_url).read())['countries']
-        return dict([(x['name'], x['code']) for x in data_list])
-
-    @staticmethod
-    def get_state_choices():
-        state_dict = Job.get_state_map()
-        state_choices = [(x, x) for x in sorted(state_dict.keys())]
-        none_choice = state_choices.pop(state_choices.index(('None', 'None')))
-        state_choices.insert(0, none_choice)
-        return state_choices
-
-    @staticmethod
-    def get_state_map():
-        data_url = 'https://d2e48ltfsb5exy.cloudfront.net/myjobs/data/usa_regions.json'
-        data_list = json.loads(urllib2.urlopen(data_url).read())['regions']
-        state_map = dict([(x['name'], x['code']) for x in data_list])
-        state_map['None'] = 'None'
-        return state_map
 
 
 class PurchasedJob(Job):
