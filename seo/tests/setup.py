@@ -39,6 +39,7 @@ class DirectSEOBase(TestCase):
                            "character set utf8 collate utf8_unicode_ci")
 
         setattr(settings, 'ROOT_URLCONF', 'dseo_urls')
+        setattr(settings, "PROJECT", 'dseo')
         clear_url_caches()
 
         self.base_middleware_classes = settings.MIDDLEWARE_CLASSES

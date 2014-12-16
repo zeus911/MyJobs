@@ -93,17 +93,16 @@ def get_company(request):
 
     # If settings.SITE is set we're on a microsite, so get the company
     # based on the microsite we're on instead.
-    if settings.SITE:
-        buids = settings.SITE.business_units.all()
-
+    if settings.SITE.canonical_company:
         kwargs = {
             'user': request.user,
-            'company__job_source_ids__in': buids,
+            'company': settings.SITE.canonical_company,
         }
-        admin_for = CompanyUser.objects.filter(**kwargs)
-
-        if admin_for:
-            return admin_for[0].company
+        try:
+            admin_for = CompanyUser.objects.get(**kwargs)
+            return admin_for.company
+        except CompanyUser.DoesNotExist:
+            pass
 
     # If the current hit is for a non-microsite admin, we don't know what
     # company we should be using; don't guess.

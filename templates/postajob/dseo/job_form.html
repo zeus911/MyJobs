@@ -1,10 +1,12 @@
-{% extends 'postajob/form.html' %}
+{% extends "postajob/dseo/dseo_posting_base.html" %}
 {% load i18n %}
 {% load common_tags %}
 {% load postajob_tags %}
-{% gz as gz %}
 
-{% block form %}
+{% block directseo_main_content %}
+{{ block.super }}
+{{ form.media }}
+<div id="job-form">
     <form action="?" method="post">
         {% csrf_token %}
         {{ form.owner }}
@@ -67,13 +69,13 @@
                 </fieldset>
             </div>
             <div class="contents">
-                <legend>Posting Location</legend>
                 {% if form.get_field_sets.3 %}
                     <fieldset>
+                        <legend>Posting Location</legend>
                         {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.3 %}
                     </fieldset>
                 {% else %}
-                    <div class="span3 form-label pull-left initial">
+                    <div class="span3 form-label pull-left initial site-label">
                         <label>Job will be visible on these sites:</label>
                     </div>
                     <div class="profile-form-input site-field">
@@ -105,15 +107,17 @@
             <button type="submit" class="btn primary" id="profile-save">{% trans 'Save' %}</button>
         </div>{# /actions #}
     </form>
-{% endblock form %}
+</div>
+<div class="clearfix"></div>
+{% endblock %}
 
 {% block extra-js %}
-    {{ block.super }}
+    <script type="text/javascript" src="{{STATIC_URL}}/bootstrap/bootstrap-modalmanager.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}/bootstrap/bootstrap-modal.js"></script>
     <script type="text/javascript">
         var form_count = {{ formset.total_form_count }};
         var form = '{{ formset.empty_form|escapejs }}';
         $(document).ready(function() {
-            accordion('.header', '.contents');
             expand_errors('.contents');
             add_locations();
             create_location_events();
