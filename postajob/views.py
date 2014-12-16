@@ -301,11 +301,7 @@ def process_admin_request(request, content_type, pk, approve=True,
 
 
 def product_listing(request):
-    site_id = settings.SITE_ID
-    try:
-        site = SeoSite.objects.get(pk=site_id)
-    except SeoSite.DoesNotExist:
-        raise Http404
+    site = settings.SITE
 
     # Get all site packages and products for a site.
     site_packages = site.sitepackage_set.all()
@@ -816,13 +812,11 @@ class SitePackageFilter(FSMView):
         if self.request.user.is_superuser:
             # If this is on the admin site or the user is a superuser,
             # get all sites for the current company.
-            user_sites = SeoSite.objects.all()
+            sites = SeoSite.objects.all()
         else:
-            kwargs = {'business_units__company': get_company(self.request)}
-            user_sites = self.request.user.get_sites()
-            # Outside the admin, limit the sites to the current company
-            user_sites = user_sites.filter(**kwargs)
-        return user_sites
+            company = get_company_or_404(self.request)
+            sites = company.get_seo_sites()
+        return sites
 
 
 @company_has_access('product_access')

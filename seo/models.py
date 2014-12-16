@@ -485,14 +485,14 @@ class SeoSite(Site):
         companies = self.associated_companies()
         company_buids = companies.values_list('job_source_ids', flat=True)
 
-        sites = SeoSite.objects.filter(business_units__in=company_buids)
+        sites = SeoSite.objects.filter(business_units__id__in=company_buids)
         return sites.exclude(site_tags__site_tag='network')
 
     def network_and_company_sites(self):
         companies = self.associated_companies()
         company_buids = companies.values_list('job_source_ids', flat=True)
 
-        query = [models.Q(business_units__in=company_buids),
+        query = [models.Q(business_units__id__in=company_buids),
                  models.Q(site_tags__site_tag='network')]
 
         return SeoSite.objects.filter(reduce(operator.or_, query))
@@ -552,6 +552,7 @@ class SeoSite(Site):
     email_domain = models.CharField(max_length=255, default='my.jobs')
 
     def clean_email_domain(self):
+        # TODO: Finish after MX Records are sorted out
         # Determine if the company actually has permission to use the domain.
         domains = self.canonical_company.get_seo_sites().values_list('domain',
                                                                      flat=True)
@@ -564,6 +565,7 @@ class SeoSite(Site):
         # Ensure that we have an MX record for the domain.
         # raise ValidationError('You do not currently have the ability '
         #                       'to send emails from this domain.')
+        return self.email_domain
 
     def postajob_site_list(self):
         filter_function = self.postajob_filter_options_dict.get(
@@ -748,11 +750,11 @@ class Company(models.Model):
 
         Outputs:
         :microsites: List of microsites
-        :buids: List of buids associated with the company's microsites
         """
-        job_source_ids = self.job_source_ids.all()
-        buids = job_source_ids.values_list('id', flat=True)
-        microsites = SeoSite.objects.filter(business_units__in=buids)
+        buids = self.job_source_ids.all()
+
+        microsites = SeoSite.objects.filter(models.Q(business_units__in=buids)
+                                            | models.Q(canonical_company=self))
         return microsites
 
     def user_has_access(self, user):
