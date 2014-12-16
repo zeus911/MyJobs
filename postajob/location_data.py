@@ -298,6 +298,16 @@ countries = bidict({
 
 
 def get_list(from_dict, short):
+    """
+    Gets a list of options suitable for use in a choice field.
+
+    Inputs:
+    :from_dict: Which dictionary we should generate this list from
+    :short: Should we use abbreviations instead of full names (ZWE vs Zimbabwe)
+
+    Outputs:
+        List of options
+    """
     if short:
         values = from_dict.keys()
     else:
@@ -306,18 +316,23 @@ def get_list(from_dict, short):
 
 
 def country_list(short=False):
+    """
+    Creates a list of countries using get_list
+    """
     return get_list(countries, short)
 
 
 def state_list(short=False, include_country=False):
+    """
+    Creates a list of states, provinces, and territories (US and CAN).
+    Optionally includes the country that a given region is in.
+    """
     us = get_list(states, short)
     can = get_list(provinces, short)
 
-    add_country = lambda regions, country: [(region, country)
-                                            for region in regions]
-    us = [(x, y, 'United States') for x, y in us]
-    can = [(x, y, 'Canada') for x, y in can]
     if include_country:
+        add_country = lambda regions, country: [(region[0], region[1], country)
+                                                for region in regions]
         us = add_country(us, 'United States')
         can = add_country(can, 'Canada')
 

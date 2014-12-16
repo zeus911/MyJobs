@@ -65,7 +65,7 @@ class JobLocation(models.Model):
         'zipcode': 'The postal code of the job location.',
     }
     country_choices = country_list()
-    state_choices = state_list()
+    state_choices = state_list(include_country=True)
 
     guid = models.CharField(max_length=255, unique=True, blank=True, default='')
     city = models.CharField(max_length=255, help_text=help_text['city'])
