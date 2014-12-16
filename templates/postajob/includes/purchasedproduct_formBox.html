@@ -2,19 +2,11 @@
 
 {% get_jobs purchased_product as jobs %}
 <div class="card-wrapper">
-    <div class="wrapper-header">
-        <h4>{{ purchased_product.product }}</h4> <span class="pull-right"><h4>Expires: {{ purchased_product.expiration_date }}</h4></span>
-    </div>
-    {% if jobs %}
-        {% include "postajob/includes/purchasedjob_rows.html" with jobs=jobs %}
-    {% else %}
     <div class="product-card no-highlight">
-        This product has no jobs.
-    </div>
-    {% endif %}
-    <div class="wrapper-footer">
-        <span class="pull-left">{% if purchased_product.can_post_more and purchased_product.jobs_remaining > 0 %}Jobs remaining: {{ purchased_product.jobs_remaining }} {% elif purchased_product.can_post_more %}Jobs remaining: Unlimited{% endif %}</span>
-        {% get_purchasedjob_add_link %}
-        <div class="clear"></div>
+        <div class="big-title">{{ product.product }}</div>
+        Jobs: <b>{{product.job_amount_posted}} / {%if product.num_jobs_allowed == 0%}Unlimited{%else%}{{product.num_jobs_allowed}}{%endif%}</b>
+        <span style="float: right;">Expires: <b>{{ product.expiration_date }}</b></span>
+
+        <a class="btn" href="{% url 'purchasedjobs_overview' purchased_product=product.pk %}">View</a>
     </div>
 </div>

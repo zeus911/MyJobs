@@ -1,0 +1,63 @@
+{% extends "postajob/dseo/dseo_posting_base.html" %}
+
+{% block directseo_main_content %}
+{{ block.super }}
+    <div id="direct_listingDiv">
+        <ul class="product-tabs">
+            <li id="active-tab" class="active">Active Products</li>
+            <li id="expired-tab">Expired Products</li>
+        </ul>
+        <div id="tab-content">
+            <div id="content-active-products">
+                {% if active_products %}
+
+                {% for product in active_products %}
+                <div class="product-card">
+                    <div class="big-title">{{ product.product }}</div>
+                    Jobs: <b>{{product.job_amount_posted}} / {%if product.num_jobs_allowed == 0%}Unlimited{%else%}{{product.num_jobs_allowed}}{%endif%}</b>
+                    <span style="float: right;">Expires: <b>{{ product.expiration_date }}</b></span>
+
+                    <a class="btn" href="{% url 'purchasedjobs_overview' purchased_product=product.pk %}">View</a>
+                </div>
+                {% endfor %}
+                {% else %}
+                    You have no active products
+                {% endif %}
+            </div>
+            <div id="content-expired-products" style="display: none;">
+                {% if expired_products %}
+                {% for product in expired_products %}
+                    <div class="product-card">
+                        <div class="big-title">{{ product.product }}</div>
+                        Jobs: <b>{{product.job_amount_posted}} / {%if product.num_jobs_allowed == 0%}Unlimited{%else%}{{product.num_jobs_allowed}}{%endif%}</b>
+                        <span style="float: right;">Expired on: <b>{{ product.expiration_date }}</b></span>
+
+                        <a class="btn" href="{% url 'purchasedjobs_overview' purchased_product=product.pk %}">View</a>
+                    </div>
+                {% endfor %}
+                {% else %}
+                    You have no expired products
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="direct_rightColBox">
+        <div class="navigation">
+            <h3>Navigation</h3>
+            <a class="btn" href="{% url 'companyprofile_add' %}">Company Profile</a>
+        </div>
+    </div>
+<div class="clearfix"></div>
+{% endblock %}
+
+{% block extra-js %}
+<script>
+    $("ul.product-tabs li").on("click", function() {
+        $("ul.product-tabs li").removeClass("active");
+        $(this).addClass("active");
+        var clicked = $(this).attr("id").split("-")[0];
+        $("div#tab-content > div").css("display", "none");
+        $("div[id*='-"+clicked+"-']").css("display", "block");
+    });
+</script>
+{% endblock extra-js %}

@@ -121,9 +121,7 @@ class ViewTests(PostajobTestBase):
             'apply_email': '',
             'apply_type': 'link',
             'post_to': 'network',
-            'date_expired_1': '04',
-            'date_expired_0': 'Jun',
-            'date_expired_2': '2014',
+            'date_expired': '15'
         }
 
         self.purchasedjob_form_data = {
@@ -136,9 +134,7 @@ class ViewTests(PostajobTestBase):
             'apply_email': '',
             'apply_type': 'link',
             'post_to': 'network',
-            'date_expired_1': '04',
-            'date_expired_0': 'Jun',
-            'date_expired_2': '2014',
+            'date_expired': '15'
         }
 
         self.purchasedproduct_form_data = {
@@ -515,7 +511,7 @@ class ViewTests(PostajobTestBase):
         response = self.client.get(reverse('purchasedproduct_add',
                                            kwargs=product),
                                    follow=True)
-        url = reverse('purchasedjobs_overview')
+        url = reverse('purchasedproducts_overview')
         self.assertTrue(response.redirect_chain[-1][0].endswith(url))
         self.assertEqual(PurchasedProduct.objects.all().count(), 1)
 
@@ -593,11 +589,11 @@ class ViewTests(PostajobTestBase):
         self.assertEqual(response.status_code, 404)
 
     def test_purchasedjob_access_not_company_user(self):
-        response = self.client.post(reverse('purchasedjobs_overview'))
+        response = self.client.post(reverse('purchasedproducts_overview'))
         self.assertEqual(response.status_code, 200)
         self.company_user.delete()
 
-        response = self.client.post(reverse('purchasedjobs_overview'))
+        response = self.client.post(reverse('purchasedproducts_overview'))
         self.assertEqual(response.status_code, 404)
 
     def test_is_company_user(self):
@@ -953,8 +949,8 @@ class PurchasedJobActionTests(PostajobTestBase):
         profile.blocked_users.add(self.user)
         add_job_link = reverse('purchasedjob_add',
                                args=[self.purchased_product.pk])
-        for url in [reverse('purchasedjobs', args=[self.purchased_product.pk]),
-                    reverse('purchasedjobs_overview')]:
+        for url in [reverse('purchasedjobs_overview',
+                            args=[self.purchased_product.pk])]:
             response = self.client.get(url, HTTP_HOST='test.jobs')
             self.assertFalse(add_job_link in response.content)
             self.assertTrue('id="block-modal"' in response.content)

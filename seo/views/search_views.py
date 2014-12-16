@@ -539,6 +539,21 @@ def stylesheet(request, cid=None, css_file="stylesheet.css"):
                             context_instance=RequestContext(request),
                             content_type="text/css",)
 
+@custom_cache_page
+def posting_stylesheet(request, cid=None, css_file="posting-stylesheet.css"):
+    """
+    TODO: Make stylesheet dynamic and not hard code.
+    Quick C&P due to due date.
+    """
+    if cid:
+        selected_stylesheet = Configuration.objects.get(id=cid)
+    else:
+        selected_stylesheet = get_site_config(request)
+    return render_to_response(css_file, {
+                              'css': selected_stylesheet},
+                              context_instance=RequestContext(request),
+                              content_type="text/css",)
+
 
 @custom_cache_page
 def job_listing_nav_redirect(request, home=None, cc3=None):

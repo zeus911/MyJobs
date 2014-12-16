@@ -88,6 +88,8 @@ SOLR = {
 
 ABSOLUTE_URL = '/'
 
+PROJECT = "dseo"
+
 STATIC_URL = "//d2e48ltfsb5exy.cloudfront.net/content_ms/files/"
 
 BROKER_HOST = '204.236.236.123'

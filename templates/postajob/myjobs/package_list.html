@@ -5,9 +5,9 @@
             <p>{{ grouping.explanation }}</p>
             <ul>
                 {% for product in grouping.products.all %}
-                {% if product.is_displayed %}
-                    <li id="product-{{ grouping.pk }}-{{ product.pk }}"><a href="https://secure.my.jobs{% url 'purchasedproduct_add' product.pk %}">{{ product }}</a></li>
-                {% endif %}
+                    {% if product.is_displayed %}
+                        <li id="product-{{ grouping.pk }}-{{ product.pk }}"><a href="{% url 'purchasedproduct_add' product.pk %}">{{ product }}</a></li>
+                    {% endif %}
                 {% endfor %}
             </ul>
         </div>
