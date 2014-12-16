@@ -1793,6 +1793,7 @@ class SeoViewsTestCase(DirectSEOTestCase):
             'uid': '1002',
             'buid': self.buid_id,
             'is_posted': True,
+            'link': 'http://asd.asdas/ASDFASDFASGDFAFDA'
         }
         self.conn.add([posted_job])
         self.assertEqual(self.conn.search(**search).docs, [{'uid': 1002}])

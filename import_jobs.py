@@ -257,7 +257,7 @@ def update_solr(buid, download=True, force=True, set_title=False,
                                          error['exception']))
         raise FeedImportError(error)
 
-    # A dictionary of uids
+    # A dictionary of ids
     jobs = jobfeed.jobparse()
 
     # Build a set of all the UIDs for all those instances.
@@ -287,18 +287,18 @@ def update_solr(buid, download=True, force=True, set_title=False,
     solr_ids = reduce(lambda x, y: x | y, results) if results else set()
     # Return the job UIDs that are in the Solr index but not in the feed
     # file.
-    solr_del_uids = solr_ids.difference(job_ids)
+    solr_del_ids = solr_ids.difference(job_ids)
 
     if not force:
         # Return the job UIDs that are in the feed file but not in the Solr
         # index.
-        solr_add_uids = job_ids.difference(solr_ids)
+        solr_add_ids = job_ids.difference(solr_ids)
         # ``jobfeed.solr_jobs()`` yields a list of dictionaries. We want to
         # filter out any dictionaries whose "uid" key is not in
         # ``solr_add_uids``. This is because by default we only want to add
         # new documents (which each ``solr_jobs()`` dictionary represents),
         # not update.
-        add_docs = filter(lambda x: int(x.get("uid", 0)) in solr_add_uids,
+        add_docs = filter(lambda x: int(x.get("link", 0)) in solr_add_ids,
                           jobfeed.solr_jobs())
     else:
         # This might seem redundant to refer to the same value
@@ -315,16 +315,16 @@ def update_solr(buid, download=True, force=True, set_title=False,
         # templates/search_configuration/solr.xml). At the very bottom you'll
         # see <uniqueKey>id</uniqueKey>. This serves as the equivalent of the pk
         # (i.e. globally unique) in a database.
-        solr_add_uids = job_ids
+        solr_add_ids = job_ids
         add_docs = jobfeed.solr_jobs()
 
     # Slice up ``add_docs`` in chunks of 4096. This is because the
     # maxBooleanClauses setting in solrconfig.xml is set to 4096. This means
     # if we used any more than that Solr would throw an error and our
     # updates wouldn't get processed.
-    add_steps = slices(range(len(solr_add_uids)), step=4096)
+    add_steps = slices(range(len(solr_add_ids)), step=4096)
     # Same concept as ``add_docs``.
-    del_steps = slices(range(len(solr_del_uids)), step=4096)
+    del_steps = slices(range(len(solr_del_ids)), step=4096)
     # Create a generator that yields 2-tuples with each invocation. The
     # 2-tuples consist of one tuple each from del_steps & add_steps. Any
     # mismatched values (e.g. there are more del_steps than add_steps)
@@ -336,7 +336,7 @@ def update_solr(buid, download=True, force=True, set_title=False,
 
         if update_chunk:
             logging.debug("BUID:%s - SOLR - Update chunk: %s" %
-                         (buid, [i['uid'] for i in update_chunk]))
+                         (buid, [i['link'] for i in update_chunk]))
             # Pass 'commitWithin' so that Solr doesn't try to commit the new
             # docs right away. This will help relieve some of the resource
             # stress during the daily update. The value is expressed in
@@ -344,20 +344,21 @@ def update_solr(buid, download=True, force=True, set_title=False,
             conn.add(update_chunk, commitWithin="30000")
 
         delete_chunk = _build_solr_delete_query(
-            list(solr_del_uids)[tup[0][0]:tup[0][1] + 1])
+            list(solr_del_ids)[tup[0][0]:tup[0][1] + 1])
 
         if delete_chunk:
+            print "delete:", delete_chunk
             # Post-a-job jobs should not be deleted during import
             delete_chunk = "(%s) AND -is_posted:true" % delete_chunk
             logging.debug("BUID:%s - SOLR - Delete chunk: %s" %
-                         (buid, list(solr_del_uids)))
+                         (buid, list(solr_del_ids)))
             conn.delete(q=delete_chunk)
 
     #Update business unit information: title, dates, and associated_jobs
     if set_title or not bu.title or (bu.title != jobfeed.job_source_name and
                                      jobfeed.job_source_name):
         bu.title = jobfeed.job_source_name
-    updated = bool(solr_add_uids) or bool(solr_del_uids)
+    updated = bool(solr_add_ids) or bool(solr_del_ids)
     _update_business_unit_modified_dates(bu, jobfeed.crawled_date,
                                          updated=updated)
     bu.associated_jobs = len(jobs)
@@ -367,7 +368,7 @@ def update_solr(buid, download=True, force=True, set_title=False,
     if delete_feed:
         os.remove(filepath)
         logging.info("BUID:%s - Deleted feed file." % buid)
-    return len(solr_add_uids), len(solr_del_uids)
+    return len(solr_add_ids), len(solr_del_ids)
 
 
 def clear_solr(buid):
@@ -386,9 +387,10 @@ def _solr_results_chunk(tup, buid, step):
 
     """
     conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
-    results = conn.search("*:*", fq="buid:%s" % buid, fl="uid",
+    results = conn.search("*:*", fq="buid:%s" % buid, fl="link",
                           rows=step, start=tup[0], facet="false",
                           mlt="false").docs
+    print "chunk'd", results
     return set([i['link'] for i in results])
 
 
@@ -515,7 +517,7 @@ def generate_feed_url(buid, task=None):
 
 def _build_solr_delete_query(old_jobs):
     if old_jobs:
-        delete_query = ("uid:(%s)" % " OR ".join([str(x) for x in old_jobs]))
+        delete_query = ('link:("%s")' % '" OR "'.join([str(x) for x in old_jobs]))
     else:
         delete_query = None
 
