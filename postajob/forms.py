@@ -127,7 +127,8 @@ class BaseJobForm(RequestForm):
 class JobLocationForm(forms.ModelForm):
     state = NoValidationChoiceField(choices=JobLocation.state_choices,
                                     widget=SelectWithOptionClasses())
-    country = ChoiceField(choices=JobLocation.country_choices)
+    country = ChoiceField(choices=JobLocation.country_choices,
+                          initial='United States')
     region = CharField(max_length=255, required=False)
 
     class Meta:

@@ -38,8 +38,6 @@ class SelectWithOptionClasses(Select):
             conditional_escape(force_unicode(option_label)))
 
     def render_options(self, choices, selected_choices):
-        # TODO: ensure all of selected_choices end up in the output
-        # output currently includes states/provinces, not regions
         selected_choices = set(force_unicode(choice) for choice in selected_choices)
         choices = [(c[0], c[1], '') for c in choices]
         more_choices = self.choices
