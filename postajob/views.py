@@ -836,7 +836,7 @@ def blocked_user_management(request):
         'blocked_users': blocked_users
     }
     return render_to_response('postajob/%s/blocked_user_management.html'
-                               % settings.PROJECT, data,
+                              % settings.PROJECT, data,
                               RequestContext(request))
 
 
