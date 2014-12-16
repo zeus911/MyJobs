@@ -24,7 +24,14 @@ urlpatterns = patterns(
 
     # Purchased job management
     url(r'^purchased-jobs/$',
+        views.purchasedproducts_overview,
+        name='purchasedproducts_overview'),
+    url(r'purchased-jobs/product/(?P<purchased_product>\d+)/view/(?P<pk>\d+)$',
+        views.view_job,
+        name='view_job'),
+    url(r'^purchased-jobs/product/(?P<purchased_product>\d+)/',
         views.purchasedjobs_overview,
+        {'admin': False},
         name='purchasedjobs_overview'),
 
     # Purchased microsite management
@@ -146,7 +153,8 @@ urlpatterns = patterns(
         views.admin_purchasedproduct,
         name='purchasedproduct'),
     url(r'^admin/purchased/product/(?P<purchased_product>\d+)/',
-        views.admin_purchasedjobs,
+        views.purchasedjobs_overview,
+        {'admin': True},
         name="purchasedjobs"),
 
     # CompanyProfile

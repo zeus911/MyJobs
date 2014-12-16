@@ -6,7 +6,7 @@
                 <p>{{ grouping.explanation }}</p>
                 <ul>
                     {% for product in grouping.products.all %}
-                        <li id="product-{{ grouping.pk }}-{{ product.pk }}"><a href="https://secure.my.jobs{% url 'purchasedproduct_add' product.pk %}">{{ product }}</a></li>
+                        <li id="product-{{ grouping.pk }}-{{ product.pk }}"><a href="{% url 'purchasedproduct_add' product.pk %}">{{ product }}</a></li>
                     {% endfor %}
                 </ul>
             </div>
