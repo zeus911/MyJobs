@@ -70,6 +70,8 @@ SOLR = {
 
 ABSOLUTE_URL = '/'
 
+PROJECT = "dseo"
+
 BROKER_HOST = '204.236.236.123'
 BROKER_PORT = 5672
 BROKER_USER = 'celery'

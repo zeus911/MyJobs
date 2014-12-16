@@ -25,6 +25,8 @@ _PATH = os.path.abspath(os.path.dirname(__file__))
 # absolute during production
 ABSOLUTE_URL = '/'
 
+PROJECT = "myjobs"
+
 SESSION_CACHE_ALIAS = 'sessions'
 CACHES = {
     'default': {

@@ -14,6 +14,6 @@
     <div class="product-details">
         Expires: {{ job.date_expired }} - Approved: {{ job.is_approved }}
     </div>
-    {% if not job.is_past_max_expiration_date %}<a class="btn" href="{% url 'purchasedjob_update' pk=job.pk %}">Edit</a>{% else %}<a class="btn disabled" title="This job has expired" href="">Edit</a>{% endif %}
+    <a class="btn" href="">View</a>
 </div>
 {% endfor %}
