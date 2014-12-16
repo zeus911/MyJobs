@@ -59,10 +59,12 @@ class Block(models.Model):
         Generates the html corresponding to the block.
 
         """
-        template = Template(self.template)
+        body_template = Template(self.template)
+        head_template = Template(self.head)
         context = RequestContext(request, self.cast().context(request))
-        html = template.render(context)
-        return mark_safe(self.head), mark_safe(html)
+        body = body_template.render(context)
+        head = head_template.render(context)
+        return mark_safe(head), mark_safe(body)
 
     def save(self, *args, **kwargs):
         if not self.id:
@@ -94,11 +96,12 @@ class ColumnBlock(Block):
         }
 
     def render(self, request):
-        template = Template(self.template)
+        body_template = Template(self.template)
+        head_template = Template(self.head)
         context = RequestContext(request, self.cast().context(request))
-        html = template.render(context)
-        css = ' '.join(context['head'] + [self.head])
-        return mark_safe(css), mark_safe(html)
+        body = body_template.render(context)
+        head = head_template.render(context)
+        return mark_safe(' '.join(context['head'] + [head])), mark_safe(body)
 
 
 class ContentBlock(Block):
