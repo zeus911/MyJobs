@@ -13,6 +13,7 @@ class MyJobsBase(TestCase):
         clear_url_caches()
         self.ms_solr = Solr('http://127.0.0.1:8983/solr/seo')
         self.ms_solr.delete(q='*:*')
+        setattr(settings, "PROJECT", 'myjobs')
 
     def tearDown(self):
         self.ms_solr.delete(q='*:*')

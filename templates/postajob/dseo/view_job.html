@@ -1,0 +1,50 @@
+{% extends "postajob/dseo/dseo_posting_base.html" %}
+{% load postajob_tags %}
+
+{% block directseo_main_content %}
+{{ block.super }}
+<div id="direct_listingDiv">
+    <table id="job-table">
+        <tr id="job-title">
+            <td>Title:</td>
+            <td>{{ job.title }}</td>
+        </tr>
+        <tr id="job-reqid">
+            <td>Requisition ID:</td>
+            <td>{% if job.reqid %}{{ job.reqid }}{% else %}No Requisition ID{% endif %}</td>
+        </tr>
+        <tr id="job-description">
+            <td>Description:</td>
+            <td>{{ job.description }}</td>
+        </tr>
+        <tr id="job-expires">
+            {% if job.is_expired %}
+            <td>Expired:</td>
+            <td>{{ job.date_expired }}</td>
+            {% else %}
+            <td>Expires:</td>
+            <td>{{ job.date_expired }}</td>
+            {% endif %}
+        </tr>
+        {% if object.apply_link %}
+        <tr id="job-apply">
+            <td>Application Link:</td>
+            <td>{{ job.apply_link }}</td>
+        </tr>
+        {% else %}
+        <tr id="job-apply">
+            <td>Application Instructions:</td>
+            <td>{{ job.apply_info }}</td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+<div class="direct_rightColBox">
+    <div class="navigation">
+        Navigation
+        <br/>
+        <a class="btn" href="{% url 'purchasedjob_update' pk=job.pk %}">Edit</a>
+    </div>
+</div>
+<div class="clearfix"></div>
+{% endblock %}

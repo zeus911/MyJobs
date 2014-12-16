@@ -38,14 +38,31 @@ def jobs_overview(request):
         jobs = Job.objects.all()
     company = get_company(request)
     data = {
+        'company' : company,
         'jobs': jobs.filter(owner=company, purchasedjob__isnull=True),
     }
-    return render_to_response('postajob/jobs_overview.html', data,
+    return render_to_response('postajob/%s/jobs_overview.html'
+                              % settings.PROJECT, data,
                               RequestContext(request))
 
 
 @company_has_access(None)
-def purchasedjobs_overview(request):
+def view_job(request, purchased_product, pk):
+    company = get_company_or_404(request)
+    product = PurchasedProduct.objects.get(pk=purchased_product)
+    if not product.owner == company:
+        raise Http404
+    data = {
+        'company': company,
+        'product': product,
+        'job': PurchasedJob.objects.get(pk=pk)
+    }
+    return render_to_response('postajob/%s/view_job.html' % settings.PROJECT,
+                              data, RequestContext(request))
+
+
+@company_has_access(None)
+def purchasedproducts_overview(request):
     company = get_company(request)
     if settings.SITE:
         sites = settings.SITE.postajob_site_list()
@@ -56,15 +73,17 @@ def purchasedjobs_overview(request):
         jobs = PurchasedJob.objects.all()
     products = products.filter(owner=company)
     data = {
+        'company': company,
         'jobs': jobs.filter(owner=company),
         'active_products': products.filter(expiration_date__gte=date.today()),
         'expired_products': products.filter(expiration_date__lt=date.today()),
     }
-    return render_to_response('postajob/purchasedjob_overview.html',
+    return render_to_response('postajob/%s/purchasedproducts_overview.html'
+                              % settings.PROJECT,
                               data, RequestContext(request))
 
 
-def admin_purchasedjobs(request, purchased_product):
+def purchasedjobs_overview(request, purchased_product, admin):
     """
     Normally we would need to filter by settings.SITE for objects in postajob
     but this is already done from a previous view.
@@ -75,12 +94,17 @@ def admin_purchasedjobs(request, purchased_product):
     jobs = product.purchasedjob_set.all()
     data = {
         'company': company,
-        'product': product,
+        'purchased_product': product,
         'jobs': jobs,
     }
-    return render_to_response('postajob/purchasedjobs_admin_overview.html',
-                              data,
-                              RequestContext(request))
+    if admin:
+        return render_to_response('postajob/%s/purchasedjobs_admin_overview.html'
+                                  % settings.PROJECT,
+                                  data, RequestContext(request))
+    else:
+        return render_to_response('postajob/%s/purchasedjobs_overview.html'
+                              % settings.PROJECT,
+                              data, RequestContext(request))
 
 
 @company_has_access('product_access')
@@ -110,7 +134,8 @@ def purchasedmicrosite_admin_overview(request):
         'company': company
     }
 
-    return render_to_response('postajob/admin_overview.html', data,
+    return render_to_response('postajob/%s/admin_overview.html'
+                              % settings.PROJECT, data,
                               RequestContext(request))
 
 
@@ -126,7 +151,8 @@ def admin_products(request):
         'products': products.filter(owner=company),
         'company': company,
     }
-    return render_to_response('postajob/products.html', data,
+    return render_to_response('postajob/%s/products.html'
+                              % settings.PROJECT, data,
                               RequestContext(request))
 
 
@@ -142,7 +168,8 @@ def admin_groupings(request):
         'product_groupings': grouping.filter(owner=company),
         'company': company,
     }
-    return render_to_response('postajob/productgrouping.html', data,
+    return render_to_response('postajob/%s/productgrouping.html'
+                               % settings.PROJECT, data,
                               RequestContext(request))
 
 
@@ -158,7 +185,8 @@ def admin_offlinepurchase(request):
         'offline_purchases': purchases.filter(owner=company),
         'company': company,
     }
-    return render_to_response('postajob/offlinepurchase.html', data,
+    return render_to_response('postajob/%s/offlinepurchase.html'
+                               % settings.PROJECT, data,
                               RequestContext(request))
 
 
@@ -175,7 +203,8 @@ def admin_request(request):
         'requests': requests.filter(owner=company),
     }
 
-    return render_to_response('postajob/request.html', data,
+    return render_to_response('postajob/%s/request.html'
+                               % settings.PROJECT, data,
                               RequestContext(request))
 
 
@@ -194,13 +223,14 @@ def admin_purchasedproduct(request):
         'expired_products': purchases.filter(expiration_date__lt=date.today()),
     }
 
-    return render_to_response('postajob/purchasedproduct.html', data,
+    return render_to_response('postajob/%s/purchasedproduct.html'
+                               % settings.PROJECT, data,
                               RequestContext(request))
 
 
 @company_has_access('product_access')
 def view_request(request, content_type, pk):
-    template = 'postajob/request/{model}.html'
+    template = 'postajob/{project}/request/{model}.html'
     company = get_company(request)
     content_type = ContentType.objects.get(pk=content_type)
     data = {
@@ -214,8 +244,9 @@ def view_request(request, content_type, pk):
     if not data['object'].user_has_access(request.user):
         raise Http404
 
-    return render_to_response(template.format(model=content_type.model), data,
-                              RequestContext(request))
+    return render_to_response(template.format(project=settings.PROJECT,
+                                              model=content_type.model),
+                              data, RequestContext(request))
 
 
 @company_has_access('product_access')
@@ -289,7 +320,8 @@ def product_listing(request):
     # Sort the grouped packages by the specified display order.
     groupings = sorted(groupings, key=lambda grouping: grouping.display_order)
 
-    return render_to_response('postajob/package_list.html',
+    return render_to_response('postajob/%s/package_list.html'
+                              % settings.PROJECT,
                               {'product_groupings': groupings},
                               RequestContext(request))
 
@@ -363,7 +395,7 @@ class PostajobModelFormMixin(object):
     """
     model = None
     prevent_delete = False
-    template_name = 'postajob/form.html'
+    template_name = 'postajob/%s/form.html' % settings.PROJECT
 
     def get_queryset(self, request):
         kwargs = {'owner__in': request.user.get_companies()}
@@ -428,7 +460,7 @@ class JobFormView(BaseJobFormView):
     form_class = JobForm
     model = Job
     display_name = 'Job'
-    template_name = 'postajob/job_form.html'
+    template_name = 'postajob/%s/job_form.html' % settings.PROJECT
 
     success_url = reverse_lazy('jobs_overview')
     add_name = 'job_add'
@@ -461,11 +493,11 @@ class PurchasedJobFormView(BaseJobFormView):
     model = PurchasedJob
     display_name = '{product} Job'
 
-    success_url = reverse_lazy('purchasedjobs_overview')
+    success_url = reverse_lazy('purchasedproducts_overview')
     add_name = 'purchasedjob_add'
     update_name = 'purchasedjob_update'
     delete_name = 'purchasedjob_delete'
-    template_name = 'postajob/job_form.html'
+    template_name = 'postajob/%s/job_form.html' % settings.PROJECT
 
     purchase_field = 'purchased_product'
     purchase_model = PurchasedProduct
@@ -568,7 +600,7 @@ class PurchasedProductFormView(PostajobModelFormMixin, RequestFormViewBase):
     # The display name is determined by the product id and set in dispatch().
     display_name = '{product} - Billing Information'
 
-    success_url = reverse_lazy('purchasedjobs_overview')
+    success_url = reverse_lazy('purchasedproducts_overview')
     add_name = 'purchasedproduct_add'
     update_name = 'purchasedproduct_update'
     delete_name = 'purchasedproduct_delete'
@@ -701,7 +733,7 @@ class OfflinePurchaseRedemptionFormView(PostajobModelFormMixin,
     model = OfflinePurchase
     display_name = 'Offline Purchase'
 
-    success_url = reverse_lazy('purchasedjobs_overview')
+    success_url = reverse_lazy('purchasedproducts_overview')
     add_name = 'offlinepurchase_redeem'
     update_name = None
     delete_name = None
@@ -802,7 +834,8 @@ def blocked_user_management(request):
         'company': company,
         'blocked_users': blocked_users
     }
-    return render_to_response('postajob/blocked_user_management.html', data,
+    return render_to_response('postajob/%s/blocked_user_management.html'
+                               % settings.PROJECT, data,
                               RequestContext(request))
 
 

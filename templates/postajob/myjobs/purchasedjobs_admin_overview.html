@@ -1,4 +1,4 @@
-{% extends "postajob/postajob_template.html" %}
+{% extends "postajob/myjobs/postajob_template.html" %}
 {% load postajob_tags %}
 {% load i18n %}
 
@@ -12,7 +12,7 @@ Purchased Jobs
 {% endblock page_title %}
 
 {% block goback_link %}
-<a href="{% url 'purchasedproduct' %}">Back to Purchased Products</a>
+<a href="{% url 'purchasedproduct' %}">Back to Purchased Products Overview</a>
 {% endblock %}
 
 {% block postajob_content %}
@@ -40,7 +40,7 @@ Purchased Jobs
                 {% endfor %}
                 {% else %}
                 <div class="product-card no-highlight">
-                    You currently have no jobs for <b>{{ product.product }}</b>.
+                    You currently have no jobs for <b>{{ purchased_product.product }}</b>.
                 </div>
                 {% endif %}
             </div>
@@ -51,15 +51,11 @@ Purchased Jobs
                     Product Details
                 </h2>
                 <label>Job Limit:</label>
-                <b>{% if product.num_jobs_allowed == 0 %}Unlimited{%else%}{{ product.num_jobs_allowed }} ({{product.jobs_remaining}} left){%endif%}</b>
+                <b>{% if purchased_product.num_jobs_allowed == 0 %}Unlimited{%else%}{{ purchased_product.num_jobs_allowed }} ({{purchased_product.jobs_remaining}} left){%endif%}</b>
                 <label>Purchase Date:</label>
-                <b>{{ product.purchase_date }}</b>
+                <b>{{ purchased_product.purchase_date }}</b>
                 <label>Expires:</label>
-                <b>{{ product.expiration_date }}</b>
-                <div class="navigation">
-                    <h2>Navigation</h2>
-                    {% get_purchasedjob_add_link %}
-                </div>
+                <b>{{ purchased_product.expiration_date }}</b>
             </div>
         </div>
     </div>

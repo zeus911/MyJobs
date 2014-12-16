@@ -69,3 +69,5 @@ SOLR = {
     }
 
 ABSOLUTE_URL = '/'
+
+PROJECT = "dseo"

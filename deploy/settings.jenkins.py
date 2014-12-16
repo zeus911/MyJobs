@@ -4,6 +4,8 @@ DEBUG = True
 
 ABSOLUTE_URL = "/"
 
+PROJECT = 'myjobs'
+
 DATABASES = {
     'default': {
         'NAME': 'redirect',
