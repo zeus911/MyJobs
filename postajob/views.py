@@ -202,7 +202,8 @@ def admin_request(request):
         requests = Request.objects.all()
     data = {
         'company': company,
-        'requests': requests.filter(owner=company),
+        'pending_requests': requests.filter(owner=company, action_taken=False),
+        'processed_requests': requests.filter(owner=company, action_taken=True)
     }
 
     return render_to_response('postajob/%s/request.html'
