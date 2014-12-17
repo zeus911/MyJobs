@@ -116,7 +116,7 @@ function update_apply_fields() {
         show_admin_field('apply_link');
 
         apply_email = $('#id_apply_email').val() || apply_email;
-        applY_info = $('#id_apply_info').val() || apply_info;
+        apply_info = $('#id_apply_info').val() || apply_info;
         clear_input('apply_email');
         clear_input('apply_info');
 
@@ -146,7 +146,7 @@ function update_apply_fields() {
         show_admin_field('apply_info');
 
         apply_email = $('#id_apply_email').val() || apply_email;
-        applY_link = $('#id_apply_link').val() || apply_link;
+        apply_link = $('#id_apply_link').val() || apply_link;
         clear_input('apply_email');
         clear_input('apply_link');
 
