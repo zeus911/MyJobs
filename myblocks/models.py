@@ -26,6 +26,7 @@ class Block(models.Model):
     offset = models.PositiveIntegerField()
     span = models.PositiveIntegerField()
     template = models.TextField()
+    head = models.TextField(blank=True)
 
     def __unicode__(self):
         return self.name
@@ -55,13 +56,15 @@ class Block(models.Model):
 
     def render(self, request):
         """
-        Generates the html corresponding to the block.
+        Generates a tuple of head, body html corresponding to the block.
 
         """
-        template = Template(self.template)
+        body_template = Template(self.template)
+        head_template = Template(self.head)
         context = RequestContext(request, self.cast().context(request))
-        html = template.render(context)
-        return mark_safe(html)
+        body = body_template.render(context)
+        head = head_template.render(context)
+        return mark_safe(head), mark_safe(body)
 
     def save(self, *args, **kwargs):
         if not self.id:
@@ -79,12 +82,26 @@ class ColumnBlock(Block):
 
     def context(self, request):
         row = '<div class="row">%s</div>'
-        blocks = self.blocks.all().order_by('columnblockorder__order')
-        html = [row % block.cast().render(request) for block in blocks]
+        head, html = [], []
+
+        for block in self.blocks.all().order_by('columnblockorder__order'):
+            block_head, block_html = block.cast().render(request)
+            head.append(block_head)
+            html.append(row % block_html)
+
         return {
             'block': self,
+            'head': head,
             'content': mark_safe(''.join(html)),
         }
+
+    def render(self, request):
+        body_template = Template(self.template)
+        head_template = Template(self.head)
+        context = RequestContext(request, self.cast().context(request))
+        body = body_template.render(context)
+        head = head_template.render(context)
+        return mark_safe(' '.join(context['head'] + [head])), mark_safe(body)
 
 
 class ContentBlock(Block):
@@ -239,19 +256,22 @@ class Row(models.Model):
         return "row"
 
     def context(self, request):
-        content = []
+        content, head = [], []
         for block in self.blocks.all().order_by('blockorder__order'):
-            content.append(block.cast().render(request))
+            block_head, block_body = block.cast().render(request)
+            content.append(block_body)
+            head.append(block_head)
         return {
             'row': self,
             'content': mark_safe(''.join(content)),
+            'head': mark_safe(''.join(head)),
         }
 
     def render(self, request):
         template = Template(self.template)
         context = RequestContext(request, self.context(request))
-        html = template.render(context)
-        return mark_safe(html)
+        body = template.render(context)
+        return mark_safe(context['head']), mark_safe(body)
 
 
 class Page(models.Model):
@@ -298,8 +318,12 @@ class Page(models.Model):
 
     def render(self, request):
         rows = self.rows.all().order_by('roworder__order')
-        content = [row.render(request) for row in rows]
-        return mark_safe(''.join(content))
+        head, body = [], []
+        for row in rows:
+            row_head, row_body = row.render(request)
+            head.append(row_head)
+            body.append(row_body)
+        return mark_safe(''.join(head)), mark_safe(''.join(body))
 
 
 class BlockOrder(models.Model):

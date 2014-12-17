@@ -193,7 +193,6 @@ class JobFeed(object):
     def country_slab(obj):
         return "%s/jobs::%s" % (obj['country_short'].lower(), obj['country'])
 
-
     @staticmethod
     def state_slab(obj):
         if slugify(obj['state']):

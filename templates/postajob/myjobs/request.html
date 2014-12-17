@@ -18,7 +18,8 @@ Requests
 {% block postajob_content %}
 <div class="row">
     <div class="span8">
-        {% include "postajob/includes/request_formBox.html" with wrapper_title="Requests" %}
+        {% include "postajob/includes/request_formBox.html" with wrapper_title="Pending Requests" requests=pending_requests %}
+        {% include "postajob/includes/request_formBox.html" with wrapper_title="Processed Requests" requests=processed_requests %}
     </div>
     <div class="span4">
         {% include "postajob/includes/postajob_navigation.html" %}
@@ -28,5 +29,4 @@ Requests
 
 
 {% block extra-js %}
-
 {% endblock %}

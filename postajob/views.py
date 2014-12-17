@@ -49,14 +49,15 @@ def jobs_overview(request):
 
 
 @company_has_access(None)
-def view_job(request, purchased_product, pk):
+def view_job(request, purchased_product, pk, admin):
     company = get_company_or_404(request)
     product = PurchasedProduct.objects.get(pk=purchased_product)
     if not product.owner == company:
         raise Http404
     data = {
+        'admin': admin,
         'company': company,
-        'product': product,
+        'purchased_product': product,
         'job': PurchasedJob.objects.get(pk=pk)
     }
     return render_to_response('postajob/%s/view_job.html' % settings.PROJECT,
@@ -105,8 +106,8 @@ def purchasedjobs_overview(request, purchased_product, admin):
                                   data, RequestContext(request))
     else:
         return render_to_response('postajob/%s/purchasedjobs_overview.html'
-                              % settings.PROJECT,
-                              data, RequestContext(request))
+                                  % settings.PROJECT,
+                                  data, RequestContext(request))
 
 
 @company_has_access('product_access')
@@ -202,7 +203,8 @@ def admin_request(request):
         requests = Request.objects.all()
     data = {
         'company': company,
-        'requests': requests.filter(owner=company),
+        'pending_requests': requests.filter(owner=company, action_taken=False),
+        'processed_requests': requests.filter(owner=company, action_taken=True)
     }
 
     return render_to_response('postajob/%s/request.html'
@@ -424,6 +426,11 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
     A mixin for job purchase formviews. JobFormView and PurchasedJobFormView
     share this exact functionality.
     """
+    prevent_delete = True
+
+    def delete(self):
+        raise Http404
+
     def get_context_data(self, **kwargs):
         context = super(BaseJobFormView, self).get_context_data(**kwargs)
         if context.get('item', None):
@@ -504,6 +511,7 @@ class PurchasedJobFormView(BaseJobFormView):
 
     purchase_field = 'purchased_product'
     purchase_model = PurchasedProduct
+
 
     def set_object(self, *args, **kwargs):
         if resolve(self.request.path).url_name == self.add_name:
