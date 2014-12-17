@@ -453,6 +453,8 @@ class ProductForm(RequestForm):
             packages = Package.objects.user_available()
             packages = packages.filter_company([self.company])
             self.fields['package'].queryset = packages
+            # remove "------" option from select box
+            self.fields['package'].empty_label = None
 
         if self.instance.pk and self.instance.num_jobs_allowed != 0:
             self.initial['job_limit'] = 'specific'
