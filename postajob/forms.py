@@ -153,16 +153,6 @@ class JobForm(BaseJobForm):
                   'post_to', 'site_packages')
         model = Job
 
-    # For a single job posting by a member company to a microsite
-    # we consider each site an individual site package but the
-    # site_package for a site is only created when it's first used,
-    # so we use SeoSite as the queryset here instead of SitePackage.
-    site_packages_widget = FSM('Sites', reverse_lazy('site_fsm'), async=True)
-    site_packages = ModelMultipleChoiceField(SeoSite.objects.none(),
-                                             help_text="",
-                                             label="Site",
-                                             required=False,
-                                             widget=site_packages_widget)
     post_to_choices = [('network', 'The entire My.jobs network'),
                        ('site', 'A specific site you own'), ]
     post_to = CharField(label='Post to', help_text=Job.help_text['post_to'],
@@ -172,13 +162,33 @@ class JobForm(BaseJobForm):
 
     def __init__(self, *args, **kwargs):
         super(JobForm, self).__init__(*args, **kwargs)
-        self.fields['site_packages'].help_text = ''
         if is_superuser_in_admin(self.request):
             sites = SeoSite.objects.all()
         else:
             sites = self.company.get_seo_sites()
 
-        self.fields['site_packages'].queryset = sites
+        site_packages_widget = FSM('Sites', reverse_lazy('site_fsm'), async=True)
+        # For a single job posting by a member company to a microsite
+        # we consider each site an individual site package but the
+        # site_package for a site is only created when it's first used,
+        # so we use SeoSite as the queryset here instead of SitePackage.
+        self.fields['site_packages'] = ModelMultipleChoiceField(
+            queryset=sites, help_text='', label='Site', required=False,
+            widget=site_packages_widget)
+
+        if self.instance.pk and self.instance.site_packages:
+            packages = self.instance.site_packages.all()
+            # If the only site package is the company package, then the
+            # current job must be posted to all company and network sites.
+            if (packages.count() == 1 and
+                    packages[0] == self.instance.owner.site_package):
+                self.initial['post_to'] = 'network'
+
+            # Since we're not using actual site_packages for the site_packages,
+            # the initial data also needs to be manually set.
+            initial = [site.pk for site in self.instance.on_sites()]
+            self.initial['site_packages'] = {site: 'selected'
+                                             for site in initial}
 
         # Set the starting date expired option
         if self.instance and self.instance.date_expired:
@@ -190,19 +200,6 @@ class JobForm(BaseJobForm):
             # Select the longest duration
             self.initial['date_expired'] = self.fields[
                 'date_expired'].widget.choices[-1][0]
-
-
-        # Since we're not using actual site_packages for the site_packages,
-        # the initial data also needs to be manually set.
-        if self.instance.pk and self.instance.site_packages:
-            packages = self.instance.site_packages.all()
-            self.initial['site_packages'] = [str(site.pk) for site in
-                                             self.instance.on_sites()]
-            # If the only site package is the company package, then the
-            # current job must be posted to all company and network sites.
-            if (packages.count() == 1 and
-                    packages[0] == self.instance.owner.site_package):
-                self.initial['post_to'] = 'network'
 
     def clean_date_expired(self):
         date_new = self.instance.date_new or datetime.now()
