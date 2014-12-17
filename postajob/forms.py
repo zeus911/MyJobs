@@ -387,7 +387,7 @@ class PurchasedJobForm(PurchasedJobBaseForm):
     def save(self, commit=True):
         # Every time a prooduct is edited it needs to go back through the
         # approval process.
-        self.is_approved = False
+        self.instance.is_approved = False
 
         self.instance.purchased_product = self.purchased_product
         return super(PurchasedJobForm, self).save(commit)
