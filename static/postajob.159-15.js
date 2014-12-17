@@ -9,6 +9,7 @@ var load_event = function(){
     update_apply_fields();
     update_site_fields();
     update_job_limit_fields();
+    update_state_selection($('select[id$="__prefix__-country"]').val());
 
     if($(".product-card").length > 1)
         $("#no-locations").remove();
@@ -29,6 +30,9 @@ var load_event = function(){
     $(document).on("change", '#post-to-selector_1', function() {
         update_site_fields();
     });
+    $(document).on("change", 'select[id$="-country"]', function () {
+        update_state_selection($(this).val());
+    });
 
     // Product Form
     $(document).on("change", '#id_job_limit_0', function() {
@@ -45,8 +49,6 @@ var load_event = function(){
     });
 
     $.each(["#deny-reason", "#block-reason"], function(index, value) {
-        console.log(index);
-        console.log(value);
         $(value).on("keyup", function() {
             var next_button = $(value + "~button");
             if ($(this).val() == "") {
@@ -167,27 +169,33 @@ function resend_invoice(id) {
 // This is also verified server-side; checking in JS just cuts down on the
 // number of requests we have to do.
 var fields = ['input[id$=-city]',
-    'input[id$=-state]',
-    'input[id$=-country]'];
+    'select[id$=-country]'];
 
 function add_location(location) {
     /*
-    Creates condensed location tags for a given location.
+     Creates condensed location tags for a given location.
      */
 
+    var country = location.find('select[id$=-country]').val(),
+        region;
+    if (country == 'United States' || country == 'Canada') {
+        region = location.find('select[id$=-state]').val();
+    }
+    else {
+        region = location.find('input[id$=-region]').val();
+    }
     // All added locations will follow the same template, with the city,
-    // region, country, and loc_num placeholders replaced with the actual
-    // values for the relevant location
+    // region, country, and loc_num placeholders replaced with the actual values
+    // for the relevant location
     var location_tag = '<div class="product-card no-highlight">city, region country<a id="remove-locations-loc_num" class="pull-right" href="?">Remove</a></div>',
         location_map = {
             city: location.find('input[id$=-city]').val(),
-            region: location.find('input[id$=-state]').val(),
-            country: location.find('input[id$=-country]').val()
+            region: region,
+            country: country
         },
-        // We need to find out which form on the page is for this location. The
-        // form input ids have the structure id_form-#-field, so we can get the
-        // form number by grabbing an input and splitting the number from its
-        // id.
+    // We need to find out which form on the page is for this location. The
+    // form input ids have the structure id_form-#-field, so we can get the
+    // form number by grabbing an input and splitting the number from its id.
         field_id = location.find('input[id$=-id]').attr('id'),
         display_container = $('#job-location-display');
     location_map['loc_num'] = field_id.split('-')[1];
@@ -229,6 +237,56 @@ function copy_forms(from, to) {
             valid = false;
         }
     });
+
+
+    if (valid) {
+        /*
+            country: currently-selected country
+            element: selector for the relevant region input
+            from_input: Result of selecting element
+            from_value: value in from_input
+         */
+        var country = from.find('select[id$=-country]').val(),
+            element, from_input, from_value;
+        if (country === 'United States' || country === 'Canada') {
+            // My.jobs currently supports region selects for the US and Canada.
+            // The options for these two sets of regions reside in the same
+            // select, named as follows.
+            element = 'select[id$=-state]';
+            from_input = from.find(element);
+            from_value = from_input.val();
+            if (from_value) {
+                to.find(element).val(from_value);
+                if (from_input.parents('.required').length > 0) {
+                    from_input.parent().unwrap();
+                }
+            } else {
+                if (from_input.parents('.required').length == 0) {
+                    from_input.parent('.profile-form-input').wrap('<div class="required">');
+                }
+                valid = false;
+            }
+        }
+        else {
+            // The selected country isn't the US or Canada. Use the open-ended
+            // input for regions.
+            element = 'input[id$=-region]';
+            from_input = from.find(element);
+            from_value = from_input.val();
+            if (from_value) {
+                to.find(element).val(from_value);
+                if (from_input.parents('.required').length > 0) {
+                    from_input.parent().unwrap();
+                }
+            } else {
+                if (from_input.parents('.required').length == 0) {
+                    from_input.parent('.profile-form-input').wrap('<div class="required">');
+                }
+                valid = false;
+            }
+        }
+    }
+
     if (valid) {
         // Zip codes are optional and shouldn't affect the validity of a
         // location. If the form is valid, copy the zip code from it as well.
@@ -251,6 +309,7 @@ function clear_form(form) {
     fields.forEach(function(element) {
         form.find(element).val('');
     });
+    form.find('#id_form-__prefix__-region').val('');
     form.find('input[name$=-zipcode]').val('');
 }
 
@@ -304,12 +363,12 @@ function create_location_events() {
             checked = delete_input.attr('checked') == 'checked';
         if (checked) {
             delete_input.removeAttr('checked');
-            $(this).parent('.product-card').css('text-decoration', 'none')
+            $(this).parent('.product-card').css('text-decoration', 'none');
             $(this).text('Remove');
         } else {
             delete_input.attr('checked', 'checked');
             $(this).parent('.product-card').css('text-decoration',
-                                                'line-through')
+                                                'line-through');
             $(this).text('Re-add');
         }
     });
@@ -327,4 +386,35 @@ function expand_errors(contents) {
             parent_accordion.slideToggle();
         }
     });
+}
+
+function update_state_selection(country) {
+    /*
+        region: open-ended input
+        state: select box for US/Canadian states, provinces, and territories
+     */
+    var region = $('#id_form-__prefix__-region'),
+        state = $('#id_form-__prefix__-state');
+    if (country == 'United States' || country == 'Canada') {
+        region.hide();
+        $('label[for="id_form-__prefix__-region"]').hide();
+
+        state.show();
+        $('label[for="id_form-__prefix__-state"]').show();
+
+        country = country.replace(' ', '.');
+        var hidden = $('#hidden-options'),
+            this_country = hidden.find('option.' + country),
+            other_country = state.find('option:not(.' + country + ')');
+        this_country.appendTo(state);
+        other_country.appendTo(hidden);
+        state.val(state.find('option:first_of_type').val());
+    }
+    else {
+        region.show();
+        $('label[for="id_form-__prefix__-region"]').show();
+
+        state.hide();
+        $('label[for="id_form-__prefix__-state"]').hide();
+    }
 }

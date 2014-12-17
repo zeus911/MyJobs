@@ -309,9 +309,9 @@ Pager.prototype = {
 
 $(document).ready(function(){
 	var pager = new Pager();
-	$('a.direct_optionsMore').click(function(e) {
-		return pager.showMoreHandler(e, $(this).parent().attr('data-num-items'), $(this).parent());
-	});
+    $(document).on("click", "a.direct_optionsMore", function(e) {
+        return pager.showMoreHandler(e, $(this).parent().attr('data-num-items'), $(this).parent());
+    });
 	$('#button_moreJobs').click(function(e) {
 		e.preventDefault();
 		var parent = $(this).parent();

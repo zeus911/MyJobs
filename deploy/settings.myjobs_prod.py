@@ -33,6 +33,8 @@ STATIC_URL = "//d2e48ltfsb5exy.cloudfront.net/content_mj/files/"
 # absolute during production
 ABSOLUTE_URL = "https://secure.my.jobs/"
 
+PROJECT = "myjobs"
+
 SESSION_CACHE_ALIAS = 'sessions'
 CACHES = {
     'default': {

@@ -75,7 +75,7 @@ class ViewTests(PostajobTestBase):
             authorize_net_transaction_key=settings.TESTING_CC_AUTH['transaction_key'])
 
         self.choices_data = ('{"countries":[{"code":"USA", '
-                             '"name":"United States of America"}], '
+                             '"name":"United States"}], '
                              '"regions":[{"code":"IN", "name":"Indiana"}] }')
         self.side_effect = [self.choices_data for x in range(0, 50)]
 
@@ -84,8 +84,8 @@ class ViewTests(PostajobTestBase):
             'form-INITIAL_FORMS': '0',
             'form-MAX_NUM_FORMS': '5',
             'form-0-city': 'Indianapolis',
-            'form-0-state': 'IN',
-            'form-0-country': 'USA'
+            'form-0-state': 'Indiana',
+            'form-0-country': 'United States'
         }
 
         # Form data
@@ -509,7 +509,7 @@ class ViewTests(PostajobTestBase):
         response = self.client.get(reverse('purchasedproduct_add',
                                            kwargs=product),
                                    follow=True)
-        url = reverse('purchasedjobs_overview')
+        url = reverse('purchasedproducts_overview')
         self.assertTrue(response.redirect_chain[-1][0].endswith(url))
         self.assertEqual(PurchasedProduct.objects.all().count(), 1)
 
@@ -587,11 +587,11 @@ class ViewTests(PostajobTestBase):
         self.assertEqual(response.status_code, 404)
 
     def test_purchasedjob_access_not_company_user(self):
-        response = self.client.post(reverse('purchasedjobs_overview'))
+        response = self.client.post(reverse('purchasedproducts_overview'))
         self.assertEqual(response.status_code, 200)
         self.company_user.delete()
 
-        response = self.client.post(reverse('purchasedjobs_overview'))
+        response = self.client.post(reverse('purchasedproducts_overview'))
         self.assertEqual(response.status_code, 404)
 
     def test_is_company_user(self):
@@ -819,7 +819,8 @@ class ViewTests(PostajobTestBase):
         location = {
             'form-0-city': 'Indianapolis',
             'form-0-state': 'Indiana',
-            'form-0-country': 'US'
+            'form-0-country': 'United States',
+            'form-0-zipcode': '12345',
         }
         self.job_form_data['form-TOTAL_FORMS'] = 1
         self.job_form_data.update(location)
@@ -831,16 +832,19 @@ class ViewTests(PostajobTestBase):
         self.assertEqual(JobLocation.objects.count(), 1)
 
         job = Job.objects.get()
+        location = job.locations.first()
         self.job_form_data['id'] = job.pk
         self.job_form_data['form-TOTAL_FORMS'] = 2
         self.job_form_data.update({
-            'form-0-DELETE': 'ok',
+            'form-0-id': location.pk,
+            'form-0-DELETE': 'on',
             'form-1-city': 'Muncie',
             'form-1-state': 'Indiana',
-            'form-1-country': 'US'
+            'form-1-country': 'United States',
         })
         self.client.post(reverse('job_update', args=[job.pk]),
                          data=self.job_form_data, follow=True)
+        self.assertEqual(JobLocation.objects.count(), 1)
 
     def test_purchasedjob_form(self):
         purchased_product = PurchasedProductFactory(
@@ -858,6 +862,43 @@ class ViewTests(PostajobTestBase):
         self.assertEqual(len(site_packages), 2)
         self.assertItemsEqual([self.site.domain, site.domain],
                               site_packages)
+
+    def test_purchasedjob_locations(self):
+        purchased_product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
+
+        site = SeoSiteFactory(domain='indiana.jobs', id=3)
+        site.business_units.add(self.bu)
+        site.sitepackage_set.add(self.sitepackage)
+        location = {
+            'form-0-city': 'Indianapolis',
+            'form-0-state': 'Indiana',
+            'form-0-country': 'United States',
+            'form-0-zipcode': '12345',
+        }
+        self.job_form_data['form-TOTAL_FORMS'] = 1
+        self.job_form_data.update(location)
+        self.assertEqual(Job.objects.count(), 0)
+        self.assertEqual(JobLocation.objects.count(), 0)
+        self.client.post(reverse('purchasedjob_add',
+                                 args=[purchased_product.pk]),
+                         data=self.job_form_data, follow=True)
+        self.assertEqual(PurchasedJob.objects.count(), 1)
+        self.assertEqual(JobLocation.objects.count(), 1)
+        job = PurchasedJob.objects.get()
+        location = job.locations.first()
+        self.job_form_data['id'] = job.pk
+        self.job_form_data['form-TOTAL_FORMS'] = 2
+        self.job_form_data.update({
+            'form-0-id': location.pk,
+            'form-0-DELETE': 'on',
+            'form-1-city': 'Muncie',
+            'form-1-state': 'Indiana',
+            'form-1-country': 'United States'
+        })
+        self.client.post(reverse('purchasedjob_update', args=[job.pk]),
+                         data=self.job_form_data, follow=True)
+        self.assertEqual(JobLocation.objects.count(), 1)
 
     def test_view_request_posted_by_unrelated_company(self):
         company = CompanyFactory(id=2, name='new company')
@@ -947,8 +988,8 @@ class PurchasedJobActionTests(PostajobTestBase):
         profile.blocked_users.add(self.user)
         add_job_link = reverse('purchasedjob_add',
                                args=[self.purchased_product.pk])
-        for url in [reverse('purchasedjobs', args=[self.purchased_product.pk]),
-                    reverse('purchasedjobs_overview')]:
+        for url in [reverse('purchasedjobs_overview',
+                            args=[self.purchased_product.pk])]:
             response = self.client.get(url, HTTP_HOST='test.jobs')
             self.assertFalse(add_job_link in response.content)
             self.assertTrue('id="block-modal"' in response.content)

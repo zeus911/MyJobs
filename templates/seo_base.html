@@ -36,7 +36,7 @@
       var pager_num_items = {{ site_config.num_subnav_items_to_show }};
     </script>
 
-    <script type="text/javascript" src="{{ STATIC_URL }}pager.157-30.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}pager.159-18.js"></script>
 
     {% block ga_js %}{% include "ga.html"%}{% endblock %}
 
@@ -230,6 +230,7 @@
 {% endblock %}{# analytics pixel #}
 
 {% block directseo_quantcast2 %}{% include "quantcast2.html" %}{% endblock %}
+{% block extra-js %}{% endblock extra-js %}
 </body>
 </html>
 
