@@ -13,7 +13,11 @@ View Job
 {% endblock page_title %}
 
 {% block goback_link %}
+{% if admin %}
+<a href="{% url 'purchasedjobs' purchased_product=purchased_product.pk %}">Back to Purchased Jobs Overview</a>
+{% else %}
 <a href="{% url 'purchasedjobs_overview' purchased_product=purchased_product.pk %}">Back to Purchased Jobs Overview</a>
+{% endif %}
 {% endblock %}
 
 {% block postajob_content %}
@@ -69,6 +73,7 @@ View Job
             <b>{{ purchased_product.purchase_date }}</b>
             <label>Expires:</label>
             <b>{{ purchased_product.expiration_date }}</b>
+            {% if not admin %}
             <div class="navigation">
                 <h2>Navigation</h2>
                 {% if job.is_expired %}
@@ -77,6 +82,7 @@ View Job
                 <a class="btn" href="{% url 'purchasedjob_update' pk=job.pk %}">Edit Job</a>
                 {% endif %}
             </div>
+            {% endif %}
         </div>
     </div>
 </div>
