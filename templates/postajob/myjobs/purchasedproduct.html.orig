@@ -1,0 +1,41 @@
+{% extends "postajob/myjobs/postajob_template.html" %}
+{% load i18n %}
+
+{% block site-title %}
+    <title>Purchased Products Overview - My.jobs</title>
+    <meta name="title" content="Purchased Products Overview - My.jobs">
+{% endblock %}
+{% load i18n %}
+
+{% block page_title %}
+Purchased Products
+{% endblock page_title %}
+
+{% block goback_link %}
+<a href="{% url 'purchasedmicrosite_admin_overview' %}">Back to Admin Overview</a>
+{% endblock %}
+
+
+{% block postajob_content %}
+    <div class="row">
+        <div class="span8">
+            {% include "postajob/includes/purchasedproduct_purchasedjob_admin_formBox.html" with wrapper_title="Active Products" purchased_products=active_products %}
+
+            {% include "postajob/includes/purchasedproduct_purchasedjob_admin_formBox.html" with wrapper_title="Expired Products" purchased_products=expired_products %}
+        </div>
+        <div class="span4">
+            {% include "postajob/includes/postajob_navigation.html" %}
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block extra-js %}
+<<<<<<< HEAD:templates/postajob/purchasedproduct.html
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}postajob.159-9.css{{ gz }}"></style>
+    <script src="{{ STATIC_URL }}postajob.159-3.js"></script>
+=======
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}postajob.159-9.css{{ gz }}">
+    <script src="{{ STATIC_URL }}postajob.159-15.js"></script>
+>>>>>>> 832b058697bd13b8e084bbaf66aaadc527cbba4d:templates/postajob/myjobs/purchasedproduct.html
+{% endblock %}

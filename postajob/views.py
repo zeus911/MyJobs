@@ -233,16 +233,23 @@ def admin_purchasedproduct(request):
 
 
 @company_has_access('product_access')
-def view_request(request, pk):
+def view_request(request, pk, model=None):
     template = 'postajob/{project}/request/{model}.html'
     company = get_company(request)
+    model = model or Request
 
-    request_made = get_object_or_404(Request, pk=pk, owner=company)
-    content_type = request_made.content_type
+    request_kwargs = {
+        'pk': pk,
+        'owner': company
+    }
 
-    request_object = request_made.request_object()
-    if not request_object:
-        raise Http404
+    request_made = get_object_or_404(model, **request_kwargs)
+    if model == Request:
+        request_object = request_made.request_object()
+    else:
+        request_object = request_made
+
+    content_type = ContentType.objects.get_for_model(type(request_object))
 
     data = {
         'company': company,
@@ -713,7 +720,6 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
     def get_success_url(self):
         if resolve(self.request.path).url_name == self.add_name:
             kwargs = {
-                'content_type': ContentType.objects.get_for_model(self.model).pk,
                 'pk': self.object.pk,
             }
             return reverse('offline_purchase_success', kwargs=kwargs)

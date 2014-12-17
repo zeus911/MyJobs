@@ -8,7 +8,7 @@
         <div class="product-details">
             Requested by: {{ request.requesting_company }} {% if request.action_taken %}- Action taken: {% if request.deny_reason %}Denied{% else %}Approved{% endif %}{% endif %}
         </div>
-        <a class="btn" href="{% url 'view_request' content_type=request.content_type_id pk=request.object_id %}">View</a>
+        <a class="btn" href="{% url 'view_request' pk=request.pk %}">View</a>
     </div>
     {% endfor %}
 {% else %}

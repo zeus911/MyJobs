@@ -1,6 +1,6 @@
 from django.conf.urls import *
 
-from postajob import views
+from postajob import models, views
 
 
 urlpatterns = patterns(
@@ -135,8 +135,9 @@ urlpatterns = patterns(
     url(r'^purchase/redeem/$',
         views.OfflinePurchaseRedemptionFormView.as_view(),
         name='offlinepurchase_redeem'),
-    url(r'^admin/purchase/offline/success/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+    url(r'^admin/purchase/offline/success/(?P<pk>\d+)/$',
         views.view_request,
+        {'model': models.OfflinePurchase},
         name='offline_purchase_success'),
 
     # PurchasedProduct
