@@ -40,7 +40,7 @@
                                 <li><a id="purchasedmicrosite-tab" href="{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Partner Microsite" %}</a></li>
                             {% endif %}
                             {% if company.purchasedproduct_set.exists %}
-                                <li><a id="purchasedproducts-tab" href="{% url 'purchasedproducts_overview' %}">{% trans "Purchased Products" %}</a></li>
+                                <li><a id="purchasedproducts-tab" href="{% url 'purchasedproducts_overview' %}">{% trans "Purchased Jobs" %}</a></li>
                             {% endif %}
                             {% if company.posting_access %}
                                 <li><a id="posted-jobs-tab" href="{% url 'jobs_overview' %}">{% trans "Posted Jobs" %}</a></li>
