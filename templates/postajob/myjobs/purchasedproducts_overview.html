@@ -19,30 +19,30 @@
     </div>
     <div class="row">
         <div class="span8">
-            <h4>Active Products</h4>
-            {% if active_products %}
-            {% for product in active_products %}
-                {% include "postajob/includes/purchasedproduct_formBox.html" with purchased_product=product %}
-            {% endfor %}
-            {% else %}
             <div class="card-wrapper">
+                <div class="wrapper-header">
+                    <h4>Active Products</h4>
+                </div>
+                {% for product in active_products %}
+                    {% include "postajob/includes/purchasedproduct_formBox.html" with purchased_product=product %}
+                {% empty %}
                 <div class="product-cards no-highlight">
                     You currently have no active products.
                 </div>
+                {% endfor %}
             </div>
-            {% endif %}
-            <h4>Expired Products</h4>
-            {% if expired_products %}
-            {% for product in expired_products %}
-                {% include "postajob/includes/purchasedproduct_formBox.html" with purchased_product=product %}
-            {% endfor %}
-            {% else %}
             <div class="card-wrapper">
+                <div class="wrapper-header">
+                    <h4>Expired Products</h4>
+                </div>
+                {% for product in expired_products %}
+                    {% include "postajob/includes/purchasedproduct_formBox.html" with purchased_product=product %}
+                {% empty %}
                 <div class="product-cards no-highlight">
                     You currently have no expired products.
                 </div>
+                {% endfor %}
             </div>
-            {% endif %}
         </div>
         <div class="span4">
             <div class="sidebar">

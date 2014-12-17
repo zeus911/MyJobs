@@ -1,0 +1,88 @@
+{% extends "postajob/myjobs/postajob_template.html" %}
+{% load i18n %}
+{% load postajob_tags %}
+
+{% block site-title %}
+<title>View Job - My.jobs</title>
+<meta name="title" content="View Job - My.jobs">
+{% endblock %}
+{% load i18n %}
+
+{% block page_title %}
+View Job
+{% endblock page_title %}
+
+{% block goback_link %}
+<a href="{% url 'purchasedjobs_overview' purchased_product=purchased_product.pk %}">Back to Purchased Jobs Overview</a>
+{% endblock %}
+
+{% block postajob_content %}
+<div class="row">
+    <div class="span8">
+        <table class="table">
+            <tr id="job-title">
+                <td>Title:</td>
+                <td>{{ job.title }}</td>
+            </tr>
+            <tr id="job-reqid">
+                <td>Requisition ID:</td>
+                <td>{% if job.reqid %}{{ job.reqid }}{% else %}No Requisition ID{% endif %}</td>
+            </tr>
+            <tr id="job-description">
+                <td>Description:</td>
+                <td>{{ job.description }}</td>
+            </tr>
+            <tr id="job-expires">
+                {% if job.is_expired %}
+                <td>Expired:</td>
+                <td>{{ job.date_expired }}</td>
+                {% else %}
+                <td>Expires:</td>
+                <td>{{ job.date_expired }}</td>
+                {% endif %}
+            </tr>
+            {% if object.apply_link %}
+            <tr id="job-apply">
+                <td>Application Link:</td>
+                <td>{{ job.apply_link }}</td>
+            </tr>
+            {% else %}
+            <tr id="job-apply">
+                <td>Application Instructions:</td>
+                <td>{{ job.apply_info }}</td>
+            </tr>
+            {% endif %}
+            <tr id="job-links">
+                <td>Job Links:</td>
+                <td>{% get_job_links job=job %}</td>
+            </tr>
+        </table>
+    </div>
+    <div class="span4">
+        <div class="sidebar">
+            <h2 class="top">
+                Product Details
+            </h2>
+            <label>Job Limit:</label>
+            <b>{% if purchased_product.num_jobs_allowed == 0 %}Unlimited{%else%}{{ purchased_product.num_jobs_allowed }} ({{purchased_product.jobs_remaining}} left){%endif%}</b>
+            <label>Purchase Date:</label>
+            <b>{{ purchased_product.purchase_date }}</b>
+            <label>Expires:</label>
+            <b>{{ purchased_product.expiration_date }}</b>
+            <div class="navigation">
+                <h2>Navigation</h2>
+                {% if job.is_expired %}
+                <a class="btn disabled" title="This job has expired" href="#">Edit Job</a>
+                {% else %}
+                <a class="btn" href="{% url 'purchasedjob_update' pk=job.pk %}">Edit Job</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extra-js %}
+
+{% endblock %}
