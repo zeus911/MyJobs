@@ -6,6 +6,20 @@ if(typeof jQuery == 'undefined') {
 }
 
 var load_event = function(){
+    /* intentionally global */
+    apply_link = $('#id_apply_link').val();
+    apply_email = $('#id_apply_email').val();
+    apply_info = $('#id_apply_info').val();
+
+    /* don't mistake apply links for emails and vice versa */
+    if(apply_link.indexOf('mailto:') == 0){
+        apply_link = '';
+        $('#id_apply_link').val('');
+    } else {
+        apply_email = '';
+        $('#id_apply_email').val('');
+    }
+
     update_apply_fields();
     update_site_fields();
     update_job_limit_fields();
@@ -97,9 +111,12 @@ function clear_input(field_name) {
 
 function update_apply_fields() {
     if($('#id_apply_type_0').is(':checked')) {
+        $('#id_apply_link').val(apply_link);
         show_field('apply-link');
         show_admin_field('apply_link');
 
+        apply_email = $('#id_apply_email').val() || apply_email;
+        apply_info = $('#id_apply_info').val() || apply_info;
         clear_input('apply_email');
         clear_input('apply_info');
 
@@ -109,9 +126,12 @@ function update_apply_fields() {
         hide_field('apply-instructions');
     }
     else if($('#id_apply_type_1').is(':checked')) {
+        $('#id_apply_email').val(apply_email);
         show_field('apply-email');
         show_admin_field('apply_email');
 
+        apply_info = $('#id_apply_info').val() || apply_info;
+        apply_link = $('#id_apply_link').val() || apply_link;
         clear_input('apply_info');
         clear_input('apply_link');
 
@@ -121,9 +141,12 @@ function update_apply_fields() {
         hide_field('apply-instructions');
     }
     else {
+        $('#id_apply_info').val(apply_info);
         show_field('apply-instructions');
         show_admin_field('apply_info');
 
+        apply_email = $('#id_apply_email').val() || apply_email;
+        apply_link = $('#id_apply_link').val() || apply_link;
         clear_input('apply_email');
         clear_input('apply_link');
 

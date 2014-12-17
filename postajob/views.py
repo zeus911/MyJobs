@@ -410,6 +410,7 @@ class PostajobModelFormMixin(object):
         return self.success_url
 
     def get_context_data(self, **kwargs):
+        kwargs['company'] = get_company(self.request)
         kwargs['prevent_delete'] = self.prevent_delete
         return super(PostajobModelFormMixin, self).get_context_data(**kwargs)
 

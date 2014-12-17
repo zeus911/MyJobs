@@ -16,8 +16,13 @@
 
 
 {% block goback_link %}
-<a href="{% url 'purchasedmicrosite_admin_overview' %}">Back to Admin Overview</a>
+{% if form.get_field_sets.3 %}
+<a href="{% url 'jobs_overview' %}">Back to Posted Jobs</a>
+{% else %}
+<a href="{% url 'purchasedproducts_overview' %}">Back to Purchased Job Overview</a>
+{% endif %}
 {% endblock %}
+
 
 
 {% block postajob_content %}

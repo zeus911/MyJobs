@@ -26,9 +26,7 @@ from universal.helpers import get_object_or_none, get_company
 
 
 def is_superuser_in_admin(request):
-    if request.path.startswith('/admin') and request.user.is_superuser:
-        return True
-    return False
+    return request.path.startswith('/admin') and request.user.is_superuser
 
 
 class BaseJobForm(RequestForm):
@@ -49,8 +47,8 @@ class BaseJobForm(RequestForm):
 
     apply_email = CharField(required=False, max_length=255,
                             label='Apply Email',
-                            widget=TextInput(attrs={'size': 50}),
-                            help_text=Job.help_text['apply_email'])
+                            help_text=Job.help_text['apply_email'],
+                            widget=TextInput(attrs={'size': 50}))
     apply_link = CharField(required=False, max_length=255,
                            label='Apply Link',
                            help_text=Job.help_text['apply_link'],
@@ -68,9 +66,15 @@ class BaseJobForm(RequestForm):
         if self.instance and self.instance.apply_info:
             self.initial['apply_type'] = 'instructions'
         else:
-            # This works because apply_email is actually a link
-            # that uses mailto:
-            self.initial['apply_type'] = 'link'
+            # convert apply_link to email
+            if self.instance.apply_link.startswith("mailto:"):
+                self.initial['apply_email'] = self.instance.apply_link.split(
+                    'mailto:')[1]
+                self.initial['apply_type'] = 'email'
+            else:
+                # This works because apply_email is actually a link
+                # that uses mailto:
+                self.initial['apply_type'] = 'link'
 
         if not is_superuser_in_admin(self.request):
             # Remove the option to set the company.
@@ -286,7 +290,8 @@ class JobForm(BaseJobForm):
     def get_field_sets(self):
         field_sets = [
             [self['title'], self['description'], self['reqid']],
-            [self['apply_type'], self['apply_link'], self['apply_info']],
+            [self['apply_type'], self['apply_link'], self['apply_email'],
+             self['apply_info']],
             [self['date_expired'], self['is_expired']],
             [self['post_to'], self['site_packages']]
         ]
@@ -380,7 +385,8 @@ class PurchasedJobForm(PurchasedJobBaseForm):
     def get_field_sets(self):
         field_sets = [
             [self['title'], self['description'], self['reqid']],
-            [self['apply_type'], self['apply_link'], self['apply_info']],
+            [self['apply_type'], self['apply_link'], self['apply_email'],
+             self['apply_info']],
             [self['date_expired'], self['is_expired']],
         ]
         return field_sets
