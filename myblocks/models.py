@@ -56,7 +56,7 @@ class Block(models.Model):
 
     def render(self, request):
         """
-        Generates the html corresponding to the block.
+        Generates a tuple of head, body html corresponding to the block.
 
         """
         body_template = Template(self.template)
