@@ -49,12 +49,13 @@ def jobs_overview(request):
 
 
 @company_has_access(None)
-def view_job(request, purchased_product, pk):
+def view_job(request, purchased_product, pk, admin):
     company = get_company_or_404(request)
     product = PurchasedProduct.objects.get(pk=purchased_product)
     if not product.owner == company:
         raise Http404
     data = {
+        'admin': admin,
         'company': company,
         'purchased_product': product,
         'job': PurchasedJob.objects.get(pk=pk)
