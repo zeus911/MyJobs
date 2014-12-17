@@ -300,7 +300,9 @@ class PurchasedJob(Job):
             content_type = ContentType.objects.get_for_model(PurchasedJob)
             request, _ = Request.objects.get_or_create(content_type=content_type,
                                                        object_id=self.pk,
-                                                       owner=product_owner)
+                                                       owner=product_owner,
+                                                       action_taken=False)
+            request.related_sites.clear()
             [request.related_sites.add(site) for site in self.on_sites()]
             request.save()
 

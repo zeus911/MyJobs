@@ -231,16 +231,22 @@ def admin_purchasedproduct(request):
 
 
 @company_has_access('product_access')
-def view_request(request, content_type, pk):
+def view_request(request, pk):
     template = 'postajob/{project}/request/{model}.html'
     company = get_company(request)
-    content_type = ContentType.objects.get(pk=content_type)
+
+    request_made = get_object_or_404(Request, pk=pk, owner=company)
+    content_type = request_made.content_type
+
+    request_object = request_made.request_object()
+    if not request_object:
+        raise Http404
+
     data = {
         'company': company,
         'content_type': content_type,
-        'object': get_object_or_404(content_type.model_class(), pk=pk),
-        'request_obj': get_object_or_none(Request, content_type=content_type,
-                                          object_id=pk),
+        'object': request_object,
+        'request_obj': request_made,
     }
 
     if not data['object'].user_has_access(request.user):
@@ -252,7 +258,7 @@ def view_request(request, content_type, pk):
 
 
 @company_has_access('product_access')
-def process_admin_request(request, content_type, pk, approve=True,
+def process_admin_request(request, pk, approve=True,
                           block=False):
     """
     Marks a Request as action taken on it and sets the corresponding object's
@@ -261,10 +267,11 @@ def process_admin_request(request, content_type, pk, approve=True,
     Adds the requesting user (if one exists) to the company's block list
     if the block parameter is True.
     """
-    content_type = ContentType.objects.get(pk=content_type)
-    request_made = Request.objects.get(content_type=content_type, object_id=pk)
-
+    company = get_company(request)
+    request_made = get_object_or_404(Request, pk=pk, owner=company)
+    content_type = request_made.content_type
     request_object = request_made.request_object()
+
     if request_object and request_object.user_has_access(request.user):
         if block and request_object.created_by:
             # Block the user that initiated this request
