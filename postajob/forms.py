@@ -388,7 +388,8 @@ class PurchasedJobForm(PurchasedJobBaseForm):
     def get_field_sets(self):
         field_sets = [
             [self['title'], self['description'], self['reqid']],
-            [self['apply_type'], self['apply_link'], self['apply_info']],
+            [self['apply_type'], self['apply_link'], self['apply_email'],
+             self['apply_info']],
             [self['date_expired'], self['is_expired']],
         ]
         return field_sets
