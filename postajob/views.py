@@ -56,7 +56,7 @@ def view_job(request, purchased_product, pk):
         raise Http404
     data = {
         'company': company,
-        'product': product,
+        'purchased_product': product,
         'job': PurchasedJob.objects.get(pk=pk)
     }
     return render_to_response('postajob/%s/view_job.html' % settings.PROJECT,
@@ -105,8 +105,8 @@ def purchasedjobs_overview(request, purchased_product, admin):
                                   data, RequestContext(request))
     else:
         return render_to_response('postajob/%s/purchasedjobs_overview.html'
-                              % settings.PROJECT,
-                              data, RequestContext(request))
+                                  % settings.PROJECT,
+                                  data, RequestContext(request))
 
 
 @company_has_access('product_access')

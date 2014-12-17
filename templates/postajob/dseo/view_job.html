@@ -37,6 +37,10 @@
             <td>{{ job.apply_info }}</td>
         </tr>
         {% endif %}
+        <tr id="job-links">
+            <td>Job Links:</td>
+            <td>{% get_job_links job=job %}</td>
+        </tr>
     </table>
 </div>
 <div class="direct_rightColBox">
