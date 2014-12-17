@@ -3,7 +3,8 @@
 {% block directseo_main_content %}
 {{ block.super }}
 <div id="direct_listingDiv">
-    {% include "postajob/includes/request_formBox.html" with wrapper_title="Requests" %}
+    {% include "postajob/includes/request_formBox.html" with wrapper_title="Pending Requests" %}
+    {% include "postajob/includes/request_formBox.html" with wrapper_title="Processed Requests" %}
 </div>
 <div class="direct_rightColBox">
     {% include "postajob/includes/postajob_navigation.html" %}
