@@ -476,7 +476,7 @@ class DEv2JobFeed(DEJobFeed):
 
         for job in jobs:
             jobdict = {'uid': self.unescape(job.find('uid').text),
-                       'link': job.find('link').text}
+                       'guid': guid_from_link(job.find('link').text)}
             joblist.append(jobdict)
         return joblist
 

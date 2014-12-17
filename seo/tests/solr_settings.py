@@ -66,7 +66,7 @@ SOLR_FIXTURE = [
         'title_slab_exact': u'retail-associate-розничная-ассоциированных/jobs-in::Retail Associate Розничная ассоциированных',
         'title_slug': u'retail-associate-розничная-ассоциированных',
         'uid': "1000",
-        'link': 'http://my.jobs/EE45273E6D914AED8CB3C9C59D203F4410'
+        'link': 'http://my.jobs/EE45273E6D9143asdfasCB3C9C59D203F4410'
     },
     {
         'buid': 0,

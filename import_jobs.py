@@ -261,7 +261,7 @@ def update_solr(buid, download=True, force=True, set_title=False,
     jobs = jobfeed.jobparse()
 
     # Build a set of all the UIDs for all those instances.
-    job_ids = set([i.get('link') for i in jobs if i.get('link')])
+    job_ids = set(i.get('guid') for i in jobs if i.get('guid'))
     conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
     step1 = 1024
 
@@ -298,7 +298,7 @@ def update_solr(buid, download=True, force=True, set_title=False,
         # ``solr_add_uids``. This is because by default we only want to add
         # new documents (which each ``solr_jobs()`` dictionary represents),
         # not update.
-        add_docs = filter(lambda x: int(x.get("link", 0)) in solr_add_ids,
+        add_docs = filter(lambda x: int(x.get("guid", 0)) in solr_add_ids,
                           jobfeed.solr_jobs())
     else:
         # This might seem redundant to refer to the same value
@@ -347,7 +347,6 @@ def update_solr(buid, download=True, force=True, set_title=False,
             list(solr_del_ids)[tup[0][0]:tup[0][1] + 1])
 
         if delete_chunk:
-            print "delete:", delete_chunk
             # Post-a-job jobs should not be deleted during import
             delete_chunk = "(%s) AND -is_posted:true" % delete_chunk
             logging.debug("BUID:%s - SOLR - Delete chunk: %s" %
@@ -387,11 +386,10 @@ def _solr_results_chunk(tup, buid, step):
 
     """
     conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
-    results = conn.search("*:*", fq="buid:%s" % buid, fl="link",
+    results = conn.search("*:*", fq="buid:%s" % buid, fl="guid",
                           rows=step, start=tup[0], facet="false",
                           mlt="false").docs
-    print "chunk'd", results
-    return set([i['link'] for i in results])
+    return set([i['guid'] for i in results])
 
 
 def _job_filter(job):
@@ -517,7 +515,7 @@ def generate_feed_url(buid, task=None):
 
 def _build_solr_delete_query(old_jobs):
     if old_jobs:
-        delete_query = ('link:("%s")' % '" OR "'.join([str(x) for x in old_jobs]))
+        delete_query = ('guid:("%s")' % '" OR "'.join([str(x) for x in old_jobs]))
     else:
         delete_query = None
 

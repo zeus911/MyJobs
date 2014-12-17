@@ -1793,7 +1793,7 @@ class SeoViewsTestCase(DirectSEOTestCase):
             'uid': '1002',
             'buid': self.buid_id,
             'is_posted': True,
-            'link': 'http://asd.asdas/ASDFASDFASGDFAFDA'
+            'guid': 'ASDFASDFASGDFAFDA'
         }
         self.conn.add([posted_job])
         self.assertEqual(self.conn.search(**search).docs, [{'uid': 1002}])
@@ -1817,7 +1817,8 @@ class SeoViewsTestCase(DirectSEOTestCase):
             'title_slab': 'trombonist/jobs-in::Trombonist',
             'title_slab_exact': 'trombonist/jobs-in::Trombonist',
             'title_slug': 'Trombonist',
-            'uid': self.feed_uids[0]
+            'uid': self.feed_uids[0],
+            'guid': "ASDSADSDFASFASDGDGASDF",
         }
         self.solr_docs[1].update(kwargs)
         self.conn.add(self.solr_docs)
