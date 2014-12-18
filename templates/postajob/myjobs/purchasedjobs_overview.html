@@ -43,6 +43,10 @@ Purchased Jobs
                     You currently have no jobs for <b>{{ purchased_product.product }}</b>.
                 </div>
                 {% endif %}
+                <div class="wrapper-footer">
+                    <a class="pull-right" href="{% url 'purchasedproduct' %}">View Invoice</a>
+                    <div class="clearfix"></div>
+                </div>
             </div>
         </div>
         <div class="span4">
