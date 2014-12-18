@@ -77,7 +77,7 @@
 
     {% if not request_obj.action_taken %}
         {% if not object.is_approved %}
-            <form action="{% url 'approve_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
+            <form action="{% url 'approve_admin_request' pk=request_obj.pk %}" method="post">
                 {% csrf_token %}
                 <button type="submit" class="btn primary pull-right">{% trans 'Approve This Job' %}</button>
             </form>
@@ -88,7 +88,7 @@
                 <div class="modal-body">{% blocktrans %}Are you sure you want to deny this job posting?{% endblocktrans %}</div>
                 <div class="modal-footer">
                     <div class="actions">
-                        <form action="{% url 'deny_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
+                        <form action="{% url 'deny_admin_request' pk=request_obj.pk %}" method="post">
                             {% csrf_token %}
                             Why is this request being denied?
                             <div class="clear"></div>
@@ -109,7 +109,7 @@
                     <div class="modal-body">{% blocktrans %}Are you sure you want to block this user from posting further jobs?{% endblocktrans %}</div>
                     <div class="modal-footer">
                         <div class="actions">
-                            <form action="{% url 'block_admin_request' content_type=content_type.pk pk=object.pk %}" method="post">
+                            <form action="{% url 'block_admin_request' pk=request_obj.pk %}" method="post">
                                 {% csrf_token %}
                                 Why is this request being denied?
                                 <div class="clear"></div>

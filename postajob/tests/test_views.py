@@ -906,13 +906,12 @@ class ViewTests(PostajobTestBase):
         CompanyUserFactory(user=user, company=company)
         product = PurchasedProductFactory(
             product=self.product, owner=company)
-        job = PurchasedJobFactory(owner=company, created_by=user,
-                                  purchased_product=product)
-
+        PurchasedJobFactory(owner=company, created_by=user,
+                            purchased_product=product)
+        request = Request.objects.get()
         response = self.client.get(
             reverse('view_request',
-                    args=[ContentType.objects.get_for_model(PurchasedJob).pk,
-                          job.pk]))
+                    args=[request.pk]))
         self.assertFalse(self.user in company.admins.all())
         self.assertEqual(response.status_code, 200)
 
@@ -925,10 +924,8 @@ class PurchasedJobActionTests(PostajobTestBase):
         self.job = PurchasedJobFactory(
             owner=self.company, created_by=self.user,
             purchased_product=self.purchased_product)
-        content_type = ContentType.objects.get_for_model(PurchasedJob)
-        self.view_kwargs = {'pk': self.job.pk,
-                            'content_type': content_type.pk}
         request = Request.objects.get()
+        self.view_kwargs = {'pk': request.pk}
         self.assertFalse(request.action_taken)
         self.assertFalse(self.job.is_approved)
 
