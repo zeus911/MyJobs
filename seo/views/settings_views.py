@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -12,7 +13,7 @@ from universal.views import RequestFormViewBase
 class SeoSiteSettingsFormView(RequestFormViewBase):
     display_name = 'Site'
     form_class = settings_forms.SeoSiteSettingsForm
-    template_name = 'postajob/form.html'
+    template_name = 'postajob/%s/form.html' % settings.PROJECT
 
     add_name = 'seosite_settings_add'
     update_name = 'seosite_settings_update'
@@ -27,6 +28,7 @@ class EmailDomainFormView(View):
         'custom_action': 'Edit',
         'display_name': 'Email Domains'
     }
+    template = 'postajob/%s/form.html' % settings.PROJECT
 
     def success_url(self):
         return reverse('purchasedmicrosite_admin_overview')
@@ -37,7 +39,7 @@ class EmailDomainFormView(View):
         kwargs.update({
             'form': form,
         })
-        return render_to_response('postajob/form.html', kwargs,
+        return render_to_response(self.template, kwargs,
                                   context_instance=RequestContext(request))
 
     def post(self, request):
@@ -49,5 +51,5 @@ class EmailDomainFormView(View):
         kwargs.update({
             'form': form,
         })
-        return render_to_response('postajob/form.html', kwargs,
+        return render_to_response(self.template, kwargs,
                                   context_instance=RequestContext(request))
