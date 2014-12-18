@@ -4,12 +4,12 @@
         {% if primary_btn %}
             <a class="btn primary" href="{{url_name}}">{{ btn_name }}</a>
         {% endif %}
-        <a class="btn{% if on_page == 'requests' %} no-show{% endif %}" href="{% url 'request' %}">Requests</a>
-        <a class="btn{% if on_page == 'offline_purchases' %} no-show{% endif %}" href="{% url 'offlinepurchase' %}">Offline Purchases</a>
-        <a class="btn{% if on_page == 'purchased_products' %} no-show{% endif %}" href="{% url 'purchasedproduct' %}">Purchased Products</a>
-        <a class="btn{% if on_page == 'products' %} no-show{% endif %}" href="{% url 'product' %}">Products</a>
-        <a class="btn{% if on_page == 'groupings' %} no-show{% endif %}" href="{% url 'productgrouping' %}">Groupings</a>
-        <a class="btn{% if on_page == 'company_profile' %} no-show{% endif %}" href="{% url 'companyprofile_add' %}">Company Profile</a>
-        <a class="btn{% if on_page == 'blocked_users' %} no-show{% endif %}" href="{% url 'blocked_user_management' %}">Blocked Users</a>
+        <a class="btn{% if on_page == 'requests' %} selected{% endif %}" href="{% url 'request' %}">Requests</a>
+        <a class="btn{% if on_page == 'offline_purchases' %} selected{% endif %}" href="{% url 'offlinepurchase' %}">Offline Purchases</a>
+        <a class="btn{% if on_page == 'purchased_products' %} selected{% endif %}" href="{% url 'purchasedproduct' %}">Purchased Products</a>
+        <a class="btn{% if on_page == 'products' %} selected{% endif %}" href="{% url 'product' %}">Products</a>
+        <a class="btn{% if on_page == 'groupings' %} selected{% endif %}" href="{% url 'productgrouping' %}">Groupings</a>
+        <a class="btn{% if on_page == 'company_profile' %} selected{% endif %}" href="{% url 'companyprofile_add' %}">Company Profile</a>
+        <a class="btn{% if on_page == 'blocked_users' %} selected{% endif %}" href="{% url 'blocked_user_management' %}">Blocked Users</a>
     </div>
 </div>
