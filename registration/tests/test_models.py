@@ -316,11 +316,15 @@ class InvitationModelTests(MyJobsBase):
                 Invitation(**args).save()
             self.assertEqual(e.exception.messages, [exception_text])
 
-    def test_invitation_emails_existing_user(self):
-        company = CompanyFactory()
-        user = UserFactory(email='companyuser@company.com',
-                           is_verified=False)
+    def companyuser_invitation(self, user, company):
+        """
+        Creates a company user via the Django admin and ensures that the email
+        generated contains the information that an invitation to manage a
+        company's PRM should contain.
 
+        Returns the body of the email as parsed by BeautifulSoup for further
+        review in the calling test.
+        """
         self.assertEqual(len(mail.outbox), 0)
         self.client.post(reverse('admin:seo_companyuser_add'),
                          {'user': user.pk,
@@ -332,15 +336,37 @@ class InvitationModelTests(MyJobsBase):
         self.assertTrue(self.admin.email in email.body)
         self.assertTrue(company.name in email.body)
 
+        body = BeautifulSoup(email.body)
+        prm_href = body.select('a')[0].attrs['href']
+        expected_prm_href = 'https://secure.my.jobs%s?company=%s&verify=%s' % (
+            reverse('prm'), company.pk, user.user_guid)
+        self.assertEqual(prm_href, expected_prm_href)
+        return body
+
+    def test_invitation_emails_verified_user(self):
+        company = CompanyFactory()
+        user = UserFactory(email='companyuser@company.com',
+                           is_verified=True)
+
+        body = self.companyuser_invitation(user, company)
+
+        self.assertEqual(len(body.select('a')), 1)
+
+    def test_invitation_emails_unverified_user(self):
+        company = CompanyFactory()
+        user = UserFactory(email='companyuser@company.com',
+                           is_verified=False)
+
+        body = self.companyuser_invitation(user, company)
+
         ap = ActivationProfile.objects.get(email=user.email)
 
-        body = BeautifulSoup(email.body)
-        self.assertEqual(len(body.select('a')), 1)
-        activation_href = body.select('a')[0].attrs['href']
-        activation_href = activation_href.replace('https://secure.my.jobs', '')
-        self.assertEqual(activation_href.split('?')[0],
-                         reverse('invitation_activate',
-                                 args=[ap.activation_key]))
+        self.assertEqual(len(body.select('a')), 2)
+        expected_activation_href = 'https://secure.my.jobs%s?verify=%s' % (
+            reverse('invitation_activate', args=[ap.activation_key]),
+            user.user_guid)
+        activation_href = body.select('a')[1].attrs['href']
+        self.assertEqual(activation_href, expected_activation_href)
 
         self.client.logout()
         self.client.get(activation_href)
