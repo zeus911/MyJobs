@@ -9,11 +9,12 @@ from django.core.urlresolvers import reverse_lazy
 from django import forms
 from django.forms import (CharField, CheckboxSelectMultiple,
                           HiddenInput, IntegerField, ModelMultipleChoiceField,
-                          RadioSelect, Select, TextInput)
+                          RadioSelect, Select, TextInput, ChoiceField)
 from django.forms.models import modelformset_factory, BaseModelFormSet
 
 from seo.models import Company, CompanyUser, SeoSite
 from mypartners.widgets import SplitDateDropDownField
+from postajob.fields import NoValidationChoiceField, SelectWithOptionClasses
 from postajob.models import (CompanyProfile, Invoice, Job, OfflinePurchase,
                              OfflineProduct, Package, Product, ProductGrouping,
                              ProductOrder, PurchasedProduct, PurchasedJob,
@@ -25,9 +26,7 @@ from universal.helpers import get_object_or_none, get_company
 
 
 def is_superuser_in_admin(request):
-    if request.path.startswith('/admin') and request.user.is_superuser:
-        return True
-    return False
+    return request.path.startswith('/admin') and request.user.is_superuser
 
 
 class BaseJobForm(RequestForm):
@@ -38,7 +37,7 @@ class BaseJobForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.159-3.js', )
+        js = ('postajob.159-15.js', )
 
     apply_choices = [('link', "Link"), ('email', 'Email'),
                      ('instructions', 'Instructions')]
@@ -48,8 +47,8 @@ class BaseJobForm(RequestForm):
 
     apply_email = CharField(required=False, max_length=255,
                             label='Apply Email',
-                            widget=TextInput(attrs={'size': 50}),
-                            help_text=Job.help_text['apply_email'])
+                            help_text=Job.help_text['apply_email'],
+                            widget=TextInput(attrs={'size': 50}))
     apply_link = CharField(required=False, max_length=255,
                            label='Apply Link',
                            help_text=Job.help_text['apply_link'],
@@ -67,9 +66,15 @@ class BaseJobForm(RequestForm):
         if self.instance and self.instance.apply_info:
             self.initial['apply_type'] = 'instructions'
         else:
-            # This works because apply_email is actually a link
-            # that uses mailto:
-            self.initial['apply_type'] = 'link'
+            # convert apply_link to email
+            if self.instance.apply_link.startswith("mailto:"):
+                self.initial['apply_email'] = self.instance.apply_link.split(
+                    'mailto:')[1]
+                self.initial['apply_type'] = 'email'
+            else:
+                # This works because apply_email is actually a link
+                # that uses mailto:
+                self.initial['apply_type'] = 'link'
 
         if not is_superuser_in_admin(self.request):
             # Remove the option to set the company.
@@ -124,10 +129,27 @@ class BaseJobForm(RequestForm):
 
 
 class JobLocationForm(forms.ModelForm):
+    state = NoValidationChoiceField(choices=JobLocation.state_choices,
+                                    widget=SelectWithOptionClasses())
+    country = ChoiceField(choices=JobLocation.country_choices,
+                          initial='United States')
+    region = CharField(max_length=255, required=False)
+
     class Meta:
-        fields = ('city', 'state', 'country', 'zipcode')
+        fields = ('city', 'state', 'region', 'country', 'zipcode')
         excluded = ('guid', 'state_short', 'country_short')
         model = JobLocation
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        if (cleaned_data.get('country') not in ["United States", "Canada"]
+                and not self.instance.pk):
+            region = cleaned_data.get('region')
+            if region:
+                cleaned_data['state'] = region
+            else:
+                raise ValidationError('State or region is required.')
+        return cleaned_data
 
 
 class BaseJobLocationFormSet(BaseModelFormSet):
@@ -135,9 +157,43 @@ class BaseJobLocationFormSet(BaseModelFormSet):
         if any(self.errors):
             return
 
-        if not self.forms or not all(form.has_changed for form in self.forms):
+        has_locations = (all(form.has_changed for form in self.forms) and
+                         all(not data['DELETE'] for data in self.cleaned_data))
+
+        if not self.forms or not has_locations:
             raise ValidationError("Job postings must have at least one "
                                   "location")
+
+    def save(self, commit=True, delete=None):
+        """
+        Overrides BaseModelFormSet.save to add an additional parameter for which
+        forms are to be deleted
+
+        Inputs:
+        :commit: Commit changes to database
+        :delete: Form indices to be deleted; Defaults to None
+
+        Outputs:
+        :saved: List of saved items
+        """
+        # This represents new locations that were removed before saving,
+        # meaning they didn't have ids when the page was loaded.
+        # We can fake deleting these by just not saving them.
+        delete = delete or []
+        saved = []
+
+        # Filter out blank strings from the list of ids to be deleted
+        deleted_ids = filter(lambda x: bool(x),
+                             [deleted['id'].value()
+                              for deleted in self.deleted_forms])
+        for index, form in enumerate(self.forms):
+            id_ = form['id'].value()
+            if id_ in deleted_ids or index in delete:
+                if id_ and commit:
+                    JobLocation.objects.get(pk=id_).delete()
+            else:
+                saved.append(form.save(commit))
+        return saved
 
 
 JobLocationFormSet = modelformset_factory(JobLocation, form=JobLocationForm,
@@ -153,16 +209,6 @@ class JobForm(BaseJobForm):
                   'post_to', 'site_packages')
         model = Job
 
-    # For a single job posting by a member company to a microsite
-    # we consider each site an individual site package but the
-    # site_package for a site is only created when it's first used,
-    # so we use SeoSite as the queryset here instead of SitePackage.
-    site_packages_widget = FSM('Sites', reverse_lazy('site_fsm'), async=True)
-    site_packages = ModelMultipleChoiceField(SeoSite.objects.none(),
-                                             help_text="",
-                                             label="Site",
-                                             required=False,
-                                             widget=site_packages_widget)
     post_to_choices = [('network', 'The entire My.jobs network'),
                        ('site', 'A specific site you own'), ]
     post_to = CharField(label='Post to', help_text=Job.help_text['post_to'],
@@ -172,15 +218,33 @@ class JobForm(BaseJobForm):
 
     def __init__(self, *args, **kwargs):
         super(JobForm, self).__init__(*args, **kwargs)
-        self.fields['site_packages'].help_text = ''
         if is_superuser_in_admin(self.request):
-            user_sites = SeoSite.objects.all()
+            sites = SeoSite.objects.all()
         else:
-            kwargs = {'business_units__company': self.company}
-            user_sites = self.request.user.get_sites()
-            user_sites = user_sites.filter(**kwargs)
+            sites = self.company.get_seo_sites()
 
-        self.fields['site_packages'].queryset = user_sites
+        site_packages_widget = FSM('Sites', reverse_lazy('site_fsm'), async=True)
+        # For a single job posting by a member company to a microsite
+        # we consider each site an individual site package but the
+        # site_package for a site is only created when it's first used,
+        # so we use SeoSite as the queryset here instead of SitePackage.
+        self.fields['site_packages'] = ModelMultipleChoiceField(
+            queryset=sites, help_text='', label='Site', required=False,
+            widget=site_packages_widget)
+
+        if self.instance.pk and self.instance.site_packages:
+            packages = self.instance.site_packages.all()
+            # If the only site package is the company package, then the
+            # current job must be posted to all company and network sites.
+            if (packages.count() == 1 and
+                    packages[0] == self.instance.owner.site_package):
+                self.initial['post_to'] = 'network'
+
+            # Since we're not using actual site_packages for the site_packages,
+            # the initial data also needs to be manually set.
+            initial = [site.pk for site in self.instance.on_sites()]
+            self.initial['site_packages'] = {site: 'selected'
+                                             for site in initial}
 
         # Set the starting date expired option
         if self.instance and self.instance.date_expired:
@@ -192,19 +256,6 @@ class JobForm(BaseJobForm):
             # Select the longest duration
             self.initial['date_expired'] = self.fields[
                 'date_expired'].widget.choices[-1][0]
-
-
-        # Since we're not using actual site_packages for the site_packages,
-        # the initial data also needs to be manually set.
-        if self.instance.pk and self.instance.site_packages:
-            packages = self.instance.site_packages.all()
-            self.initial['site_packages'] = [str(site.pk) for site in
-                                             self.instance.on_sites()]
-            # If the only site package is the company package, then the
-            # current job must be posted to all company and network sites.
-            if (packages.count() == 1 and
-                    packages[0] == self.instance.owner.site_package):
-                self.initial['post_to'] = 'network'
 
     def clean_date_expired(self):
         date_new = self.instance.date_new or datetime.now()
@@ -239,7 +290,8 @@ class JobForm(BaseJobForm):
     def get_field_sets(self):
         field_sets = [
             [self['title'], self['description'], self['reqid']],
-            [self['apply_type'], self['apply_link'], self['apply_info']],
+            [self['apply_type'], self['apply_link'], self['apply_email'],
+             self['apply_info']],
             [self['date_expired'], self['is_expired']],
             [self['post_to'], self['site_packages']]
         ]
@@ -333,7 +385,8 @@ class PurchasedJobForm(PurchasedJobBaseForm):
     def get_field_sets(self):
         field_sets = [
             [self['title'], self['description'], self['reqid']],
-            [self['apply_type'], self['apply_link'], self['apply_info']],
+            [self['apply_type'], self['apply_link'], self['apply_email'],
+             self['apply_info']],
             [self['date_expired'], self['is_expired']],
         ]
         return field_sets
@@ -383,7 +436,7 @@ class ProductForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.159-3.js', )
+        js = ('postajob.159-15.js', )
 
     job_limit_choices = [('unlimited', "Unlimited"),
                          ('specific', 'A Specific Number'), ]
@@ -403,6 +456,8 @@ class ProductForm(RequestForm):
             packages = Package.objects.user_available()
             packages = packages.filter_company([self.company])
             self.fields['package'].queryset = packages
+            # remove "------" option from select box
+            self.fields['package'].empty_label = None
 
         if self.instance.pk and self.instance.num_jobs_allowed != 0:
             self.initial['job_limit'] = 'specific'
@@ -721,7 +776,7 @@ class OfflinePurchaseForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.159-3.js', )
+        js = ('postajob.159-15.js', )
 
     def __init__(self, *args, **kwargs):
         super(OfflinePurchaseForm, self).__init__(*args, **kwargs)

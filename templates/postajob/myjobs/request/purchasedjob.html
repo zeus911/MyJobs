@@ -26,7 +26,7 @@ Purchased Job Request
         <div class="clear"></div>
 
         <div class="span3 form-label pull-left purchasedjob-request-label"><b>Posting User</b></div>
-        <div class="profile-form-input purchasedjob-request-field">{% if object.created_by %}{{ object.created_by.email }}{% else %}User deleted{% endif %}</div>
+        <div class="profile-form-input purchasedjob-request-field">{% if object.created_by %}{{ object.created_by.email }}{% else %}User deleted{% endif %} {% if object.created_by in company.companyprofile.blocked_users.all %}<strong>(Blocked)</strong>{% endif %}</div>
         <div class="clear"></div>
 
         <div class="span3 form-label pull-left purchasedjob-request-label"><b>Requisition ID</b></div>
@@ -145,5 +145,5 @@ Purchased Job Request
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}postajob.159-9.css{{ gz }}">
     <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}postajob.159-3.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}postajob.159-15.js"></script>
 {% endblock %}

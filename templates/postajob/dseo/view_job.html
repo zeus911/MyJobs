@@ -37,14 +37,28 @@
             <td>{{ job.apply_info }}</td>
         </tr>
         {% endif %}
+        <tr id="job-links">
+            <td>Job Links:</td>
+            <td>{% get_job_links job=job %}</td>
+        </tr>
     </table>
 </div>
 <div class="direct_rightColBox">
+    <h3>Product Details</h3>
+    <label>Job Limit:</label>
+    <b>{% if purchased_product.num_jobs_allowed == 0 %}Unlimited{%else%}{{ purchased_product.num_jobs_allowed }} ({{purchased_product.jobs_remaining}} left){%endif%}</b>
+    <br /><label>Purchase Date:</label>
+    <b>{{ purchased_product.purchase_date }}</b>
+    <br/><label>Expires:</label>
+    <b>{{ purchased_product.expiration_date }}</b>
+    <br />
+    {% if not admin %}
     <div class="navigation">
-        Navigation
+        <h3>Navigation</h3>
         <br/>
         <a class="btn" href="{% url 'purchasedjob_update' pk=job.pk %}">Edit</a>
     </div>
+    {% endif %}
 </div>
 <div class="clearfix"></div>
 {% endblock %}

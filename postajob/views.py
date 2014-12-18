@@ -3,6 +3,7 @@ from fsm.views import FSMView
 import itertools
 import json
 
+from django.db.models import Q
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import Http404, reverse, reverse_lazy, resolve
@@ -12,6 +13,7 @@ from django.template import RequestContext
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from myjobs.models import User
+from postajob.location_data import state_list
 
 from universal.decorators import company_has_access
 from seo.models import CompanyUser, SeoSite
@@ -47,14 +49,15 @@ def jobs_overview(request):
 
 
 @company_has_access(None)
-def view_job(request, purchased_product, pk):
+def view_job(request, purchased_product, pk, admin):
     company = get_company_or_404(request)
     product = PurchasedProduct.objects.get(pk=purchased_product)
     if not product.owner == company:
         raise Http404
     data = {
+        'admin': admin,
         'company': company,
-        'product': product,
+        'purchased_product': product,
         'job': PurchasedJob.objects.get(pk=pk)
     }
     return render_to_response('postajob/%s/view_job.html' % settings.PROJECT,
@@ -103,8 +106,8 @@ def purchasedjobs_overview(request, purchased_product, admin):
                                   data, RequestContext(request))
     else:
         return render_to_response('postajob/%s/purchasedjobs_overview.html'
-                              % settings.PROJECT,
-                              data, RequestContext(request))
+                                  % settings.PROJECT,
+                                  data, RequestContext(request))
 
 
 @company_has_access('product_access')
@@ -200,7 +203,8 @@ def admin_request(request):
         requests = Request.objects.all()
     data = {
         'company': company,
-        'requests': requests.filter(owner=company),
+        'pending_requests': requests.filter(owner=company, action_taken=False),
+        'processed_requests': requests.filter(owner=company, action_taken=True)
     }
 
     return render_to_response('postajob/%s/request.html'
@@ -301,16 +305,12 @@ def process_admin_request(request, content_type, pk, approve=True,
 
 
 def product_listing(request):
-    site_id = settings.SITE_ID
-    try:
-        site = SeoSite.objects.get(pk=site_id)
-    except SeoSite.DoesNotExist:
-        raise Http404
+    site = settings.SITE
 
     # Get all site packages and products for a site.
     site_packages = site.sitepackage_set.all()
-    products = itertools.chain.from_iterable(site_package.product_set.all()
-                                             for site_package in site_packages)
+    products = Product.objects.filter(package__sitepackage__in=site_packages)
+
     # Group products by the site package they belong to.
     groupings = set()
     for product in products:
@@ -410,6 +410,7 @@ class PostajobModelFormMixin(object):
         return self.success_url
 
     def get_context_data(self, **kwargs):
+        kwargs['company'] = get_company(self.request)
         kwargs['prevent_delete'] = self.prevent_delete
         return super(PostajobModelFormMixin, self).get_context_data(**kwargs)
 
@@ -419,6 +420,11 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
     A mixin for job purchase formviews. JobFormView and PurchasedJobFormView
     share this exact functionality.
     """
+    prevent_delete = True
+
+    def delete(self):
+        raise Http404
+
     def get_context_data(self, **kwargs):
         context = super(BaseJobFormView, self).get_context_data(**kwargs)
         if context.get('item', None):
@@ -426,17 +432,16 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
         else:
             formset_qs = JobLocation.objects.none()
         if self.request.POST:
-            pruned_post = {key: value
-                           for key, value in self.request.POST.items()
-                           if '__prefix__' not in key}
             delete = []
-            for key in pruned_post.keys():
-                if key.endswith('DELETE'):
+            for key in self.request.POST.keys():
+                # JobLocationFormSet has a custom save that accepts the indices
+                # of forms to be deleted; The following constructs that list.
+                if key.endswith('DELETE') and '__prefix__' not in key:
                     location_num = int(key.split('-')[1])
                     delete.append(location_num)
-            context['formset'] = JobLocationFormSet(pruned_post,
-                                                    queryset=formset_qs)
             context['delete'] = delete
+            context['formset'] = JobLocationFormSet(self.request.POST,
+                                                    queryset=formset_qs)
         else:
             context['formset'] = JobLocationFormSet(queryset=formset_qs)
         return context
@@ -447,14 +452,9 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
         if form.is_valid():
             if joblocation_formset.is_valid():
                 job = form.save()
-                locations = [location_form.save()
-                             for location_form in joblocation_formset.forms]
+                locations = joblocation_formset.save(delete=context['delete'])
                 for location in locations:
                     location.jobs.add(job)
-                delete = context.get('delete')
-                if delete:
-                    for to_delete in sorted(delete, reverse=True):
-                        locations[to_delete].delete()
                 job.save()
                 return redirect(self.success_url)
         return self.render_to_response(self.get_context_data(form=form))
@@ -505,6 +505,7 @@ class PurchasedJobFormView(BaseJobFormView):
 
     purchase_field = 'purchased_product'
     purchase_model = PurchasedProduct
+
 
     def set_object(self, *args, **kwargs):
         if resolve(self.request.path).url_name == self.add_name:
@@ -816,13 +817,11 @@ class SitePackageFilter(FSMView):
         if self.request.user.is_superuser:
             # If this is on the admin site or the user is a superuser,
             # get all sites for the current company.
-            user_sites = SeoSite.objects.all()
+            sites = SeoSite.objects.all()
         else:
-            kwargs = {'business_units__company': get_company(self.request)}
-            user_sites = self.request.user.get_sites()
-            # Outside the admin, limit the sites to the current company
-            user_sites = user_sites.filter(**kwargs)
-        return user_sites
+            company = get_company_or_404(self.request)
+            sites = company.get_seo_sites()
+        return sites
 
 
 @company_has_access('product_access')
@@ -841,7 +840,7 @@ def blocked_user_management(request):
         'blocked_users': blocked_users
     }
     return render_to_response('postajob/%s/blocked_user_management.html'
-                               % settings.PROJECT, data,
+                              % settings.PROJECT, data,
                               RequestContext(request))
 
 
@@ -865,3 +864,10 @@ def unblock_user(request, pk):
         else:
             profile.blocked_users.remove(user)
     return redirect(reverse('blocked_user_management'))
+
+
+def ajax_regions(request):
+    if request.is_ajax() and 'country' in request.GET:
+        country = request.GET.get('country')
+        states = state_list(country)
+        return HttpResponse(json.dumps(states))

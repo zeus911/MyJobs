@@ -29,6 +29,7 @@
                                 {{ formset_form }}
                             </div>
                         {% endfor %}
+                        <div id="hidden-options"></div>
                     </div>
                     <div id="empty-form">
                         {% include 'includes/form-error-highlight.html' with form=formset.empty_form %}

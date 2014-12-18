@@ -5,11 +5,11 @@
 {% block directseo_main_content %}
 {{ block.super }}
 <div id="direct_listingDiv">
+        {% include "postajob/includes/request_formBox.html" with wrapper_title="Recent Requests" wrapper_footer=True %}
+        {% include "postajob/includes/offlinepurchase_formBox.html" with wrapper_title="Recent Offline Purchases" wrapper_footer=True %}
+        {% include "postajob/includes/purchasedproduct_admin_formBox.html" with wrapper_title="Recent Purchased Products" wrapper_footer=True %}
         {% include "postajob/includes/product_formBox.html" with wrapper_title="Recent Products" wrapper_footer=True %}
         {% include "postajob/includes/productgroup_formBox.html" with wrapper_title="Top Groupings" order=False wrapper_footer=True %}
-        {% include "postajob/includes/offlinepurchase_formBox.html" with wrapper_title="Recent Offline Purchases" wrapper_footer=True %}
-        {% include "postajob/includes/request_formBox.html" with wrapper_title="Recent Requests" wrapper_footer=True %}
-        {% include "postajob/includes/purchasedproduct_admin_formBox.html" with wrapper_title="Recent Purchased Products" wrapper_footer=True %}
 </div>
 <div class="direct_rightColBox">
     {% include "postajob/includes/postajob_navigation.html" %}
@@ -18,5 +18,5 @@
 {% endblock %}
 
 {% block extra-js %}
-    <script src="{{ STATIC_URL }}postajob.159-3.js"></script>
+    <script src="{{ STATIC_URL }}postajob.159-15.js"></script>
 {% endblock %}
