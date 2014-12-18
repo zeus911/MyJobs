@@ -1,0 +1,45 @@
+{% extends "postajob/myjobs/postajob_template.html" %}
+{% load postajob_tags %}
+{% load i18n %}
+
+{% block site-title %}
+    <title>View Invoice - My.jobs</title>
+    <meta name="title" content="View Invoice - My.jobs">
+{% endblock %}
+
+{% block page_title %}
+View Invoice
+{% endblock page_title %}
+
+{% block goback_link %}
+<a href="{% url 'purchasedproduct' %}">Back to Purchased Jobs Overview</a>
+{% endblock %}
+
+{% block postajob_content %}
+<div class="row">
+    <div class="span8">
+
+    </div>
+    <div class="span4">
+        <div class="sidebar">
+            <h2 class="top">
+                Product Details
+            </h2>
+            <label>Job Limit:</label>
+            <b>{% if purchased_product.num_jobs_allowed == 0 %}Unlimited{%else%}{{ purchased_product.num_jobs_allowed }} ({{purchased_product.jobs_remaining}} left){%endif%}</b>
+            <label>Purchase Date:</label>
+            <b>{{ purchased_product.purchase_date }}</b>
+            <label>Expires:</label>
+            <b>{{ purchased_product.expiration_date }}</b>
+            <div class="navigation">
+                <h2>Navigation</h2>
+                <a class="btn" href="">Send me this Invoice</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock postajob_content %}
+
+{% block extra-js %}
+    {{ block.super }}
+{% endblock %}
