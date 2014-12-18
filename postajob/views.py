@@ -49,12 +49,13 @@ def jobs_overview(request):
 
 
 @company_has_access(None)
-def view_job(request, purchased_product, pk):
+def view_job(request, purchased_product, pk, admin):
     company = get_company_or_404(request)
     product = PurchasedProduct.objects.get(pk=purchased_product)
     if not product.owner == company:
         raise Http404
     data = {
+        'admin': admin,
         'company': company,
         'purchased_product': product,
         'job': PurchasedJob.objects.get(pk=pk)
@@ -424,6 +425,11 @@ class BaseJobFormView(PostajobModelFormMixin, RequestFormViewBase):
     A mixin for job purchase formviews. JobFormView and PurchasedJobFormView
     share this exact functionality.
     """
+    prevent_delete = True
+
+    def delete(self):
+        raise Http404
+
     def get_context_data(self, **kwargs):
         context = super(BaseJobFormView, self).get_context_data(**kwargs)
         if context.get('item', None):
@@ -504,6 +510,7 @@ class PurchasedJobFormView(BaseJobFormView):
 
     purchase_field = 'purchased_product'
     purchase_model = PurchasedProduct
+
 
     def set_object(self, *args, **kwargs):
         if resolve(self.request.path).url_name == self.add_name:

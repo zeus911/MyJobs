@@ -17,8 +17,10 @@ class BlockView(View):
     def handle_request(self, request):
         if not self.page:
             self.set_page(request)
+        head, body = self.page.render(request)
         context = {
-            'content': self.page.render(request),
+            'body': body,
+            'head': head,
             'page': self.page
         }
         return render_to_response('myblocks/myblocks_base.html', context,
