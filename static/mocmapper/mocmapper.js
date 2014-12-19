@@ -109,7 +109,6 @@ $(function () {
                             repr += "<td>"+item.moc_id+" ("+item.moc__title+")</td>";
                             repr += "<td>"+item.onet_id+" ("+item.onet__title+")</td></tr>";
                             p += repr;
-                            console.log(repr);                
                         });
                         p+="</table></p>";            
                         customCareers.append(p);
