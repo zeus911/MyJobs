@@ -29,7 +29,7 @@
     {% block form %}
     <div class="row">
         <div class="span8">
-            {% if company.sitepackage_set.exists and 'admin' in request.get_full_path %}
+            {% if has_package or 'admin' not in request.get_full_path %}
             <form action="?" method="post">
                 {% if show_product_labels %}
                 <div class="clear"></div>

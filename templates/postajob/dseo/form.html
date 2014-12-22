@@ -11,7 +11,7 @@
 {% block directseo_main_content %}
 {{ block.super }}
 <div id="direct_listingDiv">
-    {% if company.sitepackage_set.exists and 'admin' in request.get_full_path %}
+    {% if has_package or 'admin' not in request.get_full_path %}
     <form action="?" method="post">
         {% include "includes/form-error-highlight.html" %}
         {% csrf_token %}
