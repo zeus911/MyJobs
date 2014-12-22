@@ -1,9 +1,7 @@
 from datetime import date
 from fsm.views import FSMView
-import itertools
 import json
 
-from django.db.models import Q
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import Http404, reverse, reverse_lazy, resolve
@@ -31,6 +29,7 @@ from universal.helpers import (get_company, get_object_or_none,
 from universal.views import RequestFormViewBase
 
 
+@user_is_allowed()
 @company_has_access('posting_access')
 def jobs_overview(request):
     if settings.SITE:
@@ -48,6 +47,7 @@ def jobs_overview(request):
                               RequestContext(request))
 
 
+@user_is_allowed()
 @company_has_access(None)
 def view_job(request, purchased_product, pk, admin):
     company = get_company_or_404(request)
@@ -64,6 +64,7 @@ def view_job(request, purchased_product, pk, admin):
                               data, RequestContext(request))
 
 
+@user_is_allowed()
 @company_has_access(None)
 def purchasedproducts_overview(request):
     company = get_company(request)
@@ -110,6 +111,7 @@ def purchasedjobs_overview(request, purchased_product, admin):
                                   data, RequestContext(request))
 
 
+@user_is_allowed()
 @company_has_access('product_access')
 def purchasedmicrosite_admin_overview(request):
     company = get_company(request)
@@ -142,6 +144,7 @@ def purchasedmicrosite_admin_overview(request):
                               RequestContext(request))
 
 
+@user_is_allowed()
 @company_has_access('product_access')
 def admin_products(request):
     company = get_company(request)
@@ -159,6 +162,7 @@ def admin_products(request):
                               RequestContext(request))
 
 
+@user_is_allowed()
 @company_has_access('product_access')
 def admin_groupings(request):
     company = get_company(request)
@@ -176,6 +180,7 @@ def admin_groupings(request):
                               RequestContext(request))
 
 
+@user_is_allowed()
 @company_has_access('product_access')
 def admin_offlinepurchase(request):
     company = get_company(request)
@@ -193,6 +198,7 @@ def admin_offlinepurchase(request):
                               RequestContext(request))
 
 
+@user_is_allowed()
 @company_has_access('product_access')
 def admin_request(request):
     company = get_company(request)
@@ -212,6 +218,7 @@ def admin_request(request):
                               RequestContext(request))
 
 
+@user_is_allowed()
 @company_has_access('product_access')
 def admin_purchasedproduct(request):
     company = get_company(request)
@@ -231,7 +238,7 @@ def admin_purchasedproduct(request):
                                % settings.PROJECT, data,
                               RequestContext(request))
 
-
+@user_is_allowed()
 @company_has_access('product_access')
 def view_request(request, pk, model=None):
     template = 'postajob/{project}/request/{model}.html'
@@ -266,6 +273,7 @@ def view_request(request, pk, model=None):
                               data, RequestContext(request))
 
 
+@user_is_allowed()
 @company_has_access('product_access')
 def process_admin_request(request, pk, approve=True,
                           block=False):
@@ -344,6 +352,7 @@ def product_listing(request):
                               RequestContext(request))
 
 
+@user_is_allowed()
 @company_has_access('product_access')
 def order_postajob(request):
     """
@@ -384,6 +393,7 @@ def order_postajob(request):
     return html
 
 
+@user_is_allowed()
 @company_has_access('product_access')
 def is_company_user(request):
     email = request.REQUEST.get('email')
@@ -392,6 +402,7 @@ def is_company_user(request):
 
 
 @csrf_exempt
+@user_is_allowed()
 @company_has_access('product_access')
 def resend_invoice(request, pk):
     company = get_company(request)
@@ -485,6 +496,7 @@ class JobFormView(BaseJobFormView):
     update_name = 'job_update'
     delete_name = 'job_delete'
 
+    @method_decorator(user_is_allowed())
     @method_decorator(company_has_access('posting_access'))
     def dispatch(self, *args, **kwargs):
         """
@@ -519,7 +531,6 @@ class PurchasedJobFormView(BaseJobFormView):
 
     purchase_field = 'purchased_product'
     purchase_model = PurchasedProduct
-
 
     def set_object(self, *args, **kwargs):
         if resolve(self.request.path).url_name == self.add_name:
@@ -583,6 +594,7 @@ class ProductFormView(PostajobModelFormMixin, RequestFormViewBase):
     def delete(self):
         raise Http404
 
+    @method_decorator(user_is_allowed())
     @method_decorator(company_has_access('product_access'))
     def dispatch(self, *args, **kwargs):
         """
@@ -603,6 +615,7 @@ class ProductGroupingFormView(PostajobModelFormMixin, RequestFormViewBase):
     update_name = 'productgrouping_update'
     delete_name = 'productgrouping_delete'
 
+    @method_decorator(user_is_allowed())
     @method_decorator(company_has_access('product_access'))
     def dispatch(self, *args, **kwargs):
         """
@@ -709,6 +722,7 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
     update_name = 'offlinepurchase_update'
     delete_name = 'offlinepurchase_delete'
 
+    @method_decorator(user_is_allowed())
     @method_decorator(company_has_access('product_access'))
     def dispatch(self, *args, **kwargs):
         """
@@ -787,6 +801,7 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
     update_name = 'companyprofile_edit'
     delete_name = 'companyprofile_delete'
 
+    @method_decorator(user_is_allowed())
     @method_decorator(company_has_access(None))
     def dispatch(self, *args, **kwargs):
         """
@@ -837,6 +852,7 @@ class SitePackageFilter(FSMView):
         return sites
 
 
+@user_is_allowed()
 @company_has_access('product_access')
 def blocked_user_management(request):
     """
@@ -856,7 +872,7 @@ def blocked_user_management(request):
                               % settings.PROJECT, data,
                               RequestContext(request))
 
-
+@user_is_allowed()
 @company_has_access('product_access')
 def unblock_user(request, pk):
     """
