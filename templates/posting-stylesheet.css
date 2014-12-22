@@ -721,6 +721,12 @@ form input[type='checkbox'] {
     display: none;
 }
 
+.sidebar a.selected.btn {
+    background: white none no-repeat right top !important;
+    border: 1px solid #{{ css.primaryColor }};
+    color: #{{ css.primaryColor }} !important;
+}
+
 .pull-right {
     float: right;
 }
