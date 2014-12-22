@@ -673,7 +673,7 @@ class ViewTests(PostajobTestBase):
         self.login_user(UserFactory(email='newemail@test.test'))
 
         data = {
-            'company_name': self.company.name,
+            'company_name': self.company.name + 'bar',
             'address_line_one': '123 Place Road',
             'address_line_two': 'Suite 1',
             'city': 'Indianapolis',
