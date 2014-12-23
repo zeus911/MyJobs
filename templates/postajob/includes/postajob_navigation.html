@@ -1,15 +1,16 @@
+{% load postajob_tags %}
 <div class="sidebar">
     <div class="navigation">
         <h2 class="top">Navigation</h2>
         {% if primary_btn %}
             <a class="btn primary" href="{{url_name}}">{{ btn_name }}</a>
         {% endif %}
-        <a class="btn{% if on_page == 'requests' %} selected{% endif %}" href="{% url 'request' %}">Requests</a>
-        <a class="btn{% if on_page == 'offline_purchases' %} selected{% endif %}" href="{% url 'offlinepurchase' %}">Offline Purchases</a>
-        <a class="btn{% if on_page == 'purchased_products' %} selected{% endif %}" href="{% url 'purchasedproduct' %}">Purchased Products</a>
-        <a class="btn{% if on_page == 'products' %} selected{% endif %}" href="{% url 'product' %}">Products</a>
-        <a class="btn{% if on_page == 'groupings' %} selected{% endif %}" href="{% url 'productgrouping' %}">Groupings</a>
-        <a class="btn{% if on_page == 'company_profile' %} selected{% endif %}" href="{% url 'companyprofile_add' %}">Company Profile</a>
-        <a class="btn{% if on_page == 'blocked_users' %} selected{% endif %}" href="{% url 'blocked_user_management' %}">Blocked Users</a>
+        <a class="btn {% select 'request' %}" href="{% url 'request' %}">Requests</a>
+        <a class="btn {% select 'offline' %}" href="{% url 'offlinepurchase' %}">Offline Purchases</a>
+        <a class="btn {% select 'purchased/product' %}" href="{% url 'purchasedproduct' %}">Purchased Products</a>
+        <a class="btn {% select 'admin/product' ignore='group' %}" href="{% url 'product' %}">Products</a>
+        <a class="btn {% select 'group' %}" href="{% url 'productgrouping' %}">Groupings</a>
+        <a class="btn {% select 'profile' %}" href="{% url 'companyprofile_add' %}">Company Profile</a>
+        <a class="btn {% select 'blocked-users' %}" href="{% url 'blocked_user_management' %}">Blocked Users</a>
     </div>
 </div>
