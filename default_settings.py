@@ -476,3 +476,56 @@ PASSWORD_COMPLEXITY = {
     'DIGITS': 1,
     'PUNCTUATION': 1
 }
+
+
+EMAIL_FORMATS = {
+    'ACTIVATION': {
+
+    },
+    'CONTACT_FORM_TICKET_CREATION_FAILED': {
+        'email_address': ''
+    },
+    'CREATE_CONTACT_RECORD' : {
+
+    },
+    'FORGOTTEN_PASSWORD': {
+
+    },
+    'GENERIC': {
+
+    },
+    'INACTIVITY': {
+
+    },
+    'INVITATION': {
+
+    },
+    'INVOICE': {
+
+    },
+    'PARTNER_SAVED_SEARCH_ACTIVATION': {
+
+    },
+    'PARTNER_SAVED_SEARCH_RECIPIENT_OPTED_OUT': {
+
+    },
+    'POSTING_REQUEST_CREATED': {
+
+    },
+    'SAVED_SEARCH': {
+
+    },
+    'SAVED_SEARCH_DIGEST': {
+
+    },
+    'SAVED_SEARCH_DISABLED': {
+
+    },
+    'SAVED_SEARCH_INITIAL': {
+
+    },
+    'SAVED_SEARCH_UPDATED': {
+
+    },
+
+}
