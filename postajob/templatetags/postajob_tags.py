@@ -60,6 +60,10 @@ def get_form_action(context):
 
 @register.simple_tag(takes_context=True)
 def select(context, pattern, ignore=None):
+    """
+    Returns "selected" (CSS class for styling selected buttons) if the
+    `pattern` occurs as part of the current URL, but does not include `ignore`.
+    """
     path = context.get('request').get_full_path()
 
     if pattern in path:
