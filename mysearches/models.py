@@ -1,4 +1,5 @@
 from datetime import datetime
+from django.contrib.contenttypes.models import ContentType
 from pynliner import Pynliner
 from urlparse import urlparse
 
@@ -31,6 +32,8 @@ DOW_CHOICES = (('1', _('Monday')),
                ('7', _('Sunday')))
 
 JOBS_PER_EMAIL_CHOICES = [(5, 5)] + [(i, i) for i in range(10, 101, 10)]
+
+CONTENT_TYPES = {}
 
 
 class SavedSearch(models.Model):
@@ -69,6 +72,19 @@ class SavedSearch(models.Model):
 
     # Custom messages were created for PartnerSavedSearches
     custom_message = models.TextField(max_length=300, blank=True, null=True)
+
+    @property
+    def content_type(self):
+        if hasattr(self, 'partnersavedsearch'):
+            if 'pss' not in CONTENT_TYPES:
+                CONTENT_TYPES['pss'] = ContentType.objects.get_for_model(
+                    PartnerSavedSearch).pk
+            return CONTENT_TYPES['pss']
+        else:
+            if 'ss' not in CONTENT_TYPES:
+                CONTENT_TYPES['ss'] = ContentType.objects.get_for_model(
+                    SavedSearch).pk
+            return CONTENT_TYPES['ss']
 
     def get_company(self):
         """
@@ -134,8 +150,12 @@ class SavedSearch(models.Model):
             subject = self.label.strip()
             message = render_to_string('mysearches/email_single.html',
                                        context_dict)
+            category = '{"category": "My.jobs Saved Search Sent (%s:%s)"}' % (
+                self.content_type,
+                self.pk)
+            headers = {'X-SMTPAPI': category}
             msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
-                               [self.email])
+                               [self.email], headers=headers)
             msg.content_subtype = 'html'
             msg.send()
             self.last_sent = datetime.now()
@@ -167,9 +187,13 @@ class SavedSearch(models.Model):
             message = Pynliner().from_string(message).run()
 
             if send:
+                category = '{"category": "My.jobs Saved Search Created (%s:%s)"}' % (
+                    self.content_type,
+                    self.pk)
+                headers = {'X-SMTPAPI': category}
                 subject = "My.jobs New Saved Search - %s" % self.label.strip()
                 msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
-                                   [self.email])
+                                   [self.email], headers=headers)
                 msg.content_subtype = 'html'
                 msg.send()
             else:
@@ -199,8 +223,12 @@ class SavedSearch(models.Model):
         message = render_to_string("mysearches/email_update.html",
                                    context_dict)
 
+        category = '{"category": "My.jobs Saved Search Updated (%s:%s)"}' % (
+            self.content_type,
+            self.pk)
+        headers = {'X-SMTPAPI': category}
         msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
-                           [self.email])
+                           [self.email], headers=headers)
         msg.content_subtype = 'html'
         msg.send()
         
@@ -259,8 +287,12 @@ class SavedSearch(models.Model):
         message = render_to_string('mysearches/email_disable.html',
                                    {'saved_search': self})
 
+        category = '{"category": "My.jobs Saved Search Disabled (%s:%s)"}' % (
+            self.content_type,
+            self.pk)
+        headers = {'X-SMTPAPI': category}
         msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
-                           [self.email])
+                           [self.email], headers=headers)
         msg.content_subtype = 'html'
         msg.send()
 
@@ -286,6 +318,13 @@ class SavedSearchDigest(models.Model):
                                        verbose_name=_("Send even if there are"
                                                       " no results"),
                                        editable=False)
+
+    @property
+    def content_type(self):
+        if 'ssd' not in CONTENT_TYPES:
+            CONTENT_TYPES['ssd'] = ContentType.objects.get_for_model(
+                SavedSearchDigest).pk
+        return CONTENT_TYPES['ssd']
 
     def send_email(self, custom_msg=None):
         saved_searches = self.user.savedsearch_set.filter(is_active=True)
@@ -323,8 +362,13 @@ class SavedSearchDigest(models.Model):
             }
             message = render_to_string('mysearches/email_digest.html',
                                        context_dict)
+            category = '{"category": "My.jobs Saved Search Digest Send (%s:%s:%s)"}' % (
+                self.content_type,
+                self.pk,
+                ','.join([str(search[0].pk) for search in saved_searches]))
+            headers = {'X-SMTPAPI': category}
             msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
-                               [self.email])
+                               [self.email], headers=headers)
             msg.content_subtype = 'html'
             msg.send()
 
