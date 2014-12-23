@@ -170,6 +170,9 @@ class ViewTests(PostajobTestBase):
         for form_data in [self.job_form_data, self.purchasedjob_form_data]:
             form_data.update(self.location_management_form_data)
 
+        # makes sure that the test domain is part of site packages
+        self.company.sitepackage_set.first().sites.add(settings.SITE)
+
     def test_job_access_not_company_user(self):
         self.company_user.delete()
 
@@ -394,6 +397,7 @@ class ViewTests(PostajobTestBase):
         self.company.companyprofile.authorize_net_transaction_key = ''
         self.company.companyprofile.authorize_net_login = ''
         self.company.companyprofile.save()
+
 
         response = self.client.post(reverse('product_add'),
                                     data=self.product_form_data,
