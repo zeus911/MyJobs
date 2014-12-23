@@ -426,6 +426,7 @@ class PostajobModelFormMixin(object):
     def get_context_data(self, **kwargs):
         kwargs['company'] = get_company(self.request)
         kwargs['prevent_delete'] = self.prevent_delete
+        kwargs['on_admin_page'] = 'admin' in self.request.get_full_path()
         # the current domain should be part of the company's site package
         if kwargs['company']:
             kwargs['has_package'] = kwargs['company'].sitepackage_set.filter(
