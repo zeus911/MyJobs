@@ -477,3 +477,22 @@ class PartnerSavedSearch(SavedSearch):
         mypartners.helpers.log_change(record, None, None, self.partner,
                                       self.user.email, action_type=EMAIL,
                                       change_msg=change_msg)
+
+
+class SavedSearchLog(models.Model):
+    was_sent = models.BooleanField()
+    reason = models.TextField()
+    recipient = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    recipient_email = models.EmailField(max_length=255, blank=False)
+    sendgrid_response = models.ForeignKey('myjobs.EmailLog', null=True,
+                                          on_delete=models.SET_NULL,
+                                          help_text="""Entries prior to the
+                                          release of saved search logging will
+                                          have no categories, meaning we cannot
+                                          match them with a SendGrid
+                                          response.""")
+    new_jobs = models.IntegerField()
+    backfill_jobs = models.IntegerField()
+    date_sent = models.DateTimeField(auto_now_add=True)
+    contact_record = models.ForeignKey('mypartners.ContactRecord', null=True,
+                                       on_delete=models.SET_NULL)
