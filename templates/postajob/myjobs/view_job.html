@@ -65,10 +65,6 @@ View Job
     <div class="span4">
         <div class="sidebar">
             <h2 class="top">
-                Tips
-            </h2>
-            Jobs may take up to 30 minutes to appear after they are approved.
-            <h2>
                 Product Details
             </h2>
             <label>Job Limit:</label>
@@ -77,6 +73,10 @@ View Job
             <b>{{ purchased_product.purchase_date }}</b>
             <label>Expires:</label>
             <b>{{ purchased_product.expiration_date }}</b>
+            <h2>
+                Tips
+            </h2>
+            Jobs may take up to 30 minutes to appear after they are approved.
             {% if not admin %}
             <div class="navigation">
                 <h2>Navigation</h2>
