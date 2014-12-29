@@ -1,7 +1,7 @@
 import bleach
 
 from django.contrib.contenttypes.models import ContentType
-from django.core.urlresolvers import resolve
+from django.core.urlresolvers import resolve, reverse
 from django.template import Library
 from django.template.loader import render_to_string
 from django.utils.text import slugify
@@ -42,6 +42,7 @@ def get_job_links(job, max_sites=3):
     return url_html
 
 
+
 @register.assignment_tag
 def get_jobs(purchased_product):
     return PurchasedJob.objects.filter(purchased_product=purchased_product)
@@ -55,6 +56,21 @@ def get_form_action(context):
     elif current_url_name == 'purchasedproduct_add':
         return 'Purchase'
     return 'Add'
+
+
+@register.simple_tag(takes_context=True)
+def select(context, pattern, ignore=None):
+    """
+    Returns "selected" (CSS class for styling selected buttons) if the
+    `pattern` occurs as part of the current URL, but does not include `ignore`.
+    """
+    path = context.get('request').get_full_path()
+
+    if pattern in path:
+        if ignore and ignore in path:
+            return ''
+        
+        return 'selected'
 
 
 @register.assignment_tag

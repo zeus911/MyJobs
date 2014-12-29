@@ -154,7 +154,6 @@ def admin_products(request):
     else:
         products = Product.objects.all()
     data = {
-        'on_page': 'products',
         'products': products.filter(owner=company),
         'company': company,
     }
@@ -173,7 +172,6 @@ def admin_groupings(request):
     else:
         grouping = ProductGrouping.objects.all()
     data = {
-        'on_page': 'groupings',
         'product_groupings': grouping.filter(owner=company),
         'company': company,
     }
@@ -192,7 +190,6 @@ def admin_offlinepurchase(request):
     else:
         purchases = OfflinePurchase.objects.all()
     data = {
-        'on_page': 'offline_purchases',
         'offline_purchases': purchases.filter(owner=company),
         'company': company,
     }
@@ -211,7 +208,6 @@ def admin_request(request):
     else:
         requests = Request.objects.all()
     data = {
-        'on_page': 'requests',
         'company': company,
         'pending_requests': requests.filter(owner=company, action_taken=False),
         'processed_requests': requests.filter(owner=company, action_taken=True)
@@ -233,7 +229,6 @@ def admin_purchasedproduct(request):
         purchases = Request.objects.all()
     purchases = purchases.filter(product__owner=company)
     data = {
-        'on_page': 'purchased_products',
         'company': company,
         'active_products': purchases.filter(expiration_date__gte=date.today()),
         'expired_products': purchases.filter(expiration_date__lt=date.today()),
@@ -834,7 +829,6 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
             **kwargs)
         company = get_company(self.request)
         context.setdefault('company', company)
-        context['on_page'] = 'company_profile'
 
         return context
 
@@ -871,7 +865,6 @@ def blocked_user_management(request):
     profile = CompanyProfile.objects.get_or_create(company=company)[0]
     blocked_users = profile.blocked_users.all()
     data = {
-        'on_page': 'blocked_users',
         'company': company,
         'blocked_users': blocked_users
     }
