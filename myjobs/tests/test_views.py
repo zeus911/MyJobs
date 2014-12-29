@@ -763,8 +763,8 @@ class MyJobsViewsTests(MyJobsBase):
     def test_user_creation_source(self):
         """
         User.source should be set to the last microsite a new user visited,
-        or https://secure.my.jobs if the user never visited one or was created
-        via PRM.
+        an explicity defined source, the current site, or
+        https://secure.my.jobs.
         """
         self.client.post(reverse('home'),
                          {'action': 'register',
@@ -772,7 +772,8 @@ class MyJobsViewsTests(MyJobsBase):
                           'password1': '5UuYquA@',
                           'password2': '5UuYquA@'})
         user = User.objects.get(email='default@example.com')
-        self.assertEqual(user.source, 'https://secure.my.jobs')
+        # settings.SITE.domain == jobs.directemployers.org.
+        self.assertEqual(user.source, 'jobs.directemployers.org')
 
         self.client.get(
             reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http%3A%2F%2Findianapolis.jobs&callback=foo',

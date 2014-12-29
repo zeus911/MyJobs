@@ -2,7 +2,7 @@ import operator
 from slugify import slugify
 
 from django.conf import settings
-from django.contrib.auth.models import (BaseUserManager, Group)
+from django.contrib.auth.models import Group
 from django.contrib.contenttypes import generic
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
@@ -29,42 +29,6 @@ from mypartners.models import Tag
 from universal.helpers import get_domain, get_object_or_none, has_mx_record
 
 import decimal
-
-
-class CustomUserManager(BaseUserManager):
-    def create_user(self, **kwargs):
-        """
-        Creates an already activated user.
-
-        """
-        email = kwargs['email']
-        password = kwargs['password']
-        if not email:
-            raise ValueError('Email address required.')
-        user = self.model(email=CustomUserManager.normalize_email(email))
-        user.is_active = True
-        user.gravatar = 'none'
-        user.set_password(password)
-        user.make_guid()
-        user.save(using=self._db)
-        user.make_guid()
-        return user
-
-    def create_superuser(self, **kwargs):
-        email = kwargs['email']
-        password = kwargs['password']
-        if not email:
-            raise ValueError('Email address required.')
-        u = self.model(email=CustomUserManager.normalize_email(email))
-        u.is_staff = True
-        u.is_active = True
-        u.is_superuser = True
-        u.gravatar = u.email
-        u.make_guid()
-        u.set_password(password)
-        u.save(using=self._db)
-        u.make_guid()
-        return u
 
 
 class JobsByBuidManager(models.Manager):
