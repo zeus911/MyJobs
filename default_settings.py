@@ -485,7 +485,6 @@ GENERIC = 5
 INACTIVITY = 6
 INVITATION = 7
 INVOICE = 8
-PARTNER_SAVED_SEARCH_ACTIVATION = 9
 PARTNER_SAVED_SEARCH_RECIPIENT_OPTED_OUT = 10
 POSTING_REQUEST_CREATED = 11
 SAVED_SEARCH = 12
@@ -520,9 +519,6 @@ EMAIL_FORMATS = {
     INVOICE: {
         'address': 'invoice@{domain}',
         'subject': '{company_name} Invoice',
-    },
-    PARTNER_SAVED_SEARCH_ACTIVATION: {
-
     },
     PARTNER_SAVED_SEARCH_RECIPIENT_OPTED_OUT: {
         'address': '{company_name} Saved Search <savedsearch@{domain}>',

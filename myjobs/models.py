@@ -22,7 +22,7 @@ from django.utils.importlib import import_module
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
 from mymessages.models import Message, MessageInfo, get_messages
-from universal.helpers import send_email
+from universal.helpers import get_domain, send_email
 
 BAD_EMAIL = ['dropped', 'bounce']
 STOP_SENDING = ['unsubscribe', 'spamreport']
@@ -565,6 +565,17 @@ class User(AbstractBaseUser, PermissionsMixin):
                 {'user': self, 'partner': pss.partner})
             Message.objects.create_message(
                 subject, body, users=[pss.created_by])
+
+    def registration_source(self):
+        from seo.models import SeoSite
+        
+        domain = get_domain(self.source)
+        # Use __iendswith because we strip subdomains in get_domain but
+        # the subdomain will still be present in SeoSite.domain.
+        try:
+            return SeoSite.objects.filter(domain__iendswith=domain)
+        except (IndexError, ValueError):
+            return None
 
 
 class EmailLog(models.Model):

@@ -261,16 +261,7 @@ def process_batch_events():
                                        {'user': user,
                                         'time': time})
 
-            # Figure out if the user registered at a specific site.
-            # If they did, send the inactivity email from that domain.
-            domain = get_domain(user.source)
-            # Use __iendswith because we strip subdomains in get_domain but
-            # the subdomain will still be present in SeoSite.domain.
-            try:
-                site = SeoSite.objects.filter(domain__iendswith=domain)
-            except (IndexError, ValueError):
-                site = None
-
+            site = user.registration_source()
             user.email_user(message, email_type=settings.INACTIVITY, site=site)
 
     # These users have not responded in a month and a week. Stop sending emails.
