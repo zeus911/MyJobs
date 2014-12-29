@@ -15,10 +15,10 @@ register = Library()
 
 @register.simple_tag
 def get_job_links(job, max_sites=3):
-    locations = job.locations.all()
-
     if hasattr(job, 'is_approved') and not job.is_approved:
+
         return ''
+    locations = job.locations.all()
 
     sites = job.on_sites()
     domains = [site.domain for site in sites]
