@@ -319,8 +319,7 @@ class InvitationModelTests(MyJobsBase):
     def companyuser_invitation(self, user, company):
         """
         Creates a company user via the Django admin and ensures that the email
-        generated contains the information that an invitation to manage a
-        company's PRM should contain.
+        generated contains the information that an invitation should contain.
 
         Returns the body of the email as parsed by BeautifulSoup for further
         review in the calling test.
@@ -339,6 +338,11 @@ class InvitationModelTests(MyJobsBase):
         return BeautifulSoup(email.body)
 
     def test_invitation_emails_verified_user(self):
+        """
+        Invitations to verified users don't contain activation links. It should
+        be sufficient to rely on the assertions that companyuser_invitation
+        makes and then assert that there are no anchors in the email body.
+        """
         company = CompanyFactory()
         user = UserFactory(email='companyuser@company.com',
                            is_verified=True)
@@ -348,6 +352,10 @@ class InvitationModelTests(MyJobsBase):
         self.assertEqual(len(body.select('a')), 0)
 
     def test_invitation_emails_unverified_user(self):
+        """
+        Invitations to unverified users should contain activation links, in
+        addition to the information that companyuser_invitation tests for.
+        """
         company = CompanyFactory()
         user = UserFactory(email='companyuser@company.com',
                            is_verified=False)
@@ -356,7 +364,9 @@ class InvitationModelTests(MyJobsBase):
 
         ap = ActivationProfile.objects.get(email=user.email)
 
+        # There should be one anchor present...
         self.assertEqual(len(body.select('a')), 1)
+        # ...and it should be an activation link.
         expected_activation_href = 'https://secure.my.jobs%s?verify=%s' % (
             reverse('invitation_activate', args=[ap.activation_key]),
             user.user_guid)
@@ -364,8 +374,10 @@ class InvitationModelTests(MyJobsBase):
         self.assertEqual(activation_href, expected_activation_href)
 
         self.client.logout()
+        # Test the activation link from the email.
         self.client.get(activation_href)
 
+        # If it was a valid link, the current user should now be verified.
         user = User.objects.get(pk=user.pk)
         self.assertTrue(user.is_verified)
 
