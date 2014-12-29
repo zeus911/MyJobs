@@ -1,26 +1,25 @@
 from collections import namedtuple
-from datetime import datetime, time, timedelta
+from datetime import datetime, time
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
 from django.db.models import Min, Max, Q
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.mail import EmailMessage
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.text import get_text_list, force_unicode, force_text
-from django.utils.timezone import get_current_timezone_name, now
+from django.utils.timezone import now
 from django.utils.translation import ugettext
 from lxml import html
 from lxml.cssselect import CSSSelector
-import pytz
 import requests
 import states
+
 from universal.helpers import (get_domain, get_company, get_company_or_404,
-                               get_int_or_none)
+                               get_int_or_none, send_email)
 from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
                                CHANGE, Location, Partner, PartnerLibrary, Tag)
 from registration.models import ActivationProfile
@@ -162,7 +161,6 @@ def contact_record_val_to_str(value):
              is datetime else value.strftime('%H hours %M minutes')
              if type(value) is time else force_unicode(value))
 
-
     contact_types = dict(CONTACT_TYPE_CHOICES)
     if value in contact_types:
         value = contact_types[value]
@@ -230,9 +228,8 @@ def send_contact_record_email_response(created_records, created_contacts,
     message = render_to_string('mypartners/email/email_response.html',
                                ctx)
 
-    msg = EmailMessage(subject, message, settings.PRM_EMAIL, [to_email])
-    msg.content_subtype = 'html'
-    msg.send()
+    send_email(message, email_type=settings.CREATE_CONTACT_RECORD,
+               recipients=[to_email])
 
 
 def find_partner_from_email(partner_list, email):
@@ -260,25 +257,6 @@ def find_partner_from_email(partner_list, email):
             return partner
 
     return None
-
-
-def send_custom_activation_email(search):
-    activation = ActivationProfile.objects.get(user=search.user)
-    employee_name = search.created_by.get_full_name(default="An employee")
-    ctx = {
-        'activation': activation,
-        'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
-        'search': search,
-        'creator': employee_name,
-        'company': search.provider
-    }
-    subject = "Saved search created on your behalf"
-    message = render_to_string('mypartners/partner_search_new_user.html',
-                               ctx)
-    msg = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL,
-                       [search.user.email])
-    msg.content_subtype = 'html'
-    msg.send()
 
 
 def get_library_as_html():

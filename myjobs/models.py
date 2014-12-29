@@ -11,9 +11,7 @@ from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
                                         Group, PermissionsMixin)
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.mail import EmailMessage
 from django.db import models
-from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
@@ -24,6 +22,7 @@ from django.utils.importlib import import_module
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
 from mymessages.models import Message, MessageInfo, get_messages
+from universal.helpers import send_email
 
 BAD_EMAIL = ['dropped', 'bounce']
 STOP_SENDING = ['unsubscribe', 'spamreport']
@@ -324,10 +323,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         super(User, self).save(force_insert, force_update, using,
                                update_fields)
 
-    def email_user(self, subject, message, from_email):
-        msg = EmailMessage(subject, message, from_email, [self.email])
-        msg.content_subtype = 'html'
-        msg.send()
+    def email_user(self, message, email_type=settings.GENERIC, **kwargs):
+        send_email(message, email_type=email_type, recipients=[self.email],
+                   **kwargs)
 
     def get_username(self):
         return self.email
@@ -556,11 +554,10 @@ class User(AbstractBaseUser, PermissionsMixin):
             message = render_to_string(
                 "mysearches/email_opt_out.html",
                 {'user': self, 'partner': pss.partner})
-            email = EmailMessage(
-                subject, message, settings.SAVED_SEARCH_EMAIL,
-                [pss.created_by.email])
-            email.content_subtype = 'html'
-            email.send()
+
+            email_type = settings.PARTNER_SAVED_SEARCH_RECIPIENT_OPTED_OUT
+            send_email(message,  email_type=email_type,
+                       recipients=[pss.created_by.email])
 
             # create PRM message
             body = render_to_string(
@@ -568,6 +565,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                 {'user': self, 'partner': pss.partner})
             Message.objects.create_message(
                 subject, body, users=[pss.created_by])
+
 
 class EmailLog(models.Model):
     email = models.EmailField(max_length=254)

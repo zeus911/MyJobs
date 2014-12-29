@@ -2,6 +2,7 @@ from datetime import date, timedelta
 
 from django.contrib.auth.models import Group
 from django.core import mail
+from django.conf import settings
 
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          SeoSiteFactory)
@@ -34,6 +35,7 @@ class ModelTests(MyJobsBase):
         self.bu = BusinessUnitFactory()
         self.site.business_units.add(self.bu)
         self.site.save()
+        settings.SITE = self.site
         self.company.job_source_ids.add(self.bu)
         self.company.save()
 
@@ -229,14 +231,14 @@ class ModelTests(MyJobsBase):
 
         mail.outbox = []
 
-        self.company.companyprofile.outgoing_email_domain = 'test.domain'
-        self.company.companyprofile.save()
+        self.site.email_domain = 'test.domain'
+        self.site.save()
 
         # Recipients are admins + specified recipients.
         self.purchased_product.invoice.send_invoice_email(['this@isa.test'])
         self.assertItemsEqual(mail.outbox[0].to,
                               ['this@isa.test', u'user@test.email'])
-        self.assertItemsEqual(mail.outbox[0].from_email,
+        self.assertEqual(mail.outbox[0].from_email,
                               'invoice@test.domain')
 
     def test_invoice_unchanged_after_purchased_product_deletion(self):

@@ -838,4 +838,4 @@ class MyJobsViewsTests(MyJobsBase):
                                                 'action': 'register'})
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject,
-                         'Account activation for My.jobs')
+                         'Account Activation for My.jobs')

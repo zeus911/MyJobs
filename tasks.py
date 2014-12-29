@@ -33,6 +33,7 @@ from registration.models import ActivationProfile
 from solr import helpers
 from solr.models import Update
 from solr.signals import object_to_dict, profileunits_to_dict
+from universal.helpers import get_domain
 
 logger = logging.getLogger(__name__)
 
@@ -253,15 +254,24 @@ def process_batch_events():
     inactive = User.objects.select_related('savedsearch_set')
     inactive = inactive.filter(Q(last_response=now-timedelta(days=30)) |
                                Q(last_response=now-timedelta(days=36)))
-
     for user in inactive:
         if user.savedsearch_set.exists():
             time = (now - user.last_response).days
             message = render_to_string('myjobs/email_inactive.html',
                                        {'user': user,
                                         'time': time})
-            user.email_user('Account Inactivity', message,
-                            settings.DEFAULT_FROM_EMAIL)
+
+            # Figure out if the user registered at a specific site.
+            # If they did, send the inactivity email from that domain.
+            domain = get_domain(user.source)
+            # Use __iendswith because we strip subdomains in get_domain but
+            # the subdomain will still be present in SeoSite.domain.
+            try:
+                site = SeoSite.objects.filter(domain__iendswith=domain)
+            except (IndexError, ValueError):
+                site = None
+
+            user.email_user(message, email_type=settings.INACTIVITY, site=site)
 
     # These users have not responded in a month and a week. Stop sending emails.
     User.objects.filter(last_response__lte=now-timedelta(days=37)).update(
