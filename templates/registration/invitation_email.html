@@ -28,8 +28,6 @@
             administer {{ invitation.inviting_company.name }}'s recruitment
             and outreach tools.
         </p>
-
-        <p><a href="https://secure.my.jobs{% url 'prm' %}?company={{ invitation.inviting_company.pk }}&verify={{ invitation.invitee.user_guid}}" class="btn">Manage {{ invitation.inviting_company.name }}'s PRM</a></p>
     {% else %}
         <p>
             Your colleague

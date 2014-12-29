@@ -109,7 +109,7 @@ def get_company(request):
     if request.get_full_path().startswith('/admin/'):
         return None
 
-    company = request.GET.get('company', request.COOKIES.get('myjobs_company'))
+    company = request.COOKIES.get('myjobs_company')
     if company:
         company = get_object_or_404(Company, pk=company)
 

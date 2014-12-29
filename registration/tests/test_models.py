@@ -336,12 +336,7 @@ class InvitationModelTests(MyJobsBase):
         self.assertTrue(self.admin.email in email.body)
         self.assertTrue(company.name in email.body)
 
-        body = BeautifulSoup(email.body)
-        prm_href = body.select('a')[0].attrs['href']
-        expected_prm_href = 'https://secure.my.jobs%s?company=%s&verify=%s' % (
-            reverse('prm'), company.pk, user.user_guid)
-        self.assertEqual(prm_href, expected_prm_href)
-        return body
+        return BeautifulSoup(email.body)
 
     def test_invitation_emails_verified_user(self):
         company = CompanyFactory()
@@ -350,7 +345,7 @@ class InvitationModelTests(MyJobsBase):
 
         body = self.companyuser_invitation(user, company)
 
-        self.assertEqual(len(body.select('a')), 1)
+        self.assertEqual(len(body.select('a')), 0)
 
     def test_invitation_emails_unverified_user(self):
         company = CompanyFactory()
@@ -361,11 +356,11 @@ class InvitationModelTests(MyJobsBase):
 
         ap = ActivationProfile.objects.get(email=user.email)
 
-        self.assertEqual(len(body.select('a')), 2)
+        self.assertEqual(len(body.select('a')), 1)
         expected_activation_href = 'https://secure.my.jobs%s?verify=%s' % (
             reverse('invitation_activate', args=[ap.activation_key]),
             user.user_guid)
-        activation_href = body.select('a')[1].attrs['href']
+        activation_href = body.select('a')[0].attrs['href']
         self.assertEqual(activation_href, expected_activation_href)
 
         self.client.logout()
