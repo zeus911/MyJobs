@@ -503,7 +503,10 @@ EMAIL_FORMATS = {
         'subject': 'Partner Relationship Manager Contact Records'
     },
     FORGOTTEN_PASSWORD: {
-
+        'address': 'accounts@{domain}',
+        # Subject is handled by the templates used in Django's default
+        # password reset.
+        'subject': '',
     },
     GENERIC: {
 
