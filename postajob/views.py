@@ -256,6 +256,8 @@ def view_request(request, pk, model=None):
         'content_type': content_type,
         'object': request_object,
         'request_obj': request_made,
+        'has_package': company.sitepackage_set.filter(
+            sites__in=settings.SITE.postajob_site_list()).exists()
     }
 
     if not data['object'].user_has_access(request.user):
@@ -427,6 +429,8 @@ class PostajobModelFormMixin(object):
         kwargs['company'] = get_company(self.request)
         kwargs['prevent_delete'] = self.prevent_delete
         kwargs['on_admin_page'] = 'admin' in self.request.get_full_path()
+        # don't hide the company profile page
+        kwargs['on_admin_page'] = 'profile' not in self.request.get_full_path()
         # the current domain should be part of the company's site package
         if kwargs['company']:
             kwargs['has_package'] = kwargs['company'].sitepackage_set.filter(

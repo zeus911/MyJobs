@@ -185,6 +185,22 @@ class ViewTests(PostajobTestBase):
         response = self.client.post(reverse('job_update', kwargs={'pk': 1}))
         self.assertEqual(response.status_code, 404)
 
+    def test_admin_access_no_site_package(self):
+        """
+        Ensure that pages that would be useless without a site package have
+        their content replaced by a friendly reminder to have a site package
+        created.
+        """
+        self.company.sitepackage_set.clear()
+        
+        for url in ['request', 'offlinepurchase_add', 'product_add',
+                    'productgrouping_add']:
+            response = self.client.get(reverse(url), HTTP_HOST='test.jobs')
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("Please contact your member representative to "
+                          "activate this feature.",
+                          response.content)
+
     def test_job_access_not_for_company(self):
         new_company = CompanyFactory(name='Another Company', pk=1000)
         job = JobFactory(owner=new_company, created_by=self.user)
