@@ -1,0 +1,12 @@
+.reset-form-input label[for$=id_email] {
+    display: none;
+}
+
+.loginBox {
+    width: 270px;
+}
+
+.remembered-password {
+    float: left;
+    margin-top: 10px;
+}
