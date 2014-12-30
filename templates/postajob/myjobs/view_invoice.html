@@ -12,13 +12,15 @@ View Invoice
 {% endblock page_title %}
 
 {% block goback_link %}
-<a href="{% url 'purchasedproduct' %}">Back to Purchased Jobs Overview</a>
+<a href="{% url 'purchasedjobs' purchased_product=purchased_product.pk %}">Back to Purchased Jobs</a>
 {% endblock %}
 
 {% block postajob_content %}
 <div class="row">
     <div class="span8">
-
+        <div id="invoice">
+            {% include "postajob/invoice_email.html" %}
+        </div>
     </div>
     <div class="span4">
         <div class="sidebar">
@@ -33,7 +35,13 @@ View Invoice
             <b>{{ purchased_product.expiration_date }}</b>
             <div class="navigation">
                 <h2>Navigation</h2>
-                <a class="btn" href="">Send me this Invoice</a>
+                <a class="btn" href="{% url 'resend_invoice' pk=purchased_product.pk %}">Send me this Invoice</a>
+                <a class="btn"
+                        onclick="var new_window = window.open();
+                                 new_window.document.write(document.getElementById('invoice').innerHTML);
+                                 new_window.print();">
+                    Print Invoice
+                </a>
             </div>
         </div>
     </div>

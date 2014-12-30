@@ -42,7 +42,7 @@ Purchased Jobs
                 </div>
                 {% endfor %}
                 <div class="wrapper-footer">
-                    <a class="pull-right" href="#">View Product Invoice</a>
+                    <a class="pull-right" href="{% url 'admin_view_invoice' purchased_product=purchased_product.pk %}">View Product Invoice</a>
                     <div class="clearfix"></div>
                 </div>
             </div>
