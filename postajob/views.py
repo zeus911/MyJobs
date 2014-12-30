@@ -430,8 +430,8 @@ def resend_invoice(request, pk):
     company = get_company(request)
 
     product = PurchasedProduct.objects.get(pk=pk, product__owner=company)
-    #product.invoice.send_invoice_email(send_to_admins=False,
-    #                                   other_recipients=[request.user.email])
+    product.invoice.send_invoice_email(send_to_admins=False,
+                                       other_recipients=[request.user.email])
     data = {'purchased_product': pk}
     redirect_url = reverse('admin_view_invoice', kwargs=data) + '?m=success'
     return HttpResponseRedirect(redirect_url)
