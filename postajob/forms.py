@@ -381,7 +381,6 @@ class PurchasedJobForm(PurchasedJobBaseForm):
             self.initial['date_expired'] = self.fields[
                 'date_expired'].widget.choices[-1][0]
 
-
     def get_field_sets(self):
         field_sets = [
             [self['title'], self['description'], self['reqid']],
@@ -392,6 +391,10 @@ class PurchasedJobForm(PurchasedJobBaseForm):
         return field_sets
 
     def save(self, commit=True):
+        # Every time a prooduct is edited it needs to go back through the
+        # approval process.
+        self.instance.is_approved = False
+
         self.instance.purchased_product = self.purchased_product
         return super(PurchasedJobForm, self).save(commit)
 

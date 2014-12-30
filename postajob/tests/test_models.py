@@ -852,3 +852,32 @@ class ModelTests(MyJobsBase):
         #  gets both jobs.
         count = Request.objects.filter_by_sites([site_in_both_packages]).count()
         self.assertEqual(count, 2)
+
+    def test_request_on_purchasedjob_update(self):
+        # Creating a PurchasedJob for a Product that requires approval
+        # creates a Request
+        job = PurchasedJobFactory(owner=self.company, created_by=self.user)
+        self.assertEqual(Request.objects.count(), 1)
+
+        # Re-saving that job should not create a new request.
+        job.save()
+        self.assertEqual(Request.objects.count(), 1)
+
+        # Approving the job should also not create a new request.
+        job.is_approved = True
+        job.save()
+        self.assertEqual(Request.objects.count(), 1)
+
+        # Marking the job as not approved and saving it should not create
+        # a new request if no action was taken on the old request.
+        job.is_approved = False
+        job.save()
+        self.assertEqual(Request.objects.count(), 1)
+
+        # Marking the job as not approved and saving it should create
+        # a new request if there is no pending request.
+        request = Request.objects.get()
+        request.action_taken = True
+        request.save()
+        job.save()
+        self.assertEqual(Request.objects.count(), 2)

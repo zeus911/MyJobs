@@ -118,5 +118,8 @@
             add_locations();
             create_location_events();
         });
+    $("profile-save").on("click", function(e){
+        e.preventDefault();
+    });
     </script>
 {% endblock %}

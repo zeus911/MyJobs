@@ -1,6 +1,6 @@
 from django.conf.urls import *
 
-from postajob import views
+from postajob import models, views
 
 
 urlpatterns = patterns(
@@ -49,20 +49,20 @@ urlpatterns = patterns(
     url(r'^admin/request/$',
         views.admin_request,
         name='request'),
-    url(r'^admin/request/view/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+    url(r'^admin/request/view/(?P<pk>\d+)/$',
         views.view_request,
         name='view_request'),
-    url(r'^admin/request/approve/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+    url(r'^admin/request/approve/(?P<pk>\d+)/$',
         views.process_admin_request,
         {'approve': True,
          'block': False},
         name='approve_admin_request'),
-    url(r'^admin/request/deny/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+    url(r'^admin/request/deny/(?P<pk>\d+)/$',
         views.process_admin_request,
         {'approve': False,
          'block': False},
         name='deny_admin_request'),
-    url(r'^admin/request/block/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+    url(r'^admin/request/block/(?P<pk>\d+)/$',
         views.process_admin_request,
         {'approve': False,
          'block': True},
@@ -135,8 +135,9 @@ urlpatterns = patterns(
     url(r'^purchase/redeem/$',
         views.OfflinePurchaseRedemptionFormView.as_view(),
         name='offlinepurchase_redeem'),
-    url(r'^admin/purchase/offline/success/(?P<content_type>\d+)/(?P<pk>\d+)/$',
+    url(r'^admin/purchase/offline/success/(?P<pk>\d+)/$',
         views.view_request,
+        {'model': models.OfflinePurchase},
         name='offline_purchase_success'),
 
     # PurchasedProduct

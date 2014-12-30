@@ -777,6 +777,12 @@ input.datepicker {
     cursor: pointer;
 }
 
+.sidebar a.selected.btn {
+    background: white none no-repeat right top;
+    border: 1px solid #5E6C82 !important;
+    color: #5E6C82;
+}
+
 span.datepicker {
     border: 1px solid #BBB;
     margin: -5px;
