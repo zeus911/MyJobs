@@ -252,8 +252,8 @@ def process_batch_events():
     # These users have not responded in a month. Send them an email if they
     # own any saved searches
     inactive = User.objects.select_related('savedsearch_set')
-    inactive = inactive.filter(Q(last_response=now-timedelta(days=30)) |
-                               Q(last_response=now-timedelta(days=36)))
+    inactive = inactive.filter(Q(last_response=now-timedelta(days=82)) |
+                               Q(last_response=now-timedelta(days=89)))
     for user in inactive:
         if user.savedsearch_set.exists():
             time = (now - user.last_response).days
