@@ -405,3 +405,26 @@ class DseoLoginTests(DirectSEOBase):
         self.assertTrue(response.context['request'].user.is_authenticated())
         last_redirect = response.redirect_chain[-1][0]
         self.assertTrue(last_redirect.endswith(next_url['next']))
+
+    def test_account_creation_custom_from_email(self):
+        site = SeoSite.objects.get()
+        domain = 'new.domain'
+        site.email_domain = domain
+        site.save()
+
+        block = RegistrationBlock.objects.get()
+        user_email = 'test@registration.block'
+        data = {
+            'email': user_email,
+            'password1': 'Secret555!',
+            'password2': 'Secret555!',
+            block.submit_btn_name(): '',
+        }
+        self.client.post(reverse('login'), data=data, follow=True)
+
+        email = mail.outbox.pop()
+        # Default is my.jobs.
+        self.assertEqual(email.from_email, 'accounts@new.domain')
+
+        user = User.objects.get(email=user_email)
+        self.assertEqual(user.source, site.domain)
