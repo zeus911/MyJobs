@@ -11,6 +11,7 @@
 {% block directseo_main_content %}
 {{ block.super }}
 <div id="direct_listingDiv">
+    {% if company.sitepackage_set.exists %}
     <form action="?" method="post">
         {% include "includes/form-error-highlight.html" %}
         {% csrf_token %}
@@ -37,6 +38,9 @@
             {% if submit_text %}{{ submit_text }}{% endif %}
         </div>{# /actions #}
     </form>
+    {% else %}
+        {% include "postajob/includes/no-sitepackage.html" %}
+    {% endif %}
 </div>
 {% if sidebar %}
 <div class="direct_rightColBox">

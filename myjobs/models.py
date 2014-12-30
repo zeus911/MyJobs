@@ -528,12 +528,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         Determines if this user can receive My.jobs email
         """
         if self.opt_in_myjobs and not self.is_disabled:
-            expiration = self.get_expiration()
-            if expiration is not None:
-                if expiration.total_seconds() > 0:
-                    return True
-            else:
-                return True
+            return True
         return False
 
     def send_opt_out_notification(self):

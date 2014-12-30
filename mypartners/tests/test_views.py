@@ -313,7 +313,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
         for row in container('div', class_="product-card"):
             title = "Test Subject  - example-contact"
             today = date.today()
-            sub_title = today.strftime('%b %e, %Y - Email')
+            sub_title = today.strftime('%b. %e, %Y')
             self.assertIn(title,
                           row('div', class_="big-title")[0].get_text().strip())
             self.assertIn(sub_title,

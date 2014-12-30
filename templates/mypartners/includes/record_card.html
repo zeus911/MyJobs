@@ -4,7 +4,7 @@
         {{ record.subject }} {% if record.contact_name %} {% if record.subject %}-{% endif %} {{record.contact_name}} {% endif %}
     </div>
     <div class="sub-title">
-        {{ record.shorten_date_time }} - {{ record.get_human_readable_contact_type }}
+        {{ record.date_time }} - {{ record.get_human_readable_contact_type }}
     </div>
     <div class="partner-tags">
         {% for tag in record.tags.all %}
