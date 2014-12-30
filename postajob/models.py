@@ -792,8 +792,9 @@ class Request(BaseModel):
                 'requester': self.requesting_company().name,
             }
             body = render_to_string('postajob/request_email.html', data)
+            site = getattr(settings, 'SITE', None)
             send_email(body, settings.POSTING_REQUEST_CREATED,
-                       recipients=admin_emails, site=settings.SITE)
+                       recipients=admin_emails, site=site)
 
     def save(self, **kwargs):
         is_new = False
@@ -956,8 +957,9 @@ class Invoice(BaseModel):
         recipients = set(other_recipients + list(owner_admins))
         if recipients:
             body = render_to_string('postajob/invoice_email.html', data)
+            site = getattr(settings, 'SITE', None)
             send_email(body, email_type=settings.INVOICE, recipients=recipients,
-                       site=settings.SITE)
+                       site=site)
 
 
 class InvoiceProduct(models.Model):

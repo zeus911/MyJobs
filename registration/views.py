@@ -23,7 +23,6 @@ from myprofile.forms import (InitialNameForm, InitialAddressForm,
                              InitialWorkForm)
 from registration.forms import CustomPasswordResetForm
 from universal.decorators import activate_user
-from universal.helpers import get_domain
 
 
 # New in Django 1.5. Class based template views for static pages

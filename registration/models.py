@@ -120,8 +120,10 @@ class ActivationProfile(models.Model):
                                    ctx_dict)
         message = Pynliner().from_string(message).run()
 
+        site = getattr(settings, 'SITE', None)
+
         send_email(message, email_type=settings.ACTIVATION,
-                   recipients=[self.email], site=settings.SITE)
+                   recipients=[self.email], site=site)
 
     def save(self, *args, **kwargs):
         if not self.pk:

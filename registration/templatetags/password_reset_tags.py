@@ -4,7 +4,7 @@ from django.conf import settings
 register = Library()
 
 
-@register.simple_tag(takes_context=True)
+@register.simple_tag
 def get_current_seosite_domain():
     """
     Gets the domain of the current SeoSite.

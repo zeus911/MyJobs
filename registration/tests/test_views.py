@@ -17,6 +17,7 @@ from mysearches.models import SavedSearch
 from registration.models import ActivationProfile, Invitation
 from registration.tests.factories import InvitationFactory
 from seo.tests.setup import DirectSEOBase
+from seo.models import SeoSite
 from universal.helpers import build_url
 
 
@@ -42,6 +43,12 @@ class RegistrationViewTests(MyJobsBase):
                      'password1': 'swordfish',
                      'send_email': True}
         self.user, _ = User.objects.create_user(**self.data)
+
+        # Update the only existing site so we're working with
+        # my.jobs for historical/aesthetic purposes.
+        site = SeoSite.objects.get()
+        site.domain = 'my.jobs'
+        site.save()
 
     def test_valid_activation(self):
         """
