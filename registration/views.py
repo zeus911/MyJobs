@@ -4,6 +4,7 @@ import json
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth import logout as log_out
+from django.contrib.auth.views import password_reset
 from django.contrib.auth.decorators import user_passes_test
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response, redirect
@@ -12,7 +13,7 @@ from django.views.generic import TemplateView
 from myjobs.decorators import user_is_allowed
 from myjobs.helpers import expire_login
 from registration.models import ActivationProfile
-from registration.forms import RegistrationForm, CustomAuthForm
+from registration.forms import RegistrationForm
 from myblocks.models import Page
 from myblocks.views import BlockView
 from myjobs.models import User
@@ -20,6 +21,8 @@ from myprofile.models import SecondaryEmail
 from myprofile.forms import (InitialNameForm, InitialAddressForm,
                              InitialPhoneForm, InitialEducationForm,
                              InitialWorkForm)
+from registration.forms import CustomPasswordResetForm
+from universal.decorators import activate_user
 
 
 # New in Django 1.5. Class based template views for static pages
@@ -182,3 +185,16 @@ class DseoLogin(BlockView):
             raise Http404
         setattr(self, 'page', page)
         return page
+
+
+@activate_user
+def custom_password_reset(request):
+    email_domain = 'my.jobs'
+    if getattr(settings, 'SITE', None):
+        email_domain = settings.SITE.email_domain
+
+    from_email = settings.EMAIL_FORMATS[settings.FORGOTTEN_PASSWORD]['address']
+    from_email = from_email.format(domain=email_domain)
+
+    return password_reset(request,  password_reset_form=CustomPasswordResetForm,
+                          from_email=from_email)

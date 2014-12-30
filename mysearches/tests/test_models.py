@@ -51,7 +51,7 @@ class SavedSearchModelsTests(MyJobsBase):
         self.assertEqual(len(mail.outbox), 1)
 
         email = mail.outbox.pop()
-        self.assertEqual(email.from_email, settings.SAVED_SEARCH_EMAIL)
+        self.assertEqual(email.from_email, 'My.jobs Saved Search <savedsearch@my.jobs>')
         self.assertEqual(email.to, [self.user.email])
         self.assertEqual(email.subject, search.label)
         self.assertTrue("table" in email.body)
@@ -80,9 +80,9 @@ class SavedSearchModelsTests(MyJobsBase):
         self.assertEqual(len(mail.outbox), 2)
 
         email = mail.outbox.pop()
-        self.assertEqual(email.from_email, settings.SAVED_SEARCH_EMAIL)
+        self.assertEqual(email.from_email, 'My.jobs Saved Search <savedsearch@my.jobs>')
         self.assertEqual(email.to, [self.user.email])
-        self.assertEqual(email.subject, "Your Daily Saved Search Digest")
+        self.assertEqual(email.subject, "Your Saved Search Digest")
         self.assertTrue("table" in email.body)
         self.assertTrue(email.to[0] in email.body)
 
@@ -102,7 +102,7 @@ class SavedSearchModelsTests(MyJobsBase):
         self.assertEqual(len(mail.outbox), 1)
 
         email = mail.outbox.pop()
-        self.assertEqual(email.from_email, settings.SAVED_SEARCH_EMAIL)
+        self.assertEqual(email.from_email, 'My.jobs Saved Search <savedsearch@my.jobs>')
         self.assertEqual(email.to, [self.user.email])
         self.assertEqual("My.jobs New Saved Search" in email.subject, True)
         self.assertTrue("table" in email.body)
@@ -115,7 +115,7 @@ class SavedSearchModelsTests(MyJobsBase):
         self.assertEqual(len(mail.outbox), 1)
 
         email = mail.outbox.pop()
-        self.assertEqual(email.from_email, settings.SAVED_SEARCH_EMAIL)
+        self.assertEqual(email.from_email, 'My.jobs Saved Search <savedsearch@my.jobs>')
         self.assertEqual(email.to, [self.user.email])
         self.assertEqual("My.jobs Saved Search Updated" in email.subject, True)
         self.assertTrue("table" in email.body)

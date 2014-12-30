@@ -1,16 +1,14 @@
 from django.conf.urls import patterns, url
 from django.contrib.auth import views as auth_views
 
-from universal.decorators import activate_user
-from registration.forms import CustomPasswordResetForm, CustomSetPasswordForm
+from registration.forms import CustomSetPasswordForm
 from registration.views import (RegistrationComplete, activate, merge_accounts,
-                                resend_activation, logout)
+                                resend_activation, logout,
+                                custom_password_reset)
 
 urlpatterns = patterns('',
     # Authorization URLS
-
-    url(r'^password/reset/$', activate_user(auth_views.password_reset),
-        {'password_reset_form': CustomPasswordResetForm},
+    url(r'^password/reset/$', custom_password_reset,
         name='password_reset'),
     url(r'^password/reset/confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
         auth_views.password_reset_confirm,
