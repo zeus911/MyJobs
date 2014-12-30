@@ -264,9 +264,9 @@ def process_batch_events():
             site = user.registration_source()
             user.email_user(message, email_type=settings.INACTIVITY, site=site)
 
-    # These users have not responded in a month and a week. Stop sending emails.
-    User.objects.filter(last_response__lte=now-timedelta(days=37)).update(
-        opt_in_myjobs=False)
+    # These users have not responded in 90 days. Stop sending emails.
+    users = User.objects.filter(last_response__lte=now-timedelta(days=90))
+    users.update(opt_in_myjobs=False)
 
 
 @task(name="tasks.update_solr_from_model", ignore_result=True)
