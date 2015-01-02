@@ -33,7 +33,7 @@
     {% if communication_form %}
     <div class="row as">
         <div class="span12">
-            <div id="as-communication" class="as-section"><h3>Communication Settings</h3></div>
+            <div id="as-communication" class=""><h3>Communication Settings</h3></div>
             <div class="as-content" style="display: block;">
                 <form method="post" action="{% url 'edit_account' %}?communication#as-communication" id="as-communication-form">
                     {% with communication_form as form %}
@@ -51,7 +51,7 @@
     {% endif %}
     <div class="row as">
         <div class="span12">
-            <div id="as-password" class="as-section"><h3>Change Password</h3></div>
+            <div id="as-password" class=""><h3>Change Password</h3></div>
             <div id="as-password-content" class="as-content">
                 <form method="post" action="{% url 'edit_account' %}?password#as-password" id="as-communication-form">
                     {% with password_form as form %}
@@ -68,7 +68,7 @@
     </div>
     <div class="row as">
         <div class="span12">
-            <div id="as-disable" class="as-section"><h3>Disable Account</h3></div>
+            <div id="as-disable" class=""><h3>Disable Account</h3></div>
             <div class="as-content">
                 <div class="span3 pull-left">
                     <div class="gravatar-message">
@@ -103,7 +103,7 @@
 
     <div class="row as">
         <div class="span12">
-            <div id="as-delete" class="as-section"><h3>Delete Account</h3></div>
+            <div id="as-delete" class=""><h3>Delete Account</h3></div>
             <div class="as-content">
                 <div class="span3 pull-left">
                     <div class="gravatar-message">
@@ -162,7 +162,7 @@
 
             {% blocktrans %}
 
-            Are you sure you want to delete your account?
+            Are you sure you want to delete <b>{{ partner }}</b>?
 
             {% endblocktrans %}
 
@@ -186,5 +186,5 @@
 
 <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
-
+<link href="{{ STATIC_URL }}dseo_account_settings.css" rel="stylesheet" type="text/css">
 {% endblock %}

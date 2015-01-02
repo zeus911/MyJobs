@@ -329,11 +329,13 @@ def edit_account(request):
                 ctx['message_body'] = ('Communication Settings have been '
                                        'updated successfully.')
                 ctx['messagetype'] = 'success'
-                return render_to_response('myjobs/edit-account.html', ctx,
+                template = '%s/edit-account.html' % settings.PROJECT
+                return render_to_response(template, ctx,
                                           RequestContext(request))
             else:
                 ctx['communication_form'] = form
-                return render_to_response('myjobs/edit-account.html', ctx,
+                template = '%s/edit-account.html' % settings.PROJECT
+                return render_to_response(template, ctx,
                                           RequestContext(request))
 
         elif 'password' in request.REQUEST:
@@ -346,11 +348,13 @@ def edit_account(request):
                 ctx['message_body'] = ('Password Settings have been '
                                        'updated successfully.')
                 ctx['messagetype'] = 'success'
-                return render_to_response('myjobs/edit-account.html', ctx,
+                template = '%s/edit-account.html' % settings.PROJECT
+                return render_to_response(template, ctx,
                                           RequestContext(request))
             else:
                 ctx['password_form'] = form
-                return render_to_response('myjobs/edit-account.html', ctx,
+                template = '%s/edit-account.html' % settings.PROJECT
+                return render_to_response(template, ctx,
                                           RequestContext(request))
         else:
             return Http404
