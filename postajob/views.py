@@ -440,8 +440,10 @@ class PostajobModelFormMixin(object):
         kwargs['company'] = get_company(self.request)
         kwargs['prevent_delete'] = self.prevent_delete
         kwargs['on_admin_page'] = 'admin' in self.request.get_full_path()
-        # don't hide the company profile page
-        kwargs['on_admin_page'] = 'profile' not in self.request.get_full_path()
+        if kwargs['on_admin_page']:
+            # don't hide the company profile page
+            kwargs['on_admin_page'] = 'profile' not in self.request.get_full_path()
+        
         # the current domain should be part of the company's site package
         if kwargs['company']:
             kwargs['has_package'] = kwargs['company'].sitepackage_set.filter(
