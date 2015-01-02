@@ -5,6 +5,12 @@
 {% gz as gz %}
 
 
+
+{% block directseo_css %}
+{{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}/bootstrap/bootstrap-modal.css">
+{% endblock directseo_css %}
+
 {% block directseo_main_content %}
 {% block modal %}
 {% endblock %}
