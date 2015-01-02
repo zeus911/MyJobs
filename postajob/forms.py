@@ -644,6 +644,7 @@ class PurchasedProductNoPurchaseForm(RequestForm):
         self.instance.invoice = invoice
         self.instance.product = self.product
         self.instance.owner = self.company
+        self.instance.paid = True
 
         super(PurchasedProductNoPurchaseForm, self).save(commit)
 
