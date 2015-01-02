@@ -226,9 +226,9 @@ class ModelTests(MyJobsBase):
         user.group.add(group)
         user.save()
         self.purchased_product.invoice.send_invoice_email()
-        self.assertItemsEqual(mail.outbox[1].to,
+        self.assertItemsEqual(mail.outbox[0].to,
                               [u'user@test.email'])
-        self.assertItemsEqual(mail.outbox[1].from_email,
+        self.assertItemsEqual(mail.outbox[0].from_email,
                               'invoice@my.jobs')
 
         mail.outbox = []
@@ -293,8 +293,8 @@ class ModelTests(MyJobsBase):
         self.create_purchased_job()
         self.assertEqual(PurchasedJob.objects.all().count(), 1)
         self.assertEqual(Request.objects.all().count(), 1)
-        self.assertEqual(len(mail.outbox), 2)
-        self.assertItemsEqual(mail.outbox[1].from_email,
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertItemsEqual(mail.outbox[0].from_email,
                               'request@my.jobs')
         mail.outbox = []
 
