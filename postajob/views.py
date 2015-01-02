@@ -330,6 +330,7 @@ def process_admin_request(request, pk, approve=True,
 
 def product_listing(request):
     site = settings.SITE
+    company = get_company(request)
 
     # Get all site packages and products for a site.
     site_packages = site.sitepackage_set.all()
@@ -350,7 +351,8 @@ def product_listing(request):
 
     return render_to_response('postajob/%s/package_list.html'
                               % settings.PROJECT,
-                              {'product_groupings': groupings},
+                              {'product_groupings': groupings,
+                               'company': company},
                               RequestContext(request))
 
 
