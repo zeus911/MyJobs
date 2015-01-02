@@ -15,10 +15,10 @@ register = Library()
 
 @register.simple_tag
 def get_job_links(job, max_sites=3):
-    locations = job.locations.all()
-
     if hasattr(job, 'is_approved') and not job.is_approved:
         return ''
+
+    locations = job.locations.all()
 
     sites = job.on_sites()
     domains = [site.domain for site in sites]
@@ -104,8 +104,8 @@ def get_product_names(offline_purchase):
 
 
 @register.assignment_tag
-def get_content_type(object):
-    return ContentType.objects.get_for_model(object.__class__)
+def get_content_type(obj):
+    return ContentType.objects.get_for_model(obj.__class__)
 
 
 @register.filter

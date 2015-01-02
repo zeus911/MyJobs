@@ -316,11 +316,14 @@ class InvitationModelTests(MyJobsBase):
                 Invitation(**args).save()
             self.assertEqual(e.exception.messages, [exception_text])
 
-    def test_invitation_emails_existing_user(self):
-        company = CompanyFactory()
-        user = UserFactory(email='companyuser@company.com',
-                           is_verified=False)
+    def companyuser_invitation(self, user, company):
+        """
+        Creates a company user via the Django admin and ensures that the email
+        generated contains the information that an invitation should contain.
 
+        Returns the body of the email as parsed by BeautifulSoup for further
+        review in the calling test.
+        """
         self.assertEqual(len(mail.outbox), 0)
         self.client.post(reverse('admin:seo_companyuser_add'),
                          {'user': user.pk,
@@ -332,19 +335,56 @@ class InvitationModelTests(MyJobsBase):
         self.assertTrue(self.admin.email in email.body)
         self.assertTrue(company.name in email.body)
 
+        body = BeautifulSoup(email.body)
+
+        self.assertEqual(body.select('a')[0].attrs['href'],
+                         'https://secure.my.jobs' + reverse('home'))
+
+        return body
+
+    def test_invitation_emails_verified_user(self):
+        """
+        Invitations to verified users don't contain activation links. It should
+        be sufficient to rely on the assertions that companyuser_invitation
+        makes and then assert that the only anchor in the email body is a
+        login link.
+        """
+        company = CompanyFactory()
+        user = UserFactory(email='companyuser@company.com',
+                           is_verified=True)
+
+        body = self.companyuser_invitation(user, company)
+
+        self.assertEqual(len(body.select('a')), 1)
+
+    def test_invitation_emails_unverified_user(self):
+        """
+        Invitations to unverified users should contain activation links, in
+        addition to the information that companyuser_invitation tests for.
+        """
+        company = CompanyFactory()
+        user = UserFactory(email='companyuser@company.com',
+                           is_verified=False)
+
+        body = self.companyuser_invitation(user, company)
+
         ap = ActivationProfile.objects.get(email=user.email)
 
-        body = BeautifulSoup(email.body)
-        self.assertEqual(len(body.select('a')), 1)
-        activation_href = body.select('a')[0].attrs['href']
-        activation_href = activation_href.replace('https://secure.my.jobs', '')
-        self.assertEqual(activation_href.split('?')[0],
-                         reverse('invitation_activate',
-                                 args=[ap.activation_key]))
+        # There should be two anchors present, one of which was tested for in
+        # companyuser_invitation...
+        self.assertEqual(len(body.select('a')), 2)
+        # ...and the remaining anchor should be an activation link.
+        expected_activation_href = 'https://secure.my.jobs%s?verify=%s' % (
+            reverse('invitation_activate', args=[ap.activation_key]),
+            user.user_guid)
+        activation_href = body.select('a')[1].attrs['href']
+        self.assertEqual(activation_href, expected_activation_href)
 
         self.client.logout()
+        # Test the activation link from the email.
         self.client.get(activation_href)
 
+        # If it was a valid link, the current user should now be verified.
         user = User.objects.get(pk=user.pk)
         self.assertTrue(user.is_verified)
 

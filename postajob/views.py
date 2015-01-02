@@ -263,6 +263,8 @@ def view_request(request, pk, model=None):
         'content_type': content_type,
         'object': request_object,
         'request_obj': request_made,
+        'has_package': company.sitepackage_set.filter(
+            sites__in=settings.SITE.postajob_site_list()).exists()
     }
 
     if not data['object'].user_has_access(request.user):
@@ -328,6 +330,7 @@ def process_admin_request(request, pk, approve=True,
 
 def product_listing(request):
     site = settings.SITE
+    company = get_company(request)
 
     # Get all site packages and products for a site.
     site_packages = site.sitepackage_set.all()
@@ -348,7 +351,8 @@ def product_listing(request):
 
     return render_to_response('postajob/%s/package_list.html'
                               % settings.PROJECT,
-                              {'product_groupings': groupings},
+                              {'product_groupings': groupings,
+                               'company': company},
                               RequestContext(request))
 
 
@@ -437,6 +441,14 @@ class PostajobModelFormMixin(object):
     def get_context_data(self, **kwargs):
         kwargs['company'] = get_company(self.request)
         kwargs['prevent_delete'] = self.prevent_delete
+        kwargs['on_admin_page'] = 'admin' in self.request.get_full_path()
+        # don't hide the company profile page
+        kwargs['on_admin_page'] = 'profile' not in self.request.get_full_path()
+        # the current domain should be part of the company's site package
+        if kwargs['company']:
+            kwargs['has_package'] = kwargs['company'].sitepackage_set.filter(
+                sites__in=settings.SITE.postajob_site_list()).exists()
+
         return super(PostajobModelFormMixin, self).get_context_data(**kwargs)
 
 
