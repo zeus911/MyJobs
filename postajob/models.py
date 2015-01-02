@@ -940,8 +940,16 @@ class Invoice(BaseModel):
 
     def send_invoice_email(self, send_to_admins=True, other_recipients=None):
         """
-        Sends the invoice email to the company admins along with
-        any other optional recipients.
+        Sends the invoice email to the company admins along with any other
+        optional recipients.
+
+        Inputs:
+        :send_to_admins:    If True will send the invoice to all CompanyUsers
+                            of the Company that owns the product.
+                            [Defaults to True]
+
+        :other_recipients:  A list object that contains the other recipient(s)
+                            email so we can send them the invoice
 
         """
         from seo.models import CompanyUser

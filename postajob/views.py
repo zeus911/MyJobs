@@ -66,9 +66,8 @@ def view_job(request, purchased_product, pk, admin):
 @company_has_access(None)
 def view_invoice(request, purchased_product):
     company = get_company_or_404(request)
-    product = PurchasedProduct.objects.get(pk=purchased_product)
-    if not product.owner == company:
-        raise Http404
+    product = get_object_or_404(PurchasedProduct, pk=purchased_product,
+                                owner=company)
     invoice = product.invoice
     data = {
         'company': company,
