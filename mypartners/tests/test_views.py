@@ -46,10 +46,8 @@ class MyPartnersTestCase(MyJobsBase):
         # Create a company
         self.company = CompanyFactory()
         self.company.save()
-        self.assertEqual(len(mail.outbox), 0)
         self.admin = CompanyUserFactory(user=self.staff_user,
                                         company=self.company)
-        self.assertEqual(len(mail.outbox), 1)
         mail.outbox = []
         self.client = TestClient()
         self.client.login_user(self.staff_user)
@@ -313,7 +311,8 @@ class PartnerOverviewTests(MyPartnersTestCase):
         for row in container('div', class_="product-card"):
             title = "Test Subject  - example-contact"
             today = date.today()
-            sub_title = today.strftime('%b. %e, %Y')
+            sub_title = "%s. %s, %s" % (today.strftime('%b'), today.day,
+                                        today.year)
             self.assertIn(title,
                           row('div', class_="big-title")[0].get_text().strip())
             self.assertIn(sub_title,
