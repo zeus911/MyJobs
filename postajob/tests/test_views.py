@@ -170,6 +170,9 @@ class ViewTests(PostajobTestBase):
         for form_data in [self.job_form_data, self.purchasedjob_form_data]:
             form_data.update(self.location_management_form_data)
 
+        # makes sure that the test domain is part of site packages
+        self.company.sitepackage_set.first().sites.add(settings.SITE)
+
     def test_job_access_not_company_user(self):
         self.company_user.delete()
 
@@ -181,6 +184,22 @@ class ViewTests(PostajobTestBase):
         self.assertEqual(response.status_code, 404)
         response = self.client.post(reverse('job_update', kwargs={'pk': 1}))
         self.assertEqual(response.status_code, 404)
+
+    def test_admin_access_no_site_package(self):
+        """
+        Ensure that pages that would be useless without a site package have
+        their content replaced by a friendly reminder to have a site package
+        created.
+        """
+        self.company.sitepackage_set.clear()
+        
+        for url in ['request', 'offlinepurchase_add', 'product_add',
+                    'productgrouping_add']:
+            response = self.client.get(reverse(url), HTTP_HOST='test.jobs')
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("Please contact your member representative to "
+                          "activate this feature.",
+                          response.content)
 
     def test_job_access_not_for_company(self):
         new_company = CompanyFactory(name='Another Company', pk=1000)
@@ -394,6 +413,7 @@ class ViewTests(PostajobTestBase):
         self.company.companyprofile.authorize_net_transaction_key = ''
         self.company.companyprofile.authorize_net_login = ''
         self.company.companyprofile.save()
+
 
         response = self.client.post(reverse('product_add'),
                                     data=self.product_form_data,

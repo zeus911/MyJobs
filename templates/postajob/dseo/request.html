@@ -3,8 +3,12 @@
 {% block directseo_main_content %}
 {{ block.super }}
 <div id="direct_listingDiv">
-    {% include "postajob/includes/request_formBox.html" with wrapper_title="Pending Requests" requests=pending_requests %}
-    {% include "postajob/includes/request_formBox.html" with wrapper_title="Processed Requests" requests=processed_requests %}
+    {% if has_package %}
+        {% include "postajob/includes/request_formBox.html" with wrapper_title="Pending Requests" requests=pending_requests %}
+        {% include "postajob/includes/request_formBox.html" with wrapper_title="Processed Requests" requests=processed_requests %}
+    {% else %}
+        {% include "postajob/includes/no-sitepackage.html" %}
+    {% endif %}
 </div>
 <div class="direct_rightColBox">
     {% include "postajob/includes/postajob_navigation.html" %}
