@@ -33,7 +33,7 @@
     {% if communication_form %}
     <div class="row as">
         <div class="span12">
-            <div id="as-communication" class=""><h3>Communication Settings</h3></div>
+            <div id="as-communication" class="section-header">Communication Settings</div>
             <div class="as-content" style="display: block;">
                 <form method="post" action="{% url 'edit_account' %}?communication#as-communication" id="as-communication-form">
                     {% with communication_form as form %}
@@ -51,7 +51,7 @@
     {% endif %}
     <div class="row as">
         <div class="span12">
-            <div id="as-password" class=""><h3>Change Password</h3></div>
+            <div id="as-password" class="section-header">Change Password</div>
             <div id="as-password-content" class="as-content">
                 <form method="post" action="{% url 'edit_account' %}?password#as-password" id="as-communication-form">
                     {% with password_form as form %}
@@ -68,19 +68,12 @@
     </div>
     <div class="row as">
         <div class="span12">
-            <div id="as-disable" class=""><h3>Disable Account</h3></div>
+            <div id="as-disable" class="section-header">Disable Account</div>
             <div class="as-content">
-                <div class="span3 pull-left">
-                    <div class="gravatar-message">
-                        <div class="gravatar-message">
-                            {% get_gravatar user '150' %}<br>
-                            <img class="warning-badge" src="{{STATIC_URL}}images/caution-badge.png" />
-                        </div>
-                    </div>
-                </div>
-                <div class="span8 pull-right">
+
+                <div class="span8 indented-section">
                     <div class="row">
-                        <div class="span8">
+                        <div class="span8 account-settings-list">
                             {% trans "This will do the following:" %}<br/>
                             <ul>
                                 <li>{% trans "Deactivate all your job search tools" %}</li>
@@ -92,6 +85,8 @@
                         </div>
                     </div>
                 </div>
+                <div class="clearfix"></div>
+
                 <div class="offset4 span6 actions">
                     <button id="delete" type="button" data-toggle="modal" data-target="#disable-confirm" class="btn pull-right confirm-modal">{% trans 'Disable Account' %}</button>
                     <div class="clear"></div>
@@ -103,18 +98,11 @@
 
     <div class="row as">
         <div class="span12">
-            <div id="as-delete" class=""><h3>Delete Account</h3></div>
-            <div class="as-content">
-                <div class="span3 pull-left">
-                    <div class="gravatar-message">
-                        {% get_gravatar user '150' %}
-                        <br>
-                        <img class="warning-badge" src="{{STATIC_URL}}images/critical-badge.png" />
-                    </div>
-                </div>
-                <div class="span8 pull-right">
+            <div id="as-delete" class="section-header">Delete Account</div>
+
+                <div class="span8 indented-section">
                     <div class="row">
-                        <div class="span8">
+                        <div class="span8 account-settings-list">
                             {% trans "This will do the following:" %}<br/>
                             <ul>
                                 <li>{% trans "Delete all your resume data" %}</li>
@@ -126,7 +114,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="offset4 span6 actions">
+            <div class="clearfix"></div>
+
+            <div class="offset4 span6 actions">
                     <button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn pull-right confirm-modal">{% trans 'Delete Account' %}</button>
                     <div class="clear"></div>
                 </div>
@@ -175,6 +165,7 @@
         </div>
     </div>{# /delete-confirm #}
 </div>
+        <div class="clearfix"></div>
 {% endblock %}
 
 {% block extra-js %}
