@@ -692,7 +692,8 @@ class Product(BaseModel):
 
     def seosite(self):
         if hasattr(self.package, "sitepackage"):
-            return self.package.sitepackage.sites.values_list("domain", flat=True)
+            return self.package.sitepackage.sites.values_list("domain",
+                                                              flat=True)
         return []
 
 
