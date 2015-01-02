@@ -519,7 +519,7 @@ class ViewTests(PostajobTestBase):
                          self.purchasedproduct_form_data['exp_date_1'])
         exp_date = date.today() + timedelta(self.product.posting_window_length)
         self.assertEqual(purchase.expiration_date, exp_date)
-        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(len(mail.outbox), 1)
 
     def test_purchasedproduct_add_free_product_existing_company_with_address(self):
         self.assertEqual(PurchasedProduct.objects.all().count(), 0)

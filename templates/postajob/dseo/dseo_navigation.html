@@ -1,9 +1,15 @@
 <div id="posting-nav">
     <ul id="ul-posting-nav">
         <li id="product-listing"><a href="{% url 'product_listing' %}">Product Listing</a></li>
+        {% if company.posting_access %}
         <li id="our-postings"><a href="{% url 'jobs_overview' %}">Posted Jobs</a></li>
+        {% endif %}
+        {% if company.purchasedproduct_set.exists %}
         <li id="purchased-products"><a href="{% url 'purchasedproducts_overview' %}">Purchased Jobs</a></li>
+        {% endif %}
+        {% if company.product_access %}
         <li id="posting-admin"><a href="{% url 'purchasedmicrosite_admin_overview' %}">Partner Microsite</a></li>
+        {% endif %}
     </ul>
     <div class="clearfix"></div>
 </div>

@@ -1292,7 +1292,11 @@ class CompanyUser(models.Model):
         inviting_user = kwargs.pop('inviting_user', None)
         group = Group.objects.get(name=self.GROUP_NAME)
         self.user.groups.add(group)
-        if not self.pk:
+
+        # There are some cases where a CompanyUser may be adding themselves
+        # and not being invited, so only create an invitation if we can
+        # determine who is inviting them.
+        if not self.pk and inviting_user:
             Invitation(invitee=self.user, inviting_company=self.company,
                        added_permission=group,
                        inviting_user=inviting_user).save()

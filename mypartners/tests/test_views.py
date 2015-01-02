@@ -46,10 +46,8 @@ class MyPartnersTestCase(MyJobsBase):
         # Create a company
         self.company = CompanyFactory()
         self.company.save()
-        self.assertEqual(len(mail.outbox), 0)
         self.admin = CompanyUserFactory(user=self.staff_user,
                                         company=self.company)
-        self.assertEqual(len(mail.outbox), 1)
         mail.outbox = []
         self.client = TestClient()
         self.client.login_user(self.staff_user)

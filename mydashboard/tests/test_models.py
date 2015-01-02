@@ -18,8 +18,17 @@ class CompanyUserTests(MyJobsBase):
         """
         Adding one user as a company user also creates an invitation
         """
-        CompanyUser.objects.create(**self.data)
+        company2 = CompanyFactory(id=12345, name='New Company')
+        company_user = CompanyUser(**self.data)
+        company_user.save(inviting_user=self.user)
         self.assertEqual(self.company.admins.count(), 1)
+        self.assertEqual(Invitation.objects.count(), 1)
+
+        self.data['company'] = company2
+        # Save with no iniviting_user. No invitation should be created.
+        company_user = CompanyUser(**self.data)
+        company_user.save()
+        self.assertEqual(company2.admins.count(), 1)
         self.assertEqual(Invitation.objects.count(), 1)
 
     def test_user_without_company_removed_from_employers_group(self):
