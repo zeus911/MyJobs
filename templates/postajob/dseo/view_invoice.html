@@ -24,7 +24,7 @@
     <br />
     <div class="navigation">
         <h3>Navigation</h3>
-        <a class="btn" href="{% url 'resend_invoice' pk=purchased_product.pk %}">Send me this Invoice</a>
+        <a class="btn" href="{% url 'resend_invoice' pk=purchased_product.pk %}">Send Me This Invoice</a>
         <a class="btn"
            onclick="var new_window = window.open();
                     new_window.document.write(document.getElementById('invoice').innerHTML);

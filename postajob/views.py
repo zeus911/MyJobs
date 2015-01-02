@@ -75,10 +75,11 @@ def view_invoice(request, purchased_product):
         'invoice': invoice,
         'purchases': invoice.invoiced_products.all()
     }
-    if request.GET.get('m'):
+    # m is used to render success message. Also, 'm' for shorter url query set.
+    if 'm' in request.GET:
         data.update({'alert': 'success',
-                     'alert_message': '<b>Success!</b>  You should receive this '
-                                      'invoice shortly.'
+                     'alert_message': '<b>Success!</b>  You should receive '
+                                      'this invoice shortly.'
                      })
     return render_to_response('postajob/%s/view_invoice.html'
                               % settings.PROJECT,
