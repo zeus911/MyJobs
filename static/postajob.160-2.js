@@ -6,13 +6,13 @@ if(typeof jQuery == 'undefined') {
 }
 
 var load_event = function(){
-    /* intentionally global */
+    /* intentionally global variables used for the job form*/
     apply_link = $('#id_apply_link').val();
     apply_email = $('#id_apply_email').val();
     apply_info = $('#id_apply_info').val();
 
     /* don't mistake apply links for emails and vice versa */
-    if(apply_link.indexOf('mailto:') == 0){
+    if(apply_link && apply_link.indexOf('mailto:') == 0){
         apply_link = '';
         $('#id_apply_link').val('');
     } else {
