@@ -335,13 +335,19 @@ class InvitationModelTests(MyJobsBase):
         self.assertTrue(self.admin.email in email.body)
         self.assertTrue(company.name in email.body)
 
-        return BeautifulSoup(email.body)
+        body = BeautifulSoup(email.body)
+
+        self.assertEqual(body.select('a')[0].attrs['href'],
+                         'https://secure.my.jobs' + reverse('home'))
+
+        return body
 
     def test_invitation_emails_verified_user(self):
         """
         Invitations to verified users don't contain activation links. It should
         be sufficient to rely on the assertions that companyuser_invitation
-        makes and then assert that there are no anchors in the email body.
+        makes and then assert that the only anchor in the email body is a
+        login link.
         """
         company = CompanyFactory()
         user = UserFactory(email='companyuser@company.com',
@@ -349,7 +355,7 @@ class InvitationModelTests(MyJobsBase):
 
         body = self.companyuser_invitation(user, company)
 
-        self.assertEqual(len(body.select('a')), 0)
+        self.assertEqual(len(body.select('a')), 1)
 
     def test_invitation_emails_unverified_user(self):
         """
@@ -364,13 +370,14 @@ class InvitationModelTests(MyJobsBase):
 
         ap = ActivationProfile.objects.get(email=user.email)
 
-        # There should be one anchor present...
-        self.assertEqual(len(body.select('a')), 1)
-        # ...and it should be an activation link.
+        # There should be two anchors present, one of which was tested for in
+        # companyuser_invitation...
+        self.assertEqual(len(body.select('a')), 2)
+        # ...and the remaining anchor should be an activation link.
         expected_activation_href = 'https://secure.my.jobs%s?verify=%s' % (
             reverse('invitation_activate', args=[ap.activation_key]),
             user.user_guid)
-        activation_href = body.select('a')[0].attrs['href']
+        activation_href = body.select('a')[1].attrs['href']
         self.assertEqual(activation_href, expected_activation_href)
 
         self.client.logout()
