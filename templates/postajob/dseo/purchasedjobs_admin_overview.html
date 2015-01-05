@@ -4,6 +4,9 @@
 {% block directseo_main_content %}
 {{ block.super }}
     <div id="direct_listingDiv">
+        <div class="wrapper-header">
+            <h4>Purchased Jobs for {{ purchased_product.product }}</h4>
+        </div>
         {% if jobs %}
         {% for job in jobs %}
         <div class="product-card">
@@ -25,6 +28,10 @@
             You currently have no jobs for <b>{{ purchased_product.product }}</b>.
         </div>
         {% endif %}
+        <div class="wrapper-footer">
+            <a class="pull-right" href="{% url 'admin_view_invoice' purchased_product=purchased_product.pk %}">View Product Invoice</a>
+            <div class="clearfix"></div>
+        </div>
     </div>
     <div class="direct_rightColBox">
         <h3>Product Details</h3>
