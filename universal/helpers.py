@@ -94,6 +94,7 @@ def get_company(request):
     # If settings.SITE is set we're on a microsite, so get the company
     # based on the microsite we're on instead.
     if settings.SITE.canonical_company:
+        print settings.SITE.canonical_company
         kwargs = {
             'user': request.user,
             'company': settings.SITE.canonical_company,

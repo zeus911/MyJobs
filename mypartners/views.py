@@ -519,8 +519,9 @@ def prm_edit_saved_search(request):
     else:
         form = PartnerSavedSearchForm(partner=partner)
 
+    microsites = company.prm_saved_search_sites.values_list('domain', flat=True)
     microsites = [site.replace('http://', '').replace('https://', '').lower()
-                  for site in get_company_microsites(company)[0]]
+                  for site in microsites]
 
     ctx = {
         'company': company,

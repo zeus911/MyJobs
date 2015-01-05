@@ -732,6 +732,9 @@ class Company(models.Model):
     site_package = models.ForeignKey('postajob.SitePackage', null=True,
                                      on_delete=models.SET_NULL)
 
+    prm_saved_search_sites = models.ManyToManyField('SeoSite', null=True,
+                                                    blank=True)
+
     # Permissions
     prm_access = models.BooleanField(default=True)
     product_access = models.BooleanField(default=False)
