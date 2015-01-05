@@ -7,7 +7,7 @@
 {% if merged %}
     <div class="row">
         <div class="span12" id="profileTitleRow">
-            <h1>{% trans "Account Activated" %}</h1>
+            <div class="registration-header"><h1>{% trans "Account Activated" %}</h1></div>
         </div>
     </div>
 
@@ -26,7 +26,7 @@
 {% else %}
     <div class="row">
         <div class="span12">
-            <h1>{% trans "Activation failed" %}</h1>
+            <div class="registration-header"><h1>{% trans "Activation failed" %}</h1></div>
         </div>
     </div>
     <div class="row">
@@ -42,5 +42,6 @@
             </p>
         </div>
     </div>
+    <div class="clearfix"></div>
 {% endif %}
 {% endblock directseo_main_content %}
