@@ -5,7 +5,7 @@ import json
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import Http404, reverse, reverse_lazy, resolve
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render_to_response
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
@@ -61,6 +61,28 @@ def view_job(request, purchased_product, pk, admin):
         'job': PurchasedJob.objects.get(pk=pk)
     }
     return render_to_response('postajob/%s/view_job.html' % settings.PROJECT,
+                              data, RequestContext(request))
+
+@company_has_access(None)
+def view_invoice(request, purchased_product):
+    company = get_company_or_404(request)
+    product = get_object_or_404(PurchasedProduct, pk=purchased_product,
+                                owner=company)
+    invoice = product.invoice
+    data = {
+        'company': company,
+        'purchased_product': product,
+        'invoice': invoice,
+        'purchases': invoice.invoiced_products.all()
+    }
+    # m is used to render success message. Also, 'm' for shorter url query set.
+    if 'm' in request.GET:
+        data.update({'alert': 'success',
+                     'alert_message': '<b>Success!</b>  You should receive '
+                                      'this invoice shortly.'
+                     })
+    return render_to_response('postajob/%s/view_invoice.html'
+                              % settings.PROJECT,
                               data, RequestContext(request))
 
 
@@ -411,13 +433,12 @@ def is_company_user(request):
 def resend_invoice(request, pk):
     company = get_company(request)
 
-    try:
-        product = PurchasedProduct.objects.get(pk=pk, product__owner=company)
-    except PurchasedProduct.DoesNotExist:
-        return HttpResponse(json.dumps(False))
-
-    product.invoice.send_invoice_email()
-    return HttpResponse(json.dumps(True))
+    product = PurchasedProduct.objects.get(pk=pk, product__owner=company)
+    product.invoice.send_invoice_email(send_to_admins=False,
+                                       other_recipients=[request.user.email])
+    data = {'purchased_product': pk}
+    redirect_url = reverse('admin_view_invoice', kwargs=data) + '?m=success'
+    return HttpResponseRedirect(redirect_url)
 
 
 class PostajobModelFormMixin(object):
@@ -442,8 +463,11 @@ class PostajobModelFormMixin(object):
         kwargs['company'] = get_company(self.request)
         kwargs['prevent_delete'] = self.prevent_delete
         kwargs['on_admin_page'] = 'admin' in self.request.get_full_path()
-        # don't hide the company profile page
-        kwargs['on_admin_page'] = 'profile' not in self.request.get_full_path()
+        if kwargs['on_admin_page']:
+            # don't hide the company profile page
+            kwargs['on_admin_page'] = ('profile' not in
+                                       self.request.get_full_path())
+        
         # the current domain should be part of the company's site package
         if kwargs['company']:
             kwargs['has_package'] = kwargs['company'].sitepackage_set.filter(
