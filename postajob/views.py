@@ -67,9 +67,7 @@ def view_job(request, purchased_product, pk, admin):
 
 @company_has_access(None)
 def view_invoice(request, purchased_product):
-    print 'xxxxxxxxx'
     company = get_company_or_404(request)
-    print company
     kwargs = {
         'pk': purchased_product,
     }
@@ -77,7 +75,6 @@ def view_invoice(request, purchased_product):
         kwargs['product__owner'] = company
     else:
         kwargs['owner'] = company
-    print kwargs
     product = get_object_or_404(PurchasedProduct, **kwargs)
     invoice = product.invoice
     data = {
