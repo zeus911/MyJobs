@@ -46,7 +46,8 @@ class FacetListWidget(Widget):
         if self._type == 'featured':
             criteria_output = 'Featured Company'
         else:
-            criteria_output = _(getattr(self.site_config, "browse_%s_text" % _type))
+            criteria_output = _(getattr(self.site_config, "browse_%s_text"
+                                        % _type))
         num_items = self.site_config.num_filter_items_to_show
         col_hdr = (
             """\
