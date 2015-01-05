@@ -17,6 +17,7 @@ from mysearches.models import SavedSearch
 from registration.models import ActivationProfile, Invitation
 from registration.tests.factories import InvitationFactory
 from seo.tests.setup import DirectSEOBase
+from seo.models import SeoSite
 from universal.helpers import build_url
 
 
@@ -42,6 +43,12 @@ class RegistrationViewTests(MyJobsBase):
                      'password1': 'swordfish',
                      'send_email': True}
         self.user, _ = User.objects.create_user(**self.data)
+
+        # Update the only existing site so we're working with
+        # my.jobs for historical/aesthetic purposes.
+        site = SeoSite.objects.get()
+        site.domain = 'my.jobs'
+        site.save()
 
     def test_valid_activation(self):
         """
@@ -124,6 +131,7 @@ class RegistrationViewTests(MyJobsBase):
         self.assertEqual(len(mail.outbox), 4)
 
     def test_site_name_in_password_reset_email(self):
+        domain = settings.SITE.domain.capitalize()
         mail.outbox = []
         self.user.is_active = True
         self.user.save()
@@ -132,9 +140,9 @@ class RegistrationViewTests(MyJobsBase):
         self.assertEqual(len(mail.outbox), 1,
                          [msg.subject for msg in mail.outbox])
         msg = mail.outbox[0]
-        self.assertEqual(msg.subject, "Password Reset on My.jobs")
-        self.assertIn("The My.jobs Team", msg.body)
-        self.assertIn("user account at My.jobs.", msg.body)
+        self.assertEqual(msg.subject, "Password Reset on {0}".format(domain))
+        self.assertIn("The {0} Team".format(domain), msg.body)
+        self.assertIn("user account at {0}.".format(domain), msg.body)
 
     def test_inactive_user_requesting_password_reset(self):
         """
@@ -398,3 +406,26 @@ class DseoLoginTests(DirectSEOBase):
         self.assertTrue(response.context['request'].user.is_authenticated())
         last_redirect = response.redirect_chain[-1][0]
         self.assertTrue(last_redirect.endswith(next_url['next']))
+
+    def test_account_creation_custom_from_email(self):
+        site = SeoSite.objects.get()
+        domain = 'new.domain'
+        site.email_domain = domain
+        site.save()
+
+        block = RegistrationBlock.objects.get()
+        user_email = 'test@registration.block'
+        data = {
+            'email': user_email,
+            'password1': 'Secret555!',
+            'password2': 'Secret555!',
+            block.submit_btn_name(): '',
+        }
+        self.client.post(reverse('login'), data=data, follow=True)
+
+        email = mail.outbox.pop()
+        # Default is my.jobs.
+        self.assertEqual(email.from_email, 'accounts@new.domain')
+
+        user = User.objects.get(email=user_email)
+        self.assertEqual(user.source, site.domain)

@@ -11,9 +11,7 @@ from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
                                         Group, PermissionsMixin)
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.mail import EmailMessage
 from django.db import models
-from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
@@ -24,6 +22,7 @@ from django.utils.importlib import import_module
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
 from mymessages.models import Message, MessageInfo, get_messages
+from universal.helpers import get_domain, send_email
 
 BAD_EMAIL = ['dropped', 'bounce']
 STOP_SENDING = ['unsubscribe', 'spamreport']
@@ -122,20 +121,23 @@ class CustomUserManager(BaseUserManager):
                 user_args['password_change'] = True
                 password = self.make_random_password()
 
-            source = kwargs.get('source')
+            kwarg_source = kwargs.get('source')
             request = kwargs.get('request')
-            if source is None:
-                if request is not None:
-                    source = request.GET.get('source')
-                    if source is not None:
-                        user_args['source'] = source
-                    else:
-                        last_microsite = request.COOKIES.get('lastmicrosite',
-                                                             None)
-                        if last_microsite is not None:
-                            user_args['source'] = last_microsite
+            if request:
+                last_microsite_source = request.COOKIES.get('lastmicrosite')
+                request_source = request.GET.get('source')
             else:
-                user_args['source'] = source
+                last_microsite_source = None
+                request_source = None
+
+            if kwarg_source:
+                user_args['source'] = kwarg_source
+            elif request_source:
+                user_args['source'] = request_source
+            elif last_microsite_source:
+                user_args['source'] = last_microsite_source
+            elif hasattr(settings, 'SITE') and settings.SITE:
+                user_args['source'] = settings.SITE.domain
 
             user = self.model(**user_args)
             user.set_password(password)
@@ -324,10 +326,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         super(User, self).save(force_insert, force_update, using,
                                update_fields)
 
-    def email_user(self, subject, message, from_email):
-        msg = EmailMessage(subject, message, from_email, [self.email])
-        msg.content_subtype = 'html'
-        msg.send()
+    def email_user(self, message, email_type=settings.GENERIC, **kwargs):
+        send_email(message, email_type=email_type, recipients=[self.email],
+                   **kwargs)
 
     def get_username(self):
         return self.email
@@ -551,11 +552,10 @@ class User(AbstractBaseUser, PermissionsMixin):
             message = render_to_string(
                 "mysearches/email_opt_out.html",
                 {'user': self, 'partner': pss.partner})
-            email = EmailMessage(
-                subject, message, settings.SAVED_SEARCH_EMAIL,
-                [pss.created_by.email])
-            email.content_subtype = 'html'
-            email.send()
+
+            email_type = settings.PARTNER_SAVED_SEARCH_RECIPIENT_OPTED_OUT
+            send_email(message,  email_type=email_type,
+                       recipients=[pss.created_by.email])
 
             # create PRM message
             body = render_to_string(
@@ -563,6 +563,18 @@ class User(AbstractBaseUser, PermissionsMixin):
                 {'user': self, 'partner': pss.partner})
             Message.objects.create_message(
                 subject, body, users=[pss.created_by])
+
+    def registration_source(self):
+        from seo.models import SeoSite
+
+        domain = get_domain(self.source)
+        # Use __iendswith because we strip subdomains in get_domain but
+        # the subdomain will still be present in SeoSite.domain.
+        try:
+            return SeoSite.objects.filter(domain__iendswith=domain)[0]
+        except (IndexError, ValueError):
+            return None
+
 
 class EmailLog(models.Model):
     email = models.EmailField(max_length=254)

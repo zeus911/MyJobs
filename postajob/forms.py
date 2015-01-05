@@ -644,11 +644,12 @@ class PurchasedProductNoPurchaseForm(RequestForm):
         self.instance.invoice = invoice
         self.instance.product = self.product
         self.instance.owner = self.company
+        self.instance.paid = True
 
         super(PurchasedProductNoPurchaseForm, self).save(commit)
 
         invoice.save()
-        invoice.send_invoice_email([self.request.user.email])
+        invoice.send_invoice_email(other_recipients=[self.request.user.email])
 
 
 class PurchasedProductForm(RequestForm):
@@ -759,7 +760,8 @@ class PurchasedProductForm(RequestForm):
         except AuthorizeResponseError:
             pass
         else:
-            invoice.send_invoice_email([self.request.user.email])
+            invoice.send_invoice_email(
+                other_recipients=[self.request.user.email])
 
 
 class OfflinePurchaseForm(RequestForm):

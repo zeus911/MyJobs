@@ -476,3 +476,80 @@ PASSWORD_COMPLEXITY = {
     'DIGITS': 1,
     'PUNCTUATION': 1
 }
+
+# email types
+ACTIVATION = 1
+CREATE_CONTACT_RECORD = 3
+FORGOTTEN_PASSWORD = 4
+GENERIC = 5
+INACTIVITY = 6
+INVITATION = 7
+INVOICE = 8
+PARTNER_SAVED_SEARCH_RECIPIENT_OPTED_OUT = 10
+POSTING_REQUEST_CREATED = 11
+SAVED_SEARCH = 12
+SAVED_SEARCH_DIGEST = 13
+SAVED_SEARCH_DISABLED = 14
+SAVED_SEARCH_INITIAL = 15
+SAVED_SEARCH_UPDATED = 16
+
+EMAIL_FORMATS = {
+    ACTIVATION: {
+        'address': 'accounts@{domain}',
+        'subject': 'Account Activation for {domain}'
+    },
+    CREATE_CONTACT_RECORD : {
+        'address': PRM_EMAIL,
+        'subject': 'Partner Relationship Manager Contact Records'
+    },
+    FORGOTTEN_PASSWORD: {
+        'address': 'accounts@{domain}',
+        # Subject is handled by the templates used in Django's default
+        # password reset.
+        'subject': '',
+    },
+    GENERIC: {
+
+    },
+    INACTIVITY: {
+        'address': 'accounts@{domain}',
+        'subject': 'Account Inactive',
+    },
+    INVITATION: {
+        'address': 'accounts@{domain}',
+        'subject': '{company_name} invitation from {inviter}',
+    },
+    INVOICE: {
+        'address': 'invoice@{domain}',
+        'subject': '{company_name} Invoice',
+    },
+    PARTNER_SAVED_SEARCH_RECIPIENT_OPTED_OUT: {
+        'address': '{company_name} Saved Search <savedsearch@{domain}>',
+        'subject': 'My.jobs Partner Saved Search Update',
+    },
+    POSTING_REQUEST_CREATED: {
+        'address': 'request@{domain}',
+        'subject': 'New request for {company_name}',
+    },
+    SAVED_SEARCH: {
+        'address': '{company_name} Saved Search <savedsearch@{domain}>',
+        'subject': '{label}',
+    },
+    SAVED_SEARCH_DIGEST: {
+        'address': '{company_name} Saved Search <savedsearch@{domain}>',
+        'subject': 'Your Saved Search Digest',
+
+    },
+    SAVED_SEARCH_DISABLED: {
+        'address': '{company_name} Saved Search <savedsearch@{domain}',
+        'subject': 'Invalid URL in Your {company_name} Saved Search',
+    },
+    SAVED_SEARCH_INITIAL: {
+        'address': '{company_name} Saved Search <savedsearch@{domain}>',
+        'subject': '{company_name} New Saved Search - {label}',
+    },
+    SAVED_SEARCH_UPDATED: {
+        'address': '{company_name} Saved Search <savedsearch@{domain}>',
+        'subject': '{company_name} Saved Search Updated - {label}',
+    },
+}

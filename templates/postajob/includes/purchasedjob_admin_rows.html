@@ -10,5 +10,5 @@
     <div class="product-details">
         Expires: <b>{{ purchased_product.expiration_date }}</b>
     </div>
-    <a id="product-{{ purchased_product.id }}" class="btn" href="{% url 'purchasedjobs' purchased_product=purchased_product.pk %}">View Jobs</a>
+    <a id="product-{{ purchased_product.id }}" class="btn" href="{% url 'purchasedjobs' purchased_product=purchased_product.pk %}">Details</a>
 </div>

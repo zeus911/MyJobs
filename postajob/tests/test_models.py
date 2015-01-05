@@ -2,6 +2,7 @@ from datetime import date, timedelta
 
 from django.contrib.auth.models import Group
 from django.core import mail
+from django.conf import settings
 
 from mydashboard.tests.factories import (BusinessUnitFactory, CompanyFactory,
                                          SeoSiteFactory)
@@ -36,6 +37,9 @@ class ModelTests(MyJobsBase):
         self.site.save()
         self.company.job_source_ids.add(self.bu)
         self.company.save()
+
+        # Use the newly created site for testing instead of secure.my.jobs.
+        settings.SITE = self.site
 
         self.request_data = {
             'title': 'title',
@@ -206,12 +210,12 @@ class ModelTests(MyJobsBase):
         self.create_purchased_job()
         group, _ = Group.objects.get_or_create(name=Product.ADMIN_GROUP_NAME)
 
-        # No one to recieve the email.
+        # No one to receive the email.
         self.purchased_product.invoice.send_invoice_email()
         self.assertEqual(len(mail.outbox), 0)
 
         # Only recipient is specified recipient.
-        self.purchased_product.invoice.send_invoice_email(['this@isa.test'])
+        self.purchased_product.invoice.send_invoice_email(other_recipients=['this@isa.test'])
         self.assertItemsEqual(mail.outbox[0].to,
                               ['this@isa.test'])
 
@@ -222,31 +226,40 @@ class ModelTests(MyJobsBase):
         user.group.add(group)
         user.save()
         self.purchased_product.invoice.send_invoice_email()
-        self.assertItemsEqual(mail.outbox[1].to,
+        self.assertItemsEqual(mail.outbox[0].to,
                               [u'user@test.email'])
-        self.assertItemsEqual(mail.outbox[1].from_email,
+        self.assertItemsEqual(mail.outbox[0].from_email,
                               'invoice@my.jobs')
 
         mail.outbox = []
 
-        self.company.companyprofile.outgoing_email_domain = 'test.domain'
-        self.company.companyprofile.save()
+        self.site.email_domain = 'test.domain'
+        self.site.save()
 
         # Recipients are admins + specified recipients.
-        self.purchased_product.invoice.send_invoice_email(['this@isa.test'])
+        self.purchased_product.invoice.send_invoice_email(other_recipients=['this@isa.test'])
         self.assertItemsEqual(mail.outbox[0].to,
                               ['this@isa.test', u'user@test.email'])
-        self.assertItemsEqual(mail.outbox[0].from_email,
+        self.assertEqual(mail.outbox[0].from_email,
                               'invoice@test.domain')
+
+        mail.outbox = []
+
+        # Only recipient is this@isa.test (no admins)
+        self.purchased_product.invoice.send_invoice_email(send_to_admins=False,
+                                                          other_recipients=['this@isa.test'])
+        # Only one in .to should be this@isa.test
+        self.assertEquals(len(mail.outbox[0].to), 1)
+        self.assertItemsEqual(mail.outbox[0].to, ['this@isa.test'])
 
     def test_invoice_unchanged_after_purchased_product_deletion(self):
         self.create_purchased_job()
         invoice = self.purchased_product.invoice
-        invoice.send_invoice_email(['this@isa.test'])
+        invoice.send_invoice_email(other_recipients=['this@isa.test'])
         old_email = mail.outbox.pop()
 
         self.purchased_product.delete()
-        invoice.send_invoice_email(['this@isa.test'])
+        invoice.send_invoice_email(other_recipients=['this@isa.test'])
         new_email = mail.outbox.pop()
 
         self.assertEqual(old_email.body, new_email.body)
@@ -254,12 +267,12 @@ class ModelTests(MyJobsBase):
     def test_invoice_unchanged_after_product_changed(self):
         self.create_purchased_job()
         invoice = self.purchased_product.invoice
-        invoice.send_invoice_email(['this@isa.test'])
+        invoice.send_invoice_email(other_recipients=['this@isa.test'])
         old_email = mail.outbox.pop()
 
         self.purchased_product.product.name = 'new name'
         self.purchased_product.product.save()
-        invoice.send_invoice_email(['this@isa.test'])
+        invoice.send_invoice_email(other_recipients=['this@isa.test'])
         new_email = mail.outbox.pop()
 
         self.assertEqual(old_email.body, new_email.body)
@@ -289,8 +302,8 @@ class ModelTests(MyJobsBase):
         self.create_purchased_job()
         self.assertEqual(PurchasedJob.objects.all().count(), 1)
         self.assertEqual(Request.objects.all().count(), 1)
-        self.assertEqual(len(mail.outbox), 2)
-        self.assertItemsEqual(mail.outbox[1].from_email,
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertItemsEqual(mail.outbox[0].from_email,
                               'request@my.jobs')
         mail.outbox = []
 

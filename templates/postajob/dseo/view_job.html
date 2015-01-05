@@ -44,7 +44,9 @@
     </table>
 </div>
 <div class="direct_rightColBox">
-    <h3>Product Details</h3>
+    <h3 class="top">
+        Product Details
+    </h3>
     <label>Job Limit:</label>
     <b>{% if purchased_product.num_jobs_allowed == 0 %}Unlimited{%else%}{{ purchased_product.num_jobs_allowed }} ({{purchased_product.jobs_remaining}} left){%endif%}</b>
     <br /><label>Purchase Date:</label>
@@ -52,6 +54,10 @@
     <br/><label>Expires:</label>
     <b>{{ purchased_product.expiration_date }}</b>
     <br />
+    <h3>
+        Tips
+    </h3>
+    Jobs may take up to 30 minutes to appear after they are approved.
     {% if not admin %}
     <div class="navigation">
         <h3>Navigation</h3>

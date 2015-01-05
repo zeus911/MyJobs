@@ -6,7 +6,6 @@ from urlparse import urlparse
 from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
-from django.core.mail import EmailMessage
 from django.utils.translation import ugettext_lazy as _
 from django.template.loader import render_to_string
 
@@ -15,6 +14,7 @@ from mypartners.models import Contact, ContactRecord, Partner, EMAIL
 from mysearches.helpers import (parse_feed, update_url_if_protected,
                                 url_sort_options, validate_dotjobs_url)
 import mypartners.helpers
+from universal.helpers import send_email
 
 
 FREQUENCY_CHOICES = (
@@ -147,17 +147,17 @@ class SavedSearch(models.Model):
             context_dict = {'saved_searches': [(self, items, count)],
                             'custom_msg': custom_msg,
                             'contains_pss': is_pss}
-            subject = self.label.strip()
             message = render_to_string('mysearches/email_single.html',
                                        context_dict)
             category = '{"category": "My.jobs Saved Search Sent (%s:%s)"}' % (
                 self.content_type,
                 self.pk)
             headers = {'X-SMTPAPI': category}
-            msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
-                               [self.email], headers=headers)
-            msg.content_subtype = 'html'
-            msg.send()
+
+            send_email(message, email_type=settings.SAVED_SEARCH,
+                       recipients=[self.email], label=self.label.strip(),
+                       headers=headers)
+
             self.last_sent = datetime.now()
             self.save()
 
@@ -191,11 +191,9 @@ class SavedSearch(models.Model):
                     self.content_type,
                     self.pk)
                 headers = {'X-SMTPAPI': category}
-                subject = "My.jobs New Saved Search - %s" % self.label.strip()
-                msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
-                                   [self.email], headers=headers)
-                msg.content_subtype = 'html'
-                msg.send()
+                send_email(message, email_type=settings.SAVED_SEARCH_INITIAL,
+                           recipients=[self.email], label=self.label.strip(),
+                           headers=headers)
             else:
                 return message
     
@@ -219,7 +217,6 @@ class SavedSearch(models.Model):
             'custom_msg': custom_msg,
             'contains_pss': hasattr(self, 'partnersavedsearch')
         }
-        subject = "My.jobs Saved Search Updated - %s" % self.label.strip()
         message = render_to_string("mysearches/email_update.html",
                                    context_dict)
 
@@ -227,11 +224,10 @@ class SavedSearch(models.Model):
             self.content_type,
             self.pk)
         headers = {'X-SMTPAPI': category}
-        msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
-                           [self.email], headers=headers)
-        msg.content_subtype = 'html'
-        msg.send()
-        
+        send_email(message, email_type=settings.SAVED_SEARCH_UPDATED,
+                   recipients=[self.email], label=self.label.strip(),
+                   headers=headers)
+
     def create(self, *args, **kwargs):
         """
         On creation, check if that same URL exists for the user and raise
@@ -283,7 +279,6 @@ class SavedSearch(models.Model):
             self.save()
 
     def send_disable_email(self):
-        subject = 'Invalid search url in your My.jobs saved search'
         message = render_to_string('mysearches/email_disable.html',
                                    {'saved_search': self})
 
@@ -291,10 +286,8 @@ class SavedSearch(models.Model):
             self.content_type,
             self.pk)
         headers = {'X-SMTPAPI': category}
-        msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
-                           [self.email], headers=headers)
-        msg.content_subtype = 'html'
-        msg.send()
+        send_email(message, email_type=settings.SAVED_SEARCH_DISABLED,
+                   recipients=[self.email], headers=headers)
 
 
 class SavedSearchDigest(models.Model):
@@ -353,7 +346,6 @@ class SavedSearchDigest(models.Model):
                           if (items or hasattr(search, 'partnersavedsearch'))]
 
         if self.user.can_receive_myjobs_email() and saved_searches:
-            subject = _('Your Daily Saved Search Digest')
             context_dict = {
                 'saved_searches': saved_searches,
                 'digest': self,
@@ -367,10 +359,8 @@ class SavedSearchDigest(models.Model):
                 self.pk,
                 ','.join([str(search[0].pk) for search in saved_searches]))
             headers = {'X-SMTPAPI': category}
-            msg = EmailMessage(subject, message, settings.SAVED_SEARCH_EMAIL,
-                               [self.email], headers=headers)
-            msg.content_subtype = 'html'
-            msg.send()
+            send_email(message, email_type=settings.SAVED_SEARCH_DIGEST,
+                       recipients=[self.email], headers=headers)
 
         sent_search_kwargs = {
             'pk__in': [search[0].pk for search in saved_searches]

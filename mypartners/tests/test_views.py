@@ -46,10 +46,8 @@ class MyPartnersTestCase(MyJobsBase):
         # Create a company
         self.company = CompanyFactory()
         self.company.save()
-        self.assertEqual(len(mail.outbox), 0)
         self.admin = CompanyUserFactory(user=self.staff_user,
                                         company=self.company)
-        self.assertEqual(len(mail.outbox), 1)
         mail.outbox = []
         self.client = TestClient()
         self.client.login_user(self.staff_user)
@@ -313,7 +311,8 @@ class PartnerOverviewTests(MyPartnersTestCase):
         for row in container('div', class_="product-card"):
             title = "Test Subject  - example-contact"
             today = date.today()
-            sub_title = today.strftime('%b %e, %Y - Email')
+            sub_title = "%s. %s, %s" % (today.strftime('%b'), today.day,
+                                        today.year)
             self.assertIn(title,
                           row('div', class_="big-title")[0].get_text().strip())
             self.assertIn(sub_title,
@@ -921,7 +920,7 @@ class EmailTests(MyPartnersTestCase):
         email = mail.outbox.pop()
         expected_str = "No contacts or contact records could be created for " \
                        "the following email addresses."
-        self.assertEqual(email.from_email, settings.PRM_EMAIL)
+        self.assertEqual(email.from_email, 'My.jobs Partner Relationship Manager <prm@my.jobs>')
         self.assertEqual(email.to, [self.staff_user.email])
         self.assertTrue(expected_str in email.body)
         self.assert_contact_info_in_email(email)
@@ -941,7 +940,7 @@ class EmailTests(MyPartnersTestCase):
         expected_str = "We have successfully created contact records for:"
         unexpected_str = "No contacts or contact records could be created " \
                          "for the following email addresses."
-        self.assertEqual(email.from_email, settings.PRM_EMAIL)
+        self.assertEqual(email.from_email, 'My.jobs Partner Relationship Manager <prm@my.jobs>')
         self.assertEqual(email.to, [self.staff_user.email])
         self.assertTrue(expected_str in email.body)
         self.assertFalse(unexpected_str in email.body)
@@ -975,7 +974,7 @@ class EmailTests(MyPartnersTestCase):
         email = mail.outbox.pop()
         expected_str = "Contacts have been created for the following email " \
                        "addresses:"
-        self.assertEqual(email.from_email, settings.PRM_EMAIL)
+        self.assertEqual(email.from_email, 'My.jobs Partner Relationship Manager <prm@my.jobs>')
         self.assertEqual(email.to, [self.staff_user.email])
         self.assertTrue(expected_str in email.body)
         self.assert_contact_info_in_email(email)

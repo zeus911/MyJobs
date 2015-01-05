@@ -73,4 +73,4 @@ class RowForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(RowForm, self).__init__(*args, **kwargs)
-        self.initial['template'] = models.raw_base_template(self.Meta.model)
+        self.fields['template'].initial = models.raw_base_template(self.Meta.model)

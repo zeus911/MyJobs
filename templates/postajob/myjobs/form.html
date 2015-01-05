@@ -29,7 +29,7 @@
     {% block form %}
     <div class="row">
         <div class="span8">
-            {% if company.sitepackage_set.exists %}
+            {% if has_package or not on_admin_page %}
             <form action="?" method="post">
                 {% if show_product_labels %}
                 <div class="clear"></div>
@@ -64,9 +64,6 @@
             {% else %}
                 {% include "postajob/includes/no-sitepackage.html" %}
             {% endif %}
-        </div>
-        <div class="span4">
-            {% include "postajob/includes/postajob_navigation.html" %}
         </div>
 
     {% endblock form %}

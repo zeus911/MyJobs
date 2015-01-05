@@ -28,6 +28,8 @@
             administer {{ invitation.inviting_company.name }}'s recruitment
             and outreach tools.
         </p>
+
+        <p>You can <a href="https://secure.my.jobs{% url 'home' %}">log in here.</a></p>
     {% else %}
         <p>
             Your colleague
@@ -41,9 +43,11 @@
         </p>
     {% endif %}
 
-    <p>Please click on the Activate Account button below to get started.</p>
+    {% if not invitation.invitee.is_verified %}
+        <p>Please click on the Activate Account button below to get started.</p>
 
-    <p><a href="https://secure.my.jobs{{ url }}?verify={{ invitation.invitee.user_guid}}" class="btn">Activate Account</a></p>
+        <p><a href="https://secure.my.jobs{{ url }}?verify={{ invitation.invitee.user_guid}}" class="btn">Activate Account</a></p>
+    {% endif %}
 
     Sincerely,<br />
     My.jobs on behalf of

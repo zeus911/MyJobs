@@ -6,7 +6,6 @@ from uuid import uuid4
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
-from django.core.mail import EmailMessage
 from django.core.validators import MinValueValidator
 from django.db import models, DEFAULT_DB_ALIAS
 from django.db.models.query import QuerySet
@@ -15,6 +14,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
 from location_data import countries, all_regions, country_list, state_list
+from universal.helpers import send_email
 
 
 class BaseManagerMixin(object):
@@ -692,7 +692,8 @@ class Product(BaseModel):
 
     def seosite(self):
         if hasattr(self.package, "sitepackage"):
-            return self.package.sitepackage.sites.values_list("domain", flat=True)
+            return self.package.sitepackage.sites.values_list("domain",
+                                                              flat=True)
         return []
 
 
@@ -787,21 +788,14 @@ class Request(BaseModel):
         # Confirm that the request object was fully created and still exists
         # before sending the email.
         if self.request_object():
-            requester = self.requesting_company()
-            subject = 'New request from {company}'.format(company=requester.name)
-
             data = {
                 'request': self,
-                'requester': requester.name,
+                'requester': self.requesting_company().name,
             }
-            message = render_to_string('postajob/request_email.html', data)
-            if hasattr(self.owner, 'companyprofile'):
-                from_email = 'request@%s' % self.owner.companyprofile.outgoing_email_domain
-            else:
-                from_email = settings.REQUEST_EMAIL
-            msg = EmailMessage(subject, message, from_email, list(admin_emails))
-            msg.content_subtype = 'html'
-            msg.send()
+            body = render_to_string('postajob/request_email.html', data)
+            site = getattr(settings, 'SITE', None)
+            send_email(body, settings.POSTING_REQUEST_CREATED,
+                       recipients=admin_emails, site=site)
 
     def save(self, **kwargs):
         is_new = False
@@ -938,10 +932,18 @@ class Invoice(BaseModel):
     # Owner is the Company that owns the Products.
     owner = models.ForeignKey('seo.Company', related_name='owner')
 
-    def send_invoice_email(self, other_recipients=None):
+    def send_invoice_email(self, send_to_admins=True, other_recipients=None):
         """
-        Sends the invoice email to the company admins along with
-        any other optional recipients.
+        Sends the invoice email to the company admins along with any other
+        optional recipients.
+
+        Inputs:
+        :send_to_admins:    If True will send the invoice to all CompanyUsers
+                            of the Company that owns the product.
+                            [Defaults to True]
+
+        :other_recipients:  A list object that contains the other recipient(s)
+                            email so we can send them the invoice
 
         """
         from seo.models import CompanyUser
@@ -958,21 +960,18 @@ class Invoice(BaseModel):
 
         owner = self.owner
         group, _ = Group.objects.get_or_create(name=self.ADMIN_GROUP_NAME)
-        owner_admins = CompanyUser.objects.filter(company=owner, group=group)
-        owner_admins = owner_admins.values_list('user__email', flat=True)
+        owner_admins = []
+        if send_to_admins:
+            owner_admins = CompanyUser.objects.filter(company=owner,
+                                                      group=group)
+            owner_admins = owner_admins.values_list('user__email', flat=True)
 
         recipients = set(other_recipients + list(owner_admins))
         if recipients:
-            subject = '{company} Invoice'.format(company=owner.name)
-            message = render_to_string('postajob/invoice_email.html', data)
-            if hasattr(self.owner, 'companyprofile'):
-                from_email = 'invoice@%s' % self.owner.companyprofile.outgoing_email_domain
-            else:
-                from_email = settings.INVOICE_EMAIL
-            msg = EmailMessage(subject, message, from_email,
-                               list(recipients))
-            msg.content_subtype = 'html'
-            msg.send()
+            body = render_to_string('postajob/invoice_email.html', data)
+            site = getattr(settings, 'SITE', None)
+            send_email(body, email_type=settings.INVOICE, recipients=recipients,
+                       site=site)
 
 
 class InvoiceProduct(models.Model):

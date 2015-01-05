@@ -5,7 +5,7 @@ import json
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import Http404, reverse, reverse_lazy, resolve
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render_to_response
 from django.template import RequestContext
 from django.utils.decorators import method_decorator
@@ -61,6 +61,28 @@ def view_job(request, purchased_product, pk, admin):
         'job': PurchasedJob.objects.get(pk=pk)
     }
     return render_to_response('postajob/%s/view_job.html' % settings.PROJECT,
+                              data, RequestContext(request))
+
+@company_has_access(None)
+def view_invoice(request, purchased_product):
+    company = get_company_or_404(request)
+    product = get_object_or_404(PurchasedProduct, pk=purchased_product,
+                                owner=company)
+    invoice = product.invoice
+    data = {
+        'company': company,
+        'purchased_product': product,
+        'invoice': invoice,
+        'purchases': invoice.invoiced_products.all()
+    }
+    # m is used to render success message. Also, 'm' for shorter url query set.
+    if 'm' in request.GET:
+        data.update({'alert': 'success',
+                     'alert_message': '<b>Success!</b>  You should receive '
+                                      'this invoice shortly.'
+                     })
+    return render_to_response('postajob/%s/view_invoice.html'
+                              % settings.PROJECT,
                               data, RequestContext(request))
 
 
@@ -154,7 +176,6 @@ def admin_products(request):
     else:
         products = Product.objects.all()
     data = {
-        'on_page': 'products',
         'products': products.filter(owner=company),
         'company': company,
     }
@@ -173,7 +194,6 @@ def admin_groupings(request):
     else:
         grouping = ProductGrouping.objects.all()
     data = {
-        'on_page': 'groupings',
         'product_groupings': grouping.filter(owner=company),
         'company': company,
     }
@@ -192,7 +212,6 @@ def admin_offlinepurchase(request):
     else:
         purchases = OfflinePurchase.objects.all()
     data = {
-        'on_page': 'offline_purchases',
         'offline_purchases': purchases.filter(owner=company),
         'company': company,
     }
@@ -211,7 +230,6 @@ def admin_request(request):
     else:
         requests = Request.objects.all()
     data = {
-        'on_page': 'requests',
         'company': company,
         'pending_requests': requests.filter(owner=company, action_taken=False),
         'processed_requests': requests.filter(owner=company, action_taken=True)
@@ -233,7 +251,6 @@ def admin_purchasedproduct(request):
         purchases = Request.objects.all()
     purchases = purchases.filter(product__owner=company)
     data = {
-        'on_page': 'purchased_products',
         'company': company,
         'active_products': purchases.filter(expiration_date__gte=date.today()),
         'expired_products': purchases.filter(expiration_date__lt=date.today()),
@@ -268,6 +285,8 @@ def view_request(request, pk, model=None):
         'content_type': content_type,
         'object': request_object,
         'request_obj': request_made,
+        'has_package': company.sitepackage_set.filter(
+            sites__in=settings.SITE.postajob_site_list()).exists()
     }
 
     if not data['object'].user_has_access(request.user):
@@ -333,6 +352,7 @@ def process_admin_request(request, pk, approve=True,
 
 def product_listing(request):
     site = settings.SITE
+    company = get_company(request)
 
     # Get all site packages and products for a site.
     site_packages = site.sitepackage_set.all()
@@ -353,7 +373,8 @@ def product_listing(request):
 
     return render_to_response('postajob/%s/package_list.html'
                               % settings.PROJECT,
-                              {'product_groupings': groupings},
+                              {'product_groupings': groupings,
+                               'company': company},
                               RequestContext(request))
 
 
@@ -412,13 +433,12 @@ def is_company_user(request):
 def resend_invoice(request, pk):
     company = get_company(request)
 
-    try:
-        product = PurchasedProduct.objects.get(pk=pk, product__owner=company)
-    except PurchasedProduct.DoesNotExist:
-        return HttpResponse(json.dumps(False))
-
-    product.invoice.send_invoice_email()
-    return HttpResponse(json.dumps(True))
+    product = PurchasedProduct.objects.get(pk=pk, product__owner=company)
+    product.invoice.send_invoice_email(send_to_admins=False,
+                                       other_recipients=[request.user.email])
+    data = {'purchased_product': pk}
+    redirect_url = reverse('admin_view_invoice', kwargs=data) + '?m=success'
+    return HttpResponseRedirect(redirect_url)
 
 
 class PostajobModelFormMixin(object):
@@ -442,6 +462,17 @@ class PostajobModelFormMixin(object):
     def get_context_data(self, **kwargs):
         kwargs['company'] = get_company(self.request)
         kwargs['prevent_delete'] = self.prevent_delete
+        kwargs['on_admin_page'] = 'admin' in self.request.get_full_path()
+        if kwargs['on_admin_page']:
+            # don't hide the company profile page
+            kwargs['on_admin_page'] = ('profile' not in
+                                       self.request.get_full_path())
+        
+        # the current domain should be part of the company's site package
+        if kwargs['company']:
+            kwargs['has_package'] = kwargs['company'].sitepackage_set.filter(
+                sites__in=settings.SITE.postajob_site_list()).exists()
+
         return super(PostajobModelFormMixin, self).get_context_data(**kwargs)
 
 
@@ -834,7 +865,6 @@ class CompanyProfileFormView(PostajobModelFormMixin, RequestFormViewBase):
             **kwargs)
         company = get_company(self.request)
         context.setdefault('company', company)
-        context['on_page'] = 'company_profile'
 
         return context
 
@@ -871,7 +901,6 @@ def blocked_user_management(request):
     profile = CompanyProfile.objects.get_or_create(company=company)[0]
     blocked_users = profile.blocked_users.all()
     data = {
-        'on_page': 'blocked_users',
         'company': company,
         'blocked_users': blocked_users
     }
