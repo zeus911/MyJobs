@@ -2,13 +2,17 @@
 
 {% if purchased_products %}
     {% for product in purchased_products %}
-    <div id="request-{{ request.id }}" class="product-card no-highlight">
-        <div class="big-title">{{ product.product }}</div>
-        <div class="sub-title">{{ product.owner.name }}</div>
-        <div class="product-details">
-            {% if product.can_post_more and product.jobs_remaining > 0 %}{{ product.jobs_remaining }}{% elif product.can_post_more %}Unlimited{% else %}0{% endif %}
+    <div class="product-card no-highlight">
+        <div class="big-title">
+            {{ product.product }}
         </div>
-        <a id="resend-invoice-{{ product.pk }}" class="btn" href="">Resend Invoice</a>
+        <div class="product-details">
+            Jobs: <b>{{product.job_amount_posted}} / {%if product.num_jobs_allowed == 0%}Unlimited{%else%}{{product.num_jobs_allowed}}{%endif%}</b>
+        </div>
+        <div class="product-details">
+            Expires: <b>{{ product.expiration_date }}</b>
+        </div>
+        <a id="product-{{ product.id }}" class="btn" href="{% url 'purchasedjobs' purchased_product=product.pk %}">Details</a>
     </div>
     {% endfor %}
 {% else %}

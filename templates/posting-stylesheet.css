@@ -740,3 +740,10 @@ legend {
     width: 100%;
     margin-bottom: 10px;
 }
+
+.alert-success {
+    color: #468847;
+    background-color: #dff0d8;
+    border: 1px solid #d6e9c6;
+    padding: 8px 14px;
+}
