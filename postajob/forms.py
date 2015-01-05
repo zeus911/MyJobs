@@ -329,6 +329,7 @@ class PurchasedJobBaseForm(JobForm):
 
     def clean(self):
         date_expired = self.cleaned_data.get('date_expired').date()
+        is_expired = self.cleaned_data.get('is_expired')
 
         if not hasattr(self, 'purchased_product'):
             self.purchased_product = self.cleaned_data.get('purchased_product')
@@ -339,6 +340,10 @@ class PurchasedJobBaseForm(JobForm):
         else:
             max_job_length = self.purchased_product.max_job_length
             max_expired_date = (date.today() + timedelta(max_job_length))
+
+        if not is_expired and date.today() >= max_expired_date:
+            raise ValidationError('This job has expired and can no longer '
+                                  'be relisted.')
 
         if date_expired > max_expired_date:
             msg = 'The job must expire before %s.' % max_expired_date

@@ -767,6 +767,11 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
     update_name = 'offlinepurchase_update'
     delete_name = 'offlinepurchase_delete'
 
+    def delete(self):
+        if self.object.redeemed_on:
+            raise Http404
+        return super(OfflinePurchaseFormView, self).delete()
+
     @method_decorator(user_is_allowed())
     @method_decorator(company_has_access('product_access'))
     def dispatch(self, *args, **kwargs):
