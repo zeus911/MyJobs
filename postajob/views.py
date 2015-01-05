@@ -231,6 +231,8 @@ def admin_request(request):
         requests = Request.objects.all()
     data = {
         'company': company,
+        'has_package': company.sitepackage_set.filter(
+            sites__in=settings.SITE.postajob_site_list()).exists(),
         'pending_requests': requests.filter(owner=company, action_taken=False),
         'processed_requests': requests.filter(owner=company, action_taken=True)
     }
