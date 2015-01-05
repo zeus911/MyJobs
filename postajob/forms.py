@@ -37,7 +37,7 @@ class BaseJobForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.159-15.js', )
+        js = ('postajob.160-2.js', )
 
     apply_choices = [('link', "Link"), ('email', 'Email'),
                      ('instructions', 'Instructions')]
@@ -439,7 +439,7 @@ class ProductForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.159-15.js', )
+        js = ('postajob.160-2.js', )
 
     job_limit_choices = [('unlimited', "Unlimited"),
                          ('specific', 'A Specific Number'), ]
@@ -644,11 +644,12 @@ class PurchasedProductNoPurchaseForm(RequestForm):
         self.instance.invoice = invoice
         self.instance.product = self.product
         self.instance.owner = self.company
+        self.instance.paid = True
 
         super(PurchasedProductNoPurchaseForm, self).save(commit)
 
         invoice.save()
-        invoice.send_invoice_email([self.request.user.email])
+        invoice.send_invoice_email(other_recipients=[self.request.user.email])
 
 
 class PurchasedProductForm(RequestForm):
@@ -759,7 +760,8 @@ class PurchasedProductForm(RequestForm):
         except AuthorizeResponseError:
             pass
         else:
-            invoice.send_invoice_email([self.request.user.email])
+            invoice.send_invoice_email(
+                other_recipients=[self.request.user.email])
 
 
 class OfflinePurchaseForm(RequestForm):
@@ -779,7 +781,7 @@ class OfflinePurchaseForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.159-15.js', )
+        js = ('postajob.160-2.js', )
 
     def __init__(self, *args, **kwargs):
         super(OfflinePurchaseForm, self).__init__(*args, **kwargs)

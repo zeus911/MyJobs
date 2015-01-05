@@ -938,10 +938,18 @@ class Invoice(BaseModel):
     # Owner is the Company that owns the Products.
     owner = models.ForeignKey('seo.Company', related_name='owner')
 
-    def send_invoice_email(self, other_recipients=None):
+    def send_invoice_email(self, send_to_admins=True, other_recipients=None):
         """
-        Sends the invoice email to the company admins along with
-        any other optional recipients.
+        Sends the invoice email to the company admins along with any other
+        optional recipients.
+
+        Inputs:
+        :send_to_admins:    If True will send the invoice to all CompanyUsers
+                            of the Company that owns the product.
+                            [Defaults to True]
+
+        :other_recipients:  A list object that contains the other recipient(s)
+                            email so we can send them the invoice
 
         """
         from seo.models import CompanyUser
@@ -958,8 +966,11 @@ class Invoice(BaseModel):
 
         owner = self.owner
         group, _ = Group.objects.get_or_create(name=self.ADMIN_GROUP_NAME)
-        owner_admins = CompanyUser.objects.filter(company=owner, group=group)
-        owner_admins = owner_admins.values_list('user__email', flat=True)
+        owner_admins = []
+        if send_to_admins:
+            owner_admins = CompanyUser.objects.filter(company=owner,
+                                                      group=group)
+            owner_admins = owner_admins.values_list('user__email', flat=True)
 
         recipients = set(other_recipients + list(owner_admins))
         if recipients:
