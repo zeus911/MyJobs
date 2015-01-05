@@ -329,11 +329,13 @@ def edit_account(request):
                 ctx['message_body'] = ('Communication Settings have been '
                                        'updated successfully.')
                 ctx['messagetype'] = 'success'
-                return render_to_response('myjobs/edit-account.html', ctx,
+                template = '%s/edit-account.html' % settings.PROJECT
+                return render_to_response(template, ctx,
                                           RequestContext(request))
             else:
                 ctx['communication_form'] = form
-                return render_to_response('myjobs/edit-account.html', ctx,
+                template = '%s/edit-account.html' % settings.PROJECT
+                return render_to_response(template, ctx,
                                           RequestContext(request))
 
         elif 'password' in request.REQUEST:
@@ -346,16 +348,18 @@ def edit_account(request):
                 ctx['message_body'] = ('Password Settings have been '
                                        'updated successfully.')
                 ctx['messagetype'] = 'success'
-                return render_to_response('myjobs/edit-account.html', ctx,
+                template = '%s/edit-account.html' % settings.PROJECT
+                return render_to_response(template, ctx,
                                           RequestContext(request))
             else:
                 ctx['password_form'] = form
-                return render_to_response('myjobs/edit-account.html', ctx,
+                template = '%s/edit-account.html' % settings.PROJECT
+                return render_to_response(template, ctx,
                                           RequestContext(request))
         else:
             return Http404
 
-    return render_to_response('myjobs/edit-account.html', ctx,
+    return render_to_response('%s/edit-account.html' % settings.PROJECT, ctx,
                               RequestContext(request))
 
 
@@ -363,9 +367,11 @@ def edit_account(request):
 def delete_account(request):
     email = request.user.email
     request.user.delete()
+
+    template = '%s/delete-account-confirmation.html' % settings.PROJECT
     ctx = {'email': email}
-    return render_to_response('myjobs/delete-account-confirmation.html', ctx,
-                              RequestContext(request))
+
+    return render_to_response(template, ctx, RequestContext(request))
 
 
 @user_passes_test(User.objects.not_disabled)
@@ -374,9 +380,11 @@ def disable_account(request):
     email = user.email
     user.disable()
     logout(request)
+
+    template = '%s/disable-account-confirmation.html' % settings.PROJECT
     ctx = {'email': email}
-    return render_to_response('myjobs/disable-account-confirmation.html', ctx,
-                              RequestContext(request))
+
+    return render_to_response(template, ctx, RequestContext(request))
 
 
 @csrf_exempt
