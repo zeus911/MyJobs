@@ -189,7 +189,7 @@ def has_mx_record(domain):
 def send_email(email_body, email_type=settings.GENERIC,
                recipients=None, site=None, **kwargs):
 
-    recipients = [] if recipients is None else recipients
+    recipients = recipients or []
 
     company_name = 'My.jobs'
     domain = 'my.jobs'
