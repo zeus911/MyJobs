@@ -42,6 +42,25 @@ sys.path.insert(0, os.path.join(BASE_DIR))
 sys.path.insert(0, os.path.join(BASE_DIR, '../'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 FEED_FILE_PREFIX = "dseo_feed_"
+PARTNER_LIBRARY_SOURCES = {
+    'Employment Referral Resource Directory': {
+        'url': 'http://www.dol-esa.gov/errd/getexcel.jsp?op=1',
+        'params': {
+            'sel': 'ALL',
+            'subreg': 'Download'
+        }
+    },
+    'Disability and Veterans Community Resources Directory': {
+        'url': 'http://dol-esa.gov/errd/resourcequery.jsp',
+        'params': {
+            'returnformat': 'excel',
+            'formname': 'donwloadreg',
+            'reg': 'ALL',
+            'subreg': 'Download'
+        }
+    }
+}
+
 
 
 @task(name='tasks.send_search_digest', ignore_result=True,
@@ -67,54 +86,56 @@ def send_search_digest(self, search):
 
 @task(name='tasks.update_partner_library', ignore_result=True,
       default_retry_delay=180, max_retries=2)
-def update_partner_library(path=None, quiet=False):
-    added = 0
-    skipped = 0
-    if not quiet:
-        if not path:
-            print "Connecting to OFCCP Directory...."
+def update_partner_library():
+    print "Connecting to OFCCP Directory...."
+    print "Parsing data for PartnerLibrary information..."
 
-        print "Parsing data for PartnerLibrary information..."
+    added = skipped = 0
+    for source, data in PARTNER_LIBRARY_SOURCES.items():
+        for partner in get_library_partners(data['url'], data['params']):
+            # the second join + split take care of extra internal whitespace
+            fullname = " ".join(" ".join([partner.first_name,
+                                          partner.middle_name,
+                                          partner.last_name]).split())
+            emails = [email.strip()
+                      for email in partner.email_id.split(';', 1)]
 
-    for partner in get_library_partners(path):
-        # the second join + split take care of extra internal whitespace
-        fullname = " ".join(" ".join([partner.first_name,
-                                      partner.middle_name,
-                                      partner.last_name]).split())
-        emails = [email.strip() for email in partner.email_id.split(';', 1)]
+            for email in emails:
+                # disambiguate records by source, contact name, and address
+                if not PartnerLibrary.objects.filter(data_source=source,
+                                                     contact_name=fullname,
+                                                     st=partner.st,
+                                                     city=partner.city,
+                                                     email=email):
+                    PartnerLibrary.objects.create(
+                        data_source=source,
+                        name=partner.organization_name,
+                        uri=partner.website,
+                        region=partner.region,
+                        state=partner.state,
+                        area=partner.area,
+                        contact_name=fullname,
+                        phone=partner.phone,
+                        phone_ext=partner.phone_ext,
+                        alt_phone=partner.alt_phone,
+                        fax=partner.fax,
+                        email=email,
+                        street1=partner.street1,
+                        street2=partner.street2,
+                        city=partner.city,
+                        st=partner.st,
+                        zip_code=partner.zip_code,
+                        is_minority=partner.minority,
+                        is_female=partner.female,
+                        is_disabled=partner.disabled,
+                        is_disabled_veteran=partner.disabled_veteran,
+                        is_veteran=partner.veteran)
+                    added += 1
+                else:
+                    skipped += 1
 
-        for email in emails:
-            if not PartnerLibrary.objects.filter(contact_name=fullname,
-                                                 st=partner.st,
-                                                 city=partner.city,
-                                                 email=email):
-                PartnerLibrary.objects.create(
-                    name=partner.organization_name,
-                    uri=partner.website,
-                    region=partner.region,
-                    state=partner.state,
-                    area=partner.area,
-                    contact_name=fullname,
-                    phone=partner.phone,
-                    phone_ext=partner.phone_ext,
-                    alt_phone=partner.alt_phone,
-                    fax=partner.fax,
-                    email=email,
-                    street1=partner.street1,
-                    street2=partner.street2,
-                    city=partner.city,
-                    st=partner.st,
-                    zip_code=partner.zip_code,
-                    is_minority=partner.minority,
-                    is_female=partner.female,
-                    is_disabled=partner.disabled,
-                    is_disabled_veteran=partner.disabled_veteran,
-                    is_veteran=partner.veteran)
-                added += 1
-            else:
-                skipped += 1
-    if not quiet:
-        print "%d records added and %d records skipped." % (added, skipped)
+        print "%d records added and %d records skipped from '%s.\n" % (
+            added, skipped, source)
 
 
 @task(name='tasks.send_search_digests', ignore_result=True)

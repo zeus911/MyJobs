@@ -1,16 +1,9 @@
-from itertools import chain, product, islice
+from itertools import product
 from datetime import datetime, timedelta
-import os
 import random
 
-import pytz
-from django.db.models import Min, Max
-from django.utils.timezone import get_current_timezone_name
-
-from tasks import update_partner_library
-from mypartners import helpers, models
-from mypartners.helpers import get_library_partners, new_partner_from_library
-from mypartners.tests.test_views import (MyPartnersTestCase, 
+from mypartners import helpers
+from mypartners.tests.test_views import (MyPartnersTestCase,
                                          PartnerLibraryTestCase)
 from mypartners.tests.factories import ContactRecordFactory, PartnerFactory
 
