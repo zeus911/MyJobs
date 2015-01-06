@@ -12,9 +12,7 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Default sort_by set to 'Date' for Partner Saved Searches, see PD-912
-        for savedsearch in orm.SavedSearch.objects.filter(partnersavedsearch=True):
-            savedsearch.sort_by = 'Date'
-            savedsearch.save()
+        orm.SavedSearch.objects.filter(partnersavedsearch__isnull=False).update(sort_by='Date')
 
     def backwards(self, orm):
         pass
