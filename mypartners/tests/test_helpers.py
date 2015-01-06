@@ -130,7 +130,8 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
 
         for partner in partners:
             searchable_fields = " ".join(
-                [partner.name, partner.uri, partner.contact_name]).lower()
+                [partner.name, partner.uri, partner.contact_name,
+                 partner.email]).lower()
 
             self.assertIn('center', searchable_fields)
             self.assertIn('.org', searchable_fields)
@@ -160,14 +161,14 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
         request = self.request_factory.get(
             'prm/view/partner-library/', dict(
                 company=self.company.id,
-                city='Monaca'))
+                city='Beaumont'))
         request.user = self.staff_user
 
         partners = helpers.filter_partners(request, partner_library=True)
         self.assertTrue(partners)
 
         for partner in partners:
-            self.assertEqual(partner.city, 'Monaca')
+            self.assertEqual(partner.city, 'Beaumont')
 
     def test_date_filters(self):
         """

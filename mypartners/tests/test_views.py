@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import json
 import re
 from time import sleep
-from itertools import islice
 import os
 import random
 
@@ -1105,7 +1104,7 @@ class PartnerLibraryTestCase(MyPartnersTestCase):
         url, params = PARTNER_LIBRARY_SOURCES.items()[0][1].values()
 
         super(PartnerLibraryTestCase, cls).setUpClass()
-        for partner in islice(get_library_partners(url, params), 0, 10):
+        for partner in get_library_partners(url, params):
             fullname = " ".join(" ".join([partner.first_name,
                                           partner.middle_name,
                                           partner.last_name]).split())
