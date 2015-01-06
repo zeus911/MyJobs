@@ -1,13 +1,21 @@
 from django import forms
-from passwords.fields import PasswordField
+from django.conf import settings
+from django.contrib.auth import authenticate
 from django.contrib.auth.forms import (AuthenticationForm, PasswordResetForm,
                                        SetPasswordForm)
-from django.contrib.auth import authenticate
+from django.contrib.auth.tokens import default_token_generator
 from django.core.validators import validate_email
+from django.template import loader
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import ugettext_lazy as _
+
+from passwords.fields import PasswordField
 
 from myjobs.models import User
 from registration.models import Invitation
+from registration.templatetags.password_reset_tags import get_current_seosite
+from universal.helpers import send_email
 
 
 class CustomSetPasswordForm(SetPasswordForm):
@@ -137,6 +145,29 @@ class CustomPasswordResetForm(PasswordResetForm):
                                 attrs={'placeholder': _('Email'),
                                        'id': 'id_email',
                                        'class': 'reset-pass-input'}))
+
+    def save(self, domain_override=None,
+             subject_template_name='registration/password_reset_subject.txt',
+             email_template_name='registration/password_reset_email.html',
+             use_https=False, token_generator=default_token_generator,
+             from_email=None, request=None):
+        email = self.cleaned_data['email']
+        user = User.objects.get_email_owner(email)
+        if user is None:
+            return
+        c = {
+            'user': user,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': token_generator.make_token(user)
+        }
+        headers = {
+            'X-SMTPAPI': '{"category": "Forgotten Password for User %s"}' % (
+                user.pk)
+        }
+        body = loader.render_to_string(email_template_name, c)
+        send_email(body, email_type=settings.FORGOTTEN_PASSWORD,
+                   recipients=[email], headers=headers,
+                   domain=get_current_seosite('domain'))
 
 
 class RegistrationForm(forms.Form):
