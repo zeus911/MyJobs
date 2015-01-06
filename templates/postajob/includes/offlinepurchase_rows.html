@@ -5,8 +5,8 @@
     <div class="product-card no-highlight">
         <div class="big-title">{% get_product_names purchase %}</div>
         {% if purchase.redeemed_on %}<div class="sub-title">{{ purchase.redeemed_on }}</div>{% endif %}
-        <div class="product-details">{{ purchase.redemption_uid }} - Redeemed by: {% get_redeemer purchase %}</div>
-        <a id="product-{{ product.id }}" class="btn" href="{% url 'offlinepurchase_delete' pk=purchase.pk %}">Delete</a>
+        { % if purchase.redeemed_by %}<div class="product-details">{{ purchase.redemption_uid }} - Redeemed by: {% get_redeemer purchase %}</div> {% endif %}
+        {% if not purchase.redeemed_on %}<a id="product-{{ product.id }}" class="btn" href="{% url 'offlinepurchase_delete' pk=purchase.pk %}">Delete</a> {% endif %}
     </div>
     {% endfor %}
 {% else %}
