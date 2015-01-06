@@ -434,7 +434,8 @@ $(document).ready(function() {
             }
 
             var disclaimer = document.createElement("span"),
-                d_text = "*This partner's information was provided by the OFCCP Referral Directory. " +
+                source = $(this).data("source"),
+                d_text = "*This partner's information was provided by the <em>" + source + "</em>. " +
                     "To confirm its accuracy, DirectEmployers highly recommends following up directly " +
                     "with the partner. ";
             disclaimer.appendChild(document.createTextNode(d_text));

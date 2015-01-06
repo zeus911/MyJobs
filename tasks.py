@@ -43,13 +43,15 @@ sys.path.insert(0, os.path.join(BASE_DIR, '../'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 FEED_FILE_PREFIX = "dseo_feed_"
 PARTNER_LIBRARY_SOURCES = {
-    'ERRD': {
+    # http://www.dol-esa.gov/errd/index.html
+    'Employment Referral Resource Directory': {
         'url': 'http://www.dol-esa.gov/errd/getexcel.jsp?op=1',
         'params': {
             'sel': 'ALL',
             'subreg': 'Download'
         }
     },
+    # http://www.dol-esa.gov/errd/resources.html
     'Disability and Veterans Community Resources Directory': {
         'url': 'http://www.dol-esa.gov/errd/resourcequery.jsp',
         'params': {
