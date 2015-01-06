@@ -807,7 +807,6 @@ class SearchEditTests(MyPartnersTestCase):
                 'day_of_month': '',
                 'day_of_week': '3',
                 'jobs_per_email': 5,
-                'partner_message': '',
                 'notes': ''}
         post = data.copy()
         post.update({'company': self.company.id,
@@ -841,7 +840,6 @@ class SearchEditTests(MyPartnersTestCase):
                 'day_of_month': '',
                 'day_of_week': '3',
                 'jobs_per_email': 5,
-                'partner_message': '',
                 'notes': ''}
         post = data.copy()
         post.update({'company': self.company.id,
@@ -883,7 +881,6 @@ class SearchEditTests(MyPartnersTestCase):
                 'day_of_month': '',
                 'day_of_week': '3',
                 'jobs_per_email': 10,
-                'partner_message': '',
                 'notes': '',
                 'company': self.company.id,
                 'partner': self.partner.id}

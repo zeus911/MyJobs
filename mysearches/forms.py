@@ -89,8 +89,6 @@ class SavedSearchForm(BaseUserForm):
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
             'sort_by': RadioSelect(renderer=HorizontalRadioRenderer)
         }
-        exclude = ['custom_message']
-
 
 class DigestForm(BaseUserForm):
     def __init__(self, *args, **kwargs):
@@ -132,7 +130,6 @@ class PartnerSavedSearchForm(ModelForm):
             help_text="If a contact does not have an email they will "
                       "not show up on this list.")
         self.fields["notes"].label = "Notes and Comments"
-        self.fields["partner_message"].label = "Message for Contact"
         self.fields["url_extras"].label = "Source Codes & Campaigns"
         if self.instance.id and self.instance.tags:
             tag_names = ",".join([tag.name for tag in self.instance.tags.all()])
@@ -152,7 +149,7 @@ class PartnerSavedSearchForm(ModelForm):
         model = PartnerSavedSearch
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
                 'account_activation_message', 'frequency', 'day_of_month',
-                'day_of_week', 'jobs_per_email', 'partner_message', 'notes')
+                'day_of_week', 'jobs_per_email', 'notes')
         exclude = ('provider', 'sort_by', )
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
@@ -242,7 +239,7 @@ class PartnerSubSavedSearchForm(ModelForm):
         exclude = ('provider', 'url_extras', 'partner_message',
                    'account_activation_message', 'created_by', 'user',
                    'created_on', 'label', 'url', 'feed', 'email', 'notes',
-                   'custom_message', 'tags', )
+                   'tags', )
         widgets = {
             'sort_by': RadioSelect(renderer=HorizontalRadioRenderer,
                                    attrs={'id': 'sort_by'}),

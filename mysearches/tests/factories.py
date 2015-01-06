@@ -37,5 +37,4 @@ class PartnerSavedSearchFactory(SavedSearchFactory):
     provider = factory.SubFactory(CompanyFactory)
     partner = factory.SubFactory(PartnerFactory)
     url_extras = ""
-    partner_message = ""
     account_activation_message = ""
