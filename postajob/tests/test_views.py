@@ -300,6 +300,35 @@ class ViewTests(PostajobTestBase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(PurchasedJob.objects.all().count(), 1)
 
+    def test_unexpire_expired_purchased_job(self):
+        product = PurchasedProductFactory(
+            product=self.product, owner=self.company)
+        job = PurchasedJobFactory(
+            owner=self.company, created_by=self.user,
+            purchased_product=product)
+        kwargs = {'pk': job.pk}
+
+        self.assertFalse(job.is_expired)
+
+        job.is_expired = True
+        job.date_expired = date.today()
+        job.max_expired_date = date.today() - timedelta(1)
+        job.save()
+
+        data = dict(self.purchasedjob_form_data)
+        data['is_expired'] = False
+
+        response = self.client.post(reverse('purchasedjob_update',
+                                            kwargs=kwargs),
+                                    data=self.purchasedjob_form_data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        # Confirm that the job remains expired despite the attempt to
+        # change it.
+        job = Job.objects.get()
+        self.assertTrue(job.is_expired)
+
     def test_purchasedjob_add_too_many(self):
         product = PurchasedProductFactory(
             product=self.product, owner=self.company)
@@ -797,6 +826,18 @@ class ViewTests(PostajobTestBase):
                                             kwargs=kwargs), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(OfflinePurchase.objects.all().count(), 0)
+
+    def test_offlinepurchase_delete_already_redeemed(self):
+        offline_purchase = OfflinePurchaseFactory(
+            owner=self.company, created_by=self.company_user,
+            redeemed_on=date.today(), redeemed_by=self.company_user)
+        kwargs = {'pk': offline_purchase.pk}
+
+        response = self.client.post(reverse('offlinepurchase_delete',
+                                            kwargs=kwargs), follow=True)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(OfflinePurchase.objects.all().count(), 1)
+
 
     def test_update_companyprofile(self):
         self.client.post(reverse('companyprofile_add'),

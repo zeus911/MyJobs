@@ -341,9 +341,11 @@ class PurchasedJobBaseForm(JobForm):
             max_job_length = self.purchased_product.max_job_length
             max_expired_date = (date.today() + timedelta(max_job_length))
 
+        # Honestly just backup, because this can't really happen.
         if not is_expired and date.today() >= max_expired_date:
-            raise ValidationError('This job has expired and can no longer '
-                                  'be relisted.')
+            msg = 'This job has expired and can no longer be relisted.'
+            self._errors['is_expired'] = self.error_class([msg])
+            raise ValidationError(msg)
 
         if date_expired > max_expired_date:
             msg = 'The job must expire before %s.' % max_expired_date
