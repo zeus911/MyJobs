@@ -298,7 +298,8 @@ def get_library_partners(url, params=None):
     """
 
     params = params or {}
-    tree = html.fromstring(requests.post(url, params=params).text)
+    response = requests.post(url, params=params)
+    tree = html.fromstring(response.text)
 
     # convert column headers to valid Python identifiers, and rename duplicates
     cols = []

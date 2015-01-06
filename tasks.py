@@ -51,10 +51,10 @@ PARTNER_LIBRARY_SOURCES = {
         }
     },
     'Disability and Veterans Community Resources Directory': {
-        'url': 'http://dol-esa.gov/errd/resourcequery.jsp',
+        'url': 'http://www.dol-esa.gov/errd/resourcequery.jsp',
         'params': {
             'returnformat': 'excel',
-            'formname': 'donwloadreg',
+            'formname': 'downloadreg',
             'reg': 'ALL',
             'subreg': 'Download'
         }
@@ -87,11 +87,12 @@ def send_search_digest(self, search):
 @task(name='tasks.update_partner_library', ignore_result=True,
       default_retry_delay=180, max_retries=2)
 def update_partner_library():
-    print "Connecting to OFCCP Directory...."
-    print "Parsing data for PartnerLibrary information..."
 
-    added = skipped = 0
     for source, data in PARTNER_LIBRARY_SOURCES.items():
+        print "Connecting to %s...." % source
+        print "Parsing data for PartnerLibrary information..."
+
+        added = skipped = 0
         for partner in get_library_partners(data['url'], data['params']):
             # the second join + split take care of extra internal whitespace
             fullname = " ".join(" ".join([partner.first_name,
@@ -106,7 +107,7 @@ def update_partner_library():
                                                      contact_name=fullname,
                                                      st=partner.st,
                                                      city=partner.city,
-                                                     email=email):
+                                                     email=email).exists():
                     PartnerLibrary.objects.create(
                         data_source=source,
                         name=partner.organization_name,
