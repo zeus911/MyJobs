@@ -1195,7 +1195,7 @@ def process_email(request):
         error = "Your account is setup as the admin for multiple companies. " \
                 "Because of this we cannot match this email with a " \
                 "specific partner on a specific company with 100% certainty. " \
-                "You will need to login to My.jobs and got to " \
+                "You will need to login to My.jobs and go to " \
                 "https://secure.my.jobs/prm to create your record manually."
         send_contact_record_email_response([], [], [], contact_emails,
                                              error, admin_email)
