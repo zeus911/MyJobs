@@ -226,6 +226,8 @@ class PartnerSavedSearchForm(ModelForm):
                 'added_saved_search': instance,
             }
             Invitation(**invite_args).save()
+            # Default sort_by for new Partner Saved Searches, see PD-912
+            instance.sort_by = 'Date'
         partner = instance.partner
         contact = Contact.objects.filter(partner=partner,
                                          user=instance.user)[0]
