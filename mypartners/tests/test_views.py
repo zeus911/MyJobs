@@ -16,6 +16,8 @@ from django.http import Http404
 from django.test.client import RequestFactory 
 from django.utils.timezone import utc
 
+from tasks import PARTNER_LIBRARY_SOURCES
+
 from myjobs.tests.setup import MyJobsBase
 from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
@@ -1100,10 +1102,10 @@ class EmailTests(MyPartnersTestCase):
 class PartnerLibraryTestCase(MyPartnersTestCase):
     @classmethod
     def setUpClass(cls):
+        source, params = PARTNER_LIBRARY_SOURCES.items()[0]
+
         super(PartnerLibraryTestCase, cls).setUpClass()
-        path = os.path.join(
-            os.path.dirname(__file__), 'data', 'partner-library.html')
-        for partner in islice(get_library_partners(path), 0, 10):
+        for partner in islice(get_library_partners(source, params), 0, 10):
             fullname = " ".join(" ".join([partner.first_name,
                                           partner.middle_name,
                                           partner.last_name]).split())
