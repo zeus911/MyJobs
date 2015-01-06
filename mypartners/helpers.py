@@ -516,13 +516,15 @@ def new_partner_from_library(request):
             tags.append(tag)
 
     if library.is_disabled:
+        # rename the tag on the front end
         tag, _ = Tag.objects.get_or_create(
             company=company, name="Disability",
             defaults={'hex_color': '808A9A'})
         tags.append(tag)
 
+    # we are only interested in get_or_creates first item
     tags.append(Tag.objects.get_or_create(
-        company=company, name='OFCCP Library')[0])
+        company=company, name=library.data_source)[0])
 
     partner = Partner.objects.create(
         name=library.name,
