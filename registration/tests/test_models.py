@@ -331,7 +331,7 @@ class InvitationModelTests(MyJobsBase):
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox.pop()
         self.assertTrue('invitation' in email.subject)
-        self.assertEqual(email.from_email, settings.DEFAULT_FROM_EMAIL)
+        self.assertEqual(email.from_email, 'accounts@my.jobs')
         self.assertTrue(self.admin.email in email.body)
         self.assertTrue(company.name in email.body)
 
@@ -399,7 +399,7 @@ class InvitationModelTests(MyJobsBase):
         self.assertFalse(user.is_verified)
         email = mail.outbox.pop()
         self.assertTrue('invitation' in email.subject)
-        self.assertEqual(email.from_email, settings.DEFAULT_FROM_EMAIL)
+        self.assertEqual(email.from_email, 'accounts@my.jobs')
         self.assertTrue(self.admin.email in email.body)
 
         ap = ActivationProfile.objects.get(email=user.email)
