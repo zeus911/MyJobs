@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
-    # This is only a data migration (no real migrations)
-    # so need to set no_dry_run to True
-    no_dry_run = True
-
+class Migration(DataMigration):
+    
     def forwards(self, orm):
         # Default sort_by set to 'Date' for Partner Saved Searches, see PD-912
         orm.SavedSearch.objects.filter(partnersavedsearch__isnull=False).update(sort_by='Date')
