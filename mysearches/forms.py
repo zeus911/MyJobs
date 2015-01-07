@@ -12,8 +12,7 @@ from mysearches.models import (SavedSearch, SavedSearchDigest,
 from mypartners.forms import PartnerEmailChoices
 from mypartners.models import Contact, ADDITION, CHANGE
 from registration.models import Invitation
-from mypartners.helpers import (log_change, send_custom_activation_email,
-                                tag_get_or_create)
+from mypartners.helpers import log_change, tag_get_or_create
 
 
 class HorizontalRadioRenderer(RadioSelect.renderer):
@@ -103,7 +102,8 @@ class DigestForm(BaseUserForm):
                                            label=_('Send digest results to:'))
 
     is_active = BooleanField(label=_('Send as a digest:'),
-                             widget=CheckboxInput(attrs={'id':'id_digest_active'}),
+                             widget=CheckboxInput(
+                                 attrs={'id': 'id_digest_active'}),
                              required=False)
 
     def clean_day_of_week(self):
@@ -151,8 +151,8 @@ class PartnerSavedSearchForm(ModelForm):
     class Meta:
         model = PartnerSavedSearch
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
-                'account_activation_message', 'frequency', 'day_of_month',
-                'day_of_week', 'jobs_per_email', 'partner_message', 'notes')
+                  'account_activation_message', 'frequency', 'day_of_month',
+                  'day_of_week', 'jobs_per_email', 'partner_message', 'notes')
         exclude = ('provider', 'sort_by', )
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
