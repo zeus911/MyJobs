@@ -575,6 +575,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         except (IndexError, ValueError):
             return None
 
+    def can_access_site(self, site):
+        """
+        If a user belongs to a company who has at least one site package which
+        includes `site`, this method will return `True`.
+
+        Inputs:
+        :site: The site to look for
+        """
+        return site.sitepackage_set.filter(
+            owner__in=self.company_set.all()).exists()
+
 
 class EmailLog(models.Model):
     email = models.EmailField(max_length=254)

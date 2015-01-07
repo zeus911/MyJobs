@@ -54,8 +54,8 @@ def company_in_sitepackages(view_func):
 
     @wraps(view_func)
     def wrap(request, *args, **kwargs):
-        if not settings.SITE.sitepackage_set.filter(
-                owner__in=request.user.company_set.all()).exists():
+        if not request.user.is_anonymous() and not request.user.can_access_site(
+                settings.SITE):
             raise Http404
 
         return view_func(request, *args, **kwargs)

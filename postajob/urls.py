@@ -1,6 +1,7 @@
 from django.conf.urls import *
 
 from postajob import models, views
+from universal.decorators import company_in_sitepackages
 
 
 urlpatterns = patterns(
@@ -37,46 +38,46 @@ urlpatterns = patterns(
 
     # Purchased microsite management
     url(r'^admin/$',
-        views.purchasedmicrosite_admin_overview,
+        company_in_sitepackages(views.purchasedmicrosite_admin_overview),
         name='purchasedmicrosite_admin_overview'),
 
     # Invoices
     url(r'^admin/invoice/(?P<pk>\d+)/$',
-        views.resend_invoice,
+        company_in_sitepackages(views.resend_invoice),
         name='resend_invoice'),
 
     # Requests
     url(r'^admin/request/$',
-        views.admin_request,
+        company_in_sitepackages(views.admin_request),
         name='request'),
     url(r'^admin/request/view/(?P<pk>\d+)/$',
-        views.view_request,
+        company_in_sitepackages(views.view_request),
         name='view_request'),
     url(r'^admin/request/approve/(?P<pk>\d+)/$',
-        views.process_admin_request,
+        company_in_sitepackages(views.process_admin_request),
         {'approve': True,
          'block': False},
         name='approve_admin_request'),
     url(r'^admin/request/deny/(?P<pk>\d+)/$',
-        views.process_admin_request,
+        company_in_sitepackages(views.process_admin_request),
         {'approve': False,
          'block': False},
         name='deny_admin_request'),
     url(r'^admin/request/block/(?P<pk>\d+)/$',
-        views.process_admin_request,
+        company_in_sitepackages(views.process_admin_request),
         {'approve': False,
          'block': True},
         name='block_admin_request'),
 
     # Job
     url(r'^job/add/',
-        views.JobFormView.as_view(),
+        company_in_sitepackages(views.JobFormView.as_view()),
         name='job_add'),
     url(r'^job/delete/(?P<pk>\d+)/',
-        views.JobFormView.as_view(),
+        company_in_sitepackages(views.JobFormView.as_view()),
         name='job_delete'),
     url(r'^job/update/(?P<pk>\d+)/',
-        views.JobFormView.as_view(),
+        company_in_sitepackages(views.JobFormView.as_view()),
         name='job_update'),
 
     # PurchasedJob
@@ -92,51 +93,51 @@ urlpatterns = patterns(
 
     # Product management
     url(r'^admin/product/$',
-        views.admin_products,
+        company_in_sitepackages(views.admin_products),
         name='product'),
     url(r'^admin/product/add/',
-        views.ProductFormView.as_view(),
+        company_in_sitepackages(views.ProductFormView.as_view()),
         name='product_add'),
     url(r'^admin/product/delete/(?P<pk>\d+)/',
-        views.ProductFormView.as_view(),
+        company_in_sitepackages(views.ProductFormView.as_view()),
         name='product_delete'),
     url(r'^admin/product/update/(?P<pk>\d+)/',
-        views.ProductFormView.as_view(),
+        company_in_sitepackages(views.ProductFormView.as_view()),
         name='product_update'),
 
     # ProductGrouping
     url(r'^admin/product/group/$',
-        views.admin_groupings,
+        company_in_sitepackages(views.admin_groupings),
         name='productgrouping'),
     url(r'^admin/product/group/add/',
-        views.ProductGroupingFormView.as_view(),
+        company_in_sitepackages(views.ProductGroupingFormView.as_view()),
         name='productgrouping_add'),
     url(r'^admin/product/group/delete/(?P<pk>\d+)/',
-        views.ProductGroupingFormView.as_view(),
+        company_in_sitepackages(views.ProductGroupingFormView.as_view()),
         name='productgrouping_delete'),
     url(r'^admin/product/group/update/(?P<pk>\d+)/',
-        views.ProductGroupingFormView.as_view(),
+        company_in_sitepackages(views.ProductGroupingFormView.as_view()),
         name='productgrouping_update'),
 
     # Offline Purchases
     url(r'^admin/purchase/offline/$',
-        views.admin_offlinepurchase,
+        company_in_sitepackages(views.admin_offlinepurchase),
         name='offlinepurchase'),
     url(r'^admin/purchase/offline/add/',
-        views.OfflinePurchaseFormView.as_view(),
+        company_in_sitepackages(views.OfflinePurchaseFormView.as_view()),
         name='offlinepurchase_add'),
     url(r'^admin/purchase/offline/delete/(?P<pk>\d+)/',
-        views.OfflinePurchaseFormView.as_view(),
+        company_in_sitepackages(views.OfflinePurchaseFormView.as_view()),
         name='offlinepurchase_delete'),
     url(r'^admin/purchase/offline/update/(?P<pk>\d+)/',
-        views.OfflinePurchaseFormView.as_view(),
+        company_in_sitepackages(views.OfflinePurchaseFormView.as_view()),
         name='offlinepurchase_update'),
 
     url(r'^purchase/redeem/$',
         views.OfflinePurchaseRedemptionFormView.as_view(),
         name='offlinepurchase_redeem'),
     url(r'^admin/purchase/offline/success/(?P<pk>\d+)/$',
-        views.view_request,
+        company_in_sitepackages(views.view_request),
         {'model': models.OfflinePurchase},
         name='offline_purchase_success'),
 
@@ -152,17 +153,17 @@ urlpatterns = patterns(
         name='purchasedproduct_update'),
 
     url(r'^admin/purchased/product$',
-        views.admin_purchasedproduct,
+        company_in_sitepackages(views.admin_purchasedproduct),
         name='purchasedproduct'),
     url(r'^admin/purchased/product/(?P<purchased_product>\d+)/view/(?P<pk>\d+)$',
-        views.view_job,
+        company_in_sitepackages(views.view_job),
         {'admin': True},
         name="admin_view_job"),
     url(r'^admin/purchased/product/(?P<purchased_product>\d+)/view-invoice',
-        views.view_invoice,
+        company_in_sitepackages(views.view_invoice),
         name="admin_view_invoice"),
     url(r'^admin/purchased/product/(?P<purchased_product>\d+)/',
-        views.purchasedjobs_overview,
+        company_in_sitepackages(views.purchasedjobs_overview),
         {'admin': True},
         name="purchasedjobs"),
 
@@ -179,10 +180,10 @@ urlpatterns = patterns(
 
     # User management
     url(r'^admin/blocked-users/$',
-        views.blocked_user_management,
+        company_in_sitepackages(views.blocked_user_management),
         name='blocked_user_management'),
     url(r'^admin/blocked-users/unblock/(?P<pk>\d+)/$',
-        views.unblock_user,
+        company_in_sitepackages(views.unblock_user),
         name='unblock_user'),
 
     url(r'^sites/$',
