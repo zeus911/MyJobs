@@ -13,7 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from myjobs.models import User
 from postajob.location_data import state_list
 
-from universal.decorators import company_has_access
+from universal.decorators import company_has_access, company_in_sitepackages
 from seo.models import CompanyUser, SeoSite
 from myjobs.decorators import user_is_allowed
 from postajob.forms import (CompanyProfileForm, JobForm, OfflinePurchaseForm,
@@ -142,6 +142,7 @@ def purchasedjobs_overview(request, purchased_product, admin):
 
 
 @user_is_allowed()
+@company_in_sitepackages
 @company_has_access('product_access')
 def purchasedmicrosite_admin_overview(request):
     company = get_company(request)

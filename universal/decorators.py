@@ -1,6 +1,7 @@
 from functools import wraps
 
 from django.core.urlresolvers import reverse
+from django.conf import settings
 from django.http import Http404, HttpResponseRedirect
 
 from myjobs.models import User
@@ -39,6 +40,16 @@ def company_has_access(perm_field):
             return view_func(request, *args, **kwargs)
         return wraps(view_func)(wrap)
     return decorator
+
+def company_in_sitepackages(view_func):
+    @wraps(view_func)
+    def wrap(request, *args, **kwargs):
+        if not settings.SITE.sitepackage_set.filter(
+                owner__in=request.user.company_set.all()).exists():
+            raise Http404
+
+        return view_func(request, *args, **kwargs)
+    return wrap
 
 
 def activate_user(view_func):
