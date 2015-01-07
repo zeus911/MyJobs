@@ -144,8 +144,8 @@ def purchasedjobs_overview(request, purchased_product, admin):
 
 
 @user_is_allowed()
-@company_in_sitepackages
 @company_has_access('product_access')
+@company_in_sitepackages
 def purchasedmicrosite_admin_overview(request):
     company = get_company(request)
     if settings.SITE:
@@ -234,8 +234,8 @@ def admin_offlinepurchase(request):
 
 
 @user_is_allowed()
-@company_in_sitepackages
 @company_has_access('product_access')
+@company_in_sitepackages
 def admin_request(request):
     company = get_company(request)
     if settings.SITE:
