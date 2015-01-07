@@ -54,7 +54,6 @@ def company_in_sitepackages(view_func):
 
     @wraps(view_func)
     def wrap(request, *args, **kwargs):
-        import ipdb; ipdb.set_trace()
         if not settings.SITE.sitepackage_set.filter(
                 owner__in=request.user.company_set.all()).exists():
             raise Http404
