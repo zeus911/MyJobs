@@ -327,8 +327,13 @@ class User(AbstractBaseUser, PermissionsMixin):
                                update_fields)
 
     def email_user(self, message, email_type=settings.GENERIC, **kwargs):
+        headers = kwargs.pop('headers', None)
+        if headers is None:
+            headers = {}
+        if 'X-SMTPAPI' not in headers:
+            headers['X-SMTPAPI'] = '{"category": "Email to User (%s)"}' % self.pk
         send_email(message, email_type=email_type, recipients=[self.email],
-                   **kwargs)
+                   headers=headers, **kwargs)
 
     def get_username(self):
         return self.email
