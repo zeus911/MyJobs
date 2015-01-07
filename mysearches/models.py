@@ -129,40 +129,62 @@ class SavedSearch(models.Model):
         return items
 
     def send_email(self, custom_msg=None):
-        if not self.user.can_receive_myjobs_email():
-            return
+        log_kwargs = {
+            'was_sent': False,
+            'was_received': False,
+            'recipient': self.user,
+            'recipient_email': self.email,
+            'new_jobs': 0,
+            'backfill_jobs': 0
+        }
+        if self.user.can_receive_myjobs_email():
+            items, count = self.get_feed_items()
+            is_pss = hasattr(self, 'partnersavedsearch')
+            if items or is_pss:
+                log_kwargs['was_sent'] = True
+                if is_pss:
+                    extras = self.partnersavedsearch.url_extras
+                    if extras:
+                        mypartners.helpers.add_extra_params_to_jobs(items,
+                                                                    extras)
+                        self.url = mypartners.helpers.add_extra_params(self.url,
+                                                                       extras)
+                if self.custom_message and not custom_msg:
+                    custom_msg = self.custom_message
 
-        items, count = self.get_feed_items()
-        is_pss = hasattr(self, 'partnersavedsearch')
-        if items or is_pss:
-            if is_pss:
-                extras = self.partnersavedsearch.url_extras
-                if extras:
-                    mypartners.helpers.add_extra_params_to_jobs(items, extras)
-                    self.url = mypartners.helpers.add_extra_params(self.url,
-                                                                   extras)
-            if self.custom_message and not custom_msg:
-                custom_msg = self.custom_message
+                context_dict = {'saved_searches': [(self, items, count)],
+                                'custom_msg': custom_msg,
+                                'contains_pss': is_pss}
+                message = render_to_string('mysearches/email_single.html',
+                                           context_dict)
+                category = ('{"category": "My.jobs Saved Search Sent '
+                            '(%s:%s)"}') % (
+                                self.content_type,
+                                self.pk)
+                headers = {'X-SMTPAPI': category}
 
-            context_dict = {'saved_searches': [(self, items, count)],
-                            'custom_msg': custom_msg,
-                            'contains_pss': is_pss}
-            message = render_to_string('mysearches/email_single.html',
-                                       context_dict)
-            category = '{"category": "My.jobs Saved Search Sent (%s:%s)"}' % (
-                self.content_type,
-                self.pk)
-            headers = {'X-SMTPAPI': category}
+                send_email(message, email_type=settings.SAVED_SEARCH,
+                           recipients=[self.email], label=self.label.strip(),
+                           headers=headers)
 
-            send_email(message, email_type=settings.SAVED_SEARCH,
-                       recipients=[self.email], label=self.label.strip(),
-                       headers=headers)
+                self.last_sent = datetime.now()
+                self.save()
 
-            self.last_sent = datetime.now()
-            self.save()
+                if is_pss:
+                    record = self.partnersavedsearch.create_record(custom_msg)
+                    log_kwargs['contact_record'] = record
+                    log_kwargs['new_jobs'] = len([item for item in items
+                                                 if item.get('new')])
+                    log_kwargs['backfill_jobs'] = count - log_kwargs['new_jobs']
 
-            if is_pss:
-                self.partnersavedsearch.create_record(custom_msg)
+                else:
+                    log_kwargs['new_jobs'] = count
+                    log_kwargs['backfill_jobs'] = 0
+            else:
+                log_kwargs['reason'] = 'No jobs'
+        else:
+            log_kwargs['reason'] = "User can't receive MyJobs email"
+        SavedSearchLog.objects.create(**log_kwargs)
 
     def initial_email(self, custom_msg=None, send=True):
         """
@@ -173,12 +195,26 @@ class SavedSearch(models.Model):
         :custom_msg: Custom message to be added when manually resending an
             initial email
         :send: Denotes if we should send the generated email (True) or return
-            the body (False). Default: True
+            the body (False). If False, the body will be used in an invitation.
+            Default: True
 
         Outputs:
         :message: Generated email body (if :send: is False) or None
         """
+        log_kwargs = {
+            'reason': 'Jobs are not sent in initial saved search emails',
+            'was_sent': False,
+            'was_received': False,
+            'recipient': self.user,
+            'recipient_email': self.email,
+            'new_jobs': 0,
+            'backfill_jobs': 0
+        }
+        message = None
         if self.user.opt_in_myjobs:
+            # Even if send=False, this will still get sent; send=False currently
+            # means the generated email body will be used in an invitation.
+            log_kwargs['was_sent'] = True
             context_dict = {'saved_searches': [(self,)],
                             'custom_msg': custom_msg,
                             'contains_pss': hasattr(self, 'partnersavedsearch')}
@@ -194,9 +230,13 @@ class SavedSearch(models.Model):
                 send_email(message, email_type=settings.SAVED_SEARCH_INITIAL,
                            recipients=[self.email], label=self.label.strip(),
                            headers=headers)
-            else:
-                return message
-    
+        else:
+            log_kwargs['reason'] = "User can't receive MyJobs email"
+        SavedSearchLog.objects.create(**log_kwargs)
+
+        if not send:
+            return message
+
     def send_update_email(self, msg, custom_msg=None):
         """
         This function is meant to be called from the shell. It sends a notice to
@@ -227,6 +267,10 @@ class SavedSearch(models.Model):
         send_email(message, email_type=settings.SAVED_SEARCH_UPDATED,
                    recipients=[self.email], label=self.label.strip(),
                    headers=headers)
+        SavedSearchLog.objects.create(
+            reason='Jobs are not sent in saved search update emails',
+            was_sent=True, was_received=False, recipient=self.user,
+            recipient_email=self.email, new_jobs=0, backfill_jobs=0)
 
     def create(self, *args, **kwargs):
         """
@@ -320,11 +364,21 @@ class SavedSearchDigest(models.Model):
         return CONTENT_TYPES['ssd']
 
     def send_email(self, custom_msg=None):
+        log_kwargs = {
+            'was_sent': False,
+            'was_received': False,
+            'recipient': self.user,
+            'recipient_email': self.email,
+            'new_jobs': 0,
+            'backfill_jobs': 0
+        }
+        total_jobs = 0
         saved_searches = self.user.savedsearch_set.filter(is_active=True)
         search_list = []
         contains_pss = False
         for search in saved_searches:
             items, count = search.get_feed_items()
+            total_jobs += count
             pss = None
             if hasattr(search, 'partnersavedsearch'):
                 pss = search.partnersavedsearch
@@ -332,6 +386,8 @@ class SavedSearchDigest(models.Model):
                 pss = search
 
             if pss is not None:
+                log_kwargs['backfill_jobs'] += len([item for item in items
+                                                    if item.get('new')])
                 contains_pss = True
                 extras = pss.url_extras
                 if extras:
@@ -341,11 +397,13 @@ class SavedSearchDigest(models.Model):
                 pss.create_record(custom_msg)
             search_list.append((search, items, count))
 
+        log_kwargs['new_jobs'] = total_jobs - log_kwargs['backfill_jobs']
         saved_searches = [(search, items, count)
                           for search, items, count in search_list
                           if (items or hasattr(search, 'partnersavedsearch'))]
 
         if self.user.can_receive_myjobs_email() and saved_searches:
+            log_kwargs['was_sent'] = True
             context_dict = {
                 'saved_searches': saved_searches,
                 'digest': self,
@@ -362,11 +420,18 @@ class SavedSearchDigest(models.Model):
             send_email(message, email_type=settings.SAVED_SEARCH_DIGEST,
                        recipients=[self.email], headers=headers)
 
-        sent_search_kwargs = {
-            'pk__in': [search[0].pk for search in saved_searches]
-        }
-        searches_sent = SavedSearch.objects.filter(**sent_search_kwargs)
-        searches_sent.update(last_sent=datetime.now())
+            sent_search_kwargs = {
+                'pk__in': [search[0].pk for search in saved_searches]
+            }
+            searches_sent = SavedSearch.objects.filter(**sent_search_kwargs)
+            searches_sent.update(last_sent=datetime.now())
+        else:
+            if not saved_searches:
+                log_kwargs['reason'] = ("No saved searches or saved searches "
+                                        "have no jobs")
+            else:
+                log_kwargs['reason'] = "User can't receive MyJobs email"
+        SavedSearchLog.objects.create(**log_kwargs)
 
     def disable_or_fix(self):
         """
@@ -467,6 +532,7 @@ class PartnerSavedSearch(SavedSearch):
         mypartners.helpers.log_change(record, None, None, self.partner,
                                       self.user.email, action_type=EMAIL,
                                       change_msg=change_msg)
+        return record
 
 
 class SavedSearchLog(models.Model):
