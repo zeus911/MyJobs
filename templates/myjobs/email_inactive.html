@@ -6,6 +6,10 @@
 
 <p><a href="https://secure.my.jobs{% url 'continue_sending_mail' %}?verify={{user.user_guid}}">Continue sending me emails.</a></p>
 
-<p>If you do not wish to receive emails, you will be removed from our list {% if time == 30 %}in seven days{% elif time == 36 %}tomorrow{% endif %}.</p>
+<p>If you do not wish to receive emails, you will be removed from our list {% if time == 82 %}in seven days{% else %}tomorrow{% endif %}.</p>
 
-<p>My.jobs <a href="https://secure.my.jobs{% url 'terms' %}">Terms</a> and <a href="https://secure.my.jobs{% url 'privacy' %}">Privacy</a></p>
+
+<hr>
+
+Powered by <a href="https://secure.my.jobs">My.jobs</a><br />
+My.jobs <a href="https://secure.my.jobs{% url 'terms' %}">Terms</a> and <a href="https://secure.my.jobs{% url 'privacy' %}">Privacy</a>

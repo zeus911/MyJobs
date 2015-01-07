@@ -2,7 +2,7 @@ import operator
 from slugify import slugify
 
 from django.conf import settings
-from django.contrib.auth.models import (BaseUserManager, Group)
+from django.contrib.auth.models import Group
 from django.contrib.contenttypes import generic
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
@@ -26,45 +26,9 @@ from social_links import models as social_models
 from seo.search_backend import DESearchQuerySet
 from myjobs.models import User
 from mypartners.models import Tag
-from universal.helpers import get_domain, get_object_or_none
+from universal.helpers import get_domain, get_object_or_none, has_mx_record
 
 import decimal
-
-
-class CustomUserManager(BaseUserManager):
-    def create_user(self, **kwargs):
-        """
-        Creates an already activated user.
-
-        """
-        email = kwargs['email']
-        password = kwargs['password']
-        if not email:
-            raise ValueError('Email address required.')
-        user = self.model(email=CustomUserManager.normalize_email(email))
-        user.is_active = True
-        user.gravatar = 'none'
-        user.set_password(password)
-        user.make_guid()
-        user.save(using=self._db)
-        user.make_guid()
-        return user
-
-    def create_superuser(self, **kwargs):
-        email = kwargs['email']
-        password = kwargs['password']
-        if not email:
-            raise ValueError('Email address required.')
-        u = self.model(email=CustomUserManager.normalize_email(email))
-        u.is_staff = True
-        u.is_active = True
-        u.is_superuser = True
-        u.gravatar = u.email
-        u.make_guid()
-        u.set_password(password)
-        u.save(using=self._db)
-        u.make_guid()
-        return u
 
 
 class JobsByBuidManager(models.Manager):
@@ -309,7 +273,6 @@ class CustomFacet(BaseSavedSearch):
         self.saved_querystring = sqs.query.build_query()
         super(CustomFacet, self).save()
 
-
     def _attr_dict(self):
         # Any new additions to the custom field that will be searched on must
         # be added to the return value of this method.
@@ -402,6 +365,7 @@ class CustomFacet(BaseSavedSearch):
             qs.append('%s:%s' % (field, self._escape(thing)))
 
         return joinstring.join(qs)
+
 
 class jobListing (models.Model):
     def __unicode__(self):
@@ -548,7 +512,7 @@ class SeoSite(Site):
                                             default='this site only')
     canonical_company = models.ForeignKey('Company', blank=True, null=True,
                                           on_delete=models.SET_NULL,
-                                          related_name='canonical_company')
+                                          related_name='canonical_company_for')
     email_domain = models.CharField(max_length=255, default='my.jobs')
 
     def clean_email_domain(self):
@@ -560,11 +524,12 @@ class SeoSite(Site):
         domains.append('my.jobs')
         if self.email_domain not in domains:
             raise ValidationError('You can only send emails from a domain '
-                                  'that you own.')
+                                  'that is associated with your company.')
 
         # Ensure that we have an MX record for the domain.
-        # raise ValidationError('You do not currently have the ability '
-        #                       'to send emails from this domain.')
+        if not has_mx_record(self.email_domain):
+            raise ValidationError('You do not currently have the ability '
+                                  'to send emails from this domain.')
         return self.email_domain
 
     def postajob_site_list(self):

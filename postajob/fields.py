@@ -23,9 +23,12 @@ class NoValidationChoiceField(ChoiceField):
 class SelectWithOptionClasses(Select):
     def __init__(self, attrs=None, choices=()):
         self.choices = choices
-        super(SelectWithOptionClasses, self).__init__(attrs, [choice[:-1] for choice in choices])
+        super(SelectWithOptionClasses, self).__init__(attrs, [choice[:-1]
+                                                              for choice in
+                                                              choices])
 
-    def render_option(self, selected_choices, option_value, option_label, option_class=''):
+    def render_option(self, selected_choices, option_value, option_label,
+                      option_class=''):
         option_value = force_unicode(option_value)
         if option_value in selected_choices:
             selected_html = u' selected="selected"'
@@ -38,10 +41,13 @@ class SelectWithOptionClasses(Select):
             conditional_escape(force_unicode(option_label)))
 
     def render_options(self, choices, selected_choices):
-        selected_choices = set(force_unicode(choice) for choice in selected_choices)
+        selected_choices = set(force_unicode(choice) for choice in
+                               selected_choices)
         choices = [(c[0], c[1], '') for c in choices]
         more_choices = self.choices
         output = []
-        for option_value, option_label, option_class in chain(more_choices, choices):
-            output.append(self.render_option(selected_choices, option_value, option_label, option_class))
+        for option_value, option_label, option_class in chain(more_choices,
+                                                              choices):
+            output.append(self.render_option(selected_choices, option_value,
+                                             option_label, option_class))
         return u'\n'.join(output)

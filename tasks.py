@@ -33,6 +33,7 @@ from registration.models import ActivationProfile
 from solr import helpers
 from solr.models import Update
 from solr.signals import object_to_dict, profileunits_to_dict
+from universal.helpers import get_domain
 
 logger = logging.getLogger(__name__)
 
@@ -251,21 +252,21 @@ def process_batch_events():
     # These users have not responded in a month. Send them an email if they
     # own any saved searches
     inactive = User.objects.select_related('savedsearch_set')
-    inactive = inactive.filter(Q(last_response=now-timedelta(days=30)) |
-                               Q(last_response=now-timedelta(days=36)))
-
+    inactive = inactive.filter(Q(last_response=now-timedelta(days=82)) |
+                               Q(last_response=now-timedelta(days=89)))
     for user in inactive:
         if user.savedsearch_set.exists():
             time = (now - user.last_response).days
             message = render_to_string('myjobs/email_inactive.html',
                                        {'user': user,
                                         'time': time})
-            user.email_user('Account Inactivity', message,
-                            settings.DEFAULT_FROM_EMAIL)
 
-    # These users have not responded in a month and a week. Stop sending emails.
-    User.objects.filter(last_response__lte=now-timedelta(days=37)).update(
-        opt_in_myjobs=False)
+            site = user.registration_source()
+            user.email_user(message, email_type=settings.INACTIVITY, site=site)
+
+    # These users have not responded in 90 days. Stop sending emails.
+    users = User.objects.filter(last_response__lte=now-timedelta(days=90))
+    users.update(opt_in_myjobs=False)
 
 
 @task(name="tasks.update_solr_from_model", ignore_result=True)

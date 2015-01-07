@@ -63,9 +63,11 @@ def get_facet_count_key(filters='', query_string=''):
                  the same search.
     """
     #We use a hash to ensure key length is under memcache's 250 character limit
-    return "browsefacets::%s%s%s" % (settings.SITE_ID,
-                                     hashlib.md5(unicode(filters)).hexdigest(),
-                                     hashlib.md5(unicode(query_string)).hexdigest())
+    return "browsefacets::%s%s%s" % (
+        settings.SITE_ID,
+        hashlib.md5(unicode(filters)).hexdigest(),
+        hashlib.md5(unicode(query_string)).hexdigest()
+    )
 
 
 def get_site_config(request):

@@ -89,6 +89,8 @@ class SavedSearchForm(BaseUserForm):
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
             'sort_by': RadioSelect(renderer=HorizontalRadioRenderer)
         }
+        exclude = ['custom_message']
+
 
 class DigestForm(BaseUserForm):
     def __init__(self, *args, **kwargs):
@@ -101,7 +103,8 @@ class DigestForm(BaseUserForm):
                                            label=_('Send digest results to:'))
 
     is_active = BooleanField(label=_('Send as a digest:'),
-                             widget=CheckboxInput(attrs={'id':'id_digest_active'}),
+                             widget=CheckboxInput(
+                                 attrs={'id': 'id_digest_active'}),
                              required=False)
 
     def clean_day_of_week(self):
@@ -130,6 +133,7 @@ class PartnerSavedSearchForm(ModelForm):
             help_text="If a contact does not have an email they will "
                       "not show up on this list.")
         self.fields["notes"].label = "Notes and Comments"
+        self.fields["partner_message"].label = "Message for Contact"
         self.fields["url_extras"].label = "Source Codes & Campaigns"
         if self.instance.id and self.instance.tags:
             tag_names = ",".join([tag.name for tag in self.instance.tags.all()])
@@ -223,6 +227,8 @@ class PartnerSavedSearchForm(ModelForm):
                 'added_saved_search': instance,
             }
             Invitation(**invite_args).save()
+            # Default sort_by for new Partner Saved Searches, see PD-912
+            instance.sort_by = 'Date'
         partner = instance.partner
         contact = Contact.objects.filter(partner=partner,
                                          user=instance.user)[0]

@@ -192,6 +192,7 @@ class RegistrationBlock(Block):
             # Create a user, log them in, and redirect based on the
             # success_url rules.
             user, created = User.objects.create_user(request=request,
+                                                     send_email=True,
                                                      **form.cleaned_data)
             user_cache = authenticate(
                 username=form.cleaned_data['email'],

@@ -7,12 +7,13 @@ from django.core.exceptions import ValidationError
 from pynliner import Pynliner
 
 from django.conf import settings
-from django.core.mail import EmailMessage
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now as datetime_now
 from django.utils.translation import ugettext_lazy as _
+
+from universal.helpers import send_email
 
 
 SHA1_RE = re.compile('^[a-f0-9]{40}$')
@@ -108,23 +109,21 @@ class ActivationProfile(models.Model):
         if custom_msg:
             custom_msg = custom_msg.replace('\n', '<br>')
             custom_msg = mark_safe(custom_msg)
+
         ctx_dict = {'activation_key': self.activation_key,
                     'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
                     'password': password,
                     'primary': primary,
                     'user': self.user,
                     'custom_msg': custom_msg}
-        subject = render_to_string('registration/activation_email_subject.txt',
-                                   ctx_dict)
-        subject = ''.join(subject.splitlines())
-
         message = render_to_string('registration/activation_email.html',
                                    ctx_dict)
         message = Pynliner().from_string(message).run()
-        msg = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL,
-                           [self.email])
-        msg.content_subtype = 'html'
-        msg.send()
+
+        site = getattr(settings, 'SITE', None)
+
+        send_email(message, email_type=settings.ACTIVATION,
+                   recipients=[self.email], site=site)
 
     def save(self, *args, **kwargs):
         if not self.pk:
@@ -208,7 +207,9 @@ class Invitation(models.Model):
             from_ = self.inviting_user.email
         else:
             from_ = self.inviting_company.name
-        self.invitee.email_user('My.jobs invitation from {from_}'.format(
-            from_=from_), body, settings.DEFAULT_FROM_EMAIL)
+
+        self.invitee.email_user(body, email_type=settings.INVITATION,
+                                inviter=from_)
+
         ap.sent = datetime_now()
         ap.save()
