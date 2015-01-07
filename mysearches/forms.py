@@ -12,8 +12,7 @@ from mysearches.models import (SavedSearch, SavedSearchDigest,
 from mypartners.forms import PartnerEmailChoices
 from mypartners.models import Contact, ADDITION, CHANGE
 from registration.models import Invitation
-from mypartners.helpers import (log_change, send_custom_activation_email,
-                                tag_get_or_create)
+from mypartners.helpers import (log_change, tag_get_or_create)
 
 
 class HorizontalRadioRenderer(RadioSelect.renderer):
@@ -133,7 +132,6 @@ class PartnerSavedSearchForm(ModelForm):
             help_text="If a contact does not have an email they will "
                       "not show up on this list.")
         self.fields["notes"].label = "Notes and Comments"
-        self.fields["partner_message"].label = "Message for Contact"
         self.fields["url_extras"].label = "Source Codes & Campaigns"
         if self.instance.id and self.instance.tags:
             tag_names = ",".join([tag.name for tag in self.instance.tags.all()])
@@ -242,7 +240,7 @@ class PartnerSubSavedSearchForm(ModelForm):
     class Meta:
         model = PartnerSavedSearch
         fields = ('sort_by', 'frequency', 'day_of_month', 'day_of_week')
-        exclude = ('provider', 'url_extras', 'partner_message',
+        exclude = ('provider', 'url_extras',
                    'account_activation_message', 'created_by', 'user',
                    'created_on', 'label', 'url', 'feed', 'email', 'notes',
                    'tags', )
