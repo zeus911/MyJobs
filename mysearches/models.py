@@ -471,18 +471,16 @@ class PartnerSavedSearch(SavedSearch):
 
 class SavedSearchLog(models.Model):
     was_sent = models.BooleanField()
+    was_received = models.BooleanField(default=False,
+                                       help_text=("If date_sent is very "
+                                       "recent and was_received is unchecked, "
+                                       "SendGrid may not have responded yet - "
+                                       "give it a few minutes."))
     reason = models.TextField()
     recipient = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     recipient_email = models.EmailField(max_length=255, blank=False)
-    sendgrid_response = models.ForeignKey('myjobs.EmailLog', null=True,
-                                          on_delete=models.SET_NULL,
-                                          help_text="""Entries prior to the
-                                          release of saved search logging will
-                                          have no categories, meaning we cannot
-                                          match them with a SendGrid
-                                          response.""")
     new_jobs = models.IntegerField()
     backfill_jobs = models.IntegerField()
     date_sent = models.DateTimeField(auto_now_add=True)
     contact_record = models.ForeignKey('mypartners.ContactRecord', null=True,
-                                       on_delete=models.SET_NULL)
+                                       blank=True, on_delete=models.SET_NULL)

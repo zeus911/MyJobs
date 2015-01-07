@@ -327,9 +327,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                                update_fields)
 
     def email_user(self, message, email_type=settings.GENERIC, **kwargs):
-        headers = kwargs.pop('headers', None)
-        if headers is None:
-            headers = {}
+        headers = kwargs.pop('headers', {})
         if 'X-SMTPAPI' not in headers:
             headers['X-SMTPAPI'] = '{"category": "Email to User (%s)"}' % self.pk
         send_email(message, email_type=email_type, recipients=[self.email],
@@ -591,6 +589,15 @@ class EmailLog(models.Model):
     event = models.CharField(max_length=11)
     received = models.DateField()
     processed = models.BooleanField(default=False, blank=True)
+    category = models.CharField(max_length=255, blank=True)
+    send_log = models.ForeignKey('mysearches.SavedSearchLog', null=True,
+                                 blank=True, on_delete=models.SET_NULL,
+                                 help_text="""Entries prior to the
+                                 release of saved search logging will
+                                 have no categories, meaning we cannot
+                                 match them with a SendGrid
+                                 response.""",
+                                 related_name='sendgrid_response')
 
 
 class CustomHomepage(Site):
