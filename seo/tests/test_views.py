@@ -91,11 +91,6 @@ class SeoSiteTestCase(DirectSEOTestCase):
         site = factories.SeoSiteFactory(canonical_company=company)
         site2 = factories.SeoSiteFactory(canonical_company=company)
 
-        # we redirect to admin overview, so we need to ensure that a site
-        # package exists
-        package = SitePackage.objects.create(owner=company)
-        package.sites.add(site, site2)
-
         data = {
             str(site.pk): site.domain,
             str(site2.pk): site2.domain,
@@ -113,9 +108,9 @@ class SeoSiteTestCase(DirectSEOTestCase):
         self.assertTrue(self.client.login(**credentials))
 
         resp = self.client.post(reverse('seosites_settings_email_domain_edit'),
-                                data=data, follow=True)
+                                data=data, follow=False)
 
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 302)
         site = SeoSite.objects.get(pk=site.pk)
         site2 = SeoSite.objects.get(pk=site2.pk)
         self.assertEqual(data[str(site.pk)], site.email_domain)
