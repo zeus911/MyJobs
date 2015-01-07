@@ -979,6 +979,23 @@ class EmailTests(MyPartnersTestCase):
         self.assertTrue(expected_str in email.body)
         self.assert_contact_info_in_email(email)
 
+    def test_partner_email_multiple_companies(self):
+        company2 = CompanyFactory(name="Company 2", pk=22222)
+        CompanyUserFactory(user=self.staff_user, company=company2)
+
+        mail.outbox = []
+
+        new_email = 'test@my.jobs'
+        self.data['to'] = new_email
+        response = self.client.post(reverse('process_email'), self.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(Contact.objects.filter(email=new_email).count(), 0)
+
+        email = mail.outbox.pop()
+        self.assertIn('create your record manually.', email.body)
+
     def test_partner_email_matching(self):
         ten = PartnerFactory(owner=self.company, uri='ten.jobs', name='10',
                              pk=10)
