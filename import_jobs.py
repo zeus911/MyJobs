@@ -119,8 +119,8 @@ def get_current_jobs(guid):
     for f in files:
         path = os.path.join(active_directory, f)
         if os.path.isdir(path):
-            logger.warn("Found folder '%s' inside active jobs for JSID: %s", f,
-                                                                        guid)
+            logger.warn("Found folder '%s' inside active jobs for JSID: %s",
+                        f, guid)
             continue
         with open(path) as _f:
             yield etree.fromstring(_f.read())

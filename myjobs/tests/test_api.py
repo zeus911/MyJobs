@@ -12,8 +12,6 @@ from myjobs.tests.test_views import TestClient
 from myprofile.models import SecondaryEmail
 from mysearches.models import SavedSearch
 from mysearches.tests.helpers import return_file
-from registration.models import Invitation
-from seo.tests import CompanyFactory
 from setup import MyJobsBase
 
 
@@ -37,7 +35,7 @@ class UserResourceTests(MyJobsBase):
         response = self.make_response(self.data)
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject,
-                         'Account activation for My.jobs')
+                         'Account Activation for My.jobs')
         content = json.loads(response.content)
         self.assertEqual(content, 
                          {'user_created': True,

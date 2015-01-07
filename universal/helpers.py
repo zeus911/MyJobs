@@ -1,4 +1,3 @@
-import collections
 from copy import copy
 import re
 import urllib
@@ -7,6 +6,7 @@ from urlparse import parse_qsl, urlparse, urlunparse
 from django.conf import settings
 from django.shortcuts import get_object_or_404, Http404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.mail import EmailMessage
 
 
 def update_url_param(url, param, new_val):
@@ -180,3 +180,38 @@ def add_pagination(request, object_list, per_page=None):
         pagination = paginator.page(paginator.num_pages)
 
     return pagination
+
+
+def has_mx_record(domain):
+    return True
+
+
+def send_email(email_body, email_type=settings.GENERIC,
+               recipients=None, site=None, **kwargs):
+
+    recipients = recipients or []
+
+    company_name = 'My.jobs'
+    domain = 'my.jobs'
+
+    if site:
+        domain = site.email_domain
+        if site.canonical_company:
+            company_name = site.canonical_company.name
+
+    kwargs['company_name'] = company_name
+    kwargs['domain'] = domain
+
+    sender = settings.EMAIL_FORMATS[email_type]['address']
+    sender = sender.format(**kwargs)
+
+    # Capitalize domain for display purposes.
+    kwargs['domain'] = kwargs['domain'].capitalize()
+    subject = settings.EMAIL_FORMATS[email_type]['subject']
+    subject = subject.format(**kwargs)
+
+    message = EmailMessage(subject, email_body, sender, recipients)
+    message.content_subtype = 'html'
+    message.send()
+
+    return message

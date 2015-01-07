@@ -1285,7 +1285,7 @@ def v2_redirect(request, v2_redirect=None, country=None, state=None, city=None, 
                 }
             })
     except IndexError:
-        url = 'nav_home'
+        url = 'home'
         LOG.debug("V2 redirect to home page from IndexError", extra={
             'view': 'v2_redirect',
             'data': {

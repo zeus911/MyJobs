@@ -12,8 +12,7 @@ from mysearches.models import (SavedSearch, SavedSearchDigest,
 from mypartners.forms import PartnerEmailChoices
 from mypartners.models import Contact, ADDITION, CHANGE
 from registration.models import Invitation
-from mypartners.helpers import (log_change, send_custom_activation_email,
-                                tag_get_or_create)
+from mypartners.helpers import log_change, tag_get_or_create
 
 
 class HorizontalRadioRenderer(RadioSelect.renderer):
