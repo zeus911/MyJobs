@@ -25,7 +25,6 @@ from moc_coding import models as moc_models
 from moc_coding.tests import factories as moc_factories
 from myjobs.tests.factories import UserFactory
 from postajob.models import SitePackage
-from postajob.tests.factories import SitePackageFactory
 from seo import helpers
 from seo.tests.setup import (connection, DirectSEOBase, DirectSEOTestCase,
                              patch_settings)
@@ -94,7 +93,7 @@ class SeoSiteTestCase(DirectSEOTestCase):
 
         # we redirect to admin overview, so we need to ensure that a site
         # package exists
-        package = SitePackageFactory(owner=company)
+        package = SitePackage.objects.create(owner=company)
         package.sites.add(site, site2)
 
         data = {

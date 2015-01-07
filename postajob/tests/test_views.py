@@ -941,7 +941,7 @@ class ViewTests(PostajobTestBase):
         Trying to access the admin pages for a site that is a part of a package
         which isn't own by a company to which you belong should raise a 404.
         """
-        self.company_user.company = CompanyFactory(name="Wrong Company")
+        self.company_user.company = CompanyFactory(pk=41, name="Wrong Company")
         self.company_user.save()
 
         for page in ['view_job', 'view_invoice', 
@@ -960,6 +960,7 @@ class ViewTests(PostajobTestBase):
 class PurchasedJobActionTests(PostajobTestBase):
     def setUp(self):
         super(PurchasedJobActionTests, self).setUp()
+        self.sitepackage.sites.add(settings.SITE)
         self.purchased_product = PurchasedProductFactory(
             product=self.product, owner=self.company)
         self.job = PurchasedJobFactory(
