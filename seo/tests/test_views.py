@@ -91,6 +91,10 @@ class SeoSiteTestCase(DirectSEOTestCase):
         site = factories.SeoSiteFactory(canonical_company=company)
         site2 = factories.SeoSiteFactory(canonical_company=company)
 
+        sitepackage = SitePackage.objects.create(owner=company)
+        sitepackage.sites.add(site, site2)
+
+
         data = {
             str(site.pk): site.domain,
             str(site2.pk): site2.domain,
