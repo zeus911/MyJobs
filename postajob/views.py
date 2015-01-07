@@ -51,13 +51,15 @@ def jobs_overview(request):
 @company_has_access(None)
 def view_job(request, purchased_product, pk, admin):
     company = get_company_or_404(request)
-    product = PurchasedProduct.objects.get(pk=purchased_product)
-    if not product.owner == company:
+    purchased_product = PurchasedProduct.objects.get(pk=purchased_product)
+    if admin and not purchased_product.product.owner == company:
+        raise Http404
+    elif not admin and purchased_product.owner == company:
         raise Http404
     data = {
         'admin': admin,
         'company': company,
-        'purchased_product': product,
+        'purchased_product': purchased_product,
         'job': PurchasedJob.objects.get(pk=pk)
     }
     return render_to_response('postajob/%s/view_job.html' % settings.PROJECT,
@@ -66,8 +68,14 @@ def view_job(request, purchased_product, pk, admin):
 @company_has_access(None)
 def view_invoice(request, purchased_product):
     company = get_company_or_404(request)
-    product = get_object_or_404(PurchasedProduct, pk=purchased_product,
-                                owner=company)
+    kwargs = {
+        'pk': purchased_product,
+    }
+    if 'posting/admin' in request.get_full_path():
+        kwargs['product__owner'] = company
+    else:
+        kwargs['owner'] = company
+    product = get_object_or_404(PurchasedProduct, **kwargs)
     invoice = product.invoice
     data = {
         'company': company,
@@ -137,7 +145,6 @@ def purchasedjobs_overview(request, purchased_product, admin):
 @company_has_access('product_access')
 def purchasedmicrosite_admin_overview(request):
     company = get_company(request)
-
     if settings.SITE:
         sites = settings.SITE.postajob_site_list()
         products = Product.objects.filter_by_sites(sites)
@@ -231,6 +238,8 @@ def admin_request(request):
         requests = Request.objects.all()
     data = {
         'company': company,
+        'has_package': company.sitepackage_set.filter(
+            sites__in=settings.SITE.postajob_site_list()).exists(),
         'pending_requests': requests.filter(owner=company, action_taken=False),
         'processed_requests': requests.filter(owner=company, action_taken=True)
     }
@@ -757,6 +766,11 @@ class OfflinePurchaseFormView(PostajobModelFormMixin, RequestFormViewBase):
     add_name = 'offlinepurchase_add'
     update_name = 'offlinepurchase_update'
     delete_name = 'offlinepurchase_delete'
+
+    def delete(self):
+        if self.object.redeemed_on:
+            raise Http404
+        return super(OfflinePurchaseFormView, self).delete()
 
     @method_decorator(user_is_allowed())
     @method_decorator(company_has_access('product_access'))

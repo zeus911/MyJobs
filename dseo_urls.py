@@ -114,9 +114,12 @@ urlpatterns += patterns(
     url(r'^contact/$', 'contact', name='contact'),
     url(r'^contact-faq', 'contact_faq', name='contact_faq'),
 )
+
 urlpatterns += patterns(
     'myjobs.views',
-    url(r'^edit/$', 'edit_account', name='edit_account'),
+    url(r'^account/edit/$', 'edit_account', name='edit_account'),
+    url(r'^account/delete$', 'delete_account', name='delete_account'),
+    url(r'^account/disable$', 'disable_account', name='disable_account'),
 )
 
 urlpatterns += patterns(
