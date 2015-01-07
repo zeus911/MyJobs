@@ -22,7 +22,6 @@ from universal.helpers import (get_domain, get_company, get_company_or_404,
                                get_int_or_none, send_email)
 from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
                                CHANGE, Location, Partner, PartnerLibrary, Tag)
-from registration.models import ActivationProfile
 
 
 def prm_worthy(request):
@@ -224,12 +223,15 @@ def send_contact_record_email_response(created_records, created_contacts,
         'attachment_failures': attachment_failures,
     }
 
-    subject = 'Partner Relationship Manager Contact Records'
     message = render_to_string('mypartners/email/email_response.html',
                                ctx)
+    headers = {
+        'X-SMTPAPI': '{"category": "Contact Record %s"}' % (
+            'Failure' if error is not None else 'Success')
+    }
 
     send_email(message, email_type=settings.CREATE_CONTACT_RECORD,
-               recipients=[to_email])
+               recipients=[to_email], headers=headers)
 
 
 def find_partner_from_email(partner_list, email):

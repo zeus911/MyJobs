@@ -553,9 +553,14 @@ class User(AbstractBaseUser, PermissionsMixin):
                 "mysearches/email_opt_out.html",
                 {'user': self, 'partner': pss.partner})
 
+            headers = {
+                'X-SMTPAPI': '{"category": "Partner Saved Search Opt Out '
+                             '(%s:%s)"}' % (pss.pk, pss.created_by.pk)
+            }
+
             email_type = settings.PARTNER_SAVED_SEARCH_RECIPIENT_OPTED_OUT
             send_email(message,  email_type=email_type,
-                       recipients=[pss.created_by.email])
+                       recipients=[pss.created_by.email], headers=headers)
 
             # create PRM message
             body = render_to_string(
