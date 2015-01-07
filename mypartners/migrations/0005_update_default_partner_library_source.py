@@ -11,7 +11,7 @@ class Migration(DataMigration):
     def forwards(self, orm):
         "Write your forwards methods here."
 
-        errd = PARTNER_LIBRARY_SOURCES.items()[0]
+        errd = PARTNER_LIBRARY_SOURCES.keys()[0]
         # update tags
         orm.Tag.objects.filter(name='OFCCP Library').update(name=errd)
 

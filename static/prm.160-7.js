@@ -435,7 +435,7 @@ $(document).ready(function() {
 
             var disclaimer = document.createElement("span"),
                 source = $(this).data("source"),
-                d_text = "*This partner's information was provided by the <em>" + source + "</em>. " +
+                d_text = "*This partner's information was provided by the " + source + ". " +
                     "To confirm its accuracy, DirectEmployers highly recommends following up directly " +
                     "with the partner. ";
             disclaimer.appendChild(document.createTextNode(d_text));
