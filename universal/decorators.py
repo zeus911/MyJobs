@@ -42,6 +42,16 @@ def company_has_access(perm_field):
     return decorator
 
 def company_in_sitepackages(view_func):
+    """
+    Raises an Http404 exception of the wrapped view is accessed by a user who
+    isn't a member of a company who owns a site package which includes the
+    current seo site.
+
+    That is, if John is visiting testing.jobs, which is in a site package owned
+    by DirectEmployers, but John isn't a company user for DirectEmployers, he
+    will see a 404 page.
+    """
+
     @wraps(view_func)
     def wrap(request, *args, **kwargs):
         if not settings.SITE.sitepackage_set.filter(
