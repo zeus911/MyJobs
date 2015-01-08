@@ -185,7 +185,6 @@ class ViewTests(PostajobTestBase):
         response = self.client.post(reverse('job_update', kwargs={'pk': 1}))
         self.assertEqual(response.status_code, 404)
 
-    @skip("This error page is currently not displayed in the front end")
     def test_admin_access_no_site_package(self):
         """
         Ensure that pages that would be useless without a site package have
