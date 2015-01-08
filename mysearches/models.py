@@ -67,9 +67,6 @@ class SavedSearch(models.Model):
                              verbose_name=_("Comments"))
     last_sent = models.DateTimeField(blank=True, null=True, editable=False)
 
-    # Custom messages were created for PartnerSavedSearches
-    custom_message = models.TextField(max_length=300, blank=True, null=True)
-
     def get_company(self):
         """
         Attempts to match the feed url to an SeoSite and then determine the
@@ -125,11 +122,8 @@ class SavedSearch(models.Model):
                     mypartners.helpers.add_extra_params_to_jobs(items, extras)
                     self.url = mypartners.helpers.add_extra_params(self.url,
                                                                    extras)
-            if self.custom_message and not custom_msg:
-                custom_msg = self.custom_message
 
             context_dict = {'saved_searches': [(self, items, count)],
-                            'custom_msg': custom_msg,
                             'contains_pss': is_pss}
             message = render_to_string('mysearches/email_single.html',
                                        context_dict)
@@ -344,10 +338,6 @@ class PartnerSavedSearch(SavedSearch):
                                             "added as query string parameters "
                                             "to each of links in the saved "
                                             "search.")
-    partner_message = models.TextField(
-        blank=True, help_text="Use this field to provide a customized "
-                              "greeting that will be sent with each copy "
-                              "of this saved search.")
     tags = models.ManyToManyField('mypartners.Tag', null=True)
     account_activation_message = models.TextField(blank=True)
     created_by = models.ForeignKey(User, editable=False)
@@ -394,10 +384,8 @@ class PartnerSavedSearch(SavedSearch):
                 mypartners.helpers.add_extra_params_to_jobs(items, extras)
                 self.url = mypartners.helpers.add_extra_params(self.url, extras)
 
-            custom_msg = self.custom_message if self.custom_message else ''
             context_dict = {
                 'saved_searches': [(self, items, count)],
-                'custom_msg': custom_msg,
                 'contains_pss': True
             }
             body = render_to_string('mysearches/email_single.html',

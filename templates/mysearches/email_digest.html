@@ -4,18 +4,6 @@
 {% load form_tags %}
 
 {% block content %}
-    {% if saved_search.custom_message or custom_msg %}
-        {% if saved_search.custom_message and not custom_msg %}
-        <p>{{ saved_search.custom_message }}</p>
-        {% elif custom_msg and not saved_search.custom_message %}
-        <p>{{ custom_msg }}</p>
-        {% else %}
-        <b>Message from My.jobs</b>
-        <p>{{ custom_msg }}</p>
-        <b>Message from provider</b>
-        <p>{{ saved_search.custom_message }}</p>
-        {% endif %}
-    {% endif %}
     {% for saved_search in saved_searches %}
         {% include 'mysearches/email_table_include.html' with saved_search=saved_search %}
     {% endfor %}

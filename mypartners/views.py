@@ -609,7 +609,6 @@ def partner_savedsearch_save(request):
         instance.provider = company
         instance.partner = partner
         instance.created_by = request.user
-        instance.custom_message = instance.partner_message
         form.save()
         return HttpResponse(status=200)
     else:
