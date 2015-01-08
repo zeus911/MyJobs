@@ -83,7 +83,23 @@ def activate_user(view_func):
     return wrap
 
 
+# Rather than write a few different decorators, I decided to go with a
+# decorator factory and write partials to handle repetitive cases.
 def warn_when(condition, feature, message, link=None, link_text=None):
+    """
+    A decorator which displays a warning page for :feature: with :message: when
+    the :condition: isn't met. If a :link: is provided, a button with that link
+    will displayed, showing :link_text: or "OK".
+
+    Inputs:
+    :condition: a callable that takes the request object and returns a boolean.
+    :feature: The feature for which the warning is being displayed.
+    :message: A helpful message to display to the user.
+    :link: A link to use for the optional button that appears after the
+           message.
+    :link_text: The text to appear on the button when "OK" is to generic.
+    """
+
     def decorator(view_func):
         @wraps(view_func)
         def wrap(request, *args, **kwargs):
@@ -100,6 +116,7 @@ def warn_when(condition, feature, message, link=None, link_text=None):
         return wrap
     return decorator
 
+# used in mypartners
 warn_when_inactive = partial(
     warn_when,
     condition=lambda req: req.user.is_verified and req.user.is_active,
@@ -107,6 +124,7 @@ warn_when_inactive = partial(
     link='/accounts/register/resend',
     link_text='Resend Activation')
 
+# used in postajob
 warn_when_no_packages = partial(
     warn_when,
     condition=lambda req: getattr(get_company(req), 'has_packages', False),
