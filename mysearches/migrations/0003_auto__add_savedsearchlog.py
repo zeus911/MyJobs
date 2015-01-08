@@ -12,7 +12,7 @@ class Migration(SchemaMigration):
         db.create_table(u'mysearches_savedsearchlog', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('was_sent', self.gf('django.db.models.fields.BooleanField')()),
-            ('was_received', self.gf('django.db.models.fields.BooleanField')()),
+            ('was_received', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('reason', self.gf('django.db.models.fields.TextField')()),
             ('recipient', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'], null=True, on_delete=models.SET_NULL)),
             ('recipient_email', self.gf('django.db.models.fields.EmailField')(max_length=255)),
@@ -20,6 +20,7 @@ class Migration(SchemaMigration):
             ('backfill_jobs', self.gf('django.db.models.fields.IntegerField')()),
             ('date_sent', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('contact_record', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.ContactRecord'], null=True, on_delete=models.SET_NULL, blank=True)),
+            ('uuid', self.gf('django.db.models.fields.CharField')(max_length=32)),
         ))
         db.send_create_signal(u'mysearches', ['SavedSearchLog'])
 
@@ -218,7 +219,8 @@ class Migration(SchemaMigration):
             'reason': ('django.db.models.fields.TextField', [], {}),
             'recipient': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'recipient_email': ('django.db.models.fields.EmailField', [], {'max_length': '255'}),
-            'was_received': ('django.db.models.fields.BooleanField', [], {}),
+            'uuid': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
+            'was_received': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'was_sent': ('django.db.models.fields.BooleanField', [], {})
         },
         u'postajob.package': {

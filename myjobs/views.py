@@ -19,6 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
 from captcha.fields import ReCaptchaField
+from mysearches.models import SavedSearchLog
 
 from universal.helpers import get_domain
 from myjobs.decorators import user_is_allowed
@@ -433,14 +434,15 @@ def batch_message_digest(request):
                             event_list = [event_list]
                     to_create = []
                     for event in event_list:
-                        to_create.append(EmailLog(
-                            email=event['email'], event=event['event'],
-                            received=datetime.date.fromtimestamp(
-                                float(event['timestamp'])
-                            )))
+                        category = event.get('category', '')
+                        email_log_args = {
+                            'email': event['email'], 'event': event['event'],
+                            'received': datetime.date.fromtimestamp(
+                                float(event['timestamp'])),
+                            'category': category
+                        }
                         if event['event'] == 'bounce' and \
-                                event.get('category', '') == \
-                                'My.jobs email redirect':
+                                category == 'My.jobs email redirect':
                             subject = 'My.jobs email redirect failure'
                             body = """
                                    Contact: %s
@@ -456,6 +458,17 @@ def batch_message_digest(request):
                             }
                             log_to_jira(subject, body,
                                         issue_dict, event['email'])
+                        if '|' in category:
+                            # These categories resemble the following:
+                            # Saved Search Sent (<list of keys>|uuid)
+                            uuid = category.split('|')[-1][:-1]
+                            if uuid:
+                                try:
+                                    log = SavedSearchLog.objects.get(uuid=uuid)
+                                    email_log_args['send_log'] = log
+                                except SavedSearchLog.DoesNotExist:
+                                    pass
+                        to_create.append(EmailLog(**email_log_args))
                     EmailLog.objects.bulk_create(to_create)
                     return HttpResponse(status=200)
     return HttpResponse(status=403)

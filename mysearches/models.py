@@ -8,6 +8,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.template.loader import render_to_string
+import uuid
 
 from myjobs.models import User
 from mypartners.models import Contact, ContactRecord, Partner, EMAIL
@@ -135,7 +136,8 @@ class SavedSearch(models.Model):
             'recipient': self.user,
             'recipient_email': self.email,
             'new_jobs': 0,
-            'backfill_jobs': 0
+            'backfill_jobs': 0,
+            'uuid': uuid.uuid4().hex
         }
         if self.user.can_receive_myjobs_email():
             items, count = self.get_feed_items()
@@ -158,9 +160,10 @@ class SavedSearch(models.Model):
                 message = render_to_string('mysearches/email_single.html',
                                            context_dict)
                 category = ('{"category": "My.jobs Saved Search Sent '
-                            '(%s:%s)"}') % (
+                            '(%s:%s|%s)"}') % (
                                 self.content_type,
-                                self.pk)
+                                self.pk,
+                                log_kwargs['uuid'])
                 headers = {'X-SMTPAPI': category}
 
                 send_email(message, email_type=settings.SAVED_SEARCH,
@@ -208,7 +211,8 @@ class SavedSearch(models.Model):
             'recipient': self.user,
             'recipient_email': self.email,
             'new_jobs': 0,
-            'backfill_jobs': 0
+            'backfill_jobs': 0,
+            'uuid': uuid.uuid4().hex
         }
         message = None
         if self.user.opt_in_myjobs:
@@ -223,9 +227,11 @@ class SavedSearch(models.Model):
             message = Pynliner().from_string(message).run()
 
             if send:
-                category = '{"category": "My.jobs Saved Search Created (%s:%s)"}' % (
-                    self.content_type,
-                    self.pk)
+                category = ('{"category": "My.jobs Saved Search Created '
+                            '(%s:%s|%s)"}') % (
+                                self.content_type,
+                                self.pk,
+                                log_kwargs['uuid'])
                 headers = {'X-SMTPAPI': category}
                 send_email(message, email_type=settings.SAVED_SEARCH_INITIAL,
                            recipients=[self.email], label=self.label.strip(),
@@ -370,7 +376,8 @@ class SavedSearchDigest(models.Model):
             'recipient': self.user,
             'recipient_email': self.email,
             'new_jobs': 0,
-            'backfill_jobs': 0
+            'backfill_jobs': 0,
+            'uuid': uuid.uuid4().hex
         }
         total_jobs = 0
         saved_searches = self.user.savedsearch_set.filter(is_active=True)
@@ -412,10 +419,11 @@ class SavedSearchDigest(models.Model):
             }
             message = render_to_string('mysearches/email_digest.html',
                                        context_dict)
-            category = '{"category": "My.jobs Saved Search Digest Send (%s:%s:%s)"}' % (
+            category = '{"category": "My.jobs Saved Search Digest Send (%s:%s:%s:%s)"}' % (
                 self.content_type,
                 self.pk,
-                ','.join([str(search[0].pk) for search in saved_searches]))
+                ','.join([str(search[0].pk) for search in saved_searches]),
+                log_kwargs['uuid'])
             headers = {'X-SMTPAPI': category}
             send_email(message, email_type=settings.SAVED_SEARCH_DIGEST,
                        recipients=[self.email], headers=headers)
@@ -550,3 +558,4 @@ class SavedSearchLog(models.Model):
     date_sent = models.DateTimeField(auto_now_add=True)
     contact_record = models.ForeignKey('mypartners.ContactRecord', null=True,
                                        blank=True, on_delete=models.SET_NULL)
+    uuid = models.CharField(max_length=32)
