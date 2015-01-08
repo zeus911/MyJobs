@@ -3,13 +3,8 @@ from seo import helpers
 from setup import DirectSEOBase
 
 
-filter_types = [('city'),
-                ('state'),
-                ('country'), 
-                ('title'),
-                ('company'),
-                ('moc'),
-                ('mapped_moc')]
+filter_types = ['city', 'state', 'country', 'title', 'company', 'moc',
+                'mapped_moc']
 
 
 class DummyRequest():
@@ -36,7 +31,6 @@ class FiltersTestCase(DirectSEOBase):
         self.request = DummyRequest()
         self.config = DummyConfig()
 
-
     def test_no_more_less(self):
         slab = 'usa/jobs::United States'
         facet_counts = {}
@@ -61,10 +55,10 @@ class FiltersTestCase(DirectSEOBase):
         # Slabs with None in their location name are not rendered by the widgets
         good_bad_slabs = {
             'state': ('california/usa/jobs::California', 
-                                    'none/irl/jobs::None'),
-           'city': ('gary/indiana/usa/jobs::Indiana',
-                    'none/indiana/usa/jobs::None'),
-           'default': ('foo::foo', 'none::None')}
+                      'none/irl/jobs::None'),
+            'city': ('gary/indiana/usa/jobs::Indiana',
+                     'none/indiana/usa/jobs::None'),
+            'default': ('foo::foo', 'none::None')}
 
         for filter_type in filter_types:
             slabs = good_bad_slabs.get(filter_type, good_bad_slabs['default'])
@@ -85,7 +79,7 @@ class FiltersTestCase(DirectSEOBase):
 
         path_dict = helpers.get_bread_box_path()
         widgets = helpers.get_widgets(self.request, self.config, facet_counts, 
-                                           custom_facets=[], path_dict=path_dict)
+                                      custom_facets=[], path_dict=path_dict)
 
         # There should be a more button rendered by every widget
         for widget in widgets:

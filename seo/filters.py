@@ -17,12 +17,15 @@ class Widget(object):
     slug_order = {'location': 2, 'title': 1, 'moc': 3, 'facet': 4, 'company': 5,
                   'mapped_moc': 3}
     
-    def __init__(self, request, site_config, _type, items, path_dict):
+    def __init__(self, request, site_config, _type, items, path_dict,
+                 offset=None):
         self.request = request
         self.site_config = site_config
         self._type = _type
         self.items = items
         self.path_dict = path_dict
+        self.num_items = self.site_config.num_filter_items_to_show
+        self.offset = offset if offset else self.num_items * 2
 
     def get_req_path(self):
         return self.request.path
@@ -49,7 +52,7 @@ class FacetListWidget(Widget):
         else:
             criteria_output = _(getattr(self.site_config, "browse_%s_text"
                                         % _type))
-        num_items = self.site_config.num_filter_items_to_show
+
         col_hdr = (
             """\
             <h3><span class="direct_filterLabel">%s</span> <span class="direct_highlightedText">%s</span>\
@@ -86,7 +89,7 @@ class FacetListWidget(Widget):
                 continue
                 
             item_url = self.get_abs_url(item)
-            if counter <= num_items:
+            if counter <= self.num_items:
                 li_class = ""
             else:
                 li_class = "direct_hiddenOption"
@@ -130,14 +133,14 @@ class FacetListWidget(Widget):
               <a class="direct_optionsMore" href="#" rel="nofollow">%(more)s</a>
               <a class="direct_optionsLess" href="#" rel="nofollow">%(less)s</a>
             </span>\
-            """ % dict(num_items=self.site_config.num_filter_items_to_show,
+            """ % dict(num_items=self.num_items,
                        type=selector_type, total_items=counter,
                        more=more_output, less=less_output,
-                       offset=len(items))
+                       offset=self.offset)
         )
  
         output.append('</ul>')
-        if hidden_options or self._show_more(items, num_items):
+        if hidden_options or self._show_more(items, self.num_items):
             output.append(more_less)
 
         return mark_safe('\n'.join(output))

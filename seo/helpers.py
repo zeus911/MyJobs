@@ -750,7 +750,8 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
         # location/title/moc widgets, since facet counts aren't generated
         # from the SearchIndex.
         search_widget = facet_class(request, site_config, 'facet',
-                                    custom_facets, path_dict)
+                                    custom_facets, path_dict,
+                                    offset=len(custom_facets))
         search_widget.precedence = site_config.browse_facet_order
         widgets.append(search_widget)
     widgets.sort(key=lambda x: x.precedence)
