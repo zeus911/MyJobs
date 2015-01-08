@@ -88,7 +88,7 @@ def warn_when(condition, feature, message, link=None, link_text=None):
         @wraps(view_func)
         def wrap(request, *args, **kwargs):
             ctx = {'feature': feature,
-                    'message': message,
+                   'message': message,
                    'link': link,
                    'link_text': link_text}
             if not condition(request):

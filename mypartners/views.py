@@ -91,6 +91,7 @@ def prm(request):
                               RequestContext(request))
 
 
+@warn_when_inactive(feature='Partner Library is')
 @company_has_access('prm_access')
 def partner_library(request):
     company = get_company_or_404(request)
