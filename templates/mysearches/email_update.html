@@ -9,6 +9,18 @@
     {% with saved_search=saved_searches.0.0 %}
 
     <div style="margin-left:auto;margin-right:auto; width:95%;">
+        {% if saved_search.custom_message or custom_msg %}
+            {% if saved_search.custom_message and not custom_msg %}
+            <p>{{ saved_search.custom_message }}</p>
+            {% elif custom_msg and not saved_search.custom_message %}
+            <p>{{ custom_msg }}</p>
+            {% else %}
+            <b>Message from My.jobs</b>
+            <p>{{ custom_msg }}</p>
+            <b>Message from provider</b>
+            <p>{{ saved_search.custom_message }}</p>
+            {% endif %}
+        {% endif %}
         <p>{{message}}</p>
 
         <table style="width: 100%; border-spacing:0; display: table;">

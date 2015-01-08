@@ -17,6 +17,18 @@
 
     <div style="margin-left:auto;margin-right:auto; width:95%;">
         {% has_attr saved_search 'partnersavedsearch' as is_partner_saved_search %}
+        {% if saved_search.custom_message or custom_msg %}
+            {% if saved_search.custom_message and not custom_msg %}
+            <p>{{ saved_search.custom_message }}</p>
+            {% elif custom_msg and not saved_search.custom_message %}
+            <p>{{ custom_msg }}</p>
+            {% else %}
+            <b>Message from My.jobs</b>
+            <p>{{ custom_msg }}</p>
+            <b>Message from provider</b>
+            <p>{{ saved_search.custom_message }}</p>
+            {% endif %}
+        {% endif %}
         <p>On {{ saved_search|time_created }} (UTC),
             {% if is_partner_saved_search %}
                 {% if saved_search.created_by.get_full_name %}

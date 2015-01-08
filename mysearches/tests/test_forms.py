@@ -110,6 +110,7 @@ class PartnerSavedSearchFormTests(MyJobsBase):
         instance.provider = self.company
         instance.partner = self.partner
         instance.created_by = self.user
+        instance.custom_message = instance.partner_message
         self.assertTrue(form.is_valid())
         form.save()
         self.assertEqual(Invitation.objects.count(), 1)
