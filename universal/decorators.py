@@ -84,17 +84,15 @@ def activate_user(view_func):
 
 
 def warn_when(condition, feature, message, link=None, link_text=None):
-    msg = "{0} currently unavailable. {1}".format(feature, message)
-    link_text = link_text or 'OK'
-
     def decorator(view_func):
         @wraps(view_func)
         def wrap(request, *args, **kwargs):
-            ctx = {'msg': msg,
+            ctx = {'feature': feature,
+                    'message': message,
                    'link': link,
                    'link_text': link_text}
             if not condition(request):
-                return render_to_response('includes/inactive-user.html',
+                return render_to_response('warning_page.html',
                                           ctx,
                                           RequestContext(request))
 
