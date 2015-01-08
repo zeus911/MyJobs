@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from itertools import ifilter
+from pysolr import safe_urlencode
 
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.template import Context, Template

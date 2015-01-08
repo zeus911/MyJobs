@@ -669,39 +669,41 @@ def _clean(term):
     return DESearchQuerySet().query.clean(term)
 
 
-def combine_groups(svd_searches, match_field='name'):
+def combine_groups(custom_facet_counts, match_field='name'):
     """
+    This function collapses/combines duplicate facets (based on
+    CustomFacet.match_field) in custom_facet_counts into a single 2-tuple.
+
     Inputs:
-    :svd_searches: A list of 2-tuples, each consisting of a
-    saved_search.models.CustomFacet instance and a count of the
-    DESearchQuerySet results from that instance, e.g.:
+    :custom_facet_counts: A list of 2-tuples, each consisting of a
+                          seo.models.CustomFacet instance and a count
+                          of the DESearchQuerySet results from that
+                          instance, e.g.:
+                          (<CustomFacet: Camber Instructors>, 25)
+    :match_field: Items with equal values in match_field sum their counts in
+                  a single returned tuple
 
-    (<CustomFacet: Camber Instructors>, 25)
-
-    :match_field:Items with equal values in match_field sum their counts in
-    a single returned tuple
-
-    This function collapses/combines the items in svd_searches,
-    when needed, into a single 2-tuple as described above.
-
+    :returns: A list of (custom facet, count) tuples sorted by count.
     """
-    ssdict = {}
-    # Create a dictionary like {<CustomFacet instance>: <count of items>}
-    # On each pass, check if the "item" (CustomFacet instances) has a key
-    # in the dictionary. If not, add it. If so, add the count of that
-    # CustomFacet instance to the value of the key of the CustomFacet
-    # that shares the `match_field` attribute.
-    for item in svd_searches:
-        field = getattr(item[0], match_field)
-        if item[0].name not in ssdict:
-            ssdict[field] = {item[0]: item[1]}
-        else:
-            v = ssdict[field].keys()[0]
-            ssdict[field][v] += item[1]
 
-    ss = [i[1].items()[0] for i in ssdict.items()]
-    ss.sort(key=lambda x: -x[1])
-    return ss or []
+    # {<CustomFacet instance>: <count of items>}
+    collapsed_custom_facet_counts = {}
+
+    for facet, count in custom_facet_counts:
+        field = getattr(facet, match_field)
+        if facet not in collapsed_custom_facet_counts:
+            collapsed_custom_facet_counts[field] = {
+                'facet': facet,
+                'count': count
+            }
+        else:
+            collapsed_custom_facet_counts[field]['count'] += count
+
+    custom_facet_counts = [(count_dict['facet'], count_dict['count'])
+                           for _, count_dict in
+                           collapsed_custom_facet_counts.items()]
+    custom_facet_counts.sort(key=lambda x: -x[1])
+    return custom_facet_counts or []
 
 
 def get_widgets(request, site_config, facet_counts, custom_facets,
@@ -1283,7 +1285,9 @@ def _facet_query_result_counts(tagged_facets, sqs):
 
     counts = []
     for query, count in facet_results['queries'].iteritems():
-        counts.append((tagged_facets[query]['custom_facet'], count))
+        tagged_facet = tagged_facets[query]['custom_facet']
+        if count > 0 or tagged_facet.always_show:
+            counts.append((tagged_facet, count))
     return counts
 
 
