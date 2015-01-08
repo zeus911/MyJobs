@@ -67,7 +67,7 @@ class FacetListWidget(Widget):
         # items to display than there are slots to display them. It is False
         # by default, and switched to true if there are hidden fields created
         # or the counter matches or exceeds the num_items value
-        hidden_options=False
+        hidden_options = False
         for item in items:
             try:
                 item_name = safe(smart_truncate(facet_text(item[0])))
@@ -133,8 +133,8 @@ class FacetListWidget(Widget):
             """ % dict(num_items=self.site_config.num_filter_items_to_show,
                        type=selector_type, total_items=counter,
                        more=more_output, less=less_output,
-                       offset=self.site_config.num_filter_items_to_show*2)
-            )
+                       offset=len(items))
+        )
  
         output.append('</ul>')
         if hidden_options or self._show_more(items, num_items):

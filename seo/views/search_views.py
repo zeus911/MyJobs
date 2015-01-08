@@ -144,7 +144,7 @@ def ajax_get_facets(request, filter_path, facet_type):
 
         for param in ['offset', 'filter_path', 'num_items']:
             if param in qs:
-                del qs['param']
+                del qs[param]
 
         for i in facet_counts['%s_slab' % _type]:
             url = ("%s?%s" % (helpers.get_abs_url(i, _type, filters),
@@ -1644,8 +1644,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
                                                  params=request.GET)
             cache.set(cust_key, cust_facets)
 
-        cf_count_tup = cust_facets
-        cf_count_tup = helpers.combine_groups(cf_count_tup)
+        cf_count_tup = helpers.combine_groups(cust_facets)
 
         if not filters['facet_slug']:
             search_url_slabs = [(i[0].url_slab, i[1]) for i in cf_count_tup]
