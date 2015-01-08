@@ -23,41 +23,37 @@
 {% endblock meta-extra %}
 
 {% block content %}
-        {% include "mypartners/includes/prm_header.html" with page_title="Partner Relationship Manager" %}
-        {% if user.is_active and user.is_verified %}
-            {% if not company.partner_set.all %}
-                <div class="row">
-                    <div class="span8 offset2">
-                        <div class="row centered">
-                            <h2 style="margin-top: 0;">Add Your First Partner</h2>
-                        </div>
-                        <div class="row centered prm-no-partner">
-                            <div class="span4" onclick="location.href='{% url 'create_partner' %}?ct={{ partner_ct }}'">
-                                <h4 style="text-align: center">Create a Partner</h4>
-                                <p>Already have the right partner? Enter it here.</p>
-                                <span class="bold-next-step">next &#8594;</span>
-                            </div>
-                            <div class="span4" onclick="location.href='{% url 'partner_library' %}'">
-                                <h4>Search OFCCP Partner Library</h4>
-                                <p>Search for and find the right partner for you!</p>
-                                <span class="bold-next-step">next &#8594;</span>
-                            </div>
-                        </div>
+    {% include "mypartners/includes/prm_header.html" with page_title="Partner Relationship Manager" %}
+    {% if not company.partner_set.all %}
+        <div class="row">
+            <div class="span8 offset2">
+                <div class="row centered">
+                    <h2 style="margin-top: 0;">Add Your First Partner</h2>
+                </div>
+                <div class="row centered prm-no-partner">
+                    <div class="span4" onclick="location.href='{% url 'create_partner' %}?ct={{ partner_ct }}'">
+                        <h4 style="text-align: center">Create a Partner</h4>
+                        <p>Already have the right partner? Enter it here.</p>
+                        <span class="bold-next-step">next &#8594;</span>
+                    </div>
+                    <div class="span4" onclick="location.href='{% url 'partner_library' %}'">
+                        <h4>Search OFCCP Partner Library</h4>
+                        <p>Search for and find the right partner for you!</p>
+                        <span class="bold-next-step">next &#8594;</span>
                     </div>
                 </div>
-            {% else %}
-                <div class="row">
-                    <div id="partner-holder" class="span8">
-                        {% include "mypartners/includes/partner_column.html" with on_page="prm" %}
-                    </div>
-                    <div id="sidebar-holder" class="span4">
-                        {% include "mypartners/includes/partner_sidebar.html" with on_page="prm" filters=True navigation=True filter_tag=True special_interest=False %}
-                    </div>
-                </div>
-            {% endif %}
-        {% else %}
-            {% include 'includes/inactive-user.html' %}
-        {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="row">
+            <div id="partner-holder" class="span8">
+                {% include "mypartners/includes/partner_column.html" with on_page="prm" %}
+            </div>
+            <div id="sidebar-holder" class="span4">
+                {% include "mypartners/includes/partner_sidebar.html" with on_page="prm" filters=True navigation=True filter_tag=True special_interest=False %}
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}
 
 {% block extra-js %}

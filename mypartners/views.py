@@ -1,6 +1,5 @@
 import bleach
 from collections import OrderedDict
-import unicodecsv
 from datetime import date, datetime, timedelta
 from email.parser import HeaderParser
 from email.utils import getaddresses
@@ -11,6 +10,7 @@ import newrelic.agent
 import pytz
 import re
 import sys
+import unicodecsv
 
 from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
@@ -30,7 +30,7 @@ from django.views.decorators.csrf import csrf_exempt
 from email_parser import build_email_dicts, get_datetime_from_str
 from universal.helpers import (get_company_or_404, get_int_or_none, 
                                add_pagination, get_object_or_none)
-from universal.decorators import company_has_access
+from universal.decorators import company_has_access, warn_when_inactive
 from myjobs.models import User
 from mydashboard.helpers import get_company_microsites
 from mysearches.models import PartnerSavedSearch
@@ -55,6 +55,7 @@ from mypartners.helpers import (prm_worthy, add_extra_params,
 
 
 @company_has_access('prm_access')
+@warn_when_inactive(feature='Partner Relationship Manager is')
 def prm(request):
     """
     Partner Relationship Manager
