@@ -151,6 +151,10 @@ class CustomPasswordResetForm(PasswordResetForm):
              email_template_name='registration/password_reset_email.html',
              use_https=False, token_generator=default_token_generator,
              from_email=None, request=None):
+        """
+        Cleaned save that doesn't do lots of stuff we don't need. Adds
+        categories to emails and allows them to be html.
+        """
         email = self.cleaned_data['email']
         user = User.objects.get_email_owner(email)
         if user is None:

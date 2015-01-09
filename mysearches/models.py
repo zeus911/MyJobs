@@ -76,6 +76,13 @@ class SavedSearch(models.Model):
 
     @property
     def content_type(self):
+        """
+        Determines the content type for self and stores it. Handles both
+        SavedSearch and PartnerSavedSearch.
+
+        Outputs:
+            Primary key of the calculated content type
+        """
         if hasattr(self, 'partnersavedsearch'):
             if 'pss' not in CONTENT_TYPES:
                 CONTENT_TYPES['pss'] = ContentType.objects.get_for_model(
@@ -364,6 +371,12 @@ class SavedSearchDigest(models.Model):
 
     @property
     def content_type(self):
+        """
+        Determines and stores the content type for saved search digests.
+
+        Outputs:
+            Primary key for the saved search digest content type
+        """
         if 'ssd' not in CONTENT_TYPES:
             CONTENT_TYPES['ssd'] = ContentType.objects.get_for_model(
                 SavedSearchDigest).pk
@@ -393,8 +406,11 @@ class SavedSearchDigest(models.Model):
                 pss = search
 
             if pss is not None:
+                # New jobs will have a "new" key in their job dictionaries.
+                # We can count the number that do not
                 log_kwargs['backfill_jobs'] += len([item for item in items
-                                                    if item.get('new')])
+                                                    if not item.get('new')])
+                log_kwargs['new_jobs'] += count - log_kwargs['backfill_jobs']
                 contains_pss = True
                 extras = pss.url_extras
                 if extras:
@@ -404,7 +420,7 @@ class SavedSearchDigest(models.Model):
                 pss.create_record(custom_msg)
             search_list.append((search, items, count))
 
-        log_kwargs['new_jobs'] = total_jobs - log_kwargs['backfill_jobs']
+        #log_kwargs['new_jobs'] = total_jobs - log_kwargs['backfill_jobs']
         saved_searches = [(search, items, count)
                           for search, items, count in search_list
                           if (items or hasattr(search, 'partnersavedsearch'))]
