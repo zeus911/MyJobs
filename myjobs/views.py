@@ -25,7 +25,7 @@ from universal.helpers import get_domain
 from myjobs.decorators import user_is_allowed
 from myjobs.forms import ChangePasswordForm, EditCommunicationForm
 from myjobs.helpers import expire_login, log_to_jira, get_title_template
-from myjobs.models import EmailLog, Ticket, User, FAQ, CustomHomepage
+from myjobs.models import EmailLog, Ticket, User, FAQ, CustomHomepage, BAD_EMAIL
 from myprofile.forms import (InitialNameForm, InitialEducationForm,
                              InitialAddressForm, InitialPhoneForm,
                              InitialWorkForm)
@@ -458,16 +458,19 @@ def batch_message_digest(request):
                             }
                             log_to_jira(subject, body,
                                         issue_dict, event['email'])
-                        if '|' in category:
-                            # These categories resemble the following:
-                            # Saved Search Sent (<list of keys>|uuid)
-                            uuid = category.split('|')[-1][:-1]
-                            if uuid:
-                                try:
-                                    log = SavedSearchLog.objects.get(uuid=uuid)
-                                    email_log_args['send_log'] = log
-                                except SavedSearchLog.DoesNotExist:
-                                    pass
+                        # These categories resemble the following:
+                        # Saved Search Sent (<list of keys>|event_id)
+                        event_id = category.split('|')[-1][:-1]
+                        if event_id:
+                            try:
+                                log = SavedSearchLog.objects.get(
+                                    uuid=event_id)
+                                email_log_args['send_log'] = log
+                                if event['event'] not in BAD_EMAIL:
+                                    log.was_received = True
+                                    log.save()
+                            except SavedSearchLog.DoesNotExist:
+                                pass
                         to_create.append(EmailLog(**email_log_args))
                     EmailLog.objects.bulk_create(to_create)
                     return HttpResponse(status=200)
