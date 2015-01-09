@@ -25,7 +25,7 @@ class Widget(object):
         self.items = items
         self.path_dict = path_dict
         self.num_items = self.site_config.num_filter_items_to_show
-        self.offset = offset if offset else self.num_items * 2
+        self.offset = offset or self.num_items * 2
 
     def get_req_path(self):
         return self.request.path

@@ -700,8 +700,8 @@ def combine_groups(custom_facet_counts, match_field='name'):
             collapsed_custom_facet_counts[field]['count'] += count
 
     custom_facet_counts = [(count_dict['facet'], count_dict['count'])
-                           for _, count_dict in
-                           collapsed_custom_facet_counts.items()]
+                           for count_dict in
+                           collapsed_custom_facet_counts.values()]
     custom_facet_counts.sort(key=lambda x: -x[1])
     return custom_facet_counts or []
 
