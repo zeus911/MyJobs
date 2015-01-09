@@ -127,6 +127,6 @@ warn_when_inactive = partial(
 # used in postajob
 warn_when_no_packages = partial(
     warn_when,
-    condition=lambda req: getattr(get_company(req), 'has_packages', False),
+    condition=lambda req: getattr(get_company(req), 'has_packages', True),
     message='Please contact your member representative to activate this '
             'feature.')
