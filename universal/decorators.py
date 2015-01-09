@@ -43,7 +43,7 @@ def company_has_access(perm_field):
 
 def company_in_sitepackages(view_func):
     """
-    Raises an Http404 exception of the wrapped view is accessed by a user who
+    Raises an Http404 exception if the wrapped view is accessed by a user who
     isn't a member of a company who owns a site package which includes the
     current seo site.
 
@@ -51,7 +51,6 @@ def company_in_sitepackages(view_func):
     by DirectEmployers, but John isn't a company user for DirectEmployers, he
     will see a 404 page.
     """
-
     @wraps(view_func)
     def wrap(request, *args, **kwargs):
         if not request.user.is_anonymous() and not request.user.can_access_site(
@@ -80,3 +79,53 @@ def activate_user(view_func):
                     user.save()
         return view_func(request, *args, **kwargs)
     return wrap
+
+
+# Rather than write a few different decorators, I decided to go with a
+# decorator factory and write partials to handle repetitive cases.
+def warn_when(condition, feature, message, link=None, link_text=None):
+    """
+    A decorator which displays a warning page for :feature: with :message: when
+    the :condition: isn't met. If a :link: is provided, a button with that link
+    will displayed, showing :link_text: or "OK".
+
+    Inputs:
+    :condition: a callable that takes the request object and returns a boolean.
+    :feature: The feature for which the warning is being displayed.
+    :message: A helpful message to display to the user.
+    :link: A link to use for the optional button that appears after the
+           message.
+    :link_text: The text to appear on the button when "OK" is to generic.
+    """
+
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrap(request, *args, **kwargs):
+            ctx = {'feature': feature,
+                   'message': message,
+                   'link': link,
+                   'link_text': link_text}
+            if not condition(request):
+                return render_to_response('warning_page.html',
+                                          ctx,
+                                          RequestContext(request))
+
+            return view_func(request, *args, **kwargs)
+        return wrap
+    return decorator
+
+# used in mypartners
+warn_when_inactive = partial(
+    warn_when,
+    condition=lambda req: req.user.is_verified and req.user.is_active,
+    message='You have yet to activate your account.',
+    link='/accounts/register/resend',
+    link_text='Resend Activation')
+
+# used in postajob
+warn_when_no_packages = partial(
+    warn_when,
+    condition=lambda req: getattr(get_company(req), 'has_packages', True),
+    message='Please contact your member representative to activate this '
+            'feature.')
+>>>>>>> dae5548... Fixed some boolean logic.

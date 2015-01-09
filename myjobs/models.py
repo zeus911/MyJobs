@@ -578,12 +578,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     def can_access_site(self, site):
         """
         If a user belongs to a company who has at least one site package which
-        includes `site`, this method will return `True`.
+        includes `site`, this method will return `True`. This method will also
+        return `True` if the site has no site packages.
 
         Inputs:
         :site: The site to look for
         """
-        return site.sitepackage_set.filter(
+        packages = site.sitepackage_set
+
+        return not packages.exists() or packages.filter(
             owner__in=self.company_set.all()).exists()
 
 

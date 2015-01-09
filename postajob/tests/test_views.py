@@ -192,7 +192,7 @@ class ViewTests(PostajobTestBase):
         their content replaced by a friendly reminder to have a site package
         created.
         """
-        self.company.sitepackage_set.clear()
+        self.sitepackage.sites.clear()
         
         for url in ['request', 'offlinepurchase_add', 'product_add',
                     'productgrouping_add']:
