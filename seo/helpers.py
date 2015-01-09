@@ -277,9 +277,16 @@ def get_nav_type(filters):
     return nav_type
 
 
+def bread_box(filters):
+    bread_box_items = {}
+    for slug_type, slug in filters.items():
+        bread_box_items[slug_type] = [('operations-management-jobs')]
+    return bread_box_items
+
+
 def get_bread_box_path(filters=None):
     bread_box_path = {}
-
+    print filters
     if filters:
         for k in filters:
             if filters[k]:
@@ -297,7 +304,7 @@ def get_bread_box_path(filters=None):
                                                         settings.SLUG_TAGS[k])
                 else:
                     bread_box_path[k] = filters[k] + settings.SLUG_TAGS[k]
-
+    print 'BREAD BOX PATH:', bread_box_path
     return bread_box_path
 
 

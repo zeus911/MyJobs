@@ -15,8 +15,8 @@
         <li><a id="location_bread_box" href="{% breadbox_url base_path|cut:bread_box_path.location_slug request.META.QUERY_STRING %}" title="{% trans 'Remove' %} {{ bread_box_title.location_slug }}">{{ bread_box_title.location_slug|smart_truncate }}</a></li>
 		{% endif %}
     {% endif %}
-    {% if bread_box_path.facet_slug %}
-        <li><a id="facet_bread_box" href="{% breadbox_url base_path|cut:bread_box_path.facet_slug request.META.QUERY_STRING %}" title="{% trans 'Remove' %} {{ bread_box_title.facet_slug }}">{{ bread_box_title.facet_slug|smart_truncate }}</a></li>
+    {% for slug in bread_box_path.facet_slug %}
+        <li><a class="facet_bread_box" href="{% breadbox_url base_path|cut:slug request.META.QUERY_STRING %}" title="{% trans 'Remove' %} {{ slug }}">{{ slug|smart_truncate }}</a></li>
     {% endif %}
 	{% if bread_box_title.moc_slug %}
         <li><a id="moc_bread_box" href="{% breadbox_url base_path|cut:bread_box_path.moc_slug request.META.QUERY_STRING %}" title="{% trans 'Remove' %} {{ bread_box_title.moc_slug }}">{{ bread_box_title.moc_slug|smart_truncate:30 }}</a></li>
