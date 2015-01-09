@@ -46,7 +46,7 @@ from import_jobs import add_jobs, delete_by_guid
 from transform import transform_for_postajob
 
 from seo.templatetags.seo_extras import facet_text, smart_truncate
-from seo.cache import get_facet_count_key, get_site_config, get_total_jobs_count
+from seo.cache import get_custom_facets, get_site_config, get_total_jobs_count
 from seo.search_backend import DESearchQuerySet
 from seo import helpers
 from seo.forms.admin_forms import UploadJobFileForm
@@ -101,14 +101,9 @@ def ajax_get_facets(request, filter_path, facet_type):
     num_items = int(GET.get('num_items', DEFAULT_PAGE_SIZE))
 
     if _type == 'facet':
-
-        cust_key = get_facet_count_key(filters,
-                                       request.META.get('QUERY_STRING', ''))
-        custom_facets_count_tuples = cache.get(cust_key)
-        if custom_facets_count_tuples is None:
-            custom_facets_count_tuples = helpers.get_solr_facet(
-                settings.SITE_ID, settings.SITE_BUIDS, filters)
-            cache.set(cust_key, custom_facets_count_tuples)
+        qs = request.META.get('QUERY_STRING', '')
+        custom_facets_count_tuples = get_custom_facets(request, filters=filters,
+                                                       query_string=qs)
 
         items = helpers.more_custom_facets(custom_facets_count_tuples, filters,
                                            offset, num_items)
@@ -813,19 +808,9 @@ def ajax_filter_carousel(request):
            else None)
 
     if site_config.browse_facet_show:
-        cust_key = get_facet_count_key(filters, query_path)
-        cust_facets = cache.get(cust_key)
 
-        if not cust_facets:
-            cust_facets = helpers.get_solr_facet(settings.SITE_ID,
-                                                 settings.SITE_BUIDS,
-                                                 filters,
-                                                 params=request.GET)
-            cache.set(cust_key, cust_facets)
-
-        cf_count_tup = cust_facets
-        cf_count_tup = helpers.combine_groups(cf_count_tup)
-
+        cf_count_tup = get_custom_facets(request, filters=filters,
+                                         query_string=query_path)
         if not filters['facet_slug']:
             search_url_slabs = [(i[0].url_slab, i[1]) for i in cf_count_tup]
         else:
@@ -1034,15 +1019,8 @@ def home_page(request):
     members = Company.objects.filter(member=True).filter(job_source_ids__in=all_buids)
 
     if site_config.browse_facet_show:
-        cust_key = get_facet_count_key()
-        cust_facets = cache.get(cust_key)
-
-        if not cust_facets:
-            cust_facets = helpers.get_solr_facet(settings.SITE_ID,
-                                                 settings.SITE_BUIDS)
-            cache.set(cust_key, cust_facets)
-
-        custom_facets = helpers.combine_groups(cust_facets)[0:num_facet_items * 2]
+        cust_facets = get_custom_facets(request)
+        custom_facets = helpers.combine_groups(cust_facets)[0:num_facet_items*2]
         search_url_slabs = [(i[0].url_slab, i[1]) for i in custom_facets]
 
     ga = settings.SITE.google_analytics.all()
@@ -1639,18 +1617,8 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     custom_facets = []
 
     if site_config.browse_facet_show:
-        cust_key = get_facet_count_key(filters, query_path)
-        cust_facets = cache.get(cust_key)
-
-        if not cust_facets:
-            cust_facets = helpers.get_solr_facet(settings.SITE_ID,
-                                                 settings.SITE_BUIDS,
-                                                 filters,
-                                                 params=request.GET)
-            cache.set(cust_key, cust_facets)
-
-        cf_count_tup = cust_facets
-        cf_count_tup = helpers.combine_groups(cf_count_tup)
+        cf_count_tup = get_custom_facets(request, filters=filters,
+                                         query_string=query_path)
 
         if not filters['facet_slug']:
             search_url_slabs = [(i[0].url_slab, i[1]) for i in cf_count_tup]

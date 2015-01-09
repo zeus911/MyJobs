@@ -538,7 +538,7 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
     return filter_sqs(sqs, filters)
 
 
-def filter_sqs(sqs, filters, site_id=None):
+def filter_sqs(sqs, filters):
     """
     Filters a DESearchQuerySet based on the requested URL via
     build_filter_dict's URL-parsing algorithm. Returns a count of the
@@ -549,12 +549,16 @@ def filter_sqs(sqs, filters, site_id=None):
     right-hand "Filter By x" column.
     
     """
-    if site_id is None:
-        site_id = settings.SITE_ID
+
     if filters.get('facet_slug'):
-        subfilter = _custom_facet_from_slug_tag(filters['facet_slug'], site_id)
-        if subfilter:
-            sqs = sqs_apply_custom_facets(subfilter, sqs)
+        facet_slugs = filters.get('facet_slug').split('/')
+        custom_facets = _custom_facets_from_facet_slugs(facet_slugs)
+        # Apply each custom facet seperately so that we can guarantee the
+        # search terms are ANDed together (via being their own seperate
+        # fq parameters) rather than using the default operator for the
+        # custom facet.
+        for custom_facet in custom_facets:
+            sqs = sqs_apply_custom_facets([custom_facet], sqs)
     
     _filters = filter(lambda x: filters.get(x) and x != 'facet_slug', filters)
 
@@ -819,14 +823,13 @@ def more_custom_facets(custom_facets, filters={}, offset=0, num_items=0):
     return items
 
 
-def _custom_facet_from_slug_tag(slug, site_id):
-    """Return all CustomFacets with name_slug==slug for a given site."""
-    site_cf_keys = SeoSiteFacet.objects.filter(seosite__id=settings.SITE_ID).\
-        filter(customfacet__show_production=1).\
-        values_list('customfacet__id', flat=True)
-    custom_facets = CustomFacet.objects.filter(id__in=site_cf_keys).\
-        filter(name_slug=slug)
-    return custom_facets
+def _custom_facets_from_facet_slugs(slugs):
+    """
+    Return all CustomFacets with name_slug == slug for a given site.
+
+    """
+    custom_facets = CustomFacet.objects.prod_facets_for_current_site()
+    return custom_facets.filter(name_slug__in=slugs)
 
 
 def sqs_apply_custom_facets(custom_facets, sqs=None, exclude_facets=None):
@@ -1304,7 +1307,7 @@ def get_solr_facet(site_id, jsids, filters=None, params=None):
     #  additional "filters" parameter, which is the output
     # from helper.build_filter_dict(request.path).
     if filters:
-        sqs = filter_sqs(sqs, filters, site_id=settings.SITE_ID)
+        sqs = filter_sqs(sqs, filters)
 
     # Intersect the CustomFacet object's query parameters with those of
     # the site's default facet, if it has one.
