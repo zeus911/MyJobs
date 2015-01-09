@@ -3,24 +3,19 @@ from django.http import QueryDict
 
 class Breadbox(object):
     class Breadcrumb(object):
-        url = None
-        display_title = None
-
-        def __init__(self, url=None, display_title=None):
+        def __init__(self, url, display_title):
             self.url = url
             self.display_title = display_title
 
     clear_breadcrumb = Breadcrumb(url='/jobs/', display_title='Clear All')
-    company_breadcrumbs = None
-    facet_breadcrumbs = None
-    location_breadcrumbs = None
-    moc_breadcrumbs = None
-    q_breadcrumbs = None
 
     def __init__(self, path, filters, query_dict):
         self.path = path
         self.filters = filters
         self.query_dict = query_dict
+
+        self.build_param_breadcrumbs()
+        self.build_filter_breadcrumbs()
 
     def _make_url(self, path=None, query_dict=None):
         path = path or self.path
@@ -32,6 +27,9 @@ class Breadbox(object):
         if param in query_dict:
             del query_dict[param]
         return query_dict
+
+    def build_filter_breadcrumbs(self):
+        pass
 
     def build_location_breadcrumbs(self):
         location = self.query_dict.get('location')
