@@ -1191,6 +1191,16 @@ def process_email(request):
     admin_user = User.objects.get_email_owner(admin_email)
     if admin_user is None:
         return HttpResponse(status=200)
+    if admin_user.company_set.count() > 1:
+        error = "Your account is setup as the admin for multiple companies. " \
+                "Because of this we cannot match this email with a " \
+                "specific partner on a specific company with 100% certainty. " \
+                "You will need to login to My.jobs and go to " \
+                "https://secure.my.jobs/prm to create your record manually."
+        send_contact_record_email_response([], [], [], contact_emails,
+                                             error, admin_email)
+        return HttpResponse(status=200)
+
 
     partners = list(chain(*[company.partner_set.all()
                             for company in admin_user.company_set.all()]))
@@ -1226,8 +1236,8 @@ def process_email(request):
             error = "There was an issue with the email attachments. The " \
                     "contact records for the email will need to be created " \
                     "manually."
-            send_contact_record_email_response([], [], contact_emails, error,
-                                               admin_email)
+            send_contact_record_email_response([], [], [], contact_emails,
+                                               error, admin_email)
             return HttpResponse(status=200)
         attachments.append(attachment)
 
