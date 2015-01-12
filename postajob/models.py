@@ -703,6 +703,8 @@ class CompanyProfile(models.Model):
         'email_on_request': 'Send email to admins every time a request '
                             'is made.',
     }
+    country_choices = country_list()
+    state_choices = state_list(include_country=True)
 
     company = models.OneToOneField('seo.Company')
     description = models.TextField(max_length=255, blank=True,
@@ -714,6 +716,7 @@ class CompanyProfile(models.Model):
     city = models.CharField(max_length=255, blank=True)
     state = models.CharField(max_length=255, blank=True)
     country = models.CharField(max_length=255, blank=True)
+    region = models.CharField(max_length=255, blank=True)
     zipcode = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=255, blank=True)
 

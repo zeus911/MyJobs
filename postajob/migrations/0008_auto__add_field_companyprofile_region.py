@@ -8,55 +8,16 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'InvoiceProduct'
-        db.create_table(u'postajob_invoiceproduct', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('product_name', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('product_expiration_date', self.gf('django.db.models.fields.DateField')()),
-            ('num_jobs_allowed', self.gf('django.db.models.fields.IntegerField')()),
-            ('purchase_amount', self.gf('django.db.models.fields.DecimalField')(max_digits=20, decimal_places=2)),
-        ))
-        db.send_create_signal(u'postajob', ['InvoiceProduct'])
-
-        # Adding field 'Invoice.date_created'
-        db.add_column(u'postajob_invoice', 'date_created',
-                      self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, default=datetime.datetime(2014, 12, 11, 0, 0), blank=True),
+        # Adding field 'CompanyProfile.region'
+        db.add_column(u'postajob_companyprofile', 'region',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
                       keep_default=False)
 
-        # Adding field 'Invoice.transaction_type'
-        db.add_column(u'postajob_invoice', 'transaction_type',
-                      self.gf('django.db.models.fields.IntegerField')(default=0),
-                      keep_default=False)
-
-        # Adding M2M table for field invoiced_products on 'Invoice'
-        m2m_table_name = db.shorten_name(u'postajob_invoice_invoiced_products')
-        db.create_table(m2m_table_name, (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('invoice', models.ForeignKey(orm[u'postajob.invoice'], null=False)),
-            ('invoiceproduct', models.ForeignKey(orm[u'postajob.invoiceproduct'], null=False))
-        ))
-        db.create_unique(m2m_table_name, ['invoice_id', 'invoiceproduct_id'])
-
-
-        # Changing field 'Invoice.card_exp_date'
-        db.alter_column(u'postajob_invoice', 'card_exp_date', self.gf('django.db.models.fields.DateField')(null=True))
 
     def backwards(self, orm):
-        # Deleting model 'InvoiceProduct'
-        db.delete_table(u'postajob_invoiceproduct')
+        # Deleting field 'CompanyProfile.region'
+        db.delete_column(u'postajob_companyprofile', 'region')
 
-        # Deleting field 'Invoice.date_created'
-        db.delete_column(u'postajob_invoice', 'date_created')
-
-        # Deleting field 'Invoice.transaction_type'
-        db.delete_column(u'postajob_invoice', 'transaction_type')
-
-        # Removing M2M table for field invoiced_products on 'Invoice'
-        db.delete_table(db.shorten_name(u'postajob_invoice_invoiced_products'))
-
-
-        # Changing field 'Invoice.card_exp_date'
-        db.alter_column(u'postajob_invoice', 'card_exp_date', self.gf('django.db.models.fields.DateField')(default=datetime.datetime(2014, 12, 11, 0, 0)))
 
     models = {
         u'auth.group': {
@@ -123,6 +84,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'outgoing_email_domain': ('django.db.models.fields.CharField', [], {'default': "'my.jobs'", 'max_length': '255'}),
             'phone': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'region': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'state': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'zipcode': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'})
         },
@@ -327,7 +289,9 @@ class Migration(SchemaMigration):
             'member': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'og_img': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
+            'posting_access': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'prm_access': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'prm_saved_search_sites': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['seo.SeoSite']", 'null': 'True', 'blank': 'True'}),
             'product_access': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'site_package': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.SitePackage']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'user_created': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
@@ -441,7 +405,7 @@ class Migration(SchemaMigration):
             'ats_source_codes': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['seo.ATSSourceCode']", 'null': 'True', 'blank': 'True'}),
             'billboard_images': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['seo.BillboardImage']", 'null': 'True', 'blank': 'True'}),
             'business_units': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['seo.BusinessUnit']", 'null': 'True', 'blank': 'True'}),
-            'canonical_company': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'canonical_company'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': u"orm['seo.Company']"}),
+            'canonical_company': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'canonical_company_for'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': u"orm['seo.Company']"}),
             'configurations': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['seo.Configuration']", 'symmetrical': 'False', 'blank': 'True'}),
             'email_domain': ('django.db.models.fields.CharField', [], {'default': "'my.jobs'", 'max_length': '255'}),
             'facets': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['seo.CustomFacet']", 'null': 'True', 'through': u"orm['seo.SeoSiteFacet']", 'blank': 'True'}),

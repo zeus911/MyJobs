@@ -68,8 +68,8 @@ class ViewTests(PostajobTestBase):
             company=self.company,
             address_line_one='123 Somewhere Rd',
             city='Indianapolis',
-            state='IN',
-            country='USA',
+            state='Indiana',
+            country='United States',
             zipcode='46268',
             authorize_net_login=settings.TESTING_CC_AUTH['api_id'],
             authorize_net_transaction_key=settings.TESTING_CC_AUTH['transaction_key'])
@@ -160,7 +160,7 @@ class ViewTests(PostajobTestBase):
             'company_name': self.company.name,
             'address_line_one': '123 Street Rd.',
             'city': 'Indianapolis',
-            'country': 'USA',
+            'country': 'United States',
             'state': 'Indiana',
             'zipcode': '46268',
             'phone': '111-111-1111',
@@ -837,7 +837,6 @@ class ViewTests(PostajobTestBase):
                                             kwargs=kwargs), follow=True)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(OfflinePurchase.objects.all().count(), 1)
-
 
     def test_update_companyprofile(self):
         self.client.post(reverse('companyprofile_add'),
