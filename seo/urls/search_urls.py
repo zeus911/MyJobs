@@ -58,7 +58,7 @@ urlpatterns += patterns('seo.views.search_views',
     url(r'^(?P<filter_path>[/\w-]*)feed/(?P<feed_type>json|rss|xml|atom|indeed|jsonp)$',
         'syndication_feed', name="feed"),
     # `jobs/` is the only allowable standalone slug tag
-    url(r'^jobs/$', 'search_by_results_and_slugs'),
+    url(r'^jobs/$', 'search_by_results_and_slugs', name='all_jobs'),
     # job listing by slug tag -- the slug tag must have a parameter before it
     url(r'^[/\w-]+?/(%s)/$' % ('|'.join(stripped_slugs)),
         'search_by_results_and_slugs', name="search_by_results_and_slugs"),

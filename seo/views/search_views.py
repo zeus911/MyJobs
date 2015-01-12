@@ -746,7 +746,7 @@ def syndication_feed(request, filter_path, feed_type):
         rss = JobFeed(feed_type)
         rss.items = qs
 
-        selected = helpers.get_bread_box_title(filters, jobs)
+        selected = helpers.get_bread_box_headings(filters, jobs)
         rss.description = ''
         if not any in selected.values():
             selected = {'title_slug': request.GET.get('q'),
@@ -1025,7 +1025,7 @@ def home_page(request):
 
     ga = settings.SITE.google_analytics.all()
     bread_box_path = helpers.get_bread_box_path()
-    bread_box_title = helpers.get_bread_box_title()
+    bread_box_title = helpers.get_bread_box_headings()
     home_page_template = site_config.home_page_template
 
     # The carousel displays the featured companies if there are any, otherwise
@@ -1693,11 +1693,11 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     bread_box_path = helpers.get_bread_box_path(filters)
 
     if num_featured_jobs != 0:
-        bread_box_title = helpers.get_bread_box_title(filters,
-                                                      featured_jobs[:num_featured_jobs])
+        bread_box_title = helpers.get_bread_box_headings(filters,
+                                                         featured_jobs[:num_featured_jobs])
     else:
-        bread_box_title = helpers.get_bread_box_title(filters,
-                                                      default_jobs[:num_default_jobs])
+        bread_box_title = helpers.get_bread_box_headings(filters,
+                                                         default_jobs[:num_default_jobs])
 
     if filters['company_slug']:
         company_obj = Company.objects.filter(member=True).filter(

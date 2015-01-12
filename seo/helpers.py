@@ -277,16 +277,8 @@ def get_nav_type(filters):
     return nav_type
 
 
-def bread_box(filters):
-    bread_box_items = {}
-    for slug_type, slug in filters.items():
-        bread_box_items[slug_type] = [('operations-management-jobs')]
-    return bread_box_items
-
-
 def get_bread_box_path(filters=None):
     bread_box_path = {}
-    print filters
     if filters:
         for k in filters:
             if filters[k]:
@@ -304,7 +296,6 @@ def get_bread_box_path(filters=None):
                                                         settings.SLUG_TAGS[k])
                 else:
                     bread_box_path[k] = filters[k] + settings.SLUG_TAGS[k]
-    print 'BREAD BOX PATH:', bread_box_path
     return bread_box_path
 
 
@@ -392,7 +383,91 @@ def _page_title(crumbs):
     return " in ".join([info_part, loc_part])
 
 
-def get_bread_box_title(filters={}, jobs=None):
+def bread_box_company_heading(company_slug_value):
+    # TODO write test to hit this logic
+    if not company_slug_value:
+        return None
+
+    try:
+        kwargs = {'title_slug': company_slug_value}
+        business_unit = BusinessUnit.objects.filter(**kwargs)
+    except (BusinessUnit.DoesNotExist, BusinessUnit.MultipleObjectsReturned):
+        return None
+
+    return business_unit[0].title
+
+
+def bread_box_location_heading(location_slug_value, jobs=None):
+    if not location_slug_value:
+        return None
+
+    location_slug_value = location_slug_value.strip('/')
+
+    locations = location_slug_value.split('/')
+    loc_length = len(locations)
+    try:
+        if loc_length == 3:
+            return jobs[0].location
+        elif loc_length == 2:
+            return jobs[0].state
+        elif loc_length == 1:
+            return jobs[0].country
+    except IndexError:
+        # We didn't have a valid job to pull the location, state,
+        # or country from.
+        return None
+
+
+def bread_box_moc_heading(moc_slug_value):
+    if not moc_slug_value:
+        return None
+
+    moc_slug_value = moc_slug_value.strip('/')
+    moc_pieces = moc_slug_value.split('/')
+    moc_code = moc_pieces[1]
+    branch = moc_pieces[2]
+
+    try:
+        moc = Moc.objects.get(code=moc_code, branch=branch)
+    except (Moc.DoesNotExist, Moc.MultipleObjectsReturned):
+        return None
+
+    return moc.code + ' - ' + moc.title
+
+
+def bread_box_title_heading(title_slug_value, jobs=None):
+    if not title_slug_value:
+        return None
+
+    if title_slug_value:
+        if isinstance(jobs, DESearchQuerySet):
+            jobs = jobs.narrow("title_slug:(%s)" % title_slug_value)
+            if jobs:
+                return jobs[0].title
+        else:
+            job = jobs[0]
+            if title_slug_value == job.title_slug:
+                return job.title
+            else:
+                for job in jobs:
+                    if title_slug_value == job.title_slug:
+                        return job.title
+
+    # Try searching solr for a matching title.
+    conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
+    search_terms = {
+        'q': u'title_slug:%s' % title_slug_value,
+        'fl': 'title, title_slug',
+        'rows': 1,
+    }
+    res = conn.search(**search_terms)
+    if res and res.docs[0].get('title_slug') == title_slug_value:
+        return res.docs[0]['title']
+    else:
+        return title_slug_value.replace('-', ' ').title()
+
+
+def get_bread_box_headings(filters=None, jobs=None):
     """
     This function builds the 'bread box' titles that area seen
     in the right hand column on any page with filter criteria
@@ -406,82 +481,27 @@ def get_bread_box_title(filters={}, jobs=None):
         bread_box_title -- formatted page title
         
     """
-    bread_box_title = {}
-    conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
+    filters = filters or {}
+    bread_box_headings = {}
 
     if filters and jobs:
-        location_slug = filters["location_slug"]
-        if location_slug:
-            location_slug = location_slug.strip('/')
-            
-            locations = location_slug.split('/')
-            loc_length = len(locations)
-            try:
-                if loc_length == 3:
-                    bread_box_title['location_slug'] = jobs[0].location
-                elif loc_length == 2:
-                    bread_box_title['location_slug'] = jobs[0].state
-                elif loc_length == 1:
-                    bread_box_title['location_slug'] = jobs[0].country
-            except IndexError:
-                # We didn't have a valid job to pull the location, state, 
-                # or country from.
-                pass
+        location_slug_value = filters.get('location_slug')
+        location = bread_box_location_heading(location_slug_value, jobs)
+        bread_box_headings['location_slug'] = location
 
-        title_slug = filters.get('title_slug')
+        title_slug_value = filters.get('title_slug')
+        title = bread_box_title_heading(title_slug_value, jobs)
+        bread_box_headings['title_slug'] = title
 
-        if title_slug:
-            if isinstance(jobs, DESearchQuerySet):
-                job = jobs.narrow("title_slug:(%s)" % title_slug)
-
-                if job:
-                    bread_box_title['title_slug'] = job[0].title
-            else:
-                job = jobs[0]
-
-                # see if the first job is a match already
-                if title_slug == job.title_slug:
-                    bread_box_title['title_slug'] = job.title
-                # look through the rest if it isn't
-                else:
-                    found = False
-                    for job in jobs:
-                        if title_slug == job.title_slug:
-                            bread_box_title['title_slug'] = job.title
-                            found = True
-                            break
-                    # still can't find it? Solr query time
-                    if not found:
-                        res = conn.search(
-                            q=u"title_slug:{0}".format(title_slug),
-                            fl="title, title_slug", rows=1)
-                        if res and res.docs[0].get('title_slug') == title_slug:
-                            bread_box_title['title_slug'] = res.docs[0]['title']
-                        else:
-                            # Title case the slug as a last resort
-                            bread_box_title['title_slug'] = \
-                                title_slug.replace('-', ' ').title()
-
-        moc_slug = filters["moc_slug"]
-        if moc_slug is not None:
-            moc_slug = moc_slug.strip('/')
-            moc_pieces = moc_slug.split('/')
-            moc_code = moc_pieces[1]
-            branch = moc_pieces[2]
-            
-            moc = Moc.objects.get(code=moc_code, branch=branch)
-        
-            if moc:
-                bread_box_title['moc_slug'] = moc.code + ' - ' + moc.title
+        moc_slug_value = filters.get('moc_slug')
+        moc = bread_box_moc_heading(moc_slug_value)
+        bread_box_headings['moc_slug'] = moc
                 
-        company_slug = filters.get("company_slug")
-        # TODO write test to hit this logic
-        if company_slug:
-            business_unit = BusinessUnit.objects.filter(title_slug=company_slug)
-            if business_unit:
-                bread_box_title['company_slug'] = business_unit[0].title
+        company_slug_value = filters.get("company_slug")
+        company = bread_box_company_heading(company_slug_value)
+        bread_box_headings['company_slug'] = company
 
-    return bread_box_title
+    return bread_box_headings
 
 
 def get_jobs(custom_facets=None, exclude_facets=None, jsids=None, 
