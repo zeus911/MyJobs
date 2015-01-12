@@ -46,6 +46,7 @@ from import_jobs import add_jobs, delete_by_guid
 from transform import transform_for_postajob
 
 from seo.templatetags.seo_extras import facet_text, smart_truncate
+from seo.breadbox import Breadbox
 from seo.cache import get_custom_facets, get_site_config, get_total_jobs_count
 from seo.search_backend import DESearchQuerySet
 from seo import helpers
@@ -1590,7 +1591,6 @@ def dseo_500(request):
 @protected_site
 def search_by_results_and_slugs(request, *args, **kwargs):
     filters = helpers.build_filter_dict(request.path)
-    print request.GET
     query_path = request.META.get('QUERY_STRING', None)
 
     redirect_url = helpers.determine_redirect(request, filters)
@@ -1693,11 +1693,13 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     bread_box_path = helpers.get_bread_box_path(filters)
 
     if num_featured_jobs != 0:
-        bread_box_title = helpers.get_bread_box_headings(filters,
-                                                         featured_jobs[:num_featured_jobs])
+        jobs = featured_jobs[:num_featured_jobs]
+        breadbox = Breadbox(request.path, filters, jobs, request.GET)
+        bread_box_title = helpers.get_bread_box_headings(filters, jobs)
     else:
-        bread_box_title = helpers.get_bread_box_headings(filters,
-                                                         default_jobs[:num_default_jobs])
+        jobs = default_jobs[:num_default_jobs]
+        breadbox = Breadbox(request.path, filters, jobs, request.GET)
+        bread_box_title = helpers.get_bread_box_headings(filters, jobs)
 
     if filters['company_slug']:
         company_obj = Company.objects.filter(member=True).filter(
@@ -1733,6 +1735,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
 
     data_dict = {
         'base_path': request.path,
+        'breadbox': breadbox,
         'bread_box_path': bread_box_path,
         'bread_box_title': bread_box_title,
         'build_num': settings.BUILD,

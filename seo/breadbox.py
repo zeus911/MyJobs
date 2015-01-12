@@ -29,38 +29,50 @@ class Breadbox(object):
         self.moc_breadcrumbs = []
         self.q_breadcrumbs = []
         self.title_breadcrumbs = []
-
         self.clear_breadcrumbs = []
 
         self.build_breadcrumbs()
 
     def _make_clear_breadcrumb(self):
-        if self.clear_breadcrumb is not []:
-            self.clear_breadcrumb = [self.Breadcrumb(url=reverse('all_jobs'),
-                                                     display_title='Clear All')]
+        if self.clear_breadcrumbs is not []:
+            kwargs = {
+                'display_title': "Clear All",
+                'url': reverse('all_jobs'),
+            }
+            self.clear_breadcrumbs = [self.Breadcrumb(**kwargs)]
 
     def _make_url(self, path=None, query_dict=None):
         path = path or self.path
-        query_dict = query_dict or self.query_dict
-        return "%s?%s" % (path, query_dict.urlencode())
+        if not self.path or path == '/':
+            path = reverse('all_jobs')
+        query_dict = query_dict if query_dict is not None else self.query_dict
+        query_string = query_dict.urlencode()
+        return "%s?%s" % (path, query_string) if query_string else path
 
     def _remove_param_from_query_dict(self, param):
-        query_dict = QueryDict(self.query_dict).copy()
+        query_dict = self.query_dict.copy()
         if param in query_dict:
             del query_dict[param]
         return query_dict
+
+    def all_breadcrumbs(self):
+
+        return (self.company_breadcrumbs + self.custom_facet_breadcrumbs +
+                self.location_breadcrumbs + self.moc_breadcrumbs +
+                self.q_breadcrumbs + self.title_breadcrumbs +
+                self.clear_breadcrumbs)
 
     def build_breadcrumbs(self):
         self.build_param_breadcrumbs()
         self.build_filter_breadcrumbs()
 
     def build_breadcrumb_for_slug_type(self, slug_type, display_title):
-        ending_slug = settings.SLUG_TAGS[slug_type]
+        ending_slug = settings.SLUG_TAGS[slug_type].strip('/')
         breadcrumb_class = slug_type.replace('_slug', '_bread_box')
 
         if self.filters.get(slug_type):
             slug = self.filters[slug_type].strip('/')
-            path_for_slug = "%s/%s" % (slug, ending_slug)
+            path_for_slug = "/%s/%s" % (slug, ending_slug)
             new_path = self.path.replace(path_for_slug, '')
             kwargs = {
                 'breadcrumb_class': breadcrumb_class,
@@ -103,15 +115,15 @@ class Breadbox(object):
             # remove the ending slug as well.
             new_path = self.path
             if custom_facets.count() < 2:
-                new_path.replace(ending_slug, '')
+                new_path = new_path.replace(ending_slug, '')
 
             self.custom_facet_breadcrumbs = []
             for facet in custom_facets:
-                new_path = new_path.replace(facet.name_slug, '')
+                path_for_facet = new_path.replace("/%s" % facet.name_slug, '')
                 kwargs = {
                     'breadcrumb_class': 'facet_bread_box',
                     'display_title': facet.name,
-                    'url': self._make_url(path=new_path)
+                    'url': self._make_url(path=path_for_facet)
                 }
                 self.custom_facet_breadcrumbs.append(self.Breadcrumb(**kwargs))
                 self._make_clear_breadcrumb()
