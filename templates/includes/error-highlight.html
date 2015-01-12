@@ -28,7 +28,11 @@
         {% if field.label == 'Send Results to *' %}
             <select id="id_email" name="email" style="display: inline-block;">
             {% for email, contact in form.fields.email.choices %}
-                <option value={{ email }} {% if contact.user and not contact.user.opt_in_myjobs %}disabled title="This contact has opted out of My.jobs communications"{% endif %}>{{ contact.name|default:"----------" }}</option>
+                <option value="{{ email }}"
+                        {% if contact.user and not contact.user.opt_in_myjobs %}disabled title="This contact has opted out of My.jobs communications"{% endif %}
+                        {% if field.value %}selected{% endif %}>
+                    {{ contact.name|default:"----------" }}
+                </option>
             {% endfor %}
             </select>
         {% else %}
