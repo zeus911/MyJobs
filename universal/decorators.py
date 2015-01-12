@@ -85,7 +85,8 @@ def activate_user(view_func):
 
 # Rather than write a few different decorators, I decided to go with a
 # decorator factory and write partials to handle repetitive cases.
-def warn_when(condition, feature, message, link=None, link_text=None):
+def warn_when(condition, feature, message, link=None, link_text=None,
+              exception=None):
     """
     A decorator which displays a warning page for :feature: with :message: when
     the :condition: isn't met. If a :link: is provided, a button with that link
@@ -108,6 +109,8 @@ def warn_when(condition, feature, message, link=None, link_text=None):
                    'link': link,
                    'link_text': link_text}
             if not condition(request):
+                if exception: raise exception('{0}: {1}'.format(feature, message))
+
                 return render_to_response('warning_page.html',
                                           ctx,
                                           RequestContext(request))
@@ -127,6 +130,14 @@ warn_when_inactive = partial(
 # used in postajob
 warn_when_no_packages = partial(
     warn_when,
-    condition=lambda req: getattr(get_company(req), 'has_packages', True),
+    condition=lambda req: settings.SITE.canonical_company.has_packages)
+
+message_when_no_packages = partial(
+    warn_when_no_packages,
     message='Please contact your member representative to activate this '
             'feature.')
+
+error_when_no_packages = partial(
+    warn_when_no_packages,
+    message='Accessed company owns no site packages.',
+    exception=Http404)
