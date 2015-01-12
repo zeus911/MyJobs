@@ -598,6 +598,8 @@ class EmailLog(models.Model):
                                  match them with a SendGrid
                                  response.""",
                                  related_name='sendgrid_response')
+    # The event api reference makes no mention about how long this can be.
+    reason = models.TextField(blank=True)
 
 
 class CustomHomepage(Site):

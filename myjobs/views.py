@@ -439,7 +439,12 @@ def batch_message_digest(request):
                             'email': event['email'], 'event': event['event'],
                             'received': datetime.date.fromtimestamp(
                                 float(event['timestamp'])),
-                            'category': category
+                            'category': category,
+                            # Events can have a response (delivered, deferred),
+                            # a reason (bounce, block), or neither, but never
+                            # both.
+                            'reason': event.get('response',
+                                                event.get('reason', ''))
                         }
                         if event['event'] == 'bounce' and \
                                 category == 'My.jobs email redirect':

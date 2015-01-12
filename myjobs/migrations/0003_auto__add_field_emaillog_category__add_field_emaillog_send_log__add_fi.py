@@ -15,7 +15,12 @@ class Migration(SchemaMigration):
 
         # Adding field 'EmailLog.send_log'
         db.add_column(u'myjobs_emaillog', 'send_log',
-                      self.gf('django.db.models.fields.related.ForeignKey')(related_name='sendgrid_response', null=True, on_delete=models.SET_NULL, to=orm['mysearches.SavedSearchLog']),
+                      self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='sendgrid_response', null=True, on_delete=models.SET_NULL, to=orm['mysearches.SavedSearchLog']),
+                      keep_default=False)
+
+        # Adding field 'EmailLog.reason'
+        db.add_column(u'myjobs_emaillog', 'reason',
+                      self.gf('django.db.models.fields.TextField')(default='', blank=True),
                       keep_default=False)
 
 
@@ -25,6 +30,9 @@ class Migration(SchemaMigration):
 
         # Deleting field 'EmailLog.send_log'
         db.delete_column(u'myjobs_emaillog', 'send_log_id')
+
+        # Deleting field 'EmailLog.reason'
+        db.delete_column(u'myjobs_emaillog', 'reason')
 
 
     models = {
@@ -61,8 +69,9 @@ class Migration(SchemaMigration):
             'event': ('django.db.models.fields.CharField', [], {'max_length': '11'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'processed': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'reason': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'received': ('django.db.models.fields.DateField', [], {}),
-            'send_log': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'sendgrid_response'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': u"orm['mysearches.SavedSearchLog']"})
+            'send_log': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'sendgrid_response'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': u"orm['mysearches.SavedSearchLog']"})
         },
         u'myjobs.faq': {
             'Meta': {'object_name': 'FAQ'},
@@ -203,13 +212,15 @@ class Migration(SchemaMigration):
         u'mysearches.savedsearchlog': {
             'Meta': {'object_name': 'SavedSearchLog'},
             'backfill_jobs': ('django.db.models.fields.IntegerField', [], {}),
-            'contact_record': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.ContactRecord']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
+            'contact_record': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.ContactRecord']", 'null': 'True', 'on_delete': 'models.SET_NULL', 'blank': 'True'}),
             'date_sent': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'new_jobs': ('django.db.models.fields.IntegerField', [], {}),
             'reason': ('django.db.models.fields.TextField', [], {}),
             'recipient': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'recipient_email': ('django.db.models.fields.EmailField', [], {'max_length': '255'}),
+            'uuid': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
+            'was_received': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'was_sent': ('django.db.models.fields.BooleanField', [], {})
         },
         u'postajob.package': {
