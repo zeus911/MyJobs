@@ -716,7 +716,6 @@ class CompanyProfile(models.Model):
     city = models.CharField(max_length=255, blank=True)
     state = models.CharField(max_length=255, blank=True)
     country = models.CharField(max_length=255, blank=True)
-    region = models.CharField(max_length=255, blank=True)
     zipcode = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=255, blank=True)
 

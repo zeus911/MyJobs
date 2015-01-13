@@ -37,7 +37,7 @@ class BaseJobForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.160-2.js', )
+        js = ('postajob.160-13.js', )
 
     apply_choices = [('link', "Link"), ('email', 'Email'),
                      ('instructions', 'Instructions')]
@@ -446,7 +446,7 @@ class ProductForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.160-2.js', )
+        js = ('postajob.160-13.js', )
 
     job_limit_choices = [('unlimited', "Unlimited"),
                          ('specific', 'A Specific Number'), ]
@@ -788,7 +788,7 @@ class OfflinePurchaseForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.160-2.js', )
+        js = ('postajob.160-13.js', )
 
     def __init__(self, *args, **kwargs):
         super(OfflinePurchaseForm, self).__init__(*args, **kwargs)
@@ -908,10 +908,10 @@ class CompanyProfileForm(RequestForm):
     state = NoValidationChoiceField(choices=JobLocation.state_choices,
                                     widget=SelectWithOptionClasses(),
                                     required=False)
+    region = CharField(max_length=255, required=False)
     country = ChoiceField(choices=JobLocation.country_choices,
                           initial='United States',
                           required=False)
-    region = CharField(max_length=255, required=False)
 
     class Meta:
         model = CompanyProfile
@@ -921,6 +921,7 @@ class CompanyProfileForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
+        js = ('postajob.160-13.js', )
 
     def __init__(self, *args, **kwargs):
         super(CompanyProfileForm, self).__init__(*args, **kwargs)
