@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% gz as gz %}
 {% load i18n %}
 
 {% block site-title %}
@@ -62,13 +63,5 @@
     {{ block.super }}
     <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
-    <script type="text/javascript">
-        $(".card-tabs li").on("click", function() {
-            $(".card-tabs li").removeClass("active");
-            $(this).addClass("active");
-            var clicked = $(this).attr("id").split("-")[0];
-            $(".card-wrapper").css("display", "none");
-            $("div[id*='"+clicked+"-']").css("display", "block");
-        });
-    </script>
+    <script type="text/javascript" src="{{ STATIC_URL }}postajob-tabs.160-13.js{{ gz }}"></script>
 {% endblock %}

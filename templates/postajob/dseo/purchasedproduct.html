@@ -12,13 +12,5 @@
 {% endblock %}
 
 {% block extra-js %}
-<script type="text/javascript">
-    $(".card-tabs li").on("click", function() {
-        $(".card-tabs li").removeClass("active");
-        $(this).addClass("active");
-        var clicked = $(this).attr("id").split("-")[0];
-        $(".card-wrapper").css("display", "none");
-        $("div[id*='"+clicked+"-']").css("display", "block");
-    });
-</script>
+    <script type="text/javascript" src="{{ STATIC_URL }}postajob-tabs.160-13.js"></script>
 {% endblock %}
