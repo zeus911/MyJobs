@@ -170,9 +170,6 @@ class ViewTests(PostajobTestBase):
         for form_data in [self.job_form_data, self.purchasedjob_form_data]:
             form_data.update(self.location_management_form_data)
 
-        # makes sure that the test domain is part of site packages
-        self.company.sitepackage_set.first().sites.add(settings.SITE)
-
     def test_job_access_not_company_user(self):
         self.company_user.delete()
 
@@ -855,7 +852,8 @@ class ViewTests(PostajobTestBase):
                          self.companyprofile_form_data['company_name'])
 
     def test_list_products_jsonp(self):
-        response = self.client.get(reverse('product_listing'))
+        response = self.client.get(reverse('product_listing'),
+                                   HTTP_HOST='test.jobs')
         # When an item in the chain of objects from SeoSite->ProductGrouping
         # is missing, we return text stating that there is nothing to purchase
         self.assertTrue('There are no products configured for purchase'
@@ -868,7 +866,8 @@ class ViewTests(PostajobTestBase):
         productgrouping = ProductGroupingFactory(owner=self.company)
         ProductOrder(product=self.product, group=productgrouping).save()
 
-        response = self.client.get(reverse('product_listing'))
+        response = self.client.get(reverse('product_listing'),
+                                   HTTP_HOST='test.jobs')
         for text in [productgrouping.display_title, productgrouping.explanation,
                      unicode(self.product)]:
             # When the entire chain of objects exists, the return HTML should
@@ -993,7 +992,8 @@ class ViewTests(PostajobTestBase):
                      'block_user_management']:
 
             response = self.client.get(
-                reverse('purchasedmicrosite_admin_overview'))
+                reverse('purchasedmicrosite_admin_overview'),
+                HTTP_HOST='test.jobs')
 
         self.assertEqual(response.status_code, 404)
 
@@ -1001,7 +1001,6 @@ class ViewTests(PostajobTestBase):
 class PurchasedJobActionTests(PostajobTestBase):
     def setUp(self):
         super(PurchasedJobActionTests, self).setUp()
-        self.sitepackage.sites.add(settings.SITE)
         self.purchased_product = PurchasedProductFactory(
             product=self.product, owner=self.company)
         self.job = PurchasedJobFactory(
@@ -1014,7 +1013,8 @@ class PurchasedJobActionTests(PostajobTestBase):
 
     def test_purchasedjob_accept(self):
         self.client.get(reverse('approve_admin_request',
-                                kwargs=self.view_kwargs))
+                                kwargs=self.view_kwargs),
+                        HTTP_HOST='test.jobs')
 
         request = Request.objects.get()
         job = PurchasedJob.objects.get()
@@ -1023,7 +1023,8 @@ class PurchasedJobActionTests(PostajobTestBase):
 
     def test_purchasedjob_deny(self):
         self.client.get(reverse('deny_admin_request',
-                                kwargs=self.view_kwargs))
+                                kwargs=self.view_kwargs),
+                                HTTP_HOST='test.jobs')
 
         request = Request.objects.get()
         job = PurchasedJob.objects.get()
@@ -1032,7 +1033,8 @@ class PurchasedJobActionTests(PostajobTestBase):
 
     def test_purchasedjob_block(self):
         self.client.get(reverse('block_admin_request',
-                                kwargs=self.view_kwargs))
+                                kwargs=self.view_kwargs),
+                        HTTP_HOST='test.jobs')
 
         request = Request.objects.get()
         job = PurchasedJob.objects.get()
