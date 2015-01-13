@@ -1,6 +1,5 @@
 from django.core.urlresolvers import reverse
 from django.conf import settings
-from django.http import QueryDict
 from django.template.loader import render_to_string
 
 from seo import helpers
@@ -19,27 +18,29 @@ class Breadbox(object):
         self.path = path
         self.filters = filters
         self.jobs = jobs
+        self.job_count = 0
         self.query_dict = query_dict
 
         # Set defaults for the breadcrumb types so that the functions that
         # create them aren't responsible for guaranteeing their existance.
-        self.company_breadcrumbs = []
         self.custom_facet_breadcrumbs = []
         self.location_breadcrumbs = []
         self.moc_breadcrumbs = []
-        self.q_breadcrumbs = []
-        self.title_breadcrumbs = []
-        self.clear_breadcrumbs = []
+
+        self.q_breadcrumb = None
+        self.company_breadcrumb = None
+        self.title_breadcrumb = None
+        self.clear_breadcrumb = None
 
         self.build_breadcrumbs()
 
     def _make_clear_breadcrumb(self):
-        if self.clear_breadcrumbs is not []:
+        if not self.clear_breadcrumb:
             kwargs = {
                 'display_title': "Clear All",
                 'url': reverse('all_jobs'),
             }
-            self.clear_breadcrumbs = [self.Breadcrumb(**kwargs)]
+            self.clear_breadcrumb = self.Breadcrumb(**kwargs)
 
     def _make_url(self, path=None, query_dict=None):
         path = path or self.path
@@ -56,11 +57,14 @@ class Breadbox(object):
         return query_dict
 
     def all_breadcrumbs(self):
-
-        return (self.company_breadcrumbs + self.custom_facet_breadcrumbs +
-                self.location_breadcrumbs + self.moc_breadcrumbs +
-                self.q_breadcrumbs + self.title_breadcrumbs +
-                self.clear_breadcrumbs)
+        breadcrumbs = (self.custom_facet_breadcrumbs +
+                       self.location_breadcrumbs + self.moc_breadcrumbs)
+        single_breadcrumbs = [self.title_breadcrumb, self.company_breadcrumb,
+                              self.clear_breadcrumb, self.q_breadcrumb]
+        for breadcrumb in single_breadcrumbs:
+            if breadcrumb:
+                breadcrumbs.append(breadcrumb)
+        return breadcrumbs
 
     def build_breadcrumbs(self):
         self.build_param_breadcrumbs()
@@ -100,7 +104,7 @@ class Breadbox(object):
         breadcrumb = self.build_breadcrumb_for_slug_type('company_slug',
                                                          display_title)
         if breadcrumb:
-            self.company_breadcrumbs = [breadcrumb]
+            self.company_breadcrumb = breadcrumb
             self._make_clear_breadcrumb()
 
     def build_custom_facet_breadcrumbs_from_slugs(self):
@@ -156,7 +160,9 @@ class Breadbox(object):
             new_path = new_path.replace(location_slug, new_location_slug)
 
             kwargs = {
-                'breadcrumb_class': 'location_bread_box',
+                # This class name is different because of the way we used to
+                # do the location breadbox.
+                'breadcrumb_class': 'loc_up__bread_box',
                 'display_title': display_title,
                 'url': self._make_url(path=new_path)
             }
@@ -193,7 +199,7 @@ class Breadbox(object):
     def build_q_breadcrumbs_from_params(self):
         q = self.build_breadcrumb_for_param('q')
         if q:
-            self.q_breadcrumbs = [q]
+            self.q_breadcrumb = q
             self._make_clear_breadcrumb()
 
     def build_title_breadcrumbs_from_slugs(self):
@@ -203,8 +209,48 @@ class Breadbox(object):
         breadcrumb = self.build_breadcrumb_for_slug_type('title_slug',
                                                          display_title)
         if breadcrumb:
-            self.title_breadcrumbs = [breadcrumb]
+            self.title_breadcrumb = breadcrumb
             self._make_clear_breadcrumb()
+
+    def company_display_heading(self):
+        if self.company_breadcrumb:
+            return self.company_breadcrumb.display_title
+        return ''
+
+    def custom_facet_display_heading(self):
+        heading = ' or '.join(facet.display_title for facet in
+                              self.custom_facet_breadcrumbs)
+        return "%s Jobs" % heading if heading else ''
+
+    def location_display_heading(self):
+        if self.location_breadcrumbs:
+            # Right now we shouldn't have multiple locations, so
+            # just take the first one. In the future if we do have
+            # multiple locations the contents of
+            # breadbox.location_breadcrumbs.display_title can easily be 'ORed'
+            # together.
+            return "in %s" % self.location_breadcrumbs[0].display_title
+        return ''
+
+    def moc_display_heading(self):
+        if self.moc_breadcrumbs:
+            # Right now we shouldn't have multiple mocs, so
+            # just take the first one. In the future if we do have
+            # multiple mocs the contents of
+            # breadbox.moc_breadcrumbs.display_title can easily be 'ORed'
+            # together.
+            return self.moc_breadcrumbs[0].display_title
+        return ''
+
+    def q_display_heading(self):
+        if self.q_breadcrumb:
+            return self.q_breadcrumb.display_title
+        return ''
+
+    def title_display_heading(self):
+        if self.title_breadcrumb:
+            return "%s Jobs" % self.title_breadcrumb.display_title
+        return ''
 
     def render(self):
         return render_to_string('includes/breadbox.html', {'breadbox': self})

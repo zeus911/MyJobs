@@ -133,45 +133,27 @@ def canonical_path_from_filter_dict(filters):
     return ''.join(term_paths)
 
 
-def build_results_heading(title_dict):
-    """
-    Builds a sensible, human-readable heading for the results page in the
-    format of COMPANY Careers<br>(CUSTOM_SEARCH | "TITLE Jobs")("in LOCATION"),
-    e.g.
-
-    BP Careers
-    Environment Jobs in New Orleans, Louisiana
-
-    Inputs
-    :title_dict: A dictionary of slug tags and their values (either the human-
-                 readable values from the URL slugs or None)
-
-    Returns
-    A string composed of info in the title_dict
-
-    """
+def build_results_heading(breadbox):
     heading = []
-    get_slug = title_dict.get
-    has_facet = get_slug('facet_slug') is not None
-    has_title = get_slug('title_slug') is not None 
-    has_moc = get_slug('moc_slug') is not None 
-    has_company = get_slug('company_slug') is not None 
-    has_location = get_slug('location_slug') is not None
-    has_count = get_slug('count') is not None
+
+    has_facet = bool(breadbox.custom_facet_breadcrumbs)
+    has_title = bool(breadbox.title_breadcrumb)
+    has_moc = bool(breadbox.moc_breadcrumbs)
+    has_location = bool(breadbox.location_breadcrumbs)
+    has_count = bool(breadbox.job_count)
 
     if has_facet and not (has_title or has_moc):
-        # Custom Facet titles already have "Jobs" at the end of the string.
-        heading.append(title_dict['facet_slug'])
+        heading.append(breadbox.custom_facet_display_heading())
 
     if has_title:
-        heading.extend([title_dict['title_slug'], "Jobs"])
+        heading.append(breadbox.title_display_heading())
     elif not heading:
         if has_count:
-            heading.append(title_dict['count'])
+            heading.append(str(breadbox.job_count))
         heading.append("Jobs")
 
     if has_location:
-        heading.extend(['in', title_dict['location_slug']])
+        heading.append(breadbox.location_display_heading())
 
     return " ".join(heading)
 
@@ -736,7 +718,7 @@ def combine_groups(svd_searches, match_field='name'):
 
 
 def get_widgets(request, site_config, facet_counts, custom_facets,
-                path_dict={}, featured=False, search_facets=False):
+                breadbox=None, featured=False, search_facets=False):
     """
     Return a list of widget FacetListWidget objects to the home_page or
     job_list_by_slug_tag view, sorted by their browse order as set in the
@@ -770,7 +752,7 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
     for _type in types:
         w = facet_class(request, site_config, _type[0],
                         facet_counts['%s_slab' % _type[0]][0:num_items*2],
-                        path_dict)
+                        breadbox)
         w.precedence = _type[1]
         widgets.append(w)
 
@@ -779,7 +761,7 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
         # location/title/moc widgets, since facet counts aren't generated
         # from the SearchIndex.
         search_widget = facet_class(request, site_config, 'facet',
-                                    custom_facets, path_dict)
+                                    custom_facets, breadbox)
         search_widget.precedence = site_config.browse_facet_order
         widgets.append(search_widget)
     widgets.sort(key=lambda x: x.precedence)

@@ -16,12 +16,12 @@ class Widget(object):
     slug_order = {'location': 2, 'title': 1, 'moc': 3, 'facet': 4, 'company': 5,
                   'mapped_moc': 3}
     
-    def __init__(self, request, site_config, _type, items, path_dict):
+    def __init__(self, request, site_config, _type, items, breadbox):
         self.request = request
         self.site_config = site_config
         self._type = _type
         self.items = items
-        self.path_dict = path_dict
+        self.breadbox = breadbox
 
     def get_req_path(self):
         return self.request.path

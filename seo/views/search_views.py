@@ -1597,7 +1597,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     if redirect_url:
         return redirect_url
 
-    facet_blurb = ''
+    facet_blurb_facet = None
     search_url_slabs = []
     path = "http://%s%s" % (request.META.get('HTTP_HOST', 'localhost'),
                             request.path)
@@ -1616,7 +1616,6 @@ def search_by_results_and_slugs(request, *args, **kwargs):
            else None)
     custom_facets = []
 
-    active_facets = []
     if site_config.browse_facet_show:
         cf_count_tup = get_custom_facets(request, filters=filters,
                                          query_string=query_path)
@@ -1634,7 +1633,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
             # Set the facet blurb only if we have exactly one
             # CustomFacet applied.
             if active_facets.count() == 1:
-                facet_blurb = active_facets[0].blurb
+                facet_blurb_facet = active_facets[0]
 
     else:
         custom_facets = settings.DEFAULT_FACET
@@ -1690,20 +1689,16 @@ def search_by_results_and_slugs(request, *args, **kwargs):
             and not query_path:
         return redirect("/")
 
-    bread_box_path = helpers.get_bread_box_path(filters)
-
     if num_featured_jobs != 0:
         jobs = featured_jobs[:num_featured_jobs]
         breadbox = Breadbox(request.path, filters, jobs, request.GET)
-        bread_box_title = helpers.get_bread_box_headings(filters, jobs)
     else:
         jobs = default_jobs[:num_default_jobs]
         breadbox = Breadbox(request.path, filters, jobs, request.GET)
-        bread_box_title = helpers.get_bread_box_headings(filters, jobs)
 
     if filters['company_slug']:
-        company_obj = Company.objects.filter(member=True).filter(
-            company_slug=filters['company_slug'])
+        company_obj = Company.objects.filter(member=True)
+        company_obj = company_obj.filter(company_slug=filters['company_slug'])
         if company_obj:
             company_data = helpers.company_thumbnails(company_obj)[0]
         else:
@@ -1711,23 +1706,19 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     else:
         company_data = None
 
-    if active_facets:
-        bread_box_title['facet_slug'] = active_facets[0].name
-
     widgets = helpers.get_widgets(request, site_config, facet_counts,
-                                  search_url_slabs, bread_box_path)
+                                  search_url_slabs, breadbox=breadbox)
 
-    loc_term = bread_box_title.get('location_slug', request.GET.get('location', '\*'))
-    moc_term = bread_box_title.get('moc_slug', request.GET.get('moc', '\*'))
+    location_term = breadbox.location_display_heading()
+    moc_term = breadbox.moc_display_heading()
+    if not location_term:
+        location_term = '\*'
+    if not moc_term:
+        moc_term = '\*'
 
-    count_heading_dict = bread_box_title.copy()
-    count_heading_dict['count'] = intcomma(featured_jobs.count() +
-                                           default_jobs.count())
-    if loc_term != '\*':
-        count_heading_dict['location_slug'] = loc_term
-
-    count_heading = helpers.build_results_heading(count_heading_dict)
-    results_heading = helpers.build_results_heading(bread_box_title)
+    results_heading = helpers.build_results_heading(breadbox)
+    breadbox.job_count = intcomma(featured_jobs.count() + default_jobs.count())
+    count_heading = helpers.build_results_heading(breadbox)
 
     sort_order = request.GET.get('sort', 'relevance')
     if sort_order not in helpers.sort_order_mapper.keys():
@@ -1736,21 +1727,19 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     data_dict = {
         'base_path': request.path,
         'breadbox': breadbox,
-        'bread_box_path': bread_box_path,
-        'bread_box_title': bread_box_title,
         'build_num': settings.BUILD,
         'company': company_data,
         'count_heading': count_heading,
         'default_jobs': default_jobs[:num_default_jobs],
-        'facet_blurb': facet_blurb,
+        'facet_blurb_facet': facet_blurb_facet,
         'featured_jobs': featured_jobs[:num_featured_jobs],
         'filters': filters,
         'google_analytics': ga,
         'host': str(request.META.get("HTTP_HOST", 'localhost')),
-        'location_term': loc_term if loc_term else '\*',
+        'location_term': location_term,
         'max_filter_settings': settings.ROBOT_FILTER_LEVEL,
         'moc_id_term': moc_id_term if moc_id_term else '\*',
-        'moc_term': moc_term if moc_term else '\*',
+        'moc_term': moc_term,
         'num_filters': num_filters,
         'total_jobs_count': jobs_count,
         'results_heading': results_heading,
