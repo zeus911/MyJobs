@@ -2,6 +2,7 @@
 from itertools import ifilter
 from pysolr import safe_urlencode
 
+from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.template import Context, Template
 from django.template.defaultfilters import safe, urlencode
@@ -13,22 +14,28 @@ from seo.templatetags.seo_extras import facet_text, facet_url, smart_truncate
 
 
 class Widget(object):
-
     slug_order = {'location': 2, 'title': 1, 'moc': 3, 'facet': 4, 'company': 5,
                   'mapped_moc': 3}
     
-    def __init__(self, request, site_config, _type, items, breadbox,
+    def __init__(self, request, site_config, _type, items, filters,
                  offset=None):
         self.request = request
         self.site_config = site_config
         self._type = _type
         self.items = items
-        self.path_dict = path_dict
+        self.path_map = self.filters_to_paths(filters)
         self.num_items = self.site_config.num_filter_items_to_show
         self.offset = offset or self.num_items * 2
 
     def get_req_path(self):
         return self.request.path
+
+    @staticmethod
+    def filters_to_paths(filters):
+        for slug_type, value in filters:
+            path = "%s/%s/" % (value, settings.SLUG_TAGS[slug_type])
+            filters[slug_type] = path
+        return filters
 
 
 class FacetListWidget(Widget):
@@ -52,18 +59,17 @@ class FacetListWidget(Widget):
         else:
             criteria_output = _(getattr(self.site_config, "browse_%s_text"
                                         % _type))
-        num_items = self.site_config.num_filter_items_to_show
-        col_hdr = (
-            """\
-            <h3><span class="direct_filterLabel">%s</span> <span class="direct_highlightedText">%s</span>\
-            </h3>\
-            """ % (filter_output, criteria_output)
-        )
+
+        column_header = ('<h3><span class="direct_filterLabel">%s</span> '
+                         '<span class="direct_highlightedText">%s</span></h3>')
+        column_header = column_header % (filter_output, criteria_output)
+
         # Javascript in pager.js uses splits that assume there are no '_'
         # characters in the type
         selector_type = _type.replace('_', '')
         ul_open = '<ul role="menu" id="direct_%sDisambig">' % selector_type
-        output = [col_hdr, ul_open]
+
+        output = [column_header, ul_open]
         counter = 1
 
         # hidden options is a boolean used to track whether there are more
@@ -106,40 +112,40 @@ class FacetListWidget(Widget):
                 "item_url": item_url, 
                 "item_name": item_name, 
                 "item_count": item_count,
-                })
-            item_template = Template(
-                """\
-                <li role="menuitem" {% if li_class %} \
-                    class='{{li_class}}'{% endif %}>\
-                <a href="{{ item_url }}">\
-                    {{ item_name }} \
-                    {% if item_count %}\
-                    ({{ item_count }})\
-                    {% endif %}
-                </a></li>"""
-                )
-            
-            # render the above template and context into a string variable
+            })
+
+            li_item = ('<li role="menuitem" '
+                       '{% if li_class %}class="{{li_class}}"{% endif %}>'
+                       '<a href="{{ item_url }}">'
+                       '{{ item_name }}{% if item_count %} ({{ item_count }})'
+                       '{% endif %}</a></li>')
+            item_template = Template(li_item)
             href = item_template.render(item_context)
             
             output.append(href)
             counter += 1
 
-        more_less = (
-            """\
-            <span id="direct_moreLessLinks_%(type)sDisambig" data-type="%(type)s"\
-             class="more_less_links_container" data-num-items="%(num_items)s"\
-             data-total-items="%(total_items)s" data-offset="%(offset)s">
-              <a class="direct_optionsMore" href="#" rel="nofollow">%(more)s</a>
-              <a class="direct_optionsLess" href="#" rel="nofollow">%(less)s</a>
-            </span>\
-            """ % dict(num_items=self.num_items,
-                       type=selector_type, total_items=counter,
-                       more=more_output, less=less_output,
-                       offset=self.offset)
-        )
+        more_less = ('<span id="direct_moreLessLinks_%(type)sDisambig" '
+                     'data-type="%(type)s" '
+                     'class="more_less_links_container" '
+                     'data-num-items="%(num_items)s" '
+                     'data-total-items="%(total_items)s" '
+                     'data-offset="%(offset)s">'
+
+                     '<a class="direct_optionsMore" '
+                     'href="#" rel="nofollow">%(more)s</a>'
+
+                     '<a class="direct_optionsLess" href="#" '
+                     'rel="nofollow">%(less)s</a>'
+
+                     '</span>')
+        more_less = more_less % dict(num_items=self.num_items,
+                                     type=selector_type, total_items=counter,
+                                     more=more_output, less=less_output,
+                                     offset=self.offset)
  
         output.append('</ul>')
+
         if hidden_options or self._show_more(items, self.num_items):
             output.append(more_less)
 
@@ -148,13 +154,13 @@ class FacetListWidget(Widget):
     def _show_more(self, items, num_to_show):
         # 2*num_to_show is currently the max length of items, passed in
         # by helpers.get_widgets
-        return len(items) >= 2*num_to_show
+        return len(items) >= 2 * num_to_show
 
     def _show_widget(self, items):
         if self._type == 'featured':
             return True
-        else:
-            show = getattr(self.site_config, 'browse_{t}_show'.format(t=self._type))
+
+        show = getattr(self.site_config, 'browse_{t}_show'.format(t=self._type))
 
         if self._type == 'facet':
             retval = (bool(len(items)) and show)
@@ -163,21 +169,23 @@ class FacetListWidget(Widget):
 
         return retval
 
-    def get_abs_url(self, item, *args, **kwargs):
+    def get_abs_url(self, facet):
         """
         Calculates the absolute URL for each item in a particular filter
         <ul> tag. It then returns this as a string to be rendered in the
         template.
         
         """
+        facet_slab, facet_count = facet
         url_atoms = {'location': '', 'title': '', 'facet': '', 'featured': '',
                      'moc': '', 'company': ''}
-        if self._type in ('country', 'city', 'state'):
-            t = 'location'
-        else:
-            t = self._type
 
-        url_atoms[t] = urlencode(facet_url(item[0]))
+        if self._type in ('country', 'city', 'state'):
+            facet_type = 'location'
+        else:
+            facet_type = self._type
+
+        url_atoms[facet_type] = urlencode(facet_url(facet_slab))
 
         # For custom facets where the "show with or without results" option
         # is checked, we don't want to build out a path relative to the
@@ -192,16 +200,22 @@ class FacetListWidget(Widget):
         # builds URL path relative to current location :) Clear as mud.
         # Don't worry, we'll take this out once we have proper static pages
         # implemented.
-        if item[1]:
-            url_atoms = self._build_path_dict(t, url_atoms)
+        if facet_count:
+            url_atoms = self._build_path_dict(facet_type, url_atoms)
             
         # Create a list of intermediate 2-tuples, with the url_atoms
-        # value and the ordering data from self.slug_order. Then sort
-        # them based on that ordering data. Finally, join all values
-        # from this sorted list to create the canonical URL.
-        results = sorted([(url_atoms[k], self.slug_order['company']
-                         if k == 'featured' else self.slug_order[k])
-                         for k in url_atoms], key=lambda result: result[1])
+        # value and the ordering data from self.slug_order.
+        url_orders = []
+        for k in url_atoms:
+            order = (self.slug_order['company'] if k == 'featured'
+                     else self.slug_order[k])
+            url_orders.append((url_atoms[k], order))
+
+        # Sort them based on that ordering data.
+        results = sorted(url_orders, key=lambda result: result[1])
+
+        # Join all values from this sorted list to create
+        # the canonical URL.
         url = '/%s/' % '/'.join([i[0] for i in
                                 ifilter(lambda r: r[0], results)])
 
@@ -227,7 +241,7 @@ class FacetListWidget(Widget):
 
 class SearchFacetListWidget(FacetListWidget):
     
-    def get_abs_url(self, item, *args, **kwargs):
+    def get_abs_url(self, item):
         item_name = safe(smart_truncate(facet_text(item[0])))
         loc_val = self.request.GET.get('location', '')
         moc_val = self.request.GET.get('moc', '')

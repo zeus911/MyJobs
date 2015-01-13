@@ -420,6 +420,14 @@ SLUG_TAGS = OrderedDict([
     ('company_slug', '/careers/'),
 ])
 
+ALLOW_MULTIPLE_SLUG_TAGS = {
+    'title': False,
+    'location': False,
+    'moc': False,
+    'facet': True,
+    'company': False
+}
+
 FEED_VIEW_SOURCES = {
     'xml': 23,
     'json': 24,

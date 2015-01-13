@@ -1684,7 +1684,6 @@ def search_by_results_and_slugs(request, *args, **kwargs):
             and not query_path:
         return redirect("/")
 
-
     if num_featured_jobs != 0:
         jobs = featured_jobs[:num_featured_jobs]
         breadbox = Breadbox(request.path, filters, jobs, request.GET)
@@ -1703,7 +1702,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         company_data = None
 
     widgets = helpers.get_widgets(request, site_config, facet_counts,
-                                  search_url_slabs, breadbox=breadbox)
+                                  search_url_slabs, filters=filters)
 
     location_term = breadbox.location_display_heading()
     moc_term = breadbox.moc_display_heading()

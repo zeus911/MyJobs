@@ -722,13 +722,14 @@ def combine_groups(custom_facet_counts, match_field='name'):
 
 
 def get_widgets(request, site_config, facet_counts, custom_facets,
-                breadbox=None, featured=False, search_facets=False):
+                filters=None, featured=False, search_facets=False):
     """
     Return a list of widget FacetListWidget objects to the home_page or
     job_list_by_slug_tag view, sorted by their browse order as set in the
     site config.
 
     """
+    filters = filters or {}
     if search_facets:
         facet_class = SearchFacetListWidget
     else:
@@ -756,7 +757,7 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
     for _type in types:
         w = facet_class(request, site_config, _type[0],
                         facet_counts['%s_slab' % _type[0]][0:num_items*2],
-                        breadbox)
+                        filters)
         w.precedence = _type[1]
         widgets.append(w)
 
@@ -765,7 +766,7 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
         # location/title/moc widgets, since facet counts aren't generated
         # from the SearchIndex.
         search_widget = facet_class(request, site_config, 'facet',
-                                    custom_facets, breadbox,
+                                    custom_facets, filters,
                                     offset=len(custom_facets))
         search_widget.precedence = site_config.browse_facet_order
         widgets.append(search_widget)

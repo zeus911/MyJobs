@@ -8,7 +8,7 @@ from seo.models import CustomFacet
 
 class Breadbox(object):
     class Breadcrumb(object):
-        def __init__(self, url, display_title,
+        def __init__(self, display_title='', url=reverse('view_jobs'),
                      breadcrumb_class='breadcrumb_bread_box'):
             self.url = url
             self.display_title = display_title
@@ -218,7 +218,11 @@ class Breadbox(object):
         return ''
 
     def custom_facet_display_heading(self):
-        heading = ' or '.join(facet.display_title for facet in
+        # A large number of our facets end in " Jobs", but when we chain the
+        # facets titles together the " Jobs" ending for each individual
+        # facet doesn't make sense anymore, so rstrip it out and then
+        # re-add it after all the facet titles have been composed.
+        heading = ' or '.join(facet.display_title.rstrip(" Jobs") for facet in
                               self.custom_facet_breadcrumbs)
         return "%s Jobs" % heading if heading else ''
 
