@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from itertools import ifilter
+from pysolr import safe_urlencode
 
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.template import Context, Template
@@ -16,12 +17,15 @@ class Widget(object):
     slug_order = {'location': 2, 'title': 1, 'moc': 3, 'facet': 4, 'company': 5,
                   'mapped_moc': 3}
     
-    def __init__(self, request, site_config, _type, items, breadbox):
+    def __init__(self, request, site_config, _type, items, breadbox,
+                 offset=None):
         self.request = request
         self.site_config = site_config
         self._type = _type
         self.items = items
-        self.breadbox = breadbox
+        self.path_dict = path_dict
+        self.num_items = self.site_config.num_filter_items_to_show
+        self.offset = offset or self.num_items * 2
 
     def get_req_path(self):
         return self.request.path
@@ -66,7 +70,7 @@ class FacetListWidget(Widget):
         # items to display than there are slots to display them. It is False
         # by default, and switched to true if there are hidden fields created
         # or the counter matches or exceeds the num_items value
-        hidden_options=False
+        hidden_options = False
         for item in items:
             try:
                 item_name = safe(smart_truncate(facet_text(item[0])))
@@ -85,7 +89,7 @@ class FacetListWidget(Widget):
                 continue
                 
             item_url = self.get_abs_url(item)
-            if counter <= num_items:
+            if counter <= self.num_items:
                 li_class = ""
             else:
                 li_class = "direct_hiddenOption"
@@ -129,14 +133,14 @@ class FacetListWidget(Widget):
               <a class="direct_optionsMore" href="#" rel="nofollow">%(more)s</a>
               <a class="direct_optionsLess" href="#" rel="nofollow">%(less)s</a>
             </span>\
-            """ % dict(num_items=self.site_config.num_filter_items_to_show,
+            """ % dict(num_items=self.num_items,
                        type=selector_type, total_items=counter,
                        more=more_output, less=less_output,
-                       offset=self.site_config.num_filter_items_to_show*2)
-            )
+                       offset=self.offset)
+        )
  
         output.append('</ul>')
-        if hidden_options or self._show_more(items, num_items):
+        if hidden_options or self._show_more(items, self.num_items):
             output.append(more_less)
 
         return mark_safe('\n'.join(output))

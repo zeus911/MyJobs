@@ -1117,7 +1117,7 @@ class SeoSiteAdmin(admin.ModelAdmin):
 class CompanyAdmin(admin.ModelAdmin):
     form = CompanyForm
     save_on_top = True
-    filter_horizontal = ('job_source_ids',)
+    filter_horizontal = ('job_source_ids', 'prm_saved_search_sites')
     list_display = ('name', 'featured_on')
     list_filter = ('enhanced', 'digital_strategies_customer')
     search_fields = ['name', 'seosite__name', 'seosite__domain']
@@ -1129,6 +1129,7 @@ class CompanyAdmin(admin.ModelAdmin):
                                    ('og_img')]}),
         ('Job Sources', {'fields': ['job_source_ids']}),
         ('Featured on', {'fields': ['sites']}),
+        ('PRM', {'fields': ['prm_saved_search_sites']}),
     ]
 
 

@@ -151,7 +151,7 @@ class PartnerSavedSearchForm(ModelForm):
     class Meta:
         model = PartnerSavedSearch
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
-                  'account_activation_message', 'frequency', 'day_of_month',
+                  'frequency', 'day_of_month',
                   'day_of_week', 'jobs_per_email', 'partner_message', 'notes')
         exclude = ('provider', 'sort_by', )
         widgets = {
@@ -242,7 +242,7 @@ class PartnerSubSavedSearchForm(ModelForm):
         model = PartnerSavedSearch
         fields = ('sort_by', 'frequency', 'day_of_month', 'day_of_week')
         exclude = ('provider', 'url_extras', 'partner_message',
-                   'account_activation_message', 'created_by', 'user',
+                   'created_by', 'user',
                    'created_on', 'label', 'url', 'feed', 'email', 'notes',
                    'custom_message', 'tags', )
         widgets = {

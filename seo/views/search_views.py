@@ -73,6 +73,8 @@ From this dictionary, we should be able to filter most
 items down to what we actually need.
 """
 LOG = logging.getLogger('views')
+
+
 def ajax_get_facets(request, filter_path, facet_type):
     """
     Returns facets for the inputted facet_type
@@ -136,28 +138,22 @@ def ajax_get_facets(request, filter_path, facet_type):
         filters = helpers.get_bread_box_path(filters)
 
         qs = QueryDict(request.META.get('QUERY_STRING', None)).copy()
-        try:
-            del qs['offset']
-        except KeyError:
-            pass
-        try:
-            del qs['filter_path']
-        except KeyError:
-            pass
-        try:
-            del qs['num_items']
-        except KeyError:
-            pass
+
+        for param in ['offset', 'filter_path', 'num_items']:
+            if param in qs:
+                del qs[param]
 
         for i in facet_counts['%s_slab' % _type]:
-            url = "%s?%s" % (helpers.get_abs_url(i, _type, filters), qs.urlencode()) if \
-                qs else helpers.get_abs_url(i, _type, filters)
+            url = ("%s?%s" % (helpers.get_abs_url(i, _type, filters),
+                              qs.urlencode())
+                   if qs else helpers.get_abs_url(i, _type, filters))
             name = safe(smart_truncate(facet_text(i[0])))
 
             if name == 'None' or name.startswith('Virtual'):
                 continue
 
-            items.append({'url':url, 'name':name, 'count':i[1]})
+            items.append({'url': url, 'name': name, 'count': i[1]})
+
     data_dict = {'items': items, 'item_type': _type,
                  'num_items': 0}
 
@@ -809,7 +805,6 @@ def ajax_filter_carousel(request):
            else None)
 
     if site_config.browse_facet_show:
-
         cf_count_tup = get_custom_facets(request, filters=filters,
                                          query_string=query_path)
         if not filters['facet_slug']:
@@ -1688,6 +1683,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
             and not any([i.always_show for i in custom_facets]) \
             and not query_path:
         return redirect("/")
+
 
     if num_featured_jobs != 0:
         jobs = featured_jobs[:num_featured_jobs]
