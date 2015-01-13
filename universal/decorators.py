@@ -1,6 +1,7 @@
 from functools import wraps
 
 from django.core.urlresolvers import reverse
+from django.conf import settings
 from django.http import Http404, HttpResponseRedirect
 
 from myjobs.models import User
@@ -39,6 +40,25 @@ def company_has_access(perm_field):
             return view_func(request, *args, **kwargs)
         return wraps(view_func)(wrap)
     return decorator
+
+def company_in_sitepackages(view_func):
+    """
+    Raises an Http404 exception if the wrapped view is accessed by a user who
+    isn't a member of a company who owns a site package which includes the
+    current seo site.
+
+    That is, if John is visiting testing.jobs, which is in a site package owned
+    by DirectEmployers, but John isn't a company user for DirectEmployers, he
+    will see a 404 page.
+    """
+    @wraps(view_func)
+    def wrap(request, *args, **kwargs):
+        if not request.user.is_anonymous() and not request.user.can_access_site(
+                settings.SITE):
+            raise Http404
+
+        return view_func(request, *args, **kwargs)
+    return wrap
 
 
 def activate_user(view_func):

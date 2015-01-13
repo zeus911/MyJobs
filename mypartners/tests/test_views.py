@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import json
 import re
 from time import sleep
-from itertools import islice
 import os
 import random
 
@@ -15,6 +14,8 @@ from django.core import mail
 from django.http import Http404
 from django.test.client import RequestFactory 
 from django.utils.timezone import utc
+
+from tasks import PARTNER_LIBRARY_SOURCES
 
 from myjobs.tests.setup import MyJobsBase
 from myjobs.tests.test_views import TestClient
@@ -802,7 +803,6 @@ class SearchEditTests(MyPartnersTestCase):
                 'url': 'http://www.jobs.jobs/jobs',
                 'url_extras': '',
                 'email': self.contact.user.email,
-                'account_activation_message': '',
                 'frequency': 'W',
                 'day_of_month': '',
                 'day_of_week': '3',
@@ -836,7 +836,6 @@ class SearchEditTests(MyPartnersTestCase):
                 'url': 'http://www.jobs.jobs/jobs',
                 'url_extras': '',
                 'email': self.contact.user.email,
-                'account_activation_message': '',
                 'frequency': 'W',
                 'day_of_month': '',
                 'day_of_week': '3',
@@ -878,7 +877,6 @@ class SearchEditTests(MyPartnersTestCase):
                 'url': 'http://www.jobs.jobs/jobs',
                 'url_extras': '',
                 'email': new_contact.email,
-                'account_activation_message': '',
                 'frequency': 'W',
                 'day_of_month': '',
                 'day_of_week': '3',
@@ -1117,10 +1115,10 @@ class EmailTests(MyPartnersTestCase):
 class PartnerLibraryTestCase(MyPartnersTestCase):
     @classmethod
     def setUpClass(cls):
+        url, params = PARTNER_LIBRARY_SOURCES.items()[0][1].values()
+
         super(PartnerLibraryTestCase, cls).setUpClass()
-        path = os.path.join(
-            os.path.dirname(__file__), 'data', 'partner-library.html')
-        for partner in islice(get_library_partners(path), 0, 10):
+        for partner in get_library_partners(url, params):
             fullname = " ".join(" ".join([partner.first_name,
                                           partner.middle_name,
                                           partner.last_name]).split())
@@ -1175,4 +1173,4 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
             self.assertIn('Disability', partner.tags.values_list('name', flat=True))
 
         self.assertIn(
-            "OFCCP Library", partner.tags.values_list('name', flat=True))
+            library.data_source, partner.tags.values_list('name', flat=True))

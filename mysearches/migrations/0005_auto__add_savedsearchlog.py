@@ -139,7 +139,7 @@ class Migration(SchemaMigration):
             'area': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'contact_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'created_by': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
+            'data_source': ('django.db.models.fields.CharField', [], {'default': "'Employment Referral Resource Directory'", 'max_length': '255'}),
             'email': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'fax': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -170,7 +170,6 @@ class Migration(SchemaMigration):
         },
         u'mysearches.partnersavedsearch': {
             'Meta': {'object_name': 'PartnerSavedSearch', '_ormbases': [u'mysearches.SavedSearch']},
-            'account_activation_message': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'created_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"}),
             'partner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Partner']"}),
             'partner_message': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
@@ -281,6 +280,7 @@ class Migration(SchemaMigration):
             'og_img': ('django.db.models.fields.URLField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
             'posting_access': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'prm_access': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'prm_saved_search_sites': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['seo.SeoSite']", 'null': 'True', 'blank': 'True'}),
             'product_access': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'site_package': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['postajob.SitePackage']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'user_created': ('django.db.models.fields.BooleanField', [], {'default': 'False'})

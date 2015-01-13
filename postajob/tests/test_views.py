@@ -192,7 +192,7 @@ class ViewTests(PostajobTestBase):
         their content replaced by a friendly reminder to have a site package
         created.
         """
-        self.company.sitepackage_set.clear()
+        self.sitepackage.sites.clear()
         
         for url in ['request', 'offlinepurchase_add', 'product_add',
                     'productgrouping_add']:
@@ -977,10 +977,31 @@ class ViewTests(PostajobTestBase):
         self.assertFalse(self.user in company.admins.all())
         self.assertEqual(response.status_code, 200)
 
+    def test_accessing_wrong_company_admin(self):
+        """
+        Trying to access the admin pages for a site that is a part of a package
+        which isn't own by a company to which you belong should raise a 404.
+        """
+        self.company_user.company = CompanyFactory(pk=41, name="Wrong Company")
+        self.company_user.save()
+
+        for page in ['view_job', 'view_invoice', 
+                     'purchasedmicrosite_admin_overview', 'admin_products',
+                     'admin_groupings', 'admin_offlinepurchase',
+                     'admin_purchasedproduct', 'view_request', 
+                     'process_admin_request', 'resend_invoice', 
+                     'block_user_management']:
+
+            response = self.client.get(
+                reverse('purchasedmicrosite_admin_overview'))
+
+        self.assertEqual(response.status_code, 404)
+
 
 class PurchasedJobActionTests(PostajobTestBase):
     def setUp(self):
         super(PurchasedJobActionTests, self).setUp()
+        self.sitepackage.sites.add(settings.SITE)
         self.purchased_product = PurchasedProductFactory(
             product=self.product, owner=self.company)
         self.job = PurchasedJobFactory(

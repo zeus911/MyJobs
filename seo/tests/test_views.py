@@ -108,9 +108,9 @@ class SeoSiteTestCase(DirectSEOTestCase):
         self.assertTrue(self.client.login(**credentials))
 
         resp = self.client.post(reverse('seosites_settings_email_domain_edit'),
-                                data=data, follow=True)
+                                data=data, follow=False)
 
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 302)
         site = SeoSite.objects.get(pk=site.pk)
         site2 = SeoSite.objects.get(pk=site2.pk)
         self.assertEqual(data[str(site.pk)], site.email_domain)

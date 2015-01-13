@@ -72,6 +72,8 @@ From this dictionary, we should be able to filter most
 items down to what we actually need.
 """
 LOG = logging.getLogger('views')
+
+
 def ajax_get_facets(request, filter_path, facet_type):
     """
     Returns facets for the inputted facet_type
@@ -129,7 +131,6 @@ def ajax_get_facets(request, filter_path, facet_type):
                                                   facet_offset=offset,
                                                   sort_order=sort_order)
 
-
         #TODO: This may throw off num_items and offset. Add slicing to each
         #field list to return the correct number of facet constraints/counts
         #Jason McLaughlin 09/10/2012
@@ -140,28 +141,22 @@ def ajax_get_facets(request, filter_path, facet_type):
         filters = helpers.get_bread_box_path(filters)
 
         qs = QueryDict(request.META.get('QUERY_STRING', None)).copy()
-        try:
-            del qs['offset']
-        except KeyError:
-            pass
-        try:
-            del qs['filter_path']
-        except KeyError:
-            pass
-        try:
-            del qs['num_items']
-        except KeyError:
-            pass
+
+        for param in ['offset', 'filter_path', 'num_items']:
+            if param in qs:
+                del qs[param]
 
         for i in facet_counts['%s_slab' % _type]:
-            url = "%s?%s" % (helpers.get_abs_url(i, _type, filters), qs.urlencode()) if \
-                qs else helpers.get_abs_url(i, _type, filters)
+            url = ("%s?%s" % (helpers.get_abs_url(i, _type, filters),
+                              qs.urlencode())
+                   if qs else helpers.get_abs_url(i, _type, filters))
             name = safe(smart_truncate(facet_text(i[0])))
 
             if name == 'None' or name.startswith('Virtual'):
                 continue
 
-            items.append({'url':url, 'name':name, 'count':i[1]})
+            items.append({'url': url, 'name': name, 'count': i[1]})
+
     data_dict = {'items': items, 'item_type': _type,
                  'num_items': 0}
 
@@ -1649,8 +1644,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
                                                  params=request.GET)
             cache.set(cust_key, cust_facets)
 
-        cf_count_tup = cust_facets
-        cf_count_tup = helpers.combine_groups(cf_count_tup)
+        cf_count_tup = helpers.combine_groups(cust_facets)
 
         if not filters['facet_slug']:
             search_url_slabs = [(i[0].url_slab, i[1]) for i in cf_count_tup]

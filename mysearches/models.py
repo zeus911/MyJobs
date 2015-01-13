@@ -487,7 +487,6 @@ class PartnerSavedSearch(SavedSearch):
                               "greeting that will be sent with each copy "
                               "of this saved search.")
     tags = models.ManyToManyField('mypartners.Tag', null=True)
-    account_activation_message = models.TextField(blank=True)
     created_by = models.ForeignKey(User, editable=False)
 
     def __unicode__(self):

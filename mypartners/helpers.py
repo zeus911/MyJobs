@@ -261,52 +261,26 @@ def find_partner_from_email(partner_list, email):
     return None
 
 
-def get_library_as_html():
-    """ Get partner library data in HTML format.
 
-        The POST request is necessary in order to get the cookie required by
-        the GET request in order to obtain useful results.
+def get_library_partners(url, params=None):
     """
-    cookie_url = 'http://www.dol-esa.gov/errd/directory.jsp'
-    excel_url = 'http://www.dol-esa.gov/errd/directoryexcel.jsp'
-    response = requests.post(cookie_url, data=dict(
-        reg='ALL', # Region
-        stat='None', # State
-        name='',
-        city='',
-        sht='None', # Contractor Type
-        lst='None', # Resource Organization
-        sortorder='asc'))
+    Returns a generator that yields `CompliancePartner` objects, which can then
+    be added to the PartnerLibrary table in the database. At the moment, this
+    function assumes data to be in a table that mimicks the output of the
+    "Export to Excel" button used at wwww.dol-esa.gov/errd/directory.jsp.
 
-    return requests.get(excel_url, cookies=response.cookies).text
+    Inputs:
+    :url: The post url (str) used to generate the data.
+    :params: POST data (dict) passed to the :url:
 
-
-def get_library_partners(path=None):
-    """ Generator that produces partner library info.
-
-        If no path is given, then the data is downloaded from
-        "www.dol-esa.gov/errd".
-
-        This generator yields a CompliancePartner namedtuple whose fields
-        coincide with the table headers present in `html_file`. In the case of
-        `state` there exists two fields:
-
-        state
-            The long version of the state. Presumably indicative of the state
-            in which the organization operates in.
-
-        st
-            This is the two-letter state abbreviation. Unlike `state`, this
-            field indicates the state in which the organization's home office
-            resides.
+    Outputs:
+    A generator of `CompliancePartner` objects, whose attributes map directly
+    with the excel table.
     """
 
-    if path:
-        text = open(path, "r").read()
-    else:
-        text = get_library_as_html()
-
-    tree = html.fromstring(text)
+    params = params or {}
+    response = requests.post(url, params=params)
+    tree = html.fromstring(response.text)
 
     # convert column headers to valid Python identifiers, and rename duplicates
     cols = []
@@ -322,6 +296,7 @@ def get_library_partners(path=None):
         fields = dict((cols[i], (td.text or "").strip()) for i, td in
                       enumerate(CSSSelector("td")(row)))
 
+        # convert column headers to valid Python identifiers
         for column, value in fields.items():
             if value in [u"\xa0", None]:
                 fields[column] = ""
@@ -330,6 +305,7 @@ def get_library_partners(path=None):
             elif value == "N":
                 fields[column] = False
 
+            # coerce these to bools if they are empty strings
             if column in ["minority", "female", "disabled", "veteran",
                           "disabled_veteran", "exec_om", "first_om",
                           "professional", "technician", "sales",
@@ -382,10 +358,10 @@ def filter_partners(request, partner_library=False):
     sort_by = sort_order + request.REQUEST.get('sort_by', 'name')
     city = request.REQUEST.get('city', '').strip()
     state = request.REQUEST.get('state', '').strip()
-    tags = [tag.strip() for tag in request.REQUEST.get('tag', '').split(',') if tag]
+    tags = [
+        tag.strip() for tag in request.REQUEST.get('tag', '').split(',') if tag]
     keywords = [keyword.strip() for keyword in request.REQUEST.get(
         'keywords', '').split(',') if keyword]
-    
 
     if partner_library:
         special_interest = [
@@ -521,13 +497,15 @@ def new_partner_from_library(request):
             tags.append(tag)
 
     if library.is_disabled:
+        # rename the tag on the front end
         tag, _ = Tag.objects.get_or_create(
             company=company, name="Disability",
             defaults={'hex_color': '808A9A'})
         tags.append(tag)
 
+    # we are only interested in get_or_creates first item
     tags.append(Tag.objects.get_or_create(
-        company=company, name='OFCCP Library')[0])
+        company=company, name=library.data_source)[0])
 
     partner = Partner.objects.create(
         name=library.name,
@@ -565,7 +543,7 @@ def new_partner_from_library(request):
 def tag_get_or_create(company_id, data):
     tags = []
     for tag in data:
-        obj, created = Tag.objects.get_or_create(
+        obj, _ = Tag.objects.get_or_create(
             company_id=company_id, name__iexact=tag, defaults={"name": tag}
         )
         tags.append(obj.id)
