@@ -1,17 +1,34 @@
 {% load postajob_tags %}
 
-<div class="card-wrapper">
-    <div class="wrapper-header">
-        <h4>{{ wrapper_title }}</h4>
-    </div>
-    {% if purchased_products %}
-        {% for purchased_product in purchased_products %}
+<div class="card-tabs">
+    <ul>
+        <li id="active-tab-products" class="active">Active Products{% if active_products %}<span class="amount">{{active_products|length}}</span>{% endif %}</li>
+        <li id="expired-tab-products">Expired Products{% if expired_products %}<span class="amount">{{expired_products|length}}</span>{% endif %}</li>
+    </ul>
+    <div class="clearfix"></div>
+</div>
+<div id="active-products" class="card-wrapper">
+    {% if active_products %}
+        {% for purchased_product in active_products %}
             {% get_jobs purchased_product as jobs %}
             {% include "postajob/includes/purchasedjob_admin_rows.html" with jobs=jobs %}
         {% endfor %}
     {% else %}
         <div class="product-card no-highlight">
-            You currently have no {{ wrapper_title|lower }}.
+            Currently there are no active products.
+        </div>
+    {% endif %}
+</div>
+<div class="clearfix"></div>
+<div id="expired-products" class="card-wrapper" style="display: none;">
+    {% if expired_products %}
+        {% for purchased_product in expired_products %}
+            {% get_jobs purchased_product as jobs %}
+            {% include "postajob/includes/purchasedjob_admin_rows.html" with jobs=jobs %}
+        {% endfor %}
+    {% else %}
+        <div class="product-card no-highlight">
+            Currently there are no expired products.
         </div>
     {% endif %}
 </div>

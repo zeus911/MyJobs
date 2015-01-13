@@ -19,9 +19,7 @@ Purchased Products
 {% block postajob_content %}
     <div class="row">
         <div class="span8">
-            {% include "postajob/includes/purchasedproduct_purchasedjob_admin_formBox.html" with wrapper_title="Active Products" purchased_products=active_products %}
-
-            {% include "postajob/includes/purchasedproduct_purchasedjob_admin_formBox.html" with wrapper_title="Expired Products" purchased_products=expired_products %}
+            {% include "postajob/includes/purchasedproduct_purchasedjob_admin_formBox.html" %}
         </div>
         <div class="span4">
             {% include "postajob/includes/postajob_navigation.html" %}
@@ -33,4 +31,13 @@ Purchased Products
 {% block extra-js %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}postajob.159-9.css{{ gz }}">
     <script src="{{ STATIC_URL }}postajob.160-2.js"></script>
+    <script type="text/javascript">
+        $(".card-tabs li").on("click", function() {
+            $(".card-tabs li").removeClass("active");
+            $(this).addClass("active");
+            var clicked = $(this).attr("id").split("-")[0];
+            $(".card-wrapper").css("display", "none");
+            $("div[id*='"+clicked+"-']").css("display", "block");
+        });
+    </script>
 {% endblock %}
