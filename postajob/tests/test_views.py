@@ -860,7 +860,8 @@ class ViewTests(PostajobTestBase):
         kwargs = {'pk': offline_purchase.pk}
 
         response = self.client.post(reverse('offlinepurchase_delete',
-                                            kwargs=kwargs), follow=True)
+                                            kwargs=kwargs), follow=True,
+                                            HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 404)
         self.assertEqual(OfflinePurchase.objects.all().count(), 1)
 
