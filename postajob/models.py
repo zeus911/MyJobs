@@ -517,6 +517,8 @@ class PurchasedProduct(BaseModel):
                                          blank=True)
     invoice = models.ForeignKey('Invoice')
 
+    # owner is the person that purchased a product that created this
+    # PurchasedProduct object.
     owner = models.ForeignKey('seo.Company')
     purchase_date = models.DateField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)
@@ -564,6 +566,12 @@ class PurchasedProduct(BaseModel):
 
     def job_amount_posted(self):
         return self.num_jobs_allowed - self.jobs_remaining
+
+    def expired_job_count(self):
+        return self.purchasedjob_set.filter(is_expired=True).count()
+
+    def is_expired(self):
+        return bool(self.expiration_date < date.today())
 
 
 class ProductGrouping(BaseModel):
