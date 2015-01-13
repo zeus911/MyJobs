@@ -30,24 +30,35 @@ class DESearchQuerySet(SearchQuerySet):
 
         Input:
         :sqs2: SearchQuerySet with facets to add to self facets 
-        
+
         """
+        if sqs2 is None:
+            return self.facet_counts()
+
         facet_counts1 = self.facet_counts()
+        facet_counts2 = sqs2.query.get_facet_counts()
+
+        # field_counts = {facet_field: [(facet_field_value, count), ...], ...}
         field_counts1 = facet_counts1.get('fields')
-        if sqs2 is not None:
-            field_counts2 = sqs2.query.get_facet_counts()['fields']
-            for field in field_counts2:
-                field_dict = dict(field_counts1[field])
-                for constraint in field_counts2[field]:
-                    field_dict[constraint[0]] = field_dict.get(constraint[0], 0)
-                    field_dict[constraint[0]] += constraint[1]
-                field_counts1[field] = field_dict.items()
-                #Sort the list of field count tuples by count 
-                #(2nd value in each tuple)
-                field_counts1[field].sort(key=lambda tup:tup[1], reverse=True)
-        facet_counts1['fields']=field_counts1
+        field_counts2 = facet_counts2.get('fields')
+
+        for facet_field in field_counts2:
+            # field_dict = {facet_field_value: count, ...}
+            field_dict = dict(field_counts1[facet_field])
+
+            for facet_field_value, count in field_counts2[facet_field]:
+                current_count = field_dict.get(facet_field_value, 0)
+                field_dict[facet_field_value] = current_count + count
+
+            # Update the actual dictionary with the new results.
+            field_counts1[facet_field] = field_dict.items()
+            # Sort the list of field count tuples by count
+            # (2nd value in each tuple)
+            field_counts1[facet_field].sort(key=lambda tup: tup[1], reverse=True)
+
+        facet_counts1['fields'] = field_counts1
         return facet_counts1
- 
+
     def facet_mincount(self, mincount):
         """Sets mincount for facet result."""
         clone = self._clone()

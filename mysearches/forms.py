@@ -102,7 +102,8 @@ class DigestForm(BaseUserForm):
                                            label=_('Send digest results to:'))
 
     is_active = BooleanField(label=_('Send as a digest:'),
-                             widget=CheckboxInput(attrs={'id':'id_digest_active'}),
+                             widget=CheckboxInput(
+                                 attrs={'id': 'id_digest_active'}),
                              required=False)
 
     def clean_day_of_week(self):
@@ -150,8 +151,8 @@ class PartnerSavedSearchForm(ModelForm):
     class Meta:
         model = PartnerSavedSearch
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
-                'account_activation_message', 'frequency', 'day_of_month',
-                'day_of_week', 'jobs_per_email', 'partner_message', 'notes')
+                  'frequency', 'day_of_month',
+                  'day_of_week', 'jobs_per_email', 'partner_message', 'notes')
         exclude = ('provider', 'sort_by', )
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
@@ -225,6 +226,8 @@ class PartnerSavedSearchForm(ModelForm):
                 'added_saved_search': instance,
             }
             Invitation(**invite_args).save()
+            # Default sort_by for new Partner Saved Searches, see PD-912
+            instance.sort_by = 'Date'
         partner = instance.partner
         contact = Contact.objects.filter(partner=partner,
                                          user=instance.user)[0]
@@ -239,7 +242,7 @@ class PartnerSubSavedSearchForm(ModelForm):
         model = PartnerSavedSearch
         fields = ('sort_by', 'frequency', 'day_of_month', 'day_of_week')
         exclude = ('provider', 'url_extras', 'partner_message',
-                   'account_activation_message', 'created_by', 'user',
+                   'created_by', 'user',
                    'created_on', 'label', 'url', 'feed', 'email', 'notes',
                    'custom_message', 'tags', )
         widgets = {

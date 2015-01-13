@@ -52,7 +52,7 @@ def jobs_overview(request):
 def view_job(request, purchased_product, pk, admin):
     company = get_company_or_404(request)
     purchased_product = PurchasedProduct.objects.get(pk=purchased_product)
-    if admin and not purchased_product.product.owner == company:
+    if admin and not purchased_product.product.owner != company:
         raise Http404
     data = {
         'admin': admin,

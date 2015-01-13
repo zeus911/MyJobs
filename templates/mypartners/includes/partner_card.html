@@ -1,6 +1,6 @@
 
 {% if on_page == 'partner_library' %}
-<div id="library-{{partner.id}}" class="product-card">
+<div id="library-{{partner.id}}" class="product-card" data-source="{{ partner.data_source }}">
 {% else %}
 <div id="partner-{{partner.id}}" class="product-card">
 {% endif %}
