@@ -34,7 +34,7 @@ class PostajobTestBase(MyJobsBase):
         self.user = UserFactory(password='5UuYquA@')
         self.company = CompanyFactory(product_access=True, posting_access=True)
 
-        self.site = SeoSiteFactory()
+        self.site = SeoSiteFactory(canonical_company=self.company)
         self.bu = BusinessUnitFactory()
         self.site.business_units.add(self.bu)
         self.site.save()
@@ -45,7 +45,7 @@ class PostajobTestBase(MyJobsBase):
         SitePackageFactory(owner=self.company)
         self.package = Package.objects.get()
         self.sitepackage = SitePackage.objects.get()
-        self.site.sitepackage_set.add(self.sitepackage)
+        self.sitepackage.sites.add(self.site)
         self.product = ProductFactory(package=self.package, owner=self.company)
 
         self.login_user()
@@ -913,7 +913,7 @@ class ViewTests(PostajobTestBase):
 
         site = SeoSiteFactory(domain='indiana.jobs', id=3)
         site.business_units.add(self.bu)
-        site.sitepackage_set.add(self.sitepackage)
+        self.sitepackage.sites.add(site)
         product = {'product': purchased_product.pk}
         response = self.client.get(reverse('purchasedjob_add',
                                            kwargs=product))
@@ -930,6 +930,7 @@ class ViewTests(PostajobTestBase):
 
         site = SeoSiteFactory(domain='indiana.jobs', id=3)
         site.business_units.add(self.bu)
+        self.sitepackage.sites.add(site)
         site.sitepackage_set.add(self.sitepackage)
         location = {
             'form-0-city': 'Indianapolis',
