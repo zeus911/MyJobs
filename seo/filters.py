@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from itertools import ifilter
-from pysolr import safe_urlencode
 
 from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import intcomma
@@ -11,6 +10,41 @@ from django.utils.safestring import mark_safe
 
 import logging
 from seo.templatetags.seo_extras import facet_text, facet_url, smart_truncate
+
+
+def join_paths_of_same_type(item_type, path1, path2):
+    """
+    Combines two paths of the same slug type into a single path.
+
+    :param item_type: The type types of paths that are being
+                      combined - e.g. 'facet' or 'location'
+    :param path1: The first path to combine.
+    :param path2: The other path to combine.
+
+    :return: path1 and path2 combined as a single path. If the path
+             contains multiple slugs the slugs will be sorted
+             alphabetically.
+
+    """
+    # The "featured" item_type corresponds to feature company,
+    # which for the purpose of a slug tag is just company.
+    item_type = 'company' if item_type == 'featured' else item_type
+    slug_tag = "%s_slug" % item_type
+    slug_tag = settings.SLUG_TAGS[slug_tag]
+
+    new_path = "%s/%s" % (path1, path2)
+
+    # Strip out the slug tag so it can be sorted.
+    new_path = new_path.replace(slug_tag, '/')
+
+    # Sort them alphabetically.
+    new_path = new_path.split('/')
+    new_path = sorted(new_path)
+
+    # Recombine and readd the slug tag.
+    new_path = "/".join(new_path)
+    new_path = "%s/%s" % (new_path, slug_tag.strip('/'))
+    return new_path
 
 
 class Widget(object):
@@ -239,41 +273,6 @@ class FacetListWidget(Widget):
 
         return url
 
-    @staticmethod
-    def _join_paths_of_same_type(item_type, path1, path2):
-        """
-        Combines two paths of the same slug type into a single path.
-
-        :param item_type: The type types of paths that are being
-                          combined - e.g. 'facet' or 'location'
-        :param path1: The first path to combine.
-        :param path2: The other path to combine.
-
-        :return: path1 and path2 combined as a single path. If the path
-                 contains multiple slugs the slugs will be sorted
-                 alphabetically.
-
-        """
-        # The "featured" item_type corresponds to feature company,
-        # which for the purpose of a slug tag is just company.
-        item_type = 'company' if item_type == 'featured' else item_type
-        slug_tag = "%s_slug" % item_type
-        slug_tag = settings.SLUG_TAGS[slug_tag]
-
-        new_path = "%s/%s" % (path1, path2)
-
-        # Strip out the slug tag so it can be sorted.
-        new_path = new_path.replace(slug_tag, '/')
-
-        # Sort them alphabetically.
-        new_path = new_path.split('/')
-        new_path = sorted(new_path)
-
-        # Recombine and readd the slug tag.
-        new_path = "/".join(new_path)
-        new_path = "%s/%s" % (new_path, slug_tag.strip('/'))
-        return new_path
-
     def _build_path_dict(self, item_type, path_map):
         # This loop transfers any URL information from the
         # path_dict (which is the existing path broken down by filter type)
@@ -284,8 +283,8 @@ class FacetListWidget(Widget):
                 allow_multiple = settings.ALLOW_MULTIPLE_SLUG_TAGS[atom]
                 if atom == item_type and allow_multiple:
                     existing_path = self.path_dict[atom]
-                    new_path = self._join_paths_of_same_type(item_type, path,
-                                                             existing_path)
+                    new_path = join_paths_of_same_type(item_type, path,
+                                                       existing_path)
                     path_map[atom] = new_path
                 elif atom != item_type:
                     path_map[atom] = self.path_dict[atom].strip('/')

@@ -88,7 +88,7 @@ def ajax_get_facets(request, filter_path, facet_type):
         :HttpResponse: listing facets for the input facet_type
 
     """
-    plurals = {'titles': 'title', 'cities': 'city', 'states':'state',
+    plurals = {'titles': 'title', 'cities': 'city', 'states': 'state',
                'mocs': 'moc', 'mapped': 'mapped_moc',
                'countries': 'country', 'facets': 'facet',
                'company-ajax': 'company'}
@@ -974,7 +974,6 @@ def home_page(request):
     """
     site_config = get_site_config(request)
     num_facet_items = site_config.num_filter_items_to_show
-    custom_facets = []
     search_url_slabs = []
 
     num_jobs = site_config.num_job_items_to_show * 2
@@ -985,15 +984,14 @@ def home_page(request):
 
     featured_jobs = helpers.get_featured_jobs()
 
-    (num_featured_jobs, num_default_jobs,_,_) = helpers.featured_default_jobs(
-                                         featured_jobs.count(),
-                                         default_jobs.count(),
-                                         num_jobs, site_config.percent_featured)
+    (num_featured_jobs, num_default_jobs, _, _) = helpers.featured_default_jobs(
+        featured_jobs.count(), default_jobs.count(),
+        num_jobs, site_config.percent_featured)
 
     featured = settings.SITE.featured_companies.all()
-    # Because we're getting the featured company information from the SQL database
-    # instead of Solr, we need to append the generated feature slabs to the rest
-    # of the counts.
+    # Because we're getting the featured company information from the SQL
+    # database instead of Solr, we need to append the generated feature
+    # slabs to the rest of the counts.
     featured_counts = [(item.company_slug+'/careers::'+item.name,
                         item.associated_jobs()) for item in featured]
 
@@ -1003,7 +1001,8 @@ def home_page(request):
     # Build a list of Company objects of current members that's the intersection
     # of all member companies and the companies returned in the Solr query
     all_buids = [buid[0] for buid in all_counts['buid']]
-    members = Company.objects.filter(member=True).filter(job_source_ids__in=all_buids)
+    members = Company.objects.filter(member=True)
+    members = members.filter(job_source_ids__in=all_buids)
 
     if site_config.browse_facet_show:
         cust_facets = get_custom_facets(request)
@@ -1011,22 +1010,21 @@ def home_page(request):
         search_url_slabs = [(i[0].url_slab, i[1]) for i in custom_facets]
 
     ga = settings.SITE.google_analytics.all()
-    bread_box_path = helpers.get_bread_box_path()
-    bread_box_title = helpers.get_bread_box_headings()
+
     home_page_template = site_config.home_page_template
 
     # The carousel displays the featured companies if there are any, otherwise
     # it displays companies that were returned in the Solr query and are members
-    if (home_page_template == 'home_page/home_page_billboard.html' or
-        home_page_template == 'home_page/home_page_billboard_icons_top.html'):
-
+    billboard_templates = ['home_page/home_page_billboard.html',
+                           'home_page/home_page_billboard_icons_top.html']
+    if home_page_template in billboard_templates:
         billboard_images = (settings.SITE.billboard_images.all())
         company_images = helpers.company_thumbnails(featured) if featured else \
             helpers.company_thumbnails(members)
         company_images_json = json.dumps(company_images, ensure_ascii=False)
     else:
         billboard_images = []
-        company_images = company_slabs = None
+        company_images = None
         company_images_json = None
 
     widgets = helpers.get_widgets(request, site_config, all_counts,
@@ -1038,10 +1036,8 @@ def home_page(request):
         'total_jobs_count': jobs_count,
         'widgets': widgets,
         'item_type': 'home',
-        'bread_box_path': bread_box_path,
-        'bread_box_title': bread_box_title,
         'base_path': request.path,
-        'facet_blurb' : False,
+        'facet_blurb': False,
         'google_analytics': ga,
         'site_name': settings.SITE_NAME,
         'site_title': settings.SITE_TITLE,
@@ -1056,8 +1052,7 @@ def home_page(request):
         'billboard_images': billboard_images,
         'featured': str(bool(featured)).lower(),
         'filters': {},
-        'view_source' : settings.VIEW_SOURCE}
-
+        'view_source': settings.VIEW_SOURCE}
 
     return render_to_response(home_page_template, data_dict,
                               context_instance=RequestContext(request))
