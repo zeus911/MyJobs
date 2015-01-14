@@ -275,9 +275,9 @@ class FacetListWidget(Widget):
         return new_path
 
     def _build_path_dict(self, item_type, path_map):
-        # This loop transfers any URL information from the path_dict
-        # (which is the bread_box_path from home_page/job_list_by_slug_tag
-        # views) to the url_atoms dict after stripping leading/trailing
+        # This loop transfers any URL information from the
+        # path_dict (which is the existing path broken down by filter type)
+        # to the url_atoms dict after stripping leading/trailing
         # slashes.
         for atom, path in path_map.iteritems():
             if atom in self.path_dict:

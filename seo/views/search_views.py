@@ -792,14 +792,10 @@ def member_carousel_data(request):
 def ajax_filter_carousel(request):
     filters = helpers.build_filter_dict(request.path)
     query_path = request.META.get('QUERY_STRING', None)
-
-    active = []
-    facet_blurb = ''
     search_url_slabs = []
-
     site_config = get_site_config(request)
     num_jobs = int(site_config.num_job_items_to_show) * 2
-
+    sort_order = request.REQUEST.get('sort', 'relevance')
     # Apply any parameters in the querystring to the solr search.
     sqs = (helpers.prepare_sqs_from_search_params(request.GET) if query_path
            else None)
@@ -807,27 +803,23 @@ def ajax_filter_carousel(request):
     if site_config.browse_facet_show:
         cf_count_tup = get_custom_facets(request, filters=filters,
                                          query_string=query_path)
+
         if not filters['facet_slug']:
-            search_url_slabs = [(i[0].url_slab, i[1]) for i in cf_count_tup]
+            search_url_slabs = [(facet.url_slab, count)
+                                for facet, count in cf_count_tup]
         else:
-            for x in cf_count_tup:
-                if x[0].name_slug == filters['facet_slug']:
-                    if not facet_blurb and x[0].show_blurb:
-                        facet_blurb = x[0].blurb
-                    active.append(x[0])
-                else:
-                    search_url_slabs.append((x[0].url_slab, x[1]))
-            if active:
-                custom_facets = CustomFacet.objects.filter(
-                    name=active[0].name,
-                    seosite__id=settings.SITE_ID)
-                sqs = helpers.sqs_apply_custom_facets(custom_facets, sqs=sqs)
-    sort_order = request.REQUEST.get('sort', 'relevance')
+            facet_slugs = filters['facet_slug'].split('/')
+            active_facets = CustomFacet.objects.prod_facets_for_current_site()
+            active_facets = active_facets.filter(name_slug__in=facet_slugs)
+            search_url_slabs = [(facet.url_slab, count) for facet, count
+                                in cf_count_tup if facet not in active_facets]
+
     default_jobs = helpers.get_jobs(default_sqs=sqs,
                                     custom_facets=settings.DEFAULT_FACET,
                                     exclude_facets=settings.FEATURED_FACET,
                                     jsids=settings.SITE_BUIDS, filters=filters,
                                     facet_limit=num_jobs, sort_order=sort_order)
+
     featured_jobs = helpers.get_featured_jobs(default_sqs=sqs,
                                               filters=filters,
                                               jsids=settings.SITE_BUIDS,
@@ -835,10 +827,9 @@ def ajax_filter_carousel(request):
                                               sort_order=sort_order)
     facet_counts = default_jobs.add_facet_count(featured_jobs).get('fields')
 
-    bread_box_path = helpers.get_bread_box_path(filters)
-
     widgets = helpers.get_widgets(request, site_config, facet_counts,
-                                  search_url_slabs, bread_box_path)
+                                  search_url_slabs, filters=filters)
+
     html = loader.render_to_string('filter-carousel.html',
                                    filter_carousel({'widgets': widgets}))
     return HttpResponse(json.dumps(html),
@@ -1720,7 +1711,6 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         sort_order = 'relevance'
 
     data_dict = {
-        'base_path': request.path,
         'breadbox': breadbox,
         'build_num': settings.BUILD,
         'company': company_data,
