@@ -17,7 +17,6 @@ from django.contrib.sites.models import Site
 from django.contrib.syndication.views import Feed
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.core import urlresolvers
-from django.core.cache import cache
 from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.db.models import Q
@@ -50,6 +49,7 @@ from seo.breadbox import Breadbox
 from seo.cache import get_custom_facets, get_site_config, get_total_jobs_count
 from seo.search_backend import DESearchQuerySet
 from seo import helpers
+from seo.filters import FacetListWidget
 from seo.forms.admin_forms import UploadJobFileForm
 from seo.models import (BusinessUnit, Company, Configuration, Country,
                         CustomFacet, GoogleAnalytics, JobFeed, SeoSite, SiteTag)
@@ -108,8 +108,8 @@ def ajax_get_facets(request, filter_path, facet_type):
         custom_facets_count_tuples = get_custom_facets(request, filters=filters,
                                                        query_string=qs)
 
-        items = helpers.more_custom_facets(custom_facets_count_tuples, filters,
-                                           offset, num_items)
+        items = helpers.more_custom_facets(custom_facets_count_tuples, offset,
+                                           num_items)
     else:
         default_jobs = helpers.get_jobs(default_sqs=sqs,
                                         custom_facets=settings.DEFAULT_FACET,
@@ -132,30 +132,27 @@ def ajax_get_facets(request, filter_path, facet_type):
         #field list to return the correct number of facet constraints/counts
         #Jason McLaughlin 09/10/2012
         facet_counts = default_jobs.add_facet_count(featured_jobs).get('fields')
-
-        items = []
-
-        filters = helpers.get_bread_box_path(filters)
+        facet_results = facet_counts['%s_slab' % _type]
 
         qs = QueryDict(request.META.get('QUERY_STRING', None)).copy()
-
         for param in ['offset', 'filter_path', 'num_items']:
             if param in qs:
                 del qs[param]
+        query_string = qs.urlencode()
 
-        for i in facet_counts['%s_slab' % _type]:
-            url = ("%s?%s" % (helpers.get_abs_url(i, _type, filters),
-                              qs.urlencode())
-                   if qs else helpers.get_abs_url(i, _type, filters))
-            name = safe(smart_truncate(facet_text(i[0])))
+        widget = FacetListWidget(request, site_config, _type, facet_results,
+                                 filters, query_string=query_string)
 
+        items = []
+        for facet in facet_results:
+            facet_slab, facet_count = facet
+            url = widget.get_abs_url(facet)
+            name = safe(smart_truncate(facet_text(facet_slab)))
             if name == 'None' or name.startswith('Virtual'):
                 continue
+            items.append({'url': url, 'name': name, 'count': facet_count})
 
-            items.append({'url': url, 'name': name, 'count': i[1]})
-
-    data_dict = {'items': items, 'item_type': _type,
-                 'num_items': 0}
+    data_dict = {'items': items, 'item_type': _type, 'num_items': 0}
 
     return render_to_response('ajax_filter_items.html',
                               data_dict,

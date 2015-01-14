@@ -259,30 +259,6 @@ def get_nav_type(filters):
     return nav_type
 
 
-def get_bread_box_path(filters=None):
-    bread_box_path = {}
-
-    if filters:
-        for k in filters:
-            if filters[k]:
-                if k == 'location_slug':
-                    # build location part
-                    loc = filters[k].strip('/')
-                    bread_box_path[k] = loc + settings.SLUG_TAGS[k]
-                    loc_up = loc.split('/')
-                    # loc_up is next valid location up the location hierarchy
-                    if loc_up:
-                        if 'none' in loc_up:
-                            loc_up.remove('none')
-                        if len(loc_up) > 1:
-                            bread_box_path['loc_up'] = ('/'.join(loc_up[1:]) +
-                                                        settings.SLUG_TAGS[k])
-                else:
-                    bread_box_path[k] = filters[k] + settings.SLUG_TAGS[k]
-
-    return bread_box_path
-
-
 def job_breadcrumbs(job, company=False):
     """
     Generate breadcrumbs for job detail pages.
@@ -722,7 +698,7 @@ def combine_groups(custom_facet_counts, match_field='name'):
 
 
 def get_widgets(request, site_config, facet_counts, custom_facets,
-                filters=None, featured=False, search_facets=False):
+                filters=None, featured=False):
     """
     Return a list of widget FacetListWidget objects to the home_page or
     job_list_by_slug_tag view, sorted by their browse order as set in the
@@ -757,12 +733,18 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
         w.precedence = _type[1]
         widgets.append(w)
     if custom_facets:
+        # Since all of the custom facets are already loaded on the
+        # page (but hidden), pass in an arbitrarily large number
+        # as the offset in order to avoid more requests for custom facets
+        # to be made.
+        offset = len(custom_facets)*10000
+
         # The facet widget must be generated "separately" from
         # location/title/moc widgets, since facet counts aren't generated
         # from the SearchIndex.
         search_widget = FacetListWidget(request, site_config, 'facet',
                                         custom_facets, filters,
-                                        offset=len(custom_facets))
+                                        offset=offset)
         search_widget.precedence = site_config.browse_facet_order
         widgets.append(search_widget)
     widgets.sort(key=lambda x: x.precedence)
@@ -787,42 +769,10 @@ def facet_data(jsids):
     return sqs.facet_counts()['fields']
 
 
-def get_abs_url(item, _type, path_dict, *args, **kwargs):
-    """
-    Calculates the absolute URL for each item in a particular filter
-    <ul> tag. It then returns this as a string to be rendered in the
-    template.
-
-    """
-    slug_order = {'location': 2, 'title': 1, 'moc': 3, 'facet': 4, 'company': 5}
-    url_atoms = {'company': '', 'location': '', 'title': '', 'facet': '',
-                 'moc': ''}
-    if _type in ('country', 'city', 'state'):
-        t = 'location'
-    elif _type == 'mapped_moc':
-        t = 'moc'
-    else:
-        t = _type
-
-    url_atoms[t] = urlencode(facet_url(item[0]))
-    # This loop transfers any URL information from the path_dict
-    # (which is the bread_box_path from home_page/job_list_by_slug_tag
-    # views) to the url_atoms dict after stripping leading/trailing
-    # slashes.
-    for atom in url_atoms:
-        s = '%s_slug' % atom
-        slugstr = path_dict.get(s, '')
-        if atom != t:
-            if s in path_dict:
-                url_atoms[atom] = slugstr.strip('/')
-
-    results = sorted([(url_atoms[k], slug_order[k]) for k in url_atoms],
-                     key=lambda result: result[1])
-    return '/%s/' % '/'.join([i[0] for i in ifilter(lambda r: r[0], results)])
-
-
-def more_custom_facets(custom_facets, filters={}, offset=0, num_items=0):
+def more_custom_facets(custom_facets, offset=0, num_items=0):
     """Generates AJAX response for more custom_facets."""
+    print combine_groups(custom_facets)
+    print offset, num_items
     custom_facets = combine_groups(custom_facets)[offset:offset+num_items]
     items = []
     for i in custom_facets:

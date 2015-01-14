@@ -52,7 +52,7 @@ class Widget(object):
                   'featured': 5, 'mapped_moc': 3}
     
     def __init__(self, request, site_config, _type, items, filters,
-                 offset=None):
+                 offset=None, query_string=None):
         self.request = request
         self.site_config = site_config
         self._type = _type
@@ -60,6 +60,11 @@ class Widget(object):
         self.path_dict = self.filters_to_paths(filters.copy())
         self.num_items = self.site_config.num_filter_items_to_show
         self.offset = offset or self.num_items * 2
+
+        if hasattr(request, 'META') and not query_string:
+            self.query_string = query_string or request.META.get('QUERY_STRING')
+        else:
+            self.query_string = query_string or ''
 
     def get_req_path(self):
         return self.request.path
@@ -225,7 +230,7 @@ class FacetListWidget(Widget):
         Calculates the absolute URL for each item in a particular filter
         <ul> tag. It then returns this as a string to be rendered in the
         template.
-        
+
         """
         facet_slab, facet_count = facet
         url_atoms = {'location': '', 'title': '', 'facet': '', 'featured': '',
@@ -253,7 +258,7 @@ class FacetListWidget(Widget):
         # implemented.
         if facet_count:
             url_atoms = self._build_path_dict(facet_type, url_atoms)
-            
+
         # Create a list of intermediate 2-tuples, with the url_atoms
         # value and the ordering data from self.slug_order.
         url_orders = [(url_atoms[key], self.slug_order[key])
@@ -268,8 +273,8 @@ class FacetListWidget(Widget):
                                 ifilter(lambda r: r[0], results)])
 
         if hasattr(self.request, 'META'):
-            url = "%s?%s" % (url, self.request.META.get('QUERY_STRING'))\
-                if self.request.META.get('QUERY_STRING', None) else url
+            url = ("%s?%s" % (url, self.query_string)
+                   if self.query_string else url)
 
         return url
 
@@ -285,6 +290,10 @@ class FacetListWidget(Widget):
                     existing_path = self.path_dict[atom]
                     new_path = join_paths_of_same_type(item_type, path,
                                                        existing_path)
+                    # The code that builds out urls assumes the path
+                    #  doesn't start with a '/'
+                    new_path = new_path.lstrip('/')
+
                     path_map[atom] = new_path
                 elif atom != item_type:
                     path_map[atom] = self.path_dict[atom].strip('/')
