@@ -110,7 +110,19 @@ class FacetListWidget(Widget):
             # django template, but this widget doesn't use a specific template
             # so it makes more sense to do it directly in the python here.
             item_count = intcomma(item[1]) if item[1] else False
-            
+
+            # If it's a custom facet, update the item_name so it
+            # always ends with " Jobs".
+            if _type == 'facet':
+                # When this was added most of the custom facet
+                # names already ended with " Jobs". In order to ensure
+                # that the slugs/paths for these facets remained the same,
+                # we decided to keep " Jobs" in these slugs, so it needs
+                # stripped out first before we can re-add it to avoid
+                # duplication.
+                item_name = item_name.rstrip(" Jobs")
+                item_name = "%s Jobs" % item_name
+
             # Use the django templating system to provide richer string parsing
             item_context = Context({
                 "li_class": li_class,
@@ -227,6 +239,41 @@ class FacetListWidget(Widget):
 
         return url
 
+    @staticmethod
+    def _join_paths_of_same_type(item_type, path1, path2):
+        """
+        Combines two paths of the same slug type into a single path.
+
+        :param item_type: The type types of paths that are being
+                          combined - e.g. 'facet' or 'location'
+        :param path1: The first path to combine.
+        :param path2: The other path to combine.
+
+        :return: path1 and path2 combined as a single path. If the path
+                 contains multiple slugs the slugs will be sorted
+                 alphabetically.
+
+        """
+        # The "featured" item_type corresponds to feature company,
+        # which for the purpose of a slug tag is just company.
+        item_type = 'company' if item_type == 'featured' else item_type
+        slug_tag = "%s_slug" % item_type
+        slug_tag = settings.SLUG_TAGS[slug_tag]
+
+        new_path = "%s/%s" % (path1, path2)
+
+        # Strip out the slug tag so it can be sorted.
+        new_path = new_path.replace(slug_tag, '/')
+
+        # Sort them alphabetically.
+        new_path = new_path.split('/')
+        new_path = sorted(new_path)
+
+        # Recombine and readd the slug tag.
+        new_path = "/".join(new_path)
+        new_path = "%s/%s" % (new_path, slug_tag.strip('/'))
+        return new_path
+
     def _build_path_dict(self, item_type, path_map):
         # This loop transfers any URL information from the path_dict
         # (which is the bread_box_path from home_page/job_list_by_slug_tag
@@ -236,29 +283,9 @@ class FacetListWidget(Widget):
             if atom in self.path_dict:
                 allow_multiple = settings.ALLOW_MULTIPLE_SLUG_TAGS[atom]
                 if atom == item_type and allow_multiple:
-                    # The "featured" item_type corresponds to feature company,
-                    # which for the purpose of a slug tag is just company.
-                    slug_tag_type = ('company' if item_type == 'featured'
-                                     else item_type)
-                    slug_tag = "%s_slug" % slug_tag_type
-                    slug_tag = settings.SLUG_TAGS[slug_tag]
-
-
-                    new_path = "%s/%s" % (path, self.path_dict[atom].strip('/'))
-
-
-                    # Strip out the slug tag so it can be sorted.
-                    new_path = new_path.replace(slug_tag, '')
-                    print new_path
-
-                    # Sort them alphabetically.
-                    new_path = new_path.split('/')
-                    new_path = sorted(new_path)
-
-                    # Recombine and readd the slug tag.
-                    new_path = "/".join(new_path)
-                    new_path = "%s/%s" % (new_path, slug_tag.strip('/'))
-
+                    existing_path = self.path_dict[atom]
+                    new_path = self._join_paths_of_same_type(item_type, path,
+                                                             existing_path)
                     path_map[atom] = new_path
                 elif atom != item_type:
                     path_map[atom] = self.path_dict[atom].strip('/')
