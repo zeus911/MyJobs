@@ -389,7 +389,7 @@ def _solr_results_chunk(tup, buid, step):
     results = conn.search("*:*", fq="buid:%s" % buid, fl="uid",
                           rows=step, start=tup[0], facet="false",
                           mlt="false").docs
-    return set([i['uid'] for i in resultsif 'uid' in i])
+    return set([i['uid'] for i in results if 'uid' in i])
 
 
 def _job_filter(job):
