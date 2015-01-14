@@ -538,8 +538,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         """
         Notify saved search creators that a user has opted out of their emails.
         """
+        from mysearches.models import PartnerSavedSearch
+
         subject = "My.jobs Partner Saved Search Update"
-        saved_searches = self.partnersavedsearch_set.distinct()
+        saved_searches = PartnerSavedSearch.objects.filter(
+            user=self)
 
         # MySQL doesn't support passing a column to distinct, and I don't want
         # to deal with dictionaries returned by values, so I just keep track of
@@ -547,10 +550,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         contacts = []
         # need the partner name, so can't send a batch email or message
         for pss in saved_searches:
-            if (pss.email, pss.partner) not in contacts:
-                contacts.append((pss.email, pss.partner))
-            else:
+            if (pss.email, pss.partner) in contacts:
                 continue
+
+            contacts.append((pss.email, pss.partner))
+
             # send notification email
             message = render_to_string(
                 "mysearches/email_opt_out.html",
