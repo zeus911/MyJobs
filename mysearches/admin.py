@@ -27,19 +27,3 @@ class SavedSearchLogAdmin(admin.ModelAdmin):
 
 admin.site.register(SavedSearch, SavedSearchAdmin)
 admin.site.register(SavedSearchLog, SavedSearchLogAdmin)
-"""
-    was_sent = models.BooleanField()
-    was_received = models.BooleanField(default=False,
-                                       help_text=("If date_sent is very "
-                                       "recent and was_received is unchecked, "
-                                       "SendGrid may not have responded yet - "
-                                       "give it a few minutes."))
-    reason = models.TextField()
-    recipient = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    recipient_email = models.EmailField(max_length=255, blank=False)
-    new_jobs = models.IntegerField()
-    backfill_jobs = models.IntegerField()
-    date_sent = models.DateTimeField(auto_now_add=True)
-    contact_record = models.ForeignKey('mypartners.ContactRecord', null=True,
-                                       blank=True, on_delete=models.SET_NULL)
-    uuid = models.CharField(max_length=32)"""
