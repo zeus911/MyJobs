@@ -123,7 +123,7 @@ class ActivationProfile(models.Model):
         site = getattr(settings, 'SITE', None)
 
         headers = {
-            'X-SMTPAPI': '{"category": "Activation sent (%s)' % self.pk
+            'X-SMTPAPI': '{"category": "Activation sent (%s)"}' % self.pk
         }
 
         send_email(message, email_type=settings.ACTIVATION,
