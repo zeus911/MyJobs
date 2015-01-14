@@ -278,6 +278,8 @@ def process_batch_events():
     inactive = User.objects.select_related('savedsearch_set')
     inactive = inactive.filter(Q(last_response=now-timedelta(days=82)) |
                                Q(last_response=now-timedelta(days=89)))
+
+    category = '{"category": "User Inactivity (%s)"}'
     for user in inactive:
         if user.savedsearch_set.exists():
             time = (now - user.last_response).days
@@ -286,7 +288,9 @@ def process_batch_events():
                                         'time': time})
 
             site = user.registration_source()
-            user.email_user(message, email_type=settings.INACTIVITY, site=site)
+            headers = {'X-SMTPAPI': category}
+            user.email_user(message, email_type=settings.INACTIVITY, site=site,
+                            headers=headers)
 
     # These users have not responded in 90 days. Stop sending emails.
     users = User.objects.filter(last_response__lte=now-timedelta(days=90))

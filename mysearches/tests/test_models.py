@@ -14,7 +14,7 @@ from myjobs.tests.factories import UserFactory
 from mypartners.models import ContactRecord
 from mypartners.tests.factories import PartnerFactory, ContactFactory
 from myprofile.tests.factories import PrimaryNameFactory
-from mysearches.models import SavedSearch
+from mysearches.models import SavedSearch, SavedSearchLog
 from mysearches.templatetags.email_tags import get_activation_link
 from mysearches.tests.local.fake_feed_data import jobs, no_jobs
 from mysearches.tests.factories import (SavedSearchFactory,
@@ -49,6 +49,9 @@ class SavedSearchModelsTests(MyJobsBase):
                                     url='www.my.jobs/jobs?q=new+search')
         send_search_digests()
         self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(SavedSearchLog.objects.count(), 1)
+        log = SavedSearchLog.objects.get()
+        self.assertTrue(log.was_sent)
 
         email = mail.outbox.pop()
         self.assertEqual(email.from_email, 'My.jobs Saved Search <savedsearch@my.jobs>')
@@ -66,18 +69,28 @@ class SavedSearchModelsTests(MyJobsBase):
         SavedSearchDigestFactory(user=self.user)
         send_search_digests()
         self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(SavedSearchLog.objects.count(), 1)
+        log = SavedSearchLog.objects.get()
+        self.assertTrue('No saved searches' in log.reason)
+        self.assertFalse(log.was_sent)
 
         search1 = SavedSearchFactory(user=self.user)
         self.assertIsNone(SavedSearch.objects.get(pk=search1.pk).last_sent)
         send_search_digests()
         self.assertIsNotNone(SavedSearch.objects.get(pk=search1.pk).last_sent)
         self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(SavedSearchLog.objects.count(), 2)
+        log = SavedSearchLog.objects.last()
+        self.assertTrue(log.was_sent)
 
         search2 = SavedSearchFactory(user=self.user)
         self.assertIsNone(SavedSearch.objects.get(pk=search2.pk).last_sent)
         send_search_digests()
         self.assertIsNotNone(SavedSearch.objects.get(pk=search2.pk).last_sent)
         self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(SavedSearchLog.objects.count(), 3)
+        log = SavedSearchLog.objects.last()
+        self.assertTrue(log.was_sent)
 
         email = mail.outbox.pop()
         self.assertEqual(email.from_email, 'My.jobs Saved Search <savedsearch@my.jobs>')
@@ -100,6 +113,10 @@ class SavedSearchModelsTests(MyJobsBase):
                                     url='www.my.jobs/search?q=new+search')
         search.initial_email()
         self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(SavedSearchLog.objects.count(), 1)
+        log = SavedSearchLog.objects.get()
+        self.assertTrue('Jobs are not sent' in log.reason)
+        self.assertTrue(log.was_sent)
 
         email = mail.outbox.pop()
         self.assertEqual(email.from_email, 'My.jobs Saved Search <savedsearch@my.jobs>')
@@ -113,6 +130,9 @@ class SavedSearchModelsTests(MyJobsBase):
                                     url='www.my.jobs/search?q=new+search')
         search.send_update_email('Your search is updated')
         self.assertEqual(len(mail.outbox), 1)
+        log = SavedSearchLog.objects.get()
+        self.assertTrue('Jobs are not sent' in log.reason)
+        self.assertTrue(log.was_sent)
 
         email = mail.outbox.pop()
         self.assertEqual(email.from_email, 'My.jobs Saved Search <savedsearch@my.jobs>')
@@ -271,8 +291,13 @@ class SavedSearchModelsTests(MyJobsBase):
             SavedSearchFactory(user=self.user, feed='http://google.com')
 
         self.digest.send_email()
+        self.assertEqual(SavedSearchLog.objects.count(), 1)
+        log = SavedSearchLog.objects.get()
+        self.assertTrue('saved searches have no jobs' in log.reason)
+        self.assertFalse(log.was_sent)
 
         self.assertEqual(len(mail.outbox), 0)
+
 
 class PartnerSavedSearchTests(MyJobsBase):
     def setUp(self):
@@ -325,11 +350,13 @@ class PartnerSavedSearchTests(MyJobsBase):
         mail.outbox = []
         self.assertEqual(ContactRecord.objects.count(), 1)
         self.partner_search.send_email()
+        self.assertEqual(SavedSearchLog.objects.count(), 2)
         self.assertEqual(ContactRecord.objects.count(), 2)
         partner_record = ContactRecord.objects.all()[1]
         partner_email = mail.outbox.pop()
 
         search.send_email()
+        self.assertEqual(SavedSearchLog.objects.count(), 3)
         self.assertEqual(ContactRecord.objects.count(), 3)
         search_record = ContactRecord.objects.all()[2]
         search_email = mail.outbox.pop()
@@ -339,6 +366,14 @@ class PartnerSavedSearchTests(MyJobsBase):
         self.assertEqual(partner_record.notes, partner_email.body)
         self.assertFalse("Your resume is %s%% complete" %
                          self.user.profile_completion in partner_email.body)
+        logs = SavedSearchLog.objects.all()[1:]
+        for log in logs:
+            self.assertTrue(log.was_sent)
+            self.assertIsNotNone(log.contact_record)
+        # These are separate contact records (different pks), but the notes
+        # attached to each are identical.
+        self.assertEqual(logs[0].contact_record.notes,
+                         logs[1].contact_record.notes)
 
     def test_send_partner_saved_search_in_digest(self):
         """
@@ -348,10 +383,13 @@ class PartnerSavedSearchTests(MyJobsBase):
         SavedSearchFactory(user=self.user)
         self.assertEqual(ContactRecord.objects.count(), 1)
         self.digest.send_email()
+        self.assertEqual(SavedSearchLog.objects.count(), 2)
         self.assertEqual(ContactRecord.objects.count(), 2)
         email = mail.outbox[0]
         self.assertFalse("Your resume is %s%% complete" %
                          self.user.profile_completion in email.body)
+        log = SavedSearchLog.objects.last()
+        self.assertTrue(log.was_sent)
 
     def test_send_partner_saved_search_with_inactive_user(self):
         self.user.is_active = False
@@ -398,6 +436,9 @@ class PartnerSavedSearchTests(MyJobsBase):
         job_count = self.num_occurrences(partner_search_email.body,
                                          self.job_icon)
         self.assertEqual(len(job_count), 2)
+        log = SavedSearchLog.objects.last()
+        self.assertEqual(log.new_jobs, 1)
+        self.assertEqual(log.backfill_jobs, 1)
 
     def test_saved_search_new_job_indicator(self):
         """

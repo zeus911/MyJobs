@@ -327,8 +327,11 @@ class User(AbstractBaseUser, PermissionsMixin):
                                update_fields)
 
     def email_user(self, message, email_type=settings.GENERIC, **kwargs):
+        headers = kwargs.pop('headers', {})
+        if 'X-SMTPAPI' not in headers:
+            headers['X-SMTPAPI'] = '{"category": "Email to User (%s)"}' % self.pk
         send_email(message, email_type=email_type, recipients=[self.email],
-                   **kwargs)
+                   headers=headers, **kwargs)
 
     def get_username(self):
         return self.email
@@ -553,9 +556,14 @@ class User(AbstractBaseUser, PermissionsMixin):
                 "mysearches/email_opt_out.html",
                 {'user': self, 'partner': pss.partner})
 
+            headers = {
+                'X-SMTPAPI': '{"category": "Partner Saved Search Opt Out '
+                             '(%s:%s)"}' % (pss.pk, pss.created_by.pk)
+            }
+
             email_type = settings.PARTNER_SAVED_SEARCH_RECIPIENT_OPTED_OUT
             send_email(message,  email_type=email_type,
-                       recipients=[pss.created_by.email])
+                       recipients=[pss.created_by.email], headers=headers)
 
             # create PRM message
             body = render_to_string(
@@ -575,12 +583,37 @@ class User(AbstractBaseUser, PermissionsMixin):
         except (IndexError, ValueError):
             return None
 
+    def can_access_site(self, site):
+        """
+        If a user belongs to a company who has at least one site package which
+        includes `site`, this method will return `True`. This method will also
+        return `True` if the site has no site packages.
+
+        Inputs:
+        :site: The site to look for
+        """
+        packages = site.sitepackage_set
+
+        return not packages.exists() or packages.filter(
+            owner__in=self.company_set.all()).exists()
+
 
 class EmailLog(models.Model):
     email = models.EmailField(max_length=254)
     event = models.CharField(max_length=11)
     received = models.DateField()
     processed = models.BooleanField(default=False, blank=True)
+    category = models.CharField(max_length=255, blank=True)
+    send_log = models.ForeignKey('mysearches.SavedSearchLog', null=True,
+                                 blank=True, on_delete=models.SET_NULL,
+                                 help_text="""Entries prior to the
+                                 release of saved search logging will
+                                 have no categories, meaning we cannot
+                                 match them with a SendGrid
+                                 response.""",
+                                 related_name='sendgrid_response')
+    # The event api reference makes no mention about how long this can be.
+    reason = models.TextField(blank=True)
 
 
 class CustomHomepage(Site):

@@ -1,8 +1,9 @@
 import base64
 from bs4 import BeautifulSoup
-from importlib import import_module
 from datetime import timedelta, date
+from importlib import import_module
 import time
+import uuid
 
 from django.conf import settings
 from django.contrib.auth import login
@@ -16,7 +17,7 @@ from setup import MyJobsBase
 from myjobs.models import User, EmailLog, FAQ
 from myjobs.tests.factories import UserFactory
 from myprofile.models import Name, Education
-from mysearches.models import SavedSearch
+from mysearches.models import SavedSearch, SavedSearchLog
 from registration.models import ActivationProfile
 from registration import signals as custom_signals
 
@@ -73,14 +74,15 @@ class MyJobsViewsTests(MyJobsBase):
 
         self.email_user = UserFactory(email='accounts@my.jobs')
 
-    def make_messages(self, when, apiversion=2):
+    def make_messages(self, when, apiversion=2, category=''):
         """
         Creates test api messages for sendgrid tests.
 
         Inputs:
         :self:  the calling object
         :when:  timestamp
-        :apiversion: the version of the API to mimick
+        :apiversion: the version of the API to mimic
+        :category: category that the originating email was sent with; Optional
 
         Returns:
         JSON-esque object if apiversion<3
@@ -88,11 +90,13 @@ class MyJobsViewsTests(MyJobsBase):
 
         """
         message = '{{"email":"alice@example.com","timestamp":"{0}",' \
-            '"event":"{1}"}}'
+            '"event":"{1}"{2}}}'
         messages = []
+        if category:
+            category = ',"category":"%s"' % category
         for event in self.events:
             messages.append(message.format(time.mktime(when.timetuple()),
-                                           event))
+                                           event, category))
         if apiversion < 3:
             return '\r\n'.join(messages)
         else:
@@ -163,7 +167,6 @@ class MyJobsViewsTests(MyJobsBase):
 
         response_errors = resp.context['password_form'].errors
         self.assertItemsEqual(response_errors, errors)
-
 
     def test_password_without_punctuation_failure(self):
         resp = self.client.post(reverse('edit_account')+'?password',
@@ -371,6 +374,35 @@ class MyJobsViewsTests(MyJobsBase):
             self.assertEqual(response.status_code, 200)
         process_batch_events()
         self.assertEqual(EmailLog.objects.count(), 2)
+
+    def test_batch_with_category(self):
+        """
+        When a batch submission contains categories, we should try to link the
+        relevant events with a saved search log.
+        """
+        now = date.today()
+        log_uuid = uuid.uuid4().hex
+        SavedSearchLog.objects.create(was_sent=True, recipient=self.user,
+                                      recipient_email=self.user.email,
+                                      uuid=log_uuid, new_jobs=0,
+                                      backfill_jobs=0)
+        self.events = ['open']
+        category = '(stuff|%s)' % log_uuid
+        message = self.make_messages(now, 3, category)
+        self.client.post(reverse('batch_message_digest'),
+                         data=message,
+                         content_type='text/json',
+                         HTTP_AUTHORIZATION='BASIC %s' %
+                         base64.b64encode('accounts%40my.jobs:5UuYquA@'))
+        self.assertEqual(EmailLog.objects.count(), 1)
+        email_log = EmailLog.objects.get()
+        self.assertIn(log_uuid, email_log.category)
+        saved_search_log = SavedSearchLog.objects.get()
+        self.assertEqual(saved_search_log.uuid, log_uuid)
+        # One saved search log can handle multiple sendgrid responses
+        # (multiple bounces, clicks, opens, etc per email).
+        self.assertTrue(email_log in saved_search_log.sendgrid_response.all())
+        self.assertTrue(saved_search_log.was_received)
 
     def test_batch_bounce_message_digest(self):
         now = date.today()

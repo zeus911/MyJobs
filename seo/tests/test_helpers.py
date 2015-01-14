@@ -3,15 +3,45 @@ from decimal import Decimal
 from collections import namedtuple
 from mock import patch
 
+from django.conf import settings
+
 from seo import helpers
 from seo.models import CustomFacet
-from seo.tests.factories import CustomFacetFactory, SeoSiteFacetFactory
+from seo.tests import factories
 from setup import DirectSEOBase
 
 
 class SeoHelpersTestCase(DirectSEOBase):
+    """
+    CustomFacets with count 0 should not be returned by get_solr_facet()
+    unless CustomFacet.always_show = True.
 
- 
+    """
+    def test_get_solr_facet_always_show(self):
+        site_facet = factories.SeoSiteFacetFactory()
+        site = site_facet.seosite
+        settings.SITE_ID = site.pk
+        settings.SITE = site
+        custom_facet = site_facet.customfacet
+        custom_facet.show_production = 1
+        custom_facet.save()
+
+        # The custom facet should have no results, and therefore should
+        # not be in the list.
+        result_counts = helpers.get_solr_facet(site.pk, [])
+        self.assertEqual(len(result_counts), 0)
+
+        custom_facet.always_show = True
+        custom_facet.save()
+        result_counts = helpers.get_solr_facet(site.pk, [])
+        # If always_show is True the facet should be in the list even
+        # if the count is 0.
+        self.assertEqual(len(result_counts), 1)
+        # The custom facet returned should be the one we created.
+        self.assertEqual(result_counts[0][0], custom_facet)
+        # The count should be 0.
+        self.assertEqual(result_counts[0][1], 0)
+
     def test_featured_default_jobs(self):
         """
         Requests the number and offsets for featured and default jobs
@@ -21,29 +51,31 @@ class SeoHelpersTestCase(DirectSEOBase):
         """
         p = Decimal(0.5)
         input_outputs = [
-                #Getting jobs from sets of 25 featured andj
-                #55 default, 50% split, in slices of 20 and 10
-                ((25, 55, 20, p, 0), (10, 10, 0, 0)),
-                ((25, 55, 20, p, 20), (10, 10, 10, 10)),
-                ((25, 55, 20, p, 40), (5, 15, 20, 20)),
-                ((25, 55, 10, p, 60), (0, 10, 30, 35)),
-                ((25, 55, 20, p, 70), (0, 10, 35, 45)),
-                #Offset higher than available jobs
-                ((0, 50, 20, p, 50), (0, 0, 25, 50))
-                ]
+            #Getting jobs from sets of 25 featured andj
+            #55 default, 50% split, in slices of 20 and 10
+            ((25, 55, 20, p, 0), (10, 10, 0, 0)),
+            ((25, 55, 20, p, 20), (10, 10, 10, 10)),
+            ((25, 55, 20, p, 40), (5, 15, 20, 20)),
+            ((25, 55, 10, p, 60), (0, 10, 30, 35)),
+            ((25, 55, 20, p, 70), (0, 10, 35, 45)),
+            #Offset higher than available jobs
+            ((0, 50, 20, p, 50), (0, 0, 25, 50))
+        ]
         io2 = []
-        for i,o in input_outputs:
+        for i, o in input_outputs:
             #Reverse counts for featured and default jobs
-            io2.append(((i[1],i[0],i[2],i[3],i[4]), (o[1],o[0],o[3],o[2])))
+            io2.append(((i[1], i[0], i[2], i[3], i[4]),
+                        (o[1], o[0], o[3], o[2])))
             #No Featured Facet jobs
-            io2.append(((0,90,i[2],i[3],i[4]), (0,i[2],int(i[4]*i[3]),i[4])))
+            io2.append(((0, 90, i[2], i[3], i[4]),
+                        (0, i[2], int(i[4]*i[3]), i[4])))
         input_outputs.extend(io2)
         #Rounding should favor featured jobs. Here the first element to be
         #returned is a featured job, and the second is a default job
         input_outputs.append(((1, 1, 1, p, 0), (1, 0, 0, 0)))
         input_outputs.append(((1, 1, 1, p, 1), (0, 1, 1, 0)))
 
-        for i,o in input_outputs:
+        for i, o in input_outputs:
             self.assertEqual(helpers.featured_default_jobs(*i), o)
 
     def test_breadcrumbs(self):
@@ -54,7 +86,7 @@ class SeoHelpersTestCase(DirectSEOBase):
                     'state': 'Indiana',
                     'state_slab': 'indiana/usa/jobs::Indiana',
                     'title': 'Retail Associate',
-                    'title_slab': 'retail-associate/jobs-in::Retail Associate' }
+                    'title_slab': 'retail-associate/jobs-in::Retail Associate'}
 
         field_list = " ".join(field for field in job_dict)
         jobTuple = namedtuple('jobTuple', field_list)
@@ -75,13 +107,11 @@ class SeoHelpersTestCase(DirectSEOBase):
                          '/retail-associate/jobs-in/')
 
 
-
-
 class FuzzyInt(int):
     """
     Overrides the equal method in int to return true if an integer is within 
-    the FuzzyInt's range. This let's us set a range for AssertNumQueries to make tests
-    less brittle.
+    the FuzzyInt's range. This let's us set a range for AssertNumQueries to
+    make tests less brittle.
 
     """
     def __new__(cls, lowest, highest):
@@ -91,7 +121,7 @@ class FuzzyInt(int):
         return obj
 
     def __eq__(self, other):
-        return other >= self.lowest and other <= self.highest
+        return self.lowest <= other <= self.highest
 
     def __repr__(self):
         return "[%d..%d]" % (self.lowest, self.highest)
@@ -119,11 +149,12 @@ class SeoHelpersDjangoTestCase(DirectSEOBase):
         terms = [unicode(i) for i in range(10)]
         facets = CustomFacet.objects.all()
         self.assertEqual(len(facets), 0)
-        facet_ids = [CustomFacetFactory(title=term).id for term in terms]
+        facet_ids = [factories.CustomFacetFactory(title=term).id
+                     for term in terms]
         facets = CustomFacet.objects.filter(id__in=facet_ids).order_by('title')
-        [SeoSiteFacetFactory(customfacet=facet) for facet in facets]
+        [factories.SeoSiteFacetFactory(customfacet=facet) for facet in facets]
 
-        site_facet = SeoSiteFacetFactory()
+        site_facet = factories.SeoSiteFacetFactory()
         mock_active.return_value = site_facet
 
         for split in range(len(terms)):
