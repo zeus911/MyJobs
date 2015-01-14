@@ -945,8 +945,6 @@ class CompanyProfileForm(RequestForm):
             region = cleaned_data.get('region')
             if region:
                 cleaned_data['state'] = region
-            else:
-                raise ValidationError('State or region is required.')
 
         if self.instance.company.user_created:
             company_name = cleaned_data.get('company_name')
