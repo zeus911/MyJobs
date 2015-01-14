@@ -1,5 +1,4 @@
 {% extends "postajob/myjobs/postajob_template.html" %}
-{% gz as gz %}
 {% load i18n %}
 
 {% block site-title %}
@@ -30,6 +29,6 @@ Purchased Products
 
 
 {% block extra-js %}
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}postajob.159-9.css{{ gz }}">
-    <script type="text/javascript" src="{{ STATIC_URL }}postajob-tabs.160-13.js{{ gz }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}postajob.159-9.css">
+    <script type="text/javascript" src="{{ STATIC_URL }}postajob-tabs.160-13.js"></script>
 {% endblock %}

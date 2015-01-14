@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% gz as gz %}
 {% load i18n %}
 
 {% block site-title %}
@@ -63,5 +62,5 @@
     {{ block.super }}
     <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}postajob-tabs.160-13.js{{ gz }}"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}postajob-tabs.160-13.js"></script>
 {% endblock %}
