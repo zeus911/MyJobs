@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.conf import settings
 from django.template.loader import render_to_string
 
@@ -8,7 +8,7 @@ from seo.models import CustomFacet
 
 class Breadbox(object):
     class Breadcrumb(object):
-        def __init__(self, display_title='', url=reverse('view_jobs'),
+        def __init__(self, display_title='', url=reverse_lazy('view_jobs'),
                      breadcrumb_class='breadcrumb_bread_box'):
             self.url = url
             self.display_title = display_title

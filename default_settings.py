@@ -425,7 +425,8 @@ ALLOW_MULTIPLE_SLUG_TAGS = {
     'location': False,
     'moc': False,
     'facet': True,
-    'company': False
+    'company': False,
+    'featured': False,
 }
 
 FEED_VIEW_SOURCES = {

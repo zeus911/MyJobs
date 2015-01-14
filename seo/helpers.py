@@ -21,7 +21,7 @@ from seo_pysolr import Solr
 from seo.search_backend import DESearchQuerySet
 from seo.models import BusinessUnit, CustomFacet, SeoSiteFacet
 from seo.templatetags.seo_extras import facet_text, facet_url, smart_truncate
-from seo.filters import FacetListWidget, SearchFacetListWidget
+from seo.filters import FacetListWidget
 from serializers import JSONExtraValuesSerializer
 from moc_coding.models import Moc
 
@@ -730,10 +730,6 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
 
     """
     filters = filters or {}
-    if search_facets:
-        facet_class = SearchFacetListWidget
-    else:
-        facet_class = FacetListWidget
 
     moc_field = 'mapped_moc' if settings.SITE_BUIDS else 'moc'
     if featured:
@@ -755,19 +751,18 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
     num_items = site_config.num_filter_items_to_show
     widgets = []
     for _type in types:
-        w = facet_class(request, site_config, _type[0],
-                        facet_counts['%s_slab' % _type[0]][0:num_items*2],
-                        filters)
+        w = FacetListWidget(request, site_config, _type[0],
+                            facet_counts['%s_slab' % _type[0]][0:num_items*2],
+                            filters)
         w.precedence = _type[1]
         widgets.append(w)
-
     if custom_facets:
         # The facet widget must be generated "separately" from
         # location/title/moc widgets, since facet counts aren't generated
         # from the SearchIndex.
-        search_widget = facet_class(request, site_config, 'facet',
-                                    custom_facets, filters,
-                                    offset=len(custom_facets))
+        search_widget = FacetListWidget(request, site_config, 'facet',
+                                        custom_facets, filters,
+                                        offset=len(custom_facets))
         search_widget.precedence = site_config.browse_facet_order
         widgets.append(search_widget)
     widgets.sort(key=lambda x: x.precedence)

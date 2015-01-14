@@ -15,7 +15,7 @@ from seo.templatetags.seo_extras import facet_text, facet_url, smart_truncate
 
 class Widget(object):
     slug_order = {'location': 2, 'title': 1, 'moc': 3, 'facet': 4, 'company': 5,
-                  'mapped_moc': 3}
+                  'featured': 5, 'mapped_moc': 3}
     
     def __init__(self, request, site_config, _type, items, filters,
                  offset=None):
@@ -23,7 +23,7 @@ class Widget(object):
         self.site_config = site_config
         self._type = _type
         self.items = items
-        self.path_map = self.filters_to_paths(filters)
+        self.path_dict = self.filters_to_paths(filters.copy())
         self.num_items = self.site_config.num_filter_items_to_show
         self.offset = offset or self.num_items * 2
 
@@ -32,10 +32,12 @@ class Widget(object):
 
     @staticmethod
     def filters_to_paths(filters):
-        for slug_type, value in filters:
-            path = "%s/%s/" % (value, settings.SLUG_TAGS[slug_type])
-            filters[slug_type] = path
-        return filters
+        path_dict = {}
+        for slug_type, value in filters.iteritems():
+            path = ("%s%s" % (value, settings.SLUG_TAGS[slug_type])
+                    if value else '')
+            path_dict[slug_type.replace('_slug', '')] = path
+        return path_dict
 
 
 class FacetListWidget(Widget):
@@ -46,8 +48,10 @@ class FacetListWidget(Widget):
     def render(self):
         _type = self._type
         items = filter(lambda x: x[0], self.items)
+
         if not self._show_widget(items):
             return
+
         # When you add custom keywords to a microsite, you will need to manually
         # enter a translation to directseo/locale<LANG>/LC_MESSAGES/django.po
         # for each language. Examples are "Profession" or "Area".
@@ -77,6 +81,7 @@ class FacetListWidget(Widget):
         # by default, and switched to true if there are hidden fields created
         # or the counter matches or exceeds the num_items value
         hidden_options = False
+
         for item in items:
             try:
                 item_name = safe(smart_truncate(facet_text(item[0])))
@@ -205,11 +210,8 @@ class FacetListWidget(Widget):
             
         # Create a list of intermediate 2-tuples, with the url_atoms
         # value and the ordering data from self.slug_order.
-        url_orders = []
-        for k in url_atoms:
-            order = (self.slug_order['company'] if k == 'featured'
-                     else self.slug_order[k])
-            url_orders.append((url_atoms[k], order))
+        url_orders = [(url_atoms[key], self.slug_order[key])
+                      for key in url_atoms]
 
         # Sort them based on that ordering data.
         results = sorted(url_orders, key=lambda result: result[1])
@@ -230,43 +232,34 @@ class FacetListWidget(Widget):
         # (which is the bread_box_path from home_page/job_list_by_slug_tag
         # views) to the url_atoms dict after stripping leading/trailing
         # slashes.
-        for atom in path_map:
-            s = '%s_slug' % atom
-            if atom != item_type:
-                if s in self.path_dict:
-                    path_map[atom] = self.path_dict[s].strip('/')
+        for atom, path in path_map.iteritems():
+            if atom in self.path_dict:
+                allow_multiple = settings.ALLOW_MULTIPLE_SLUG_TAGS[atom]
+                if atom == item_type and allow_multiple:
+                    # The "featured" item_type corresponds to feature company,
+                    # which for the purpose of a slug tag is just company.
+                    slug_tag_type = ('company' if item_type == 'featured'
+                                     else item_type)
+                    slug_tag = "%s_slug" % slug_tag_type
+                    slug_tag = settings.SLUG_TAGS[slug_tag]
 
+
+                    new_path = "%s/%s" % (path, self.path_dict[atom].strip('/'))
+
+
+                    # Strip out the slug tag so it can be sorted.
+                    new_path = new_path.replace(slug_tag, '')
+                    print new_path
+
+                    # Sort them alphabetically.
+                    new_path = new_path.split('/')
+                    new_path = sorted(new_path)
+
+                    # Recombine and readd the slug tag.
+                    new_path = "/".join(new_path)
+                    new_path = "%s/%s" % (new_path, slug_tag.strip('/'))
+
+                    path_map[atom] = new_path
+                elif atom != item_type:
+                    path_map[atom] = self.path_dict[atom].strip('/')
         return path_map
-        
-
-class SearchFacetListWidget(FacetListWidget):
-    
-    def get_abs_url(self, item):
-        item_name = safe(smart_truncate(facet_text(item[0])))
-        loc_val = self.request.GET.get('location', '')
-        moc_val = self.request.GET.get('moc', '')
-        t_val = self.request.GET.get('q', '')
-        company_val = self.request.GET.get('company', '')
-        exact_loc = self.request.GET.get('exact_loc', '')
-        exact_title = self.request.GET.get('exact_title', '')
-        qs_dict = {'location': loc_val, 'q': t_val, 'company': company_val,
-                   'exact_loc': exact_loc, 'exact_title': exact_title}
-        if moc_val:
-            qs_dict['moc'] = moc_val.split(' - ')[0]
-
-        if self._type in ('city', 'state', 'country', 'cities', 'states',
-                          'countries'):
-            qs_dict['exact_loc'] = 'true'
-            qs_dict['location'] = item_name
-        elif self._type in ('moc', 'mocs'):
-            qs_dict[self._type] = item_name.split(' - ')[0]
-        elif self._type in ('title', 'titles'):
-            qs_dict['exact_title'] = 'true'
-            qs_dict['q'] = safe(facet_text(item[0]))
-        else:
-            qs_dict[self._type] = safe(facet_text(item[0]))
-
-        # Using safe_urlencode here because without it, search terms like
-        # Düsseldorf will throw an exception since urllib.urlencode chokes
-        # on UTF-8 values which can't fail down to ascii.
-        return './search?{qs}'.format(qs=safe_urlencode(qs_dict))
