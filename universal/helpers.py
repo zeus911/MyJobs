@@ -187,8 +187,7 @@ def has_mx_record(domain):
 
 
 def send_email(email_body, email_type=settings.GENERIC,
-               recipients=None, site=None, **kwargs):
-
+               recipients=None, site=None, headers=None, **kwargs):
     recipients = recipients or []
 
     company_name = 'My.jobs'
@@ -210,7 +209,13 @@ def send_email(email_body, email_type=settings.GENERIC,
     subject = settings.EMAIL_FORMATS[email_type]['subject']
     subject = subject.format(**kwargs)
 
-    message = EmailMessage(subject, email_body, sender, recipients)
+    email_kwargs = {
+        'subject': subject, 'body': email_body, 'from_email': sender,
+        'to': recipients
+    }
+    if headers is not None:
+        email_kwargs['headers'] = headers
+    message = EmailMessage(**email_kwargs)
     message.content_subtype = 'html'
     message.send()
 

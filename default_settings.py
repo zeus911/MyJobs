@@ -506,7 +506,7 @@ EMAIL_FORMATS = {
         'address': 'accounts@{domain}',
         # Subject is handled by the templates used in Django's default
         # password reset.
-        'subject': '',
+        'subject': 'Password Reset on {domain}',
     },
     GENERIC: {
 
