@@ -771,8 +771,6 @@ def facet_data(jsids):
 
 def more_custom_facets(custom_facets, offset=0, num_items=0):
     """Generates AJAX response for more custom_facets."""
-    print combine_groups(custom_facets)
-    print offset, num_items
     custom_facets = combine_groups(custom_facets)[offset:offset+num_items]
     items = []
     for i in custom_facets:
