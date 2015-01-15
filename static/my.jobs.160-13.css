@@ -333,6 +333,7 @@ h1 > small > a:hover {
     font-weight: normal;
     color: #000;
     border-radius: 5px;
+    white-space: nowrap;
 }
 
 .tag-name.small {
@@ -458,7 +459,6 @@ h1 > small > a:hover {
     background-color: #888888;
     color: #000;
     font-size: 0.9em;
-    white-space: nowrap;
 }
 
 #library-modal-check {
