@@ -9,6 +9,11 @@ class SavedSearchAdmin(admin.ModelAdmin):
 
 
 class SavedSearchLogAdmin(admin.ModelAdmin):
+    list_display = ['recipient_email', 'was_sent', 'was_received', 'new_jobs',
+                    'backfill_jobs']
+    search_fields = ['recipient_email']
+    list_filter = ['was_sent', 'was_received']
+
     def get_readonly_fields(self, request, obj=None):
         # Disable editing of existing saved search logs while allowing logs
         # to be added
