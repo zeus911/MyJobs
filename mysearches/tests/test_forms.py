@@ -1,5 +1,8 @@
 from mock import patch
 
+from django.core import mail
+from django.core.urlresolvers import reverse
+
 from myjobs.tests.setup import MyJobsBase
 from mypartners.models import Contact
 from mypartners.tests.factories import ContactFactory, PartnerFactory
@@ -118,3 +121,27 @@ class PartnerSavedSearchFormTests(MyJobsBase):
         self.assertTrue(invitation.invitee.in_reserve)
         contact = Contact.objects.get(pk=contact.pk)
         self.assertEqual(invitation.invitee, contact.user)
+
+    def test_initial_email_has_unsubscription_options(self):
+        """
+        The initial email received for a partner saved search should have an
+        unsubscribe link included
+        """
+
+        # create and submit the form
+        contact = ContactFactory(user=None, email='new_user@example.com',
+                                 partner=self.partner)
+        self.partner_search_data['email'] = 'new_user@example.com'
+        form = PartnerSavedSearchForm(partner=self.partner,
+                                      data=self.partner_search_data)
+        instance = form.instance
+        instance.provider = self.company
+        instance.partner = self.partner
+        instance.created_by = self.user
+        instance.custom_message = instance.partner_message
+        self.assertTrue(form.is_valid())
+        form.save()
+
+        # ensure email received with the correct content
+        self.assertIn(mail.outbox[0].body, 
+                      "Unsubscribe from all My.jobs emails")
