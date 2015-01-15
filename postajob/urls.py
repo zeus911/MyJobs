@@ -200,23 +200,23 @@ urlpatterns = patterns(
 
     url(r'^admin/purchased/product$',
         company_in_sitepackages(message_when_no_packages(
-            feature='Purchased Producst are')(
+            feature='Purchased Products are')(
                 views.admin_purchasedproduct)),
         name='purchasedproduct'),
     url(r'^admin/purchased/product/(?P<purchased_product>\d+)/view/(?P<pk>\d+)$',
         company_in_sitepackages(message_when_no_packages(
-            feature='Purchased Producst are')(
+            feature='Purchased Products are')(
                 views.view_job)),
         {'admin': True},
         name="admin_view_job"),
     url(r'^admin/purchased/product/(?P<purchased_product>\d+)/view-invoice',
         company_in_sitepackages(message_when_no_packages(
-            feature='Purchased Producst are')(
+            feature='Purchased Products are')(
                 views.view_invoice)),
         name="admin_view_invoice"),
     url(r'^admin/purchased/product/(?P<purchased_product>\d+)/',
         company_in_sitepackages(message_when_no_packages(
-            feature='Purchased Producst are')(
+            feature='Purchased Products are')(
         views.purchasedjobs_overview)),
         {'admin': True},
         name="purchasedjobs"),
