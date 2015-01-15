@@ -143,5 +143,7 @@ class PartnerSavedSearchFormTests(MyJobsBase):
         form.save()
 
         # ensure email received with the correct content
-        self.assertIn(mail.outbox[0].body, 
-                      "Unsubscribe from all My.jobs emails")
+        for phrase in ["Deactivate this saved search",
+                       "Deactivate all saved searches",
+                       "Unsubscribe from all My.jobs emails"]:
+            self.assertIn(phrase, mail.outbox[0].body)

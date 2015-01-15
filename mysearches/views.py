@@ -269,6 +269,7 @@ def unsubscribe(request, user=None):
         # saved_search is a single search rather than a queryset this time
         cache = [saved_search]
         saved_search.is_active = False
+        has_pss = hasattr(saved_search, 'partnersavedsearch')
         saved_search.save()
     except ValueError:
         digest = SavedSearchDigest.objects.get_or_create(
@@ -286,7 +287,8 @@ def unsubscribe(request, user=None):
     return render_to_response('mysearches/saved_search_disable.html',
                               {'search_id': search_id,
                                'searches': cache,
-                               'email_user': user},
+                               'email_user': user,
+                               'contains_pss': has_pss},
                               RequestContext(request))
 
 
