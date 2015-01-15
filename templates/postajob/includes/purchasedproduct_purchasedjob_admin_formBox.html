@@ -8,27 +8,23 @@
     <div class="clearfix"></div>
 </div>
 <div id="active-products" class="card-wrapper">
-    {% if active_products %}
-        {% for purchased_product in active_products %}
-            {% get_jobs purchased_product as jobs %}
-            {% include "postajob/includes/purchasedjob_admin_rows.html" with jobs=jobs %}
-        {% endfor %}
-    {% else %}
-        <div class="product-card no-highlight">
-            Currently there are no active products.
-        </div>
-    {% endif %}
+    {% for purchased_product in active_products %}
+        {% get_jobs purchased_product as jobs %}
+        {% include "postajob/includes/purchasedjob_admin_rows.html" with jobs=jobs %}
+    {% empty %}
+    <div class="product-card no-highlight">
+        Currently there are no active products.
+    </div>
+    {% endfor %}
 </div>
 <div class="clearfix"></div>
 <div id="expired-products" class="card-wrapper" style="display: none;">
-    {% if expired_products %}
-        {% for purchased_product in expired_products %}
-            {% get_jobs purchased_product as jobs %}
-            {% include "postajob/includes/purchasedjob_admin_rows.html" with jobs=jobs %}
-        {% endfor %}
-    {% else %}
-        <div class="product-card no-highlight">
-            Currently there are no expired products.
-        </div>
-    {% endif %}
+    {% for purchased_product in expired_products %}
+        {% get_jobs purchased_product as jobs %}
+        {% include "postajob/includes/purchasedjob_admin_rows.html" with jobs=jobs %}
+    {% empty %}
+    <div class="product-card no-highlight">
+        Currently there are no expired products.
+    </div>
+    {% endfor %}
 </div>

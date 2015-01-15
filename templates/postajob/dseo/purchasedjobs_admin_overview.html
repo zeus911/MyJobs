@@ -12,27 +12,25 @@
             <div class="clearfix"></div>
         </div>
         <div id="active-jobs" class="card-wrapper">
-            {% if active_jobs %}
             {% for job in active_jobs %}
-            <div class="product-card">
-                <div class="big-title">
-                    {{ job.title }}
+                <div class="product-card">
+                    <div class="big-title">
+                        {{ job.title }}
+                    </div>
+                    <div class="product-details">
+                        {% if job.reqid %}Requisition ID: <b>{{ job.reqid }}</b>{% else %}No job requisition ID{% endif %}
+                    </div>
+                    <div class="product-details">
+                        Expires: <b>{{ job.date_expired }}</b>
+                    </div>
+                    {% get_content_type job as content_type %}
+                    <a class="btn" href="{% url 'admin_view_job' purchased_product=purchased_product.pk pk=job.pk %}">View</a>
                 </div>
-                <div class="product-details">
-                    {% if job.reqid %}Requisition ID: <b>{{ job.reqid }}</b>{% else %}No job requisition ID{% endif %}
+            {% empty %}
+                <div class="product-card">
+                    You currently have no jobs for <b>{{ purchased_product.product }}</b>.
                 </div>
-                <div class="product-details">
-                    Expires: <b>{{ job.date_expired }}</b>
-                </div>
-                {% get_content_type job as content_type %}
-                <a class="btn" href="{% url 'admin_view_job' purchased_product=purchased_product.pk pk=job.pk %}">View</a>
-            </div>
             {% endfor %}
-            {% else %}
-            <div class="product-card">
-                You currently have no jobs for <b>{{ purchased_product.product }}</b>.
-            </div>
-            {% endif %}
             <div class="wrapper-footer">
                 <a class="pull-right" href="{% url 'admin_view_invoice' purchased_product=purchased_product.pk %}">View Product Invoice</a>
                 <div class="clearfix"></div>
@@ -40,7 +38,6 @@
         </div>
         <div class="clearfix"></div>
         <div id="expired-jobs" class="card-wrapper" style="display: none;">
-            {% if expired_jobs %}
             {% for job in expired_jobs %}
             <div class="product-card">
                 <div class="big-title">
@@ -55,12 +52,11 @@
                 {% get_content_type job as content_type %}
                 <a class="btn" href="{% url 'admin_view_job' purchased_product=purchased_product.pk pk=job.pk %}">View</a>
             </div>
-            {% endfor %}
-            {% else %}
+            {% empty %}
             <div class="product-card">
                 You currently have no jobs for <b>{{ purchased_product.product }}</b>.
             </div>
-            {% endif %}
+            {% endfor %}
             <div class="wrapper-footer">
                 <a class="pull-right" href="{% url 'admin_view_invoice' purchased_product=purchased_product.pk %}">View Product Invoice</a>
                 <div class="clearfix"></div>

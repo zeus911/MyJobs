@@ -26,7 +26,6 @@ Purchased Jobs for {{ purchased_product.product }}
                 <div class="clearfix"></div>
             </div>
             <div id="active-jobs" class="card-wrapper">
-                {% if active_jobs %}
                 {% for job in active_jobs %}
                 <div class="product-card no-highlight">
                     <div class="big-title">
@@ -41,16 +40,14 @@ Purchased Jobs for {{ purchased_product.product }}
                     {% get_content_type job as content_type %}
                     <a class="btn" href="{% url 'view_job' purchased_product=purchased_product.pk pk=job.pk %}">View</a>
                 </div>
-                {% endfor %}
-                {% else %}
+                {% empty %}
                 <div class="product-card no-highlight">
                     You currently have no active jobs for <b>{{ purchased_product.product }}</b>.
                 </div>
-                {% endif %}
+                {% endfor %}
             </div>
             <div class="clearfix"></div>
             <div id="expired-jobs" class="card-wrapper" style="display: none;">
-                {% if expired_jobs %}
                 {% for job in expired_jobs %}
                 <div class="product-card no-highlight">
                     <div class="big-title">
@@ -65,12 +62,11 @@ Purchased Jobs for {{ purchased_product.product }}
                     {% get_content_type job as content_type %}
                     <a class="btn" href="{% url 'view_job' purchased_product=purchased_product.pk pk=job.pk %}">View</a>
                 </div>
-                {% endfor %}
-                {% else %}
+                {% empty %}
                 <div class="product-card no-highlight">
                     You currently have no expired jobs for <b>{{ purchased_product.product }}</b>.
                 </div>
-                {% endif %}
+                {% endfor %}
             </div>
         </div>
         <div class="span4">

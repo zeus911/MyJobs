@@ -1,7 +1,6 @@
 {% load postajob_tags %}
 
-{% if purchased_products %}
-    {% for product in purchased_products %}
+{% for product in purchased_products %}
     <div class="product-card no-highlight">
         <div class="big-title">
             {{ product.product }}
@@ -22,9 +21,8 @@
         {% endwith %}
         <a id="product-{{ product.id }}" class="btn" href="{% url 'purchasedjobs' purchased_product=product.pk %}">Details</a>
     </div>
-    {% endfor %}
-{% else %}
-<div class="product-card no-highlight">
-    You currently have no purchased products.
-</div>
-{% endif %}
+{% empty %}
+    <div class="product-card no-highlight">
+        You currently have no purchased products.
+    </div>
+{% endfor %}
