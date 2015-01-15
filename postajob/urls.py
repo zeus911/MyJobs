@@ -71,13 +71,13 @@ urlpatterns = patterns(
 
     # Job
     url(r'^job/add/',
-        company_in_sitepackages(views.JobFormView.as_view()),
+        views.JobFormView.as_view(),
         name='job_add'),
     url(r'^job/delete/(?P<pk>\d+)/',
-        company_in_sitepackages(views.JobFormView.as_view()),
+        views.JobFormView.as_view(),
         name='job_delete'),
     url(r'^job/update/(?P<pk>\d+)/',
-        company_in_sitepackages(views.JobFormView.as_view()),
+        views.JobFormView.as_view(),
         name='job_update'),
 
     # PurchasedJob
