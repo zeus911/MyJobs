@@ -34,10 +34,8 @@
         </td>
     </tr>
 
-        {% if not contains_pss %}
-
-            {% with saved_search=saved_searches.0.0 %}
-
+        {% with saved_search=saved_searches.0.0 %}
+            {% if not contains_pss %}
                 {% block completion %}
                 <tr>
                     <td colspan="2">
@@ -45,11 +43,12 @@
                     </td>
                 </tr>
                 {% endblock %}
-
+            {% endif %}
                 <tr>
-
                     <td colspan=1 style="width: 33%; padding: 8px; line-height: 20px; border-top: 1px solid #ddd;">
-                        <a href="https://secure.my.jobs{% url 'view_profile' %}?verify={{saved_search.user.user_guid}}">{% trans 'My Resume' %}</a><br>
+                        {% if not contains_pss %}
+                            <a href="https://secure.my.jobs{% url 'view_profile' %}?verify={{saved_search.user.user_guid}}">{% trans 'My Resume' %}</a><br>
+                        {% endif %}
                         <a href="https://secure.my.jobs{% url 'saved_search_main' %}?verify={{saved_search.user.user_guid}}">{% trans 'My Saved Searches' %}</a><br>
                         <a href="https://secure.my.jobs{% url 'edit_account' %}?verify={{saved_search.user.user_guid}}">{% trans 'Account Settings' %}</a><br>
                     </td>
@@ -61,8 +60,6 @@
                 </tr>
 
             {% endwith %}
-
-        {% endif %}
 
     <tr>
         <td colspan=2 style="padding: 8px; line-height: 20px; border-top: 1px solid #ddd;">
