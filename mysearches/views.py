@@ -283,6 +283,7 @@ def unsubscribe(request, user=None):
         # that queryset; Make a copy and then update the queryset
         cache = list(saved_searches)
         saved_searches.update(is_active=False)
+        has_pss = False
 
     return render_to_response('mysearches/saved_search_disable.html',
                               {'search_id': search_id,
