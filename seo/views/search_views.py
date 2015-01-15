@@ -34,7 +34,6 @@ from django.utils.html import strip_tags
 from django.utils.feedgenerator import Atom1Feed
 from django.views.decorators.csrf import csrf_exempt
 
-
 from slugify import slugify
 
 from moc_coding import models as moc_models

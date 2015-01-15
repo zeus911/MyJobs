@@ -150,17 +150,14 @@ class FacetListWidget(Widget):
             # so it makes more sense to do it directly in the python here.
             item_count = intcomma(item[1]) if item[1] else False
 
-            # If it's a custom facet, update the item_name so it
-            # always ends with " Jobs".
             if _type == 'facet':
                 # When this was added most of the custom facet
-                # names already ended with " Jobs". In order to ensure
-                # that the slugs/paths for these facets remained the same,
-                # we decided to keep " Jobs" in these slugs, so it needs
-                # stripped out first before we can re-add it to avoid
-                # duplication.
+                # names ended with " Jobs" (for prettier titles). In order to
+                #  ensure that the slugs/paths for these facets remained the
+                # same, we decided to keep " Jobs" in these slugs, so it needs
+                # stripped out to match all the other facet types that
+                # don't end in " Jobs".
                 item_name = item_name.rstrip(" Jobs")
-                item_name = "%s Jobs" % item_name
 
             # Use the django templating system to provide richer string parsing
             item_context = Context({
