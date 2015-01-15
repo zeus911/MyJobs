@@ -365,6 +365,7 @@ def bread_box_location_heading(location_slug_value, jobs=None):
 
     locations = location_slug_value.split('/')
     loc_length = len(locations)
+
     try:
         if loc_length == 3:
             return jobs[0].location
@@ -396,22 +397,16 @@ def bread_box_moc_heading(moc_slug_value):
 
 
 def bread_box_title_heading(title_slug_value, jobs=None):
-    if not title_slug_value:
+    if not title_slug_value and not jobs:
         return None
 
-    if title_slug_value:
-        if isinstance(jobs, DESearchQuerySet):
-            jobs = jobs.narrow("title_slug:(%s)" % title_slug_value)
-            if jobs:
-                return jobs[0].title
-        else:
-            job = jobs[0]
+    job = jobs[0]
+    if title_slug_value == job.title_slug:
+        return job.title
+    else:
+        for job in jobs:
             if title_slug_value == job.title_slug:
                 return job.title
-            else:
-                for job in jobs:
-                    if title_slug_value == job.title_slug:
-                        return job.title
 
     # Try searching solr for a matching title.
     conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
@@ -424,7 +419,10 @@ def bread_box_title_heading(title_slug_value, jobs=None):
     if res and res.docs[0].get('title_slug') == title_slug_value:
         return res.docs[0]['title']
     else:
-        return title_slug_value.replace('-', ' ').title()
+        if title_slug_value:
+            return title_slug_value.replace('-', ' ').title()
+        else:
+            return None
 
 
 def get_bread_box_headings(filters=None, jobs=None):
@@ -447,19 +445,23 @@ def get_bread_box_headings(filters=None, jobs=None):
     if filters and jobs:
         location_slug_value = filters.get('location_slug')
         location = bread_box_location_heading(location_slug_value, jobs)
-        bread_box_headings['location_slug'] = location
+        if location:
+            bread_box_headings['location_slug'] = location
 
         title_slug_value = filters.get('title_slug')
         title = bread_box_title_heading(title_slug_value, jobs)
-        bread_box_headings['title_slug'] = title
+        if title:
+            bread_box_headings['title_slug'] = title
 
         moc_slug_value = filters.get('moc_slug')
         moc = bread_box_moc_heading(moc_slug_value)
-        bread_box_headings['moc_slug'] = moc
-                
+        if moc:
+            bread_box_headings['moc_slug'] = moc
+
         company_slug_value = filters.get("company_slug")
         company = bread_box_company_heading(company_slug_value)
-        bread_box_headings['company_slug'] = company
+        if company:
+            bread_box_headings['company_slug'] = company
 
     return bread_box_headings
 

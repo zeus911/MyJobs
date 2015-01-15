@@ -67,8 +67,8 @@ class Breadbox(object):
         return breadcrumbs
 
     def build_breadcrumbs(self):
-        self.build_param_breadcrumbs()
         self.build_filter_breadcrumbs()
+        self.build_param_breadcrumbs()
 
     def build_breadcrumb_for_slug_type(self, slug_type, display_title):
         ending_slug = settings.SLUG_TAGS[slug_type].strip('/')
@@ -252,7 +252,7 @@ class Breadbox(object):
         return ''
 
     def title_display_heading(self):
-        if self.title_breadcrumb:
+        if self.title_breadcrumb and self.title_breadcrumb.display_title:
             return "%s Jobs" % self.title_breadcrumb.display_title
         return ''
 

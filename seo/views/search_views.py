@@ -742,13 +742,19 @@ def syndication_feed(request, filter_path, feed_type):
 
         selected = helpers.get_bread_box_headings(filters, jobs)
         rss.description = ''
+
         if not any in selected.values():
             selected = {'title_slug': request.GET.get('q'),
                         'location_slug': request.GET.get('location')}
-        rss.description = helpers.build_results_heading(selected)
+
+        breadbox = Breadbox(request.path, selected, jobs, request.GET)
+
+        rss.description = helpers.build_results_heading(breadbox)
         rss.title = rss.description
+
         if feed_type == 'atom':
             rss.feed_type = Atom1Feed
+
         data = Feed.get_feed(rss, jobs, request)
         response = HttpResponse(content_type=data.mime_type)
         data.write(response, 'utf-8')
