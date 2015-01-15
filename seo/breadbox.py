@@ -162,7 +162,7 @@ class Breadbox(object):
             kwargs = {
                 # This class name is different because of the way we used to
                 # do the location breadbox.
-                'breadcrumb_class': 'loc_up__bread_box',
+                'breadcrumb_class': 'loc_up_bread_box',
                 'display_title': display_title,
                 'url': self._make_url(path=new_path)
             }
@@ -233,7 +233,7 @@ class Breadbox(object):
             # multiple locations the contents of
             # breadbox.location_breadcrumbs.display_title can easily be 'ORed'
             # together.
-            return "in %s" % self.location_breadcrumbs[0].display_title
+            return self.location_breadcrumbs[0].display_title
         return ''
 
     def moc_display_heading(self):

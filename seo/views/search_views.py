@@ -24,6 +24,7 @@ from django.http import (HttpResponse, Http404, HttpResponseNotFound,
                          HttpResponseRedirect, HttpResponseServerError,
                          QueryDict)
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404, redirect, render_to_response
 from django.template import RequestContext, loader
 from django.template.defaultfilters import safe

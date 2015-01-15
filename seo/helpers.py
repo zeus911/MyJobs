@@ -3,24 +3,23 @@ import datetime
 import logging
 import math
 import operator
+from pysolr import SolrError
 import urllib
-from base64 import b64encode
-from itertools import islice, ifilter
+from itertools import islice
 from urlparse import urljoin, urlparse, parse_qs, parse_qsl
 
 from django.conf import settings
 from django.shortcuts import redirect
-from django.template.defaultfilters import safe, urlencode
+from django.template.defaultfilters import safe
 from haystack.backends.solr_backend import SolrSearchQuery
 from haystack.inputs import Raw
 from haystack.query import SQ, EmptySearchQuerySet
 from ordereddict import OrderedDict
-from saved_search.groupsearch import GroupQuerySet
 
 from seo_pysolr import Solr
 from seo.search_backend import DESearchQuerySet
-from seo.models import BusinessUnit, CustomFacet, SeoSiteFacet
-from seo.templatetags.seo_extras import facet_text, facet_url, smart_truncate
+from seo.models import BusinessUnit, CustomFacet
+from seo.templatetags.seo_extras import facet_text, smart_truncate
 from seo.filters import FacetListWidget
 from serializers import JSONExtraValuesSerializer
 from moc_coding.models import Moc
@@ -139,7 +138,11 @@ def build_results_heading(breadbox):
     has_facet = bool(breadbox.custom_facet_breadcrumbs)
     has_title = bool(breadbox.title_breadcrumb)
     has_moc = bool(breadbox.moc_breadcrumbs)
-    has_location = bool(breadbox.location_breadcrumbs)
+    # breadbox.location_breadcrumbs accounts for both
+    # the location data from the path and from the query parameters.
+    # The heading is only built from the path data, so we have to
+    # ignore any data passed in for location from the query parameters here.
+    has_location = bool(breadbox.filters['location_slug'])
     has_count = bool(breadbox.job_count)
 
     if has_facet and not (has_title or has_moc):
@@ -153,7 +156,7 @@ def build_results_heading(breadbox):
         heading.append("Jobs")
 
     if has_location:
-        heading.append(breadbox.location_display_heading())
+        heading.append("in %s" % breadbox.location_display_heading())
 
     return " ".join(heading)
 
@@ -410,12 +413,17 @@ def bread_box_title_heading(title_slug_value, jobs=None):
 
     # Try searching solr for a matching title.
     conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
-    search_terms = {
-        'q': u'title_slug:%s' % title_slug_value,
-        'fl': 'title, title_slug',
-        'rows': 1,
-    }
-    res = conn.search(**search_terms)
+    try:
+        search_terms = {
+            'q': u'title_slug:%s' % title_slug_value,
+            'fl': 'title, title_slug',
+            'rows': 1,
+        }
+        res = conn.search(**search_terms)
+    except SolrError:
+        # Poorly formated title_slug_values can sometimes cause Solr errors.
+        res = None
+
     if res and res.docs[0].get('title_slug') == title_slug_value:
         return res.docs[0]['title']
     else:
