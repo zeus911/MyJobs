@@ -427,7 +427,10 @@ function update_state_selection(country) {
             other_country = state.find('option:not(.' + country + ')');
         this_country.appendTo(state);
         other_country.appendTo(hidden);
-        state.val(state.find('option:first_of_type').val());
+        if (!state.find(':selected')) {
+            // Only set the selected option if nothing is selected.
+            state.val(state.find('option:first_of_type').val());
+        }
     }
     else {
         region.show();
