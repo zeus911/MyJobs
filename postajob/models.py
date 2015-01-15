@@ -715,7 +715,8 @@ class CompanyProfile(models.Model):
                                         verbose_name='Address Line Two')
     city = models.CharField(max_length=255, blank=True)
     state = models.CharField(max_length=255, blank=True)
-    country = models.CharField(max_length=255, blank=True)
+    country = models.CharField(max_length=255, blank=True,
+                               default='United States')
     zipcode = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=255, blank=True)
 

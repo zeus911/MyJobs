@@ -933,7 +933,7 @@ class CompanyProfileForm(RequestForm):
             initial=self.instance.company.name, label='Company Name')
         self.fields.keyOrder.insert(0, self.fields.keyOrder.pop())
 
-        # companies pulled from content aquisition should be read-only
+        # companies pulled from content acquisition should be read-only
         if not self.instance.company.user_created:
             self.fields['company_name'].widget.attrs['readonly'] = True
             self.fields['description'].widget.attrs['readonly'] = True
