@@ -645,8 +645,8 @@ class ViewTests(PostajobTestBase):
         self.assertEqual(response.status_code, 404)
 
     def test_purchasedproducts_active_expired(self):
-        for x in range(50, 53):
-            PurchasedProductFactory(product=self.product, owner=self.company)
+        PurchasedProductFactory.create_batch(3, product=self.product,
+                                             owner=self.company)
 
         expired_product = PurchasedProductFactory(product=self.product,
                                                   owner=self.company)
@@ -660,9 +660,9 @@ class ViewTests(PostajobTestBase):
     def test_purchasedjobs_active_expired(self):
         purchased_product = PurchasedProductFactory(product=self.product,
                                                     owner=self.company)
-        for x in range(50, 53):
-            PurchasedJobFactory(purchased_product=purchased_product,
-                                owner=self.company, created_by=self.user)
+        PurchasedJobFactory.create_batch(
+            3, purchased_product=purchased_product, owner=self.company,
+            created_by=self.user)
         expired_job = PurchasedJobFactory(purchased_product=purchased_product,
                                           owner=self.company,
                                           created_by=self.user)
