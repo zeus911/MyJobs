@@ -1,7 +1,6 @@
 from mock import patch
 
 from django.core import mail
-from django.core.urlresolvers import reverse
 
 from myjobs.tests.setup import MyJobsBase
 from mypartners.models import Contact
