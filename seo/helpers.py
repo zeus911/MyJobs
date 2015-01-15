@@ -403,13 +403,14 @@ def bread_box_title_heading(title_slug_value, jobs=None):
     if not title_slug_value and not jobs:
         return None
 
-    job = jobs[0]
-    if title_slug_value == job.title_slug:
-        return job.title
-    else:
-        for job in jobs:
-            if title_slug_value == job.title_slug:
-                return job.title
+    if jobs:
+        job = jobs[0]
+        if title_slug_value == job.title_slug:
+            return job.title
+        else:
+            for job in jobs:
+                if title_slug_value == job.title_slug:
+                    return job.title
 
     # Try searching solr for a matching title.
     conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
