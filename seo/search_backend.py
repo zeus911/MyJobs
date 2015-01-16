@@ -447,8 +447,7 @@ class DESolrSearchBackend(SolrSearchBackend):
         #     # time yet.
         #     # kwargs['fl'] += ' _dist_:geodist()'
         #     pass
-        print query_string
-        print kwargs
+
         try:
             raw_results = self.conn.search(query_string, **kwargs)
         except (IOError, SolrError), e:

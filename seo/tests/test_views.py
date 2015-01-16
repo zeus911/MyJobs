@@ -69,6 +69,32 @@ class WidgetsTestCase(DirectSEOTestCase):
 class SeoSiteTestCase(DirectSEOTestCase):
     fixtures = ['seo_views_testdata.json']
 
+    def test_ajax_geolocation(self):
+        base_url = reverse('ajax_geolocation_facet')
+        site = SeoSite.objects.get()
+        bu = BusinessUnit.objects.get(id=0)
+        site.business_units.add(bu)
+
+        resp = self.client.get(base_url)
+        result = json.loads(resp.content)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['count'], 2)
+
+        test_path = '/retail-associate-розничная-ассоциированных/jobs-in/'
+        with_path = '%s?filter_path=%s'
+        with_path = with_path % (base_url, test_path)
+        resp = self.client.get(with_path)
+        result = json.loads(resp.content)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['count'], 1)
+
+        with_query_string = '%s?q=guid:%s'
+        with_query_string = with_query_string % (base_url, '2'*32)
+        resp = self.client.get(with_query_string)
+        result = json.loads(resp.content)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['count'], 1)
+
     def test_update_email_domain_no_access(self):
         # Not logged in
         resp = self.client.get(reverse('seosites_settings_email_domain_edit'))
