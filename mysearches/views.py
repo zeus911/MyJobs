@@ -250,6 +250,7 @@ def save_edit_form(request):
 
 @user_is_allowed(SavedSearch, 'id', pass_user=True)
 def unsubscribe(request, user=None):
+    import ipdb; ipdb.set_trace()
     """
     Deactivates a user's saved searches.
 
@@ -279,11 +280,12 @@ def unsubscribe(request, user=None):
             digest.save()
         saved_searches = SavedSearch.objects.filter(user=user,
                                                     is_active=True)
+        has_pss = saved_searches.filter(
+            partnersavedsearch__isnull=False).exists()
         # Updating the field that a queryset was filtered on seems to empty
         # that queryset; Make a copy and then update the queryset
         cache = list(saved_searches)
         saved_searches.update(is_active=False)
-        has_pss = False
 
     return render_to_response('mysearches/saved_search_disable.html',
                               {'search_id': search_id,
