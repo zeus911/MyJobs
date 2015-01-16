@@ -332,10 +332,10 @@ def PartnerEmailChoices(partner):
     contacts = Contact.objects.filter(partner=partner)
     for contact in contacts:
         if contact.user:
-            choices.append((contact.user.email, contact.name))
+            choices.append((contact.user.email, contact ))
         else:
             if contact.email:
-                choices.append((contact.email, contact.name))
+                choices.append((contact.email, contact ))
     return choices
 
 

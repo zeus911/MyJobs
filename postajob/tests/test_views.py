@@ -34,7 +34,7 @@ class PostajobTestBase(MyJobsBase):
         self.user = UserFactory(password='5UuYquA@')
         self.company = CompanyFactory(product_access=True, posting_access=True)
 
-        self.site = SeoSiteFactory()
+        self.site = SeoSiteFactory(canonical_company=self.company)
         self.bu = BusinessUnitFactory()
         self.site.business_units.add(self.bu)
         self.site.save()
@@ -45,7 +45,7 @@ class PostajobTestBase(MyJobsBase):
         SitePackageFactory(owner=self.company)
         self.package = Package.objects.get()
         self.sitepackage = SitePackage.objects.get()
-        self.site.sitepackage_set.add(self.sitepackage)
+        self.sitepackage.sites.add(self.site)
         self.product = ProductFactory(package=self.package, owner=self.company)
 
         self.login_user()
@@ -170,9 +170,6 @@ class ViewTests(PostajobTestBase):
         for form_data in [self.job_form_data, self.purchasedjob_form_data]:
             form_data.update(self.location_management_form_data)
 
-        # makes sure that the test domain is part of site packages
-        self.company.sitepackage_set.first().sites.add(settings.SITE)
-
     def test_job_access_not_company_user(self):
         self.company_user.delete()
 
@@ -185,7 +182,6 @@ class ViewTests(PostajobTestBase):
         response = self.client.post(reverse('job_update', kwargs={'pk': 1}))
         self.assertEqual(response.status_code, 404)
 
-    @skip("This error page is currently not displayed in the front end")
     def test_admin_access_no_site_package(self):
         """
         Ensure that pages that would be useless without a site package have
@@ -259,7 +255,8 @@ class ViewTests(PostajobTestBase):
 
         response = self.client.post(reverse('purchasedjob_add', kwargs=kwargs),
                                     data=self.purchasedjob_form_data,
-                                    follow=True)
+                                    follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(PurchasedJob.objects.count(), 1)
         self.assertEqual(Request.objects.count(), 1)
@@ -279,7 +276,8 @@ class ViewTests(PostajobTestBase):
         response = self.client.post(reverse('purchasedjob_update',
                                             kwargs=kwargs),
                                     data=self.purchasedjob_form_data,
-                                    follow=True)
+                                    follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(PurchasedJob.objects.all().count(), 1)
         # Ensure we're working with the most recent copy of the job.
@@ -296,7 +294,8 @@ class ViewTests(PostajobTestBase):
         kwargs = {'pk': job.pk}
 
         response = self.client.post(reverse('purchasedjob_delete',
-                                            kwargs=kwargs))
+                                            kwargs=kwargs),
+                                            HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 404)
         self.assertEqual(PurchasedJob.objects.all().count(), 1)
 
@@ -338,12 +337,14 @@ class ViewTests(PostajobTestBase):
 
         response = self.client.post(reverse('purchasedjob_add', kwargs=kwargs),
                                     data=self.purchasedjob_form_data,
-                                    follow=True)
+                                    follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(PurchasedJob.objects.all().count(), 1)
 
         response = self.client.post(reverse('purchasedjob_add', kwargs=kwargs),
-                                    data=self.purchasedjob_form_data)
+                                    data=self.purchasedjob_form_data,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 404)
 
     def test_job_add_network(self):
@@ -434,7 +435,8 @@ class ViewTests(PostajobTestBase):
     def test_product_add(self):
         response = self.client.post(reverse('product_add'),
                                     data=self.product_form_data,
-                                    follow=True)
+                                    follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         # Should get the product just added + self.product
         self.assertEqual(Product.objects.all().count(), 2)
@@ -447,18 +449,21 @@ class ViewTests(PostajobTestBase):
 
         response = self.client.post(reverse('product_add'),
                                     data=self.product_form_data,
-                                    follow=True)
+                                    follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertIn('You cannot charge for jobs', response.content)
 
         data = dict(self.product_form_data)
         data['cost'] = 0
         data['requires_approval'] = False
         response = self.client.post(reverse('product_add'), data=data,
-                                    follow=True)
+                                    follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertIn('Free jobs require approval', response.content)
 
         data['requires_approval'] = True
-        self.client.post(reverse('product_add'), data=data, follow=True)
+        self.client.post(reverse('product_add'), data=data, follow=True,
+                         HTTP_HOST='test.jobs')
         self.assertEqual(Product.objects.all().count(), 2)
 
     def test_product_update(self):
@@ -467,7 +472,8 @@ class ViewTests(PostajobTestBase):
 
         self.assertNotEqual(self.product.name, self.product_form_data['name'])
         response = self.client.post(reverse('product_update', kwargs=kwargs),
-                                    data=self.product_form_data, follow=True)
+                                    data=self.product_form_data, follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Product.objects.all().count(), 1)
 
@@ -478,7 +484,8 @@ class ViewTests(PostajobTestBase):
         self.product_form_data['name'] = 'New Title'
         kwargs = {'pk': self.product.pk}
 
-        response = self.client.post(reverse('product_delete', kwargs=kwargs))
+        response = self.client.post(reverse('product_delete', kwargs=kwargs),
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 404)
 
     def test_product_update_job_limit(self):
@@ -489,7 +496,8 @@ class ViewTests(PostajobTestBase):
 
         self.assertNotEqual(self.product.name, self.product_form_data['name'])
         response = self.client.post(reverse('product_update', kwargs=kwargs),
-                                    data=self.product_form_data, follow=True)
+                                    data=self.product_form_data, follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Product.objects.all().count(), 1)
 
@@ -500,7 +508,8 @@ class ViewTests(PostajobTestBase):
     def test_productgrouping_add(self):
         response = self.client.post(reverse('productgrouping_add'),
                                     data=self.productgrouping_form_data,
-                                    follow=True)
+                                    follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ProductGrouping.objects.all().count(), 1)
 
@@ -513,7 +522,8 @@ class ViewTests(PostajobTestBase):
         response = self.client.post(reverse('productgrouping_update',
                                             kwargs=kwargs),
                                     data=self.productgrouping_form_data,
-                                    follow=True)
+                                    follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ProductGrouping.objects.all().count(), 1)
 
@@ -526,7 +536,8 @@ class ViewTests(PostajobTestBase):
         kwargs = {'pk': group.pk}
 
         response = self.client.post(reverse('productgrouping_delete',
-                                            kwargs=kwargs))
+                                            kwargs=kwargs),
+                                            HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 302)
         self.assertEqual(ProductGrouping.objects.all().count(), 0)
 
@@ -536,7 +547,8 @@ class ViewTests(PostajobTestBase):
         response = self.client.post(reverse('purchasedproduct_add',
                                             kwargs=product),
                                     data=self.purchasedproduct_form_data,
-                                    follow=True)
+                                    follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(PurchasedProduct.objects.count(), 1)
         purchase = PurchasedProduct.objects.get()
@@ -558,7 +570,8 @@ class ViewTests(PostajobTestBase):
         product = {'product': self.product.pk}
         response = self.client.get(reverse('purchasedproduct_add',
                                            kwargs=product),
-                                   follow=True)
+                                   follow=True,
+                                   HTTP_HOST='test.jobs')
         url = reverse('purchasedproducts_overview')
         self.assertTrue(response.redirect_chain[-1][0].endswith(url))
         self.assertEqual(PurchasedProduct.objects.all().count(), 1)
@@ -574,10 +587,10 @@ class ViewTests(PostajobTestBase):
         del data['cvv']
         del data['exp_date_0']
         del data['exp_date_1']
-        self.client.post(reverse('purchasedproduct_add',
-                                 kwargs=product),
+        self.client.post(reverse('purchasedproduct_add', kwargs=product),
                          data=data,
-                         follow=True)
+                         follow=True,
+                         HTTP_HOST='test.jobs')
         self.assertEqual(PurchasedProduct.objects.all().count(), 1)
 
     def test_purchasedproduct_add_free_product_no_company(self):
@@ -594,10 +607,10 @@ class ViewTests(PostajobTestBase):
         del data['exp_date_0']
         del data['exp_date_1']
         data['company_name'] = 'Test New Company'
-        self.client.post(reverse('purchasedproduct_add',
-                                 kwargs=product),
+        self.client.post(reverse('purchasedproduct_add', kwargs=product),
                          data=data,
-                         follow=True)
+                         follow=True,
+                         HTTP_HOST='test.jobs')
         Company.objects.get(name=data['company_name'])
         self.assertEqual(PurchasedProduct.objects.all().count(), 1)
 
@@ -623,7 +636,8 @@ class ViewTests(PostajobTestBase):
         kwargs = {'pk': purchased_product.pk}
 
         response = self.client.post(reverse('purchasedproduct_update',
-                                            kwargs=kwargs))
+                                            kwargs=kwargs),
+                                            HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 404)
 
     def test_purchasedproduct_delete(self):
@@ -637,12 +651,49 @@ class ViewTests(PostajobTestBase):
         self.assertEqual(response.status_code, 404)
 
     def test_purchasedjob_access_not_company_user(self):
-        response = self.client.post(reverse('purchasedproducts_overview'))
+        response = self.client.post(reverse('purchasedproducts_overview'),
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.company_user.delete()
 
-        response = self.client.post(reverse('purchasedproducts_overview'))
+        response = self.client.post(reverse('purchasedproducts_overview'),
+                                            HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 404)
+
+    def test_purchasedproducts_active_expired(self):
+        PurchasedProductFactory.create_batch(3, product=self.product,
+                                             owner=self.company)
+
+        expired_product = PurchasedProductFactory(product=self.product,
+                                                  owner=self.company)
+        expired_product.expiration_date = date.today()-timedelta(days=1)
+        expired_product.save()
+        response = self.client.post(reverse('purchasedproduct'),
+                                    HTTP_HOST='test.jobs')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["active_products"]), 3)
+        self.assertEqual(len(response.context["expired_products"]), 1)
+
+    def test_purchasedjobs_active_expired(self):
+        purchased_product = PurchasedProductFactory(product=self.product,
+                                                    owner=self.company)
+        PurchasedJobFactory.create_batch(
+            3, purchased_product=purchased_product, owner=self.company,
+            created_by=self.user)
+        expired_job = PurchasedJobFactory(purchased_product=purchased_product,
+                                          owner=self.company,
+                                          created_by=self.user)
+        expired_job.is_expired = True
+        expired_job.save()
+
+        response = self.client.post(
+            reverse('purchasedjobs',
+                    kwargs={'purchased_product': purchased_product.id}),
+            HTTP_HOST='test.jobs')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['active_jobs']), 3)
+        self.assertEqual(len(response.context['expired_jobs']), 1)
 
     def test_is_company_user(self):
         # Current user is a CompanyUser
@@ -674,7 +725,8 @@ class ViewTests(PostajobTestBase):
     def test_offlinepurchase_redeem_not_logged_in(self):
         self.client.logout()
         response = self.client.get(reverse('offlinepurchase_redeem'),
-                                   follow=True)
+                                   follow=True,
+                                   HTTP_HOST='test.jobs')
         self.assertEqual(response.request['PATH_INFO'], reverse('login'))
         self.assertEqual(response.status_code, 200)
 
@@ -699,7 +751,8 @@ class ViewTests(PostajobTestBase):
         }
         current_product_count = PurchasedProduct.objects.all().count()
         response = self.client.post(reverse('offlinepurchase_redeem'),
-                                    data=data, follow=True)
+                                    data=data, follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(current_product_count + 3,
                          PurchasedProduct.objects.all().count())
@@ -734,7 +787,8 @@ class ViewTests(PostajobTestBase):
         }
         current_product_count = PurchasedProduct.objects.all().count()
         response = self.client.post(reverse('offlinepurchase_redeem'),
-                                    data=data, follow=True)
+                                    data=data, follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(current_product_count,
                          PurchasedProduct.objects.all().count())
@@ -751,7 +805,8 @@ class ViewTests(PostajobTestBase):
         data = {'redemption_id': offline_purchase.redemption_uid}
         current_product_count = PurchasedProduct.objects.all().count()
         response = self.client.post(reverse('offlinepurchase_redeem'),
-                                    data=data, follow=True)
+                                    data=data, follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(current_product_count + 3,
                          PurchasedProduct.objects.all().count())
@@ -765,7 +820,8 @@ class ViewTests(PostajobTestBase):
         data = {'redemption_id': 1}
         current_product_count = PurchasedProduct.objects.all().count()
         response = self.client.post(reverse('offlinepurchase_redeem'),
-                                    data=data, follow=True)
+                                    data=data, follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(current_product_count,
                          PurchasedProduct.objects.all().count())
@@ -782,7 +838,8 @@ class ViewTests(PostajobTestBase):
         data = {'redemption_id': offline_purchase.redemption_uid}
         current_product_count = PurchasedProduct.objects.all().count()
         response = self.client.post(reverse('offlinepurchase_redeem'),
-                                    data=data, follow=True)
+                                    data=data, follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(current_product_count,
                          PurchasedProduct.objects.all().count())
@@ -790,7 +847,8 @@ class ViewTests(PostajobTestBase):
     def test_offlinepurchase_add_without_company(self):
         response = self.client.post(reverse('offlinepurchase_add'),
                                     data=self.offlinepurchase_form_data,
-                                    follow=True)
+                                    follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(OfflinePurchase.objects.all().count(), 1)
         offline_purchase = OfflinePurchase.objects.get()
@@ -814,7 +872,8 @@ class ViewTests(PostajobTestBase):
         kwargs = {'pk': offline_purchase.pk}
 
         response = self.client.post(reverse('offlinepurchase_update',
-                                            kwargs=kwargs))
+                                            kwargs=kwargs),
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 404)
 
     def test_offlinepurchase_delete(self):
@@ -823,7 +882,9 @@ class ViewTests(PostajobTestBase):
         kwargs = {'pk': offline_purchase.pk}
 
         response = self.client.post(reverse('offlinepurchase_delete',
-                                            kwargs=kwargs), follow=True)
+                                            kwargs=kwargs),
+                                    follow=True,
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(OfflinePurchase.objects.all().count(), 0)
 
@@ -834,14 +895,15 @@ class ViewTests(PostajobTestBase):
         kwargs = {'pk': offline_purchase.pk}
 
         response = self.client.post(reverse('offlinepurchase_delete',
-                                            kwargs=kwargs), follow=True)
+                                            kwargs=kwargs), follow=True,
+                                            HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 404)
         self.assertEqual(OfflinePurchase.objects.all().count(), 1)
 
-
     def test_update_companyprofile(self):
         self.client.post(reverse('companyprofile_add'),
-                         data=self.companyprofile_form_data, follow=True)
+                         data=self.companyprofile_form_data, follow=True,
+                         HTTP_HOST='test.jobs')
         profile = CompanyProfile.objects.get()
         self.assertEqual(profile.address_line_one,
                          self.companyprofile_form_data['address_line_one'])
@@ -850,26 +912,28 @@ class ViewTests(PostajobTestBase):
         self.company.save()
         self.companyprofile_form_data['company_name'] = 'A New Name'
         self.client.post(reverse('companyprofile_add'),
-                         data=self.companyprofile_form_data, follow=True)
+                         data=self.companyprofile_form_data, follow=True,
+                         HTTP_HOST='test.jobs')
         profile = CompanyProfile.objects.get()
         self.assertEqual(profile.company.name,
                          self.companyprofile_form_data['company_name'])
 
     def test_list_products_jsonp(self):
-        response = self.client.get(reverse('product_listing'))
+        response = self.client.get(reverse('product_listing'),
+                                   HTTP_HOST='test.jobs')
         # When an item in the chain of objects from SeoSite->ProductGrouping
         # is missing, we return text stating that there is nothing to purchase
         self.assertTrue('There are no products configured for purchase'
                         in response.content)
         site_package = SitePackageFactory()
-        site_package.sites.add(SeoSite.objects.get(id=1))
-        site_package.save()
+        site_package.sites.add(SeoSite.objects.get(id=1), settings.SITE)
         self.product.package = site_package
         self.product.save()
         productgrouping = ProductGroupingFactory(owner=self.company)
         ProductOrder(product=self.product, group=productgrouping).save()
 
-        response = self.client.get(reverse('product_listing'))
+        response = self.client.get(reverse('product_listing'),
+                                   HTTP_HOST='test.jobs')
         for text in [productgrouping.display_title, productgrouping.explanation,
                      unicode(self.product)]:
             # When the entire chain of objects exists, the return HTML should
@@ -914,7 +978,7 @@ class ViewTests(PostajobTestBase):
 
         site = SeoSiteFactory(domain='indiana.jobs', id=3)
         site.business_units.add(self.bu)
-        site.sitepackage_set.add(self.sitepackage)
+        self.sitepackage.sites.add(site)
         product = {'product': purchased_product.pk}
         response = self.client.get(reverse('purchasedjob_add',
                                            kwargs=product))
@@ -931,6 +995,7 @@ class ViewTests(PostajobTestBase):
 
         site = SeoSiteFactory(domain='indiana.jobs', id=3)
         site.business_units.add(self.bu)
+        self.sitepackage.sites.add(site)
         site.sitepackage_set.add(self.sitepackage)
         location = {
             'form-0-city': 'Indianapolis',
@@ -944,7 +1009,8 @@ class ViewTests(PostajobTestBase):
         self.assertEqual(JobLocation.objects.count(), 0)
         self.client.post(reverse('purchasedjob_add',
                                  args=[purchased_product.pk]),
-                         data=self.job_form_data, follow=True)
+                         data=self.job_form_data, follow=True,
+                         HTTP_HOST='test.jobs')
         self.assertEqual(PurchasedJob.objects.count(), 1)
         self.assertEqual(JobLocation.objects.count(), 1)
         job = PurchasedJob.objects.get()
@@ -959,7 +1025,8 @@ class ViewTests(PostajobTestBase):
             'form-1-country': 'United States'
         })
         self.client.post(reverse('purchasedjob_update', args=[job.pk]),
-                         data=self.job_form_data, follow=True)
+                         data=self.job_form_data, follow=True,
+                         HTTP_HOST='test.jobs')
         self.assertEqual(JobLocation.objects.count(), 1)
 
     def test_view_request_posted_by_unrelated_company(self):
@@ -973,7 +1040,8 @@ class ViewTests(PostajobTestBase):
         request = Request.objects.get()
         response = self.client.get(
             reverse('view_request',
-                    args=[request.pk]))
+                    args=[request.pk]),
+            HTTP_HOST='test.jobs')
         self.assertFalse(self.user in company.admins.all())
         self.assertEqual(response.status_code, 200)
 
@@ -993,7 +1061,8 @@ class ViewTests(PostajobTestBase):
                      'block_user_management']:
 
             response = self.client.get(
-                reverse('purchasedmicrosite_admin_overview'))
+                reverse('purchasedmicrosite_admin_overview'),
+                HTTP_HOST='test.jobs')
 
         self.assertEqual(response.status_code, 404)
 
@@ -1001,7 +1070,6 @@ class ViewTests(PostajobTestBase):
 class PurchasedJobActionTests(PostajobTestBase):
     def setUp(self):
         super(PurchasedJobActionTests, self).setUp()
-        self.sitepackage.sites.add(settings.SITE)
         self.purchased_product = PurchasedProductFactory(
             product=self.product, owner=self.company)
         self.job = PurchasedJobFactory(
@@ -1014,7 +1082,8 @@ class PurchasedJobActionTests(PostajobTestBase):
 
     def test_purchasedjob_accept(self):
         self.client.get(reverse('approve_admin_request',
-                                kwargs=self.view_kwargs))
+                                kwargs=self.view_kwargs),
+                        HTTP_HOST='test.jobs')
 
         request = Request.objects.get()
         job = PurchasedJob.objects.get()
@@ -1023,7 +1092,8 @@ class PurchasedJobActionTests(PostajobTestBase):
 
     def test_purchasedjob_deny(self):
         self.client.get(reverse('deny_admin_request',
-                                kwargs=self.view_kwargs))
+                                kwargs=self.view_kwargs),
+                                HTTP_HOST='test.jobs')
 
         request = Request.objects.get()
         job = PurchasedJob.objects.get()
@@ -1032,7 +1102,8 @@ class PurchasedJobActionTests(PostajobTestBase):
 
     def test_purchasedjob_block(self):
         self.client.get(reverse('block_admin_request',
-                                kwargs=self.view_kwargs))
+                                kwargs=self.view_kwargs),
+                        HTTP_HOST='test.jobs')
 
         request = Request.objects.get()
         job = PurchasedJob.objects.get()

@@ -12,7 +12,7 @@
         {% endfor %}
     </div>
     <div class="product-details">
-        Last sent: {{search.last_sent}}
+        Last sent: {{search.last_sent|default:"Never"}}
     </div>
     <a id="savedsearch-{{search.id}}" class="btn" href="{% url 'partner_view_full_feed' %}?partner={{ partner.id }}&id={{ search.id }}">View</a>
 </div>

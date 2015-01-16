@@ -22,7 +22,6 @@ from myprofile.forms import (InitialNameForm, InitialAddressForm,
                              InitialPhoneForm, InitialEducationForm,
                              InitialWorkForm)
 from registration.forms import CustomPasswordResetForm
-from universal.decorators import activate_user
 
 
 # New in Django 1.5. Class based template views for static pages
@@ -189,7 +188,6 @@ class DseoLogin(BlockView):
         return page
 
 
-@activate_user
 def custom_password_reset(request):
     template = 'registration/%s/password_reset_form.html' % settings.PROJECT
     email_domain = 'my.jobs'

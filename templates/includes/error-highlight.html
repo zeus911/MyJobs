@@ -25,7 +25,19 @@
         {% add_required_label field %}
     </div>
     <div class="profile-form-input {{ field.label|slugify }}-field">
-        {{ field }}
+        {% if field.label == 'Send Results to *' %}
+            <select id="id_email" name="email" style="display: inline-block;">
+            {% for email, contact in form.fields.email.choices %}
+                <option value="{{ email }}"
+                        {% if contact.user and not contact.user.opt_in_myjobs %}disabled title="This contact has opted out of My.jobs communications"{% endif %}
+                        {% if field.value %}selected{% endif %}>
+                    {{ contact.name|default:"----------" }}
+                </option>
+            {% endfor %}
+            </select>
+        {% else %}
+            {{ field }}
+        {% endif %}
         {% if field.help_text %}
             {% if field|is_checkbox_field %}
                 <br/><span class="help-block checkbox-help-block">{{ field.help_text|safe }}</span>
