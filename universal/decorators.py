@@ -128,16 +128,22 @@ warn_when_inactive = partial(
     link_text='Resend Activation')
 
 # used in postajob
-warn_when_no_packages = partial(
-    warn_when,
-    condition=lambda req: settings.SITE.canonical_company.has_packages)
+def site_misconfigured(request):
+    try:
+        return settings.SITE.canonical_company.has_packages
+    except AttributeError:
+        return False
 
-message_when_no_packages = partial(
-    warn_when_no_packages,
+warn_when_site_misconfigured = partial(
+    warn_when,
+    condition = site_misconfigured)
+
+message_when_site_misconfigured = partial(
+    warn_when_site_misconfigured,
     message='Please contact your member representative to activate this '
             'feature.')
 
-error_when_no_packages = partial(
-    warn_when_no_packages,
+error_when_site_misconfigured = partial(
+    warn_when_site_misconfigured,
     message='Accessed company owns no site packages.',
     exception=Http404)
