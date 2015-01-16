@@ -355,11 +355,13 @@ class SeoSiteTestCase(DirectSEOTestCase):
         site.business_units.add(bu)
         site.configurations.add(config)
         site.save()
-        site2 = factories.SeoSiteFactory(domain='somewhere.jobs', id=102, site_ptr_id=102)
+        site2 = factories.SeoSiteFactory(domain='somewhere.jobs', id=102,
+                                         site_ptr_id=102)
         site2.business_units.add(bu)
         site2.configurations.add(config)
         site2.save()
-        site3 = factories.SeoSiteFactory(domain='anywhere.jobs', id=112, site_ptr_id=112)
+        site3 = factories.SeoSiteFactory(domain='anywhere.jobs', id=112,
+                                         site_ptr_id=112)
         site3.configurations.add(config)
         site3.save()
         self.conn.add(solr_settings.POSTED_JOB_FIXTURE)
