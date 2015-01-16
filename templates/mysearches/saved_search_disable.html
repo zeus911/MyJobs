@@ -50,13 +50,13 @@
                     {% if searches|length and not contains_pss %}
                         <tr class="profile-section">
                             <td>
-                                <a href="{%url 'delete_saved_search'%}?id={{search_id}}&verify={{email_user.user_guid}}">
+                                <a id="delete" type="button" data-toggle="modal" data-target="#delete-confirm">
                                     {% blocktrans count counter=count %}
                                     Delete it instead
                                     {% plural %}
                                     Delete them instead
                                     {% endblocktrans %}
-                                </a>
+                                </button>
                             </td>
                         </tr>
                     {% endif %}
@@ -69,6 +69,23 @@
                     </tr>
                 {% endif %}
                 </table>
+            </div>
+            <div id="delete-confirm" class="modal hide fade row">
+                <div class="modal-header">
+                    {% trans 'Really Delete?' %}
+                </div>
+                <div class="modal-body">
+                    {% blocktrans %}
+                    <p>Are you sure you want to delete these saved searches?</p>
+                    <em>Note: Partner saved searches may only be deleted by the partner who created them.</em>
+                    {% endblocktrans %}
+                </div>
+                <div class="modal-footer">
+                    <div class="actions">
+                        <button data-dismiss="modal" class="btn primary pull-right">{% trans 'Cancel' %}</button>
+                        <a class="btn" href="{% url 'delete_saved_search' %}?id={{search_id}}&verify={{email_user.user_guid}}">{% trans 'Delete' %}</a>
+                    </div>
+                </div>
             </div>
     </div>
     {% endwith %}

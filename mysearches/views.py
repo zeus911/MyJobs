@@ -30,7 +30,7 @@ def delete_saved_search(request, user=None):
         search.delete()
     except ValueError:
         # all searches are being deleted
-        SavedSearch.objects.filter(user=user).delete()
+        SavedSearch.objects.filter(user=user, partnersavedsearch__isnull=True).delete()
         search_name = 'all'
 
     return HttpResponseRedirect(
@@ -250,7 +250,6 @@ def save_edit_form(request):
 
 @user_is_allowed(SavedSearch, 'id', pass_user=True)
 def unsubscribe(request, user=None):
-    import ipdb; ipdb.set_trace()
     """
     Deactivates a user's saved searches.
 
@@ -261,6 +260,7 @@ def unsubscribe(request, user=None):
     """
     search_id = request.REQUEST.get('id')
     user = user or request.user
+    has_pss = None
     try:
         search_id = int(search_id)
         saved_search = get_object_or_404(SavedSearch, id=search_id,
@@ -280,8 +280,6 @@ def unsubscribe(request, user=None):
             digest.save()
         saved_searches = SavedSearch.objects.filter(user=user,
                                                     is_active=True)
-        has_pss = saved_searches.filter(
-            partnersavedsearch__isnull=False).exists()
         # Updating the field that a queryset was filtered on seems to empty
         # that queryset; Make a copy and then update the queryset
         cache = list(saved_searches)
