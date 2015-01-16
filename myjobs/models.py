@@ -309,7 +309,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         if (self.__original_opt_in_myjobs != self.opt_in_myjobs
                 and not self.opt_in_myjobs):
-            self.partnersavedsearch_set.update(unsubscribed=True)
+            # I'm sorry
+            from mysearches.models import PartnerSavedSearch
+            PartnerSavedSearch.objects.filter(user=self).update(
+                unsubscribed=True)
             self.send_opt_out_notification()
 
         # If the password has changed, it's not being set for the first time
