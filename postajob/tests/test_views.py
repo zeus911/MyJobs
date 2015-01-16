@@ -668,7 +668,8 @@ class ViewTests(PostajobTestBase):
                                                   owner=self.company)
         expired_product.expiration_date = date.today()-timedelta(days=1)
         expired_product.save()
-        response = self.client.post(reverse('purchasedproduct'))
+        response = self.client.post(reverse('purchasedproduct'),
+                                    HTTP_HOST='test.jobs')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["active_products"]), 3)
         self.assertEqual(len(response.context["expired_products"]), 1)
@@ -687,7 +688,8 @@ class ViewTests(PostajobTestBase):
 
         response = self.client.post(
             reverse('purchasedjobs',
-                    kwargs={'purchased_product': purchased_product.id}))
+                    kwargs={'purchased_product': purchased_product.id}),
+            HTTP_HOST='test.jobs')
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context['active_jobs']), 3)
