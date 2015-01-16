@@ -88,8 +88,6 @@ def ajax_geolocation_facet(request):
         :HttpResponse: listing facets for the input facet_type
 
     """
-    site_config = get_site_config(request)
-
     filter_path = request.GET.get('filter_path', '/jobs/')
     filters = helpers.build_filter_dict(filter_path)
 
