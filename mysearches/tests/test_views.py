@@ -250,6 +250,28 @@ class MySearchViewTests(MyJobsBase):
             'saved_search_main_query')+'?d='+str(urllib2.quote(
                                                  search.label)))
 
+    def test_delete_unowned_partner_search(self):
+        """
+        Attempting to delete a partner saved search which was created for you
+        should do nothing.
+        """
+        import ipdb; ipdb.set_trace()
+        
+        user = UserFactory(email='asdfa@example.com')
+        company = CompanyFactory(id=2423, name="Bacon Factory",
+                                 user_created=False)
+        SavedSearchFactory(user=user)
+        pss = PartnerSavedSearchFactory(user=self.user, created_by=user,
+                                        provider=company)
+
+        response = self.client.get(reverse('delete_saved_search') +
+            '?id=ALL')
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(models.PartnerSavedSearch.objects.filter(
+            pk=pss.pk).exists())
+        self.assertFalse(models.SavedSearch.objects.all().exists())
+
     def test_delete_unowned_search(self):
         """
         Attempting to delete a search that isn't yours should
