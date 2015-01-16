@@ -47,7 +47,7 @@
                 <h2>{% trans "What now:" %}</h2>
                 <table class="table table-bordered table-striped">
                 {% if user.is_authenticated %}
-                    {% if searches|length %}
+                    {% if searches|length and not contains_pss %}
                         <tr class="profile-section">
                             <td>
                                 <a href="{%url 'delete_saved_search'%}?id={{search_id}}&verify={{email_user.user_guid}}">

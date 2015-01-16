@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% block site-title %}
-<title>Purchased Jobs Overview - My.jobs</title>
+<title>Purchased Products Overview - My.jobs</title>
 <meta name="title" content="Purchased Product Overview - My.jobs">
 {% endblock %}
 
@@ -14,15 +14,19 @@
     </div>
     <div class="row">
         <div class="span12 prm-header">
-            <span>Post a Job</span>
+            <span>Purchased Product Overview</span>
         </div>
     </div>
     <div class="row">
         <div class="span8">
-            <div class="card-wrapper">
-                <div class="wrapper-header">
-                    <h4>Active Products</h4>
-                </div>
+            <div class="card-tabs">
+                <ul>
+                    <li id="active-tab-products" class="active">Active Products{% if active_products %}<span class="amount">{{active_products|length}}</span>{% endif %}</li>
+                    <li id="expired-tab-products">Expired Products{% if expired_products %}<span class="amount">{{expired_products|length}}</span>{% endif %}</li>
+                </ul>
+                <div class="clearfix"></div>
+            </div>
+            <div id="active-products" class="card-wrapper">
                 {% for product in active_products %}
                     {% include "postajob/includes/purchasedproduct_formBox.html" with purchased_product=product %}
                 {% empty %}
@@ -31,10 +35,8 @@
                 </div>
                 {% endfor %}
             </div>
-            <div class="card-wrapper">
-                <div class="wrapper-header">
-                    <h4>Expired Products</h4>
-                </div>
+            <div class="clearfix"></div>
+            <div id="expired-products" class="card-wrapper" style="display:none;">
                 {% for product in expired_products %}
                     {% include "postajob/includes/purchasedproduct_formBox.html" with purchased_product=product %}
                 {% empty %}
@@ -60,5 +62,5 @@
     {{ block.super }}
     <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}postajob.159-9.css{{ gz }}">
+    <script type="text/javascript" src="{{ STATIC_URL }}postajob-tabs.160-13.js"></script>
 {% endblock %}

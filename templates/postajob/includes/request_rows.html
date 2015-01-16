@@ -1,7 +1,6 @@
 {% load postajob_tags %}
 
-{% if requests %}
-    {% for request in requests %}
+{% for request in requests %}
     <div id="request-{{ request.id }}" class="product-card no-highlight">
         <div class="big-title">{{ request.model_name }}</div>
         <div class="sub-title">Requested on: {{ request.made_on }}</div>
@@ -10,9 +9,8 @@
         </div>
         <a class="btn" href="{% url 'view_request' pk=request.pk %}">View</a>
     </div>
-    {% endfor %}
-{% else %}
-<div class="product-card no-highlight">
-    You currently have no requests.
-</div>
-{% endif %}
+{% empty %}
+    <div class="product-card no-highlight">
+        You currently have no requests.
+    </div>
+{% endfor %}

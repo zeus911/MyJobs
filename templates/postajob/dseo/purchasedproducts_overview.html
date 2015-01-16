@@ -3,42 +3,61 @@
 {% block directseo_main_content %}
 {{ block.super }}
     <div id="direct_listingDiv">
-        <ul class="product-tabs">
-            <li id="active-tab" class="active">Active Products</li>
-            <li id="expired-tab">Expired Products</li>
-        </ul>
-        <div id="tab-content">
-            <div id="content-active-products">
-                {% if active_products %}
-
-                {% for product in active_products %}
+        <div class="card-tabs">
+            <ul>
+                <li id="active-tab" class="active">Active Products{% if active_products %}<span class="amount">{{active_products|length}}</span>{% endif %}</li>
+                <li id="expired-tab">Expired Products{% if expired_products %}<span class="amount">{{expired_products|length}}</span>{% endif %}</li>
+            </ul>
+            <div class="clearfix"></div>
+        </div>
+        <div id="active-products" class="card-wrapper">
+            {% for product in active_products %}
                 <div class="product-card">
                     <div class="big-title">{{ product.product }}</div>
-                    Jobs: <b>{{product.job_amount_posted}} / {%if product.num_jobs_allowed == 0%}Unlimited{%else%}{{product.num_jobs_allowed}}{%endif%}</b>
-                    <span style="float: right;">Expires: <b>{{ product.expiration_date }}</b></span>
-
+                    <div class="product-details">
+                        {% with expired_count=product.expired_job_count num_jobs_allowed=product.num_jobs_allowed job_amount_posted=product.job_amount_posted %}
+                        {% if is_expired and expired_count == job_amount_posted or expired_count == num_jobs_allowed and expired_count > 0 %}
+                        <b>All jobs have expired.</b>
+                        {% else %}
+                        Jobs: <b>{{ job_amount_posted }} / {%if num_jobs_allowed == 0%}Unlimited{%else%}{{product.num_jobs_allowed}}{%endif%}{%if expired_count > 0%} <span class="warn">({{expired_count}} expired)</span>{% endif %}</b>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                    <div class="product-details">
+                        Expire{%if is_expired %}d{%else%}s{%endif%}: <b>{{ product.expiration_date }}</b>
+                    </div>
                     <a class="btn" href="{% url 'purchasedjobs_overview' purchased_product=product.pk %}">View</a>
                 </div>
-                {% endfor %}
-                {% else %}
-                    You have no active products
-                {% endif %}
-            </div>
-            <div id="content-expired-products" style="display: none;">
-                {% if expired_products %}
-                {% for product in expired_products %}
-                    <div class="product-card">
-                        <div class="big-title">{{ product.product }}</div>
-                        Jobs: <b>{{product.job_amount_posted}} / {%if product.num_jobs_allowed == 0%}Unlimited{%else%}{{product.num_jobs_allowed}}{%endif%}</b>
-                        <span style="float: right;">Expired on: <b>{{ product.expiration_date }}</b></span>
-
-                        <a class="btn" href="{% url 'purchasedjobs_overview' purchased_product=product.pk %}">View</a>
+            {% empty %}
+                <div class="product-card">
+                    You have no active products.
+                </div>
+            {% endfor %}
+        </div>
+        <div class="clearfix"></div>
+        <div id="expired-products" class="card-wrapper" style="display: none;">
+            {% for product in expired_products %}
+                <div class="product-card">
+                    <div class="big-title">{{ product.product }}</div>
+                    <div class="product-details">
+                        {% with expired_count=product.expired_job_count num_jobs_allowed=product.num_jobs_allowed job_amount_posted=product.job_amount_posted %}
+                        {% if is_expired and expired_count == job_amount_posted or expired_count == num_jobs_allowed and expired_count > 0 %}
+                        <b>All jobs have expired.</b>
+                        {% else %}
+                        Jobs: <b>{{ job_amount_posted }} / {%if num_jobs_allowed == 0%}Unlimited{%else%}{{product.num_jobs_allowed}}{%endif%}{%if expired_count > 0%} <span class="warn">({{expired_count}} expired)</span>{% endif %}</b>
+                        {% endif %}
+                        {% endwith %}
                     </div>
-                {% endfor %}
-                {% else %}
-                    You have no expired products
-                {% endif %}
-            </div>
+                    <div class="product-details">
+                        Expire{%if is_expired %}d{%else%}s{%endif%}: <b>{{ product.expiration_date }}</b>
+                    </div>
+                    <a class="btn" href="{% url 'purchasedjobs_overview' purchased_product=product.pk %}">View</a>
+                </div>
+            {% empty %}
+                <div class="product-card">
+                    You have no expired products.
+                </div>
+            {% endfor %}
         </div>
     </div>
     <div class="direct_rightColBox">
@@ -51,13 +70,5 @@
 {% endblock %}
 
 {% block extra-js %}
-<script>
-    $("ul.product-tabs li").on("click", function() {
-        $("ul.product-tabs li").removeClass("active");
-        $(this).addClass("active");
-        var clicked = $(this).attr("id").split("-")[0];
-        $("div#tab-content > div").css("display", "none");
-        $("div[id*='-"+clicked+"-']").css("display", "block");
-    });
-</script>
+    <script type="text/javascript" src="{{ STATIC_URL }}postajob-tabs.160-13.js"></script>
 {% endblock extra-js %}

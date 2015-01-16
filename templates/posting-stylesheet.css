@@ -190,16 +190,16 @@ ul#ul-posting-nav a {
     padding: 10px;
 }
 
-ul.product-tabs {
+ul.product-tabs,
+ul.job-tabs,
+.card-tabs ul {
     height: 24px;
     margin: 0;
 }
 
-ul.product-tabs li:first-of-type {
-    margin-left: 5px;
-}
-
-ul.product-tabs li {
+ul.product-tabs li,
+ul.job-tabs li,
+.card-tabs li {
     cursor: pointer;
     border: 1px solid #eee;
     border-bottom: 0;
@@ -208,13 +208,38 @@ ul.product-tabs li {
     display: inline;
     padding: 7px 10px;
     margin-bottom: 10px;
-    text-decoration: underline;
 }
 
-ul.product-tabs li.active {
+ul.product-tabs li.active,
+ul.job-tabs li.active,
+.card-tabs li.active {
     font-weight: bold;
     cursor: default;
     text-decoration: none;
+}
+
+.card-tabs li .amount,
+ul.job-tabs li .amount,
+ul.product-tabs li .amount {
+    background-color: #9696A3;
+    border-radius: 10px;
+    color: #FFF;
+    font-size: 11px;
+    font-weight: 100;
+    line-height: 1;
+    margin-left: 3px;
+    padding: 3px 7px;
+    position: relative;
+}
+
+.card-tabs li.active .amount,
+ul.job-tabs li.active .amount,
+ul.product-tabs li.active .amount {
+    background-color: #{{css.primaryColor}};
+}
+
+.product-card .warn {
+    color: red;
 }
 
 /* posting because */
