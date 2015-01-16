@@ -787,9 +787,8 @@ class SeoSiteTestCase(DirectSEOTestCase):
         custom_onet = moc_factories.OnetFactory.build(code=custom_job['onet'])
         custom_onet.save()
 
-        custom_career = moc_factories.CustomCareerFactory.build(moc=moc,
-                                                                object_id=self.buid_id,
-                                                                onet_id=custom_onet.code)
+        custom_career = moc_factories.CustomCareerFactory.build(
+            moc=moc, object_id=self.buid_id, onet_id=custom_onet.code)
         custom_career.save()
 
         bu = BusinessUnit.objects.get(id=1)
