@@ -16,6 +16,9 @@ from django.test.client import Client
 from setup import MyJobsBase
 from myjobs.models import User, EmailLog, FAQ
 from myjobs.tests.factories import UserFactory
+from mypartners.tests.factories import PartnerFactory
+from mysearches.models import PartnerSavedSearch
+from seo.tests.factories import CompanyFactory, CompanyUserFactory
 from myprofile.models import Name, Education
 from mysearches.models import SavedSearch, SavedSearchLog
 from registration.models import ActivationProfile
@@ -746,6 +749,38 @@ class MyJobsViewsTests(MyJobsBase):
         self.client.get(reverse('unsubscribe_all'))
         self.user = User.objects.get(id=self.user.id)
         self.assertFalse(self.user.opt_in_myjobs)
+
+    def test_opt_out_sends_notification(self):
+        """
+        When a user creates a saved search for another user and that user opts
+        out of My.jobs communications, the creator should get a My.jobs message
+        and email notifying them of the opt-out.
+        """
+
+        # required fields for saved search
+        company = CompanyFactory()
+        partner = PartnerFactory(owner=company)
+
+        creator = UserFactory(id=3, email='normal@user.com')
+
+        # should not have any messages
+        self.assertFalse(creator.messages_unread())
+
+        PartnerSavedSearch.objects.create(user=self.user, provider=company,
+                                          created_by=creator,
+                                          partner=partner)
+
+        self.client.get(reverse('unsubscribe_all'))
+
+        # creator should have a My.jobs message and email
+        for body in [creator.messages_unread()[0].message.body,
+                     mail.outbox[0].body]: 
+            self.assertIn(self.user.email, body)
+            self.assertIn('opted out of receiving saved search emails', body)
+
+        # email should be sent to right person
+        self.assertIn(creator.email, mail.outbox[0].to)
+
 
     def test_toolbar_logged_in(self):
         self.client.login_user(self.user)
