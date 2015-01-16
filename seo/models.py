@@ -732,6 +732,11 @@ class Company(models.Model):
         """
         return user in self.admins.all()
 
+    @property
+    def has_packages(self):
+        return self.sitepackage_set.filter(
+            sites__in=settings.SITE.postajob_site_list()).exists()
+
 
 class FeaturedCompany(models.Model):
     """
