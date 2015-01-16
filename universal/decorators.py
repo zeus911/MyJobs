@@ -18,7 +18,6 @@ def company_has_access(perm_field):
     inputs:
         :perm_field: The name of the BooleanField on Company that handles
             permissions for the requested feature.
-
     """
     def decorator(view_func):
         def wrap(request, *args, **kwargs):
