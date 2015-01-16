@@ -644,6 +644,39 @@ class ViewTests(PostajobTestBase):
         response = self.client.post(reverse('purchasedproducts_overview'))
         self.assertEqual(response.status_code, 404)
 
+    def test_purchasedproducts_active_expired(self):
+        PurchasedProductFactory.create_batch(3, product=self.product,
+                                             owner=self.company)
+
+        expired_product = PurchasedProductFactory(product=self.product,
+                                                  owner=self.company)
+        expired_product.expiration_date = date.today()-timedelta(days=1)
+        expired_product.save()
+        response = self.client.post(reverse('purchasedproduct'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["active_products"]), 3)
+        self.assertEqual(len(response.context["expired_products"]), 1)
+
+    def test_purchasedjobs_active_expired(self):
+        purchased_product = PurchasedProductFactory(product=self.product,
+                                                    owner=self.company)
+        PurchasedJobFactory.create_batch(
+            3, purchased_product=purchased_product, owner=self.company,
+            created_by=self.user)
+        expired_job = PurchasedJobFactory(purchased_product=purchased_product,
+                                          owner=self.company,
+                                          created_by=self.user)
+        expired_job.is_expired = True
+        expired_job.save()
+
+        response = self.client.post(
+            reverse('purchasedjobs',
+                    kwargs={'purchased_product': purchased_product.id}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['active_jobs']), 3)
+        self.assertEqual(len(response.context['expired_jobs']), 1)
+
     def test_is_company_user(self):
         # Current user is a CompanyUser
         params = {'email': self.user.email}
@@ -837,7 +870,6 @@ class ViewTests(PostajobTestBase):
                                             kwargs=kwargs), follow=True)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(OfflinePurchase.objects.all().count(), 1)
-
 
     def test_update_companyprofile(self):
         self.client.post(reverse('companyprofile_add'),

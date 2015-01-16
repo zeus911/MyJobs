@@ -52,7 +52,7 @@ def jobs_overview(request):
 def view_job(request, purchased_product, pk, admin):
     company = get_company_or_404(request)
     purchased_product = PurchasedProduct.objects.get(pk=purchased_product)
-    if admin and not purchased_product.product.owner != company:
+    if admin and purchased_product.product.owner != company:
         raise Http404
     elif not admin and purchased_product.owner != company:
         raise Http404
@@ -129,7 +129,8 @@ def purchasedjobs_overview(request, purchased_product, admin):
     data = {
         'company': company,
         'purchased_product': product,
-        'jobs': jobs,
+        'active_jobs': jobs.filter(is_expired=False),
+        'expired_jobs': jobs.filter(is_expired=True)
     }
     if admin:
         return render_to_response('postajob/%s/purchasedjobs_admin_overview.html'
