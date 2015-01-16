@@ -486,6 +486,7 @@ class PartnerSavedSearch(SavedSearch):
         blank=True, help_text="Use this field to provide a customized "
                               "greeting that will be sent with each copy "
                               "of this saved search.")
+    unsubscribed = models.BooleanField(default=False)
     tags = models.ManyToManyField('mypartners.Tag', null=True)
     created_by = models.ForeignKey(User, editable=False)
 
