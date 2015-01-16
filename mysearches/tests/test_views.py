@@ -250,17 +250,16 @@ class MySearchViewTests(MyJobsBase):
             'saved_search_main_query')+'?d='+str(urllib2.quote(
                                                  search.label)))
 
-    def test_delete_unowned_partner_search(self):
+    def test_delete_all_searches(self):
         """
-        Attempting to delete a partner saved search which was created for you
-        should do nothing.
+        Deleting all searches should only remove regular saved searches if the
+        partner saved searches weren't created by the user trying to use it.
         """
-        import ipdb; ipdb.set_trace()
         
         user = UserFactory(email='asdfa@example.com')
         company = CompanyFactory(id=2423, name="Bacon Factory",
                                  user_created=False)
-        SavedSearchFactory(user=user)
+        SavedSearchFactory(user=self.user)
         pss = PartnerSavedSearchFactory(user=self.user, created_by=user,
                                         provider=company)
 
@@ -268,9 +267,12 @@ class MySearchViewTests(MyJobsBase):
             '?id=ALL')
         
         self.assertEqual(response.status_code, 302)
+        # partner saved search should still exist...
         self.assertTrue(models.PartnerSavedSearch.objects.filter(
             pk=pss.pk).exists())
-        self.assertFalse(models.SavedSearch.objects.all().exists())
+        # ... but the regular saved search shouldn't
+        self.assertFalse(models.SavedSearch.objects.filter(
+            partnersavedsearch__isnull=True).exists())
 
     def test_delete_unowned_search(self):
         """
