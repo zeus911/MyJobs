@@ -9,7 +9,8 @@ from django.shortcuts import render_to_response, get_object_or_404
 
 from myjobs.decorators import user_is_allowed
 from myjobs.models import User
-from mysearches.models import SavedSearch, SavedSearchDigest
+from mysearches.models import (SavedSearch, SavedSearchDigest,
+                               PartnerSavedSearch)
 from mysearches.forms import (SavedSearchForm, DigestForm,
                               PartnerSubSavedSearchForm)
 from mysearches.helpers import (get_interval_from_frequency, parse_feed,
@@ -47,13 +48,10 @@ def saved_search_main(request):
             SavedSearchDigest.MultipleObjectsReturned):
         digest_obj = None
     updated = request.REQUEST.get('d')
-    saved_searches = list(SavedSearch.objects.filter(user=request.user))
-    partner_saved_searches = []
-    # Check to see if any searches are PartnerSavedSearches
-    for saved_search in saved_searches[:]:
-        if hasattr(saved_search, 'partnersavedsearch'):
-            partner_saved_searches.append(
-                saved_searches.pop(saved_searches.index(saved_search)))
+    saved_searches = SavedSearch.objects.filter(
+        user=request.user, partnersavedsearch__isnull=True)
+    partner_saved_searches = PartnerSavedSearch.objects.filter(
+        user=request.user)
 
     if request.user.is_verified:
         form = DigestForm(user=request.user, instance=digest_obj)
