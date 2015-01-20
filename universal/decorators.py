@@ -121,7 +121,8 @@ def warn_when(condition, feature, message, link=None, link_text=None,
 # used in mypartners
 warn_when_inactive = partial(
     warn_when,
-    condition=lambda req: req.user.is_verified and req.user.is_active,
+    condition=lambda req: req.user.is_anonymous() or
+                          (req.user.is_verified and req.user.is_active),
     message='You have yet to activate your account.',
     link='/accounts/register/resend',
     link_text='Resend Activation')
