@@ -37,7 +37,7 @@ class BaseJobForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.160-2.js', )
+        js = ('postajob.160-13.js', )
 
     apply_choices = [('link', "Link"), ('email', 'Email'),
                      ('instructions', 'Instructions')]
@@ -446,7 +446,7 @@ class ProductForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.160-2.js', )
+        js = ('postajob.160-13.js', )
 
     job_limit_choices = [('unlimited', "Unlimited"),
                          ('specific', 'A Specific Number'), ]
@@ -788,7 +788,7 @@ class OfflinePurchaseForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
-        js = ('postajob.160-2.js', )
+        js = ('postajob.160-13.js', )
 
     def __init__(self, *args, **kwargs):
         super(OfflinePurchaseForm, self).__init__(*args, **kwargs)
@@ -905,6 +905,14 @@ class OfflinePurchaseRedemptionForm(RequestForm):
 
 
 class CompanyProfileForm(RequestForm):
+    state = NoValidationChoiceField(choices=JobLocation.state_choices,
+                                    widget=SelectWithOptionClasses(),
+                                    required=False)
+    region = CharField(max_length=255, required=False)
+    country = ChoiceField(choices=JobLocation.country_choices,
+                          initial='United States',
+                          required=False)
+
     class Meta:
         model = CompanyProfile
         exclude = ('company', 'blocked_users', 'customer_of')
@@ -913,6 +921,7 @@ class CompanyProfileForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
+        js = ('postajob.160-13.js', )
 
     def __init__(self, *args, **kwargs):
         super(CompanyProfileForm, self).__init__(*args, **kwargs)
@@ -924,19 +933,26 @@ class CompanyProfileForm(RequestForm):
             initial=self.instance.company.name, label='Company Name')
         self.fields.keyOrder.insert(0, self.fields.keyOrder.pop())
 
-        # companies pulled from content aquisition should be read-only
+        # companies pulled from content acquisition should be read-only
         if not self.instance.company.user_created:
             self.fields['company_name'].widget.attrs['readonly'] = True
             self.fields['description'].widget.attrs['readonly'] = True
 
     def clean(self):
+        cleaned_data = self.cleaned_data
+        if (cleaned_data.get('country') not in ["United States", "Canada"]
+                and not self.instance.pk):
+            region = cleaned_data.get('region')
+            if region:
+                cleaned_data['state'] = region
+
         if self.instance.company.user_created:
-            company_name = self.cleaned_data.get('company_name')
+            company_name = cleaned_data.get('company_name')
             msg = clean_company_name(company_name, self.instance.company)
             if msg:
                 self._errors['company_name'] = self.error_class([msg])
                 raise ValidationError(msg)
-        return self.cleaned_data
+        return cleaned_data
 
     def save(self, commit=True):
         self.instance.company = self.company
