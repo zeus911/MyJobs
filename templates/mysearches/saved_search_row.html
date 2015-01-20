@@ -7,7 +7,7 @@
         <div class="pull-left">
             {{ search.label }}<br />
             {% if search.partner %}
-                <em>Partner: {{ search.partner }}</em>
+                <em>Created by: {{ search.partner.owner }}</em>
             {% endif %}
         </div>{% make_label search.is_active "pull-right" %}
     </td>
