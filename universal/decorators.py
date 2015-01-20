@@ -108,7 +108,8 @@ def warn_when(condition, feature, message, link=None, link_text=None,
                    'link': link,
                    'link_text': link_text}
             if not condition(request):
-                if exception: raise exception('{0}: {1}'.format(feature, message))
+                if exception:
+                    raise exception('{0}: {1}'.format(feature, message))
 
                 return render_to_response('warning_page.html',
                                           ctx,
