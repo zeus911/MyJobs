@@ -517,6 +517,8 @@ class PurchasedProduct(BaseModel):
                                          blank=True)
     invoice = models.ForeignKey('Invoice')
 
+    # owner is the person that purchased a product that created this
+    # PurchasedProduct object.
     owner = models.ForeignKey('seo.Company')
     purchase_date = models.DateField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)
@@ -564,6 +566,12 @@ class PurchasedProduct(BaseModel):
 
     def job_amount_posted(self):
         return self.num_jobs_allowed - self.jobs_remaining
+
+    def expired_job_count(self):
+        return self.purchasedjob_set.filter(is_expired=True).count()
+
+    def is_expired(self):
+        return bool(self.expiration_date < date.today())
 
 
 class ProductGrouping(BaseModel):
@@ -703,6 +711,8 @@ class CompanyProfile(models.Model):
         'email_on_request': 'Send email to admins every time a request '
                             'is made.',
     }
+    country_choices = country_list()
+    state_choices = state_list(include_country=True)
 
     company = models.OneToOneField('seo.Company')
     description = models.TextField(max_length=255, blank=True,
@@ -713,7 +723,8 @@ class CompanyProfile(models.Model):
                                         verbose_name='Address Line Two')
     city = models.CharField(max_length=255, blank=True)
     state = models.CharField(max_length=255, blank=True)
-    country = models.CharField(max_length=255, blank=True)
+    country = models.CharField(max_length=255, blank=True,
+                               default='United States')
     zipcode = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=255, blank=True)
 
@@ -794,8 +805,11 @@ class Request(BaseModel):
             }
             body = render_to_string('postajob/request_email.html', data)
             site = getattr(settings, 'SITE', None)
+            headers = {
+                'X-SMTPAPI': '{"category": "Request Created (%s)"}' % self.pk
+            }
             send_email(body, settings.POSTING_REQUEST_CREATED,
-                       recipients=admin_emails, site=site)
+                       recipients=admin_emails, site=site, headers=headers)
 
     def save(self, **kwargs):
         is_new = False
@@ -970,8 +984,11 @@ class Invoice(BaseModel):
         if recipients:
             body = render_to_string('postajob/invoice_email.html', data)
             site = getattr(settings, 'SITE', None)
+            headers = {
+                'X-SMTPAPI': '{"category": "Invoice sent (%s)"}' % self.pk
+            }
             send_email(body, email_type=settings.INVOICE, recipients=recipients,
-                       site=site)
+                       site=site, headers=headers)
 
 
 class InvoiceProduct(models.Model):

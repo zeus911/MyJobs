@@ -16,11 +16,23 @@
 <div class="direct_rightColBox">
     <h3>Product Details</h3>
     <label>Job Limit:</label>
-    <b>{% if purchased_product.num_jobs_allowed == 0 %}Unlimited{%else%}{{ purchased_product.num_jobs_allowed }} ({{purchased_product.jobs_remaining}} left){%endif%}</b>
+    {% with is_expired=purchased_product.is_expired num_jobs_allowed=purchased_product.num_jobs_allowed %}
+    <b>
+        {% if not is_expired %}
+            {% if num_jobs_allowed == 0 %}
+                Unlimited
+            {%else%}
+                {{ num_jobs_allowed }} ({{purchased_product.jobs_remaining}} left)
+            {%endif%}
+        {% else %}
+            This product has expired.
+        {% endif %}
+    </b>
     <br /><label>Purchase Date:</label>
     <b>{{ purchased_product.purchase_date }}</b>
-    <br/><label>Expires:</label>
+    <br/><label>Expire{%if is_expired %}d{%else%}s{%endif%}:</label>
     <b>{{ purchased_product.expiration_date }}</b>
+    {% endwith %}
     <br />
     <div class="navigation">
         <h3>Navigation</h3>

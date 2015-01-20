@@ -30,7 +30,6 @@
         <div class="span12" id="profileTitleBar"><h1>{{company_name}}</h1><span class="pull-right" id="dashboard-time-filter">{% include "time_filter.html" %}</span></div>
         <div class="span12" id="profileSubtitleBar">&nbsp;</div>
     </div>
-    {% if user.is_active and user.is_verified %}
     <div class="row">
         <div class="span8" id="moduleColumn">            
         
@@ -65,9 +64,6 @@
 
         </div> {# /.span4 #}
     </div>{# /row #}
-    {% else %}
-        {% include 'includes/inactive-user.html' %}
-    {% endif %}
 </div>{# /wrapper #}
 
 {% endblock %}

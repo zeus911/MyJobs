@@ -152,9 +152,12 @@ class RegistrationViewTests(MyJobsBase):
         self.user.is_active = False
         self.user.save()
 
+        mail.outbox = []
         self.client.post(reverse('password_reset'), {'email': self.user.email})
+        self.assertEqual(len(mail.outbox), 1)
+
         user = User.objects.get(pk=self.user.pk)
-        self.assertTrue(user.is_active)
+        self.assertFalse(user.is_active)
 
     def test_accept_invitation_already_activated(self):
         """

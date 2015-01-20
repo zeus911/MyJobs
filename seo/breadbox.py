@@ -7,7 +7,17 @@ from seo.models import CustomFacet
 
 
 class Breadbox(object):
+    """
+    Builds and contains breadcrumbs.
+
+    """
     class Breadcrumb(object):
+        """
+        An object containing a url with either a part of the path or a
+        query_dict parameter removed and a human readable display_title
+        that describes the section that was removed.
+
+        """
         def __init__(self, display_title='', url=reverse_lazy('view_jobs'),
                      breadcrumb_class='breadcrumb_bread_box'):
             self.url = url
@@ -43,6 +53,18 @@ class Breadbox(object):
             self.clear_breadcrumb = self.Breadcrumb(**kwargs)
 
     def _make_url(self, path=None, query_dict=None):
+        """
+        Builds a url using either self.path/self.query_dict or the specified
+        path/query_dict.
+
+        :param path: The path you want the new url to contain. if None
+                     it uses self.path.
+        :param query_dict: The query dict you want the new url to contain.
+                           If None it uses self.query_dict.
+        :return: A new url, built from self.path or the new specified path
+                 and self.query_dict or a specified query_dict.
+
+        """
         path = path or self.path
         if not self.path or path == '/':
             path = reverse('all_jobs')
@@ -51,12 +73,21 @@ class Breadbox(object):
         return "%s?%s" % (path, query_string) if query_string else path
 
     def _remove_param_from_query_dict(self, param):
+        """
+        :param param: Param to remove from self.query_dict.
+        :return: A new QueryDict with param removed.
+
+        """
         query_dict = self.query_dict.copy()
         if param in query_dict:
             del query_dict[param]
         return query_dict
 
     def all_breadcrumbs(self):
+        """
+        :return: A list of all the breadcrumbs in the Breadbox.
+
+        """
         breadcrumbs = (self.custom_facet_breadcrumbs +
                        self.location_breadcrumbs + self.moc_breadcrumbs)
         single_breadcrumbs = [self.title_breadcrumb, self.company_breadcrumb,
@@ -67,10 +98,26 @@ class Breadbox(object):
         return breadcrumbs
 
     def build_breadcrumbs(self):
+        """
+        Builds all possible breadrcrumbs for a Breadbox.
+
+        """
         self.build_filter_breadcrumbs()
         self.build_param_breadcrumbs()
 
     def build_breadcrumb_for_slug_type(self, slug_type, display_title):
+        """
+        Builds a breadcrumb for a specific slug_type. Useful for slugs
+        that will only have a single breadcrumb.
+
+        :param slug_type: The slug type of the breadcrumb you're building.
+                          It's a string that matches the * in *_slug.
+                          Possible types can be found in settings.SLUG_TAGS.
+        :param display_title: The display title you want the resulting
+                              breadcrumb to have.
+        :return: A breadcrumb.
+
+        """
         ending_slug = settings.SLUG_TAGS[slug_type].strip('/')
         breadcrumb_class = slug_type.replace('_slug', '_bread_box')
 
@@ -87,6 +134,15 @@ class Breadbox(object):
         return None
 
     def build_breadcrumb_for_param(self, param):
+        """
+        Builds a breadcrumb for a specific param. Useful for params that
+        will have only a single breadcrumb.
+
+        :param param: The query_dict param you would like to build a
+                      breadcrumb for.
+        :return: A breadcrumb.
+
+        """
         param_value = self.query_dict.get(param)
         if param_value:
             updated_query_dict = self._remove_param_from_query_dict(param)
@@ -133,6 +189,10 @@ class Breadbox(object):
                 self._make_clear_breadcrumb()
 
     def build_filter_breadcrumbs(self):
+        """
+        Builds all the breadcrumbs related to slugs.
+
+        """
         self.build_company_breadcrumbs_from_slugs()
         self.build_custom_facet_breadcrumbs_from_slugs()
         self.build_location_breadcrumbs_from_slugs()
@@ -192,6 +252,10 @@ class Breadbox(object):
             self._make_clear_breadcrumb()
 
     def build_param_breadcrumbs(self):
+        """
+        Builds all the breadcrumbs related to the query dict.
+
+        """
         self.build_location_breadcrumbs_from_params()
         self.build_moc_breadcrumbs_from_params()
         self.build_q_breadcrumbs_from_params()
@@ -257,4 +321,12 @@ class Breadbox(object):
         return ''
 
     def render(self):
+        """
+        Renders the Breadbox as a string. Not currently used in templates
+        because of the generous use of mark_safe that it would require,
+        but useful for testing.
+
+        :return: The Breadbox rendered as a string.
+
+        """
         return render_to_string('includes/breadbox.html', {'breadbox': self})

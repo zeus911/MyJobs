@@ -133,6 +133,16 @@ def canonical_path_from_filter_dict(filters):
 
 
 def build_results_heading(breadbox):
+    """
+    Builds a sensible, human-readable heading for the results page in the
+    format of COMPANY Careers<br>(CUSTOM_SEARCH | "TITLE Jobs")("in LOCATION")
+
+    :param breadbox: A Breadbox instance with all the breadcrumbs that should
+                     appear in the heading already built.
+
+    :return: A string containing the heading.
+
+    """
     heading = []
 
     has_facet = bool(breadbox.custom_facet_breadcrumbs)

@@ -122,8 +122,12 @@ class ActivationProfile(models.Model):
 
         site = getattr(settings, 'SITE', None)
 
+        headers = {
+            'X-SMTPAPI': '{"category": "Activation sent (%s)"}' % self.pk
+        }
+
         send_email(message, email_type=settings.ACTIVATION,
-                   recipients=[self.email], site=site)
+                   recipients=[self.email], site=site, headers=headers)
 
     def save(self, *args, **kwargs):
         if not self.pk:
@@ -208,8 +212,12 @@ class Invitation(models.Model):
         else:
             from_ = self.inviting_company.name
 
+        headers = {
+            'X-SMTPAPI': '{"category": "Invitation Sent (%s)"}' % self.pk
+        }
+
         self.invitee.email_user(body, email_type=settings.INVITATION,
-                                inviter=from_)
+                                inviter=from_, headers=headers)
 
         ap.sent = datetime_now()
         ap.save()

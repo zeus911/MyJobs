@@ -1,6 +1,5 @@
 import bleach
 from collections import OrderedDict
-import unicodecsv
 from datetime import date, datetime, timedelta
 from email.parser import HeaderParser
 from email.utils import getaddresses
@@ -11,6 +10,7 @@ import newrelic.agent
 import pytz
 import re
 import sys
+import unicodecsv
 
 from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
@@ -30,7 +30,7 @@ from django.views.decorators.csrf import csrf_exempt
 from email_parser import build_email_dicts, get_datetime_from_str
 from universal.helpers import (get_company_or_404, get_int_or_none, 
                                add_pagination, get_object_or_none)
-from universal.decorators import company_has_access
+from universal.decorators import company_has_access, warn_when_inactive
 from myjobs.models import User
 from mydashboard.helpers import get_company_microsites
 from mysearches.models import PartnerSavedSearch
@@ -54,6 +54,7 @@ from mypartners.helpers import (prm_worthy, add_extra_params,
                                 find_partner_from_email, tag_get_or_create)
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def prm(request):
     """
@@ -90,6 +91,7 @@ def prm(request):
                               RequestContext(request))
 
 
+@warn_when_inactive(feature='Partner Library is')
 @company_has_access('prm_access')
 def partner_library(request):
     company = get_company_or_404(request)
@@ -136,6 +138,7 @@ def create_partner_from_library(request):
     return HttpResponse(json.dumps(ctx))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def partner_details(request):
     company, partner, user = prm_worthy(request)
@@ -159,6 +162,7 @@ def partner_details(request):
                               RequestContext(request))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def edit_item(request):
     """ Contact/Partner Form.
@@ -279,6 +283,7 @@ def save_item(request):
             return HttpResponse(json.dumps(form.errors))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def delete_prm_item(request):
     """
@@ -333,6 +338,7 @@ def delete_prm_item(request):
                                     str(partner_id))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def prm_overview(request):
     """
@@ -365,6 +371,7 @@ def prm_overview(request):
                               RequestContext(request))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def partner_tagging(request):
     company = get_company_or_404(request)
@@ -378,6 +385,7 @@ def partner_tagging(request):
                               RequestContext(request))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def edit_partner_tag(request):
     company = get_company_or_404(request)
@@ -412,6 +420,7 @@ def edit_partner_tag(request):
                                   RequestContext(request))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def edit_location(request):
     company, partner, _ = prm_worthy(request)
@@ -454,6 +463,7 @@ def edit_location(request):
         'mypartners/edit_location.html', ctx, RequestContext(request))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def delete_location(request):
     company, partner, _ = prm_worthy(request)
@@ -468,6 +478,7 @@ def delete_location(request):
             partner.id, contact.id))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def delete_partner_tag(request):
     company = get_company_or_404(request)
@@ -479,6 +490,7 @@ def delete_partner_tag(request):
     return HttpResponseRedirect(reverse('partner_tagging'))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def prm_saved_searches(request):
     """
@@ -509,6 +521,7 @@ def prm_saved_searches(request):
                               RequestContext(request))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def prm_edit_saved_search(request):
     company, partner, user = prm_worthy(request)
@@ -536,6 +549,7 @@ def prm_edit_saved_search(request):
                               RequestContext(request))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def verify_contact(request):
     """
@@ -617,6 +631,7 @@ def partner_savedsearch_save(request):
         return HttpResponse(json.dumps(form.errors))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def partner_view_full_feed(request):
     """
@@ -656,6 +671,7 @@ def partner_view_full_feed(request):
                               RequestContext(request))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def prm_records(request):
     """
@@ -701,6 +717,7 @@ def prm_records(request):
                               RequestContext(request))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def prm_edit_records(request):
     company, partner, user = prm_worthy(request)
@@ -739,6 +756,7 @@ def prm_edit_records(request):
                               RequestContext(request))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def prm_view_records(request):
     """
@@ -859,6 +877,7 @@ def get_records(request):
     return HttpResponse(json.dumps(data))
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def get_uploaded_file(request):
     """
@@ -891,6 +910,7 @@ def get_uploaded_file(request):
     return HttpResponseRedirect(path)
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def partner_main_reports(request):
     company, partner, user = prm_worthy(request)
@@ -1070,6 +1090,7 @@ def partner_get_referrals(request):
         raise Http404
 
 
+@warn_when_inactive(feature='Partner Relationship Manager is')
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_export(request):
     #TODO: investigate using django's builtin serialization for XML

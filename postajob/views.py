@@ -52,7 +52,7 @@ def jobs_overview(request):
 def view_job(request, purchased_product, pk, admin):
     company = get_company_or_404(request)
     purchased_product = PurchasedProduct.objects.get(pk=purchased_product)
-    if admin and not purchased_product.product.owner != company:
+    if admin and purchased_product.product.owner != company:
         raise Http404
     elif not admin and purchased_product.owner != company:
         raise Http404
@@ -129,7 +129,8 @@ def purchasedjobs_overview(request, purchased_product, admin):
     data = {
         'company': company,
         'purchased_product': product,
-        'jobs': jobs,
+        'active_jobs': jobs.filter(is_expired=False),
+        'expired_jobs': jobs.filter(is_expired=True)
     }
     if admin:
         return render_to_response('postajob/%s/purchasedjobs_admin_overview.html'
@@ -238,8 +239,6 @@ def admin_request(request):
         requests = Request.objects.all()
     data = {
         'company': company,
-        'has_package': company.sitepackage_set.filter(
-            sites__in=settings.SITE.postajob_site_list()).exists(),
         'pending_requests': requests.filter(owner=company, action_taken=False),
         'processed_requests': requests.filter(owner=company, action_taken=True)
     }
@@ -294,8 +293,6 @@ def view_request(request, pk, model=None):
         'content_type': content_type,
         'object': request_object,
         'request_obj': request_made,
-        'has_package': company.sitepackage_set.filter(
-            sites__in=settings.SITE.postajob_site_list()).exists()
     }
 
     if not data['object'].user_has_access(request.user):
@@ -471,16 +468,6 @@ class PostajobModelFormMixin(object):
     def get_context_data(self, **kwargs):
         kwargs['company'] = get_company(self.request)
         kwargs['prevent_delete'] = self.prevent_delete
-        kwargs['on_admin_page'] = 'admin' in self.request.get_full_path()
-        if kwargs['on_admin_page']:
-            # don't hide the company profile page
-            kwargs['on_admin_page'] = ('profile' not in
-                                       self.request.get_full_path())
-        
-        # the current domain should be part of the company's site package
-        if kwargs['company']:
-            kwargs['has_package'] = kwargs['company'].sitepackage_set.filter(
-                sites__in=settings.SITE.postajob_site_list()).exists()
 
         return super(PostajobModelFormMixin, self).get_context_data(**kwargs)
 

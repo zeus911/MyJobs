@@ -9,11 +9,13 @@ from django.shortcuts import render_to_response, get_object_or_404
 
 from myjobs.decorators import user_is_allowed
 from myjobs.models import User
-from mysearches.models import SavedSearch, SavedSearchDigest
+from mysearches.models import (SavedSearch, SavedSearchDigest,
+                               PartnerSavedSearch)
 from mysearches.forms import (SavedSearchForm, DigestForm,
                               PartnerSubSavedSearchForm)
 from mysearches.helpers import (get_interval_from_frequency, parse_feed,
                                 url_sort_options, validate_dotjobs_url)
+from universal.decorators import warn_when_inactive
 
 
 @user_is_allowed(SavedSearch, 'id', pass_user=True)
@@ -30,7 +32,7 @@ def delete_saved_search(request, user=None):
         search.delete()
     except ValueError:
         # all searches are being deleted
-        SavedSearch.objects.filter(user=user).delete()
+        SavedSearch.objects.filter(user=user, partnersavedsearch__isnull=True).delete()
         search_name = 'all'
 
     return HttpResponseRedirect(
@@ -39,6 +41,7 @@ def delete_saved_search(request, user=None):
 
 @user_is_allowed()
 @user_passes_test(User.objects.not_disabled)
+@warn_when_inactive(feature="Saved Searches are")
 def saved_search_main(request):
     # instantiate the form if the digest object exists
     try:
@@ -47,13 +50,10 @@ def saved_search_main(request):
             SavedSearchDigest.MultipleObjectsReturned):
         digest_obj = None
     updated = request.REQUEST.get('d')
-    saved_searches = list(SavedSearch.objects.filter(user=request.user))
-    partner_saved_searches = []
-    # Check to see if any searches are PartnerSavedSearches
-    for saved_search in saved_searches[:]:
-        if hasattr(saved_search, 'partnersavedsearch'):
-            partner_saved_searches.append(
-                saved_searches.pop(saved_searches.index(saved_search)))
+    saved_searches = SavedSearch.objects.filter(
+        user=request.user, partnersavedsearch__isnull=True)
+    partner_saved_searches = PartnerSavedSearch.objects.filter(
+        user=request.user)
 
     if request.user.is_verified:
         form = DigestForm(user=request.user, instance=digest_obj)
@@ -74,6 +74,7 @@ def saved_search_main(request):
 @user_is_allowed()
 @user_passes_test(User.objects.is_verified)
 @user_passes_test(User.objects.not_disabled)
+@warn_when_inactive(feature="Saved Searches are")
 def view_full_feed(request):
     search_id = request.REQUEST.get('id')
     saved_search = SavedSearch.objects.get(id=search_id)
@@ -161,6 +162,7 @@ def save_digest_form(request):
 
 @user_passes_test(User.objects.is_verified)
 @user_passes_test(User.objects.not_disabled)
+@warn_when_inactive(feature="Saved Searches are")
 def save_search_form(request):
     search_id = request.POST.get('search_id')
 
@@ -195,6 +197,7 @@ def save_search_form(request):
 
 @user_passes_test(User.objects.is_verified)
 @user_passes_test(User.objects.not_disabled)
+@warn_when_inactive(feature="Saved Searches are")
 def edit_search(request):
     search_id = request.REQUEST.get('id')
     partner_saved_search = request.REQUEST.get('pss')
@@ -260,6 +263,7 @@ def unsubscribe(request, user=None):
     """
     search_id = request.REQUEST.get('id')
     user = user or request.user
+    has_pss = None
     try:
         search_id = int(search_id)
         saved_search = get_object_or_404(SavedSearch, id=search_id,
@@ -269,6 +273,7 @@ def unsubscribe(request, user=None):
         # saved_search is a single search rather than a queryset this time
         cache = [saved_search]
         saved_search.is_active = False
+        has_pss = hasattr(saved_search, 'partnersavedsearch')
         saved_search.save()
     except ValueError:
         digest = SavedSearchDigest.objects.get_or_create(
@@ -286,7 +291,8 @@ def unsubscribe(request, user=None):
     return render_to_response('mysearches/saved_search_disable.html',
                               {'search_id': search_id,
                                'searches': cache,
-                               'email_user': user},
+                               'email_user': user,
+                               'contains_pss': has_pss},
                               RequestContext(request))
 
 

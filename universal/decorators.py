@@ -1,8 +1,10 @@
-from functools import wraps
+from functools import partial, wraps
 
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.http import Http404, HttpResponseRedirect
+from django.shortcuts import render_to_response
+from django.template import RequestContext
 
 from myjobs.models import User
 from universal.helpers import build_url, get_company
@@ -79,3 +81,63 @@ def activate_user(view_func):
                     user.save()
         return view_func(request, *args, **kwargs)
     return wrap
+
+
+# Rather than write a few different decorators, I decided to go with a
+# decorator factory and write partials to handle repetitive cases.
+def warn_when(condition, feature, message, link=None, link_text=None,
+              exception=None):
+    """
+    A decorator which displays a warning page for :feature: with :message: when
+    the :condition: isn't met. If a :link: is provided, a button with that link
+    will displayed, showing :link_text: or "OK".
+
+    Inputs:
+    :condition: a callable that takes the request object and returns a boolean.
+    :feature: The feature for which the warning is being displayed.
+    :message: A helpful message to display to the user.
+    :link: A link to use for the optional button that appears after the
+           message.
+    :link_text: The text to appear on the button when "OK" is to generic.
+    """
+
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrap(request, *args, **kwargs):
+            ctx = {'feature': feature,
+                   'message': message,
+                   'link': link,
+                   'link_text': link_text}
+            if not condition(request):
+                if exception: raise exception('{0}: {1}'.format(feature, message))
+
+                return render_to_response('warning_page.html',
+                                          ctx,
+                                          RequestContext(request))
+
+            return view_func(request, *args, **kwargs)
+        return wrap
+    return decorator
+
+# used in mypartners
+warn_when_inactive = partial(
+    warn_when,
+    condition=lambda req: req.user.is_verified and req.user.is_active,
+    message='You have yet to activate your account.',
+    link='/accounts/register/resend',
+    link_text='Resend Activation')
+
+# used in postajob
+warn_when_no_packages = partial(
+    warn_when,
+    condition=lambda req: settings.SITE.canonical_company.has_packages)
+
+message_when_no_packages = partial(
+    warn_when_no_packages,
+    message='Please contact your member representative to activate this '
+            'feature.')
+
+error_when_no_packages = partial(
+    warn_when_no_packages,
+    message='Accessed company owns no site packages.',
+    exception=Http404)
