@@ -6,7 +6,7 @@
 {% cache 600 joblisting %}
 
 {% block directseo_title %}
-{% build_title site_title title_term location_term bread_box_title.company_slug results_heading %}
+{% build_title site_title title_term location_term breadbox.company_breadcrumb.display_title results_heading %}
 {% endblock %}
 {# meta description only on homepage #}
 {% block seo_description %}{% endblock %}
@@ -16,16 +16,16 @@
 {%endblock%}
 
 {% block rss_feed %}
-<link rel="alternate" type="application/rss+xml" title="{% build_title site_title title_term location_term bread_box_title.company_slug results_heading %}" href="{{request.build_absolute_uri|build_rss_link}}">
+<link rel="alternate" type="application/rss+xml" title="{% build_title site_title title_term location_term breadbox.company_breadcrumb.display_title results_heading %}" href="{{request.build_absolute_uri|build_rss_link}}">
 {% endblock %}
 
 {% block directseo_blurb %}
 <div id="direct_blurbDiv">
-    {% if facet_blurb %}
-    {% if bread_box_title.facet_slug %}<h3>{{bread_box_title.facet_slug}}</h3>{% endif %}
-    <div id="direct_blurbContents">
-        <p>{{facet_blurb|safe}}</p>
-    </div>    
+    {% if facet_blurb_facet %}
+        <h3>{{ facet_blurb_facet.name }}</h3>
+        <div id="direct_blurbContents">
+            <p>{{ facet_blurb_facet.blurb|safe }}</p>
+        </div>
     {% else %}
     {% if site_config.defaultBlurbTitle %}<h3>{{site_config.defaultBlurbTitle}}</h3>{% endif %}
     <div id="direct_blurbContents">
@@ -41,8 +41,8 @@
 {% if not count_heading %}
     {% blocktrans %}All Jobs{% endblocktrans %}
 {% else %}
-    {% if bread_box_title.company_slug %}
-        <span class="direct_jobListingCompany">{{ bread_box_title.company_slug }} Careers</span>
+    {% if breadbox.company_breadcrumb %}
+        <span class="direct_jobListingCompany">{{ breadbox.company_breadcrumb.display_title }} Careers</span>
     {% endif %}
     {{ count_heading }}
 {% endif %}
@@ -73,7 +73,8 @@
 
 
 <div id="direct_disambiguationDiv" class="direct_rightColBox" role="menu">
-    {% if bread_box_path or location_term and location_term != '\*' or title_term and title_term != '\*' or moc_term and moc_term != '\*' %}
+    {# If clear_breadcrumb exists, we know at least one search term that can be removed has been applied, so include the breadbox #}
+    {% if breadbox.clear_breadcrumb %}
         {% include 'includes/breadbox.html' %}
     {% endif %}
     {% include 'includes/seo_sort.html' %}

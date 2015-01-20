@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from itertools import ifilter
-from pysolr import safe_urlencode
 
+from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.template import Context, Template
 from django.template.defaultfilters import safe, urlencode
@@ -12,23 +12,71 @@ import logging
 from seo.templatetags.seo_extras import facet_text, facet_url, smart_truncate
 
 
-class Widget(object):
+def join_paths_of_same_type(item_type, path1, path2):
+    """
+    Combines two paths of the same slug type into a single path.
 
+    :param item_type: The type types of paths that are being
+                      combined - e.g. 'facet' or 'location'
+    :param path1: The first path to combine.
+    :param path2: The other path to combine.
+
+    :return: path1 and path2 combined as a single path. If the path
+             contains multiple slugs the slugs will be sorted
+             alphabetically.
+
+    """
+    # The "featured" item_type corresponds to feature company,
+    # which for the purpose of a slug tag is just company.
+    item_type = 'company' if item_type == 'featured' else item_type
+    slug_tag = "%s_slug" % item_type
+    slug_tag = settings.SLUG_TAGS[slug_tag]
+
+    new_path = "%s/%s" % (path1, path2)
+
+    # Strip out the slug tag so it can be sorted.
+    new_path = new_path.replace(slug_tag, '/')
+
+    # Sort them alphabetically.
+    new_path = new_path.split('/')
+    new_path = sorted(new_path)
+
+    # Recombine and readd the slug tag.
+    new_path = "/".join(new_path)
+    new_path = "%s/%s" % (new_path, slug_tag.strip('/'))
+    return new_path
+
+
+class Widget(object):
     slug_order = {'location': 2, 'title': 1, 'moc': 3, 'facet': 4, 'company': 5,
-                  'mapped_moc': 3}
+                  'featured': 5, 'mapped_moc': 3}
     
-    def __init__(self, request, site_config, _type, items, path_dict,
-                 offset=None):
+    def __init__(self, request, site_config, _type, items, filters,
+                 offset=None, query_string=None):
         self.request = request
         self.site_config = site_config
         self._type = _type
         self.items = items
-        self.path_dict = path_dict
+        self.path_dict = self.filters_to_paths(filters.copy())
         self.num_items = self.site_config.num_filter_items_to_show
         self.offset = offset or self.num_items * 2
 
+        if hasattr(request, 'META') and not query_string:
+            self.query_string = query_string or request.META.get('QUERY_STRING')
+        else:
+            self.query_string = query_string or ''
+
     def get_req_path(self):
         return self.request.path
+
+    @staticmethod
+    def filters_to_paths(filters):
+        path_dict = {}
+        for slug_type, value in filters.iteritems():
+            path = ("%s%s" % (value, settings.SLUG_TAGS[slug_type])
+                    if value else '')
+            path_dict[slug_type.replace('_slug', '')] = path
+        return path_dict
 
 
 class FacetListWidget(Widget):
@@ -39,8 +87,10 @@ class FacetListWidget(Widget):
     def render(self):
         _type = self._type
         items = filter(lambda x: x[0], self.items)
+
         if not self._show_widget(items):
             return
+
         # When you add custom keywords to a microsite, you will need to manually
         # enter a translation to directseo/locale<LANG>/LC_MESSAGES/django.po
         # for each language. Examples are "Profession" or "Area".
@@ -53,17 +103,16 @@ class FacetListWidget(Widget):
             criteria_output = _(getattr(self.site_config, "browse_%s_text"
                                         % _type))
 
-        col_hdr = (
-            """\
-            <h3><span class="direct_filterLabel">%s</span> <span class="direct_highlightedText">%s</span>\
-            </h3>\
-            """ % (filter_output, criteria_output)
-        )
+        column_header = ('<h3><span class="direct_filterLabel">%s</span> '
+                         '<span class="direct_highlightedText">%s</span></h3>')
+        column_header = column_header % (filter_output, criteria_output)
+
         # Javascript in pager.js uses splits that assume there are no '_'
         # characters in the type
         selector_type = _type.replace('_', '')
         ul_open = '<ul role="menu" id="direct_%sDisambig">' % selector_type
-        output = [col_hdr, ul_open]
+
+        output = [column_header, ul_open]
         counter = 1
 
         # hidden options is a boolean used to track whether there are more
@@ -71,6 +120,7 @@ class FacetListWidget(Widget):
         # by default, and switched to true if there are hidden fields created
         # or the counter matches or exceeds the num_items value
         hidden_options = False
+
         for item in items:
             try:
                 item_name = safe(smart_truncate(facet_text(item[0])))
@@ -99,47 +149,56 @@ class FacetListWidget(Widget):
             # django template, but this widget doesn't use a specific template
             # so it makes more sense to do it directly in the python here.
             item_count = intcomma(item[1]) if item[1] else False
-            
+
+            if _type == 'facet':
+                # When this was added most of the custom facet
+                # names ended with " Jobs" (for prettier titles). In order to
+                #  ensure that the slugs/paths for these facets remained the
+                # same, we decided to keep " Jobs" in these slugs, so it needs
+                # stripped out to match all the other facet types that
+                # don't end in " Jobs".
+                item_name = item_name.rstrip(" Jobs")
+
             # Use the django templating system to provide richer string parsing
             item_context = Context({
                 "li_class": li_class,
                 "item_url": item_url, 
                 "item_name": item_name, 
                 "item_count": item_count,
-                })
-            item_template = Template(
-                """\
-                <li role="menuitem" {% if li_class %} \
-                    class='{{li_class}}'{% endif %}>\
-                <a href="{{ item_url }}">\
-                    {{ item_name }} \
-                    {% if item_count %}\
-                    ({{ item_count }})\
-                    {% endif %}
-                </a></li>"""
-                )
-            
-            # render the above template and context into a string variable
+            })
+
+            li_item = ('<li role="menuitem" '
+                       '{% if li_class %}class="{{li_class}}"{% endif %}>'
+                       '<a href="{{ item_url }}">'
+                       '{{ item_name }}{% if item_count %} ({{ item_count }})'
+                       '{% endif %}</a></li>')
+            item_template = Template(li_item)
             href = item_template.render(item_context)
             
             output.append(href)
             counter += 1
 
-        more_less = (
-            """\
-            <span id="direct_moreLessLinks_%(type)sDisambig" data-type="%(type)s"\
-             class="more_less_links_container" data-num-items="%(num_items)s"\
-             data-total-items="%(total_items)s" data-offset="%(offset)s">
-              <a class="direct_optionsMore" href="#" rel="nofollow">%(more)s</a>
-              <a class="direct_optionsLess" href="#" rel="nofollow">%(less)s</a>
-            </span>\
-            """ % dict(num_items=self.num_items,
-                       type=selector_type, total_items=counter,
-                       more=more_output, less=less_output,
-                       offset=self.offset)
-        )
+        more_less = ('<span id="direct_moreLessLinks_%(type)sDisambig" '
+                     'data-type="%(type)s" '
+                     'class="more_less_links_container" '
+                     'data-num-items="%(num_items)s" '
+                     'data-total-items="%(total_items)s" '
+                     'data-offset="%(offset)s">'
+
+                     '<a class="direct_optionsMore" '
+                     'href="#" rel="nofollow">%(more)s</a>'
+
+                     '<a class="direct_optionsLess" href="#" '
+                     'rel="nofollow">%(less)s</a>'
+
+                     '</span>')
+        more_less = more_less % dict(num_items=self.num_items,
+                                     type=selector_type, total_items=counter,
+                                     more=more_output, less=less_output,
+                                     offset=self.offset)
  
         output.append('</ul>')
+
         if hidden_options or self._show_more(items, self.num_items):
             output.append(more_less)
 
@@ -148,13 +207,13 @@ class FacetListWidget(Widget):
     def _show_more(self, items, num_to_show):
         # 2*num_to_show is currently the max length of items, passed in
         # by helpers.get_widgets
-        return len(items) >= 2*num_to_show
+        return len(items) >= 2 * num_to_show
 
     def _show_widget(self, items):
         if self._type == 'featured':
             return True
-        else:
-            show = getattr(self.site_config, 'browse_{t}_show'.format(t=self._type))
+
+        show = getattr(self.site_config, 'browse_{t}_show'.format(t=self._type))
 
         if self._type == 'facet':
             retval = (bool(len(items)) and show)
@@ -163,21 +222,23 @@ class FacetListWidget(Widget):
 
         return retval
 
-    def get_abs_url(self, item, *args, **kwargs):
+    def get_abs_url(self, facet):
         """
         Calculates the absolute URL for each item in a particular filter
         <ul> tag. It then returns this as a string to be rendered in the
         template.
-        
+
         """
+        facet_slab, facet_count = facet
         url_atoms = {'location': '', 'title': '', 'facet': '', 'featured': '',
                      'moc': '', 'company': ''}
-        if self._type in ('country', 'city', 'state'):
-            t = 'location'
-        else:
-            t = self._type
 
-        url_atoms[t] = urlencode(facet_url(item[0]))
+        if self._type in ('country', 'city', 'state'):
+            facet_type = 'location'
+        else:
+            facet_type = self._type
+
+        url_atoms[facet_type] = urlencode(facet_url(facet_slab))
 
         # For custom facets where the "show with or without results" option
         # is checked, we don't want to build out a path relative to the
@@ -192,67 +253,45 @@ class FacetListWidget(Widget):
         # builds URL path relative to current location :) Clear as mud.
         # Don't worry, we'll take this out once we have proper static pages
         # implemented.
-        if item[1]:
-            url_atoms = self._build_path_dict(t, url_atoms)
-            
+        if facet_count:
+            url_atoms = self._build_path_dict(facet_type, url_atoms)
+
         # Create a list of intermediate 2-tuples, with the url_atoms
-        # value and the ordering data from self.slug_order. Then sort
-        # them based on that ordering data. Finally, join all values
-        # from this sorted list to create the canonical URL.
-        results = sorted([(url_atoms[k], self.slug_order['company']
-                         if k == 'featured' else self.slug_order[k])
-                         for k in url_atoms], key=lambda result: result[1])
+        # value and the ordering data from self.slug_order.
+        url_orders = [(url_atoms[key], self.slug_order[key])
+                      for key in url_atoms]
+
+        # Sort them based on that ordering data.
+        results = sorted(url_orders, key=lambda result: result[1])
+
+        # Join all values from this sorted list to create
+        # the canonical URL.
         url = '/%s/' % '/'.join([i[0] for i in
                                 ifilter(lambda r: r[0], results)])
 
         if hasattr(self.request, 'META'):
-            url = "%s?%s" % (url, self.request.META.get('QUERY_STRING'))\
-                if self.request.META.get('QUERY_STRING', None) else url
+            url = ("%s?%s" % (url, self.query_string)
+                   if self.query_string else url)
 
         return url
 
     def _build_path_dict(self, item_type, path_map):
-        # This loop transfers any URL information from the path_dict
-        # (which is the bread_box_path from home_page/job_list_by_slug_tag
-        # views) to the url_atoms dict after stripping leading/trailing
+        # This loop transfers any URL information from the
+        # path_dict (which is the existing path broken down by filter type)
+        # to the url_atoms dict after stripping leading/trailing
         # slashes.
-        for atom in path_map:
-            s = '%s_slug' % atom
-            if atom != item_type:
-                if s in self.path_dict:
-                    path_map[atom] = self.path_dict[s].strip('/')
+        for atom, path in path_map.iteritems():
+            if atom in self.path_dict:
+                allow_multiple = settings.ALLOW_MULTIPLE_SLUG_TAGS[atom]
+                if atom == item_type and allow_multiple:
+                    existing_path = self.path_dict[atom]
+                    new_path = join_paths_of_same_type(item_type, path,
+                                                       existing_path)
+                    # The code that builds out urls assumes the path
+                    #  doesn't start with a '/'
+                    new_path = new_path.lstrip('/')
 
+                    path_map[atom] = new_path
+                elif atom != item_type:
+                    path_map[atom] = self.path_dict[atom].strip('/')
         return path_map
-        
-
-class SearchFacetListWidget(FacetListWidget):
-    
-    def get_abs_url(self, item, *args, **kwargs):
-        item_name = safe(smart_truncate(facet_text(item[0])))
-        loc_val = self.request.GET.get('location', '')
-        moc_val = self.request.GET.get('moc', '')
-        t_val = self.request.GET.get('q', '')
-        company_val = self.request.GET.get('company', '')
-        exact_loc = self.request.GET.get('exact_loc', '')
-        exact_title = self.request.GET.get('exact_title', '')
-        qs_dict = {'location': loc_val, 'q': t_val, 'company': company_val,
-                   'exact_loc': exact_loc, 'exact_title': exact_title}
-        if moc_val:
-            qs_dict['moc'] = moc_val.split(' - ')[0]
-
-        if self._type in ('city', 'state', 'country', 'cities', 'states',
-                          'countries'):
-            qs_dict['exact_loc'] = 'true'
-            qs_dict['location'] = item_name
-        elif self._type in ('moc', 'mocs'):
-            qs_dict[self._type] = item_name.split(' - ')[0]
-        elif self._type in ('title', 'titles'):
-            qs_dict['exact_title'] = 'true'
-            qs_dict['q'] = safe(facet_text(item[0]))
-        else:
-            qs_dict[self._type] = safe(facet_text(item[0]))
-
-        # Using safe_urlencode here because without it, search terms like
-        # Düsseldorf will throw an exception since urllib.urlencode chokes
-        # on UTF-8 values which can't fail down to ascii.
-        return './search?{qs}'.format(qs=safe_urlencode(qs_dict))

@@ -1,11 +1,21 @@
-if(typeof jQuery == 'undefined') {
+if (typeof jQuery == 'undefined') {
     var script = document.createElement('script');
     script.type = "text/javascript";
     script.src = "//d2e48ltfsb5exy.cloudfront.net/framework/v2/secure/js/code/jquery-1.7.1.min.js";
     document.getElementsByTagName('head')[0].appendChild(script);
 }
 
+var prefix;
 var load_event = function(){
+    // The field selector changes depending on if we are on a job form. We can
+    // determine if we are by checking for the existence of an empty form. This
+    // must be done after the DOM has loaded.
+    if (typeof form == 'undefined') {
+        prefix = 'id_';
+    } else {
+        prefix = 'id_form-__prefix__-';
+    }
+
     /* intentionally global variables used for the job form*/
     apply_link = $('#id_apply_link').val() || '';
     apply_email = $('#id_apply_email').val() || '';
@@ -23,7 +33,7 @@ var load_event = function(){
     update_apply_fields();
     update_site_fields();
     update_job_limit_fields();
-    update_state_selection($('select[id$="__prefix__-country"]').val());
+    update_state_selection($('select[id="' + prefix + 'country"]').val());
 
     if($(".product-card").length > 1)
         $("#no-locations").remove();
@@ -44,7 +54,7 @@ var load_event = function(){
     $(document).on("change", '#post-to-selector_1', function() {
         update_site_fields();
     });
-    $(document).on("change", 'select[id$="-country"]', function () {
+    $(document).on("change", 'select[id="' + prefix + 'country"]', function () {
         update_state_selection($(this).val());
     });
 
@@ -332,7 +342,7 @@ function clear_form(form) {
     fields.forEach(function(element) {
         form.find(element).val('');
     });
-    form.find('#id_form-__prefix__-region').val('');
+    form.find('#id_form-__prefix__region').val('');
     form.find('input[name$=-zipcode]').val('');
 }
 
@@ -397,33 +407,19 @@ function create_location_events() {
     });
 }
 
-function expand_errors(contents) {
-    /*
-     Expands the content portion of an accordion (denoted by the :contents:
-     param) if an input inside the accordion has errors (has 'required' as
-     one of its classes)
-     */
-    $('.required').each(function() {
-        var parent_accordion = $(this).parents(contents);
-        if (parent_accordion.css('display') == "none") {
-            parent_accordion.slideToggle();
-        }
-    });
-}
-
 function update_state_selection(country) {
     /*
         region: open-ended input
         state: select box for US/Canadian states, provinces, and territories
      */
-    var region = $('#id_form-__prefix__-region'),
-        state = $('#id_form-__prefix__-state');
+    var region = $('#' + prefix + 'region'),
+        state = $('#' + prefix + 'state');
     if (country == 'United States' || country == 'Canada') {
         region.hide();
-        $('label[for="id_form-__prefix__-region"]').hide();
+        $('label[for="' + prefix + 'region"]').hide();
 
         state.show();
-        $('label[for="id_form-__prefix__-state"]').show();
+        $('label[for="' + prefix + 'state"]').show();
 
         country = country.replace(' ', '.');
         var hidden = $('#hidden-options'),
@@ -431,13 +427,16 @@ function update_state_selection(country) {
             other_country = state.find('option:not(.' + country + ')');
         this_country.appendTo(state);
         other_country.appendTo(hidden);
-        state.val(state.find('option:first_of_type').val());
+        if (!state.find(':selected')) {
+            // Only set the selected option if nothing is selected.
+            state.val(state.find('option:first_of_type').val());
+        }
     }
     else {
         region.show();
-        $('label[for="id_form-__prefix__-region"]').show();
+        $('label[for="' + prefix + 'region"]').show();
 
         state.hide();
-        $('label[for="id_form-__prefix__-state"]').hide();
+        $('label[for="' + prefix + 'state"]').hide();
     }
 }

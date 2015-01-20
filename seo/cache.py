@@ -3,7 +3,7 @@ import hashlib
 from django.core.cache import cache
 from django.http import HttpRequest
 from django.utils.cache import get_cache_key
-from seo.helpers import get_jobs
+from seo.helpers import get_jobs, get_solr_facet
 
 from seo.models import Configuration
 from django.conf import settings
@@ -54,7 +54,7 @@ def get_total_jobs_count():
     return jobs_count
 
 
-def get_facet_count_key(filters='', query_string=''):
+def get_facet_count_key(filters=None, query_string=None):
     """
     Returns a unique key for the current site and filter path
     Inputs:
@@ -62,12 +62,27 @@ def get_facet_count_key(filters='', query_string=''):
                  representation of two filters is equal, they should represent
                  the same search.
     """
+    filters = filters or ''
+    query_string = query_string or ''
+
     #We use a hash to ensure key length is under memcache's 250 character limit
     return "browsefacets::%s%s%s" % (
         settings.SITE_ID,
         hashlib.md5(unicode(filters)).hexdigest(),
         hashlib.md5(unicode(query_string)).hexdigest()
     )
+
+
+def get_custom_facets(request, filters=None, query_string=None):
+    custom_facet_key = get_facet_count_key(filters, query_string)
+    custom_facets = cache.get(custom_facet_key)
+
+    if not custom_facets:
+        custom_facets = get_solr_facet(settings.SITE_ID, settings.SITE_BUIDS,
+                                       filters=filters, params=request.GET)
+        cache.set(custom_facet_key, custom_facets)
+
+    return custom_facets
 
 
 def get_site_config(request):

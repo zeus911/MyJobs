@@ -1,36 +1,11 @@
 {% load seo_extras %}
 {% load i18n %}
-<h3>{% trans "Current Search Criteria" %}</h3>
-<ul id="direct_searchOptions">
-  {% if bread_box_path.company_slug %}
-  <li><a id="title_bread_box" href="{% breadbox_url base_path|cut:bread_box_path.company_slug request.META.QUERY_STRING %}" title="{% trans 'Remove' %} {{ bread_box_title.company_slug }}">{{ bread_box_title.company_slug|smart_truncate }}</a></li>
-  {% endif %}
-    {% if bread_box_path.title_slug %}
-        <li><a id="title_bread_box" href="{% breadbox_url base_path|cut:bread_box_path.title_slug request.META.QUERY_STRING %}" title="{% trans 'Remove' %} {{ bread_box_title.title_slug }}">{{ bread_box_title.title_slug|smart_truncate }}</a></li>
-    {% endif %}
-    {% if bread_box_path.loc_up %}
-        <li><a id="loc_up_bread_box" href="{% breadbox_location_url base_path|cut:bread_box_path.location_slug bread_box_path.loc_up request.META.QUERY_STRING %}" title="{% trans 'Remove' %} {{ bread_box_title.location_slug }}">{{ bread_box_title.location_slug|smart_truncate }}</a></li>
-    {% else %}
-		{% if bread_box_title.location_slug %}
-        <li><a id="location_bread_box" href="{% breadbox_url base_path|cut:bread_box_path.location_slug request.META.QUERY_STRING %}" title="{% trans 'Remove' %} {{ bread_box_title.location_slug }}">{{ bread_box_title.location_slug|smart_truncate }}</a></li>
-		{% endif %}
-    {% endif %}
-    {% if bread_box_path.facet_slug %}
-        <li><a id="facet_bread_box" href="{% breadbox_url base_path|cut:bread_box_path.facet_slug request.META.QUERY_STRING %}" title="{% trans 'Remove' %} {{ bread_box_title.facet_slug }}">{{ bread_box_title.facet_slug|smart_truncate }}</a></li>
-    {% endif %}
-	{% if bread_box_title.moc_slug %}
-        <li><a id="moc_bread_box" href="{% breadbox_url base_path|cut:bread_box_path.moc_slug request.META.QUERY_STRING %}" title="{% trans 'Remove' %} {{ bread_box_title.moc_slug }}">{{ bread_box_title.moc_slug|smart_truncate:30 }}</a></li>
-    {% endif %}
-    {% if title_term and title_term != '\*' %}
-        <li><a href="{{ base_path }}{% breadbox_qs request.META.QUERY_STRING 'q' %}" title="{% trans 'Remove' %}">{{ title_term }}</a></li>
-    {% endif %}
-    {% if location_term and location_term != '\*' and not bread_box_title.location_slug %}
-        <li><a href="{{ base_path }}{% breadbox_qs request.META.QUERY_STRING 'location' %}" title="{% trans 'Remove' %}">{{ location_term }}</a></li>
-    {% endif %}
-    {% if moc_term and moc_term != '\*' and not bread_box_title.moc_slug %}
-        <li><a href="{{ base_path }}{% breadbox_qs request.META.QUERY_STRING 'moc' %}" title="{% trans 'Remove' %}">{{ moc_term }}</a></li>
-    {% endif %}
-    {% if bread_box_path|length > 1 or location_term and location_term != '\*' or title_term and title_term != '\*' or moc_term and moc_term != '\*' %}
-        <li><a href="{% breadbox_url '' '' %}" title="Clear All">{% blocktrans %}Clear All{% endblocktrans %}</a></li>
-    {% endif %}
-</ul>
+
+{% if breadbox.all_breadcrumbs %}
+    <h3>{% trans "Current Search Criteria" %}</h3>
+    <ul id="direct_searchOptions">
+        {% for breadcrumb in breadbox.all_breadcrumbs %}
+            <li><a class="{{ breadcrumb.breadcrumb_class }}" href="{{ breadcrumb.url }}" title="{% trans 'Remove' %}">{{ breadcrumb.display_title|smart_truncate }}</a></li>
+        {% endfor %}
+    </ul>
+{% endif %}

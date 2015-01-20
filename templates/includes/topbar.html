@@ -273,11 +273,6 @@
         });
 
         {% if group_member and company_name|length > 1 %}
-        // See if a cookie is already set. If so update employer links.
-        var cid = read_cookie();
-        if(cid)
-            update_employer_tools(cid);
-
         // Build multiple company selector
         get_companies();
     });
@@ -338,8 +333,7 @@
                 // replaces text of main li holding company list
                 parent_list_item.firstChild.innerHTML = "<b>"+ this.firstChild.innerHTML +"</b>";
 
-                // update employer links
-                update_employer_tools(item_id);
+                process_reload();
             };
             list.appendChild(list_item);
         }
@@ -347,16 +341,16 @@
         parent_list_item.appendChild(label);
         parent_list_item.appendChild(list);
 
-        var parent_element = document.getElementById("employer-apps");
-        var first_child = parent_element.firstChild;
+        var parent_element = document.getElementById("employer-apps"),
+            first_child = parent_element.firstChild;
         parent_element.insertBefore(parent_list_item, first_child);
 
         // Mobile
-        var mobile_parent_element = document.createElement("li");
+        var mobile_parent_element = document.createElement("li"),
+            mobile_label = document.createElement("a");
         mobile_parent_element.setAttribute("id", "mobile-company-select");
         mobile_parent_element.setAttribute("class", "no-show");
         mobile_parent_element.setAttribute("style", "cursor:pointer");
-        var mobile_label = document.createElement("a");
         mobile_label.innerHTML = "<b>" + menu_company_name + "</b>";
         if(menu_company_name.length > 20)
             mobile_label.setAttribute("style", "font-size: 21px");
@@ -376,8 +370,8 @@
             $("#partner-link").addClass("no-show");
             $("#account-link").addClass("no-show");
         };
-        var pop_menu = document.getElementById("pop-menu");
-        var search_item = document.getElementById("search-jobs");
+        var pop_menu = document.getElementById("pop-menu"),
+            search_item = document.getElementById("search-jobs");
         pop_menu.insertBefore(mobile_parent_element, search_item.parentNode);
 
         for(var j=0; j<data.length; j++) {
@@ -390,8 +384,7 @@
                 var mobile_item_id = this.id.split("_")[1];
                 set_cookie(mobile_item_id, 14);
                 mobile_parent_element.firstChild.innerHTML = "<b>"+ this.firstChild.innerHTML + "</b>";
-                update_employer_tools(mobile_item_id);
-                $("#back-btn").click();
+                process_reload();
             };
             pop_menu.appendChild(mobile_list_item);
         }
@@ -409,8 +402,8 @@
     }
 
     function read_cookie() {
-        var nameEQ = "myjobs_company=";
-        var ca = document.cookie.split(';');
+        var nameEQ = "myjobs_company=",
+            ca = document.cookie.split(';');
         for (var i=0; i< ca.length; i++) {
             var c = ca[i];
             while (c.charAt(0) === ' ')
@@ -425,19 +418,42 @@
         set_cookie("", -1);
     }
 
-    function update_employer_tools(company_id) {
-        // li_children are children of Employer Tools
-        var li_children = document.getElementById("employer-apps").children;
+    function process_reload() {
+        /*
+        Looks at what path the user is currently in.  If the path is showing
+        an app that changing company matters redirect the user to a desired
+        location instead of causing a 404.
+         */
+        var path = window.location.pathname,
+            // Apps that changing company IDs would be a problem.
+            app_names = ["candidates", "prm", "posting"],
+            new_href = window.location.protocol + "//" + window.location.host,
+            app_name,
+            i;
 
-        // Editing links from old company to newly set company
-        for(var i=0; i<li_children.length; i++)
-            li_children[i].firstChild.search = "company="+company_id;
+        for(i=0; i < app_names.length; i++) {
+            app_name = app_names[i];
+            if(path.indexOf(app_name) != -1) {
+                if(app_name === "candidates") {
+                    // window.location.href used instead of window.location.replace
+                    // to simulate a link instead of a redirect.
+                    window.location.href = new_href + "/candidates/view/";
 
-        var candidate_link = document.getElementById("candidate-link");
-        candidate_link.search = "company=" + company_id;
-
-        var partner_link = document.getElementById("partner-link");
-        partner_link.search = "company=" + company_id;
+                    // Return false so code doesn't reach location.reload() as it
+                    // was causing race conditions
+                    return false
+                }
+                else if(app_name === "prm") {
+                    window.location.href = new_href + "/prm/view/";
+                    return false
+                }
+                else if(app_name === "posting") {
+                    window.location.href = new_href + "/posting/admin/";
+                    return false
+                }
+            }
+        }
+        location.reload();
     }
 
     {% else %}

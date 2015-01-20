@@ -3,25 +3,24 @@ import datetime
 import logging
 import math
 import operator
+from pysolr import SolrError
 import urllib
-from base64 import b64encode
-from itertools import islice, ifilter
+from itertools import islice
 from urlparse import urljoin, urlparse, parse_qs, parse_qsl
 
 from django.conf import settings
 from django.shortcuts import redirect
-from django.template.defaultfilters import safe, urlencode
+from django.template.defaultfilters import safe
 from haystack.backends.solr_backend import SolrSearchQuery
 from haystack.inputs import Raw
 from haystack.query import SQ, EmptySearchQuerySet
 from ordereddict import OrderedDict
-from saved_search.groupsearch import GroupQuerySet
 
 from seo_pysolr import Solr
 from seo.search_backend import DESearchQuerySet
-from seo.models import BusinessUnit, CustomFacet, SeoSiteFacet
-from seo.templatetags.seo_extras import facet_text, facet_url, smart_truncate
-from seo.filters import FacetListWidget, SearchFacetListWidget
+from seo.models import BusinessUnit, CustomFacet
+from seo.templatetags.seo_extras import facet_text, smart_truncate
+from seo.filters import FacetListWidget
 from serializers import JSONExtraValuesSerializer
 from moc_coding.models import Moc
 
@@ -133,45 +132,41 @@ def canonical_path_from_filter_dict(filters):
     return ''.join(term_paths)
 
 
-def build_results_heading(title_dict):
+def build_results_heading(breadbox):
     """
     Builds a sensible, human-readable heading for the results page in the
-    format of COMPANY Careers<br>(CUSTOM_SEARCH | "TITLE Jobs")("in LOCATION"),
-    e.g.
+    format of COMPANY Careers<br>(CUSTOM_SEARCH | "TITLE Jobs")("in LOCATION")
 
-    BP Careers
-    Environment Jobs in New Orleans, Louisiana
+    :param breadbox: A Breadbox instance with all the breadcrumbs that should
+                     appear in the heading already built.
 
-    Inputs
-    :title_dict: A dictionary of slug tags and their values (either the human-
-                 readable values from the URL slugs or None)
-
-    Returns
-    A string composed of info in the title_dict
+    :return: A string containing the heading.
 
     """
     heading = []
-    get_slug = title_dict.get
-    has_facet = get_slug('facet_slug') is not None
-    has_title = get_slug('title_slug') is not None 
-    has_moc = get_slug('moc_slug') is not None 
-    has_company = get_slug('company_slug') is not None 
-    has_location = get_slug('location_slug') is not None
-    has_count = get_slug('count') is not None
+
+    has_facet = bool(breadbox.custom_facet_breadcrumbs)
+    has_title = bool(breadbox.title_breadcrumb)
+    has_moc = bool(breadbox.moc_breadcrumbs)
+    # breadbox.location_breadcrumbs accounts for both
+    # the location data from the path and from the query parameters.
+    # The heading is only built from the path data, so we have to
+    # ignore any data passed in for location from the query parameters here.
+    has_location = bool(breadbox.filters['location_slug'])
+    has_count = bool(breadbox.job_count)
 
     if has_facet and not (has_title or has_moc):
-        # Custom Facet titles already have "Jobs" at the end of the string.
-        heading.append(title_dict['facet_slug'])
+        heading.append(breadbox.custom_facet_display_heading())
 
     if has_title:
-        heading.extend([title_dict['title_slug'], "Jobs"])
+        heading.append(breadbox.title_display_heading())
     elif not heading:
         if has_count:
-            heading.append(title_dict['count'])
+            heading.append(str(breadbox.job_count))
         heading.append("Jobs")
 
     if has_location:
-        heading.extend(['in', title_dict['location_slug']])
+        heading.append("in %s" % breadbox.location_display_heading())
 
     return " ".join(heading)
 
@@ -277,30 +272,6 @@ def get_nav_type(filters):
     return nav_type
 
 
-def get_bread_box_path(filters=None):
-    bread_box_path = {}
-
-    if filters:
-        for k in filters:
-            if filters[k]:
-                if k == 'location_slug':
-                    # build location part
-                    loc = filters[k].strip('/')
-                    bread_box_path[k] = loc + settings.SLUG_TAGS[k]
-                    loc_up = loc.split('/')
-                    # loc_up is next valid location up the location hierarchy
-                    if loc_up:
-                        if 'none' in loc_up:
-                            loc_up.remove('none')
-                        if len(loc_up) > 1:
-                            bread_box_path['loc_up'] = ('/'.join(loc_up[1:]) +
-                                                        settings.SLUG_TAGS[k])
-                else:
-                    bread_box_path[k] = filters[k] + settings.SLUG_TAGS[k]
-
-    return bread_box_path
-
-
 def job_breadcrumbs(job, company=False):
     """
     Generate breadcrumbs for job detail pages.
@@ -385,7 +356,95 @@ def _page_title(crumbs):
     return " in ".join([info_part, loc_part])
 
 
-def get_bread_box_title(filters={}, jobs=None):
+def bread_box_company_heading(company_slug_value):
+    # TODO write test to hit this logic
+    if not company_slug_value:
+        return None
+
+    try:
+        kwargs = {'title_slug': company_slug_value}
+        business_unit = BusinessUnit.objects.filter(**kwargs)
+    except (BusinessUnit.DoesNotExist, BusinessUnit.MultipleObjectsReturned):
+        return None
+
+    return business_unit[0].title
+
+
+def bread_box_location_heading(location_slug_value, jobs=None):
+    if not location_slug_value:
+        return None
+
+    location_slug_value = location_slug_value.strip('/')
+
+    locations = location_slug_value.split('/')
+    loc_length = len(locations)
+
+    try:
+        if loc_length == 3:
+            return jobs[0].location
+        elif loc_length == 2:
+            return jobs[0].state
+        elif loc_length == 1:
+            return jobs[0].country
+    except IndexError:
+        # We didn't have a valid job to pull the location, state,
+        # or country from.
+        return None
+
+
+def bread_box_moc_heading(moc_slug_value):
+    if not moc_slug_value:
+        return None
+
+    moc_slug_value = moc_slug_value.strip('/')
+    moc_pieces = moc_slug_value.split('/')
+    moc_code = moc_pieces[1]
+    branch = moc_pieces[2]
+
+    try:
+        moc = Moc.objects.get(code=moc_code, branch=branch)
+    except (Moc.DoesNotExist, Moc.MultipleObjectsReturned):
+        return None
+
+    return moc.code + ' - ' + moc.title
+
+
+def bread_box_title_heading(title_slug_value, jobs=None):
+    if not title_slug_value and not jobs:
+        return None
+
+    if jobs:
+        job = jobs[0]
+        if title_slug_value == job.title_slug:
+            return job.title
+        else:
+            for job in jobs:
+                if title_slug_value == job.title_slug:
+                    return job.title
+
+    # Try searching solr for a matching title.
+    conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
+    try:
+        search_terms = {
+            'q': u'title_slug:%s' % title_slug_value,
+            'fl': 'title, title_slug',
+            'rows': 1,
+        }
+        res = conn.search(**search_terms)
+    except SolrError:
+        # Poorly formated title_slug_values can sometimes cause Solr errors.
+        res = None
+
+    if res and res.docs[0].get('title_slug') == title_slug_value:
+        return res.docs[0]['title']
+    else:
+        if title_slug_value:
+            return title_slug_value.replace('-', ' ').title()
+        else:
+            return None
+
+
+def get_bread_box_headings(filters=None, jobs=None):
     """
     This function builds the 'bread box' titles that area seen
     in the right hand column on any page with filter criteria
@@ -399,82 +458,31 @@ def get_bread_box_title(filters={}, jobs=None):
         bread_box_title -- formatted page title
         
     """
-    bread_box_title = {}
-    conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
+    filters = filters or {}
+    bread_box_headings = {}
 
     if filters and jobs:
-        location_slug = filters["location_slug"]
-        if location_slug:
-            location_slug = location_slug.strip('/')
-            
-            locations = location_slug.split('/')
-            loc_length = len(locations)
-            try:
-                if loc_length == 3:
-                    bread_box_title['location_slug'] = jobs[0].location
-                elif loc_length == 2:
-                    bread_box_title['location_slug'] = jobs[0].state
-                elif loc_length == 1:
-                    bread_box_title['location_slug'] = jobs[0].country
-            except IndexError:
-                # We didn't have a valid job to pull the location, state, 
-                # or country from.
-                pass
+        location_slug_value = filters.get('location_slug')
+        location = bread_box_location_heading(location_slug_value, jobs)
+        if location:
+            bread_box_headings['location_slug'] = location
 
-        title_slug = filters.get('title_slug')
+        title_slug_value = filters.get('title_slug')
+        title = bread_box_title_heading(title_slug_value, jobs)
+        if title:
+            bread_box_headings['title_slug'] = title
 
-        if title_slug:
-            if isinstance(jobs, DESearchQuerySet):
-                job = jobs.narrow("title_slug:(%s)" % title_slug)
+        moc_slug_value = filters.get('moc_slug')
+        moc = bread_box_moc_heading(moc_slug_value)
+        if moc:
+            bread_box_headings['moc_slug'] = moc
 
-                if job:
-                    bread_box_title['title_slug'] = job[0].title
-            else:
-                job = jobs[0]
+        company_slug_value = filters.get("company_slug")
+        company = bread_box_company_heading(company_slug_value)
+        if company:
+            bread_box_headings['company_slug'] = company
 
-                # see if the first job is a match already
-                if title_slug == job.title_slug:
-                    bread_box_title['title_slug'] = job.title
-                # look through the rest if it isn't
-                else:
-                    found = False
-                    for job in jobs:
-                        if title_slug == job.title_slug:
-                            bread_box_title['title_slug'] = job.title
-                            found = True
-                            break
-                    # still can't find it? Solr query time
-                    if not found:
-                        res = conn.search(
-                            q=u"title_slug:{0}".format(title_slug),
-                            fl="title, title_slug", rows=1)
-                        if res and res.docs[0].get('title_slug') == title_slug:
-                            bread_box_title['title_slug'] = res.docs[0]['title']
-                        else:
-                            # Title case the slug as a last resort
-                            bread_box_title['title_slug'] = \
-                                title_slug.replace('-', ' ').title()
-
-        moc_slug = filters["moc_slug"]
-        if moc_slug is not None:
-            moc_slug = moc_slug.strip('/')
-            moc_pieces = moc_slug.split('/')
-            moc_code = moc_pieces[1]
-            branch = moc_pieces[2]
-            
-            moc = Moc.objects.get(code=moc_code, branch=branch)
-        
-            if moc:
-                bread_box_title['moc_slug'] = moc.code + ' - ' + moc.title
-                
-        company_slug = filters.get("company_slug")
-        # TODO write test to hit this logic
-        if company_slug:
-            business_unit = BusinessUnit.objects.filter(title_slug=company_slug)
-            if business_unit:
-                bread_box_title['company_slug'] = business_unit[0].title
-
-    return bread_box_title
+    return bread_box_headings
 
 
 def get_jobs(custom_facets=None, exclude_facets=None, jsids=None, 
@@ -538,7 +546,7 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
     return filter_sqs(sqs, filters)
 
 
-def filter_sqs(sqs, filters, site_id=None):
+def filter_sqs(sqs, filters):
     """
     Filters a DESearchQuerySet based on the requested URL via
     build_filter_dict's URL-parsing algorithm. Returns a count of the
@@ -549,12 +557,16 @@ def filter_sqs(sqs, filters, site_id=None):
     right-hand "Filter By x" column.
     
     """
-    if site_id is None:
-        site_id = settings.SITE_ID
+
     if filters.get('facet_slug'):
-        subfilter = _custom_facet_from_slug_tag(filters['facet_slug'], site_id)
-        if subfilter:
-            sqs = sqs_apply_custom_facets(subfilter, sqs)
+        facet_slugs = filters.get('facet_slug').split('/')
+        custom_facets = _custom_facets_from_facet_slugs(facet_slugs)
+        # Apply each custom facet seperately so that we can guarantee the
+        # search terms are ANDed together (via being their own seperate
+        # fq parameters) rather than using the default operator for the
+        # custom facet.
+        for custom_facet in custom_facets:
+            sqs = sqs_apply_custom_facets([custom_facet], sqs)
     
     _filters = filter(lambda x: filters.get(x) and x != 'facet_slug', filters)
 
@@ -707,17 +719,14 @@ def combine_groups(custom_facet_counts, match_field='name'):
 
 
 def get_widgets(request, site_config, facet_counts, custom_facets,
-                path_dict={}, featured=False, search_facets=False):
+                filters=None, featured=False):
     """
     Return a list of widget FacetListWidget objects to the home_page or
     job_list_by_slug_tag view, sorted by their browse order as set in the
     site config.
 
     """
-    if search_facets:
-        facet_class = SearchFacetListWidget
-    else:
-        facet_class = FacetListWidget
+    filters = filters or {}
 
     moc_field = 'mapped_moc' if settings.SITE_BUIDS else 'moc'
     if featured:
@@ -739,19 +748,24 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
     num_items = site_config.num_filter_items_to_show
     widgets = []
     for _type in types:
-        w = facet_class(request, site_config, _type[0],
-                        facet_counts['%s_slab' % _type[0]][0:num_items*2],
-                        path_dict)
+        w = FacetListWidget(request, site_config, _type[0],
+                            facet_counts['%s_slab' % _type[0]][0:num_items*2],
+                            filters)
         w.precedence = _type[1]
         widgets.append(w)
-
     if custom_facets:
+        # Since all of the custom facets are already loaded on the
+        # page (but hidden), pass in an arbitrarily large number
+        # as the offset in order to avoid more requests for custom facets
+        # to be made.
+        offset = len(custom_facets)*10000
+
         # The facet widget must be generated "separately" from
         # location/title/moc widgets, since facet counts aren't generated
         # from the SearchIndex.
-        search_widget = facet_class(request, site_config, 'facet',
-                                    custom_facets, path_dict,
-                                    offset=len(custom_facets))
+        search_widget = FacetListWidget(request, site_config, 'facet',
+                                        custom_facets, filters,
+                                        offset=offset)
         search_widget.precedence = site_config.browse_facet_order
         widgets.append(search_widget)
     widgets.sort(key=lambda x: x.precedence)
@@ -776,41 +790,7 @@ def facet_data(jsids):
     return sqs.facet_counts()['fields']
 
 
-def get_abs_url(item, _type, path_dict, *args, **kwargs):
-    """
-    Calculates the absolute URL for each item in a particular filter
-    <ul> tag. It then returns this as a string to be rendered in the
-    template.
-
-    """
-    slug_order = {'location': 2, 'title': 1, 'moc': 3, 'facet': 4, 'company': 5}
-    url_atoms = {'company': '', 'location': '', 'title': '', 'facet': '',
-                 'moc': ''}
-    if _type in ('country', 'city', 'state'):
-        t = 'location'
-    elif _type == 'mapped_moc':
-        t = 'moc'
-    else:
-        t = _type
-
-    url_atoms[t] = urlencode(facet_url(item[0]))
-    # This loop transfers any URL information from the path_dict
-    # (which is the bread_box_path from home_page/job_list_by_slug_tag
-    # views) to the url_atoms dict after stripping leading/trailing
-    # slashes.
-    for atom in url_atoms:
-        s = '%s_slug' % atom
-        slugstr = path_dict.get(s, '')
-        if atom != t:
-            if s in path_dict:
-                url_atoms[atom] = slugstr.strip('/')
-
-    results = sorted([(url_atoms[k], slug_order[k]) for k in url_atoms],
-                     key=lambda result: result[1])
-    return '/%s/' % '/'.join([i[0] for i in ifilter(lambda r: r[0], results)])
-
-
-def more_custom_facets(custom_facets, filters={}, offset=0, num_items=0):
+def more_custom_facets(custom_facets, offset=0, num_items=0):
     """Generates AJAX response for more custom_facets."""
     custom_facets = combine_groups(custom_facets)[offset:offset+num_items]
     items = []
@@ -822,14 +802,13 @@ def more_custom_facets(custom_facets, filters={}, offset=0, num_items=0):
     return items
 
 
-def _custom_facet_from_slug_tag(slug, site_id):
-    """Return all CustomFacets with name_slug==slug for a given site."""
-    site_cf_keys = SeoSiteFacet.objects.filter(seosite__id=settings.SITE_ID).\
-        filter(customfacet__show_production=1).\
-        values_list('customfacet__id', flat=True)
-    custom_facets = CustomFacet.objects.filter(id__in=site_cf_keys).\
-        filter(name_slug=slug)
-    return custom_facets
+def _custom_facets_from_facet_slugs(slugs):
+    """
+    Return all CustomFacets with name_slug == slug for a given site.
+
+    """
+    custom_facets = CustomFacet.objects.prod_facets_for_current_site()
+    return custom_facets.filter(name_slug__in=slugs)
 
 
 def sqs_apply_custom_facets(custom_facets, sqs=None, exclude_facets=None):
@@ -1309,7 +1288,7 @@ def get_solr_facet(site_id, jsids, filters=None, params=None):
     #  additional "filters" parameter, which is the output
     # from helper.build_filter_dict(request.path).
     if filters:
-        sqs = filter_sqs(sqs, filters, site_id=settings.SITE_ID)
+        sqs = filter_sqs(sqs, filters)
 
     # Intersect the CustomFacet object's query parameters with those of
     # the site's default facet, if it has one.

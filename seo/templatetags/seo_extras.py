@@ -487,7 +487,7 @@ def breadbox_qs(qs, remove_param):
 
 
 @register.simple_tag
-def build_title(site_title, search_q, location_q, breadbox, heading):
+def build_title(site_title, search_q, location_q, company, heading):
     """
     Build title and metatag title based on search queries and other filters.
 
@@ -496,8 +496,8 @@ def build_title(site_title, search_q, location_q, breadbox, heading):
     """
     title = site_title + " - "
 
-    if breadbox:
-        title += "%s %s" % (breadbox, "Careers - ")
+    if company:
+        title += "%s %s" % (company, "Careers - ")
 
     if search_q == "\*":
         pass
