@@ -25,7 +25,6 @@ def home_page_check(view_func):
         if config.home_page_template == 'home_page/home_page_dns_settings.html':
             data_dict = {
                 'item_type': 'home',
-                'base_path': request.path,
                 'facet_blurb': False,
                 'site_name': settings.SITE_NAME,
                 'site_title': settings.SITE_TITLE,

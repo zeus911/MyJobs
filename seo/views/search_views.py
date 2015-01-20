@@ -17,7 +17,6 @@ from django.contrib.sites.models import Site
 from django.contrib.syndication.views import Feed
 from django.contrib.humanize.templatetags.humanize import intcomma
 from django.core import urlresolvers
-from django.core.cache import cache
 from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.db.models import Q
@@ -25,6 +24,7 @@ from django.http import (HttpResponse, Http404, HttpResponseNotFound,
                          HttpResponseRedirect, HttpResponseServerError,
                          QueryDict)
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404, redirect, render_to_response
 from django.template import RequestContext, loader
 from django.template.defaultfilters import safe
@@ -33,7 +33,6 @@ from django.utils.encoding import smart_str, iri_to_uri
 from django.utils.html import strip_tags
 from django.utils.feedgenerator import Atom1Feed
 from django.views.decorators.csrf import csrf_exempt
-
 
 from slugify import slugify
 
@@ -46,9 +45,11 @@ from import_jobs import add_jobs, delete_by_guid
 from transform import transform_for_postajob
 
 from seo.templatetags.seo_extras import facet_text, smart_truncate
-from seo.cache import get_facet_count_key, get_site_config, get_total_jobs_count
+from seo.breadbox import Breadbox
+from seo.cache import get_custom_facets, get_site_config, get_total_jobs_count
 from seo.search_backend import DESearchQuerySet
 from seo import helpers
+from seo.filters import FacetListWidget
 from seo.forms.admin_forms import UploadJobFileForm
 from seo.models import (BusinessUnit, Company, Configuration, Country,
                         CustomFacet, GoogleAnalytics, JobFeed, SeoSite, SiteTag)
@@ -87,7 +88,7 @@ def ajax_get_facets(request, filter_path, facet_type):
         :HttpResponse: listing facets for the input facet_type
 
     """
-    plurals = {'titles': 'title', 'cities': 'city', 'states':'state',
+    plurals = {'titles': 'title', 'cities': 'city', 'states': 'state',
                'mocs': 'moc', 'mapped': 'mapped_moc',
                'countries': 'country', 'facets': 'facet',
                'company-ajax': 'company'}
@@ -103,17 +104,12 @@ def ajax_get_facets(request, filter_path, facet_type):
     num_items = int(GET.get('num_items', DEFAULT_PAGE_SIZE))
 
     if _type == 'facet':
+        qs = request.META.get('QUERY_STRING', '')
+        custom_facets_count_tuples = get_custom_facets(request, filters=filters,
+                                                       query_string=qs)
 
-        cust_key = get_facet_count_key(filters,
-                                       request.META.get('QUERY_STRING', ''))
-        custom_facets_count_tuples = cache.get(cust_key)
-        if custom_facets_count_tuples is None:
-            custom_facets_count_tuples = helpers.get_solr_facet(
-                settings.SITE_ID, settings.SITE_BUIDS, filters)
-            cache.set(cust_key, custom_facets_count_tuples)
-
-        items = helpers.more_custom_facets(custom_facets_count_tuples, filters,
-                                           offset, num_items)
+        items = helpers.more_custom_facets(custom_facets_count_tuples, offset,
+                                           num_items)
     else:
         default_jobs = helpers.get_jobs(default_sqs=sqs,
                                         custom_facets=settings.DEFAULT_FACET,
@@ -131,34 +127,32 @@ def ajax_get_facets(request, filter_path, facet_type):
                                                   facet_offset=offset,
                                                   sort_order=sort_order)
 
+
         #TODO: This may throw off num_items and offset. Add slicing to each
         #field list to return the correct number of facet constraints/counts
         #Jason McLaughlin 09/10/2012
         facet_counts = default_jobs.add_facet_count(featured_jobs).get('fields')
-
-        items = []
-
-        filters = helpers.get_bread_box_path(filters)
+        facet_results = facet_counts['%s_slab' % _type]
 
         qs = QueryDict(request.META.get('QUERY_STRING', None)).copy()
-
         for param in ['offset', 'filter_path', 'num_items']:
             if param in qs:
                 del qs[param]
+        query_string = qs.urlencode()
 
-        for i in facet_counts['%s_slab' % _type]:
-            url = ("%s?%s" % (helpers.get_abs_url(i, _type, filters),
-                              qs.urlencode())
-                   if qs else helpers.get_abs_url(i, _type, filters))
-            name = safe(smart_truncate(facet_text(i[0])))
+        widget = FacetListWidget(request, site_config, _type, facet_results,
+                                 filters, query_string=query_string)
 
+        items = []
+        for facet in facet_results:
+            facet_slab, facet_count = facet
+            url = widget.get_abs_url(facet)
+            name = safe(smart_truncate(facet_text(facet_slab)))
             if name == 'None' or name.startswith('Virtual'):
                 continue
+            items.append({'url': url, 'name': name, 'count': facet_count})
 
-            items.append({'url': url, 'name': name, 'count': i[1]})
-
-    data_dict = {'items': items, 'item_type': _type,
-                 'num_items': 0}
+    data_dict = {'items': items, 'item_type': _type, 'num_items': 0}
 
     return render_to_response('ajax_filter_items.html',
                               data_dict,
@@ -746,15 +740,21 @@ def syndication_feed(request, filter_path, feed_type):
         rss = JobFeed(feed_type)
         rss.items = qs
 
-        selected = helpers.get_bread_box_title(filters, jobs)
+        selected = helpers.get_bread_box_headings(filters, jobs)
         rss.description = ''
+
         if not any in selected.values():
             selected = {'title_slug': request.GET.get('q'),
                         'location_slug': request.GET.get('location')}
-        rss.description = helpers.build_results_heading(selected)
+
+        breadbox = Breadbox(request.path, selected, jobs, request.GET)
+
+        rss.description = helpers.build_results_heading(breadbox)
         rss.title = rss.description
+
         if feed_type == 'atom':
             rss.feed_type = Atom1Feed
+
         data = Feed.get_feed(rss, jobs, request)
         response = HttpResponse(content_type=data.mime_type)
         data.write(response, 'utf-8')
@@ -795,53 +795,34 @@ def member_carousel_data(request):
 def ajax_filter_carousel(request):
     filters = helpers.build_filter_dict(request.path)
     query_path = request.META.get('QUERY_STRING', None)
-
-    active = []
-    facet_blurb = ''
     search_url_slabs = []
-
     site_config = get_site_config(request)
     num_jobs = int(site_config.num_job_items_to_show) * 2
-
+    sort_order = request.REQUEST.get('sort', 'relevance')
     # Apply any parameters in the querystring to the solr search.
     sqs = (helpers.prepare_sqs_from_search_params(request.GET) if query_path
            else None)
 
     if site_config.browse_facet_show:
-        cust_key = get_facet_count_key(filters, query_path)
-        cust_facets = cache.get(cust_key)
-
-        if not cust_facets:
-            cust_facets = helpers.get_solr_facet(settings.SITE_ID,
-                                                 settings.SITE_BUIDS,
-                                                 filters,
-                                                 params=request.GET)
-            cache.set(cust_key, cust_facets)
-
-        cf_count_tup = cust_facets
-        cf_count_tup = helpers.combine_groups(cf_count_tup)
+        cf_count_tup = get_custom_facets(request, filters=filters,
+                                         query_string=query_path)
 
         if not filters['facet_slug']:
-            search_url_slabs = [(i[0].url_slab, i[1]) for i in cf_count_tup]
+            search_url_slabs = [(facet.url_slab, count)
+                                for facet, count in cf_count_tup]
         else:
-            for x in cf_count_tup:
-                if x[0].name_slug == filters['facet_slug']:
-                    if not facet_blurb and x[0].show_blurb:
-                        facet_blurb = x[0].blurb
-                    active.append(x[0])
-                else:
-                    search_url_slabs.append((x[0].url_slab, x[1]))
-            if active:
-                custom_facets = CustomFacet.objects.filter(
-                    name=active[0].name,
-                    seosite__id=settings.SITE_ID)
-                sqs = helpers.sqs_apply_custom_facets(custom_facets, sqs=sqs)
-    sort_order = request.REQUEST.get('sort', 'relevance')
+            facet_slugs = filters['facet_slug'].split('/')
+            active_facets = CustomFacet.objects.prod_facets_for_current_site()
+            active_facets = active_facets.filter(name_slug__in=facet_slugs)
+            search_url_slabs = [(facet.url_slab, count) for facet, count
+                                in cf_count_tup if facet not in active_facets]
+
     default_jobs = helpers.get_jobs(default_sqs=sqs,
                                     custom_facets=settings.DEFAULT_FACET,
                                     exclude_facets=settings.FEATURED_FACET,
                                     jsids=settings.SITE_BUIDS, filters=filters,
                                     facet_limit=num_jobs, sort_order=sort_order)
+
     featured_jobs = helpers.get_featured_jobs(default_sqs=sqs,
                                               filters=filters,
                                               jsids=settings.SITE_BUIDS,
@@ -849,10 +830,9 @@ def ajax_filter_carousel(request):
                                               sort_order=sort_order)
     facet_counts = default_jobs.add_facet_count(featured_jobs).get('fields')
 
-    bread_box_path = helpers.get_bread_box_path(filters)
-
     widgets = helpers.get_widgets(request, site_config, facet_counts,
-                                  search_url_slabs, bread_box_path)
+                                  search_url_slabs, filters=filters)
+
     html = loader.render_to_string('filter-carousel.html',
                                    filter_carousel({'widgets': widgets}))
     return HttpResponse(json.dumps(html),
@@ -997,7 +977,6 @@ def home_page(request):
     """
     site_config = get_site_config(request)
     num_facet_items = site_config.num_filter_items_to_show
-    custom_facets = []
     search_url_slabs = []
 
     num_jobs = site_config.num_job_items_to_show * 2
@@ -1008,15 +987,14 @@ def home_page(request):
 
     featured_jobs = helpers.get_featured_jobs()
 
-    (num_featured_jobs, num_default_jobs,_,_) = helpers.featured_default_jobs(
-                                         featured_jobs.count(),
-                                         default_jobs.count(),
-                                         num_jobs, site_config.percent_featured)
+    (num_featured_jobs, num_default_jobs, _, _) = helpers.featured_default_jobs(
+        featured_jobs.count(), default_jobs.count(),
+        num_jobs, site_config.percent_featured)
 
     featured = settings.SITE.featured_companies.all()
-    # Because we're getting the featured company information from the SQL database
-    # instead of Solr, we need to append the generated feature slabs to the rest
-    # of the counts.
+    # Because we're getting the featured company information from the SQL
+    # database instead of Solr, we need to append the generated feature
+    # slabs to the rest of the counts.
     featured_counts = [(item.company_slug+'/careers::'+item.name,
                         item.associated_jobs()) for item in featured]
 
@@ -1026,37 +1004,30 @@ def home_page(request):
     # Build a list of Company objects of current members that's the intersection
     # of all member companies and the companies returned in the Solr query
     all_buids = [buid[0] for buid in all_counts['buid']]
-    members = Company.objects.filter(member=True).filter(job_source_ids__in=all_buids)
+    members = Company.objects.filter(member=True)
+    members = members.filter(job_source_ids__in=all_buids)
 
     if site_config.browse_facet_show:
-        cust_key = get_facet_count_key()
-        cust_facets = cache.get(cust_key)
-
-        if not cust_facets:
-            cust_facets = helpers.get_solr_facet(settings.SITE_ID,
-                                                 settings.SITE_BUIDS)
-            cache.set(cust_key, cust_facets)
-
-        custom_facets = helpers.combine_groups(cust_facets)[0:num_facet_items * 2]
+        cust_facets = get_custom_facets(request)
+        custom_facets = helpers.combine_groups(cust_facets)[0:num_facet_items*2]
         search_url_slabs = [(i[0].url_slab, i[1]) for i in custom_facets]
 
     ga = settings.SITE.google_analytics.all()
-    bread_box_path = helpers.get_bread_box_path()
-    bread_box_title = helpers.get_bread_box_title()
+
     home_page_template = site_config.home_page_template
 
     # The carousel displays the featured companies if there are any, otherwise
     # it displays companies that were returned in the Solr query and are members
-    if (home_page_template == 'home_page/home_page_billboard.html' or
-        home_page_template == 'home_page/home_page_billboard_icons_top.html'):
-
+    billboard_templates = ['home_page/home_page_billboard.html',
+                           'home_page/home_page_billboard_icons_top.html']
+    if home_page_template in billboard_templates:
         billboard_images = (settings.SITE.billboard_images.all())
         company_images = helpers.company_thumbnails(featured) if featured else \
             helpers.company_thumbnails(members)
         company_images_json = json.dumps(company_images, ensure_ascii=False)
     else:
         billboard_images = []
-        company_images = company_slabs = None
+        company_images = None
         company_images_json = None
 
     widgets = helpers.get_widgets(request, site_config, all_counts,
@@ -1068,10 +1039,8 @@ def home_page(request):
         'total_jobs_count': jobs_count,
         'widgets': widgets,
         'item_type': 'home',
-        'bread_box_path': bread_box_path,
-        'bread_box_title': bread_box_title,
         'base_path': request.path,
-        'facet_blurb' : False,
+        'facet_blurb': False,
         'google_analytics': ga,
         'site_name': settings.SITE_NAME,
         'site_title': settings.SITE_TITLE,
@@ -1086,8 +1055,7 @@ def home_page(request):
         'billboard_images': billboard_images,
         'featured': str(bool(featured)).lower(),
         'filters': {},
-        'view_source' : settings.VIEW_SOURCE}
-
+        'view_source': settings.VIEW_SOURCE}
 
     return render_to_response(home_page_template, data_dict,
                               context_instance=RequestContext(request))
@@ -1613,8 +1581,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     if redirect_url:
         return redirect_url
 
-    active = []
-    facet_blurb = ''
+    facet_blurb_facet = None
     search_url_slabs = []
     path = "http://%s%s" % (request.META.get('HTTP_HOST', 'localhost'),
                             request.path)
@@ -1634,33 +1601,24 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     custom_facets = []
 
     if site_config.browse_facet_show:
-        cust_key = get_facet_count_key(filters, query_path)
-        cust_facets = cache.get(cust_key)
-
-        if not cust_facets:
-            cust_facets = helpers.get_solr_facet(settings.SITE_ID,
-                                                 settings.SITE_BUIDS,
-                                                 filters,
-                                                 params=request.GET)
-            cache.set(cust_key, cust_facets)
-
-        cf_count_tup = helpers.combine_groups(cust_facets)
+        cf_count_tup = get_custom_facets(request, filters=filters,
+                                         query_string=query_path)
 
         if not filters['facet_slug']:
-            search_url_slabs = [(i[0].url_slab, i[1]) for i in cf_count_tup]
+            search_url_slabs = [(facet.url_slab, count)
+                                for facet, count in cf_count_tup]
         else:
-            for x in cf_count_tup:
-                if x[0].name_slug == filters['facet_slug']:
-                    if not facet_blurb and x[0].show_blurb:
-                        facet_blurb = x[0].blurb
-                    active.append(x[0])
-                else:
-                    search_url_slabs.append((x[0].url_slab, x[1]))
-            if active:
-                custom_facets = CustomFacet.objects.filter(
-                    name=active[0].name,
-                    seosite__id=settings.SITE_ID)
-                sqs = helpers.sqs_apply_custom_facets(custom_facets, sqs=sqs)
+            facet_slugs = filters['facet_slug'].split('/')
+            active_facets = CustomFacet.objects.prod_facets_for_current_site()
+            active_facets = active_facets.filter(name_slug__in=facet_slugs)
+            search_url_slabs = [(facet.url_slab, count) for facet, count
+                                in cf_count_tup if facet not in active_facets]
+
+            # Set the facet blurb only if we have exactly one
+            # CustomFacet applied.
+            if active_facets.count() == 1:
+                facet_blurb_facet = active_facets[0]
+
     else:
         custom_facets = settings.DEFAULT_FACET
 
@@ -1715,18 +1673,16 @@ def search_by_results_and_slugs(request, *args, **kwargs):
             and not query_path:
         return redirect("/")
 
-    bread_box_path = helpers.get_bread_box_path(filters)
-
     if num_featured_jobs != 0:
-        bread_box_title = helpers.get_bread_box_title(filters,
-                                                      featured_jobs[:num_featured_jobs])
+        jobs = featured_jobs[:num_featured_jobs]
+        breadbox = Breadbox(request.path, filters, jobs, request.GET)
     else:
-        bread_box_title = helpers.get_bread_box_title(filters,
-                                                      default_jobs[:num_default_jobs])
+        jobs = default_jobs[:num_default_jobs]
+        breadbox = Breadbox(request.path, filters, jobs, request.GET)
 
     if filters['company_slug']:
-        company_obj = Company.objects.filter(member=True).filter(
-            company_slug=filters['company_slug'])
+        company_obj = Company.objects.filter(member=True)
+        company_obj = company_obj.filter(company_slug=filters['company_slug'])
         if company_obj:
             company_data = helpers.company_thumbnails(company_obj)[0]
         else:
@@ -1734,45 +1690,39 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     else:
         company_data = None
 
-    if filters['facet_slug'] and active:
-        bread_box_title['facet_slug'] = active[0].name
-
     widgets = helpers.get_widgets(request, site_config, facet_counts,
-                                  search_url_slabs, bread_box_path)
+                                  search_url_slabs, filters=filters)
 
-    loc_term = bread_box_title.get('location_slug', request.GET.get('location', '\*'))
-    moc_term = bread_box_title.get('moc_slug', request.GET.get('moc', '\*'))
+    location_term = breadbox.location_display_heading()
+    moc_term = breadbox.moc_display_heading()
+    if not location_term:
+        location_term = '\*'
+    if not moc_term:
+        moc_term = '\*'
 
-    count_heading_dict = bread_box_title.copy()
-    count_heading_dict['count'] = intcomma(featured_jobs.count() +
-                                           default_jobs.count())
-    if loc_term != '\*':
-        count_heading_dict['location_slug'] = loc_term
-
-    count_heading = helpers.build_results_heading(count_heading_dict)
-    results_heading = helpers.build_results_heading(bread_box_title)
+    results_heading = helpers.build_results_heading(breadbox)
+    breadbox.job_count = intcomma(featured_jobs.count() + default_jobs.count())
+    count_heading = helpers.build_results_heading(breadbox)
 
     sort_order = request.GET.get('sort', 'relevance')
     if sort_order not in helpers.sort_order_mapper.keys():
         sort_order = 'relevance'
 
     data_dict = {
-        'base_path': request.path,
-        'bread_box_path': bread_box_path,
-        'bread_box_title': bread_box_title,
+        'breadbox': breadbox,
         'build_num': settings.BUILD,
         'company': company_data,
         'count_heading': count_heading,
         'default_jobs': default_jobs[:num_default_jobs],
-        'facet_blurb': facet_blurb,
+        'facet_blurb_facet': facet_blurb_facet,
         'featured_jobs': featured_jobs[:num_featured_jobs],
         'filters': filters,
         'google_analytics': ga,
         'host': str(request.META.get("HTTP_HOST", 'localhost')),
-        'location_term': loc_term if loc_term else '\*',
+        'location_term': location_term,
         'max_filter_settings': settings.ROBOT_FILTER_LEVEL,
         'moc_id_term': moc_id_term if moc_id_term else '\*',
-        'moc_term': moc_term if moc_term else '\*',
+        'moc_term': moc_term,
         'num_filters': num_filters,
         'total_jobs_count': jobs_count,
         'results_heading': results_heading,

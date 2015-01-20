@@ -45,7 +45,7 @@
     <meta name="viewport" content="width=device-width"/>
 
     {% block meta_title %}
-        <meta name="title" content="{% build_title site_title title_term location_term bread_box_title.company_slug results_heading %}">
+        <meta name="title" content="{% build_title site_title title_term location_term breadbox.company_breadcrumb.display_title results_heading %}">
     {% endblock %}
 
 

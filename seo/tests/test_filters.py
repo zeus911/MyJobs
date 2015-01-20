@@ -77,9 +77,8 @@ class FiltersTestCase(DirectSEOBase):
         for filter_type in filter_types:
             facet_counts['%s_slab' % filter_type] = items
 
-        path_dict = helpers.get_bread_box_path()
         widgets = helpers.get_widgets(self.request, self.config, facet_counts, 
-                                      custom_facets=[], path_dict=path_dict)
+                                      custom_facets=[])
 
         # There should be a more button rendered by every widget
         for widget in widgets:
