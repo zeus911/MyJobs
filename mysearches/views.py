@@ -9,7 +9,8 @@ from django.shortcuts import render_to_response, get_object_or_404
 
 from myjobs.decorators import user_is_allowed
 from myjobs.models import User
-from mysearches.models import SavedSearch, SavedSearchDigest
+from mysearches.models import (SavedSearch, SavedSearchDigest,
+                               PartnerSavedSearch)
 from mysearches.forms import (SavedSearchForm, DigestForm,
                               PartnerSubSavedSearchForm)
 from mysearches.helpers import (get_interval_from_frequency, parse_feed,
@@ -31,7 +32,7 @@ def delete_saved_search(request, user=None):
         search.delete()
     except ValueError:
         # all searches are being deleted
-        SavedSearch.objects.filter(user=user).delete()
+        SavedSearch.objects.filter(user=user, partnersavedsearch__isnull=True).delete()
         search_name = 'all'
 
     return HttpResponseRedirect(
@@ -49,13 +50,10 @@ def saved_search_main(request):
             SavedSearchDigest.MultipleObjectsReturned):
         digest_obj = None
     updated = request.REQUEST.get('d')
-    saved_searches = list(SavedSearch.objects.filter(user=request.user))
-    partner_saved_searches = []
-    # Check to see if any searches are PartnerSavedSearches
-    for saved_search in saved_searches[:]:
-        if hasattr(saved_search, 'partnersavedsearch'):
-            partner_saved_searches.append(
-                saved_searches.pop(saved_searches.index(saved_search)))
+    saved_searches = SavedSearch.objects.filter(
+        user=request.user, partnersavedsearch__isnull=True)
+    partner_saved_searches = PartnerSavedSearch.objects.filter(
+        user=request.user)
 
     if request.user.is_verified:
         form = DigestForm(user=request.user, instance=digest_obj)
@@ -265,6 +263,7 @@ def unsubscribe(request, user=None):
     """
     search_id = request.REQUEST.get('id')
     user = user or request.user
+    has_pss = None
     try:
         search_id = int(search_id)
         saved_search = get_object_or_404(SavedSearch, id=search_id,
@@ -288,7 +287,6 @@ def unsubscribe(request, user=None):
         # that queryset; Make a copy and then update the queryset
         cache = list(saved_searches)
         saved_searches.update(is_active=False)
-        has_pss = False
 
     return render_to_response('mysearches/saved_search_disable.html',
                               {'search_id': search_id,
