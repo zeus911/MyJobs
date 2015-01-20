@@ -286,7 +286,7 @@ class Breadbox(object):
         # facets titles together the " Jobs" ending for each individual
         # facet doesn't make sense anymore, so rstrip it out and then
         # re-add it after all the facet titles have been composed.
-        heading = ' or '.join(facet.display_title.rstrip(" Jobs") for facet in
+        heading = ' and '.join(facet.display_title.rstrip(" Jobs") for facet in
                               self.custom_facet_breadcrumbs)
         return "%s Jobs" % heading if heading else ''
 
