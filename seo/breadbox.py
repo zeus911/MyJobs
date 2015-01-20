@@ -8,7 +8,7 @@ from seo.models import CustomFacet
 
 class Breadbox(object):
     """
-    Builds and containes breadcrumbs.
+    Builds and contains breadcrumbs.
 
     """
     class Breadcrumb(object):
