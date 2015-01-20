@@ -42,7 +42,7 @@ def user_is_allowed(model=None, pk_name=None, pass_user=False):
             if request.user.is_anonymous() and not email and not guid:
                 path = request.path
                 qs = request.META.get('QUERY_STRING')
-                next_url = "%s?%s" % (path, qs) if qs else path
+                next_url = request.get_full_path()
                 return HttpResponseRedirect(reverse('login')+'?next='+next_url)
 
             if email:
