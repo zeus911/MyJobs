@@ -306,14 +306,20 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
+        # TODO: Fix PartnerSavedSearch-User relationship.
+        # Then self.partnersavedsearch_set will work properly.
+        # Importing locally otherwise circular imports.
+        from mysearches.models import PartnerSavedSearch
 
         if (self.__original_opt_in_myjobs != self.opt_in_myjobs
                 and not self.opt_in_myjobs):
-            # I'm sorry
-            from mysearches.models import PartnerSavedSearch
             PartnerSavedSearch.objects.filter(user=self).update(
                 unsubscribed=True)
             self.send_opt_out_notification()
+        elif (self.__original_opt_in_myjobs != self.opt_in_myjobs
+                and self.opt_in_myjobs):
+            PartnerSavedSearch.objects.filter(
+                user=self, is_active=True).update(unsubscribed=False)
 
         # If the password has changed, it's not being set for the first time
         # and it wasn't change to a blank string, don't require them to change
