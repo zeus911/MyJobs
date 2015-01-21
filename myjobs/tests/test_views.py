@@ -567,6 +567,17 @@ class MyJobsViewsTests(MyJobsBase):
                                         'does%40not.exist:wrong_pass'))
         self.assertEqual(response.status_code, 403)
 
+    def test_redirect_query_params(self):
+        import ipdb; ipdb.set_tractest_redirect_next_url_not_truncatede()
+        """
+        If a user is redirected, the next parameter should not be missing query
+        parameters.
+        """
+        # log out to force redirects
+        self.client.post(reverse('auth_logout'))
+
+        response = self.client.get("view/prm/view?company=99999")
+
     def test_anonymous_continue_sending_mail(self):
         Session.objects.all().delete()
         self.user.last_response = date.today() - timedelta(days=7)
