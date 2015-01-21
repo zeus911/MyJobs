@@ -75,68 +75,6 @@ items down to what we actually need.
 LOG = logging.getLogger('views')
 
 
-def ajax_geolocation_facet(request):
-    """
-    Returns facets for the inputted facet_type
-    Inputs:
-        :filter_path: Filters arguments from url
-        :facet_type: Field that is being faceted
-        :sqs: starting Haystack Search Query Set
-        :search_facets: Boolean, True when there is a query to apply
-                before faceting
-    Output:
-        :HttpResponse: listing facets for the input facet_type
-
-    """
-    filter_path = request.GET.get('filter_path', '/jobs/')
-    filters = helpers.build_filter_dict(filter_path)
-
-    sort_order = request.REQUEST.get('sort', 'relevance')
-
-    num_items = int(request.GET.get('num_items', DEFAULT_PAGE_SIZE))
-
-    facet_field_type = request.GET.get('facet', 'buid')
-
-    sqs = helpers.prepare_sqs_from_search_params(request.GET)
-    default_jobs = helpers.get_jobs(default_sqs=sqs,
-                                    custom_facets=settings.DEFAULT_FACET,
-                                    exclude_facets=settings.FEATURED_FACET,
-                                    jsids=settings.SITE_BUIDS,
-                                    filters=filters,
-                                    facet_limit=num_items,
-                                    sort_order=sort_order)
-    featured_jobs = helpers.get_featured_jobs(default_sqs=sqs,
-                                              jsids=settings.SITE_BUIDS,
-                                              filters=filters,
-                                              facet_limit=num_items,
-                                              sort_order=sort_order)
-
-    facet_counts = default_jobs.add_facet_count(featured_jobs).get('fields')
-    facet_counts = facet_counts['lat_long_%s_slab' % facet_field_type]
-
-    data = []
-    for facet_count in facet_counts:
-        slab, count = facet_count
-        try:
-            latitude, longitude, buid = slab.split('::')
-        except ValueError:
-            continue
-
-        data.append({
-            'buid': buid,
-            'count': count,
-            'lat': latitude,
-            'lng': longitude,
-        })
-
-    data = json.dumps(data)
-    callback_name = request.GET.get('callback')
-    if callback_name:
-        data = callback_name + "(" + data + ")"
-
-    return HttpResponse(data, content_type='application/javascript')
-
-
 def ajax_get_facets(request, filter_path, facet_type):
     """
     Returns facets for the inputted facet_type

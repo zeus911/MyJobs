@@ -69,32 +69,6 @@ class WidgetsTestCase(DirectSEOTestCase):
 class SeoSiteTestCase(DirectSEOTestCase):
     fixtures = ['seo_views_testdata.json']
 
-    def test_ajax_geolocation(self):
-        base_url = reverse('ajax_geolocation_facet')
-        site = SeoSite.objects.get()
-        bu = BusinessUnit.objects.get(id=0)
-        site.business_units.add(bu)
-
-        resp = self.client.get(base_url)
-        result = json.loads(resp.content)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['count'], 2)
-
-        test_path = '/retail-associate-розничная-ассоциированных/jobs-in/'
-        with_path = '%s?filter_path=%s'
-        with_path = with_path % (base_url, test_path)
-        resp = self.client.get(with_path)
-        result = json.loads(resp.content)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['count'], 1)
-
-        with_query_string = '%s?q=guid:%s'
-        with_query_string = with_query_string % (base_url, '2'*32)
-        resp = self.client.get(with_query_string)
-        result = json.loads(resp.content)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['count'], 1)
-
     def test_update_email_domain_no_access(self):
         # Not logged in
         resp = self.client.get(reverse('seosites_settings_email_domain_edit'))
@@ -355,13 +329,11 @@ class SeoSiteTestCase(DirectSEOTestCase):
         site.business_units.add(bu)
         site.configurations.add(config)
         site.save()
-        site2 = factories.SeoSiteFactory(domain='somewhere.jobs', id=102,
-                                         site_ptr_id=102)
+        site2 = factories.SeoSiteFactory(domain='somewhere.jobs', id=102, site_ptr_id=102)
         site2.business_units.add(bu)
         site2.configurations.add(config)
         site2.save()
-        site3 = factories.SeoSiteFactory(domain='anywhere.jobs', id=112,
-                                         site_ptr_id=112)
+        site3 = factories.SeoSiteFactory(domain='anywhere.jobs', id=112, site_ptr_id=112)
         site3.configurations.add(config)
         site3.save()
         self.conn.add(solr_settings.POSTED_JOB_FIXTURE)
@@ -787,8 +759,9 @@ class SeoSiteTestCase(DirectSEOTestCase):
         custom_onet = moc_factories.OnetFactory.build(code=custom_job['onet'])
         custom_onet.save()
 
-        custom_career = moc_factories.CustomCareerFactory.build(
-            moc=moc, object_id=self.buid_id, onet_id=custom_onet.code)
+        custom_career = moc_factories.CustomCareerFactory.build(moc=moc,
+                                                                object_id=self.buid_id,
+                                                                onet_id=custom_onet.code)
         custom_career.save()
 
         bu = BusinessUnit.objects.get(id=1)
