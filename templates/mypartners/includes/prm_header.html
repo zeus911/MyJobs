@@ -14,7 +14,7 @@
         <span class="pull-right" id="candidate-time-filter">{% include "mypartners/includes/date_range.html" %}</span>
         {% endif %}
         {% if download %}
-        <span class="pull-right" id="record-download">{% include "mypartners/includes/download_records.html" %}</span>
+        <span class="pull-right" id="record-download">{% include "mypartners/includes/download_records.html" with date_start=request.GET.date_start date_end=request.GET.date_end %}</span>
         {% endif %}
     </div>
 </div>
