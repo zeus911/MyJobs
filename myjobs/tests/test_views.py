@@ -547,7 +547,8 @@ class MyJobsViewsTests(MyJobsBase):
                                     HTTP_AUTHORIZATION='BASIC %s' %
                                     base64.b64encode(
                                         'accounts%40my.jobs:5UuYquA@'))
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(EmailLog.objects.count(), 0)
 
     def test_invalid_user(self):
         now = date.today()
