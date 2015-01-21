@@ -410,7 +410,7 @@ def bread_box_moc_heading(moc_slug_value):
 
 
 def bread_box_title_heading(title_slug_value, jobs=None):
-    if not title_slug_value and not jobs:
+    if not title_slug_value and not jobs and not title_slug_value:
         return None
 
     if jobs:
