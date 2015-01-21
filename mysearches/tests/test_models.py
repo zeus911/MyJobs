@@ -535,11 +535,11 @@ class SavedSearchSendingTests(MyJobsBase):
         # last_sent to one year ago all of the jobs should be old.
         self.saved_search.send_email()
         email = mail.outbox.pop()
-        self.assertIn('Showing 3 of more than 3 total jobs', email.body)
+        self.assertIn('Showing the top 3 jobs', email.body)
 
         self.partner_search.send_email()
         email = mail.outbox.pop()
-        self.assertIn('Showing 3 of more than 3 total jobs', email.body)
+        self.assertIn('Showing the top 3 jobs', email.body)
 
     @patch('urllib2.urlopen')
     def test_some_jobs_new(self, urlopen_mock):
@@ -557,11 +557,11 @@ class SavedSearchSendingTests(MyJobsBase):
         # three days ago one of the jobs should be old.
         self.saved_search.send_email()
         email = mail.outbox.pop()
-        self.assertIn('Showing 1 of more than 1 total jobs', email.body)
+        self.assertIn('Showing the top 1 jobs', email.body)
 
         self.partner_search.send_email()
         email = mail.outbox.pop()
-        self.assertIn('Showing 3 of more than 3 total jobs', email.body)
+        self.assertIn('Showing the top 3 jobs', email.body)
 
     @patch('urllib2.urlopen')
     def test_no_jobs_new(self, urlopen_mock):
@@ -581,7 +581,7 @@ class SavedSearchSendingTests(MyJobsBase):
 
         self.partner_search.send_email()
         email = mail.outbox.pop()
-        self.assertIn('Showing 3 of more than 3 total jobs', email.body)
+        self.assertIn('Showing the top 3 jobs', email.body)
 
     @patch('urllib2.urlopen')
     def test_partner_saved_search_backfill(self, urlopen_mock):
@@ -596,19 +596,19 @@ class SavedSearchSendingTests(MyJobsBase):
         # jobs_per_email is default, so all 3 should get sent.
         self.partner_search.send_email()
         email = mail.outbox.pop()
-        self.assertIn('Showing 3 of more than 3 total jobs', email.body)
+        self.assertIn('Showing the top 3 jobs', email.body)
 
         self.partner_search.jobs_per_email = 2
         self.partner_search.save()
         self.partner_search.send_email()
         email = mail.outbox.pop()
-        self.assertIn('Showing 2 of more than 2 total jobs', email.body)
+        self.assertIn('Showing the top 2 jobs', email.body)
 
         self.partner_search.jobs_per_email = 1
         self.partner_search.save()
         self.partner_search.send_email()
         email = mail.outbox.pop()
-        self.assertIn('Showing 1 of more than 1 total jobs', email.body)
+        self.assertIn('Showing the top 1 jobs', email.body)
 
     @patch('urllib2.urlopen')
     def test_no_jobs(self, urlopen_mock):
