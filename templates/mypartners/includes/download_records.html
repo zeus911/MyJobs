@@ -2,6 +2,7 @@
     <li>
         <span class="hover-element">Download</span>
         <ul id="download-list">
+            {% with date_start=request.GET.date_start contact=request.GET.contact contact_type=request.GET.contact_type date_end=request.GET.date_end %}
             <li class="inside-list-title">
                 Export Type
                 <span class="pull-right"><i class="icon icon-download"></i></span>
@@ -16,5 +17,6 @@
                 <li class="records-printer-friendly-export">Printer Friendly</li>
             </a>
         </ul>
+        {% endwith %}
     </li>
 </ul>
