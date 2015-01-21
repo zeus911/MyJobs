@@ -18,7 +18,6 @@ def company_has_access(perm_field):
     inputs:
         :perm_field: The name of the BooleanField on Company that handles
             permissions for the requested feature.
-
     """
     def decorator(view_func):
         def wrap(request, *args, **kwargs):
@@ -109,7 +108,8 @@ def warn_when(condition, feature, message, link=None, link_text=None,
                    'link': link,
                    'link_text': link_text}
             if not condition(request):
-                if exception: raise exception('{0}: {1}'.format(feature, message))
+                if exception:
+                    raise exception('{0}: {1}'.format(feature, message))
 
                 return render_to_response('warning_page.html',
                                           ctx,
@@ -122,22 +122,29 @@ def warn_when(condition, feature, message, link=None, link_text=None,
 # used in mypartners
 warn_when_inactive = partial(
     warn_when,
-    condition=lambda req: req.user.is_verified and req.user.is_active,
+    condition=lambda req: req.user.is_anonymous() or
+                          (req.user.is_verified and req.user.is_active),
     message='You have yet to activate your account.',
     link='/accounts/register/resend',
     link_text='Resend Activation')
 
 # used in postajob
-warn_when_no_packages = partial(
-    warn_when,
-    condition=lambda req: settings.SITE.canonical_company.has_packages)
+def site_misconfigured(request):
+    try:
+        return settings.SITE.canonical_company.has_packages
+    except AttributeError:
+        return False
 
-message_when_no_packages = partial(
-    warn_when_no_packages,
+warn_when_site_misconfigured = partial(
+    warn_when,
+    condition = site_misconfigured)
+
+message_when_site_misconfigured = partial(
+    warn_when_site_misconfigured,
     message='Please contact your member representative to activate this '
             'feature.')
 
-error_when_no_packages = partial(
-    warn_when_no_packages,
+error_when_site_misconfigured = partial(
+    warn_when_site_misconfigured,
     message='Accessed company owns no site packages.',
     exception=Http404)
