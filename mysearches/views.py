@@ -280,7 +280,7 @@ def unsubscribe(request, user=None):
         saved_search.save()
 
         # method expects an iterable and I didn't want to run another query
-        user.send_opt_out_notifications([saved_search])
+        user.send_opt_out_notifications([saved_search.partnersavedsearch])
     except ValueError:
         digest = SavedSearchDigest.objects.get_or_create(
             user=user)[0]
