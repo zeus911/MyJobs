@@ -278,6 +278,9 @@ def unsubscribe(request, user=None):
             saved_search.partnersavedsearch.unsubscribed = True
             saved_search.partnersavedsearch.save()
         saved_search.save()
+
+        # method expects an iterable and I didn't want to run another query
+        user.send_opt_out_notifications([saved_search])
     except ValueError:
         digest = SavedSearchDigest.objects.get_or_create(
             user=user)[0]
@@ -286,6 +289,11 @@ def unsubscribe(request, user=None):
             digest.save()
         saved_searches = SavedSearch.objects.filter(user=user,
                                                     is_active=True)
+
+        # we want the associated partner saved searches themselves
+        user.send_opt_out_notifications([
+            search.partnersavedsearch for search in saved_searches.filter(
+                partnersavedsearch__isnull=False)])
 
         # saved_searches that have partner saved searches
         ss_have_pss = saved_searches.filter(partnersavedsearch__isnull=False)

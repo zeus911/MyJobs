@@ -315,7 +315,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                 and not self.opt_in_myjobs):
             PartnerSavedSearch.objects.filter(user=self).update(
                 unsubscribed=True)
-            self.send_opt_out_notification()
+            self.send_opt_out_notifications()
         elif (self.__original_opt_in_myjobs != self.opt_in_myjobs
                 and self.opt_in_myjobs):
             PartnerSavedSearch.objects.filter(
@@ -544,19 +544,20 @@ class User(AbstractBaseUser, PermissionsMixin):
             return True
         return False
 
-    def send_opt_out_notification(self):
+    def send_opt_out_notifications(self, saved_searches=None):
         """
         Notify saved search creators that a user has opted out of their emails.
         """
         from mysearches.models import PartnerSavedSearch
 
         subject = "My.jobs Partner Saved Search Update"
-        saved_searches = PartnerSavedSearch.objects.filter(
+
+        saved_searches = saved_searches or PartnerSavedSearch.objects.filter(
             user=self)
 
         # MySQL doesn't support passing a column to distinct, and I don't want
-        # to deal with dictionaries returned by values, so I just keep track of
-        # unique contacts manually.
+        # to deal with dictionaries returned by `values()`, so I just keep
+        # track of unique contacts manually.
         contacts = []
         # need the partner name, so can't send a batch email or message
         for pss in saved_searches:
