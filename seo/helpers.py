@@ -361,13 +361,13 @@ def bread_box_company_heading(company_slug_value):
     if not company_slug_value:
         return None
 
-    try:
-        kwargs = {'title_slug': company_slug_value}
-        business_unit = BusinessUnit.objects.filter(**kwargs)
-    except (BusinessUnit.DoesNotExist, BusinessUnit.MultipleObjectsReturned):
-        return None
+    kwargs = {'title_slug': company_slug_value}
+    business_unit = BusinessUnit.objects.filter(**kwargs)
 
-    return business_unit[0].title
+    try:
+        return business_unit[0].title
+    except Exception:
+        return None
 
 
 def bread_box_location_heading(location_slug_value, jobs=None):
