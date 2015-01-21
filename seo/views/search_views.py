@@ -1616,7 +1616,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
 
             # Set the facet blurb only if we have exactly one
             # CustomFacet applied.
-            if active_facets.count() == 1:
+            if active_facets.count() == 1 and active_facets[0].blurb:
                 facet_blurb_facet = active_facets[0]
 
     else:
