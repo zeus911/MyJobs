@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from bs4 import BeautifulSoup
+import csv
 import json
 import re
 from time import sleep
 import os
 import random
+from StringIO import StringIO
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -468,6 +470,30 @@ class RecordsDetailsTests(MyPartnersTestCase):
 
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+
+    def test_export_dates_correct(self):
+        """ Exporting contact records should honor date filters. """
+
+        self.default_view = 'prm_export'
+
+        records = ContactRecordFactory.create_batch(3, partner=self.partner)
+
+        # this should be the only record to show up in the result
+        ContactRecordFactory(partner=self.partner,
+                             date_time=datetime(3025, 2, 1))
+
+
+
+        url= self.get_url(partner=self.partner.id,
+                          company=self.company.id,
+                          file_format='csv',
+                          date_start='2/1/3025')
+
+        response = self.client.get(url)
+        # parse the response into elements so we can count them.
+        printed_records = list(csv.DictReader(StringIO(response.content)))
+
+        self.assertEqual(len(printed_records), 1)
 
     def test_bleaching(self):
         """
