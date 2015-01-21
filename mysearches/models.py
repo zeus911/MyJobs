@@ -420,7 +420,6 @@ class SavedSearchDigest(models.Model):
                 pss.create_record(custom_msg)
             search_list.append((search, items, count))
 
-        #log_kwargs['new_jobs'] = total_jobs - log_kwargs['backfill_jobs']
         saved_searches = [(search, items, count)
                           for search, items, count in search_list
                           if (items or hasattr(search, 'partnersavedsearch'))]
