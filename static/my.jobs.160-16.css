@@ -593,6 +593,10 @@ h1 > small > a:hover {
     margin-top: 2px;
 }
 
+.important-label {
+    background-color: #b94a48;
+}
+
 .card-wrapper + .card-wrapper {
     margin-top: 20px;
 }

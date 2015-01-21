@@ -420,7 +420,6 @@ class SavedSearchDigest(models.Model):
                 pss.create_record(custom_msg)
             search_list.append((search, items, count))
 
-        #log_kwargs['new_jobs'] = total_jobs - log_kwargs['backfill_jobs']
         saved_searches = [(search, items, count)
                           for search, items, count in search_list
                           if (items or hasattr(search, 'partnersavedsearch'))]
@@ -486,6 +485,7 @@ class PartnerSavedSearch(SavedSearch):
         blank=True, help_text="Use this field to provide a customized "
                               "greeting that will be sent with each copy "
                               "of this saved search.")
+    unsubscribed = models.BooleanField(default=False)
     tags = models.ManyToManyField('mypartners.Tag', null=True)
     created_by = models.ForeignKey(User, editable=False)
 

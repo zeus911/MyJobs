@@ -423,7 +423,8 @@ def batch_message_digest(request):
                         for event_str in events:
                             if event_str == '':
                                 continue
-                            try:  # nested try :/ -need to catch json exceptions
+                            # nested try :/ -need to catch json exceptions
+                            try:
                                 event_list.append(json.loads(event_str))
                             except ValueError:  # Bad json
                                 newrelic.agent.record_exception(
