@@ -277,10 +277,10 @@ def unsubscribe(request, user=None):
         if has_pss:
             saved_search.partnersavedsearch.unsubscribed = True
             saved_search.partnersavedsearch.save()
+            # method expects an iterable and I didn't want to run another query
+            user.send_opt_out_notifications([saved_search.partnersavedsearch])
         saved_search.save()
 
-        # method expects an iterable and I didn't want to run another query
-        user.send_opt_out_notifications([saved_search.partnersavedsearch])
     except ValueError:
         digest = SavedSearchDigest.objects.get_or_create(
             user=user)[0]

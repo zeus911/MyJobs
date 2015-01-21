@@ -569,7 +569,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             # send notification email
             message = render_to_string(
                 "mysearches/email_opt_out.html",
-                {'user': self, 'partner': pss.partner})
+                {'user': self, 'partner': pss.partner, 'company': pss.provider})
 
             headers = {
                 'X-SMTPAPI': '{"category": "Partner Saved Search Opt Out '
@@ -583,7 +583,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             # create PRM message
             body = render_to_string(
                 "mysearches/email_opt_out_message.html",
-                {'user': self, 'partner': pss.partner})
+                {'user': self, 'partner': pss.partner, 'company': pss.provider})
             Message.objects.create_message(
                 subject, body, users=[pss.created_by])
 
