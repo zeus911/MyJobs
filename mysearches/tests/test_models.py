@@ -557,7 +557,7 @@ class SavedSearchSendingTests(MyJobsBase):
         # three days ago one of the jobs should be old.
         self.saved_search.send_email()
         email = mail.outbox.pop()
-        self.assertIn('Showing the top 1 jobs', email.body)
+        self.assertIn('Showing the top job', email.body)
 
         self.partner_search.send_email()
         email = mail.outbox.pop()
@@ -608,7 +608,7 @@ class SavedSearchSendingTests(MyJobsBase):
         self.partner_search.save()
         self.partner_search.send_email()
         email = mail.outbox.pop()
-        self.assertIn('Showing the top 1 jobs', email.body)
+        self.assertIn('Showing the top job', email.body)
 
     @patch('urllib2.urlopen')
     def test_no_jobs(self, urlopen_mock):
