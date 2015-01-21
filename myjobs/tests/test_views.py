@@ -751,11 +751,46 @@ class MyJobsViewsTests(MyJobsBase):
         self.user = User.objects.get(id=self.user.id)
         self.assertFalse(self.user.opt_in_myjobs)
 
-    def test_opt_out_sends_notification(self):
+    def test_opt_out_sends_notifications(self):
         """
         When a user creates a saved search for another user and that user opts
         out of My.jobs communications, the creator should get a My.jobs message
         and email notifying them of the opt-out.
+        """
+
+        # required fields for saved search
+        company = CompanyFactory()
+        partner = PartnerFactory(owner=company)
+
+        creator = UserFactory(id=3, email='normal@user.com')
+
+        # should not have any messages
+        self.assertFalse(creator.messages_unread())
+
+        PartnerSavedSearch.objects.create(user=self.user, provider=company,
+                                          created_by=creator,
+                                          partner=partner)
+
+        # simulate a user opting out
+        self.user.opt_in_myjobs = False
+        self.user.save()
+
+        self.client.get(reverse('unsubscribe_all'))
+
+        # creator should have a My.jobs message and email
+        for body in [creator.messages_unread()[0].message.body,
+                     mail.outbox[0].body]: 
+            self.assertIn(self.user.email, body)
+            self.assertIn('unsubscribed from one or more saved search emails', 
+                          body)
+
+        # email should be sent to right person
+        self.assertIn(creator.email, mail.outbox[0].to)
+
+    def test_unsubscribe_sends_notifications(self):
+        """
+        When a user unsubscribes from one or more saved searches, the user who
+        created the saved search should recieve an email and notification.
         """
 
         # required fields for saved search
@@ -777,7 +812,8 @@ class MyJobsViewsTests(MyJobsBase):
         for body in [creator.messages_unread()[0].message.body,
                      mail.outbox[0].body]: 
             self.assertIn(self.user.email, body)
-            self.assertIn('opted out of receiving saved search emails', body)
+            self.assertIn('unsubscribed from one or more saved search emails', 
+                          body)
 
         # email should be sent to right person
         self.assertIn(creator.email, mail.outbox[0].to)
