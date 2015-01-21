@@ -2,6 +2,7 @@ import base64
 import datetime
 import json
 import logging
+import sys
 import urllib2
 from urlparse import urlparse
 import uuid
@@ -19,7 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
 from captcha.fields import ReCaptchaField
-from mysearches.models import SavedSearchLog
+import newrelic.agent
 
 from universal.helpers import get_domain
 from myjobs.decorators import user_is_allowed
@@ -30,6 +31,7 @@ from myprofile.forms import (InitialNameForm, InitialEducationForm,
                              InitialAddressForm, InitialPhoneForm,
                              InitialWorkForm)
 from myprofile.models import ProfileUnits, Name
+from mysearches.models import SavedSearchLog
 from registration.forms import RegistrationForm, CustomAuthForm
 
 logger = logging.getLogger('__name__')
@@ -398,6 +400,7 @@ def batch_message_digest(request):
     2) or as well formed JSON (Version 3)
 
     """
+    newrelic.agent.add_custom_parameter('body', request.body)
     if 'HTTP_AUTHORIZATION' in request.META:
         method, details = request.META['HTTP_AUTHORIZATION'].split()
         if method.lower() == 'basic':
@@ -420,12 +423,16 @@ def batch_message_digest(request):
                         for event_str in events:
                             if event_str == '':
                                 continue
-                            try:  # nested try :/ -need to catch json exceptions
+                            # nested try :/ -need to catch json exceptions
+                            try:
                                 event_list.append(json.loads(event_str))
-                            except ValueError, e:  # return 404 is bad json
-                                return HttpResponse(status=400)
+                            except ValueError:  # Bad json
+                                newrelic.agent.record_exception(
+                                    *sys.exc_info())
+                                return HttpResponse(status=200)
                     except Exception:
-                        return HttpResponse(status=400)
+                        newrelic.agent.record_exception(*sys.exc_info())
+                        return HttpResponse(status=200)
                     else:
                         # If only one event was posted, this could be any
                         # version of the api; event_list will be a list of
@@ -465,7 +472,11 @@ def batch_message_digest(request):
                                         issue_dict, event['email'])
                         # These categories resemble the following:
                         # Saved Search Sent (<list of keys>|event_id)
-                        event_id = category.split('|')[-1][:-1]
+                        try:
+                            event_id = category.split('|')[-1][:-1]
+                        except AttributeError:
+                            newrelic.agent.record_exception(*sys.exc_info())
+                            return HttpResponse(status=200)
                         if event_id:
                             try:
                                 log = SavedSearchLog.objects.get(

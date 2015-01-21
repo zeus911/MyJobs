@@ -228,6 +228,7 @@ Build data, update the URL (pushState or refresh page), run ajax if not IE 9 or 
 function run_ajax() {
     var data = build_data();
     update_search_url(data);
+    update_download_links(data);
     if (typeof(isIE) == "number" && isIE > 9 || typeof(isIE) == 'boolean' && isIE == false) {
         send_filter(data);
     }
@@ -404,6 +405,28 @@ function update_search_url(data) {
     } else {
         location.search = search_url;
     }
+}
+
+/*
+Updates download links so that date filters match what is being displayed
+*/
+function update_download_links(data){
+    var csv_link = $(".records-csv-export-link"),
+        xml_link = $(".records-xml-export-link"),
+        // printer  friendly
+        html_link = $(".records-printer-friendly-export-link");
+
+    // We want the current location bar's query parameters, not the stale ones
+    // that are already in the anchor tag
+    csv_link.attr('href', csv_link.attr('href').split('?')[0] 
+                        + location.search);
+    xml_link.attr('href', xml_link.attr('href').split('?')[0] 
+                        + location.search 
+                        + '&file_format=xml');
+    html_link.attr('href', html_link.attr('href').split('?')[0] 
+                         + location.search 
+                         + '&file_format=printer_friendly');
+
 }
 
 

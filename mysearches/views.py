@@ -274,6 +274,9 @@ def unsubscribe(request, user=None):
         cache = [saved_search]
         saved_search.is_active = False
         has_pss = hasattr(saved_search, 'partnersavedsearch')
+        if has_pss:
+            saved_search.partnersavedsearch.unsubscribed = True
+            saved_search.partnersavedsearch.save()
         saved_search.save()
     except ValueError:
         digest = SavedSearchDigest.objects.get_or_create(
@@ -283,6 +286,15 @@ def unsubscribe(request, user=None):
             digest.save()
         saved_searches = SavedSearch.objects.filter(user=user,
                                                     is_active=True)
+
+        # saved_searches that have partner saved searches
+        ss_have_pss = saved_searches.filter(partnersavedsearch__isnull=False)
+        # Bulk update (django 1.6) can't dig through a Foreign Key have to
+        # iterate with a for loop
+        for ss in ss_have_pss:
+            ss.partnersavedsearch.unsubscribed = True
+            ss.partnersavedsearch.save()
+
         # Updating the field that a queryset was filtered on seems to empty
         # that queryset; Make a copy and then update the queryset
         cache = list(saved_searches)
