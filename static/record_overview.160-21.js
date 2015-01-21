@@ -416,6 +416,8 @@ function update_download_links(data){
         // printer  friendly
         html_link = $(".records-printer-friendly-export-link");
 
+    // We want the current location bar's query parameters, not the stale ones
+    // that are already in the anchor tag
     csv_link.attr('href', csv_link.attr('href').split('?')[0] 
                         + location.search);
     xml_link.attr('href', xml_link.attr('href').split('?')[0] 
