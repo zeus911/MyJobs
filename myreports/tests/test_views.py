@@ -20,11 +20,11 @@ class TestReportsOverview(TestCase):
     def test_access_restricted_to_staff(self):
         """Until release, MyReports should only be viewable by staff users."""
 
+        self.user.is_staff = False
+        self.user.save()
         response = self.client.get(reverse('reports_overview'))
-
-        self.assertRedirects(response, "{}?next={}".format(
-            reverse('home'), reverse('reports_overview')))
-
+        
+        self.assertEqual(response.status_code, 404)
 
 class TestEditReport(TestCase):
     """
