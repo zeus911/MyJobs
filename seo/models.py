@@ -547,7 +547,8 @@ class SeoSite(Site):
         configs.update(revision=models.F('revision') + 1)
         for config in configs:
             config.clear_cache()
-        #Delete domain-based cache entries that don't use the custom_cache_page prefix
+        # Delete domain-based cache entries that don't use the
+        # custom_cache_page prefix
         site_cache_key = '%s:SeoSite' % self.domain
         buid_cache_key = '%s:buids' % site_cache_key
         social_cache_key = '%s:social_links' % self.domain
@@ -594,14 +595,15 @@ class SeoSiteFacet(models.Model):
     STANDARD = 'STD'
     DEFAULT = 'DFT'
     FEATURED = 'FTD'
-    FACET_TYPE_CHOICES = (
-        (STANDARD, 'Standard'),
-        (DEFAULT, 'Default'),
-        (FEATURED, 'Featured'),
-    )
-    BOOLEAN_CHOICES = (('or', 'OR'),
-                       ('and', 'AND'))
+    FACET_TYPE_CHOICES = ((STANDARD, 'Standard'), (DEFAULT, 'Default'),
+                          (FEATURED, 'Featured'), )
 
+    BOOLEAN_CHOICES = (('or', 'OR'), ('and', 'AND'), )
+
+    FACET_GROUP_CHOICES = ((1, 'Facet Group 1'), (2, 'Facet Group 2'),
+                           (3, 'Facet Group 3'), )
+
+    facet_group = models.IntegerField(choices=FACET_GROUP_CHOICES, default=1)
     seosite = models.ForeignKey('SeoSite', verbose_name="Seo Site")
     customfacet = models.ForeignKey('CustomFacet', verbose_name="Custom Facet")
     facet_type = models.CharField(max_length=4,
@@ -950,7 +952,9 @@ class Configuration(models.Model):
         (4, 4),
         (5, 5),
         (6, 6),
-        (7, 7)
+        (7, 7),
+        (8, 8),
+        (9, 9),
     )
 
     STATUS_CHOICES = (
@@ -1023,22 +1027,39 @@ class Configuration(models.Model):
     browse_city_show = models.BooleanField('Show', default=True)
     browse_title_show = models.BooleanField('Show', default=True)
     browse_facet_show = models.BooleanField('Show', default=False)
+    browse_facet_show_2 = models.BooleanField('Show', default=False)
+    browse_facet_show_3 = models.BooleanField('Show', default=False)
     browse_moc_show = models.BooleanField('Show', default=False)
     browse_company_show = models.BooleanField('Show', default=False)
-    browse_country_text = models.CharField('Browse by', default='Country',
+
+    browse_country_text = models.CharField('Heading for Country Facet',
+                                           default='Country',
                                            max_length=50)
-    browse_state_text = models.CharField('Browse by', default='State',
+    browse_state_text = models.CharField('Heading for State Facet',
+                                         default='State',
                                          max_length=50)
-    browse_city_text = models.CharField('Browse by', default='City',
+    browse_city_text = models.CharField('Heading for City Facet',
+                                        default='City',
                                         max_length=50)
-    browse_title_text = models.CharField('Browse by', default='Title',
+    browse_title_text = models.CharField('Heading for Title Facet',
+                                         default='Title',
                                          max_length=50)
-    browse_facet_text = models.CharField('Browse by', default='Job Profiles',
+    browse_facet_text = models.CharField('Heading for Custom Facet Group 1',
+                                         default='Job Profiles',
                                          max_length=50)
-    browse_moc_text = models.CharField('Browse by', default='Military Titles',
-                                       max_length=50)
-    browse_company_text = models.CharField('Browse by', default='Company',
+    browse_facet_text_2 = models.CharField('Heading for Custom Facet Group 2',
+                                           default='Job Profiles',
                                            max_length=50)
+    browse_facet_text_3 = models.CharField('Heading for Custom Facet Group 3',
+                                           default='Job Profiles',
+                                           max_length=50)
+    browse_moc_text = models.CharField('Heading for MOC Facet',
+                                       default='Military Titles',
+                                       max_length=50)
+    browse_company_text = models.CharField('Heading for Company Facet',
+                                           default='Company',
+                                           max_length=50)
+
     browse_country_order = models.IntegerField('Order', default=3,
                                                choices=ORDER_CHOICES)
     browse_state_order = models.IntegerField('Order', default=4,
@@ -1049,6 +1070,10 @@ class Configuration(models.Model):
                                              choices=ORDER_CHOICES)
     browse_facet_order = models.IntegerField('Order', default=2,
                                              choices=ORDER_CHOICES)
+    browse_facet_order_2 = models.IntegerField('Order', default=2,
+                                               choices=ORDER_CHOICES)
+    browse_facet_order_3 = models.IntegerField('Order', default=2,
+                                               choices=ORDER_CHOICES)
     browse_moc_order = models.IntegerField('Order', default=1,
                                            choices=ORDER_CHOICES)
     browse_company_order = models.IntegerField('Order', default=7,
