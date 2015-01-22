@@ -130,6 +130,10 @@ warn_when_inactive = partial(
 
 # used in postajob
 def site_misconfigured(request):
+    # Make sure logged out users are redirected
+    if request.user.is_anonymous():
+        return True
+
     try:
         return settings.SITE.canonical_company.has_packages
     except AttributeError:
