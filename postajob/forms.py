@@ -598,19 +598,27 @@ class PurchasedProductNoPurchaseForm(RequestForm):
     class Meta:
         model = PurchasedProduct
         fields = ('address_line_one', 'address_line_two', 'city', 'state',
-                  'country', 'zipcode')
+                  'region', 'country', 'zipcode')
 
     class Media:
         css = {
             'all': ('postajob.158-18.css', )
         }
+        js = (
+            'postajob.160-13.js',
+        )
 
     address_line_one = CharField(label='Address Line One')
     address_line_two = CharField(label='Address Line Two',
                                  required=False)
+    state = NoValidationChoiceField(choices=JobLocation.state_choices,
+                                    widget=SelectWithOptionClasses(),
+                                    label='State',
+                                    required=False)
+    region = CharField(max_length=255, label='Region')
+    country = ChoiceField(choices=JobLocation.country_choices,
+                          initial='United States', label='Country')
     city = CharField(label='City')
-    state = CharField(label='State')
-    country = CharField(label='Country')
     zipcode = CharField(label='Zip Code')
 
     def __init__(self, *args, **kwargs):
@@ -621,8 +629,17 @@ class PurchasedProductNoPurchaseForm(RequestForm):
             self.fields.keyOrder.insert(0, self.fields.keyOrder.pop())
 
     def clean(self):
+        cleaned_data = self.cleaned_data
+        if (cleaned_data.get('country') not in ["United States", "Canada"]
+                and not self.instance.pk):
+            region = cleaned_data.get('region')
+            if region:
+                cleaned_data['state'] = region
+            else:
+                raise ValidationError('State or region is required.')
+
         if not self.company:
-            company_name = self.cleaned_data.get('company_name')
+            company_name = cleaned_data.get('company_name')
             msg = clean_company_name(company_name, None)
             if msg:
                 self._errors['company_name'] = self.error_class([msg])
@@ -670,6 +687,9 @@ class PurchasedProductForm(RequestForm):
         css = {
             'all': ('postajob.159-9.css', )
         }
+        js = (
+            'postajob.160-13.js',
+        )
 
     card_number = CharField(label='Credit Card Number')
     cvv = IntegerField(label='CVV')
@@ -680,9 +700,15 @@ class PurchasedProductForm(RequestForm):
     address_line_one = CharField(label='Billing Address Line One')
     address_line_two = CharField(label='Billing Address Line Two',
                                  required=False)
+    state = NoValidationChoiceField(choices=JobLocation.state_choices,
+                                    widget=SelectWithOptionClasses(),
+                                    label='Billing State')
+    region = CharField(max_length=255, required=False,
+                       label='Billing Region')
+    country = ChoiceField(choices=JobLocation.country_choices,
+                          initial='United States',
+                          label='Billing Country')
     city = CharField(label='Billing City')
-    state = CharField(label='Billing State')
-    country = CharField(label='Billing Country')
     zipcode = CharField(label='Billing Zip Code')
 
     def __init__(self, *args, **kwargs):
@@ -693,6 +719,15 @@ class PurchasedProductForm(RequestForm):
             self.fields.keyOrder.insert(0, self.fields.keyOrder.pop())
 
     def clean(self):
+        cleaned_data = self.cleaned_data
+        if (cleaned_data.get('country') not in ["United States", "Canada"]
+                and not self.instance.pk):
+            region = cleaned_data.get('region')
+            if region:
+                cleaned_data['state'] = region
+            else:
+                raise ValidationError('State or region is required.')
+
         if not self.company:
             company_name = self.cleaned_data.get('company_name')
             msg = clean_company_name(company_name, None)

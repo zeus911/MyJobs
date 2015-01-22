@@ -919,6 +919,8 @@ class Invoice(BaseModel):
         (FREE, 'Free'),
         (OFFLINE_PURCHASE, 'Offline Purchase'),
     )
+    country_choices = country_list()
+    state_choices = state_list(include_country=True)
 
     objects = InvoiceManager()
 
@@ -939,7 +941,8 @@ class Invoice(BaseModel):
                                         verbose_name='Address Line Two')
     city = models.CharField(max_length=255)
     state = models.CharField(max_length=255)
-    country = models.CharField(max_length=255)
+    country = models.CharField(max_length=255, choices=country_choices,
+                               default='United States')
     zipcode = models.CharField(max_length=255)
     invoiced_products = models.ManyToManyField('InvoiceProduct')
 
