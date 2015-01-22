@@ -162,7 +162,7 @@ def build_results_heading(breadbox):
         heading.append(breadbox.title_display_heading())
     elif not heading:
         if has_count:
-            heading.append(str(breadbox.job_count))
+            heading.append(unicode(breadbox.job_count))
         heading.append("Jobs")
 
     if has_location:
@@ -410,7 +410,7 @@ def bread_box_moc_heading(moc_slug_value):
 
 
 def bread_box_title_heading(title_slug_value, jobs=None):
-    if not title_slug_value and not jobs:
+    if (not title_slug_value and not jobs) or not title_slug_value:
         return None
 
     if jobs:
