@@ -162,7 +162,7 @@ def build_results_heading(breadbox):
         heading.append(breadbox.title_display_heading())
     elif not heading:
         if has_count:
-            heading.append(str(breadbox.job_count))
+            heading.append(unicode(breadbox.job_count))
         heading.append("Jobs")
 
     if has_location:
