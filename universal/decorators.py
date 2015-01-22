@@ -25,7 +25,7 @@ def company_has_access(perm_field):
             # If the user is not logged in, redirect them to the login page
             # with this url as the next url.
             if request.user.is_anonymous():
-                params = {'next': request.path, }
+                params = {'next': request.get_full_path()}
                 next_url = build_url(reverse('home'), params)
                 return HttpResponseRedirect(next_url)
 

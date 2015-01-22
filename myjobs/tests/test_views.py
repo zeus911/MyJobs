@@ -4,6 +4,7 @@ from datetime import timedelta, date
 from importlib import import_module
 import time
 import uuid
+from urllib import urlencode
 
 from django.conf import settings
 from django.contrib.auth import login
@@ -566,6 +567,18 @@ class MyJobsViewsTests(MyJobsBase):
                                     base64.b64encode(
                                         'does%40not.exist:wrong_pass'))
         self.assertEqual(response.status_code, 403)
+
+    def test_redirect_query_params(self):
+        """
+        If a user is redirected, the next parameter should not be missing query
+        parameters.
+        """
+        # log out to force redirects
+        self.client.post(reverse('auth_logout'))
+
+        response = self.client.get(reverse('prm') + '?company=1')
+        self.assertIn(urlencode({'next': '/prm/view?company=1'}),
+                      response.get('Location'))
 
     def test_anonymous_continue_sending_mail(self):
         Session.objects.all().delete()
