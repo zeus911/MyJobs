@@ -103,18 +103,24 @@ def warn_when(condition, feature, message, link=None, link_text=None,
     def decorator(view_func):
         @wraps(view_func)
         def wrap(request, *args, **kwargs):
-            if not request.user.is_anonymous():
-                ctx = {'feature': feature,
-                       'message': message,
-                       'link': link,
-                       'link_text': link_text}
-                if condition(request):
-                    if exception:
-                        raise exception('{0}: {1}'.format(feature, message))
+            if request.user.is_anonymous():
+                params = {'next': request.get_full_path()}
+                next_url = build_url(reverse('home'), params)
+                return HttpResponseRedirect(next_url)
 
-                    return render_to_response('warning_page.html',
-                                              ctx,
-                                              RequestContext(request))
+            ctx = {'feature': feature,
+                   'message': message,
+                   'link': link,
+                   'link_text': link_text}
+
+            if condition(request):
+                if exception:
+                    raise exception('{0}: {1}'.format(feature, message))
+
+                return render_to_response('warning_page.html',
+                                          ctx,
+                                          RequestContext(request))
+
             return view_func(request, *args, **kwargs)
         return wrap
     return decorator
