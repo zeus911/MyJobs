@@ -65,8 +65,8 @@ class Breadbox(object):
                  and self.query_dict or a specified query_dict.
 
         """
-        path = path or self.path
-        if not self.path or path == '/':
+        path = path if path is not None else self.path
+        if path == '/' or not path:
             path = reverse('all_jobs')
         query_dict = query_dict if query_dict is not None else self.query_dict
         query_string = query_dict.urlencode()
