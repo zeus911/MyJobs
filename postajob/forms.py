@@ -615,9 +615,10 @@ class PurchasedProductNoPurchaseForm(RequestForm):
                                     widget=SelectWithOptionClasses(),
                                     label='State',
                                     required=False)
-    region = CharField(max_length=255, label='Region')
+    region = CharField(max_length=255, label='Region', required=False)
     country = ChoiceField(choices=JobLocation.country_choices,
-                          initial='United States', label='Country')
+                          initial='United States', label='Country',
+                          required=False)
     city = CharField(label='City')
     zipcode = CharField(label='Zip Code')
 
