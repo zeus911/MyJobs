@@ -681,7 +681,7 @@ class PurchasedProductForm(RequestForm):
         model = PurchasedProduct
         fields = ('card_number', 'cvv', 'exp_date', 'first_name', 'last_name',
                   'address_line_one', 'address_line_two', 'city', 'state',
-                  'country', 'zipcode')
+                  'region', 'country', 'zipcode')
 
     class Media:
         css = {
