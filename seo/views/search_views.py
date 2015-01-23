@@ -1279,8 +1279,11 @@ def send_sns_confirm(response):
         if response['Subject'] != 'END':
             buid = response['Subject']
             if int(buid) in allowed_buids:
+                LOG.info("Creatin update_solr task for %s" % buid)
                 set_title = helpers.create_businessunit(int(buid))
                 task_update_solr.delay(buid, force=True, set_title=set_title)
+            else:
+                LOG.info("Skipping update_solr for %s because it is not in the allowed buids list." % buid)
 
 
 def new_sitemap_index(request):
@@ -1866,12 +1869,7 @@ def confirm_load_jobs_from_etl(response):
                      'ad875783-c49e-49ff-b82a-b0538026e089',
                      '0ab41358-8323-4863-9f19-fdb344a75a35',)
 
-    LOG.info("sns received for ETL", extra={
-        'view': 'send_sns_confirm',
-        'data': {
-            'json message': response
-        }
-    })
+    LOG.info("sns received for ETL")
 
     if response:
         if response.get('Subject', None) != 'END':
@@ -1882,6 +1880,7 @@ def confirm_load_jobs_from_etl(response):
             if jsid.lower() in blocked_jsids:
                 LOG.info("Ignoring sns for %s", jsid)
                 return None
+            LOG.info("Creating ETL Task (%s, %s, %s" % (jsid, buid, name))
             task_etl_to_solr.delay(jsid, buid, name)
 
 
