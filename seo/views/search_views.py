@@ -1269,17 +1269,12 @@ def send_sns_confirm(response):
     # Postajob buids and state job bank buids
     allowed_buids = [1228, 5480] + range(2650,2704)
 
-    LOG.info("sns received", extra = {
-        'view': 'send_sns_confirm',
-        'data': {
-            'json message': response
-        }
-    })
+    LOG.info("sns received for SEOXML")
     if response:
         if response['Subject'] != 'END':
             buid = response['Subject']
             if int(buid) in allowed_buids:
-                LOG.info("Creatin update_solr task for %s" % buid)
+                LOG.info("Creating update_solr task for %s" % buid)
                 set_title = helpers.create_businessunit(int(buid))
                 task_update_solr.delay(buid, force=True, set_title=set_title)
             else:
