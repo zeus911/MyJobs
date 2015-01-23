@@ -11,6 +11,6 @@ def reports_overview(request):
                               RequestContext(request))
 
 @restrict_to_staff()
-def edit_report(request):
+def create_report(request):
     return render_to_response('myreports/create_report.html', {},
                               RequestContext(request))
