@@ -67,8 +67,9 @@ class FiltersTestCase(DirectSEOBase):
                                       facet_counts,
                                       custom_facets=facet_counts['facet_slab'])
         for widget in widgets:
-            self.assertEqual(widget.render().find('More'), -1) 
-            self.assertEqual(widget.render().find('Less'), -1)
+            rendered_widget = widget.render()
+            self.assertNotIn('More', rendered_widget)
+            self.assertNotIn('Less', rendered_widget)
 
     def test_more_less(self):
         """
@@ -128,7 +129,7 @@ class FiltersTestCase(DirectSEOBase):
         offset = self.config.num_filter_items_to_show * 2
         for widget in widgets:
             self.assertNotEqual(widget.render().find('More'), -1)
-            if widget._type != 'facet':
+            if widget.widget_type != 'facet':
                 self.assertIn('data-offset="%s"' % offset, widget.render())
             else:
                 # Facet offset should always be larger, since all the facets
@@ -181,7 +182,7 @@ class FiltersTestCase(DirectSEOBase):
                     # If the path isn't being overwritten, there slug
                     # from the existing path should appear the same
                     # number of times that there are elements in the widget.
-                    if value and widget._type not in included_slug_types:
+                    if value and widget.widget_type not in included_slug_types:
                         matches = list(finditer(value, widget.render()))
                         self.assertEqual(len(matches), num_items)
                     elif value and widget.facet_type_to_slug() == filter_type:
@@ -217,7 +218,7 @@ class FiltersTestCase(DirectSEOBase):
                                       custom_facets=custom_facets,
                                       filters=filters)
         for widget in widgets:
-            if widget._type == 'facet':
+            if widget.widget_type == 'facet':
                 new_path = '/mechanic-jobs/taco-truck-driver/new-jobs/'
                 matches = list(finditer(new_path, widget.render()))
                 self.assertEqual(len(matches), num_items)
