@@ -78,6 +78,13 @@ class Widget(object):
             path_dict[slug_type.replace('_slug', '')] = path
         return path_dict
 
+    def facet_type_to_slug(self):
+        if self._type in ['city', 'state', 'country']:
+            return 'location_slug'
+        elif self._type in ['featured', 'company']:
+            return 'company_slug'
+        return '%s_slug' % self._type
+
 
 class FacetListWidget(Widget):
     """
