@@ -74,9 +74,10 @@ class ViewTests(PostajobTestBase):
             authorize_net_login=settings.TESTING_CC_AUTH['api_id'],
             authorize_net_transaction_key=settings.TESTING_CC_AUTH['transaction_key'])
 
-        self.choices_data = ('{"countries":[{"code":"USA", '
+        self.choices_data = ('{"countries":[{"code":"United States", '
                              '"name":"United States"}], '
-                             '"regions":[{"code":"IN", "name":"Indiana"}] }')
+                             '"regions":[{"code":"Indiana", '
+                             '"name":"Indiana"}] }')
         self.side_effect = [self.choices_data for x in range(0, 50)]
 
         self.location_management_form_data = {
@@ -141,7 +142,7 @@ class ViewTests(PostajobTestBase):
             'address_line_one': '123 Street Rd.',
             'card_number': '4007000000027',
             'city': 'Indianapolis',
-            'country': 'USA',
+            'country': 'United States',
             'cvv': '123',
             'exp_date_0': (date.today().month + 1) % 12 or 12,
             'exp_date_1': date.today().year + 5,
@@ -744,8 +745,8 @@ class ViewTests(PostajobTestBase):
             'address_line_one': '123 Place Road',
             'address_line_two': 'Suite 1',
             'city': 'Indianapolis',
-            'state': 'IN',
-            'country': 'USA',
+            'state': 'Indiana',
+            'country': 'United States',
             'zipcode': '46268',
             'redemption_id': offline_purchase.redemption_uid
         }
@@ -780,8 +781,8 @@ class ViewTests(PostajobTestBase):
             'address_line_one': '123 Place Road',
             'address_line_two': 'Suite 1',
             'city': 'Indianapolis',
-            'state': 'IN',
-            'country': 'USA',
+            'state': 'Indiana',
+            'country': 'United States',
             'zipcode': '46268',
             'redemption_id': offline_purchase.redemption_uid
         }
