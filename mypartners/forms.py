@@ -402,6 +402,10 @@ class ContactRecordForm(forms.ModelForm):
                     widget=forms.CheckboxSelectMultiple)
         init_tags(self)
 
+        # mark contact type specific fields as required
+        for field in ['contact_email', 'contact_phone', 'location', 'job_id']:
+            self.fields[field].label += " *"
+
     def clean(self):
         contact_type = self.cleaned_data.get('contact_type', None)
         if contact_type == 'email' and not self.cleaned_data['contact_email']:
