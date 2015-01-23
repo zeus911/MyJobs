@@ -94,6 +94,10 @@ function disable_fields(){
     $('label[for$="job_interviews"]').hide();
     $('[id$="job_hires"]').hide();
     $('label[for$="job_hires"]').hide();
+    $('[id$="subject"]').hide();
+    $('label[for$="subject"]').hide();
+    $('label[for*="date_time_"]').hide();
+    $(".date-time").hide();
 }
 
 function display_length_widget(display){
@@ -113,21 +117,27 @@ function show_fields(){
     if(contact_type == 'email'){
         $('[id$="contact_email"]').show();
         $('label[for$="contact_email"]').show();
-        $('[id*="date_time_"]').show();
+        $('[id$="subject"]').show();
+        $('label[for$="subject"]').show();
         $('label[for*="date_time_"]').show();
+        $(".date-time").show();
     } else if(contact_type == 'phone') {
         $('[id$="contact_phone"]').show();
         $('label[for$="contact_phone"]').show();
         $('[id$="length"]').show();
         $('label[for$="length"]').show();
-        $('[id*="date_time_"]').show();
         $('label[for*="date_time_"]').show();
+        $(".date-time").show();
+        $('[id$="subject"]').show();
+        $('label[for$="subject"]').show();
     } else if(contact_type == 'meetingorevent') {
         $('[id$="location"]').show();
         $('label[for$="location"]').show();
-        $('[id*="date_time_"]').show();
         $('label[for*="date_time_"]').show();
         display_length_widget("show");
+        $(".date-time").show();
+        $('[id$="subject"]').show();
+        $('label[for$="subject"]').show();
     } else if(contact_type == 'job'){
         $('[id$="contact_email"]').show();
         $('label[for$="contact_email"]').show();
@@ -139,13 +149,11 @@ function show_fields(){
         $('label[for$="job_interviews"]').show();
         $('[id$="job_hires"]').show();
         $('label[for$="job_hires"]').show();
-
-        // Hiding fields
-        $('[id$="subject"]').hide();
-        $('label[for$="subject"]').hide();
-        $('[id*="date_time_"]').hide();
-        $('label[for*="date_time_"]').hide();
-        $(".date-time").hide();
+    } else {
+        $('[id$="subject"]').show();
+        $('label[for$="subject"]').show();
+        $('label[for*="date_time_"]').show();
+        $(".date-time").show();
     }
 }
 
