@@ -2,7 +2,6 @@ from functools import partial
 from django.conf import settings
 from universal.decorators import not_found_when, warn_when
 
-# used in postajob
 def site_misconfigured(request):
     try:
         return not settings.SITE.canonical_company.has_packages
