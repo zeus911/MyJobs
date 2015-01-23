@@ -1,3 +1,4 @@
+from datetime import timedelta
 from itertools import chain
 from os import path
 from re import sub
@@ -200,6 +201,7 @@ class Partner(models.Model):
         if date_start:
             records = records.filter(date_time__gte=date_start)
         if date_end:
+            date_end = date_end + timedelta(1)
             records = records.filter(date_time__lte=date_end)
         if record_type:
             if record_type == 'email':

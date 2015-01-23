@@ -162,7 +162,7 @@ def build_results_heading(breadbox):
         heading.append(breadbox.title_display_heading())
     elif not heading:
         if has_count:
-            heading.append(str(breadbox.job_count))
+            heading.append(unicode(breadbox.job_count))
         heading.append("Jobs")
 
     if has_location:
@@ -361,13 +361,13 @@ def bread_box_company_heading(company_slug_value):
     if not company_slug_value:
         return None
 
-    try:
-        kwargs = {'title_slug': company_slug_value}
-        business_unit = BusinessUnit.objects.filter(**kwargs)
-    except (BusinessUnit.DoesNotExist, BusinessUnit.MultipleObjectsReturned):
-        return None
+    kwargs = {'title_slug': company_slug_value}
+    business_unit = BusinessUnit.objects.filter(**kwargs)
 
-    return business_unit[0].title
+    try:
+        return business_unit[0].title
+    except Exception:
+        return None
 
 
 def bread_box_location_heading(location_slug_value, jobs=None):
@@ -410,7 +410,7 @@ def bread_box_moc_heading(moc_slug_value):
 
 
 def bread_box_title_heading(title_slug_value, jobs=None):
-    if not title_slug_value and not jobs:
+    if (not title_slug_value and not jobs) or not title_slug_value:
         return None
 
     if jobs:
@@ -534,8 +534,7 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
     sqs = sqs.facet_sort(facet_sort).facet_mincount(mc)
     sqs = sqs.facet("city_slab").facet("state_slab").facet("country_slab")\
              .facet("moc_slab").facet("title_slab").facet("full_loc")\
-             .facet("company_slab").facet("buid").facet("mapped_moc_slab")\
-             .facet("lat_long_buid_slab")
+             .facet("company_slab").facet("buid").facet("mapped_moc_slab")
 
     # When get_jobs is called from job_listing_by_slug_tag, sqs already has site
     # default facets and filters from URL applied. The call to filter_sqs

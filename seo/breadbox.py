@@ -65,8 +65,8 @@ class Breadbox(object):
                  and self.query_dict or a specified query_dict.
 
         """
-        path = path or self.path
-        if not self.path or path == '/':
+        path = path if path is not None else self.path
+        if path == '/' or not path:
             path = reverse('all_jobs')
         query_dict = query_dict if query_dict is not None else self.query_dict
         query_string = query_dict.urlencode()
@@ -284,10 +284,15 @@ class Breadbox(object):
     def custom_facet_display_heading(self):
         # A large number of our facets end in " Jobs", but when we chain the
         # facets titles together the " Jobs" ending for each individual
-        # facet doesn't make sense anymore, so rstrip it out and then
+        # facet doesn't make sense anymore, so strip it out and then
         # re-add it after all the facet titles have been composed.
-        heading = ' and '.join(facet.display_title.rstrip(" Jobs") for facet in
-                              self.custom_facet_breadcrumbs)
+        display_titles = []
+        for facet in self.custom_facet_breadcrumbs:
+            title = facet.display_title
+            if title.endswith(' Jobs'):
+                title = title[:-5]
+            display_titles.append(title)
+        heading = ' and '.join(display_titles)
         return "%s Jobs" % heading if heading else ''
 
     def location_display_heading(self):

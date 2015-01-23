@@ -157,7 +157,8 @@ class FacetListWidget(Widget):
                 # same, we decided to keep " Jobs" in these slugs, so it needs
                 # stripped out to match all the other facet types that
                 # don't end in " Jobs".
-                item_name = item_name.rstrip(" Jobs")
+                if item_name.endswith(" Jobs"):
+                    item_name = item_name[:-5]
 
             # Use the django templating system to provide richer string parsing
             item_context = Context({

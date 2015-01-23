@@ -241,9 +241,6 @@ def hr_xml_to_json(xml, business_unit):
     description = data.find('.//PositionFormattedDescription/Content').text
     link = data.find('.//Communication/URI').text
 
-    latitude = data.find('.//SpatialLocation/Latitude').text
-    longitude = data.find('.//SpatialLocation/Longitude').text
-
     # Lookup the company.  (Assumes that company is 1-to-1 on BusinessUnit)
     try:
         company = business_unit.company_set.all()[0]
@@ -361,13 +358,7 @@ def hr_xml_to_json(xml, business_unit):
     job['mapped_mocid'] = mapped_moc_tup.ids
 
     job['text'] = " ".join([force_text((job.get(k)) or "None") for k in
-                            text_fields])
-
-    job['GeoLocation'] = ("%s, %s" % (latitude, longitude)
-                          if latitude and longitude else None)
-    job['lat_long_buid_slab'] = "%s::%s::%s" % (latitude, longitude,
-                                                business_unit.id)
-    job['lat_long_buid_slab_exact'] = job['lat_long_buid_slab']
+                                  text_fields])
 
     return job
 
