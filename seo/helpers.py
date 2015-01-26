@@ -718,6 +718,16 @@ def combine_groups(custom_facet_counts, match_field='name'):
     return custom_facet_counts or []
 
 
+def sort_custom_facets_by_group(custom_facets):
+    grouped_facets = {1: [], 2: [], 3: []}
+    for facet, count in custom_facets:
+        seosite_facet = facet.seositefacet_set.filter(seosite=settings.SITE)
+        seosite_facet = seosite_facet.first()
+        if seosite_facet:
+            grouped_facets[seosite_facet.facet_group].append((facet, count))
+    return grouped_facets
+
+
 def get_widgets(request, site_config, facet_counts, custom_facets,
                 filters=None, featured=False):
     """
@@ -754,20 +764,23 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
         w.precedence = _type[1]
         widgets.append(w)
     if custom_facets:
-        # Since all of the custom facets are already loaded on the
-        # page (but hidden), pass in an arbitrarily large number
-        # as the offset in order to avoid more requests for custom facets
-        # to be made.
-        offset = len(custom_facets)*10000
+        grouped_facets = sort_custom_facets_by_group(custom_facets)
+        for group, facets in grouped_facets.items():
+            if facets:
+                # Since all of the custom facets are already loaded on the
+                # page (but hidden), pass in an arbitrarily large number
+                # as the offset in order to avoid more requests for custom
+                # facets to be made.
+                offset = len(custom_facets)*10000
 
-        # The facet widget must be generated "separately" from
-        # location/title/moc widgets, since facet counts aren't generated
-        # from the SearchIndex.
-        search_widget = CustomFacetListWidget(request, site_config, 'facet',
-                                              custom_facets, filters,
-                                              offset=offset)
-        search_widget.precedence = site_config.browse_facet_order
-        widgets.append(search_widget)
+                # The facet widget must be generated "separately" from
+                # location/title/moc widgets, since facet counts aren't
+                # generated from the SearchIndex.
+                search_widget = CustomFacetListWidget(request, site_config,
+                                                      facets, filters, group,
+                                                      offset=offset)
+            search_widget.precedence = site_config.browse_facet_order
+            widgets.append(search_widget)
     widgets.sort(key=lambda x: x.precedence)
     return widgets
 

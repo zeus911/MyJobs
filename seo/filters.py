@@ -357,6 +357,13 @@ class FacetListWidget(object):
 
 
 class CustomFacetListWidget(FacetListWidget):
+    def __init__(self, request, site_config, items, filters, group_num,
+                 offset=None, query_string=None):
+        self.group_num = group_num
+        super(CustomFacetListWidget, self).__init__(request, site_config,
+                                                    'facet', items, filters,
+                                                    offset, query_string)
+
     def _item_name(self, item):
         facet, count = item
 
@@ -375,3 +382,24 @@ class CustomFacetListWidget(FacetListWidget):
     def _item_url(self, item):
         facet, count = item
         return self.get_abs_url((facet.url_slab, count))
+
+    def get_title(self):
+        """
+        Gets the "Browse by ___" title for the widget.
+
+        :return: A string containing the title.
+
+        """
+        if self.widget_type == 'featured':
+            return 'Featured Company'
+
+        # When you add custom keywords to a microsite, you will need to manually
+        # enter a translation to directseo/locale<LANG>/LC_MESSAGES/django.po
+        # for each language. Examples are "Profession" or "Area".
+        if self.group_num == 1:
+            facet_title_field = 'browse_%s_text' % self.widget_type
+        else:
+            facet_title_field = 'browse_%s_text_%s' % (self.widget_type,
+                                                       self.group_num)
+        facet_title = getattr(self.site_config, facet_title_field)
+        return _(facet_title)
