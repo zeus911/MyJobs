@@ -131,15 +131,7 @@ class FacetListWidget(object):
 
         return mark_safe('\n'.join(output))
 
-    def _render_li(self, item):
-        """
-        Turns a facet tuple into an li containing the correct link
-        to the item.
-
-        :param item: A facet (slug, count) tuple to be rendered.
-        :return: The <li></li> block representing the item.
-
-        """
+    def _item_name(self, item):
         try:
             item_name = safe(smart_truncate(facet_text(item[0])))
         except IndexError:
@@ -151,8 +143,24 @@ class FacetListWidget(object):
             return None
         if item_name in ('None', '') or item_name.startswith("Virtual"):
             return None
+        return item_name
 
-        item_url = self.get_abs_url(item)
+    def _item_url(self, item):
+        return self.get_abs_url(item)
+
+    def _render_li(self, item):
+        """
+        Turns a facet tuple into an li containing the correct link
+        to the item.
+
+        :param item: A facet (slug, count) tuple to be rendered.
+        :return: The <li></li> block representing the item.
+
+        """
+        item_name = self._item_name(item)
+        if not item_name:
+            return None
+        item_url = self._item_url(item)
 
         if self._num_items_rendered <= self.num_to_show:
             li_class = ""
@@ -349,31 +357,10 @@ class FacetListWidget(object):
 
 
 class CustomFacetListWidget(FacetListWidget):
-    def _render_li(self, item):
-        """
-        Turns a facet tuple into an li containing the correct link
-        to the item.
-
-        :param item: A facet (slug, count) tuple to be rendered.
-        :return: The <li></li> block representing the item.
-
-        """
+    def _item_name(self, item):
         facet, count = item
+
         item_name = facet.name
-
-        item_url = self.get_abs_url((facet.url_slab, count))
-
-        if self._num_items_rendered <= self.num_to_show:
-            li_class = ""
-        else:
-            li_class = "direct_hiddenOption"
-            self._has_hidden_items = True
-
-        # build item_count using humanized. This is usally called inside the
-        # django template, but this widget doesn't use a specific template
-        # so it makes more sense to do it directly in the python here.
-        item_count = intcomma(item[1]) if item[1] else False
-
         # When this was added most of the custom facet
         # names ended with " Jobs" (for prettier titles). In order to
         #  ensure that the slugs/paths for these facets remained the
@@ -383,20 +370,8 @@ class CustomFacetListWidget(FacetListWidget):
         if item_name.endswith(" Jobs"):
             item_name = item_name[:-5]
 
-        # Use the django templating system to provide richer string parsing
-        item_context = Context({
-            "li_class": li_class,
-            "item_url": item_url,
-            "item_name": item_name,
-            "item_count": item_count,
-        })
+        return item_name
 
-        li_item = ('<li role="menuitem" '
-                   '{% if li_class %}class="{{li_class}}"{% endif %}>'
-                   '<a href="{{ item_url }}">'
-                   '{{ item_name }}{% if item_count %} ({{ item_count }})'
-                   '{% endif %}</a></li>')
-        item_template = Template(li_item)
-        href = item_template.render(item_context)
-
-        return href
+    def _item_url(self, item):
+        facet, count = item
+        return self.get_abs_url((facet.url_slab, count))
