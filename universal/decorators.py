@@ -103,11 +103,17 @@ def warn_when(condition, feature, message, link=None, link_text=None,
     def decorator(view_func):
         @wraps(view_func)
         def wrap(request, *args, **kwargs):
+            if request.user.is_anonymous():
+                params = {'next': request.get_full_path()}
+                next_url = build_url(reverse('home'), params)
+                return HttpResponseRedirect(next_url)
+
             ctx = {'feature': feature,
                    'message': message,
                    'link': link,
                    'link_text': link_text}
-            if not condition(request):
+
+            if condition(request):
                 if exception:
                     raise exception('{0}: {1}'.format(feature, message))
 
@@ -119,32 +125,15 @@ def warn_when(condition, feature, message, link=None, link_text=None,
         return wrap
     return decorator
 
-# used in mypartners
+not_found_when = partial(
+    warn_when,
+    exception=Http404)
+
 warn_when_inactive = partial(
     warn_when,
-    condition=lambda req: req.user.is_anonymous() or
-                          (req.user.is_verified and req.user.is_active),
+    condition=lambda req: not req.user.is_anonymous() and
+                          (not req.user.is_verified or not req.user.is_active),
     message='You have yet to activate your account.',
     link='/accounts/register/resend',
     link_text='Resend Activation')
 
-# used in postajob
-def site_misconfigured(request):
-    try:
-        return settings.SITE.canonical_company.has_packages
-    except AttributeError:
-        return False
-
-warn_when_site_misconfigured = partial(
-    warn_when,
-    condition = site_misconfigured)
-
-message_when_site_misconfigured = partial(
-    warn_when_site_misconfigured,
-    message='Please contact your member representative to activate this '
-            'feature.')
-
-error_when_site_misconfigured = partial(
-    warn_when_site_misconfigured,
-    message='Accessed company owns no site packages.',
-    exception=Http404)

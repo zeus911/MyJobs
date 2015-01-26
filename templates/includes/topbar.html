@@ -33,8 +33,11 @@
                         <a>{% trans "Employers" %}</a>
                         <ul id="employer-apps" class="submenu">
                             {% if company.prm_access %}
-                                <li><a id="candidate-tab" href="{{ ABSOLUTE_URL }}candidates/view?company={{ company.id }}">{% trans "Candidates" %}</a></li>
-                                <li><a id="partner-tab" href="{{ ABSOLUTE_URL }}prm/view?company={{ company.id }}">{% trans "PRM" %}</a></li>
+                                <li><a id="candidate-tab" href="{{ ABSOLUTE_URL }}candidates/view">{% trans "Candidates" %}</a></li>
+                                <li><a id="partner-tab" href="{{ ABSOLUTE_URL }}prm/view">{% trans "PRM" %}</a></li>
+                            {% endif %}
+                            {% if user.is_staff %}
+                                <li><a id="reports-tab" href="{{ ABSOLUTE_URL }}reports/view">{% trans "Reports" %}</a></li>
                             {% endif %}
                             {% if company.product_access %}
                                 <li><a id="purchasedmicrosite-tab" href="{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Partner Microsite" %}</a></li>
@@ -107,6 +110,9 @@
 
                                             <li><a id="partner-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}prm/view?company={{ company.id }}">{% trans "PRM" %}</a></li>
 
+                                        {% endif %}
+                                        {% if user.is_staff %}
+                                            <li><a id="reports-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}reports/view">{% trans "Reports" %}</a></li>
                                         {% endif %}
                                         {% if company.product_access %}
                                             <li><a id="purchased-microsite-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Partner Microsite" %}</a></li>

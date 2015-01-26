@@ -1,9 +1,9 @@
 from django.conf.urls import *
 
 from postajob import models, views
-from universal.decorators import (company_in_sitepackages, 
-                                  message_when_site_misconfigured,
-                                  error_when_site_misconfigured)
+from postajob.decorators import (message_when_site_misconfigured,
+                                 error_when_site_misconfigured)
+from universal.decorators import company_in_sitepackages 
 
 
 urlpatterns = patterns(
