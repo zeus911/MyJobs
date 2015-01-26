@@ -4,7 +4,7 @@ from re import finditer
 
 from django.core.urlresolvers import reverse_lazy
 
-from seo import helpers
+from seo import helpers, models
 from seo.tests import factories
 from setup import DirectSEOBase
 
@@ -20,29 +20,16 @@ class DummyRequest(object):
             self.META = {'QUERY_STRING': query_string}
 
 
-class DummyConfig(object):
-    def __init__(self, facet=False):
-        self.num_filter_items_to_show = 5
-        #Add browse_foo_text for each _type you pass to Widget
-        i = 0
-
-        config_filter_types = copy(filter_types)
-        if facet:
-            config_filter_types.append('facet')
-
-        for filter_type in config_filter_types:
-            i += 1
-            setattr(self, 'browse_%s_show' % filter_type, True)
-            setattr(self, 'browse_%s_order' % filter_type, i)
-            setattr(self, 'browse_%s_text' % filter_type, filter_type)
-
-
 class FiltersTestCase(DirectSEOBase):
 
     def setUp(self):
         super(FiltersTestCase, self).setUp()
         self.request = DummyRequest()
-        self.config = DummyConfig()
+        self.site = models.SeoSite.objects.first()
+        self.config = factories.ConfigurationFactory(num_filter_items_to_show=5)
+        for filter_type in filter_types:
+            setattr(self.config, 'browse_%s_show' % filter_type, True)
+        self.config.save()
 
     def test_no_facets(self):
         """
@@ -203,7 +190,6 @@ class FiltersTestCase(DirectSEOBase):
 
         """
         facet_counts = {}
-        config = DummyConfig(facet=True)
 
         slab = 'taco-truck-driver/new-jobs::Taco Truck Driver'
 
@@ -225,7 +211,7 @@ class FiltersTestCase(DirectSEOBase):
         filters = helpers.build_filter_dict(path)
         request = DummyRequest(path)
         custom_facets = facet_counts['facet_slab']
-        widgets = helpers.get_widgets(request, config, facet_counts,
+        widgets = helpers.get_widgets(request, self.config, facet_counts,
                                       custom_facets=custom_facets,
                                       filters=filters)
         for widget in widgets:
@@ -269,5 +255,127 @@ class FiltersTestCase(DirectSEOBase):
             matches = list(finditer(query_string, widget.render()))
             self.assertEqual(len(matches), num_items)
 
+    def test_custom_facet_multiple_groups(self):
+        """
+        Confirms that custom facet groups are hiding/showing correctly.
+
+        """
+        facet_counts = {}
+
+        slab = 'taco-truck-driver/new-jobs::Taco Truck Driver'
+
+        num_items = self.config.num_filter_items_to_show + 1
+
+        for filter_type in filter_types:
+            items = []
+            for i in range(num_items):
+                items.append((slab, 5))
+            facet_counts['%s_slab' % filter_type] = items
+
+        facet_counts['facet_slab'] = []
+        for i in range(num_items):
+            facet = factories.CustomFacetFactory(name='Test 1', url_slab=slab)
+            factories.SeoSiteFacetFactory(customfacet=facet, seosite=self.site,
+                                          facet_group=1)
+            facet_counts['facet_slab'].append((facet, 5))
+        for i in range(num_items):
+            facet = factories.CustomFacetFactory(name='Test 2', url_slab=slab)
+            factories.SeoSiteFacetFactory(customfacet=facet, seosite=self.site,
+                                          facet_group=2)
+            facet_counts['facet_slab'].append((facet, 5))
+        for i in range(num_items):
+            facet = factories.CustomFacetFactory(name='Test 3',  url_slab=slab)
+            factories.SeoSiteFacetFactory(customfacet=facet, seosite=self.site,
+                                          facet_group=3)
+            facet_counts['facet_slab'].append((facet, 5))
+
+        path = '/mechanic-jobs/new-jobs/'
+        filters = helpers.build_filter_dict(path)
+        request = DummyRequest(path)
+        custom_facets = facet_counts['facet_slab']
+
+        # Show only the default custom facet group.
+        self.config.browse_facet_show = True
+        self.config.save()
+        num_widgets = get_num_of_widgets(request, self.config, facet_counts,
+                                         custom_facets=custom_facets,
+                                         filters=filters)
+        # 6 default widgets + 1 custom facet widget
+        self.assertEqual(num_widgets, 7)
+
+        # Show two of the custom facet groups.
+        self.config.browse_facet_show_2 = True
+        self.config.save()
+        num_widgets = get_num_of_widgets(request, self.config, facet_counts,
+                                         custom_facets=custom_facets,
+                                         filters=filters)
+        self.assertEqual(num_widgets, 8)
+
+        # Show all three custom facet groups.
+        self.config.browse_facet_show_3 = True
+        self.config.save()
+        num_widgets = get_num_of_widgets(request, self.config, facet_counts,
+                                         custom_facets=custom_facets,
+                                         filters=filters)
+        self.assertEqual(num_widgets, 9)
+
+    def test_seosite_facet_in_facet_group(self):
+        self.config.browse_facet_show = True
+        self.config.browse_facet_text = 'Facet 1'
+        self.config.browse_facet_show_2 = True
+        self.config.browse_facet_text_2 = 'Facet 2'
+        self.config.browse_facet_show_3 = True
+        self.config.browse_facet_text_3 = 'Facet 3'
+        self.config.save()
+
+        facet1 = factories.CustomFacetFactory(name='Test 1')
+        factories.SeoSiteFacetFactory(customfacet=facet1, seosite=self.site,
+                                      facet_group=1)
+        facet2 = factories.CustomFacetFactory(name='Test 2')
+        factories.SeoSiteFacetFactory(customfacet=facet2, seosite=self.site,
+                                      facet_group=2)
+        facet3 = factories.CustomFacetFactory(name='Test 3')
+        factories.SeoSiteFacetFactory(customfacet=facet3, seosite=self.site,
+                                      facet_group=3)
+
+        facet_counts = {'facet_slab': [(facet1, 5), (facet2, 5), (facet3, 5)]}
+        for filter_type in filter_types:
+            facet_counts['%s_slab' % filter_type] = []
+
+        request = DummyRequest()
+
+        widgets = helpers.get_widgets(request, self.config, facet_counts,
+                                      custom_facets=facet_counts['facet_slab'])
+
+        titles = [widget.get_title() for widget in widgets]
+        self.assertIn('Facet 1', titles)
+        self.assertIn('Facet 2', titles)
+        self.assertIn('Facet 3', titles)
+
+        for widget in widgets:
+            if widget.widget_type == 'facet':
+                # If we're rendering a facet, then confirm that
+                # the corresponding custom facet "Test #" shows
+                # up in the results.
+                title = widget.get_title()
+                index = title[-1]
+                matches = list(finditer('Test %s' % index, widget.render()))
+                self.assertEqual(len(matches), 1)
 
 
+def get_num_of_widgets(*args, **kwargs):
+    """
+    Gets the number of widgets that actually have rendered content for
+    a given get_widgets call.
+
+    :param args: The args for helpers.get_widgets()
+    :param kwargs: The kwargs for helpers.get_widgets()
+    :return: The number of widgets with actual content able to be
+             rendered by helpers.get_widgets().
+
+    """
+    widgets = helpers.get_widgets(*args, **kwargs)
+    # Render only the facet widgets since they're the only
+    # ones we actually care about.
+    widgets = [widget.render() for widget in widgets]
+    return len(filter(None, widgets))

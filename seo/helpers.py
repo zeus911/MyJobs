@@ -719,15 +719,26 @@ def combine_groups(custom_facet_counts, match_field='name'):
 
 
 def sort_custom_facets_by_group(custom_facets):
+    """
+    Groups a list of custom facets based on the related SeoSiteFacet
+    facet_group.
+
+    :param custom_facets: A list of custom facets to be sorted.
+    :return: A dictionary where the keys are the facet_groups and the
+             values are a list of custom facets for that facet_group.
+
+    """
+    # Right now we know we only have these 3 facet_groups.
     grouped_facets = {1: [], 2: [], 3: []}
+
     for facet, count in custom_facets:
-        cached_facets = settings.STANDARD_FACET
+        cached_facets = getattr(settings, 'STANDARD_FACET', [])
         try:
             # Attempt to match the facet to a cached version, which
             # will have the facet_group already included.
             cached_facet = cached_facets[(cached_facets.index(facet))]
             facet_group = getattr(cached_facet, 'facet_group', 1)
-        except IndexError:
+        except (IndexError, ValueError):
             # If we can't match it to a cached version, do the lookup
             # manually.
             site_facet = facet.active_site_facet()
@@ -790,8 +801,8 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
                                                       facets, filters,
                                                       facet_group,
                                                       offset=offset)
-            search_widget.precedence = site_config.browse_facet_order
-            widgets.append(search_widget)
+                search_widget.precedence = site_config.browse_facet_order
+                widgets.append(search_widget)
     widgets.sort(key=lambda x: x.precedence)
     return widgets
 
