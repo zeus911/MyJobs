@@ -34,7 +34,7 @@ def search_records(request):
     for field, type_ in types.items():
         value = request.POST.get(field)
         if value:
-            records.filter({type_ + type_to_query[type_]})
+            records.filter(**{type_ + type_to_query[type_]: value})
 
     ctx = {'records': list(results.values_list('name', 'uri', 'tags')),
            'types': types}
