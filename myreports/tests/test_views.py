@@ -6,8 +6,8 @@ from django.core.urlresolvers import reverse
 from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
 
-class TestReportsOverview(TestCase):
-    """Tests the reports_overview view."""
+class TestReports(TestCase):
+    """Tests the reports view, which is the landing page for reports"""
 
     def setUp(self):
         self.client = TestClient()
@@ -22,13 +22,6 @@ class TestReportsOverview(TestCase):
 
         self.user.is_staff = False
         self.user.save()
-        response = self.client.get(reverse('reports_overview'))
-        
-        self.assertEqual(response.status_code, 404)
+        response = self.client.get(reverse('reports'))
 
-class TestEditReport(TestCase):
-    """
-    Tests the edit_report view, which implements both editing and viewing of
-    reports.
-    """
-    pass
+        self.assertEqual(response.status_code, 404)
