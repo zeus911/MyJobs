@@ -142,9 +142,8 @@ class PartnerSavedSearchForm(ModelForm):
             widget=TextInput(attrs={'id': 'p-tags', 'placeholder': 'Tags'})
         )
 
-        # If it's an edit make the email recipient unchangable.
-        # Because it's a select box, make them the only option as well,
-        # so it doesn't even appear to the user that they can change it.
+        # If it's an edit make the email recipient unchangable (for
+        # compliance purposes).
         if self.instance and self.instance.pk:
             self.fields['email'].widget.attrs['disabled'] = True
 
