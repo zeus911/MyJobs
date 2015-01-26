@@ -390,9 +390,6 @@ class CustomFacetListWidget(FacetListWidget):
         :return: A string containing the title.
 
         """
-        if self.widget_type == 'featured':
-            return 'Featured Company'
-
         # When you add custom keywords to a microsite, you will need to manually
         # enter a translation to directseo/locale<LANG>/LC_MESSAGES/django.po
         # for each language. Examples are "Profession" or "Area".
@@ -403,3 +400,13 @@ class CustomFacetListWidget(FacetListWidget):
                                                        self.group_num)
         facet_title = getattr(self.site_config, facet_title_field)
         return _(facet_title)
+
+    def render(self):
+        facet_show_field = 'browse_%s_show' % self.widget_type
+        if self.group_num != 1:
+            facet_show_field = '%s_%s' % (facet_show_field, self.group_num)
+
+        if not getattr(self.site_config, facet_show_field):
+            return None
+
+        return super(CustomFacetListWidget, self).render()

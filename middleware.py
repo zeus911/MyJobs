@@ -245,19 +245,25 @@ class MultiHostMiddleware:
             else:
                 setattr(settings, v, '')
 
-        settings.CACHE_MIDDLEWARE_KEY_PREFIX = "%s" % (my_site.domain,)
-        default_site_facets = SeoSiteFacet.objects.filter(
-            seosite=my_site).filter(
-                facet_type=SeoSiteFacet.DEFAULT)
+        site_facets = SeoSiteFacet.objects.filter(seosite=my_site)
+
+        settings.CACHE_MIDDLEWARE_KEY_PREFIX = "%s" % my_site.domain
+
+        default = SeoSiteFacet.DEFAULT
+        default_site_facets = site_facets.filter(facet_type=default)
         settings.DEFAULT_FACET = custom_facets_ops_groups(default_site_facets)
 
-        featured_site_facets = SeoSiteFacet.objects.filter(
-            seosite=my_site).filter(
-                facet_type=SeoSiteFacet.FEATURED)
+        featured = SeoSiteFacet.FEATURED
+        featured_site_facets = site_facets.filter(facet_type=featured)
         settings.FEATURED_FACET = custom_facets_ops_groups(featured_site_facets)
-        settings.SITE_PACKAGES = [int(site.pk)
-                                  for site in SitePackage.objects.filter(
-                                      sites=my_site)]
+
+        standard = SeoSiteFacet.STANDARD
+        standard_site_facets = site_facets.filter(facet_type=standard)
+        settings.STANDARD_FACET = custom_facets_ops_groups(standard_site_facets)
+
+        packages = SitePackage.objects.filter(sites=my_site)
+        settings.SITE_PACKAGES = [int(site_package.pk)
+                                  for site_package in packages]
 
 
 def custom_facets_ops_groups(site_facets):

@@ -721,7 +721,15 @@ def combine_groups(custom_facet_counts, match_field='name'):
 def sort_custom_facets_by_group(custom_facets):
     grouped_facets = {1: [], 2: [], 3: []}
     for facet, count in custom_facets:
-        facet_group = getattr(facet, 'facet_group', 1)
+        cached_facets = settings.STANDARD_FACET
+        try:
+            cached_facet = cached_facets[(cached_facets.index(facet))]
+            facet_group = getattr(cached_facet, 'facet_group', 1)
+        except IndexError:
+            site_facet = facet.active_site_facet()
+            if not site_facet:
+                continue
+            facet_group = site_facet.facet_group
         grouped_facets[facet_group].append((facet, count))
     return grouped_facets
 
@@ -763,7 +771,7 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
         widgets.append(w)
     if custom_facets:
         grouped_facets = sort_custom_facets_by_group(custom_facets)
-        for group, facets in grouped_facets.items():
+        for facet_group, facets in grouped_facets.items():
             if facets:
                 # Since all of the custom facets are already loaded on the
                 # page (but hidden), pass in an arbitrarily large number
@@ -775,7 +783,8 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
                 # location/title/moc widgets, since facet counts aren't
                 # generated from the SearchIndex.
                 search_widget = CustomFacetListWidget(request, site_config,
-                                                      facets, filters, group,
+                                                      facets, filters,
+                                                      facet_group,
                                                       offset=offset)
             search_widget.precedence = site_config.browse_facet_order
             widgets.append(search_widget)
