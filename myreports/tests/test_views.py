@@ -26,9 +26,10 @@ class TestReports(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_filter_partners(self):
+    def test_search_records(self):
         """Test that filtering partners through ajax works properly."""
-        import ipdb; ipdb.set_trace()
-        response = self.client.post(reverse('reports'),
-                                    {'name': 'DirectEmployers'},
+
+        response = self.client.post(reverse('search_records'),
+                                    {'name': 'TestCompany'},
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code, 200)

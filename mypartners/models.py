@@ -367,6 +367,10 @@ class ContactRecord(models.Model):
     def shorten_date_time(self):
         return self.date_time.strftime('%b %e, %Y')
 
+    @staticmethod
+    def get_searchable_fields():
+        return [field.name for field in ContactRecord._meta.fields]
+
 
 MAX_ATTACHMENT_MB = 4
 
