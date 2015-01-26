@@ -723,9 +723,13 @@ def sort_custom_facets_by_group(custom_facets):
     for facet, count in custom_facets:
         cached_facets = settings.STANDARD_FACET
         try:
+            # Attempt to match the facet to a cached version, which
+            # will have the facet_group already included.
             cached_facet = cached_facets[(cached_facets.index(facet))]
             facet_group = getattr(cached_facet, 'facet_group', 1)
         except IndexError:
+            # If we can't match it to a cached version, do the lookup
+            # manually.
             site_facet = facet.active_site_facet()
             if not site_facet:
                 continue

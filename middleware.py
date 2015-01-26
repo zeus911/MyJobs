@@ -246,6 +246,7 @@ class MultiHostMiddleware:
                 setattr(settings, v, '')
 
         site_facets = SeoSiteFacet.objects.filter(seosite=my_site)
+        site_facets = site_facets.select_related('customfacet')
 
         settings.CACHE_MIDDLEWARE_KEY_PREFIX = "%s" % my_site.domain
 
