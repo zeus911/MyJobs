@@ -20,7 +20,7 @@ from seo_pysolr import Solr
 from seo.search_backend import DESearchQuerySet
 from seo.models import BusinessUnit, CustomFacet
 from seo.templatetags.seo_extras import facet_text, smart_truncate
-from seo.filters import FacetListWidget
+from seo.filters import FacetListWidget, CustomFacetListWidget
 from serializers import JSONExtraValuesSerializer
 from moc_coding.models import Moc
 
@@ -763,9 +763,9 @@ def get_widgets(request, site_config, facet_counts, custom_facets,
         # The facet widget must be generated "separately" from
         # location/title/moc widgets, since facet counts aren't generated
         # from the SearchIndex.
-        search_widget = FacetListWidget(request, site_config, 'facet',
-                                        custom_facets, filters,
-                                        offset=offset)
+        search_widget = CustomFacetListWidget(request, site_config, 'facet',
+                                              custom_facets, filters,
+                                              offset=offset)
         search_widget.precedence = site_config.browse_facet_order
         widgets.append(search_widget)
     widgets.sort(key=lambda x: x.precedence)

@@ -1,29 +1,36 @@
 # -*- coding: utf-8 -*-
+from copy import copy
 from re import finditer
 
 from django.core.urlresolvers import reverse_lazy
 
 from seo import helpers
+from seo.tests import factories
 from setup import DirectSEOBase
 
 
 filter_types = ['city', 'state', 'country', 'title', 'company', 'moc',
-                'mapped_moc', 'facet']
+                'mapped_moc']
 
 
-class DummyRequest():
+class DummyRequest(object):
     def __init__(self, path=reverse_lazy('view_jobs'), query_string=None):
         self.path = path
         if query_string:
             self.META = {'QUERY_STRING': query_string}
 
 
-class DummyConfig():
-    def __init__(self):
+class DummyConfig(object):
+    def __init__(self, facet=False):
         self.num_filter_items_to_show = 5
         #Add browse_foo_text for each _type you pass to Widget
         i = 0
-        for filter_type in filter_types:
+
+        config_filter_types = copy(filter_types)
+        if facet:
+            config_filter_types.append('facet')
+
+        for filter_type in config_filter_types:
             i += 1
             setattr(self, 'browse_%s_show' % filter_type, True)
             setattr(self, 'browse_%s_order' % filter_type, i)
@@ -64,8 +71,7 @@ class FiltersTestCase(DirectSEOBase):
                 items.append((slab, 5))
             facet_counts['%s_slab' % filter_type] = items
         widgets = helpers.get_widgets(self.request, self.config, 
-                                      facet_counts,
-                                      custom_facets=facet_counts['facet_slab'])
+                                      facet_counts, custom_facets=[])
         for widget in widgets:
             rendered_widget = widget.render()
             self.assertNotIn('More', rendered_widget)
@@ -84,8 +90,7 @@ class FiltersTestCase(DirectSEOBase):
                 items.append((slab, 5))
             facet_counts['%s_slab' % filter_type] = items
         widgets = helpers.get_widgets(self.request, self.config,
-                                      facet_counts,
-                                      custom_facets=facet_counts['facet_slab'])
+                                      facet_counts, custom_facets=[])
         for widget in widgets:
             self.assertNotEqual(widget.render().find('More'), -1)
             self.assertNotEqual(widget.render().find('Less'), -1)
@@ -123,7 +128,7 @@ class FiltersTestCase(DirectSEOBase):
         for filter_type in filter_types:
             facet_counts['%s_slab' % filter_type] = items
         widgets = helpers.get_widgets(self.request, self.config, facet_counts,
-                                      custom_facets=facet_counts['facet_slab'])
+                                      custom_facets=[])
 
         # There should be a more button rendered by every widget
         offset = self.config.num_filter_items_to_show * 2
@@ -170,12 +175,11 @@ class FiltersTestCase(DirectSEOBase):
                 items.append((slab, 5))
             facet_counts['%s_slab' % filter_type] = items
 
-        custom_facets = facet_counts['facet_slab']
         for path, included_slug_types in paths_and_included_facet_types:
             filters = helpers.build_filter_dict(path)
             request = DummyRequest(path)
             widgets = helpers.get_widgets(request, self.config, facet_counts,
-                                          custom_facets=custom_facets,
+                                          custom_facets=[],
                                           filters=filters)
             for widget in widgets:
                 for filter_type, value in filters.iteritems():
@@ -199,6 +203,7 @@ class FiltersTestCase(DirectSEOBase):
 
         """
         facet_counts = {}
+        config = DummyConfig(facet=True)
 
         slab = 'taco-truck-driver/new-jobs::Taco Truck Driver'
 
@@ -210,11 +215,17 @@ class FiltersTestCase(DirectSEOBase):
                 items.append((slab, 5))
             facet_counts['%s_slab' % filter_type] = items
 
+        facet_counts['facet_slab'] = []
+        for i in range(num_items):
+            facet = factories.CustomFacetFactory(name='Test',
+                                                 url_slab=slab)
+            facet_counts['facet_slab'].append((facet, 5))
+
         path = '/mechanic-jobs/new-jobs/'
         filters = helpers.build_filter_dict(path)
         request = DummyRequest(path)
         custom_facets = facet_counts['facet_slab']
-        widgets = helpers.get_widgets(request, self.config, facet_counts,
+        widgets = helpers.get_widgets(request, config, facet_counts,
                                       custom_facets=custom_facets,
                                       filters=filters)
         for widget in widgets:
@@ -239,13 +250,12 @@ class FiltersTestCase(DirectSEOBase):
             for i in range(num_items):
                 items.append((slab, 5))
             facet_counts['%s_slab' % filter_type] = items
-        custom_facets = facet_counts['facet_slab']
 
         query_string = 'q=taco'
         request = DummyRequest(query_string=query_string)
 
         widgets = helpers.get_widgets(request, self.config, facet_counts,
-                                      custom_facets=custom_facets)
+                                      custom_facets=[])
         for widget in widgets:
             matches = list(finditer(query_string, widget.render()))
             self.assertEqual(len(matches), num_items)
@@ -254,7 +264,7 @@ class FiltersTestCase(DirectSEOBase):
         request = DummyRequest(query_string=query_string)
 
         widgets = helpers.get_widgets(request, self.config, facet_counts,
-                                      custom_facets=custom_facets)
+                                      custom_facets=[])
         for widget in widgets:
             matches = list(finditer(query_string, widget.render()))
             self.assertEqual(len(matches), num_items)

@@ -165,15 +165,6 @@ class FacetListWidget(object):
         # so it makes more sense to do it directly in the python here.
         item_count = intcomma(item[1]) if item[1] else False
 
-        if self.widget_type == 'facet':
-            # When this was added most of the custom facet
-            # names ended with " Jobs" (for prettier titles). In order to
-            #  ensure that the slugs/paths for these facets remained the
-            # same, we decided to keep " Jobs" in these slugs, so it needs
-            # stripped out to match all the other facet types that
-            # don't end in " Jobs".
-            if item_name.endswith(" Jobs"):
-                item_name = item_name[:-5]
 
         # Use the django templating system to provide richer string parsing
         item_context = Context({
@@ -355,3 +346,57 @@ class FacetListWidget(object):
                 elif atom != item_type:
                     path_map[atom] = self.path_dict[atom].strip('/')
         return path_map
+
+
+class CustomFacetListWidget(FacetListWidget):
+    def _render_li(self, item):
+        """
+        Turns a facet tuple into an li containing the correct link
+        to the item.
+
+        :param item: A facet (slug, count) tuple to be rendered.
+        :return: The <li></li> block representing the item.
+
+        """
+        facet, count = item
+        item_name = facet.name
+
+        item_url = self.get_abs_url((facet.url_slab, count))
+
+        if self._num_items_rendered <= self.num_to_show:
+            li_class = ""
+        else:
+            li_class = "direct_hiddenOption"
+            self._has_hidden_items = True
+
+        # build item_count using humanized. This is usally called inside the
+        # django template, but this widget doesn't use a specific template
+        # so it makes more sense to do it directly in the python here.
+        item_count = intcomma(item[1]) if item[1] else False
+
+        # When this was added most of the custom facet
+        # names ended with " Jobs" (for prettier titles). In order to
+        #  ensure that the slugs/paths for these facets remained the
+        # same, we decided to keep " Jobs" in these slugs, so it needs
+        # stripped out to match all the other facet types that
+        # don't end in " Jobs".
+        if item_name.endswith(" Jobs"):
+            item_name = item_name[:-5]
+
+        # Use the django templating system to provide richer string parsing
+        item_context = Context({
+            "li_class": li_class,
+            "item_url": item_url,
+            "item_name": item_name,
+            "item_count": item_count,
+        })
+
+        li_item = ('<li role="menuitem" '
+                   '{% if li_class %}class="{{li_class}}"{% endif %}>'
+                   '<a href="{{ item_url }}">'
+                   '{{ item_name }}{% if item_count %} ({{ item_count }})'
+                   '{% endif %}</a></li>')
+        item_template = Template(li_item)
+        href = item_template.render(item_context)
+
+        return href
