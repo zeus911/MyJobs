@@ -249,18 +249,18 @@ class MultiHostMiddleware:
         default_site_facets = SeoSiteFacet.objects.filter(
             seosite=my_site).filter(
                 facet_type=SeoSiteFacet.DEFAULT)
-        settings.DEFAULT_FACET = custom_facets_with_ops(default_site_facets)
+        settings.DEFAULT_FACET = custom_facets_ops_groups(default_site_facets)
 
         featured_site_facets = SeoSiteFacet.objects.filter(
             seosite=my_site).filter(
                 facet_type=SeoSiteFacet.FEATURED)
-        settings.FEATURED_FACET = custom_facets_with_ops(featured_site_facets)
+        settings.FEATURED_FACET = custom_facets_ops_groups(featured_site_facets)
         settings.SITE_PACKAGES = [int(site.pk)
                                   for site in SitePackage.objects.filter(
                                       sites=my_site)]
 
 
-def custom_facets_with_ops(site_facets):
+def custom_facets_ops_groups(site_facets):
     """
     Returns a list of custom facets with boolean_operation attributes set
     from site facets
@@ -268,7 +268,8 @@ def custom_facets_with_ops(site_facets):
     """
     custom_facets = []
     for site_facet in site_facets:
-        cf = site_facet.customfacet
-        setattr(cf, 'boolean_operation', site_facet.boolean_operation)
-        custom_facets.append(cf)
+        custom_facet = site_facet.customfacet
+        setattr(custom_facet, 'boolean_operation', site_facet.boolean_operation)
+        setattr(custom_facet, 'facet_group', site_facet.facet_group)
+        custom_facets.append(custom_facet)
     return custom_facets

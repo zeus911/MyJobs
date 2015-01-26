@@ -721,10 +721,8 @@ def combine_groups(custom_facet_counts, match_field='name'):
 def sort_custom_facets_by_group(custom_facets):
     grouped_facets = {1: [], 2: [], 3: []}
     for facet, count in custom_facets:
-        seosite_facet = facet.seositefacet_set.filter(seosite=settings.SITE)
-        seosite_facet = seosite_facet.first()
-        if seosite_facet:
-            grouped_facets[seosite_facet.facet_group].append((facet, count))
+        facet_group = getattr(facet, 'facet_group', 1)
+        grouped_facets[facet_group].append((facet, count))
     return grouped_facets
 
 

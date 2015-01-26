@@ -230,7 +230,8 @@ class CustomFacet(BaseSavedSearch):
         return '%s' % self.name
 
     def active_site_facet(self):
-        return self.seositefacet_set.filter(seosite__id=settings.SITE_ID)[0]
+        facets = self.seositefacet_set.filter(seosite__id=settings.SITE_ID)
+        return facets.first()
 
     def get_op(custom_facet):
         """
