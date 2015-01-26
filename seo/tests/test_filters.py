@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from copy import copy
 from re import finditer
 
+from django.conf import settings
 from django.core.urlresolvers import reverse_lazy
 
 from seo import helpers, models
@@ -26,6 +26,8 @@ class FiltersTestCase(DirectSEOBase):
         super(FiltersTestCase, self).setUp()
         self.request = DummyRequest()
         self.site = models.SeoSite.objects.first()
+        settings.SITE = self.site
+        settings.SITE_ID = self.site.pk
         self.config = factories.ConfigurationFactory(num_filter_items_to_show=5)
         for filter_type in filter_types:
             setattr(self.config, 'browse_%s_show' % filter_type, True)
@@ -260,6 +262,23 @@ class FiltersTestCase(DirectSEOBase):
         Confirms that custom facet groups are hiding/showing correctly.
 
         """
+        def get_num_of_widgets(*args, **kwargs):
+            """
+            Gets the number of widgets that actually have rendered content for
+            a given get_widgets call.
+
+            :param args: The args for helpers.get_widgets()
+            :param kwargs: The kwargs for helpers.get_widgets()
+            :return: The number of widgets with actual content able to be
+                     rendered by helpers.get_widgets().
+
+            """
+            returned_widgets = helpers.get_widgets(*args, **kwargs)
+            # Render only the facet widgets since they're the only
+            # ones we actually care about.
+            returned_widgets = [w.render() for w in returned_widgets]
+            return len(filter(None, returned_widgets))
+
         facet_counts = {}
 
         slab = 'taco-truck-driver/new-jobs::Taco Truck Driver'
@@ -361,21 +380,3 @@ class FiltersTestCase(DirectSEOBase):
                 index = title[-1]
                 matches = list(finditer('Test %s' % index, widget.render()))
                 self.assertEqual(len(matches), 1)
-
-
-def get_num_of_widgets(*args, **kwargs):
-    """
-    Gets the number of widgets that actually have rendered content for
-    a given get_widgets call.
-
-    :param args: The args for helpers.get_widgets()
-    :param kwargs: The kwargs for helpers.get_widgets()
-    :return: The number of widgets with actual content able to be
-             rendered by helpers.get_widgets().
-
-    """
-    widgets = helpers.get_widgets(*args, **kwargs)
-    # Render only the facet widgets since they're the only
-    # ones we actually care about.
-    widgets = [widget.render() for widget in widgets]
-    return len(filter(None, widgets))
