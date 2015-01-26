@@ -26,11 +26,11 @@
     </div>
     <div class="profile-form-input {{ field.label|slugify }}-field">
         {% if field.label == 'Send Results to *' %}
-            <select id="id_email" name="email" style="display: inline-block;">
+            <select id="id_email" name="email" style="display: inline-block;" {% if form.fields.email.widget.attrs.disabled %}disabled{% endif %}>
             {% for email, contact in form.fields.email.choices %}
                 <option value="{{ email }}"
                         {% if contact.user and not contact.user.opt_in_myjobs %}disabled title="This contact has opted out of My.jobs communications"{% endif %}
-                        {% if field.value %}selected{% endif %}>
+                        {% if field.value == email %}selected{% endif %}>
                     {{ contact.name|default:"----------" }}
                 </option>
             {% endfor %}
