@@ -123,7 +123,7 @@ class FacetListWidget(object):
         if not self._show_widget(self.items):
             return
 
-        output = [self._render_list()]
+        output = [self._as_ul()]
 
         if self._has_hidden_items or self._show_more(self.items):
             more_less = self._render_more_less()
@@ -131,7 +131,7 @@ class FacetListWidget(object):
 
         return mark_safe('\n'.join(output))
 
-    def _render_list_item(self, item):
+    def _render_li(self, item):
         """
         Turns a facet tuple into an li containing the correct link
         to the item.
@@ -193,7 +193,7 @@ class FacetListWidget(object):
 
         return href
 
-    def _render_list_items(self):
+    def _render_lis(self):
         """
         Renders all the items in self.items.
 
@@ -202,14 +202,14 @@ class FacetListWidget(object):
         """
         rendered_items = []
         for item in self.items:
-            rendered_item = self._render_list_item(item)
+            rendered_item = self._render_li(item)
             if rendered_item:
                 rendered_items.append(rendered_item)
                 self._num_items_rendered += 1
         self._num_items_rendered += len(rendered_items)
         return rendered_items
 
-    def _render_list(self):
+    def _as_ul(self):
         """
         Renders the complete ul containing li items for all valid items
         in self.items.
@@ -228,7 +228,7 @@ class FacetListWidget(object):
 
         output = [column_header, ul_open]
 
-        list_items = self._render_list_items()
+        list_items = self._render_lis()
         output = output + list_items
 
         output.append('</ul>')
