@@ -280,3 +280,7 @@ def custom_facets_ops_groups(site_facets):
         setattr(custom_facet, 'facet_group', site_facet.facet_group)
         custom_facets.append(custom_facet)
     return custom_facets
+
+
+def filter_custom_facets_by_production_status(custom_facets):
+    return [facet for facet in custom_facets if facet.show_production]

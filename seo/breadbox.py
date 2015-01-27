@@ -3,7 +3,6 @@ from django.conf import settings
 from django.template.loader import render_to_string
 
 from seo import helpers
-from seo.models import CustomFacet
 
 
 class Breadbox(object):
@@ -168,13 +167,12 @@ class Breadbox(object):
         if self.filters.get('facet_slug'):
             facet_filters = self.filters['facet_slug'].strip('/')
             facet_filters = facet_filters.split('/')
-            custom_facets = CustomFacet.objects.prod_facets_for_current_site()
-            custom_facets = custom_facets.filter(name_slug__in=facet_filters)
+            custom_facets = helpers.standard_facets_by_name_slug(facet_filters)
 
             # If there's at most one path that we can remove, then
             # remove the ending slug as well.
             new_path = self.path
-            if custom_facets.count() < 2:
+            if len(custom_facets) < 2:
                 new_path = new_path.replace(ending_slug, '')
 
             self.custom_facet_breadcrumbs = []

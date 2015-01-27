@@ -37,6 +37,12 @@ sort_order_mapper = {
 sort_fields = ['relevance', 'date']
 
 
+def standard_facets_by_name_slug(name_slugs):
+    custom_facets = settings.STANDARD_FACET
+    return [facet for facet in custom_facets
+            if facet.name_slug in name_slugs]
+
+
 def company_thumbnails(companies, use_canonical=True):
     """
     Generate company information used in the carousel, company modules,
@@ -560,7 +566,7 @@ def filter_sqs(sqs, filters):
 
     if filters.get('facet_slug'):
         facet_slugs = filters.get('facet_slug').split('/')
-        custom_facets = _custom_facets_from_facet_slugs(facet_slugs)
+        custom_facets = standard_facets_by_name_slug(facet_slugs)
         # Apply each custom facet seperately so that we can guarantee the
         # search terms are ANDed together (via being their own seperate
         # fq parameters) rather than using the default operator for the
@@ -835,15 +841,6 @@ def more_custom_facets(custom_facets, offset=0, num_items=0):
         items.append({'url': url, 'name': name, 'count': i[1]})
 
     return items
-
-
-def _custom_facets_from_facet_slugs(slugs):
-    """
-    Return all CustomFacets with name_slug == slug for a given site.
-
-    """
-    custom_facets = CustomFacet.objects.prod_facets_for_current_site()
-    return custom_facets.filter(name_slug__in=slugs)
 
 
 def sqs_apply_custom_facets(custom_facets, sqs=None, exclude_facets=None):
@@ -1277,7 +1274,7 @@ def urlencode_path_and_query_string(url):
 def _build_facet_queries(custom_facets):
     tagged_facets = {}
     sqs = DESearchQuerySet()
-    custom_facet_queries = custom_facets.get_raw_facet_queries()
+    custom_facet_queries = [facet.saved_querystring for facet in custom_facets]
     for query, facet in zip(custom_facet_queries, custom_facets):
         tagged_facets[query] = {
             'custom_facet': facet,
@@ -1306,9 +1303,8 @@ def _facet_query_result_counts(tagged_facets, sqs):
     return counts
 
 
-def get_solr_facet(site_id, jsids, filters=None, params=None):
-    custom_facets = CustomFacet.objects.prod_facets_for_current_site()
-    custom_facets = custom_facets.prefetch_related('business_units')
+def get_solr_facet(jsids, filters=None, params=None):
+    custom_facets = settings.STANDARD_FACET
 
     # Short-circuit the function if a site has facets turned on, but either
     # does not have any facets with `show_production` == 1 or has not yet

@@ -25,15 +25,16 @@ class SeoHelpersTestCase(DirectSEOBase):
         custom_facet = site_facet.customfacet
         custom_facet.show_production = 1
         custom_facet.save()
+        settings.STANDARD_FACET = [custom_facet]
 
         # The custom facet should have no results, and therefore should
         # not be in the list.
-        result_counts = helpers.get_solr_facet(site.pk, [])
+        result_counts = helpers.get_solr_facet([])
         self.assertEqual(len(result_counts), 0)
 
         custom_facet.always_show = True
         custom_facet.save()
-        result_counts = helpers.get_solr_facet(site.pk, [])
+        result_counts = helpers.get_solr_facet([])
         # If always_show is True the facet should be in the list even
         # if the count is 0.
         self.assertEqual(len(result_counts), 1)

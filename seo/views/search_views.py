@@ -812,8 +812,7 @@ def ajax_filter_carousel(request):
             custom_facet_counts = cf_count_tup
         else:
             facet_slugs = filters['facet_slug'].split('/')
-            active_facets = CustomFacet.objects.prod_facets_for_current_site()
-            active_facets = active_facets.filter(name_slug__in=facet_slugs)
+            active_facets = helpers.standard_facets_by_name_slug(facet_slugs)
             custom_facet_counts = [(facet, count) for facet, count
                                    in cf_count_tup
                                    if facet not in active_facets]
@@ -1608,15 +1607,14 @@ def search_by_results_and_slugs(request, *args, **kwargs):
             custom_facet_counts = cf_count_tup
         else:
             facet_slugs = filters['facet_slug'].split('/')
-            active_facets = CustomFacet.objects.prod_facets_for_current_site()
-            active_facets = active_facets.filter(name_slug__in=facet_slugs)
+            active_facets = helpers.standard_facets_by_name_slug(facet_slugs)
             custom_facet_counts = [(facet, count) for facet, count
                                    in cf_count_tup
                                    if facet not in active_facets]
 
             # Set the facet blurb only if we have exactly one
             # CustomFacet applied.
-            if active_facets.count() == 1 and active_facets[0].blurb:
+            if len(active_facets) == 1 and active_facets[0].blurb:
                 facet_blurb_facet = active_facets[0]
 
     else:
