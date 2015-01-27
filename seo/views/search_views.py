@@ -523,10 +523,9 @@ def stylesheet(request, cid=None, css_file="stylesheet.css"):
         selected_stylesheet = Configuration.objects.get(id=cid)
     else:
         selected_stylesheet = get_site_config(request)
-    return render_to_response(css_file, {
-                            'css': selected_stylesheet},
-                            context_instance=RequestContext(request),
-                            content_type="text/css",)
+    return render_to_response(css_file, {'css': selected_stylesheet},
+                              context_instance=RequestContext(request),
+                              content_type="text/css",)
 
 @custom_cache_page
 def posting_stylesheet(request, cid=None, css_file="posting-stylesheet.css"):
