@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 
 from django.http import HttpResponse
@@ -38,31 +39,40 @@ def search_records(request):
     if not request.is_ajax():
         return HttpResponse()
 
-    # incrementally filter results
-    records = ContactRecord.objects.all()
-    fields = ContactRecord.get_searchable_fields()
-    types = {field: get_field_type(ContactRecord, field) for field in fields}
 
-    # TODO: Do something more sensible for date fields
+    # used to map field types to a query
     type_to_query = {
-        'DateTimeField': '__gte',
         'CharField': '__iexact',
         'TextField': '__icontains',
         'AutoField': '__exact',
         'ForeignKey': '__name__icontains'}
 
-    for field, type_ in types.items():
-        value = request.POST.get(field)
-        if value:
-            records.filter(**{type_ + type_to_query[type_]: value})
+    records = ContactRecord.objects.all()
+    types = {}
 
-    ctx = {'records': list(results.values_list('name', 'uri', 'tags')),
+    for key, value in request.GET.items():
+        if value:
+            type_ = get_fieldtype_(ContactRecord, key)
+
+            if key == 'start_date':
+                value = datetime.strptime(value, '%m/%d/%Y').date()
+                records.filter(datetime__gte=value)
+            elif key == 'end_date':
+                value = datetime.strptime(value, '%m/%d/%Y').date()
+                records.filter(datetime__lte=value)
+            elif type_:
+                records.filter(**{type_ + type_to_query[type_]: value})
+                types[key] = type_
+
+    ctx = {'records': list(records.values_list('name', 'uri', 'tags')),
            'types': types}
 
     return HttpResponse(json.dumps(ctx))
 
 # TODO: Move to helpers.py
-def get_field_type(model, field):
-    """Returns the type of the `model`'s `field`."""
+def get_fieldtype_(model, field):
+    """Returns the type of the `model`'s `field` or None if it doesn't exist."""
 
-    return model._meta.get_field(field).get_internal_type()
+    fields = model.get_searchable_fields()
+    if field in fields:
+        return model._meta.get_field(field).get_internaltype_()
