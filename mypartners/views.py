@@ -540,6 +540,9 @@ def prm_edit_saved_search(request):
         else:
             values['label'] = "Copy of %s" % values['label']
             values.pop('email', None)
+            values.pop('notes', None)
+            values.pop('custom_message', None)
+            values.pop('partner_message', None)
             form = PartnerSavedSearchForm(initial=values, partner=partner)
     else:
         form = PartnerSavedSearchForm(partner=partner)
