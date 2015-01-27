@@ -529,14 +529,16 @@ class CustomFacetAdmin(RowPermissionsAdmin):
     list_filter = (GroupListFilter,)
     fieldsets = (
         (None, {'fields': [('name', 'group'), ('always_show',
-                                                        'show_production')]}),
+                                               'show_production')]}),
         ('Search terms', {'fields': ['title', 'keyword', 'company', 'onet',
-                                     ('country', 'state', 'city'),'business_units']}),
+                                     ('country', 'state', 'city'),
+                                     'business_units']}),
         ('Advanced options', {'classes': ('collapse',),
                               'fields': [('querystring', 'search_preview'),
                                          'show_blurb', 'blurb']}),
         ('Add Seo Site Facets', {'classes': ('collapse', ),
-                                 'fields': ['sites', 'facet_type',
+                                 'fields': ['facet_group',
+                                            'sites', 'facet_type',
                                             'boolean_operation']})
         )
     save_as = True
