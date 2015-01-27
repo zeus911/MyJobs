@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 
 from django.http import HttpResponse
@@ -58,9 +58,12 @@ def search_records(request):
                 value = datetime.strptime(value, '%m/%d/%Y').date()
                 records.filter(datetime__gte=value)
             elif key == 'end_date':
-                value = datetime.strptime(value, '%m/%d/%Y').date()
+                # handles off-by-one error; otherwise date provided is excluded
+                value = datetime.strptime(
+                    value, '%m/%d/%Y').date() + timedelta(1)
                 records.filter(datetime__lte=value)
             elif type_:
+                # determine best query based on field type
                 records.filter(**{type_ + type_to_query[type_]: value})
                 types[key] = type_
 
