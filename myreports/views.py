@@ -10,13 +10,33 @@ from myreports.decorators import restrict_to_staff
 
 @restrict_to_staff()
 def reports(request):
+    """The Reports app landing page."""
+
     return render_to_response('myreports/reports.html', {},
                               RequestContext(request))
 
 def search_records(request):
+    """
+    AJAX view that returns `ContactRecord`s based on post data submitted with
+    the request. Query parameters with the exceptions listed below should match
+    `ContactRecord` field names.
+
+    Field Types:
+        DateTimeField - Handled in accordance with the exceptions listed below.
+        CharField - Handled as an exact, case-insensitive match.
+        TextField - Handled as a partial, case-insensitive match.
+        AutoField - Handled as an exact match.
+        ForeignKey - Handled as a partial, case-insensitive match.
+
+    Exceptions:
+    * `datetime` should instead be passed as `start_date` and `end_date`, which
+       will then be pasred using a >= and <= match respectively. That is, if
+       both are given, records that fall between those dates will be queried
+       for.
+    """
+
     if not request.is_ajax():
         return HttpResponse()
-
 
     # incrementally filter results
     records = ContactRecord.objects.all()
@@ -28,7 +48,7 @@ def search_records(request):
         'DateTimeField': '__gte',
         'CharField': '__iexact',
         'TextField': '__icontains',
-        'AutoField': '__iexact',
+        'AutoField': '__exact',
         'ForeignKey': '__name__icontains'}
 
     for field, type_ in types.items():
@@ -43,4 +63,6 @@ def search_records(request):
 
 # TODO: Move to helpers.py
 def get_field_type(model, field):
+    """Returns the type of the `model`'s `field`."""
+
     return model._meta.get_field(field).get_internal_type()
