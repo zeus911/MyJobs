@@ -7,7 +7,6 @@ from django.utils import timezone
 from django.contrib.auth.models import Group
 
 
-
 def start_default():
     return datetime.datetime.now()
 
@@ -78,19 +77,26 @@ class Message(models.Model):
         ('block', 'Notice'),
         ('success', 'Success'),
     )
+    ACCOUNT = 'account'
+    PRM = 'prm'
+    MESSAGE_CLASSES = [ACCOUNT, PRM]
+    MESSAGE_CLASS_CHOICES = zip(MESSAGE_CLASSES, ['Account', 'PRM'])
     group = models.ManyToManyField(Group)
     users = models.ManyToManyField('myjobs.User', through='MessageInfo')
     subject = models.CharField("Subject", max_length=200)
-    message_type = models.CharField("Type of message", choices=TYPE_OF_MESSAGES,
+    message_type = models.CharField("Message type", choices=TYPE_OF_MESSAGES,
                                     max_length=200)
     body = models.TextField('Body')
-    start_on = models.DateTimeField('start on', default=start_default)
-    expire_at = models.DateTimeField('expire at',
+    start_on = models.DateTimeField('Start on', default=start_default)
+    expire_at = models.DateTimeField('Expire at',
                                      default=expire_default,
                                      null=True,
                                      help_text="Default is two weeks " +
                                                "after message is sent.")
-    btn_text = models.CharField('Button Text', max_length=100, default='OK')
+    btn_text = models.CharField('Button text', max_length=100, default='OK')
+    message_class = models.CharField('Message class',
+                                     choices=MESSAGE_CLASS_CHOICES,
+                                     max_length=200, default=ACCOUNT)
 
     objects = MessageManager()
 
@@ -143,7 +149,7 @@ class MessageInfo(models.Model):
             message.start_on = timezone.make_aware(
                 message.start_on, timezone.UTC())
         date_expired = (message.expire_at - message.start_on) + \
-                       message.start_on
+            message.start_on
         if now > date_expired:
             self.mark_expired()
             return True
@@ -151,22 +157,30 @@ class MessageInfo(models.Model):
             return False
 
 
-def get_messages(user):
+def get_messages(user, limit_to=None):
     """
     Gathers Messages based on user, user's groups and if message has started
     and is not expired.
 
     Inputs:
     :user:              User obj to get user's groups
+    :limit_to:          Limits returned messages to a given message class;
+                        Default: no limit
 
     Outputs:
     :active_messages:   A list of messages that starts before the current
                         time and expires after the current time. 'active'
                         messages.
     """
+    assert limit_to in Message.MESSAGE_CLASSES + [None], 'limit_to is ' +\
+        'invalid; got %s, expected one of %s' % (limit_to,
+                                                 Message.MESSAGE_CLASSES + [None])
     now = timezone.now().date()
     messages = Message.objects.prefetch_related('messageinfo_set').filter(
         Q(group__in=user.groups.all()) | Q(users=user),
-        Q(expire_at__isnull=True) | Q(expire_at__gte=now)).distinct()
+        Q(expire_at__isnull=True) | Q(expire_at__gte=now))
+    if limit_to is not None:
+        messages = messages.filter(message_class=limit_to)
+    messages = messages.distinct()
 
     return messages
