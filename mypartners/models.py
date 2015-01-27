@@ -368,9 +368,15 @@ class ContactRecord(models.Model):
         return self.date_time.strftime('%b %e, %Y')
 
     @staticmethod
-    def get_searchable_fields():
-        return [field.name for field in ContactRecord._meta.fields]
+    def get_field_type(field):
+        """
+        Returns the type of the `model`'s `field` or None if it doesn't
+        exist.
+        """
+        fields = [field.name for field in ContactRecord._meta.fields]
 
+        if field in fields:
+            return ContactRecord._meta.get_field(field).get_internaltype_()
 
 MAX_ATTACHMENT_MB = 4
 

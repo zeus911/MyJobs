@@ -39,7 +39,6 @@ def search_records(request):
     if not request.is_ajax():
         return HttpResponse()
 
-
     # used to map field types to a query
     type_to_query = {
         'CharField': '__iexact',
@@ -52,7 +51,7 @@ def search_records(request):
 
     for key, value in request.GET.items():
         if value:
-            type_ = get_fieldtype_(ContactRecord, key)
+            type_ = ContactRecord.get_field_type(key)
 
             if key == 'start_date':
                 value = datetime.strptime(value, '%m/%d/%Y').date()
@@ -71,11 +70,3 @@ def search_records(request):
            'types': types}
 
     return HttpResponse(json.dumps(ctx))
-
-# TODO: Move to helpers.py
-def get_fieldtype_(model, field):
-    """Returns the type of the `model`'s `field` or None if it doesn't exist."""
-
-    fields = model.get_searchable_fields()
-    if field in fields:
-        return model._meta.get_field(field).get_internaltype_()
