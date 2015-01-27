@@ -131,15 +131,7 @@ class FacetListWidget(object):
 
         return mark_safe('\n'.join(output))
 
-    def _render_li(self, item):
-        """
-        Turns a facet tuple into an li containing the correct link
-        to the item.
-
-        :param item: A facet (slug, count) tuple to be rendered.
-        :return: The <li></li> block representing the item.
-
-        """
+    def _item_name(self, item):
         try:
             item_name = safe(smart_truncate(facet_text(item[0])))
         except IndexError:
@@ -151,8 +143,24 @@ class FacetListWidget(object):
             return None
         if item_name in ('None', '') or item_name.startswith("Virtual"):
             return None
+        return item_name
 
-        item_url = self.get_abs_url(item)
+    def _item_url(self, item):
+        return self.get_abs_url(item)
+
+    def _render_li(self, item):
+        """
+        Turns a facet tuple into an li containing the correct link
+        to the item.
+
+        :param item: A facet (slug, count) tuple to be rendered.
+        :return: The <li></li> block representing the item.
+
+        """
+        item_name = self._item_name(item)
+        if not item_name:
+            return None
+        item_url = self._item_url(item)
 
         if self._num_items_rendered <= self.num_to_show:
             li_class = ""
@@ -165,15 +173,6 @@ class FacetListWidget(object):
         # so it makes more sense to do it directly in the python here.
         item_count = intcomma(item[1]) if item[1] else False
 
-        if self.widget_type == 'facet':
-            # When this was added most of the custom facet
-            # names ended with " Jobs" (for prettier titles). In order to
-            #  ensure that the slugs/paths for these facets remained the
-            # same, we decided to keep " Jobs" in these slugs, so it needs
-            # stripped out to match all the other facet types that
-            # don't end in " Jobs".
-            if item_name.endswith(" Jobs"):
-                item_name = item_name[:-5]
 
         # Use the django templating system to provide richer string parsing
         item_context = Context({
@@ -355,3 +354,58 @@ class FacetListWidget(object):
                 elif atom != item_type:
                     path_map[atom] = self.path_dict[atom].strip('/')
         return path_map
+
+
+class CustomFacetListWidget(FacetListWidget):
+    def __init__(self, request, site_config, items, filters, group_num,
+                 offset=None, query_string=None):
+        self.group_num = group_num
+        super(CustomFacetListWidget, self).__init__(request, site_config,
+                                                    'facet', items, filters,
+                                                    offset, query_string)
+
+    def _item_name(self, item):
+        facet, count = item
+
+        item_name = facet.name
+        # When this was added most of the custom facet
+        # names ended with " Jobs" (for prettier titles). In order to
+        #  ensure that the slugs/paths for these facets remained the
+        # same, we decided to keep " Jobs" in these slugs, so it needs
+        # stripped out to match all the other facet types that
+        # don't end in " Jobs".
+        if item_name.endswith(" Jobs"):
+            item_name = item_name[:-5]
+
+        return item_name
+
+    def _item_url(self, item):
+        facet, count = item
+        return self.get_abs_url((facet.url_slab, count))
+
+    def get_title(self):
+        """
+        Gets the "Browse by ___" title for the widget.
+
+        :return: A string containing the title.
+
+        """
+        # When you add custom keywords to a microsite, you will need to manually
+        # enter a translation to directseo/locale<LANG>/LC_MESSAGES/django.po
+        # for each language. Examples are "Profession" or "Area".
+        facet_title_field = 'browse_%s_text' % self.widget_type
+        if self.group_num != 1:
+            facet_title_field = '%s_%s' % (facet_title_field,
+                                           self.group_num)
+        facet_title = getattr(self.site_config, facet_title_field)
+        return _(facet_title)
+
+    def render(self):
+        facet_show_field = 'browse_%s_show' % self.widget_type
+        if self.group_num != 1:
+            facet_show_field = '%s_%s' % (facet_show_field, self.group_num)
+
+        if not getattr(self.site_config, facet_show_field):
+            return None
+
+        return super(CustomFacetListWidget, self).render()

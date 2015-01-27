@@ -156,23 +156,10 @@ class Redirect(models.Model):
 
 
 class CustomFacetQuerySet(QuerySet):
-    def get_facet_queries(self):
-        """
-        Returns a list of search queries for each facet
-
-        """
-        return [SQ(content=Raw(facet.saved_querystring)) for facet in self
-                if facet.saved_querystring]
-
-    def get_raw_facet_queries(self):
-        return [facet.saved_querystring for facet in self
-                if facet.saved_querystring]
-
     def prod_facets_for_current_site(self):
         kwargs = {
             'seositefacet__seosite__id': settings.SITE_ID,
             'show_production': 1,
-
         }
         return self.filter(**kwargs)
 
@@ -230,7 +217,8 @@ class CustomFacet(BaseSavedSearch):
         return '%s' % self.name
 
     def active_site_facet(self):
-        return self.seositefacet_set.filter(seosite__id=settings.SITE_ID)[0]
+        facets = self.seositefacet_set.filter(seosite__id=settings.SITE_ID)
+        return facets.first()
 
     def get_op(custom_facet):
         """
