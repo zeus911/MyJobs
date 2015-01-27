@@ -143,8 +143,9 @@ class SeoHelpersDjangoTestCase(DirectSEOBase):
         an object (in this case CustomFacet.active_site_facet) 
         to our function's local environment (where we've named it mock_active).
         We then override that objects behavior (it's return value in this case)
-        to avoid having to set up a chain of sites and configurations just to get
-        settings.SITE_ID set so that active_site_facet works correctly.
+        to avoid having to set up a chain of sites and configurations
+        just to get settings.SITE_ID set so that active_site_facet works
+        correctly.
 
         """
         terms = [unicode(i) for i in range(10)]
