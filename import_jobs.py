@@ -45,9 +45,8 @@ def update_job_source(guid, buid, name):
 
     # Lookup the jobs, filter then, transform them, and then load the jobs
     jobs = get_current_jobs(guid)
-    # Hack to ignore the includeinindex bit for pearsoninternal.jobs
-    # Should be temporary.
-    if buid not in ["31578", "31094", "23525", "23500"]:
+    # allow ignoring the includeinindex bit
+    if bu.ignore_includeinindex == True:
         jobs = filter_current_jobs(jobs)
     jobs = list(hr_xml_to_json(job, bu) for job in jobs)
     for job in jobs:
