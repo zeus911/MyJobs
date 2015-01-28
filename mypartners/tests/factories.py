@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from mypartners.models import (Partner, Contact, ContactRecord,
                                ContactLogEntry, Tag)
+from seo.tests.factories import CompanyFactory
 from mydashboard.tests.factories import CompanyFactory
 
 

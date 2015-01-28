@@ -18,14 +18,6 @@ class BusinessUnitFactory(factory.django.DjangoModelFactory):
     date_crawled = "2010-10-18 07:00:02"
     enable_markdown = True
 
-
-class CompanyFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Company
-
-    id = 1
-    name = 'Test Company'
-
-
 class SeoSiteFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = SeoSite
 

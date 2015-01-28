@@ -43,7 +43,6 @@ def search_records(request):
 
     records, types = get_records_for[model](request)
 
-    ctx = {'records': list(records.values_list('name', 'uri', 'tags')),
-           'types': types}
+    ctx = {'records': records, 'types': types}
 
-    return HttpResponse(json.dumps(ctx))
+    return HttpResponse(ctx)

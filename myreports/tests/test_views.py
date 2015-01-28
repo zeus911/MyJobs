@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 
 from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
+from mypartners.tests.factories import ContactRecordFactory
 
 class TestReports(TestCase):
     """Tests the reports view, which is the landing page for reports"""
@@ -28,8 +29,9 @@ class TestReports(TestCase):
 
     def test_search_records(self):
         """Test that filtering partners through ajax works properly."""
+        ContactRecordFactory.create_batch(20)
 
         response = self.client.post(reverse('search_records'),
-                                    {'name': 'TestCompany'},
+                                    {'contact_name': 'TestCompany'},
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(response.status_code, 200)
