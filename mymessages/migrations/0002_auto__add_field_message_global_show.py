@@ -8,15 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Message.message_class'
-        db.add_column(u'mymessages_message', 'message_class',
-                      self.gf('django.db.models.fields.CharField')(default='account', max_length=200),
+        # Adding field 'Message.global_show'
+        db.add_column(u'mymessages_message', 'global_show',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting field 'Message.message_class'
-        db.delete_column(u'mymessages_message', 'message_class')
+        # Deleting field 'Message.global_show'
+        db.delete_column(u'mymessages_message', 'global_show')
 
 
     models = {
@@ -72,12 +72,12 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Message'},
             'body': ('django.db.models.fields.TextField', [], {}),
             'btn_text': ('django.db.models.fields.CharField', [], {'default': "'OK'", 'max_length': '100'}),
-            'expire_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 2, 10, 0, 0)', 'null': 'True'}),
+            'expire_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 2, 11, 0, 0)', 'null': 'True'}),
+            'global_show': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'group': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Group']", 'symmetrical': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'message_class': ('django.db.models.fields.CharField', [], {'default': "'account'", 'max_length': '200'}),
             'message_type': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'start_on': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 1, 27, 0, 0)'}),
+            'start_on': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 1, 28, 0, 0)'}),
             'subject': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'users': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myjobs.User']", 'through': u"orm['mymessages.MessageInfo']", 'symmetrical': 'False'})
         },

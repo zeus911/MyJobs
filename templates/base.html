@@ -57,7 +57,7 @@
                             </div>
 
                             {% endif %}
-
+                            {% comment %}
                             {% with user.messages_unread as messages %}
 
                             {% for message_info in messages %}
@@ -74,6 +74,7 @@
                             {% endfor %}
 
                             {% endwith %}
+                            {% endcomment %}
 
                         {% endif %}
                         {% endblock%}

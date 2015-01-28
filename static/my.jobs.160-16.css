@@ -4118,3 +4118,24 @@ span.helptext {
      */
     text-indent: 60px;
 }
+
+#inbox .block {
+    color: #c09853;
+    background-color: #fcf8e3;
+    border: 1px solid #fbeed5;
+}
+#inbox .error {
+    color: #b94a48;
+    background-color: #f2dede;
+    border: 1px solid #eed3d7;
+}
+#inbox .info {
+    color: #3a87ad;
+    background-color: #d9edf7;
+    border: 1px solid #bce8f1;
+}
+#inbox .success {
+    color: #468847;
+    background-color: #dff0d8;
+    border: 1px solid #d6e9c6;
+}

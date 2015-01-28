@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div id="inbox">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="{{ message.message_type }}">
+                    <div class="message-subject {{ message.message_type }}">
+                        {{ message.subject }}
+                    </div>
+                    <div class="message-body {{ message.message_type }}">
+                        {{ message.body|safe }}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No messages</p>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra-js %}
+    <script type="text/javascript">
+        $(document).ready(function() {
+            accordion('.message-subject', '.message-body');
+        });
+    </script>
+{% endblock %}

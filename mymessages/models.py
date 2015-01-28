@@ -77,10 +77,6 @@ class Message(models.Model):
         ('block', 'Notice'),
         ('success', 'Success'),
     )
-    ACCOUNT = 'account'
-    PRM = 'prm'
-    MESSAGE_CLASSES = [ACCOUNT, PRM]
-    MESSAGE_CLASS_CHOICES = zip(MESSAGE_CLASSES, ['Account', 'PRM'])
     group = models.ManyToManyField(Group)
     users = models.ManyToManyField('myjobs.User', through='MessageInfo')
     subject = models.CharField("Subject", max_length=200)
@@ -94,11 +90,16 @@ class Message(models.Model):
                                      help_text="Default is two weeks " +
                                                "after message is sent.")
     btn_text = models.CharField('Button text', max_length=100, default='OK')
-    message_class = models.CharField('Message class',
-                                     choices=MESSAGE_CLASS_CHOICES,
-                                     max_length=200, default=ACCOUNT)
+    global_show = models.BooleanField('Show everywhere', default=False,
+                                      help_text='Show at the top of all pages '
+                                                'in addition to the inbox')
 
     objects = MessageManager()
+
+    @property
+    def display_class(self):
+        return dict(self.MESSAGE_CLASS_CHOICES).get(self.message_class,
+                                                    self.message_class.title())
 
     def __unicode__(self):
         return self.subject
@@ -157,30 +158,22 @@ class MessageInfo(models.Model):
             return False
 
 
-def get_messages(user, limit_to=None):
+def get_messages(user):
     """
     Gathers Messages based on user, user's groups and if message has started
     and is not expired.
 
     Inputs:
     :user:              User obj to get user's groups
-    :limit_to:          Limits returned messages to a given message class;
-                        Default: no limit
 
     Outputs:
     :active_messages:   A list of messages that starts before the current
                         time and expires after the current time. 'active'
                         messages.
     """
-    assert limit_to in Message.MESSAGE_CLASSES + [None], 'limit_to is ' +\
-        'invalid; got %s, expected one of %s' % (limit_to,
-                                                 Message.MESSAGE_CLASSES + [None])
     now = timezone.now().date()
     messages = Message.objects.prefetch_related('messageinfo_set').filter(
         Q(group__in=user.groups.all()) | Q(users=user),
-        Q(expire_at__isnull=True) | Q(expire_at__gte=now))
-    if limit_to is not None:
-        messages = messages.filter(message_class=limit_to)
-    messages = messages.distinct()
+        Q(expire_at__isnull=True) | Q(expire_at__gte=now)).distinct()
 
     return messages
