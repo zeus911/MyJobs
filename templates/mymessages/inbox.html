@@ -2,16 +2,29 @@
 {% block content %}
     <div id="inbox">
         {% if messages %}
-            {% for message in messages %}
-                <div class="{{ message.message_type }}">
-                    <div class="message-subject {{ message.message_type }}">
-                        {{ message.subject }}
+            <table>
+                <tr><th>Date</th><th>Message</th><th>{# actions #}</th></tr>
+                {% for message in messages %}
+                    <tr>
+                        <td>{{ message.start_on }}</td>
+                        <td>
+                            <span class="circle {{ message.message_type }}" title="{{ message.display_type }}"></span>
+                            {{ message.subject }}
+                        </td>
+                        <td><a>mark read</a><a>delete</a></td>
+                    </tr>
+                    {% comment %}
+                    <div class="{{ message.message_type }}">
+                        <div class="message-subject {{ message.message_type }}">
+                            {{ message.subject }}
+                        </div>
+                        <div class="message-body {{ message.message_type }}">
+                            {{ message.body|safe }}
+                        </div>
                     </div>
-                    <div class="message-body {{ message.message_type }}">
-                        {{ message.body|safe }}
-                    </div>
-                </div>
-            {% endfor %}
+                    {% endcomment %}
+                {% endfor %}
+            </table>
         {% else %}
             <p>No messages</p>
         {% endif %}

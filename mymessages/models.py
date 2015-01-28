@@ -97,9 +97,9 @@ class Message(models.Model):
     objects = MessageManager()
 
     @property
-    def display_class(self):
-        return dict(self.MESSAGE_CLASS_CHOICES).get(self.message_class,
-                                                    self.message_class.title())
+    def display_type(self):
+        return dict(self.TYPE_OF_MESSAGES).get(self.message_type,
+                                               self.message_type.title())
 
     def __unicode__(self):
         return self.subject
