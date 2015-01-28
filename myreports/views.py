@@ -49,22 +49,22 @@ def search_records(request):
     records = ContactRecord.objects.all()
     types = {}
 
-    for key, value in request.GET.items():
-        if value:
-            type_ = ContactRecord.get_field_type(key)
+    # save myself a check for a falsey value by removing them to begin with
+    for key, value in {k:v for k, v in request.GET.items() if v}:
+        type_ = ContactRecord.get_field_type(key)
 
-            if key == 'start_date':
-                value = datetime.strptime(value, '%m/%d/%Y').date()
-                records.filter(datetime__gte=value)
-            elif key == 'end_date':
-                # handles off-by-one error; otherwise date provided is excluded
-                value = datetime.strptime(
-                    value, '%m/%d/%Y').date() + timedelta(1)
-                records.filter(datetime__lte=value)
-            elif type_:
-                # determine best query based on field type
-                records.filter(**{type_ + type_to_query[type_]: value})
-                types[key] = type_
+        if key == 'start_date':
+            value = datetime.strptime(value, '%m/%d/%Y').date()
+            records.filter(datetime__gte=value)
+        elif key == 'end_date':
+            # handles off-by-one error; otherwise date provided is excluded
+            value = datetime.strptime(
+                value, '%m/%d/%Y').date() + timedelta(1)
+            records.filter(datetime__lte=value)
+        elif type_:
+            # determine best query based on field type
+            records.filter(**{type_ + type_to_query[type_]: value})
+            types[key] = type_
 
     ctx = {'records': list(records.values_list('name', 'uri', 'tags')),
            'types': types}
