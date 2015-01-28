@@ -359,10 +359,13 @@ class FacetListWidget(object):
 class CustomFacetListWidget(FacetListWidget):
     def __init__(self, request, site_config, items, filters, group_num,
                  offset=None, query_string=None):
-        self.group_num = group_num
         super(CustomFacetListWidget, self).__init__(request, site_config,
                                                     'facet', items, filters,
                                                     offset, query_string)
+        self.group_num = group_num
+        self.selector_type = 'facet'
+        if self.group_num != 1:
+            self.selector_type = '%s-%s' % (self.selector_type, group_num)
 
     def _item_name(self, item):
         facet, count = item

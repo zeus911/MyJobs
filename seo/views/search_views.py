@@ -102,14 +102,10 @@ def ajax_get_facets(request, filter_path, facet_type):
     sort_order = request.REQUEST.get('sort', 'relevance')
     offset = int(GET.get('offset', site_config.num_filter_items_to_show*2))
     num_items = int(GET.get('num_items', DEFAULT_PAGE_SIZE))
-
     if _type == 'facet':
-        qs = request.META.get('QUERY_STRING', '')
-        custom_facets_count_tuples = get_custom_facets(request, filters=filters,
-                                                       query_string=qs)
-
-        items = helpers.more_custom_facets(custom_facets_count_tuples, offset,
-                                           num_items)
+        # Standard facets are all already loaded on page load,
+        # so there will never be anything to return here.
+        items = []
     else:
         default_jobs = helpers.get_jobs(default_sqs=sqs,
                                         custom_facets=settings.DEFAULT_FACET,
