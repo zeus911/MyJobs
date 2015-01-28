@@ -129,7 +129,7 @@ def ajax_geolocation_facet(request):
             'lng': longitude,
         })
 
-    data = json.dumps(data)
+    data = json.dumps(data, sort_keys=True)
     callback_name = request.GET.get('callback')
     if callback_name:
         data = callback_name + "(" + data + ")"
