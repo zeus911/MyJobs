@@ -3,24 +3,11 @@ from mypartners.models import Contact, ContactRecord
 
 
 def filter_contact_records(request):
-    # TODO: update documentation
     """
-    AJAX view that returns `ContactRecord`s based on post data submitted with
-    the request. Query parameters with the exceptions listed below should match
-    `ContactRecord` field names.
-
-    Field Types:
-        DateTimeField - Handled in accordance with the exceptions listed below.
-        CharField - Handled as an exact, case-insensitive match.
-        TextField - Handled as a partial, case-insensitive match.
-        AutoField - Handled as an exact match.
-        ForeignKey - Handled as a partial, case-insensitive match.
-
-    Exceptions:
-    * `datetime` should instead be passed as `start_date` and `end_date`, which
-       will then be pasred using a >= and <= match respectively. That is, if
-       both are given, records that fall between those dates will be queried
-       for.
+    Examines the request for query parameters and converts those to sensible
+    query terms. Parameters should generally match `ContactRecord` field
+    names, though `start_date` and `end_date` are also accepted and will be
+    mapped to the `datetime` field.
     """
 
     # used to map field types to a query
