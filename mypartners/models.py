@@ -373,10 +373,10 @@ class ContactRecord(models.Model):
         Returns the type of the `model`'s `field` or None if it doesn't
         exist.
         """
-        fields = [field.name for field in ContactRecord._meta.fields]
+        fields = [f.name for f in ContactRecord._meta.fields]
 
         if field in fields:
-            return ContactRecord._meta.get_field(field).get_internaltype_()
+            return ContactRecord._meta.get_field(field).get_internal_type()
 
 MAX_ATTACHMENT_MB = 4
 

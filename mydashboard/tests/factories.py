@@ -2,6 +2,7 @@ import factory
 from slugify import slugify
 
 from myjobs.tests.factories import UserFactory
+from seo.tests.factories import CompanyFactory
 from seo.models import (BusinessUnit, Company, CompanyUser,
                         SeoSite)
 
