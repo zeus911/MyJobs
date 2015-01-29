@@ -73,13 +73,13 @@ class TestSearchRecords(MyReportsTestCase):
     def test_restricted_to_post(self):
         """GET requests should raise a 404."""
 
-        response = self.client.post(reverse('search_records'),
-                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        response = self.client.get(reverse('search_records'),
+                                   HTTP_X_REQUESTED_WITH='XMLHttpRequest')
 
         self.assertEqual(response.status_code, 404)
 
     def test_json_output(self):
-        """Test that filtering partners through ajax works properly."""
+        """Test that filtering contact records through ajax works properly."""
 
         # records to be filtered out
         ContactRecordFactory.create_batch(10, contact_name='John Doe')
@@ -103,5 +103,21 @@ class TestSearchRecords(MyReportsTestCase):
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = json.loads(response.content)
         
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(output['records']), 10)
+
+    def test_filtering_on_partner(self):
+        """Test the ability to filter by partner."""
+
+        PartnerFactory.create_batch(10, name="Test Partner",
+                                    owner=self.company)
+
+        response = self.client.post(reverse('search_records'),
+                                    {'name': 'Test Partner',
+                                     'model': 'Partner'},
+                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        output = json.loads(response.content)
+
+        # ContactRecordFactory creates 10 partners in setUp
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(output['records']), 10)

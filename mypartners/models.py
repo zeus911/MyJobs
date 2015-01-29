@@ -37,6 +37,92 @@ ACTIVITY_TYPES = {
     4: 'sent',
 }
 
+class SearchParameterQuerySet(models.query.QuerySet):
+    """
+    Defines a query set with a `from_search` method for filtering by query
+    paramenters.
+    """
+
+    # used ot map field types to a query
+    QUERY_BY_TYPE = {
+        'CharField': '__iexact',
+        'TextField': '__icontains',
+        'AutoField': '__exact',
+        'ForeignKey': '__pk__in'}
+
+    def from_search(self, company=None, parameters=None, company_ptr=None):
+        """
+        Intelligently filter based on query parameters.
+
+        Inputs:
+            :company: The company to restrict results to
+            :parameters: A dict of field: term pairs where field is a field of
+                         the `ContactRecord` model and term is search term
+                         you'd like to filter against.
+
+                         For `datetime`, pass `start_date` and/or `end_date`
+                         instead.
+            :company_ptr: String used to reference the model's company.
+                          Defaults to 'company'
+        """
+
+        # string used to reference the model's company
+        company_ptr = company_ptr or 'company'
+
+        # extract dates so they aren't traversed later
+        start_date = parameters.pop('start_date', None)
+        end_date = parameters.pop('end_date', None)
+
+        records = self.all()
+
+        # only return records the current user has access to
+        if company:
+            records = self.filter(**{company_ptr: company})
+
+        # filter by dates
+        if start_date:
+            start_date = datetime.strptime(start_date, '%m/%d/%Y').date()
+            records.filter(datetime__gte=start_date)
+
+        if end_date:
+            # handles off-by-one error; otherwise date provided is excluded
+            end_date = datetime.strptime(
+                end_date, '%m/%d/%Y').date() + timedelta(1)
+            records.filter(datetime__lte=end_date)
+
+        for key, value in parameters.items():
+            type_ = self.get_field_type(key)
+
+            if type_:
+                query_by_type = SearchParameterQuerySet.QUERY_BY_TYPE
+                records = records.filter(
+                    **{'%s%s' % (key, query_by_type[type_]): value})
+
+        return records
+
+    def get_field_type(self, field):
+        """
+        Returns the type of the `model`'s `field` or None if it doesn't
+        exist.
+        """
+        fields = [f.name for f in self.model._meta.fields]
+
+        if field in fields:
+            return self.model._meta.get_field(field).get_internal_type()
+
+
+class SearchParameterManager(models.Manager):
+    def __init__(self, *args, **kwargs):
+        self.company_ptr = kwargs.pop('company_ptr')
+        super(SearchParameterManager, self).__init__(*args, **kwargs)
+
+    def get_query_set(self):
+        return SearchParameterQuerySet(self.model, using=self._db)
+
+    def from_search(self, company, parameters):
+        return self.get_query_set().from_search(
+            company, parameters, company_ptr=self.company_ptr)
+
 
 class Location(models.Model):
     label = models.CharField(max_length=60, verbose_name='Address Label',
@@ -61,6 +147,7 @@ class Location(models.Model):
         super(Location, self).save(**kwargs)
 
 
+
 class Contact(models.Model):
     """
     Everything here is self explanatory except for one part. With the Contact
@@ -76,6 +163,8 @@ class Contact(models.Model):
     locations = models.ManyToManyField('Location', related_name='contacts')
     tags = models.ManyToManyField('Tag', null=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
+
+    objects = SearchParameterManager(company_ptr='partner__owner')
 
     class Meta:
         verbose_name_plural = 'contacts'
@@ -169,6 +258,8 @@ class Partner(models.Model):
     tags = models.ManyToManyField('Tag', null=True)
     # owner is the Company that owns this partner.
     owner = models.ForeignKey('seo.Company')
+
+    objects = SearchParameterManager(company_ptr='owner')
 
     def __unicode__(self):
         return self.name
@@ -276,68 +367,12 @@ class PartnerLibrary(models.Model):
         return self.name
 
 
-class ContactRecordQuerySet(models.query.QuerySet):
-    def from_search(self, company, parameters):
-        """
-        Inputs:
-            :parameters: A dict of field: term pairs where field is a field of
-                         the `ContactRecord` model and term is search term
-                         you'd like to filter against.
-
-                         For `datetime`, pass `start_date` and/or `end_date`
-                         instead.
-        """
-
-        # extract dates so they aren't traversed later
-        start_date = parameters.pop('start_date', None)
-        end_date = parameters.pop('end_date', None)
-
-        # used ot map field types to a query
-        type_to_query = {
-            'CharField': '__iexact',
-            'TextField': '__icontains',
-            'AutoField': '__exact',
-            'ForeignKey': '__name__icontains'}
-
-        # only return records the current user has access to
-        records = self.filter(partner__owner=company)
-
-        # filter by dates
-        if start_date:
-            start_date = datetime.strptime(start_date, '%m/%d/%Y').date()
-            records.filter(datetime__gte=start_date)
-
-        if end_date:
-            # handles off-by-one error; otherwise date provided is excluded
-            end_date = datetime.strptime(
-                end_date, '%m/%d/%Y').date() + timedelta(1)
-            records.filter(datetime__lte=end_date)
-
-        for key, value in parameters.items():
-            type_ = ContactRecord.get_field_type(key)
-
-            if type_:
-                records = records.filter(
-                    **{'%s%s' % (key, type_to_query[type_]): value})
-
-        return records
-
-
-class ContactRecordManager(models.Manager):
-    def get_query_set(self):
-        return ContactRecordQuerySet(self.model, using=self._db)
-
-    def from_search(self, company, parameters):
-        return self.get_query_set().from_search(company, parameters)
-
-
-
 class ContactRecord(models.Model):
     """
     Object for Communication Records
     """
 
-    objects = ContactRecordManager()
+    objects = SearchParameterManager(company_ptr='partner__owner')
 
     created_on = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
@@ -425,16 +460,8 @@ class ContactRecord(models.Model):
     def shorten_date_time(self):
         return self.date_time.strftime('%b %e, %Y')
 
-    @staticmethod
-    def get_field_type(field):
-        """
-        Returns the type of the `model`'s `field` or None if it doesn't
-        exist.
-        """
-        fields = [f.name for f in ContactRecord._meta.fields]
 
-        if field in fields:
-            return ContactRecord._meta.get_field(field).get_internal_type()
+
 
 MAX_ATTACHMENT_MB = 4
 
