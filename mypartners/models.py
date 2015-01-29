@@ -126,7 +126,7 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
 class SearchParameterManager(models.Manager):
     def __init__(self, *args, **kwargs):
-        self.company_ptr = kwargs.pop('company_ptr')
+        self.company_ptr = kwargs.pop('company_ptr', None)
         super(SearchParameterManager, self).__init__(*args, **kwargs)
 
     def get_query_set(self):
