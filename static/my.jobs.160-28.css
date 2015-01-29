@@ -4129,6 +4129,10 @@ span.helptext {
     margin: 3px 3px 0 3px;
 }
 
+/*
+ These colors were pulled from the alert-* classes
+ that we were previously using.
+*/
 #inbox .block {
     /* Yellow */
     color: #c09853;
