@@ -6,7 +6,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'myjobs.User'
 
-    email = factory.Sequence(lambda n: 'alice%n@example.com' % n)
+    email = factory.Sequence(lambda n: 'alice%i@example.com' % n)
     gravatar = 'alice@example.com'
     password = '5UuYquA@'
     user_guid = factory.LazyAttribute(lambda n: '{0}'.format(uuid.uuid4()))
