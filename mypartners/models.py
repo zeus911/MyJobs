@@ -276,10 +276,68 @@ class PartnerLibrary(models.Model):
         return self.name
 
 
+class ContactRecordQuerySet(models.query.QuerySet):
+    def from_search(self, company, parameters):
+        """
+        Inputs:
+            :parameters: A dict of field: term pairs where field is a field of
+                         the `ContactRecord` model and term is search term
+                         you'd like to filter against.
+
+                         For `datetime`, pass `start_date` and/or `end_date`
+                         instead.
+        """
+
+        # extract dates so they aren't traversed later
+        start_date = parameters.pop('start_date', None)
+        end_date = parameters.pop('end_date', None)
+
+        # used ot map field types to a query
+        type_to_query = {
+            'CharField': '__iexact',
+            'TextField': '__icontains',
+            'AutoField': '__exact',
+            'ForeignKey': '__name__icontains'}
+
+        # only return records the current user has access to
+        records = self.filter(partner__owner=company)
+
+        # filter by dates
+        if start_date:
+            start_date = datetime.strptime(start_date, '%m/%d/%Y').date()
+            records.filter(datetime__gte=start_date)
+
+        if end_date:
+            # handles off-by-one error; otherwise date provided is excluded
+            end_date = datetime.strptime(
+                end_date, '%m/%d/%Y').date() + timedelta(1)
+            records.filter(datetime__lte=end_date)
+
+        for key, value in parameters.items():
+            type_ = ContactRecord.get_field_type(key)
+
+            if type_:
+                records = records.filter(
+                    **{'%s%s' % (key, type_to_query[type_]): value})
+
+        return records
+
+
+class ContactRecordManager(models.Manager):
+    def get_query_set(self):
+        return ContactRecordQuerySet(self.model, using=self._db)
+
+    def from_search(self, company, parameters):
+        return self.get_query_set().from_search(company, parameters)
+
+
+
 class ContactRecord(models.Model):
     """
     Object for Communication Records
     """
+
+    objects = ContactRecordManager()
 
     created_on = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
