@@ -18,8 +18,6 @@ class MyReportsTestCase(TestCase):
     """
     def setUp(self):
         self.client = TestClient()
-        # TODO: on release of MyReports, change this to set more appropriate
-        #       permissions
         self.user = UserFactory(email='testuser@directemployers.org',
                                 is_staff=True)
         self.company = CompanyFactory(name='Test Company')
@@ -125,6 +123,21 @@ class TestSearchRecords(MyReportsTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(output['records']), 10)
 
+    def test_list_query_params(self):
+        """Test that query parameters that are lists are parsed correctly."""
+
+        ContactFactory.create_batch(10, partner=self.partner)
+
+        response = self.client.post(reverse('search_records'),
+                                    {'contact': range(1, 6),
+                                     'model': 'Partner'},
+                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+        output = json.loads(response.content)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(output['records']), 5)
+
     def test_filtering_on_contact(self):
         """Test the ability to filter by contact."""
 
@@ -144,3 +157,6 @@ class TestSearchRecords(MyReportsTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(output['records']), 10)
+
+
+

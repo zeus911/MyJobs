@@ -20,9 +20,6 @@ def reports(request):
 
 
 def search_records(request):
-    # TODO: 
-    #   * Render a template with the results as a QuerySet
-    #   * Figure out best way to detect lists
     """
     AJAX view that returns a JSON representation of a query set based on post
     data submitted with the request.
@@ -46,10 +43,19 @@ def search_records(request):
 
     if request.is_ajax() and request.method == 'POST':
         company = get_company_or_404(request)
-        params = {key: value for key, value in request.POST.items() if key}
+
+        # get rid of empty params and flatten single-item lists
+        params = {}
+        for key in request.POST.keys():
+            value = request.POST.getlist(key)
+            if value:
+                if len(value) > 1:
+                    params[key] = value
+                else:
+                    params[key] = value[0]
+
         model = params.pop('model', 'ContactRecord')
         output = params.pop('output', 'json')
-
         records = get_model('mypartners', model.title()).objects.from_search(
             company, params)
         ctx = {'records': records}

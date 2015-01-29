@@ -102,10 +102,6 @@ class SearchParameterQuerySet(models.query.QuerySet):
         for key, value in parameters.items():
             type_ = self.get_field_type(key)
 
-            # keys aren't plural when using them to filter
-            if type_ == 'ForeignKey' and key.endswith('s'):
-                key = key[:-1]
-
             if type_:
                 query_by_type = SearchParameterQuerySet.QUERY_BY_TYPE
                 records = records.filter(
@@ -113,15 +109,22 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
         return records
 
-    def get_field_type(self, field):
+    def get_field_type(self, name):
         """
         Returns the type of the `model`'s `field` or None if it doesn't
         exist.
         """
-        fields = [f.name for f in self.model._meta.fields]
 
-        if field in fields:
-            return self.model._meta.get_field(field).get_internal_type()
+        # using get_fields isn't sufficient as it doesn't account
+        field = self.model._meta.get_field_by_name(name)[0]
+
+        try:
+            field_type = field.get_internal_type()
+        except AttributeError:
+            # field apparently isn't a field
+            field_type = field.field.get_internal_type()
+
+        return field_type
 
 
 class SearchParameterManager(models.Manager):
