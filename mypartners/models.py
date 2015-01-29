@@ -14,6 +14,7 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from myjobs.models import User
+import states
 
 
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
@@ -45,7 +46,7 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
     # used ot map field types to a query
     QUERY_BY_TYPE = {
-        'CharField': '__iexact',
+        'CharField': '__icontains',
         'TextField': '__icontains',
         'AutoField': '__exact',
         'ForeignKey': '__pk__in'}
@@ -64,12 +65,15 @@ class SearchParameterQuerySet(models.query.QuerySet):
                          instead.
             :company_ptr: String used to reference the model's company.
                           Defaults to 'company'
+
+            If the model has a `parse_parameters` method, that is called before
+            parsing remaining parameters.
         """
 
         # string used to reference the model's company
         company_ptr = company_ptr or 'company'
 
-        # extract dates so they aren't traversed later
+        # extract special fields so they aren't traversed later
         start_date = parameters.pop('start_date', None)
         end_date = parameters.pop('end_date', None)
 
@@ -90,8 +94,17 @@ class SearchParameterQuerySet(models.query.QuerySet):
                 end_date, '%m/%d/%Y').date() + timedelta(1)
             records.filter(datetime__lte=end_date)
 
+        # do special parsing
+        if hasattr(self.model, 'parse_parameters'):
+            records = self.model.parse_parameters(parameters, records)
+
+
         for key, value in parameters.items():
             type_ = self.get_field_type(key)
+
+            # keys aren't plural when using them to filter
+            if type_ == 'ForeignKey' and key.endswith('s'):
+                key = key[:-1]
 
             if type_:
                 query_by_type = SearchParameterQuerySet.QUERY_BY_TYPE
@@ -258,6 +271,18 @@ class Partner(models.Model):
     tags = models.ManyToManyField('Tag', null=True)
     # owner is the Company that owns this partner.
     owner = models.ForeignKey('seo.Company')
+
+    @classmethod
+    def parse_parameters(cls, parameters, records):
+        """Used to parse state during `from_search()`."""
+
+        # TODO: Use state synonyms
+        state = parameters.pop('state', None)
+
+        if state:
+            records = records.filter(contact__locations__state__iexact=state)
+
+        return records
 
     objects = SearchParameterManager(company_ptr='owner')
 
