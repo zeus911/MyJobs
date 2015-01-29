@@ -201,8 +201,8 @@ function resend_invoice(id) {
 // Required fields for locations
 // This is also verified server-side; checking in JS just cuts down on the
 // number of requests we have to do.
-var fields = ['input[id$=-city]',
-    'select[id$=-country]'];
+var city_selector = 'input[id$=-city]',
+    country_selector = 'select[id$=-country]';
 
 function add_location(location) {
     /*
@@ -255,7 +255,7 @@ function copy_forms(from, to) {
     form.
      */
     var valid = true;
-    fields.forEach(function(element) {
+    [city_selector, country_selector].forEach(function(element) {
         var from_input = from.find(element),
             from_value = from_input.val();
         if (from_value) {
@@ -338,11 +338,13 @@ function clear_form(form) {
     /*
     Clears all values from our input form so that further locations can be
     added.
+
+    Not clearing country was a conscious decision by myself - if a job is being
+    added in one country, it seems likely that further locations might also be
+    in that same country. -TDP
      */
-    fields.forEach(function(element) {
-        form.find(element).val('');
-    });
-    form.find('#id_form-__prefix__region').val('');
+    form.find(city_selector).val('');
+    form.find('#id_form-__prefix__-region').val('');
     form.find('input[name$=-zipcode]').val('');
 }
 

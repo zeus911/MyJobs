@@ -65,7 +65,6 @@ PARTNER_LIBRARY_SOURCES = {
 }
 
 
-
 @task(name='tasks.send_search_digest', ignore_result=True,
       default_retry_delay=180, max_retries=2, bind=True)
 def send_search_digest(self, search):

@@ -75,6 +75,68 @@ items down to what we actually need.
 LOG = logging.getLogger('views')
 
 
+def ajax_geolocation_facet(request):
+    """
+    Returns facets for the inputted facet_type
+    Inputs:
+        :filter_path: Filters arguments from url
+        :facet_type: Field that is being faceted
+        :sqs: starting Haystack Search Query Set
+        :search_facets: Boolean, True when there is a query to apply
+                before faceting
+    Output:
+        :HttpResponse: listing facets for the input facet_type
+
+    """
+    filter_path = request.GET.get('filter_path', '/jobs/')
+    filters = helpers.build_filter_dict(filter_path)
+
+    sort_order = request.REQUEST.get('sort', 'relevance')
+
+    num_items = int(request.GET.get('num_items', DEFAULT_PAGE_SIZE))
+
+    facet_field_type = request.GET.get('facet', 'buid')
+
+    sqs = helpers.prepare_sqs_from_search_params(request.GET)
+    default_jobs = helpers.get_jobs(default_sqs=sqs,
+                                    custom_facets=settings.DEFAULT_FACET,
+                                    exclude_facets=settings.FEATURED_FACET,
+                                    jsids=settings.SITE_BUIDS,
+                                    filters=filters,
+                                    facet_limit=num_items,
+                                    sort_order=sort_order)
+    featured_jobs = helpers.get_featured_jobs(default_sqs=sqs,
+                                              jsids=settings.SITE_BUIDS,
+                                              filters=filters,
+                                              facet_limit=num_items,
+                                              sort_order=sort_order)
+
+    facet_counts = default_jobs.add_facet_count(featured_jobs).get('fields')
+    facet_counts = facet_counts['lat_long_%s_slab' % facet_field_type]
+
+    data = []
+    for facet_count in facet_counts:
+        slab, count = facet_count
+        try:
+            latitude, longitude, buid = slab.split('::')
+        except ValueError:
+            continue
+
+        data.append({
+            'buid': buid,
+            'count': count,
+            'lat': latitude,
+            'lng': longitude,
+        })
+
+    data = json.dumps(data, sort_keys=True)
+    callback_name = request.GET.get('callback')
+    if callback_name:
+        data = callback_name + "(" + data + ")"
+
+    return HttpResponse(data, content_type='application/javascript')
+
+
 def ajax_get_facets(request, filter_path, facet_type):
     """
     Returns facets for the inputted facet_type
@@ -1269,18 +1331,16 @@ def send_sns_confirm(response):
     # Postajob buids and state job bank buids
     allowed_buids = [1228, 5480] + range(2650,2704)
 
-    LOG.info("sns received", extra = {
-        'view': 'send_sns_confirm',
-        'data': {
-            'json message': response
-        }
-    })
+    LOG.info("sns received for SEOXML")
     if response:
         if response['Subject'] != 'END':
             buid = response['Subject']
             if int(buid) in allowed_buids:
+                LOG.info("Creating update_solr task for %s" % buid)
                 set_title = helpers.create_businessunit(int(buid))
                 task_update_solr.delay(buid, force=True, set_title=set_title)
+            else:
+                LOG.info("Skipping update_solr for %s because it is not in the allowed buids list." % buid)
 
 
 def new_sitemap_index(request):
@@ -1866,12 +1926,7 @@ def confirm_load_jobs_from_etl(response):
                      'ad875783-c49e-49ff-b82a-b0538026e089',
                      '0ab41358-8323-4863-9f19-fdb344a75a35',)
 
-    LOG.info("sns received for ETL", extra={
-        'view': 'send_sns_confirm',
-        'data': {
-            'json message': response
-        }
-    })
+    LOG.info("sns received for ETL")
 
     if response:
         if response.get('Subject', None) != 'END':
@@ -1882,6 +1937,7 @@ def confirm_load_jobs_from_etl(response):
             if jsid.lower() in blocked_jsids:
                 LOG.info("Ignoring sns for %s", jsid)
                 return None
+            LOG.info("Creating ETL Task (%s, %s, %s" % (jsid, buid, name))
             task_etl_to_solr.delay(jsid, buid, name)
 
 

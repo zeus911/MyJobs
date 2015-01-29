@@ -94,6 +94,8 @@ class JobIndex(indexes.SearchIndex, indexes.Indexable):
                                          indexed=False)
     link = indexes.CharField(stored=True, indexed=False) 
     location = LocationCharField(model_attr='location', faceted=True, null=True)
+    GeoLocation = indexes.LocationField(model_attr='location')
+    lat_long_buid_slab = indexes.CharField(faceted=True)
     moc = indexes.MultiValueField(faceted=True, null=True, stored=False)
     mocid = indexes.MultiValueField(null=True)
     moc_slab = indexes.MultiValueField(faceted=True, null=True, stored=False)
