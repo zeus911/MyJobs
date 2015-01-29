@@ -26,8 +26,11 @@ class MyReportsTestCase(TestCase):
 class TestReports(MyReportsTestCase):
     """Tests the reports view, which is the landing page for reports."""
 
-    def test_access_restricted_to_staff(self):
-        """Until release, MyReports should only be viewable by staff users."""
+    def test_unavailable_if_not_staff(self):
+        """
+        Until release, MyReports should not be accessible by users who aren't
+        staff.
+        """
 
         self.user.is_staff = False
         self.user.save()
@@ -35,11 +38,25 @@ class TestReports(MyReportsTestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_available_to_staff(self):
+        """Should be available to staff users."""
+
+        response = self.client.get(reverse('reports'))
+
+        self.assertEqual(response.status_code, 200)
+
 
 class TestSearchRecords(MyReportsTestCase):
     """
     Tests the `search_records` view which is used to query various models.
     """
+
+    def test_restricted_to_ajax(self):
+        """View should only be reachable through AJAX."""
+
+        response = self.client.post(reverse('search_records'))
+
+        self.assertEqual(response.status_code, 404)
 
     def test_json_output(self):
         """Test that filtering partners through ajax works properly."""
@@ -59,6 +76,8 @@ class TestSearchRecords(MyReportsTestCase):
 
         # ensure a proper json response
         output = json.loads(response.content)
+
+        # ensure the correct number of results received
         self.assertIn('records', output)
         self.assertEqual(len(output['records']), 10)
 
