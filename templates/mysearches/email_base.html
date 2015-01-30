@@ -54,10 +54,10 @@
                     </td>
                     <td colspan=1 style="padding: 8px; line-height: 20px; border-top: 1px solid #ddd;">
                         {% block footer-right %}
-                        {% endblock %}
                         <a href="https://secure.my.jobs{% url 'unsubscribe' %}?id={{ saved_search.id }}&verify={{saved_search.user.user_guid}}">{% trans 'Deactivate this saved search' %}</a><br>
                         <a href="https://secure.my.jobs{% url 'unsubscribe' %}?id=digest&verify={{saved_search.user.user_guid}}">{% trans 'Deactivate all saved searches' %}</a><br>
                         <a href="https://secure.my.jobs{% url 'unsubscribe_all' %}?verify={{saved_search.user.user_guid}}">{% trans 'Unsubscribe from all My.jobs emails' %}</a><br>
+                        {% endblock %}
                     </td>
                 </tr>
 

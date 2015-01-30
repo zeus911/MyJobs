@@ -17,7 +17,7 @@ urlpatterns = patterns(
         views.is_company_user,
         name="is_company_user"),
     url(r'list/$',
-        error_when_site_misconfigured(feature='Job Listing')(
+        error_when_site_misconfigured(feature='Job Listing', redirect=False)(
             views.product_listing),
         name='product_listing'),
 

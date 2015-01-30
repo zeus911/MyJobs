@@ -142,6 +142,11 @@ class PartnerSavedSearchForm(ModelForm):
             widget=TextInput(attrs={'id': 'p-tags', 'placeholder': 'Tags'})
         )
 
+        # If it's an edit make the email recipient unchangable (for
+        # compliance purposes).
+        if self.instance and self.instance.pk:
+            self.fields['email'].widget.attrs['disabled'] = True
+
         initial = kwargs.get("instance")
         feed_args = {"widget": HiddenInput()}
         if initial:
