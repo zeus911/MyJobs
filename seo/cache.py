@@ -78,8 +78,8 @@ def get_custom_facets(request, filters=None, query_string=None):
     custom_facets = cache.get(custom_facet_key)
 
     if not custom_facets:
-        custom_facets = get_solr_facet(settings.SITE_ID, settings.SITE_BUIDS,
-                                       filters=filters, params=request.GET)
+        custom_facets = get_solr_facet(settings.SITE_BUIDS, filters=filters,
+                                       params=request.GET)
         cache.set(custom_facet_key, custom_facets)
 
     return custom_facets

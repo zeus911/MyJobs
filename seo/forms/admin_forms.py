@@ -392,6 +392,7 @@ class CustomFacetForm(SiteRowPermissionsForm):
                                                 widget=business_units_widget)
     facet_type = forms.ChoiceField(required=False,
                                    choices=SeoSiteFacet.FACET_TYPE_CHOICES)
+    facet_group = forms.ChoiceField(choices=SeoSiteFacet.FACET_GROUP_CHOICES)
     boolean_operation = forms.ChoiceField(required=False,
                                           choices=SeoSiteFacet.BOOLEAN_CHOICES)
 
@@ -414,12 +415,14 @@ class CustomFacetForm(SiteRowPermissionsForm):
         sites = self.cleaned_data['sites']
         facet_type = self.cleaned_data['facet_type']
         boolean_operation = self.cleaned_data['boolean_operation']
+        facet_group = self.cleaned_data['facet_group']
         for site in sites:
             try:
-                facet, _ = SeoSiteFacet.objects.get_or_create(seosite=site,
-                                                              customfacet=customfacet,
-                                                              facet_type=facet_type,
-                                                              boolean_operation=boolean_operation)
+                facet, _ = SeoSiteFacet.objects.get_or_create(
+                    seosite=site, customfacet=customfacet,
+                    facet_type=facet_type, boolean_operation=boolean_operation,
+                    facet_group=facet_group
+                )
                 facet.save()
             except SeoSiteFacet.MultipleObjectsReturned:
                 pass
