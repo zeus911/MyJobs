@@ -451,11 +451,15 @@ class User(AbstractBaseUser, PermissionsMixin):
             else:
                 self.user_guid = guid
 
-    def messages_unread(self):
+    def messages(self, only_new=True):
         """
-        Gets a list of active Messages from get_messages. Then gets or creates
-        MessageInfo based on user a Message. If the MessageInfo has been read
-        already or is expired, ignore it, otherwise add it to 'message_infos'.
+        Gets a list of Messages from get_messages. Then gets or creates
+        MessageInfo based on user a Message. Excludes read and expired messages
+        by default, which can be overridden with only_new=False.
+
+        Input:
+        :only_new: A boolean denoting the inclusion or exclusion of
+            read/expired messages
 
         Output:
         :messages:  A list of Messages to be shown to the User.
@@ -466,7 +470,18 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         MessageInfo.objects.bulk_create(new_message_infos)
 
-        return self.messageinfo_set.filter(read=False, expired=False)
+        info_kwargs = {}
+        if only_new:
+            info_kwargs = {'read': False, 'expired': False}
+
+        return self.messageinfo_set.filter(**info_kwargs)
+
+    def messages_unread(self):
+        """
+        Used in templates where passing an argument to self.messages() is
+        not practical. Excludes read and expired messages.
+        """
+        return self.messages(only_new=True)
 
     def get_full_name(self, default=""):
         """

@@ -4160,3 +4160,23 @@ span.helptext {
     background-color: #dff0d8;
     border: 1px solid #d6e9c6;
 }
+
+#inbox td:last-child {
+    text-align: right;
+}
+
+#inbox tr>*:first-child {
+    padding-left: 5px;
+}
+
+#inbox tr>*:last-child {
+    padding-right: 5px;
+}
+
+#inbox .step-links .current {
+    left: 45%;
+}
+
+.read {
+    background-color: #eee;
+}

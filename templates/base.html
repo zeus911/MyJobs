@@ -57,7 +57,6 @@
                             </div>
 
                             {% endif %}
-                            {% comment %}
                             {% with user.messages_unread as messages %}
 
                             {% for message_info in messages %}
@@ -67,14 +66,13 @@
                                 <br>
                                 {{ message_info.message.body|safe }}
                                 <div class="clear"></div>
-                                <button class="btn pull-right mymessage-{{ message_info.message.id }}-{{ user.id }}">{{ message_info.message.btn_text }}</button>
+                                <button class="btn pull-right mymessage-read-{{ message_info.message.id }}-{{ user.id }}">{{ message_info.message.btn_text }}</button>
                                 <div class="clear"></div>
                             </div>
 
                             {% endfor %}
 
                             {% endwith %}
-                            {% endcomment %}
 
                         {% endif %}
                         {% endblock%}
@@ -129,7 +127,7 @@
         var static_url = "{{ STATIC_URL }}";
     </script>
     <script type="text/javascript" src="{{ STATIC_URL }}custom.154-10.js{{ gz }}"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}my.jobs.158-14.js{{ gz }}"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}my.jobs.160-30.js{{ gz }}"></script>
 
     {% block extra-js %}
 
