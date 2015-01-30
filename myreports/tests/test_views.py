@@ -1,5 +1,7 @@
 """Tests associated with the various MyReports views."""
 
+# TODO: Remove custom manager specific tests to a separate test case.
+
 import json
 
 from django.test import TestCase
@@ -7,6 +9,7 @@ from django.core.urlresolvers import reverse
 
 from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
+from mypartners.models import Partner
 from mypartners.tests.factories import (ContactFactory, ContactRecordFactory,
                                         PartnerFactory)
 from seo.tests.factories import CompanyFactory, CompanyUserFactory
@@ -157,3 +160,14 @@ class TestSearchRecords(MyReportsTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(output['records']), 10)
+
+    def test_sort_by_order(self):
+        """Tests that blank values are included after others."""
+
+        PartnerFactory.create_batch(10)
+        PartnerFactory.create_batch(10, name="")
+
+        partners = list(Partner.objects.sort_by('name'))
+
+        self.assertEqual(partners[0].name, "Company")
+        self.assertEqual(partners[-1].name, "")
