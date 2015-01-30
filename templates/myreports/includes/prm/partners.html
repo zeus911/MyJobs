@@ -1,0 +1,33 @@
+<table>
+    <tbody>
+        {% if partners %}
+        <tr>
+            <td>
+                <input id="all" type="checkbox" checked>
+            </td>
+            <td>
+                All Partners
+            </td>
+        </tr>
+        {% endif %}
+        {% for partner in partners %}
+        <tr>
+            <td>
+                <input type="checkbox" value="{{ partner.id }}" checked>
+            </td>
+            <td>
+                {{ partner.name }}
+            </td>
+            <td>
+                {{ partner.get_contact_records.count }}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td>There are no partners that meet your specifications.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a id="back" class="btn">Back</a>
+<a id="next" class="btn {% if not partners %}disabled{% endif %}">Next</a>
