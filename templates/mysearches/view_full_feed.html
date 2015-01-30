@@ -115,6 +115,9 @@
             <div class="navigation">
                 <h2>Navigation</h2>
                 <a href="{% url 'partner_edit_search' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ search.partnersavedsearch.id }}" class="btn edit">Edit</a>
+                <a href="{% url 'partner_edit_search' %}?company={{ company.id }}&partner={{ partner.id }}&copies={{ search.partnersavedsearch.id }}" 
+                   class="btn copy"
+                   title="This will create a copy of this saved search to be sent to a different contact.">Copy</a>
             </div>
         </div>
         {% else %}

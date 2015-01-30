@@ -2,6 +2,7 @@ import factory
 from slugify import slugify
 
 from myjobs.tests.factories import UserFactory
+from seo.tests.factories import CompanyFactory
 from seo.models import (BusinessUnit, Company, CompanyUser,
                         SeoSite)
 
@@ -17,14 +18,6 @@ class BusinessUnitFactory(factory.django.DjangoModelFactory):
     associated_jobs = 4
     date_crawled = "2010-10-18 07:00:02"
     enable_markdown = True
-
-
-class CompanyFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Company
-
-    id = 1
-    name = 'Test Company'
-
 
 class SeoSiteFactory(factory.django.DjangoModelFactory):
     FACTORY_FOR = SeoSite

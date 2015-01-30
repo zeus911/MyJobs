@@ -14,6 +14,7 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from myjobs.models import User
+import states
 
 
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
@@ -36,6 +37,130 @@ ACTIVITY_TYPES = {
     3: 'deleted',
     4: 'sent',
 }
+
+class SearchParameterQuerySet(models.query.QuerySet):
+    """
+    Defines a query set with a `from_search` method for filtering by query
+    paramenters.
+    """
+
+    # used ot map field types to a query
+    QUERY_BY_TYPE = {
+        'CharField': '__icontains',
+        'TextField': '__icontains',
+        'AutoField': '__exact',
+        'ForeignKey': '__pk__in'}
+
+    def from_search(self, company=None, parameters=None, company_ptr=None):
+        """
+        Intelligently filter based on query parameters.
+
+        Inputs:
+            :company: The company to restrict results to
+            :parameters: A dict of field: term pairs where field is a field of
+                         the `ContactRecord` model and term is search term
+                         you'd like to filter against.
+
+                         For `datetime`, pass `start_date` and/or `end_date`
+                         instead.
+            :company_ptr: String used to reference the model's company.
+                          Defaults to 'company'
+
+            If the model has a `parse_parameters` method, that is called before
+            parsing remaining parameters.
+        """
+
+        # string used to reference the model's company
+        company_ptr = company_ptr or 'company'
+
+        # extract special fields so they aren't traversed later
+        start_date = parameters.pop('start_date', None)
+        end_date = parameters.pop('end_date', None)
+
+        records = self.all()
+
+        # only return records the current user has access to
+        if company:
+            records = self.filter(**{company_ptr: company})
+
+        # filter by dates
+        if start_date:
+            start_date = datetime.strptime(start_date, '%m/%d/%Y').date()
+            records.filter(datetime__gte=start_date)
+
+        if end_date:
+            # handles off-by-one error; otherwise date provided is excluded
+            end_date = datetime.strptime(
+                end_date, '%m/%d/%Y').date() + timedelta(1)
+            records.filter(datetime__lte=end_date)
+
+        # do special parsing
+        if hasattr(self.model, 'parse_parameters'):
+            records = self.model.parse_parameters(parameters, records)
+
+
+        for key, value in parameters.items():
+            type_ = self.get_field_type(key)
+
+            if type_:
+                query_by_type = SearchParameterQuerySet.QUERY_BY_TYPE
+                records = records.filter(
+                    **{'%s%s' % (key, query_by_type[type_]): value})
+
+        return records
+
+    def sort_by(self, *fields):
+        """Like `order_by`, but ensures that blank values come at the end of a
+           result. It's not as efficient as `order_by`, so it's best to call as
+           late as possible (eg. after you've finished sorting).
+        """
+        query = models.Q()
+        for field in fields:
+            query |= models.Q(**{field.lstrip('-'): ''}) | models.Q(
+                **{field.lstrip('-') + '__isnull': True})
+
+        blank_records = self.filter(query).order_by(*fields)
+
+        self = self.exclude(id__in=blank_records).order_by(*fields)
+
+        # force evaluation: see http://stackoverflow.com/questions/18235419
+        len(self)
+        self._result_cache += blank_records
+
+        return self
+
+    def get_field_type(self, name):
+        """
+        Returns the type of the `model`'s `field` or None if it doesn't
+        exist.
+        """
+
+        # using get_fields isn't sufficient as it doesn't account
+        field = self.model._meta.get_field_by_name(name)[0]
+
+        try:
+            field_type = field.get_internal_type()
+        except AttributeError:
+            # field apparently isn't a field
+            field_type = field.field.get_internal_type()
+
+        return field_type
+
+
+class SearchParameterManager(models.Manager):
+    def __init__(self, *args, **kwargs):
+        self.company_ptr = kwargs.pop('company_ptr', None)
+        super(SearchParameterManager, self).__init__(*args, **kwargs)
+
+    def get_query_set(self):
+        return SearchParameterQuerySet(self.model, using=self._db)
+
+    def from_search(self, company, parameters):
+        return self.get_query_set().from_search(
+            company, parameters, company_ptr=self.company_ptr)
+
+    def sort_by(self, *fields):
+        return self.get_query_set().sort_by(*fields)
 
 
 class Location(models.Model):
@@ -61,6 +186,7 @@ class Location(models.Model):
         super(Location, self).save(**kwargs)
 
 
+
 class Contact(models.Model):
     """
     Everything here is self explanatory except for one part. With the Contact
@@ -76,6 +202,8 @@ class Contact(models.Model):
     locations = models.ManyToManyField('Location', related_name='contacts')
     tags = models.ManyToManyField('Tag', null=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
+
+    objects = SearchParameterManager(company_ptr='partner__owner')
 
     class Meta:
         verbose_name_plural = 'contacts'
@@ -169,6 +297,20 @@ class Partner(models.Model):
     tags = models.ManyToManyField('Tag', null=True)
     # owner is the Company that owns this partner.
     owner = models.ForeignKey('seo.Company')
+
+    @classmethod
+    def parse_parameters(cls, parameters, records):
+        """Used to parse state during `from_search()`."""
+
+        # TODO: Use state synonyms
+        state = parameters.pop('state', None)
+
+        if state:
+            records = records.filter(contact__locations__state__iexact=state)
+
+        return records
+
+    objects = SearchParameterManager(company_ptr='owner')
 
     def __unicode__(self):
         return self.name
@@ -281,6 +423,8 @@ class ContactRecord(models.Model):
     Object for Communication Records
     """
 
+    objects = SearchParameterManager(company_ptr='partner__owner')
+
     created_on = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     partner = models.ForeignKey(Partner)
@@ -366,6 +510,8 @@ class ContactRecord(models.Model):
 
     def shorten_date_time(self):
         return self.date_time.strftime('%b %e, %Y')
+
+
 
 
 MAX_ATTACHMENT_MB = 4

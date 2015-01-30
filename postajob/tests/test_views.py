@@ -920,6 +920,8 @@ class ViewTests(PostajobTestBase):
                          self.companyprofile_form_data['company_name'])
 
     def test_list_products_jsonp(self):
+        # view should work without being logged in
+        self.client.logout()
         response = self.client.get(reverse('product_listing'),
                                    HTTP_HOST='test.jobs')
         # When an item in the chain of objects from SeoSite->ProductGrouping

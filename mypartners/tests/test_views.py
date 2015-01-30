@@ -885,6 +885,17 @@ class SearchEditTests(MyPartnersTestCase):
                              msg="%s != %s for field %s" %
                                  (v, getattr(search, k), k))
 
+    def test_copy_existing_saved_search(self):
+        saved_search = PartnerSavedSearch.objects.first()
+        response = self.client.post('%s?company=%s&partner=%s&copies=%s' %
+            (reverse('partner_edit_search'), self.company.id,
+             self.partner.id, saved_search.id))
+
+        self.assertEqual(response.status_code, 200)
+
+        # make sure the label is a copy
+        self.assertIn("Copy of %s" % saved_search.label, response.content)
+
     def test_partner_search_for_new_contact_email(self):
         """Confirms that an email is sent when a new user is created for a 
         contact because a saved search was created on that contact's behalf.
@@ -1196,7 +1207,8 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
                 self.assertIn(tag, partner.tags.values_list('name', flat=True))
 
         if library.is_disabled:
-            self.assertIn('Disability', partner.tags.values_list('name', flat=True))
+            self.assertIn('Disability',
+                          partner.tags.values_list('name', flat=True))
 
         self.assertIn(
             library.data_source, partner.tags.values_list('name', flat=True))
