@@ -245,22 +245,29 @@ class MultiHostMiddleware:
             else:
                 setattr(settings, v, '')
 
-        settings.CACHE_MIDDLEWARE_KEY_PREFIX = "%s" % (my_site.domain,)
-        default_site_facets = SeoSiteFacet.objects.filter(
-            seosite=my_site).filter(
-                facet_type=SeoSiteFacet.DEFAULT)
-        settings.DEFAULT_FACET = custom_facets_with_ops(default_site_facets)
+        site_facets = SeoSiteFacet.objects.filter(seosite=my_site)
+        site_facets = site_facets.select_related('customfacet')
 
-        featured_site_facets = SeoSiteFacet.objects.filter(
-            seosite=my_site).filter(
-                facet_type=SeoSiteFacet.FEATURED)
-        settings.FEATURED_FACET = custom_facets_with_ops(featured_site_facets)
-        settings.SITE_PACKAGES = [int(site.pk)
-                                  for site in SitePackage.objects.filter(
-                                      sites=my_site)]
+        settings.CACHE_MIDDLEWARE_KEY_PREFIX = "%s" % my_site.domain
+
+        default = SeoSiteFacet.DEFAULT
+        default_site_facets = site_facets.filter(facet_type=default)
+        settings.DEFAULT_FACET = custom_facets_ops_groups(default_site_facets)
+
+        featured = SeoSiteFacet.FEATURED
+        featured_site_facets = site_facets.filter(facet_type=featured)
+        settings.FEATURED_FACET = custom_facets_ops_groups(featured_site_facets)
+
+        standard = SeoSiteFacet.STANDARD
+        standard_site_facets = site_facets.filter(facet_type=standard)
+        settings.STANDARD_FACET = custom_facets_ops_groups(standard_site_facets)
+
+        packages = SitePackage.objects.filter(sites=my_site)
+        settings.SITE_PACKAGES = [int(site_package.pk)
+                                  for site_package in packages]
 
 
-def custom_facets_with_ops(site_facets):
+def custom_facets_ops_groups(site_facets):
     """
     Returns a list of custom facets with boolean_operation attributes set
     from site facets
@@ -268,7 +275,12 @@ def custom_facets_with_ops(site_facets):
     """
     custom_facets = []
     for site_facet in site_facets:
-        cf = site_facet.customfacet
-        setattr(cf, 'boolean_operation', site_facet.boolean_operation)
-        custom_facets.append(cf)
+        custom_facet = site_facet.customfacet
+        setattr(custom_facet, 'boolean_operation', site_facet.boolean_operation)
+        setattr(custom_facet, 'facet_group', site_facet.facet_group)
+        custom_facets.append(custom_facet)
     return custom_facets
+
+
+def filter_custom_facets_by_production_status(custom_facets):
+    return [facet for facet in custom_facets if facet.show_production]
