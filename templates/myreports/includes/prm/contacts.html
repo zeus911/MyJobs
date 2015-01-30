@@ -1,0 +1,30 @@
+<table>
+    <tbody>
+        {% if contacts %}
+        <tr>
+            <td>
+                <input id="all" type="checkbox" checked>
+            </td>
+            <td>
+                All Contacts
+            </td>
+        </tr>
+        {% endif %}
+        {% for contact in contacts %}
+        <tr>
+            <td>
+                <input type="checkbox" value="{{ contact.id }}" checked>
+            </td>
+            <td>
+                {{ contact.name }}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td>There are no contacts that meet your specifications.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a id="back" class="btn">Back</a>
+<a id="submit_report" class="btn">Generate Report</a>

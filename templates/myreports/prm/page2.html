@@ -1,0 +1,13 @@
+<div id="date-filter" class="filter-option">
+    <div class="date-picker">
+        <input class="datepicker picker-left" id="start-date" type="text" placeholder="Start Date" />
+        <span class="datepicker" id="activity-to-">to</span>
+        <input class="datepicker picker-right" id="end-date" type="text" placeholder="End Date" />
+    </div>
+</div>
+<h2>Or</h2>
+<div id="location-filter" class="filter-option">
+    <label>State:</label>
+    {% include "includes/state_dropdown.html" %}
+</div>
+<a id="next" class="btn">Next</a>
