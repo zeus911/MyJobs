@@ -109,6 +109,11 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
         return records
 
+    def sort_by(self, *fields):
+        """Like `order_by`, but ensures that blank values come at the end of a
+           result.
+        """
+
     def get_field_type(self, name):
         """
         Returns the type of the `model`'s `field` or None if it doesn't

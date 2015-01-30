@@ -157,6 +157,3 @@ class TestSearchRecords(MyReportsTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(output['records']), 10)
-
-
-
