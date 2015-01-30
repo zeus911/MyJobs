@@ -102,13 +102,13 @@ class TestSearchRecords(MyReportsTestCase):
         response = self.client.post(reverse('search_records'),
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = json.loads(response.content)
-        
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(output['records']), 10)
 
     def test_filtering_on_partner(self):
         """Test the ability to filter by partner."""
-            
+
         # we already have one because of self.partner
         PartnerFactory.create_batch(9, name="Test Partner",
                                     owner=self.company)
