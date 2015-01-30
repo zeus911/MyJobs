@@ -3,6 +3,7 @@
 # TODO: Remove custom manager specific tests to a separate test case.
 
 import json
+import unittest
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
@@ -69,14 +70,15 @@ class TestSearchRecords(MyReportsTestCase):
     def test_restricted_to_ajax(self):
         """View should only be reachable through AJAX."""
 
-        response = self.client.post(reverse('search_records'))
+        response = self.client.get(reverse('prm_filter_partners'))
 
         self.assertEqual(response.status_code, 404)
 
-    def test_restricted_to_post(self):
+    @unittest.skip("TODO: Change AJAX requests to GET")
+    def test_restricted_to_get(self):
         """GET requests should raise a 404."""
 
-        response = self.client.get(reverse('search_records'),
+        response = self.client.get(reverse('prm_filter_partners'),
                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
 
         self.assertEqual(response.status_code, 404)
@@ -87,7 +89,9 @@ class TestSearchRecords(MyReportsTestCase):
         # records to be filtered out
         ContactRecordFactory.create_batch(10, contact_name='John Doe')
 
-        response = self.client.post(reverse('search_records'),
+        response = self.client.get(reverse('search_records',
+                                   kwargs={'model': 'ContactRecord',
+                                           'output': 'json'}),
                                     {'contact_name': 'Joe Shmoe'},
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = json.loads(response.content)
@@ -102,7 +106,9 @@ class TestSearchRecords(MyReportsTestCase):
         partner = PartnerFactory(name="Wrong Partner")
         ContactRecordFactory.create_batch(10, partner=partner)
 
-        response = self.client.post(reverse('search_records'),
+        response = self.client.get(reverse('search_records',
+                                   kwargs={'model': 'ContactRecord',
+                                           'output': 'json'}),
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = json.loads(response.content)
 
@@ -116,11 +122,10 @@ class TestSearchRecords(MyReportsTestCase):
         PartnerFactory.create_batch(9, name="Test Partner",
                                     owner=self.company)
 
-        response = self.client.post(reverse('search_records'),
-                                    {'name': 'Test Partner',
-                                     'model': 'Partner'},
+        response = self.client.get(reverse('prm_filter_partners'),
+                                    {'name': 'Test Partner'},
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        output = json.loads(response.content)
+        output = response.context
 
         # ContactRecordFactory creates 10 partners in setUp
         self.assertEqual(response.status_code, 200)
@@ -129,17 +134,15 @@ class TestSearchRecords(MyReportsTestCase):
     def test_list_query_params(self):
         """Test that query parameters that are lists are parsed correctly."""
 
-        ContactFactory.create_batch(10, partner=self.partner)
+        ContactFactory.create_batch(10, partner__owner=self.company)
 
-        response = self.client.post(reverse('search_records'),
-                                    {'contact': range(1, 6),
-                                     'model': 'Partner'},
+        response = self.client.get(reverse('prm_filter_partners'),
+                                    {'contact': range(1, 6)},
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-
-        output = json.loads(response.content)
+        output = response.context
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(output['records']), 5)
+        self.assertEqual(output['records'].count(), 5)
 
     def test_filtering_on_contact(self):
         """Test the ability to filter by contact."""
@@ -152,17 +155,16 @@ class TestSearchRecords(MyReportsTestCase):
                                     partner=self.partner)
 
 
-        response = self.client.post(reverse('search_records'),
-                                    {'name': 'Jane Doe',
-                                     'model': 'Contact'},
+        response = self.client.get(reverse('prm_filter_contacts'),
+                                    {'name': 'Jane Doe'},
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        output = json.loads(response.content)
+        output = response.context
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(output['records']), 10)
 
     def test_sort_by_order(self):
-        """Tests that blank values are included after others."""
+        """Tests that `sort_order` orders blank values after others."""
 
         PartnerFactory.create_batch(10)
         PartnerFactory.create_batch(10, name="")

@@ -11,5 +11,7 @@ urlpatterns = patterns(
         {'model': 'Contact',
          'output': 'myreports/includes/prm/contacts.html'},
         name='prm_filter_contacts'),
+    url(r'^search/(?P<model>\w+)/(?P<output>\w+)$',
+        'search_records', name='search_records')
 )
 

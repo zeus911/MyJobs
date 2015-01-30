@@ -28,6 +28,8 @@ class ContactFactory(factory.django.DjangoModelFactory):
     email = 'fake@email.com'
     phone = '84104391'
 
+    partner = factory.SubFactory(PartnerFactory)
+
     @factory.post_generation
     def locations(self, create, extracted, **kwargs):
         if not create:
