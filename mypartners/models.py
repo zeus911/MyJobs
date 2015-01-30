@@ -113,15 +113,17 @@ class SearchParameterQuerySet(models.query.QuerySet):
         """Like `order_by`, but ensures that blank values come at the end of a
            result.
         """
-        #TODO: detect field type first
-        for field in fields:
-            column = field.lstrip('-')
-            no_column = "no_%s" % column
-            select = {no_column: 'LENGTH(%s) = 0' % column}
-            self = self.extra(select=select).order_by(no_column, field)
+        blank_records = self.filter(
+            **{field.lstrip('-'): '' for field in fields}).order_by(*fields)
+
+        self = self.exclude(id__in=blank_records.values_list(
+            'id', flat=True)).order_by(*fields)
+
+        # force evaluation: see http://stackoverflow.com/questions/18235419
+        len(self)
+        self._result_cache += blank_records
 
         return self
-
 
     def get_field_type(self, name):
         """
@@ -152,6 +154,9 @@ class SearchParameterManager(models.Manager):
     def from_search(self, company, parameters):
         return self.get_query_set().from_search(
             company, parameters, company_ptr=self.company_ptr)
+
+    def sort_by(self, *fields):
+        return self.get_query_set().sort_by(*fields)
 
 
 class Location(models.Model):
