@@ -16,24 +16,27 @@ tr>*:last-child {
             <table class="table" style="width: 100%; table-layout: fixed; border: 1px solid black;">
                 <tr><th>Date</th><th>Message</th><th>{# actions #}</th></tr>
                 {% for message in messages %}
-                    <tr>
+                    <tr id="message-{{ message.pk }}">
                         <td>{{ message.start_on }}</td>
                         <td>
                             <span class="circle {{ message.message_type }}" title="{{ message.display_type }}"></span>
                             {{ message.subject }}
+                            <div id="message-{{ message.pk }}-full" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
+                                <div class="modal-header">
+                                    <h3>{{ message.subject }}</h3>
+                                </div>
+                                <div class="modal-body">
+                                    {{ message.body|safe }}
+                                </div>
+                                <div class="modal-footer">
+                                    <div class="actions">
+                                        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+                                    </div>
+                                </div>
+                            </div>
                         </td>
                         <td><a>mark read</a><a>delete</a></td>
                     </tr>
-                    {% comment %}
-                    <div class="{{ message.message_type }}">
-                        <div class="message-subject {{ message.message_type }}">
-                            {{ message.subject }}
-                        </div>
-                        <div class="message-body {{ message.message_type }}">
-                            {{ message.body|safe }}
-                        </div>
-                    </div>
-                    {% endcomment %}
                 {% endfor %}
             </table>
         {% else %}
@@ -43,6 +46,9 @@ tr>*:last-child {
 {% endblock %}
 
 {% block extra-js %}
+    <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}inbox.160-29.js"></script>
     <script type="text/javascript">
         $(document).ready(function() {
             accordion('.message-subject', '.message-body');

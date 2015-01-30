@@ -585,8 +585,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                 "mysearches/email_opt_out_message.html",
                 {'user': self, 'partner': pss.partner, 'company': pss.provider})
             Message.objects.create_message(
-                subject, body, users=[pss.created_by],
-                message_class=Message.PRM)
+                subject, body, users=[pss.created_by])
 
     def registration_source(self):
         from seo.models import SeoSite
