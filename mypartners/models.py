@@ -114,8 +114,12 @@ class SearchParameterQuerySet(models.query.QuerySet):
            result. It's not as efficient as `order_by`, so it's best to call as
            late as possible (eg. after you've finished sorting).
         """
-        blank_records = self.filter(
-            **{field.lstrip('-'): '' for field in fields}).order_by(*fields)
+        query = models.Q()
+        for field in fields:
+            query |= models.Q(**{field.lstrip('-'): ''}) | models.Q(
+                **{field.lstrip('-') + '__isnull': True})
+
+        blank_records = self.filter(query).order_by(*fields)
 
         self = self.exclude(id__in=blank_records).order_by(*fields)
 
