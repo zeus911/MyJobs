@@ -111,13 +111,13 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
     def sort_by(self, *fields):
         """Like `order_by`, but ensures that blank values come at the end of a
-           result.
+           result. It's not as efficient as `order_by`, so it's best to call as
+           late as possible (eg. after you've finished sorting).
         """
         blank_records = self.filter(
             **{field.lstrip('-'): '' for field in fields}).order_by(*fields)
 
-        self = self.exclude(id__in=blank_records.values_list(
-            'id', flat=True)).order_by(*fields)
+        self = self.exclude(id__in=blank_records).order_by(*fields)
 
         # force evaluation: see http://stackoverflow.com/questions/18235419
         len(self)
