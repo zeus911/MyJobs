@@ -172,6 +172,10 @@ class ConfigurationAdmin (admin.ModelAdmin):
                  'browse_title_show'),
                 ('browse_facet_order', 'browse_facet_text',
                  'browse_facet_show'),
+                ('browse_facet_order_2', 'browse_facet_text_2',
+                 'browse_facet_show_2'),
+                ('browse_facet_order_3', 'browse_facet_text_3',
+                 'browse_facet_show_3'),
                 ('browse_company_order', 'browse_company_text',
                  'browse_company_show'),
                 ('browse_moc_order', 'browse_moc_text', 'browse_moc_show'),
@@ -525,14 +529,16 @@ class CustomFacetAdmin(RowPermissionsAdmin):
     list_filter = (GroupListFilter,)
     fieldsets = (
         (None, {'fields': [('name', 'group'), ('always_show',
-                                                        'show_production')]}),
+                                               'show_production')]}),
         ('Search terms', {'fields': ['title', 'keyword', 'company', 'onet',
-                                     ('country', 'state', 'city'),'business_units']}),
+                                     ('country', 'state', 'city'),
+                                     'business_units']}),
         ('Advanced options', {'classes': ('collapse',),
                               'fields': [('querystring', 'search_preview'),
                                          'show_blurb', 'blurb']}),
         ('Add Seo Site Facets', {'classes': ('collapse', ),
-                                 'fields': ['sites', 'facet_type',
+                                 'fields': ['facet_group',
+                                            'sites', 'facet_type',
                                             'boolean_operation']})
         )
     save_as = True

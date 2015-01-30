@@ -18,13 +18,14 @@ class BreadboxTests(DirectSEOBase):
         self.site = SeoSiteFactory()
         settings.SITE = self.site
         settings.SITE_ID = self.site.pk
-
+        settings.STANDARD_FACET = []
         for x in range(1, 4):
             facet = CustomFacetFactory(name_slug='custom-facet-%s' % x,
                                        name="Custom Facet %s" % x,
                                        always_show=True,
                                        show_production=1)
             SeoSiteFacetFactory(customfacet=facet, seosite=self.site)
+            settings.STANDARD_FACET.append(facet)
 
         kwargs = {'seositefacet__seosite': self.site}
         self.custom_facets = CustomFacet.objects.filter(**kwargs)
