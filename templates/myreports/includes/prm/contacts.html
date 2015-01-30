@@ -1,16 +1,16 @@
 <table>
     <tbody>
-        {% if contacts %}
+        {% if records %}
         <tr>
             <td>
                 <input id="all" type="checkbox" checked>
             </td>
             <td>
-                All Contacts
+                All records
             </td>
         </tr>
         {% endif %}
-        {% for contact in contacts %}
+        {% for contact in records %}
         <tr>
             <td>
                 <input type="checkbox" value="{{ contact.id }}" checked>
@@ -21,7 +21,7 @@
         </tr>
         {% empty %}
         <tr>
-            <td>There are no contacts that meet your specifications.</td>
+            <td>There are no records that meet your specifications.</td>
         </tr>
         {% endfor %}
     </tbody>

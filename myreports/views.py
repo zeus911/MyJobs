@@ -25,9 +25,6 @@ def reports(request):
     return render_to_response('myreports/reports.html', {},
                               RequestContext(request))
 
-
-
-
 def prm_filter_contacts(request):
     if request.is_ajax():
         company = get_company_or_404(request)
@@ -78,7 +75,7 @@ def search_records(request, model='ContactRecord', output=None):
             if value:
                 if len(value) > 1:
                     params[key] = value
-                else:
+                elif value[0]:
                     params[key] = value[0]
 
         records = get_model('mypartners', model.title()).objects.from_search(
@@ -94,8 +91,7 @@ def search_records(request, model='ContactRecord', output=None):
 
             return HttpResponse(ctx)
         else:
-            template = 'myreports/includes/prm/partners.html'
-            html = render_to_response(template, ctx, RequestContext(request))
+            html = render_to_response(output, ctx, RequestContext(request))
             response = HttpResponse()
             response.content = html.content
 

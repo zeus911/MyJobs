@@ -43,6 +43,7 @@ var Report = function(types) {
             data = current_page.data;
         }
         else url = location.path;
+        $.ajaxSettings.traditional = true;
         $.ajax({
             type: 'GET',
             url: url,
