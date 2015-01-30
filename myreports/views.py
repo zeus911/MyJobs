@@ -26,18 +26,6 @@ def reports(request):
                               RequestContext(request))
 
 
-def prm_filter_partners(request):
-    if request.is_ajax():
-        company = get_company_or_404(request)
-        partners = Partner.objects.filter(owner=company)
-        data = {
-            'partners': partners
-        }
-        response = HttpResponse()
-        template = 'myreports/includes/prm/partners.html'
-        html = render_to_response(template, data, RequestContext(request))
-        response.content = html.content
-        return response
 
 
 def prm_filter_contacts(request):
@@ -57,7 +45,8 @@ def prm_filter_contacts(request):
         raise Http404
 
 
-def search_records(request):
+def search_records(request, model='ContactRecord', output=None):
+    # TODO: update documentation
     """
     AJAX view that returns a JSON representation of a query set based on post
     data submitted with the request.
@@ -79,23 +68,22 @@ def search_records(request):
         client.post(model='Contact', tag='veteran', output='json')
     """
 
-    if request.is_ajax() and request.method == 'POST':
+    if request.is_ajax() and request.method == 'GET':
         company = get_company_or_404(request)
 
         # get rid of empty params and flatten single-item lists
         params = {}
-        for key in request.POST.keys():
-            value = request.POST.getlist(key)
+        for key in request.GET.keys():
+            value = request.GET.getlist(key)
             if value:
                 if len(value) > 1:
                     params[key] = value
                 else:
                     params[key] = value[0]
 
-        model = params.pop('model', 'ContactRecord')
-        output = params.pop('output', 'json')
         records = get_model('mypartners', model.title()).objects.from_search(
             company, params)
+
         ctx = {'records': records}
 
         # serialize
@@ -105,5 +93,12 @@ def search_records(request):
             ctx = json.dumps(ctx, cls=DjangoJSONEncoder)
 
             return HttpResponse(ctx)
+        else:
+            template = 'myreports/includes/prm/partners.html'
+            html = render_to_response(template, ctx, RequestContext(request))
+            response = HttpResponse()
+            response.content = html.content
+
+            return response
     else:
         raise Http404("This view is only reachable via an AJAX POST request")

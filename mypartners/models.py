@@ -1,5 +1,4 @@
-from datetime import timedelta
-from itertools import chain
+from datetime import datetime, timedelta
 from os import path
 from re import sub
 from urllib import urlencode
@@ -14,7 +13,6 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from myjobs.models import User
-import states
 
 
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
@@ -73,31 +71,26 @@ class SearchParameterQuerySet(models.query.QuerySet):
         # string used to reference the model's company
         company_ptr = company_ptr or 'company'
 
-        # extract special fields so they aren't traversed later
-        start_date = parameters.pop('start_date', None)
-        end_date = parameters.pop('end_date', None)
-
-        records = self.all()
-
         # only return records the current user has access to
         if company:
             records = self.filter(**{company_ptr: company})
+        else:
+            records = self.all()
 
-        # filter by dates
-        if start_date:
-            start_date = datetime.strptime(start_date, '%m/%d/%Y').date()
-            records.filter(datetime__gte=start_date)
+        # extract special fields so they aren't traversed later
+        if parameters.get('start_date'):
+            parameters['start_date'] = datetime.strptime(
+                parameters['start_date'], '%m/%d/%Y').date()
 
-        if end_date:
+        if parameters.get('end_date'):
             # handles off-by-one error; otherwise date provided is excluded
-            end_date = datetime.strptime(
-                end_date, '%m/%d/%Y').date() + timedelta(1)
-            records.filter(datetime__lte=end_date)
+            parameters['end_date'] = datetime.strptime(
+                parameters['end_date'], '%m/%d/%Y').date() + timedelta(1)
+
 
         # do special parsing
         if hasattr(self.model, 'parse_parameters'):
             records = self.model.parse_parameters(parameters, records)
-
 
         for key, value in parameters.items():
             type_ = self.get_field_type(key)
@@ -106,6 +99,9 @@ class SearchParameterQuerySet(models.query.QuerySet):
                 query_by_type = SearchParameterQuerySet.QUERY_BY_TYPE
                 records = records.filter(
                     **{'%s%s' % (key, query_by_type[type_]): value})
+
+        # remove duplicates
+        records = records.distinct()
 
         return records
 
@@ -298,19 +294,32 @@ class Partner(models.Model):
     # owner is the Company that owns this partner.
     owner = models.ForeignKey('seo.Company')
 
+    objects = SearchParameterManager(company_ptr='owner')
+
     @classmethod
     def parse_parameters(cls, parameters, records):
         """Used to parse state during `from_search()`."""
 
+        start_date = parameters.pop('start_date', None)
+        end_date = parameters.pop('end_date', None)
+
+        # using a foreign relationship, so can't just filter twice
+        if start_date and end_date:
+            records = records.filter(contactrecord__date_time__range=[
+                start_date, end_date])
+        elif start_date:
+            records = records.filter(contactrecord__date_time__gte=start_date)
+        elif end_date:
+            records = records.filter(contactrecord__date_time__lte=end_date)
+
         # TODO: Use state synonyms
         state = parameters.pop('state', None)
+
 
         if state:
             records = records.filter(contact__locations__state__iexact=state)
 
         return records
-
-    objects = SearchParameterManager(company_ptr='owner')
 
     def __unicode__(self):
         return self.name
