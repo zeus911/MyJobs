@@ -113,6 +113,15 @@ class SearchParameterQuerySet(models.query.QuerySet):
         """Like `order_by`, but ensures that blank values come at the end of a
            result.
         """
+        #TODO: detect field type first
+        for field in fields:
+            column = field.lstrip('-')
+            no_column = "no_%s" % column
+            select = {no_column: 'LENGTH(%s) = 0' % column}
+            self = self.extra(select=select).order_by(no_column, field)
+
+        return self
+
 
     def get_field_type(self, name):
         """
