@@ -49,7 +49,7 @@ class SearchParameterQuerySet(models.query.QuerySet):
         'AutoField': '__exact',
         'ForeignKey': '__pk__in'}
 
-    def from_search(self, company=None, parameters=None, company_ptr=None):
+    def from_search(self, company=None, parameters=None):
         """
         Intelligently filter based on query parameters.
 
@@ -61,19 +61,14 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
                          For `datetime`, pass `start_date` and/or `end_date`
                          instead.
-            :company_ptr: String used to reference the model's company.
-                          Defaults to 'company'
-
             If the model has a `parse_parameters` method, that is called before
             parsing remaining parameters.
         """
 
-        # string used to reference the model's company
-        company_ptr = company_ptr or 'company'
-
         # only return records the current user has access to
         if company:
-            records = self.filter(**{company_ptr: company})
+            company_ref = getattr(self.model, 'company_ref', 'company')
+            records = self.filter(**{company_ref: company})
         else:
             records = self.all()
 
@@ -145,7 +140,6 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
 class SearchParameterManager(models.Manager):
     def __init__(self, *args, **kwargs):
-        self.company_ptr = kwargs.pop('company_ptr', None)
         super(SearchParameterManager, self).__init__(*args, **kwargs)
 
     def get_query_set(self):
@@ -153,7 +147,7 @@ class SearchParameterManager(models.Manager):
 
     def from_search(self, company, parameters):
         return self.get_query_set().from_search(
-            company, parameters, company_ptr=self.company_ptr)
+            company, parameters)
 
     def sort_by(self, *fields):
         return self.get_query_set().sort_by(*fields)
@@ -199,7 +193,8 @@ class Contact(models.Model):
     tags = models.ManyToManyField('Tag', null=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
 
-    objects = SearchParameterManager(company_ptr='partner__owner')
+    company_ref = 'partner__owner'
+    objects = SearchParameterManager()
 
     class Meta:
         verbose_name_plural = 'contacts'
@@ -294,7 +289,8 @@ class Partner(models.Model):
     # owner is the Company that owns this partner.
     owner = models.ForeignKey('seo.Company')
 
-    objects = SearchParameterManager(company_ptr='owner')
+    company_ref = 'owner'
+    objects = SearchParameterManager()
 
     @classmethod
     def parse_parameters(cls, parameters, records):
@@ -432,7 +428,8 @@ class ContactRecord(models.Model):
     Object for Communication Records
     """
 
-    objects = SearchParameterManager(company_ptr='partner__owner')
+    company_ref = 'partner__owner'
+    objects = SearchParameterManager()
 
     created_on = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)

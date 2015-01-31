@@ -43,7 +43,9 @@ def prm_filter_contacts(request):
 
 
 def search_records(request, model='ContactRecord', output=None):
-    # TODO: update documentation
+    # TODO: 
+    # * update documentation
+    # * supply a way to clear the cache
     """
     AJAX view that returns a JSON representation of a query set based on post
     data submitted with the request.
@@ -64,7 +66,6 @@ def search_records(request, model='ContactRecord', output=None):
 
         client.post(model='Contact', tag='veteran', output='json')
     """
-
     if request.is_ajax() and request.method == 'GET':
         company = get_company_or_404(request)
 
@@ -78,8 +79,13 @@ def search_records(request, model='ContactRecord', output=None):
                 elif value[0]:
                     params[key] = value[0]
 
-        records = get_model('mypartners', model.title()).objects.from_search(
-            company, params)
+        # fetch results from cache if available
+        records = search_records.cache.get(
+            model, get_model(
+                'mypartners', model).objects).from_search(
+                    company, params)
+
+        search_records.cache[model] = records
 
         ctx = {'records': records}
 
@@ -98,3 +104,4 @@ def search_records(request, model='ContactRecord', output=None):
             return response
     else:
         raise Http404("This view is only reachable via an AJAX POST request")
+search_records.cache = {}
