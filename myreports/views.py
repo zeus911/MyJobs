@@ -45,7 +45,6 @@ def prm_filter_contacts(request):
 def search_records(request, model='ContactRecord', output=None):
     # TODO: 
     # * update documentation
-    # * supply a way to clear the cache
     """
     AJAX view that returns a JSON representation of a query set based on post
     data submitted with the request.
@@ -72,6 +71,10 @@ def search_records(request, model='ContactRecord', output=None):
         # get rid of empty params and flatten single-item lists
         params = {}
         for key in request.GET.keys():
+            if key == 'clear_cache':
+                search_records.cache = {}
+                continue
+
             value = request.GET.getlist(key)
             if value:
                 if len(value) > 1:

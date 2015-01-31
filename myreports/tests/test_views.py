@@ -137,7 +137,8 @@ class TestSearchRecords(MyReportsTestCase):
         ContactFactory.create_batch(10, partner__owner=self.company)
 
         response = self.client.get(reverse('prm_filter_partners'),
-                                    {'contact': range(1, 6)},
+                                    {'contact': range(1, 6),
+                                     'clear_cache': True},
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = response.context
 
