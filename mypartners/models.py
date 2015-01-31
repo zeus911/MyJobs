@@ -72,6 +72,9 @@ class SearchParameterQuerySet(models.query.QuerySet):
         else:
             records = self.all()
 
+        # fetch related models in one query
+        records = records.select_related()
+
         # extract special fields so they aren't traversed later
         if parameters.get('start_date'):
             parameters['start_date'] = datetime.strptime(
