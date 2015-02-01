@@ -15,6 +15,7 @@ from mypartners.tests.factories import (ContactFactory, ContactRecordFactory,
                                         PartnerFactory)
 from seo.tests.factories import CompanyFactory, CompanyUserFactory
 
+
 class MyReportsTestCase(TestCase):
     """
     Base class for all MyReports Tests. Identical to `django.test.TestCase`
@@ -58,7 +59,7 @@ class TestReports(MyReportsTestCase):
 
 class TestSearchRecords(MyReportsTestCase):
     """
-    Tests the `search_records` view which is used to query various models.
+    Tests the `filter_records` view which is used to query various models.
     """
 
     def setUp(self):
@@ -70,7 +71,7 @@ class TestSearchRecords(MyReportsTestCase):
     def test_restricted_to_ajax(self):
         """View should only be reachable through AJAX."""
 
-        response = self.client.get(reverse('prm_filter_partners'))
+        response = self.client.get(reverse('filter_partners'))
 
         self.assertEqual(response.status_code, 404)
 
@@ -78,7 +79,7 @@ class TestSearchRecords(MyReportsTestCase):
     def test_restricted_to_get(self):
         """GET requests should raise a 404."""
 
-        response = self.client.get(reverse('prm_filter_partners'),
+        response = self.client.get(reverse('filter_partners'),
                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
 
         self.assertEqual(response.status_code, 404)
@@ -89,11 +90,10 @@ class TestSearchRecords(MyReportsTestCase):
         # records to be filtered out
         ContactRecordFactory.create_batch(10, contact_name='John Doe')
 
-        response = self.client.get(reverse('search_records',
-                                   kwargs={'model': 'ContactRecord',
-                                           'output': 'json'}),
-                                    {'contact_name': 'Joe Shmoe'},
-                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        response = self.client.get(reverse('filter_records',
+                                   kwargs={'model': 'ContactRecord'}),
+                                   {'contact_name': 'Joe Shmoe'},
+                                   HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
@@ -106,10 +106,9 @@ class TestSearchRecords(MyReportsTestCase):
         partner = PartnerFactory(name="Wrong Partner")
         ContactRecordFactory.create_batch(10, partner=partner)
 
-        response = self.client.get(reverse('search_records',
-                                   kwargs={'model': 'ContactRecord',
-                                           'output': 'json'}),
-                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        response = self.client.get(reverse('filter_records',
+                                   kwargs={'model': 'ContactRecord'}),
+                                   HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
@@ -122,9 +121,9 @@ class TestSearchRecords(MyReportsTestCase):
         PartnerFactory.create_batch(9, name="Test Partner",
                                     owner=self.company)
 
-        response = self.client.get(reverse('prm_filter_partners'),
-                                    {'name': 'Test Partner'},
-                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        response = self.client.get(reverse('filter_partners'),
+                                   {'name': 'Test Partner'},
+                                   HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = response.context
 
         # ContactRecordFactory creates 10 partners in setUp
@@ -136,10 +135,10 @@ class TestSearchRecords(MyReportsTestCase):
 
         ContactFactory.create_batch(10, partner__owner=self.company)
 
-        response = self.client.get(reverse('prm_filter_partners'),
-                                    {'contact': range(1, 6),
-                                     'clear_cache': True},
-                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        response = self.client.get(reverse('filter_partners'),
+                                   {'contact': range(1, 6),
+                                    'clear_cache': True},
+                                   HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = response.context
 
         self.assertEqual(response.status_code, 200)
@@ -155,10 +154,9 @@ class TestSearchRecords(MyReportsTestCase):
         ContactFactory.create_batch(10, name="Jane Smith",
                                     partner=self.partner)
 
-
-        response = self.client.get(reverse('prm_filter_contacts'),
-                                    {'name': 'Jane Doe'},
-                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        response = self.client.get(reverse('filter_contacts'),
+                                   {'name': 'Jane Doe'},
+                                   HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = response.context
 
         self.assertEqual(response.status_code, 200)

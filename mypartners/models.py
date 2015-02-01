@@ -49,6 +49,7 @@ class SearchParameterQuerySet(models.query.QuerySet):
         'AutoField': '__exact',
         'ForeignKey': '__pk__in'}
 
+    # TODO: Come up with a better name for this method
     def from_search(self, company=None, parameters=None):
         """
         Intelligently filter based on query parameters.

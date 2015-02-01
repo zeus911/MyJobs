@@ -3,15 +3,16 @@ from django.conf.urls import patterns, url
 urlpatterns = patterns(
     'myreports.views',
     url(r'^view$', 'reports', name='reports'),
-    url(r'^ajax/partners$', 'search_records',
+    url(r'^ajax/partner$', 'filter_records',
         {'model': 'Partner',
          'output': 'myreports/includes/prm/partners.html'},
-        name='prm_filter_partners'),
-    url(r'^ajax/contacts$', 'search_records',
+        name='filter_partners'),
+    url(r'^ajax/contact$', 'filter_records',
         {'model': 'Contact',
          'output': 'myreports/includes/prm/contacts.html'},
-        name='prm_filter_contacts'),
-    url(r'^search/(?P<model>\w+)/(?P<output>\w+)$',
-        'search_records', name='search_records')
+        name='filter_contacts'),
+    url(r'^ajax/(?P<model>\w+)$',
+        'filter_records',
+        {'output': 'json'},
+        name='filter_records')
 )
-
