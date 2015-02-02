@@ -270,6 +270,8 @@ Pager.prototype = {
             "state": "/ajax/states/",
             "country": "/ajax/countries/",
             "facet": "/ajax/facets/",
+            "facet-2": "/ajax/facets/",
+            "facet-3": "/ajax/facets/",
             "moc": "/ajax/mocs/",
             "mappedmoc": "/ajax/mapped/",
             "company": "/ajax/company-ajax/",
@@ -281,7 +283,7 @@ Pager.prototype = {
             return "/ajax/joblisting/";
         } else {
             return urls[type];
-        };
+        }
     },
 
     _getItemsSuccessHandler: function(html, insertIntoElem, parent){
