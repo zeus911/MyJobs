@@ -70,10 +70,6 @@ def filter_records(request, model='contactrecord', output='json'):
         # get rid of empty params and flatten single-item lists
         params = {}
         for key in request.GET.keys():
-            if key == 'clear_cache':
-                filter_records.cache = {}
-                continue
-
             value = request.GET.getlist(key)
             if value:
                 if len(value) > 1:
@@ -82,12 +78,8 @@ def filter_records(request, model='contactrecord', output='json'):
                     params[key] = value[0]
 
         # fetch results from cache if available
-        records = filter_records.cache.get(
-            model, get_model(
-                'mypartners', model).objects).from_search(
-                    company, params)
-
-        filter_records.cache[model] = records
+        records = get_model('mypartners', model).objects.from_search(
+            company, params)
 
         ctx = {'records': records}
 
@@ -106,4 +98,3 @@ def filter_records(request, model='contactrecord', output='json'):
             return response
     else:
         raise Http404("This view is only reachable via an AJAX POST request")
-filter_records.cache = {}
