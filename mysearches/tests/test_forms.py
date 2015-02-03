@@ -6,6 +6,7 @@ from myjobs.tests.setup import MyJobsBase
 from mypartners.models import Contact
 from mypartners.tests.factories import ContactFactory, PartnerFactory
 from mysearches.forms import SavedSearchForm, PartnerSavedSearchForm
+from mysearches.forms import PartnerSavedSearch
 from mysearches.tests.helpers import return_file
 from mysearches.tests.factories import SavedSearchFactory
 from myjobs.tests.factories import UserFactory
@@ -146,3 +147,20 @@ class PartnerSavedSearchFormTests(MyJobsBase):
                        "Deactivate all saved searches",
                        "Unsubscribe from all My.jobs emails"]:
             self.assertIn(phrase, mail.outbox[0].body)
+
+    def test_sort_by_date_initially(self):
+        contact = ContactFactory(user=None, email='new_user@example.com',
+                                 partner=self.partner)
+        self.partner_search_data['email'] = 'new_user@example.com'
+        form = PartnerSavedSearchForm(partner=self.partner,
+                                      data=self.partner_search_data)
+        instance = form.instance
+        instance.provider = self.company
+        instance.partner = self.partner
+        instance.created_by = self.user
+        instance.custom_message = instance.partner_message
+        self.assertTrue(form.is_valid())
+        form.save()
+
+        instance = PartnerSavedSearch.objects.get()
+        self.assertEqual(instance.sort_by, 'Date')
