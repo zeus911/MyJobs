@@ -1,8 +1,10 @@
 {% for message in messages %}
     <tr id="message-{{ message.message.pk }}"{% if message.read %} class="read"{% endif %}>
-        <td>{{ message.message.start_on }}</td>
         <td>
             <span class="circle {{ message.message.message_type }}" title="{{ message.message.display_type }}"></span>
+        </td>
+        <td>{{ message.message.start_on }}</td>
+        <td>
             {{ message.message.subject }}
             <div id="message-{{ message.message.pk }}-full" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
                 <div class="modal-header">
