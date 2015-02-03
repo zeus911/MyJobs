@@ -66,6 +66,8 @@ def filter_records(request, model='contactrecord', output='json'):
     """
     if request.is_ajax() and request.method == 'GET':
         company = get_company_or_404(request)
+        user = request.user
+        path = request.get_full_path()
 
         # get rid of empty params and flatten single-item lists
         params = {}
@@ -77,9 +79,16 @@ def filter_records(request, model='contactrecord', output='json'):
                 elif value[0]:
                     params[key] = value[0]
 
+        clear_cache = params.pop('clear_cache', False)
+
         # fetch results from cache if available
-        records = get_model('mypartners', model).objects.from_search(
-            company, params)
+        if not clear_cache and (user, company, path) in filter_records.cache:
+            records = filter_records.cache[(user, company, path)]
+        else:
+            records = get_model('mypartners', model).objects.from_search(
+                company, params)
+
+            filter_records.cache[(user, company, path)] = records
 
         ctx = {'records': records}
 
@@ -89,12 +98,13 @@ def filter_records(request, model='contactrecord', output='json'):
             ctx['records'] = list(records.values())
             ctx = json.dumps(ctx, cls=DjangoJSONEncoder)
 
-            return HttpResponse(ctx)
+            response = HttpResponse(ctx)
         else:
             html = render_to_response(output, ctx, RequestContext(request))
             response = HttpResponse()
             response.content = html.content
 
-            return response
+        return response
     else:
         raise Http404("This view is only reachable via an AJAX POST request")
+filter_records.cache = {}
