@@ -33,6 +33,11 @@
     <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}inbox.160-29.js"></script>
+    {% if clicked %}
+        <script type="text/javascript">
+            var clicked = {{ clicked }};
+        </script>
+    {% endif %}
 {% endblock %}
 
 {% block activation_message %}

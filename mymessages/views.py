@@ -29,15 +29,33 @@ def read(request):
 
 def get_message_page(request):
     message_list = request.user.messages(only_new=False)
-    paginator = Paginator(message_list, 10)
-    page = request.GET.get('page')
+    items_per_page = 10
+    paginator = Paginator(message_list, items_per_page)
+    message_clicked = request.GET.get('message')
+    page = None
+    if message_clicked is not None:
+        try:
+            message_clicked = int(message_clicked)
+        except ValueError:
+            message_clicked = None
+        else:
+            try:
+                index = [message.message.pk
+                         for message in message_list].index(message_clicked)
+            except ValueError:
+                message_clicked = None
+            else:
+                page = (index // items_per_page) + 1
+
+    if page is None:
+        page = request.GET.get('page')
     try:
         messages = paginator.page(page)
     except PageNotAnInteger:
         messages = paginator.page(1)
     except EmptyPage:
         messages = paginator.page(paginator.num_pages)
-    return messages
+    return messages, message_clicked
 
 
 @user_is_allowed()
@@ -54,7 +72,7 @@ def delete(request):
                 info.delete()
             else:
                 info.message.delete()
-        messages = get_message_page(request)
+        messages, _ = get_message_page(request)
         response = render_to_string('mymessages/includes/messages.html',
                                     {'messages': messages},
                                      RequestContext(request))
@@ -65,6 +83,7 @@ def delete(request):
 @user_is_allowed()
 @user_passes_test(User.objects.not_disabled)
 def inbox(request):
-    messages = get_message_page(request)
-    return render_to_response('mymessages/inbox.html', {'messages': messages},
+    messages, clicked = get_message_page(request)
+    return render_to_response('mymessages/inbox.html', {'messages': messages,
+                                                        'clicked': clicked},
                               RequestContext(request))

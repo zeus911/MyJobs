@@ -3,7 +3,7 @@
         <td>
             <span class="circle {{ message.message.message_type }}" title="{{ message.message.display_type }}"></span>
         </td>
-        <td>{{ message.message.start_on }}</td>
+        <td>{{ message.message.start_on.date }}</td>
         <td>
             {{ message.message.subject }}
             <div id="message-{{ message.message.pk }}-full" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
@@ -15,7 +15,7 @@
                 </div>
                 <div class="modal-footer">
                     <div class="actions">
-                        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+                        <a class="btn" data-dismiss="modal" aria-hidden="true">Close</a>
                     </div>
                 </div>
             </div>

@@ -3854,6 +3854,10 @@ table td, table th {
     background-image: url("//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/glyphicons-halflings.png");
 }
 
+.icon-white {
+    background-image: url("//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/glyphicons-halflings-white.png");
+}
+
 body.modal-open {
     overflow: hidden;
 }

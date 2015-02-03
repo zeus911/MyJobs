@@ -15,10 +15,16 @@ $(document).ready(function() {
     $(document).on('click', '[class*=mymessage-delete-]', function(){
         delete_message(this);
     });
+
+    if (typeof(clicked) != 'undefined') {
+        var message = $('#message-' + clicked);
+        message.click();
+        //on_read(message);
+    }
 });
 
 function on_read(clicked) {
-    var parent = clicked.parents('tr');
+    var parent = clicked.is('tr') ? clicked : clicked.parents('tr');
     // On future views, this is all done at the template level; As this
     // was initiated by ajax, that doesn't happen.
     if (clicked.is('a[class*=mymessage-read]')) {

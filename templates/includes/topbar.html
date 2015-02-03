@@ -25,6 +25,19 @@
             <div class="menu-container" role="menu">
                 {% if user.is_authenticated %}
                 <ul class="mobile_hide">
+                    <li>
+                        <a><span class="icon-envelope icon-white has-drop"></span></a>
+                        <ul id="header-inbox" class="submenu">
+                            <li>Inbox <a style="display:inline;" href="{% url 'inbox' %}">See All</a></li>
+                            {% for message in user.messages %}
+                                {% if forloop.counter <= 3 %}
+                                    <li><a href="{% url 'inbox' %}?message={{ message.message.pk }}">{{ message.message.start_on.date }} - {{ message.message.subject|truncatewords:'10' }}</a></li>
+                                {% endif %}
+                            {% empty %}
+                                <li>No new messages</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
                     {% is_a_group_member user "Employer" as group_member %}
                     {% get_company_name user as company_name %}
                     {% get_company_from_cookie as company %}
