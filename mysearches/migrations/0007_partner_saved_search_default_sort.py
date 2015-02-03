@@ -7,7 +7,7 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        # Default sort_by set to 'Date' for Partner Saved Searches, see PD-912
+        # Default sort_by set to 'Date' for Partner Saved Searches, see PD-1014
         orm.SavedSearch.objects.filter(partnersavedsearch__isnull=False).update(sort_by='Date')
 
     def backwards(self, orm):
