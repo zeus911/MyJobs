@@ -4173,6 +4173,14 @@ span.helptext {
     padding-right: 5px;
 }
 
+#inbox tbody {
+    /* Bootstrap 2.2.1 has a ".table tbody+tbody" style that adds a border.
+     * Having groups of rows is nice, but we don't want the border that
+     * is added in this case.
+     */
+    border-top: 0;
+}
+
 #inbox .step-links .current {
     left: 45%;
 }

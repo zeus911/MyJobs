@@ -4,34 +4,9 @@
         {% if messages %}
             <table class="table" style="width: 100%; table-layout: fixed; border: 1px solid black;">
                 <tr><th>Date</th><th>Message</th><th>{# actions #}</th></tr>
-                {% for message in messages %}
-                    <tr id="message-{{ message.pk }}"{% if message.read %} class="read"{% endif %}>
-                        <td>{{ message.message.start_on }}</td>
-                        <td>
-                            <span class="circle {{ message.message.message_type }}" title="{{ message.message.display_type }}"></span>
-                            {{ message.message.subject }}
-                            <div id="message-{{ message.pk }}-full" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
-                                <div class="modal-header">
-                                    <h3>{{ message.message.subject }}</h3>
-                                </div>
-                                <div class="modal-body">
-                                    {{ message.message.body|safe }}
-                                </div>
-                                <div class="modal-footer">
-                                    <div class="actions">
-                                        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            {% if not message.read %}
-                                <a class="btn mymessage-read-{{ message.id }}-{{ user.id }}">Mark Read</a>
-                            {% endif %}
-                            <a class="btn mymessage-delete-{{ message.id }}-{{ user.id }}">Delete</a>
-                        </td>
-                    </tr>
-                {% endfor %}
+                <tbody id="messages">
+                    {% include 'mymessages/includes/messages.html' %}
+                </tbody>
             </table>
             <div class="pagination">
                 <span class="step-links">
