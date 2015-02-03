@@ -60,7 +60,7 @@ $(document).ready(function(){
         contactForm();
     });
 
-    $('[class*=mymessage-read-]').click(function(){
+    $(document).on('click', '[class*=mymessage-read-]', function(){
         readMessage(this);
     });
 

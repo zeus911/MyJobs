@@ -17,8 +17,12 @@ from mymessages.models import MessageInfo
 def read(request):
     if request.is_ajax():
         message, user = request.GET.get('name').split('-')[2:]
-        m = MessageInfo.objects.get(user=user, message__id=message)
-        m.mark_read()
+        try:
+            m = MessageInfo.objects.get(user=user, message__id=message)
+        except MessageInfo.DoesNotExist:
+            pass
+        else:
+            m.mark_read()
         return HttpResponse('')
     raise Http404
 

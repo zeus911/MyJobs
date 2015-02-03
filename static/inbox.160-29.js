@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    $('tr[id^=message]').click(function(e) {
+    $(document).on('click', 'tr[id^=message]', function(e) {
         // Individual message ids are formatted "message-<id>"
         var target = $(e.target);
         if (!target.is('a')) {
@@ -12,7 +12,7 @@ $(document).ready(function() {
         }
     });
 
-    $('[class*=mymessage-delete-]').click(function(){
+    $(document).on('click', '[class*=mymessage-delete-]', function(){
         delete_message(this);
     });
 });
@@ -37,11 +37,11 @@ function delete_message(button) {
         data = "name="+name;
     $.ajax({
         type: 'GET',
-        url: '/message/delete/',
+        url: '/message/delete/' + window.location.search,
         data: data,
         dataType: 'json',
         success: function(data) {
-            $('#messages').replaceWith(data);
+            $('#messages').html(data);
         }
     });
 }

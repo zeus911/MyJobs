@@ -70,11 +70,11 @@ STATICFILES_FINDERS = (
 ADMIN_MEDIA_PREFIX = '//d2e48ltfsb5exy.cloudfront.net/myjobs/admin/'
 
 TEMPLATE_LOADERS = (
-    ('django.template.loaders.cached.Loader', (
+#    ('django.template.loaders.cached.Loader', (
         'django.template.loaders.filesystem.Loader',
         'django.template.loaders.app_directories.Loader',
         'django.template.loaders.eggs.Loader',
-    )),
+#    )),
 )
 
 MIDDLEWARE_CLASSES = (
