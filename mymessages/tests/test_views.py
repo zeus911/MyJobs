@@ -18,18 +18,49 @@ class MessageViewTests(MyJobsBase):
         for group in Group.objects.all():
             self.message.group.add(group.pk)
         self.message.save()
-        self.messageInfo = MessageInfo(user=self.user,
+        self.messageinfo = MessageInfo(user=self.user,
                                        message=self.message)
-        self.messageInfo.save()
+        self.messageinfo.save()
         self.client = TestClient()
         self.client.login_user(self.user)
 
     def test_user_post_mark_message_read(self):
         self.client.get(reverse('read'),
-                        data={'name': 'message-'+str(self.message.id)
+                        data={'name': 'message-read-'+str(self.message.id)
                                       + '-'+str(self.user.id)},
                         follow=True,
                         HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         m = MessageInfo.objects.get(user=self.user, message=self.message)
         self.assertTrue(m.read)
         self.assertTrue(m.read_at)
+
+    def test_delete_message_single_recipient(self):
+        """
+        Deleting a MessageInfo when there is only one recipient also deletes
+        the message associated with it.
+        """
+        self.client.get(reverse('delete'),
+                        data={'name': 'message-delete-'+str(self.message.id)
+                                      + '-'+str(self.user.id)},
+                        HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        with self.assertRaises(MessageInfo.DoesNotExist):
+            MessageInfo.objects.get(pk=self.messageinfo.pk)
+        with self.assertRaises(Message.DoesNotExist):
+            Message.objects.get(pk=self.message.pk)
+
+    def test_delete_message_multiple_recipients(self):
+        """
+        Deleting a MessageInfo with multiple recipients deletes the info for
+        the current user only.
+        """
+        user = UserFactory(email='new@example.com')
+        messageinfo = MessageInfo.objects.create(user=user, message=self.message)
+
+        self.client.get(reverse('delete'),
+                        data={'name': 'message-delete-'+str(self.message.id)
+                                      + '-'+str(self.user.id)},
+                        HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        with self.assertRaises(MessageInfo.DoesNotExist):
+            MessageInfo.objects.get(pk=self.messageinfo.pk)
+        Message.objects.get(pk=self.message.pk)
+        MessageInfo.objects.get(pk=messageinfo.pk)
