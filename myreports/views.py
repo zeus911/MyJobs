@@ -46,7 +46,7 @@ def filter_records(request, model='contactrecord', output='json'):
                      for `ContactRecord`).
         :end_date: Upper bound for record date-related field (eg. `datetime`
                    for `ContactRecord`).
-        :clear_cache: If present, this view's cache is cleared.
+        :ignore_cache: If present, this view's cache is ignored.
 
         Remaining query parameters are assumed to be field names of the model.
 
@@ -79,18 +79,20 @@ def filter_records(request, model='contactrecord', output='json'):
                 elif value[0]:
                     params[key] = value[0]
 
-        clear_cache = params.pop('clear_cache', False)
+        ignore_cache = params.pop('ignore_cache', False)
 
         # fetch results from cache if available
-        if not clear_cache and (user, company, path) in filter_records.cache:
+        if not ignore_cache and (user, company, path) in filter_records.cache:
             records = filter_records.cache[(user, company, path)]
+            cached = True
         else:
             records = get_model('mypartners', model).objects.from_search(
                 company, params)
+            cached = False
 
             filter_records.cache[(user, company, path)] = records
 
-        ctx = {'records': records}
+        ctx = {'records': records, 'cached': cached}
 
         # serialize
         if output == 'json':

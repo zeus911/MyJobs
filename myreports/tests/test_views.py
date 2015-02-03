@@ -171,3 +171,28 @@ class TestSearchRecords(MyReportsTestCase):
 
         self.assertEqual(partners[0].name, "Company")
         self.assertEqual(partners[-1].name, "")
+
+    def test_cached_results(self):
+        """
+        Tests that hitting the view multiple times with the same parameters
+        returns a cached result. Also tests that ignoring cache works properly.
+        """
+        ContactRecordFactory.create_batch(10, partner=self.partner)
+
+        url = reverse('filter_records', kwargs={'model': 'ContactRecord'})
+        kwargs = {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'}
+
+        # this request should not be cached
+        response = self.client.get(url, **kwargs)
+        output = json.loads(response.content)
+        self.assertFalse(output['cached'])
+
+        # this call should be cached
+        response = self.client.get(url, **kwargs)
+        output = json.loads(response.content)
+        self.assertTrue(output['cached'])
+
+        # this call should not be cached as we ignore the cache
+        response = self.client.get(url + '?ignore_cache', **kwargs)
+        output = json.loads(response.content)
+        self.assertFalse(output['cached'])
