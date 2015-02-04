@@ -13,6 +13,8 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest
 from django.test.client import Client
+from mymessages.models import Message, MessageInfo
+from mymessages.tests.factories import MessageInfoFactory
 
 from setup import MyJobsBase
 from myjobs.models import User, EmailLog, FAQ
@@ -831,7 +833,6 @@ class MyJobsViewsTests(MyJobsBase):
         # email should be sent to right person
         self.assertIn(creator.email, mail.outbox[0].to)
 
-
     def test_toolbar_logged_in(self):
         self.client.login_user(self.user)
         response = self.client.get(reverse('toolbar'))
@@ -866,6 +867,31 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.get(reverse('home'))
         self.assertIn(last_site, response.content)
         self.assertIn(last_name, response.content)
+
+    def test_messages_in_topbar(self):
+        self.client.login_user(self.user)
+        for num_messages in range(1, 5):
+            infos = MessageInfoFactory.create_batch(size=num_messages,
+                                                    user=self.user)
+            infos[0].mark_read()
+
+            response = self.client.get(reverse('home'))
+            if num_messages == 1:
+                self.assertTrue('No new messages' in response.content,
+                                'Iteration %s' % num_messages)
+            for info in infos[1:4]:
+                self.assertTrue('message=%s' % info.message.pk
+                                in response.content,
+                                'Iteration %s, %s not found' % (
+                                    num_messages,
+                                    'message=%s' % info.message.pk))
+            for info in infos[4:]:
+                self.assertFalse('message=%s' % info.message.pk
+                                 in response.content,
+                                 "Iteration %s, %s exists but shouldn't" % (
+                                     num_messages,
+                                     'message=%s' % info.message.pk))
+            Message.objects.all().delete()
 
     def test_cas_logged_in(self):
         response = self.client.get(reverse('cas'), follow=True)
