@@ -71,10 +71,9 @@ def filter_current_jobs(jobs, bu):
     for job in jobs:
         # Written using continues to allow easily adding multiple conditions to
         # remove jobs.
-        if bu.ignore_includeinindex is False and \
-           job.find(hr_xml_include_in_index).text == '0':
-                logger.info("A job was filtered for %s" % bu)
-                continue
+        if bu.ignore_includeinindex is False and job.find(hr_xml_include_in_index).text == '0':
+            logger.info("A job was filtered for %s" % bu)
+            continue
         yield job
 
 
