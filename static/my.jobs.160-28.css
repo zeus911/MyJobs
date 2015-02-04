@@ -4174,6 +4174,12 @@ span.helptext {
     border: 1px solid #d6e9c6;
 }
 
+#inbox .table {
+    width: 100%;
+    table-layout: fixed;
+    border: 1px solid #ddd;
+}
+
 #inbox td:last-child {
     text-align: right;
 }
