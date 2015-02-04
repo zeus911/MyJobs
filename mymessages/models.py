@@ -90,9 +90,6 @@ class Message(models.Model):
                                      help_text="Default is two weeks " +
                                                "after message is sent.")
     btn_text = models.CharField('Button text', max_length=100, default='OK')
-    global_show = models.BooleanField('Show everywhere', default=False,
-                                      help_text='Show at the top of all pages '
-                                                'in addition to the inbox')
 
     objects = MessageManager()
 
@@ -172,8 +169,11 @@ def get_messages(user):
                         messages.
     """
     now = timezone.now().date()
-    messages = Message.objects.prefetch_related('messageinfo_set').filter(
-        Q(group__in=user.groups.all()) | Q(users=user),
-        Q(expire_at__isnull=True) | Q(expire_at__gte=now)).distinct()
+    try:
+        messages = Message.objects.prefetch_related('messageinfo_set').filter(
+            Q(group__in=user.groups.all()) | Q(users=user),
+            Q(expire_at__isnull=True) | Q(expire_at__gte=now)).distinct()
+    except ValueError:
+        messages = Message.objects.none()
 
     return messages

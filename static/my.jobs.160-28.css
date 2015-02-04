@@ -1313,8 +1313,13 @@ ul.header-menu > li > ul > a > li:hover {
     text-decoration: none;
 }
 
-#menu-inbox-all {
+#menu-inbox-all > * {
     display: inline;
+}
+
+#menu-inbox-all > p {
+    color: white;
+    padding-left: 4px;
 }
 
 #date-range-list > li:last-child:hover {

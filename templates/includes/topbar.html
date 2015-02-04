@@ -28,7 +28,7 @@
                     <li class="has-drop">
                         <a id="menu-inbox"><div class="icon-envelope icon-white"></div></a>
                         <ul class="submenu">
-                            <li>Inbox <a id="menu-inbox-all" style="display:inline;" href="{% url 'inbox' %}">See All</a></li>
+                            <li id="menu-inbox-all"><p>Inbox </p><a href="{% url 'inbox' %}">(See All)</a></li>
                             {% for message in user.messages %}
                                 {% if forloop.counter <= 3 %}
                                     <li><a href="{% url 'inbox' %}?message={{ message.message.pk }}">{{ message.message.start_on.date }} - {{ message.message.subject|truncatewords:'10' }}</a></li>
@@ -110,8 +110,6 @@
 
                                     {% if user.is_active %}
 
-                                        <li><a id="menu-inbox-link" href="{% url 'inbox' %}">{% trans "My Inbox" %}</a></li>
-
                                         <li><a id="savedsearch-link" class="no-show seeker-menu" href="{{ ABSOLUTE_URL }}saved-search/view/">{% trans "My Saved Searches" %}</a></li>
 
                                         {% if company.prm_access  %}
@@ -134,6 +132,7 @@
                                         {% endif %}
                                     {% endif %}
                                     <li><a id="account-link" href="{{ ABSOLUTE_URL }}account/edit">{% trans "Account Settings" %}</a></li>
+                                    <li><a id="menu-inbox-link" href="{% url 'inbox' %}">{% trans "Messages" %} ({{ user.messages_unread.count }})</a></li>
                                     <li><a id="search-jobs" href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
                                     <li><a id="settings-link" style="cursor: pointer;">{% trans "Settings" %}</a></li>
 
