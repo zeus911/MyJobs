@@ -204,10 +204,7 @@ class Partner(models.Model):
             date_end = date_end + timedelta(1)
             records = records.filter(date_time__lte=date_end)
         if record_type:
-            if record_type == 'email':
-                records = records.filter(contact_type__in=['email', 'pssemail'])
-            else:
-                records = records.filter(contact_type=record_type)
+            records = records.filter(contact_type=record_type)
         if created_by:
             records = records.filter(created_by=created_by)
 
