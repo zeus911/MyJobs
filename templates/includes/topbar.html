@@ -25,10 +25,10 @@
             <div class="menu-container" role="menu">
                 {% if user.is_authenticated %}
                 <ul class="mobile_hide">
-                    <li>
-                        <a><span class="icon-envelope icon-white has-drop"></span></a>
-                        <ul id="header-inbox" class="submenu">
-                            <li>Inbox <a style="display:inline;" href="{% url 'inbox' %}">See All</a></li>
+                    <li class="has-drop">
+                        <a id="menu-inbox"><div class="icon-envelope icon-white"></div></a>
+                        <ul class="submenu">
+                            <li>Inbox <a id="menu-inbox-all" style="display:inline;" href="{% url 'inbox' %}">See All</a></li>
                             {% for message in user.messages %}
                                 {% if forloop.counter <= 3 %}
                                     <li><a href="{% url 'inbox' %}?message={{ message.message.pk }}">{{ message.message.start_on.date }} - {{ message.message.subject|truncatewords:'10' }}</a></li>
@@ -109,6 +109,8 @@
                                     <li><a id="profile-link" class="no-show seeker-menu" href="{{ ABSOLUTE_URL }}profile/view/">{% trans "My Resume" %}</a></li>
 
                                     {% if user.is_active %}
+
+                                        <li><a id="menu-inbox-link" href="{% url 'inbox' %}">{% trans "My Inbox" %}</a></li>
 
                                         <li><a id="savedsearch-link" class="no-show seeker-menu" href="{{ ABSOLUTE_URL }}saved-search/view/">{% trans "My Saved Searches" %}</a></li>
 

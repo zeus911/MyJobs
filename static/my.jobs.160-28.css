@@ -1313,6 +1313,10 @@ ul.header-menu > li > ul > a > li:hover {
     text-decoration: none;
 }
 
+#menu-inbox-all {
+    display: inline;
+}
+
 #date-range-list > li:last-child:hover {
     background-color: #f2f2f2;
 }
