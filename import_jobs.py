@@ -73,6 +73,7 @@ def filter_current_jobs(jobs, bu):
         # remove jobs.
         if bu.ignore_includeinindex is False and \
            job.find(hr_xml_include_in_index).text == '0':
+                logger.info("A job was filtered for %s" % bu)
                 continue
         yield job
 
