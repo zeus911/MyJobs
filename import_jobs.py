@@ -44,10 +44,9 @@ def update_job_source(guid, buid, name):
     add_company(bu)
 
     # Lookup the jobs, filter then, transform them, and then load the jobs
-    jobs = get_current_jobs(guid)
-    # allow ignoring the includeinindex bit
-    if bu.ignore_includeinindex == True:
-        jobs = filter_current_jobs(jobs)
+    zf = get_jobsfs_zipfile(guid)
+    jobs = get_jobs_from_zipfile(zf, guid)
+    jobs = filter_current_jobs(jobs, bu)
     jobs = list(hr_xml_to_json(job, bu) for job in jobs)
     for job in jobs:
         job['link'] = make_redirect(job, bu).make_link()
@@ -60,29 +59,34 @@ def update_job_source(guid, buid, name):
     bu.save()
 
 
-def filter_current_jobs(jobs):
-    """Given a iterator/generator of jobs, filter the list, removing jobs that
-       should not be indexed for microsites.
-
+def filter_current_jobs(jobs, bu):
+    """Given a iterator/generator of jobs, filter the list, removing jobs that should not be indexed for microsites.
+    Inputs:
+        :jobs: A iterable of etree objects.
+        :bu: The BusinessUnit these jobs are associated with.
+    
        Returns: a generator of jobs which pass validation for indexing."""
 
     hr_xml_include_in_index = ".//*[@schemeName='dbextras.tempjobwrappingjobs.includeinindex']"
     for job in jobs:
         # Written using continues to allow easily adding multiple conditions to
         # remove jobs.
-        if job.find(hr_xml_include_in_index).text == '0':
-            continue
+        if bu.ignore_includeinindex is False and \
+           job.find(hr_xml_include_in_index).text == '0':
+                continue
         yield job
 
 
-def get_current_jobs(guid):
-    """Get a list of xml documents representing all the current jobs.
-
-    Input:
-        :guid: A guid used to access the jobsfs server.
-    :return: [lxml.eTree, lxml.eTree,...]"""
-    logger.debug("Getting current Jobs for guid: %s", guid)
-
+def get_jobsfs_zipfile(guid):
+    """Get a fileobject for the zipfile from JobsFS.  
+    
+    This has been separated to simplify uncouple parsing zipfiles from jobsFS, so we can more easily test the rest of 
+    this code.
+     
+    Inputs:
+        :guid: The guid of which to download.
+    :return: A urllib2 Response (A filelike object)
+    """
     # Download the zipfile
     url = 'http://jobsfs.directemployers.org/%s/ActiveDirectory_%s.zip' % \
         (guid, guid)
@@ -91,15 +95,27 @@ def get_current_jobs(guid):
                                                              'di?dsDe4'))
     req.add_header("Authorization", authheader)
     resp = urllib2.urlopen(req)
+    return resp
 
-    # Write zipfile to filesystem
-    filename = '/tmp/%s/%s.zip' % (guid, guid)
-    directory = os.path.dirname(filename)
+
+def get_jobs_from_zipfile(fileobject, guid):
+    """Get a list of xml documents representing all the current jobs.
+
+    Input:
+        :guid: A guid used to access the jobsfs server.
+    :return: [lxml.eTree, lxml.eTree,...]"""
+    logger.debug("Getting current Jobs for guid: %s", guid)
+
+    # Delete any existing data and use the guid to create a unique folder.
+    directory = "/tmp/%s" % guid
     if os.path.exists(directory):
         shutil.rmtree(directory)
     os.mkdir(directory)
+    
+    # Write zipfile to filesystem
+    filename = os.path.join(directory, '%s.zip' % guid)
     with open(filename, 'wb') as f:
-        for chunk in iter(lambda: resp.read(1024 * 16), ''):
+        for chunk in iter(lambda: fileobject.read(1024 * 16), ''):
             f.write(chunk)
 
     # Extact all files from zipfile.
@@ -110,7 +126,7 @@ def get_current_jobs(guid):
         zf.extractall(directory)
     finally:
         zf.close()
-
+    
     # Process the files.
     active_directory = os.path.join(directory, 'ActiveDirectory_%s' % guid)
     files = os.listdir(active_directory)
@@ -126,7 +142,6 @@ def get_current_jobs(guid):
 
     # clean up after ourselves.
     shutil.rmtree(directory)
-
 
 class FeedImportError(Exception):
     def __init__(self, msg):
