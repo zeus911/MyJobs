@@ -25,12 +25,14 @@ def reports(request):
                               RequestContext(request))
 
 
-def filter_records(request, model='contactrecord', output='json'):
+def filter_records(request,
+                   app='mypartners', model='contactrecord', output='json'):
     """
     AJAX view that returns a query set based on post data submitted with the
     request, caching results by default.
 
     Inputs:
+        :app: The app to which the model belongs.
         :model: The model that should be filtered on.
         :output: The output type. By default, this is JSON. Alternatively the
                  path to a template file may be used, in which case the view is
@@ -78,7 +80,7 @@ def filter_records(request, model='contactrecord', output='json'):
                     params[key] = value[0]
 
         # fetch results from cache if available
-        records = get_model('mypartners', model).objects.from_search(
+        records = get_model(app, model).objects.from_search(
             company, params)
 
         ctx = {'records': records}
