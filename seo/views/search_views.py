@@ -1066,7 +1066,7 @@ def home_page(request):
 
     if site_config.browse_facet_show:
         cust_facets = get_custom_facets(request)
-        custom_facet_counts = helpers.combine_groups(cust_facets)[0:num_facet_items*2]
+        custom_facet_counts = helpers.combine_groups(cust_facets)
 
     ga = settings.SITE.google_analytics.all()
 
