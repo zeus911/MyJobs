@@ -98,7 +98,7 @@ def get_jobsfs_zipfile(guid):
     return resp
 
 
-def get_jobs_from_zipfile(fileobject, guid):
+def get_jobs_from_zipfile(zipfileobject, guid):
     """Get a list of xml documents representing all the current jobs.
 
     Input:
@@ -115,7 +115,7 @@ def get_jobs_from_zipfile(fileobject, guid):
     # Write zipfile to filesystem
     filename = os.path.join(directory, '%s.zip' % guid)
     with open(filename, 'wb') as f:
-        for chunk in iter(lambda: fileobject.read(1024 * 16), ''):
+        for chunk in iter(lambda: zipfileobject.read(1024 * 16), ''):
             f.write(chunk)
 
     # Extact all files from zipfile.
