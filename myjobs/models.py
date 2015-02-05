@@ -464,6 +464,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         Output:
         :messages:  A list of Messages to be shown to the User.
         """
+        if not self.pk:
+            return MessageInfo.objects.none()
+
         messages = get_messages(self).exclude(users=self)
         new_message_infos = [
             MessageInfo(user=self, message=message) for message in messages]
