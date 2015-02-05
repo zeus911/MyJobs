@@ -86,12 +86,10 @@ def filter_records(request,
                 else:
                     params[key] = value_list
 
-        csrftoken = params.pop('csrfmiddlewaretoken', None)
-        output = params.pop('output', 'json')
-        if not csrftoken:
-            # probably better as a 403, what we don't use that anywhere else...
-            raise Http404("CSRF Middleware Token is missing!")
+        # remove csrf token from search parameters
+        params.pop('csrfmiddlewaretoken', None)
 
+        output = params.pop('output', 'json')
         ignore_cache = params.pop('ignore_cache', False)
 
         # fetch results from cache if available
@@ -99,7 +97,7 @@ def filter_records(request,
             records = filter_records.cache[(user, company, path)]
             cached = True
         else:
-            records = get_model('mypartners', model).objects.from_search(
+            records = get_model(app, model).objects.from_search(
                 company, params)
             cached = False
 

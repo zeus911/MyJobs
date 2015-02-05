@@ -3,7 +3,6 @@
 # TODO: Remove custom manager specific tests to a separate test case.
 
 import json
-import unittest
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
@@ -71,14 +70,16 @@ class TestSearchRecords(MyReportsTestCase):
     def test_restricted_to_ajax(self):
         """View should only be reachable through AJAX."""
 
-        response = self.client.post(reverse('filter_partners'))
+        response = self.client.post(reverse('filter_records', kwargs={
+            'app': 'mypartners', 'model': 'partner'}))
 
         self.assertEqual(response.status_code, 404)
 
     def test_restricted_to_post(self):
         """GET requests should raise a 404."""
 
-        response = self.client.get(reverse('filter_partners'),
+        response = self.client.get(reverse('filter_records', kwargs={
+            'app': 'mypartners', 'model': 'partner'}),
                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
 
         self.assertEqual(response.status_code, 404)
@@ -122,10 +123,11 @@ class TestSearchRecords(MyReportsTestCase):
         PartnerFactory.create_batch(9, name="Test Partner",
                                     owner=self.company)
 
-        response = self.client.post(reverse('filter_partners'),
+        response = self.client.post(reverse('filter_records', kwargs={
+            'app': 'mypartners', 'model': 'partner'}),
                                     {'name': 'Test Partner'},
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        output = response.context
+        output = json.loads(response.content)
 
         # ContactRecordFactory creates 10 partners in setUp
         self.assertEqual(response.status_code, 200)
@@ -136,13 +138,14 @@ class TestSearchRecords(MyReportsTestCase):
 
         ContactFactory.create_batch(10, partner__owner=self.company)
 
-        response = self.client.post(reverse('filter_partners'),
+        response = self.client.post(reverse('filter_records', kwargs={
+            'app': 'mypartners', 'model': 'partner'}),
                                     {'contact': range(1, 6)},
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        output = response.context
+        output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(output['records'].count(), 5)
+        self.assertEqual(len(output['records']), 5)
 
     def test_filtering_on_contact(self):
         """Test the ability to filter by contact."""
@@ -154,10 +157,12 @@ class TestSearchRecords(MyReportsTestCase):
         ContactFactory.create_batch(10, name="Jane Smith",
                                     partner=self.partner)
 
-        response = self.client.post(reverse('filter_contacts'),
+        response = self.client.post(reverse('filter_records',
+                                    kwargs={'app': 'mypartners',
+                                            'model': 'contact'}),
                                     {'name': 'Jane Doe'},
                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        output = response.context
+        output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(output['records']), 10)
@@ -180,7 +185,8 @@ class TestSearchRecords(MyReportsTestCase):
         """
         ContactRecordFactory.create_batch(10, partner=self.partner)
 
-        url = reverse('filter_records', kwargs={'model': 'ContactRecord'})
+        url = reverse('filter_records', kwargs={
+            'app': 'mypartners', 'model': 'contactrecord'})
         kwargs = {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'}
 
         # this request should not be cached
