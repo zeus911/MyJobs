@@ -304,7 +304,7 @@
         var label = document.createElement("a");
 
         // Company id from myjobs_company cookie
-        var cid = read_cookie();
+        var cid = read_cookie("myjobs_company");
 
         var list = document.createElement("ul");
         list.setAttribute("id", "select_company");
@@ -407,8 +407,8 @@
         document.cookie = "myjobs_company="+company_id+expires+"; path=/";
     }
 
-    function read_cookie() {
-        var nameEQ = "myjobs_company=",
+    function read_cookie(cookie) {
+        var nameEQ = cookie + "=",
             ca = document.cookie.split(';');
         for (var i=0; i< ca.length; i++) {
             var c = ca[i];
