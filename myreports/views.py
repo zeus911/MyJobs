@@ -71,9 +71,9 @@ def filter_records(request,
 
         # get rid of empty params and flatten single-item lists
         params = {}
-        for key in request.GET.keys():
-            value = request.GET.get(key)
-            value_list = request.GET.getlist(key)
+        for key in request.POST.keys():
+            value = request.POST.get(key)
+            value_list = request.POST.getlist(key)
 
             # parsing a list parameter as a regular parameter only captures the
             # last item, so if trying both ways returns the same value, we can
