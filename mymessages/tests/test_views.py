@@ -5,6 +5,7 @@ from myjobs.tests.setup import MyJobsBase
 from myjobs.tests.factories import UserFactory
 from myjobs.tests.test_views import TestClient
 from mymessages.models import Message, MessageInfo
+from mymessages.tests.factories import MessageInfoFactory
 
 
 class MessageViewTests(MyJobsBase):
@@ -64,3 +65,12 @@ class MessageViewTests(MyJobsBase):
             MessageInfo.objects.get(pk=self.messageinfo.pk)
         Message.objects.get(pk=self.message.pk)
         MessageInfo.objects.get(pk=messageinfo.pk)
+
+    def test_auto_page_inbox(self):
+        infos = MessageInfoFactory.create_batch(11, user=self.user)
+        request = self.client.get(reverse('inbox'))
+        self.assertTrue('Page 1 of 2' in request.content)
+
+        request = self.client.get(reverse('inbox') +
+                                  '?message=%s' % infos[-1].message.pk)
+        self.assertTrue('Page 2 of 2' in request.content)
