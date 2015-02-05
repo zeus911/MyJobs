@@ -64,18 +64,23 @@ def filter_records(request, model='contactrecord', output='json'):
                 'model': 'partner',
                 'output': 'myreports/example_view.html'}))
     """
-    if request.is_ajax() and request.method == 'GET':
+    if request.is_ajax() and request.method == 'POST':
         company = get_company_or_404(request)
 
         # get rid of empty params and flatten single-item lists
         params = {}
-        for key in request.GET.keys():
-            value = request.GET.getlist(key)
+        for key in request.POST.keys():
+            value = request.POST.getlist(key)
             if value:
                 if len(value) > 1:
                     params[key] = value
                 elif value[0]:
                     params[key] = value[0]
+
+        csrftoken = params.pop('csrfmiddlewaretoken', None)
+        if not csrftoken:
+            # probably better as a 403, what we don't use that anywhere else...
+            raise Http404("CSRF Middleware Token is missing!")
 
         # fetch results from cache if available
         records = get_model('mypartners', model).objects.from_search(
