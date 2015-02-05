@@ -79,10 +79,10 @@ def filter_records(request,
             # last item, so if trying both ways returns the same value, we can
             # be sure that it's not a list
             if value:
-                if len(value) > 1:
+                if value == value_list[0]:
                     params[key] = value
-                elif value[0]:
-                    params[key] = value[0]
+                else:
+                    params[key] = value_list
 
         csrftoken = params.pop('csrfmiddlewaretoken', None)
         output = params.pop('output', 'json')
