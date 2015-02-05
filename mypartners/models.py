@@ -47,7 +47,8 @@ class SearchParameterQuerySet(models.query.QuerySet):
         'CharField': '__icontains',
         'TextField': '__icontains',
         'AutoField': '__exact',
-        'ForeignKey': '__pk__in'}
+        'ForeignKey': '',
+        'ManyToManyField': ''}
 
     # TODO: Come up with a better name for this method
     def from_search(self, company=None, parameters=None):
@@ -91,12 +92,16 @@ class SearchParameterQuerySet(models.query.QuerySet):
             self = self.model._parse_parameters(parameters, self)
 
         for key, value in parameters.items():
-            type_ = self.get_field_type(key)
+            if hasattr(value, '__iter__'):
+                query = '%s%s' % (key, '__in')
+            else:
+                type_ = self.get_field_type(key)
 
-            if type_:
-                query_by_type = SearchParameterQuerySet.QUERY_BY_TYPE
-                self = self.filter(
-                    **{'%s%s' % (key, query_by_type[type_]): value})
+                # construct query based on field type
+                query = '%s%s' % (
+                    key, SearchParameterQuerySet.QUERY_BY_TYPE[type_])
+
+            self = self.filter(**{query: value})
 
         # remove duplicates
         self = self.distinct()
