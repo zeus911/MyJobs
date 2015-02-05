@@ -48,7 +48,7 @@ def filter_records(request,
                      for `ContactRecord`).
         :end_date: Upper bound for record date-related field (eg. `datetime`
                    for `ContactRecord`).
-        :clear_cache: If present, this view's cache is cleared.
+        :ignore_cache: If present, this view's cache is ignored.
 
         Remaining query parameters are assumed to be field names of the model.
 
@@ -68,6 +68,8 @@ def filter_records(request,
     """
     if request.is_ajax() and request.method == 'POST':
         company = get_company_or_404(request)
+        user = request.user
+        path = request.get_full_path()
 
         # get rid of empty params and flatten single-item lists
         params = {}
@@ -90,11 +92,20 @@ def filter_records(request,
             # probably better as a 403, what we don't use that anywhere else...
             raise Http404("CSRF Middleware Token is missing!")
 
-        # fetch results from cache if available
-        records = get_model(app, model).objects.from_search(
-            company, params)
+        ignore_cache = params.pop('ignore_cache', False)
 
-        ctx = {'records': records}
+        # fetch results from cache if available
+        if not ignore_cache and (user, company, path) in filter_records.cache:
+            records = filter_records.cache[(user, company, path)]
+            cached = True
+        else:
+            records = get_model('mypartners', model).objects.from_search(
+                company, params)
+            cached = False
+
+            filter_records.cache[(user, company, path)] = records
+
+        ctx = {'records': records, 'cached': cached}
 
         # serialize
         if output == 'json':
@@ -102,12 +113,13 @@ def filter_records(request,
             ctx['records'] = list(records.values())
             ctx = json.dumps(ctx, cls=DjangoJSONEncoder)
 
-            return HttpResponse(ctx)
+            response = HttpResponse(ctx)
         else:
             html = render_to_response(output + ".html", ctx, RequestContext(request))
             response = HttpResponse()
             response.content = html.content
 
-            return response
+        return response
     else:
         raise Http404("This view is only reachable via an AJAX POST request")
+filter_records.cache = {}
