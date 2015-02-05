@@ -47,7 +47,7 @@ def update_job_source(guid, buid, name):
     zf = get_jobsfs_zipfile(guid)
     jobs = get_jobs_from_zipfile(zf, guid)
     jobs = filter_current_jobs(jobs, bu)
-    jobs = list(hr_xml_to_json(job, bu) for job in jobs)
+    jobs = [hr_xml_to_json(job, bu) for job in jobs]
     for job in jobs:
         job['link'] = make_redirect(job, bu).make_link()
     remove_expired_jobs(buid, jobs)

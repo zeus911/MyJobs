@@ -4,8 +4,8 @@ import os
 from django.conf import settings
 
 from seo_pysolr import Solr
-from import_jobs import DATA_DIR, add_company, remove_expired_jobs, update_solr, get_jobs_from_zipfile,\
-    filter_current_jobs
+from import_jobs import (DATA_DIR, add_company, remove_expired_jobs, update_solr, get_jobs_from_zipfile,
+    filter_current_jobs)
 
 from seo.models import BusinessUnit, Company
 from seo.tests.factories import BusinessUnitFactory, CompanyFactory
@@ -165,6 +165,7 @@ class LoadETLTestCase(DirectSEOBase):
         pass
     
     def test_filtering_on_includeinindex_bit(self):
+        """Test that filtering on the include_in_index bit works"""
         
         #Prove we have the expected number of jobs in the zipfile itself.
         self.assertEqual(len(self.jobs), 39, 
@@ -178,6 +179,7 @@ class LoadETLTestCase(DirectSEOBase):
         
     
     def test_businessunit_ignore_includeinindex(self):
+        """Test that filtering on the include_in_index bit can be overridden on a per business unit basis."""
         # Set ignore_includeinindex on the test BusinessUnit
         self.businessunit.ignore_includeinindex = True
         self.businessunit.save()
