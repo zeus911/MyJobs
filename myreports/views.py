@@ -15,8 +15,8 @@ def reports(request):
     """The Reports app landing page."""
     if request.is_ajax():
         response = HttpResponse()
-        template = 'myreports/{path}.html'
-        html = render_to_response(template.format(path=request.POST['html']),
+        template = '{path}.html'
+        html = render_to_response(template.format(path=request.POST['output']),
                                   {}, RequestContext(request))
         response.content = html.content
         return response
@@ -78,6 +78,7 @@ def filter_records(request, model='contactrecord', output='json'):
                     params[key] = value[0]
 
         csrftoken = params.pop('csrfmiddlewaretoken', None)
+        output = params.pop('output', 'json')
         if not csrftoken:
             # probably better as a 403, what we don't use that anywhere else...
             raise Http404("CSRF Middleware Token is missing!")
@@ -96,7 +97,7 @@ def filter_records(request, model='contactrecord', output='json'):
 
             return HttpResponse(ctx)
         else:
-            html = render_to_response(output, ctx, RequestContext(request))
+            html = render_to_response(output + ".html", ctx, RequestContext(request))
             response = HttpResponse()
             response.content = html.content
 

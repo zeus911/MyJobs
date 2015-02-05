@@ -14,9 +14,11 @@ var Report = function(types) {
  * @returns {Array}
  */
 Report.prototype.create_pages = function(report_types) {
-     var pages = {"PRM": [new Page(true, "date_location", "Date and/or Location"),
-                          new ListPage(false, "/includes/prm/partners", "Select Partners", "/reports/ajax/partner"),
-                          new ListPage(false, "/includes/prm/contacts", "Select Contacts", "/reports/ajax/contact")]},
+     var pages = {"PRM": [new Page(true, "myreports/date_location", "Date and/or Location"),
+                          new ListPage(false, "myreports/includes/prm/partners",
+                              "Select Partners", "/reports/ajax/partner", "partner"),
+                          new ListPage(false, "myreports/includes/prm/contacts",
+                              "Select Contacts", "/reports/ajax/contact", "contact")]},
          data = []; // Initialize array that will be returned
 
     // When multiple report types have been selected this will combine.
@@ -28,6 +30,10 @@ Report.prototype.create_pages = function(report_types) {
     return data
 };
 
+/**
+ *
+ * @returns {*}
+ */
 Report.prototype.current_page = function() {
     for (var page in this.pages) {
         if (this.pages[page].active === true) {
@@ -40,6 +46,11 @@ Report.prototype.current_page = function() {
     return this.pages[0];
 };
 
+/**
+ *
+ * @param current_page_index
+ * @param direction
+ */
 Report.prototype.update_pages = function(current_page_index, direction) {
     this.pages[current_page_index].active = false;
     if(direction === "next") {
@@ -52,10 +63,9 @@ Report.prototype.update_pages = function(current_page_index, direction) {
 Report.prototype.load_active_page = function(filters) {
     var current_page = this.current_page(),
         data = {"csrfmiddlewaretoken": read_cookie("csrftoken"),
-                "html": current_page.html},
+                "output": current_page.output},
         url = location.protocol + "//" + location.host; // https://secure.my.jobs
     if(typeof filters !== "undefined") {
-        delete data["html"];
         $.extend(data, filters);
     }
     if (current_page instanceof ListPage) {
@@ -75,7 +85,8 @@ Report.prototype.load_active_page = function(filters) {
             throw "Something horrible happened.";
         },
         complete: function() {
-            current_page.load_data();
+            if(current_page.data != null)
+                current_page.load_data();
         }
     });
 };
@@ -86,6 +97,8 @@ Report.prototype.next_page = function() {
         next_page = this.pages[current_page_index + 1];
     current_page.active = false;
     next_page.active = true;
+    console.log("Current Page: ", current_page);
+    console.log("Next Page: ", next_page);
     this.load_active_page(current_page.data);
 };
 
@@ -99,17 +112,11 @@ Report.prototype.previous_page = function() {
     this.load_active_page(prev_data_to_load);
 };
 
-/**
- *
- * @param active
- * @param html
- * @param step
- * @constructor
- */
-var Page = function(active, html, step) {
+
+var Page = function(active, output, step) {
     this.active = active;
     this.data = null;
-    this.html = html;
+    this.output = output;
     this.step = step;
 };
 
@@ -137,16 +144,11 @@ Page.prototype.load_data = function() {
     }
 };
 
-/**
- *
- * @param active
- * @param html
- * @param step
- * @constructor
- */
-var ListPage = function(active, html, step, url) {
-    this.url = url;
-    Page.call(this, active, html, step)
+
+var ListPage = function(active, output, step, ajax_url, record_type) {
+    this.url = ajax_url;
+    this.record_type = record_type;
+    Page.call(this, active, output, step)
 };
 
 ListPage.prototype = Object.create(Page.prototype);
@@ -156,9 +158,48 @@ ListPage.prototype.toString = function() {
     return "<ListPage: " + this.step + ">";
 };
 
+ListPage.prototype.save_data = function() {
+    var records = [],
+        all_checkbox = $("input#all"), // Button that acts like "Select All"
+        all_checkboxes = $("#content input[type='checkbox']:not(#all)"), // All other checkboxes
+        record_type = this.record_type;
+    if($(all_checkbox).is(":checked")) {
+        this.data = {}; // initialize this.data;
+        this.data[record_type] = "";
+    } else {
+        // iterate through all checkboxes and find all the ones that are checked
+        // and add to data.
+        $(all_checkboxes).each(function(element) {
+            if($(all_checkboxes[element]).is(":checked")){
+                records.push(all_checkboxes[element].value);
+            }
+        });
+        // if there were no partners selected ignore saving data.
+        if(records.length > 0) {
+            this.data = {}; // initialize this.data;
+            this.data[record_type] = records;
+        } else {
+            return false;
+        }
+    }
+};
+
+ListPage.prototype.load_data = function() {
+    var record_type = this.record_type;
+    if(this.data[record_type] != "") {
+        var all_checkboxes = $("#content input"); // all checkboxes in content
+        $(all_checkboxes).each(function(element) {
+            $(all_checkboxes[element]).prop("checked", false);
+        });
+        for(var i = 0; i < this.data[record_type].length; i++) {
+            $("input[value='"+this.data[record_type][i]+"']").prop("checked", true);
+        }
+    }
+};
+
 $(document).ready(function() {
     // Simulate page 1 (page 1 is where the user selects what types of reporting)
-    report = new Report(["PRM"]);
+    var report = new Report(["PRM"]);
     report.pages = report.create_pages(report.types);
     report.load_active_page();
 

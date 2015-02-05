@@ -1616,6 +1616,17 @@ table#row-link-table {
     border-left: 1px solid #E5E5E5;
 }
 
+.table-scrollable tbody {
+    max-height: 200px;
+    width: 300px;
+    overflow-y: auto;
+    display: block;
+}
+
+.table-scrollable tr {
+    padding: 2px 5px;
+}
+
 .inner-table-label {
     background-color: #FFF !important;
     padding: 4px 8px !important;
