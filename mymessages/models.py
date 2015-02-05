@@ -177,6 +177,7 @@ def get_messages(user):
             Q(group__in=user.groups.all()) | Q(users=user),
             Q(expire_at__isnull=True) | Q(expire_at__gte=now)).distinct()
     except ValueError:
+        # User has been deleted, causing the call to user.groups.all to fail
         messages = Message.objects.none()
 
     return messages
