@@ -72,12 +72,17 @@ def filter_records(request,
         # get rid of empty params and flatten single-item lists
         params = {}
         for key in request.GET.keys():
-            value = request.GET.getlist(key)
+            value = request.GET.get(key)
+            value_list = request.GET.getlist(key)
+
+            # parsing a list parameter as a regular parameter only captures the
+            # last item, so if trying both ways returns the same value, we can
+            # be sure that it's not a list
             if value:
-                if len(value) > 1:
+                if value == value_list[0]:
                     params[key] = value
-                elif value[0]:
-                    params[key] = value[0]
+                else:
+                    params[key] = value_list
 
         # fetch results from cache if available
         records = get_model(app, model).objects.from_search(
