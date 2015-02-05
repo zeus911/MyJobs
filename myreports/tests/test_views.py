@@ -89,10 +89,11 @@ class TestSearchRecords(MyReportsTestCase):
         # records to be filtered out
         ContactRecordFactory.create_batch(10, contact_name='John Doe')
 
-        response = self.client.post(reverse('filter_records',
-                                    kwargs={'model': 'contactrecord'}),
-                                    {'contact_name': 'Joe Shmoe'},
-                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        response = self.client.get(
+            reverse('filter_records',
+                    kwargs={'app': 'mypartners', 'model': 'contactrecord'}),
+            {'contact_name': 'Joe Shmoe'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
@@ -105,9 +106,10 @@ class TestSearchRecords(MyReportsTestCase):
         partner = PartnerFactory(name="Wrong Partner")
         ContactRecordFactory.create_batch(10, partner=partner)
 
-        response = self.client.post(reverse('filter_records',
-                                    kwargs={'model': 'contactrecord'}),
-                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        response = self.client.get(
+            reverse('filter_records',
+                    kwargs={'app': 'mypartners', 'model': 'contactrecord'}),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)

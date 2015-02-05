@@ -25,12 +25,14 @@ def reports(request):
                               RequestContext(request))
 
 
-def filter_records(request, model='contactrecord', output='json'):
+def filter_records(request,
+                   app='mypartners', model='contactrecord', output='json'):
     """
     AJAX view that returns a query set based on post data submitted with the
     request, caching results by default.
 
     Inputs:
+        :app: The app to which the model belongs.
         :model: The model that should be filtered on.
         :output: The output type. By default, this is JSON. Alternatively the
                  path to a template file may be used, in which case the view is
@@ -69,13 +71,18 @@ def filter_records(request, model='contactrecord', output='json'):
 
         # get rid of empty params and flatten single-item lists
         params = {}
-        for key in request.POST.keys():
-            value = request.POST.getlist(key)
+        for key in request.GET.keys():
+            value = request.GET.get(key)
+            value_list = request.GET.getlist(key)
+
+            # parsing a list parameter as a regular parameter only captures the
+            # last item, so if trying both ways returns the same value, we can
+            # be sure that it's not a list
             if value:
-                if len(value) > 1:
+                if value == value_list[0]:
                     params[key] = value
-                elif value[0]:
-                    params[key] = value[0]
+                else:
+                    params[key] = value_list
 
         csrftoken = params.pop('csrfmiddlewaretoken', None)
         output = params.pop('output', 'json')
@@ -84,7 +91,7 @@ def filter_records(request, model='contactrecord', output='json'):
             raise Http404("CSRF Middleware Token is missing!")
 
         # fetch results from cache if available
-        records = get_model('mypartners', model).objects.from_search(
+        records = get_model(app, model).objects.from_search(
             company, params)
 
         ctx = {'records': records}
