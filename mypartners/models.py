@@ -35,6 +35,7 @@ ACTIVITY_TYPES = {
     4: 'sent',
 }
 
+
 class SearchParameterQuerySet(models.query.QuerySet):
     """
     Defines a query set with a `from_search` method for filtering by query
@@ -61,8 +62,8 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
                          For `datetime`, pass `start_date` and/or `end_date`
                          instead.
-            If the model has a `_parse_parameters` method, that is called before
-            parsing remaining parameters.
+            If the model has a `_parse_parameters` method, that is called
+            before parsing remaining parameters.
         """
 
         # only return records the current user has access to
@@ -84,7 +85,6 @@ class SearchParameterQuerySet(models.query.QuerySet):
             # handles off-by-one error; otherwise date provided is excluded
             parameters['end_date'] = datetime.strptime(
                 parameters['end_date'], '%m/%d/%Y').date() + timedelta(1)
-
 
         # do special parsing
         if hasattr(self.model, '_parse_parameters'):
@@ -211,7 +211,8 @@ class Contact(models.Model):
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
             records = records.filter(
-                partner__contactrecord__date_time__range=[start_date, end_date])
+                partner__contactrecord__date_time__range=[
+                    start_date, end_date])
         elif start_date:
             records = records.filter(
                 partner__contactrecord__date_time__gte=start_date)
@@ -333,7 +334,6 @@ class Partner(models.Model):
         # TODO: Use state synonyms
         state = parameters.pop('state', None)
 
-
         if state:
             records = records.filter(contact__locations__state__iexact=state)
 
@@ -374,7 +374,8 @@ class Partner(models.Model):
             records = records.filter(date_time__lte=date_end)
         if record_type:
             if record_type == 'email':
-                records = records.filter(contact_type__in=['email', 'pssemail'])
+                records = records.filter(
+                    contact_type__in=['email', 'pssemail'])
             else:
                 records = records.filter(contact_type=record_type)
         if created_by:
@@ -411,7 +412,8 @@ class PartnerLibrary(models.Model):
         default='Employment Referral Resource Directory')
 
     # Organization Info
-    name = models.CharField(max_length=255, verbose_name='Partner Organization')
+    name = models.CharField(max_length=255,
+                            verbose_name='Partner Organization')
     uri = models.URLField(blank=True)
     region = models.CharField(max_length=30, blank=True)
     # long state name
@@ -439,7 +441,8 @@ class PartnerLibrary(models.Model):
     is_female = models.BooleanField('female', default=False)
     is_disabled = models.BooleanField('disabled', default=False)
     is_veteran = models.BooleanField('veteran', default=False)
-    is_disabled_veteran = models.BooleanField('disabled_veteran', default=False)
+    is_disabled_veteran = models.BooleanField('disabled_veteran',
+                                              default=False)
 
     def __unicode__(self):
         return self.name
@@ -468,8 +471,8 @@ class ContactRecord(models.Model):
                                      blank=True)
     contact_phone = models.CharField(verbose_name="Contact Phone Number",
                                      max_length=30, blank=True)
-    location = models.CharField(verbose_name="Meeting Location", max_length=255,
-                                blank=True)
+    location = models.CharField(verbose_name="Meeting Location",
+                                max_length=255, blank=True)
     length = models.TimeField(verbose_name="Meeting Length", blank=True,
                               null=True)
     subject = models.CharField(verbose_name="Subject or Topic", max_length=255,
@@ -535,8 +538,9 @@ class ContactRecord(models.Model):
                        self.contact_name, ACTIVITY_TYPES[log.action_flag])
 
         if log.user:
-            user = log.user.get_full_name() if log.user.get_full_name() else \
-                log.user.email
+            user = log.user.email
+            if log.user.get_fullname:
+                user = log.user.get_full_name()
             contact_str = "%s by %s" % (contact_str, user)
 
         return contact_str
@@ -557,9 +561,8 @@ class ContactRecord(models.Model):
         return self.date_time.strftime('%b %e, %Y')
 
 
-
-
 MAX_ATTACHMENT_MB = 4
+S3_CONNECTION = 'S3Connection:s3.amazonaws.com'
 
 
 class PRMAttachment(models.Model):
@@ -608,7 +611,7 @@ class PRMAttachment(models.Model):
         # Confirm that we're not trying to change public/private status of
         # actual files during local testing.
         try:
-            if repr(default_storage.connection) == 'S3Connection:s3.amazonaws.com':
+            if repr(default_storage.connection) == S3_CONNECTION:
                 from boto import connect_s3, s3
                 conn = connect_s3(settings.AWS_ACCESS_KEY_ID,
                                   settings.AWS_SECRET_KEY)
@@ -645,7 +648,8 @@ class ContactLogEntry(models.Model):
 
         """
         try:
-            return self.content_type.get_object_for_this_type(pk=self.object_id)
+            return self.content_type.get_object_for_this_type(
+                pk=self.object_id)
         except self.content_type.model_class().DoesNotExist:
             return None
 

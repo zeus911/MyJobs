@@ -185,10 +185,13 @@ class PartnerSavedSearchForm(ModelForm):
     def clean(self):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
-        user_email = cleaned_data.get('email')
+        user_email = cleaned_data.get('email') or self.instance.email
 
         if not user_email:
             raise ValidationError(_("This field is required."))
+
+        # we have an email, so remove email error
+        self._errors.pop('email', None)
 
         # Get or create the user since they might not exist yet
         created = False
