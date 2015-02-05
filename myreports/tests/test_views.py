@@ -45,7 +45,7 @@ class TestReports(MyReportsTestCase):
 
         self.user.is_staff = False
         self.user.save()
-        response = self.client.get(reverse('reports'))
+        response = self.client.post(reverse('reports'))
 
         self.assertEqual(response.status_code, 404)
 
@@ -89,7 +89,7 @@ class TestSearchRecords(MyReportsTestCase):
         # records to be filtered out
         ContactRecordFactory.create_batch(10, contact_name='John Doe')
 
-        response = self.client.get(
+        response = self.client.post(
             reverse('filter_records',
                     kwargs={'app': 'mypartners', 'model': 'contactrecord'}),
             {'contact_name': 'Joe Shmoe'},
@@ -106,7 +106,7 @@ class TestSearchRecords(MyReportsTestCase):
         partner = PartnerFactory(name="Wrong Partner")
         ContactRecordFactory.create_batch(10, partner=partner)
 
-        response = self.client.get(
+        response = self.client.post(
             reverse('filter_records',
                     kwargs={'app': 'mypartners', 'model': 'contactrecord'}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest')
@@ -184,16 +184,16 @@ class TestSearchRecords(MyReportsTestCase):
         kwargs = {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'}
 
         # this request should not be cached
-        response = self.client.get(url, **kwargs)
+        response = self.client.post(url, **kwargs)
         output = json.loads(response.content)
         self.assertFalse(output['cached'])
 
         # this call should be cached
-        response = self.client.get(url, **kwargs)
+        response = self.client.post(url, **kwargs)
         output = json.loads(response.content)
         self.assertTrue(output['cached'])
 
         # this call should not be cached as we ignore the cache
-        response = self.client.get(url + '?ignore_cache', **kwargs)
+        response = self.client.post(url + '?ignore_cache', **kwargs)
         output = json.loads(response.content)
         self.assertFalse(output['cached'])

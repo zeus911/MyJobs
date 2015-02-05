@@ -115,7 +115,8 @@ def filter_records(request,
 
             response = HttpResponse(ctx)
         else:
-            html = render_to_response(output + ".html", ctx, RequestContext(request))
+            html = render_to_response(
+                output + ".html", ctx, RequestContext(request))
             response = HttpResponse()
             response.content = html.content
 
