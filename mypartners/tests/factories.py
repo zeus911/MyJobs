@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from mypartners.models import (Partner, Contact, ContactRecord,
                                ContactLogEntry, Tag)
+from seo.tests.factories import CompanyFactory
 from mydashboard.tests.factories import CompanyFactory
 
 
@@ -26,6 +27,8 @@ class ContactFactory(factory.django.DjangoModelFactory):
     name = 'foo bar'
     email = 'fake@email.com'
     phone = '84104391'
+
+    partner = factory.SubFactory(PartnerFactory)
 
     @factory.post_generation
     def locations(self, create, extracted, **kwargs):

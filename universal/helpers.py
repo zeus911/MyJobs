@@ -3,6 +3,7 @@ import re
 import urllib
 from urlparse import parse_qsl, urlparse, urlunparse
 
+from django.db.models.loading import get_model
 from django.conf import settings
 from django.shortcuts import get_object_or_404, Http404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -86,23 +87,16 @@ def get_company(request):
     Uses the myjobs_company cookie to determine what the current company is.
 
     """
-    from seo.models import Company, CompanyUser
-
     if not request.user or request.user.is_anonymous():
         return None
 
     # If settings.SITE is set we're on a microsite, so get the company
     # based on the microsite we're on instead.
     if settings.SITE.canonical_company:
-        kwargs = {
-            'user': request.user,
-            'company': settings.SITE.canonical_company,
-        }
-        try:
-            admin_for = CompanyUser.objects.get(**kwargs)
-            return admin_for.company
-        except CompanyUser.DoesNotExist:
-            pass
+        company = settings.SITE.canonical_company
+
+        if company.companyuser_set.filter(user=request.user).exists():
+            return company
 
     # If the current hit is for a non-microsite admin, we don't know what
     # company we should be using; don't guess.
@@ -111,7 +105,7 @@ def get_company(request):
 
     company = request.COOKIES.get('myjobs_company')
     if company:
-        company = get_object_or_404(Company, pk=company)
+        company = get_object_or_404(get_model('seo', 'company'), pk=company)
 
         # If the company cookie is correctly set, confirm that the user
         # actually has access to that company.

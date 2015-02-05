@@ -1,16 +1,16 @@
 <table>
     <tbody>
-        {% if partners %}
+        {% if records %}
         <tr>
             <td>
                 <input id="all" type="checkbox" checked>
             </td>
             <td>
-                All Partners
+                All records
             </td>
         </tr>
         {% endif %}
-        {% for partner in partners %}
+        {% for partner in records %}
         <tr>
             <td>
                 <input type="checkbox" value="{{ partner.id }}" checked>
@@ -24,10 +24,10 @@
         </tr>
         {% empty %}
         <tr>
-            <td>There are no partners that meet your specifications.</td>
+            <td>There are no records that meet your specifications.</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 <a id="back" class="btn">Back</a>
-<a id="next" class="btn {% if not partners %}disabled{% endif %}">Next</a>
+<a id="next" class="btn {% if not records %}disabled{% endif %}">Next</a>

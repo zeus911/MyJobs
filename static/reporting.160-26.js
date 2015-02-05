@@ -39,10 +39,11 @@ var Report = function(types) {
         // page.filter is used to tell ajax to hit a different url.
         // exception pages from default.
         if(current_page.filter === "partner" || current_page.filter === "contact") {
-            url += "/reports/ajax/"+ current_page.filter +"s";
+            url += "/reports/ajax/"+ current_page.filter;
             data = current_page.data;
         }
         else url = location.path;
+        $.ajaxSettings.traditional = true;
         $.ajax({
             type: 'GET',
             url: url,
@@ -92,7 +93,7 @@ var Report = function(types) {
             data = {"page": Math.max(1, this.current_page_num - 1)};
         // TODO: fix exception page logic
         if(current_page.custom_save === "contact") {
-            url += "/reports/ajax/partners";
+            url += "/reports/ajax/partner";
             data = current_page.data;
         }
         else url = location.path;
