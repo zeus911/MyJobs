@@ -95,6 +95,9 @@ class Message(models.Model):
 
     @property
     def display_type(self):
+        """
+        Returns the tooltip for this message on the inbox.
+        """
         return dict(self.TYPE_OF_MESSAGES).get(self.message_type,
                                                self.message_type.title())
 

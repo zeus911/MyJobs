@@ -17,9 +17,9 @@ $(document).ready(function() {
     });
 
     if (typeof(clicked) != 'undefined') {
+        // A message was clicked in the topbar; ensure its modal opens.
         var message = $('#message-' + clicked);
         message.click();
-        //on_read(message);
     }
 });
 

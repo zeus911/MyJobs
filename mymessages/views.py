@@ -28,26 +28,42 @@ def read(request):
 
 
 def get_message_page(request):
+    """
+    Retrieves the list of messages that should be displayed on the inbox,
+    paginates it, and selects the proper page based on the presence of
+    a "message" or "page" query string.
+    """
     message_list = request.user.messages(only_new=False)
     items_per_page = 10
     paginator = Paginator(message_list, items_per_page)
+
+    # User clicked on this message in their topbar.
     message_clicked = request.GET.get('message')
     page = None
     if message_clicked is not None:
         try:
             message_clicked = int(message_clicked)
         except ValueError:
+            # This isn't an integer somehow; ignore it.
             message_clicked = None
         else:
             try:
+                # Determine the clicked message's place in the full list
+                # of messages.
                 index = [message.message.pk
                          for message in message_list].index(message_clicked)
             except ValueError:
+                # The message clicked has either been deleted, is not associated
+                # with this user, or otherwise doesn't exist.
                 message_clicked = None
             else:
+                # index // items_per_page is the desired page; The paginator is
+                # 1-indexed, so increment it.
                 page = (index // items_per_page) + 1
 
     if page is None:
+        # Only check for the page query string if all of the above failed
+        # to produce a page number.
         page = request.GET.get('page')
     try:
         messages = paginator.page(page)
@@ -64,18 +80,23 @@ def delete(request):
     if request.is_ajax():
         message_id, user = request.GET.get('name').split('-')[2:]
         try:
+            # People like multi-clicking things.
             info = MessageInfo.objects.get(user=user, message__id=message_id)
         except MessageInfo.DoesNotExist:
             pass
         else:
             if info.message.messageinfo_set.count() > 1:
+                # This message can be viewed by multiple users; Delete this
+                # user's MessageInfo only.
                 info.delete()
             else:
+                # This user is the only user that can see this message. Deleting
+                # the actual message will also delete this user's MessageInfo.
                 info.message.delete()
         messages, _ = get_message_page(request)
         response = render_to_string('mymessages/includes/messages.html',
                                     {'messages': messages},
-                                     RequestContext(request))
+                                    RequestContext(request))
         return HttpResponse(json.dumps(response))
     raise Http404
 

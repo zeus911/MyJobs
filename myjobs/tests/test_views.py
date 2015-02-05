@@ -871,21 +871,32 @@ class MyJobsViewsTests(MyJobsBase):
     def test_messages_in_topbar(self):
         self.client.login_user(self.user)
         for num_messages in range(1, 5):
+            # The indicator in the topbar will display a max of three messages.
+            # Test that the correct number of messages is displayed for all
+            # possible counts.
             infos = MessageInfoFactory.create_batch(size=num_messages,
                                                     user=self.user)
+            # Mark the first message as read to show that read messages are
+            # not shown.
             infos[0].mark_read()
 
             response = self.client.get(reverse('home'))
             if num_messages == 1:
+                # The only message has been read in this instance; it should not
+                # have been displayed.
                 self.assertTrue('No new messages' in response.content,
                                 'Iteration %s' % num_messages)
             for info in infos[1:4]:
+                # Ensure that the 1-3 messages we expect are appearing on
+                # the page.
                 self.assertTrue('message=%s' % info.message.pk
                                 in response.content,
                                 'Iteration %s, %s not found' % (
                                     num_messages,
                                     'message=%s' % info.message.pk))
             for info in infos[4:]:
+                # Ensure that any additional unread messages beyond 3 are not
+                # displayed.
                 self.assertFalse('message=%s' % info.message.pk
                                  in response.content,
                                  "Iteration %s, %s exists but shouldn't" % (

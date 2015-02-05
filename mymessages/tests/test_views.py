@@ -67,6 +67,10 @@ class MessageViewTests(MyJobsBase):
         MessageInfo.objects.get(pk=messageinfo.pk)
 
     def test_auto_page_inbox(self):
+        """
+        If a "message=%d" parameter is passed on an inbox view, we should
+        detect which page that message appears on and select it.
+        """
         infos = MessageInfoFactory.create_batch(11, user=self.user)
         request = self.client.get(reverse('inbox'))
         self.assertTrue('Page 1 of 2' in request.content)
