@@ -91,7 +91,7 @@ class TestSearchRecords(MyReportsTestCase):
         ContactRecordFactory.create_batch(10, contact_name='John Doe')
 
         response = self.client.get(reverse('filter_records',
-                                   kwargs={'model': 'ContactRecord'}),
+                                   kwargs={'model': 'contactrecord'}),
                                    {'contact_name': 'Joe Shmoe'},
                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = json.loads(response.content)
@@ -107,7 +107,7 @@ class TestSearchRecords(MyReportsTestCase):
         ContactRecordFactory.create_batch(10, partner=partner)
 
         response = self.client.get(reverse('filter_records',
-                                   kwargs={'model': 'ContactRecord'}),
+                                   kwargs={'model': 'contactrecord'}),
                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = json.loads(response.content)
 
@@ -136,8 +136,7 @@ class TestSearchRecords(MyReportsTestCase):
         ContactFactory.create_batch(10, partner__owner=self.company)
 
         response = self.client.get(reverse('filter_partners'),
-                                   {'contact': range(1, 6),
-                                    'clear_cache': True},
+                                   {'contact': range(1, 6)},
                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = response.context
 

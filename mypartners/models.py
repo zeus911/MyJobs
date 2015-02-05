@@ -21,7 +21,6 @@ CONTACT_TYPE_CHOICES = (('email', 'Email'),
                         ('job', 'Job Followup'),
                         ('pssemail', "Partner Saved Search Email"))
 
-
 # Flags for ContactLogEntry action_flag. Based on django.contrib.admin.models
 # action flags.
 ADDITION = 1
@@ -62,19 +61,19 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
                          For `datetime`, pass `start_date` and/or `end_date`
                          instead.
-            If the model has a `parse_parameters` method, that is called before
+            If the model has a `_parse_parameters` method, that is called before
             parsing remaining parameters.
         """
 
         # only return records the current user has access to
         if company:
             company_ref = getattr(self.model, 'company_ref', 'company')
-            records = self.filter(**{company_ref: company})
+            self = self.filter(**{company_ref: company})
         else:
-            records = self.all()
+            self = self.all()
 
         # fetch related models in one query
-        records = records.select_related()
+        self = self.select_related()
 
         # extract special fields so they aren't traversed later
         if parameters.get('start_date'):
@@ -88,21 +87,21 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
 
         # do special parsing
-        if hasattr(self.model, 'parse_parameters'):
-            records = self.model.parse_parameters(parameters, records)
+        if hasattr(self.model, '_parse_parameters'):
+            self = self.model._parse_parameters(parameters, self)
 
         for key, value in parameters.items():
             type_ = self.get_field_type(key)
 
             if type_:
                 query_by_type = SearchParameterQuerySet.QUERY_BY_TYPE
-                records = records.filter(
+                self = self.filter(
                     **{'%s%s' % (key, query_by_type[type_]): value})
 
         # remove duplicates
-        records = records.distinct()
+        self = self.distinct()
 
-        return records
+        return self
 
     def sort_by(self, *fields):
         """Like `order_by`, but ensures that blank values come at the end of a
@@ -180,7 +179,6 @@ class Location(models.Model):
         super(Location, self).save(**kwargs)
 
 
-
 class Contact(models.Model):
     """
     Everything here is self explanatory except for one part. With the Contact
@@ -202,6 +200,26 @@ class Contact(models.Model):
 
     class Meta:
         verbose_name_plural = 'contacts'
+
+    @classmethod
+    def _parse_parameters(self, parameters, records):
+        """Used to parse state during `from_search()`."""
+
+        start_date = parameters.pop('start_date', None)
+        end_date = parameters.pop('end_date', None)
+
+        # using a foreign relationship, so can't just filter twice
+        if start_date and end_date:
+            records = records.filter(
+                partner__contactrecord__date_time__range=[start_date, end_date])
+        elif start_date:
+            records = records.filter(
+                partner__contactrecord__date_time__gte=start_date)
+        elif end_date:
+            records = records.filter(
+                partner__contactrecord__date_time__lte=end_date)
+
+        return records
 
     def __unicode__(self):
         if self.name:
@@ -297,7 +315,7 @@ class Partner(models.Model):
     objects = SearchParameterManager()
 
     @classmethod
-    def parse_parameters(cls, parameters, records):
+    def _parse_parameters(cls, parameters, records):
         """Used to parse state during `from_search()`."""
 
         start_date = parameters.pop('start_date', None)
@@ -471,6 +489,23 @@ class ContactRecord(models.Model):
     job_hires = models.CharField(max_length=6, verbose_name="Number of Hires",
                                  blank=True)
     tags = models.ManyToManyField('Tag', null=True)
+
+    @classmethod
+    def _parse_parameters(self, parameters, records):
+        """Used to parse state during `from_search()`."""
+
+        start_date = parameters.pop('start_date', None)
+        end_date = parameters.pop('end_date', None)
+
+        # using a foreign relationship, so can't just filter twice
+        if start_date and end_date:
+            records = records.filter(date_time__range=[start_date, end_date])
+        elif start_date:
+            records = records.filter(date_time__gte=start_date)
+        elif end_date:
+            records = records.filter(date_time__lte=end_date)
+
+        return records
 
     def __unicode__(self):
         return "%s Contact Record - %s" % (self.contact_type, self.subject)
