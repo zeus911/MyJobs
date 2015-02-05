@@ -15,8 +15,8 @@ def reports(request):
     """The Reports app landing page."""
     if request.is_ajax():
         response = HttpResponse()
-        template = 'myreports/prm/page{page}.html'
-        html = render_to_response(template.format(page=request.GET['page']),
+        template = 'myreports/{path}.html'
+        html = render_to_response(template.format(path=request.POST['html']),
                                   {}, RequestContext(request))
         response.content = html.content
         return response

@@ -11,8 +11,7 @@ urlpatterns = patterns(
         {'model': 'contact',
          'output': 'myreports/includes/prm/contacts.html'},
         name='filter_contacts'),
-    url(r'^ajax/(?P<model>\w+)$',
-        'filter_records',
+    url(r'^ajax/(?P<model>\w+)$', 'filter_records',
         {'output': 'json'},
         name='filter_records')
 )
