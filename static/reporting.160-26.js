@@ -33,7 +33,7 @@ var Report = function(types) {
     // current page number.
     this.next_page = function() {
         var current_page = this.current_page(),
-            that = this,
+            that = this, // for when "this" goes out-of-scope (lexical scoping)
             url = location.protocol + "//" + location.host, // https://secure.my.jobs
             data = {"page": this.current_page_num + 1}; // Default data
         // page.filter is used to tell ajax to hit a different url.
@@ -145,7 +145,7 @@ var Page = function() {
     // Saves page data. Usually is called during page change forward or back.
     this.save_data = function() {
         // Check to see if there is a custom save associated with this page.
-        if(this.custom_save == undefined) {
+        if(typeof this.custom_save === "undefined") {
             // Run default save funciton
             var inputs = $("#content input, #content select:not([class*=__select])"),// all inputs and selects on page.
                 data = {};
@@ -200,7 +200,7 @@ var Page = function() {
         }
     };
     this.load_data = function() {
-        if(this.custom_save == undefined) {
+        if(typeof this.custom_save === "undefined") {
             // run default load
             for(var key in this.data) {
                 if(this.data.hasOwnProperty(key)) {
@@ -298,7 +298,7 @@ $(document).ready(function() {
                 $(next_btn).removeClass("disabled");
             }
         } else {
-            // turn all chekcs off
+            // turn all checks off
             $(all_checkboxes).each(function(element) {
                $(all_checkboxes[element]).prop("checked", false);
             });

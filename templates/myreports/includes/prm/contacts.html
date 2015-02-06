@@ -1,15 +1,8 @@
-<table>
+{% if records %}
+<input id="all" type="checkbox" checked> All Contacts
+{% endif %}
+<table id="contact" class="table-scrollable">
     <tbody>
-        {% if records %}
-        <tr>
-            <td>
-                <input id="all" type="checkbox" checked>
-            </td>
-            <td>
-                All records
-            </td>
-        </tr>
-        {% endif %}
         {% for contact in records %}
         <tr>
             <td>

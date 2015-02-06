@@ -15,8 +15,8 @@ def reports(request):
     """The Reports app landing page."""
     if request.is_ajax():
         response = HttpResponse()
-        template = 'myreports/prm/page{page}.html'
-        html = render_to_response(template.format(page=request.GET['page']),
+        template = '{path}.html'
+        html = render_to_response(template.format(path=request.POST['output']),
                                   {}, RequestContext(request))
         response.content = html.content
         return response
@@ -66,14 +66,14 @@ def filter_records(request,
                 'model': 'partner',
                 'output': 'myreports/example_view.html'}))
     """
-    if request.is_ajax() and request.method == 'GET':
+    if request.is_ajax() and request.method == 'POST':
         company = get_company_or_404(request)
 
         # get rid of empty params and flatten single-item lists
         params = {}
-        for key in request.GET.keys():
-            value = request.GET.get(key)
-            value_list = request.GET.getlist(key)
+        for key in request.POST.keys():
+            value = request.POST.getlist(key)
+            value_list = request.POST.getlist(key)
 
             # parsing a list parameter as a regular parameter only captures the
             # last item, so if trying both ways returns the same value, we can
@@ -84,8 +84,14 @@ def filter_records(request,
                 else:
                     params[key] = value_list
 
+        csrftoken = params.pop('csrfmiddlewaretoken', None)
+        output = params.pop('output', 'json')
+        if not csrftoken:
+            # probably better as a 403, what we don't use that anywhere else...
+            raise Http404("CSRF Middleware Token is missing!")
+
         # fetch results from cache if available
-        records = get_model(app, model).objects.from_search(
+        records = get_model('mypartners', model).objects.from_search(
             company, params)
 
         ctx = {'records': records}
@@ -98,7 +104,7 @@ def filter_records(request,
 
             return HttpResponse(ctx)
         else:
-            html = render_to_response(output, ctx, RequestContext(request))
+            html = render_to_response(output + ".html", ctx, RequestContext(request))
             response = HttpResponse()
             response.content = html.content
 
