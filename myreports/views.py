@@ -128,7 +128,7 @@ def filter_records(request,
             ctx['records'] = list(records.values())
             ctx = json.dumps(ctx, cls=DjangoJSONEncoder)
 
-            response = HttpResponse(ctx)
+            response = HttpResponse(ctx, content_type='application/json')
         else:
             html = render_to_response(
                 output + ".html", ctx, RequestContext(request))
