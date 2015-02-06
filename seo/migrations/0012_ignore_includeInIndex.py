@@ -3,6 +3,7 @@ from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
+from south import orm
 
 class Migration(DataMigration):
 
@@ -13,7 +14,7 @@ class Migration(DataMigration):
             bu.save()
 
     def backwards(self, orm):
-        "Write your backwards methods here."
+        pass
 
     models = {
         u'auth.group': {
