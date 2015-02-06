@@ -250,7 +250,7 @@ class BusinessUnitAdmin(admin.ModelAdmin):
     fieldsets = [
         ('Basics', {'fields': [('id', 'title', 'title_slug',
                                 'associated_jobs', 'federal_contractor',
-                                'enable_markdown'),
+                                'enable_markdown', 'ignore_includeinindex'),
                                ('date_crawled', 'date_updated')]}),
         ('Sites', {'fields': ['sites']})
     ]
