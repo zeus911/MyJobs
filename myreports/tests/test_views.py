@@ -1,7 +1,6 @@
 """Tests associated with the various MyReports views."""
 
 # TODO:
-#   * Remove custom manager specific tests to a separate test case.
 #   * See about refactoring some of the repetitive parts of the filter_records
 #     tests into the setUp method.
 
