@@ -1199,7 +1199,6 @@ class BusinessUnit(models.Model):
     associated_jobs = models.IntegerField('Associated Jobs', default=0)
     customcareers = generic.GenericRelation(moc_models.CustomCareer)
     federal_contractor = models.BooleanField(default=False)
-    ignore_includeinindex = models.BooleanField('Ignore "Include In Index"', default=False)
 
     # True if a BusinessUnit's descriptions are in markdown
     # Assumes that new business units will have support markdown
