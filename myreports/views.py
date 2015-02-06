@@ -2,6 +2,7 @@ import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models.loading import get_model
+from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -49,6 +50,10 @@ def filter_records(request,
         :end_date: Upper bound for record date-related field (eg. `datetime`
                    for `ContactRecord`).
         :ignore_cache: If present, this view's cache is ignored.
+        :sort_by: The field to sort records by. If not present, primary key is
+                  used.
+        :count: The field to annotate with a count. If not present, no
+                annotations are used.
 
         Remaining query parameters are assumed to be field names of the model.
 
@@ -89,8 +94,11 @@ def filter_records(request,
         # remove csrf token from search parameters
         params.pop('csrfmiddlewaretoken', None)
 
+        # get special query parameters
         output = params.pop('output', 'json')
         ignore_cache = params.pop('ignore_cache', False)
+        sort_by = params.pop('sort_by', None)
+        count = params.pop('count', None)
 
         # fetch results from cache if available
         if not ignore_cache and (user, company, path) in filter_records.cache:
@@ -99,8 +107,14 @@ def filter_records(request,
         else:
             records = get_model(app, model).objects.from_search(
                 company, params)
-            cached = False
 
+            if count:
+                records = records.annotate(count=Count(count))
+
+            if sort_by:
+                records = records.sort_by(sort_by)
+
+            cached = False
             filter_records.cache[(user, company, path)] = records
 
         ctx = {'records': records, 'cached': cached}
