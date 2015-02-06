@@ -16,9 +16,9 @@ var Report = function(types) {
 Report.prototype.create_pages = function(report_types) {
      var pages = {"PRM": [new Page(true, "myreports/date_location", "Date and/or Location"),
                           new ListPage(false, "myreports/includes/prm/partners",
-                              "Select Partners", "/reports/ajax/partner", "partner"),
+                              "Select Partners", "/reports/ajax/mypartners/partner", "partner"),
                           new ListPage(false, "myreports/includes/prm/contacts",
-                              "Select Contacts", "/reports/ajax/contact", "contact")]},
+                              "Select Contacts", "/reports/ajax/mypartners/contact", "contact")]},
          data = []; // Initialize array that will be returned
 
     // When multiple report types have been selected this will combine.

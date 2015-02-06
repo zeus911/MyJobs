@@ -48,7 +48,7 @@ def filter_records(request,
                      for `ContactRecord`).
         :end_date: Upper bound for record date-related field (eg. `datetime`
                    for `ContactRecord`).
-        :clear_cache: If present, this view's cache is cleared.
+        :ignore_cache: If present, this view's cache is ignored.
 
         Remaining query parameters are assumed to be field names of the model.
 
@@ -68,11 +68,13 @@ def filter_records(request,
     """
     if request.is_ajax() and request.method == 'POST':
         company = get_company_or_404(request)
+        user = request.user
+        path = request.get_full_path()
 
         # get rid of empty params and flatten single-item lists
         params = {}
         for key in request.POST.keys():
-            value = request.POST.getlist(key)
+            value = request.POST.get(key)
             value_list = request.POST.getlist(key)
 
             # parsing a list parameter as a regular parameter only captures the
@@ -84,17 +86,24 @@ def filter_records(request,
                 else:
                     params[key] = value_list
 
-        csrftoken = params.pop('csrfmiddlewaretoken', None)
+        # remove csrf token from search parameters
+        params.pop('csrfmiddlewaretoken', None)
+
         output = params.pop('output', 'json')
-        if not csrftoken:
-            # probably better as a 403, what we don't use that anywhere else...
-            raise Http404("CSRF Middleware Token is missing!")
+        ignore_cache = params.pop('ignore_cache', False)
 
         # fetch results from cache if available
-        records = get_model('mypartners', model).objects.from_search(
-            company, params)
+        if not ignore_cache and (user, company, path) in filter_records.cache:
+            records = filter_records.cache[(user, company, path)]
+            cached = True
+        else:
+            records = get_model(app, model).objects.from_search(
+                company, params)
+            cached = False
 
-        ctx = {'records': records}
+            filter_records.cache[(user, company, path)] = records
+
+        ctx = {'records': records, 'cached': cached}
 
         # serialize
         if output == 'json':
@@ -102,12 +111,14 @@ def filter_records(request,
             ctx['records'] = list(records.values())
             ctx = json.dumps(ctx, cls=DjangoJSONEncoder)
 
-            return HttpResponse(ctx)
+            response = HttpResponse(ctx)
         else:
-            html = render_to_response(output + ".html", ctx, RequestContext(request))
+            html = render_to_response(
+                output + ".html", ctx, RequestContext(request))
             response = HttpResponse()
             response.content = html.content
 
-            return response
+        return response
     else:
         raise Http404("This view is only reachable via an AJAX POST request")
+filter_records.cache = {}
