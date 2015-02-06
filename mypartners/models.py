@@ -124,7 +124,8 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
         # force evaluation: see http://stackoverflow.com/questions/18235419
         len(self)
-        self._result_cache += blank_records
+        for record in blank_records:
+            self._result_cache.append(record)
 
         return self
 
