@@ -3,17 +3,17 @@ from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
-from south import orm
 
 class Migration(DataMigration):
 
     def forwards(self, orm):
+        "Write your forwards methods here."
         for bu in orm.BusinessUnit.objects.filter(id__in=[31578, 31094, 23525, 23500]):
             bu.ignore_includeinindex = True
             bu.save()
 
     def backwards(self, orm):
-        pass
+        "Write your backwards methods here."
 
     models = {
         u'auth.group': {
@@ -181,8 +181,14 @@ class Migration(DataMigration):
             'browse_country_show': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'browse_country_text': ('django.db.models.fields.CharField', [], {'default': "'Country'", 'max_length': '50'}),
             'browse_facet_order': ('django.db.models.fields.IntegerField', [], {'default': '2'}),
+            'browse_facet_order_2': ('django.db.models.fields.IntegerField', [], {'default': '2'}),
+            'browse_facet_order_3': ('django.db.models.fields.IntegerField', [], {'default': '2'}),
             'browse_facet_show': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'browse_facet_show_2': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'browse_facet_show_3': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'browse_facet_text': ('django.db.models.fields.CharField', [], {'default': "'Job Profiles'", 'max_length': '50'}),
+            'browse_facet_text_2': ('django.db.models.fields.CharField', [], {'default': "'Job Profiles'", 'max_length': '50'}),
+            'browse_facet_text_3': ('django.db.models.fields.CharField', [], {'default': "'Job Profiles'", 'max_length': '50'}),
             'browse_moc_order': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
             'browse_moc_show': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'browse_moc_text': ('django.db.models.fields.CharField', [], {'default': "'Military Titles'", 'max_length': '50'}),
@@ -347,6 +353,7 @@ class Migration(DataMigration):
             'Meta': {'object_name': 'SeoSiteFacet'},
             'boolean_operation': ('django.db.models.fields.CharField', [], {'default': "'or'", 'max_length': '3', 'db_index': 'True'}),
             'customfacet': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.CustomFacet']"}),
+            'facet_group': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
             'facet_type': ('django.db.models.fields.CharField', [], {'default': "'STD'", 'max_length': '4', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'seosite': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.SeoSite']"})
