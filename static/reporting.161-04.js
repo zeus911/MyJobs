@@ -1,11 +1,15 @@
 /**
- *
+ * Report manages the Page objects.  Can retrieve current page object being
+ * used, move to next page, or go back to previous page.  Lastly, Report
+ * also handles submission.
  * @param types
  * @constructor
  */
 var Report = function(types) {
     this.types = types;
-    this.pages = [];
+    this.pages = this.create_pages(this.types);
+
+    this.generate_sidebar();
 };
 
 /**
@@ -14,20 +18,21 @@ var Report = function(types) {
  * @returns {Array}
  */
 Report.prototype.create_pages = function(report_types) {
-     var pages = {"PRM": [new Page(true, "myreports/date_location", "Date and/or Location"),
-                          new ListPage(false, "myreports/includes/prm/partners",
-                              "Select Partners", "/reports/ajax/mypartners/partner", "partner"),
-                          new ListPage(false, "myreports/includes/prm/contacts",
-                              "Select Contacts", "/reports/ajax/mypartners/contact", "contact")]},
-         data = []; // Initialize array that will be returned
+    // page lists
+     var p_lists = {"PRM": [new Page(true, "myreports/date_location", "Date and/or Location"),
+                            new ListPage(false, "myreports/includes/prm/partners",
+                                "Select Partners", "/reports/ajax/mypartners/partner", "partner"),
+                            new ListPage(false, "myreports/includes/prm/contacts",
+                                "Select Contacts", "/reports/ajax/mypartners/contact", "contact")]},
+         pages = []; // Initialize array that will be returned
 
     // When multiple report types have been selected this will combine.
     for (var key in report_types) {
-        if (pages.hasOwnProperty(report_types[key])) {
-            data.push.apply(data, pages[report_types[key]]);
+        if (p_lists.hasOwnProperty(report_types[key])) {
+            pages.push.apply(pages, p_lists[report_types[key]]);
         }
     }
-    return data
+    return pages;
 };
 
 /**
@@ -97,8 +102,6 @@ Report.prototype.next_page = function() {
         next_page = this.pages[current_page_index + 1];
     current_page.active = false;
     next_page.active = true;
-    console.log("Current Page: ", current_page);
-    console.log("Next Page: ", next_page);
     this.load_active_page(current_page.data);
 };
 
@@ -110,6 +113,17 @@ Report.prototype.previous_page = function() {
     current_page.active = false;
     prev_page.active = true;
     this.load_active_page(prev_data_to_load);
+};
+
+Report.prototype.generate_sidebar = function() {
+    var sidebar_content = $("#sidebar-content"),
+        ul = $("<ul></ul>");
+    for(var page in this.pages) {
+        var li = $("<li id=\"step-"+ page +"\"></li>");
+        li.html(this.pages[page].step);
+        ul.append(li);
+    }
+    sidebar_content.prepend(ul);
 };
 
 
@@ -200,7 +214,6 @@ ListPage.prototype.load_data = function() {
 $(document).ready(function() {
     // Simulate page 1 (page 1 is where the user selects what types of reporting)
     var report = new Report(["PRM"]);
-    report.pages = report.create_pages(report.types);
     report.load_active_page();
 
     $(document).on("click", ".datepicker",function(e) {
