@@ -50,7 +50,7 @@ def filter_records(request,
         :end_date: Upper bound for record date-related field (eg. `datetime`
                    for `ContactRecord`).
         :ignore_cache: If present, this view's cache is ignored.
-        :sort_by: The field to sort records by. If not present, primary key is
+        :order_by: The field to sort records by. If not present, primary key is
                   used.
         :count: The field to annotate with a count. If not present, no
                 annotations are used.
@@ -97,7 +97,7 @@ def filter_records(request,
         # get special query parameters
         output = params.pop('output', 'json')
         ignore_cache = params.pop('ignore_cache', False)
-        sort_by = params.pop('sort_by', None)
+        order_by = params.pop('order_by', None)
         count = params.pop('count', None)
 
         # fetch results from cache if available
@@ -111,8 +111,11 @@ def filter_records(request,
             if count:
                 records = records.annotate(count=Count(count))
 
-            if sort_by:
-                records = records.sort_by(sort_by)
+            if order_by:
+                if hasattr(order_by, '__iter__'):
+                    records = records.order_by(*order_by)
+                else:
+                    records = records.sort_by(order_by)
 
             cached = False
             filter_records.cache[(user, company, path)] = records

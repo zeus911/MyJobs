@@ -173,26 +173,23 @@ class TestFilterRecords(MyReportsTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(output['records']), 10)
 
-    def test_sort_by_order(self):
-        """Tests that `sort_order` orders blank values after others."""
+    def test_order_by_order(self):
+        """Tests that `order_by` parameter is passed to `QuerySet`."""
 
         # mix up the order they are created in so that blanks aren't all next
         # to each other
-        PartnerFactory.create_batch(5, owner=self.company)
-        PartnerFactory.create_batch(5, owner=self.company, name="")
-        PartnerFactory.create_batch(5, owner=self.company)
-        PartnerFactory.create_batch(5, owner=self.company, name="")
+        PartnerFactory.create_batch(10, owner=self.company, name="New Partner")
+        PartnerFactory.create_batch(10, owner=self.company)
 
         response = self.client.post(
             reverse('filter_records',
                     kwargs={'app': 'mypartners', 'model': 'partner'}),
-            {'sort_by': 'name'},
+            {'order_by': 'name'},
             HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         output = json.loads(response.content)
         records = output['records']
 
-        self.assertEqual(records[0]['name'], "Company")
-        self.assertEqual(records[-1]['name'], "")
+        self.assertTrue(records[0]['name'] < records[-1]['name'])
 
     def test_cached_results(self):
         """
