@@ -263,7 +263,6 @@ $(document).ready(function() {
 
     $(document).on("click", "#back", function(e) {
         e.preventDefault();
-        report.current_page().save_data();
         report.previous_page();
     });
 
