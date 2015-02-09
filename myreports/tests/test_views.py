@@ -172,6 +172,7 @@ class TestFilterRecords(MyReportsTestCase):
 
     def test_filter_by_state(self):
         """Tests that filtering by state works."""
+
         indiana = LocationFactory(state="IN")
         ContactFactory.create_batch(10, name="Jane Doe", partner=self.partner, 
                                     locations=[indiana])
@@ -203,8 +204,6 @@ class TestFilterRecords(MyReportsTestCase):
 
         self.assertTrue(records[0]['name'] < records[-1]['name'])
 
-    import unittest
-    @unittest.skip("Fixing later")
     def test_cached_results(self):
         """
         Tests that hitting the view multiple times with the same parameters

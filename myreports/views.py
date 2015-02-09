@@ -120,7 +120,7 @@ def filter_records(request,
                     records = records.sort_by(order_by)
 
             cached = False
-            filter_records.cache[(user, company, path)] = records
+            filter_records.cache[cache_key] = records
 
         ctx = {'records': records, 'cached': cached}
 
