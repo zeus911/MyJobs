@@ -100,9 +100,10 @@ def filter_records(request,
         order_by = params.pop('order_by', None)
         count = params.pop('count', None)
 
+        cache_key = (user, company, path, tuple(params.items()))
         # fetch results from cache if available
-        if not ignore_cache and (user, company, path) in filter_records.cache:
-            records = filter_records.cache[(user, company, path)]
+        if not ignore_cache and cache_key in filter_records.cache:
+            records = filter_records.cache[cache_key]
             cached = True
         else:
             records = get_model(app, model).objects.from_search(
