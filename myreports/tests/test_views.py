@@ -3,9 +3,7 @@
 # TODO:
 #   * See about refactoring some of the repetitive parts of the filter_records
 #     tests into the setUp method.
-
-import json
-
+import json 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 
@@ -172,7 +170,21 @@ class TestFilterRecords(MyReportsTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(output['records']), 10)
 
-    def test_order_by_order(self):
+    def test_filter_by_state(self):
+        """Tests that filtering by state works."""
+        ContactFactory.create_batch(10, name="Jane Doe", partner=self.partner, 
+                                    state="IN")
+
+        response = self.client.post(
+            reverse('filter_records',
+                    kwargs={'app': 'mypartners', 'model': 'partner'}),
+            {'state': 'IN'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        output = json.loads(response.content)
+        
+        self.assertEqual(len(output['records']), 10)
+
+    def test_order_by(self):
         """Tests that `order_by` parameter is passed to `QuerySet`."""
 
         # mix up the order they are created in so that blanks aren't all next
