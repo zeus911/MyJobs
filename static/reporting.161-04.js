@@ -78,6 +78,7 @@ Report.prototype.load_active_page = function(filters) {
     } else {
         url += location.pathname;
     }
+    console.log("Data being sent", data);
     $.ajax({
         type: 'POST',
         url: url,
