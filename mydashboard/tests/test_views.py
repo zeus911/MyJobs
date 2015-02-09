@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import unittest
 import uuid
 
 from bs4 import BeautifulSoup
@@ -123,6 +124,7 @@ class MyDashboardViewsTests(MyJobsBase):
             solr = pysolr.Solr(location)
             solr.add(dicts)
 
+    @unittest.skip("Need to decide whether or not we want duplicate candidates" 
     def test_number_of_searches_and_users_is_correct(self):
         response = self.client.post(
             reverse('dashboard')+'?company='+str(self.company.id))
