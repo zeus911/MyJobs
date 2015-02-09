@@ -663,7 +663,8 @@ def partner_view_full_feed(request):
         url_of_feed = url_sort_options(saved_search.feed,
                                        saved_search.sort_by,
                                        saved_search.frequency)
-        items, count = parse_feed(url_of_feed, saved_search.frequency)
+        items, count = parse_feed(url_of_feed, saved_search.frequency,
+                                  saved_search.jobs_per_email)
         start_date = date.today() + timedelta(get_interval_from_frequency(
             saved_search.frequency))
         extras = saved_search.partnersavedsearch.url_extras
