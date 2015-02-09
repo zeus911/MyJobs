@@ -35,36 +35,17 @@ class MessageViewTests(MyJobsBase):
         self.assertTrue(m.read)
         self.assertTrue(m.read_at)
 
-    def test_delete_message_single_recipient(self):
+    def test_delete_message(self):
         """
-        Deleting a MessageInfo when there is only one recipient also deletes
-        the message associated with it.
+        Deleting a MessageInfo should instead mark it as deleted.
         """
+        self.assertTrue(self.messageinfo.deleted_on is None)
         self.client.get(reverse('delete'),
                         data={'name': 'message-delete-'+str(self.message.id)
                                       + '-'+str(self.user.id)},
                         HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        with self.assertRaises(MessageInfo.DoesNotExist):
-            MessageInfo.objects.get(pk=self.messageinfo.pk)
-        with self.assertRaises(Message.DoesNotExist):
-            Message.objects.get(pk=self.message.pk)
-
-    def test_delete_message_multiple_recipients(self):
-        """
-        Deleting a MessageInfo with multiple recipients deletes the info for
-        the current user only.
-        """
-        user = UserFactory(email='new@example.com')
-        messageinfo = MessageInfo.objects.create(user=user, message=self.message)
-
-        self.client.get(reverse('delete'),
-                        data={'name': 'message-delete-'+str(self.message.id)
-                                      + '-'+str(self.user.id)},
-                        HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        with self.assertRaises(MessageInfo.DoesNotExist):
-            MessageInfo.objects.get(pk=self.messageinfo.pk)
-        Message.objects.get(pk=self.message.pk)
-        MessageInfo.objects.get(pk=messageinfo.pk)
+        self.messageinfo = MessageInfo.objects.get(pk=self.messageinfo.pk)
+        self.assertIsNotNone(self.messageinfo.deleted_on)
 
     def test_auto_page_inbox(self):
         """

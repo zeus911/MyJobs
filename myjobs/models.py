@@ -473,12 +473,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         messages = get_messages(self).exclude(users=self)
         new_message_infos = [
             MessageInfo(user=self, message=message) for message in messages]
-
         MessageInfo.objects.bulk_create(new_message_infos)
 
-        info_kwargs = {}
+        info_kwargs = {'deleted_on__isnull': True}
         if only_new:
-            info_kwargs = {'read': False, 'expired': False}
+            info_kwargs.update({'read': False, 'expired': False})
 
         # Ordering by -id shows the most recent items first.
         return self.messageinfo_set.filter(**info_kwargs).order_by('-id')

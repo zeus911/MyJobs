@@ -115,6 +115,8 @@ class MessageInfo(models.Model):
     read_at = models.DateTimeField('read at', null=True)
     expired = models.BooleanField(default=False, db_index=True)
     expired_on = models.DateTimeField('expired on', null=True)
+    deleted_on = models.DateTimeField('deleted on', blank=True, null=True,
+                                      db_index=True)
 
     def __unicode__(self):
         return self.message.subject
@@ -174,6 +176,7 @@ def get_messages(user):
     now = timezone.now().date()
     messages = Message.objects.prefetch_related('messageinfo_set').filter(
         Q(group__in=user.groups.all()) | Q(users=user),
-        Q(expire_at__isnull=True) | Q(expire_at__gte=now)).distinct()
+        Q(expire_at__isnull=True) | Q(expire_at__gte=now),
+        Q(messageinfo__deleted_on__isnull=True)).distinct()
 
     return messages

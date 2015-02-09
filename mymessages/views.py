@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from django.contrib.auth.decorators import user_passes_test
@@ -79,20 +80,8 @@ def get_message_page(request):
 def delete(request):
     if request.is_ajax():
         message_id, user = request.GET.get('name').split('-')[2:]
-        try:
-            # People like multi-clicking things.
-            info = MessageInfo.objects.get(user=user, message__id=message_id)
-        except MessageInfo.DoesNotExist:
-            pass
-        else:
-            if info.message.messageinfo_set.count() > 1:
-                # This message can be viewed by multiple users; Delete this
-                # user's MessageInfo only.
-                info.delete()
-            else:
-                # This user is the only user that can see this message. Deleting
-                # the actual message will also delete this user's MessageInfo.
-                info.message.delete()
+        MessageInfo.objects.filter(user=user, message__id=message_id).update(
+            deleted_on=datetime.datetime.now())
         messages, _ = get_message_page(request)
         response = render_to_string('mymessages/includes/messages.html',
                                     {'messages': messages},
