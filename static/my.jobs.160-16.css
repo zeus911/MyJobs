@@ -1330,6 +1330,17 @@ ul.header-menu > li > ul > a > li:hover {
     margin-right: 0;
 }
 
+/* My Reports */
+.sidebar li {
+    padding: 3px 5px;
+}
+.sidebar li.active {
+    background-color: #D5FACF;
+}
+
+.sidebar li i.success {
+    color: green;
+}
 
 
 /* Sort by field in saved search save/edit */

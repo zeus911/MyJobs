@@ -51,20 +51,6 @@ Report.prototype.current_page = function() {
     return this.pages[0];
 };
 
-/**
- *
- * @param current_page_index
- * @param direction
- */
-Report.prototype.update_pages = function(current_page_index, direction) {
-    this.pages[current_page_index].active = false;
-    if(direction === "next") {
-        this.pages[current_page_index + 1].active = true;
-    } else {
-        this.pages[Math.max(0, current_page_index - 1)].active = true;
-    }
-};
-
 Report.prototype.load_active_page = function(filters) {
     var current_page = this.current_page(),
         data = {"csrfmiddlewaretoken": read_cookie("csrftoken"),
@@ -103,16 +89,24 @@ Report.prototype.next_page = function() {
         filter = {};
     current_page.active = false;
     next_page.active = true;
+    // if FilterPage, grab all the data prior to next_page
     if(next_page instanceof FilterPage) {
         // Extend filter for every page from index 0 up to index next_page
         for(var i = 0; i < this.pages.indexOf(next_page); i++) {
             $.extend(filter, this.pages[i]["data"])
         }
+    // else page prior is good enough
     } else {
         filter = current_page.data;
     }
     filter["ignore_cache"] = true;
     this.load_active_page(filter);
+    this.next_sidebar();
+    console.log(current_page_index + 1);
+    console.log(typeof this.pages.length);
+    if(current_page_index + 1 === this.pages.length - 1) {
+        this.activate_generate_report();
+    }
 };
 
 Report.prototype.previous_page = function() {
@@ -132,19 +126,73 @@ Report.prototype.previous_page = function() {
         filter = prev_data_to_load;
     }
     this.load_active_page(filter);
+    this.prev_sidebar();
 };
 
 Report.prototype.generate_sidebar = function() {
     var sidebar_content = $("#sidebar-content"),
         ul = $("<ul></ul>");
     for(var page in this.pages) {
-        var li = $("<li id=\"step-"+ page +"\"></li>");
-        li.html(this.pages[page].step);
+        var li = $("<li id=\"step-"+ page +"\"></li>"), // <li></li>
+            i; // <i></i>
+        if(page === "0") {
+            li.addClass("active");
+        }
+        i = $("<i class=\"fa fa-minus\"></i>");
+        li.html(" " + this.pages[page].step);
+        li.prepend(i);
         ul.append(li);
     }
     sidebar_content.prepend(ul);
 };
 
+Report.prototype.next_sidebar = function() {
+    var active = $(".sidebar li.active");
+    $(active).removeClass("active").children("i").removeClass("fa-minus")
+        .addClass("fa-check success");
+    $(active).next().addClass("active");
+};
+
+Report.prototype.prev_sidebar = function() {
+    var active = $(".sidebar li.active");
+    $(active).removeClass("active");
+    $(active).prev().addClass("active");
+    if($(active).prev().children("i").hasClass("fa-check")) {
+        $(active).prev().children("i").removeClass("fa-check success").addClass("fa-minus");
+    }
+};
+
+Report.prototype.activate_generate_report = function() {
+    var that = this;
+    $("#gen-report").removeClass("disabled").on("click", function() {
+        that.submit_report();
+    });
+};
+
+Report.prototype.submit_report = function() {
+    var pages = this.pages,
+        data = {"csrfmiddlewaretoken": read_cookie("csrftoken")},
+        url = location.protocol + "//" + location.host; // https://secure.my.jobs
+    // combine all data together
+    for (var page in pages) {
+        $.extend(data, pages[page]["data"]);
+    }
+    $.ajax({
+        type: 'POST',
+        url: url + "/reports/ajax/mypartners/contactrecord",
+        data: $.param(data, true),
+        success: function(data) {
+            $("#content").html(data);
+        },
+        error: function () {
+            // TODO: change when testing is done to something more useful.
+            throw "Something horrible happened.";
+        },
+        complete: function() {
+
+        }
+    });
+};
 
 var Page = function(active, output, step) {
     this.active = active;
