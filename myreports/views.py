@@ -2,6 +2,7 @@ import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models.loading import get_model
+from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -49,6 +50,10 @@ def filter_records(request,
         :end_date: Upper bound for record date-related field (eg. `datetime`
                    for `ContactRecord`).
         :ignore_cache: If present, this view's cache is ignored.
+        :order_by: The field to sort records by. If not present, primary key is
+                  used.
+        :count: The field to annotate with a count. If not present, no
+                annotations are used.
 
         Remaining query parameters are assumed to be field names of the model.
 
@@ -84,24 +89,38 @@ def filter_records(request,
                 if value == value_list[0]:
                     params[key] = value
                 else:
-                    params[key] = value_list
+                    # lists are not hashable
+                    params[key] = tuple(value_list)
 
         # remove csrf token from search parameters
         params.pop('csrfmiddlewaretoken', None)
 
+        # get special query parameters
         output = params.pop('output', 'json')
         ignore_cache = params.pop('ignore_cache', False)
+        order_by = params.pop('order_by', None)
+        count = params.pop('count', None)
 
+        cache_key = (user, company, path, tuple(params.items()))
         # fetch results from cache if available
-        if not ignore_cache and (user, company, path) in filter_records.cache:
-            records = filter_records.cache[(user, company, path)]
+        if not ignore_cache and cache_key in filter_records.cache:
+            records = filter_records.cache[cache_key]
             cached = True
         else:
             records = get_model(app, model).objects.from_search(
                 company, params)
-            cached = False
 
-            filter_records.cache[(user, company, path)] = records
+            if count:
+                records = records.annotate(count=Count(count))
+
+            if order_by:
+                if hasattr(order_by, '__iter__'):
+                    records = records.order_by(*order_by)
+                else:
+                    records = records.sort_by(order_by)
+
+            cached = False
+            filter_records.cache[cache_key] = records
 
         ctx = {'records': records, 'cached': cached}
 
@@ -111,7 +130,7 @@ def filter_records(request,
             ctx['records'] = list(records.values())
             ctx = json.dumps(ctx, cls=DjangoJSONEncoder)
 
-            response = HttpResponse(ctx)
+            response = HttpResponse(ctx, content_type='application/json')
         else:
             html = render_to_response(
                 output + ".html", ctx, RequestContext(request))

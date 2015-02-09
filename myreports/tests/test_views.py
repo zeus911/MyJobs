@@ -1,17 +1,16 @@
 """Tests associated with the various MyReports views."""
 
-# TODO: Remove custom manager specific tests to a separate test case.
-
+# TODO:
+#   * See about refactoring some of the repetitive parts of the filter_records
+#     tests into the setUp method.
 import json
-
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 
 from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
-from mypartners.models import Partner
 from mypartners.tests.factories import (ContactFactory, ContactRecordFactory,
-                                        PartnerFactory)
+                                        LocationFactory, PartnerFactory)
 from seo.tests.factories import CompanyFactory, CompanyUserFactory
 
 
@@ -56,13 +55,13 @@ class TestReports(MyReportsTestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class TestSearchRecords(MyReportsTestCase):
+class TestFilterRecords(MyReportsTestCase):
     """
     Tests the `filter_records` view which is used to query various models.
     """
 
     def setUp(self):
-        super(TestSearchRecords, self).setUp()
+        super(TestFilterRecords, self).setUp()
 
         ContactRecordFactory.create_batch(10, partner=self.partner,
                                           contact_name='Joe Shmoe')
@@ -171,16 +170,39 @@ class TestSearchRecords(MyReportsTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(output['records']), 10)
 
-    def test_sort_by_order(self):
-        """Tests that `sort_order` orders blank values after others."""
+    def test_filter_by_state(self):
+        """Tests that filtering by state works."""
 
-        PartnerFactory.create_batch(10)
-        PartnerFactory.create_batch(10, name="")
+        indiana = LocationFactory(state="IN")
+        ContactFactory.create_batch(10, name="Jane Doe", partner=self.partner, 
+                                    locations=[indiana])
 
-        partners = list(Partner.objects.sort_by('name'))
+        response = self.client.post(
+            reverse('filter_records',
+                    kwargs={'app': 'mypartners', 'model': 'contact'}),
+            {'state': 'IN'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        output = json.loads(response.content)
+        
+        self.assertEqual(len(output['records']), 10)
 
-        self.assertEqual(partners[0].name, "Company")
-        self.assertEqual(partners[-1].name, "")
+    def test_order_by(self):
+        """Tests that `order_by` parameter is passed to `QuerySet`."""
+
+        # mix up the order they are created in so that blanks aren't all next
+        # to each other
+        PartnerFactory.create_batch(10, owner=self.company, name="New Partner")
+        PartnerFactory.create_batch(10, owner=self.company)
+
+        response = self.client.post(
+            reverse('filter_records',
+                    kwargs={'app': 'mypartners', 'model': 'partner'}),
+            {'order_by': 'name'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        output = json.loads(response.content)
+        records = output['records']
+
+        self.assertTrue(records[0]['name'] < records[-1]['name'])
 
     def test_cached_results(self):
         """
@@ -189,7 +211,7 @@ class TestSearchRecords(MyReportsTestCase):
         """
         ContactRecordFactory.create_batch(10, partner=self.partner)
 
-        url = reverse('filter_records', 
+        url = reverse('filter_records',
                       kwargs={'app': 'mypartners', 'model': 'contactrecord'})
         kwargs = {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'}
 
@@ -207,3 +229,19 @@ class TestSearchRecords(MyReportsTestCase):
         response = self.client.post(url + '?ignore_cache', **kwargs)
         output = json.loads(response.content)
         self.assertFalse(output['cached'])
+
+    def test_count_annotation(self):
+        """
+        When `count` is passed to the view, the resulting records should be
+        annotated as a `Count` for the field passed to count.
+        """
+
+        response = self.client.post(
+            reverse('filter_records',
+                    kwargs={'app': 'mypartners', 'model': 'partner'}),
+            {'count': 'contact'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        output = json.loads(response.content)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(all('count' in record for record in output['records']))
