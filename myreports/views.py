@@ -89,7 +89,8 @@ def filter_records(request,
                 if value == value_list[0]:
                     params[key] = value
                 else:
-                    params[key] = value_list
+                    # lists are not hashable
+                    params[key] = tuple(value_list)
 
         # remove csrf token from search parameters
         params.pop('csrfmiddlewaretoken', None)
