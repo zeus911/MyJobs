@@ -78,7 +78,6 @@ Report.prototype.load_active_page = function(filters) {
     } else {
         url += location.pathname;
     }
-    console.log("Data being sent", data);
     $.ajax({
         type: 'POST',
         url: url,
@@ -109,12 +108,11 @@ Report.prototype.next_page = function() {
         for(var i = 0; i < this.pages.indexOf(next_page); i++) {
             $.extend(filter, this.pages[i]["data"])
         }
-        console.log("Next FilterPage filters: ", next_page.toString(), filter);
-        this.load_active_page(filter);
     } else {
-        console.log("Next filters: ", next_page.toString(), current_page.data);
-        this.load_active_page(current_page.data);
+        filter = current_page.data;
     }
+    filter["ignore_cache"] = true;
+    this.load_active_page(filter);
 };
 
 Report.prototype.previous_page = function() {
@@ -130,12 +128,10 @@ Report.prototype.previous_page = function() {
         for(var i = 0; i < prev_page_index; i++) {
             $.extend(filter, this.pages[i]["data"]);
         }
-        console.log("Prev FilterPage filters: ", prev_page.toString(), filter);
-        this.load_active_page(filter);
     } else {
-        console.log("Prev Filters: ", prev_page.toString(), prev_data_to_load);
-        this.load_active_page(prev_data_to_load);
+        filter = prev_data_to_load;
     }
+    this.load_active_page(filter);
 };
 
 Report.prototype.generate_sidebar = function() {
