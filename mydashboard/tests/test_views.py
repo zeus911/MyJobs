@@ -126,11 +126,8 @@ class MyDashboardViewsTests(MyJobsBase):
     def test_number_of_searches_and_users_is_correct(self):
         response = self.client.post(
             reverse('dashboard')+'?company='+str(self.company.id))
-        soup = BeautifulSoup(response.content)
         # 6 users total
-        count_box = soup.select('.count-box-left')
-        count = int(count_box[0].text)
-        self.assertIn(count, [6, 7])
+        self.assertEqual(response.context['total_candidates'], 6)
 
         old_search = SavedSearch.objects.all()[0]
         old_search.created_on -= timedelta(days=31)
@@ -139,10 +136,8 @@ class MyDashboardViewsTests(MyJobsBase):
         response = self.client.post(
             reverse('dashboard')+'?company='+str(self.company.id),
             {'microsite': 'test.jobs'})
-        soup = BeautifulSoup(response.content)
-        count_box = soup.select('.count-box-left')
-        count = int(count_box[0].text)
-        self.assertIn(count, [6, 7])
+
+        self.assertEqual(response.context['total_candidates'], 6)
 
     def test_facets(self):
         education = EducationFactory(user=self.candidate_user)
