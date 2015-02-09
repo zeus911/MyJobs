@@ -20,9 +20,9 @@ var Report = function(types) {
 Report.prototype.create_pages = function(report_types) {
     // page lists
      var p_lists = {"PRM": [new Page(true, "myreports/date_location", "Date and/or Location"),
-                            new ListPage(false, "myreports/includes/prm/partners",
+                            new FilterPage(false, "myreports/includes/prm/partners",
                                 "Select Partners", "/reports/ajax/mypartners/partner", "partner"),
-                            new ListPage(false, "myreports/includes/prm/contacts",
+                            new FilterPage(false, "myreports/includes/prm/contacts",
                                 "Select Contacts", "/reports/ajax/mypartners/contact", "contact")]},
          pages = []; // Initialize array that will be returned
 
@@ -73,7 +73,7 @@ Report.prototype.load_active_page = function(filters) {
     if(typeof filters !== "undefined") {
         $.extend(data, filters);
     }
-    if (current_page instanceof ListPage) {
+    if (current_page instanceof FilterPage) {
         url += current_page.url;
     } else {
         url += location.pathname;
@@ -99,20 +99,42 @@ Report.prototype.load_active_page = function(filters) {
 Report.prototype.next_page = function() {
     var current_page = this.current_page(),
         current_page_index = this.pages.indexOf(current_page),
-        next_page = this.pages[current_page_index + 1];
+        next_page = this.pages[current_page_index + 1],
+        filter = {};
     current_page.active = false;
     next_page.active = true;
-    this.load_active_page(current_page.data);
+    if(next_page instanceof FilterPage) {
+        // Extend filter for every page from index 0 up to index next_page
+        for(var i = 0; i < this.pages.indexOf(next_page); i++) {
+            $.extend(filter, this.pages[i]["data"])
+        }
+        console.log("Next FilterPage filters: ", next_page.toString(), filter);
+        this.load_active_page(filter);
+    } else {
+        console.log("Next filters: ", next_page.toString(), current_page.data);
+        this.load_active_page(current_page.data);
+    }
 };
 
 Report.prototype.previous_page = function() {
     var current_page = this.current_page(),
         current_page_index = this.pages.indexOf(current_page),
-        prev_page = this.pages[Math.max(0, current_page_index - 1)],
-        prev_data_to_load = this.pages[Math.max(0, current_page_index - 2)].data;
+        prev_page_index = Math.max(0, current_page_index - 1),
+        prev_page = this.pages[prev_page_index],
+        prev_data_to_load = this.pages[Math.max(0, current_page_index - 2)].data,
+        filter = {};
     current_page.active = false;
     prev_page.active = true;
-    this.load_active_page(prev_data_to_load);
+    if(prev_page instanceof FilterPage && prev_page_index !== 0) {
+        for(var i = 0; i < prev_page_index; i++) {
+            $.extend(filter, this.pages[i]["data"]);
+        }
+        console.log("Prev FilterPage filters: ", prev_page.toString(), filter);
+        this.load_active_page(filter);
+    } else {
+        console.log("Prev Filters: ", prev_page.toString(), prev_data_to_load);
+        this.load_active_page(prev_data_to_load);
+    }
 };
 
 Report.prototype.generate_sidebar = function() {
@@ -159,20 +181,20 @@ Page.prototype.load_data = function() {
 };
 
 
-var ListPage = function(active, output, step, ajax_url, record_type) {
+var FilterPage = function(active, output, step, ajax_url, record_type) {
     this.url = ajax_url;
     this.record_type = record_type;
     Page.call(this, active, output, step)
 };
 
-ListPage.prototype = Object.create(Page.prototype);
+FilterPage.prototype = Object.create(Page.prototype);
 
 // Overwrite Page's toString
-ListPage.prototype.toString = function() {
-    return "<ListPage: " + this.step + ">";
+FilterPage.prototype.toString = function() {
+    return "<FilterPage: " + this.step + ">";
 };
 
-ListPage.prototype.save_data = function() {
+FilterPage.prototype.save_data = function() {
     var records = [],
         all_checkbox = $("input#all"), // Button that acts like "Select All"
         all_checkboxes = $("#content input[type='checkbox']:not(#all)"), // All other checkboxes
@@ -198,7 +220,7 @@ ListPage.prototype.save_data = function() {
     }
 };
 
-ListPage.prototype.load_data = function() {
+FilterPage.prototype.load_data = function() {
     var record_type = this.record_type;
     if(this.data[record_type] != "") {
         var all_checkboxes = $("#content input"); // all checkboxes in content
