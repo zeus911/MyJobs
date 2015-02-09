@@ -884,7 +884,7 @@ class MyJobsViewsTests(MyJobsBase):
             if num_messages == 1:
                 # The only message has been read in this instance; it should not
                 # have been displayed.
-                self.assertTrue('No new messages' in response.content,
+                self.assertTrue('No new unread messages' in response.content,
                                 'Iteration %s' % num_messages)
             for info in infos[1:4]:
                 # Ensure that the 1-3 messages we expect are appearing on

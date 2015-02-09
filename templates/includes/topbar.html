@@ -34,7 +34,7 @@
                                     <li><a href="{% url 'inbox' %}?message={{ message.message.pk }}">{{ message.message.start_on.date }} - {{ message.message.subject|truncatewords:'10' }}</a></li>
                                 {% endif %}
                             {% empty %}
-                                <li>No new messages</li>
+                                <li><p>No new unread messages</p></li>
                             {% endfor %}
                         </ul>
                     </li>

@@ -465,6 +465,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         :messages:  A list of Messages to be shown to the User.
         """
         if not self.pk:
+            # The "user deletion successful" page attempts to load messages.
+            # Since the user has been deleted by that point, that is a bad
+            # thing. Ensure that the user exists before proceeding.
             return MessageInfo.objects.none()
 
         messages = get_messages(self).exclude(users=self)
@@ -477,7 +480,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         if only_new:
             info_kwargs = {'read': False, 'expired': False}
 
-        return self.messageinfo_set.filter(**info_kwargs)
+        # Ordering by -id shows the most recent items first.
+        return self.messageinfo_set.filter(**info_kwargs).order_by('-id')
 
     def messages_unread(self):
         """

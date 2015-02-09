@@ -1317,7 +1317,7 @@ ul.header-menu > li > ul > a > li:hover {
     display: inline;
 }
 
-#menu-inbox-all > p {
+#menu-inbox ~ ul li > p {
     color: white;
     padding-left: 4px;
 }
@@ -4178,6 +4178,10 @@ span.helptext {
     width: 100%;
     table-layout: fixed;
     border: 1px solid #ddd;
+}
+
+#inbox #messages > tr {
+    cursor: pointer;
 }
 
 #inbox td:last-child {

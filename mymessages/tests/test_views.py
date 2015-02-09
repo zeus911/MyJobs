@@ -75,6 +75,8 @@ class MessageViewTests(MyJobsBase):
         request = self.client.get(reverse('inbox'))
         self.assertTrue('Page 1 of 2' in request.content)
 
+        # Messages are displayed in reverse creation order, so the first item
+        # in the list is the last item on the last page.
         request = self.client.get(reverse('inbox') +
-                                  '?message=%s' % infos[-1].message.pk)
+                                  '?message=%s' % infos[0].message.pk)
         self.assertTrue('Page 2 of 2' in request.content)
