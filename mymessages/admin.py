@@ -1,8 +1,7 @@
 from django import forms
 from django.contrib import admin
 
-from mymessages.models import Message, MessageInfo
-from myjobs.models import User
+from mymessages.models import Message
 
 
 class AdminMessageForm(forms.ModelForm):
