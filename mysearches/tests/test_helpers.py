@@ -99,7 +99,7 @@ class SavedSearchHelperTests(MyJobsBase):
 
     def test_parse_feed_with_count(self):
         feed_url = 'http://www.my.jobs/feed/rss'
-        num_items = 100
+        num_items = 1
 
         items, count = parse_feed(feed_url, num_items=num_items)
         self.assertEqual(count, num_items)
