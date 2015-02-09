@@ -193,4 +193,3 @@ class LoadETLTestCase(DirectSEOBase):
         self.assertEqual(len(filtered_jobs), 39,
                          "filter_current_jobs should ignore the includeinindex bit, returning 39 jobs.  "
                          "Instead returned %s." % len(filtered_jobs))
-                
