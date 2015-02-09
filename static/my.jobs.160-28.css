@@ -1313,10 +1313,6 @@ ul.header-menu > li > ul > a > li:hover {
     text-decoration: none;
 }
 
-#menu-inbox-all > * {
-    display: inline;
-}
-
 #menu-inbox ~ ul li > p {
     color: white;
     padding-left: 4px;

@@ -28,7 +28,7 @@
                     <li class="has-drop">
                         <a id="menu-inbox"><div class="icon-envelope icon-white"></div></a>
                         <ul class="submenu">
-                            <li id="menu-inbox-all"><p>Inbox </p><a href="{% url 'inbox' %}">(See All)</a></li>
+                            <li id="menu-inbox-all"><a href="{% url 'inbox' %}">Inbox (See All)</a></li>
                             {% for message in user.messages %}
                                 {% if forloop.counter <= 3 %}
                                     <li><a href="{% url 'inbox' %}?message={{ message.message.pk }}">{{ message.message.start_on.date }} - {{ message.message.subject|truncatewords:'10' }}</a></li>
