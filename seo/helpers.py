@@ -540,8 +540,7 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
     sqs = sqs.facet_sort(facet_sort).facet_mincount(mc)
     sqs = sqs.facet("city_slab").facet("state_slab").facet("country_slab")\
              .facet("moc_slab").facet("title_slab").facet("full_loc")\
-             .facet("company_slab").facet("buid").facet("mapped_moc_slab")\
-             .facet("lat_long_buid_slab")
+             .facet("company_slab").facet("buid").facet("mapped_moc_slab")
 
     # When get_jobs is called from job_listing_by_slug_tag, sqs already has site
     # default facets and filters from URL applied. The call to filter_sqs
