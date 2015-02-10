@@ -102,8 +102,6 @@ Report.prototype.next_page = function() {
     filter["ignore_cache"] = true;
     this.load_active_page(filter);
     this.next_sidebar();
-    console.log(current_page_index + 1);
-    console.log(typeof this.pages.length);
     if(current_page_index + 1 === this.pages.length - 1) {
         this.activate_generate_report();
     }
@@ -154,17 +152,21 @@ Report.prototype.next_sidebar = function() {
 };
 
 Report.prototype.prev_sidebar = function() {
-    var active = $(".sidebar li.active");
+    var active = $(".sidebar li.active"),
+        report_btn = $("#gen-report");
     $(active).removeClass("active");
     $(active).prev().addClass("active");
     if($(active).prev().children("i").hasClass("fa-check")) {
         $(active).prev().children("i").removeClass("fa-check success").addClass("fa-minus");
     }
+    if(!report_btn.hasClass("disabled")) {
+        report_btn.addClass("disabled").unbind("click");
+    }
 };
 
 Report.prototype.activate_generate_report = function() {
     var that = this;
-    $("#gen-report").removeClass("disabled").on("click", function() {
+    $("#gen-report").removeClass("disabled").on("click", function test() {
         that.submit_report();
     });
 };
