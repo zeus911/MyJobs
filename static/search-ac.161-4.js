@@ -124,7 +124,6 @@ $(document).ready(function(){
             });
         },
 	    select: function( event, ui ) {
-		    $( "<div/>" ).text(ui.item.label).prependTo( "#moc" );
 		    $( "#moc_id" ).val(ui.item.moc_id);
 	    },
         open: function(event, ul) {
