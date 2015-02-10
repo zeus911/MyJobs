@@ -13,6 +13,7 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from myjobs.models import User
+import states
 
 
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
@@ -124,7 +125,8 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
         # force evaluation: see http://stackoverflow.com/questions/18235419
         len(self)
-        self._result_cache += blank_records
+        for record in blank_records:
+            self._result_cache.append(record)
 
         return self
 
@@ -224,6 +226,17 @@ class Contact(models.Model):
         elif end_date:
             records = records.filter(
                 partner__contactrecord__date_time__lte=end_date)
+
+        # parse state
+        state = parameters.pop('state', False)
+        if state:
+            state_query = models.Q()
+            # match state synonyms when querying
+            for synonym in states.synonyms[state.strip().lower()]:
+                state_query |= models.Q(
+                    locations__state__iexact=synonym)
+
+            records = records.filter(state_query)
 
         return records
 
@@ -336,11 +349,16 @@ class Partner(models.Model):
         elif end_date:
             records = records.filter(contactrecord__date_time__lte=end_date)
 
-        # TODO: Use state synonyms
-        state = parameters.pop('state', None)
-
+        # parse state
+        state = parameters.pop('state', False)
         if state:
-            records = records.filter(contact__locations__state__iexact=state)
+            state_query = models.Q()
+            # match state synonyms when querying
+            for synonym in states.synonyms[state.strip().lower()]:
+                state_query |= models.Q(
+                    contact__locations__state__iexact=synonym)
+
+            records = records.filter(state_query)
 
         return records
 
