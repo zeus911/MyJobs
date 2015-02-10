@@ -13,10 +13,18 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.DateTimeField')(db_index=True, null=True, blank=True),
                       keep_default=False)
 
+        # Adding field 'Message.system'
+        db.add_column(u'mymessages_message', 'system',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
 
     def backwards(self, orm):
         # Deleting field 'MessageInfo.deleted_on'
         db.delete_column(u'mymessages_messageinfo', 'deleted_on')
+
+        # Deleting field 'Message.system'
+        db.delete_column(u'mymessages_message', 'system')
 
 
     models = {
@@ -72,12 +80,13 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Message'},
             'body': ('django.db.models.fields.TextField', [], {}),
             'btn_text': ('django.db.models.fields.CharField', [], {'default': "'OK'", 'max_length': '100'}),
-            'expire_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 2, 23, 0, 0)', 'null': 'True'}),
+            'expire_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 2, 24, 0, 0)', 'null': 'True'}),
             'group': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Group']", 'symmetrical': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'message_type': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'start_on': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 2, 9, 0, 0)'}),
+            'start_on': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 2, 10, 0, 0)'}),
             'subject': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'system': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'users': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myjobs.User']", 'through': u"orm['mymessages.MessageInfo']", 'symmetrical': 'False'})
         },
         u'mymessages.messageinfo': {

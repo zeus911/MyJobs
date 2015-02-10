@@ -241,7 +241,8 @@ h1 > small > a:hover {
     border-top: 0;
 }
 
-.product-card:not(.no-highlight):hover {
+.product-card:not(.no-highlight):hover,
+#inbox #messages > tr:hover {
     background: #D5FACF;
     cursor: pointer;
 }
@@ -4174,10 +4175,6 @@ span.helptext {
     width: 100%;
     table-layout: fixed;
     border: 1px solid #ddd;
-}
-
-#inbox #messages > tr {
-    cursor: pointer;
 }
 
 #inbox td:last-child {

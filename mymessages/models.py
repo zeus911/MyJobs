@@ -90,6 +90,10 @@ class Message(models.Model):
                                      help_text="Default is two weeks " +
                                                "after message is sent.")
     btn_text = models.CharField('Button text', max_length=100, default='OK')
+    system = models.BooleanField('System message', default=False,
+                                 help_text='This is a system message and '
+                                           'appears as an alert as well as '
+                                           'in the inbox.')
 
     objects = MessageManager()
 

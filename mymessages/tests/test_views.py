@@ -12,16 +12,13 @@ class MessageViewTests(MyJobsBase):
     def setUp(self):
         super(MessageViewTests, self).setUp()
         self.user = UserFactory()
-        self.message = Message(subject='subject',
-                               body='body',
-                               message_type='success')
-        self.message.save()
+        self.message = Message.objects.create(subject='subject',
+                                              body='body',
+                                              message_type='success')
         for group in Group.objects.all():
             self.message.group.add(group.pk)
-        self.message.save()
-        self.messageinfo = MessageInfo(user=self.user,
-                                       message=self.message)
-        self.messageinfo.save()
+        self.messageinfo = MessageInfo.objects.create(user=self.user,
+                                                      message=self.message)
         self.client = TestClient()
         self.client.login_user(self.user)
 
@@ -61,3 +58,17 @@ class MessageViewTests(MyJobsBase):
         request = self.client.get(reverse('inbox') +
                                   '?message=%s' % infos[0].message.pk)
         self.assertTrue('Page 2 of 2' in request.content)
+
+    def test_system_message_as_alert(self):
+        """
+        Only system messages should show as alerts.
+        """
+        button_class = 'mymessage-read-{message}-{user}'.format(
+            message=self.message.pk, user=self.user.pk)
+        response = self.client.get(reverse('home'))
+        self.assertNotIn(button_class, response.content)
+
+        self.message.system = True
+        self.message.save()
+        response = self.client.get(reverse('home'))
+        self.assertIn(button_class, response.content)

@@ -451,7 +451,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             else:
                 self.user_guid = guid
 
-    def messages(self, only_new=True):
+    def messages(self, only_new=True, system=False):
         """
         Gets a list of Messages from get_messages. Then gets or creates
         MessageInfo based on user a Message. Excludes read and expired messages
@@ -460,6 +460,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         Input:
         :only_new: A boolean denoting the inclusion or exclusion of
             read/expired messages
+        :system: A boolean denoting if we should return just system messages
+            or all messages
 
         Output:
         :messages:  A list of Messages to be shown to the User.
@@ -478,6 +480,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         info_kwargs = {'deleted_on__isnull': True}
         if only_new:
             info_kwargs.update({'read': False, 'expired': False})
+        if system:
+            # We can't unilaterally add system to info_kwargs - if system is
+            # False, we want to return all messages and not just messages
+            # that aren't system messages.
+            info_kwargs['message__system'] = system
 
         # Ordering by -id shows the most recent items first.
         return self.messageinfo_set.filter(**info_kwargs).order_by('-id')
@@ -488,6 +495,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         not practical. Excludes read and expired messages.
         """
         return self.messages(only_new=True)
+
+    def system_messages(self):
+        """
+        Used in templates where passing an argument to self.messages()
+        is not practical. Returns unread, unexpired system messages.
+        """
+        return self.messages(only_new=True, system=True)
 
     def get_full_name(self, default=""):
         """

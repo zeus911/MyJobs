@@ -13,7 +13,7 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest
 from django.test.client import Client
-from mymessages.models import Message, MessageInfo
+from mymessages.models import Message
 from mymessages.tests.factories import MessageInfoFactory
 
 from setup import MyJobsBase
@@ -21,7 +21,7 @@ from myjobs.models import User, EmailLog, FAQ
 from myjobs.tests.factories import UserFactory
 from mypartners.tests.factories import PartnerFactory
 from mysearches.models import PartnerSavedSearch
-from seo.tests.factories import CompanyFactory, CompanyUserFactory
+from seo.tests.factories import CompanyFactory
 from myprofile.models import Name, Education
 from mysearches.models import SavedSearch, SavedSearchLog
 from registration.models import ActivationProfile
