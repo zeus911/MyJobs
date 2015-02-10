@@ -1,39 +1,40 @@
 /**
- *
+ * Report manages the Page objects.  Can retrieve current page object being
+ * used, move to next page, or go back to previous page.  Lastly, Report
+ * also handles submission.
  * @param types
  * @constructor
  */
 var Report = function(types) {
     this.types = types;
-    this.pages = [];
+    this.pages = this.create_pages(this.types);
+
+    this.generate_sidebar();
 };
 
-/**
- *
- * @param report_types
- * @returns {Array}
- */
+
+// Generates a list of Page objects based on report types.
+// Different virtual reports go here.
 Report.prototype.create_pages = function(report_types) {
-     var pages = {"PRM": [new Page(true, "myreports/date_location", "Date and/or Location"),
-                          new ListPage(false, "myreports/includes/prm/partners",
-                              "Select Partners", "/reports/ajax/mypartners/partner", "partner"),
-                          new ListPage(false, "myreports/includes/prm/contacts",
-                              "Select Contacts", "/reports/ajax/mypartners/contact", "contact")]},
-         data = []; // Initialize array that will be returned
+    // page lists
+     var p_lists = {"PRM": [new Page(true, "myreports/date_location", "Date and/or Location"),
+                            new FilterPage(false, "myreports/includes/prm/partners",
+                                "Select Partners", "/reports/ajax/mypartners/partner", "partner"),
+                            new FilterPage(false, "myreports/includes/prm/contacts",
+                                "Select Contacts", "/reports/ajax/mypartners/contact", "contact")]},
+         pages = []; // Initialize array that will be returned
 
     // When multiple report types have been selected this will combine.
     for (var key in report_types) {
-        if (pages.hasOwnProperty(report_types[key])) {
-            data.push.apply(data, pages[report_types[key]]);
+        if (p_lists.hasOwnProperty(report_types[key])) {
+            pages.push.apply(pages, p_lists[report_types[key]]);
         }
     }
-    return data
+    return pages;
 };
 
-/**
- *
- * @returns {*}
- */
+
+// Grabs a Page object that has page.active === true
 Report.prototype.current_page = function() {
     for (var page in this.pages) {
         if (this.pages[page].active === true) {
@@ -46,20 +47,10 @@ Report.prototype.current_page = function() {
     return this.pages[0];
 };
 
-/**
- *
- * @param current_page_index
- * @param direction
- */
-Report.prototype.update_pages = function(current_page_index, direction) {
-    this.pages[current_page_index].active = false;
-    if(direction === "next") {
-        this.pages[current_page_index + 1].active = true;
-    } else {
-        this.pages[Math.max(0, current_page_index - 1)].active = true;
-    }
-};
 
+// Can be called to load the current page independently from
+// next/prev page calls. See Report.prototype.current_page to see
+// how current page is found.
 Report.prototype.load_active_page = function(filters) {
     var current_page = this.current_page(),
         data = {"csrfmiddlewaretoken": read_cookie("csrftoken"),
@@ -68,7 +59,7 @@ Report.prototype.load_active_page = function(filters) {
     if(typeof filters !== "undefined") {
         $.extend(data, filters);
     }
-    if (current_page instanceof ListPage) {
+    if (current_page instanceof FilterPage) {
         url += current_page.url;
     } else {
         url += location.pathname;
@@ -91,28 +82,151 @@ Report.prototype.load_active_page = function(filters) {
     });
 };
 
+
+// Move active status to the next page in Report.pages.
+// Adds extra filtering if needed, calls load_active_page,
+// and updates sidebar accordingly.
 Report.prototype.next_page = function() {
     var current_page = this.current_page(),
         current_page_index = this.pages.indexOf(current_page),
-        next_page = this.pages[current_page_index + 1];
+        next_page = this.pages[current_page_index + 1],
+        filter = {};
     current_page.active = false;
     next_page.active = true;
-    console.log("Current Page: ", current_page);
-    console.log("Next Page: ", next_page);
-    this.load_active_page(current_page.data);
+    // if FilterPage, grab all the data prior to next_page
+    if(next_page instanceof FilterPage) {
+        // Extend filter for every page from index 0 up to index next_page
+        for(var i = 0; i < this.pages.indexOf(next_page); i++) {
+            $.extend(filter, this.pages[i]["data"])
+        }
+    // else page prior is good enough
+    } else {
+        filter = current_page.data;
+    }
+    filter["ignore_cache"] = true;
+    this.load_active_page(filter);
+    this.next_sidebar();
+    if(current_page_index + 1 === this.pages.length - 1) {
+        this.activate_generate_report();
+    }
 };
 
+
+// Move active status to the previous page in Report.pages.
+// Adds extra filtering if needed, calls load_active_page,
+// and updates sidebar accordingly.
 Report.prototype.previous_page = function() {
     var current_page = this.current_page(),
         current_page_index = this.pages.indexOf(current_page),
-        prev_page = this.pages[Math.max(0, current_page_index - 1)],
-        prev_data_to_load = this.pages[Math.max(0, current_page_index - 2)].data;
+        prev_page_index = Math.max(0, current_page_index - 1),
+        prev_page = this.pages[prev_page_index],
+        prev_data_to_load = this.pages[Math.max(0, current_page_index - 2)].data,
+        filter = {};
     current_page.active = false;
     prev_page.active = true;
-    this.load_active_page(prev_data_to_load);
+    if(prev_page instanceof FilterPage && prev_page_index !== 0) {
+        for(var i = 0; i < prev_page_index; i++) {
+            $.extend(filter, this.pages[i]["data"]);
+        }
+    } else {
+        filter = prev_data_to_load;
+    }
+    this.load_active_page(filter);
+    this.prev_sidebar();
+};
+
+// Builds out the steps based on Report.pages,
+// more specifically Page.step.
+Report.prototype.generate_sidebar = function() {
+    var sidebar_content = $("#sidebar-content"),
+        ul = $("<ul></ul>");
+    for(var page in this.pages) {
+        var li = $("<li id=\"step-"+ page +"\"></li>"), // <li></li>
+            i; // <i></i>
+        if(page === "0") {
+            li.addClass("active");
+        }
+        i = $("<i class=\"fa fa-minus\"></i>");
+        li.html(" " + this.pages[page].step);
+        li.prepend(i);
+        ul.append(li);
+    }
+    sidebar_content.prepend(ul);
+};
+
+// Removes .active from current step, changes "-" to a check,
+// and adds .active to the next step
+Report.prototype.next_sidebar = function() {
+    var active = $(".sidebar li.active");
+    $(active).removeClass("active").children("i").removeClass("fa-minus")
+        .addClass("fa-check success");
+    $(active).next().addClass("active");
 };
 
 
+// Removes .active from current step and adds .active to previous step.
+// If previous step has a check change it back to a "-".
+Report.prototype.prev_sidebar = function() {
+    var active = $(".sidebar li.active"),
+        report_btn = $("#gen-report");
+    $(active).removeClass("active");
+    $(active).prev().addClass("active");
+    // if previous step has check.
+    if($(active).prev().children("i").hasClass("fa-check")) {
+        $(active).prev().children("i").removeClass("fa-check success").addClass("fa-minus");
+    }
+    // if generate report is not disabled.
+    if(!report_btn.hasClass("disabled")) {
+        report_btn.addClass("disabled").unbind("click");
+    }
+};
+
+
+// Actives the generate report button on sidebar.
+// Also binds a click event to the button.
+Report.prototype.activate_generate_report = function() {
+    var that = this;
+    $("#gen-report").removeClass("disabled").on("click", function test() {
+        that.submit_report();
+    });
+};
+
+// Submits the report
+Report.prototype.submit_report = function() {
+    var pages = this.pages,
+        data = {"csrfmiddlewaretoken": read_cookie("csrftoken")},
+        url = location.protocol + "//" + location.host; // https://secure.my.jobs
+    // combine all data together
+    for (var page in pages) {
+        $.extend(data, pages[page]["data"]);
+    }
+    $.ajax({
+        type: 'POST',
+        dataType: "json",
+        url: url + "/reports/ajax/mypartners/contactrecord",
+        data: $.param(data, true),
+        success: function(data) {
+            // TODO: Do something useful here.
+            $("#content").html(JSON.stringify(data.records));
+        },
+        error: function () {
+            // TODO: change when testing is done to something more useful.
+            throw "Something horrible happened.";
+        }
+    });
+};
+
+/**
+ * Page handles saving and loading of data.
+ *
+ * @param active    Boolean that is used to determine if a page is the one
+ *                  currently loaded.
+ * @param output    String that tells the view that is hit by load_active_page
+ *                  what template to use.
+ * @param step      String that is used for sidebar to show the user what the
+ *                  main purpose of this page.
+ * @constructor
+ */
 var Page = function(active, output, step) {
     this.active = active;
     this.data = null;
@@ -120,14 +234,15 @@ var Page = function(active, output, step) {
     this.step = step;
 };
 
-/**
- * Overwrite toString function for better object name
- * @returns {string}
- */
+
+// Overwrite toString function for better object name. Useful for debugging.
+// @returns {string}
 Page.prototype.toString = function() {
     return '<Page: ' + this.step + '>';
 };
 
+// Looks at every input and select in the #content div and follows this pattern:
+// {"element's ID": "element's value"}
 Page.prototype.save_data = function() {
     var inputs = $("#content input, #content select:not([class*=__select])"),// all inputs and selects on page.
         data = {};
@@ -137,6 +252,7 @@ Page.prototype.save_data = function() {
     this.data = data;
 };
 
+// Looks at every key which is based on element's ID and adds element's value.
 Page.prototype.load_data = function() {
     for(var key in this.data) {
         if(this.data.hasOwnProperty(key))
@@ -145,20 +261,25 @@ Page.prototype.load_data = function() {
 };
 
 
-var ListPage = function(active, output, step, ajax_url, record_type) {
+// FilterPage is PRM specific. Needs extra filters and hits different
+// filtering views to grab additional information.
+var FilterPage = function(active, output, step, ajax_url, record_type) {
     this.url = ajax_url;
     this.record_type = record_type;
     Page.call(this, active, output, step)
 };
 
-ListPage.prototype = Object.create(Page.prototype);
+// Creates a FilterPage.prototype that inherits from Page.prototype.
+// Part of the Page.call() in FilterPage constructor
+FilterPage.prototype = Object.create(Page.prototype);
 
 // Overwrite Page's toString
-ListPage.prototype.toString = function() {
-    return "<ListPage: " + this.step + ">";
+FilterPage.prototype.toString = function() {
+    return "<FilterPage: " + this.step + ">";
 };
 
-ListPage.prototype.save_data = function() {
+// Overwrites Page.prototype.save_data
+FilterPage.prototype.save_data = function() {
     var records = [],
         all_checkbox = $("input#all"), // Button that acts like "Select All"
         all_checkboxes = $("#content input[type='checkbox']:not(#all)"), // All other checkboxes
@@ -184,7 +305,8 @@ ListPage.prototype.save_data = function() {
     }
 };
 
-ListPage.prototype.load_data = function() {
+// Overwrites Page.prototype.load_data
+FilterPage.prototype.load_data = function() {
     var record_type = this.record_type;
     if(this.data[record_type] != "") {
         var all_checkboxes = $("#content input"); // all checkboxes in content
@@ -200,7 +322,6 @@ ListPage.prototype.load_data = function() {
 $(document).ready(function() {
     // Simulate page 1 (page 1 is where the user selects what types of reporting)
     var report = new Report(["PRM"]);
-    report.pages = report.create_pages(report.types);
     report.load_active_page();
 
     $(document).on("click", ".datepicker",function(e) {
@@ -231,7 +352,6 @@ $(document).ready(function() {
 
     $(document).on("click", "#back", function(e) {
         e.preventDefault();
-        report.current_page().save_data();
         report.previous_page();
     });
 
