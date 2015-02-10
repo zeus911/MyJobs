@@ -124,7 +124,7 @@ class MyDashboardViewsTests(MyJobsBase):
             solr = pysolr.Solr(location)
             solr.add(dicts)
 
-    @unittest.skip("Need to decide whether or not we want duplicate candidates" 
+    @unittest.skip("Correct behavior undefined with respect to duplicates.")
     def test_number_of_searches_and_users_is_correct(self):
         response = self.client.post(
             reverse('dashboard')+'?company='+str(self.company.id))
