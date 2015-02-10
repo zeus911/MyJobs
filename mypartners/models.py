@@ -522,6 +522,8 @@ class ContactRecord(models.Model):
 
         start_date = parameters.pop('start_date', None)
         end_date = parameters.pop('end_date', None)
+        # popping state so it doesn't get parsed again
+        state = parameters.pop('state', None)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
