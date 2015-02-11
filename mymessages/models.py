@@ -7,7 +7,6 @@ from django.utils import timezone
 from django.contrib.auth.models import Group
 
 
-
 def start_default():
     return datetime.datetime.now()
 
@@ -81,18 +80,30 @@ class Message(models.Model):
     group = models.ManyToManyField(Group)
     users = models.ManyToManyField('myjobs.User', through='MessageInfo')
     subject = models.CharField("Subject", max_length=200)
-    message_type = models.CharField("Type of message", choices=TYPE_OF_MESSAGES,
+    message_type = models.CharField("Message type", choices=TYPE_OF_MESSAGES,
                                     max_length=200)
     body = models.TextField('Body')
-    start_on = models.DateTimeField('start on', default=start_default)
-    expire_at = models.DateTimeField('expire at',
+    start_on = models.DateTimeField('Start on', default=start_default)
+    expire_at = models.DateTimeField('Expire at',
                                      default=expire_default,
                                      null=True,
                                      help_text="Default is two weeks " +
                                                "after message is sent.")
-    btn_text = models.CharField('Button Text', max_length=100, default='OK')
+    btn_text = models.CharField('Button text', max_length=100, default='OK')
+    system = models.BooleanField('System message', default=False,
+                                 help_text='This is a system message and '
+                                           'appears as an alert as well as '
+                                           'in the inbox.')
 
     objects = MessageManager()
+
+    @property
+    def display_type(self):
+        """
+        Returns the tooltip for this message on the inbox.
+        """
+        return dict(self.TYPE_OF_MESSAGES).get(self.message_type,
+                                               self.message_type.title())
 
     def __unicode__(self):
         return self.subject
@@ -108,6 +119,8 @@ class MessageInfo(models.Model):
     read_at = models.DateTimeField('read at', null=True)
     expired = models.BooleanField(default=False, db_index=True)
     expired_on = models.DateTimeField('expired on', null=True)
+    deleted_on = models.DateTimeField('deleted on', blank=True, null=True,
+                                      db_index=True)
 
     def __unicode__(self):
         return self.message.subject
@@ -143,7 +156,7 @@ class MessageInfo(models.Model):
             message.start_on = timezone.make_aware(
                 message.start_on, timezone.UTC())
         date_expired = (message.expire_at - message.start_on) + \
-                       message.start_on
+            message.start_on
         if now > date_expired:
             self.mark_expired()
             return True
@@ -167,6 +180,7 @@ def get_messages(user):
     now = timezone.now().date()
     messages = Message.objects.prefetch_related('messageinfo_set').filter(
         Q(group__in=user.groups.all()) | Q(users=user),
-        Q(expire_at__isnull=True) | Q(expire_at__gte=now)).distinct()
+        Q(expire_at__isnull=True) | Q(expire_at__gte=now),
+        Q(messageinfo__deleted_on__isnull=True)).distinct()
 
     return messages

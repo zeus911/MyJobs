@@ -13,13 +13,15 @@ from django.core import mail
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest
 from django.test.client import Client
+from mymessages.models import Message
+from mymessages.tests.factories import MessageInfoFactory
 
 from setup import MyJobsBase
 from myjobs.models import User, EmailLog, FAQ
 from myjobs.tests.factories import UserFactory
 from mypartners.tests.factories import PartnerFactory
 from mysearches.models import PartnerSavedSearch
-from seo.tests.factories import CompanyFactory, CompanyUserFactory
+from seo.tests.factories import CompanyFactory
 from myprofile.models import Name, Education
 from mysearches.models import SavedSearch, SavedSearchLog
 from registration.models import ActivationProfile
@@ -831,7 +833,6 @@ class MyJobsViewsTests(MyJobsBase):
         # email should be sent to right person
         self.assertIn(creator.email, mail.outbox[0].to)
 
-
     def test_toolbar_logged_in(self):
         self.client.login_user(self.user)
         response = self.client.get(reverse('toolbar'))
@@ -866,6 +867,42 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.get(reverse('home'))
         self.assertIn(last_site, response.content)
         self.assertIn(last_name, response.content)
+
+    def test_messages_in_topbar(self):
+        self.client.login_user(self.user)
+        for num_messages in range(1, 5):
+            # The indicator in the topbar will display a max of three messages.
+            # Test that the correct number of messages is displayed for all
+            # possible counts.
+            infos = MessageInfoFactory.create_batch(size=num_messages,
+                                                    user=self.user)
+            # Mark the first message as read to show that read messages are
+            # not shown.
+            infos[0].mark_read()
+
+            response = self.client.get(reverse('home'))
+            if num_messages == 1:
+                # The only message has been read in this instance; it should not
+                # have been displayed.
+                self.assertTrue('No new unread messages' in response.content,
+                                'Iteration %s' % num_messages)
+            for info in infos[1:4]:
+                # Ensure that the 1-3 messages we expect are appearing on
+                # the page.
+                self.assertTrue('message=%s' % info.message.pk
+                                in response.content,
+                                'Iteration %s, %s not found' % (
+                                    num_messages,
+                                    'message=%s' % info.message.pk))
+            for info in infos[4:]:
+                # Ensure that any additional unread messages beyond 3 are not
+                # displayed.
+                self.assertFalse('message=%s' % info.message.pk
+                                 in response.content,
+                                 "Iteration %s, %s exists but shouldn't" % (
+                                     num_messages,
+                                     'message=%s' % info.message.pk))
+            Message.objects.all().delete()
 
     def test_cas_logged_in(self):
         response = self.client.get(reverse('cas'), follow=True)

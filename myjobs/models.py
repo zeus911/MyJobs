@@ -451,22 +451,57 @@ class User(AbstractBaseUser, PermissionsMixin):
             else:
                 self.user_guid = guid
 
-    def messages_unread(self):
+    def messages(self, only_new=True, system=False):
         """
-        Gets a list of active Messages from get_messages. Then gets or creates
-        MessageInfo based on user a Message. If the MessageInfo has been read
-        already or is expired, ignore it, otherwise add it to 'message_infos'.
+        Gets a list of Messages from get_messages. Then gets or creates
+        MessageInfo based on user a Message. Excludes read and expired messages
+        by default, which can be overridden with only_new=False.
+
+        Input:
+        :only_new: A boolean denoting the inclusion or exclusion of
+            read/expired messages
+        :system: A boolean denoting if we should return just system messages
+            or all messages
 
         Output:
         :messages:  A list of Messages to be shown to the User.
         """
+        if not self.pk:
+            # The "user deletion successful" page attempts to load messages.
+            # Since the user has been deleted by that point, that is a bad
+            # thing. Ensure that the user exists before proceeding.
+            return MessageInfo.objects.none()
+
         messages = get_messages(self).exclude(users=self)
         new_message_infos = [
             MessageInfo(user=self, message=message) for message in messages]
-
         MessageInfo.objects.bulk_create(new_message_infos)
 
-        return self.messageinfo_set.filter(read=False, expired=False)
+        info_kwargs = {'deleted_on__isnull': True}
+        if only_new:
+            info_kwargs.update({'read': False, 'expired': False})
+        if system:
+            # We can't unilaterally add system to info_kwargs - if system is
+            # False, we want to return all messages and not just messages
+            # that aren't system messages.
+            info_kwargs['message__system'] = system
+
+        # Ordering by -id shows the most recent items first.
+        return self.messageinfo_set.filter(**info_kwargs).order_by('-id')
+
+    def messages_unread(self):
+        """
+        Used in templates where passing an argument to self.messages() is
+        not practical. Excludes read and expired messages.
+        """
+        return self.messages(only_new=True)
+
+    def system_messages(self):
+        """
+        Used in templates where passing an argument to self.messages()
+        is not practical. Returns unread, unexpired system messages.
+        """
+        return self.messages(only_new=True, system=True)
 
     def get_full_name(self, default=""):
         """
