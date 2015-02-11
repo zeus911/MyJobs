@@ -37,7 +37,7 @@ class MyDashboardViewsTests(MyJobsBase):
 
         self.business_unit = BusinessUnitFactory()
 
-        self.company = CompanyFactory()
+        self.company = CompanyFactory(id=1)
         self.company.job_source_ids.add(self.business_unit)
         self.admin = CompanyUserFactory(user=self.staff_user,
                                         company=self.company)
