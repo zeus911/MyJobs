@@ -142,6 +142,11 @@ class PartnerSavedSearchForm(ModelForm):
             widget=TextInput(attrs={'id': 'p-tags', 'placeholder': 'Tags'})
         )
 
+        # If it's an edit make the email recipient unchangable (for
+        # compliance purposes).
+        if self.instance and self.instance.pk:
+            self.fields['email'].widget.attrs['disabled'] = True
+
         initial = kwargs.get("instance")
         feed_args = {"widget": HiddenInput()}
         if initial:
@@ -180,10 +185,13 @@ class PartnerSavedSearchForm(ModelForm):
     def clean(self):
         cleaned_data = self.cleaned_data
         url = cleaned_data.get('url')
-        user_email = cleaned_data.get('email')
+        user_email = cleaned_data.get('email') or self.instance.email
 
         if not user_email:
             raise ValidationError(_("This field is required."))
+
+        # we have an email, so remove email error
+        self._errors.pop('email', None)
 
         # Get or create the user since they might not exist yet
         created = False
@@ -214,6 +222,8 @@ class PartnerSavedSearchForm(ModelForm):
     def save(self, commit=True):
         self.instance.feed = self.cleaned_data.get('feed')
         is_new_or_change = CHANGE if self.instance.pk else ADDITION
+        if not self.instance.pk:
+            self.instance.sort_by = 'Date'
         instance = super(PartnerSavedSearchForm, self).save(commit)
         tags = self.cleaned_data.get('tags')
         self.instance.tags = tags
@@ -227,7 +237,6 @@ class PartnerSavedSearchForm(ModelForm):
             }
             Invitation(**invite_args).save()
             # Default sort_by for new Partner Saved Searches, see PD-912
-            instance.sort_by = 'Date'
         partner = instance.partner
         contact = Contact.objects.filter(partner=partner,
                                          user=instance.user)[0]

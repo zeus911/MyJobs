@@ -1336,6 +1336,17 @@ ul.header-menu > li > ul > a > li:hover {
     margin-right: 0;
 }
 
+/* My Reports */
+.sidebar li {
+    padding: 3px 5px;
+}
+.sidebar li.active {
+    background-color: #D5FACF;
+}
+
+.sidebar li i.success {
+    color: green;
+}
 
 
 /* Sort by field in saved search save/edit */
@@ -1620,6 +1631,17 @@ table#row-link-table {
 .table-bordered th,
 .table-bordered td{
     border-left: 1px solid #E5E5E5;
+}
+
+.table-scrollable tbody {
+    max-height: 200px;
+    width: 300px;
+    overflow-y: auto;
+    display: block;
+}
+
+.table-scrollable tr {
+    padding: 2px 5px;
 }
 
 .inner-table-label {
@@ -4128,7 +4150,6 @@ span.helptext {
      */
     text-indent: 60px;
 }
-
 
 /* Inbox message type indicators */
 .circle {

@@ -526,11 +526,27 @@ def prm_saved_searches(request):
 def prm_edit_saved_search(request):
     company, partner, user = prm_worthy(request)
     item_id = request.REQUEST.get('id')
+    copy_id = request.REQUEST.get('copies')
+
     if item_id:
         instance = get_object_or_404(PartnerSavedSearch, id=item_id)
         form = PartnerSavedSearchForm(partner=partner, instance=instance)
+    elif copy_id:
+        try:
+            values = PartnerSavedSearch.objects.filter(pk=copy_id).values()[0]
+        except IndexError:
+            # saved search to be copied doesn't exist since values is empty
+            raise Http404
+        else:
+            values['label'] = "Copy of %s" % values['label']
+            values.pop('email', None)
+            values.pop('notes', None)
+            values.pop('custom_message', None)
+            values.pop('partner_message', None)
+            form = PartnerSavedSearchForm(initial=values, partner=partner)
     else:
         form = PartnerSavedSearchForm(partner=partner)
+
 
     microsites = company.prm_saved_search_sites.values_list('domain', flat=True)
     microsites = [site.replace('http://', '').replace('https://', '').lower()
@@ -545,6 +561,7 @@ def prm_edit_saved_search(request):
         'content_type': ContentType.objects.get_for_model(PartnerSavedSearch).id,
         'view_name': 'PRM',
     }
+
     return render_to_response('mypartners/partner_edit_search.html', ctx,
                               RequestContext(request))
 
@@ -646,7 +663,8 @@ def partner_view_full_feed(request):
         url_of_feed = url_sort_options(saved_search.feed,
                                        saved_search.sort_by,
                                        saved_search.frequency)
-        items, count = parse_feed(url_of_feed, saved_search.frequency)
+        items, count = parse_feed(url_of_feed, saved_search.frequency,
+                                  saved_search.jobs_per_email)
         start_date = date.today() + timedelta(get_interval_from_frequency(
             saved_search.frequency))
         extras = saved_search.partnersavedsearch.url_extras
@@ -694,9 +712,7 @@ def prm_records(request):
         response.content = html.content
         return response
 
-    contact_type_choices = [choice for choice in CONTACT_TYPE_CHOICES
-                            if choice[0] != 'pssemail']
-    contact_type_choices.insert(0, ('all', 'All'))
+    contact_type_choices = (('all', 'All'),) + CONTACT_TYPE_CHOICES
 
     contact_choices = [
         (c, c) for c in contact_records.order_by(
