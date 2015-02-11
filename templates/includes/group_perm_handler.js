@@ -1,4 +1,5 @@
-    $('#id_group').on('change', function(){
+    //$().on doesn't work with older versions of jQuery, which django uses
+    $('#id_group').change(function(){
 	    var val = $(this).val();
 	    if(val){
             // set the value from group ddl to GroupPermission.groupId
