@@ -171,6 +171,7 @@ class CompanyFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'seo.Company'
 
+    id = factory.sequence(lambda n: n)
     name = factory.Sequence(lambda n: "Acme Incorporated %d" % n)
     member = True
     company_slug = factory.LazyAttribute(lambda x: slugify(x.name))
