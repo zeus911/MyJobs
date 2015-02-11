@@ -20,7 +20,7 @@ class AdminMessage(admin.ModelAdmin):
         }),
         ('Message', {
             'fields': (
-                'message_type', 'subject', 'body', 'btn_text',
+                'message_type', 'subject', 'body', 'btn_text', 'system',
             ),
         }),
         (None, {
