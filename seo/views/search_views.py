@@ -98,6 +98,7 @@ def ajax_geolocation_facet(request):
     facet_field_type = request.GET.get('facet', 'buid')
 
     sqs = helpers.prepare_sqs_from_search_params(request.GET)
+    sqs = sqs.facet("lat_long_%s_slab" % facet_field_type, limit=-1)
     default_jobs = helpers.get_jobs(default_sqs=sqs,
                                     custom_facets=settings.DEFAULT_FACET,
                                     exclude_facets=settings.FEATURED_FACET,
