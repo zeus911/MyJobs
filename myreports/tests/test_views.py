@@ -186,6 +186,22 @@ class TestFilterRecords(MyReportsTestCase):
         
         self.assertEqual(len(output['records']), 10)
 
+    def test_filter_by_city(self):
+        """Tests that filtering by city works."""
+
+        indianapolis = LocationFactory(city="Indianapolis")
+        ContactFactory.create_batch(10, name="Jane Doe", partner=self.partner,
+                                    locations=[indianapolis])
+
+        response = self.client.post(
+            reverse('filter_records',
+                    kwargs={'app': 'mypartners', 'model': 'contact'}),
+            {'city': 'indianapolis'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        output = json.loads(response.content)
+        
+        self.assertEqual(len(output['records']), 10)
+
     def test_order_by(self):
         """Tests that `order_by` parameter is passed to `QuerySet`."""
 
