@@ -2,6 +2,7 @@ import base64
 from bs4 import BeautifulSoup
 from datetime import timedelta, date
 from importlib import import_module
+import re
 import time
 import uuid
 from urllib import urlencode
@@ -881,6 +882,10 @@ class MyJobsViewsTests(MyJobsBase):
             infos[0].mark_read()
 
             response = self.client.get(reverse('home'))
+            search = re.search('id="menu-inbox">%s<' % (num_messages-1, ),
+                               response.content)
+            # If the count isn't in the topbar, this will return None
+            self.assertIsNotNone(search)
             if num_messages == 1:
                 # The only message has been read in this instance; it should not
                 # have been displayed.
