@@ -214,6 +214,8 @@ class Contact(models.Model):
 
         start_date = parameters.pop('start_date', None)
         end_date = parameters.pop('end_date', None)
+        state = parameters.pop('state', None)
+        city = parameters.pop('city', None)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -227,8 +229,6 @@ class Contact(models.Model):
             records = records.filter(
                 partner__contactrecord__date_time__lte=end_date)
 
-        # parse state
-        state = parameters.pop('state', False)
         if state:
             state_query = models.Q()
             # match state synonyms when querying
@@ -237,6 +237,9 @@ class Contact(models.Model):
                     locations__state__iexact=synonym)
 
             records = records.filter(state_query)
+
+        if city:
+            records = records.filter(locations__city__icontains=city)
 
         return records
 
@@ -339,6 +342,8 @@ class Partner(models.Model):
 
         start_date = parameters.pop('start_date', None)
         end_date = parameters.pop('end_date', None)
+        state = parameters.pop('state', None)
+        city = parameters.pop('city', None)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -349,8 +354,6 @@ class Partner(models.Model):
         elif end_date:
             records = records.filter(contactrecord__date_time__lte=end_date)
 
-        # parse state
-        state = parameters.pop('state', False)
         if state:
             state_query = models.Q()
             # match state synonyms when querying
@@ -359,6 +362,9 @@ class Partner(models.Model):
                     contact__locations__state__iexact=synonym)
 
             records = records.filter(state_query)
+
+        if city:
+            records = records.filter(contact__locations__city__icontains=city)
 
         return records
 
