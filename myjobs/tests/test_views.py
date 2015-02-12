@@ -2,7 +2,6 @@ import base64
 from bs4 import BeautifulSoup
 from datetime import timedelta, date
 from importlib import import_module
-import re
 import time
 import uuid
 from urllib import urlencode
@@ -124,7 +123,7 @@ class MyJobsViewsTests(MyJobsBase):
                                 data={'password': '5UuYquA@',
                                       'new_password1': '7dY=Ybtk',
                                       'new_password2': 'notNew'}, follow=True)
-        
+
         errors = {'new_password2': [u'The new password fields did not match.'],
                   'new_password1': [u'The new password fields did not match.']}
 
@@ -136,7 +135,7 @@ class MyJobsViewsTests(MyJobsBase):
                                 data={'password': '5UuYquA@',
                                       'new_password1': 'SECRET',
                                       'new_password2': 'SECRET'}, follow=True)
-        
+
         errors = {'new_password1': [
             u'Invalid Length (Must be 8 characters or more)',
             u'Based on a common sequence of characters',
@@ -151,7 +150,7 @@ class MyJobsViewsTests(MyJobsBase):
                                 data={'password': '5UuYquA@',
                                       'new_password1': 'secret',
                                       'new_password2': 'secret'}, follow=True)
-        
+
         errors = {'new_password1': [
             u'Invalid Length (Must be 8 characters or more)',
             u'Based on a common sequence of characters',
@@ -166,7 +165,7 @@ class MyJobsViewsTests(MyJobsBase):
                                 data={'password': '5UuYquA@',
                                       'new_password1': 'Secret',
                                       'new_password2': 'Secret'}, follow=True)
-        
+
         errors = {'new_password1': [
             u'Invalid Length (Must be 8 characters or more)',
             u'Based on a common sequence of characters',
@@ -180,7 +179,7 @@ class MyJobsViewsTests(MyJobsBase):
                                 data={'password': '5UuYquA@',
                                       'new_password1': 'S3cr37',
                                       'new_password2': 'S3cr37'}, follow=True)
-        
+
         errors = {'new_password1': [
             u'Invalid Length (Must be 8 characters or more)',
             u'Based on a common sequence of characters',
@@ -795,9 +794,9 @@ class MyJobsViewsTests(MyJobsBase):
 
         # creator should have a My.jobs message and email
         for body in [creator.messages_unread()[0].message.body,
-                     mail.outbox[0].body]: 
+                     mail.outbox[0].body]:
             self.assertIn(self.user.email, body)
-            self.assertIn('unsubscribed from one or more saved search emails', 
+            self.assertIn('unsubscribed from one or more saved search emails',
                           body)
 
         # email should be sent to right person
@@ -826,9 +825,9 @@ class MyJobsViewsTests(MyJobsBase):
 
         # creator should have a My.jobs message and email
         for body in [creator.messages_unread()[0].message.body,
-                     mail.outbox[0].body]: 
+                     mail.outbox[0].body]:
             self.assertIn(self.user.email, body)
-            self.assertIn('unsubscribed from one or more saved search emails', 
+            self.assertIn('unsubscribed from one or more saved search emails',
                           body)
 
         # email should be sent to right person
@@ -846,11 +845,11 @@ class MyJobsViewsTests(MyJobsBase):
         expected_response = '({"user_fullname": "", "user_gravatar": '\
                             '"", "employer": ""});'
         self.assertEqual(response.content, expected_response)
-    
+
     def test_p3p(self):
         """
         make sure the P3P headers are being set
-        
+
         """
         self.client.login_user(self.user)
         response = self.client.get(reverse('toolbar'))
@@ -882,10 +881,8 @@ class MyJobsViewsTests(MyJobsBase):
             infos[0].mark_read()
 
             response = self.client.get(reverse('home'))
-            search = re.search('id="menu-inbox">%s<' % (num_messages-1, ),
-                               response.content)
-            # If the count isn't in the topbar, this will return None
-            self.assertIsNotNone(search)
+            self.assertTrue('id="menu-inbox">%s<' % (num_messages-1, )
+                            in response.content)
             if num_messages == 1:
                 # The only message has been read in this instance; it should not
                 # have been displayed.
