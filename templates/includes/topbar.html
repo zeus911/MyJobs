@@ -26,7 +26,7 @@
                 {% if user.is_authenticated %}
                 <ul class="mobile_hide">
                     <li class="has-drop">
-                        <a id="menu-inbox"><div class="icon-envelope icon-white"></div></a>
+                        <a id="menu-inbox">{{ user.messages_unread.count }}<div class="icon-envelope icon-white"></div></a>
                         <ul class="submenu">
                             <li id="menu-inbox-all"><a href="{% url 'inbox' %}">Inbox (See All)</a></li>
                             {% for message in user.messages %}
