@@ -1,8 +1,5 @@
 """Tests associated with the various MyReports views."""
 
-# TODO:
-#   * See about refactoring some of the repetitive parts of the filter_records
-#     tests into the setUp method.
 import json
 from django.test import TestCase
 from django.core.urlresolvers import reverse
@@ -62,6 +59,9 @@ class TestFilterRecords(MyReportsTestCase):
 
     def setUp(self):
         super(TestFilterRecords, self).setUp()
+        self.client = TestClient(path='/reports/ajax/mypartners',
+                                 HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.client.login_user(self.user)
 
         ContactRecordFactory.create_batch(10, partner=self.partner,
                                           contact_name='Joe Shmoe')
@@ -69,19 +69,17 @@ class TestFilterRecords(MyReportsTestCase):
     def test_restricted_to_ajax(self):
         """View should only be reachable through AJAX."""
 
-        response = self.client.post(
-            reverse('filter_records',
-                    kwargs={'app': 'mypartners', 'model': 'partner'}))
+        self.client.path += '/partner'
+        self.client.defaults.pop('HTTP_X_REQUESTED_WITH')
+        response = self.client.post()
 
         self.assertEqual(response.status_code, 404)
 
     def test_restricted_to_post(self):
         """GET requests should raise a 404."""
 
-        response = self.client.get(
-            reverse('filter_records',
-                    kwargs={'app': 'mypartners', 'model': 'partner'}),
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.client.path += '/partner'
+        response = self.client.get()
 
         self.assertEqual(response.status_code, 404)
 
@@ -91,11 +89,8 @@ class TestFilterRecords(MyReportsTestCase):
         # records to be filtered out
         ContactRecordFactory.create_batch(10, contact_name='John Doe')
 
-        response = self.client.post(
-            reverse('filter_records',
-                    kwargs={'app': 'mypartners', 'model': 'contactrecord'}),
-            {'contact_name': 'Joe Shmoe'},
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.client.path += '/contactrecord'
+        response = self.client.post(data={'contact_name': 'Joe Shmoe'})
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
@@ -108,10 +103,8 @@ class TestFilterRecords(MyReportsTestCase):
         partner = PartnerFactory(name="Wrong Partner")
         ContactRecordFactory.create_batch(10, partner=partner)
 
-        response = self.client.post(
-            reverse('filter_records',
-                    kwargs={'app': 'mypartners', 'model': 'contactrecord'}),
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.client.path += '/contactrecord'
+        response = self.client.post()
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
@@ -121,14 +114,10 @@ class TestFilterRecords(MyReportsTestCase):
         """Test the ability to filter by partner."""
 
         # we already have one because of self.partner
-        PartnerFactory.create_batch(9, name="Test Partner",
-                                    owner=self.company)
+        PartnerFactory.create_batch(9, name="Test Partner", owner=self.company)
 
-        response = self.client.post(
-            reverse('filter_records',
-                    kwargs={'app': 'mypartners', 'model': 'partner'}),
-            {'name': 'Test Partner'},
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.client.path += '/partner'
+        response = self.client.post(data={'name': 'Test Partner'})
         output = json.loads(response.content)
 
         # ContactRecordFactory creates 10 partners in setUp
@@ -140,11 +129,8 @@ class TestFilterRecords(MyReportsTestCase):
 
         ContactFactory.create_batch(10, partner__owner=self.company)
 
-        response = self.client.post(
-            reverse('filter_records',
-                    kwargs={'app': 'mypartners', 'model': 'partner'}),
-            {'contact': range(1, 6)},
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.client.path += '/partner'
+        response = self.client.post(data={'contact': range(1, 6)})
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
@@ -153,18 +139,13 @@ class TestFilterRecords(MyReportsTestCase):
     def test_filtering_on_contact(self):
         """Test the ability to filter by contact."""
 
-        ContactFactory.create_batch(10, name="Jane Doe",
-                                    partner=self.partner)
+        ContactFactory.create_batch(10, name="Jen Doe", partner=self.partner)
 
         # contacts with the wrong name
-        ContactFactory.create_batch(10, name="Jane Smith",
-                                    partner=self.partner)
+        ContactFactory.create_batch(10, name="Jen Smith", partner=self.partner)
 
-        response = self.client.post(
-            reverse('filter_records',
-                    kwargs={'app': 'mypartners', 'model': 'contact'}),
-            {'name': 'Jane Doe'},
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.client.path += '/contact'
+        response = self.client.post(data={'name': 'Jen Doe'})
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
@@ -174,32 +155,26 @@ class TestFilterRecords(MyReportsTestCase):
         """Tests that filtering by state works."""
 
         indiana = LocationFactory(state="IN")
-        ContactFactory.create_batch(10, name="Jane Doe", partner=self.partner, 
+        ContactFactory.create_batch(10, name="Jen Doe", partner=self.partner,
                                     locations=[indiana])
 
-        response = self.client.post(
-            reverse('filter_records',
-                    kwargs={'app': 'mypartners', 'model': 'contact'}),
-            {'state': 'IN'},
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.client.path += '/contact'
+        response = self.client.post(data={'state': 'IN'})
         output = json.loads(response.content)
-        
+
         self.assertEqual(len(output['records']), 10)
 
     def test_filter_by_city(self):
         """Tests that filtering by city works."""
 
         indianapolis = LocationFactory(city="Indianapolis")
-        ContactFactory.create_batch(10, name="Jane Doe", partner=self.partner,
+        ContactFactory.create_batch(10, name="Jen Doe", partner=self.partner,
                                     locations=[indianapolis])
 
-        response = self.client.post(
-            reverse('filter_records',
-                    kwargs={'app': 'mypartners', 'model': 'contact'}),
-            {'city': 'indianapolis'},
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.client.path += '/contact'
+        response = self.client.post(data={'city': 'indianapolis'})
         output = json.loads(response.content)
-        
+
         self.assertEqual(len(output['records']), 10)
 
     def test_order_by(self):
@@ -210,11 +185,8 @@ class TestFilterRecords(MyReportsTestCase):
         PartnerFactory.create_batch(10, owner=self.company, name="New Partner")
         PartnerFactory.create_batch(10, owner=self.company)
 
-        response = self.client.post(
-            reverse('filter_records',
-                    kwargs={'app': 'mypartners', 'model': 'partner'}),
-            {'order_by': 'name'},
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.client.path += '/partner'
+        response = self.client.post(data={'order_by': 'name'})
         output = json.loads(response.content)
         records = output['records']
 
@@ -227,22 +199,21 @@ class TestFilterRecords(MyReportsTestCase):
         """
         ContactRecordFactory.create_batch(10, partner=self.partner)
 
-        url = reverse('filter_records',
-                      kwargs={'app': 'mypartners', 'model': 'contactrecord'})
-        kwargs = {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'}
+        self.client.path += '/contactrecord'
 
         # this request should not be cached
-        response = self.client.post(url, **kwargs)
+        response = self.client.post()
         output = json.loads(response.content)
         self.assertFalse(output['cached'])
 
         # this call should be cached
-        response = self.client.post(url, **kwargs)
+        response = self.client.post()
         output = json.loads(response.content)
         self.assertTrue(output['cached'])
 
         # this call should not be cached as we ignore the cache
-        response = self.client.post(url + '?ignore_cache', **kwargs)
+        self.client.path += '?ignore_cache'
+        response = self.client.post()
         output = json.loads(response.content)
         self.assertFalse(output['cached'])
 
@@ -252,11 +223,8 @@ class TestFilterRecords(MyReportsTestCase):
         annotated as a `Count` for the field passed to count.
         """
 
-        response = self.client.post(
-            reverse('filter_records',
-                    kwargs={'app': 'mypartners', 'model': 'partner'}),
-            {'count': 'contact'},
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.client.path += '/partner'
+        response = self.client.post(data={'count': 'contact'})
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
