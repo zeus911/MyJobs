@@ -1319,6 +1319,10 @@ ul.header-menu > li > ul > a > li:hover {
     padding-left: 4px;
 }
 
+#menu-inbox > div.icon-envelope {
+    margin-left: 3px;
+}
+
 #date-range-list > li:last-child:hover {
     background-color: #f2f2f2;
 }
