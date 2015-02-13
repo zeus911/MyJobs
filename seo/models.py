@@ -28,6 +28,7 @@ from myjobs.models import User
 from mypartners.models import Tag
 from universal.helpers import get_domain, get_object_or_none, has_mx_record
 
+
 import decimal
 
 
@@ -526,21 +527,25 @@ class SeoSite(Site):
         return filter_function(self)
 
     def clear_cache(self):
-        # Increment Configuration revision attribute, which is used
+        self.clear_caches([self])
+
+    @staticmethod
+    def clear_caches(sites):
+        # Increment Configuration revision attributes, which is used
         # when calculating a custom_cache_pages cache key prefix.
         # This will effectively expire the page cache for custom_cache_page
         # views_
-        configs = self.configurations.all()
+        configs = Configuration.objects.filter(seosite__in=sites)
         # https://docs.djangoproject.com/en/dev/topics/db/queries/#query-expressions
         configs.update(revision=models.F('revision') + 1)
-        for config in configs:
-            config.clear_cache()
+        Configuration.clear_caches(configs)
         # Delete domain-based cache entries that don't use the
         # custom_cache_page prefix
-        site_cache_key = '%s:SeoSite' % self.domain
-        buid_cache_key = '%s:buids' % site_cache_key
-        social_cache_key = '%s:social_links' % self.domain
-        cache.delete_many([site_cache_key, buid_cache_key, social_cache_key])
+        site_cache_keys = ['%s:SeoSite' % site.domain for site in sites]
+        buid_cache_keys = ['%s:buids' % key for key in site_cache_keys]
+        social_cache_keys = ['%s:social_links' % key for key in sites]
+        cache.delete_many([site_cache_keys, buid_cache_keys, social_cache_keys])
+
 
     def email_domain_choices(self,):
         from postajob.models import CompanyProfile
@@ -964,14 +969,19 @@ class Configuration(models.Model):
         self.browse_mapped_moc_order = self.browse_moc_order
 
     def clear_cache(self):
+        self.clear_caches([self])
+
+    @staticmethod
+    def clear_caches(configs):
         # Delete all cached configurations used to determine cache key prefixes
         # in directseo.seo.decorators.custom_cache_page because the
         # configuration revision referenced in the key_prefix has changed.
+        sites = SeoSite.objects.filter(configuration__in=configs)
         cache.delete_many(["%s:config:%s" % (domain, self.status) for domain in
-                           self.seosite_set.all().values_list('domain',
-                                                              flat=True)])
+                           sites.values_list('domain', flat=True)])
         cache.delete_many(["jobs_count::%s" % pk for pk in 
-                           self.seosite_set.all().values_list('id', flat=True)])
+                           sites.values_list('id', flat=True)])
+
 
     def save(self, *args, **kwargs):
         # Increment the revision number so a new cache key will be used for urls
@@ -1204,6 +1214,14 @@ class BusinessUnit(models.Model):
     # Assumes that new business units will have support markdown
     enable_markdown = models.BooleanField('Enable Markdown for job '
                                           'descriptions', default=True)
+
+    @staticmethod
+    def clear_cache(buid):
+        sites = SeoSite.objects.filter(businessunits=buid).exclude(site_tags__site_tag='network')
+        SeoSite.clear_caches(sites)
+
+    def save(self, *args, **kwargs):
+        super(BusinessUnit, self).save(*args, **kwargs)
 
 
 class Country(models.Model):

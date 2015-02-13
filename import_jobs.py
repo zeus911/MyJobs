@@ -19,6 +19,7 @@ from seo_pysolr import Solr
 from xmlparse import DEv2JobFeed
 from seo.helpers import slices, create_businessunit
 from seo.models import BusinessUnit, Company
+import tasks
 from transform import hr_xml_to_json, make_redirect
 
 
@@ -59,6 +60,8 @@ def update_job_source(guid, buid, name):
     bu.associated_jobs = len(jobs)
     bu.date_updated = datetime.datetime.utcnow()
     bu.save()
+    # Clear cache in 20 minutes
+    tasks.task_clear_bu_cache.delay(buid=bu.id, countdown=1500)
 
 
 def filter_current_jobs(jobs):
@@ -362,6 +365,7 @@ def update_solr(buid, download=True, force=True, set_title=False,
                                          updated=updated)
     bu.associated_jobs = len(jobs)
     bu.save()
+    tasks.task_clear_bu_cache.delay(buid=bu.id, countdown=1500)
     #Update the Django database to reflect company additions and name changes
     add_company(bu)
     if delete_feed:

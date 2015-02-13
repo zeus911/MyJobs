@@ -21,7 +21,7 @@ from django.core.urlresolvers import reverse_lazy
 from django.template.loader import render_to_string
 from django.db.models import Q
 
-from seo.models import Company, SeoSite
+from seo.models import Company, SeoSite, BusinessUnit
 from myjobs.models import EmailLog, User, STOP_SENDING, BAD_EMAIL
 from mymessages.models import Message
 from mysearches.models import SavedSearch, SavedSearchDigest
@@ -676,6 +676,13 @@ def expire_jobs():
         # Saving will trigger job.add_to_solr().
         job.save()
 
+
+@task(name="tasks.task_clear_cache", acks_late=True, ignore_results=True)
+def task_clear_bu_cache(buid, **kwargs):
+    try:
+        BusinessUnit.clear_cache(buid)
+    except:
+        logging.error(traceback.format_exc(sys.exc_info()))
 
 @task(name="tasks.task_update_solr", acks_late=True, ignore_result=True)
 def task_update_solr(jsid, **kwargs):
