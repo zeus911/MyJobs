@@ -173,7 +173,7 @@ CELERY_ROUTES = {
         'routing_key': 'dseo.submit_all_sitemaps'
     },
     'tasks.process_sendgrid_event': {
-        'queue': 'sendgrid_batch',
+        'queue': 'sendgrid',
         'routing_key': 'sendgrid.process_sendgrid_event',
     },
 }
