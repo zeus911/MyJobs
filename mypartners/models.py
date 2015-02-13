@@ -234,12 +234,13 @@ class Contact(models.Model):
             # match state synonyms when querying
             for synonym in states.synonyms[state.strip().lower()]:
                 state_query |= models.Q(
-                    locations__state__iexact=synonym)
+                    locations__state__iregex='\s*'.join(list(synonym)))
 
             records = records.filter(state_query)
 
         if city:
-            records = records.filter(locations__city__icontains=city)
+            records = records.filter(
+                locations__city__iregex='\s*'.join(list(city)))
 
         return records
 
@@ -359,14 +360,14 @@ class Partner(models.Model):
             # match state synonyms when querying
             for synonym in states.synonyms[state.strip().lower()]:
                 state_query |= models.Q(
-                    contact__locations__state__iexact=synonym)
+                    contact__locations__state__iregex='\s*'.join(
+                        list(synonym)))
 
             records = records.filter(state_query)
 
         if city:
-            records = records.filter(contact__locations__city__icontains=city)
-
-        return records
+            records = records.filter(
+                contact__locations__city__iregex='\s*'.join(list(city)))
 
     def __unicode__(self):
         return self.name
