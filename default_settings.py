@@ -125,6 +125,9 @@ CELERY_QUEUES = {
     },
     'myjobs': {
         'binding_key': 'myjobs.#'
+    },
+    'sendgrid': {
+        'binding_key': 'sendgrid.#'
     }
 }
 CELERY_ROUTES = {
@@ -171,7 +174,7 @@ CELERY_ROUTES = {
     },
     'tasks.process_sendgrid_event': {
         'queue': 'sendgrid_batch',
-        'routing_key': 'myjobs.process_sendgrid_event',
+        'routing_key': 'sendgrid.process_sendgrid_event',
     },
 }
 CELERYBEAT_SCHEDULE = {
