@@ -168,7 +168,11 @@ CELERY_ROUTES = {
     'tasks.submit_all_sitemaps': {
         'queue': 'myjobs',
         'routing_key': 'dseo.submit_all_sitemaps'
-    }
+    },
+    'tasks.process_sendgrid_event': {
+        'queue': 'sendgrid_batch',
+        'routing_key': 'myjobs.process_sendgrid_event',
+    },
 }
 CELERYBEAT_SCHEDULE = {
     'weekly-partner-library-update': {
