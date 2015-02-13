@@ -171,7 +171,7 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
         for partner in partners:
             self.assertEqual(partner.city, 'Beaumont')
 
-    def test_city_state_with_whitespace(self):
+    def test_location_with_whitespace(self):
         """
         Tests that filtering on Partner when a user has added extra whitespace
         to a city and state properly ignores that space.

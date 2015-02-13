@@ -76,7 +76,7 @@ class SearchParameterQuerySet(models.query.QuerySet):
             self = self.all()
 
         # fetch related models in one query
-        self = self.select_related()
+        self = self.prefetch_related()
 
         # extract special fields so they aren't traversed later
         if parameters.get('start_date'):
@@ -368,6 +368,8 @@ class Partner(models.Model):
         if city:
             records = records.filter(
                 contact__locations__city__iregex='\s*'.join(list(city)))
+
+        return records
 
     def __unicode__(self):
         return self.name
