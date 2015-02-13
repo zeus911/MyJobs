@@ -2,7 +2,6 @@ import base64
 import datetime
 import json
 import logging
-import sys
 import urllib2
 from urlparse import urlparse
 import uuid
@@ -20,19 +19,18 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
 from captcha.fields import ReCaptchaField
-import newrelic.agent
 
 from universal.helpers import get_domain
 from myjobs.decorators import user_is_allowed
 from myjobs.forms import ChangePasswordForm, EditCommunicationForm
 from myjobs.helpers import expire_login, log_to_jira, get_title_template
-from myjobs.models import EmailLog, Ticket, User, FAQ, CustomHomepage, BAD_EMAIL
+from myjobs.models import Ticket, User, FAQ, CustomHomepage
 from myprofile.forms import (InitialNameForm, InitialEducationForm,
                              InitialAddressForm, InitialPhoneForm,
                              InitialWorkForm)
 from myprofile.models import ProfileUnits, Name
-from mysearches.models import SavedSearchLog
 from registration.forms import RegistrationForm, CustomAuthForm
+from tasks import process_sendgrid_event
 
 logger = logging.getLogger('__name__')
 
@@ -400,7 +398,6 @@ def batch_message_digest(request):
     2) or as well formed JSON (Version 3)
 
     """
-    newrelic.agent.add_custom_parameter('body', request.body)
     if 'HTTP_AUTHORIZATION' in request.META:
         method, details = request.META['HTTP_AUTHORIZATION'].split()
         if method.lower() == 'basic':
@@ -409,86 +406,12 @@ def batch_message_digest(request):
             login_info = base64.b64decode(details).split(':')
             if len(login_info) == 2:
                 login_info[0] = urllib2.unquote(login_info[0])
-                user = authenticate(email=login_info[0],
-                                    password=login_info[1])
-                target_user = User.objects.get(email='accounts@my.jobs')
-                if user is not None and user == target_user:
-                    events = request.body
-                    try:
-                        # try parsing post data as json
-                        event_list = json.loads(events)
-                    except ValueError, e:  # nope, it's V1 or V2
-                        event_list = []
-                        events = events.splitlines()
-                        for event_str in events:
-                            if event_str == '':
-                                continue
-                            # nested try :/ -need to catch json exceptions
-                            try:
-                                event_list.append(json.loads(event_str))
-                            except ValueError:  # Bad json
-                                newrelic.agent.record_exception(
-                                    *sys.exc_info())
-                                return HttpResponse(status=200)
-                    except Exception:
-                        newrelic.agent.record_exception(*sys.exc_info())
-                        return HttpResponse(status=200)
-                    else:
-                        # If only one event was posted, this could be any
-                        # version of the api; event_list will be a list of
-                        # dicts if using V3 but will be a dict for V1 and V2.
-                        if type(event_list) != list:
-                            event_list = [event_list]
-                    to_create = []
-                    for event in event_list:
-                        category = event.get('category', '')
-                        email_log_args = {
-                            'email': event['email'], 'event': event['event'],
-                            'received': datetime.date.fromtimestamp(
-                                float(event['timestamp'])),
-                            'category': category,
-                            # Events can have a response (delivered, deferred),
-                            # a reason (bounce, block), or neither, but never
-                            # both.
-                            'reason': event.get('response',
-                                                event.get('reason', ''))
-                        }
-                        if event['event'] == 'bounce' and \
-                                category == 'My.jobs email redirect':
-                            subject = 'My.jobs email redirect failure'
-                            body = """
-                                   Contact: %s
-                                   Type: %s
-                                   Reason: %s
-                                   Status: %s
-                                   """ % (event['email'], event['type'],
-                                          event['reason'], event['status'])
-                            issue_dict = {
-                                'summary': 'Redirect email failure',
-                                'description': body,
-                                'issuetype': {'name': 'Bug'}
-                            }
-                            log_to_jira(subject, body,
-                                        issue_dict, event['email'])
-                        # These categories resemble the following:
-                        # Saved Search Sent (<list of keys>|event_id)
-                        try:
-                            event_id = category.split('|')[-1][:-1]
-                        except AttributeError:
-                            newrelic.agent.record_exception(*sys.exc_info())
-                            return HttpResponse(status=200)
-                        if event_id:
-                            try:
-                                log = SavedSearchLog.objects.get(
-                                    uuid=event_id)
-                                email_log_args['send_log'] = log
-                                if event['event'] not in BAD_EMAIL:
-                                    log.was_received = True
-                                    log.save()
-                            except SavedSearchLog.DoesNotExist:
-                                pass
-                        to_create.append(EmailLog(**email_log_args))
-                    EmailLog.objects.bulk_create(to_create)
+                user, password = login_info
+
+                if (user == settings.SENDGRID_BATCH_POST_USER and
+                        password == settings.SENDGRID_BATCH_POST_PASSWORD):
+
+                    process_sendgrid_event.delay(request.body)
                     return HttpResponse(status=200)
     return HttpResponse(status=403)
 
