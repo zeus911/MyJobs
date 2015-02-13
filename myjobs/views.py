@@ -397,6 +397,8 @@ def batch_message_digest(request):
     of events is a series of JSON strings separated by new lines (Version 1 and
     2) or as well formed JSON (Version 3)
 
+    Creates a celery task that adds these events to the EmailLog.
+
     """
     if 'HTTP_AUTHORIZATION' in request.META:
         method, details = request.META['HTTP_AUTHORIZATION'].split()

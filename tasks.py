@@ -732,7 +732,7 @@ def get_event_list(events):
     Turns a block of json events into a list of events.
 
     :param events: A json encoded group of events.
-    :return: Those events as a list.
+    :return: A list of the events as dictionaries.
     """
 
     try:
@@ -765,6 +765,10 @@ def get_event_list(events):
 
 
 def event_list_to_email_log(event_list):
+    """
+    :param event_list: A list of events, where each event is a dictionary.
+    :return: A list of EmailLog objects.
+    """
     events_to_create = []
     for event in event_list:
         category = event.get('category', '')
