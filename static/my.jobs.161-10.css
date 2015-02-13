@@ -1342,6 +1342,29 @@ ul.header-menu > li > ul > a > li:hover {
     color: green;
 }
 
+.panel {
+    background-color: #F9FAFA;
+    border: 1px solid #E5E5E5;
+    box-sizing: border-box;
+    -webkit-box-shadow: 2px 2px 3px #BBB;
+    -moz-box-shadow: 2px 2px 3px  #BBB;
+    box-shadow: 2px 2px 3px  #BBB;
+    padding: 10px;
+}
+
+.panel h1,
+.panel h2,
+.panel h3,
+.panel h4,
+.panel h5,
+.panel h6 {
+    margin: 0;
+}
+
+.row + .row-add-margin {
+    margin-top: 20px;
+}
+
 
 /* Sort by field in saved search save/edit */
 #saved-search-form label[for^='id_sort_by'],

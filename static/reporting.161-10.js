@@ -12,6 +12,95 @@ var Report = function(types) {
     this.generate_sidebar();
 };
 
+Report.prototype.bind_event = function() {
+    var report = this;
+    $(document).on("click", "#next:not(.disabled)", function(e) {
+        e.preventDefault();
+        report.current_page().save_data();
+        report.next_page();
+    });
+
+    $(document).on("click", "#back", function(e) {
+        e.preventDefault();
+        report.previous_page();
+    });
+
+    $(document).on("click", "#submit_report", function(e) {
+        e.preventDefault();
+        report.current_page().save_data();
+        report.submit_report();
+    });
+
+    // All partner/contact checkbox logic
+    $(document).on("click", "input[type='checkbox']#all", function(e) {
+        var all_checkboxes = $("#content input:not(#all)"),
+            next_btn = $("#next");
+        // if #all is checked onclick
+        if($(this).is(":checked")) {
+            // turn all checks on
+            $(all_checkboxes).each(function(element) {
+                $(all_checkboxes[element]).prop("checked", true);
+            });
+
+            // remove disabled on next button if it is disabled
+            if($(next_btn).hasClass("disabled")) {
+                $(next_btn).removeClass("disabled");
+            }
+        } else {
+            // turn all checks off
+            $(all_checkboxes).each(function(element) {
+               $(all_checkboxes[element]).prop("checked", false);
+            });
+            // disable next button
+            $("#next").addClass("disabled");
+        }
+    });
+
+    // The other checkboxes
+    $(document).on("click", "input[type='checkbox']:not(#all)", function(e) {
+        var all_checkboxes = $("#content input:not(#all)"),
+            all_are_checked = true,
+            all_are_not_checked = true,
+            next_btn = $("#next");
+        $(all_checkboxes).each(function(element) {
+            // Check to see if all checkboxes are checked
+            if(!$(all_checkboxes[element]).is(":checked")){
+                all_are_checked = false;
+                // exit .each function. Mimics break
+                return false;
+            }
+        });
+        var all_checkbox = $("#content input#all"); // the all partner/contact checkbox
+        if(all_are_checked === false)
+            $(all_checkbox).prop("checked", false);
+        else
+            $(all_checkbox).prop("checked", true);
+
+        // disabling next button logic
+        if($(this).is(":checked")) {
+            if($(next_btn).hasClass("disabled")) {
+                $(next_btn).removeClass("disabled");
+            }
+        } else {
+            if(all_are_checked === false) {
+                $(all_checkboxes).each(function(element) {
+                    if($(all_checkboxes[element]).is(":checked")){
+                        all_are_not_checked = false;
+                        // exit .each function. Mimics break
+                        return false;
+                    }
+                });
+                if(all_are_not_checked == true) {
+                    $("#next").addClass("disabled");
+                } else {
+                    if($(next_btn).hasClass("disabled")) {
+                        $(next_btn).removeClass("disabled");
+                    }
+                }
+            }
+        }
+    });
+};
 
 // Generates a list of Page objects based on report types.
 // Different virtual reports go here.
@@ -47,7 +136,6 @@ Report.prototype.current_page = function() {
     return this.pages[0];
 };
 
-
 // Can be called to load the current page independently from
 // next/prev page calls. See Report.prototype.current_page to see
 // how current page is found.
@@ -81,7 +169,6 @@ Report.prototype.load_active_page = function(filters) {
         }
     });
 };
-
 
 // Move active status to the next page in Report.pages.
 // Adds extra filtering if needed, calls load_active_page,
@@ -140,6 +227,11 @@ Report.prototype.previous_page = function() {
 Report.prototype.generate_sidebar = function() {
     var sidebar_content = $("#sidebar-content"),
         ul = $("<ul></ul>");
+    // Generate top heading
+    // TODO: Make "PRM Report" programmatic
+    sidebar_content.prepend($("<h2 class=\"top\">PRM Report</h2>"));
+    // Generate step 1, selecting a topic.
+    ul.append($("<li><i class=\"fa fa-check success\"></i>Select topic(s)</li>"));
     for(var page in this.pages) {
         var li = $("<li id=\"step-"+ page +"\"></li>"), // <li></li>
             i; // <i></i>
@@ -322,7 +414,7 @@ FilterPage.prototype.load_data = function() {
 $(document).ready(function() {
     // Simulate page 1 (page 1 is where the user selects what types of reporting)
     var report = new Report(["PRM"]);
-    report.load_active_page();
+    //report.load_active_page();
 
     $(document).on("click", ".datepicker",function(e) {
        $(this).pickadate({
@@ -344,91 +436,10 @@ $(document).ready(function() {
        });
     });
 
-    $(document).on("click", "#next:not(.disabled)", function(e) {
+    $(document).on("click", "#start-report", function(e) {
         e.preventDefault();
-        report.current_page().save_data();
-        report.next_page();
-    });
-
-    $(document).on("click", "#back", function(e) {
-        e.preventDefault();
-        report.previous_page();
-    });
-
-    $(document).on("click", "#submit_report", function(e) {
-        e.preventDefault();
-        report.current_page().save_data();
-        report.submit_report();
-    });
-
-    // All partner/contact checkbox logic
-    $(document).on("click", "input[type='checkbox']#all", function(e) {
-        var all_checkboxes = $("#content input:not(#all)"),
-            next_btn = $("#next");
-        // if #all is checked onclick
-        if($(this).is(":checked")) {
-            // turn all checks on
-            $(all_checkboxes).each(function(element) {
-                $(all_checkboxes[element]).prop("checked", true);
-            });
-
-            // remove disabled on next button if it is disabled
-            if($(next_btn).hasClass("disabled")) {
-                $(next_btn).removeClass("disabled");
-            }
-        } else {
-            // turn all checks off
-            $(all_checkboxes).each(function(element) {
-               $(all_checkboxes[element]).prop("checked", false);
-            });
-            // disable next button
-            $("#next").addClass("disabled");
-        }
-    });
-
-    // The other checkboxes
-    $(document).on("click", "input[type='checkbox']:not(#all)", function(e) {
-        var all_checkboxes = $("#content input:not(#all)"),
-            all_are_checked = true,
-            all_are_not_checked = true,
-            next_btn = $("#next");
-        $(all_checkboxes).each(function(element) {
-            // Check to see if all checkboxes are checked
-            if(!$(all_checkboxes[element]).is(":checked")){
-                all_are_checked = false;
-                // exit .each function. Mimics break
-                return false;
-            }
-        });
-        var all_checkbox = $("#content input#all"); // the all partner/contact checkbox
-        if(all_are_checked === false)
-            $(all_checkbox).prop("checked", false);
-        else
-            $(all_checkbox).prop("checked", true);
-
-        // disabling next button logic
-        if($(this).is(":checked")) {
-            if($(next_btn).hasClass("disabled")) {
-                $(next_btn).removeClass("disabled");
-            }
-        } else {
-            if(all_are_checked === false) {
-                $(all_checkboxes).each(function(element) {
-                    if($(all_checkboxes[element]).is(":checked")){
-                        all_are_not_checked = false;
-                        // exit .each function. Mimics break
-                        return false;
-                    }
-                });
-                if(all_are_not_checked == true) {
-                    $("#next").addClass("disabled");
-                } else {
-                    if($(next_btn).hasClass("disabled")) {
-                        $(next_btn).removeClass("disabled");
-                    }
-                }
-            }
-        }
+        var report = new Report();
+        report.bind_events();
     });
 });
 

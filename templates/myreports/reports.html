@@ -9,13 +9,41 @@
 {% block content %}
 <div class="row">
     <div class="span12">
-        <input type="checkbox" value="PRM-report" checked/> PRM
+        <h1>Reports</h1>
     </div>
 </div>
 <div class="row">
     <div id="content" class="span8">
+        <div class="row">
+            <div id="" class="span8 panel">
+                <h2>Create a new Report</h2>
+                <input type="checkbox" value="PRM"> PRM
+                <input type="checkbox" value="compliance"> Compliance
+                <input type="checkbox" value="report3"> Report Type 3
+                <input type="checkbox" value="report4"> Report Type 4
+                <div class="clearfix"></div>
+                <a id="start-report" class="btn">Next</a>
+            </div>
+        </div>
+        <div class="row row-add-margin">
+            <div class="span4 panel">
+                <h2>Common Reports</h2>
+                {% for report in common_reports %}
+                {% empty %}
+                No common reports
+                {% endfor %}
+            </div>
+            <div class="span4 panel">
+                <h2>Recent Reports</h2>
+                {% for report in recent_reports %}
+                {% empty %}
+                No recent reports
+                {% endfor %}
+            </div>
+        </div>
+
     </div>
-    <div class="span4">
+    <div class="span4 mobile_hide">
         {% include "myreports/includes/report-sidebar.html" %}
     </div>
 </div>
