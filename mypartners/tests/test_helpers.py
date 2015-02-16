@@ -188,7 +188,7 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
         from mypartners.models import Partner
         self.fail("partners: {0}\nstatus: {1}\ncontext:{2}".format(
             Partner.objects.all(), response.status_code,
-            request.context.keys()))
+            response.context.keys()))
         self.assertEqual(response.status_code, 200)
 
         # check that we in fact return partners whos contact's location is the
