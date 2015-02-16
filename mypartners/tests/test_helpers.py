@@ -177,7 +177,7 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
         to a city and state properly ignores that space.
         """
         location = LocationFactory(city=" Alberson            ",
-                                   state="        New           York")
+                                   state="        New          York")
         partner = PartnerFactory(owner=self.company)
         ContactFactory(partner=partner, locations=[location])
 
