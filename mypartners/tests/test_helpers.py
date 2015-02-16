@@ -186,7 +186,7 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
             {'city': 'Alberson', 'state': 'New York'})
 
         self.fail("partners: {0}\nstatus: {1}".format(
-            Partner.objects.all(), response.status_code)
+            Partner.objects.all(), response.status_code))
         self.assertEqual(response.status_code, 200)
 
         # check that we in fact return partners whos contact's location is the
