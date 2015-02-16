@@ -185,6 +185,7 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
             '/prm/view',
             {'city': 'Alberson', 'state': 'New York'})
 
+        from mypartners.models import Partner
         self.fail("partners: {0}\nstatus: {1}".format(
             Partner.objects.all(), response.status_code))
         self.assertEqual(response.status_code, 200)
