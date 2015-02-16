@@ -181,14 +181,9 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
         partner = PartnerFactory(owner=self.company)
         ContactFactory(partner=partner, locations=[location])
 
-        response = self.client.post(
+        response = self.client.get(
             '/prm/view',
             {'city': 'Alberson', 'state': 'New York'})
-
-        from mypartners.models import Partner
-        self.fail("has_partners?: {}\npartners: {}".format(
-            response.context["has_partners"], response.context["partners"}))
-        self.assertEqual(response.status_code, 200)
 
         # check that we in fact return partners whos contact's location is the
         # mangled location above
