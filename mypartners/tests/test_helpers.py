@@ -183,20 +183,8 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
 
         response = self.client.get(
             '/prm/view',
-            {'company': self.company,
+            {'company': self.company.id,
              'city': 'Alberson', 'state': 'New York'})
-
-        from mypartners.models import Partner
-        self.fail("""\
-            
-            company_name: {}
-            partner_companies: {}
-            partners: {}
-            has_partners: {}
-            """.format(response.context['company_name'],
-                       Partner.objects.values_list('owner__name', flat=True),
-                       response.context['partners'],
-                       response.context['has_partners']))
 
         # check that we in fact return partners whos contact's location is the
         # mangled location above
