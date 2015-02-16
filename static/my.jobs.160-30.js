@@ -60,7 +60,7 @@ $(document).ready(function(){
         contactForm();
     });
 
-    $('[class*=mymessage-]').click(function(){
+    $(document).on('click', '[class*=mymessage-read-]', function(){
         readMessage(this);
     });
 
@@ -86,18 +86,22 @@ $(document).ready(function(){
 });
 
 function readMessage(button){
-    var message_box = $(button);
-    var name = $(button).attr('class').split(' ').pop();
-    var data = "name="+name;
+    var message_box = $(button),
+        name = message_box.attr('class').split(' ').pop(),
+        data = "name="+name;
     $.ajax({
         type: 'GET',
         url: '/message/',
         data: data,
         dataType: 'json',
         success: function(data) {
-            message_box.parent().hide();
+            if (typeof on_read === "undefined") {
+                message_box.parent().hide();
+            } else {
+                on_read(message_box);
+            }
         }
-    })
+    });
 }
 
 function clearForm(form) {
