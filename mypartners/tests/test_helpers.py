@@ -181,14 +181,18 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
         partner = PartnerFactory(owner=self.company)
         ContactFactory(partner=partner, locations=[location])
 
-        response = self.client.get(
-            '/prm/view',
-            {'company': self.company.id,
-             'city': 'Alberson', 'state': 'New York'})
+        request = self.request_factory.get(
+            'prm/view/', dict(
+                company=self.company.id,
+                city='Alberson',
+                state='New York'))
+        request.user = self.staff_user
+        
+        partners = helpers.filter_partners(request)
 
         # check that we in fact return partners whos contact's location is the
         # mangled location above
-        for partner in response.context['partners'].object_list:
+        for partner in partners:
             cities = partner.contact_set.values_list(
                 'locations__city', flat=True)
             self.assertIn(location.city, cities)
