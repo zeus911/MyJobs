@@ -28,12 +28,10 @@ class MessageTests(MyJobsBase):
         self.assertGreaterEqual(m, 1)
 
     def test_message_made_sent_to_multiple(self):
-        m = int(Message.objects.all().count())
-        UserFactory(email="Best@best.com")
-        n_u = User.objects.get(email="Best@best.com")
+        m = Message.objects.all().count()
+        n_u = UserFactory(email="Best@best.com")
         n_u.groups.add(Group.objects.get(id=1).pk)
-        n_u.save()
-        n_u.messages_unread()
+        n_u.claim_messages()
         message_info = MessageInfo.objects.all().count()
         self.assertGreaterEqual(m, 1)
         self.assertGreaterEqual(message_info, 2)
@@ -82,7 +80,9 @@ class MessageManagerTests(MyJobsBase):
             subject='subject', body='message body',
             groups=Group.objects.all())
 
-        infos = self.user.messages_unread()
+        self.user.claim_messages()
+
+        infos = self.user.messageinfo_set.all()
         self.assertEqual(len(infos), 1)
         self.assertEqual(infos[0].message, message)
 
@@ -101,7 +101,9 @@ class MessageManagerTests(MyJobsBase):
             users=new_user, subject='subject', body='message body',
             groups=Group.objects.get(pk=1))
 
-        get_messages = lambda u: [info.message for info in u.messages_unread()]
+        [user.claim_messages() for user in [new_user, self.user]]
+        get_messages = lambda u: list(u.message_set.all())
+
         group_user_messages = get_messages(self.user)
         new_user_messages = get_messages(new_user)
 
@@ -115,5 +117,6 @@ class MessageManagerTests(MyJobsBase):
             groups=Group.objects.get(pk=1), expires=False)
 
         self.assertTrue(message.expire_at is None)
-        info = self.user.messages_unread()[0]
+        self.user.claim_messages()
+        info = self.user.messageinfo_set.first()
         self.assertFalse(info.expired_time())

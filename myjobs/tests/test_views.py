@@ -781,7 +781,7 @@ class MyJobsViewsTests(MyJobsBase):
         creator = UserFactory(id=3, email='normal@user.com')
 
         # should not have any messages
-        self.assertFalse(creator.messages_unread())
+        self.assertFalse(creator.message_set.all())
 
         PartnerSavedSearch.objects.create(user=self.user, provider=company,
                                           created_by=creator,
@@ -794,7 +794,7 @@ class MyJobsViewsTests(MyJobsBase):
         self.client.get(reverse('unsubscribe_all'))
 
         # creator should have a My.jobs message and email
-        for body in [creator.messages_unread()[0].message.body,
+        for body in [creator.message_set.first().body,
                      mail.outbox[0].body]: 
             self.assertIn(self.user.email, body)
             self.assertIn('unsubscribed from one or more saved search emails', 
@@ -816,7 +816,7 @@ class MyJobsViewsTests(MyJobsBase):
         creator = UserFactory(id=3, email='normal@user.com')
 
         # should not have any messages
-        self.assertFalse(creator.messages_unread())
+        self.assertFalse(creator.message_set.all())
 
         PartnerSavedSearch.objects.create(user=self.user, provider=company,
                                           created_by=creator,
@@ -825,7 +825,7 @@ class MyJobsViewsTests(MyJobsBase):
         self.client.get(reverse('unsubscribe_all'))
 
         # creator should have a My.jobs message and email
-        for body in [creator.messages_unread()[0].message.body,
+        for body in [creator.message_set.first().body,
                      mail.outbox[0].body]: 
             self.assertIn(self.user.email, body)
             self.assertIn('unsubscribed from one or more saved search emails', 

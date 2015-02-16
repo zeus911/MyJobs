@@ -23,7 +23,7 @@ class TaskTests(MyJobsBase):
             self.assertEqual(u.is_verified, event in STOP_SENDING)
             self.assertFalse(u.opt_in_myjobs)
 
-            infos = u.messages_unread()
+            infos = u.messageinfo_set.all()
             self.assertEqual(len(infos), 1)
             message = infos[0].message
 

@@ -139,15 +139,6 @@ def get_nonuser_gravatar(email, size=20):
         return ''
 
 
-@register.filter(name='get_messages')
-def get_messages(user):
-    """
-    Gets messages associated to the users that are marked as not read.
-    """
-
-    return user.messages_unread()
-
-
 @register.assignment_tag(takes_context=True)
 def get_ms_name(context):
     """
