@@ -185,6 +185,14 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
             '/prm/view',
             {'city': 'Alberson', 'state': 'New York'})
 
+        self.fail("""\
+            
+            company_name: {}
+            partners: {}
+            has_partners: {}
+            partner_ct: {}""".format(*[response.context[key] for key in
+                'company_name', 'partners', 'has_partners', 'partner_ct']))
+
         # check that we in fact return partners whos contact's location is the
         # mangled location above
         for partner in response.context['partners'].object_list:
