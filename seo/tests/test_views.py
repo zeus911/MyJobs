@@ -737,6 +737,9 @@ class SeoSiteTestCase(DirectSEOTestCase):
         null search results - Ticket MS-378
 
         """
+        base_search_fields = deepcopy(helpers.search_fields)
+        helpers.search_fields = helpers.search_fields + ['onet', 'moc']
+
         moc_id = "4105"
         moc_code = "1343"
 
@@ -862,6 +865,9 @@ class SeoSiteTestCase(DirectSEOTestCase):
         self.assertTrue(len(resp.context['default_jobs']) == 1)
         self.assertIn(custom_onet.code,
                       resp.context['default_jobs'][0].onet)
+
+        helpers.search_fields = base_search_fields
+
 
 class TemplateTestCase(DirectSEOTestCase):
     fixtures = ['seo_views_testdata.json']
@@ -1884,6 +1890,9 @@ class SeoViewsTestCase(DirectSEOTestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_moc_search_results(self):
+        base_search_fields = deepcopy(helpers.search_fields)
+        helpers.search_fields = helpers.search_fields + ['onet', 'moc']
+
         onetcode = "11904100"
         onettitle = "Engineering Managers"
         onet2code = "13209901"
@@ -1927,6 +1936,8 @@ class SeoViewsTestCase(DirectSEOTestCase):
         self.assertTrue(len(resp.context['default_jobs']) == 1)
         self.assertIn(onet2code, str(resp.context['default_jobs'][0].onet))
         self.assertEqual(resp.status_code, 200)
+
+        helpers.search_fields = base_search_fields
 
     def test_moc_ac(self):
         """Test the autocomplete for the MOC search box."""

@@ -36,6 +36,14 @@ sort_order_mapper = {
 }
 sort_fields = ['relevance', 'date']
 
+search_fields = ['company', 'title', 'city', 'state', 'country',
+                 'date_updated', 'link', 'apply_info', 'highlighted',
+                 'company_enhanced', 'company_slab', 'country_short',
+                 'state_short', 'text', 'company_canonical_microsite',
+                 'html_description', 'date_new', 'django_ct', 'uid',
+                 'guid', 'django_id', 'id', 'score', 'title_exact',
+                 'company_exact', 'location_exact', 'location']
+
 
 def standard_facets_by_name_slug(name_slugs):
     custom_facets = settings.STANDARD_FACET
@@ -520,7 +528,7 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
         sqs = DESearchQuerySet()
     sqs = sqs_apply_custom_facets(custom_facets, sqs, exclude_facets)
     sqs = _sqs_narrow_by_buid_and_site_package(sqs, buids=jsids)
-
+    sqs = sqs.fields(search_fields)
 
     sqs = sqs.order_by(sort_order_mapper.get(sort_order, '-score'))
 
