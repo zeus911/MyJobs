@@ -33,6 +33,8 @@ class MessageTests(MyJobsBase):
         user.claim_messages()
         self.assertEqual(Message.objects.count(), 1)
         self.assertEqual(MessageInfo.objects.count(), 2)
+        self.assertEqual(self.message,
+                         self.user.messageinfo_set.get().message)
 
     def test_message_unread_default(self):
         m = self.messageInfo
