@@ -36,36 +36,12 @@
         </small>
     </div>
     {% endif %}
-    <div class="partner-tags">
-        {% if on_page == 'prm' %}
-            {% for tag in partner.get_all_tags %}
-                <span class="tag-name small" style="background-color: #{{tag.hex_color}}">{{ tag.name }}</span>
-            {% endfor %}
-        {% elif on_page == 'partner_library' %}
-
-            {% if partner.is_veteran %}
-                <div class="partner-tag veteran">Veteran</div>
-            {% endif %}
-            {% if partner.is_female %}
-                <div class="partner-tag female">Female</div>
-            {% endif %}
-            {% if partner.is_minority %}
-                <div class="partner-tag minority">Minority</div>
-            {% endif %}
-            {% if partner.is_disabled %}
-                <div class="partner-tag disabled">Disability</div>
-            {% endif %}
-            {% if partner.is_disabled_veteran %}
-                <div class="partner-tag disabled-veteran">Disabled Veteran</div>
-            {% endif %}
-
-        {% endif %}
-    </div>
     <div class="product-details">
         {% if on_page == 'prm' %}
 
         {% if partner.primary_contact %}
         {% if partner.primary_contact.name %}
+        <i class="icon icon-user icon-black" alt="primary contact"></i>
         {{ partner.primary_contact.name }}
         {% if partner.primary_contact.email %}
         <span class="details-subtext">({{ partner.primary_contact.email }})</span>
@@ -94,6 +70,40 @@
         {% if partner.phone %}
         <input id="{{partner.id}}-{{partner.phone}}" class="partner-phone" type="hidden" />
         {% endif %}
+        {% endif %}
+    </div>
+    <div class="product-details">
+        {% if on_page == 'prm' and partner.library.data_source %}
+        <i class="icon icon-list-alt icon-black" alt="original import source"></i>
+        {{ partner.library.data_source }}
+        {% elif partner.data_source %}
+        <i class="icon icon-list-alt icon-black" alt="original import source"></i>
+        {{ partner.data_source }}
+        {% endif %}
+    </div>
+    <div class="partner-tags">
+        {% if on_page == 'prm' %}
+            {% for tag in partner.get_all_tags %}
+                <span class="tag-name small" style="background-color: #{{tag.hex_color}}">{{ tag.name }}</span>
+            {% endfor %}
+        {% elif on_page == 'partner_library' %}
+
+            {% if partner.is_veteran %}
+                <div class="partner-tag veteran">Veteran</div>
+            {% endif %}
+            {% if partner.is_female %}
+                <div class="partner-tag female">Female</div>
+            {% endif %}
+            {% if partner.is_minority %}
+                <div class="partner-tag minority">Minority</div>
+            {% endif %}
+            {% if partner.is_disabled %}
+                <div class="partner-tag disabled">Disability</div>
+            {% endif %}
+            {% if partner.is_disabled_veteran %}
+                <div class="partner-tag disabled-veteran">Disabled Veteran</div>
+            {% endif %}
+
         {% endif %}
     </div>
     {% if on_page == 'prm' %}
