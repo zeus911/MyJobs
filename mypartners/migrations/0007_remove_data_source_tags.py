@@ -21,6 +21,7 @@ class Migration(DataMigration):
         # remove tags named after a PartnerLibrary data source
         orm.Tag.objects.filter(name__in=data_source).delete()
 
+
     def backwards(self, orm):
         "Write your backwards methods here."
 
@@ -77,6 +78,7 @@ class Migration(DataMigration):
             'Meta': {'object_name': 'Contact'},
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '255', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'library': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.PartnerLibrary']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'locations': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'contacts'", 'symmetrical': 'False', 'to': u"orm['mypartners.Location']"}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'notes': ('django.db.models.fields.TextField', [], {'max_length': '1000', 'blank': 'True'}),
