@@ -2,7 +2,7 @@
     <div class="big-title">
         {{ contact.name }}
     </div>
-    {% if contact.get_location %}
+    {% if contact.locations.exists %}
     <div class="sub-title">
         {% for location in contact.locations.all %}
             {{ location }}{% if not forloop.last %}; {% endif %}
