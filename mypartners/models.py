@@ -195,6 +195,9 @@ class Contact(models.Model):
     user = models.ForeignKey(User, blank=True, null=True,
                              on_delete=models.SET_NULL)
     partner = models.ForeignKey('Partner')
+    # used if this partner was created by using the partner library
+    library = models.ForeignKey('PartnerLibrary', null=True,
+                                on_delete=models.SET_NULL)
     name = models.CharField(max_length=255, verbose_name='Full Name')
     email = models.EmailField(max_length=255, verbose_name='Email', blank=True)
     phone = models.CharField(max_length=30, verbose_name='Phone', blank=True)

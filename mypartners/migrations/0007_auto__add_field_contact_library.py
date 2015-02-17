@@ -1,24 +1,23 @@
 # -*- coding: utf-8 -*-
 from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import DataMigration
+from south.v2 import SchemaMigration
 from django.db import models
 
-class Migration(DataMigration):
+
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        data_source = PartnerLibrary.objects.values_list(
-            'data_source', flat=True).distinct()
+        # Adding field 'Contact.library'
+        db.add_column(u'mypartners_contact', 'library',
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.PartnerLibrary'], null=True, on_delete=models.SET_NULL),
+                      keep_default=False)
 
-        # mark contacts by the library partner they came from
-        contacts_from_library = orm.Contact.objets.filter(
-            tag__name__in=data_source).update(library=partner__library)
-
-        # remove tags named after a PartnerLibrary data source
-        orm.Tag.objects.filter(name__in=data_source).delete()
 
     def backwards(self, orm):
-        "Write your backwards methods here."
+        # Deleting field 'Contact.library'
+        db.delete_column(u'mypartners_contact', 'library_id')
+
 
     models = {
         u'auth.group': {
@@ -73,6 +72,7 @@ class Migration(DataMigration):
             'Meta': {'object_name': 'Contact'},
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '255', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'library': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.PartnerLibrary']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'locations': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'contacts'", 'symmetrical': 'False', 'to': u"orm['mypartners.Location']"}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'notes': ('django.db.models.fields.TextField', [], {'max_length': '1000', 'blank': 'True'}),
@@ -421,4 +421,3 @@ class Migration(DataMigration):
     }
 
     complete_apps = ['mypartners']
-    symmetrical = True

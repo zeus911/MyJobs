@@ -11,10 +11,10 @@
         {% if contact.email %} {{contact.email}} {% endif %}
         {% if contact.phone %} {% if contact.email %} &#8226; {% endif %} &#9742;{{contact.phone}} {% endif %}
     </div>
-    {% if contact.partner.library %}
+    {% if contact.library %}
     <div class="product-details">
         <i class="icon icon-list-alt icon-black" alt="original import source"></i>
-        {{ contact.partner.library.data_source }}
+        {{ contact.library.data_source }}
     </div>
     {% endif %}
     <div class="partner-tags">
