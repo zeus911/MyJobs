@@ -181,6 +181,7 @@ def to_string(value):
 def get_attr(obj, attr):
     return obj.get(attr)
 
+
 @register.simple_tag
 def paginated_index(index, page, per_page=None):
     """
@@ -200,6 +201,7 @@ def paginated_index(index, page, per_page=None):
     page = int(page or 1) - 1
     index = int(index or 1)
     return page * per_page + index
+
 
 @register.assignment_tag(takes_context=True)
 def gz(context):
