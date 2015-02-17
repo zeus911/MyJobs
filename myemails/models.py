@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth.models import ContentType
 from django.db import models
-from django.template import Template
+from django.template import Template, Context
 
 
 class EmailSection(models.Model):
@@ -17,9 +17,9 @@ class EmailSection(models.Model):
 
 
 class EmailTemplate(models.Model):
-    header = models.ForeignKey('EmailSection')
-    body = models.ForeignKey('EmailSection')
-    footer = models.ForeignKey('EmailSection')
+    header = models.ForeignKey('EmailSection', related_name='header_for')
+    body = models.ForeignKey('EmailSection', related_name='body_for')
+    footer = models.ForeignKey('EmailSection', related_name='footer_for')
 
     @staticmethod
     def build_context(for_object):
@@ -33,7 +33,7 @@ class EmailTemplate(models.Model):
         """
         context = {}
         # TODO: Build context based on object passed to the function.
-        return context
+        return Context(context)
 
     def render(self, for_object):
         """
@@ -43,7 +43,8 @@ class EmailTemplate(models.Model):
         :return: The rendered email.
         """
         context = self.build_context(for_object)
-        template = Template(self.header + self.body + self.footer)
+        template = Template('\n'.join([self.header.content, self.body.content,
+                                       self.footer.content]))
         return template.render(context)
 
 
@@ -51,9 +52,6 @@ class Event(models.Model):
     email_template = models.ForeignKey('EmailTemplate')
     is_active = models.BooleanField(default=True)
     owner = models.ForeignKey('seo.Company')
-
-    model = models.ForeignKey(ContentType)
-    field = models.CharField(max_length=255)
 
     class Meta:
         abstract = True
@@ -70,10 +68,20 @@ class Event(models.Model):
 
 
 class CronEvent(Event):
-    minutes = models.TimeField()
+    model = models.ForeignKey(ContentType, blank=True, null=True)
+    field = models.CharField(max_length=255, blank=True)
+    minutes = models.PositiveIntegerField()
 
     def schedule_task(self, for_object):
-        EmailCronTask.objects.create(
+        """
+        Creates an EmailCronTask for the for_object.
+
+        :param for_object: The object that will have an email sent for it
+                           in the future.
+        :return: The created EamilCronTask.
+        """
+
+        return EmailCronTask.objects.create(
             object_id=for_object.pk,
             model=ContentType.objects.get_for_model(for_object._meta.model),
             related_event=self,
@@ -86,7 +94,9 @@ class CronEvent(Event):
 
         """
         base_time = getattr(for_object, self.field, datetime.now())
-        return base_time + timedelta
+        if base_time is None or base_time == '':
+            base_time = datetime.now()
+        return base_time + timedelta(minutes=self.minutes)
 
 
 class ValueEvent(Event):
@@ -96,7 +106,9 @@ class ValueEvent(Event):
         ('__lte', 'is less than or equal to'),
     )
 
-    compare_using = models.CharField(choices=COMPARISON_CHOICES)
+    compare_using = models.CharField(max_length=255, choices=COMPARISON_CHOICES)
+    model = models.ForeignKey(ContentType)
+    field = models.CharField(max_length=255)
     value = models.PositiveIntegerField()
 
 
@@ -105,6 +117,6 @@ class EmailCronTask(models.Model):
     model = models.ForeignKey(ContentType)
 
     completed_on = models.DateTimeField(blank=True, null=True)
-    related_event = models.ForeignKey('EmailCron')
+    related_event = models.ForeignKey('CronEvent')
     scheduled_for = models.DateTimeField()
     scheduled_at = models.DateTimeField(auto_now_add=True)
