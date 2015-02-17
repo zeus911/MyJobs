@@ -696,6 +696,16 @@ def task_etl_to_solr(guid, buid, name):
         raise task_etl_to_solr.retry()
 
 
+@task(name='tasks.priority_etl_to_solr', ignore_result=True)
+def task_priority_etl_to_solr(guid, buid, name):
+    try:
+        import_jobs.update_job_source(guid, buid, name)
+    except Exception as e:
+        logging.error("Error loading jobs for jobsource: %s", guid)
+        logging.exception(e)
+        raise task_etl_to_solr.retry()
+
+
 @task(name="tasks.task_clear_solr", ignore_result=True)
 def task_clear_solr(jsid):
     """Delete all jobs for a given Business Unit/Job Source."""

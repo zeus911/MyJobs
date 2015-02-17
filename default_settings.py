@@ -123,6 +123,9 @@ CELERY_QUEUES = {
     'solr': {
         'binding_key': 'solr.#'
     },
+    'priority': {
+        'binding_key': 'priority.#'
+    },
     'myjobs': {
         'binding_key': 'myjobs.#'
     }
@@ -139,6 +142,10 @@ CELERY_ROUTES = {
     'tasks.etl_to_solr': {
         'queue': 'solr',
         'routing_key': 'solr.update_solr'
+    },
+    'tasks.priority_etl_to_solr': {
+        'queue': 'priority',
+        'routing_key': 'priority.update_solr'
     },
     'tasks.send_search_digest': {
         'queue': 'myjobs',
