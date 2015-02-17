@@ -12,29 +12,27 @@ class MessageTests(MyJobsBase):
     def setUp(self):
         super(MessageTests, self).setUp()
         self.user = UserFactory()
-        self.message = Message(subject='subject',
-                               body='body',
-                               message_type='success')
-        self.message.save()
+        self.message = Message.objects.create(subject='subject',
+                                              body='body',
+                                              message_type='success')
         for group in Group.objects.all():
             self.message.group.add(group.pk)
-        self.message.save()
-        self.messageInfo = MessageInfo(user=self.user,
-                                       message=self.message)
-        self.messageInfo.save()
+        self.messageInfo = MessageInfo.objects.create(user=self.user,
+                                                      message=self.message)
 
     def test_message_made(self):
         m = Message.objects.all().count()
         self.assertGreaterEqual(m, 1)
 
     def test_message_made_sent_to_multiple(self):
-        m = Message.objects.all().count()
-        n_u = UserFactory(email="Best@best.com")
-        n_u.groups.add(Group.objects.get(id=1).pk)
-        n_u.claim_messages()
-        message_info = MessageInfo.objects.all().count()
-        self.assertGreaterEqual(m, 1)
-        self.assertGreaterEqual(message_info, 2)
+        """
+        Test that one message can be received by multiple users.
+        """
+        user = UserFactory(email="Best@best.com")
+        user.groups.add(Group.objects.get(id=1))
+        user.claim_messages()
+        self.assertEqual(Message.objects.count(), 1)
+        self.assertEqual(MessageInfo.objects.count(), 2)
 
     def test_message_unread_default(self):
         m = self.messageInfo
