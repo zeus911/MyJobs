@@ -177,6 +177,28 @@ class TestFilterRecords(MyReportsTestCase):
 
         self.assertEqual(len(output['records']), 10)
 
+    def test_filter_location_with_whitespace(self):
+        """
+        Tests that filter is forgiving of extra whitespace when filtering by
+        city and/or state.
+        """
+        location = LocationFactory(city="    Alberson         ",
+                                   state="                  New      York")
+        ContactFactory.create_batch(5, partner=self.partner)
+        ContactFactory.create_batch(
+            5, partner=self.partner, locations=[location])
+
+        self.client.path += '/contact'
+        response = self.client.post(
+            data={'city': 'alberson', 'state': 'new york',
+                  'output': 'myreports/includes/prm/contacts'})
+
+        for record in response.context['records']:
+            self.assertIn(location.city,
+                          record.locations.values_list('city', flat=True))
+            self.assertIn(location.state,
+                          record.locations.values_list('state', flat=True))
+
     def test_order_by(self):
         """Tests that `order_by` parameter is passed to `QuerySet`."""
 

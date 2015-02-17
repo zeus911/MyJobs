@@ -20,7 +20,7 @@ import states
 
 from universal.helpers import (get_domain, get_company, get_company_or_404,
                                get_int_or_none, send_email)
-from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES, 
+from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES,
                                CHANGE, Location, Partner, PartnerLibrary, Tag)
 
 
@@ -421,12 +421,14 @@ def filter_partners(request, partner_library=False):
                    Q(contact__email__icontains=keyword)))
 
     if city:
-        query &= Q(**{'%s__icontains' % contact_city: city})
+        query &= Q(**{'%s__iregex' % contact_city: '\s*'.join(list(city))})
 
     if state:
         state_query = Q()
+        # match state synonyms when querying
         for synonym in states.synonyms[state.strip().lower()]:
-            state_query |= Q(**{'%s__iexact' % contact_state: synonym})
+            state_query |= Q(
+                **{'%s__iregex' % contact_state: '\s*'.join(list(synonym))})
 
         query &= state_query
 

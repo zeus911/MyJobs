@@ -5,7 +5,8 @@ import random
 from mypartners import helpers
 from mypartners.tests.test_views import (MyPartnersTestCase,
                                          PartnerLibraryTestCase)
-from mypartners.tests.factories import ContactRecordFactory, PartnerFactory
+from mypartners.tests.factories import (ContactFactory, LocationFactory,
+                                        ContactRecordFactory, PartnerFactory)
 
 
 
@@ -169,6 +170,36 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
 
         for partner in partners:
             self.assertEqual(partner.city, 'Beaumont')
+
+    def test_location_with_whitespace(self):
+        """
+        Tests that filtering on Partner when a user has added extra whitespace
+        to a city and state properly ignores that space.
+        """
+        location = LocationFactory(city=" Alberson            ",
+                                   state="        New          York")
+        partner = PartnerFactory(owner=self.company)
+        ContactFactory(partner=partner, locations=[location])
+
+        request = self.request_factory.get(
+            'prm/view/', dict(
+                company=self.company.id,
+                city='Alberson',
+                state='New York'))
+        request.user = self.staff_user
+        
+        partners = helpers.filter_partners(request)
+
+        # check that we in fact return partners whos contact's location is the
+        # mangled location above
+        for partner in partners:
+            cities = partner.contact_set.values_list(
+                'locations__city', flat=True)
+            self.assertIn(location.city, cities)
+
+            states = partner.contact_set.values_list(
+                'locations__state', flat=True)
+            self.assertIn(location.state, states)
 
     def test_date_filters(self):
         """
