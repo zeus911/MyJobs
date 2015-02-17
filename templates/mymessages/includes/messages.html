@@ -1,4 +1,4 @@
-{% for message in all_messages %}
+{% for message in messages %}
     <tr id="message-{{ message.message.pk }}"{% if message.read %} class="read"{% endif %}>
         <td>
             <span class="circle {{ message.message.message_type }}" title="{{ message.message.display_type }}"></span>
