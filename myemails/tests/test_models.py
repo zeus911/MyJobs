@@ -39,12 +39,10 @@ class CronEventTests(MyJobsBase):
 
         model = self.saved_search._meta.model
         self.saved_search_contenttype = ContentType.objects.get_for_model(model)
-        cron_kwargs = {
-            'field': 'last_sent',
-            'model': self.saved_search_contenttype,
-        }
+        cron_kwargs = {'model': self.saved_search_contenttype}
+        self.cron_event_no_field = factories.CronEventFactory(**cron_kwargs)
+        cron_kwargs['field'] = 'last_sent'
         self.cron_event_with_field = factories.CronEventFactory(**cron_kwargs)
-        self.cron_event_no_field = factories.CronEventFactory()
 
     def test_cron_event_schedule_task_no_field(self):
         today = datetime.now().date()
