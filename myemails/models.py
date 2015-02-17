@@ -1,25 +1,57 @@
+from datetime import datetime, timedelta
+
 from django.contrib.auth.models import ContentType
 from django.db import models
+from django.template import Template
+
+
+class EmailSection(models.Model):
+    SECTION_TYPES = (
+        (1, 'Header'),
+        (2, 'Body'),
+        (3, 'Footer'),
+    )
+
+    section_type = models.PositiveIntegerField(choices=SECTION_TYPES)
+    content = models.TextField()
 
 
 class EmailTemplate(models.Model):
-    # header = models.ForeignKey()
-    # footers = models.ForeignKey()
+    header = models.ForeignKey('EmailSection')
+    body = models.ForeignKey('EmailSection')
+    footer = models.ForeignKey('EmailSection')
 
-    pass
+    @staticmethod
+    def build_context(for_object):
+        """
+        Builds context based on a generic number of things that
+        a user might want to include in an email.
+
+        :param for_object: The object the context is being built for.
+        :return: A dictionary of context for the templates to use.
+
+        """
+        context = {}
+        # TODO: Build context based on object passed to the function.
+        return context
+
+    def render(self, for_object):
+        """
+        Renders the EmailTemplate for a given object.
+
+        :param for_object: The object the email is being rendered for.
+        :return: The rendered email.
+        """
+        context = self.build_context(for_object)
+        template = Template(self.header + self.body + self.footer)
+        return template.render(context)
 
 
 class Event(models.Model):
-    COMPARISON_CHOICES = (
-        ('', 'is equal to'),
-        ('__gte', 'is greater than or equal to'),
-        ('__lte', 'is less than or equal to'),
-    )
-    email_template = models.ForeignKey('EmailTemplate', null=True)
+    email_template = models.ForeignKey('EmailTemplate')
     is_active = models.BooleanField(default=True)
     owner = models.ForeignKey('seo.Company')
 
-    compare_using = models.CharField(choices=COMPARISON_CHOICES)
     model = models.ForeignKey(ContentType)
     field = models.CharField(max_length=255)
 
@@ -27,11 +59,18 @@ class Event(models.Model):
         abstract = True
 
     def send_email(self, for_object):
-        pass
+        """
+        Sends an email for a for_object.
+
+        :param for_object: The object an email is being sent for.
+
+        """
+        email_content = self.email_template.render(for_object)
+        # TODO: Write actual send email logic
 
 
 class CronEvent(Event):
-    value = models.TimeField()
+    minutes = models.TimeField()
 
     def schedule_task(self, for_object):
         EmailCronTask.objects.create(
@@ -46,11 +85,18 @@ class CronEvent(Event):
         :return: The next valid time this Event would be scheduled for.
 
         """
-        
-        return None
+        base_time = getattr(for_object, self.field, datetime.now())
+        return base_time + timedelta
 
 
 class ValueEvent(Event):
+    COMPARISON_CHOICES = (
+        ('', 'is equal to'),
+        ('__gte', 'is greater than or equal to'),
+        ('__lte', 'is less than or equal to'),
+    )
+
+    compare_using = models.CharField(choices=COMPARISON_CHOICES)
     value = models.PositiveIntegerField()
 
 
