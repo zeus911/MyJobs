@@ -7,12 +7,16 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        data_source = PartnerLibrary.objects.values_list(
+        data_source = orm.PartnerLibrary.objects.values_list(
             'data_source', flat=True).distinct()
 
         # mark contacts by the library partner they came from
-        contacts_from_library = orm.Contact.objets.filter(
-            tag__name__in=data_source).update(library=partner__library)
+        contacts_from_library = orm.Contact.objects.filter(
+            tags__name__in=data_source)
+
+        for contact in contacts_from_library:
+            contact.library = contact.partner.library
+            contact.save()
 
         # remove tags named after a PartnerLibrary data source
         orm.Tag.objects.filter(name__in=data_source).delete()
