@@ -15,11 +15,7 @@
 
             {% for location in partner.get_contact_locations %}
             <span title="Click to filter location">
-                {% if not forloop.last %}
-                    {{ location }};
-                {% else %}
-                    {{ location }}
-                {% endif %}
+                {{ location }}{% if not forloop.last %}; {% endif %}
             </span>
             {% endfor %}
 
