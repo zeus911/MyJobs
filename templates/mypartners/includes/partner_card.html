@@ -72,15 +72,17 @@
         {% endif %}
         {% endif %}
     </div>
+    {% if partner.library or partner.data_source %}
     <div class="product-details">
-        {% if on_page == 'prm' and partner.library.data_source %}
+        {% if on_page == 'prm' %}
         <i class="icon icon-list-alt icon-black" alt="original import source"></i>
         {{ partner.library.data_source }}
-        {% elif partner.data_source %}
+        {% else %}
         <i class="icon icon-list-alt icon-black" alt="original import source"></i>
         {{ partner.data_source }}
         {% endif %}
     </div>
+    {% endif %}
     <div class="partner-tags">
         {% if on_page == 'prm' %}
             {% for tag in partner.get_all_tags %}
