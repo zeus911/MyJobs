@@ -225,6 +225,7 @@ class MyDashboardViewsTests(MyJobsBase):
         response = self.client.post(reverse('dashboard')+q)
         self.assertIn(city_filter_str, response.content)
 
+    @unittest.skip("Correct behavior undefined with respect to duplicates.")
     def test_search_field(self):
         # Build url
         def build_url(search):

@@ -207,7 +207,7 @@ class BillboardImageFactory(factory.django.DjangoModelFactory):
 
 class CompanyUserFactory(factory.django.DjangoModelFactory):
     class Meta:
-        user = 'seo.CompanyUser'
+        model = 'seo.CompanyUser'
 
     user = factory.SubFactory(UserFactory)
     company = factory.SubFactory(CompanyFactory)

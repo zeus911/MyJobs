@@ -6,7 +6,7 @@ from myjobs.tests.factories import UserFactory
 
 class InvitationFactory(factory.django.DjangoModelFactory):
     class Meta:
-        user = 'registration.Invitation'
+        model = 'registration.Invitation'
 
     invitee_email = 'invitee@example.com'
     inviting_user = factory.SubFactory(

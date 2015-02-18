@@ -64,12 +64,11 @@ class ContactLogEntryFactory(factory.django.DjangoModelFactory):
                        lambda a: ContentType.objects.get(name='contact'))
 
 
-class TagFactory(factory.Factory):
+class TagFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'mypartners.Tag'
 
     name = "foo"
-
     company = factory.SubFactory(CompanyFactory)
 
 
