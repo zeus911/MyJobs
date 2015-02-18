@@ -79,7 +79,6 @@ class TestClient(Client):
                             "either path be passed explicit, or the "
                             "path be specified in the constructor")
 
-
     def login_user(self, user):
         if 'django.contrib.sessions' not in settings.INSTALLED_APPS:
             raise AssertionError("Unable to login without "
@@ -902,7 +901,8 @@ class MyJobsViewsTests(MyJobsBase):
 
     def test_referring_site_in_topbar(self):
         self.client.get(
-            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http%3A%2F%2Findianapolis.jobs&callback=foo',
+            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http%3A'
+                                 '%2F%2Findianapolis.jobs&callback=foo',
             HTTP_REFERER='http://indianapolis.jobs')
 
         last_site = self.client.cookies.get('lastmicrosite').value
@@ -928,8 +928,8 @@ class MyJobsViewsTests(MyJobsBase):
             self.assertTrue('id="menu-inbox">%s<' % (num_messages-1, )
                             in response.content)
             if num_messages == 1:
-                # The only message has been read in this instance; it should not
-                # have been displayed.
+                # The only message has been read in this instance; it should
+                # not have been displayed.
                 self.assertTrue('No new unread messages' in response.content,
                                 'Iteration %s' % num_messages)
             for info in infos[1:4]:
@@ -977,7 +977,8 @@ class MyJobsViewsTests(MyJobsBase):
         self.assertEqual(user.source, 'jobs.directemployers.org')
 
         self.client.get(
-            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http%3A%2F%2Findianapolis.jobs&callback=foo',
+            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http'
+                                 '%3A%2F%2Findianapolis.jobs&callback=foo',
             HTTP_REFERER='http://indianapolis.jobs')
 
         last_site = self.client.cookies.get('lastmicrosite').value

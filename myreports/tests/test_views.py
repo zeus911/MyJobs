@@ -215,7 +215,6 @@ class TestFilterRecords(MyReportsTestCase):
         self.assertTrue(records[0]['name'] < records[-1]['name'])
 
     def test_cached_results(self):
-        import ipdb; ipdb.set_trace()
         """
         Tests that hitting the view multiple times with the same parameters
         returns a cached result. Also tests that ignoring cache works properly.
