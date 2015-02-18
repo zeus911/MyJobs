@@ -1365,6 +1365,29 @@ ul.header-menu > li > ul > a > li:hover {
     margin-top: 20px;
 }
 
+h1.bottom-bordered,
+h2.bottom-bordered,
+h3.bottom-bordered {
+    border-bottom: 2px solid #873f3d;
+}
+
+.reporting-breadcrumbs ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.rpt-container {
+    min-height: 345px;
+    position: relative;
+}
+
+.rpt-buttons {
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+}
+
 
 /* Sort by field in saved search save/edit */
 #saved-search-form label[for^='id_sort_by'],
@@ -1650,11 +1673,16 @@ table#row-link-table {
     border-left: 1px solid #E5E5E5;
 }
 
+.table-scrollable {
+    width: 100%;
+}
+
 .table-scrollable tbody {
     max-height: 200px;
-    width: 300px;
+    width: 100%;
     overflow-y: auto;
     display: block;
+    position: relative;
 }
 
 .table-scrollable tr {

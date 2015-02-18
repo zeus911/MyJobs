@@ -1,3 +1,12 @@
+/*
+Send the user a message when they try to unload the page saying their
+progress will not be saved and will be lost.
+TODO: uncomment this and give a more meaningful message. Commented out for development purposes.
+window.addEventListener("beforeunload", function(e) {
+    e.returnValue = "\\o/";
+});
+*/
+
 /**
  * Report manages the Page objects.  Can retrieve current page object being
  * used, move to next page, or go back to previous page.  Lastly, Report
@@ -12,7 +21,7 @@ var Report = function(types) {
     this.generate_sidebar();
 };
 
-Report.prototype.bind_event = function() {
+Report.prototype.bind_events = function() {
     var report = this;
     $(document).on("click", "#next:not(.disabled)", function(e) {
         e.preventDefault();
@@ -34,7 +43,8 @@ Report.prototype.bind_event = function() {
     // All partner/contact checkbox logic
     $(document).on("click", "input[type='checkbox']#all", function(e) {
         var all_checkboxes = $("#content input:not(#all)"),
-            next_btn = $("#next");
+            next_btn = $("#next"),
+            gen_btn = $("#gen-report");
         // if #all is checked onclick
         if($(this).is(":checked")) {
             // turn all checks on
@@ -43,8 +53,9 @@ Report.prototype.bind_event = function() {
             });
 
             // remove disabled on next button if it is disabled
-            if($(next_btn).hasClass("disabled")) {
+            if($(next_btn).hasClass("disabled") || $(gen_btn).hasClass("disabled")) {
                 $(next_btn).removeClass("disabled");
+                $(gen_btn).removeClass("disabled");
             }
         } else {
             // turn all checks off
@@ -52,7 +63,8 @@ Report.prototype.bind_event = function() {
                $(all_checkboxes[element]).prop("checked", false);
             });
             // disable next button
-            $("#next").addClass("disabled");
+            $(next_btn).addClass("disabled");
+            $(gen_btn).addClass("disabled");
         }
     });
 
@@ -61,7 +73,8 @@ Report.prototype.bind_event = function() {
         var all_checkboxes = $("#content input:not(#all)"),
             all_are_checked = true,
             all_are_not_checked = true,
-            next_btn = $("#next");
+            next_btn = $("#next"),
+            gen_btn = $("#gen-report");
         $(all_checkboxes).each(function(element) {
             // Check to see if all checkboxes are checked
             if(!$(all_checkboxes[element]).is(":checked")){
@@ -78,8 +91,9 @@ Report.prototype.bind_event = function() {
 
         // disabling next button logic
         if($(this).is(":checked")) {
-            if($(next_btn).hasClass("disabled")) {
+            if($(next_btn).hasClass("disabled") || $(gen_btn).hasClass("disabled")) {
                 $(next_btn).removeClass("disabled");
+                $(gen_btn).removeClass("disabled");
             }
         } else {
             if(all_are_checked === false) {
@@ -91,10 +105,12 @@ Report.prototype.bind_event = function() {
                     }
                 });
                 if(all_are_not_checked == true) {
-                    $("#next").addClass("disabled");
+                    $(next_btn).addClass("disabled");
+                    $(gen_btn).addClass("disabled");
                 } else {
-                    if($(next_btn).hasClass("disabled")) {
+                    if($(next_btn).hasClass("disabled") || $(gen_btn).hasClass("disabled")) {
                         $(next_btn).removeClass("disabled");
+                        $(gen_btn).removeClass("disabled");
                     }
                 }
             }
@@ -106,7 +122,7 @@ Report.prototype.bind_event = function() {
 // Different virtual reports go here.
 Report.prototype.create_pages = function(report_types) {
     // page lists
-     var p_lists = {"PRM": [new Page(true, "myreports/date_location", "Date and/or Location"),
+     var p_lists = {"prm": [new Page(true, "myreports/date_location", "Date and/or Location"),
                             new FilterPage(false, "myreports/includes/prm/partners",
                                 "Select Partners", "/reports/ajax/mypartners/partner", "partner"),
                             new FilterPage(false, "myreports/includes/prm/contacts",
@@ -143,7 +159,8 @@ Report.prototype.load_active_page = function(filters) {
     var current_page = this.current_page(),
         data = {"csrfmiddlewaretoken": read_cookie("csrftoken"),
                 "output": current_page.output},
-        url = location.protocol + "//" + location.host; // https://secure.my.jobs
+        url = location.protocol + "//" + location.host, // https://secure.my.jobs
+        report = this;
     if(typeof filters !== "undefined") {
         $.extend(data, filters);
     }
@@ -166,6 +183,16 @@ Report.prototype.load_active_page = function(filters) {
         complete: function() {
             if(current_page.data != null)
                 current_page.load_data();
+            var current_page_index = report.pages.indexOf(current_page)
+            if(current_page_index === report.pages.length - 1) {
+                report.activate_generate_report();
+            } else if(current_page_index === 0) {
+                $("#back").hide();
+            } else {
+                $("#back").show();
+                $("#next").show();
+                $("#gen-report").remove();
+            }
         }
     });
 };
@@ -191,11 +218,9 @@ Report.prototype.next_page = function() {
         filter = current_page.data;
     }
     filter["ignore_cache"] = true;
+    this.add_breadcrumb(current_page, current_page_index);
     this.load_active_page(filter);
     this.next_sidebar();
-    if(current_page_index + 1 === this.pages.length - 1) {
-        this.activate_generate_report();
-    }
 };
 
 
@@ -218,6 +243,7 @@ Report.prototype.previous_page = function() {
     } else {
         filter = prev_data_to_load;
     }
+    this.remove_breadcrumb(prev_page_index);
     this.load_active_page(filter);
     this.prev_sidebar();
 };
@@ -226,12 +252,15 @@ Report.prototype.previous_page = function() {
 // more specifically Page.step.
 Report.prototype.generate_sidebar = function() {
     var sidebar_content = $("#sidebar-content"),
-        ul = $("<ul></ul>");
+        ul = $("<ul></ul>"),
+        current_top_heading = $(".sidebar .top");
+
+    current_top_heading.removeClass("top");
     // Generate top heading
     // TODO: Make "PRM Report" programmatic
     sidebar_content.prepend($("<h2 class=\"top\">PRM Report</h2>"));
     // Generate step 1, selecting a topic.
-    ul.append($("<li><i class=\"fa fa-check success\"></i>Select topic(s)</li>"));
+    ul.append($("<li><i class=\"fa fa-check success\"></i> Select topic(s)</li>"));
     for(var page in this.pages) {
         var li = $("<li id=\"step-"+ page +"\"></li>"), // <li></li>
             i; // <i></i>
@@ -243,7 +272,7 @@ Report.prototype.generate_sidebar = function() {
         li.prepend(i);
         ul.append(li);
     }
-    sidebar_content.prepend(ul);
+    sidebar_content.append(ul);
 };
 
 // Removes .active from current step, changes "-" to a check,
@@ -273,12 +302,46 @@ Report.prototype.prev_sidebar = function() {
     }
 };
 
+Report.prototype.add_breadcrumb = function(page, step_num) {
+    var container = $(".reporting-breadcrumbs"),
+        row = $("<div class=\"row\"></div>"),
+        step = $("<div class=\"span2\"></div>"), // Where page.step goes (same text as sidebar)
+        info = $("<div class=\"span6\"></div>"), // Where page.data goes
+        ul = $("<ul></ul>");
+    row.attr("id", "step-" + step_num);
+    step.html("<b>"+ page.step +"</b>:");
+    row.append(step);
+    for(var key in page.data) {
+        var li = $("<li></li>"),
+            value = page.data[key];
+        if(value === "") continue;
+        if(key === "partner" || key === "contact") {
+            li.html(key.replace("_", " ") + ": " + value.length + " were selected.")
+        } else {
+            li.html(key.replace("_", " ") + ": " + value);
+        }
+        ul.append(li);
+    }
+    info.append(ul);
+    row.append(info);
+    container.append(row);
+};
+
+Report.prototype.remove_breadcrumb = function(step_num) {
+    var row = $(".row#step-"+step_num);
+    row.remove();
+};
 
 // Actives the generate report button on sidebar.
 // Also binds a click event to the button.
 Report.prototype.activate_generate_report = function() {
-    var that = this;
-    $("#gen-report").removeClass("disabled").on("click", function test() {
+    var that = this,
+        container = $(".rpt-buttons"),
+        next_btn = $("#next"),
+        gen_btn = $("<a id=\"gen-report\" class=\"btn pull-right\">Generate Report</a>");
+    next_btn.hide();
+    container.append(gen_btn);
+    $(document).removeClass("disabled").on("click", "#gen-report:not(.disabled)",function test() {
         that.submit_report();
     });
 };
@@ -413,7 +476,7 @@ FilterPage.prototype.load_data = function() {
 
 $(document).ready(function() {
     // Simulate page 1 (page 1 is where the user selects what types of reporting)
-    var report = new Report(["PRM"]);
+    //var report = new Report(["PRM"]);
     //report.load_active_page();
 
     $(document).on("click", ".datepicker",function(e) {
@@ -436,10 +499,33 @@ $(document).ready(function() {
        });
     });
 
-    $(document).on("click", "#start-report", function(e) {
+    $(document).on("click", "#start-report:not(.disabled)", function(e) {
         e.preventDefault();
-        var report = new Report();
+        var choices = $("#choices input[type='checkbox']:checked"),
+            types = [];
+        for(var i=0; i < choices.length; i++) {
+            types.push(choices[i].value.toLowerCase());
+        }
+        var report = new Report(types);
         report.bind_events();
+        $("#container").addClass("rpt-container");
+        $("#back").hide();
+        $(".rpt-buttons").removeClass("no-show");
+        report.load_active_page();
+        report.add_breadcrumb({"data": {"types": types}, "step": "Select topic(s)"}, "start");
+    });
+
+    $(document).on("click", "#choices input[type='checkbox']:checked", function() {
+        var btn = $("#start-report");
+        btn.removeClass("disabled");
+    });
+
+    $(document).on("click", "#choices input[type='checkbox']:not(:checked)", function() {
+        var btn = $("#start-report"),
+            checkboxes = $("#choices input[type='checkbox']");
+        if(!checkboxes.is(":checked")) {
+            btn.addClass("disabled");
+        }
     });
 });
 
