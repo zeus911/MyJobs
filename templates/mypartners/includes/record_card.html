@@ -6,13 +6,13 @@
     <div class="sub-title">
         {{ record.date_time }} - {{ record.get_human_readable_contact_type }}
     </div>
+    <div class="product-details">
+        Created by: {{ record.created_by }}
+    </div>
     <div class="partner-tags">
         {% for tag in record.tags.all %}
         <span class="tag-name small" style="background-color: #{{tag.hex_color}}">{{ tag.name }}</span>
         {% endfor %}
-    </div>
-    <div class="product-details">
-        Created by: {{ record.created_by }}
     </div>
     <a class="btn" href="{% url 'record_view' %}?{% for key, values in request.GET.iterlists %}{% ifnotequal key 'page' %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}&page={% paginated_index index page request.GET.per_page %}">View</a>
 </div>
