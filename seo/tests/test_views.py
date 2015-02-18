@@ -737,8 +737,10 @@ class SeoSiteTestCase(DirectSEOTestCase):
         null search results - Ticket MS-378
 
         """
+        # MOC and Onet are not typically retrieved in the search results,
+        # so we need to add them.
         base_search_fields = deepcopy(helpers.search_fields)
-        helpers.search_fields = helpers.search_fields + ['onet', 'moc']
+        helpers.search_fields += ['onet', 'moc']
 
         moc_id = "4105"
         moc_code = "1343"
@@ -866,6 +868,7 @@ class SeoSiteTestCase(DirectSEOTestCase):
         self.assertIn(custom_onet.code,
                       resp.context['default_jobs'][0].onet)
 
+        # Reset the search_fields so onet and moc are no longer retrieved.
         helpers.search_fields = base_search_fields
 
 
@@ -1890,8 +1893,10 @@ class SeoViewsTestCase(DirectSEOTestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_moc_search_results(self):
+        # MOC and Onet are not typically retrieved in the search results,
+        # so we need to add them.
         base_search_fields = deepcopy(helpers.search_fields)
-        helpers.search_fields = helpers.search_fields + ['onet', 'moc']
+        helpers.search_fields += ['onet', 'moc']
 
         onetcode = "11904100"
         onettitle = "Engineering Managers"
@@ -1937,6 +1942,7 @@ class SeoViewsTestCase(DirectSEOTestCase):
         self.assertIn(onet2code, str(resp.context['default_jobs'][0].onet))
         self.assertEqual(resp.status_code, 200)
 
+        # Reset the search_fields since Onet and MOC are no longer needed.
         helpers.search_fields = base_search_fields
 
     def test_moc_ac(self):

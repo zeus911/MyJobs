@@ -36,13 +36,15 @@ sort_order_mapper = {
 }
 sort_fields = ['relevance', 'date']
 
-search_fields = ['company', 'title', 'city', 'state', 'country',
-                 'date_updated', 'link', 'apply_info', 'highlighted',
-                 'company_enhanced', 'company_slab', 'country_short',
-                 'state_short', 'text', 'company_canonical_microsite',
-                 'html_description', 'date_new', 'django_ct', 'uid',
-                 'guid', 'django_id', 'id', 'score', 'title_exact',
-                 'company_exact', 'location_exact', 'location']
+
+# Fields that populate the Solr "fl" parameter on searches that use
+# get_jobs().
+search_fields = ['apply_info', 'city', 'company', 'company_canonical_microsite',
+                 'company_enhanced', 'company_exact', 'company_slab', 'country',
+                 'country_short', 'date_new', 'date_updated', 'django_ct',
+                 'django_id', 'guid', 'highlighted', 'html_description', 'id',
+                 'link', 'location', 'location_exact', 'score', 'state',
+                 'state_short', 'text', 'title', 'title_exact', 'uid']
 
 
 def standard_facets_by_name_slug(name_slugs):
@@ -528,6 +530,7 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
         sqs = DESearchQuerySet()
     sqs = sqs_apply_custom_facets(custom_facets, sqs, exclude_facets)
     sqs = _sqs_narrow_by_buid_and_site_package(sqs, buids=jsids)
+    # Limit the retrieved results to only fields that are actually needed.
     sqs = sqs.fields(search_fields)
 
     sqs = sqs.order_by(sort_order_mapper.get(sort_order, '-score'))
