@@ -46,23 +46,39 @@ class TestClient(Client):
         path and data attribute to be used for get and post requests.
         """
         self.path = path
-        self.data = data
+        self.data = data or {}
         super(TestClient, self).__init__(enforce_csrf_checks, **defaults)
 
-    def get(self, path=None, data=None, secure=False, **extra):
-        # we can't pass a None as path to the super class, so we reconstruct
-        # args without Nones
-        args = filter(None, [path or self.path, data or self.data])
-        extra.update({'secure': False})
-        return super(TestClient, self).get(*args, **extra)
+    def get(self, path=None, data=None, follow=False, secure=False, **extra):
+        """
+        Like the builtin get method, but uses the instances path and data when
+        available.
+        """
+        path = path or self.path
+        data = data or self.data
+
+        try:
+            return super(TestClient, self).get(
+                path, data=data, follow=follow, secure=secure, **extra)
+        except TypeError:
+            raise Exception("Calls to TestClient's methods require that "
+                            "either path be passed explicit, or the "
+                            "path be specified in the constructor")
 
     def post(self, path=None, data=None, content_type=MULTIPART_CONTENT,
              secure=False, **extra):
-        # we can't pass a None as path to the super class, so we reconstruct
-        # args without Nones
-        args = filter(None, [path or self.path, data or self.data])
-        extra.update({'content_type': content_type, 'secure': secure})
-        return super(TestClient, self).post(*args, **extra)
+        path = path or self.path
+        data = data or self.data
+
+        try:
+            return super(TestClient, self).post(
+                path, data=data, content_type=content_type,
+                secure=secure, **extra)
+        except TypeError:
+            raise Exception("Calls to TestClient's methods require that "
+                            "either path be passed explicit, or the "
+                            "path be specified in the constructor")
+
 
     def login_user(self, user):
         if 'django.contrib.sessions' not in settings.INSTALLED_APPS:
