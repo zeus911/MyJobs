@@ -5,19 +5,20 @@ import factory.django
 from django.contrib.contenttypes.models import ContentType
 
 from slugify import slugify
-from moc_coding.models import CustomCareer, Moc, MocDetail, Onet
 from seo.models import BusinessUnit
 
 
 class OnetFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Onet
+    class Meta:
+        model = 'moc_coding.Onet'
 
     title = "Some Onet"
     code = "99999999"
 
 
 class MocDetailFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = MocDetail
+    class Meta:
+        model = 'moc_coding.MocDetail'
 
     primary_value = "01"
     service_branch = "c"
@@ -26,7 +27,8 @@ class MocDetailFactory(factory.django.DjangoModelFactory):
 
 
 class MocFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Moc
+    class Meta:
+        model = 'moc_coding.Moc'
 
     code = factory.fuzzy.FuzzyText('01')
     branch = 'coast-guard'
@@ -36,8 +38,10 @@ class MocFactory(factory.django.DjangoModelFactory):
 
 
 class CustomCareerFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = CustomCareer
+    class Meta:
+        model = 'moc_coding.CustomerCareer'
 
     moc = factory.SubFactory(MocFactory)
     onet_id = "99999999"
-    content_type_id = factory.LazyAttribute(lambda x: ContentType.objects.get_for_model(BusinessUnit).pk)
+    content_type_id = factory.LazyAttribute(
+        lambda x: ContentType.objects.get_for_model(BusinessUnit).pk)

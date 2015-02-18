@@ -1,15 +1,20 @@
+import uuid
 import factory
-from myjobs.models import *
 
 
 class UserFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = User
+    class Meta:
+        model = 'myjobs.User'
+
     email = 'alice@example.com'
     gravatar = 'alice@example.com'
     password = '5UuYquA@'
     user_guid = factory.LazyAttribute(lambda n: '{0}'.format(uuid.uuid4()))
     is_active = True
     is_verified = True
+
+    # email = factory.Sequence(lambda n: 'test_%d@test.zztestzz' % n)
+    user_guid = uuid.uuid4()
 
     @classmethod
     def _prepare(cls, create, **kwargs):
