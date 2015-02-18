@@ -23,7 +23,21 @@ class Migration(DataMigration):
 
 
     def backwards(self, orm):
-        "Write your backwards methods here."
+        contacts_from_library = orm.Contact.objects.filter(
+            library__isnull=False)
+
+        # add back the appropriate tag to related contacts
+        for contact in contacts_from_library:
+            # tag the contact with the library data_source
+            tag, created = orm.Tag.objects.get_or_create(
+                company=contact.partner.owner,
+                name=contact.library.data_source)
+            contact.tags.add(tag)
+
+            # remove the library relationship
+            contact.library = None
+            contact.save()
+            
 
     models = {
         u'auth.group': {
