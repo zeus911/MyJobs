@@ -39,7 +39,7 @@ class MocFactory(factory.django.DjangoModelFactory):
 
 class CustomCareerFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = 'moc_coding.CustomerCareer'
+        model = 'moc_coding.CustomCareer'
 
     moc = factory.SubFactory(MocFactory)
     onet_id = "99999999"
