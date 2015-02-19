@@ -10,6 +10,15 @@ class EmailLogAdmin(admin.ModelAdmin):
     search_fields = ['email']
     list_filter = ['event', 'processed']
 
+    def get_readonly_fields(self, request, obj=None):
+        # Disable editing of existing saved search logs while allowing logs
+        # to be added
+        if obj is None:
+            return self.readonly_fields
+        else:
+            return ('email', 'event', 'received', 'processed', 'category',
+                    'send_log', 'reason')
+
 
 class UserAdmin(admin.ModelAdmin):
     list_display = ['email', 'date_joined', 'last_response', 'is_active',

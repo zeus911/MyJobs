@@ -88,7 +88,8 @@ def view_full_feed(request):
                                        saved_search.sort_by,
                                        frequency=saved_search.frequency)
         try:
-            items, count = parse_feed(url_of_feed, saved_search.frequency)
+            items, count = parse_feed(url_of_feed, saved_search.frequency,
+                                      saved_search.jobs_per_email)
         except HTTPError:
             items = None
             count = 0

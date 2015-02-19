@@ -19,9 +19,6 @@ class Command(NoArgsCommand):
         server = urllib.urlopen('//d2e48ltfsb5exy.cloudfront.net/100x50/seo/')
         soup = BeautifulSoup(server.read())
 
-        import ipdb
-        ipdb.set_trace()
-
         on_server = [x['href'] for x in soup.findAll(href=re.compile('.*\.gif'))]
 
         missing_logos = list(set(in_db) - set(on_server))

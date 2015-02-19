@@ -665,7 +665,8 @@ def partner_view_full_feed(request):
                                        saved_search.sort_by,
                                        saved_search.frequency)
         try:
-            items, count = parse_feed(url_of_feed, saved_search.frequency)
+            items, count = parse_feed(url_of_feed, saved_search.frequency,
+                                      saved_search.jobs_per_email)
         except HTTPError:
             items = None
             count = 0
@@ -716,9 +717,7 @@ def prm_records(request):
         response.content = html.content
         return response
 
-    contact_type_choices = [choice for choice in CONTACT_TYPE_CHOICES
-                            if choice[0] != 'pssemail']
-    contact_type_choices.insert(0, ('all', 'All'))
+    contact_type_choices = (('all', 'All'),) + CONTACT_TYPE_CHOICES
 
     contact_choices = [
         (c, c) for c in contact_records.order_by(

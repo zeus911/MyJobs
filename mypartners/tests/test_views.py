@@ -105,8 +105,7 @@ class MyPartnerViewsTests(MyPartnersTestCase):
 
         self.assertEqual(len(soup.select('.product-card')), 1)
 
-        for _ in range(9):
-            PartnerFactory(owner=self.company)
+        PartnerFactory.create_batch(10, owner=self.company)
 
         response = self.client.post('/prm/view')
         soup = BeautifulSoup(response.content)
@@ -1207,7 +1206,8 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
                 self.assertIn(tag, partner.tags.values_list('name', flat=True))
 
         if library.is_disabled:
-            self.assertIn('Disability', partner.tags.values_list('name', flat=True))
+            self.assertIn('Disability',
+                          partner.tags.values_list('name', flat=True))
 
         self.assertIn(
             library.data_source, partner.tags.values_list('name', flat=True))

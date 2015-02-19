@@ -1,0 +1,26 @@
+{% if records %}
+<input id="all" type="checkbox" checked> All Partners
+{% endif %}
+<table id="partner" class="table-scrollable">
+    <tbody>
+        {% for partner in records %}
+        <tr>
+            <td>
+                <input type="checkbox" value="{{ partner.id }}" checked>
+            </td>
+            <td>
+                {{ partner.name }}
+            </td>
+            <td>
+                {{ partner.get_contact_records.count }}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td>There are no records that meet your specifications.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a id="back" class="btn">Back</a>
+<a id="next" class="btn {% if not records %}disabled{% endif %}">Next</a>

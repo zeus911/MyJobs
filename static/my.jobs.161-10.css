@@ -241,7 +241,8 @@ h1 > small > a:hover {
     border-top: 0;
 }
 
-.product-card:not(.no-highlight):hover {
+.product-card:not(.no-highlight):hover,
+#inbox #messages > tr:hover {
     background: #D5FACF;
     cursor: pointer;
 }
@@ -1313,6 +1314,15 @@ ul.header-menu > li > ul > a > li:hover {
     text-decoration: none;
 }
 
+#menu-inbox ~ ul li > p {
+    color: white;
+    padding-left: 4px;
+}
+
+#menu-inbox > div.icon-envelope {
+    margin-left: 3px;
+}
+
 #date-range-list > li:last-child:hover {
     background-color: #f2f2f2;
 }
@@ -1330,6 +1340,17 @@ ul.header-menu > li > ul > a > li:hover {
     margin-right: 0;
 }
 
+/* My Reports */
+.sidebar li {
+    padding: 3px 5px;
+}
+.sidebar li.active {
+    background-color: #D5FACF;
+}
+
+.sidebar li i.success {
+    color: green;
+}
 
 
 /* Sort by field in saved search save/edit */
@@ -1614,6 +1635,17 @@ table#row-link-table {
 .table-bordered th,
 .table-bordered td{
     border-left: 1px solid #E5E5E5;
+}
+
+.table-scrollable tbody {
+    max-height: 200px;
+    width: 300px;
+    overflow-y: auto;
+    display: block;
+}
+
+.table-scrollable tr {
+    padding: 2px 5px;
 }
 
 .inner-table-label {
@@ -3854,6 +3886,10 @@ table td, table th {
     background-image: url("//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/glyphicons-halflings.png");
 }
 
+.icon-white {
+    background-image: url("//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/glyphicons-halflings-white.png");
+}
+
 body.modal-open {
     overflow: hidden;
 }
@@ -4117,4 +4153,80 @@ span.helptext {
      * me.
      */
     text-indent: 60px;
+}
+
+/* Inbox message type indicators */
+.circle {
+    border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    margin: 3px 3px 0 3px;
+}
+
+/*
+ These colors were pulled from the alert-* classes
+ that we were previously using.
+*/
+#inbox .block {
+    /* Yellow */
+    color: #c09853;
+    background-color: #fcf8e3;
+    border: 1px solid #fbeed5;
+}
+
+#inbox .error {
+    /* Red */
+    color: #b94a48;
+    background-color: #f2dede;
+    border: 1px solid #eed3d7;
+}
+
+#inbox .info {
+    /* Blue */
+    color: #3a87ad;
+    background-color: #d9edf7;
+    border: 1px solid #bce8f1;
+}
+
+#inbox .success {
+    /* Green */
+    color: #468847;
+    background-color: #dff0d8;
+    border: 1px solid #d6e9c6;
+}
+
+#inbox .table {
+    width: 100%;
+    table-layout: fixed;
+    border: 1px solid #ddd;
+}
+
+#inbox td:last-child {
+    text-align: right;
+}
+
+#inbox tr>*:first-child {
+    padding-left: 5px;
+    width: 14px;
+}
+
+#inbox tr>*:last-child {
+    padding-right: 5px;
+}
+
+#inbox tbody {
+    /* Bootstrap 2.2.1 has a ".table tbody+tbody" style that adds a border.
+     * Having groups of rows is nice, but we don't want the border that
+     * is added in this case.
+     */
+    border-top: 0;
+}
+
+#inbox .step-links .current {
+    left: 45%;
+}
+
+.read {
+    background-color: #eee;
 }

@@ -85,19 +85,26 @@ class SavedSearchHelperTests(MyJobsBase):
         x = datetime.date(month=6, day=1, year=2010)
         is_in_range = date_in_range(start, end, x)
         self.assertFalse(is_in_range)
-        
+
     def test_parse_feed(self):
         feed_url = 'http://www.my.jobs/feed/rss'
 
         for use_json, count in [(True, 2), (False, 1)]:
             items = parse_feed(feed_url, use_json=use_json)
 
-            # The second value in the items list is the total count from a feed,
-            # which may not equal the number of items returned
+            # The second value in the items list is the total count from a
+            # feed, which may not equal the number of items returned
             self.assertEqual(items[1], len(items[0]))
             item = items[0][0]
             for element in ['pubdate', 'title', 'description', 'link']:
                 self.assertTrue(item[element])
+
+    def test_parse_feed_with_count(self):
+        feed_url = 'http://www.my.jobs/feed/rss'
+        num_items = 1
+
+        items, count = parse_feed(feed_url, num_items=num_items)
+        self.assertEqual(count, num_items)
 
     def test_url_sort_options(self):
         feed = 'http://www.my.jobs/jobs/feed/rss?date_sort=False'
