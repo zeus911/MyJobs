@@ -221,6 +221,10 @@ h1 > small > a:hover {
     position: relative;
 }
 
+.partner-tags {
+    margin-top: 5px;
+}
+
 .product-card.tag {
     width: 31%;
     margin: 0 1.5% 0 1.5%;
