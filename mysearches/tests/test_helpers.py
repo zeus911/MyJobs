@@ -59,8 +59,6 @@ class SavedSearchHelperTests(MyJobsBase):
         ]
         for url_set in urls:
             label, feed = validate_dotjobs_url(url_set[0], self.user)
-            print url_set
-            print label, feed
             self.assertEqual(feed, url_set[1])
             self.assertIsNotNone(label)
 
