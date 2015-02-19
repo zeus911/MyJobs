@@ -52,13 +52,15 @@ class SavedSearchHelperTests(MyJobsBase):
 
     def test_validate_dotjobs_url_with_special_chars(self):
         urls = [
-            ('http://www.my.jobs/jobs/?q=query with spaces/',
+            ('http://www.my.jobs/jobs/?q=query with spaces',
              'http://www.my.jobs/jobs/feed/rss?q=query+with+spaces'),
             ('http://www.my.jobs/jobs/?q=яы',
              'http://www.my.jobs/jobs/feed/rss?q=%D1%8F%D1%8B')
         ]
         for url_set in urls:
             label, feed = validate_dotjobs_url(url_set[0], self.user)
+            print url_set
+            print label, feed
             self.assertEqual(feed, url_set[1])
             self.assertIsNotNone(label)
 

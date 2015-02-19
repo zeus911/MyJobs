@@ -51,7 +51,11 @@ class MySearchViewTests(MyJobsBase):
 
     def tearDown(self):
         super(MySearchViewTests, self).tearDown()
-        self.patcher.stop()
+        try:
+            self.patcher.stop()
+        except RuntimeError:
+            # patcher was stopped in a test
+            pass
 
     def test_search_main(self):
         response = self.client.get(reverse('saved_search_main'))
@@ -360,3 +364,9 @@ class MySearchViewTests(MyJobsBase):
             reverse('edit_search'), search.pk)
         self.assertTrue(edit_url in response.content)
 
+    def test_viewing_feed_on_bad_search(self):
+        search = SavedSearchFactory(user=self.user, url='http://404.com',
+                                    feed='http://404.com/feed/json')
+        response = self.client.get(reverse(
+            'view_full_feed') + '?id=%s' % search.id)
+        self.assertIn('This site is no longer in operation.', response.content)

@@ -47,6 +47,8 @@
                             </td>
                         </tr>
                     {% endfor %}
+                {% elif items == None %}
+                    <tr><td>This site is no longer in operation. You will need to delete or modify this saved search.</td></tr>
                 {% else %}
                     <tr><td>Sorry, no new jobs for today!</td></tr>
                 {% endif %}

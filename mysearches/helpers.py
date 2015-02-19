@@ -126,10 +126,7 @@ def get_json(json_url):
                     List of one or more Python dictionaries
     """
     json_feed = urllib2.urlopen(json_url).read()
-    try:
-        return json.loads(json_feed)
-    except ValueError:
-        return []
+    return json.loads(json_feed)
 
 
 def parse_feed(feed_url, frequency='W', num_items=100, offset=0,
