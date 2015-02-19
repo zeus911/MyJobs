@@ -11,6 +11,11 @@ class RequestForm(ModelForm):
 
 
 class NormalizedModelForm(ModelForm):
+    """
+    Extends ModelForm by automatically normalizing string fields on form
+    submission. For instance, a field that is entered as "   Foo    Bar" will
+    be translated to "Foo Bar".
+    """
 
     def clean(self):
         self.cleaned_data = {key: ' '.join(value.split(' '))
