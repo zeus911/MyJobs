@@ -36,7 +36,7 @@
         {% if on_page == 'prm' %}
             {% if partner.primary_contact %}
                 {% if partner.primary_contact.name %}
-                    <i class="icon icon-user icon-black" alt="primary contact"></i>
+                    <i class="icon icon-user" alt="primary contact"></i>
                     {{ partner.primary_contact.name }}
                     {% if partner.primary_contact.email %}
                         <span class="details-subtext">({{ partner.primary_contact.email }})</span>
@@ -51,7 +51,7 @@
         {% elif on_page == 'partner_library' %}
 
             {% if partner.contact_name %}
-                <i class="icon icon-user icon-black" alt="primary contact"></i>
+                <i class="icon icon-user" alt="primary contact"></i>
                 {{ partner.contact_name }}
                 {% if partner.email %}
                     <span class="details-subtext">({{partner.email}})</span>
@@ -71,10 +71,10 @@
     {% if partner.library or partner.data_source %}
         <div class="product-details">
             {% if on_page == 'prm' %}
-                <i class="icon icon-list-alt icon-black" alt="original import source"></i>
+                <i class="icon icon-list-alt" alt="original import source"></i>
                 {{ partner.library.data_source }}
             {% else %}
-                <i class="icon icon-list-alt icon-black" alt="original import source"></i>
+                <i class="icon icon-list-alt" alt="original import source"></i>
                 {{ partner.data_source }}
             {% endif %}
         </div>
