@@ -26,10 +26,10 @@
                 {% if user.is_authenticated %}
                 <ul class="mobile_hide">
                     <li class="has-drop">
-                        <a id="menu-inbox">{{ user.messages_unread.count }}<div class="icon-envelope icon-white"></div></a>
+                        <a id="menu-inbox">{{ new_messages.count }}<div class="icon-envelope icon-white"></div></a>
                         <ul class="submenu">
                             <li id="menu-inbox-all"><a href="{% url 'inbox' %}">Inbox (See All)</a></li>
-                            {% for message in user.messages %}
+                            {% for message in new_messages %}
                                 {% if forloop.counter <= 3 %}
                                     <li><a href="{% url 'inbox' %}?message={{ message.message.pk }}">{{ message.message.start_on.date }} - {{ message.message.subject|truncatewords:'10' }}</a></li>
                                 {% endif %}
@@ -138,7 +138,7 @@
                                         {% endif %}
                                     {% endif %}
                                     <li><a id="account-link" href="{{ ABSOLUTE_URL }}account/edit">{% trans "Account Settings" %}</a></li>
-                                    <li><a id="menu-inbox-link" href="{% url 'inbox' %}">{% trans "Messages" %} ({{ user.messages_unread.count }})</a></li>
+                                    <li><a id="menu-inbox-link" href="{% url 'inbox' %}">{% trans "Messages" %} ({{ new_messages.count }})</a></li>
                                     <li><a id="search-jobs" href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
                                     <li><a id="settings-link" style="cursor: pointer;">{% trans "Settings" %}</a></li>
 

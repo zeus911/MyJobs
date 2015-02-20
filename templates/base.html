@@ -57,9 +57,8 @@
                             </div>
 
                             {% endif %}
-                            {% with user.system_messages as messages %}
 
-                            {% for message_info in messages %}
+                            {% for message_info in system_messages %}
 
                             <div class="alert alert-{{ message_info.message.message_type }} mail-alert hide-mobile">
                                 <b>{{ message_info.message.subject }}</b>
@@ -71,8 +70,6 @@
                             </div>
 
                             {% endfor %}
-
-                            {% endwith %}
 
                         {% endif %}
                         {% endblock%}
