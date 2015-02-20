@@ -503,10 +503,6 @@ def new_partner_from_library(request):
             defaults={'hex_color': '808A9A'})
         tags.append(tag)
 
-    # we are only interested in get_or_creates first item
-    tags.append(Tag.objects.get_or_create(
-        company=company, name=library.data_source)[0])
-
     partner = Partner.objects.create(
         name=library.name,
         uri=library.uri,
@@ -524,6 +520,7 @@ def new_partner_from_library(request):
 
     contact = Contact.objects.create(
         partner=partner,
+        library=library,
         name=library.contact_name or "Not Available",
         email=library.email,
         phone=library.phone,
