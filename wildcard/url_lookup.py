@@ -54,7 +54,7 @@ def get_jpi_file(count=10, filename="site_list.py"):
             site_list.append(site_tuple)
             if ".metro." in site_tuple[1]:
                 site_tuple_check_metro = (site_tuple[0], 
-                                          site_tuple[1].replace(".metro.","."),
+                                          site_tuple[1].replace(".metro.", "."),
                                           site_tuple[2])
                 site_list.append(site_tuple_check_metro)
             

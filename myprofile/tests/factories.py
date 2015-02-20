@@ -1,11 +1,11 @@
 import factory
 import datetime
 from myjobs.tests.factories import UserFactory
-from myprofile.models import *
 
 
 class SecondaryEmailFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = SecondaryEmail
+    class Meta:
+        model = 'myprofile.SecondaryEmail'
 
     user = factory.SubFactory(UserFactory)
     email = "alicia.smith@foo.com"
@@ -13,7 +13,9 @@ class SecondaryEmailFactory(factory.django.DjangoModelFactory):
 
 
 class NewNameFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Name
+    class Meta:
+        model = 'myprofile.Name'
+
     given_name = "Alice"
     family_name = "Smith"
     primary = False
@@ -21,7 +23,8 @@ class NewNameFactory(factory.django.DjangoModelFactory):
     
 
 class PrimaryNameFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Name
+    class Meta:
+        model = 'myprofile.Name'
 
     given_name = "Alice"
     family_name = "Smith"
@@ -30,7 +33,8 @@ class PrimaryNameFactory(factory.django.DjangoModelFactory):
 
 
 class NewPrimaryNameFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Name
+    class Meta:
+        model = 'myprofile.Name'
 
     given_name = "Alicia"
     family_name = "Smith"
@@ -39,7 +43,8 @@ class NewPrimaryNameFactory(factory.django.DjangoModelFactory):
 
 
 class EducationFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Education
+    class Meta:
+        model = 'myprofile.Education'
 
     organization_name = "College"
     degree_date = datetime.date(2005, 1, 2)
@@ -54,7 +59,8 @@ class EducationFactory(factory.django.DjangoModelFactory):
 
 
 class AddressFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Address
+    class Meta:
+        model = 'myprofile.Address'
 
     label = "Home"
     address_line_one = "1234 Thing Road"
@@ -67,7 +73,8 @@ class AddressFactory(factory.django.DjangoModelFactory):
 
 
 class TelephoneFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Telephone
+    class Meta:
+        model = 'myprofile.Telephone'
 
     use_code = "Home"
     area_dialing = "(123)"
@@ -76,7 +83,8 @@ class TelephoneFactory(factory.django.DjangoModelFactory):
 
 
 class EmploymentHistoryFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = EmploymentHistory
+    class Meta:
+        model = 'myprofile.EmploymentHistory'
 
     position_title = "Handler"
     organization_name = "Mr. Wrench"
@@ -86,7 +94,8 @@ class EmploymentHistoryFactory(factory.django.DjangoModelFactory):
 
 
 class MilitaryServiceFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = MilitaryService
+    class Meta:
+        model = 'myprofile.MilitaryService'
 
     country_code = "USA"
     branch = "Navy"
@@ -100,7 +109,8 @@ class MilitaryServiceFactory(factory.django.DjangoModelFactory):
 
 
 class WebsiteFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Website
+    class Meta:
+        model = 'myprofile.Website'
 
     display_text = "My Jobs"
     uri = 'my.jobs'
@@ -111,7 +121,8 @@ class WebsiteFactory(factory.django.DjangoModelFactory):
 
 
 class LicenseFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = License
+    class Meta:
+        model = 'myprofile.License'
     
     license_type = "Type"
     license_name = "Name"
@@ -119,7 +130,8 @@ class LicenseFactory(factory.django.DjangoModelFactory):
 
 
 class SummaryFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Summary
+    class Meta:
+        model = 'myprofile.Summary'
 
     headline = 'My Summary'
     the_summary = "One day I knew I'd work for Mr. Wrench"
@@ -127,7 +139,8 @@ class SummaryFactory(factory.django.DjangoModelFactory):
 
 
 class VolunteerHistoryFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = VolunteerHistory
+    class Meta:
+        model = 'myprofile.VolunteerHistory'
 
     position_title = "Title"
     organization_name = "DirectEmployers"
