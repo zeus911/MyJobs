@@ -421,14 +421,12 @@ def filter_partners(request, partner_library=False):
                    Q(contact__email__icontains=keyword)))
 
     if city:
-        query &= Q(**{'%s__iregex' % contact_city: '\s*'.join(list(city))})
+        query &= Q(**{'%s__icontains' % contact_city: city})
 
     if state:
         state_query = Q()
-        # match state synonyms when querying
         for synonym in states.synonyms[state.strip().lower()]:
-            state_query |= Q(
-                **{'%s__iregex' % contact_state: '\s*'.join(list(synonym))})
+            state_query |= Q(**{'%s__iexact' % contact_state: synonym})
 
         query &= state_query
 
