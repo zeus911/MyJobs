@@ -47,6 +47,8 @@
                             </td>
                         </tr>
                     {% endfor %}
+                {% elif items == None %}
+                    <tr><td>The domain for this saved search is no longer valid. Please edit the domain or delete this saved search.</td></tr>
                 {% else %}
                     <tr><td>Sorry, no new jobs for today!</td></tr>
                 {% endif %}
