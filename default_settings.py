@@ -128,6 +128,9 @@ CELERY_QUEUES = {
     },
     'myjobs': {
         'binding_key': 'myjobs.#'
+    },
+    'sendgrid': {
+        'binding_key': 'sendgrid.#'
     }
 }
 CELERY_ROUTES = {
@@ -175,7 +178,11 @@ CELERY_ROUTES = {
     'tasks.submit_all_sitemaps': {
         'queue': 'myjobs',
         'routing_key': 'dseo.submit_all_sitemaps'
-    }
+    },
+    'tasks.process_sendgrid_event': {
+        'queue': 'sendgrid',
+        'routing_key': 'sendgrid.process_sendgrid_event',
+    },
 }
 CELERYBEAT_SCHEDULE = {
     'weekly-partner-library-update': {

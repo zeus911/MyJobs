@@ -106,6 +106,10 @@ class MyJobsViewsTests(MyJobsBase):
 
         self.email_user = UserFactory(email='accounts@my.jobs')
 
+        self.auth = '%s:%s' % (settings.SENDGRID_BATCH_POST_USER,
+                               settings.SENDGRID_BATCH_POST_PASSWORD)
+        self.auth = base64.b64encode(self.auth)
+
     def make_messages(self, when, apiversion=2, category=''):
         """
         Creates test api messages for sendgrid tests.
@@ -343,9 +347,7 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.post(reverse('batch_message_digest'),
                                     data=messages,
                                     content_type="text/json",
-                                    HTTP_AUTHORIZATION='BASIC %s' %
-                                    base64.b64encode(
-                                        'accounts%40my.jobs:5UuYquA@'))
+                                    HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         process_batch_events()
@@ -375,9 +377,7 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.post(reverse('batch_message_digest'),
                                     data=messages,
                                     content_type="text/json",
-                                    HTTP_AUTHORIZATION='BASIC %s' %
-                                    base64.b64encode(
-                                        'accounts%40my.jobs:5UuYquA@'))
+                                    HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         process_batch_events()
@@ -403,8 +403,7 @@ class MyJobsViewsTests(MyJobsBase):
                                         data=messages,
                                         content_type='text/json',
                                         HTTP_AUTHORIZATION='BASIC %s' %
-                                        base64.b64encode(
-                                            'accounts%40my.jobs:5UuYquA@'))
+                                                           self.auth)
             self.assertEqual(response.status_code, 200)
         process_batch_events()
         self.assertEqual(EmailLog.objects.count(), 2)
@@ -426,8 +425,7 @@ class MyJobsViewsTests(MyJobsBase):
         self.client.post(reverse('batch_message_digest'),
                          data=message,
                          content_type='text/json',
-                         HTTP_AUTHORIZATION='BASIC %s' %
-                         base64.b64encode('accounts%40my.jobs:5UuYquA@'))
+                         HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertEqual(EmailLog.objects.count(), 1)
         email_log = EmailLog.objects.get()
         self.assertIn(log_uuid, email_log.category)
@@ -448,9 +446,7 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.post(reverse('batch_message_digest'),
                                     data=message,
                                     content_type='text/json',
-                                    HTTP_AUTHORIZATION='BASIC %s' %
-                                    base64.b64encode(
-                                        'accounts%40my.jobs:5UuYquA@'))
+                                    HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox.pop()
@@ -484,9 +480,7 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.post(reverse('batch_message_digest'),
                                     data=messages,
                                     content_type="text/json",
-                                    HTTP_AUTHORIZATION='BASIC %s' %
-                                    base64.b64encode(
-                                        'accounts%40my.jobs:5UuYquA@'))
+                                    HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertTrue(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         self.assertEqual(
@@ -519,9 +513,7 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.post(reverse('batch_message_digest'),
                                     data=messages,
                                     content_type="text/json",
-                                    HTTP_AUTHORIZATION='BASIC %s' %
-                                    base64.b64encode(
-                                        'accounts%40my.jobs:5UuYquA@'))
+                                    HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertTrue(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         self.assertEqual(
@@ -554,9 +546,7 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.post(reverse('batch_message_digest'),
                                     data=messages,
                                     content_type="text/json",
-                                    HTTP_AUTHORIZATION='BASIC %s' %
-                                    base64.b64encode(
-                                        'accounts%40my.jobs:5UuYquA@'))
+                                    HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertTrue(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         self.assertEqual(
@@ -575,9 +565,7 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.post(reverse('batch_message_digest'),
                                     data='this is invalid',
                                     content_type="text/json",
-                                    HTTP_AUTHORIZATION='BASIC %s' %
-                                    base64.b64encode(
-                                        'accounts%40my.jobs:5UuYquA@'))
+                                    HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 0)
 
