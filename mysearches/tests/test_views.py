@@ -369,4 +369,5 @@ class MySearchViewTests(MyJobsBase):
                                     feed='http://404.com/feed/json')
         response = self.client.get(reverse(
             'view_full_feed') + '?id=%s' % search.id)
-        self.assertIn('This site is no longer in operation.', response.content)
+        self.assertIn('The domain for this saved search is no longer valid.',
+                      response.content)
