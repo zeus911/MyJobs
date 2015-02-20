@@ -32,6 +32,21 @@ class ContactFormTests(MyPartnersTestCase):
         email_count = Contact.objects.filter(email=self.data['email']).count()
         self.assertEqual(email_count, 0)
 
+    def test_input_sanitized(self):
+        """
+        Test that extra whitespace is stripped when saving the form. This works
+        because ContactForm is a subclass of
+        universal.form.NormalizedModelForm.
+        """
+        self.data['name'] = "                    John    Doe            "
+        self.data['company_id'] = 1
+        form = ContactForm(instance=self.contact, data=self.data)
+        self.assertTrue(form.is_valid())
+        form.save(self.staff_user, self.partner.pk)
+        
+        contact = Contact.objects.get(email=self.data['email'])
+        self.assertEqual(contact.name, "John Doe")
+
 
 class PartnerSavedSearchFormTests(MyPartnersTestCase):
     def test_partner_saved_search_form_from_instance(self):
