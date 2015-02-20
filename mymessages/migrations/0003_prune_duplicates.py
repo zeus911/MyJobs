@@ -1,21 +1,28 @@
 # -*- coding: utf-8 -*-
 from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
-        # Adding unique constraint on 'MessageInfo', fields ['user', 'message']
-        db.create_unique(u'mymessages_messageinfo', ['user_id', 'message_id'])
+        # Find duplicates as well as the most recent MessageInfo
+        duplicates = orm.MessageInfo.objects.values(
+            'user_id', 'message_id').order_by().annotate(
+                max_id=models.Max('id'), count=models.Count('id')).filter(
+                    count__gt=1)
 
+        # Iterate through duplicates, removing all but the most recent one
+        # found previously.
+        for duplicate in duplicates:
+            orm.MessageInfo.objects.filter(
+                user_id=duplicate['user_id'],
+                message_id=duplicate['message_id']).exclude(
+                    id=duplicate['max_id']).delete()
 
     def backwards(self, orm):
-        # Removing unique constraint on 'MessageInfo', fields ['user', 'message']
-        db.delete_unique(u'mymessages_messageinfo', ['user_id', 'message_id'])
-
+        pass
 
     models = {
         u'auth.group': {
@@ -70,17 +77,17 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Message'},
             'body': ('django.db.models.fields.TextField', [], {}),
             'btn_text': ('django.db.models.fields.CharField', [], {'default': "'OK'", 'max_length': '100'}),
-            'expire_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 2, 27, 0, 0)', 'null': 'True'}),
+            'expire_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 3, 5, 0, 0)', 'null': 'True'}),
             'group': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['auth.Group']", 'symmetrical': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'message_type': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'start_on': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 2, 13, 0, 0)'}),
+            'start_on': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 2, 19, 0, 0)'}),
             'subject': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'system': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'users': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myjobs.User']", 'through': u"orm['mymessages.MessageInfo']", 'symmetrical': 'False'})
         },
         u'mymessages.messageinfo': {
-            'Meta': {'unique_together': "(('user', 'message'),)", 'object_name': 'MessageInfo'},
+            'Meta': {'object_name': 'MessageInfo'},
             'deleted_on': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
             'expired': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'db_index': 'True'}),
             'expired_on': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
@@ -93,3 +100,4 @@ class Migration(SchemaMigration):
     }
 
     complete_apps = ['mymessages']
+    symmetrical = True
