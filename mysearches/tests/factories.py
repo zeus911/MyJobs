@@ -3,11 +3,12 @@ import factory
 from mydashboard.tests.factories import CompanyFactory
 from mypartners.tests.factories import PartnerFactory
 from myjobs.tests.factories import UserFactory
-from mysearches.models import SavedSearch, SavedSearchDigest, PartnerSavedSearch
 
 
 class SavedSearchFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = SavedSearch
+    class Meta:
+        model = 'mysearches.SavedSearch'
+
     user = factory.SubFactory(UserFactory)
 
     url = "http://www.my.jobs/jobs"
@@ -23,7 +24,9 @@ class SavedSearchFactory(factory.django.DjangoModelFactory):
 
 
 class SavedSearchDigestFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = SavedSearchDigest
+    class Meta:
+        model = 'mysearches.SavedSearchDigest'
+
     user = factory.SubFactory(UserFactory)
     email = "alice@example.com"
     is_active = "True"
@@ -31,7 +34,8 @@ class SavedSearchDigestFactory(factory.django.DjangoModelFactory):
 
 
 class PartnerSavedSearchFactory(SavedSearchFactory):
-    FACTORY_FOR = PartnerSavedSearch
+    class Meta:
+        model = 'mysearches.PartnerSavedSearch'
 
     created_by = factory.SubFactory(UserFactory)
     provider = factory.SubFactory(CompanyFactory)

@@ -1,9 +1,11 @@
+import uuid
 import factory
-from myjobs.models import *
 
 
 class UserFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = User
+    class Meta:
+        model = 'myjobs.User'
+
     email = 'alice@example.com'
     gravatar = 'alice@example.com'
     password = '5UuYquA@'

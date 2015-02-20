@@ -65,7 +65,8 @@ class LocalCacheTestCase(DirectSEOTestCase):
 
             # Update config without calling save()
             config.meta = 'new meta'
-            factories.Configuration.objects.filter(id=config.id).update(meta=config.meta)
+            models.Configuration.objects.filter(id=config.id).update(
+                meta=config.meta)
             response = self.client.get('/',
                                        HTTP_HOST=u'oranges.jobs')
 

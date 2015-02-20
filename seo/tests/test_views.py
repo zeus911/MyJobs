@@ -1775,7 +1775,7 @@ class SeoViewsTestCase(DirectSEOTestCase):
                                     data="{\"Subject\": \"%s\"}" % buid,
                                     content_type="application/json")
             self.assertEqual(resp.status_code, 200)
-            businessunit = factories.BusinessUnit.objects.filter(id=buid)
+            businessunit = BusinessUnit.objects.filter(id=buid)
             self.assertEqual(businessunit.count(), 1)
 
     def test_xml_parse_moc(self):
