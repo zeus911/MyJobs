@@ -90,7 +90,7 @@
            window.location = $(this).find("a").attr("href");
         });
     });
-    google.load("visualization", "0.1", {packages:["corechart"]});
+    google.load("visualization", "1", {packages:["corechart"]});
     var company_id = {{ company.id }};
     var partner_id = {{ partner.id }};
     var total_records = {{ count }};
