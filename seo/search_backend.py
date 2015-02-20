@@ -302,7 +302,6 @@ class DESolrSearchBackend(SolrSearchBackend):
             if isinstance(fields, (list, set)):
                 fields = " ".join(fields)
             kwargs['fl'] = fields
-
        # This code was causing sort_by to break, but we're keeping it as a
        # reference in case we want to enable geographic sorting in the future.
        # Haystack does have an order_by_distance function, so this code might
