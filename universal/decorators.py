@@ -20,6 +20,7 @@ def company_has_access(perm_field):
             permissions for the requested feature.
     """
     def decorator(view_func):
+        @wraps(view_func)
         def wrap(request, *args, **kwargs):
 
             # If the user is not logged in, redirect them to the login page

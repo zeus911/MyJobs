@@ -143,9 +143,8 @@ def get_attachment_link(partner_id, attachment_id, attachment_name):
 
 
 def retrieve_fields(model):
-    fields = [field for field in model._meta.get_all_field_names()
-              if unicode(field) not in [u'id', u'prmattachment']]
-    return fields
+    return set(model._meta.get_all_field_names()).difference(
+        [u'id', u'prmattachment'])
 
 
 def contact_record_val_to_str(value):

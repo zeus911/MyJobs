@@ -1,3 +1,4 @@
+import csv
 import json
 
 from django.core.serializers.json import DjangoJSONEncoder
@@ -27,7 +28,7 @@ def reports(request):
 
 
 def filter_records(request,
-                   app='mypartners', model='contactrecord', output='json'):
+        app='mypartners', model='contactrecord', output=None):
     """
     AJAX view that returns a query set based on post data submitted with the
     request, caching results by default.
@@ -71,7 +72,7 @@ def filter_records(request,
                 'model': 'partner',
                 'output': 'myreports/example_view.html'}))
     """
-    if request.is_ajax() and request.method == 'POST':
+    if True: #request.is_ajax() and request.method == 'POST':
         company = get_company_or_404(request)
         user = request.user
         path = request.get_full_path()
@@ -96,7 +97,7 @@ def filter_records(request,
         params.pop('csrfmiddlewaretoken', None)
 
         # get special query parameters
-        output = params.pop('output', 'json')
+        output = output or params.pop('output', 'json')
         ignore_cache = params.pop('ignore_cache', False)
         order_by = params.pop('order_by', None)
         count = params.pop('count', None)
@@ -131,6 +132,26 @@ def filter_records(request,
             ctx = json.dumps(ctx, cls=DjangoJSONEncoder)
 
             response = HttpResponse(ctx, content_type='application/json')
+        elif output == 'csv':
+            # TODO: use plural for model
+            content_disposition = "attachment; filename='%s.csv'" % model
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = content_disposition
+
+            fields = get_model(app, model)._meta.get_all_field_names()
+            # TODO: implement foreign fields
+            fields = set(fields).difference([
+                'id', 'prmattachment', 'tags', 'locations', 'savedsearchlog'])
+            writer = csv.writer(response)
+            writer.writerow(list(fields))
+
+            for record in records:
+                writer.writerow([
+                    unicode(getattr(record, field)).encode('utf-8')
+                    for field in fields])
+
+            return response
+
         else:
             html = render_to_response(
                 output + ".html", ctx, RequestContext(request))
