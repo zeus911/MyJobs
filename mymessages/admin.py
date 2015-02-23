@@ -1,8 +1,7 @@
 from django import forms
 from django.contrib import admin
 
-from mymessages.models import Message, MessageInfo
-from myjobs.models import User
+from mymessages.models import Message
 
 
 class AdminMessageForm(forms.ModelForm):
@@ -21,7 +20,7 @@ class AdminMessage(admin.ModelAdmin):
         }),
         ('Message', {
             'fields': (
-                'message_type', 'subject', 'body', 'btn_text',
+                'message_type', 'subject', 'body', 'btn_text', 'system',
             ),
         }),
         (None, {

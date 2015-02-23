@@ -1,0 +1,25 @@
+{% if records %}
+<input id="all" type="checkbox" checked> All Contacts
+{% endif %}
+<table id="contact" class="table-scrollable">
+    <tbody>
+        {% for contact in records %}
+        <tr>
+            <td>
+                <input type="checkbox" value="{{ contact.id }}" checked>
+            </td>
+            <td>
+                {{ contact.name }}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td>There are no records that meet your specifications.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a id="back" class="btn">Back</a>
+{% if next %}
+    <a id="next" class="btn">Next</a>
+{% endif %}

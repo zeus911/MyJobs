@@ -25,6 +25,19 @@
             <div class="menu-container" role="menu">
                 {% if user.is_authenticated %}
                 <ul class="mobile_hide">
+                    <li class="has-drop">
+                        <a id="menu-inbox">{{ user.messages_unread.count }}<div class="icon-envelope icon-white"></div></a>
+                        <ul class="submenu">
+                            <li id="menu-inbox-all"><a href="{% url 'inbox' %}">Inbox (See All)</a></li>
+                            {% for message in user.messages %}
+                                {% if forloop.counter <= 3 %}
+                                    <li><a href="{% url 'inbox' %}?message={{ message.message.pk }}">{{ message.message.start_on.date }} - {{ message.message.subject|truncatewords:'10' }}</a></li>
+                                {% endif %}
+                            {% empty %}
+                                <li><p>No new unread messages</p></li>
+                            {% endfor %}
+                        </ul>
+                    </li>
                     {% is_a_group_member user "Employer" as group_member %}
                     {% get_company_name user as company_name %}
                     {% get_company_from_cookie as company %}
@@ -33,8 +46,11 @@
                         <a>{% trans "Employers" %}</a>
                         <ul id="employer-apps" class="submenu">
                             {% if company.prm_access %}
-                                <li><a id="candidate-tab" href="{{ ABSOLUTE_URL }}candidates/view?company={{ company.id }}">{% trans "Candidates" %}</a></li>
-                                <li><a id="partner-tab" href="{{ ABSOLUTE_URL }}prm/view?company={{ company.id }}">{% trans "PRM" %}</a></li>
+                                <li><a id="candidate-tab" href="{{ ABSOLUTE_URL }}candidates/view">{% trans "Candidates" %}</a></li>
+                                <li><a id="partner-tab" href="{{ ABSOLUTE_URL }}prm/view">{% trans "PRM" %}</a></li>
+                            {% endif %}
+                            {% if user.is_staff %}
+                                <li><a id="reports-tab" href="{{ ABSOLUTE_URL }}reports/view">{% trans "Reports" %}</a></li>
                             {% endif %}
                             {% if company.product_access %}
                                 <li><a id="purchasedmicrosite-tab" href="{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Partner Microsite" %}</a></li>
@@ -108,6 +124,9 @@
                                             <li><a id="partner-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}prm/view?company={{ company.id }}">{% trans "PRM" %}</a></li>
 
                                         {% endif %}
+                                        {% if user.is_staff %}
+                                            <li><a id="reports-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}reports/view">{% trans "Reports" %}</a></li>
+                                        {% endif %}
                                         {% if company.product_access %}
                                             <li><a id="purchased-microsite-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Partner Microsite" %}</a></li>
                                         {% endif %}
@@ -119,6 +138,7 @@
                                         {% endif %}
                                     {% endif %}
                                     <li><a id="account-link" href="{{ ABSOLUTE_URL }}account/edit">{% trans "Account Settings" %}</a></li>
+                                    <li><a id="menu-inbox-link" href="{% url 'inbox' %}">{% trans "Messages" %} ({{ user.messages_unread.count }})</a></li>
                                     <li><a id="search-jobs" href="{% get_ms_url %}">{% trans "Search Jobs" %}</a></li>
                                     <li><a id="settings-link" style="cursor: pointer;">{% trans "Settings" %}</a></li>
 
@@ -298,7 +318,7 @@
         var label = document.createElement("a");
 
         // Company id from myjobs_company cookie
-        var cid = read_cookie();
+        var cid = read_cookie("myjobs_company");
 
         var list = document.createElement("ul");
         list.setAttribute("id", "select_company");
@@ -401,8 +421,8 @@
         document.cookie = "myjobs_company="+company_id+expires+"; path=/";
     }
 
-    function read_cookie() {
-        var nameEQ = "myjobs_company=",
+    function read_cookie(cookie) {
+        var nameEQ = cookie + "=",
             ca = document.cookie.split(';');
         for (var i=0; i< ca.length; i++) {
             var c = ca[i];

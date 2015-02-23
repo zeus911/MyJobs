@@ -92,3 +92,8 @@ HAYSTACK_CONNECTIONS = {
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
     }
 }
+
+BROKER_HOST = '204.236.236.123'
+BROKER_PORT = 5672
+BROKER_USER = 'celery'
+BROKER_VHOST = 'dseo-vhost'
