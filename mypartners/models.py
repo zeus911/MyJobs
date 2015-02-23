@@ -342,6 +342,9 @@ class Partner(models.Model):
     company_ref = 'owner'
     objects = SearchParameterManager()
 
+    def natural_key(self):
+        return str(self)
+
     @classmethod
     def _parse_parameters(cls, parameters, records):
         """Used to parse state during `from_search()`."""
@@ -483,6 +486,9 @@ class ContactRecord(models.Model):
     """
     Object for Communication Records
     """
+
+    class Meta:
+        verbose_name_plural = 'contact records'
 
     company_ref = 'partner__owner'
     objects = SearchParameterManager()
