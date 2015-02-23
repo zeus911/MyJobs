@@ -8,3 +8,18 @@ class RequestForm(ModelForm):
         self.request = kwargs.pop('request', None)
         self.company = get_company(self.request)
         super(RequestForm, self).__init__(*args, **kwargs)
+
+
+class NormalizedModelForm(ModelForm):
+    """
+    Extends ModelForm by automatically normalizing string fields on form
+    submission. For instance, a field that is entered as "   Foo    Bar" will
+    be translated to "Foo Bar".
+    """
+
+    def clean(self):
+        self.cleaned_data = {key: ' '.join(value.split())
+                             for key, value in self.cleaned_data.items()
+                             # I don't see us porting to Python 3 any time soon
+                             if isinstance(value, basestring)}
+        return super(NormalizedModelForm, self).clean()
