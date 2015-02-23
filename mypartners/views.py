@@ -34,6 +34,7 @@ from universal.helpers import (get_company_or_404, get_int_or_none,
 from universal.decorators import company_has_access, warn_when_inactive
 from myjobs.models import User
 from mydashboard.helpers import get_company_microsites
+from myreports.helpers import render_response
 from mysearches.models import PartnerSavedSearch
 from mysearches.helpers import (url_sort_options, parse_feed,
                                 get_interval_from_frequency)
@@ -1110,12 +1111,67 @@ def partner_get_referrals(request):
     else:
         raise Http404
 
-from myreports.views import filter_records
 
 @warn_when_inactive(feature='Partner Relationship Manager is')
 @user_passes_test(lambda u: User.objects.is_group_member(u, 'Employer'))
 def prm_export(request):
-    return filter_records(request, output='csv')
+    #TODO: investigate using django's builtin serialization for XML
+    company, partner, user = prm_worthy(request)
+    file_format = request.REQUEST.get('file_format', 'csv')
+    fields = retrieve_fields(ContactRecord)
+    _, _, records = get_records_from_request(request)
+
+    ctx = {'records': records}
+    return render_response(request, ctx, output='csv')
+
+    if file_format == 'xml':
+        root = etree.Element("contact_records")
+        for record in records:
+            xml_record = etree.SubElement(root, "record")
+            for field in fields:
+                xml = etree.SubElement(xml_record, field)
+                value = getattr(record, field, '')
+
+                if hasattr(value, 'all'):
+                    value = ', '.join([val.name for val in value.all() if val])
+
+                xml.text = contact_record_val_to_str(value)
+        response = HttpResponse(etree.tostring(root, pretty_print=True,
+                                               xml_declaration=True),
+                                mimetype='application/force-download')
+    elif file_format == 'printer_friendly':
+        ctx = {
+            'company': company,
+            'fields': fields,
+            'partner': partner,
+            'records': records,
+        }
+        return render_to_response('mypartners/printer_friendly.html', ctx,
+                                  RequestContext(request))
+    # CSV/XLS
+    else:
+        response = HttpResponse(content_type='text/csv')
+        writer = unicodecsv.writer(response, encoding='utf-8')
+        writer.writerow(fields)
+        for record in records:
+            values = [getattr(record, field, '') for field in fields]
+            values = [
+                contact_record_val_to_str(v)
+                if not hasattr(v, 'all') else
+                ', '.join([val.name for val in v.all() if val]) for v in values
+            ]
+            # Remove the HTML and reformat.
+            values = [bleach.clean(v, [], strip=True) for v in values]
+            # replaces multiple occurences of space by a single sapce.
+            values = [' '.join(filter(bool, v.split(' '))) for v in values]
+            values = [re.sub('\s+\n\s+', '\n', v) for v in values]
+            writer.writerow(values)
+
+    response['Content-Disposition'] = 'attachment; ' \
+                                      'filename="company_record_report".%s' \
+                                      % file_format
+
+    return response
 
 
 @csrf_exempt

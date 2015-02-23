@@ -178,6 +178,9 @@ class Location(models.Model):
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
 
+    def natural_key(self):
+        return str(self)
+
     def __unicode__(self):
         return (", ".join([self.city, self.state]) if self.city and self.state
                 else self.city or self.state)
@@ -728,6 +731,9 @@ class Tag(models.Model):
 
     def __unicode__(self):
         return "%s for %s" % (self.name, self.company.name)
+
+    def natural_key(self):
+        return self.name
 
     class Meta:
         unique_together = ('name', 'company')

@@ -1,7 +1,3 @@
-import csv
-import json
-
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models.loading import get_model
 from django.db.models import Count
 from django.http import HttpResponse, Http404
@@ -9,6 +5,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 from myreports.decorators import restrict_to_staff
+from myreports.helpers import render_response
 from universal.helpers import get_company_or_404
 
 
@@ -28,7 +25,7 @@ def reports(request):
 
 
 def filter_records(request,
-        app='mypartners', model='contactrecord', output=None):
+                   app='mypartners', model='contactrecord', output=None):
     """
     AJAX view that returns a query set based on post data submitted with the
     request, caching results by default.
@@ -72,7 +69,7 @@ def filter_records(request,
                 'model': 'partner',
                 'output': 'myreports/example_view.html'}))
     """
-    if True: #request.is_ajax() and request.method == 'POST':
+    if request.is_ajax() and request.method == 'POST':
         company = get_company_or_404(request)
         user = request.user
         path = request.get_full_path()
@@ -125,40 +122,7 @@ def filter_records(request,
 
         ctx = {'records': records, 'cached': cached}
 
-        # serialize
-        if output == 'json':
-            # you can't use djangos serializers on a regular python object
-            ctx['records'] = list(records.values())
-            ctx = json.dumps(ctx, cls=DjangoJSONEncoder)
-
-            response = HttpResponse(ctx, content_type='application/json')
-        elif output == 'csv':
-            # TODO: use plural for model
-            content_disposition = "attachment; filename='%s.csv'" % model
-            response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = content_disposition
-
-            fields = get_model(app, model)._meta.get_all_field_names()
-            # TODO: implement foreign fields
-            fields = set(fields).difference([
-                'id', 'prmattachment', 'tags', 'locations', 'savedsearchlog'])
-            writer = csv.writer(response)
-            writer.writerow(list(fields))
-
-            for record in records:
-                writer.writerow([
-                    unicode(getattr(record, field)).encode('utf-8')
-                    for field in fields])
-
-            return response
-
-        else:
-            html = render_to_response(
-                output + ".html", ctx, RequestContext(request))
-            response = HttpResponse()
-            response.content = html.content
-
-        return response
+        return render_response(request, ctx, output)
     else:
         raise Http404("This view is only reachable via an AJAX POST request")
 filter_records.cache = {}
