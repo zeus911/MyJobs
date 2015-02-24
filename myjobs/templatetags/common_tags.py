@@ -7,7 +7,7 @@ from django.conf import settings
 from myjobs import version
 from myjobs.models import User
 from myjobs.helpers import get_completion, make_fake_gravatar
-from seo.models import CompanyUser
+from seo.models import Company
 from universal.helpers import get_company
 
 from django.db.models.loading import get_model
@@ -89,7 +89,10 @@ def get_company_name(user):
     """
 
     # Only return companies for which the user is a company user
-    return user.company_set.filter(companyuser__user=user)
+    try:
+        return user.company_set.filter(companyuser__user=user)
+    except ValueError:
+        return Company.objects.none()
 
 
 @register.simple_tag(takes_context=True)
