@@ -85,16 +85,11 @@ def get_company_name(user):
     :user: User instance
 
     Outputs:
-    :company_list: A list of company names, or an empty string if there are no
-                   companies associated with the user
+    A `QuerySet` of companies for which the user is a `CompanyUser`.
     """
 
-    try:
-        companies = CompanyUser.objects.filter(user=user)
-        company_list = [company.company for company in companies]
-        return company_list
-    except CompanyUser.DoesNotExist:
-        return {}
+    # Only return companies for which the user is a company user
+    return user.company_set.filter(companyuser__user=user)
 
 
 @register.simple_tag(takes_context=True)

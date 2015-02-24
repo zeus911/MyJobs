@@ -20,7 +20,7 @@ from django.views.generic import TemplateView
 
 from captcha.fields import ReCaptchaField
 
-from universal.helpers import get_domain
+from universal.helpers import get_domain, get_company
 from myjobs.decorators import user_is_allowed
 from myjobs.forms import ChangePasswordForm, EditCommunicationForm
 from myjobs.helpers import expire_login, log_to_jira, get_title_template
