@@ -19,7 +19,8 @@ class NormalizedModelForm(ModelForm):
 
     def clean(self):
         self.cleaned_data = {key: ' '.join(value.split())
-                             for key, value in self.cleaned_data.items()
                              # I don't see us porting to Python 3 any time soon
-                             if isinstance(value, basestring)}
+                             if isinstance(value, basestring) else value
+                             for key, value in self.cleaned_data.items()}
+
         return super(NormalizedModelForm, self).clean()
