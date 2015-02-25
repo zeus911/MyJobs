@@ -128,11 +128,13 @@ def filter_records(request,
         # serialize
         if output == 'json':
             # you can't use djangos serializers on a regular python object
-            data = {record['pk']: record['fields']
-                    for record in serializers.serialize('python', records)}
+            data = [dict([('pk', record['pk'])] + record['fields'].items())
+                    for record in serializers.serialize('python', records)]
 
-            for pk, record in data.items():
-                record['count'] = records.get(pk=pk).count
+            if count:
+                counts = {record.pk: record.count for record in records}
+                for record in data:
+                    record['count'] = counts[record['pk']]
 
             ctx = json.dumps(data, cls=DjangoJSONEncoder)
 
