@@ -719,10 +719,12 @@ class SearchFeedTests(MyPartnersTestCase):
         details = soup.find(class_="sidebar")
         self.assertIn('Active', details.find('h2').get_text())
         texts = ['http://www.my.jobs/jobs',
+                 'None',
                  'Weekly on Monday',
                  'Relevance',
                  'Never',
                  'alice@example.com',
+                 str(self.search.jobs_per_email),
                  'All jobs from www.my.jobs']
         details = details('span', recursive=False)
         for i, text in enumerate(texts):

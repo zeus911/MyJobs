@@ -65,6 +65,10 @@
                 <a href="{{search.url}}" target="_blank">{{search.url|truncatechars:40}}</a>
             </span>
             <br/><br/>
+            <b>Source Codes & Campaigns</b>
+            <br/>
+            <span>{% if search.url_extras %}{{ search.url_extras }}{% else %}None{% endif %}</span>
+            <br/><br/>
             <b>Frequency</b>
             <br/>
             <span>
@@ -94,6 +98,10 @@
             <span>
                 {{search.email}}
             </span>
+            <br/><br/>
+            <b>Jobs per Email</b>
+            <br/>
+            <span>{{ search.jobs_per_email }}{% if new_jobs != search.jobs_per_email %} ({{ new_jobs }} new){% endif %}</span>
             <br/><br/>
             <b>Tags</b>
             <br/>
