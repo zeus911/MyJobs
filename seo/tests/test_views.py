@@ -77,8 +77,7 @@ class SearchBoxTests(DirectSEOTestCase):
         bu = BusinessUnit.objects.get(id=0)
         self.site.business_units.add(bu)
 
-        self.config = factories.ConfigurationFactory(browse_moc_show=True,
-                                                     status=2)
+        self.config = factories.ConfigurationFactory(status=2)
         self.site.configurations.add(self.config)
 
     def check_for_label_on_results_pages(self, label):
@@ -105,11 +104,19 @@ class SearchBoxTests(DirectSEOTestCase):
 
     def test_custom_search_box_labels(self):
         # No custom where label added.
+        # Regular search box.
         default_where_label = 'Where'
-        self.check_for_label_on_results_pages(default_where_label)
         default_what_label = 'What'
-        self.check_for_label_on_results_pages(default_what_label)
         default_moc_label = 'Military'
+
+        self.check_for_label_on_results_pages(default_where_label)
+        self.check_for_label_on_results_pages(default_what_label)
+
+        # Search box vets.
+        self.config.browse_moc_show = True
+        self.config.save()
+        self.check_for_label_on_results_pages(default_where_label)
+        self.check_for_label_on_results_pages(default_what_label)
         self.check_for_label_on_results_pages(default_moc_label)
 
         # With custom label.
@@ -117,14 +124,20 @@ class SearchBoxTests(DirectSEOTestCase):
         custom_what_label = 'Custom What'
         custom_moc_label = 'Custom Moc'
 
+        # Regular search box.
+        self.config.browse_moc_show = False
         self.config.where_label = custom_where_label
         self.config.save()
         self.check_for_label_on_results_pages(custom_where_label)
-
         self.config.what_label = custom_what_label
         self.config.save()
         self.check_for_label_on_results_pages(custom_what_label)
 
+        # Search box vets.
+        self.config.browse_moc_show = True
+        self.config.save()
+        self.check_for_label_on_results_pages(custom_where_label)
+        self.check_for_label_on_results_pages(custom_what_label)
         self.config.moc_label = custom_moc_label
         self.config.save()
         self.check_for_label_on_results_pages(custom_moc_label)
@@ -135,25 +148,38 @@ class SearchBoxTests(DirectSEOTestCase):
         custom_what_placeholder = 'Custom What placeholder'
         custom_moc_placeholder = 'Custom Moc placeholder'
 
+        # Regular search box.
         self.config.where_placeholder = custom_where_placeholder
         self.config.save()
         self.check_for_placeholder_on_results_pages(custom_where_placeholder)
-
         self.config.what_placeholder = custom_what_placeholder
         self.config.save()
         self.check_for_placeholder_on_results_pages(custom_what_placeholder)
 
+        # Search box vets.
+        self.config.browse_moc_show = True
+        self.config.save()
+        self.check_for_placeholder_on_results_pages(custom_where_placeholder)
+        self.check_for_placeholder_on_results_pages(custom_what_placeholder)
         self.config.moc_placeholder = custom_moc_placeholder
         self.config.save()
         self.check_for_placeholder_on_results_pages(custom_moc_placeholder)
 
     def test_custom_search_box_helptexts(self):
         # No custom where helptext added.
+        # Regular search box.
         default_where_helptext = 'city, state, country'
-        self.check_for_helptext_on_results_pages(default_where_helptext)
         default_what_helptext = 'job title, keywords'
-        self.check_for_helptext_on_results_pages(default_what_helptext)
         default_moc_helptext = 'military job title or code'
+
+        self.check_for_helptext_on_results_pages(default_where_helptext)
+        self.check_for_helptext_on_results_pages(default_what_helptext)
+
+        # Search box vets.
+        self.config.browse_moc_show = True
+        self.config.save()
+        self.check_for_helptext_on_results_pages(default_where_helptext)
+        self.check_for_helptext_on_results_pages(default_what_helptext)
         self.check_for_helptext_on_results_pages(default_moc_helptext)
 
         # With custom helptext.
@@ -161,14 +187,20 @@ class SearchBoxTests(DirectSEOTestCase):
         custom_what_helptext = 'Custom What helptext'
         custom_moc_helptext = 'Custom Moc helptext'
 
+        # Regular search box.
+        self.config.browse_moc_show = False
         self.config.where_helptext = custom_where_helptext
         self.config.save()
         self.check_for_helptext_on_results_pages(custom_where_helptext)
-
         self.config.what_helptext = custom_what_helptext
         self.config.save()
         self.check_for_helptext_on_results_pages(custom_what_helptext)
 
+        # Search box vets.
+        self.config.browse_moc_show = True
+        self.config.save()
+        self.check_for_helptext_on_results_pages(custom_where_helptext)
+        self.check_for_helptext_on_results_pages(custom_what_helptext)
         self.config.moc_helptext = custom_moc_helptext
         self.config.save()
         self.check_for_helptext_on_results_pages(custom_moc_helptext)

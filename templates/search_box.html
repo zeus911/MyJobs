@@ -9,12 +9,12 @@
     <div class="row standard">
       <div class="searchHeader" role="search">
           <div class="searchTab">
-              <label for="location">{% if site_config.where_label %}{{ site_config.where_label }}{% else %}{% trans "Where" %}{% endif %}</label>
+              <label for="location">{{ site_config.where_label|default:_("Where") }}</label>
               <input title="Search Location" type="text" name="location" id="location" class="micrositeLocationField" {% if location_term != "\*" %}value="{{ location_term }}"{% endif %} {% if site_config.where_placeholder %}placeholder="{{ site_config.where_placeholder }}"{% endif %}/>
               <span class="helptext" id="where">{% if site_config.where_helptext %}{{ site_config.where_helptext|safe }}{% else %}{% blocktrans %}city, state, country{% endblocktrans %}{% endif %}</span>
           </div>
           <div class="searchTab">
-              <label for="q">{% if site_config.what_label %}{{ site_config.what_label }}{% else %}{% trans "What" %}{% endif %}</label>
+              <label for="q">{{ site_config.what_label|default:_("What") }}</label>
               <input title="Search Phrase" type="text" name="q" id="q" class="micrositeTitleField" {% if title_term != "\*" %}value="{{ title_term }}"{% endif %} {% if site_config.what_placeholder %}placeholder="{{ site_config.what_placeholder }}"{% endif %}/>
               <span class="helptext" id="what">{% if site_config.what_helptext %}{{ site_config.what_helptext|safe }}{% else %}{% blocktrans %}job title, keywords{% endblocktrans %}{% endif %}</span>
           </div>
