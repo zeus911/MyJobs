@@ -8,8 +8,8 @@ class Migration(DataMigration):
 
     def forwards(self, orm):
         """Normalizes city and state data."""
-        locations = Location.objects.filter(
-            state__contains=' ') | Location.objects.filter(
+        locations = orm.Location.objects.filter(
+            state__contains=' ') | orm.Location.objects.filter(
                 city__contains=' ')
 
         # can't do a bulk update since we need to modify existing records
