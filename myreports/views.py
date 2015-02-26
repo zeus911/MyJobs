@@ -7,6 +7,7 @@ from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.utils.html import strip_tags
 
 from myreports.decorators import restrict_to_staff
 from universal.helpers import get_company_or_404
@@ -127,18 +128,28 @@ def filter_records(request,
 
         # serialize
         if output == 'json':
-            # you can't use djangos serializers on a regular python object
-            data = [dict([('pk', record['pk'])] + record['fields'].items())
-                    for record in serializers.serialize('python', records)]
 
+            # store the counts so we don't have to run a query every time
             if count:
                 counts = {record.pk: record.count for record in records}
-                for record in data:
-                    record['count'] = counts[record['pk']]
+            else:
+                counts = None
 
-            ctx = json.dumps(data, cls=DjangoJSONEncoder)
+            # flatten the structure; attempting to modify dicts in place while
+            # serializing proved to be rather inefficient
+            data = []
+            for record in serializers.serialize('python', records):
+                data.append(record['fields'])
+                data[-1]['pk'] = record['pk']
 
-            response = HttpResponse(ctx, content_type='application/json')
+                if counts:
+                    data[-1]['count'] = counts[record['pk']]
+
+            ctx = json.dumps(data, cls=DjangoJSONEncoder,
+                             separators=(',', ';'))
+
+            response = HttpResponse(
+                ctx, content_type='application/json; charset=utf-8')
         else:
             html = render_to_response(
                 output + ".html", ctx, RequestContext(request))
