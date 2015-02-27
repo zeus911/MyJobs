@@ -713,7 +713,7 @@ class SearchFeedTests(MyPartnersTestCase):
                            id=self.search.id)
 
         response = self.client.get(url)
-        soup = BeautifulSoup(response.content)
+        soup = BeautifulSoup(response.content.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
         details = soup.find(class_="sidebar")

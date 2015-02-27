@@ -373,7 +373,7 @@ class MyDashboardViewsTests(MyJobsBase):
                     )+'?company='+str(self.company.id)+'&user='+str(
                         self.candidate_user.id))
 
-        soup = BeautifulSoup(response.content)
+        soup = BeautifulSoup(response.content.decode('utf-8'))
         titles = soup.find('div', {'id': 'candidate-content'}).findAll(
             'a', {'class': 'accordion-toggle'})
         info = soup.find('div', {'id': 'candidate-content'}).findAll('li')
@@ -388,7 +388,7 @@ class MyDashboardViewsTests(MyJobsBase):
                     )+'?company='+str(self.company.id)+'&user='+str(
                         self.candidate_user.id))
 
-        soup = BeautifulSoup(response.content)
+        soup = BeautifulSoup(response.content.decode('utf-8'))
         titles = soup.find('div', {'id': 'candidate-content'}).findAll(
             'a', {'class': 'accordion-toggle'})
         info = soup.find('div', {'id': 'candidate-content'}).findAll('li')

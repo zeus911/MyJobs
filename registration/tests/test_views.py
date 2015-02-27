@@ -78,7 +78,7 @@ class RegistrationViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.data['email'])
 
-        contents = BeautifulSoup(response.content)
+        contents = BeautifulSoup(response.content.decode('utf-8'))
         bank = contents.find(id='moduleBank')
         anchors = bank.findAll('a')
         self.assertEqual(len(anchors), 1)
