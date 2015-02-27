@@ -1016,7 +1016,7 @@ class MyJobsViewsTests(MyJobsBase):
         self.assertTrue('The Right Place for' in title.text)
 
         response = self.client.get(reverse('home') + '?next=/prm/view/')
-        content = BeautifulSoup(response.content)
+        content = BeautifulSoup(response.content.decode('utf-8'))
         title = content.select('div#title')[0]
         self.assertTrue('The new OFCCP regulations' in title.text)
 

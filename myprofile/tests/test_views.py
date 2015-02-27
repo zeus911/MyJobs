@@ -167,6 +167,6 @@ class MyProfileViewsTests(MyJobsBase):
         resp = self.client.get(reverse('handle_form'),
                                data={'module': 'Address',
                                      'id': address.id})
-        content = BeautifulSoup(resp.content)
+        content = BeautifulSoup(resp.content.decode('utf-8'))
         selected = content.find('option', attrs={'selected': True})
         self.assertEqual(selected.attrs['value'], 'AFG')
