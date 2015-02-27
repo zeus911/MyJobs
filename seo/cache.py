@@ -20,7 +20,9 @@ MINUTES_TO_CACHE_JOB_DATA = 10
 
 def cache_page_prefix(request):
     """Returns the key prefix based on the input request"""
+    import ipdb; ipdb.set_trace();
     config = get_site_config(request)
+    print config
     return "%s-%s-%s-%s" % (request.get_host(), config.id,
                             config.status, config.revision)
 

@@ -60,7 +60,7 @@ def update_job_source(guid, buid, name):
     bu.associated_jobs = len(jobs)
     bu.date_updated = datetime.datetime.utcnow()
     bu.save()
-    # Clear cache in 20 minutes
+    # Clear cache in 20 minutes to allow for solr replication
     tasks.task_clear_bu_cache.delay(buid=bu.id, countdown=1500)
 
 
@@ -365,6 +365,7 @@ def update_solr(buid, download=True, force=True, set_title=False,
                                          updated=updated)
     bu.associated_jobs = len(jobs)
     bu.save()
+    # Clear cache in 20 minutes to allow for solr replication
     tasks.task_clear_bu_cache.delay(buid=bu.id, countdown=1500)
     #Update the Django database to reflect company additions and name changes
     add_company(bu)

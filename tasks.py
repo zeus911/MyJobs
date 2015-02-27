@@ -680,7 +680,7 @@ def expire_jobs():
 @task(name="tasks.task_clear_cache", acks_late=True, ignore_results=True)
 def task_clear_bu_cache(buid, **kwargs):
     try:
-        BusinessUnit.clear_cache(buid)
+        BusinessUnit.clear_caches([buid])
     except:
         logging.error(traceback.format_exc(sys.exc_info()))
 

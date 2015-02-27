@@ -526,9 +526,6 @@ class SeoSite(Site):
             self.postajob_filter_type, SeoSite.this_site_only)
         return filter_function(self)
 
-    def clear_cache(self):
-        self.clear_caches([self])
-
     @staticmethod
     def clear_caches(sites):
         # Increment Configuration revision attributes, which is used
@@ -537,14 +534,15 @@ class SeoSite(Site):
         # views_
         configs = Configuration.objects.filter(seosite__in=sites)
         # https://docs.djangoproject.com/en/dev/topics/db/queries/#query-expressions
+        print configs
         configs.update(revision=models.F('revision') + 1)
         Configuration.clear_caches(configs)
         # Delete domain-based cache entries that don't use the
         # custom_cache_page prefix
         site_cache_keys = ['%s:SeoSite' % site.domain for site in sites]
         buid_cache_keys = ['%s:buids' % key for key in site_cache_keys]
-        social_cache_keys = ['%s:social_links' % key for key in sites]
-        cache.delete_many([site_cache_keys, buid_cache_keys, social_cache_keys])
+        social_cache_keys = ['%s:social_links' % site.domain for site in sites]
+        cache.delete_many(site_cache_keys + buid_cache_keys + social_cache_keys)
 
 
     def email_domain_choices(self,):
@@ -563,7 +561,7 @@ class SeoSite(Site):
 
     def save(self, *args, **kwargs):
         super(SeoSite, self).save(*args, **kwargs)
-        self.clear_cache()
+        self.clear_caches([self])
 
     def user_has_access(self, user):
         """
@@ -968,19 +966,21 @@ class Configuration(models.Model):
         self.browse_mapped_moc_text = self.browse_moc_text
         self.browse_mapped_moc_order = self.browse_moc_order
 
-    def clear_cache(self):
-        self.clear_caches([self])
-
     @staticmethod
     def clear_caches(configs):
         # Delete all cached configurations used to determine cache key prefixes
         # in directseo.seo.decorators.custom_cache_page because the
         # configuration revision referenced in the key_prefix has changed.
-        sites = SeoSite.objects.filter(configuration__in=configs)
-        cache.delete_many(["%s:config:%s" % (domain, self.status) for domain in
-                           sites.values_list('domain', flat=True)])
-        cache.delete_many(["jobs_count::%s" % pk for pk in 
-                           sites.values_list('id', flat=True)])
+        sites = SeoSite.objects.filter(configurations__in=configs)
+        print configs
+        statuses = set()
+        for config in configs:
+            statuses.add(config.status)
+        for status in statuses:
+            cache.delete_many(["%s:config:%s" % (site.domain, status) for 
+                               site in sites.all()])
+            cache.delete_many(["jobs_count::%s" % site.pk for 
+                               site in  sites.all()])
 
 
     def save(self, *args, **kwargs):
@@ -988,7 +988,7 @@ class Configuration(models.Model):
         # of the seosites linked to this configuration.
         self.revision += 1
         super(Configuration, self).save(*args, **kwargs)
-        self.clear_cache()
+        self.clear_caches([self])
 
     def status_title(self):
         if self.status == 1:
@@ -1217,11 +1217,12 @@ class BusinessUnit(models.Model):
 
     @staticmethod
     def clear_cache(buid):
-        sites = SeoSite.objects.filter(businessunits=buid).exclude(site_tags__site_tag='network')
+        sites = SeoSite.objects.filter(business_units=buid).exclude(site_tags__site_tag='network')
         SeoSite.clear_caches(sites)
 
     def save(self, *args, **kwargs):
         super(BusinessUnit, self).save(*args, **kwargs)
+        self.clear_cache(self.id)
 
 
 class Country(models.Model):

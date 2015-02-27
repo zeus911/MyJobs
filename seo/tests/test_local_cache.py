@@ -4,8 +4,7 @@ import django.utils.cache
 from mock import patch, Mock
 
 import middleware
-from seo import cache
-from seo import models
+from seo import cache, decorators, models
 from seo.tests.setup import DirectSEOTestCase, patch_settings
 from seo.tests import factories
 from seo.views import search_views as views
@@ -36,11 +35,45 @@ class LocalCacheTestCase(DirectSEOTestCase):
             cache_patch.start()
         get_cache_patch = patch.object(django.core.cache, 'get_cache', 
                                        Mock(return_value=self.locmem_cache))
+        #        middleware_patch = patch.object(django.middleware.cache, 
+        #                                        'get_cache', 
+        #                                        Mock(return_value=self.locmem_cache))
+
 
     def tearDown(self):
         super(DirectSEOTestCase, self).tearDown()
         for cache_patch in self.cache_patches:
             cache_patch.stop()
+
+    def test_clear_cache_on_bu_save(self):
+        with patch_settings(CACHES = {'default': {'BACKEND':
+            'django.core.cache.backends.locmem.LocMemCache'}}):
+
+
+            site = factories.SeoSiteFactory()
+            site.business_units.add(self.businessunit)
+            config = factories.ConfigurationFactory(status=2)
+            print config
+            site.configurations.add(config)
+            resp = self.client.get('/', HTTP_HOST= u'buckconsultants.jobs', 
+                                   follow=True)
+            initial_jobs = resp.context['default_jobs']
+            self.assertEqual(resp.status_code, 200)
+            self.assertGreater(len(initial_jobs), 0)
+
+            self.conn.delete(id = self.solr_docs[0]['id'])
+            resp = self.client.get('/', HTTP_HOST= u'buckconsultants.jobs')
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(resp.context, None)
+            for job in initial_jobs:
+                self.assertContains(resp, job.guid)
+            self.businessunit.save()
+            resp = self.client.get('/', HTTP_HOST= u'buckconsultants.jobs')
+            new_jobs = resp.context['default_jobs']
+            self.assertEqual(len(initial_jobs)-1, len(new_jobs))
+            solr_docs = self.conn.search('*:*')
+            self.assertEqual(len(solr_docs), len(new_jobs))
+        
 
     def test_expire_site_on_config_save(self):
         """
