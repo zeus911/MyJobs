@@ -1033,6 +1033,7 @@ def home_page(request):
     render_to_response call
 
     """
+
     site_config = get_site_config(request)
     num_facet_items = site_config.num_filter_items_to_show
     custom_facet_counts = []
