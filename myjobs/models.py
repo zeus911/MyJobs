@@ -3,6 +3,7 @@ import hashlib
 import string
 import urllib
 import uuid
+from django.db.models import Q
 
 import pytz
 
@@ -11,17 +12,18 @@ from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
                                         Group, PermissionsMixin)
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.db import models, transaction
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.importlib import import_module
+from django.utils.translation import ugettext_lazy as _
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
-from mymessages.models import Message, MessageInfo, get_messages
+from mymessages.models import Message, MessageInfo
 from universal.helpers import get_domain, send_email
 
 BAD_EMAIL = ['dropped', 'bounce']
@@ -451,57 +453,37 @@ class User(AbstractBaseUser, PermissionsMixin):
             else:
                 self.user_guid = guid
 
-    def messages(self, only_new=True, system=False):
+    def get_messages(self):
         """
-        Gets a list of Messages from get_messages. Then gets or creates
-        MessageInfo based on user a Message. Excludes read and expired messages
-        by default, which can be overridden with only_new=False.
+        Gathers Messages based on user, user's groups and if message has started
+        and is not expired.
 
-        Input:
-        :only_new: A boolean denoting the inclusion or exclusion of
-            read/expired messages
-        :system: A boolean denoting if we should return just system messages
-            or all messages
+        Outputs:
+        :active_messages:   A list of messages that starts before the current
+                            time and expires after the current time. 'active'
+                            messages.
+        """
+        now = timezone.now().date()
+        messages = Message.objects.prefetch_related('messageinfo_set').filter(
+            Q(group__in=self.groups.all()) | Q(users=self),
+            Q(expire_at__isnull=True) | Q(expire_at__gte=now),
+            Q(messageinfo__deleted_on__isnull=True)).distinct()
 
-        Output:
-        :messages:  A list of Messages to be shown to the User.
+        return messages
+
+    def claim_messages(self):
+        """
+        Create MessageInfos for group-based messages that this user hasn't
+        seen yet.
         """
         if not self.pk:
-            # The "user deletion successful" page attempts to load messages.
-            # Since the user has been deleted by that point, that is a bad
-            # thing. Ensure that the user exists before proceeding.
-            return MessageInfo.objects.none()
+            return
+        messages = self.get_messages().exclude(users=self)
 
-        messages = get_messages(self).exclude(users=self)
-        new_message_infos = [
-            MessageInfo(user=self, message=message) for message in messages]
-        MessageInfo.objects.bulk_create(new_message_infos)
-
-        info_kwargs = {'deleted_on__isnull': True}
-        if only_new:
-            info_kwargs.update({'read': False, 'expired': False})
-        if system:
-            # We can't unilaterally add system to info_kwargs - if system is
-            # False, we want to return all messages and not just messages
-            # that aren't system messages.
-            info_kwargs['message__system'] = system
-
-        # Ordering by -id shows the most recent items first.
-        return self.messageinfo_set.filter(**info_kwargs).order_by('-id')
-
-    def messages_unread(self):
-        """
-        Used in templates where passing an argument to self.messages() is
-        not practical. Excludes read and expired messages.
-        """
-        return self.messages(only_new=True)
-
-    def system_messages(self):
-        """
-        Used in templates where passing an argument to self.messages()
-        is not practical. Returns unread, unexpired system messages.
-        """
-        return self.messages(only_new=True, system=True)
+        with transaction.atomic():
+            for message in messages:
+                MessageInfo.objects.get_or_create(
+                    user=self, message=message)
 
     def get_full_name(self, default=""):
         """

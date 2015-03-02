@@ -224,36 +224,39 @@ def process_user_events(email):
     deactivate = filter_by_event(BAD_EMAIL)
     stop_sending = filter_by_event(STOP_SENDING)
     update_fields = []
-    if user and (deactivate or stop_sending) and user.opt_in_myjobs:
-        user.opt_in_myjobs = False
-        if deactivate:
-            user.is_verified = False
-            user.deactivate_type = deactivate[0].event
-            update_fields.append('is_verified')
-            body = """
-            <b>Warning</b>: Attempts to send messages to {email} have failed.
-            Please check your email address in your <a href="{{settings_url}}">
-            account settings</a>.
-            """.format(email=deactivate[0].email)
-        else:
-            user.deactivate_type = stop_sending[0].event
-            body = """
-            <b>Warning</b>: We have received a request to stop communications
-            with {email}. If this was in error, please opt back into emails in
-            your <a href="{{settings_url}}">account settings</a>.
-            """.format(email=stop_sending[0].email)
-        body = body.format(settings_url=reverse_lazy('edit_account'))
-        Message.objects.create_message(users=user, subject='', body=body)
-        update_fields.extend(['deactivate_type',
-                              'opt_in_myjobs'])
+    if user:
+        if (deactivate or stop_sending) and user.opt_in_myjobs:
+            user.opt_in_myjobs = False
+            if deactivate:
+                user.is_verified = False
+                user.deactivate_type = deactivate[0].event
+                update_fields.append('is_verified')
+                body = ('<b>Warning</b>: Attempts to send messages to {email} '
+                        'have failed. Please check your email address in your '
+                        '<a href="{{settings_url}}">'
+                        'account settings</a>.').format(
+                            email=deactivate[0].email)
+            else:
+                user.deactivate_type = stop_sending[0].event
+                body = ('<b>Warning</b>: We have received a request to stop '
+                        'communications with {email}. If this was in error, '
+                        'please opt back into emails in your '
+                        '<a href="{{settings_url}}">'
+                        'account settings</a>.').format(
+                            email=stop_sending[0].email)
+            body = body.format(settings_url=reverse_lazy('edit_account'))
+            Message.objects.create_message(users=user, subject='', body=body)
+            update_fields.extend(['deactivate_type',
+                                  'opt_in_myjobs'])
 
-    if user and user.last_response < newest_log.received:
-        user.last_response = newest_log.received
-        update_fields.append('last_response')
+        if user.last_response < newest_log.received:
+            user.last_response = newest_log.received
+            update_fields.append('last_response')
 
-    # If update_fields is an empty iterable, the save is aborted
-    # This doesn't hit the DB unless a field has changed
-    user.save(update_fields=update_fields)
+        # If update_fields is an empty iterable, the save is aborted
+        # This doesn't hit the DB unless a field has changed
+        user.save(update_fields=update_fields)
+
     logs.update(processed=True)
 
 
@@ -689,8 +692,18 @@ def task_update_solr(jsid, **kwargs):
         raise task_update_solr.retry()
 
 
-@task(name='tasks.etl_to_solr', ignore_result=True)
+@task(name='tasks.etl_to_solr', ignore_result=True, send_error_emails=True)
 def task_etl_to_solr(guid, buid, name):
+    try:
+        import_jobs.update_job_source(guid, buid, name)
+    except Exception as e:
+        logging.error("Error loading jobs for jobsource: %s", guid)
+        logging.exception(e)
+        raise task_etl_to_solr.retry()
+
+
+@task(name='tasks.priority_etl_to_solr', ignore_result=True)
+def task_priority_etl_to_solr(guid, buid, name):
     try:
         import_jobs.update_job_source(guid, buid, name)
     except Exception as e:

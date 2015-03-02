@@ -52,7 +52,7 @@ class SavedSearchHelperTests(MyJobsBase):
 
     def test_validate_dotjobs_url_with_special_chars(self):
         urls = [
-            ('http://www.my.jobs/jobs/?q=query with spaces/',
+            ('http://www.my.jobs/jobs/?q=query with spaces',
              'http://www.my.jobs/jobs/feed/rss?q=query+with+spaces'),
             ('http://www.my.jobs/jobs/?q=яы',
              'http://www.my.jobs/jobs/feed/rss?q=%D1%8F%D1%8B')

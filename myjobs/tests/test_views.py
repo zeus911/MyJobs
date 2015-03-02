@@ -46,23 +46,38 @@ class TestClient(Client):
         path and data attribute to be used for get and post requests.
         """
         self.path = path
-        self.data = data
+        self.data = data or {}
         super(TestClient, self).__init__(enforce_csrf_checks, **defaults)
 
-    def get(self, path=None, data=None, secure=False, **extra):
-        # we can't pass a None as path to the super class, so we reconstruct
-        # args without Nones
-        args = filter(None, [path or self.path, data or self.data])
-        extra.update({'secure': False})
-        return super(TestClient, self).get(*args, **extra)
+    def get(self, path=None, data=None, follow=False, secure=False, **extra):
+        """
+        Like the builtin get method, but uses the instances path and data when
+        available.
+        """
+        path = path or self.path
+        data = data or self.data
+
+        try:
+            return super(TestClient, self).get(
+                path, data=data, follow=follow, secure=secure, **extra)
+        except TypeError:
+            raise Exception("Calls to TestClient's methods require that "
+                            "either path be passed explicit, or the "
+                            "path be specified in the constructor")
 
     def post(self, path=None, data=None, content_type=MULTIPART_CONTENT,
              secure=False, **extra):
-        # we can't pass a None as path to the super class, so we reconstruct
-        # args without Nones
-        args = filter(None, [path or self.path, data or self.data])
-        extra.update({'content_type': content_type, 'secure': secure})
-        return super(TestClient, self).post(*args, **extra)
+        path = path or self.path
+        data = data or self.data
+
+        try:
+            return super(TestClient, self).post(
+                path, data=data, content_type=content_type,
+                secure=secure, **extra)
+        except TypeError:
+            raise Exception("Calls to TestClient's methods require that "
+                            "either path be passed explicit, or the "
+                            "path be specified in the constructor")
 
     def login_user(self, user):
         if 'django.contrib.sessions' not in settings.INSTALLED_APPS:
@@ -796,7 +811,7 @@ class MyJobsViewsTests(MyJobsBase):
         creator = UserFactory(id=3, email='normal@user.com')
 
         # should not have any messages
-        self.assertFalse(creator.messages_unread())
+        self.assertFalse(creator.message_set.all())
 
         PartnerSavedSearch.objects.create(user=self.user, provider=company,
                                           created_by=creator,
@@ -809,8 +824,8 @@ class MyJobsViewsTests(MyJobsBase):
         self.client.get(reverse('unsubscribe_all'))
 
         # creator should have a My.jobs message and email
-        for body in [creator.messages_unread()[0].message.body,
-                     mail.outbox[0].body]:
+        for body in [creator.message_set.first().body,
+                     mail.outbox[0].body]: 
             self.assertIn(self.user.email, body)
             self.assertIn('unsubscribed from one or more saved search emails',
                           body)
@@ -831,7 +846,7 @@ class MyJobsViewsTests(MyJobsBase):
         creator = UserFactory(id=3, email='normal@user.com')
 
         # should not have any messages
-        self.assertFalse(creator.messages_unread())
+        self.assertFalse(creator.message_set.all())
 
         PartnerSavedSearch.objects.create(user=self.user, provider=company,
                                           created_by=creator,
@@ -840,8 +855,8 @@ class MyJobsViewsTests(MyJobsBase):
         self.client.get(reverse('unsubscribe_all'))
 
         # creator should have a My.jobs message and email
-        for body in [creator.messages_unread()[0].message.body,
-                     mail.outbox[0].body]:
+        for body in [creator.message_set.first().body,
+                     mail.outbox[0].body]: 
             self.assertIn(self.user.email, body)
             self.assertIn('unsubscribed from one or more saved search emails',
                           body)
@@ -874,7 +889,8 @@ class MyJobsViewsTests(MyJobsBase):
 
     def test_referring_site_in_topbar(self):
         self.client.get(
-            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http%3A%2F%2Findianapolis.jobs&callback=foo',
+            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http%3A'
+                                 '%2F%2Findianapolis.jobs&callback=foo',
             HTTP_REFERER='http://indianapolis.jobs')
 
         last_site = self.client.cookies.get('lastmicrosite').value
@@ -900,8 +916,8 @@ class MyJobsViewsTests(MyJobsBase):
             self.assertTrue('id="menu-inbox">%s<' % (num_messages-1, )
                             in response.content)
             if num_messages == 1:
-                # The only message has been read in this instance; it should not
-                # have been displayed.
+                # The only message has been read in this instance; it should
+                # not have been displayed.
                 self.assertTrue('No new unread messages' in response.content,
                                 'Iteration %s' % num_messages)
             for info in infos[1:4]:
@@ -949,7 +965,8 @@ class MyJobsViewsTests(MyJobsBase):
         self.assertEqual(user.source, 'jobs.directemployers.org')
 
         self.client.get(
-            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http%3A%2F%2Findianapolis.jobs&callback=foo',
+            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http'
+                                 '%3A%2F%2Findianapolis.jobs&callback=foo',
             HTTP_REFERER='http://indianapolis.jobs')
 
         last_site = self.client.cookies.get('lastmicrosite').value

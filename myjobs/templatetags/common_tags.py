@@ -7,7 +7,7 @@ from django.conf import settings
 from myjobs import version
 from myjobs.models import User
 from myjobs.helpers import get_completion, make_fake_gravatar
-from seo.models import CompanyUser
+from seo.models import Company
 from universal.helpers import get_company
 
 from django.db.models.loading import get_model
@@ -85,16 +85,14 @@ def get_company_name(user):
     :user: User instance
 
     Outputs:
-    :company_list: A list of company names, or an empty string if there are no
-                   companies associated with the user
+    A `QuerySet` of companies for which the user is a `CompanyUser`.
     """
 
+    # Only return companies for which the user is a company user
     try:
-        companies = CompanyUser.objects.filter(user=user)
-        company_list = [company.company for company in companies]
-        return company_list
-    except CompanyUser.DoesNotExist:
-        return {}
+        return user.company_set.filter(companyuser__user=user)
+    except ValueError:
+        return Company.objects.none()
 
 
 @register.simple_tag(takes_context=True)
@@ -139,15 +137,6 @@ def get_nonuser_gravatar(email, size=20):
         return ''
 
 
-@register.filter(name='get_messages')
-def get_messages(user):
-    """
-    Gets messages associated to the users that are marked as not read.
-    """
-
-    return user.messages_unread()
-
-
 @register.assignment_tag(takes_context=True)
 def get_ms_name(context):
     """
@@ -190,6 +179,7 @@ def to_string(value):
 def get_attr(obj, attr):
     return obj.get(attr)
 
+
 @register.simple_tag
 def paginated_index(index, page, per_page=None):
     """
@@ -209,6 +199,7 @@ def paginated_index(index, page, per_page=None):
     page = int(page or 1) - 1
     index = int(index or 1)
     return page * per_page + index
+
 
 @register.assignment_tag(takes_context=True)
 def gz(context):

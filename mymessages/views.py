@@ -10,6 +10,7 @@ from django.template.loader import render_to_string
 
 from myjobs.decorators import user_is_allowed
 from myjobs.models import User
+from mymessages.context_processors import message_lists
 from mymessages.models import MessageInfo
 
 
@@ -18,12 +19,8 @@ from mymessages.models import MessageInfo
 def read(request):
     if request.is_ajax():
         message, user = request.GET.get('name').split('-')[2:]
-        try:
-            m = MessageInfo.objects.get(user=user, message__id=message)
-        except MessageInfo.DoesNotExist:
-            pass
-        else:
-            m.mark_read()
+        for info in MessageInfo.objects.filter(user=user, message__id=message):
+            info.mark_read()
         return HttpResponse('')
     raise Http404
 
@@ -34,7 +31,7 @@ def get_message_page(request):
     paginates it, and selects the proper page based on the presence of
     a "message" or "page" query string.
     """
-    message_list = request.user.messages(only_new=False)
+    message_list = message_lists(request)['all_messages']
     items_per_page = 10
     paginator = Paginator(message_list, items_per_page)
 

@@ -20,7 +20,7 @@ class SavedSearchFormTests(MyJobsBase):
         self.user = UserFactory()
         self.data = {'url': 'http://www.my.jobs/jobs',
                      'feed': 'http://www.my.jobs/jobs/feed/rss?',
-                     'email': 'alice@example.com',
+                     'email': self.user.email,
                      'frequency': 'D',
                      'jobs_per_email': 5,
                      'label': 'All jobs from www.my.jobs',

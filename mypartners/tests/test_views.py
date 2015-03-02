@@ -719,10 +719,12 @@ class SearchFeedTests(MyPartnersTestCase):
         details = soup.find(class_="sidebar")
         self.assertIn('Active', details.find('h2').get_text())
         texts = ['http://www.my.jobs/jobs',
+                 'None',
                  'Weekly on Monday',
                  'Relevance',
                  'Never',
                  'alice@example.com',
+                 str(self.search.jobs_per_email),
                  'All jobs from www.my.jobs']
         details = details('span', recursive=False)
         for i, text in enumerate(texts):
@@ -1199,6 +1201,12 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
         except Partner.DoesNotExist:
             self.fail("Partner with an ID of %s not created!" % library_id)
 
+        # ensure that the associated contact was created as well
+        try:
+            contact = Contact.objects.get(library=library_id)
+        except Partner.DoesNotExist:
+            self.fail("Contact with an ID of %s not created!" % library_id)
+
         # test that appropriate tags created
         library = PartnerLibrary.objects.get(id=library_id)
         for tag in ['Veteran', 'Disabled Veteran',  
@@ -1209,6 +1217,3 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
         if library.is_disabled:
             self.assertIn('Disability',
                           partner.tags.values_list('name', flat=True))
-
-        self.assertIn(
-            library.data_source, partner.tags.values_list('name', flat=True))

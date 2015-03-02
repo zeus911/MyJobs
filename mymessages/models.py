@@ -2,7 +2,6 @@ import collections
 import datetime
 
 from django.db import models
-from django.db.models import Q
 from django.utils import timezone
 from django.contrib.auth.models import Group
 
@@ -122,6 +121,9 @@ class MessageInfo(models.Model):
     deleted_on = models.DateTimeField('deleted on', blank=True, null=True,
                                       db_index=True)
 
+    class Meta:
+        unique_together = (('user', 'message'), )
+
     def __unicode__(self):
         return self.message.subject
 
@@ -162,25 +164,3 @@ class MessageInfo(models.Model):
             return True
         else:
             return False
-
-
-def get_messages(user):
-    """
-    Gathers Messages based on user, user's groups and if message has started
-    and is not expired.
-
-    Inputs:
-    :user:              User obj to get user's groups
-
-    Outputs:
-    :active_messages:   A list of messages that starts before the current
-                        time and expires after the current time. 'active'
-                        messages.
-    """
-    now = timezone.now().date()
-    messages = Message.objects.prefetch_related('messageinfo_set').filter(
-        Q(group__in=user.groups.all()) | Q(users=user),
-        Q(expire_at__isnull=True) | Q(expire_at__gte=now),
-        Q(messageinfo__deleted_on__isnull=True)).distinct()
-
-    return messages
