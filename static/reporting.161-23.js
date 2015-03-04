@@ -48,7 +48,7 @@ Report.prototype.bind_events = function () {
       c_field = report.find_field("Select Contacts");
 
     if (typeof in_list !== "undefined") {
-      
+
       report.data[in_list] = ["10", "13"];
       if (in_list === "partner") {
         contact_wrapper.html(c_field.render(report.data)).children().unwrap();
@@ -265,10 +265,12 @@ List.prototype.filter = function (type, filter) {
   }
 
   $.ajaxSettings.traditional = true;
+  console.log(url);
   $.ajax({
     type: 'POST',
     url: url,
     data: $.param(data, true),
+    dataType: "json",
     global: false,
     success: function (data) {
       var ul = $("<ul></ul>"),
@@ -286,8 +288,9 @@ List.prototype.filter = function (type, filter) {
       $("#"+ type + ".list-body").append(ul);
       $(selected).html(data.records.length).parent().show("fast");
     },
-    error: function () {
+    error: function (e) {
       // TODO: change when testing is done to something more useful.
+      console.log(e);
       throw "Something horrible happened.";
     }
   });
