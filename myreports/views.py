@@ -18,7 +18,7 @@ def reports(request):
     if request.is_ajax():
         response = HttpResponse()
         template = '{path}.html'
-        html = render_to_response(template.format(path=request.GET['output']),
+        html = render_to_response(template.format(path=request.POST['output']),
                                   {}, RequestContext(request))
         response.content = html.content
         return response
@@ -72,16 +72,16 @@ def filter_records(request,
                 'model': 'partner',
                 'output': 'myreports/example_view.html'}))
     """
-    if True:#request.is_ajax() and request.method == 'GET':
+    if request.is_ajax() and request.method == 'POST':
         company = get_company_or_404(request)
         user = request.user
         path = request.get_full_path()
 
         # get rid of empty params and flatten single-item lists
         params = {}
-        for key in request.GET.keys():
-            value = request.GET.get(key)
-            value_list = request.GET.getlist(key)
+        for key in request.POST.keys():
+            value = request.POST.get(key)
+            value_list = request.POST.getlist(key)
 
             # parsing a list parameter as a regular parameter only captures the
             # last item, so if trying both ways returns the same value, we can
@@ -158,5 +158,5 @@ def filter_records(request,
 
         return response
     else:
-        raise Http404("This view is only reachable via an AJAX GET request")
+        raise Http404("This view is only reachable via an AJAX POST request")
 filter_records.cache = {}
