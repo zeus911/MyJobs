@@ -40,22 +40,40 @@ Report.prototype.bind_events = function () {
   $(document.body).on("change", "input", function (e) {
     console.log("CHANGE!");
 
-
     var in_list = $(this).parents(".list-body").attr("id"),
-      partner_wrapper = $("#partner-wrapper"),
       contact_wrapper = $("#contact-wrapper"),
-      p_field = report.find_field("Select Partners"),
       c_field = report.find_field("Select Contacts");
 
     if (typeof in_list !== "undefined") {
+      var all_records = $(this).parents(".list-body").prev().children("input"),
+        records = $($(this).parents(".list-body").find("input")),
+        values = [];
 
-      report.data[in_list] = ["10", "13"];
+      if (all_records.is(":checked")) {
+        report.data[in_list] = "";
+      } else {
+        // iterate through all checkboxes and find all the ones that are checked
+        // and add to data.
+        $(records).each(function (element) {
+          if ($(records[element]).is(":checked")) {
+            values.push(records[element].value);
+          }
+        });
+        // if there were no partners selected ignore saving data.
+        if (values.length > 0) {
+          report.data[in_list] = values;
+        } else {
+          report.data[in_list] = "";
+        }
+      }
+
       if (in_list === "partner") {
         contact_wrapper.html(c_field.render(report.data)).children().unwrap();
       }
-      console.log("test");
     } else {
-      var is_prm_field = function (e) {
+      var partner_wrapper = $("#partner-wrapper"),
+        p_field = report.find_field("Select Partners"),
+        is_prm_field = function (e) {
         // This list will need to be updated if more is added to the PRM report
         // if they filter down partners/contacts
         var prm_field = ["start_date", "end_date", "state", "city"],
@@ -66,12 +84,10 @@ Report.prototype.bind_events = function () {
       };
 
       report.data[$(e.currentTarget).attr("id")] = $(e.currentTarget).val();
-      console.log(report.data);
 
       if (is_prm_field(e)) {
         partner_wrapper.html(p_field.render(report.data)).children().unwrap();
         contact_wrapper.html(c_field.render(report.data)).children().unwrap();
-        console.log("updated");
       }
     }
   });
@@ -144,25 +160,20 @@ Report.prototype.bind_events = function () {
     var modal = $("#report-modal"),
       body = modal.children(".modal-body"),
       footer = modal.children(".modal-footer");
-
-    // Demo purposes
-    var infos = $(".rpt-container input[type='text']"),
-      i = 0,
-      data = [];
-    for (i; i < infos.length; i++) {
-      var ldata = {};
-      ldata.label = $(infos[i]).attr("placeholder");
-      ldata.value = $(infos[i]).val();
-      data.push(ldata);
-    }
-    console.log(data);
-    body.html(JSON.stringify(data));
+    console.log(report.data);
+    body.html(report.readable_data());
     modal.modal("show");
   });
 
   $(document.body).on("click", "#gen-report", function (e) {
 
   });
+};
+
+Report.prototype.readable_data = function () {
+  var data = this.data,
+    html = '';
+  return html;
 };
 
 Report.prototype.find_field = function (field_label) {
@@ -202,8 +213,7 @@ Field.prototype.render = function () {
     wrapper.append(l).append(input);
     html = $("<div>").append(wrapper).remove().html();
   } else if (this.type === "date") {
-    var date_widget = $("<div id='date-filter' class='filter-option'></div>")
-                        .append("<div class='date-picker'></div>"),
+    var date_widget = $("<div id='date-filter' class='filter-option'></div>").append("<div class='date-picker'></div>"),
       date_picker = $(date_widget).children("div")
                       .append("<input id='start_date' class='datepicker picker-left' type='text' placeholder='Start Date' />")
                       .append("<span id='activity-to-' class='datepicker'>to</span>")
@@ -265,7 +275,6 @@ List.prototype.filter = function (type, filter) {
   }
 
   $.ajaxSettings.traditional = true;
-  console.log(url);
   $.ajax({
     type: 'POST',
     url: url,
@@ -277,7 +286,7 @@ List.prototype.filter = function (type, filter) {
         selected = $("[id^='" + type + "-header'] span span");
       for (var i = 0; i < data.records.length; i++) {
         var record = data.records[i],
-          li = $("<li><input type='checkbox' value='"+ record.id +"' checked /> "+ record.name +"</li>"),
+          li = $("<li><input type='checkbox' value='"+ record.pk +"' checked /> "+ record.name +"</li>"),
           invis_box = $("<div class=\"invis-box\"></div>");
         if (type === "partner") {
           li.append("<span class='pull-right'>"+ record.count +"</span>");
@@ -290,7 +299,6 @@ List.prototype.filter = function (type, filter) {
     },
     error: function (e) {
       // TODO: change when testing is done to something more useful.
-      console.log(e);
       throw "Something horrible happened.";
     }
   });
