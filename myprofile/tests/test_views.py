@@ -46,7 +46,7 @@ class MyProfileViewsTests(MyJobsBase):
         resp = self.client.get(reverse('handle_form'),
                                data={'module': 'Name'})
         self.assertTemplateUsed(resp, 'myprofile/profile_form.html')
-        soup = BeautifulSoup(resp.content.decode('utf-8'))
+        soup = BeautifulSoup(resp.content)
         self.assertEquals(soup.form.attrs['id'], 'profile-unit-form')
         with self.assertRaises(KeyError):
             soup.find('input', id='id_name-given_name').attrs['value']
@@ -60,7 +60,7 @@ class MyProfileViewsTests(MyJobsBase):
         resp = self.client.get(reverse('handle_form'),
                                data={'module': 'Name', 'id': self.name.id})
         self.assertTemplateUsed(resp, 'myprofile/profile_form.html')
-        soup = BeautifulSoup(resp.content.decode('utf-8'))
+        soup = BeautifulSoup(resp.content)
         self.assertEquals(soup.form.attrs['id'], 'profile-unit-form')
         self.assertEquals(soup.find('input', id='id_name-given_name')
                           .attrs['value'], 'Alice')
@@ -157,7 +157,7 @@ class MyProfileViewsTests(MyJobsBase):
         """
         resp = self.client.get(reverse('handle_form'),
                                data={'module': 'Address'})
-        content = BeautifulSoup(resp.content.decode('utf-8'))
+        content = BeautifulSoup(resp.content)
 
         selected = content.find('option', attrs={'selected': True})
         self.assertEqual(selected.attrs['value'], 'USA')
@@ -167,6 +167,6 @@ class MyProfileViewsTests(MyJobsBase):
         resp = self.client.get(reverse('handle_form'),
                                data={'module': 'Address',
                                      'id': address.id})
-        content = BeautifulSoup(resp.content.decode('utf-8'))
+        content = BeautifulSoup(resp.content)
         selected = content.find('option', attrs={'selected': True})
         self.assertEqual(selected.attrs['value'], 'AFG')
