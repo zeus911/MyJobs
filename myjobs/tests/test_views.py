@@ -690,7 +690,7 @@ class MyJobsViewsTests(MyJobsBase):
         inactive_user = UserFactory(email='inactive@my.jobs', is_active=False)
         self.client.login_user(inactive_user)
         response = self.client.get("/")
-        soup = BeautifulSoup(response.content.decode('utf-8'))
+        soup = BeautifulSoup(response.content)
         self.assertFalse(soup.findAll('a', {'id': 'savedsearch-link'}))
 
     def test_user_account_settings(self):
@@ -1011,12 +1011,12 @@ class MyJobsViewsTests(MyJobsBase):
         """
         self.client.logout()
         response = self.client.get(reverse('home'))
-        content = BeautifulSoup(response.content.decode('utf-8'))
+        content = BeautifulSoup(response.content)
         title = content.select('div#title')[0]
         self.assertTrue('The Right Place for' in title.text)
 
         response = self.client.get(reverse('home') + '?next=/prm/view/')
-        content = BeautifulSoup(response.content.decode('utf-8'))
+        content = BeautifulSoup(response.content)
         title = content.select('div#title')[0]
         self.assertTrue('The new OFCCP regulations' in title.text)
 
