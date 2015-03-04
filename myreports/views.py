@@ -145,8 +145,8 @@ def filter_records(request,
                 if counts:
                     data[-1]['count'] = counts[record['pk']]
 
-            ctx = json.dumps(data, cls=DjangoJSONEncoder,
-                             separators=(',', ';'))
+            ctx['records'] = data
+            ctx = json.dumps(ctx, cls=DjangoJSONEncoder)
 
             response = HttpResponse(
                 ctx, content_type='application/json; charset=utf-8')
