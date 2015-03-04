@@ -1361,6 +1361,75 @@ ul.header-menu > li > ul > a > li:hover {
     margin: 0;
 }
 
+.panel > #choices input[type="checkbox"] {
+    margin-top: -1px;
+}
+
+.list-header {
+    box-sizing: border-box;
+    background-color: #F9FAFA;
+    padding: 5px;
+    position: relative;
+}
+
+.list-header:hover {
+    cursor: pointer;
+    background-color: #D5FACF;
+}
+
+.list-header i {
+    top: 9px;
+    position: absolute;
+}
+
+.list-header input[type="checkbox"] {
+    margin-top: -1px;
+    margin-left: 15px;
+}
+
+.list-body {
+    box-sizing: border-box;
+    padding: 5px 10px;
+    overflow-y: auto;
+    max-height: 210px;
+}
+
+.list-body ul {
+    box-sizing: border-box;
+    margin: 0 0 0 10px;
+    list-style: none;
+    padding: 0 0 0 10px;
+    border-left: 1px solid #ccc;
+}
+
+.list-body ul li {
+    position: relative;
+}
+
+.list-body li:hover {
+    background-color: #D5FACF;
+    cursor: pointer;
+}
+
+.list-body ul input[type="checkbox"] {
+    margin-top: -1px;
+}
+
+.invis-box {
+    background-color: transparent;
+    width: 12px;
+    height: 12px;
+    position: absolute;
+    top: 5px;
+    z-index: 100;
+}
+
+.rpt-container label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #5e6c82;
+}
+
 .row + .row-add-margin {
     margin-top: 20px;
 }

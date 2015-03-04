@@ -42,7 +42,7 @@
                     {% endfor %}
                 </div>
                 <div class="span4 panel">
-                    <h2>Recent Reports</h2>w
+                    <h2>Recent Reports</h2>
                     {% for report in recent_reports %}
                     {% empty %}
                     No recent reports
@@ -59,10 +59,24 @@
         {% include "myreports/includes/report-sidebar.html" %}
     </div>
 </div>
+<div id="report-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+        <h3>Review Info</h3>
+    </div>
+    <div class="modal-body">
+    </div>
+    <div class="modal-footer">
+        <a class="btn" data-dismiss="modal" aria-hidden="true">Cancel</a>
+        <a id="gen-report" class="btn primary">Generate Report</a>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}reporting.161-10.js"></script>
+<script src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
+<script src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
+<script src="{{ STATIC_URL }}reporting.161-23.js"></script>
 <script src="{{ STATIC_URL }}pickadate/picker.js"></script>
 <script src="{{ STATIC_URL }}pickadate/picker.date.js"></script>
 <script src="{{ STATIC_URL }}pickadate/legacy.js"></script>

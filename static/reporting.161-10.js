@@ -268,14 +268,17 @@ Report.prototype.load_active_page = function (filters) {
                 "output": current_page.output},
     url = location.protocol + "//" + location.host, // https://secure.my.jobs
     report = this;
+
   if (typeof filters !== "undefined") {
     $.extend(data, filters);
   }
+
   if (current_page instanceof FilterPage) {
     url += current_page.url;
   } else {
     url += location.pathname;
   }
+
   $.ajax({
     type: 'POST',
     url: url,
@@ -314,6 +317,7 @@ Report.prototype.next_page = function () {
     next_page = this.pages[current_page_index + 1],
     filter = {},
     i = 0; // iterator
+
   current_page.active = false;
   next_page.active = true;
   // if FilterPage, grab all the data prior to next_page
@@ -343,6 +347,7 @@ Report.prototype.previous_page = function () {
     prev_data_to_load = this.pages[Math.max(0, current_page_index - 2)].data,
     filter = {},
     i = 0; // iterator
+
   current_page.active = false;
   prev_page.active = true;
   if (prev_page instanceof FilterPage && prev_page_index !== 0) {
@@ -389,6 +394,7 @@ Report.prototype.generate_sidebar = function () {
 // and adds .active to the next step
 Report.prototype.next_sidebar = function () {
   var active = $(".sidebar li.active");
+
   $(active).removeClass("active").children("i").removeClass("fa-minus")
     .addClass("fa-check success");
   $(active).next().addClass("active");
@@ -400,6 +406,7 @@ Report.prototype.next_sidebar = function () {
 Report.prototype.prev_sidebar = function () {
   var active = $(".sidebar li.active"),
     report_btn = $("#gen-report");
+
   $(active).removeClass("active");
   $(active).prev().addClass("active");
   // if previous step has check.
@@ -419,6 +426,7 @@ Report.prototype.add_breadcrumb = function (page, step_num) {
     info = $("<div class=\"span6\"></div>"), // Where page.data goes
     ul = $("<ul></ul>"),
     key; // iterator
+
   row.attr("id", "step-" + step_num);
   step.html("<b>" + page.step + "</b>:");
   row.append(step);
@@ -450,6 +458,7 @@ Report.prototype.activate_generate_report = function () {
     container = $(".rpt-buttons"),
     next_btn = $("#next"),
     gen_btn = $("<a id=\"gen-report\" class=\"btn pull-right\">Generate Report</a>");
+
   next_btn.hide();
   container.append(gen_btn);
   $(document.body).removeClass("disabled").on("click", "#gen-report:not(.disabled)", function test() {
@@ -463,10 +472,12 @@ Report.prototype.submit_report = function () {
     data = {"csrfmiddlewaretoken": read_cookie("csrftoken")}, // Initialize Data
     url = location.protocol + "//" + location.host,           // https://secure.my.jobs
     page;                                                     // iterator
+
   // combine all data together
   for (page in pages) {
     $.extend(data, pages[page]["data"]);
   }
+
   $.ajax({
     type: 'POST',
     dataType: "json",
