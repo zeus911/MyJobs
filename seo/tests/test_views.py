@@ -66,6 +66,145 @@ class WidgetsTestCase(DirectSEOTestCase):
                     self.assertNotEqual(widget_object.find(more_string), -1)
 
 
+class SearchBoxTests(DirectSEOTestCase):
+    fixtures = ['seo_views_testdata.json']
+
+    def setUp(self):
+        super(SearchBoxTests, self).setUp()
+        # Add buid 0 to the site so we'll have jobs in the
+        # "all_jobs" view.
+        self.site = SeoSite.objects.get()
+        bu = BusinessUnit.objects.get(id=0)
+        self.site.business_units.add(bu)
+
+        self.config = factories.ConfigurationFactory(status=2)
+        self.site.configurations.add(self.config)
+
+    def check_for_label_on_results_pages(self, label):
+        # The label will be between two label tags.
+        label = '>%s</label>' % label
+        self.check_for_string_on_results_pages(label)
+
+    def check_for_placeholder_on_results_pages(self, placeholder):
+        # The placeholder will always show up inside a placeholder attribute.
+        placeholder = 'placeholder="%s"' % placeholder
+        self.check_for_string_on_results_pages(placeholder)
+
+    def check_for_helptext_on_results_pages(self, helptext):
+        # The helptext is always inside of a span.
+        helptext = ">%s</span" % helptext
+        self.check_for_string_on_results_pages(helptext)
+
+    def check_for_string_on_results_pages(self, string):
+        resp = self.client.get(reverse('home'))
+        self.assertIn(string, resp.content)
+
+        resp = self.client.get(reverse('all_jobs'))
+        self.assertIn(string, resp.content)
+
+    def test_custom_search_box_labels(self):
+        # No custom where label added.
+        # Regular search box.
+        default_where_label = 'Where'
+        default_what_label = 'What'
+        default_moc_label = 'Military'
+
+        self.check_for_label_on_results_pages(default_where_label)
+        self.check_for_label_on_results_pages(default_what_label)
+
+        # Search box vets.
+        self.config.browse_moc_show = True
+        self.config.save()
+        self.check_for_label_on_results_pages(default_where_label)
+        self.check_for_label_on_results_pages(default_what_label)
+        self.check_for_label_on_results_pages(default_moc_label)
+
+        # With custom label.
+        custom_where_label = 'Custom Where'
+        custom_what_label = 'Custom What'
+        custom_moc_label = 'Custom Moc'
+
+        # Regular search box.
+        self.config.browse_moc_show = False
+        self.config.where_label = custom_where_label
+        self.config.save()
+        self.check_for_label_on_results_pages(custom_where_label)
+        self.config.what_label = custom_what_label
+        self.config.save()
+        self.check_for_label_on_results_pages(custom_what_label)
+
+        # Search box vets.
+        self.config.browse_moc_show = True
+        self.config.save()
+        self.check_for_label_on_results_pages(custom_where_label)
+        self.check_for_label_on_results_pages(custom_what_label)
+        self.config.moc_label = custom_moc_label
+        self.config.save()
+        self.check_for_label_on_results_pages(custom_moc_label)
+
+    def test_custom_search_box_placeholders(self):
+        # There are no default placeholders, so we can only check custom ones.
+        custom_where_placeholder = 'Custom Where placeholder'
+        custom_what_placeholder = 'Custom What placeholder'
+        custom_moc_placeholder = 'Custom Moc placeholder'
+
+        # Regular search box.
+        self.config.where_placeholder = custom_where_placeholder
+        self.config.save()
+        self.check_for_placeholder_on_results_pages(custom_where_placeholder)
+        self.config.what_placeholder = custom_what_placeholder
+        self.config.save()
+        self.check_for_placeholder_on_results_pages(custom_what_placeholder)
+
+        # Search box vets.
+        self.config.browse_moc_show = True
+        self.config.save()
+        self.check_for_placeholder_on_results_pages(custom_where_placeholder)
+        self.check_for_placeholder_on_results_pages(custom_what_placeholder)
+        self.config.moc_placeholder = custom_moc_placeholder
+        self.config.save()
+        self.check_for_placeholder_on_results_pages(custom_moc_placeholder)
+
+    def test_custom_search_box_helptexts(self):
+        # No custom where helptext added.
+        # Regular search box.
+        default_where_helptext = 'city, state, country'
+        default_what_helptext = 'job title, keywords'
+        default_moc_helptext = 'military job title or code'
+
+        self.check_for_helptext_on_results_pages(default_where_helptext)
+        self.check_for_helptext_on_results_pages(default_what_helptext)
+
+        # Search box vets.
+        self.config.browse_moc_show = True
+        self.config.save()
+        self.check_for_helptext_on_results_pages(default_where_helptext)
+        self.check_for_helptext_on_results_pages(default_what_helptext)
+        self.check_for_helptext_on_results_pages(default_moc_helptext)
+
+        # With custom helptext.
+        custom_where_helptext = 'Custom Where helptext'
+        custom_what_helptext = 'Custom What helptext'
+        custom_moc_helptext = 'Custom Moc helptext'
+
+        # Regular search box.
+        self.config.browse_moc_show = False
+        self.config.where_helptext = custom_where_helptext
+        self.config.save()
+        self.check_for_helptext_on_results_pages(custom_where_helptext)
+        self.config.what_helptext = custom_what_helptext
+        self.config.save()
+        self.check_for_helptext_on_results_pages(custom_what_helptext)
+
+        # Search box vets.
+        self.config.browse_moc_show = True
+        self.config.save()
+        self.check_for_helptext_on_results_pages(custom_where_helptext)
+        self.check_for_helptext_on_results_pages(custom_what_helptext)
+        self.config.moc_helptext = custom_moc_helptext
+        self.config.save()
+        self.check_for_helptext_on_results_pages(custom_moc_helptext)
+
 class SeoSiteTestCase(DirectSEOTestCase):
     fixtures = ['seo_views_testdata.json']
 

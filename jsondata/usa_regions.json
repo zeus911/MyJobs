@@ -7,8 +7,8 @@
         "code":"AK",
         "name":"Alaska"
     },{
-        "code": "AS",
-        "name": "American Samoa"
+        "code":"AS",
+        "name":"American Samoa"
     },{
         "code":"AZ",
         "name":"Arizona"
@@ -168,6 +168,9 @@
     },{
         "code":"WI",
         "name":"Wisconsin"
+    },{
+        "code":"WY",
+        "name":"Wyoming"
     },{
         "code":"AA",
         "name":"Armed Forces Americas"
