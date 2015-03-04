@@ -1,5 +1,6 @@
 import json
 
+from django.core import serializers
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models.loading import get_model
 from django.db.models import Count
@@ -126,11 +127,29 @@ def filter_records(request,
 
         # serialize
         if output == 'json':
-            # you can't use djangos serializers on a regular python object
-            ctx['records'] = list(records.values())
-            ctx = json.dumps(ctx, cls=DjangoJSONEncoder)
 
-            response = HttpResponse(ctx, content_type='application/json')
+            # store the counts so we don't have to run a query every time later
+            if count:
+                counts = {record.pk: record.count for record in records}
+            else:
+                counts = None
+
+            # flatten the structure; attempting to modify dicts in place while
+            # serializing proved to be rather inefficient
+            data = []
+            for record in serializers.serialize('python', records):
+                data.append(record['fields'])
+                data[-1]['pk'] = record['pk']
+
+                # using a serializer strips annotations, so we add them back in
+                if counts:
+                    data[-1]['count'] = counts[record['pk']]
+
+            ctx = json.dumps(data, cls=DjangoJSONEncoder,
+                             separators=(',', ';'))
+
+            response = HttpResponse(
+                ctx, content_type='application/json; charset=utf-8')
         else:
             html = render_to_response(
                 output + ".html", ctx, RequestContext(request))
