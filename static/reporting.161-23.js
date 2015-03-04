@@ -37,7 +37,7 @@ Report.prototype.bind_events = function () {
   var report = this;
 
   // Update Partner and Contact Lists
-  $(document.body).on("change", "input", function (e) {
+  $(document.body).on("change", "input:not([id$=-all-checkbox])", function (e) {
     console.log("CHANGE!");
 
     var in_list = $(this).parents(".list-body").attr("id"),
