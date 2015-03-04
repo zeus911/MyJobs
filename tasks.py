@@ -1,7 +1,9 @@
 import boto
 from datetime import date, timedelta, datetime
 from itertools import chain, izip_longest
+import json
 import logging
+import newrelic.agent
 import os
 import pysolr
 import sys
@@ -23,8 +25,9 @@ from django.db.models import Q
 
 from seo.models import Company, SeoSite
 from myjobs.models import EmailLog, User, STOP_SENDING, BAD_EMAIL
+from myjobs.helpers import log_to_jira
 from mymessages.models import Message
-from mysearches.models import SavedSearch, SavedSearchDigest
+from mysearches.models import SavedSearch, SavedSearchDigest, SavedSearchLog
 from mypartners.models import PartnerLibrary
 from mypartners.helpers import get_library_partners
 import import_jobs
@@ -33,7 +36,7 @@ from registration.models import ActivationProfile
 from solr import helpers
 from solr.models import Update
 from solr.signals import object_to_dict, profileunits_to_dict
-from universal.helpers import get_domain
+
 
 logger = logging.getLogger(__name__)
 
@@ -221,36 +224,39 @@ def process_user_events(email):
     deactivate = filter_by_event(BAD_EMAIL)
     stop_sending = filter_by_event(STOP_SENDING)
     update_fields = []
-    if user and (deactivate or stop_sending) and user.opt_in_myjobs:
-        user.opt_in_myjobs = False
-        if deactivate:
-            user.is_verified = False
-            user.deactivate_type = deactivate[0].event
-            update_fields.append('is_verified')
-            body = """
-            <b>Warning</b>: Attempts to send messages to {email} have failed.
-            Please check your email address in your <a href="{{settings_url}}">
-            account settings</a>.
-            """.format(email=deactivate[0].email)
-        else:
-            user.deactivate_type = stop_sending[0].event
-            body = """
-            <b>Warning</b>: We have received a request to stop communications
-            with {email}. If this was in error, please opt back into emails in
-            your <a href="{{settings_url}}">account settings</a>.
-            """.format(email=stop_sending[0].email)
-        body = body.format(settings_url=reverse_lazy('edit_account'))
-        Message.objects.create_message(users=user, subject='', body=body)
-        update_fields.extend(['deactivate_type',
-                              'opt_in_myjobs'])
+    if user:
+        if (deactivate or stop_sending) and user.opt_in_myjobs:
+            user.opt_in_myjobs = False
+            if deactivate:
+                user.is_verified = False
+                user.deactivate_type = deactivate[0].event
+                update_fields.append('is_verified')
+                body = ('<b>Warning</b>: Attempts to send messages to {email} '
+                        'have failed. Please check your email address in your '
+                        '<a href="{{settings_url}}">'
+                        'account settings</a>.').format(
+                            email=deactivate[0].email)
+            else:
+                user.deactivate_type = stop_sending[0].event
+                body = ('<b>Warning</b>: We have received a request to stop '
+                        'communications with {email}. If this was in error, '
+                        'please opt back into emails in your '
+                        '<a href="{{settings_url}}">'
+                        'account settings</a>.').format(
+                            email=stop_sending[0].email)
+            body = body.format(settings_url=reverse_lazy('edit_account'))
+            Message.objects.create_message(users=user, subject='', body=body)
+            update_fields.extend(['deactivate_type',
+                                  'opt_in_myjobs'])
 
-    if user and user.last_response < newest_log.received:
-        user.last_response = newest_log.received
-        update_fields.append('last_response')
+        if user.last_response < newest_log.received:
+            user.last_response = newest_log.received
+            update_fields.append('last_response')
 
-    # If update_fields is an empty iterable, the save is aborted
-    # This doesn't hit the DB unless a field has changed
-    user.save(update_fields=update_fields)
+        # If update_fields is an empty iterable, the save is aborted
+        # This doesn't hit the DB unless a field has changed
+        user.save(update_fields=update_fields)
+
     logs.update(processed=True)
 
 
@@ -686,8 +692,18 @@ def task_update_solr(jsid, **kwargs):
         raise task_update_solr.retry()
 
 
-@task(name='tasks.etl_to_solr', ignore_result=True)
+@task(name='tasks.etl_to_solr', ignore_result=True, send_error_emails=True)
 def task_etl_to_solr(guid, buid, name):
+    try:
+        import_jobs.update_job_source(guid, buid, name)
+    except Exception as e:
+        logging.error("Error loading jobs for jobsource: %s", guid)
+        logging.exception(e)
+        raise task_etl_to_solr.retry()
+
+
+@task(name='tasks.priority_etl_to_solr', ignore_result=True)
+def task_priority_etl_to_solr(guid, buid, name):
     try:
         import_jobs.update_job_source(guid, buid, name)
     except Exception as e:
@@ -722,3 +738,109 @@ def task_submit_all_sitemaps():
     sites = SeoSite.objects.all()
     for site in sites:
         task_submit_sitemap.delay(site.domain)
+
+
+def get_event_list(events):
+    """
+    Turns a block of json events into a list of events.
+
+    :param events: A json encoded group of events.
+    :return: A list of the events as dictionaries.
+    """
+
+    try:
+        # try parsing post data as json
+        event_list = json.loads(events)
+    except ValueError:  # nope, it's V1 or V2
+        event_list = []
+        events = events.splitlines()
+        for event_str in events:
+            if event_str == '':
+                continue
+            # nested try :/ -need to catch json exceptions
+            try:
+                event_list.append(json.loads(event_str))
+            except ValueError:  # Bad json
+                newrelic.agent.record_exception(
+                    *sys.exc_info())
+                return []
+    except Exception:
+        newrelic.agent.record_exception(*sys.exc_info())
+        return []
+    else:
+        # If only one event was posted, this could be any
+        # version of the api; event_list will be a list of
+        # dicts if using V3 but will be a dict for V1 and V2.
+        if type(event_list) != list:
+            event_list = [event_list]
+
+    return event_list
+
+
+def event_list_to_email_log(event_list):
+    """
+    :param event_list: A list of events, where each event is a dictionary.
+    :return: A list of EmailLog objects.
+    """
+    events_to_create = []
+    for event in event_list:
+        category = event.get('category', '')
+        email_log_args = {
+            'email': event['email'], 'event': event['event'],
+            'received': date.fromtimestamp(float(event['timestamp'])),
+            'category': category,
+            # Events can have a response (delivered, deferred),
+            # a reason (bounce, block), or neither, but never
+            # both.
+            'reason': event.get('response',
+                                event.get('reason', ''))
+        }
+        if event['event'] == 'bounce' and category == 'My.jobs email redirect':
+            subject = 'My.jobs email redirect failure'
+            body = """
+                   Contact: %s
+                   Type: %s
+                   Reason: %s
+                   Status: %s
+                   """ % (event['email'], event['type'],
+                          event['reason'], event['status'])
+            issue_dict = {
+                'summary': 'Redirect email failure',
+                'description': body,
+                'issuetype': {'name': 'Bug'}
+            }
+            log_to_jira(subject, body, issue_dict, event['email'])
+        # These categories resemble the following:
+        # Saved Search Sent (<list of keys>|event_id)
+        try:
+            event_id = category.split('|')[-1][:-1]
+        except AttributeError:
+            newrelic.agent.record_exception(*sys.exc_info())
+            return []
+        if event_id:
+            try:
+                log = SavedSearchLog.objects.get(
+                    uuid=event_id)
+                email_log_args['send_log'] = log
+                if event['event'] not in BAD_EMAIL:
+                    log.was_received = True
+                    log.save()
+            except SavedSearchLog.DoesNotExist:
+                pass
+        events_to_create.append(EmailLog(**email_log_args))
+
+    return events_to_create
+
+@task(name="tasks.process_sendgrid_event", ignore_result=True)
+def process_sendgrid_event(events):
+    """
+    Processes events POSTed by SendGrid.
+
+    :events: A request body containing a batch of events from SendGrid. A batch
+             of events is a series of JSON strings separated by new lines
+             (Version 1 and 2) or as well formed JSON (Version 3)
+
+    """
+    event_list = get_event_list(events)
+    events_to_create = event_list_to_email_log(event_list)
+    EmailLog.objects.bulk_create(events_to_create)

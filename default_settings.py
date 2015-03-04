@@ -123,8 +123,14 @@ CELERY_QUEUES = {
     'solr': {
         'binding_key': 'solr.#'
     },
+    'priority': {
+        'binding_key': 'priority.#'
+    },
     'myjobs': {
         'binding_key': 'myjobs.#'
+    },
+    'sendgrid': {
+        'binding_key': 'sendgrid.#'
     }
 }
 CELERY_ROUTES = {
@@ -139,6 +145,10 @@ CELERY_ROUTES = {
     'tasks.etl_to_solr': {
         'queue': 'solr',
         'routing_key': 'solr.update_solr'
+    },
+    'tasks.priority_etl_to_solr': {
+        'queue': 'priority',
+        'routing_key': 'priority.update_solr'
     },
     'tasks.send_search_digest': {
         'queue': 'myjobs',
@@ -168,7 +178,11 @@ CELERY_ROUTES = {
     'tasks.submit_all_sitemaps': {
         'queue': 'myjobs',
         'routing_key': 'dseo.submit_all_sitemaps'
-    }
+    },
+    'tasks.process_sendgrid_event': {
+        'queue': 'sendgrid',
+        'routing_key': 'sendgrid.process_sendgrid_event',
+    },
 }
 CELERYBEAT_SCHEDULE = {
     'weekly-partner-library-update': {
@@ -257,7 +271,7 @@ CAPTCHA_AJAX = True
 PROJECT_APPS = ('myjobs', 'myprofile', 'mysearches', 'registration',
                 'mydashboard', 'mysignon', 'mymessages', 'mypartners',
                 'solr', 'postajob', 'moc_coding', 'seo', 'social_links',
-                'wildcard', 'myblocks', )
+                'wildcard', 'myblocks', 'myemails', )
 
 INSTALLED_APPS += PROJECT_APPS
 

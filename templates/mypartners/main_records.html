@@ -31,6 +31,8 @@
             <div class="sidebar">
                 <h2 class="top">Filters</h2>
                 <input id="p-id" type="hidden" value="{{partner.id}}" />
+                <label>Keywords:</label>
+                <input id="record_keywords" type="text" placeholder="Keywords" {% if request.GET.keywords %}value="{{request.GET.keywords}}"{% endif %} />
                 <label>Contact</label>
                 <select id="record_contact" name="record_contact">
                     {% for contact in contact_choices %}
@@ -43,6 +45,8 @@
                         <option value="{{ contact_type.0 }}">{{ contact_type.1 }}</option>
                     {% endfor %}
                 </select>
+                <label>Tags:</label>
+                <input id="record_tag" type="text" placeholder="Tags" {% if request.GET.tag %}value="{{request.GET.tag}}"{% endif %} />
                 <label>Date Range</label>
                 {% include "mypartners/includes/date_widget.html" %}
                 <div class="navigation">
@@ -56,7 +60,7 @@
 {% endblock %}
 
 {% block extra-js %}
-<script src="{{ STATIC_URL }}record_overview.160-21.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}record_overview.161-25.js{{ gz }}"></script>
 <script src="{{ STATIC_URL }}pickadate/picker.js"></script>
 <script src="{{ STATIC_URL }}pickadate/picker.date.js"></script>
 <script src="{{ STATIC_URL }}pickadate/legacy.js"></script>

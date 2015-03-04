@@ -12,14 +12,16 @@ from django.contrib.sessions.models import Session
 from django.core import mail
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest
-from django.test.client import Client
+from django.test.client import Client, MULTIPART_CONTENT
+from mymessages.models import Message
+from mymessages.tests.factories import MessageInfoFactory
 
 from setup import MyJobsBase
 from myjobs.models import User, EmailLog, FAQ
 from myjobs.tests.factories import UserFactory
 from mypartners.tests.factories import PartnerFactory
 from mysearches.models import PartnerSavedSearch
-from seo.tests.factories import CompanyFactory, CompanyUserFactory
+from seo.tests.factories import CompanyFactory
 from myprofile.models import Name, Education
 from mysearches.models import SavedSearch, SavedSearchLog
 from registration.models import ActivationProfile
@@ -33,11 +35,52 @@ from tasks import process_batch_events
 
 class TestClient(Client):
     """
-    Custom test client that decouples testing from the authentication bits
+    Custom test client that decouples testing from the authentication bits, as
+    well as reduces boilerplate when sending requests.
     """
 
+    def __init__(self, enforce_csrf_checks=False, path=None,
+                 data=None, **defaults):
+        """
+        In addition to Django's test client, this method also takes an optional
+        path and data attribute to be used for get and post requests.
+        """
+        self.path = path
+        self.data = data or {}
+        super(TestClient, self).__init__(enforce_csrf_checks, **defaults)
+
+    def get(self, path=None, data=None, follow=False, secure=False, **extra):
+        """
+        Like the builtin get method, but uses the instances path and data when
+        available.
+        """
+        path = path or self.path
+        data = data or self.data
+
+        try:
+            return super(TestClient, self).get(
+                path, data=data, follow=follow, secure=secure, **extra)
+        except TypeError:
+            raise Exception("Calls to TestClient's methods require that "
+                            "either path be passed explicit, or the "
+                            "path be specified in the constructor")
+
+    def post(self, path=None, data=None, content_type=MULTIPART_CONTENT,
+             secure=False, **extra):
+        path = path or self.path
+        data = data or self.data
+
+        try:
+            return super(TestClient, self).post(
+                path, data=data, content_type=content_type,
+                secure=secure, **extra)
+        except TypeError:
+            raise Exception("Calls to TestClient's methods require that "
+                            "either path be passed explicit, or the "
+                            "path be specified in the constructor")
+
     def login_user(self, user):
-        if not 'django.contrib.sessions' in settings.INSTALLED_APPS:
+        if 'django.contrib.sessions' not in settings.INSTALLED_APPS:
             raise AssertionError("Unable to login without "
                                  "django.contrib.sessions in INSTALLED_APPS")
         user.backend = "%s.%s" % ("django.contrib.auth.backends",
@@ -78,6 +121,10 @@ class MyJobsViewsTests(MyJobsBase):
 
         self.email_user = UserFactory(email='accounts@my.jobs')
 
+        self.auth = '%s:%s' % (settings.SENDGRID_BATCH_POST_USER,
+                               settings.SENDGRID_BATCH_POST_PASSWORD)
+        self.auth = base64.b64encode(self.auth)
+
     def make_messages(self, when, apiversion=2, category=''):
         """
         Creates test api messages for sendgrid tests.
@@ -111,7 +158,8 @@ class MyJobsViewsTests(MyJobsBase):
         resp = self.client.post(reverse('edit_account')+'?password',
                                 data={'password': '5UuYquA@',
                                       'new_password1': '7dY=Ybtk',
-                                      'new_password2': '7dY=Ybtk'}, follow=True)
+                                      'new_password2': '7dY=Ybtk'},
+                                follow=True)
         user = User.objects.get(id=self.user.id)
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(user.check_password('7dY=Ybtk'))
@@ -121,7 +169,7 @@ class MyJobsViewsTests(MyJobsBase):
                                 data={'password': '5UuYquA@',
                                       'new_password1': '7dY=Ybtk',
                                       'new_password2': 'notNew'}, follow=True)
-        
+
         errors = {'new_password2': [u'The new password fields did not match.'],
                   'new_password1': [u'The new password fields did not match.']}
 
@@ -133,7 +181,7 @@ class MyJobsViewsTests(MyJobsBase):
                                 data={'password': '5UuYquA@',
                                       'new_password1': 'SECRET',
                                       'new_password2': 'SECRET'}, follow=True)
-        
+
         errors = {'new_password1': [
             u'Invalid Length (Must be 8 characters or more)',
             u'Based on a common sequence of characters',
@@ -148,7 +196,7 @@ class MyJobsViewsTests(MyJobsBase):
                                 data={'password': '5UuYquA@',
                                       'new_password1': 'secret',
                                       'new_password2': 'secret'}, follow=True)
-        
+
         errors = {'new_password1': [
             u'Invalid Length (Must be 8 characters or more)',
             u'Based on a common sequence of characters',
@@ -163,7 +211,7 @@ class MyJobsViewsTests(MyJobsBase):
                                 data={'password': '5UuYquA@',
                                       'new_password1': 'Secret',
                                       'new_password2': 'Secret'}, follow=True)
-        
+
         errors = {'new_password1': [
             u'Invalid Length (Must be 8 characters or more)',
             u'Based on a common sequence of characters',
@@ -177,7 +225,7 @@ class MyJobsViewsTests(MyJobsBase):
                                 data={'password': '5UuYquA@',
                                       'new_password1': 'S3cr37',
                                       'new_password2': 'S3cr37'}, follow=True)
-        
+
         errors = {'new_password1': [
             u'Invalid Length (Must be 8 characters or more)',
             u'Based on a common sequence of characters',
@@ -199,26 +247,27 @@ class MyJobsViewsTests(MyJobsBase):
         # Form with only some sections completely filled out should
         # save successfully
 
-        resp = self.client.post(reverse('home'),
-                                data={'name-given_name': 'Alice',
-                                      'name-family_name': 'Smith',
-                                      'edu-organization_name': 'Stanford University',
-                                      'edu-degree_date': '2012-01-01',
-                                      'edu-education_level_code': '6',
-                                      'edu-degree_major': 'Basket Weaving',
-                                      'work-position_title': 'Rocket Scientist',
-                                      'work-organization_name': 'Blamco Inc.',
-                                      'work-start_date': '2013-01-01',
-                                      'ph-use_code': 'Home',
-                                      'ph-area_dialing': '999',
-                                      'ph-number': '1234567',
-                                      'addr-address_line_one': '123 Easy St.',
-                                      'addr-city_name': 'Pleasantville',
-                                      'addr-country_sub_division_code': 'IN',
-                                      'addr-country_code': 'USA',
-                                      'addr-postal_code': '99999',
-                                      'action': 'save_profile'},
-                                follow=True)
+        resp = self.client.post(
+            reverse('home'),
+            data={'name-given_name': 'Alice',
+                  'name-family_name': 'Smith',
+                  'edu-organization_name': 'Stanford University',
+                  'edu-degree_date': '2012-01-01',
+                  'edu-education_level_code': '6',
+                  'edu-degree_major': 'Basket Weaving',
+                  'work-position_title': 'Rocket Scientist',
+                  'work-organization_name': 'Blamco Inc.',
+                  'work-start_date': '2013-01-01',
+                  'ph-use_code': 'Home',
+                  'ph-area_dialing': '999',
+                  'ph-number': '1234567',
+                  'addr-address_line_one': '123 Easy St.',
+                  'addr-city_name': 'Pleasantville',
+                  'addr-country_sub_division_code': 'IN',
+                  'addr-country_code': 'USA',
+                  'addr-postal_code': '99999',
+                  'action': 'save_profile'},
+            follow=True)
 
         self.assertEquals(resp.content, 'valid')
 
@@ -313,9 +362,7 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.post(reverse('batch_message_digest'),
                                     data=messages,
                                     content_type="text/json",
-                                    HTTP_AUTHORIZATION='BASIC %s' %
-                                    base64.b64encode(
-                                        'accounts%40my.jobs:5UuYquA@'))
+                                    HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         process_batch_events()
@@ -345,9 +392,7 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.post(reverse('batch_message_digest'),
                                     data=messages,
                                     content_type="text/json",
-                                    HTTP_AUTHORIZATION='BASIC %s' %
-                                    base64.b64encode(
-                                        'accounts%40my.jobs:5UuYquA@'))
+                                    HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         process_batch_events()
@@ -373,8 +418,7 @@ class MyJobsViewsTests(MyJobsBase):
                                         data=messages,
                                         content_type='text/json',
                                         HTTP_AUTHORIZATION='BASIC %s' %
-                                        base64.b64encode(
-                                            'accounts%40my.jobs:5UuYquA@'))
+                                                           self.auth)
             self.assertEqual(response.status_code, 200)
         process_batch_events()
         self.assertEqual(EmailLog.objects.count(), 2)
@@ -396,8 +440,7 @@ class MyJobsViewsTests(MyJobsBase):
         self.client.post(reverse('batch_message_digest'),
                          data=message,
                          content_type='text/json',
-                         HTTP_AUTHORIZATION='BASIC %s' %
-                         base64.b64encode('accounts%40my.jobs:5UuYquA@'))
+                         HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertEqual(EmailLog.objects.count(), 1)
         email_log = EmailLog.objects.get()
         self.assertIn(log_uuid, email_log.category)
@@ -418,9 +461,7 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.post(reverse('batch_message_digest'),
                                     data=message,
                                     content_type='text/json',
-                                    HTTP_AUTHORIZATION='BASIC %s' %
-                                    base64.b64encode(
-                                        'accounts%40my.jobs:5UuYquA@'))
+                                    HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox.pop()
@@ -454,9 +495,7 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.post(reverse('batch_message_digest'),
                                     data=messages,
                                     content_type="text/json",
-                                    HTTP_AUTHORIZATION='BASIC %s' %
-                                    base64.b64encode(
-                                        'accounts%40my.jobs:5UuYquA@'))
+                                    HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertTrue(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         self.assertEqual(
@@ -489,9 +528,7 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.post(reverse('batch_message_digest'),
                                     data=messages,
                                     content_type="text/json",
-                                    HTTP_AUTHORIZATION='BASIC %s' %
-                                    base64.b64encode(
-                                        'accounts%40my.jobs:5UuYquA@'))
+                                    HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertTrue(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         self.assertEqual(
@@ -524,9 +561,7 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.post(reverse('batch_message_digest'),
                                     data=messages,
                                     content_type="text/json",
-                                    HTTP_AUTHORIZATION='BASIC %s' %
-                                    base64.b64encode(
-                                        'accounts%40my.jobs:5UuYquA@'))
+                                    HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertTrue(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 3)
         self.assertEqual(
@@ -545,9 +580,7 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.post(reverse('batch_message_digest'),
                                     data='this is invalid',
                                     content_type="text/json",
-                                    HTTP_AUTHORIZATION='BASIC %s' %
-                                    base64.b64encode(
-                                        'accounts%40my.jobs:5UuYquA@'))
+                                    HTTP_AUTHORIZATION='BASIC %s' % self.auth)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(EmailLog.objects.count(), 0)
 
@@ -778,7 +811,7 @@ class MyJobsViewsTests(MyJobsBase):
         creator = UserFactory(id=3, email='normal@user.com')
 
         # should not have any messages
-        self.assertFalse(creator.messages_unread())
+        self.assertFalse(creator.message_set.all())
 
         PartnerSavedSearch.objects.create(user=self.user, provider=company,
                                           created_by=creator,
@@ -791,10 +824,10 @@ class MyJobsViewsTests(MyJobsBase):
         self.client.get(reverse('unsubscribe_all'))
 
         # creator should have a My.jobs message and email
-        for body in [creator.messages_unread()[0].message.body,
+        for body in [creator.message_set.first().body,
                      mail.outbox[0].body]: 
             self.assertIn(self.user.email, body)
-            self.assertIn('unsubscribed from one or more saved search emails', 
+            self.assertIn('unsubscribed from one or more saved search emails',
                           body)
 
         # email should be sent to right person
@@ -813,7 +846,7 @@ class MyJobsViewsTests(MyJobsBase):
         creator = UserFactory(id=3, email='normal@user.com')
 
         # should not have any messages
-        self.assertFalse(creator.messages_unread())
+        self.assertFalse(creator.message_set.all())
 
         PartnerSavedSearch.objects.create(user=self.user, provider=company,
                                           created_by=creator,
@@ -822,15 +855,14 @@ class MyJobsViewsTests(MyJobsBase):
         self.client.get(reverse('unsubscribe_all'))
 
         # creator should have a My.jobs message and email
-        for body in [creator.messages_unread()[0].message.body,
+        for body in [creator.message_set.first().body,
                      mail.outbox[0].body]: 
             self.assertIn(self.user.email, body)
-            self.assertIn('unsubscribed from one or more saved search emails', 
+            self.assertIn('unsubscribed from one or more saved search emails',
                           body)
 
         # email should be sent to right person
         self.assertIn(creator.email, mail.outbox[0].to)
-
 
     def test_toolbar_logged_in(self):
         self.client.login_user(self.user)
@@ -844,11 +876,11 @@ class MyJobsViewsTests(MyJobsBase):
         expected_response = '({"user_fullname": "", "user_gravatar": '\
                             '"", "employer": ""});'
         self.assertEqual(response.content, expected_response)
-    
+
     def test_p3p(self):
         """
         make sure the P3P headers are being set
-        
+
         """
         self.client.login_user(self.user)
         response = self.client.get(reverse('toolbar'))
@@ -857,7 +889,8 @@ class MyJobsViewsTests(MyJobsBase):
 
     def test_referring_site_in_topbar(self):
         self.client.get(
-            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http%3A%2F%2Findianapolis.jobs&callback=foo',
+            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http%3A'
+                                 '%2F%2Findianapolis.jobs&callback=foo',
             HTTP_REFERER='http://indianapolis.jobs')
 
         last_site = self.client.cookies.get('lastmicrosite').value
@@ -866,6 +899,44 @@ class MyJobsViewsTests(MyJobsBase):
         response = self.client.get(reverse('home'))
         self.assertIn(last_site, response.content)
         self.assertIn(last_name, response.content)
+
+    def test_messages_in_topbar(self):
+        self.client.login_user(self.user)
+        for num_messages in range(1, 5):
+            # The indicator in the topbar will display a max of three messages.
+            # Test that the correct number of messages is displayed for all
+            # possible counts.
+            infos = MessageInfoFactory.create_batch(size=num_messages,
+                                                    user=self.user)
+            # Mark the first message as read to show that read messages are
+            # not shown.
+            infos[0].mark_read()
+
+            response = self.client.get(reverse('home'))
+            self.assertTrue('id="menu-inbox">%s<' % (num_messages-1, )
+                            in response.content)
+            if num_messages == 1:
+                # The only message has been read in this instance; it should
+                # not have been displayed.
+                self.assertTrue('No new unread messages' in response.content,
+                                'Iteration %s' % num_messages)
+            for info in infos[1:4]:
+                # Ensure that the 1-3 messages we expect are appearing on
+                # the page.
+                self.assertTrue('message=%s' % info.message.pk
+                                in response.content,
+                                'Iteration %s, %s not found' % (
+                                    num_messages,
+                                    'message=%s' % info.message.pk))
+            for info in infos[4:]:
+                # Ensure that any additional unread messages beyond 3 are not
+                # displayed.
+                self.assertFalse('message=%s' % info.message.pk
+                                 in response.content,
+                                 "Iteration %s, %s exists but shouldn't" % (
+                                     num_messages,
+                                     'message=%s' % info.message.pk))
+            Message.objects.all().delete()
 
     def test_cas_logged_in(self):
         response = self.client.get(reverse('cas'), follow=True)
@@ -894,7 +965,8 @@ class MyJobsViewsTests(MyJobsBase):
         self.assertEqual(user.source, 'jobs.directemployers.org')
 
         self.client.get(
-            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http%3A%2F%2Findianapolis.jobs&callback=foo',
+            reverse('toolbar') + '?site_name=Indianapolis%20Jobs&site=http'
+                                 '%3A%2F%2Findianapolis.jobs&callback=foo',
             HTTP_REFERER='http://indianapolis.jobs')
 
         last_site = self.client.cookies.get('lastmicrosite').value

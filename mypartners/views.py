@@ -1,38 +1,34 @@
-import bleach
-from collections import OrderedDict
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from email.parser import HeaderParser
 from email.utils import getaddresses
 from itertools import chain
 import json
 from lxml import etree
-import newrelic.agent
 import pytz
 import re
-import sys
 import unicodecsv
 
 from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
-from django.core.serializers import serialize
 from django.core.files.storage import default_storage
 from django.db.models import Count
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
+from django.utils.html import strip_tags
 from django.utils.text import force_text
 from django.utils.timezone import localtime, now
 from django.utils.datastructures import SortedDict
 from django.views.decorators.csrf import csrf_exempt
+from urllib2 import HTTPError
 
 from email_parser import build_email_dicts, get_datetime_from_str
-from universal.helpers import (get_company_or_404, get_int_or_none, 
+from universal.helpers import (get_company_or_404, get_int_or_none,
                                add_pagination, get_object_or_none)
 from universal.decorators import company_has_access, warn_when_inactive
 from myjobs.models import User
-from mydashboard.helpers import get_company_microsites
 from mysearches.models import PartnerSavedSearch
 from mysearches.helpers import (url_sort_options, parse_feed,
                                 get_interval_from_frequency)
@@ -40,7 +36,7 @@ from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm, ContactRecordForm, TagForm,
                               LocationForm)
-from mypartners.models import (Partner, PartnerLibrary, Contact, ContactRecord,
+from mypartners.models import (Partner, Contact, ContactRecord,
                                PRMAttachment, ContactLogEntry, Tag,
                                CONTACT_TYPE_CHOICES, ADDITION, DELETION,
                                Location)
@@ -660,10 +656,11 @@ def partner_view_full_feed(request):
     saved_search = get_object_or_404(PartnerSavedSearch, id=search_id)
 
     if company == saved_search.partnersavedsearch.provider:
-        url_of_feed = url_sort_options(saved_search.feed,
-                                       saved_search.sort_by,
-                                       saved_search.frequency)
-        items, count = parse_feed(url_of_feed, saved_search.frequency)
+        try:
+            items, count = saved_search.get_feed_items()
+        except HTTPError:
+            items = None
+            count = 0
         start_date = date.today() + timedelta(get_interval_from_frequency(
             saved_search.frequency))
         extras = saved_search.partnersavedsearch.url_extras
@@ -682,6 +679,7 @@ def partner_view_full_feed(request):
         'company': company,
         'start_date': start_date,
         'count': count,
+        'new_jobs': len([item for item in items if item.get('new')]),
     }
 
     return render_to_response('mysearches/view_full_feed.html', ctx,
@@ -1151,7 +1149,7 @@ def prm_export(request):
                 ', '.join([val.name for val in v.all() if val]) for v in values
             ]
             # Remove the HTML and reformat.
-            values = [bleach.clean(v, [], strip=True) for v in values]
+            values = [strip_tags(v) for v in values]
             # replaces multiple occurences of space by a single sapce.
             values = [' '.join(filter(bool, v.split(' '))) for v in values]
             values = [re.sub('\s+\n\s+', '\n', v) for v in values]

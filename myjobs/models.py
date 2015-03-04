@@ -3,6 +3,7 @@ import hashlib
 import string
 import urllib
 import uuid
+from django.db.models import Q
 
 import pytz
 
@@ -11,17 +12,18 @@ from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
                                         Group, PermissionsMixin)
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.db import models, transaction
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.importlib import import_module
+from django.utils.translation import ugettext_lazy as _
 
 from default_settings import GRAVATAR_URL_PREFIX, GRAVATAR_URL_DEFAULT
 from registration import signals as custom_signals
-from mymessages.models import Message, MessageInfo, get_messages
+from mymessages.models import Message, MessageInfo
 from universal.helpers import get_domain, send_email
 
 BAD_EMAIL = ['dropped', 'bounce']
@@ -451,22 +453,37 @@ class User(AbstractBaseUser, PermissionsMixin):
             else:
                 self.user_guid = guid
 
-    def messages_unread(self):
+    def get_messages(self):
         """
-        Gets a list of active Messages from get_messages. Then gets or creates
-        MessageInfo based on user a Message. If the MessageInfo has been read
-        already or is expired, ignore it, otherwise add it to 'message_infos'.
+        Gathers Messages based on user, user's groups and if message has started
+        and is not expired.
 
-        Output:
-        :messages:  A list of Messages to be shown to the User.
+        Outputs:
+        :active_messages:   A list of messages that starts before the current
+                            time and expires after the current time. 'active'
+                            messages.
         """
-        messages = get_messages(self).exclude(users=self)
-        new_message_infos = [
-            MessageInfo(user=self, message=message) for message in messages]
+        now = timezone.now().date()
+        messages = Message.objects.prefetch_related('messageinfo_set').filter(
+            Q(group__in=self.groups.all()) | Q(users=self),
+            Q(expire_at__isnull=True) | Q(expire_at__gte=now),
+            Q(messageinfo__deleted_on__isnull=True)).distinct()
 
-        MessageInfo.objects.bulk_create(new_message_infos)
+        return messages
 
-        return self.messageinfo_set.filter(read=False, expired=False)
+    def claim_messages(self):
+        """
+        Create MessageInfos for group-based messages that this user hasn't
+        seen yet.
+        """
+        if not self.pk:
+            return
+        messages = self.get_messages().exclude(users=self)
+
+        with transaction.atomic():
+            for message in messages:
+                MessageInfo.objects.get_or_create(
+                    user=self, message=message)
 
     def get_full_name(self, default=""):
         """

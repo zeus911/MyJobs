@@ -1,11 +1,9 @@
 import factory
-import factory.django
-
-from social_links.models import SocialLink, SocialLinkType
 
 
 class SocialLinkFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = SocialLink
+    class Meta:
+        model = 'social_links.SocialLink'
 
     link_url = 'google.com'
     link_title = 'Link Title'
@@ -15,7 +13,8 @@ class SocialLinkFactory(factory.django.DjangoModelFactory):
 
 
 class SocialLinkTypeFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = SocialLinkType
+    class Meta:
+        model = 'social_links.SocialLinkType'
 
     site = 'Social Site'
     icon = factory.django.FileField(filename='icon.png')

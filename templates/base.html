@@ -19,7 +19,7 @@
     {% block meta-extra %}{% endblock %}
 
     <link href="{{ STATIC_URL }}def.ui.152-21.css{{ gz }}" rel="stylesheet" type="text/css">
-    <link href="{{ STATIC_URL }}my.jobs.161-10.css{{ gz }}" rel="stylesheet" type="text/css">
+    <link href="{{ STATIC_URL }}my.jobs.161-18.css{{ gz }}" rel="stylesheet" type="text/css">
     <!--[if IE]>
     <link href="{{ STATIC_URL }}my.jobs.ie.155-14.css{{ gz }}" rel="stylesheet" type="text/css">
     <![endif]-->
@@ -58,22 +58,18 @@
 
                             {% endif %}
 
-                            {% with user.messages_unread as messages %}
-
-                            {% for message_info in messages %}
+                            {% for message_info in system_messages %}
 
                             <div class="alert alert-{{ message_info.message.message_type }} mail-alert hide-mobile">
                                 <b>{{ message_info.message.subject }}</b>
                                 <br>
                                 {{ message_info.message.body|safe }}
                                 <div class="clear"></div>
-                                <button class="btn pull-right mymessage-{{ message_info.message.id }}-{{ user.id }}">{{ message_info.message.btn_text }}</button>
+                                <button class="btn pull-right mymessage-read-{{ message_info.message.id }}-{{ user.id }}">{{ message_info.message.btn_text }}</button>
                                 <div class="clear"></div>
                             </div>
 
                             {% endfor %}
-
-                            {% endwith %}
 
                         {% endif %}
                         {% endblock%}
@@ -128,7 +124,7 @@
         var static_url = "{{ STATIC_URL }}";
     </script>
     <script type="text/javascript" src="{{ STATIC_URL }}custom.154-10.js{{ gz }}"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}my.jobs.158-14.js{{ gz }}"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}my.jobs.160-30.js{{ gz }}"></script>
 
     {% block extra-js %}
 

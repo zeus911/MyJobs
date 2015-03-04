@@ -37,6 +37,16 @@ sort_order_mapper = {
 sort_fields = ['relevance', 'date']
 
 
+# Fields that populate the Solr "fl" parameter on searches that use
+# get_jobs().
+search_fields = ['apply_info', 'city', 'company', 'company_canonical_microsite',
+                 'company_enhanced', 'company_exact', 'company_slab', 'country',
+                 'country_short', 'date_new', 'date_updated', 'django_ct',
+                 'django_id', 'guid', 'highlighted', 'html_description', 'id',
+                 'link', 'location', 'location_exact', 'score', 'state',
+                 'state_short', 'text', 'title', 'title_exact', 'uid']
+
+
 def standard_facets_by_name_slug(name_slugs):
     custom_facets = settings.STANDARD_FACET
     return [facet for facet in custom_facets
@@ -520,7 +530,8 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
         sqs = DESearchQuerySet()
     sqs = sqs_apply_custom_facets(custom_facets, sqs, exclude_facets)
     sqs = _sqs_narrow_by_buid_and_site_package(sqs, buids=jsids)
-
+    # Limit the retrieved results to only fields that are actually needed.
+    sqs = sqs.fields(search_fields)
 
     sqs = sqs.order_by(sort_order_mapper.get(sort_order, '-score'))
 
@@ -540,8 +551,7 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
     sqs = sqs.facet_sort(facet_sort).facet_mincount(mc)
     sqs = sqs.facet("city_slab").facet("state_slab").facet("country_slab")\
              .facet("moc_slab").facet("title_slab").facet("full_loc")\
-             .facet("company_slab").facet("buid").facet("mapped_moc_slab")\
-             .facet("lat_long_buid_slab")
+             .facet("company_slab").facet("buid").facet("mapped_moc_slab")
 
     # When get_jobs is called from job_listing_by_slug_tag, sqs already has site
     # default facets and filters from URL applied. The call to filter_sqs

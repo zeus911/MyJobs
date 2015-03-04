@@ -52,3 +52,7 @@ HAYSTACK_CONNECTIONS = {
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password'],
     },
 }
+
+TEMPLATE_CONTEXT_PROCESSORS += (
+    'mymessages.context_processors.message_lists',
+)

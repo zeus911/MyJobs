@@ -6,14 +6,13 @@ import string
 from datetime import datetime
 from django.contrib.contenttypes.models import ContentType
 
-from mypartners.models import (Partner, Contact, ContactRecord,
-                               ContactLogEntry, Tag)
 from seo.tests.factories import CompanyFactory
 from mydashboard.tests.factories import CompanyFactory
 
 
 class PartnerFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Partner
+    class Meta:
+        model = 'mypartners.Partner'
 
     name = 'Company'
     uri = 'www.my.jobs'
@@ -22,7 +21,8 @@ class PartnerFactory(factory.django.DjangoModelFactory):
 
 
 class ContactFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = Contact
+    class Meta:
+        model = 'mypartners.Contact'
 
     name = 'foo bar'
     email = 'fake@email.com'
@@ -41,7 +41,8 @@ class ContactFactory(factory.django.DjangoModelFactory):
 
 
 class ContactRecordFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = ContactRecord
+    class Meta:
+        model = 'mypartners.ContactRecord'
 
     contact_type = 'email'
     contact_name = 'example-contact'
@@ -54,7 +55,8 @@ class ContactRecordFactory(factory.django.DjangoModelFactory):
 
 
 class ContactLogEntryFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = ContactLogEntry
+    class Meta:
+        model = 'mypartners.ContactLogEntry'
 
     action_flag = 1
     contact_identifier = "Example Contact Log"
@@ -62,11 +64,11 @@ class ContactLogEntryFactory(factory.django.DjangoModelFactory):
                        lambda a: ContentType.objects.get(name='contact'))
 
 
-class TagFactory(factory.Factory):
-    FACTORY_FOR = Tag
+class TagFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'mypartners.Tag'
 
     name = "foo"
-
     company = factory.SubFactory(CompanyFactory)
 
 

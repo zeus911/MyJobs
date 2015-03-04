@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from StringIO import StringIO
 
 import requests
+from urllib2 import HTTPError
 
 
 def return_file(time_=None):
@@ -26,7 +27,9 @@ def return_file(time_=None):
         :file: File-like object
         """
         feed = False
-        if 'feed/rss' in url:
+        if '404.com' in url:
+            raise HTTPError(url=None, code=404, msg=None, hdrs=None, fp=None)
+        elif 'feed/rss' in url:
             file_ = 'rss.rss'
             feed = True
         elif 'feed/json' in url:
