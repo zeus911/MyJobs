@@ -1690,8 +1690,8 @@ def search_by_results_and_slugs(request, *args, **kwargs):
                                               facet_limit=num_jobs,
                                               sort_order=sort_order)
 
-    # Force the query to evaluate and populate the result cache. From
-    # here on out unless changes are made to the sqs objects
+    # Force the query to evaluate and populate the result cache. After this
+    # unless changes are made to the sqs objects
     # anything using query results will be working with the same
     # exact version of the query results (and more importantly,
     # the query won't be re-run).
