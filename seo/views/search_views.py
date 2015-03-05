@@ -1667,27 +1667,9 @@ def search_by_results_and_slugs(request, *args, **kwargs):
             if len(active_facets) == 1 and active_facets[0].blurb:
                 facet_blurb_facet = active_facets[0]
 
-    sqs = helpers.prepare_sqs_from_search_params(request.GET)
-    default_jobs = helpers.get_jobs(default_sqs=sqs,
-                                    custom_facets=settings.DEFAULT_FACET,
-                                    exclude_facets=settings.FEATURED_FACET,
-                                    jsids=settings.SITE_BUIDS, filters=filters,
-                                    facet_limit=num_jobs, sort_order=sort_order)
-    featured_jobs = helpers.get_featured_jobs(default_sqs=sqs,
-                                              filters=filters,
-                                              jsids=settings.SITE_BUIDS,
-                                              facet_limit=num_jobs,
-                                              sort_order=sort_order)
-
-    # Force the query to evaluate and populate the result cache. After this
-    # unless changes are made to the sqs objects
-    # anything using query results will be working with the same
-    # exact version of the query results (and more importantly,
-    # the query won't be re-run).
-    default_jobs[:num_jobs]
-    featured_jobs[:num_jobs]
-
-    facet_counts = default_jobs.add_facet_count(featured_jobs).get('fields')
+    default_jobs, featured_jobs, facet_counts = helpers.jobs_and_counts(request,
+                                                                        filters,
+                                                                        num_jobs)
 
     total_featured_jobs = featured_jobs.count()
     total_default_jobs = default_jobs.count()
@@ -1711,15 +1693,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     
     breadbox = Breadbox(request.path, filters, jobs, request.GET)
 
-    if filters['company_slug']:
-        company_obj = Company.objects.filter(member=True)
-        company_obj = company_obj.filter(company_slug=filters['company_slug'])
-        if company_obj:
-            company_data = helpers.company_thumbnails(company_obj)[0]
-        else:
-            company_data = None
-    else:
-        company_data = None
+    company_data = helpers.get_company_data(filters)
 
     widgets = helpers.get_widgets(request, site_config, facet_counts,
                                   custom_facet_counts, filters=filters)
