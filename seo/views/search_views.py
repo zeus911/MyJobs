@@ -1632,6 +1632,8 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     filters = helpers.build_filter_dict(request.path)
     query_path = request.META.get('QUERY_STRING', None)
 
+    print filters
+
     redirect_url = helpers.determine_redirect(request, filters)
     if redirect_url:
         return redirect_url
@@ -1651,12 +1653,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
 
     sort_order = request.REQUEST.get('sort', 'relevance')
 
-    # Apply any parameters in the querystring to the solr search.
-    sqs = helpers.prepare_sqs_from_search_params(request.GET)
-
-    custom_facets = []
     custom_facet_counts = []
-
     if site_config.browse_facet_show:
         cf_count_tup = get_custom_facets(request, filters=filters,
                                          query_string=query_path)
@@ -1675,15 +1672,12 @@ def search_by_results_and_slugs(request, *args, **kwargs):
             if len(active_facets) == 1 and active_facets[0].blurb:
                 facet_blurb_facet = active_facets[0]
 
-    else:
-        custom_facets = settings.DEFAULT_FACET
-
+    sqs = helpers.prepare_sqs_from_search_params(request.GET)
     default_jobs = helpers.get_jobs(default_sqs=sqs,
                                     custom_facets=settings.DEFAULT_FACET,
                                     exclude_facets=settings.FEATURED_FACET,
                                     jsids=settings.SITE_BUIDS, filters=filters,
                                     facet_limit=num_jobs, sort_order=sort_order)
-    jobs_count = get_total_jobs_count()
     featured_jobs = helpers.get_featured_jobs(default_sqs=sqs,
                                               filters=filters,
                                               jsids=settings.SITE_BUIDS,
@@ -1707,19 +1701,11 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         total_featured_jobs, total_default_jobs,
         num_jobs, site_config.percent_featured)
 
-    # Strip html and markdown formatting from description snippets
-    try:
-        i = text_fields.index('description')
-        text_fields[i] = 'html_description'
-    except ValueError:
-        pass
 
     if not facet_counts:
         return redirect("/")
 
-    if num_default_jobs == 0 and num_featured_jobs == 0 \
-            and not any([i.always_show for i in custom_facets]) \
-            and not query_path:
+    if num_default_jobs == 0 and num_featured_jobs == 0 and not query_path:
         return redirect("/")
 
     default_jobs = default_jobs[:num_default_jobs]
@@ -1779,7 +1765,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         'moc_id_term': moc_id_term if moc_id_term else '\*',
         'moc_term': moc_term,
         'num_filters': len([k for (k, v) in filters.iteritems() if v]),
-        'total_jobs_count': jobs_count,
+        'total_jobs_count': get_total_jobs_count(),
         'results_heading': results_heading,
         'search_url': request.path,
         'site_commitments': settings.COMMITMENTS,

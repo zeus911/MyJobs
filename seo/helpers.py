@@ -1351,6 +1351,13 @@ def get_solr_facet(jsids, filters=None, params=None):
 
 
 def add_text_to_job(job):
+    # Strip html and markdown formatting from description snippets
+    try:
+        i = text_fields.index('description')
+        text_fields[i] = 'html_description'
+    except ValueError:
+        pass
+
     h = HTMLParser()
     text = filter(None, [getattr(job, x, "None") for x in text_fields])
     unformatted_text = h.unescape(strip_tags(" ".join(text)))
