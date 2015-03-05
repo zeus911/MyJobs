@@ -1,5 +1,6 @@
 from collections import defaultdict
 import datetime
+from HTMLParser import HTMLParser
 import logging
 import math
 import operator
@@ -11,6 +12,7 @@ from urlparse import urljoin, urlparse, parse_qs, parse_qsl
 from django.conf import settings
 from django.shortcuts import redirect
 from django.template.defaultfilters import safe
+from django.utils.html import strip_tags
 from haystack.backends.solr_backend import SolrSearchQuery
 from haystack.inputs import Raw
 from haystack.query import SQ, EmptySearchQuerySet
@@ -23,6 +25,7 @@ from seo.templatetags.seo_extras import facet_text, smart_truncate
 from seo.filters import FacetListWidget, CustomFacetListWidget
 from serializers import JSONExtraValuesSerializer
 from moc_coding.models import Moc
+from xmlparse import text_fields
 
 
 # Because we don't want things like 'salted_date' in the url paramters,
@@ -1345,3 +1348,11 @@ def get_solr_facet(jsids, filters=None, params=None):
     result_counts = _facet_query_result_counts(tagged_facets, sqs)
     result_counts.sort(key=lambda x: -x[1])
     return result_counts
+
+
+def add_text_to_job(job):
+    h = HTMLParser()
+    text = filter(None, [getattr(job, x, "None") for x in text_fields])
+    unformatted_text = h.unescape(strip_tags(" ".join(text)))
+    setattr(job, 'text', unformatted_text)
+    return job

@@ -1618,8 +1618,8 @@ def dseo_500(request):
         'site_heading': settings.SITE_HEADING,
         'site_tags': settings.SITE_TAGS,
         'site_description': settings.SITE_DESCRIPTION,
-        'build_num' : settings.BUILD,
-        'view_source' : settings.VIEW_SOURCE
+        'build_num': settings.BUILD,
+        'view_source': settings.VIEW_SOURCE
     }
     return HttpResponseServerError(loader.render_to_string(
                                    'dseo_500.html', data_dict,
@@ -1637,24 +1637,26 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         return redirect_url
 
     facet_blurb_facet = None
-    path = "http://%s%s" % (request.META.get('HTTP_HOST', 'localhost'),
-                            request.path)
-    num_filters = len([k for (k, v) in filters.iteritems() if v])
+
     moc_id_term = request.GET.get('moc_id', None)
     q_term = request.GET.get('q', None)
 
     ga = settings.SITE.google_analytics.all()
-    sitecommit_str = helpers.make_specialcommit_string(
-        settings.COMMITMENTS.all())
-    site_config = get_site_config(request)
-    num_jobs = int(site_config.num_job_items_to_show) * 2
-    sort_order = request.REQUEST.get('sort', 'relevance')
-    # Apply any parameters in the querystring to the solr search.
-    sqs = (helpers.prepare_sqs_from_search_params(request.GET) if query_path
-           else None)
-    custom_facets = []
 
+    sitecommit_str = helpers.make_specialcommit_string(settings.COMMITMENTS.all())
+
+    site_config = get_site_config(request)
+
+    num_jobs = int(site_config.num_job_items_to_show) * 2
+
+    sort_order = request.REQUEST.get('sort', 'relevance')
+
+    # Apply any parameters in the querystring to the solr search.
+    sqs = helpers.prepare_sqs_from_search_params(request.GET)
+
+    custom_facets = []
     custom_facet_counts = []
+
     if site_config.browse_facet_show:
         cf_count_tup = get_custom_facets(request, filters=filters,
                                          query_string=query_path)
@@ -1687,10 +1689,22 @@ def search_by_results_and_slugs(request, *args, **kwargs):
                                               jsids=settings.SITE_BUIDS,
                                               facet_limit=num_jobs,
                                               sort_order=sort_order)
+
+    # Force the query to evaluate and populate the result cache. From
+    # here on out unless changes are made to the sqs objects
+    # anything using query results will be working with the same
+    # exact version of the query results (and more importantly,
+    # the query won't be re-run).
+    default_jobs[:num_jobs]
+    featured_jobs[:num_jobs]
+
     facet_counts = default_jobs.add_facet_count(featured_jobs).get('fields')
 
+    total_featured_jobs = featured_jobs.count()
+    total_default_jobs = default_jobs.count()
+
     (num_featured_jobs, num_default_jobs, _, _) = helpers.featured_default_jobs(
-        featured_jobs.count(), default_jobs.count(),
+        total_featured_jobs, total_default_jobs,
         num_jobs, site_config.percent_featured)
 
     # Strip html and markdown formatting from description snippets
@@ -1699,27 +1713,8 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         text_fields[i] = 'html_description'
     except ValueError:
         pass
-    h = HTMLParser()
-    all_jobs = itertools.chain(default_jobs[:num_default_jobs],
-                               featured_jobs[:num_featured_jobs])
-    for job in all_jobs:
-        text = filter(None, [getattr(job, x, "None") for x in text_fields])
-        unformatted_text = h.unescape(strip_tags(" ".join(text)))
-        setattr(job, 'text', unformatted_text)
 
     if not facet_counts:
-        LOG.info("Redirecting to home page after receiving 'None' "
-                 "for facet_counts.",
-                 extra={
-                     'view': 'job_listing_by_slug_tag',
-                     'data': {
-                         'request': request,
-                         'site_id': settings.SITE_ID,
-                         'path': path,
-                         'custom_facets': custom_facets,
-                         'filters': filters
-                     }
-                 })
         return redirect("/")
 
     if num_default_jobs == 0 and num_featured_jobs == 0 \
@@ -1728,11 +1723,17 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         return redirect("/")
 
     if num_featured_jobs != 0:
-        jobs = featured_jobs[:num_featured_jobs]
+        jobs = featured_jobs
         breadbox = Breadbox(request.path, filters, jobs, request.GET)
     else:
         jobs = default_jobs[:num_default_jobs]
         breadbox = Breadbox(request.path, filters, jobs, request.GET)
+
+    default_jobs = default_jobs[:num_default_jobs]
+    featured_jobs = featured_jobs[:num_featured_jobs]
+
+    for job in itertools.chain(default_jobs, featured_jobs):
+        helpers.add_text_to_job(job)
 
     if filters['company_slug']:
         company_obj = Company.objects.filter(member=True)
@@ -1755,7 +1756,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         moc_term = '\*'
 
     results_heading = helpers.build_results_heading(breadbox)
-    breadbox.job_count = intcomma(featured_jobs.count() + default_jobs.count())
+    breadbox.job_count = intcomma(total_default_jobs + total_featured_jobs)
     count_heading = helpers.build_results_heading(breadbox)
 
     sort_order = request.GET.get('sort', 'relevance')
@@ -1767,9 +1768,9 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         'build_num': settings.BUILD,
         'company': company_data,
         'count_heading': count_heading,
-        'default_jobs': default_jobs[:num_default_jobs],
+        'default_jobs': default_jobs,
         'facet_blurb_facet': facet_blurb_facet,
-        'featured_jobs': featured_jobs[:num_featured_jobs],
+        'featured_jobs': featured_jobs,
         'filters': filters,
         'google_analytics': ga,
         'host': str(request.META.get("HTTP_HOST", 'localhost')),
@@ -1777,7 +1778,7 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         'max_filter_settings': settings.ROBOT_FILTER_LEVEL,
         'moc_id_term': moc_id_term if moc_id_term else '\*',
         'moc_term': moc_term,
-        'num_filters': num_filters,
+        'num_filters': len([k for (k, v) in filters.iteritems() if v]),
         'total_jobs_count': jobs_count,
         'results_heading': results_heading,
         'search_url': request.path,
