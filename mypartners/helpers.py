@@ -514,7 +514,7 @@ def new_partner_from_library(request):
         library=library)
     partner.tags = tags
 
-    state = library.st if library.has_valid_location else ""
+    state = request.GET.get("state", library.st)
     location = Location.objects.create(
         address_line_one=library.street1,
         address_line_two=library.street2,
