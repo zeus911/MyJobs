@@ -1630,26 +1630,23 @@ def dseo_500(request):
 @protected_site
 def search_by_results_and_slugs(request, *args, **kwargs):
     filters = helpers.build_filter_dict(request.path)
-    query_path = request.META.get('QUERY_STRING', None)
 
     redirect_url = helpers.determine_redirect(request, filters)
     if redirect_url:
         return redirect_url
 
-    facet_blurb_facet = None
-
+    query_path = request.META.get('QUERY_STRING', None)
     moc_id_term = request.GET.get('moc_id', None)
     q_term = request.GET.get('q', None)
+    sort_order = request.GET.get('sort', 'relevance')
+    if sort_order not in helpers.sort_order_mapper.keys():
+        sort_order = 'relevance'
 
+    facet_blurb_facet = None
     ga = settings.SITE.google_analytics.all()
-
     sitecommit_str = helpers.make_specialcommit_string(settings.COMMITMENTS.all())
-
     site_config = get_site_config(request)
-
     num_jobs = int(site_config.num_job_items_to_show) * 2
-
-    sort_order = request.REQUEST.get('sort', 'relevance')
 
     custom_facet_counts = []
     if site_config.browse_facet_show:
@@ -1699,7 +1696,6 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         total_featured_jobs, total_default_jobs,
         num_jobs, site_config.percent_featured)
 
-
     if not facet_counts:
         return redirect("/")
 
@@ -1709,15 +1705,11 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     default_jobs = default_jobs[:num_default_jobs]
     featured_jobs = featured_jobs[:num_featured_jobs]
 
-    if num_featured_jobs != 0:
-        jobs = featured_jobs
-        breadbox = Breadbox(request.path, filters, jobs, request.GET)
-    else:
-        jobs = default_jobs
-        breadbox = Breadbox(request.path, filters, jobs, request.GET)
-
-    for job in itertools.chain(default_jobs, featured_jobs):
+    jobs = list(itertools.chain(featured_jobs, default_jobs))
+    for job in jobs:
         helpers.add_text_to_job(job)
+    
+    breadbox = Breadbox(request.path, filters, jobs, request.GET)
 
     if filters['company_slug']:
         company_obj = Company.objects.filter(member=True)
@@ -1742,10 +1734,6 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     results_heading = helpers.build_results_heading(breadbox)
     breadbox.job_count = intcomma(total_default_jobs + total_featured_jobs)
     count_heading = helpers.build_results_heading(breadbox)
-
-    sort_order = request.GET.get('sort', 'relevance')
-    if sort_order not in helpers.sort_order_mapper.keys():
-        sort_order = 'relevance'
 
     data_dict = {
         'breadbox': breadbox,
