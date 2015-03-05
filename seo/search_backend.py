@@ -288,8 +288,6 @@ class DESolrSearchBackend(SolrSearchBackend):
         Overrides both search() and build_search_kwargs().
 
         """
-        from settings import stack_trace
-        stack_trace()
 
         if len(query_string) == 0:
             return {
