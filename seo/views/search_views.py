@@ -1632,8 +1632,6 @@ def search_by_results_and_slugs(request, *args, **kwargs):
     filters = helpers.build_filter_dict(request.path)
     query_path = request.META.get('QUERY_STRING', None)
 
-    print filters
-
     redirect_url = helpers.determine_redirect(request, filters)
     if redirect_url:
         return redirect_url
