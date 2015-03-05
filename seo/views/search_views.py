@@ -1722,15 +1722,15 @@ def search_by_results_and_slugs(request, *args, **kwargs):
             and not query_path:
         return redirect("/")
 
+    default_jobs = default_jobs[:num_default_jobs]
+    featured_jobs = featured_jobs[:num_featured_jobs]
+
     if num_featured_jobs != 0:
         jobs = featured_jobs
         breadbox = Breadbox(request.path, filters, jobs, request.GET)
     else:
-        jobs = default_jobs[:num_default_jobs]
+        jobs = default_jobs
         breadbox = Breadbox(request.path, filters, jobs, request.GET)
-
-    default_jobs = default_jobs[:num_default_jobs]
-    featured_jobs = featured_jobs[:num_featured_jobs]
 
     for job in itertools.chain(default_jobs, featured_jobs):
         helpers.add_text_to_job(job)
