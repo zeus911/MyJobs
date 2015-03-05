@@ -174,7 +174,8 @@ class Location(models.Model):
                                         blank=True)
     city = models.CharField(max_length=255, verbose_name='City')
     state = models.CharField(max_length=200, verbose_name='State/Region')
-    country_code = models.CharField(max_length=3, verbose_name='Country')
+    country_code = models.CharField(max_length=3, verbose_name='Country', 
+                                    default='USA')
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
 
