@@ -417,6 +417,7 @@ $(document).ready(function() {
                 var p = document.createElement("p");
                 var note = document.createElement("span");
                 var note_node = document.createTextNode("Note: ");
+                var add_required = false;
                 note.appendChild(note_node);
                 note.setAttribute("style", "color: red");
                 var text = "This partner is missing information from the primary contact. " +
@@ -432,6 +433,7 @@ $(document).ready(function() {
                 }
 
                 if(for_completion.indexOf("state") !== -1) {
+                  add_required = true;
                   $("#add-partner-library").addClass("disabled");
                   var required_ul = $("<ul></ul>"),
                       required_li = $("<li>state: </li>"),
@@ -459,10 +461,11 @@ $(document).ready(function() {
 
                 optional = $("<p><b>Optional data</b><br />These fields are " + 
                              "missing but can be added later:</p>");
-                $(".modal-body").append(p).append(required)
-                                .append(required_ul)
-                                .append(optional)
-                                .append(ul);
+                $(".modal-body").append(p)
+                if(add_required)
+                  $(".modal-body").append(required).append(required_ul)
+                
+                $(".modal-body").append(optional).append(ul);
 
             }
 
