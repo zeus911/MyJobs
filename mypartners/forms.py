@@ -6,6 +6,7 @@ from django.utils.timezone import get_current_timezone_name
 from collections import OrderedDict
 import pytz
 
+from postajob.location_data import state_list
 from myprofile.forms import generate_custom_widgets
 from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
                                ADDITION, CHANGE, MAX_ATTACHMENT_MB, Tag,
@@ -515,5 +516,8 @@ class LocationForm(NormalizedModelForm):
     class Meta:
         form_name = "Location"
         model = Location
+        exclude = ('country_code',)
         widgets = generate_custom_widgets(model)
 
+    state = forms.ChoiceField(
+        widget=forms.Select(), choices=state_list(), label='State')
