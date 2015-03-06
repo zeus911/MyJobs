@@ -2,31 +2,16 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 
 from seo.models import SeoSite
-from seo.search_backend import DESolrSearchBackend, DESolrEngine
 from seo.tests import factories
 from seo.tests.solr_settings import SOLR_FIXTURE
 from setup import DirectSEOTestCase
 from universal.helpers import build_url
 
 
-class CountingDESolrSearchBackend(DESolrSearchBackend):
-    def search(self, *args, **kwargs):
-        settings.SOLR_QUERY_COUNTER += 1
-        return super(CountingDESolrSearchBackend, self).search(*args, **kwargs)
-
-
-class CountingDESolrEngine(DESolrEngine):
-    backend = CountingDESolrSearchBackend
-
-
 class QueryCountTests(DirectSEOTestCase):
     def setUp(self):
         super(QueryCountTests, self).setUp()
         settings.SOLR_QUERY_COUNTER = 0
-
-        self.default_engine = settings.HAYSTACK_CONNECTIONS['default']['ENGINE']
-        self.engine = 'seo.tests.test_solr.CountingDESolrEngine'
-        settings.HAYSTACK_CONNECTIONS['default']['ENGINE'] = self.engine
 
         # For each search page there should be at least 2 queries:
         #   default jobs, total jobs
@@ -65,9 +50,8 @@ class QueryCountTests(DirectSEOTestCase):
         self.feed_types = ['json', 'rss', 'xml', 'atom', 'indeed', 'jsonp']
 
     def tearDown(self):
+        settings.SOLR_QUERY_COUNTER = 0
         super(QueryCountTests, self).tearDown()
-        settings.HAYSTACK_CONNECTIONS['default']['ENGINE'] = self.default_engine
-        settings.SOLR_QUERY_COUNTER = None
 
     def test_num_queries_homepage(self):
         self.client.get(reverse('home'))

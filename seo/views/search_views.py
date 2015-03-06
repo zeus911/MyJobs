@@ -713,10 +713,15 @@ def syndication_feed(request, filter_path, feed_type):
                             jsids=settings.SITE_BUIDS,
                             filters=filters, sort_order=sort_order)
 
+    job_count = jobs.count()
+    num_items = min(num_items, max_items, job_count)
+    jobs[:num_items]
+
     if days_ago:
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=days_ago)
         jobs = jobs.filter(date_new__gte=start_date)
+
 
     try:
         j = jobs[0]
@@ -727,9 +732,6 @@ def syndication_feed(request, filter_path, feed_type):
         buid_last_written = j.date_updated
     else:
         buid_last_written = datetime.datetime.now()
-
-    job_count = jobs.count()
-    num_items = min(num_items, max_items, job_count)
 
     qs = jobs.values('city', 'company', 'country', 'country_short', 'date_new',
                      'description', 'location', 'reqid', 'state', 'state_short',
