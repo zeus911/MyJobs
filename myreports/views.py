@@ -10,6 +10,7 @@ from django.template import RequestContext
 
 from myreports.decorators import restrict_to_staff
 from universal.helpers import get_company_or_404
+from universal.decorators import company_has_access
 
 
 @restrict_to_staff()
@@ -126,7 +127,9 @@ def filter_records(request,
         ctx = {'records': records, 'cached': cached}
 
         # serialize
-        if output == 'json':
+        if output == 'python':
+            return records
+        elif output == 'json':
 
             # store the counts so we don't have to run a query every time later
             if count:
@@ -160,3 +163,8 @@ def filter_records(request,
     else:
         raise Http404("This view is only reachable via an AJAX POST request")
 filter_records.cache = {}
+
+
+@company_has_access('prm_access')
+def generate_report(request):
+    records = filter_records(output='python')
