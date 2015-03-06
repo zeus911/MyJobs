@@ -32,7 +32,6 @@ Report.prototype.create_fields = function(types) {
     }
   }
   return fields;
-
 };
 
 
@@ -195,7 +194,17 @@ Report.prototype.bind_events = function() {
     if (report.data) {
       $.extend(data, report.data);
     }
-    console.log(url);
+    // ffffffffffffffffu...
+    if (data.contact) {
+      var new_list = [];
+      for (var i = 0; i < data.contact.length; i++) {
+        var value = data.contact[i],
+            name = $("#contact input[value='" + value + "']").next("span").html();
+        new_list.push(name);
+      }
+      delete data.contact;
+      data.contact_name = new_list;
+    }
     $.ajaxSettings.traditional = true;
     $.ajax({
       type: 'POST',
@@ -204,7 +213,7 @@ Report.prototype.bind_events = function() {
       dataType: "json",
       global: false,
       success: function (data) {
-        $(".modal-body").html(data);
+        $(".modal-body").html(JSON.stringify(data.records));
       }
     });
   });
