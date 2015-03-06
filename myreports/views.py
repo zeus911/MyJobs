@@ -106,19 +106,17 @@ def view_records(request, app, model, output='json'):
         records = filter_records(request, get_model(app, model),
                                  params, ignore_cache)
 
+        counts = {}
         if count:
             records = records.annotate(count=Count(count))
+            counts = {record.pk: record.count for record in records}
 
         if output == 'json':
-            if count:
-                counts = {record.pk: record.count for record in records}
-                ctx = [dict({'pk': record['pk'],
-                             'count': counts[record['pk']]},
-                            **record['fields'])
-                       for record in serializers.serialize('python', records)]
-            else:
-                ctx = [dict({'pk': record['pk']}, **record['fields'])
-                       for record in serializers.serialize('python', records)]
+            ctx = [dict({'pk': record['pk']}, **record['fields'])
+                   for record in serializers.serialize('python', records)]
+            if counts:
+                ctx = [dict({'count': counts[record['pk']]}, **record)
+                       for record in ctx]
 
             ctx = json.dumps(ctx, cls=DjangoJSONEncoder)
 
