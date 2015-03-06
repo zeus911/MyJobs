@@ -7,14 +7,14 @@ window.addEventListener("beforeunload", function(e) {
 });
 */
 
-
+// Handles storing data, rendering fields, and submitting report. See prototype functions
 var Report = function(types) {
   this.types = types;
   this.data = {};
   this.fields = this.create_fields(types);
 };
 
-
+//
 Report.prototype.create_fields = function(types) {
    var reports = {"prm":        [new Field("Select Date", "date"),
                                  new Field("State", "text"),
@@ -41,8 +41,6 @@ Report.prototype.bind_events = function() {
 
   // Update Partner and Contact Lists
   $(document.body).on("change", "input:not([id$=-all-checkbox])", function(e) {
-    console.log("CHANGE!");
-
     var in_list = $(this).parents(".list-body").attr("id"),
         contact_wrapper = $("#contact-wrapper"),
         c_field = report.find_field("Select Contacts");
@@ -235,7 +233,7 @@ Report.prototype.readable_data = function() {
         var ul = $("<ul></ul>");
 
         for (var i = 0; i < value.length; i++) {
-          var name = $("#" + key + " input[value='" + value[i] + "'").next("span").html(),
+          var name = $("#" + key + " input[value='" + value[i] + "']").next("span").html(),
               li = $("<li>" + name + "</li>");
           ul.append(li);
         }
