@@ -13,6 +13,28 @@ def get_breadbox(request):
     return Breadbox(request.path, filters, jobs, request.GET)
 
 
+def get_custom_facet_counts(request):
+    custom_facet_counts = []
+    filters = get_filters(request)
+    querystring = request.META.get('QUERY_STRING', None)
+    site_config = get_site_config(request)
+
+    if site_config.browse_facet_show:
+        cached_custom_facets = cache.get_custom_facets(request, filters=filters,
+                                                       query_string=querystring)
+
+        if not filters['facet_slug']:
+            custom_facet_counts = cached_custom_facets
+        else:
+            facet_slugs = filters['facet_slug'].split('/')
+            active_facets = helpers.standard_facets_by_name_slug(facet_slugs)
+            custom_facet_counts = [(facet, count) for facet, count
+                                   in cached_custom_facets
+                                   if facet not in active_facets]
+
+    return custom_facet_counts
+
+
 def get_default_jobs(request):
     default_jobs, _, _ = get_jobs_and_counts(request)
     return default_jobs
@@ -75,3 +97,12 @@ def get_title_term(request):
 def get_total_jobs_count(request):
     return cache.get_total_jobs_count()
 
+
+def get_widgets(request):
+    filters = get_filters(request)
+    _, _, facet_counts = get_jobs_and_counts(request)
+    site_config = get_site_config(request)
+
+
+    return helpers.get_widgets(request, site_config, facet_counts,
+                               custom_facet_counts, filters=filters)
