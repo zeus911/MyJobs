@@ -52,6 +52,7 @@ class Block(models.Model):
     def context(self, request):
         return {
             'block': self,
+            'request': request,
         }
 
     def render(self, request):
@@ -72,6 +73,14 @@ class Block(models.Model):
             # its subclass.
             self.content_type = self._get_real_type()
         super(Block, self).save(*args, **kwargs)
+
+
+class BreadboxBlock(Block):
+    def context(self, request):
+        return {
+            'block': self,
+            'breadbox': None
+        }
 
 
 class ColumnBlock(Block):
@@ -216,30 +225,50 @@ class SavedSearchWidgetBlock(Block):
 class SearchBoxBlock(Block):
     base_template = 'myblocks/blocks/searchbox.html'
 
+    def context(self, request):
+        return {
+            'block': self,
+            'location_term': '',
+            'moc_term': '',
+            'moc_id_term': '',
+            'search_url': '',
+            'site_config': '',
+            'title_term': '',
+            'total_job_count': 0,
+        }
+
 
 class SearchFilterBlock(Block):
     base_template = 'myblocks/blocks/searchfilter.html'
 
     def context(self, request):
-        data = get_jobs(request)
-        data['block'] = self
-        return data
+        return {
+            'widgets': []
+        }
 
 
 class SearchResultBlock(Block):
     base_template = 'myblocks/blocks/searchresult.html'
 
     def context(self, request):
-        data = get_jobs(request)
-        data['block'] = self
-        return data
+        return {
+            'block': self,
+            'data_type': '',
+            'default_jobs': [],
+            'featured_jobs': [],
+            'location_term': '',
+            'request': request,
+            'site_config': '',
+            'site_tags': '',
+            'title_term': '',
+        }
 
 
 class ShareBlock(Block):
     base_template = 'myblocks/blocks/share.html'
 
 
-class VeteranSearchBox(Block):
+class VeteranSearchBox(SearchBoxBlock):
     base_template = 'myblocks/blocks/veteransearchbox.html'
 
 
