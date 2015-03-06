@@ -186,75 +186,43 @@ class SeoHelpersDjangoTestCase(DirectSEOBase):
                 for term in missing_terms:
                     self.assertEqual(query.find(term), -1)
 
-from haystack import connections
+
 from seo.models import SeoSite
+from seo.search_backend import DESolrSearchBackend, DESolrEngine
 
 
-class CaptureSolrQueriesContext(object):
-    """
-    Context manager that captures queries executed by all Solr connections.
-    """
-    def __iter__(self):
-        return iter(self.captured_queries)
+class CountingDESolrSearchBackend(DESolrSearchBackend):
+    counter = 0
 
-    def __getitem__(self, index):
-        return self.captured_queries[index]
-
-    def __len__(self):
-        return len(self.captured_queries)
-
-    def __enter__(self):
-        self.initial_queries = self._sum_queries()
-        self.final_queries = None
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        if exc_type is not None:
-            return
-        self.final_queries = self._sum_queries()
-
-    def _sum_queries(self):
-        return sum(map(lambda conn: len(conn.queries), connections.all()))
-
-    @property
-    def captured_queries(self):
-        return [q for conn in connections.all() for q in conn.queries]
+    def search(self, *args, **kwargs):
+        settings.SOLR_QUERY_COUNTER += 1
+        return super(CountingDESolrSearchBackend, self).search(*args, **kwargs)
 
 
-class AssertNumSolrQueriesContext(CaptureSolrQueriesContext):
-    def __init__(self, test_case, num):
-        self.test_case = test_case
-        self.num = num
-        super(AssertNumSolrQueriesContext, self).__init__()
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        super(AssertNumSolrQueriesContext, self).__exit__(exc_type, exc_value,
-                                                          traceback)
-        if exc_type is not None:
-            return
-        executed = len(self)
-        self.test_case.assertEqual(
-            executed, self.num, "%d queries executed, %d expected" % (
-                executed, self.num
-            )
-        )
+class CountingDESolrEngine(DESolrEngine):
+    backend = CountingDESolrSearchBackend
 
 
 class SolrQueryTests(DirectSEOTestCase):
-    def assertNumSolrQueries(self, num, func=None, *args, **kwargs):
-        context = AssertNumSolrQueriesContext(self, num)
-        if func is None:
-            return context
+    def setUp(self):
+        super(SolrQueryTests, self).setUp()
+        settings.SOLR_QUERY_COUNTER = 0
 
-        with context:
-            func(*args, **kwargs)
+
+    def tearDown(self):
+        super(SolrQueryTests, self).tearDown()
+        settings.SOLR_QUERY_COUNTER = None
+
 
     def test_num_queries_homepage(self):
+        settings.HAYSTACK_CONNECTIONS['default']['ENGINE'] = 'seo.tests.test_helpers.CountingDESolrEngine'
+
         # Make a valid non-dns-homepage configuration to use.
         site = SeoSite.objects.get()
         site.configurations.all().delete()
         site.configurations.add(factories.ConfigurationFactory(status=2))
+        site.business_units.add(0)
 
-        with self.assertNumSolrQueries(FuzzyInt(1, 2)):
-            resp = self.client.get(reverse('home'))
+        resp = self.client.get(reverse('home'))
 
+        print settings.SOLR_QUERY_COUNTER
