@@ -194,7 +194,6 @@ Report.prototype.bind_events = function() {
     if (report.data) {
       $.extend(data, report.data);
     }
-    // ffffffffffffffffu...
     if (data.contact) {
       var new_list = [];
       for (var i = 0; i < data.contact.length; i++) {
