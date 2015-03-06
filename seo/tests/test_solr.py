@@ -42,7 +42,7 @@ class QueryCountTests(DirectSEOTestCase):
         site.business_units.add(0)
 
         # Insert extra jobs so we know the search pages
-        # isn't iterating through all jobs for some reason.
+        # aren't iterating through all jobs for some reason.
         bulk_jobs = []
         job = SOLR_FIXTURE[0]
         for i in range(5000, 5050):
