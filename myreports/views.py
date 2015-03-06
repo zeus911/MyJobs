@@ -19,7 +19,7 @@ def reports(request):
     if request.is_ajax():
         response = HttpResponse()
         template = '{path}.html'
-        html = render_to_response(template.format(path=request.GET['output']),
+        html = render_to_response(template.format(path=request.POST['output']),
                                   {}, RequestContext(request))
         response.content = html.content
         return response
@@ -95,8 +95,8 @@ filter_records.cache = {}
 
 # render records?
 def view_records(request, app, model, output='json'):
-    if True:#request.is_ajax() and request.method == 'GET':
-        params = parse_params(request.GET)
+    if request.is_ajax() and request.method == 'POST':
+        params = parse_params(request.POST)
 
         params.pop('csrfmiddlewaretoken', None)
         ignore_cache = params.pop('ignore_cache', False)
@@ -128,4 +128,4 @@ def view_records(request, app, model, output='json'):
         return response
 
     else:
-        raise Http404("This view is only reachable via an AJAX GET request.")
+        raise Http404("This view is only reachable via an AJAX POST request.")
