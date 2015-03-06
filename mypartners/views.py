@@ -656,12 +656,8 @@ def partner_view_full_feed(request):
     saved_search = get_object_or_404(PartnerSavedSearch, id=search_id)
 
     if company == saved_search.partnersavedsearch.provider:
-        url_of_feed = url_sort_options(saved_search.feed,
-                                       saved_search.sort_by,
-                                       saved_search.frequency)
         try:
-            items, count = parse_feed(url_of_feed, saved_search.frequency,
-                                      saved_search.jobs_per_email)
+            items, count = saved_search.get_feed_items()
         except HTTPError:
             items = None
             count = 0
@@ -683,6 +679,7 @@ def partner_view_full_feed(request):
         'company': company,
         'start_date': start_date,
         'count': count,
+        'new_jobs': len([item for item in items if item.get('new')]),
     }
 
     return render_to_response('mysearches/view_full_feed.html', ctx,

@@ -692,7 +692,7 @@ def task_update_solr(jsid, **kwargs):
         raise task_update_solr.retry()
 
 
-@task(name='tasks.etl_to_solr', ignore_result=True)
+@task(name='tasks.etl_to_solr', ignore_result=True, send_error_emails=True)
 def task_etl_to_solr(guid, buid, name):
     try:
         import_jobs.update_job_source(guid, buid, name)
@@ -819,8 +819,7 @@ def event_list_to_email_log(event_list):
             return []
         if event_id:
             try:
-                log = SavedSearchLog.objects.get(
-                    uuid=event_id)
+                log = SavedSearchLog.objects.get(uuid=event_id)
                 email_log_args['send_log'] = log
                 if event['event'] not in BAD_EMAIL:
                     log.was_received = True

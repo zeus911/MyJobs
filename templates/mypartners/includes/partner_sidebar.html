@@ -9,8 +9,8 @@
         <label>City:</label>
         <input id="lib-city" type="text" placeholder="City" {% if request.GET.city %}value="{{request.GET.city}}"{% endif %} />
         {% if filter_tag %}
-        <label>Tag:</label>
-        <input id="lib-tag" type="text" placeholder="Tag" {% if request.GET.tag %}value="{{request.GET.tag}}"{% endif %} />
+        <label>Tags:</label>
+        <input id="lib-tag" type="text" placeholder="Tags" {% if request.GET.tag %}value="{{request.GET.tag}}"{% endif %} />
         {% endif %}
         {% if on_page = "prm" %}
         <label>Last Activity:</label>

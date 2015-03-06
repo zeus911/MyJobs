@@ -160,6 +160,11 @@ class ConfigurationAdmin (admin.ModelAdmin):
                 ('home_page_template', 'publisher',
                  'show_home_social_footer',
                  'show_home_microsite_carousel')]}),
+            ('Search Box Options', {'fields': [
+                ('where_label', 'where_placeholder', 'where_helptext'),
+                ('what_label', 'what_placeholder', 'what_helptext'),
+                ('moc_label', 'moc_placeholder', 'moc_helptext')
+            ]}),
             ('Blurb Options', {'fields': ['defaultBlurbTitle',
                                           'defaultBlurb']}),
             ('Navigation Options', {'fields': [

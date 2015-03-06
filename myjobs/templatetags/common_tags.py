@@ -7,7 +7,7 @@ from django.conf import settings
 from myjobs import version
 from myjobs.models import User
 from myjobs.helpers import get_completion, make_fake_gravatar
-from seo.models import CompanyUser
+from seo.models import Company
 from universal.helpers import get_company
 
 from django.db.models.loading import get_model
@@ -85,16 +85,14 @@ def get_company_name(user):
     :user: User instance
 
     Outputs:
-    :company_list: A list of company names, or an empty string if there are no
-                   companies associated with the user
+    A `QuerySet` of companies for which the user is a `CompanyUser`.
     """
 
+    # Only return companies for which the user is a company user
     try:
-        companies = CompanyUser.objects.filter(user=user)
-        company_list = [company.company for company in companies]
-        return company_list
-    except CompanyUser.DoesNotExist:
-        return {}
+        return user.company_set.filter(companyuser__user=user)
+    except ValueError:
+        return Company.objects.none()
 
 
 @register.simple_tag(takes_context=True)
