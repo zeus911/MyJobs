@@ -7,7 +7,8 @@ from django.template import Template, RequestContext
 from django.template.loaders.filesystem import Loader
 from django.utils.safestring import mark_safe
 
-from myblocks.helpers import get_jobs, success_url
+from myblocks import context_tools
+from myblocks.helpers import success_url
 from myjobs.helpers import expire_login
 from myjobs.models import User
 from registration.forms import CustomAuthForm, RegistrationForm
@@ -79,7 +80,7 @@ class BreadboxBlock(Block):
     def context(self, request):
         return {
             'block': self,
-            'breadbox': None
+            'breadbox': context_tools.get_breadbox(request)
         }
 
 
@@ -228,13 +229,13 @@ class SearchBoxBlock(Block):
     def context(self, request):
         return {
             'block': self,
-            'location_term': '',
-            'moc_term': '',
-            'moc_id_term': '',
-            'search_url': '',
-            'site_config': '',
-            'title_term': '',
-            'total_job_count': 0,
+            'location_term': context_tools.get_location_term(request),
+            'moc_term': context_tools.get_moc_term(request),
+            'moc_id_term': context_tools.get_moc_id_term(request),
+            'search_url': context_tools.get_search_url(request),
+            'site_config': context_tools.get_site_config(request),
+            'title_term': context_tools.get_title_term(request),
+            'total_jobs_count': context_tools.get_total_jobs_count(request),
         }
 
 
@@ -254,13 +255,13 @@ class SearchResultBlock(Block):
         return {
             'block': self,
             'data_type': '',
-            'default_jobs': [],
-            'featured_jobs': [],
-            'location_term': '',
+            'default_jobs': context_tools.get_default_jobs(request),
+            'featured_jobs': context_tools.get_featured_jobs(request),
+            'location_term': context_tools.get_location_term(request),
             'request': request,
-            'site_config': '',
-            'site_tags': '',
-            'title_term': '',
+            'site_config': context_tools.get_site_config(request),
+            'site_tags': settings.SITE_TAGS,
+            'title_term': context_tools.get_title_term(request),
         }
 
 
