@@ -4,12 +4,11 @@ from collections import namedtuple
 from mock import patch
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
 
 from seo import helpers
 from seo.models import CustomFacet
 from seo.tests import factories
-from setup import DirectSEOBase, DirectSEOTestCase
+from setup import DirectSEOBase
 
 
 class SeoHelpersTestCase(DirectSEOBase):
@@ -185,44 +184,3 @@ class SeoHelpersDjangoTestCase(DirectSEOBase):
                     self.assertNotEqual(query.find(term), -1)
                 for term in missing_terms:
                     self.assertEqual(query.find(term), -1)
-
-
-from seo.models import SeoSite
-from seo.search_backend import DESolrSearchBackend, DESolrEngine
-
-
-class CountingDESolrSearchBackend(DESolrSearchBackend):
-    counter = 0
-
-    def search(self, *args, **kwargs):
-        settings.SOLR_QUERY_COUNTER += 1
-        return super(CountingDESolrSearchBackend, self).search(*args, **kwargs)
-
-
-class CountingDESolrEngine(DESolrEngine):
-    backend = CountingDESolrSearchBackend
-
-
-class SolrQueryTests(DirectSEOTestCase):
-    def setUp(self):
-        super(SolrQueryTests, self).setUp()
-        settings.SOLR_QUERY_COUNTER = 0
-
-
-    def tearDown(self):
-        super(SolrQueryTests, self).tearDown()
-        settings.SOLR_QUERY_COUNTER = None
-
-
-    def test_num_queries_homepage(self):
-        settings.HAYSTACK_CONNECTIONS['default']['ENGINE'] = 'seo.tests.test_helpers.CountingDESolrEngine'
-
-        # Make a valid non-dns-homepage configuration to use.
-        site = SeoSite.objects.get()
-        site.configurations.all().delete()
-        site.configurations.add(factories.ConfigurationFactory(status=2))
-        site.business_units.add(0)
-
-        resp = self.client.get(reverse('home'))
-
-        print settings.SOLR_QUERY_COUNTER
