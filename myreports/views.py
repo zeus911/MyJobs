@@ -9,6 +9,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 from myreports.decorators import restrict_to_staff
+from myreports.models import Report
 from universal.helpers import get_company_or_404
 from universal.decorators import company_has_access
 
@@ -96,15 +97,17 @@ filter_records.cache = {}
 # render records?
 def view_records(request, app, model, output='json'):
     if request.is_ajax() and request.method == 'POST':
+        # parse request into dict, converting singleton lists into single items
         params = parse_params(request.POST)
 
+        # remove non-query related params
         params.pop('csrfmiddlewaretoken', None)
         ignore_cache = params.pop('ignore_cache', False)
         count = params.pop('count', None)
         output = output or params.pop('output', 'json')
 
-        records = filter_records(request, get_model(app, model),
-                                 params, ignore_cache)
+        records = filter_records(
+            request, get_model(app, model), params, ignore_cache)
 
         counts = {}
         if count:
@@ -119,7 +122,6 @@ def view_records(request, app, model, output='json'):
                        for record in ctx]
 
             ctx = json.dumps(ctx, cls=DjangoJSONEncoder)
-
             response = HttpResponse(
                 ctx, content_type='application/json; charset=utf-8')
 
@@ -127,3 +129,21 @@ def view_records(request, app, model, output='json'):
 
     else:
         raise Http404("This view is only reachable via an AJAX POST request.")
+
+
+@company_has_access('prm_access')
+def create_report(request, app, model):
+    company = get_company_or_404(request)
+    user = request.user
+    path = request.get_full_path()
+    params = parse_params(request.POST)
+
+    params.pop('csrfmiddlewaretoken', None)
+    ignore_cache = params.pop('ignore_cache', False)
+    records = filter_records(
+        request, get_model(app, model), params, ignore_cache)
+
+    # TODO: S3 storage
+    Report.objects.get_or_create(
+        created_by=user, owner=company, path=path,
+        params=json.dumps(params.items()), results=records)
