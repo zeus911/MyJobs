@@ -10,8 +10,6 @@ from universal.helpers import build_url
 
 
 class CountingDESolrSearchBackend(DESolrSearchBackend):
-    counter = 0
-
     def search(self, *args, **kwargs):
         settings.SOLR_QUERY_COUNTER += 1
         return super(CountingDESolrSearchBackend, self).search(*args, **kwargs)
