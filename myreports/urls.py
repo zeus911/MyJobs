@@ -4,7 +4,7 @@ urlpatterns = patterns(
     'myreports.views',
     url(r'^view$', 'reports', name='reports'),
     url(r'^ajax/(?P<app>\w+)/(?P<model>\w+)$',
-        'filter_records',
+        'view_records',
         {'app': 'mypartners', 'output': 'json'},
-        name='filter_records')
+        name='view_records')
 )

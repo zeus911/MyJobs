@@ -183,7 +183,7 @@ Report.prototype.bind_events = function() {
       dataType: "json",
       global: false,
       success: function (data) {
-        $(".modal-body").html(JSON.stringify(data.records));
+        $(".modal-body").html(JSON.stringify(data));
       }
     });
   });
@@ -376,7 +376,7 @@ List.prototype.filter = function(type, filter) {
 
       // render
       $("#"+ type + ".list-body").append(ul);
-      $(selected).html(data.records.length).parent().show("fast");
+      $(selected).html(data.length).parent().show("fast");
     },
     error: function(e) {
       // TODO: change when testing is done to something more useful.
