@@ -7,6 +7,7 @@ window.addEventListener("beforeunload", function(e) {
 });
 */
 
+
 // Handles storing data, rendering fields, and submitting report. See prototype functions
 var Report = function(types) {
   this.types = types;
@@ -14,7 +15,8 @@ var Report = function(types) {
   this.fields = this.create_fields(types);
 };
 
-//
+
+// Pulls the fields required for report type(s)
 Report.prototype.create_fields = function(types) {
    var reports = {"prm":        [new Field("Select Date", "date"),
                                  new Field("State", "text"),
@@ -35,6 +37,7 @@ Report.prototype.create_fields = function(types) {
 };
 
 
+// Bind events for report, events that use the report object need to be here.
 Report.prototype.bind_events = function() {
   var report = this;
 
@@ -45,6 +48,7 @@ Report.prototype.bind_events = function() {
         contact_wrapper = $("#contact-wrapper"),
         c_field = report.find_field("Select Contacts");
 
+    // Check to see if the triggering even was in a list.
     if (typeof in_list !== "undefined") {
       var all_records = $(this).parents(".list-body").prev().children("input"),
         records = $($(this).parents(".list-body").find("input")),
@@ -105,6 +109,7 @@ Report.prototype.bind_events = function() {
   });
 
 
+  // Slides the associated list up or down.
   $(document.body).on("click", ".list-header", function() {
     var icon = $(this).children("i");
 
@@ -118,6 +123,7 @@ Report.prototype.bind_events = function() {
   });
 
 
+  // Clicking on an li in the lists will click the checkbox.
   $(document.body).on("click", ".list-body li", function() {
     $(this).children("input").click();
   });
@@ -157,6 +163,7 @@ Report.prototype.bind_events = function() {
   });
 
 
+  // Clicking on all "type" checkbox will check all checkboxes in associated list.
   $(document.body).on("click", "input[id$=-all-checkbox]:checked", function(e) {
     e.stopPropagation();
     var checkboxes = $(this).parent().next().find("input");
@@ -167,6 +174,7 @@ Report.prototype.bind_events = function() {
   });
 
 
+  // Clicking on all "type" checkbox will uncheck all checkboxes in associated list.
   $(document.body).on("click", "input[id$=-all-checkbox]:not(:checked)", function(e) {
     e.stopPropagation();
     var checkboxes = $(this).parent().next().find("input");
@@ -177,6 +185,7 @@ Report.prototype.bind_events = function() {
   });
 
 
+  // Clicking this button will show the modal with human readable data to review.
   $(document.body).on("click", "#show-modal", function(e) {
     var modal = $("#report-modal"),
         body = modal.children(".modal-body"),
@@ -186,6 +195,7 @@ Report.prototype.bind_events = function() {
   });
 
 
+  // Actually submits the report's data to create a Report object in db.
   $(document.body).on("click", "#gen-report", function(e) {
     var data = {"csrfmiddlewaretoken": read_cookie("csrftoken")},
         url = location.protocol + "//" + location.host + "/reports/ajax/mypartners/contactrecord";
@@ -217,6 +227,7 @@ Report.prototype.bind_events = function() {
 };
 
 
+// Changes report.data from having PKs in lists to show more human friendly data such as names.
 Report.prototype.readable_data = function() {
   var data = this.data,
       html = '',
@@ -226,12 +237,16 @@ Report.prototype.readable_data = function() {
     if (data.hasOwnProperty(key)) {
       var value = data[key];
 
+      // Replace _ with spaces
       key = key.replace(/_/g, " ");
+
       html += "<label>" + key + ":</label>";
 
+      // If value is an object (aka a list).
       if (typeof value === "object") {
         var ul = $("<ul></ul>");
 
+        // fill ul with li's.
         for (var i = 0; i < value.length; i++) {
           var name = $("#" + key + " input[value='" + value[i] + "']").next("span").html(),
               li = $("<li>" + name + "</li>");
@@ -248,6 +263,7 @@ Report.prototype.readable_data = function() {
 };
 
 
+// Takes a field label (or name) and finds the associated field/list/widget.
 Report.prototype.find_field = function(field_label) {
   return ($.grep(this.fields, function(field) {
     return field.label === field_label;
@@ -255,14 +271,17 @@ Report.prototype.find_field = function(field_label) {
 };
 
 
+// Takes a list of Fields and renders them.
 Report.prototype.render_fields = function(fields) {
   var container = $("#container"),
       html = '',
       i = 0;
+
+  // for field in fields render.
   for (i; i < fields.length; i++) {
-    var field = fields[i];
-    html += field.render();
+    html += fields[i].render();
   }
+
   html += "<br /><a id=\"show-modal\" class=\"btn\">Generate Report</a>";
   container.html(html);
 };
@@ -274,6 +293,7 @@ var Field = function(label, type) {
 };
 
 
+// Outputs html based on type using jQuery.
 Field.prototype.render = function() {
   var html = '',
       wrapper = $("<div></div>"), // wrapping div
@@ -308,6 +328,8 @@ var List = function(label, type) {
 List.prototype = Object.create(Field.prototype);
 
 
+// Outputs html based on type using jQuery.
+// Runs ajax asynchronously to render associated lists.
 List.prototype.render = function(filter) {
   var container = $("<div id='"+ this.type +"-header' class='list-header'></div>"),
       icon = $("<i class='fa fa-plus-square-o'></i>"),
@@ -332,6 +354,7 @@ List.prototype.render = function(filter) {
   wrapper.append(container).append(body);
   html = wrapper.prop("outerHTML");
 
+  // Asynchronously renders a list of records based on list type.
   (function() {
     list.filter(list.type, filter);
   })();
@@ -339,17 +362,20 @@ List.prototype.render = function(filter) {
   return html;
 };
 
-
+// Renders a list of records based on type.
 List.prototype.filter = function(type, filter) {
   "use strict";
   var url = location.protocol + "//" + location.host, // https://secure.my.jobs
       data = {"csrfmiddlewaretoken": read_cookie("csrftoken")};
 
+  // if filter, add to data.
   if (typeof filter !== "undefined") {
     $.extend(data, filter);
   }
 
+  // specific duties based on type.
   if (type === "partner") {
+    // annotate how many records a partner has.
     $.extend(data, {"count": "contactrecord"});
     url += "/reports/ajax/mypartners/partner";
   } else if (type === "contact") {
@@ -366,16 +392,23 @@ List.prototype.filter = function(type, filter) {
     success: function(data) {
       var ul = $("<ul></ul>"),
           selected = $("[id^='" + type + "-header'] span span");
+
+      // fill ul with li's
       for (var i = 0; i < data.records.length; i++) {
         var record = data.records[i],
             li = $("<li><input type='checkbox' value='"+ record.pk +"' checked /> <span>"+ record.name +"</span></li>"),
             invis_box = $("<div class=\"invis-box\"></div>");
+
+        // add record count to right of partners
         if (type === "partner") {
           li.append("<span class='pull-right'>"+ record.count +"</span>");
         }
+
         li.append(invis_box);
         ul.append(li);
       }
+
+      // render
       $("#"+ type + ".list-body").append(ul);
       $(selected).html(data.records.length).parent().show("fast");
     },
@@ -388,6 +421,7 @@ List.prototype.filter = function(type, filter) {
 
 
 $(document).ready(function() {
+  // For date widget.
   $(document.body).on("click", ".datepicker",function(e) {
    $(this).pickadate({
      format: "mm/dd/yyyy",
@@ -414,9 +448,13 @@ $(document).ready(function() {
     var choices = $("#choices input[type='checkbox']:checked"),
       types = [],
       i = 0;
+
+    // fill types with choices that are checked, see selector.
     for (i; i < choices.length; i++) {
       types.push(choices[i].value.toLowerCase());
     }
+
+    // Create js Report object and set up next step.
     var report = new Report(types);
     report.bind_events();
     $("#container").addClass("rpt-container");
@@ -425,13 +463,14 @@ $(document).ready(function() {
     report.render_fields(report.fields);
   });
 
-
+  // On initial page, when a type gets checked remove disabled from "Next" button.
   $(document.body).on("click", "#choices input[type='checkbox']:checked", function() {
     var btn = $("#start-report");
     btn.removeClass("disabled");
   });
 
-
+  // On initial page, when a checkbox is unchecked look to see if any others are checked.
+  // If not then disable "Next" button.
   $(document.body).on("click", "#choices input[type='checkbox']:not(:checked)", function() {
     var btn = $("#start-report"),
         checkboxes = $("#choices input[type='checkbox']");
