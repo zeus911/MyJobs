@@ -244,6 +244,7 @@ class SearchFilterBlock(Block):
 
     def context(self, request):
         return {
+            'block': self,
             'widgets': context_tools.get_widgets(request)
         }
 
