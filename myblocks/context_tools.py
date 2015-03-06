@@ -103,6 +103,7 @@ def get_widgets(request):
     _, _, facet_counts = get_jobs_and_counts(request)
     site_config = get_site_config(request)
 
+    custom_facet_counts = get_custom_facet_counts(request)
 
     return helpers.get_widgets(request, site_config, facet_counts,
                                custom_facet_counts, filters=filters)
