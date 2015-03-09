@@ -101,6 +101,9 @@ CELERY_DEFAULT_EXCHANGE = 'tasks'
 CELERY_DEFAULT_EXCHANGE_TYPE = 'topic'
 CELERY_DEFAULT_ROUTING_KEY = 'dseo.default'
 CELERY_QUEUES = {
+    'priority': {
+        'binding_key': 'priority.#'
+    },
     'dseo': {
         'binding_key': 'dseo.#'
     },
@@ -109,6 +112,10 @@ CELERY_QUEUES = {
     }
 }
 CELERY_ROUTES = {
+    'tasks.priority_etl_to_solr': {
+        'queue': 'priority',
+        'routing_key': 'priority.update_solr'
+    },
     'tasks.task_update_solr': {
         'queue': 'solr',
         'routing_key': 'solr.update_solr'
