@@ -543,3 +543,16 @@ ul.submenu > li > a:hover {
         text-align: left;
     }
 }
+
+#menu-inbox ~ ul li > p {
+    color: white;
+    padding-left: 4px;
+}
+
+#menu-inbox > div.icon-envelope {
+    margin-left: 3px;
+}
+
+.icon-white {
+    background-image: url("//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/glyphicons-halflings-white.png");
+}
