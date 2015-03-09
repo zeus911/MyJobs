@@ -963,6 +963,7 @@ class Configuration(models.Model):
         self.browse_mapped_moc_text = self.browse_moc_text
         self.browse_mapped_moc_order = self.browse_moc_order
 
+
     def clear_cache(self):
         # Delete all cached configurations used to determine cache key prefixes
         # in directseo.seo.decorators.custom_cache_page because the
@@ -1129,6 +1130,18 @@ class Configuration(models.Model):
                                                              'search widget '
                                                              'on job listing '
                                                              'page.')
+
+    moc_label = models.CharField(max_length=255, blank=True)
+    what_label = models.CharField(max_length=255, blank=True)
+    where_label = models.CharField(max_length=255, blank=True)
+
+    moc_placeholder = models.CharField(max_length=255, blank=True)
+    what_placeholder = models.CharField(max_length=255, blank=True)
+    where_placeholder = models.CharField(max_length=255, blank=True)
+
+    moc_helptext = models.TextField(blank=True)
+    what_helptext = models.TextField(blank=True)
+    where_helptext = models.TextField(blank=True)
 
 
 class GoogleAnalytics (models.Model):

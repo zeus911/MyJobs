@@ -23,7 +23,7 @@ class TaskTests(MyJobsBase):
             self.assertEqual(u.is_verified, event in STOP_SENDING)
             self.assertFalse(u.opt_in_myjobs)
 
-            infos = u.messages_unread()
+            infos = u.messageinfo_set.all()
             self.assertEqual(len(infos), 1)
             message = infos[0].message
 
@@ -35,3 +35,13 @@ class TaskTests(MyJobsBase):
 
             EmailLog.objects.all().delete()
             u.delete()
+
+    def test_event_with_no_user(self):
+        EmailLog.objects.create(email='test@example.com', event=STOP_SENDING[0],
+                                received=datetime.datetime.now(),
+                                processed=False)
+
+        process_batch_events()
+
+        log = EmailLog.objects.get()
+        self.assertTrue(log.processed)
