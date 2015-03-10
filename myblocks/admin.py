@@ -30,6 +30,11 @@ class LoginBlockAdmin(admin.ModelAdmin):
     save_as = True
 
 
+class MoreButtonBlockAdmin(admin.ModelAdmin):
+    form = forms.MoreButtonBlockForm
+    save_as = True
+
+
 class RegistrationBlockAdmin(admin.ModelAdmin):
     form = forms.RegistrationBlockForm
     save_as = True
@@ -89,6 +94,13 @@ class RowAdmin(admin.ModelAdmin):
 admin.site.register(models.ContentBlock, ContentBlockAdmin)
 admin.site.register(models.ImageBlock, ImageBlockAdmin)
 admin.site.register(models.LoginBlock, LoginBlockAdmin)
+admin.site.register(models.MoreButtonBlock, MoreButtonBlockAdmin)
+admin.site.register(models.SavedSearchWidgetBlock, SavedSearchWidgetBlockAdmin)
+admin.site.register(models.SearchBoxBlock, SearchBoxBlockAdmin)
+admin.site.register(models.SearchFilterBlock, SearchFilterBlockAdmin)
+admin.site.register(models.VeteranSearchBox, VeteranSearchBoxAdmin)
+admin.site.register(models.SearchResultBlock, SearchResultBlockAdmin)
+admin.site.register(models.ShareBlock, ShareBlockAdmin)
 admin.site.register(models.RegistrationBlock, RegistrationBlockAdmin)
 admin.site.register(models.ColumnBlock, ColumnBlockAdmin)
 

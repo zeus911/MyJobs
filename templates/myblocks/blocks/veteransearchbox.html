@@ -3,24 +3,24 @@
 {% load seo_extras %}
 
 <div class="veteran-search-box-block {{ block.bootstrap_classes }}" id="veteran-search-box-block-{{block.id}}">
-    <form id="standardSearch" action={% if search_url %}"{{ search_url }}"{% else %}"/jobs/"{% endif %}>
+    <form id="standardSearch" action="{{ search_url }}">
         <div class="row veteran">
             <div class="searchHeader" role="search">
                 <div class="searchTab">
                     <label for="location">{% trans "Where" %}</label>
-                    <input title="Search Location" type="text" name="location" id="location" class="micrositeLocationField" value={% if location_term != "\*" %}"{{ location_term }}"{% else %}""{% endif %}/>
+                    <input title="Search Location" type="text" name="location" id="location" class="micrositeLocationField" value="{{ location_term }}" />
                     <span class="helptext" id="where">{% blocktrans %}city, state, country{% endblocktrans %}</span>
                 </div>
                 <div class="searchTab">
                     <label for="q">{% trans "What" %}</label>
-                    <input title="Search Phrase" type="text" name="q" id="q" class="micrositeTitleField" value={% if title_term != "\*" %}"{{ title_term }}"{% else %}""{% endif %}/>
+                    <input title="Search Phrase" type="text" name="q" id="q" class="micrositeTitleField" value="{{ title_term }}" />
                     <span class="helptext" id="what">{% blocktrans %}job title, keywords{% endblocktrans %}</span>
                 </div>
                 <div class="searchTab">
                     <label for="moc">{% trans 'Military' %}</label>
-                    <input title="Search MOC" type="text" name="moc" id="moc" class="micrositeMOCField" value={% if moc_term != "\*" %}"{{ moc_term }}"{% else %}""{% endif %}/>
-                    <span class="helptext" id="moc">{% blocktrans %}military job title or code{% endblocktrans %}</span>
-                    <input type="hidden" name="moc_id" id="moc_id" value={% if moc_id_term != "\*" %}"{{ moc_id_term }}"{% else %}""{% endif %}/>
+                    <input title="Search MOC" type="text" name="moc" id="moc" class="micrositeMOCField" value="{{ moc_term }}" />
+                    <span class="helptext" id="military">{% blocktrans %}military job title or code{% endblocktrans %}</span>
+                    <input type="hidden" name="moc_id" id="moc_id" value="{{ moc_id_term }}" />
                 </div>
                 <div class="stub">
                     <div class="pull-right">

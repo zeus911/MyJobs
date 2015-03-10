@@ -171,6 +171,20 @@ class LoginBlock(Block):
         return 'login-%s' % self.id
 
 
+class MoreButtonBlock(Block):
+    base_template = 'myblocks/blocks/morebutton.html'
+
+    def context(self, request):
+        return {
+            'arranged_jobs': context_tools.get_arranged_jobs(request),
+            'block': self,
+            'data_type': '',
+            'num_default_jobs': len(context_tools.get_default_jobs(request)),
+            'num_featured_jobs': len(context_tools.get_featured_jobs(request)),
+            'site_config': context_tools.get_site_config(request),
+        }
+
+
 class RegistrationBlock(Block):
     base_template = 'myblocks/blocks/registration.html'
 
@@ -254,6 +268,7 @@ class SearchResultBlock(Block):
 
     def context(self, request):
         return {
+            'arranged_jobs': context_tools.get_arranged_jobs(request),
             'block': self,
             'data_type': '',
             'default_jobs': context_tools.get_default_jobs(request),
@@ -270,8 +285,20 @@ class ShareBlock(Block):
     base_template = 'myblocks/blocks/share.html'
 
 
-class VeteranSearchBox(SearchBoxBlock):
+class VeteranSearchBox(Block):
     base_template = 'myblocks/blocks/veteransearchbox.html'
+
+    def context(self, request):
+        return {
+            'block': self,
+            'location_term': context_tools.get_location_term(request),
+            'moc_term': context_tools.get_moc_term(request),
+            'moc_id_term': context_tools.get_moc_id_term(request),
+            'search_url': context_tools.get_search_url(request),
+            'site_config': context_tools.get_site_config(request),
+            'title_term': context_tools.get_title_term(request),
+            'total_jobs_count': context_tools.get_total_jobs_count(request),
+        }
 
 
 class Row(models.Model):
@@ -308,7 +335,7 @@ class Row(models.Model):
 
 class Page(models.Model):
     HOME_PAGE = 'home_page'
-    JOB_LISTING = 'job_listing'
+    SEARCH_RESULTS = 'search_results'
     LOGIN = 'login'
 
     PRODUCTION = 'production'
@@ -316,7 +343,7 @@ class Page(models.Model):
 
     page_type_choices = (
         # (HOME_PAGE, 'Home Page'),
-        # (JOB_LISTING, 'Job Listing Page'),
+        (SEARCH_RESULTS, 'Job Search Results Page'),
         (LOGIN, 'Login Page'),
     )
     page_status_choices = (

@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.views.generic import TemplateView
 
 from seo.models import CustomFacet
+from seo.views import search_views
 
 #Lazily matches any repition of alphanumeric characters, /, or -
 SLUG_RE = '[/\w-]+?'
@@ -58,11 +59,20 @@ urlpatterns += patterns('seo.views.search_views',
     url(r'^(?P<filter_path>[/\w-]*)feed/(?P<feed_type>json|rss|xml|atom|indeed|jsonp)$',
         'syndication_feed', name="feed"),
     # `jobs/` is the only allowable standalone slug tag
-    url(r'^jobs/$', 'search_by_results_and_slugs', name='all_jobs'),
-    # job listing by slug tag -- the slug tag must have a parameter before it
+
+    # url(r'^jobs/$', 'search_by_results_and_slugs', name='all_jobs'),
+    # # job listing by slug tag -- the slug tag must have a parameter before it
+    # url(r'^[/\w-]+?/(%s)/$' % ('|'.join(stripped_slugs)),
+    #     'search_by_results_and_slugs', name="search_by_results_and_slugs"),
+
+    url(r'^jobs/$', search_views.SearchResults.as_view(), name='all_jobs'),
+
     url(r'^[/\w-]+?/(%s)/$' % ('|'.join(stripped_slugs)),
-        'search_by_results_and_slugs', name="search_by_results_and_slugs"),
-    # home page
+        search_views.SearchResults.as_view(),
+        name="search_by_results_and_slugs"),
+
+
+# home page
     url(r'^$', 'home_page', name="home"),
     # all companies page
     url(r'^all-companies/$', 'company_listing',{'group':'all'},

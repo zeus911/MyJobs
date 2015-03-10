@@ -7,7 +7,6 @@ import operator
 from fsm.views import FSMView
 import urllib
 import json as simplejson
-from HTMLParser import HTMLParser
 from types import IntType
 from urlparse import urlparse, urlunparse
 
@@ -30,7 +29,6 @@ from django.template import RequestContext, loader
 from django.template.defaultfilters import safe
 from django.utils.decorators import method_decorator
 from django.utils.encoding import smart_str, iri_to_uri
-from django.utils.html import strip_tags
 from django.utils.feedgenerator import Atom1Feed
 from django.views.decorators.csrf import csrf_exempt
 
@@ -44,6 +42,8 @@ from xmlparse import text_fields
 from import_jobs import add_jobs, delete_by_guid
 from transform import transform_for_postajob
 
+from myblocks.views import BlockView
+from myblocks.models import Page
 from seo.templatetags.seo_extras import facet_text, smart_truncate
 from seo.breadbox import Breadbox
 from seo.cache import get_custom_facets, get_site_config, get_total_jobs_count
@@ -52,7 +52,7 @@ from seo import helpers
 from seo.filters import FacetListWidget
 from seo.forms.admin_forms import UploadJobFileForm
 from seo.models import (BusinessUnit, Company, Configuration, Country,
-                        CustomFacet, GoogleAnalytics, JobFeed, SeoSite, SiteTag)
+                        GoogleAnalytics, JobFeed, SeoSite, SiteTag)
 from seo.decorators import (sns_json_message, custom_cache_page, protected_site,
                             home_page_check)
 from seo.sitemap import DateSitemap
@@ -1624,6 +1624,11 @@ def dseo_500(request):
     return HttpResponseServerError(loader.render_to_string(
                                    'dseo_500.html', data_dict,
                                    context_instance=RequestContext(request)))
+
+
+class SearchResults(BlockView):
+    page_type = Page.SEARCH_RESULTS
+
 
 
 @home_page_check

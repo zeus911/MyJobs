@@ -32,6 +32,11 @@ class LoginBlockForm(BlockForm):
         model = models.LoginBlock
 
 
+class MoreButtonBlockForm(BlockForm):
+    class Meta:
+        model = models.MoreButtonBlock
+
+
 class RegistrationBlockForm(BlockForm):
     class Meta:
         model = models.RegistrationBlock

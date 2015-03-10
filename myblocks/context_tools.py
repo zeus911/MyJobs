@@ -1,9 +1,22 @@
 from itertools import chain
 
-from django.core.urlresolvers import resolve, reverse
+from django.core.urlresolvers import reverse
+from django.utils.functional import memoize
 
 from seo import cache, helpers
 from seo.breadbox import Breadbox
+from seo.templatetags.job_setup import create_arranged_jobs
+
+
+_context_cache = {}
+
+
+def get_arranged_jobs(request):
+    featured_jobs = get_featured_jobs(request)
+    default_jobs = get_default_jobs(request)
+    site_config = get_site_config(request)
+    return create_arranged_jobs(request, featured_jobs, default_jobs,
+                                site_config)
 
 
 def get_breadbox(request):
