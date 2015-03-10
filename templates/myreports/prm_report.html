@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block meta-extra %}
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="span12">
+        <h4 class="chart-header">{{ report.communication_activity.title }}</h1>
+
+        <div class="chart-container">
+            {{ report.communication_activity }}
+        </div>
+    </div>
+</div>
+{% endblock %}
