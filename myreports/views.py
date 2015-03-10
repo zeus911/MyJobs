@@ -10,6 +10,7 @@ from django.template import RequestContext
 
 from myreports.decorators import restrict_to_staff
 from myreports.models import Report
+from myreports.reports import PRMReport
 from universal.helpers import get_company_or_404
 from universal.decorators import company_has_access
 
@@ -48,10 +49,9 @@ def parse_params(querydict):
     return params
 
 
-# TODO: add doc for new calls
 def filter_records(request, model, params, ignore_cache=False):
     """
-    AJAX view that returns a query set based on post data submitted with the
+    View that returns a query set based on post data submitted with the
     request, caching results by default.
 
     Inputs:
@@ -133,17 +133,21 @@ def view_records(request, app, model, output='json'):
 
 @company_has_access('prm_access')
 def create_report(request, app, model):
-    company = get_company_or_404(request)
-    user = request.user
-    path = request.get_full_path()
     params = parse_params(request.POST)
+    template = 'myreports/prm_report.html'
 
     params.pop('csrfmiddlewaretoken', None)
     ignore_cache = params.pop('ignore_cache', False)
     records = filter_records(
         request, get_model(app, model), params, ignore_cache)
 
-    # TODO: S3 storage
+    report = PRMReport(records)
+    ctx = {'report': report}
+
+    """
     Report.objects.get_or_create(
         created_by=user, owner=company, path=path,
         params=json.dumps(params.items()), results=records)
+    """
+
+    return render_to_response(template, ctx, RequestContext(request))
