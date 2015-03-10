@@ -42,7 +42,7 @@ Report.prototype.bind_events = function() {
   var report = this;
 
 
-  // Update Partner and Contact Lists
+  // Updates data field of Report. Also, if needed, updates Partner and Contact Lists
   $(document.body).on("change", "input:not([id$=-all-checkbox])", function(e) {
     var in_list = $(this).parents(".list-body").attr("id"),
         contact_wrapper = $("#contact-wrapper"),
@@ -51,8 +51,8 @@ Report.prototype.bind_events = function() {
     // Check to see if the triggering even was in a list.
     if (typeof in_list !== "undefined") {
       var all_records = $(this).parents(".list-body").prev().children("input"),
-        records = $($(this).parents(".list-body").find("input")),
-        values = [];
+          records = $($(this).parents(".list-body").find("input")),
+          values = [];
 
       if (all_records.is(":checked")) {
         report.data[in_list] = "";
@@ -82,16 +82,16 @@ Report.prototype.bind_events = function() {
       }
     } else {
       var partner_wrapper = $("#partner-wrapper"),
-        p_field = report.find_field("Select Partners"),
-        is_prm_field = function(e) {
-        // This list will need to be updated if more is added to the PRM report
-        // if they filter down partners/contacts
-        var prm_field = ["start_date", "end_date", "state", "city"],
-          e_id = $(e.currentTarget).attr("id");
+          p_field = report.find_field("Select Partners"),
+          is_prm_field = function(e) {
+            // This list will need to be updated if more is added to the PRM report
+            // if they filter down partners/contacts
+            var prm_field = ["start_date", "end_date", "state", "city"],
+                e_id = $(e.currentTarget).attr("id");
 
-        // returns true or false
-        return (prm_field.indexOf(e_id) >= 0);
-      };
+            // returns true or false
+            return (prm_field.indexOf(e_id) >= 0);
+          };
 
       report.data[$(e.currentTarget).attr("id")] = $(e.currentTarget).val();
 
@@ -123,65 +123,28 @@ Report.prototype.bind_events = function() {
   });
 
 
+  $(document.body).on("click", ".list-body :checkbox", function(e) {
+    e.stopPropagation();
+
+    update_all_checkbox(this);
+  });
+
+
   // Clicking on an li in the lists will click the checkbox.
   $(document.body).on("click", ".list-body li", function() {
-    $(this).children("input").click();
+    var checkbox = $(this).children("input");
+
+    checkbox.prop("checked", !checkbox.prop("checked")).change();
+
+    update_all_checkbox(this);
   });
 
-
-  // The event that a checked checkbox is clicked (will uncheck the checkbox)
-  $(document.body).on("click", ".list-body input[type='checkbox']:checked", function(e) {
-    e.stopPropagation();
-    var all_checkbox = $(this).parents("div.list-body").prev().children("input");
-    if (all_checkbox.is(":checked")) {
-      all_checkbox.prop("checked", false);
-    }
-  });
-
-
-  $(document.body).on("click", ".list-body input[type='checkbox']:not(:checked)", function(e) {
-    e.stopPropagation();
-    var all_checkbox = $(this).parents("div.list-body").prev().children("input"),
-        checkboxes = $(this).parents(".list-body").find("input"),
-        all_are_checked = true,
-        that = this;
-
-    $(checkboxes).each(function(element) {
-      // Check to see if all checkboxes are checked
-      if (!$(checkboxes[element]).is(":checked") && checkboxes[element] !== that) {
-        all_are_checked = false;
-        // exit .each function. Mimics break
-        return false;
-      }
-    });
-
-    if (!all_are_checked) {
-      all_checkbox.prop("checked", false);
-    } else {
-      all_checkbox.prop("checked", true);
-    }
-  });
-
-
-  // Clicking on all "type" checkbox will check all checkboxes in associated list.
-  $(document.body).on("click", "input[id$=-all-checkbox]:checked", function(e) {
+  // Clicking on all "type" checkbox will check/uncheck all checkboxes in associated list.
+  $(document.body).on("click", "input[id$=-all-checkbox]", function(e) {
     e.stopPropagation();
     var checkboxes = $(this).parent().next().find("input");
 
-    $(checkboxes).each(function(element) {
-      $(checkboxes[element]).prop("checked", true);
-    });
-  });
-
-
-  // Clicking on all "type" checkbox will uncheck all checkboxes in associated list.
-  $(document.body).on("click", "input[id$=-all-checkbox]:not(:checked)", function(e) {
-    e.stopPropagation();
-    var checkboxes = $(this).parent().next().find("input");
-
-    $(checkboxes).each(function(element) {
-      $(checkboxes[element]).prop("checked", false);
-    });
+    checkboxes.prop("checked", $(this).prop("checked")).change();
   });
 
 
@@ -197,7 +160,7 @@ Report.prototype.bind_events = function() {
 
   // Actually submits the report's data to create a Report object in db.
   $(document.body).on("click", "#gen-report", function(e) {
-    var data = {"csrfmiddlewaretoken": read_cookie("csrftoken")},
+    var data = {"csrfmiddlewaretoken": read_cookie("csrftoken"), "ignore_cache": true},
         url = location.protocol + "//" + location.host + "/reports/ajax/mypartners/contactrecord";
     if (report.data) {
       $.extend(data, report.data);
@@ -231,11 +194,12 @@ Report.prototype.bind_events = function() {
 Report.prototype.readable_data = function() {
   var data = this.data,
       html = '',
-      key;
+      key,
+      value;
 
   for (key in data) {
     if (data.hasOwnProperty(key)) {
-      var value = data[key];
+      value = data[key];
 
       // Replace _ with spaces
       key = key.replace(/_/g, " ");
@@ -295,21 +259,23 @@ var Field = function(label, type) {
 
 // Outputs html based on type using jQuery.
 Field.prototype.render = function() {
-  var html = '',
+  var l = $("<label>" + this.label + "</label>"), // label for <input>
       wrapper = $("<div></div>"), // wrapping div
-      l = $("<label>" + this.label + "</label>"), // label for <input>
-      input;
+      html = '',
+      input,
+      date_widget,
+      date_picker;
 
   if (this.type === "text") {
     input = $("<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "' type='text' placeholder='"+ this.label +"' />");
     wrapper.append(l).append(input);
     html = wrapper.prop("outerHTML");
   } else if (this.type === "date") {
-    var date_widget = $("<div id='date-filter' class='filter-option'></div>").append("<div class='date-picker'></div>"),
-        date_picker = $(date_widget).children("div")
-                        .append("<input id='start_date' class='datepicker picker-left' type='text' placeholder='Start Date' />")
-                        .append("<span id='activity-to-' class='datepicker'>to</span>")
-                        .append("<input id='end_date' class='datepicker picker-right' type='text' placeholder='End Date' />");
+    date_widget = $("<div id='date-filter' class='filter-option'></div>").append("<div class='date-picker'></div>"),
+    date_picker = $(date_widget).children("div")
+                    .append("<input id='start_date' class='datepicker picker-left' type='text' placeholder='Start Date' />")
+                    .append("<span id='activity-to-' class='datepicker'>to</span>")
+                    .append("<input id='end_date' class='datepicker picker-right' type='text' placeholder='End Date' />");
     date_widget.append(date_picker);
     html += l.prop("outerHTML");
     html += date_widget.prop("outerHTML");
@@ -391,20 +357,20 @@ List.prototype.filter = function(type, filter) {
     global: false,
     success: function(data) {
       var ul = $("<ul></ul>"),
-          selected = $("[id^='" + type + "-header'] span span");
+          selected = $("[id^='" + type + "-header'] span span"),
+          record,
+          li;
 
       // fill ul with li's
       for (var i = 0; i < data.records.length; i++) {
-        var record = data.records[i],
-            li = $("<li><input type='checkbox' value='"+ record.pk +"' checked /> <span>"+ record.name +"</span></li>"),
-            invis_box = $("<div class=\"invis-box\"></div>");
+        record = data.records[i];
+        li = $("<li><input type='checkbox' value='"+ record.pk +"' checked /> <span>"+ record.name +"</span></li>");
 
         // add record count to right of partners
         if (type === "partner") {
           li.append("<span class='pull-right'>"+ record.count +"</span>");
         }
 
-        li.append(invis_box);
         ul.append(li);
       }
 
@@ -414,7 +380,7 @@ List.prototype.filter = function(type, filter) {
     },
     error: function(e) {
       // TODO: change when testing is done to something more useful.
-      throw "Something horrible happened.";
+      console.error("Something horrible happened.");
     }
   });
 };
@@ -446,8 +412,9 @@ $(document).ready(function() {
   $(document.body).on("click", "#start-report:not(.disabled)", function(e) {
     e.preventDefault();
     var choices = $("#choices input[type='checkbox']:checked"),
-      types = [],
-      i = 0;
+        types = [],
+        i = 0,
+        report;
 
     // fill types with choices that are checked, see selector.
     for (i; i < choices.length; i++) {
@@ -455,7 +422,7 @@ $(document).ready(function() {
     }
 
     // Create js Report object and set up next step.
-    var report = new Report(types);
+    report = new Report(types);
     report.bind_events();
     $("#container").addClass("rpt-container");
     $("#back").hide();
@@ -463,19 +430,28 @@ $(document).ready(function() {
     report.render_fields(report.fields);
   });
 
+
   // On initial page, when a type gets checked remove disabled from "Next" button.
   $(document.body).on("click", "#choices input[type='checkbox']:checked", function() {
-    var btn = $("#start-report");
-    btn.removeClass("disabled");
+    $("#start-report").removeClass("disabled");
   });
+
 
   // On initial page, when a checkbox is unchecked look to see if any others are checked.
   // If not then disable "Next" button.
   $(document.body).on("click", "#choices input[type='checkbox']:not(:checked)", function() {
-    var btn = $("#start-report"),
-        checkboxes = $("#choices input[type='checkbox']");
+    var checkboxes = $("#choices input[type='checkbox']");
     if (!checkboxes.is(":checked")) {
-      btn.addClass("disabled");
+      $("#start-report").addClass("disabled");
     }
   });
 });
+
+
+function update_all_checkbox(element) {
+  var all_checkbox = $(element).parents("div.list-body").prev().children("input"),
+      checkboxes = $(element).parents(".list-body").find("input"),
+      checked = $(element).parents(".list-body").find(":checked");
+
+  all_checkbox.prop("checked", checked.length === checkboxes.length);
+}
