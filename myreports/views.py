@@ -15,15 +15,13 @@ from universal.helpers import get_company_or_404
 @restrict_to_staff()
 def reports(request):
     """The Reports app landing page."""
-    if request.is_ajax():
-        response = HttpResponse()
-        template = '{path}.html'
-        html = render_to_response(template.format(path=request.POST['output']),
-                                  {}, RequestContext(request))
-        response.content = html.content
-        return response
+    company = get_company_or_404(request)
 
-    return render_to_response('myreports/reports.html', {},
+    ctx = {
+        "company": company,
+    }
+
+    return render_to_response('myreports/reports.html', ctx,
                               RequestContext(request))
 
 
