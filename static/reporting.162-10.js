@@ -19,7 +19,7 @@ var Report = function(types) {
 // Pulls the fields required for report type(s)
 Report.prototype.create_fields = function(types) {
    var reports = {"prm":        [new Field("Select Date", "date"),
-                                 new Field("State", "text"),
+                                 new Field("State", "state"),
                                  new Field("City", "text"),
                                  new List("Select Partners", "partner"),
                                  new List("Select Contacts", "contact")],
@@ -64,14 +64,10 @@ Report.prototype.bind_events = function() {
             values.push(records[element].value);
           }
         });
-        // if there were no partners selected ignore saving data.
-        if (values.length > 0) {
-          report.data[in_list] = values;
-        } else {
-          // Suppose to return 0 contacts
-          // List filter uses IDs which no object will ever have id=0
-          report.data[in_list] = "0";
-        }
+
+        // If false suppose to return 0 contacts
+        // List filter uses IDs which no object will ever have id=0
+        report.data[in_list] = values.length > 0 ? values : "0";
       }
 
       if (in_list === "partner") {
@@ -93,6 +89,7 @@ Report.prototype.bind_events = function() {
             return (prm_field.indexOf(e_id) >= 0);
           };
 
+      // Default update/save data
       report.data[$(e.currentTarget).attr("id")] = $(e.currentTarget).val();
 
       if (is_prm_field(e)) {
@@ -287,7 +284,17 @@ Field.prototype.render = function() {
     html += l.prop("outerHTML");
     html += date_widget.prop("outerHTML");
   } else if (this.type === "state") {
-    // TODO: ajax state dropdown
+    html += "<label>State</label><div class='state'></div>";
+    (function() {
+      $.ajax({
+        type: "POST",
+        url: location.protocol + "//" + location.host + "/reports/ajax/get-states",
+        data: {"csrfmiddlewaretoken": read_cookie("csrftoken")},
+        success: function(data) {
+          $(".state").html(data);
+        }
+      });
+    })();
   }
   return html;
 };

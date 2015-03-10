@@ -25,6 +25,17 @@ def reports(request):
                               RequestContext(request))
 
 
+def get_states(request):
+    if request.is_ajax():
+        response = HttpResponse()
+        html = render_to_response('includes/state_dropdown.html',
+                                  {}, RequestContext(request))
+        response.content = html.content
+        return response
+    else:
+        raise Http404
+
+
 def filter_records(request,
                    app='mypartners', model='contactrecord', output='json'):
     """
