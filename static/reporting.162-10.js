@@ -147,7 +147,10 @@ Report.prototype.bind_events = function() {
     var checkboxes = $(this).parent().next().find("input"),
         num_selected = $(this).siblings("span").children("span");
 
+    // Update all checkboxes with this' current state.
     checkboxes.prop("checked", $(this).prop("checked")).change();
+
+    // Update how many items in the list is selected based on this' current state. All or nothing.
     num_selected.html($(this).prop("checked") ? checkboxes.length : "0");
   });
 
