@@ -43,7 +43,7 @@ Report.prototype.bind_events = function() {
 
 
   // Updates data field of Report. Also, if needed, updates Partner and Contact Lists
-  $(document.body).on("change", "input:not([id$=-all-checkbox])", function(e) {
+  $(document.body).on("change", "input:not([id$=-all-checkbox]), select", function(e) {
     var in_list = $(this).parents(".list-body").attr("id"),
         contact_wrapper = $("#contact-wrapper"),
         c_field = report.find_field("Select Contacts");
@@ -223,7 +223,7 @@ Report.prototype.readable_data = function() {
 
         html += ul.prop("outerHTML");
       } else {
-        html += value;
+        html += key === "state" ? $("#state option[value=" + value + "]").html() : value;
       }
     }
   }
