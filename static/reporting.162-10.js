@@ -67,7 +67,7 @@ Report.prototype.bind_events = function() {
 
         // If false suppose to return 0 contacts
         // List filter uses IDs which no object will ever have id=0
-        report.data[in_list] = values.length > 0 ? values : "0";
+        report.data[in_list] = values.length ? values : "0";
       }
 
       if (in_list === "partner") {
@@ -217,7 +217,7 @@ Report.prototype.readable_data = function() {
 
         // grab names associated by value.
         for (i = 0; i < value.length; i++) {
-          items[i] = $("#" + key + " input[value='" + value[i] + "']").next("span").html();
+          items.push($("#" + key + " input[value='" + value[i] + "']").next("span").html());
         }
 
         html += "<ul><li>" + items.join('</li><li>') + '</li></ul>';
@@ -242,10 +242,10 @@ Report.prototype.find_field = function(field_label) {
 Report.prototype.render_fields = function(fields) {
   var container = $("#container"),
       html = '',
-      i = 0;
+      i;
 
   // for field in fields render.
-  for (i; i < fields.length; i++) {
+  for (i = 0; i < fields.length; i++) {
     html += fields[i].render();
   }
 
@@ -438,8 +438,6 @@ $(document).ready(function() {
     report = new Report(types);
     report.bind_events();
     $("#container").addClass("rpt-container");
-    $("#back").hide();
-    $(".rpt-buttons").removeClass("no-show");
     report.render_fields(report.fields);
   });
 
