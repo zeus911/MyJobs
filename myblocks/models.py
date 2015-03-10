@@ -68,6 +68,12 @@ class Block(models.Model):
         head = head_template.render(context)
         return mark_safe(head), mark_safe(body)
 
+    def required_css(self):
+        return []
+
+    def required_js(self):
+        return []
+
     def save(self, *args, **kwargs):
         if not self.id:
             # Set content_type so the object can later be cast back to
@@ -112,6 +118,18 @@ class ColumnBlock(Block):
         body = body_template.render(context)
         head = head_template.render(context)
         return mark_safe(' '.join(context['head'] + [head])), mark_safe(body)
+
+    def required_css(self):
+        css = []
+        for block in self.blocks.all():
+            css += block.cast().required_css()
+        return css
+
+    def required_js(self):
+        js = []
+        for block in self.blocks.all():
+            js += block.cast().required_js()
+        return js
 
 
 class ContentBlock(Block):
@@ -183,6 +201,9 @@ class MoreButtonBlock(Block):
             'num_featured_jobs': len(context_tools.get_featured_jobs(request)),
             'site_config': context_tools.get_site_config(request),
         }
+
+    def required_js(self):
+        return ['%spager.160-29.js' % settings.STATIC_URL]
 
 
 class RegistrationBlock(Block):
@@ -274,6 +295,8 @@ class SearchResultBlock(Block):
             'default_jobs': context_tools.get_default_jobs(request),
             'featured_jobs': context_tools.get_featured_jobs(request),
             'location_term': context_tools.get_location_term(request),
+            'moc_term': context_tools.get_moc_term(request),
+            'query_string': context_tools.get_query_string(request),
             'request': request,
             'site_config': context_tools.get_site_config(request),
             'site_tags': settings.SITE_TAGS,
@@ -332,6 +355,18 @@ class Row(models.Model):
         body = template.render(context)
         return mark_safe(context['head']), mark_safe(body)
 
+    def required_css(self):
+        css = []
+        for block in self.blocks.all():
+            css += block.cast().required_css()
+        return css
+
+    def required_js(self):
+        js = []
+        for block in self.blocks.all():
+            js += block.cast().required_js()
+        return js
+
 
 class Page(models.Model):
     HOME_PAGE = 'home_page'
@@ -382,7 +417,30 @@ class Page(models.Model):
             row_head, row_body = row.render(request)
             head.append(row_head)
             body.append(row_body)
+
+        css = [self.to_css_tag(css_file) for css_file in self.required_css()]
+        js = [self.to_js_tag(js_file) for js_file in self.required_js()]
+        head = head + css + js
+
         return mark_safe(''.join(head)), mark_safe(''.join(body))
+
+    def required_css(self):
+        css = []
+        for block in self.all_blocks():
+            css += block.required_css()
+        return css
+
+    def required_js(self):
+        js = []
+        for block in self.all_blocks():
+            js += block.required_js()
+        return js
+
+    def to_css_tag(self, css_file):
+        return '<link rel="stylesheet" type="text/css" href="%s">' % css_file
+
+    def to_js_tag(self, js_file):
+        return '<script type="text/javascript" src="%s"></script>' % js_file
 
 
 class BlockOrder(models.Model):

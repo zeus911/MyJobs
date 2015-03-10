@@ -29,7 +29,7 @@ def get_breadbox(request):
 def get_custom_facet_counts(request):
     custom_facet_counts = []
     filters = get_filters(request)
-    querystring = request.META.get('QUERY_STRING', None)
+    querystring = get_query_string(request)
     site_config = get_site_config(request)
 
     if site_config.browse_facet_show:
@@ -78,6 +78,10 @@ def get_jobs_and_counts(request):
     default_jobs = default_jobs[:default_needed]
     featured_jobs = featured_jobs[:featured_needed]
 
+    jobs = list(chain(featured_jobs, default_jobs))
+    for job in jobs:
+        helpers.add_text_to_job(job)
+
     return default_jobs, featured_jobs, facet_counts
 
 
@@ -93,6 +97,10 @@ def get_moc_term(request):
 
 def get_moc_id_term(request):
     return request.GET.get('moc_id', '')
+
+
+def get_query_string(request):
+    return request.META.get('QUERY_STRING', None)
 
 
 def get_search_url(request):
