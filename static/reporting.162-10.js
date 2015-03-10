@@ -212,16 +212,15 @@ Report.prototype.readable_data = function() {
 
       // If value is an object (aka a list).
       if (typeof value === "object") {
-        var ul = $("<ul></ul>");
+        var items = [],
+            i;
 
-        // fill ul with li's.
-        for (var i = 0; i < value.length; i++) {
-          var name = $("#" + key + " input[value='" + value[i] + "']").next("span").html(),
-              li = $("<li>" + name + "</li>");
-          ul.append(li);
+        // grab names associated by value.
+        for (i = 0; i < value.length; i++) {
+          items[i] = $("#" + key + " input[value='" + value[i] + "']").next("span").html();
         }
 
-        html += ul.prop("outerHTML");
+        html += "<ul><li>" + items.join('</li><li>') + '</li></ul>';
       } else {
         html += key === "state" ? $("#state option[value=" + value + "]").html() : value;
       }
