@@ -126,6 +126,7 @@ Report.prototype.bind_events = function() {
   $(document.body).on("click", ".list-body :checkbox", function(e) {
     e.stopPropagation();
 
+    update_items_selected(this);
     update_all_checkbox(this);
   });
 
@@ -136,15 +137,18 @@ Report.prototype.bind_events = function() {
 
     checkbox.prop("checked", !checkbox.prop("checked")).change();
 
+    update_items_selected(this);
     update_all_checkbox(this);
   });
 
   // Clicking on all "type" checkbox will check/uncheck all checkboxes in associated list.
   $(document.body).on("click", "input[id$=-all-checkbox]", function(e) {
     e.stopPropagation();
-    var checkboxes = $(this).parent().next().find("input");
+    var checkboxes = $(this).parent().next().find("input"),
+        num_selected = $(this).siblings("span").children("span");
 
     checkboxes.prop("checked", $(this).prop("checked")).change();
+    num_selected.html($(this).prop("checked") ? checkboxes.length : "0");
   });
 
 
@@ -454,4 +458,12 @@ function update_all_checkbox(element) {
       checked = $(element).parents(".list-body").find(":checked");
 
   all_checkbox.prop("checked", checked.length === checkboxes.length);
+}
+
+
+function update_items_selected(element) {
+  var checked = $(element).parents(".list-body").find(":checked"),
+      num_selected = $(element).parents(".list-body").prev().children("span").children("span");
+
+  num_selected.html(checked.length);
 }
