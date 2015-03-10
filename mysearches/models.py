@@ -573,4 +573,4 @@ class SavedSearchLog(models.Model):
     date_sent = models.DateTimeField(auto_now_add=True)
     contact_record = models.ForeignKey('mypartners.ContactRecord', null=True,
                                        blank=True, on_delete=models.SET_NULL)
-    uuid = models.CharField(max_length=32)
+    uuid = models.CharField(max_length=32, db_index=True)

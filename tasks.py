@@ -819,8 +819,7 @@ def event_list_to_email_log(event_list):
             return []
         if event_id:
             try:
-                log = SavedSearchLog.objects.get(
-                    uuid=event_id)
+                log = SavedSearchLog.objects.get(uuid=event_id)
                 email_log_args['send_log'] = log
                 if event['event'] not in BAD_EMAIL:
                     log.was_received = True
