@@ -1,8 +1,9 @@
+import collections
+import functools
 from itertools import chain
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.utils.functional import memoize
 
 from seo import cache, helpers
 from seo.breadbox import Breadbox
@@ -12,6 +13,35 @@ from seo.templatetags.job_setup import create_arranged_jobs
 _context_cache = {}
 
 
+class Memoized(object):
+    """
+    Decorator. Caches a function's return value each time it is called.
+    If called later with the same arguments, the cached value is returned
+    (not reevaluated).
+
+    """
+    def __init__(self, func):
+        self.func = func
+        self.cache = {}
+
+    def __call__(self, *args, **kwargs):
+        if not isinstance(args, collections.Hashable) or kwargs:
+            return self.func(*args, **kwargs)
+        if args in self.cache:
+            return self.cache[args]
+        else:
+            value = self.func(*args)
+            self.cache[args] = value
+            return value
+
+    def __repr__(self):
+        return self.func.__doc__
+
+    def __get__(self, obj, objtype):
+        return functools.partial(self.__call__, obj)
+
+
+@Memoized
 def get_arranged_jobs(request):
     featured_jobs = get_featured_jobs(request)
     default_jobs = get_default_jobs(request)
@@ -20,6 +50,7 @@ def get_arranged_jobs(request):
                                 site_config)
 
 
+@Memoized
 def get_breadbox(request):
     filters = get_filters(request)
     featured_jobs, default_jobs, facet_counts = get_jobs_and_counts(request)
@@ -27,6 +58,7 @@ def get_breadbox(request):
     return Breadbox(request.path, filters, jobs, request.GET)
 
 
+@Memoized
 def get_custom_facet_counts(request):
     custom_facet_counts = []
     filters = get_filters(request)
@@ -45,24 +77,27 @@ def get_custom_facet_counts(request):
             custom_facet_counts = [(facet, count) for facet, count
                                    in cached_custom_facets
                                    if facet not in active_facets]
-
     return custom_facet_counts
 
 
+@Memoized
 def get_default_jobs(request):
     default_jobs, _, _ = get_jobs_and_counts(request)
     return default_jobs
 
 
+@Memoized
 def get_featured_jobs(request):
     _, featured_jobs, _ = get_jobs_and_counts(request)
     return featured_jobs
 
 
+@Memoized
 def get_filters(request):
     return helpers.build_filter_dict(request.path)
 
 
+@Memoized
 def get_jobs_and_counts(request):
     filters = get_filters(request)
     site_config = get_site_config(request)
@@ -86,44 +121,54 @@ def get_jobs_and_counts(request):
     return default_jobs, featured_jobs, facet_counts
 
 
+@Memoized
 def get_location_term(request):
     breadbox = get_breadbox(request)
     return breadbox.location_display_heading()
 
 
+@Memoized
 def get_moc_term(request):
     breadbox = get_breadbox(request)
     return breadbox.moc_display_heading()
 
 
+@Memoized
 def get_moc_id_term(request):
     return request.GET.get('moc_id', '')
 
 
+@Memoized
 def get_query_string(request):
     return request.META.get('QUERY_STRING', None)
 
 
+@Memoized
 def get_search_url(request):
     return request.path if request.path != '/' else reverse('all_jobs')
 
 
+@Memoized
 def get_site_commitments_string(request):
     return helpers.make_specialcommit_string(settings.COMMITMENTS.all())
 
 
+@Memoized
 def get_site_config(request):
     return cache.get_site_config(request)
 
 
+@Memoized
 def get_title_term(request):
     return request.GET.get('q', '')
 
 
+@Memoized
 def get_total_jobs_count(request):
     return cache.get_total_jobs_count()
 
 
+@Memoized
 def get_widgets(request):
     filters = get_filters(request)
     _, _, facet_counts = get_jobs_and_counts(request)
