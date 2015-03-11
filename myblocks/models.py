@@ -368,7 +368,6 @@ class Page(models.Model):
         for block in self.all_blocks():
             additional_js += [self.to_js_tag(js) for js in block.required_js()]
         head += list(set(additional_js))
-        print additional_js
         return self.head + ''.join(head)
 
     def get_template(self):
