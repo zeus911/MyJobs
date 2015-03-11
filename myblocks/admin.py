@@ -15,13 +15,13 @@ class ColumnBlockAdmin(admin.ModelAdmin):
     save_as = True
 
 
-class ContentBlockAdmin(admin.ModelAdmin):
-    form = forms.ContentBlockForm
+class BreadboxBlockAdmin(admin.ModelAdmin):
+    form = forms.BreadboxForm
     save_as = True
 
 
-class ImageBlockAdmin(admin.ModelAdmin):
-    form = forms.ImageBlockForm
+class ContentBlockAdmin(admin.ModelAdmin):
+    form = forms.ContentBlockForm
     save_as = True
 
 
@@ -91,8 +91,8 @@ class RowAdmin(admin.ModelAdmin):
     save_as = True
 
 
+admin.site.register(models.BreadboxBlock, BreadboxBlockAdmin)
 admin.site.register(models.ContentBlock, ContentBlockAdmin)
-admin.site.register(models.ImageBlock, ImageBlockAdmin)
 admin.site.register(models.LoginBlock, LoginBlockAdmin)
 admin.site.register(models.MoreButtonBlock, MoreButtonBlockAdmin)
 admin.site.register(models.SavedSearchWidgetBlock, SavedSearchWidgetBlockAdmin)

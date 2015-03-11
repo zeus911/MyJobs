@@ -20,6 +20,14 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'myblocks', ['MoreButtonBlock'])
 
+        # Adding field 'Page.head'
+        db.add_column(u'myblocks_page', 'head',
+                      self.gf('django.db.models.fields.TextField')(default='', blank=True),
+                      keep_default=False)
+
+        # Deleting field 'Row.template'
+        db.delete_column(u'myblocks_row', 'template')
+
 
     def backwards(self, orm):
         # Deleting model 'BreadboxBlock'
@@ -27,6 +35,14 @@ class Migration(SchemaMigration):
 
         # Deleting model 'MoreButtonBlock'
         db.delete_table(u'myblocks_morebuttonblock')
+
+        # Deleting field 'Page.head'
+        db.delete_column(u'myblocks_page', 'head')
+
+        # Adding field 'Row.template'
+        db.add_column(u'myblocks_row', 'template',
+                      self.gf('django.db.models.fields.TextField')(default=''),
+                      keep_default=False)
 
 
     models = {
@@ -102,6 +118,7 @@ class Migration(SchemaMigration):
         },
         u'myblocks.page': {
             'Meta': {'object_name': 'Page'},
+            'head': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'page_type': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'rows': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myblocks.Row']", 'through': u"orm['myblocks.RowOrder']", 'symmetrical': 'False'}),
@@ -115,8 +132,7 @@ class Migration(SchemaMigration):
         u'myblocks.row': {
             'Meta': {'object_name': 'Row'},
             'blocks': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['myblocks.Block']", 'through': u"orm['myblocks.BlockOrder']", 'symmetrical': 'False'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'template': ('django.db.models.fields.TextField', [], {})
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         u'myblocks.roworder': {
             'Meta': {'ordering': "('order',)", 'object_name': 'RowOrder'},

@@ -51,25 +51,12 @@ class Block(models.Model):
         return self.content_type.get_object_for_this_type(pk=self.pk)
 
     def context(self, request):
-        return {
-            'block': self,
-            'request': request,
-        }
+        return {}
 
-    def render(self, request):
-        """
-        Generates a tuple of head, body html corresponding to the block.
-
-        """
-        body_template = Template(self.template)
-        head_template = Template(self.head)
-        context = RequestContext(request, self.cast().context(request))
-        body = body_template.render(context)
-        head = head_template.render(context)
-        return mark_safe(head), mark_safe(body)
-
-    def required_css(self):
-        return []
+    def get_template(self):
+        return '<div class="block-%s %s">%s</div>' % (self.id,
+                                                      self.bootstrap_classes(),
+                                                      self.template)
 
     def required_js(self):
         return []
@@ -83,47 +70,34 @@ class Block(models.Model):
 
 
 class BreadboxBlock(Block):
+    base_template = 'myblocks/blocks/breadbox.html'
+
     def context(self, request):
         return {
-            'block': self,
             'breadbox': context_tools.get_breadbox(request)
         }
 
 
 class ColumnBlock(Block):
-    base_template = 'myblocks/blocks/columnblock.html'
+    base_template = None
 
     blocks = models.ManyToManyField('Block', through='ColumnBlockOrder',
                                     related_name='included_blocks')
 
     def context(self, request):
-        row = '<div class="row">%s</div>'
-        head, html = [], []
-
-        for block in self.blocks.all().order_by('columnblockorder__order'):
-            block_head, block_html = block.cast().render(request)
-            head.append(block_head)
-            html.append(row % block_html)
-
-        return {
-            'block': self,
-            'head': head,
-            'content': mark_safe(''.join(html)),
-        }
-
-    def render(self, request):
-        body_template = Template(self.template)
-        head_template = Template(self.head)
-        context = RequestContext(request, self.cast().context(request))
-        body = body_template.render(context)
-        head = head_template.render(context)
-        return mark_safe(' '.join(context['head'] + [head])), mark_safe(body)
-
-    def required_css(self):
-        css = []
+        context = {}
         for block in self.blocks.all():
-            css += block.cast().required_css()
-        return css
+            context.update(block.context(request))
+        return context
+
+    def get_template(self):
+        blocks = []
+        for block in self.blocks.all().order_by('columnblockorder__order'):
+            blocks.append('<row>%s</row>' % block.get_template())
+
+        return '<div class="block-%s %s">%s</div>' % (self.id,
+                                                      self.bootstrap_classes(),
+                                                      ''.join(blocks))
 
     def required_js(self):
         js = []
@@ -136,19 +110,6 @@ class ContentBlock(Block):
     base_template = 'myblocks/blocks/content.html'
 
 
-class ImageBlock(Block):
-    base_template = 'myblocks/blocks/image.html'
-
-    image_url = models.URLField(max_length=200)
-
-    def context(self, request):
-        return {
-            'block': self,
-            'request': request,
-            'site': settings.SITE,
-        }
-
-
 class LoginBlock(Block):
     base_template = 'myblocks/blocks/login.html'
 
@@ -158,14 +119,14 @@ class LoginBlock(Block):
             # If data is being posted to this specific block, give the form
             # the opportunity to render any errors.
             return {
-                'action': querystring,
-                'block': self,
+                'login_action': querystring,
                 'login_form': CustomAuthForm(data=request.POST),
+                'login_submit_btn_name': self.submit_btn_name()
             }
         return {
-            'action': querystring,
-            'block': self,
+            'login_action': querystring,
             'login_form': CustomAuthForm(),
+            'login_submit_btn_name': self.submit_btn_name()
         }
 
     def handle_post(self, request):
@@ -195,7 +156,6 @@ class MoreButtonBlock(Block):
     def context(self, request):
         return {
             'arranged_jobs': context_tools.get_arranged_jobs(request),
-            'block': self,
             'data_type': '',
             'num_default_jobs': len(context_tools.get_default_jobs(request)),
             'num_featured_jobs': len(context_tools.get_featured_jobs(request)),
@@ -215,16 +175,16 @@ class RegistrationBlock(Block):
             # If data is being posted to this specific block, give the form
             # the opportunity to render any errors.
             return {
-                'action': querystring,
-                'block': self,
+                'registration_action': querystring,
                 'qs': querystring,
                 'registration_form': RegistrationForm(request.POST,
                                                       auto_id=False),
+                'registration_submit_btn_name': self.submit_btn_name(),
             }
         return {
-            'action': querystring,
-            'block': self,
+            'registration_action': querystring,
             'registration_form': RegistrationForm(),
+            'registration_submit_btn_name': self.submit_btn_name(),
         }
 
     def handle_post(self, request):
@@ -257,13 +217,15 @@ class RegistrationBlock(Block):
 class SavedSearchWidgetBlock(Block):
     base_template = 'myblocks/blocks/savedsearchwidget.html'
 
+    def required_js(self):
+        return ['//d2e48ltfsb5exy.cloudfront.net/myjobs/tools/def.myjobs.widget.153-05.js']
+
 
 class SearchBoxBlock(Block):
     base_template = 'myblocks/blocks/searchbox.html'
 
     def context(self, request):
         return {
-            'block': self,
             'location_term': context_tools.get_location_term(request),
             'moc_term': context_tools.get_moc_term(request),
             'moc_id_term': context_tools.get_moc_id_term(request),
@@ -279,9 +241,11 @@ class SearchFilterBlock(Block):
 
     def context(self, request):
         return {
-            'block': self,
             'widgets': context_tools.get_widgets(request)
         }
+
+    def required_js(self):
+        return ['%spager.160-29.js' % settings.STATIC_URL]
 
 
 class SearchResultBlock(Block):
@@ -290,14 +254,13 @@ class SearchResultBlock(Block):
     def context(self, request):
         return {
             'arranged_jobs': context_tools.get_arranged_jobs(request),
-            'block': self,
             'data_type': '',
             'default_jobs': context_tools.get_default_jobs(request),
             'featured_jobs': context_tools.get_featured_jobs(request),
             'location_term': context_tools.get_location_term(request),
             'moc_term': context_tools.get_moc_term(request),
             'query_string': context_tools.get_query_string(request),
-            'request': request,
+            'site_commitments_string': context_tools.get_site_commitments_string(request),
             'site_config': context_tools.get_site_config(request),
             'site_tags': settings.SITE_TAGS,
             'title_term': context_tools.get_title_term(request),
@@ -313,7 +276,6 @@ class VeteranSearchBox(Block):
 
     def context(self, request):
         return {
-            'block': self,
             'location_term': context_tools.get_location_term(request),
             'moc_term': context_tools.get_moc_term(request),
             'moc_id_term': context_tools.get_moc_id_term(request),
@@ -325,50 +287,28 @@ class VeteranSearchBox(Block):
 
 
 class Row(models.Model):
-    base_template = 'myblocks/row_base.html'
-
     blocks = models.ManyToManyField('Block', through='BlockOrder')
-    template = models.TextField()
 
     def __unicode__(self):
         return ', '.join([block.name for block in self.blocks.all()])
 
     @staticmethod
-    def boostrap_classes():
+    def bootstrap_classes():
         return "row"
 
-    def context(self, request):
-        content, head = [], []
-        for block in self.blocks.all().order_by('blockorder__order'):
-            block_head, block_body = block.cast().render(request)
-            content.append(block_body)
-            head.append(block_head)
-        return {
-            'row': self,
-            'content': mark_safe(''.join(content)),
-            'head': mark_safe(''.join(head)),
-        }
+    def context(self):
+        return {}
 
-    def render(self, request):
-        template = Template(self.template)
-        context = RequestContext(request, self.context(request))
-        body = template.render(context)
-        return mark_safe(context['head']), mark_safe(body)
+    def get_template(self):
+        blocks = [block.get_template()
+                  for block in self.blocks.all().order_by('blockorder__order')]
 
-    def required_css(self):
-        css = []
-        for block in self.blocks.all():
-            css += block.cast().required_css()
-        return css
-
-    def required_js(self):
-        js = []
-        for block in self.blocks.all():
-            js += block.cast().required_js()
-        return js
+        return '<row>%s</row>' % ''.join(blocks)
 
 
 class Page(models.Model):
+    base_template = 'myblocks/myblocks_base.html'
+
     HOME_PAGE = 'home_page'
     SEARCH_RESULTS = 'search_results'
     LOGIN = 'login'
@@ -392,6 +332,8 @@ class Page(models.Model):
     status = models.CharField(choices=page_status_choices, max_length=255,
                               default='production')
 
+    head = models.TextField(blank=True)
+
     def __unicode__(self):
         return "%s for %s: %s" % (self.page_type, self.site.name, self.pk)
 
@@ -407,37 +349,48 @@ class Page(models.Model):
     def bootstrap_classes(self):
         return "col-md-12"
 
-    def raw_base_template(self):
-        return raw_base_template(self)
+    def context(self, request):
+        context = {}
+        for block in self.all_blocks():
+            context.update(block.context(request))
+        return context
+
+    def get_body(self):
+        rows = []
+        for row in self.rows.all().order_by('roworder__order'):
+            rows.append(row.get_template())
+        return ''.join(rows)
+
+    def get_head(self):
+        blocks = self.all_blocks()
+        head = [block.head for block in blocks]
+        additional_js = []
+        for block in self.all_blocks():
+            additional_js += [self.to_js_tag(js) for js in block.required_js()]
+        head += list(set(additional_js))
+        print additional_js
+        return self.head + ''.join(head)
+
+    def get_template(self):
+        from django.template import Template, Context
+        context = {
+            'body': mark_safe(self.get_body()),
+            'head': mark_safe(self.get_head()),
+            'page': self,
+            'STATIC_URL': settings.STATIC_URL,
+        }
+        template = Template(raw_base_template(self))
+        return template.render(Context(context))
 
     def render(self, request):
-        rows = self.rows.all().order_by('roworder__order')
-        head, body = [], []
-        for row in rows:
-            row_head, row_body = row.render(request)
-            head.append(row_head)
-            body.append(row_body)
+        context = self.context(request)
+        template = Template(self.get_template())
+        return template.render(RequestContext(request, context))
 
-        css = [self.to_css_tag(css_file) for css_file in self.required_css()]
-        js = [self.to_js_tag(js_file) for js_file in self.required_js()]
-        head = head + css + js
-
-        return mark_safe(''.join(head)), mark_safe(''.join(body))
-
-    def required_css(self):
-        css = []
-        for block in self.all_blocks():
-            css += block.required_css()
-        return css
-
-    def required_js(self):
-        js = []
-        for block in self.all_blocks():
-            js += block.required_js()
-        return js
-
-    def to_css_tag(self, css_file):
-        return '<link rel="stylesheet" type="text/css" href="%s">' % css_file
+    def templatetag_library(self):
+        templatetags = ['{% load seo_extras %}', '{% load i18n %}',
+                        '{% load highlight %}', '{% load humanize %}']
+        return ' '.join(templatetags)
 
     def to_js_tag(self, js_file):
         return '<script type="text/javascript" src="%s"></script>' % js_file

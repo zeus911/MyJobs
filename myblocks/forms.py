@@ -12,19 +12,20 @@ class BlockForm(forms.ModelForm):
         self.fields['template'].initial = models.raw_base_template(self.Meta.model)
 
 
-class ColumnBlockForm(BlockForm):
+class BreadboxForm(BlockForm):
     class Meta:
+        model = models.BreadboxBlock
+
+
+class ColumnBlockForm(forms.ModelForm):
+    class Meta:
+        exclude = ('template', )
         model = models.ColumnBlock
 
 
 class ContentBlockForm(BlockForm):
     class Meta:
         model = models.ContentBlock
-
-
-class ImageBlockForm(BlockForm):
-    class Meta:
-        model = models.ImageBlock
 
 
 class LoginBlockForm(BlockForm):
@@ -75,7 +76,3 @@ class VeteranSearchBoxForm(BlockForm):
 class RowForm(forms.ModelForm):
     class Meta:
         model = models.Row
-
-    def __init__(self, *args, **kwargs):
-        super(RowForm, self).__init__(*args, **kwargs)
-        self.fields['template'].initial = models.raw_base_template(self.Meta.model)

@@ -1,5 +1,6 @@
 from itertools import chain
 
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.functional import memoize
 
@@ -105,6 +106,10 @@ def get_query_string(request):
 
 def get_search_url(request):
     return request.path if request.path != '/' else reverse('all_jobs')
+
+
+def get_site_commitments_string(request):
+    return helpers.make_specialcommit_string(settings.COMMITMENTS.all())
 
 
 def get_site_config(request):
