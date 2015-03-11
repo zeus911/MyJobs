@@ -110,13 +110,12 @@ Report.prototype.bind_events = function() {
   $(document.body).on("click", ".list-header", function() {
     var icon = $(this).children("i");
 
-    if(icon.hasClass("fa-plus-square-o")) {
+    if (icon.hasClass("fa-plus-square-o")) {
       icon.removeClass("fa-plus-square-o").addClass("fa-minus-square-o");
-      $(this).next(".list-body").slideDown();
     } else {
       icon.removeClass("fa-minus-square-o").addClass("fa-plus-square-o");
-      $(this).next(".list-body").slideUp();
     }
+    $(this).next(".list-body").stop(true, true).slideToggle();
   });
 
 
@@ -208,7 +207,9 @@ Report.prototype.readable_data = function() {
       // Replace _ with spaces
       key = key.replace(/_/g, " ");
 
-      html += "<label>" + key + ":</label>";
+      if (value) {
+        html += "<label>" + key + ":</label>";
+      }
 
       // If value is an object (aka a list).
       if (typeof value === "object") {
@@ -388,7 +389,7 @@ List.prototype.filter = function(type, filter) {
       }
 
       // render
-      $("#"+ type + ".list-body").append(ul);
+      $("#"+ type + ".list-body").html('').append(ul);
       $(selected).html(data.records.length).parent().show("fast");
     },
     error: function(e) {
