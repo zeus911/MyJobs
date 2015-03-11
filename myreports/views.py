@@ -14,6 +14,12 @@ from myreports.reports import PRMReport
 from universal.helpers import get_company_or_404
 from universal.decorators import company_has_access
 
+# TODO: 
+# * write unit tests for new report generation stuff
+# * update documentation for views
+# * look at class-based views
+# * see about re-merging create_report and filter_records on get/post
+
 
 @restrict_to_staff()
 def reports(request):
@@ -133,7 +139,7 @@ def view_records(request, app, model, output='json'):
 
 @company_has_access('prm_access')
 def create_report(request, app, model):
-    params = parse_params(request.POST)
+    params = parse_params(request.GET)
     template = 'myreports/prm_report.html'
 
     params.pop('csrfmiddlewaretoken', None)
@@ -151,3 +157,4 @@ def create_report(request, app, model):
     """
 
     return render_to_response(template, ctx, RequestContext(request))
+

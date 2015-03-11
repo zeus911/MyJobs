@@ -161,7 +161,7 @@ Report.prototype.bind_events = function() {
   // Actually submits the report's data to create a Report object in db.
   $(document.body).on("click", "#gen-report", function(e) {
     var data = {"csrfmiddlewaretoken": read_cookie("csrftoken"), "ignore_cache": true},
-        url = location.protocol + "//" + location.host + "/reports/ajax/mypartners/contactrecord";
+        url = location.protocol + "//" + location.host + "/reports/ajax/render/mypartners/contactrecord";
     if (report.data) {
       $.extend(data, report.data);
     }
@@ -175,17 +175,9 @@ Report.prototype.bind_events = function() {
       delete data.contact;
       data.contact_name = new_list;
     }
-    $.ajaxSettings.traditional = true;
-    $.ajax({
-      type: 'POST',
-      url: url,
-      data: $.param(data, true),
-      dataType: "json",
-      global: false,
-      success: function (data) {
-        $(".modal-body").html(JSON.stringify(data));
-      }
-    });
+
+    window.location = url + '?' + $.param(data);
+
   });
 };
 
@@ -343,9 +335,9 @@ List.prototype.filter = function(type, filter) {
   if (type === "partner") {
     // annotate how many records a partner has.
     $.extend(data, {"count": "contactrecord"});
-    url += "/reports/ajax/mypartners/partner";
+    url += "/reports/ajax/get/mypartners/partner";
   } else if (type === "contact") {
-    url += "/reports/ajax/mypartners/contact";
+    url += "/reports/ajax/get/mypartners/contact";
   }
 
   $.ajaxSettings.traditional = true;
@@ -362,8 +354,8 @@ List.prototype.filter = function(type, filter) {
           li;
 
       // fill ul with li's
-      for (var i = 0; i < data.records.length; i++) {
-        record = data.records[i];
+      for (var i = 0; i < data.length; i++) {
+        record = data[i];
         li = $("<li><input type='checkbox' value='"+ record.pk +"' checked /> <span>"+ record.name +"</span></li>");
 
         // add record count to right of partners
