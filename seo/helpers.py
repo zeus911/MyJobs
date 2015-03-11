@@ -532,7 +532,7 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
     sqs = sqs_apply_custom_facets(custom_facets, sqs, exclude_facets)
     sqs = _sqs_narrow_by_buid_and_site_package(sqs, buids=jsids)
     # Limit the retrieved results to only fields that are actually needed.
-    sqs = sqs.fields(search_fields)
+    #sqs = sqs.fields(search_fields)
 
     sqs = sqs.order_by(sort_order_mapper.get(sort_order, '-score'))
 
