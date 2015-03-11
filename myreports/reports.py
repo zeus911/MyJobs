@@ -30,21 +30,24 @@ class PRMReport(Report):
 
     foo = charts.ColumnChart(
         title='Referral Activity',
-        height=330,
-        width=340)
+        height=356,
+        width=360,
+        renderer_options={
+            'legend': 'none',
+            'chartArea': {
+                'top': 22,
+                'left': 37,
+                'height': 270,
+                'width': 290}})
 
     def __init__(self, records, *args, **kwargs):
         self.records = records
         super(PRMReport, self).__init__(*args, **kwargs)
 
-    def add_columns(self, data, *columns):
-        for column in columns:
-            data.add_column(column)
-
     def get_data_for_communication_activity(self):
         data = ChartData()
 
-        self.add_columns(data, 'Contact Type', 'Count')
+        data.add_columns(['Contact Type', 'Count'])
 
         for contact_type, label in CONTACT_TYPE_CHOICES:
             if label != 'Job Followup':
@@ -54,18 +57,18 @@ class PRMReport(Report):
         return data
 
     def get_data_for_foo(self):
-        import ipdb; ipdb.set_trace()
         data = ChartData()
-        self.add_columns(data, 'Referral Type', 'Count')
+        data.add_columns(['Referral Type', 'Count'])
 
         referrals = self.records.aggregate(
             applications=Sum('job_applications'),
             interviews=Sum('job_interviews'),
             hires=Sum('job_hires'))
 
-        data.add_row('Applications', referrals.applications)
-        data.add_row('Inteviews', referrals.interviews)
-        data.add_row('Hires', referrals.hires)
-        data.add_row('Records', self.records.count())
+        data.add_row(['Applications', referrals['applications']])
+        data.add_row(['Inteviews', referrals['interviews']])
+        data.add_row(['Hires', referrals['hires']])
+        data.add_row(['Records', self.records.filter(
+            contact_type='job').count()])
 
         return data
