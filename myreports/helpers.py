@@ -5,6 +5,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 
 
 def serialize(fmt, data, counts=None):
+    # TODO: see if i can preserve annotations using `values`
     if fmt == 'json':
         data = [dict({'pk': record['pk']}, **record['fields'])
                 for record in serializers.serialize('python', data)]
