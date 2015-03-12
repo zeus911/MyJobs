@@ -3,7 +3,7 @@ from django.db import models
 
 class Report(models.Model):
     created_by = models.ForeignKey('myjobs.User')
-    owner = models.ForienKey('seo.Company')
+    owner = models.ForeignKey('seo.Company')
     created_on = models.DateTimeField(auto_now_add=True)
     # path used to generate the report; identifies the app and model queried on
     path = models.CharField(max_length=255)
