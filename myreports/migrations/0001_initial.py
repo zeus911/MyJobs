@@ -11,6 +11,7 @@ class Migration(SchemaMigration):
         # Adding model 'Report'
         db.create_table(u'myreports_report', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=100)),
             ('created_by', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'])),
             ('owner', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['seo.Company'])),
             ('created_on', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
@@ -80,6 +81,7 @@ class Migration(SchemaMigration):
             'created_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"}),
             'created_on': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
             'params': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'path': ('django.db.models.fields.CharField', [], {'max_length': '255'}),

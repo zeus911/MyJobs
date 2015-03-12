@@ -16,3 +16,22 @@ def serialize(fmt, data, counts=None):
         return json.dumps(data, cls=DjangoJSONEncoder)
     else:
         return data
+
+
+def parse_params(querydict):
+    params = {}
+    for key in querydict.keys():
+        value = querydict.get(key)
+        value_list = querydict.getlist(key)
+
+        # parsing a list parameter as a regular parameter only captures the
+        # last item, so if trying both ways returns the same value, we can
+        # be sure that it's not a list
+        if value:
+            if value == value_list[0]:
+                params[key] = value
+            else:
+                # lists are not hashable
+                params[key] = tuple(value_list)
+
+    return params

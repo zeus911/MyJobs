@@ -392,13 +392,8 @@ List.prototype.filter = function(type, filter) {
       }
 
       // render
-<<<<<<< HEAD
-      $("#"+ type + ".list-body").append(ul);
-      $(selected).html(data.length).parent().show("fast");
-=======
       $("#"+ type + ".list-body").html('').append(ul);
-      $(selected).html(data.records.length).parent().show("fast");
->>>>>>> pd-978-additions
+      $(selected).html(data.length).parent().show("fast");
     },
     error: function(e) {
       // TODO: change when testing is done to something more useful.
@@ -481,8 +476,6 @@ function update_all_checkbox(element) {
 
   all_checkbox.prop("checked", checked.length === checkboxes.length);
 }
-<<<<<<< HEAD
-=======
 
 
 function update_items_selected(element) {
@@ -491,4 +484,3 @@ function update_items_selected(element) {
 
   num_selected.html(checked.length);
 }
->>>>>>> pd-978-additions

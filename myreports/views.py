@@ -1,6 +1,8 @@
+from datetime import datetime
 import json
 
 from django.core import serializers
+from django.core.files.base import ContentFile
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models.loading import get_model
 from django.db.models import Count
@@ -9,12 +11,12 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 from myreports.decorators import restrict_to_staff
+from myreports.helpers import serialize, parse_params
 from myreports.models import Report
-from myreports.reports import PRMReport
 from universal.helpers import get_company_or_404
 from universal.decorators import company_has_access
 
-# TODO: 
+# TODO:
 # * write unit tests for new report generation stuff
 # * update documentation for views
 # * look at class-based views
@@ -46,25 +48,6 @@ def get_states(request):
         return response
     else:
         raise Http404
-
-
-def parse_params(querydict):
-    params = {}
-    for key in querydict.keys():
-        value = querydict.get(key)
-        value_list = querydict.getlist(key)
-
-        # parsing a list parameter as a regular parameter only captures the
-        # last item, so if trying both ways returns the same value, we can
-        # be sure that it's not a list
-        if value:
-            if value == value_list[0]:
-                params[key] = value
-            else:
-                # lists are not hashable
-                params[key] = tuple(value_list)
-
-    return params
 
 
 def filter_records(request, model, params, ignore_cache=False):
@@ -151,22 +134,23 @@ def view_records(request, app, model, output='json'):
 
 @company_has_access('prm_access')
 def create_report(request, app, model):
+    company = get_company_or_404(request)
+    user = request.user
+    path = request.get_full_path()
     params = parse_params(request.GET)
-    template = 'myreports/prm_report.html'
 
     params.pop('csrfmiddlewaretoken', None)
+    name = params.pop('report_name', datetime.now())
     ignore_cache = params.pop('ignore_cache', False)
     records = filter_records(
         request, get_model(app, model), params, ignore_cache)
 
-    report = PRMReport(records)
-    ctx = {'report': report}
+    contents = serialize('json', records)
+    results = ContentFile(contents)
+    report, created = Report.objects.get_or_create(
+        name=name, created_by=user, owner=company, path=path,
+        params=json.dumps(params.items()))
 
-    """
-    Report.objects.get_or_create(
-        created_by=user, owner=company, path=path,
-        params=json.dumps(params.items()), results=records)
-    """
+    report.results.save('%s-%s.json' % (name, report.pk), results)
 
-    return render_to_response(template, ctx, RequestContext(request))
-
+    return HttpResponse()
