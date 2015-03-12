@@ -1,7 +1,7 @@
 {% if records %}
 <input id="all" type="checkbox" checked> All Partners
 {% endif %}
-<table id="partner" class="table-scrollable">
+<table id="partner" class="table-scrollable table table-striped">
     <tbody>
         {% for partner in records %}
         <tr>
@@ -22,5 +22,3 @@
         {% endfor %}
     </tbody>
 </table>
-<a id="back" class="btn">Back</a>
-<a id="next" class="btn {% if not records %}disabled{% endif %}">Next</a>

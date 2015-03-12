@@ -44,8 +44,9 @@ sort_fields = ['relevance', 'date']
 # get_jobs().
 search_fields = ['apply_info', 'city', 'company', 'company_canonical_microsite',
                  'company_enhanced', 'company_exact', 'company_slab', 'country',
-                 'country_short', 'date_new', 'date_updated', 'django_ct',
-                 'django_id', 'guid', 'highlighted', 'html_description', 'id',
+                 'country_short', 'date_new', 'date_updated',
+                 'description', 'django_ct', 'django_id', 'guid', 'highlighted',
+                 'html_description', 'id',
                  'link', 'location', 'location_exact', 'score', 'state',
                  'state_short', 'text', 'title', 'title_exact', 'uid']
 
@@ -534,7 +535,7 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
     sqs = sqs_apply_custom_facets(custom_facets, sqs, exclude_facets)
     sqs = _sqs_narrow_by_buid_and_site_package(sqs, buids=jsids)
     # Limit the retrieved results to only fields that are actually needed.
-    sqs = sqs.fields(search_fields)
+    #sqs = sqs.fields(search_fields)
 
     sqs = sqs.order_by(sort_order_mapper.get(sort_order, '-score'))
 
