@@ -10,27 +10,37 @@ class BlockView(View):
     page = None
     page_type = None
 
-    def get(self, request):
-        return self.handle_request(request)
+    def get(self, request, *args, **kwargs):
+        self.set_page(request)
+        self.preprocess_request(request, *args, **kwargs)
+        return self.handle_request(request, **kwargs)
 
-    def handle_request(self, request):
+    def handle_request(self, request, **kwargs):
         if not self.page:
             self.set_page(request)
         return HttpResponse(self.page.render(request))
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         self.set_page(request)
+        self.preprocess_request(request, *args, **kwargs)
         for block in self.page.all_blocks():
             # Checks to see if any blocks need to do any special handling of
             # posts.
             if hasattr(block, 'handle_post'):
-                response = block.handle_post(request)
+                response = block.handle_post(request, **kwargs)
                 # Some blocks redirect after appropriately handling posted
                 # data. Allow the blocks to successfully redirect if they do.
                 if response is not None:
                     return response
 
         return self.handle_request(request)
+
+    def preprocess_request(self, request, *args, **kwargs):
+        for block in self.page.all_blocks():
+            if hasattr(block, 'handle_redirect'):
+                redirect = block.handle_redirect(request, *args, **kwargs)
+                if redirect:
+                    return redirect
 
     def set_page(self, request):
         """

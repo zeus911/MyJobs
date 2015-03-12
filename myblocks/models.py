@@ -2,7 +2,8 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect
+from django.shortcuts import redirect
 from django.template import Template, RequestContext
 from django.template.loaders.filesystem import Loader
 from django.utils.safestring import mark_safe
@@ -43,6 +44,7 @@ class Block(models.Model):
     def block_size(self):
         return self.offset + self.span
 
+    @context_tools.Memoized
     def cast(self):
         """
         Casts the block to the appropriate subclass.
@@ -50,7 +52,7 @@ class Block(models.Model):
         """
         return self.content_type.get_object_for_this_type(pk=self.pk)
 
-    def context(self, request):
+    def context(self, request, **kwargs):
         return {}
 
     def get_template(self):
@@ -69,10 +71,20 @@ class Block(models.Model):
         super(Block, self).save(*args, **kwargs)
 
 
+class ApplyLinkBlock(Block):
+    base_template = 'myblocks/blocks/applylink.html'
+
+    def context(self, request, **kwargs):
+        job_id = kwargs.get('job_id', '')
+        return {
+            'apply_link_job': context_tools.get_job(request, job_id),
+        }
+
+
 class BreadboxBlock(Block):
     base_template = 'myblocks/blocks/breadbox.html'
 
-    def context(self, request):
+    def context(self, request, **kwargs):
         return {
             'breadbox': context_tools.get_breadbox(request)
         }
@@ -84,21 +96,25 @@ class ColumnBlock(Block):
     blocks = models.ManyToManyField('Block', through='ColumnBlockOrder',
                                     related_name='included_blocks')
 
-    def context(self, request):
+    @context_tools.Memoized
+    def context(self, request, **kwargs):
         context = {}
         for block in self.blocks.all():
-            context.update(block.context(request))
+            context.update(block.cast().context(request, **kwargs))
         return context
 
+    @context_tools.Memoized
     def get_template(self):
         blocks = []
         for block in self.blocks.all().order_by('columnblockorder__order'):
-            blocks.append('<row>%s</row>' % block.get_template())
+            blocks.append('<div class="row">%s</div>'
+                          % block.cast().get_template())
 
         return '<div class="block-%s %s">%s</div>' % (self.id,
                                                       self.bootstrap_classes(),
                                                       ''.join(blocks))
 
+    @context_tools.Memoized
     def required_js(self):
         js = []
         for block in self.blocks.all():
@@ -110,10 +126,44 @@ class ContentBlock(Block):
     base_template = 'myblocks/blocks/content.html'
 
 
+class JobDetailBlock(Block):
+    base_template = 'myblocks/blocks/jobdetail.html'
+
+    def context(self, request, **kwargs):
+        job_id = kwargs.get('job_id', '')
+
+        return {
+            'site_commitments_string': context_tools.get_site_commitments_string(request),
+            'requested_job': context_tools.get_job(request, job_id),
+        }
+
+    def handle_redirect(self, request, *args, **kwargs):
+        job_id = kwargs.get('job_id', '')
+        job = context_tools.get_job(request, job_id)
+
+        if not job:
+            raise Http404
+
+        if settings.SITE_BUIDS and job.buid not in settings.SITE_BUIDS:
+            on_this_site = set(settings.SITE_PACKAGES) & set(job.on_sites)
+            if job.on_sites and not on_this_site:
+                return redirect('home')
+
+
+class JobDetailBreadboxBlock(Block):
+    base_template = 'myblocks/blocks/jobdetailbreadbox.html'
+
+    def context(self, request, *args, **kwargs):
+        job_id = kwargs.get('job_id', '')
+        return {
+            'job_detail_breadcrumbs': context_tools.get_job_detail_breadbox(request, job_id)
+        }
+
+
 class LoginBlock(Block):
     base_template = 'myblocks/blocks/login.html'
 
-    def context(self, request):
+    def context(self, request, **kwargs):
         querystring = "?%s" % request.META.get('QUERY_STRING')
         if request.POST and self.submit_btn_name() in request.POST:
             # If data is being posted to this specific block, give the form
@@ -153,7 +203,7 @@ class LoginBlock(Block):
 class MoreButtonBlock(Block):
     base_template = 'myblocks/blocks/morebutton.html'
 
-    def context(self, request):
+    def context(self, request, **kwargs):
         return {
             'arranged_jobs': context_tools.get_arranged_jobs(request),
             'data_type': '',
@@ -169,7 +219,7 @@ class MoreButtonBlock(Block):
 class RegistrationBlock(Block):
     base_template = 'myblocks/blocks/registration.html'
 
-    def context(self, request):
+    def context(self, request, **kwargs):
         querystring = "?%s" % request.META.get('QUERY_STRING')
         if request.POST and self.submit_btn_name() in request.POST:
             # If data is being posted to this specific block, give the form
@@ -224,7 +274,7 @@ class SavedSearchWidgetBlock(Block):
 class SearchBoxBlock(Block):
     base_template = 'myblocks/blocks/searchbox.html'
 
-    def context(self, request):
+    def context(self, request, **kwargs):
         return {
             'location_term': context_tools.get_location_term(request),
             'moc_term': context_tools.get_moc_term(request),
@@ -239,7 +289,7 @@ class SearchBoxBlock(Block):
 class SearchFilterBlock(Block):
     base_template = 'myblocks/blocks/searchfilter.html'
 
-    def context(self, request):
+    def context(self, request, **kwargs):
         return {
             'widgets': context_tools.get_widgets(request)
         }
@@ -251,7 +301,7 @@ class SearchFilterBlock(Block):
 class SearchResultBlock(Block):
     base_template = 'myblocks/blocks/searchresult.html'
 
-    def context(self, request):
+    def context(self, request, **kwargs):
         return {
             'arranged_jobs': context_tools.get_arranged_jobs(request),
             'data_type': '',
@@ -274,7 +324,7 @@ class ShareBlock(Block):
 class VeteranSearchBox(Block):
     base_template = 'myblocks/blocks/veteransearchbox.html'
 
-    def context(self, request):
+    def context(self, request, **kwargs):
         return {
             'location_term': context_tools.get_location_term(request),
             'moc_term': context_tools.get_moc_term(request),
@@ -299,17 +349,19 @@ class Row(models.Model):
     def context(self):
         return {}
 
+    @context_tools.Memoized
     def get_template(self):
-        blocks = [block.get_template()
+        blocks = [block.cast().get_template()
                   for block in self.blocks.all().order_by('blockorder__order')]
 
-        return '<row>%s</row>' % ''.join(blocks)
+        return '<div class="row">%s</div>' % ''.join(blocks)
 
 
 class Page(models.Model):
     base_template = 'myblocks/myblocks_base.html'
 
     HOME_PAGE = 'home_page'
+    JOB_DETAIL = 'job_detail'
     SEARCH_RESULTS = 'search_results'
     LOGIN = 'login'
 
@@ -318,6 +370,7 @@ class Page(models.Model):
 
     page_type_choices = (
         # (HOME_PAGE, 'Home Page'),
+        (JOB_DETAIL, 'Job Detail Page'),
         (SEARCH_RESULTS, 'Job Search Results Page'),
         (LOGIN, 'Login Page'),
     )
@@ -337,6 +390,7 @@ class Page(models.Model):
     def __unicode__(self):
         return "%s for %s: %s" % (self.page_type, self.site.name, self.pk)
 
+    @context_tools.Memoized
     def all_blocks(self):
         """
         Gets a list of every unique block included in a page.
@@ -349,10 +403,10 @@ class Page(models.Model):
     def bootstrap_classes(self):
         return "col-md-12"
 
-    def context(self, request):
+    def context(self, request, **kwargs):
         context = {}
         for block in self.all_blocks():
-            context.update(block.context(request))
+            context.update(block.context(request, **kwargs))
         return context
 
     def get_body(self):
@@ -361,12 +415,17 @@ class Page(models.Model):
             rows.append(row.get_template())
         return ''.join(rows)
 
+    @context_tools.Memoized
     def get_head(self):
         blocks = self.all_blocks()
+
         head = [block.head for block in blocks]
+
         additional_js = []
+
         for block in self.all_blocks():
             additional_js += [self.to_js_tag(js) for js in block.required_js()]
+
         head += list(set(additional_js))
         return self.head + ''.join(head)
 
@@ -381,8 +440,8 @@ class Page(models.Model):
         template = Template(raw_base_template(self))
         return template.render(Context(context))
 
-    def render(self, request):
-        context = self.context(request)
+    def render(self, request, **kwargs):
+        context = self.context(request, **kwargs)
         template = Template(self.get_template())
         return template.render(RequestContext(request, context))
 

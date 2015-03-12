@@ -4,18 +4,17 @@ from itertools import chain
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.http import QueryDict
 
 from seo import cache, helpers
 from seo.breadbox import Breadbox
+from seo.search_backend import DESearchQuerySet
 from seo.templatetags.job_setup import create_arranged_jobs
-
-
-_context_cache = {}
 
 
 class Memoized(object):
     """
-    Decorator. Caches a function's return value each time it is called.
+    Caches a function's return value each time it is called.
     If called later with the same arguments, the cached value is returned
     (not reevaluated).
 
@@ -54,7 +53,7 @@ def get_arranged_jobs(request):
 def get_breadbox(request):
     filters = get_filters(request)
     featured_jobs, default_jobs, facet_counts = get_jobs_and_counts(request)
-    jobs = chain(featured_jobs, default_jobs)
+    jobs = list(chain(featured_jobs, default_jobs))
     return Breadbox(request.path, filters, jobs, request.GET)
 
 
@@ -98,6 +97,17 @@ def get_filters(request):
 
 
 @Memoized
+def get_job(request, job_id):
+    search_type = 'guid' if len(job_id) > 31 else 'uid'
+
+    try:
+        query = "%s:(%s)" % (search_type, job_id)
+        return DESearchQuerySet().narrow(query)[0]
+    except IndexError:
+        return None
+
+
+@Memoized
 def get_jobs_and_counts(request):
     filters = get_filters(request)
     site_config = get_site_config(request)
@@ -119,6 +129,40 @@ def get_jobs_and_counts(request):
         helpers.add_text_to_job(job)
 
     return default_jobs, featured_jobs, facet_counts
+
+@Memoized
+def get_job_detail_breadbox(request, job_id):
+    job = get_job(request, job_id)
+    site_config = get_site_config(request)
+
+    breadbox = helpers.job_breadcrumbs(job, site_config.browse_company_show)
+
+    query_string = get_query_string(request)
+    if query_string:
+        # Append the query_path to all of the exising urls
+        for field in breadbox:
+            path = breadbox[field].get('path', '/jobs/')
+            path_and_query_string = "%s?%s" % (path, query_string)
+            new_url = (path_and_query_string if query_string
+                       else breadbox[field]['path'])
+            breadbox[field]['path'] = new_url
+
+        # Create a new path for title and moc query string values
+        # from the job information.
+        fields = ['title', 'city']
+        path = ''
+        for field in fields:
+            slab = getattr(job, '%s_slab' % field)
+            path = "%s%s/" % (path, slab.split("::")[0])
+        for field in ['q', 'moc']:
+            if request.GET.get(field, None):
+                breadbox[field] = {}
+                qs = QueryDict(query_string).copy()
+                del qs[field]
+                breadbox[field]['path'] = "/%s?%s" % (path, qs.urlencode())
+                breadbox[field]['display'] = request.GET.get(field)
+
+    return breadbox
 
 
 @Memoized

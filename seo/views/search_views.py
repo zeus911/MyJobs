@@ -75,6 +75,47 @@ items down to what we actually need.
 LOG = logging.getLogger('views')
 
 
+class FallbackBlockView(BlockView):
+    page_type = Page.SEARCH_RESULTS
+    fallback = None
+
+    def handle_request(self, request, *args, **kwargs):
+        if not self.page:
+            self.set_page(request)
+        if not self.page:
+            return self.fallback(request, *args, **kwargs)
+        return HttpResponse(self.page.render(request, **kwargs))
+
+    def post(self, request, *args, **kwargs):
+        self.set_page(request)
+        if not self.page:
+            return self.fallback(request, *args, **kwargs)
+        return super(FallbackBlockView, self).post(request, *args, **kwargs)
+
+    def set_page(self, request):
+        if request.user.is_authenticated() and request.user.is_staff:
+            try:
+                page = Page.objects.filter(site=settings.SITE,
+                                           status=Page.STAGING,
+                                           page_type=self.page_type)[0]
+                setattr(self, 'page', page)
+            except IndexError:
+                pass
+
+        try:
+            page = Page.objects.filter(site=settings.SITE,
+                                       status=Page.PRODUCTION,
+                                       page_type=self.page_type)[0]
+        except IndexError:
+            try:
+                page = Page.objects.filter(site_id=1,
+                                           status=Page.PRODUCTION,
+                                           page_type=self.page_type)[0]
+            except IndexError:
+                page = None
+        setattr(self, 'page', page)
+
+
 def ajax_geolocation_facet(request):
     """
     Returns facets for the inputted facet_type
@@ -561,6 +602,14 @@ def job_detail_by_title_slug_job_id(request, job_id, title_slug=None,
         elif qry:
             redirect_url += "?%s" % qry
         return redirect(redirect_url, permanent=True)
+
+
+class JobDetail(FallbackBlockView):
+    page_type = Page.JOB_DETAIL
+
+    def __init__(self, **kwargs):
+        super(JobDetail, self).__init__(**kwargs)
+        self.fallback = job_detail_by_title_slug_job_id
 
 
 @custom_cache_page
@@ -1626,11 +1675,6 @@ def dseo_500(request):
                                    context_instance=RequestContext(request)))
 
 
-class SearchResults(BlockView):
-    page_type = Page.SEARCH_RESULTS
-
-
-
 @home_page_check
 @protected_site
 def search_by_results_and_slugs(request, *args, **kwargs):
@@ -1750,6 +1794,14 @@ def search_by_results_and_slugs(request, *args, **kwargs):
 
     return render_to_response('job_listing.html', data_dict,
                               context_instance=RequestContext(request))
+
+
+class SearchResults(FallbackBlockView):
+    page_type = Page.SEARCH_RESULTS
+
+    def __init__(self, **kwargs):
+        super(SearchResults, self).__init__(**kwargs)
+        self.fallback = search_by_results_and_slugs
 
 
 def urls_redirect(request, guid, vsid=None, debug=None):

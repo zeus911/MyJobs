@@ -95,12 +95,22 @@ urlpatterns += patterns('seo.views.search_views',
         name='member-companies_home'),
     url(r'^member-companies/(?P<alpha>[a-z])/$', 'company_listing', {'group':'member'},
         name='member-companies'),
+
     # job detail (aka job view)
+    # url(r'^(?P<location_slug>[\w-]+)/(?P<title_slug>[\w~-]+)/(?P<job_id>[0-9A-Fa-f]{1,32})/job/$',
+    #     'job_detail_by_title_slug_job_id',
+    #     name="job_detail_by_location_slug_title_slug_job_id"),
+    # url(r'(?P<feed>xml|rss|atom|json|indeed)?/?(?P<job_id>[0-9A-Fa-f]{1,32})/job/$',
+    #     'job_detail_by_title_slug_job_id', name="job_detail_by_job_id"),
+
     url(r'^(?P<location_slug>[\w-]+)/(?P<title_slug>[\w~-]+)/(?P<job_id>[0-9A-Fa-f]{1,32})/job/$',
-        'job_detail_by_title_slug_job_id',
+        search_views.JobDetail.as_view(),
         name="job_detail_by_location_slug_title_slug_job_id"),
     url(r'(?P<feed>xml|rss|atom|json|indeed)?/?(?P<job_id>[0-9A-Fa-f]{1,32})/job/$',
-        'job_detail_by_title_slug_job_id', name="job_detail_by_job_id"),
+        search_views.JobDetail.as_view(),
+        name="job_detail_by_job_id"),
+
+
     # ajax urls
     url(r'^ajax/(?P<filter_path>[/\w-]*)(?P<facet_type>titles|cities|states|'
         'countries|facets|mapped|mocs|company-ajax)/$', 'ajax_get_facets'),

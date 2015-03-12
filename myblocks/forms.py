@@ -12,7 +12,12 @@ class BlockForm(forms.ModelForm):
         self.fields['template'].initial = models.raw_base_template(self.Meta.model)
 
 
-class BreadboxForm(BlockForm):
+class ApplyLinkBlockForm(BlockForm):
+    class Meta:
+        model = models.ApplyLinkBlock
+
+
+class BreadboxBlockForm(BlockForm):
     class Meta:
         model = models.BreadboxBlock
 
@@ -26,6 +31,16 @@ class ColumnBlockForm(forms.ModelForm):
 class ContentBlockForm(BlockForm):
     class Meta:
         model = models.ContentBlock
+
+
+class JobDetailBlockForm(BlockForm):
+    class Meta:
+        model = models.JobDetailBlock
+
+
+class JobDetailBreadboxBlockForm(BlockForm):
+    class Meta:
+        model = models.JobDetailBreadboxBlock
 
 
 class LoginBlockForm(BlockForm):
