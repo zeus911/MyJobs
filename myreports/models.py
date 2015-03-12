@@ -15,7 +15,10 @@ class Report(models.Model):
 
     def __init__(self, *args, **kwargs):
         super(Report, self).__init__(*args, **kwargs)
-        self._results = self.results.read()
+        if self.results:
+            self._results = self.results.read()
+        else:
+            self._results = '{}'
 
     @property
     def json(self):
