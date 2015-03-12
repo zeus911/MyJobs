@@ -85,8 +85,7 @@ class FallbackBlockView(BlockView):
             self.set_page(request)
         if not self.page:
             return self.fallback(request, *args, **kwargs)
-        required_redirect = self.page.handle_redirect(request, self.page_type,
-                                                      *args, **kwargs)
+        required_redirect = self.page.handle_redirect(request, *args, **kwargs)
         if required_redirect:
             return required_redirect
         return HttpResponse(self.page.render(request, **kwargs))

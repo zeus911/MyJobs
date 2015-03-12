@@ -10,6 +10,7 @@ class BlockForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(BlockForm, self).__init__(*args, **kwargs)
         self.fields['template'].initial = models.raw_base_template(self.Meta.model)
+        self.fields['head'].initial = models.raw_base_head(self.Meta.model)
 
 
 class ApplyLinkBlockForm(BlockForm):

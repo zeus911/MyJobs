@@ -95,6 +95,9 @@ def get_featured_jobs(request):
 def get_filters(request):
     return helpers.build_filter_dict(request.path)
 
+@Memoized
+def get_google_analytics(request):
+    return settings.SITE.google_analytics.all()
 
 @Memoized
 def get_job(request, job_id):

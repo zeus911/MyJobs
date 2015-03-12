@@ -16,8 +16,7 @@ class BlockView(View):
     def handle_request(self, request, *args, **kwargs):
         if not self.page:
             self.set_page(request)
-        required_redirect = self.page.handle_redirect(request, self.page_type,
-                                                      *args, **kwargs)
+        required_redirect = self.page.handle_redirect(request, *args, **kwargs)
         if required_redirect:
             return required_redirect
         return HttpResponse(self.page.render(request))

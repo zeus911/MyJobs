@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
-from django.template import Template, RequestContext
+from django.template import Context, Template, RequestContext
 from django.template.loaders.filesystem import Loader
 from django.utils.safestring import mark_safe
 
@@ -19,6 +19,13 @@ from registration.forms import CustomAuthForm, RegistrationForm
 from seo import helpers
 
 
+def raw_base_head(obj):
+    if obj.base_head:
+        loader = Loader()
+        return loader.load_template_source(obj.base_head)[0]
+    return ''
+
+
 def raw_base_template(obj):
     loader = Loader()
     return loader.load_template_source(obj.base_template)[0]
@@ -26,6 +33,7 @@ def raw_base_template(obj):
 
 class Block(models.Model):
     base_template = None
+    base_head = None
 
     content_type = models.ForeignKey(ContentType, editable=False)
     name = models.CharField(max_length=255)
@@ -351,6 +359,7 @@ class Row(models.Model):
 
 class Page(models.Model):
     base_template = 'myblocks/myblocks_base.html'
+    base_head = 'myblocks/head/page.html'
 
     ERROR_404 = '404'
     HOME_PAGE = 'home_page'
@@ -403,6 +412,11 @@ class Page(models.Model):
         context = {}
         for block in self.all_blocks():
             context.update(block.context(request, **kwargs))
+
+        context['site_title'] = settings.SITE_TITLE
+        context['site_description'] = settings.SITE_DESCRIPTION
+
+
         return context
 
     def get_body(self):
@@ -425,20 +439,35 @@ class Page(models.Model):
         head += list(set(additional_js))
         return self.head + ''.join(head)
 
-    def get_template(self):
-        from django.template import Template, Context
+    def get_template(self, request):
+        filters = context_tools.get_filters(request)
+
         context = {
             'body': mark_safe(self.get_body()),
+            'google_analytics': context_tools.get_google_analytics(request),
             'head': mark_safe(self.get_head()),
+            'max_filter_settings': settings.ROBOT_FILTER_LEVEL,
+            'num_filters': len([k for (k, v) in filters.iteritems() if v]),
             'page': self,
             'STATIC_URL': settings.STATIC_URL,
         }
         template = Template(raw_base_template(self))
         return template.render(Context(context))
 
+    def pixel_template(self):
+        return mark_safe("""
+            <img style="display: none;" border="0" height="1" width="1" alt="My.jobs"
+            {% if the_job %}
+                src="http://my.jobs/pixel.gif?{{request|make_pixel_qs:the_job|safe}}"
+            {% else %}
+                src="http://my.jobs/pixel.gif?{{request|make_pixel_qs|safe}}"
+            {% endif %}
+            />
+        """)
+
     def render(self, request, **kwargs):
         context = self.context(request, **kwargs)
-        template = Template(self.get_template())
+        template = Template(self.get_template(request))
         return template.render(RequestContext(request, context))
 
     def templatetag_library(self):
@@ -502,7 +531,6 @@ class Page(models.Model):
         if redirect_url:
             return redirect_url
 
-
         jobs_and_counts = context_tools.get_jobs_and_counts(request)
         default_jobs = jobs_and_counts[0]
         featured_jobs = jobs_and_counts[1]
@@ -515,10 +543,15 @@ class Page(models.Model):
 
         return
 
-    def handle_redirect(self, request, page_type, *args, **kwargs):
+    def handle_postprocessing(self, response, page_type):
         if page_type == self.JOB_DETAIL:
+            response = response
+        return response
+
+    def handle_redirect(self, request, *args, **kwargs):
+        if self.page_type == self.JOB_DETAIL:
             return self.handle_job_detail_redirect(request, *args, **kwargs)
-        if page_type == self.SEARCH_RESULTS:
+        if self.page_type == self.SEARCH_RESULTS:
             return self.handle_search_results_redirect(request, *args, **kwargs)
         return None
 
