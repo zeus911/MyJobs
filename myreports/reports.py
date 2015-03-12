@@ -28,7 +28,7 @@ class PRMReport(Report):
             'colors': ['#4bb1cf', '#faa732', '#5f6c82', '#5eb95e']
             })
 
-    foo = charts.ColumnChart(
+    referral_activity = charts.ColumnChart(
         title='Referral Activity',
         height=356,
         width=360,
@@ -38,7 +38,8 @@ class PRMReport(Report):
                 'top': 22,
                 'left': 37,
                 'height': 270,
-                'width': 290}})
+                'width': 290},
+            'colors': ['#08c']})
 
     def __init__(self, records, *args, **kwargs):
         self.records = records
@@ -56,7 +57,7 @@ class PRMReport(Report):
 
         return data
 
-    def get_data_for_foo(self):
+    def get_data_for_referral_activity(self):
         data = ChartData()
         data.add_columns(['Referral Type', 'Count'])
 
