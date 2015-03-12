@@ -17,8 +17,11 @@ def reports(request):
     """The Reports app landing page."""
     company = get_company_or_404(request)
 
+    success = 'success' in request.POST
+
     ctx = {
         "company": company,
+        "success": success
     }
 
     return render_to_response('myreports/reports.html', ctx,

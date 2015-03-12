@@ -1,12 +1,5 @@
-/*
-Send the user a message when they try to unload the page saying their
-progress will not be saved and will be lost.
-TODO: uncomment this and give a more meaningful message. Commented out for development purposes.
-window.addEventListener("beforeunload", function(e) {
-    e.returnValue = "\\o/";
-});
-*/
-
+// Variable to get through beforeunload listener without displaying message.
+var reload = false;
 
 // Handles storing data, rendering fields, and submitting report. See prototype functions
 var Report = function(types) {
@@ -40,6 +33,16 @@ Report.prototype.create_fields = function(types) {
 // Bind events for report, events that use the report object need to be here.
 Report.prototype.bind_events = function() {
   var report = this;
+
+  // Send the user a message when they try to unload the page saying their
+  // progress will not be saved and will be lost.
+  /*
+  window.addEventListener("beforeunload", function(e) {
+    if (!reload) {
+      e.returnValue = "You have unsaved changes!";
+    }
+  });
+  */
 
 
   // Updates data field of Report. Also, if needed, updates Partner and Contact Lists
@@ -164,7 +167,8 @@ Report.prototype.bind_events = function() {
 
   // Actually submits the report's data to create a Report object in db.
   $(document.body).on("click", "#gen-report", function(e) {
-    var data = {"csrfmiddlewaretoken": read_cookie("csrftoken"), "ignore_cache": true},
+    var csrf = read_cookie("csrftoken"),
+        data = {"csrfmiddlewaretoken": csrf, "ignore_cache": true},
         url = location.protocol + "//" + location.host + "/reports/ajax/mypartners/contactrecord";
     if (report.data) {
       $.extend(data, report.data);
@@ -187,7 +191,13 @@ Report.prototype.bind_events = function() {
       dataType: "json",
       global: false,
       success: function (data) {
-        $(".modal-body").html(JSON.stringify(data.records));
+        reload = true;
+        var new_url = location.protocol + '//' + location.host + location.pathname,
+            form = $('<form action="'+ new_url +'" method="POST" style="display: none;">' +
+          '<input type="hidden" name="csrfmiddlewaretoken" value="' + csrf + '" />"' +
+          '<input type="hidden" name="success" value="true" /> </form>');
+        $('body').append(form);
+        form.submit();
       }
     });
   });
