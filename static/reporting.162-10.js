@@ -19,7 +19,7 @@ var Report = function(types) {
 // Pulls the fields required for report type(s)
 Report.prototype.create_fields = function(types) {
    var reports = {"prm":        [new Field("Select Date", "date"),
-                                 new Field("State", "state"),
+                                 new Field("State", "state", true),
                                  new Field("City", "text"),
                                  new List("Select Partners", "partner"),
                                  new List("Select Contacts", "contact")],
@@ -137,6 +137,7 @@ Report.prototype.bind_events = function() {
     update_all_checkbox(this);
   });
 
+
   // Clicking on all "type" checkbox will check/uncheck all checkboxes in associated list.
   $(document.body).on("click", "input[id$=-all-checkbox]", function(e) {
     e.stopPropagation();
@@ -204,7 +205,7 @@ Report.prototype.readable_data = function() {
     if (data.hasOwnProperty(key)) {
       value = data[key];
 
-      // Replace _ with spaces
+      // Replace all '_' instances with spaces
       key = key.replace(/_/g, " ");
 
       if (value) {
@@ -255,9 +256,10 @@ Report.prototype.render_fields = function(fields) {
 };
 
 
-var Field = function(label, type) {
+var Field = function(label, type, required) {
   this.label = label;
   this.type = type;
+  this.required = typeof required !== 'undefined';
 };
 
 
@@ -300,8 +302,8 @@ Field.prototype.render = function() {
 };
 
 
-var List = function(label, type) {
-  Field.call(this, label, type);
+var List = function(label, type, required) {
+  Field.call(this, label, type, required);
 };
 
 
@@ -314,22 +316,13 @@ List.prototype.render = function(filter) {
   var container = $("<div id='"+ this.type +"-header' class='list-header'></div>"),
       icon = $("<i class='fa fa-plus-square-o'></i>"),
       all_checkbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />"),
-      record_count,
+      record_count = $("<span style='display: none;'>(<span>0</span> "+ this.type.capitalize() +"s Selected)</span>"),
       html,
       body = $("<div id='"+ this.type +"' class='list-body' style='display: none;'></div>"),
       wrapper = $("<div id='"+ this.type +"-wrapper'></div>"),
       list = this;
 
-  if (this.type === "contact") {
-    record_count = $("<span style='display: none;'>(<span>0</span> Contacts Selected)</span>");
-    container.append(icon).append(all_checkbox).append(" All Contacts ").append(record_count);
-  } else if (this.type === "partner") {
-    record_count = $("<span style='display: none;'>(<span>0</span> Partners Selected)</span>");
-    container.append(icon).append(all_checkbox).append(" All Partners ").append(record_count);
-  } else {
-    record_count = $("<span style='display: none;'>(<span>0</span> "+ this.type +" Selected)</span>");
-    container.append(icon).append(all_checkbox).append(" All " + this.type + " ").append(record_count);
-  }
+  container.append(icon).append(all_checkbox).append(" All " + this.type.capitalize() + "s ").append(record_count);
 
   wrapper.append(container).append(body);
   html = wrapper.prop("outerHTML");
@@ -397,6 +390,12 @@ List.prototype.filter = function(type, filter) {
       console.error("Something horrible happened.");
     }
   });
+};
+
+
+// Capitalize first letter of a string.
+String.prototype.capitalize = function() {
+  return this.charAt(0).toUpperCase() + this.slice(1);
 };
 
 
