@@ -8,16 +8,78 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Deleting model 'ImageBlock'
+        db.delete_table(u'myblocks_imageblock')
+
+        # Adding model 'JobDetailBreadboxBlock'
+        db.create_table(u'myblocks_jobdetailbreadboxblock', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+        ))
+        db.send_create_signal(u'myblocks', ['JobDetailBreadboxBlock'])
+
+        # Adding model 'JobDetailBlock'
+        db.create_table(u'myblocks_jobdetailblock', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+        ))
+        db.send_create_signal(u'myblocks', ['JobDetailBlock'])
+
+        # Adding model 'MoreButtonBlock'
+        db.create_table(u'myblocks_morebuttonblock', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+        ))
+        db.send_create_signal(u'myblocks', ['MoreButtonBlock'])
+
+        # Adding model 'BreadboxBlock'
+        db.create_table(u'myblocks_breadboxblock', (
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+        ))
+        db.send_create_signal(u'myblocks', ['BreadboxBlock'])
+
         # Adding model 'ApplyLinkBlock'
         db.create_table(u'myblocks_applylinkblock', (
             (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
         ))
         db.send_create_signal(u'myblocks', ['ApplyLinkBlock'])
 
+        # Adding field 'Page.head'
+        db.add_column(u'myblocks_page', 'head',
+                      self.gf('django.db.models.fields.TextField')(default='', blank=True),
+                      keep_default=False)
+
+        # Deleting field 'Row.template'
+        db.delete_column(u'myblocks_row', 'template')
+
 
     def backwards(self, orm):
+        # Adding model 'ImageBlock'
+        db.create_table(u'myblocks_imageblock', (
+            ('image_url', self.gf('django.db.models.fields.URLField')(max_length=200)),
+            (u'block_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['myblocks.Block'], unique=True, primary_key=True)),
+        ))
+        db.send_create_signal(u'myblocks', ['ImageBlock'])
+
+        # Deleting model 'JobDetailBreadboxBlock'
+        db.delete_table(u'myblocks_jobdetailbreadboxblock')
+
+        # Deleting model 'JobDetailBlock'
+        db.delete_table(u'myblocks_jobdetailblock')
+
+        # Deleting model 'MoreButtonBlock'
+        db.delete_table(u'myblocks_morebuttonblock')
+
+        # Deleting model 'BreadboxBlock'
+        db.delete_table(u'myblocks_breadboxblock')
+
         # Deleting model 'ApplyLinkBlock'
         db.delete_table(u'myblocks_applylinkblock')
+
+        # Deleting field 'Page.head'
+        db.delete_column(u'myblocks_page', 'head')
+
+        # Adding field 'Row.template'
+        db.add_column(u'myblocks_row', 'template',
+                      self.gf('django.db.models.fields.TextField')(default=''),
+                      keep_default=False)
 
 
     models = {
@@ -84,6 +146,10 @@ class Migration(SchemaMigration):
         },
         u'myblocks.jobdetailblock': {
             'Meta': {'object_name': 'JobDetailBlock', '_ormbases': [u'myblocks.Block']},
+            u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'})
+        },
+        u'myblocks.jobdetailbreadboxblock': {
+            'Meta': {'object_name': 'JobDetailBreadboxBlock', '_ormbases': [u'myblocks.Block']},
             u'block_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['myblocks.Block']", 'unique': 'True', 'primary_key': 'True'})
         },
         u'myblocks.loginblock': {
