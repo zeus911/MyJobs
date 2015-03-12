@@ -15,9 +15,7 @@ Report.prototype.create_fields = function(types) {
                                  new Field("State", "state", true),
                                  new Field("City", "text"),
                                  new List("Select Partners", "partner"),
-                                 new List("Select Contacts", "contact")],
-                  "compliance": [new Field("test", "text"),
-                                 new Field("test2", "text")]},
+                                 new List("Select Contacts", "contact")]},
         fields = [],
         key;
 
