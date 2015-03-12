@@ -2,11 +2,14 @@
 from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import DataMigration
-from django.db import models
+from django.db import models, connection
 
 class Migration(DataMigration):
 
     def forwards(self, orm):
+        if connection.vendor == 'sqlite':
+            return True
+
         # Convert Configuration model to UTF-8
         db.execute("ALTER TABLE seo_configuration "
                    "CONVERT TO CHARACTER SET utf8 "
