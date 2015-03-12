@@ -1,6 +1,9 @@
+from slugify import slugify
+
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import reverse
 from django.db import models
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
@@ -13,6 +16,7 @@ from myblocks.helpers import success_url
 from myjobs.helpers import expire_login
 from myjobs.models import User
 from registration.forms import CustomAuthForm, RegistrationForm
+from seo import helpers
 
 
 def raw_base_template(obj):
@@ -136,18 +140,6 @@ class JobDetailBlock(Block):
             'site_commitments_string': context_tools.get_site_commitments_string(request),
             'requested_job': context_tools.get_job(request, job_id),
         }
-
-    def handle_redirect(self, request, *args, **kwargs):
-        job_id = kwargs.get('job_id', '')
-        job = context_tools.get_job(request, job_id)
-
-        if not job:
-            raise Http404
-
-        if settings.SITE_BUIDS and job.buid not in settings.SITE_BUIDS:
-            on_this_site = set(settings.SITE_PACKAGES) & set(job.on_sites)
-            if job.on_sites and not on_this_site:
-                return redirect('home')
 
 
 class JobDetailBreadboxBlock(Block):
@@ -452,6 +444,79 @@ class Page(models.Model):
 
     def to_js_tag(self, js_file):
         return '<script type="text/javascript" src="%s"></script>' % js_file
+
+    def handle_job_detail_redirect(self, request, *args, **kwargs):
+        job_id = kwargs.get('job_id', '')
+        job = context_tools.get_job(request, job_id)
+
+        if not job:
+            raise Http404
+
+        if settings.SITE_BUIDS and job.buid not in settings.SITE_BUIDS:
+            on_this_site = set(settings.SITE_PACKAGES) & set(job.on_sites)
+            if job.on_sites and not on_this_site:
+                return redirect('home')
+
+        title_slug = kwargs.get('title_slug', '')
+        location_slug = kwargs.get('location_slug', '')
+        job_location_slug = slugify(job.location)
+        if title_slug == job.title_slug and location_slug == job_location_slug:
+            return None
+
+        feed = kwargs.get('feed', '')
+        query = ""
+        for k, v in request.GET.items():
+            query = ("=".join([k, v]) if query == "" else
+                     "&".join([query, "=".join([k, v])]))
+
+        # The url wasn't quite the canonical form, so we redirect them
+        # to the correct version based on the title and location of the
+        # job with the passed in id.
+        new_kwargs = {
+            'location_slug': slugify(job.location),
+            'title_slug': job.title_slug,
+            'job_id': job.guid
+        }
+        redirect_url = reverse('job_detail_by_location_slug_title_slug_job_id',
+                               kwargs=new_kwargs)
+
+        # if the feed type is passed, add source params, otherwise only preserve
+        # the initial query string.
+        if feed:
+            if query != "":
+                query = "&%s" % query
+            redirect_url += "?utm_source=%s&utm_medium=feed%s" % (feed, query)
+        elif query:
+            redirect_url += "?%s" % query
+        return redirect(redirect_url, permanent=True)
+
+    def handle_search_results_redirect(self, request, *args, **kwargs):
+        filters = context_tools.get_filters(request)
+        query_string = context_tools.get_query_string(request)
+
+        redirect_url = helpers.determine_redirect(request, filters)
+        if redirect_url:
+            return redirect_url
+
+
+        jobs_and_counts = context_tools.get_jobs_and_counts(request)
+        default_jobs = jobs_and_counts[0]
+        featured_jobs = jobs_and_counts[1]
+        facet_counts = jobs_and_counts[2]
+        if not facet_counts:
+            return redirect("/")
+        if (len(default_jobs) == 0 and len(featured_jobs) == 0
+                and not query_string):
+            return redirect("/")
+
+        return
+
+    def handle_redirect(self, request, page_type, *args, **kwargs):
+        if page_type == self.JOB_DETAIL:
+            return self.handle_job_detail_redirect(request, *args, **kwargs)
+        if page_type == self.SEARCH_RESULTS:
+            return self.handle_search_results_redirect(request, *args, **kwargs)
+        return None
 
 
 class BlockOrder(models.Model):
