@@ -44,6 +44,7 @@ from transform import transform_for_postajob
 
 from myblocks.views import BlockView
 from myblocks.models import Page
+from myblocks import context_tools
 from seo.templatetags.seo_extras import facet_text, smart_truncate
 from seo.breadbox import Breadbox
 from seo.cache import get_custom_facets, get_site_config, get_total_jobs_count
@@ -1648,6 +1649,14 @@ def dseo_404(request, the_job=None, job_detail=False):
         context_instance=RequestContext(request)))
 
 
+class Dseo404(FallbackBlockView):
+    page_type = Page.ERROR_404
+
+    def __init__(self, **kwargs):
+        super(Dseo404, self).__init__(**kwargs)
+        self.fallback = dseo_404
+
+
 def dseo_500(request):
     """
     Handles server errors gracefully.
@@ -1806,6 +1815,14 @@ class SearchResults(FallbackBlockView):
     def __init__(self, **kwargs):
         super(SearchResults, self).__init__(**kwargs)
         self.fallback = search_by_results_and_slugs
+
+    def set_page(self, request):
+        default_jobs, featured_jobs, _ = context_tools.get_jobs_and_counts(request)
+
+        if not default_jobs and not featured_jobs:
+            self.page_type = Page.NO_RESULTS
+
+        return super(SearchResults, self).set_page(request)
 
 
 def urls_redirect(request, guid, vsid=None, debug=None):

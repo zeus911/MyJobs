@@ -352,19 +352,23 @@ class Row(models.Model):
 class Page(models.Model):
     base_template = 'myblocks/myblocks_base.html'
 
+    ERROR_404 = '404'
     HOME_PAGE = 'home_page'
     JOB_DETAIL = 'job_detail'
     SEARCH_RESULTS = 'search_results'
     LOGIN = 'login'
+    NO_RESULTS = 'no_results'
 
     PRODUCTION = 'production'
     STAGING = 'staging'
 
     page_type_choices = (
+        (ERROR_404, '404'),
         # (HOME_PAGE, 'Home Page'),
         (JOB_DETAIL, 'Job Detail Page'),
         (SEARCH_RESULTS, 'Job Search Results Page'),
         (LOGIN, 'Login Page'),
+        (NO_RESULTS, 'No Results Found'),
     )
     page_status_choices = (
         (STAGING, 'Staging'),
