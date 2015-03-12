@@ -89,6 +89,15 @@ class VeteranSearchBoxForm(BlockForm):
         model = models.VeteranSearchBox
 
 
+class PageForm(forms.ModelForm):
+    class Meta:
+        model = models.Page
+
+    def __init__(self, *args, **kwargs):
+        super(PageForm, self).__init__(*args, **kwargs)
+        self.fields['head'].initial = models.raw_base_head(self.Meta.model)
+
+
 class RowForm(forms.ModelForm):
     class Meta:
         model = models.Row

@@ -96,6 +96,7 @@ class RowOrderInline(admin.TabularInline):
 
 
 class PageAdmin(admin.ModelAdmin):
+    form = forms.PageForm
     inlines = (RowOrderInline, )
     save_as = True
 
