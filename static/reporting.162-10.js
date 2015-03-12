@@ -57,7 +57,7 @@ Report.prototype.bind_events = function() {
           records = $($(this).parents(".list-body").find("input")),
           values = [];
 
-      if (all_records.is(":checked")) {
+      if (all_records.is(":checked") && $(this).is(":checked")) {
         report.data[in_list] = "";
       } else {
         // iterate through all checkboxes and find all the ones that are checked

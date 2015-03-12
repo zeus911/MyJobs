@@ -12,13 +12,18 @@
         <h1 class="bottom-bordered">{{ company }} <small>Reports</small></h1>
     </div>
 </div>
+{% if success %}
+<div class="row">
+    <div class="span12">
+        <div class="alert alert-success">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            Successfully created a report!
+        </div>
+    </div>
+</div>
+{% endif %}
 <div class="row">
     <div id="container" class="span8">
-        <div class="row">
-            <div class="span8 reporting-breadcrumbs">
-
-            </div>
-        </div>
         <div id="content">
             <div class="row">
                 <div id="" class="span8 panel">
