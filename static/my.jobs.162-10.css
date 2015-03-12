@@ -1325,15 +1325,6 @@ ul.header-menu > li > ul > a > li:hover {
     text-decoration: none;
 }
 
-#menu-inbox ~ ul li > p {
-    color: white;
-    padding-left: 4px;
-}
-
-#menu-inbox > div.icon-envelope {
-    margin-left: 3px;
-}
-
 #date-range-list > li:last-child:hover {
     background-color: #f2f2f2;
 }
@@ -1434,15 +1425,6 @@ ul.header-menu > li > ul > a > li:hover {
 
 .list-body ul input[type="checkbox"] {
     margin-top: -1px;
-}
-
-.invis-box {
-    background-color: transparent;
-    width: 12px;
-    height: 12px;
-    position: absolute;
-    top: 5px;
-    z-index: 100;
 }
 
 .rpt-container label {

@@ -1,5 +1,6 @@
 from collections import defaultdict
 import datetime
+from HTMLParser import HTMLParser
 import logging
 import math
 import operator
@@ -11,6 +12,7 @@ from urlparse import urljoin, urlparse, parse_qs, parse_qsl
 from django.conf import settings
 from django.shortcuts import redirect
 from django.template.defaultfilters import safe
+from django.utils.html import strip_tags
 from haystack.backends.solr_backend import SolrSearchQuery
 from haystack.inputs import Raw
 from haystack.query import SQ, EmptySearchQuerySet
@@ -18,11 +20,12 @@ from ordereddict import OrderedDict
 
 from seo_pysolr import Solr
 from seo.search_backend import DESearchQuerySet
-from seo.models import BusinessUnit, CustomFacet
+from seo.models import BusinessUnit, Company
 from seo.templatetags.seo_extras import facet_text, smart_truncate
 from seo.filters import FacetListWidget, CustomFacetListWidget
 from serializers import JSONExtraValuesSerializer
 from moc_coding.models import Moc
+from xmlparse import text_fields
 
 
 # Because we don't want things like 'salted_date' in the url paramters,
@@ -41,8 +44,9 @@ sort_fields = ['relevance', 'date']
 # get_jobs().
 search_fields = ['apply_info', 'city', 'company', 'company_canonical_microsite',
                  'company_enhanced', 'company_exact', 'company_slab', 'country',
-                 'country_short', 'date_new', 'date_updated', 'django_ct',
-                 'django_id', 'guid', 'highlighted', 'html_description', 'id',
+                 'country_short', 'date_new', 'date_updated',
+                 'description', 'django_ct', 'django_id', 'guid', 'highlighted',
+                 'html_description', 'id',
                  'link', 'location', 'location_exact', 'score', 'state',
                  'state_short', 'text', 'title', 'title_exact', 'uid']
 
@@ -82,37 +86,37 @@ def build_filter_dict(slug_path):
     """
     Parses out the slug tags and associated values into key/value pairs.
     Slug tags are the keys, and values are values.
-    
+
     Then, it maps values from the returned slug_dict to keys from
     settings.SLUG_TAGS
-    
+
     General Format:
     {value_1}/{slug_tag_1}/{value_2}/{slug_tag_2}/.../{value_n}/{slug_tag_n}/
-        
+
     Example:
         slug_path = "project-manager/jobs-in/usa/jobs/"
-        
+
         The first list comprehension returns <dict>:
         {
             'jobs-in': 'project-manager',
             'jobs': 'usa'
         }
-        
+
         Location values can span across multiple '/':
         i.e.- boston/ma/usa/jobs
                 slug_tag = jobs
                 value = boston/ma/usa
-        
-        So now we have:    
-        
+
+        So now we have:
+
         slugs_dict:
         {
             'jobs-in': 'project-manager',
             'jobs': 'usa'
         }
-        
-        And,    
-        
+
+        And,
+
         settings.SLUG_TAGS:
         {
             'title_slug': '/jobs-in/',
@@ -120,9 +124,9 @@ def build_filter_dict(slug_path):
             'facet_slug': '/new-jobs/',
             'moc_slug': '/veteran-jobs/'
         }
-                
-        That get turned into this: 
-                
+
+        That get turned into this:
+
         Final Result:
         {
             'title_slug': 'project-manager',
@@ -130,7 +134,7 @@ def build_filter_dict(slug_path):
             'facet_slug': None,
             'moc_slug': None
         }
-    
+
     """
     slug_value_list = settings.SLUG_TAG_PARSING_REGEX.findall(slug_path)
     slugs_dict = dict([(key, value.strip('/')) for (value, key) in
@@ -193,20 +197,20 @@ def parse_location_slug(location_slug):
         boston/massachusettes/usa
         boston/none/usa
         none/none/usa
-        
+
         massachusetts/usa
-        
+
         /usa
-    
-    So it will have 1, 2, or 3 pieces to it. We'll return 
+
+    So it will have 1, 2, or 3 pieces to it. We'll return
     a dictionary with this form:
-    
+
     locations = {
         "country": {value|None},
         "state": {value|None},
         "city": {value|None}
     }
-    
+
     """
 
     locations = {
@@ -233,14 +237,14 @@ def parse_location_slug(location_slug):
     else:
         # we only have the country
         locations["country_short"] = location_pieces[0]
-        
+
     return locations
 
 
 def parse_moc_slug(moc_slug):
     """
     Return {'moc': <moc_code>} dictionary.
-    
+
     """
     moc_slug = moc_slug.strip('/').split('/')
     return {'moc': moc_slug[1]}
@@ -251,7 +255,7 @@ def get_nav_type(filters):
     This method determines which type of primary nav we should build.
     It's pretty heavy on business logic, so it makes sense to keep
     it self contained within here.
-    
+
     Business Logic:
         # if we have a moc_slug, build that nav
         # if we have a facet_slug, build that nav
@@ -260,21 +264,21 @@ def get_nav_type(filters):
             # if we have 3 location pieces, build city
             # if we have 2 location pieces, build state
             # if we have 1 piece, build country
-    
+
     """
     nav_type = ''
     moc_slug = filters["moc_slug"]
     facet_slug = filters["facet_slug"]
     title_slug = filters["title_slug"]
     location_slug = filters["location_slug"]
-    
+
     if moc_slug:
         nav_type = 'moc'
     elif facet_slug:
         nav_type = 'facet'
     elif title_slug:
         nav_type = 'title'
-    elif location_slug: 
+    elif location_slug:
         location_slug = location_slug.strip('/')
         location_pieces = location_slug.split('/')
         location_length = len(location_pieces)
@@ -284,7 +288,7 @@ def get_nav_type(filters):
             nav_type = 'state'
         else:
             nav_type = 'country'
-    
+
     return nav_type
 
 
@@ -293,11 +297,11 @@ def job_breadcrumbs(job, company=False):
     Generate breadcrumbs for job detail pages.
     Inputs:
         :job: Job document from Haystack
-        :company: Boolean, set to True to include comapny information in output 
+        :company: Boolean, set to True to include comapny information in output
 
     Outputs:
         A list of dictionaries for each field in the breadbox
-    
+
     """
     fields = ['title', 'city', 'state', 'country']
     breadcrumbs = {}
@@ -322,10 +326,10 @@ def job_breadcrumbs(job, company=False):
 
     if company:
         fields.append('company')
-        
+
         for k in dropmap:
             dropmap[k].append('company')
-            
+
         dropmap['company'] = ['title', 'city']
 
     for i in fields:
@@ -465,14 +469,14 @@ def get_bread_box_headings(filters=None, jobs=None):
     This function builds the 'bread box' titles that area seen
     in the right hand column on any page with filter criteria
     applied to it.
-    
+
     Inputs:
         filters -- filters in use on the current path
         jobs -- solr/haystack jobs query object
-    
+
     Returns:
         bread_box_title -- formatted page title
-        
+
     """
     filters = filters or {}
     bread_box_headings = {}
@@ -501,7 +505,7 @@ def get_bread_box_headings(filters=None, jobs=None):
     return bread_box_headings
 
 
-def get_jobs(custom_facets=None, exclude_facets=None, jsids=None, 
+def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
              default_sqs=None, filters={},  fields=None, facet_limit=250,
              facet_sort="count", facet_offset=None, mc=1,
              sort_order='relevance'):
@@ -517,12 +521,12 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
                         Middleware
         :default_sqs: Starting search query set
         :filters: Dictionary of filter terms in field_name:search_term format
-        The following inputs are Solr parameters. 
+        The following inputs are Solr parameters.
         :facet_limit: max number of facets to return per field. -1=unlimited
         :facet_sort: How to sort facets
         :facet_offset: offset into the facet list
-        :mc: mincount - Smallest facet size to return 
-    
+        :mc: mincount - Smallest facet size to return
+
     """
     if default_sqs is not None:
         sqs = default_sqs
@@ -531,7 +535,7 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
     sqs = sqs_apply_custom_facets(custom_facets, sqs, exclude_facets)
     sqs = _sqs_narrow_by_buid_and_site_package(sqs, buids=jsids)
     # Limit the retrieved results to only fields that are actually needed.
-    sqs = sqs.fields(search_fields)
+    #sqs = sqs.fields(search_fields)
 
     sqs = sqs.order_by(sort_order_mapper.get(sort_order, '-score'))
 
@@ -547,7 +551,7 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
 
     if facet_limit > 0:
         sqs = sqs.facet_limit(facet_limit)
-        
+
     sqs = sqs.facet_sort(facet_sort).facet_mincount(mc)
     sqs = sqs.facet("city_slab").facet("state_slab").facet("country_slab")\
              .facet("moc_slab").facet("title_slab").facet("full_loc")\
@@ -572,7 +576,7 @@ def filter_sqs(sqs, filters):
     This helper function enables accurate counts in the template when
     displaying number of results next to the Custom Facet(tm) name on the
     right-hand "Filter By x" column.
-    
+
     """
 
     if filters.get('facet_slug'):
@@ -584,7 +588,7 @@ def filter_sqs(sqs, filters):
         # custom facet.
         for custom_facet in custom_facets:
             sqs = sqs_apply_custom_facets([custom_facet], sqs)
-    
+
     _filters = filter(lambda x: filters.get(x) and x != 'facet_slug', filters)
 
     for f in _filters:
@@ -600,7 +604,7 @@ def filter_sqs(sqs, filters):
                     else:
                         if v != 'none':
                             sqs = sqs.narrow("city_slug:(%s)" % v)
-                        
+
         elif f == 'moc_slug':
             t = filters[f]
             try:
@@ -647,7 +651,7 @@ def featured_default_jobs(f, d, total, percent_f, offset=0):
     Returns number of featured and default jobs to display based on their
     search query result counts, number of total jobs requested, and percent
     featured
-    Inputs: 
+    Inputs:
     :f: Integer number of jobs in featured search query set
     :d: Integer number of jobs in default search query set
     :total: Total number of jobs requested
@@ -660,7 +664,7 @@ def featured_default_jobs(f, d, total, percent_f, offset=0):
     :f_offset:Start offset for featured query set, may be larger than f
     :d_offset:Start offset for default query set, may be larger than d
 
-    If offsets aren't needed, Python convention is to use _ as 
+    If offsets aren't needed, Python convention is to use _ as
     an ignore placeholder in the packing tuple i.e.:
         (a,b,_,_) = featured_default_jobs()
 
@@ -680,7 +684,7 @@ def featured_default_jobs(f, d, total, percent_f, offset=0):
     f = max(0, f)
     d = max(0, d)
 
-    #Fill percent_f of total from f 
+    #Fill percent_f of total from f
     num_featured_jobs = min(f, int(math.ceil(total * percent_f)))
 
     #Fill remaining total from d
@@ -1062,7 +1066,7 @@ def slices(seq, start=0, end=None, step=2):
     (8, 12)
 
     etc. Put another way:
-    
+
     >> x = slices(range(20), step=4)
     >> [i for i in x]
     [(0, 4), (4, 8), (8, 12), (12, 16), (16, 20), (20, 21)]
@@ -1071,7 +1075,7 @@ def slices(seq, start=0, end=None, step=2):
     multiple of 'step', we add an additional item onto the end so we make
     sure to get each item. (This is why in the example above the last
     tuple is '(20, 21)'.)
-    
+
     """
     fun = split_by
     ls = len(seq)
@@ -1082,7 +1086,7 @@ def slices(seq, start=0, end=None, step=2):
             rng = xrange(ls/step+1)
         else:
             rng = xrange(ls/step)
-            
+
         for i in rng:
             segment = fun(step, seq[start:])
             start += step
@@ -1106,7 +1110,7 @@ def create_businessunit(buid):
 
     Writes/Modifies:
     `seo_businessunit` table in the database.
-    
+
     """
     # We use BUID 0 for testing, but in all other cases the buid must be > 0.
     if buid < 0:
@@ -1131,17 +1135,17 @@ def make_json(data, host):
 
 def make_specialcommit_string(special_commits):
     """
-    Build the site commitment string here instead of multiple times in the 
+    Build the site commitment string here instead of multiple times in the
     template. Called from seo.views.search_views.job_listing_by_slug_tag and
     seo.views.search_views.
     [10-8-12 JPSOLE]
-    
+
     Inputs:
     :special_commits:      settings.COMMITMENTS.all() object
-    
+
     Returns:
     A space separated string of values in special_commits
-    
+
     """
     return ' '.join(special_commits.values_list('commit', flat=True))
 
@@ -1345,3 +1349,57 @@ def get_solr_facet(jsids, filters=None, params=None):
     result_counts = _facet_query_result_counts(tagged_facets, sqs)
     result_counts.sort(key=lambda x: -x[1])
     return result_counts
+
+
+def add_text_to_job(job):
+    # Strip html and markdown formatting from description snippets
+    try:
+        i = text_fields.index('description')
+        text_fields[i] = 'html_description'
+    except ValueError:
+        pass
+
+    h = HTMLParser()
+    text = filter(None, [getattr(job, x, "None") for x in text_fields])
+    unformatted_text = h.unescape(strip_tags(" ".join(text)))
+    setattr(job, 'text', unformatted_text)
+    return job
+
+
+def jobs_and_counts(request, filters, num_jobs):
+    sort_order = request.GET.get('sort', 'relevance')
+
+    sqs = prepare_sqs_from_search_params(request.GET)
+    default_jobs = get_jobs(default_sqs=sqs,
+                            custom_facets=settings.DEFAULT_FACET,
+                            exclude_facets=settings.FEATURED_FACET,
+                            jsids=settings.SITE_BUIDS, filters=filters,
+                            facet_limit=num_jobs, sort_order=sort_order)
+    featured_jobs = get_featured_jobs(default_sqs=sqs, filters=filters,
+                                      jsids=settings.SITE_BUIDS,
+                                      facet_limit=num_jobs,
+                                      sort_order=sort_order)
+
+    # Force the query to evaluate and populate the result cache. After this
+    # unless changes are made to the sqs objects
+    # anything using query results will be working with the same
+    # exact version of the query results (and more importantly,
+    # the query won't be re-run).
+    default_jobs[:num_jobs]
+    featured_jobs[:num_jobs]
+
+    facet_counts = default_jobs.add_facet_count(featured_jobs).get('fields')
+
+    return default_jobs, featured_jobs, facet_counts
+
+
+def get_company_data(filters):
+    if filters['company_slug']:
+        company_obj = Company.objects.filter(member=True)
+        company_obj = company_obj.filter(company_slug=filters['company_slug'])
+        if company_obj:
+            return company_thumbnails(company_obj)[0]
+        else:
+            return None
+    else:
+        return None

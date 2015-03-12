@@ -36,11 +36,11 @@ class DESearchQuerySet(SearchQuerySet):
             return self.facet_counts()
 
         facet_counts1 = self.facet_counts()
-        facet_counts2 = sqs2.query.get_facet_counts()
+        facet_counts2 = sqs2.facet_counts()
 
         # field_counts = {facet_field: [(facet_field_value, count), ...], ...}
-        field_counts1 = facet_counts1.get('fields')
-        field_counts2 = facet_counts2.get('fields')
+        field_counts1 = facet_counts1.get('fields', [])
+        field_counts2 = facet_counts2.get('fields', [])
 
         for facet_field in field_counts2:
             # field_dict = {facet_field_value: count, ...}
@@ -288,6 +288,7 @@ class DESolrSearchBackend(SolrSearchBackend):
         Overrides both search() and build_search_kwargs().
 
         """
+
         if len(query_string) == 0:
             return {
                 'results': [],
