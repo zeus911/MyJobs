@@ -1,12 +1,5 @@
-/*
-Send the user a message when they try to unload the page saying their
-progress will not be saved and will be lost.
-TODO: uncomment this and give a more meaningful message. Commented out for development purposes.
-window.addEventListener("beforeunload", function(e) {
-    e.returnValue = "\\o/";
-});
-*/
-
+// Variable to get through beforeunload listener without displaying message.
+var reload = false;
 
 // Handles storing data, rendering fields, and submitting report. See prototype functions
 var Report = function(types) {
@@ -19,7 +12,7 @@ var Report = function(types) {
 // Pulls the fields required for report type(s)
 Report.prototype.create_fields = function(types) {
    var reports = {"prm":        [new Field("Select Date", "date"),
-                                 new Field("State", "text"),
+                                 new Field("State", "state", true),
                                  new Field("City", "text"),
                                  new List("Select Partners", "partner"),
                                  new List("Select Contacts", "contact")],
@@ -41,9 +34,19 @@ Report.prototype.create_fields = function(types) {
 Report.prototype.bind_events = function() {
   var report = this;
 
+  // Send the user a message when they try to unload the page saying their
+  // progress will not be saved and will be lost.
+  /*
+  window.addEventListener("beforeunload", function(e) {
+    if (!reload) {
+      e.returnValue = "You have unsaved changes!";
+    }
+  });
+  */
+
 
   // Updates data field of Report. Also, if needed, updates Partner and Contact Lists
-  $(document.body).on("change", "input:not([id$=-all-checkbox])", function(e) {
+  $(document.body).on("change", "input:not([id$=-all-checkbox]), select", function(e) {
     var in_list = $(this).parents(".list-body").attr("id"),
         contact_wrapper = $("#contact-wrapper"),
         c_field = report.find_field("Select Contacts");
@@ -64,14 +67,10 @@ Report.prototype.bind_events = function() {
             values.push(records[element].value);
           }
         });
-        // if there were no partners selected ignore saving data.
-        if (values.length > 0) {
-          report.data[in_list] = values;
-        } else {
-          // Suppose to return 0 contacts
-          // List filter uses IDs which no object will ever have id=0
-          report.data[in_list] = "0";
-        }
+
+        // If false suppose to return 0 contacts
+        // List filter uses IDs which no object will ever have id=0
+        report.data[in_list] = values.length ? values : "0";
       }
 
       if (in_list === "partner") {
@@ -93,6 +92,7 @@ Report.prototype.bind_events = function() {
             return (prm_field.indexOf(e_id) >= 0);
           };
 
+      // Default update/save data
       report.data[$(e.currentTarget).attr("id")] = $(e.currentTarget).val();
 
       if (is_prm_field(e)) {
@@ -113,19 +113,19 @@ Report.prototype.bind_events = function() {
   $(document.body).on("click", ".list-header", function() {
     var icon = $(this).children("i");
 
-    if(icon.hasClass("fa-plus-square-o")) {
+    if (icon.hasClass("fa-plus-square-o")) {
       icon.removeClass("fa-plus-square-o").addClass("fa-minus-square-o");
-      $(this).next(".list-body").slideDown();
     } else {
       icon.removeClass("fa-minus-square-o").addClass("fa-plus-square-o");
-      $(this).next(".list-body").slideUp();
     }
+    $(this).next(".list-body").stop(true, true).slideToggle();
   });
 
 
   $(document.body).on("click", ".list-body :checkbox", function(e) {
     e.stopPropagation();
 
+    update_items_selected(this);
     update_all_checkbox(this);
   });
 
@@ -136,15 +136,22 @@ Report.prototype.bind_events = function() {
 
     checkbox.prop("checked", !checkbox.prop("checked")).change();
 
+    update_items_selected(this);
     update_all_checkbox(this);
   });
+
 
   // Clicking on all "type" checkbox will check/uncheck all checkboxes in associated list.
   $(document.body).on("click", "input[id$=-all-checkbox]", function(e) {
     e.stopPropagation();
-    var checkboxes = $(this).parent().next().find("input");
+    var checkboxes = $(this).parent().next().find("input"),
+        num_selected = $(this).siblings("span").children("span");
 
+    // Update all checkboxes with this' current state.
     checkboxes.prop("checked", $(this).prop("checked")).change();
+
+    // Update how many items in the list is selected based on this' current state. All or nothing.
+    num_selected.html($(this).prop("checked") ? checkboxes.length : "0");
   });
 
 
@@ -160,7 +167,8 @@ Report.prototype.bind_events = function() {
 
   // Actually submits the report's data to create a Report object in db.
   $(document.body).on("click", "#gen-report", function(e) {
-    var data = {"csrfmiddlewaretoken": read_cookie("csrftoken"), "ignore_cache": true},
+    var csrf = read_cookie("csrftoken"),
+        data = {"csrfmiddlewaretoken": csrf, "ignore_cache": true},
         url = location.protocol + "//" + location.host + "/reports/ajax/render/mypartners/contactrecord";
     if (report.data) {
       $.extend(data, report.data);
@@ -175,9 +183,23 @@ Report.prototype.bind_events = function() {
       delete data.contact;
       data.contact_name = new_list;
     }
-
-    window.location = url + '?' + $.param(data);
-
+    $.ajaxSettings.traditional = true;
+    $.ajax({
+      type: 'POST',
+      url: url,
+      data: $.param(data, true),
+      dataType: "json",
+      global: false,
+      success: function (data) {
+        reload = true;
+        var new_url = location.protocol + '//' + location.host + location.pathname,
+            form = $('<form action="'+ new_url +'" method="POST" style="display: none;">' +
+          '<input type="hidden" name="csrfmiddlewaretoken" value="' + csrf + '" />"' +
+          '<input type="hidden" name="success" value="true" /> </form>');
+        $('body').append(form);
+        form.submit();
+      }
+    });
   });
 };
 
@@ -193,25 +215,26 @@ Report.prototype.readable_data = function() {
     if (data.hasOwnProperty(key)) {
       value = data[key];
 
-      // Replace _ with spaces
+      // Replace all '_' instances with spaces
       key = key.replace(/_/g, " ");
 
-      html += "<label>" + key + ":</label>";
+      if (value) {
+        html += "<label>" + key + ":</label>";
+      }
 
       // If value is an object (aka a list).
       if (typeof value === "object") {
-        var ul = $("<ul></ul>");
+        var items = [],
+            i;
 
-        // fill ul with li's.
-        for (var i = 0; i < value.length; i++) {
-          var name = $("#" + key + " input[value='" + value[i] + "']").next("span").html(),
-              li = $("<li>" + name + "</li>");
-          ul.append(li);
+        // grab names associated by value.
+        for (i = 0; i < value.length; i++) {
+          items.push($("#" + key + " input[value='" + value[i] + "']").next("span").html());
         }
 
-        html += ul.prop("outerHTML");
+        html += "<ul><li>" + items.join('</li><li>') + '</li></ul>';
       } else {
-        html += value;
+        html += key === "state" ? $("#state option[value=" + value + "]").html() : value;
       }
     }
   }
@@ -231,10 +254,10 @@ Report.prototype.find_field = function(field_label) {
 Report.prototype.render_fields = function(fields) {
   var container = $("#container"),
       html = '',
-      i = 0;
+      i;
 
   // for field in fields render.
-  for (i; i < fields.length; i++) {
+  for (i = 0; i < fields.length; i++) {
     html += fields[i].render();
   }
 
@@ -243,9 +266,10 @@ Report.prototype.render_fields = function(fields) {
 };
 
 
-var Field = function(label, type) {
+var Field = function(label, type, required) {
   this.label = label;
   this.type = type;
+  this.required = typeof required !== 'undefined';
 };
 
 
@@ -272,14 +296,24 @@ Field.prototype.render = function() {
     html += l.prop("outerHTML");
     html += date_widget.prop("outerHTML");
   } else if (this.type === "state") {
-    // TODO: ajax state dropdown
+    html += "<label>State</label><div class='state'></div>";
+    (function() {
+      $.ajax({
+        type: "POST",
+        url: location.protocol + "//" + location.host + "/reports/ajax/get-states",
+        data: {"csrfmiddlewaretoken": read_cookie("csrftoken")},
+        success: function(data) {
+          $(".state").html(data);
+        }
+      });
+    })();
   }
   return html;
 };
 
 
-var List = function(label, type) {
-  Field.call(this, label, type);
+var List = function(label, type, required) {
+  Field.call(this, label, type, required);
 };
 
 
@@ -292,22 +326,13 @@ List.prototype.render = function(filter) {
   var container = $("<div id='"+ this.type +"-header' class='list-header'></div>"),
       icon = $("<i class='fa fa-plus-square-o'></i>"),
       all_checkbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />"),
-      record_count,
+      record_count = $("<span style='display: none;'>(<span>0</span> "+ this.type.capitalize() +"s Selected)</span>"),
       html,
       body = $("<div id='"+ this.type +"' class='list-body' style='display: none;'></div>"),
       wrapper = $("<div id='"+ this.type +"-wrapper'></div>"),
       list = this;
 
-  if (this.type === "contact") {
-    record_count = $("<span style='display: none;'>(<span>0</span> Contacts Selected)</span>");
-    container.append(icon).append(all_checkbox).append(" All Contacts ").append(record_count);
-  } else if (this.type === "partner") {
-    record_count = $("<span style='display: none;'>(<span>0</span> Partners Selected)</span>");
-    container.append(icon).append(all_checkbox).append(" All Partners ").append(record_count);
-  } else {
-    record_count = $("<span style='display: none;'>(<span>0</span> "+ this.type +" Selected)</span>");
-    container.append(icon).append(all_checkbox).append(" All " + this.type + " ").append(record_count);
-  }
+  container.append(icon).append(all_checkbox).append(" All " + this.type.capitalize() + "s ").append(record_count);
 
   wrapper.append(container).append(body);
   html = wrapper.prop("outerHTML");
@@ -367,14 +392,25 @@ List.prototype.filter = function(type, filter) {
       }
 
       // render
+<<<<<<< HEAD
       $("#"+ type + ".list-body").append(ul);
       $(selected).html(data.length).parent().show("fast");
+=======
+      $("#"+ type + ".list-body").html('').append(ul);
+      $(selected).html(data.records.length).parent().show("fast");
+>>>>>>> pd-978-additions
     },
     error: function(e) {
       // TODO: change when testing is done to something more useful.
       console.error("Something horrible happened.");
     }
   });
+};
+
+
+// Capitalize first letter of a string.
+String.prototype.capitalize = function() {
+  return this.charAt(0).toUpperCase() + this.slice(1);
 };
 
 
@@ -417,8 +453,6 @@ $(document).ready(function() {
     report = new Report(types);
     report.bind_events();
     $("#container").addClass("rpt-container");
-    $("#back").hide();
-    $(".rpt-buttons").removeClass("no-show");
     report.render_fields(report.fields);
   });
 
@@ -447,3 +481,14 @@ function update_all_checkbox(element) {
 
   all_checkbox.prop("checked", checked.length === checkboxes.length);
 }
+<<<<<<< HEAD
+=======
+
+
+function update_items_selected(element) {
+  var checked = $(element).parents(".list-body").find(":checked"),
+      num_selected = $(element).parents(".list-body").prev().children("span").children("span");
+
+  num_selected.html(checked.length);
+}
+>>>>>>> pd-978-additions

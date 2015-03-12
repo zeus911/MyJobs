@@ -24,16 +24,28 @@ from universal.decorators import company_has_access
 @restrict_to_staff()
 def reports(request):
     """The Reports app landing page."""
+    company = get_company_or_404(request)
+
+    success = 'success' in request.POST
+
+    ctx = {
+        "company": company,
+        "success": success
+    }
+
+    return render_to_response('myreports/reports.html', ctx,
+                              RequestContext(request))
+
+
+def get_states(request):
     if request.is_ajax():
         response = HttpResponse()
-        template = '{path}.html'
-        html = render_to_response(template.format(path=request.POST['output']),
+        html = render_to_response('includes/state_dropdown.html',
                                   {}, RequestContext(request))
         response.content = html.content
         return response
-
-    return render_to_response('myreports/reports.html', {},
-                              RequestContext(request))
+    else:
+        raise Http404
 
 
 def parse_params(querydict):
