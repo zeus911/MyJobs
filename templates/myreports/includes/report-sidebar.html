@@ -4,9 +4,9 @@
         <div class="report">
             <a>{{ report.name }}</a>
             <div class="icon-set">
-                <i class="fa fa-eye" title="View"></i>
-                <i class="fa fa-copy" title="Clone Report"></i>
-                <i id="report-{{ report.id }}" class="fa fa-download" title="Export"></i>
+                <i id="view-{{ report.id }}" class="fa fa-eye" title="View"></i>
+                <i id="clone-{{ report.id }}" class="fa fa-copy" title="Clone Report"></i>
+                <i id="export-{{ report.id }}" class="fa fa-download" title="Export"></i>
             </div>
         </div>
     {% empty %}

@@ -10,12 +10,13 @@ var Report = function(types) {
 
 
 // Pulls the fields required for report type(s)
+// Field Params: label, type, required, value
 Report.prototype.create_fields = function(types) {
    var reports = {"prm":        [new Field("Select Date", "date"),
-                                 new Field("State", "state", true),
+                                 new Field("State", "state"),
                                  new Field("City", "text"),
-                                 new List("Select Partners", "partner"),
-                                 new List("Select Contacts", "contact")]},
+                                 new List("Select Partners", "partner", true),
+                                 new List("Select Contacts", "contact", true)]},
         fields = [],
         key;
 
@@ -24,7 +25,7 @@ Report.prototype.create_fields = function(types) {
       fields.push.apply(fields, reports[types[key]]);
     }
   }
-  fields.unshift(new Field("Report Name", "text", true));
+  fields.unshift(new Field("Report Name", "text", true, format_date(new Date())));
   return fields;
 };
 
@@ -42,6 +43,12 @@ Report.prototype.bind_events = function() {
     }
   });
   */
+
+  // Because this is pre-filled and will normally be a pretty long this
+  // just selects text on focus for easy editing. UX-goodness
+  $(document.body).on("focus", "#report_name", function() {
+    $(this).select();
+  });
 
 
   // Updates data field of Report. Also, if needed, updates Partner and Contact Lists
@@ -265,10 +272,11 @@ Report.prototype.render_fields = function(fields) {
 };
 
 
-var Field = function(label, type, required) {
+var Field = function(label, type, required, value) {
   this.label = label;
   this.type = type;
   this.required = typeof required !== 'undefined';
+  this.value = value || '';
 };
 
 
@@ -281,8 +289,13 @@ Field.prototype.render = function() {
       date_widget,
       date_picker;
 
+  // Indication that the field is required.
+  if (this.required) {
+    l.append("<span style='color: red;'>*</span>");
+  }
+
   if (this.type === "text") {
-    input = $("<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "' type='text' placeholder='"+ this.label +"' />");
+    input = $("<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "' type='text' placeholder='"+ this.label +"' value='" + this.value + "' />");
     wrapper.append(l).append(input);
     html = wrapper.prop("outerHTML");
   } else if (this.type === "date") {
@@ -295,7 +308,7 @@ Field.prototype.render = function() {
     html += l.prop("outerHTML");
     html += date_widget.prop("outerHTML");
   } else if (this.type === "state") {
-    html += "<label>State</label><div class='state'></div>";
+    html += l.prop("outerHTML") + "<div class='state'></div>";
     (function() {
       $.ajax({
         type: "POST",
@@ -422,6 +435,9 @@ String.prototype.capitalize = function() {
 
 
 $(document).ready(function() {
+  var sidebar = $(".sidebar");
+
+
   // For date widget.
   $(document.body).on("click", ".datepicker",function(e) {
    $(this).pickadate({
@@ -478,7 +494,51 @@ $(document).ready(function() {
       $("#start-report").addClass("disabled");
     }
   });
+
+
+  // View Report
+  sidebar.on("click", ".fa-eye", function() {
+    var report_id = $(this).attr("id").split("-")[1];
+    console.log("View Report ID: ", report_id);
+  });
+
+
+  // Clone Report
+  sidebar.on("click", ".fa-copy", function() {
+    var report_id = $(this).attr("id").split("-")[1];
+    console.log("Clone Report ID: ", report_id);
+  });
+
+
+  // Export Report
+  sidebar.on("click", ".fa-download", function() {
+    var report_id = $(this).attr("id").split("-")[1];
+    console.log("Export Report ID: ", report_id);
+  });
 });
+
+
+function format_date(date) {
+  var year = date.getFullYear(),
+      month = date.getMonth(),
+      day = date.getDate(),
+      hours = date.getHours(),
+      minutes = date.getMinutes(),
+      seconds = date.getSeconds(),
+      milliseconds = date.getMilliseconds();
+
+  function turn_two_digit(value) {
+    return value < 10 ? "0" + value : value;
+  }
+
+  month = turn_two_digit(parseInt(month) + 1);
+  day = turn_two_digit(day);
+  hours = turn_two_digit(hours);
+  minutes = turn_two_digit(minutes);
+  seconds = turn_two_digit(seconds);
+
+  return year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds + "." + milliseconds;
+}
 
 
 function update_all_checkbox(element) {
