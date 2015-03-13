@@ -639,6 +639,7 @@ def stylesheet(request, cid=None, css_file="stylesheet.css"):
                               context_instance=RequestContext(request),
                               content_type="text/css",)
 
+
 @custom_cache_page
 def posting_stylesheet(request, cid=None, css_file="posting-stylesheet.css"):
     """
@@ -1207,14 +1208,14 @@ def company_listing(request, alpha=None, group=None):
         companies = Company.objects.filter(job_source_ids__in=buids).\
             exclude(company_slug='').distinct()
 
-        if group=='member':
+        if group == 'member':
             companies = companies.filter(member=True)
 
     # Get ordered list of first character of company names (used to determine
     # what buttons to display).
     alpha_filters = set()
     for co in companies:
-        if (len(alpha_filters)==27):
+        if len(alpha_filters) == 27:
             break
         alpha_filters.add(co.company_slug[0] if co.company_slug[0].isalpha()
                              else '0-9')
