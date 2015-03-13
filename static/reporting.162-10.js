@@ -15,9 +15,7 @@ Report.prototype.create_fields = function(types) {
                                  new Field("State", "state", true),
                                  new Field("City", "text"),
                                  new List("Select Partners", "partner"),
-                                 new List("Select Contacts", "contact")],
-                  "compliance": [new Field("test", "text"),
-                                 new Field("test2", "text")]},
+                                 new List("Select Contacts", "contact")]},
         fields = [],
         key;
 
@@ -57,7 +55,7 @@ Report.prototype.bind_events = function() {
           records = $($(this).parents(".list-body").find("input")),
           values = [];
 
-      if (all_records.is(":checked")) {
+      if (all_records.is(":checked") && $(this).is(":checked")) {
         report.data[in_list] = "";
       } else {
         // iterate through all checkboxes and find all the ones that are checked
