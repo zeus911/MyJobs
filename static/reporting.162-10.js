@@ -24,6 +24,7 @@ Report.prototype.create_fields = function(types) {
       fields.push.apply(fields, reports[types[key]]);
     }
   }
+  fields.unshift(new Field("Report Name", "text", true));
   return fields;
 };
 
@@ -325,19 +326,32 @@ List.prototype.render = function(filter) {
       icon = $("<i class='fa fa-plus-square-o'></i>"),
       all_checkbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />"),
       record_count = $("<span style='display: none;'>(<span>0</span> "+ this.type.capitalize() +"s Selected)</span>"),
-      html,
       body = $("<div id='"+ this.type +"' class='list-body' style='display: none;'></div>"),
       wrapper = $("<div id='"+ this.type +"-wrapper'></div>"),
-      list = this;
+      prm_fields = ["start_date", "end_date", "state", "city"],
+      copied_filter = $.extend({}, filter),
+      list = this,
+      key,
+      html;
 
   container.append(icon).append(all_checkbox).append(" All " + this.type.capitalize() + "s ").append(record_count);
 
   wrapper.append(container).append(body);
   html = wrapper.prop("outerHTML");
 
+  if (this.type === "partner" || this.type === "contact") {
+    for (key in copied_filter) {
+      if (copied_filter.hasOwnProperty(key)) {
+        if (prm_fields.indexOf(key) === -1) {
+          delete copied_filter[key];
+        }
+      }
+    }
+  }
+
   // Asynchronously renders a list of records based on list type.
   (function() {
-    list.filter(list.type, filter);
+    list.filter(list.type, copied_filter);
   })();
 
   return html;

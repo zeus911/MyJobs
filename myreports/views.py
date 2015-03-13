@@ -30,7 +30,7 @@ def reports(request):
 
     success = 'success' in request.POST
 
-    reports = Report.objects.filter(owner=company)
+    reports = Report.objects.filter(owner=company).order_by("-created_on")
 
     ctx = {
         "company": company,
@@ -140,7 +140,7 @@ def create_report(request, app, model):
     company = get_company_or_404(request)
     user = request.user
     path = request.get_full_path()
-    params = parse_params(request.GET)
+    params = parse_params(request.POST)
 
     params.pop('csrfmiddlewaretoken', None)
     name = params.pop('report_name', datetime.now())
