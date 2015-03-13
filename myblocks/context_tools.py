@@ -24,6 +24,8 @@ class Memoized(object):
         self.cache = {}
 
     def __call__(self, *args, **kwargs):
+        if not settings.MEMOIZE:
+            return self.func(*args, **kwargs)
         if not isinstance(args, collections.Hashable) or kwargs:
             return self.func(*args, **kwargs)
         if args in self.cache:
