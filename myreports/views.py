@@ -30,9 +30,12 @@ def reports(request):
 
     success = 'success' in request.POST
 
+    reports = Report.objects.filter(owner=company)
+
     ctx = {
         "company": company,
-        "success": success
+        "success": success,
+        "past_reports": reports
     }
 
     return render_to_response('myreports/reports.html', ctx,

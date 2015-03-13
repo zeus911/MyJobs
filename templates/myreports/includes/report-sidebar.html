@@ -2,12 +2,12 @@
     <h2 class="top">Past Reports</h2>
     {% for report in past_reports %}
         <div class="report">
-            {{ report.name }}
+            <a>{{ report.name }}</a>
             <div class="icon-set pull-right">
+                <i class="fa fa-eye" title="View"></i>
                 <i class="fa fa-copy" title="Clone Report"></i>
-                <i id="{{ report.id }}" class="fa fa-download" title="Export"></i>
+                <i id="report-{{ report.id }}" class="fa fa-download" title="Export"></i>
             </div>
-            <div class="clearfix"></div>
         </div>
     {% empty %}
         No past reports

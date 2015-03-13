@@ -1460,6 +1460,43 @@ h3.bottom-bordered {
     width: 100%;
 }
 
+.sidebar .report {
+    box-sizing: border-box;
+    padding: 2px 0;
+    position: relative;
+}
+
+.sidebar .report > a {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 210px;
+    white-space: nowrap;
+}
+
+.sidebar .report:hover {
+    background-color: #D5FACF;
+}
+
+.sidebar .icon-set {
+    position: absolute;
+    right: 0;
+    top: 3px;
+    width: 65px;
+}
+
+.icon-set i {
+    font-size: 16px;
+}
+
+.icon-set i + i {
+    margin-left: 5px;
+}
+
+.sidebar .report i:hover {
+    cursor: pointer;
+}
+
 
 /* Sort by field in saved search save/edit */
 #saved-search-form label[for^='id_sort_by'],
