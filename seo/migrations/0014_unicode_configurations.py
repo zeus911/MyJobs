@@ -9,7 +9,6 @@ class Migration(DataMigration):
     def forwards(self, orm):
         if connection.vendor == 'sqlite':
             return True
-
         # Convert Configuration model to UTF-8
         db.execute("ALTER TABLE seo_configuration "
                    "CONVERT TO CHARACTER SET utf8 "
