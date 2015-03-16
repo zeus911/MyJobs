@@ -56,154 +56,97 @@
         </table>
     </div>{# /feed-page #}
     <div class="span4">
-        {% if partner %}
         <div class="sidebar">
-            <h2 class="top">Details {% make_label search.is_active "pull-right"%}</h2>
-            <b>Search URL</b>
-            <br/>
-            <span>
-                <a href="{{search.url}}" target="_blank">{{search.url|truncatechars:40}}</a>
-            </span>
-            <br/><br/>
-            <b>Source Codes &amp; Campaigns</b>
-            <br/>
-            <span>{% if search.url_extras %}{{ search.url_extras }}{% else %}None{% endif %}</span>
-            <br/><br/>
-            <b>Frequency</b>
-            <br/>
+            <h2 class="top">{% trans 'Details' %} {% make_label search.is_active "pull-right" %}</h2>
+
+            <b>{% trans 'Search URL:' %}</b>
+            <br />
+            <a href="{{ search.url }}" target="_blank">{{ search.url|truncatechars:40 }}</a>
+
+            {% if partner %}
+                <br /><br />
+                <b>{% trans 'Source Codes & Campaigns:'%}</b>
+                <br />
+                <span>{% if search.url_extras %}{{ search.url_extras }}{% else %}None{% endif %}</span>
+            {% endif %}
+
+            <br /><br />
+            <b>{% trans 'Frequency:' %}</b>
+            <br />
             <span>
                 {% if search.frequency == 'D' %}
-                Daily
+                    Daily
                 {% elif search.frequency == 'W' %}
-                Weekly on {{search.get_verbose_dow}}
+                    Weekly on {{ search.get_verbose_dow }}
                 {% else %}
-                Monthly on the {{search.day_of_month|ordinal}}
+                    Monthly on the {{ search.day_of_month|ordinal }}
                 {% endif %}
             </span>
-            <br/><br/>
-            <b>Sort By</b>
-            <br/>
-            <span>
-                {{search.sort_by}}
-            </span>
-            <br/><br/>
-            <b>Last Sent</b>
-            <br/>
-            <span>
-                {% if search.last_sent %}{{search.last_sent}}{% else %}Never{% endif %}
-            </span>
-            <br/><br/>
-            <b>Sent To</b>
-            <br/>
-            <span>
-                {{search.email}}
-            </span>
-            <br/><br/>
-            <b>Jobs per Email</b>
-            <br/>
-            <span>{{ search.jobs_per_email }}{% if new_jobs != search.jobs_per_email %} ({{ new_jobs }} new){% endif %}</span>
-            <br/><br/>
-            <b>Tags</b>
-            <br/>
-            {% if search.tags %}
+
+            <br /><br />
+            <b>{% trans 'Sort By:' %}</b>
+            <br />
+            <span>{{ search.sort_by }}</span>
+
+            <br /><br />
+            <b>{% trans 'Last Sent:' %}</b>
+            <br />
+            <span>{% if search.last_sent %}{{ search.last_sent }}{% else %}Never{% endif %}</span>
+
+            <br /><br />
+            <b>{% trans 'Sent To:' %}</b>
+            <br />
+            <span>{{ search.email }}</span>
+
+            {% if partner %}
+                <br /><br />
+                <b>{% trans 'Jobs per Email:' %}</b>
+                <br />
+                <span>{{ search.jobs_per_email }}{% if new_jobs != search.jobs_per_email %} ({{ new_jobs }} new){% endif %}</span>
+
+                <br /><br />
+                <b>{% trans 'Tags:' %}</b>
+                <br />
                 {% for tag in search.tags.all %}
-                <span class="tag-name small" style="background-color: #{{tag.hex_color}}">{{ tag.name }}</span>
+                    <span class="tag-name-small" style="background-color: #{{ tag.hex_color }}">{{ tag.name }}</span>
+                {% empty %}
+                    <span>None Provided</span>
                 {% endfor %}
-            {% else %}
-                None Provided
             {% endif %}
-            <br/><br/>
-            <b>Notes</b>
-            <br/>
+
+            <br /><br />
+            <b>{% trans 'Notes:' %}</b>
+            <br />
             <span>
                 {% if search.notes %}
-                {{ search.notes }}
+                    {{ search.notes }}
                 {% else %}
-                None Provided
+                    None Provided
                 {% endif %}
             </span>
+
             <div class="navigation">
-                <h2>Navigation</h2>
-                <a href="{% url 'partner_edit_search' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ search.partnersavedsearch.id }}" class="btn edit">Edit</a>
-                <a href="{% url 'partner_edit_search' %}?company={{ company.id }}&partner={{ partner.id }}&copies={{ search.partnersavedsearch.id }}" 
-                   class="btn copy"
-                   title="This will create a copy of this saved search to be sent to a different contact.">Copy</a>
+                <h2>{% trans 'Navigation' %}</h2>
+                {% if not is_pss %}
+                    <a href="{% url 'edit_search' %}?id={{ search.id }}" class="btn edit">Edit</a>
+                {% else %}
+                    {% if not partner %}
+                        <a href="{% url 'edit_search' %}?id={{ search.id }}&pss=True" class="btn edit">Edit</a>
+                    {% else %}
+                        <a href="{% url 'partner_edit_search' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ search.partnersavedsearch.id }}" class="btn edit">Edit</a>
+                        <a href="{% url 'partner_edit_search' %}?company={{ company.id }}&partner={{ partner.id }}&copies={{ search.partnersavedsearch.id }}"
+                           class="btn copy"
+                           title="This will create a copy of this saved search to be sent to a different contact.">Copy</a>
+                    {% endif %}
+                {% endif %}
+                {% if not partner %}
+                    <a onclick="history.go(-1); return true;" class="btn">Back</a>
+                {% endif %}
+                {% if settings.DEBUG %}
+                    <a href="{% url 'send_saved_search' %}?id={{ search.id }}{% if is_pss and partner %}&is_pss=true{% endif %}" class="btn send">Send</a>
+                {% endif %}
             </div>
         </div>
-        {% else %}
-        <div class="formBox" id="saved-search-listing-details">
-            <h2>{% trans 'Details' %} {% make_label search.is_active "pull-right"%}</h2>
-
-            <div>
-                <b>{% trans 'Search URL:' %}</b>
-                <div class="clear"></div>
-                <a href="{{search.url}}" target="_blank">{{search.url|truncatechars:40}}</a>
-            </div>
-
-            <div>
-                <b>{% trans 'Frequency:' %}</b>
-                <div class="clear"></div>
-
-                {% if search.frequency == 'D' %}
-
-                Daily
-
-                {% elif search.frequency == 'W' %}
-
-                Weekly on {{search.get_verbose_dow}}
-
-                {% else %}
-
-                Monthly on the {{search.day_of_month|ordinal}}
-
-                {% endif %}
-
-            </div>
-            <div>
-                <b>{% trans 'Sort By:' %}</b>
-                <div class='clear'></div>
-                {{search.sort_by}}
-            </div>
-
-            <div>
-                <b>{% trans 'Last Sent:' %}</b>
-                <div class="clear"></div>
-                {% if search.last_sent %}{{search.last_sent}}{% else %}Never{% endif %}
-            </div>
-
-            <div>
-                <b>{% trans 'Sent To:' %}</b>
-                <div class="clear"></div>
-                {{search.email}}
-            </div>
-
-            <div>
-                <b>{% trans 'Notes:' %}</b>
-                <div class="clear"></div>
-
-                {% if search.notes %}
-                {{ search.notes }}
-                {% else %}
-                None Provided
-                {% endif %}
-            </div>
-
-            <div class="pull-right">
-                {% if not is_pss %}
-                <a href="{% url 'edit_search' %}?id={{ search.id }}" class="btn edit">Edit</a>
-                {% else %}
-                {# This check is coming from PRM, view: partner_view_full_feed #}
-                {% if not partner %}
-                <a href="{% url 'edit_search' %}?id={{ search.id }}&pss=True" class="btn edit">Edit</a>
-                {% else %}
-                <a href="{% url 'partner_edit_search' %}?company={{ company.id }}&partner={{ partner.id }}&id={{ search.partnersavedsearch.id }}" class="btn edit">Edit</a>
-                {% endif %}
-                {% endif %}
-                <a onclick="history.go(-1); return true;" class="btn">Back</a>
-            </div>
-            <div class="clear"></div>
-        </div>{# /saved-search-listing-details #}
-        {% endif %}
     </div>
 </div>
 {% endblock content %}

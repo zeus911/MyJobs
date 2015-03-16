@@ -1,6 +1,7 @@
 import json
 from datetime import date, timedelta
 
+from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
@@ -353,3 +354,24 @@ def saved_search_widget(request):
 
     return HttpResponse("%s(%s)" % (callback, json.dumps(html.content)),
                         content_type='text/javascript')
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def send_saved_search(request):
+    if settings.DEBUG:
+        search_id = request.GET.get('id')
+        search = SavedSearch.objects.get(pk=search_id)
+        search.send_email()
+        if request.GET.get('is_pss'):
+            search = search.partnersavedsearch
+            redirect_to = reverse('partner_view_full_feed') + \
+                '?partner={partner_id}&id={search_id}'.format(
+                    partner_id=search.partner.pk,
+                    search_id=search.pk
+                )
+        else:
+            redirect_to = reverse('view_full_feed') + '?id={search_id}'.format(
+                search_id=search_id)
+        return HttpResponseRedirect(redirect_to)
+    else:
+        raise Http404()
