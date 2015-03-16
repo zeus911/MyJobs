@@ -72,7 +72,7 @@
             </a>
             <div style="display: block; margin-bottom: 5px;"></div>
             {% endif %}
-            <a href="https://secure.my.jobs{% get_created_url saved_search %}" class="btn">
+            <a href="{{ saved_search.url }}" class="btn">
                 View "{{ saved_search.label }}"
             </a>
             <br>

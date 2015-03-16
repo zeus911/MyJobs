@@ -167,7 +167,7 @@ Report.prototype.bind_events = function() {
   $(document.body).on("click", "#gen-report", function(e) {
     var csrf = read_cookie("csrftoken"),
         data = {"csrfmiddlewaretoken": csrf, "ignore_cache": true},
-        url = location.protocol + "//" + location.host + "/reports/ajax/mypartners/contactrecord";
+        url = location.protocol + "//" + location.host + "/reports/ajax/render/mypartners/contactrecord";
     if (report.data) {
       $.extend(data, report.data);
     }
@@ -358,9 +358,9 @@ List.prototype.filter = function(type, filter) {
   if (type === "partner") {
     // annotate how many records a partner has.
     $.extend(data, {"count": "contactrecord"});
-    url += "/reports/ajax/mypartners/partner";
+    url += "/reports/ajax/get/mypartners/partner";
   } else if (type === "contact") {
-    url += "/reports/ajax/mypartners/contact";
+    url += "/reports/ajax/get/mypartners/contact";
   }
 
   $.ajaxSettings.traditional = true;
@@ -377,8 +377,8 @@ List.prototype.filter = function(type, filter) {
           li;
 
       // fill ul with li's
-      for (var i = 0; i < data.records.length; i++) {
-        record = data.records[i];
+      for (var i = 0; i < data.length; i++) {
+        record = data[i];
         li = $("<li><input type='checkbox' value='"+ record.pk +"' checked /> <span>"+ record.name +"</span></li>");
 
         // add record count to right of partners
@@ -391,7 +391,7 @@ List.prototype.filter = function(type, filter) {
 
       // render
       $("#"+ type + ".list-body").html('').append(ul);
-      $(selected).html(data.records.length).parent().show("fast");
+      $(selected).html(data.length).parent().show("fast");
     },
     error: function(e) {
       // TODO: change when testing is done to something more useful.

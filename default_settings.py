@@ -260,6 +260,7 @@ INSTALLED_APPS = (
     'saved_search',
     'taggit',
     'fsm',
+    'report_tools',
 )
 
 # Captcha SSL
@@ -271,7 +272,7 @@ CAPTCHA_AJAX = True
 PROJECT_APPS = ('myjobs', 'myprofile', 'mysearches', 'registration',
                 'mydashboard', 'mysignon', 'mymessages', 'mypartners',
                 'solr', 'postajob', 'moc_coding', 'seo', 'social_links',
-                'wildcard', 'myblocks', 'myemails', )
+                'wildcard', 'myblocks', 'myemails', 'myreports')
 
 INSTALLED_APPS += PROJECT_APPS
 
@@ -576,3 +577,6 @@ EMAIL_FORMATS = {
         'subject': '{company_name} Saved Search Updated - {label}',
     },
 }
+
+
+MEMOIZE = True
