@@ -679,7 +679,6 @@ def partner_view_full_feed(request):
         'company': company,
         'start_date': start_date,
         'count': count,
-        'new_jobs': len([item for item in items if item.get('new')]),
     }
 
     return render_to_response('mysearches/view_full_feed.html', ctx,
