@@ -973,10 +973,11 @@ class SeoSiteTestCase(DirectSEOTestCase):
         bu.save()
 
         default_job.update({
-                    'buid':'1',
-                    'mapped_moc':[moc],
-                    'mapped_mocid':[moc.id],
-                    'onet':'1234'})
+            'buid': '1',
+            'mapped_moc': [moc],
+            'mapped_mocid': [moc.id],
+            'onet': '1234'
+        })
 
         self.conn.add([default_job])
 
