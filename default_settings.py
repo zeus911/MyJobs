@@ -70,11 +70,11 @@ STATICFILES_FINDERS = (
 ADMIN_MEDIA_PREFIX = '//d2e48ltfsb5exy.cloudfront.net/myjobs/admin/'
 
 TEMPLATE_LOADERS = (
-    #('django.template.loaders.cached.Loader', (
+    ('django.template.loaders.cached.Loader', (
         'django.template.loaders.filesystem.Loader',
         'django.template.loaders.app_directories.Loader',
         'django.template.loaders.eggs.Loader',
-    #)),
+    )),
 )
 
 MIDDLEWARE_CLASSES = (
@@ -149,6 +149,10 @@ CELERY_ROUTES = {
     'tasks.priority_etl_to_solr': {
         'queue': 'priority',
         'routing_key': 'priority.update_solr'
+    },
+    'tasks.task_clear_bu_cache': {
+        'queue': 'priority',
+        'routing_key': 'priority.clear_cache'
     },
     'tasks.send_search_digest': {
         'queue': 'myjobs',
@@ -260,6 +264,7 @@ INSTALLED_APPS = (
     'saved_search',
     'taggit',
     'fsm',
+    'report_tools',
 )
 
 # Captcha SSL
@@ -271,7 +276,7 @@ CAPTCHA_AJAX = True
 PROJECT_APPS = ('myjobs', 'myprofile', 'mysearches', 'registration',
                 'mydashboard', 'mysignon', 'mymessages', 'mypartners',
                 'solr', 'postajob', 'moc_coding', 'seo', 'social_links',
-                'wildcard', 'myblocks', 'myemails', )
+                'wildcard', 'myblocks', 'myemails', 'myreports')
 
 INSTALLED_APPS += PROJECT_APPS
 
@@ -576,3 +581,5 @@ EMAIL_FORMATS = {
         'subject': '{company_name} Saved Search Updated - {label}',
     },
 }
+
+MEMOIZE = True

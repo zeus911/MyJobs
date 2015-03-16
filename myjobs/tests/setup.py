@@ -21,6 +21,7 @@ class MyJobsBase(TestCase):
             'mymessages.context_processors.message_lists',
         )
         setattr(settings, 'TEMPLATE_CONTEXT_PROCESSORS', context_processors)
+        setattr(settings, 'MEMOIZE', False)
 
     def tearDown(self):
         self.ms_solr.delete(q='*:*')

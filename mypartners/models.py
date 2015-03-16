@@ -68,7 +68,7 @@ class SearchParameterQuerySet(models.query.QuerySet):
             If the model has a `_parse_parameters` method, that is called
             before parsing remaining parameters.
         """
-
+        parameters = (parameters or {}).copy()
         # only return records the current user has access to
         if company:
             company_ref = getattr(self.model, 'company_ref', 'company')

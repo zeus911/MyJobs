@@ -3,7 +3,8 @@ from django.contrib import admin
 from django.db.models.loading import cache as model_cache
 from django.views.generic import RedirectView
 
-from seo.views.search_views import BusinessUnitAdminFilter, SeoSiteAdminFilter
+from seo.views.search_views import (BusinessUnitAdminFilter, SeoSiteAdminFilter,
+                                    Dseo404)
 from registration import views as registration_views
 
 # This is a bit of code pulled from a Django TRAC ticket describing a problem
@@ -45,7 +46,7 @@ v1_api.register(JobSearchResource())
 v1_api.register(JobResource())
 
 admin.autodiscover()
-handler404 = 'seo.views.search_views.dseo_404'
+handler404 = Dseo404.as_view()
 handler500 = 'seo.views.search_views.dseo_500'
 
 
