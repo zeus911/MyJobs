@@ -722,7 +722,6 @@ def syndication_feed(request, filter_path, feed_type):
         start_date = now - datetime.timedelta(days=days_ago)
         jobs = jobs.filter(date_new__gte=start_date)
 
-
     try:
         j = jobs[0]
     except IndexError:
@@ -733,9 +732,10 @@ def syndication_feed(request, filter_path, feed_type):
     else:
         buid_last_written = datetime.datetime.now()
 
-    qs = jobs.values('city', 'company', 'country', 'country_short', 'date_new',
-                     'description', 'location', 'reqid', 'state', 'state_short',
-                     'title', 'uid', 'guid')[offset:offset+num_items]
+    qs = jobs.values('city', 'company', 'country', 'country_short',
+                     'date_new', 'description', 'location', 'reqid', 'state',
+                     'state_short', 'title', 'uid', 'guid',
+                     'is_posted')[offset:offset+num_items]
 
     self_link = ExtraValue(name="link", content="",
                            attributes={'href': request.build_absolute_uri(),

@@ -1887,13 +1887,13 @@ class SeoViewsTestCase(DirectSEOTestCase):
 
         with connection(connections_info=solr_settings.HAYSTACK_CONNECTIONS):
             known_url = 'http://testserver/11111111111111111111111111111111'
+            postajob_url = 'http://testserver/%s/job/' % job_location.guid
             for feed_type in feed_types:
                 resp = self.client.get('/feed/%s' % feed_type)
 
                 # Confirm that the url for a posted job is correct in the
                 # feed.
-                self.assertIn('http://testserver/%s/job/' % job_location.guid,
-                              resp.content)
+                self.assertIn(postajob_url, resp.content)
                 # Confirm that the url for a normal job is correct
                 # in the feed.
                 self.assertIn(known_url, resp.content)
