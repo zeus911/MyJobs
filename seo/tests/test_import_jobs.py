@@ -4,7 +4,9 @@ import os
 from django.conf import settings
 
 from seo_pysolr import Solr
-from import_jobs import DATA_DIR, add_company, remove_expired_jobs, update_solr
+from import_jobs import (DATA_DIR, add_company, remove_expired_jobs, update_solr, get_jobs_from_zipfile,
+    filter_current_jobs)
+
 from seo.models import BusinessUnit, Company
 from seo.tests.factories import BusinessUnitFactory, CompanyFactory
 from setup import DirectSEOBase
@@ -145,3 +147,49 @@ class ImportJobsTestCase(DirectSEOBase):
             self.assertEqual(len(removed), 6, "Removed jobs %s" % removed)
             ids = [d['id'] for d in self.solr.search('*:*').docs]
             self.assertTrue([5, 6, 7, 8, 9, 10] not in ids)
+
+
+class LoadETLTestCase(DirectSEOBase):
+    def setUp(self):
+        
+        self.zipfile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    'data',
+                                    'ActiveDirectory_ce2ca701-eeca-4c13-96ba-e6bde9cb7060.zip') 
+        
+        with open(self.zipfile) as zf:
+            self.jobs = list(get_jobs_from_zipfile(zf, "ce2ca701-eeca-4c13-96ba-e6bde9cb7060"))
+            
+        self.businessunit = BusinessUnitFactory(id=0)
+    
+    def tearDown(self):
+        pass
+    
+    def test_filtering_on_includeinindex_bit(self):
+        """Test that filtering on the include_in_index bit works"""
+        
+        #Prove we have the expected number of jobs in the zipfile itself.
+        self.assertEqual(len(self.jobs), 39, 
+                         "Expected to find 0 jobs in the test zipfile, instead found %s" % len(self.jobs))
+        
+        # Prove that filtering works.
+        filtered_jobs = list(filter_current_jobs(self.jobs, self.businessunit))
+        self.assertEqual(len(filtered_jobs), 38,
+                         "filter_current_jobs should rmeove jobs with the includeinindex bit set, "
+                         "it's expected to return %s.  Instead it returned %s" % (38, len(filtered_jobs)))
+        
+    
+    def test_businessunit_ignore_includeinindex(self):
+        """Test that filtering on the include_in_index bit can be overridden on a per business unit basis."""
+        # Set ignore_includeinindex on the test BusinessUnit
+        self.businessunit.ignore_includeinindex = True
+        self.businessunit.save()
+        
+        #Prove we have the expected number of jobs in the zipfile itself.
+        self.assertEqual(len(self.jobs), 39, 
+                         "Expected to find 0 jobs in the test zipfile, instead found %s" % len(self.jobs))
+        
+        # Prove that filtering works.
+        filtered_jobs = list(filter_current_jobs(self.jobs, self.businessunit))
+        self.assertEqual(len(filtered_jobs), 39,
+                         "filter_current_jobs should ignore the includeinindex bit, returning 39 jobs.  "
+                         "Instead returned %s." % len(filtered_jobs))

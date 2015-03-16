@@ -33,7 +33,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'directseo.settings'
 FEED_FILE_PREFIX = "dseo_feed_"
 
 
-def update_job_source(guid, buid, name):
+def update_job_source(guid, buid, name, clear_cache=False):
     """Composed method for resopnding to a guid update."""
 
     logger.info("Updating Job Source %s", guid)
@@ -45,12 +45,10 @@ def update_job_source(guid, buid, name):
     add_company(bu)
 
     # Lookup the jobs, filter then, transform them, and then load the jobs
-    jobs = get_current_jobs(guid)
-    # Hack to ignore the includeinindex bit for pearsoninternal.jobs
-    # Should be temporary.
-    if buid not in ["31578", "31094", "23525", "23500"]:
-        jobs = filter_current_jobs(jobs)
-    jobs = list(hr_xml_to_json(job, bu) for job in jobs)
+    zf = get_jobsfs_zipfile(guid)
+    jobs = get_jobs_from_zipfile(zf, guid)
+    jobs = filter_current_jobs(jobs, bu)
+    jobs = [hr_xml_to_json(job, bu) for job in jobs]
     for job in jobs:
         job['link'] = make_redirect(job, bu).make_link()
     remove_expired_jobs(buid, jobs)
@@ -60,13 +58,16 @@ def update_job_source(guid, buid, name):
     bu.associated_jobs = len(jobs)
     bu.date_updated = datetime.datetime.utcnow()
     bu.save()
-    # Clear cache in 20 minutes to allow for solr replication
-    tasks.task_clear_bu_cache.delay(buid=bu.id, countdown=1500)
+    if clear_cache:
+        # Clear cache in 20 minutes to allow for solr replication
+        tasks.task_clear_bu_cache.delay(buid=bu.id, countdown=1500)
 
 
-def filter_current_jobs(jobs):
-    """Given a iterator/generator of jobs, filter the list, removing jobs that
-       should not be indexed for microsites.
+def filter_current_jobs(jobs, bu):
+    """Given a iterator/generator of jobs, filter the list, removing jobs that should not be indexed for microsites.
+    Inputs:
+        :jobs: A iterable of etree objects.
+        :bu: The BusinessUnit these jobs are associated with.
 
        Returns: a generator of jobs which pass validation for indexing."""
 
@@ -74,19 +75,22 @@ def filter_current_jobs(jobs):
     for job in jobs:
         # Written using continues to allow easily adding multiple conditions to
         # remove jobs.
-        if job.find(hr_xml_include_in_index).text == '0':
+        if bu.ignore_includeinindex is False and job.find(hr_xml_include_in_index).text == '0':
+            logger.info("A job was filtered for %s" % bu)
             continue
         yield job
 
 
-def get_current_jobs(guid):
-    """Get a list of xml documents representing all the current jobs.
+def get_jobsfs_zipfile(guid):
+    """Get a fileobject for the zipfile from JobsFS.
 
-    Input:
-        :guid: A guid used to access the jobsfs server.
-    :return: [lxml.eTree, lxml.eTree,...]"""
-    logger.debug("Getting current Jobs for guid: %s", guid)
+    This has been separated to simplify uncouple parsing zipfiles from jobsFS, so we can more easily test the rest of
+    this code.
 
+    Inputs:
+        :guid: The guid of which to download.
+    :return: A urllib2 Response (A filelike object)
+    """
     # Download the zipfile
     url = 'http://jobsfs.directemployers.org/%s/ActiveDirectory_%s.zip' % \
         (guid, guid)
@@ -95,15 +99,27 @@ def get_current_jobs(guid):
                                                              'di?dsDe4'))
     req.add_header("Authorization", authheader)
     resp = urllib2.urlopen(req)
+    return resp
 
-    # Write zipfile to filesystem
-    filename = '/tmp/%s/%s.zip' % (guid, guid)
-    directory = os.path.dirname(filename)
+
+def get_jobs_from_zipfile(zipfileobject, guid):
+    """Get a list of xml documents representing all the current jobs.
+
+    Input:
+        :guid: A guid used to access the jobsfs server.
+    :return: [lxml.eTree, lxml.eTree,...]"""
+    logger.debug("Getting current Jobs for guid: %s", guid)
+
+    # Delete any existing data and use the guid to create a unique folder.
+    directory = "/tmp/%s" % guid
     if os.path.exists(directory):
         shutil.rmtree(directory)
     os.mkdir(directory)
+
+    # Write zipfile to filesystem
+    filename = os.path.join(directory, '%s.zip' % guid)
     with open(filename, 'wb') as f:
-        for chunk in iter(lambda: resp.read(1024 * 16), ''):
+        for chunk in iter(lambda: zipfileobject.read(1024 * 16), ''):
             f.write(chunk)
 
     # Extact all files from zipfile.
@@ -131,7 +147,6 @@ def get_current_jobs(guid):
     # clean up after ourselves.
     shutil.rmtree(directory)
 
-
 class FeedImportError(Exception):
     def __init__(self, msg):
         self.msg = msg
@@ -154,7 +169,7 @@ def add_company(bu):
     name change of an existing company.
 
     """
-    # See if there is an existing relationship. For now, we are assuming only 
+    # See if there is an existing relationship. For now, we are assuming only
     # one or zero instances of a company exist in the database--this may change
     companies = bu.company_set.all()
     if companies:
@@ -211,7 +226,7 @@ def add_company(bu):
 
 
 def update_solr(buid, download=True, force=True, set_title=False,
-                delete_feed=True, data_dir=DATA_DIR):
+                delete_feed=True, data_dir=DATA_DIR, clear_cache=False):
     """
     Update the Solr master index with the data contained in a feed file
     for a given buid/jsid.
@@ -365,8 +380,9 @@ def update_solr(buid, download=True, force=True, set_title=False,
                                          updated=updated)
     bu.associated_jobs = len(jobs)
     bu.save()
-    # Clear cache in 20 minutes to allow for solr replication
-    tasks.task_clear_bu_cache.delay(buid=bu.id, countdown=1500)
+    if clear_cache:
+        # Clear cache in 20 minutes to allow for solr replication
+        tasks.task_clear_bu_cache.delay(buid=bu.id, countdown=1500)
     #Update the Django database to reflect company additions and name changes
     add_company(bu)
     if delete_feed:
@@ -539,7 +555,7 @@ def chunk(l, chunk_size=1024):
 def remove_expired_jobs(buid, active_jobs, upload_chunk_size=1024):
     """
     Given a job source id and a list of active jobs for that job source,
-    Remove the jobs on solr that are not among the active jobs.  
+    Remove the jobs on solr that are not among the active jobs.
     """
     conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
     count = conn.search("*:*", fq="buid:%s" % buid, facet="false",

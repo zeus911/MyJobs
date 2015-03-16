@@ -221,6 +221,10 @@ h1 > small > a:hover {
     position: relative;
 }
 
+.partner-tags {
+    margin-top: 5px;
+}
+
 .product-card.tag {
     width: 31%;
     margin: 0 1.5% 0 1.5%;
@@ -241,7 +245,8 @@ h1 > small > a:hover {
     border-top: 0;
 }
 
-.product-card:not(.no-highlight):hover {
+.product-card:not(.no-highlight):hover,
+#inbox #messages > tr:hover {
     background: #D5FACF;
     cursor: pointer;
 }
@@ -267,10 +272,6 @@ h1 > small > a:hover {
 
 .product-card .sub-title small span:hover {
     text-decoration: underline;
-}
-
-.product-card .product-details {
-    margin-top: 2px;
 }
 
 .product-card .warn {
@@ -459,6 +460,16 @@ h1 > small > a:hover {
     background-color: #888888;
     color: #000;
     font-size: 0.9em;
+}
+
+.product-card .partner-tag,
+.product-card .tag-name {
+    box-sizing: border-box;
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    position: relative;
+    text-overflow: ellipsis;
 }
 
 #library-modal-check {
@@ -980,6 +991,7 @@ input.picker-right {
     width: 50%;
     height: 40%;
     text-align: center;
+    z-index: 1;
 }
 
 .piehole > .piehole-big {
@@ -1330,6 +1342,123 @@ ul.header-menu > li > ul > a > li:hover {
     margin-right: 0;
 }
 
+/* My Reports */
+.sidebar li {
+    padding: 3px 5px;
+}
+.sidebar li.active {
+    background-color: #D5FACF;
+}
+
+.sidebar li i.success {
+    color: green;
+}
+
+.panel {
+    background-color: #F9FAFA;
+    border: 1px solid #E5E5E5;
+    box-sizing: border-box;
+    -webkit-box-shadow: 2px 2px 3px #BBB;
+    -moz-box-shadow: 2px 2px 3px  #BBB;
+    box-shadow: 2px 2px 3px  #BBB;
+    padding: 10px;
+}
+
+.panel h1,
+.panel h2,
+.panel h3,
+.panel h4,
+.panel h5,
+.panel h6 {
+    margin: 0;
+}
+
+.panel > #choices input[type="checkbox"] {
+    margin-top: -1px;
+}
+
+.list-header {
+    box-sizing: border-box;
+    background-color: #F9FAFA;
+    padding: 5px;
+    position: relative;
+}
+
+.list-header:hover {
+    cursor: pointer;
+    background-color: #D5FACF;
+}
+
+.list-header i {
+    top: 9px;
+    position: absolute;
+}
+
+.list-header input[type="checkbox"] {
+    margin-top: -1px;
+    margin-left: 15px;
+}
+
+.list-body {
+    box-sizing: border-box;
+    padding: 5px 10px;
+    overflow-y: auto;
+    max-height: 210px;
+}
+
+.list-body ul {
+    box-sizing: border-box;
+    margin: 0 0 0 10px;
+    list-style: none;
+    padding: 0 0 0 10px;
+    border-left: 1px solid #ccc;
+}
+
+.list-body ul li {
+    position: relative;
+}
+
+.list-body li:hover {
+    background-color: #D5FACF;
+    cursor: pointer;
+}
+
+.list-body ul input[type="checkbox"] {
+    margin-top: -1px;
+}
+
+.rpt-container label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #5e6c82;
+}
+
+.row + .row-add-margin {
+    margin-top: 20px;
+}
+
+h1.bottom-bordered,
+h2.bottom-bordered,
+h3.bottom-bordered {
+    border-bottom: 2px solid #873f3d;
+}
+
+.reporting-breadcrumbs ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.rpt-container {
+    min-height: 345px;
+    position: relative;
+}
+
+.rpt-buttons {
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+}
 
 
 /* Sort by field in saved search save/edit */
@@ -1614,6 +1743,22 @@ table#row-link-table {
 .table-bordered th,
 .table-bordered td{
     border-left: 1px solid #E5E5E5;
+}
+
+.table-scrollable {
+    width: 100%;
+}
+
+.table-scrollable tbody {
+    max-height: 200px;
+    width: 100%;
+    overflow-y: auto;
+    display: block;
+    position: relative;
+}
+
+.table-scrollable tr {
+    padding: 2px 5px;
 }
 
 .inner-table-label {
@@ -3854,6 +3999,10 @@ table td, table th {
     background-image: url("//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/glyphicons-halflings.png");
 }
 
+.icon-white {
+    background-image: url("//d2e48ltfsb5exy.cloudfront.net/content_mj/files/images/glyphicons-halflings-white.png");
+}
+
 body.modal-open {
     overflow: hidden;
 }
@@ -4117,4 +4266,80 @@ span.helptext {
      * me.
      */
     text-indent: 60px;
+}
+
+/* Inbox message type indicators */
+.circle {
+    border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    margin: 3px 3px 0 3px;
+}
+
+/*
+ These colors were pulled from the alert-* classes
+ that we were previously using.
+*/
+#inbox .block {
+    /* Yellow */
+    color: #c09853;
+    background-color: #fcf8e3;
+    border: 1px solid #fbeed5;
+}
+
+#inbox .error {
+    /* Red */
+    color: #b94a48;
+    background-color: #f2dede;
+    border: 1px solid #eed3d7;
+}
+
+#inbox .info {
+    /* Blue */
+    color: #3a87ad;
+    background-color: #d9edf7;
+    border: 1px solid #bce8f1;
+}
+
+#inbox .success {
+    /* Green */
+    color: #468847;
+    background-color: #dff0d8;
+    border: 1px solid #d6e9c6;
+}
+
+#inbox .table {
+    width: 100%;
+    table-layout: fixed;
+    border: 1px solid #ddd;
+}
+
+#inbox td:last-child {
+    text-align: right;
+}
+
+#inbox tr>*:first-child {
+    padding-left: 5px;
+    width: 14px;
+}
+
+#inbox tr>*:last-child {
+    padding-right: 5px;
+}
+
+#inbox tbody {
+    /* Bootstrap 2.2.1 has a ".table tbody+tbody" style that adds a border.
+     * Having groups of rows is nice, but we don't want the border that
+     * is added in this case.
+     */
+    border-top: 0;
+}
+
+#inbox .step-links .current {
+    left: 45%;
+}
+
+.read {
+    background-color: #eee;
 }

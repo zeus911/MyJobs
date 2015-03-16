@@ -30,7 +30,7 @@ class SocialLinkType(models.Model):
             filename = 'unnamed_file'
 
         uid = uuid.uuid4()
-        location_template = 'social-icons/%s/%s/%s'
+        location_template = '/social-icons/%s/%s/%s'
         if (getattr(settings, 'DEFAULT_FILE_STORAGE') !=
                 'storages.backends.s3boto.S3BotoStorage'):
             location_template = 'files/' + location_template

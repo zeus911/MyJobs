@@ -6,6 +6,7 @@ from django.utils.timezone import get_current_timezone_name
 from collections import OrderedDict
 import pytz
 
+from postajob.location_data import states
 from myprofile.forms import generate_custom_widgets
 from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
                                ADDITION, CHANGE, MAX_ATTACHMENT_MB, Tag,
@@ -13,6 +14,8 @@ from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
 from mypartners.helpers import log_change, get_attachment_link, tag_get_or_create
 from mypartners.widgets import (MultipleFileField,
                                 SplitDateTimeDropDownField, TimeDropDownField)
+from universal.forms import NormalizedModelForm
+
 
 
 def init_tags(self):
@@ -25,7 +28,7 @@ def init_tags(self):
     )
 
 
-class ContactForm(forms.ModelForm):
+class ContactForm(NormalizedModelForm):
     """
     Creates a new contact or edits an existing one.
     """
@@ -64,7 +67,7 @@ class ContactForm(forms.ModelForm):
     class Meta:
         form_name = "Contact Information"
         model = Contact
-        exclude = ['user', 'partner', 'locations']
+        exclude = ['user', 'partner', 'locations', 'library']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
@@ -103,7 +106,7 @@ class ContactForm(forms.ModelForm):
         return contact
 
 
-class PartnerInitialForm(forms.ModelForm):
+class PartnerInitialForm(NormalizedModelForm):
     """
     This form is used when an employer currently has no partner to create a
     partner (short and sweet version).
@@ -150,7 +153,7 @@ class PartnerInitialForm(forms.ModelForm):
         return partner
 
 
-class NewPartnerForm(forms.ModelForm):
+class NewPartnerForm(NormalizedModelForm):
 
     # used to identify if location info is entered into a form
     __LOCATION_FIELDS = (
@@ -207,7 +210,7 @@ class NewPartnerForm(forms.ModelForm):
     class Meta:
         form_name = "Partner Information"
         model = Contact
-        exclude = ['user', 'partner', 'tags', 'locations']
+        exclude = ['user', 'partner', 'tags', 'locations', 'library']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
@@ -273,7 +276,7 @@ def remove_partner_data(dictionary, keys):
     return new_dictionary
 
 
-class PartnerForm(forms.ModelForm):
+class PartnerForm(NormalizedModelForm):
     """
     This form is used only to edit the partner form. (see prm/view/details)
 
@@ -339,7 +342,7 @@ def PartnerEmailChoices(partner):
     return choices
 
 
-class ContactRecordForm(forms.ModelForm):
+class ContactRecordForm(NormalizedModelForm):
     date_time = SplitDateTimeDropDownField(label='Date & Time')
     length = TimeDropDownField()
     attachment = MultipleFileField(required=False,
@@ -486,7 +489,7 @@ class ContactRecordForm(forms.ModelForm):
         return instance
 
 
-class TagForm(forms.ModelForm):
+class TagForm(NormalizedModelForm):
     def __init__(self, *args, **kwargs):
         super(TagForm, self).__init__(*args, **kwargs)
 
@@ -509,8 +512,13 @@ class TagForm(forms.ModelForm):
         widgets = generate_custom_widgets(model)
 
 
-class LocationForm(forms.ModelForm):
+class LocationForm(NormalizedModelForm):
     class Meta:
         form_name = "Location"
         model = Location
+        exclude = ('country_code',)
         widgets = generate_custom_widgets(model)
+
+    states = sorted(states.items(), key=lambda s: s[1])
+    state = forms.ChoiceField(
+        widget=forms.Select(), choices=states, label='State')

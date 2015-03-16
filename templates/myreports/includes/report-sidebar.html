@@ -1,0 +1,20 @@
+<div class="sidebar">
+    <h2 class="top">Past Reports</h2>
+    {% for report in past_reports %}
+        <div class="report">
+            {{ report.name }}
+            <div class="icon-set pull-right">
+                <i class="fa fa-copy" title="Clone Report"></i>
+                <i id="{{ report.id }}" class="fa fa-download" title="Export"></i>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+    {% empty %}
+        No past reports
+    {% endfor %}
+    <h2>Report Queue</h2>
+    {% for report in queued_reports %}
+    {% empty %}
+        No reports generating
+    {% endfor %}
+</div>

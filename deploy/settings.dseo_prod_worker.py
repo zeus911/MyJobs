@@ -56,14 +56,14 @@ HAYSTACK_CONNECTIONS = {
         # code is deployed. Check the deployment project in
         # direct_seo/web/conf/hosts and make sure the one in production looks
         # like that.
-        'URL': 'http://solr_server/solr',
+        'URL': 'http://solr_server:8983/solr',
         'TIMEOUT': 300,
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
     },
     'groups': {
         'ENGINE': 'saved_search.groupsearch.SolrGrpEngine',
-        'URL': 'http://solr_server/solr',
+        'URL': 'http://solr_server:8983/solr',
         'TIMEOUT': 300,
         'HTTP_AUTH_USERNAME': SOLR_AUTH['username'],
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
@@ -101,6 +101,9 @@ CELERY_DEFAULT_EXCHANGE = 'tasks'
 CELERY_DEFAULT_EXCHANGE_TYPE = 'topic'
 CELERY_DEFAULT_ROUTING_KEY = 'dseo.default'
 CELERY_QUEUES = {
+    'priority': {
+        'binding_key': 'priority.#'
+    },
     'dseo': {
         'binding_key': 'dseo.#'
     },
@@ -109,6 +112,10 @@ CELERY_QUEUES = {
     }
 }
 CELERY_ROUTES = {
+    'tasks.priority_etl_to_solr': {
+        'queue': 'priority',
+        'routing_key': 'priority.update_solr'
+    },
     'tasks.task_update_solr': {
         'queue': 'solr',
         'routing_key': 'solr.update_solr'

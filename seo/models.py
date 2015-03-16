@@ -980,6 +980,8 @@ class Configuration(models.Model):
             cache.delete_many(["jobs_count::%s" % site.pk for
                                site in  sites.all()])
 
+    def clear_cache(self):
+        self.clear_caches([self])
 
     def save(self, *args, **kwargs):
         # Increment the revision number so a new cache key will be used for urls
@@ -1138,6 +1140,18 @@ class Configuration(models.Model):
                                                              'on job listing '
                                                              'page.')
 
+    moc_label = models.CharField(max_length=255, blank=True)
+    what_label = models.CharField(max_length=255, blank=True)
+    where_label = models.CharField(max_length=255, blank=True)
+
+    moc_placeholder = models.CharField(max_length=255, blank=True)
+    what_placeholder = models.CharField(max_length=255, blank=True)
+    where_placeholder = models.CharField(max_length=255, blank=True)
+
+    moc_helptext = models.TextField(blank=True)
+    what_helptext = models.TextField(blank=True)
+    where_helptext = models.TextField(blank=True)
+
 
 class GoogleAnalytics (models.Model):
     web_property_id = models.CharField('Web Property ID', max_length=20)
@@ -1207,6 +1221,7 @@ class BusinessUnit(models.Model):
     associated_jobs = models.IntegerField('Associated Jobs', default=0)
     customcareers = generic.GenericRelation(moc_models.CustomCareer)
     federal_contractor = models.BooleanField(default=False)
+    ignore_includeinindex = models.BooleanField('Ignore "Include In Index"', default=False)
 
     # True if a BusinessUnit's descriptions are in markdown
     # Assumes that new business units will have support markdown

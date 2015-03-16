@@ -107,18 +107,18 @@ class UserManagerTests(MyJobsBase):
         activation message instead of the content they were originally meaning
         to see.
         """
-        client = TestClient()
+        client = TestClient(path=reverse('saved_search_main'))
         user = UserFactory()
 
         # Active user
         client.login_user(user)
-        resp = client.get(reverse('saved_search_main'))
+        resp = client.get()
         self.assertIn('Saved Search', resp.content)
 
         # Inactive user
         user.is_verified= False
         user.save()
-        resp = client.get(reverse('saved_search_main'))
+        resp = client.get()
         self.assertIn('unavailable', resp.content)
 
     def test_group_status(self):

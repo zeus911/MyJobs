@@ -222,6 +222,8 @@ class PartnerSavedSearchForm(ModelForm):
     def save(self, commit=True):
         self.instance.feed = self.cleaned_data.get('feed')
         is_new_or_change = CHANGE if self.instance.pk else ADDITION
+        if not self.instance.pk:
+            self.instance.sort_by = 'Date'
         instance = super(PartnerSavedSearchForm, self).save(commit)
         tags = self.cleaned_data.get('tags')
         self.instance.tags = tags
@@ -235,7 +237,6 @@ class PartnerSavedSearchForm(ModelForm):
             }
             Invitation(**invite_args).save()
             # Default sort_by for new Partner Saved Searches, see PD-912
-            instance.sort_by = 'Date'
         partner = instance.partner
         contact = Contact.objects.filter(partner=partner,
                                          user=instance.user)[0]

@@ -124,6 +124,9 @@ class SavedSearchModelsTests(MyJobsBase):
         self.assertEqual("My.jobs New Saved Search" in email.subject, True)
         self.assertTrue("table" in email.body)
         self.assertTrue(email.to[0] in email.body)
+        # Search url appears twice - once displaying the saved search source
+        # and once in the view link.
+        self.assertEqual(email.body.count(search.url), 2)
 
     def test_send_update_email(self):
         search = SavedSearchFactory(user=self.user, is_active=False,

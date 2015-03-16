@@ -1,5 +1,4 @@
-from datetime import timedelta
-from itertools import chain
+from datetime import datetime, timedelta
 from os import path
 from re import sub
 from urllib import urlencode
@@ -14,6 +13,8 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from myjobs.models import User
+from postajob.location_data import states
+from states import synonyms
 
 
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
@@ -21,7 +22,6 @@ CONTACT_TYPE_CHOICES = (('email', 'Email'),
                         ('meetingorevent', 'Meeting or Event'),
                         ('job', 'Job Followup'),
                         ('pssemail', "Partner Saved Search Email"))
-
 
 # Flags for ContactLogEntry action_flag. Based on django.contrib.admin.models
 # action flags.
@@ -38,6 +38,132 @@ ACTIVITY_TYPES = {
 }
 
 
+class SearchParameterQuerySet(models.query.QuerySet):
+    """
+    Defines a query set with a `from_search` method for filtering by query
+    paramenters.
+    """
+
+    # used ot map field types to a query
+    QUERY_BY_TYPE = {
+        'CharField': '__icontains',
+        'TextField': '__icontains',
+        'AutoField': '__exact',
+        'ForeignKey': '',
+        'ManyToManyField': ''}
+
+    # TODO: Come up with a better name for this method
+    def from_search(self, company=None, parameters=None):
+        """
+        Intelligently filter based on query parameters.
+
+        Inputs:
+            :company: The company to restrict results to
+            :parameters: A dict of field: term pairs where field is a field of
+                         the `ContactRecord` model and term is search term
+                         you'd like to filter against.
+
+                         For `datetime`, pass `start_date` and/or `end_date`
+                         instead.
+            If the model has a `_parse_parameters` method, that is called
+            before parsing remaining parameters.
+        """
+        parameters = (parameters or {}).copy()
+        # only return records the current user has access to
+        if company:
+            company_ref = getattr(self.model, 'company_ref', 'company')
+            self = self.filter(**{company_ref: company})
+        else:
+            self = self.all()
+
+        # fetch related models in one query
+        self = self.select_related()
+
+        # extract special fields so they aren't traversed later
+        if parameters.get('start_date'):
+            parameters['start_date'] = datetime.strptime(
+                parameters['start_date'], '%m/%d/%Y').date()
+
+        if parameters.get('end_date'):
+            # handles off-by-one error; otherwise date provided is excluded
+            parameters['end_date'] = datetime.strptime(
+                parameters['end_date'], '%m/%d/%Y').date() + timedelta(1)
+
+        # do special parsing
+        if hasattr(self.model, '_parse_parameters'):
+            self = self.model._parse_parameters(parameters, self)
+
+        for key, value in parameters.items():
+            if hasattr(value, '__iter__'):
+                query = '%s%s' % (key, '__in')
+            else:
+                type_ = self.get_field_type(key)
+
+                # construct query based on field type
+                query = '%s%s' % (
+                    key, SearchParameterQuerySet.QUERY_BY_TYPE[type_])
+
+            self = self.filter(**{query: value})
+
+        # remove duplicates
+        self = self.distinct()
+
+        return self
+
+    def sort_by(self, *fields):
+        """Like `order_by`, but ensures that blank values come at the end of a
+           result. It's not as efficient as `order_by`, so it's best to call as
+           late as possible (eg. after you've finished sorting).
+        """
+        query = models.Q()
+        for field in fields:
+            query |= models.Q(**{field.lstrip('-'): ''}) | models.Q(
+                **{field.lstrip('-') + '__isnull': True})
+
+        blank_records = self.filter(query).order_by(*fields)
+
+        self = self.exclude(id__in=blank_records).order_by(*fields)
+
+        # force evaluation: see http://stackoverflow.com/questions/18235419
+        len(self)
+        for record in blank_records:
+            self._result_cache.append(record)
+
+        return self
+
+    def get_field_type(self, name):
+        """
+        Returns the type of the `model`'s `field` or None if it doesn't
+        exist.
+        """
+
+        # using get_fields isn't sufficient as it doesn't account
+        field = self.model._meta.get_field_by_name(name)[0]
+
+        try:
+            field_type = field.get_internal_type()
+        except AttributeError:
+            # field apparently isn't a field
+            field_type = field.field.get_internal_type()
+
+        return field_type
+
+
+class SearchParameterManager(models.Manager):
+    def __init__(self, *args, **kwargs):
+        super(SearchParameterManager, self).__init__(*args, **kwargs)
+
+    def get_query_set(self):
+        return SearchParameterQuerySet(self.model, using=self._db)
+
+    def from_search(self, company, parameters):
+        return self.get_query_set().from_search(
+            company, parameters)
+
+    def sort_by(self, *fields):
+        return self.get_query_set().sort_by(*fields)
+
+
 class Location(models.Model):
     label = models.CharField(max_length=60, verbose_name='Address Label',
                              blank=True)
@@ -49,7 +175,8 @@ class Location(models.Model):
                                         blank=True)
     city = models.CharField(max_length=255, verbose_name='City')
     state = models.CharField(max_length=200, verbose_name='State/Region')
-    country_code = models.CharField(max_length=3, verbose_name='Country')
+    country_code = models.CharField(max_length=3, verbose_name='Country', 
+                                    default='USA')
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
 
@@ -70,6 +197,9 @@ class Contact(models.Model):
     user = models.ForeignKey(User, blank=True, null=True,
                              on_delete=models.SET_NULL)
     partner = models.ForeignKey('Partner')
+    # used if this partner was created by using the partner library
+    library = models.ForeignKey('PartnerLibrary', null=True,
+                                on_delete=models.SET_NULL)
     name = models.CharField(max_length=255, verbose_name='Full Name')
     email = models.EmailField(max_length=255, verbose_name='Email', blank=True)
     phone = models.CharField(max_length=30, verbose_name='Phone', blank=True)
@@ -77,8 +207,46 @@ class Contact(models.Model):
     tags = models.ManyToManyField('Tag', null=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
 
+    company_ref = 'partner__owner'
+    objects = SearchParameterManager()
+
     class Meta:
         verbose_name_plural = 'contacts'
+
+    @classmethod
+    def _parse_parameters(self, parameters, records):
+        """Used to parse state during `from_search()`."""
+
+        start_date = parameters.pop('start_date', None)
+        end_date = parameters.pop('end_date', None)
+        state = parameters.pop('state', None)
+        city = parameters.pop('city', None)
+
+        # using a foreign relationship, so can't just filter twice
+        if start_date and end_date:
+            records = records.filter(
+                partner__contactrecord__date_time__range=[
+                    start_date, end_date])
+        elif start_date:
+            records = records.filter(
+                partner__contactrecord__date_time__gte=start_date)
+        elif end_date:
+            records = records.filter(
+                partner__contactrecord__date_time__lte=end_date)
+
+        if state:
+            state_query = models.Q()
+            # match state synonyms when querying
+            for synonym in synonyms[state.strip().lower()]:
+                state_query |= models.Q(
+                    locations__state__iexact=synonym)
+
+            records = records.filter(state_query)
+
+        if city:
+            records = records.filter(locations__city__icontains=city)
+
+        return records
 
     def __unicode__(self):
         if self.name:
@@ -170,6 +338,41 @@ class Partner(models.Model):
     # owner is the Company that owns this partner.
     owner = models.ForeignKey('seo.Company')
 
+    company_ref = 'owner'
+    objects = SearchParameterManager()
+
+    @classmethod
+    def _parse_parameters(cls, parameters, records):
+        """Used to parse state during `from_search()`."""
+
+        start_date = parameters.pop('start_date', None)
+        end_date = parameters.pop('end_date', None)
+        state = parameters.pop('state', None)
+        city = parameters.pop('city', None)
+
+        # using a foreign relationship, so can't just filter twice
+        if start_date and end_date:
+            records = records.filter(contactrecord__date_time__range=[
+                start_date, end_date])
+        elif start_date:
+            records = records.filter(contactrecord__date_time__gte=start_date)
+        elif end_date:
+            records = records.filter(contactrecord__date_time__lte=end_date)
+
+        if state:
+            state_query = models.Q()
+            # match state synonyms when querying
+            for synonym in synonyms[state.strip().lower()]:
+                state_query |= models.Q(
+                    contact__locations__state__iexact=synonym)
+
+            records = records.filter(state_query)
+
+        if city:
+            records = records.filter(contact__locations__city__icontains=city)
+
+        return records
+
     def __unicode__(self):
         return self.name
 
@@ -193,7 +396,7 @@ class Partner(models.Model):
     # get_contact_records_for_partner
     def get_contact_records(self, contact_name=None, record_type=None,
                             created_by=None, date_start=None, date_end=None,
-                            order_by=None):
+                            order_by=None, keywords=None, tags=None):
 
         records = self.contactrecord_set.prefetch_related('tags').all()
         if contact_name:
@@ -204,12 +407,22 @@ class Partner(models.Model):
             date_end = date_end + timedelta(1)
             records = records.filter(date_time__lte=date_end)
         if record_type:
-            if record_type == 'email':
-                records = records.filter(contact_type__in=['email', 'pssemail'])
-            else:
-                records = records.filter(contact_type=record_type)
+            records = records.filter(contact_type=record_type)
         if created_by:
             records = records.filter(created_by=created_by)
+        if tags:
+            for tag in tags:
+                records = records.filter(tags__name__icontains=tag)
+        if keywords:
+            query = models.Q()
+            for keyword in keywords:
+                query &= (models.Q(contact_email__icontains=keyword) |
+                          models.Q(contact_phone__icontains=keyword) |
+                          models.Q(subject__icontains=keyword) |
+                          models.Q(notes__icontains=keyword) |
+                          models.Q(job_id__icontains=keyword))
+
+            records = records.filter(query)
 
         if order_by:
             records = records.order_by(order_by)
@@ -236,13 +449,24 @@ class PartnerLibrary(models.Model):
     module.
 
     """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Regular initialization with a custom has_valid_location property.
+        Rather than modify the data on import, we mark the location as invalid.
+        """
+
+        super(PartnerLibrary, self).__init__(*args, **kwargs)
+        self.has_valid_location = self.st.upper() in states.keys()
+
     # Where the data was pulled from
     data_source = models.CharField(
         max_length=255,
         default='Employment Referral Resource Directory')
 
     # Organization Info
-    name = models.CharField(max_length=255, verbose_name='Partner Organization')
+    name = models.CharField(max_length=255,
+                            verbose_name='Partner Organization')
     uri = models.URLField(blank=True)
     region = models.CharField(max_length=30, blank=True)
     # long state name
@@ -270,16 +494,25 @@ class PartnerLibrary(models.Model):
     is_female = models.BooleanField('female', default=False)
     is_disabled = models.BooleanField('disabled', default=False)
     is_veteran = models.BooleanField('veteran', default=False)
-    is_disabled_veteran = models.BooleanField('disabled_veteran', default=False)
+    is_disabled_veteran = models.BooleanField('disabled_veteran',
+                                              default=False)
 
     def __unicode__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        self.has_valid_location = self.st.upper() in states.keys()
+
+        super(PartnerLibrary, self).save(*args, **kwargs)
 
 
 class ContactRecord(models.Model):
     """
     Object for Communication Records
     """
+
+    company_ref = 'partner__owner'
+    objects = SearchParameterManager()
 
     created_on = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
@@ -296,8 +529,8 @@ class ContactRecord(models.Model):
                                      blank=True)
     contact_phone = models.CharField(verbose_name="Contact Phone Number",
                                      max_length=30, blank=True)
-    location = models.CharField(verbose_name="Meeting Location", max_length=255,
-                                blank=True)
+    location = models.CharField(verbose_name="Meeting Location",
+                                max_length=255, blank=True)
     length = models.TimeField(verbose_name="Meeting Length", blank=True,
                               null=True)
     subject = models.CharField(verbose_name="Subject or Topic", max_length=255,
@@ -317,6 +550,25 @@ class ContactRecord(models.Model):
     job_hires = models.CharField(max_length=6, verbose_name="Number of Hires",
                                  blank=True)
     tags = models.ManyToManyField('Tag', null=True)
+
+    @classmethod
+    def _parse_parameters(self, parameters, records):
+        """Used to parse state during `from_search()`."""
+
+        start_date = parameters.pop('start_date', None)
+        end_date = parameters.pop('end_date', None)
+        # popping state so it doesn't get parsed again
+        state = parameters.pop('state', None)
+
+        # using a foreign relationship, so can't just filter twice
+        if start_date and end_date:
+            records = records.filter(date_time__range=[start_date, end_date])
+        elif start_date:
+            records = records.filter(date_time__gte=start_date)
+        elif end_date:
+            records = records.filter(date_time__lte=end_date)
+
+        return records
 
     def __unicode__(self):
         return "%s Contact Record - %s" % (self.contact_type, self.subject)
@@ -346,8 +598,9 @@ class ContactRecord(models.Model):
                        self.contact_name, ACTIVITY_TYPES[log.action_flag])
 
         if log.user:
-            user = log.user.get_full_name() if log.user.get_full_name() else \
-                log.user.email
+            user = log.user.email
+            if log.user.get_fullname:
+                user = log.user.get_full_name()
             contact_str = "%s by %s" % (contact_str, user)
 
         return contact_str
@@ -369,6 +622,7 @@ class ContactRecord(models.Model):
 
 
 MAX_ATTACHMENT_MB = 4
+S3_CONNECTION = 'S3Connection:s3.amazonaws.com'
 
 
 class PRMAttachment(models.Model):
@@ -417,7 +671,7 @@ class PRMAttachment(models.Model):
         # Confirm that we're not trying to change public/private status of
         # actual files during local testing.
         try:
-            if repr(default_storage.connection) == 'S3Connection:s3.amazonaws.com':
+            if repr(default_storage.connection) == S3_CONNECTION:
                 from boto import connect_s3, s3
                 conn = connect_s3(settings.AWS_ACCESS_KEY_ID,
                                   settings.AWS_SECRET_KEY)
@@ -454,7 +708,8 @@ class ContactLogEntry(models.Model):
 
         """
         try:
-            return self.content_type.get_object_for_this_type(pk=self.object_id)
+            return self.content_type.get_object_for_this_type(
+                pk=self.object_id)
         except self.content_type.model_class().DoesNotExist:
             return None
 

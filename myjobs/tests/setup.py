@@ -1,5 +1,6 @@
 from seo_pysolr import Solr
 
+from django.conf import settings
 from django.core.cache import cache
 from django.core.urlresolvers import clear_url_caches
 from django.test import TestCase
@@ -15,5 +16,14 @@ class MyJobsBase(TestCase):
         self.ms_solr.delete(q='*:*')
         setattr(settings, "PROJECT", 'myjobs')
 
+        self.base_context_processors = settings.TEMPLATE_CONTEXT_PROCESSORS
+        context_processors = self.base_context_processors + (
+            'mymessages.context_processors.message_lists',
+        )
+        setattr(settings, 'TEMPLATE_CONTEXT_PROCESSORS', context_processors)
+        setattr(settings, 'MEMOIZE', False)
+
     def tearDown(self):
         self.ms_solr.delete(q='*:*')
+        setattr(settings, 'TEMPLATE_CONTEXT_PROCESSORS',
+                self.base_context_processors)
