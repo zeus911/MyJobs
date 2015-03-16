@@ -165,22 +165,26 @@ def create_report(request, app, model):
 
 
 def get_report(request):
-    if request.is_ajax() and request.method == "POST":
-        report_id = request.POST['report']
-        report = Report.objects.get(id=report_id)
-        report_graph = PRMReport(report)
-        ctx = {
-            "report": report_graph
-        }
+    report_id = request.GET['report']
+    report = Report.objects.get(id=report_id)
+    report_graph = PRMReport(report)
+    params = json.loads(report.params)    
+    
+    # TODO: don't assume things here like the model
+    records = filter_records(
+        request, get_model('mypartners', 'contactrecord'), params, True)
+    report_graph = PRMReport(records)
 
-        response = HttpResponse()
-        html = render_to_response('myreports/prm_report.html', ctx,
-                                  RequestContext(request))
-        response.content = html.content
+    ctx = {
+        "report": report_graph
+    }
 
-        return response
-    else:
-        return Http404("This view is only reachable via an AJAX POST request.")
+    response = HttpResponse()
+    html = render_to_response('myreports/prm_report.html', ctx,
+                              RequestContext(request))
+    response.content = html.content
+
+    return response
 
 
 def get_inputs(request):

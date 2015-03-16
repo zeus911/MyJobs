@@ -597,17 +597,9 @@ $(document).ready(function() {
                 "report": report_id},
         url = location.protocol + "//" + location.host; // https://secure.my.jobs
 
+    url += '/reports/ajax/get-report/';
+    window.location = url + "/reports/ajax/get-report/" + "?" + $.param(data);
 
-    $.ajax({
-      type: "POST",
-      url: url + "/reports/ajax/get-report",
-      data: data,
-      success: function(data) {
-        $.getScript("https://www.google.com/jsapi").done(function() {
-          $(".wrapper > .row").html(data);
-        });
-      }
-    });
   });
 
 
