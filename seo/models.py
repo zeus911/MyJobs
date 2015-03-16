@@ -1189,8 +1189,16 @@ class JobFeed(Feed):
         return item['description']
 
     def item_link(self, item):
-        vs = settings.FEED_VIEW_SOURCES.get(self.type, 20)
-        return '/%s%s' % (item['guid'], vs)
+        is_posted = item.get('is_posted', False)
+        if is_posted:
+            # If an item is posted, instead of using the
+            # redirect link we use the http://site.jobs/guid/jobs/ link
+            # that goes directly to the microsite.
+            return "/%s/job/" % item['guid']
+
+        else:
+            vs = settings.FEED_VIEW_SOURCES.get(self.type, 20)
+            return '/%s%s' % (item['guid'], vs)
 
     def item_pubdate(self, item):
         return item['date_new']

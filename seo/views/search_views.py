@@ -776,7 +776,6 @@ def syndication_feed(request, filter_path, feed_type):
         start_date = now - datetime.timedelta(days=days_ago)
         jobs = jobs.filter(date_new__gte=start_date)
 
-
     try:
         j = jobs[0]
     except IndexError:
@@ -787,9 +786,10 @@ def syndication_feed(request, filter_path, feed_type):
     else:
         buid_last_written = datetime.datetime.now()
 
-    qs = jobs.values('city', 'company', 'country', 'country_short', 'date_new',
-                     'description', 'location', 'reqid', 'state', 'state_short',
-                     'title', 'uid', 'guid')[offset:offset+num_items]
+    qs = jobs.values('city', 'company', 'country', 'country_short',
+                     'date_new', 'description', 'location', 'reqid', 'state',
+                     'state_short', 'title', 'uid', 'guid',
+                     'is_posted')[offset:offset+num_items]
 
     self_link = ExtraValue(name="link", content="",
                            attributes={'href': request.build_absolute_uri(),
@@ -1609,7 +1609,7 @@ def _moc_json(detail):
     mil = detail.military_description
     moc_id = detail.moc.id
     label = "%s - %s (%s - %s)" % (value, civ, branch, mil)
-    return {'label': label, 'value': value, 'moc_id':moc_id}
+    return {'label': label, 'value': value, 'moc_id': moc_id}
 
 
 def dseo_404(request, the_job=None, job_detail=False):
@@ -1732,9 +1732,8 @@ def search_by_results_and_slugs(request, *args, **kwargs):
             if len(active_facets) == 1 and active_facets[0].blurb:
                 facet_blurb_facet = active_facets[0]
 
-    default_jobs, featured_jobs, facet_counts = helpers.jobs_and_counts(request,
-                                                                        filters,
-                                                                        num_jobs)
+    default_jobs, featured_jobs, facet_counts = helpers.jobs_and_counts(
+        request, filters, num_jobs)
 
     total_featured_jobs = featured_jobs.count()
     total_default_jobs = default_jobs.count()
@@ -1866,6 +1865,7 @@ def post_a_job(request):
         jobs_added = 0
     resp = {'jobs_added': jobs_added}
     return HttpResponse(json.dumps(resp), content_type='application/json')
+
 
 @csrf_exempt
 def delete_a_job(request):
