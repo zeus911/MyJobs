@@ -11,7 +11,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 from myreports.decorators import restrict_to_staff
-from myreports.helpers import serialize, parse_params
+from myreports.helpers import serialize, parse_params, humanize
 from myreports.models import Report
 from universal.helpers import get_company_or_404
 from universal.decorators import company_has_access
@@ -149,8 +149,22 @@ def create_report(request, app, model):
     results = ContentFile(contents)
     report, created = Report.objects.get_or_create(
         name=name, created_by=user, owner=company, path=path,
-        params=json.dumps(params.items()))
+        params=json.dumps(params))
 
     report.results.save('%s-%s.json' % (name, report.pk), results)
 
     return HttpResponse()
+
+
+def get_report(request):
+    report_id = request.GET.get('report', 0)
+    report = get_model('myreports', 'report').objects.get(pk=report_id)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = "attachment; filename='%s-%s.csv'" % (
+        report.name, report.pk)
+
+    records = humanize(report.python)
+    response = serialize('csv', records, output=response, as_is=True)
+
+    return response
