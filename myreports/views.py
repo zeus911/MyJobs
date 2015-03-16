@@ -149,7 +149,7 @@ def create_report(request, app, model):
     results = ContentFile(contents)
     report, created = Report.objects.get_or_create(
         name=name, created_by=user, owner=company, path=path,
-        params=json.dumps(params.items()))
+        params=json.dumps(params))
 
     report.results.save('%s-%s.json' % (name, report.pk), results)
 
