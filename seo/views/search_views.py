@@ -7,7 +7,6 @@ import operator
 from fsm.views import FSMView
 import urllib
 import json as simplejson
-from HTMLParser import HTMLParser
 from types import IntType
 from urlparse import urlparse, urlunparse
 
@@ -30,7 +29,6 @@ from django.template import RequestContext, loader
 from django.template.defaultfilters import safe
 from django.utils.decorators import method_decorator
 from django.utils.encoding import smart_str, iri_to_uri
-from django.utils.html import strip_tags
 from django.utils.feedgenerator import Atom1Feed
 from django.views.decorators.csrf import csrf_exempt
 
@@ -44,6 +42,9 @@ from xmlparse import text_fields
 from import_jobs import add_jobs, delete_by_guid
 from transform import transform_for_postajob
 
+from myblocks.views import BlockView
+from myblocks.models import Page
+from myblocks import context_tools
 from seo.templatetags.seo_extras import facet_text, smart_truncate
 from seo.breadbox import Breadbox
 from seo.cache import get_custom_facets, get_site_config, get_total_jobs_count
@@ -52,7 +53,7 @@ from seo import helpers
 from seo.filters import FacetListWidget
 from seo.forms.admin_forms import UploadJobFileForm
 from seo.models import (BusinessUnit, Company, Configuration, Country,
-                        CustomFacet, GoogleAnalytics, JobFeed, SeoSite, SiteTag)
+                        GoogleAnalytics, JobFeed, SeoSite, SiteTag)
 from seo.decorators import (sns_json_message, custom_cache_page, protected_site,
                             home_page_check)
 from seo.sitemap import DateSitemap
@@ -73,6 +74,50 @@ From this dictionary, we should be able to filter most
 items down to what we actually need.
 """
 LOG = logging.getLogger('views')
+
+
+class FallbackBlockView(BlockView):
+    page_type = Page.SEARCH_RESULTS
+    fallback = None
+
+    def handle_request(self, request, *args, **kwargs):
+        if not self.page:
+            self.set_page(request)
+        if not self.page:
+            return self.fallback(request, *args, **kwargs)
+        required_redirect = self.page.handle_redirect(request, *args, **kwargs)
+        if required_redirect:
+            return required_redirect
+        return HttpResponse(self.page.render(request, **kwargs))
+
+    def post(self, request, *args, **kwargs):
+        self.set_page(request)
+        if not self.page:
+            return self.fallback(request, *args, **kwargs)
+        return super(FallbackBlockView, self).post(request, *args, **kwargs)
+
+    def set_page(self, request):
+        if request.user.is_authenticated() and request.user.is_staff:
+            try:
+                page = Page.objects.filter(site=settings.SITE,
+                                           status=Page.STAGING,
+                                           page_type=self.page_type)[0]
+                setattr(self, 'page', page)
+            except IndexError:
+                pass
+
+        try:
+            page = Page.objects.filter(site=settings.SITE,
+                                       status=Page.PRODUCTION,
+                                       page_type=self.page_type)[0]
+        except IndexError:
+            try:
+                page = Page.objects.filter(site_id=1,
+                                           status=Page.PRODUCTION,
+                                           page_type=self.page_type)[0]
+            except IndexError:
+                page = None
+        setattr(self, 'page', page)
 
 
 def ajax_geolocation_facet(request):
@@ -563,6 +608,14 @@ def job_detail_by_title_slug_job_id(request, job_id, title_slug=None,
         return redirect(redirect_url, permanent=True)
 
 
+class JobDetail(FallbackBlockView):
+    page_type = Page.JOB_DETAIL
+
+    def __init__(self, **kwargs):
+        super(JobDetail, self).__init__(**kwargs)
+        self.fallback = job_detail_by_title_slug_job_id
+
+
 @custom_cache_page
 def stylesheet(request, cid=None, css_file="stylesheet.css"):
     """
@@ -585,6 +638,7 @@ def stylesheet(request, cid=None, css_file="stylesheet.css"):
     return render_to_response(css_file, {'css': selected_stylesheet},
                               context_instance=RequestContext(request),
                               content_type="text/css",)
+
 
 @custom_cache_page
 def posting_stylesheet(request, cid=None, css_file="posting-stylesheet.css"):
@@ -1154,14 +1208,14 @@ def company_listing(request, alpha=None, group=None):
         companies = Company.objects.filter(job_source_ids__in=buids).\
             exclude(company_slug='').distinct()
 
-        if group=='member':
+        if group == 'member':
             companies = companies.filter(member=True)
 
     # Get ordered list of first character of company names (used to determine
     # what buttons to display).
     alpha_filters = set()
     for co in companies:
-        if (len(alpha_filters)==27):
+        if len(alpha_filters) == 27:
             break
         alpha_filters.add(co.company_slug[0] if co.company_slug[0].isalpha()
                              else '0-9')
@@ -1597,6 +1651,14 @@ def dseo_404(request, the_job=None, job_detail=False):
         context_instance=RequestContext(request)))
 
 
+class Dseo404(FallbackBlockView):
+    page_type = Page.ERROR_404
+
+    def __init__(self, **kwargs):
+        super(Dseo404, self).__init__(**kwargs)
+        self.fallback = dseo_404
+
+
 def dseo_500(request):
     """
     Handles server errors gracefully.
@@ -1747,6 +1809,22 @@ def search_by_results_and_slugs(request, *args, **kwargs):
 
     return render_to_response('job_listing.html', data_dict,
                               context_instance=RequestContext(request))
+
+
+class SearchResults(FallbackBlockView):
+    page_type = Page.SEARCH_RESULTS
+
+    def __init__(self, **kwargs):
+        super(SearchResults, self).__init__(**kwargs)
+        self.fallback = search_by_results_and_slugs
+
+    def set_page(self, request):
+        default_jobs, featured_jobs, _ = context_tools.get_jobs_and_counts(request)
+
+        if not default_jobs and not featured_jobs:
+            self.page_type = Page.NO_RESULTS
+
+        return super(SearchResults, self).set_page(request)
 
 
 def urls_redirect(request, guid, vsid=None, debug=None):

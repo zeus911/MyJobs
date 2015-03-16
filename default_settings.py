@@ -577,3 +577,6 @@ EMAIL_FORMATS = {
         'subject': '{company_name} Saved Search Updated - {label}',
     },
 }
+
+
+MEMOIZE = True

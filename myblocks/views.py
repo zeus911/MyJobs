@@ -1,7 +1,6 @@
 from django.conf import settings
-from django.http import Http404
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.http import Http404, HttpResponse
+
 from django.views.generic import View
 
 from myblocks.models import Page
@@ -11,34 +10,30 @@ class BlockView(View):
     page = None
     page_type = None
 
-    def get(self, request):
-        return self.handle_request(request)
+    def get(self, request, *args, **kwargs):
+        return self.handle_request(request, *args, **kwargs)
 
-    def handle_request(self, request):
+    def handle_request(self, request, *args, **kwargs):
         if not self.page:
             self.set_page(request)
-        head, body = self.page.render(request)
-        context = {
-            'body': body,
-            'head': head,
-            'page': self.page
-        }
-        return render_to_response('myblocks/myblocks_base.html', context,
-                                  context_instance=RequestContext(request))
+        required_redirect = self.page.handle_redirect(request, *args, **kwargs)
+        if required_redirect:
+            return required_redirect
+        return HttpResponse(self.page.render(request))
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         self.set_page(request)
         for block in self.page.all_blocks():
             # Checks to see if any blocks need to do any special handling of
             # posts.
             if hasattr(block, 'handle_post'):
-                response = block.handle_post(request)
+                response = block.handle_post(request, **kwargs)
                 # Some blocks redirect after appropriately handling posted
                 # data. Allow the blocks to successfully redirect if they do.
                 if response is not None:
                     return response
 
-        return self.handle_request(request)
+        return self.handle_request(request, *args, **kwargs)
 
     def set_page(self, request):
         """

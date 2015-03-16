@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.views.generic import TemplateView
 
 from seo.models import CustomFacet
+from seo.views import search_views
 
 #Lazily matches any repition of alphanumeric characters, /, or -
 SLUG_RE = '[/\w-]+?'
@@ -58,11 +59,13 @@ urlpatterns += patterns('seo.views.search_views',
     url(r'^(?P<filter_path>[/\w-]*)feed/(?P<feed_type>json|rss|xml|atom|indeed|jsonp)$',
         'syndication_feed', name="feed"),
     # `jobs/` is the only allowable standalone slug tag
-    url(r'^jobs/$', 'search_by_results_and_slugs', name='all_jobs'),
-    # job listing by slug tag -- the slug tag must have a parameter before it
+    url(r'^jobs/$', search_views.SearchResults.as_view(), name='all_jobs'),
     url(r'^[/\w-]+?/(%s)/$' % ('|'.join(stripped_slugs)),
-        'search_by_results_and_slugs', name="search_by_results_and_slugs"),
-    # home page
+        search_views.SearchResults.as_view(),
+        name="search_by_results_and_slugs"),
+
+
+# home page
     url(r'^$', 'home_page', name="home"),
     # all companies page
     url(r'^all-companies/$', 'company_listing',{'group':'all'},
@@ -85,12 +88,16 @@ urlpatterns += patterns('seo.views.search_views',
         name='member-companies_home'),
     url(r'^member-companies/(?P<alpha>[a-z])/$', 'company_listing', {'group':'member'},
         name='member-companies'),
+
     # job detail (aka job view)
     url(r'^(?P<location_slug>[\w-]+)/(?P<title_slug>[\w~-]+)/(?P<job_id>[0-9A-Fa-f]{1,32})/job/$',
-        'job_detail_by_title_slug_job_id',
+        search_views.JobDetail.as_view(),
         name="job_detail_by_location_slug_title_slug_job_id"),
     url(r'(?P<feed>xml|rss|atom|json|indeed)?/?(?P<job_id>[0-9A-Fa-f]{1,32})/job/$',
-        'job_detail_by_title_slug_job_id', name="job_detail_by_job_id"),
+        search_views.JobDetail.as_view(),
+        name="job_detail_by_job_id"),
+
+
     # ajax urls
     url(r'^ajax/(?P<filter_path>[/\w-]*)(?P<facet_type>titles|cities|states|'
         'countries|facets|mapped|mocs|company-ajax)/$', 'ajax_get_facets'),
