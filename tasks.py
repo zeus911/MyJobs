@@ -23,7 +23,7 @@ from django.core.urlresolvers import reverse_lazy
 from django.template.loader import render_to_string
 from django.db.models import Q
 
-from seo.models import Company, SeoSite
+from seo.models import Company, SeoSite, BusinessUnit
 from myjobs.models import EmailLog, User, STOP_SENDING, BAD_EMAIL
 from myjobs.helpers import log_to_jira
 from mymessages.models import Message
@@ -683,6 +683,13 @@ def expire_jobs():
         job.save()
 
 
+@task(name="tasks.task_clear_bu_cache", acks_late=True, ignore_results=True)
+def task_clear_bu_cache(buid, **kwargs):
+    try:
+        BusinessUnit.clear_cache(buid)
+    except:
+        logging.error(traceback.format_exc(sys.exc_info()))
+
 @task(name="tasks.task_update_solr", acks_late=True, ignore_result=True)
 def task_update_solr(jsid, **kwargs):
     try:
@@ -705,11 +712,11 @@ def task_etl_to_solr(guid, buid, name):
 @task(name='tasks.priority_etl_to_solr', ignore_result=True)
 def task_priority_etl_to_solr(guid, buid, name):
     try:
-        import_jobs.update_job_source(guid, buid, name)
+        import_jobs.update_job_source(guid, buid, name, clear_cache=True)
     except Exception as e:
         logging.error("Error loading jobs for jobsource: %s", guid)
         logging.exception(e)
-        raise task_etl_to_solr.retry()
+        raise task_priority_etl_to_solr.retry()
 
 
 @task(name="tasks.task_clear_solr", ignore_result=True)

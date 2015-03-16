@@ -7,6 +7,7 @@ from lxml import etree
 import pytz
 import re
 import unicodecsv
+from validate_email import validate_email
 
 from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
@@ -1212,10 +1213,12 @@ def process_email(request):
     # the address was in both To and CC.
     contact_emails = list(set(contact_emails))
 
+    validated_contacts = []
     for element in contact_emails:
-        if element.lower() == 'prm@my.jobs':
-            contact_emails.remove(element)
-            break
+        if not element.lower() == 'prm@my.jobs' and validate_email(element):
+            validated_contacts.append(element)
+
+    contact_emails = validated_contacts
 
     try:
         contact_emails.remove(admin_email)
@@ -1232,9 +1235,8 @@ def process_email(request):
                 "You will need to login to My.jobs and go to " \
                 "https://secure.my.jobs/prm to create your record manually."
         send_contact_record_email_response([], [], [], contact_emails,
-                                             error, admin_email)
+                                           error, admin_email)
         return HttpResponse(status=200)
-
 
     partners = list(chain(*[company.partner_set.all()
                             for company in admin_user.company_set.all()]))
@@ -1278,7 +1280,16 @@ def process_email(request):
     created_records = []
     attachment_failures = []
     date_time = now() if not date_time else date_time
-    for contact in possible_contacts + created_contacts:
+    all_contacts = possible_contacts + created_contacts
+    if not all_contacts:
+        error = "No contacts or contact records could be created " \
+                "from this email. You will need to log in and manually " \
+                "create contact records for this email."
+        send_contact_record_email_response([], [], [], contact_emails,
+                                           error, admin_email)
+        return HttpResponse(status=200)
+
+    for contact in all_contacts:
         change_msg = "Email was sent by %s to %s" % \
                      (admin_user.get_full_name(), contact.name)
         record = ContactRecord.objects.create(partner=contact.partner,

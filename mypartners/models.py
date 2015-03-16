@@ -13,7 +13,8 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from myjobs.models import User
-import states
+from postajob.location_data import states
+from states import synonyms
 
 
 CONTACT_TYPE_CHOICES = (('email', 'Email'),
@@ -67,7 +68,7 @@ class SearchParameterQuerySet(models.query.QuerySet):
             If the model has a `_parse_parameters` method, that is called
             before parsing remaining parameters.
         """
-
+        parameters = (parameters or {}).copy()
         # only return records the current user has access to
         if company:
             company_ref = getattr(self.model, 'company_ref', 'company')
@@ -174,7 +175,8 @@ class Location(models.Model):
                                         blank=True)
     city = models.CharField(max_length=255, verbose_name='City')
     state = models.CharField(max_length=200, verbose_name='State/Region')
-    country_code = models.CharField(max_length=3, verbose_name='Country')
+    country_code = models.CharField(max_length=3, verbose_name='Country', 
+                                    default='USA')
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
 
@@ -235,7 +237,7 @@ class Contact(models.Model):
         if state:
             state_query = models.Q()
             # match state synonyms when querying
-            for synonym in states.synonyms[state.strip().lower()]:
+            for synonym in synonyms[state.strip().lower()]:
                 state_query |= models.Q(
                     locations__state__iexact=synonym)
 
@@ -360,7 +362,7 @@ class Partner(models.Model):
         if state:
             state_query = models.Q()
             # match state synonyms when querying
-            for synonym in states.synonyms[state.strip().lower()]:
+            for synonym in synonyms[state.strip().lower()]:
                 state_query |= models.Q(
                     contact__locations__state__iexact=synonym)
 
@@ -447,6 +449,16 @@ class PartnerLibrary(models.Model):
     module.
 
     """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Regular initialization with a custom has_valid_location property.
+        Rather than modify the data on import, we mark the location as invalid.
+        """
+
+        super(PartnerLibrary, self).__init__(*args, **kwargs)
+        self.has_valid_location = self.st.upper() in states.keys()
+
     # Where the data was pulled from
     data_source = models.CharField(
         max_length=255,
@@ -487,6 +499,11 @@ class PartnerLibrary(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        self.has_valid_location = self.st.upper() in states.keys()
+
+        super(PartnerLibrary, self).save(*args, **kwargs)
 
 
 class ContactRecord(models.Model):

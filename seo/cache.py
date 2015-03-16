@@ -7,15 +7,14 @@ from seo.helpers import get_jobs, get_solr_facet
 
 from seo.models import Configuration
 from django.conf import settings
-'''
-This module is currently a holding place for low-level caching that was
-scattered across different modules. It's not much better than throwing
-everything in helpers.py, but it should make refactoring caching easier in the
-future.
 
-'''
-#Time to cache data affected by regular job updates
-MINUTES_TO_CACHE_JOB_DATA = 10 
+# This module is currently a holding place for low-level caching that was
+# scattered across different modules. It's not much better than throwing
+# everything in helpers.py, but it should make refactoring caching easier in the
+# future.
+
+# Time to cache data affected by regular job updates
+MINUTES_TO_CACHE_JOB_DATA = 10
 
 
 def cache_page_prefix(request):
