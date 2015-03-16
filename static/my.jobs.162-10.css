@@ -1536,7 +1536,25 @@ h3.bottom-bordered {
     box-sizing: border-box;
     padding: 5px;
     position: absolute;
+}
 
+.sidebar .center-text {
+    background-color: #EBEBEB;
+    border: 1px solid #fff;
+    text-align: center;
+    margin-top: 5px;
+    padding: 2px 0;
+}
+
+.sidebar .center-text a {
+    text-decoration: underline;
+}
+
+.reporting-modal label {
+    display: inline-block;
+    margin-right: 5px;
+    font-weight: 700;
+    font-size: 16px;
 }
 
 

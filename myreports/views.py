@@ -47,6 +47,22 @@ def reports(request):
                               RequestContext(request))
 
 
+def report_archive(request):
+    if request.is_ajax() and request.method == "POST":
+        company = get_company_or_404(request)
+        reports = Report.objects.filter(owner=company).order_by("-created_on")
+        ctx = {
+            "reports": reports
+        }
+
+        response = HttpResponse()
+        html = render_to_response('myreports/report-archive.html', ctx,
+                                  RequestContext(request))
+        response.content = html.content
+
+        return response
+
+
 def get_states(request):
     if request.is_ajax():
         response = HttpResponse()

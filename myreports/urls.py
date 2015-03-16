@@ -3,6 +3,7 @@ from django.conf.urls import patterns, url
 urlpatterns = patterns(
     'myreports.views',
     url(r'^view$', 'reports', name='reports'),
+    url(r'^view/archive$', 'report_archive', name='report_archive'),
     url(r'^ajax/get-states', 'get_states', name='get_states'),
     url(r'^ajax/get/(?P<app>\w+)/(?P<model>\w+)$',
         'view_records',

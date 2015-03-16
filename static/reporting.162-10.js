@@ -83,7 +83,7 @@ Report.prototype.bind_events = function() {
         if (typeof report.data.contact !== "undefined") {
           delete report.data.contact;
         }
-        contact_wrapper.html(c_field.render(report.data)).children().unwrap();
+        contact_wrapper.html(c_field.render(report)).children().unwrap();
       }
     } else {
       var partner_wrapper = $("#partner-wrapper"),
@@ -108,8 +108,8 @@ Report.prototype.bind_events = function() {
         if (typeof report.data.contact !== "undefined") {
           delete report.data.contact;
         }
-        partner_wrapper.html(p_field.render(report.data)).children().unwrap();
-        contact_wrapper.html(c_field.render(report.data)).children().unwrap();
+        partner_wrapper.html(p_field.render(report)).children().unwrap();
+        contact_wrapper.html(c_field.render(report)).children().unwrap();
       }
     }
   });
@@ -251,13 +251,14 @@ Report.prototype.readable_data = function() {
 
   for (key in data) {
     if (data.hasOwnProperty(key)) {
+      html += "<div>";
       value = data[key];
 
       // Replace all '_' instances with spaces
       key = key.replace(/_/g, " ");
 
       if (value) {
-        html += "<label>" + key + ":</label>";
+        html += "<label>" + key.capitalize() + ":</label>";
       }
 
       // If value is an object (aka a list).
@@ -275,18 +276,21 @@ Report.prototype.readable_data = function() {
         html += key === "state" ? $("#state option[value=" + value + "]").html() : value;
       }
     }
+    html += "</div>";
   }
   if (typeof data['partner'] === "undefined") {
     if ($("#partner-all-checkbox").is(":checked")) {
-      html += "<label>Partners</label> All Partners";
+      html += "<div><label>Partners:</label>All Partners</div>";
     }
   }
 
   if (typeof data['contact'] === "undefined") {
     if ($("#contact-all-checkbox").is(":checked")) {
-      html += "<label>Contacts</label> All Contacts";
+      html += "<div><label>Contacts:</label>All Contacts</div>";
     }
   }
+
+
 
   return html;
 };
@@ -430,7 +434,7 @@ List.prototype.render = function(report) {
       record_count = $("<span style='display: none;'>(<span>0</span> "+ this.type.capitalize() +"s Selected)</span>"),
       body = $("<div id='"+ this.type +"' class='list-body' style='display: none;'></div>"),
       wrapper = $("<div id='"+ this.type +"-wrapper'></div>"),
-      prm_fields = ["start_date", "end_date", "state", "city"],
+      prm_fields = ["start_date", "end_date", "state", "city", "partner"],
       copied_filter,
       list = this,
       key,
@@ -486,6 +490,9 @@ List.prototype.filter = function(filter) {
     // annotate how many records a partner has.
     $.extend(data, {"count": "contactrecord"});
     url += "/reports/ajax/get/mypartners/partner";
+    if (typeof data["partner"] !== "undefined") {
+      delete data["partner"];
+    }
   } else if (list.type === "contact") {
     url += "/reports/ajax/get/mypartners/contact";
   }
@@ -629,6 +636,19 @@ $(document).ready(function() {
         report.bind_events();
         $("#container").addClass("rpt-container");
         report.render_fields(report.fields);
+      }
+    });
+  });
+
+  // View Archive
+  sidebar.on("click", "#report-archive", function() {
+    var data = {"csrfmiddlewaretoken": read_cookie("csrftoken")};
+    $.ajax({
+      type: "POST",
+      url: "view/archive",
+      data: data,
+      success: function(data) {
+        $("#main-container").html(data);
       }
     });
   });
