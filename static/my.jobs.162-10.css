@@ -214,7 +214,7 @@ h1 > small > a:hover {
 }
 
 .product-card {
-    background-color: #F9FAFA;
+    background-color: #F7F7F7;
     box-sizing: border-box;
     padding: 15px 75px 15px 10px;
     border: 1px solid #E5E5E5;
@@ -342,12 +342,13 @@ h1 > small > a:hover {
 }
 
 .sidebar {
-    background-color: #F9FAFA;
+    background-color: #F7F7F7;
     border: 1px solid #E5E5E5;
     border-top: 0;
     box-sizing: border-box;
     box-shadow: 2px 2px 3px #BBB;
     padding: 10px;
+    position: relative;
 }
 
 .sidebar * {
@@ -723,7 +724,7 @@ h1 > small > a:hover {
 .prm-header{
     font-weight: bold;
     padding: 5px 0;
-    background-color: #F9FAFA;
+    background-color: #F7F7F7;
     margin-bottom: 20px;
     border: 1px solid #d5d4d0;
 }
@@ -1355,7 +1356,7 @@ ul.header-menu > li > ul > a > li:hover {
 }
 
 .panel {
-    background-color: #F9FAFA;
+    background-color: #F7F7F7;
     border: 1px solid #E5E5E5;
     box-sizing: border-box;
     -webkit-box-shadow: 2px 2px 3px #BBB;
@@ -1379,7 +1380,8 @@ ul.header-menu > li > ul > a > li:hover {
 
 .list-header {
     box-sizing: border-box;
-    background-color: #F9FAFA;
+    background-color: #FFF;
+    border: 1px solid #d5d4d0;
     padding: 5px;
     position: relative;
 }
@@ -1411,7 +1413,7 @@ ul.header-menu > li > ul > a > li:hover {
     margin: 0 0 0 10px;
     list-style: none;
     padding: 0 0 0 10px;
-    border-left: 1px solid #ccc;
+    border-left: 1px solid #d5d4d0;
 }
 
 .list-body ul li {
@@ -1427,10 +1429,39 @@ ul.header-menu > li > ul > a > li:hover {
     margin-top: -1px;
 }
 
+div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
+    border: 0;
+    border-right: 1px solid #d5d4d0;
+    border-bottom: 1px solid #d5d4d0;
+    border-left: 1px solid #d5d4d0;
+}
+
+.rpt-container {
+    background-color: #F7F7F7;
+    border: 1px solid #d5d4d0;
+    box-shadow: 2px 2px 3px #BBB;
+    box-sizing: border-box;
+    padding: 10px;
+    position: relative;
+}
+
 .rpt-container label {
     font-size: 16px;
     font-weight: 700;
     color: #5e6c82;
+}
+
+.rpt-container span.datepicker {
+    margin: -1px;
+}
+
+.rpt-container input[type="text"] {
+    width: 206px;
+}
+
+.show-modal-holder {
+    margin-top: 20px;
+    text-align: center;
 }
 
 .row + .row-add-margin {
@@ -1447,11 +1478,6 @@ h3.bottom-bordered {
     list-style: none;
     margin: 0;
     padding: 0;
-}
-
-.rpt-container {
-    min-height: 345px;
-    position: relative;
 }
 
 .rpt-buttons {
@@ -1489,12 +1515,28 @@ h3.bottom-bordered {
     font-size: 16px;
 }
 
-.icon-set i + i {
+.icon-set a.icon-link {
+    color: black;
+}
+
+.icon-set i + i,
+.icon-set i + a.icon-link {
     margin-left: 5px;
 }
 
 .sidebar .report i:hover {
     cursor: pointer;
+}
+
+.sidebar .report-exports {
+    width: 250px;
+    background-color: white;
+    border: 1px solid #000;
+    border-radius: 5px;
+    box-sizing: border-box;
+    padding: 5px;
+    position: absolute;
+
 }
 
 

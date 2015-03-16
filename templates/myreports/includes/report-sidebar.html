@@ -2,16 +2,21 @@
     <h2 class="top">Past Reports</h2>
     {% for report in past_reports %}
         <div class="report">
-            <a>{{ report.name }}</a>
+            <a id="report-{{ report.id }}">{{ report.name }}</a>
             <div class="icon-set">
                 <i id="view-{{ report.id }}" class="fa fa-eye" title="View"></i>
                 <i id="clone-{{ report.id }}" class="fa fa-copy" title="Clone Report"></i>
-                <i id="export-{{ report.id }}" class="fa fa-download" title="Export"></i>
+                <a class="icon-link" href="/reports/download?report={{ report.id }}"><i id="export-{{ report.id }}" class="fa fa-download" title="Export"></i></a>
             </div>
         </div>
     {% empty %}
         No past reports
     {% endfor %}
+    {% if report_count > 10 %}
+    <div style="text-align: center;">
+        <a id="report-archive">View Report Archive</a>
+    </div>
+    {% endif %}
     <h2>Report Queue</h2>
     {% for report in queued_reports %}
     {% empty %}

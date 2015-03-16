@@ -115,6 +115,28 @@ Report.prototype.bind_events = function() {
   });
 
 
+  // For date widget.
+  $(document.body).on("click", ".datepicker",function(e) {
+   $(this).pickadate({
+     format: "mm/dd/yyyy",
+     selectYears: true,
+     selectMonths: true,
+     today: false,
+     clear: false,
+     close: false,
+     onOpen: function() {
+       if (this.get("id") === "start-date") {
+         var end_date = $("#end-date").val();
+         this.set("max", new Date(end_date || new Date()));
+       } else if (this.get("id") === "end-date") {
+         var start_date = $("#start-date").val();
+         this.set("min", new Date(start_date || new Date(0)));
+       }
+     }
+   });
+  });
+
+
   // Slides the associated list up or down.
   $(document.body).on("click", ".list-header", function() {
     var icon = $(this).children("i");
@@ -166,6 +188,11 @@ Report.prototype.bind_events = function() {
     var modal = $("#report-modal"),
         body = modal.children(".modal-body"),
         footer = modal.children(".modal-footer");
+
+    if (typeof report.data['report_name'] === "undefined") {
+      report.data['report_name'] = $("#report_name").val();
+    }
+
     body.html(report.readable_data());
     modal.modal("show");
   });
@@ -210,6 +237,11 @@ Report.prototype.bind_events = function() {
 };
 
 
+Report.prototype.unbind_events = function() {
+  $(document.body).unbind("click");
+};
+
+
 // Changes report.data from having PKs in lists to show more human friendly data such as names.
 Report.prototype.readable_data = function() {
   var data = this.data,
@@ -244,6 +276,18 @@ Report.prototype.readable_data = function() {
       }
     }
   }
+  if (typeof data['partner'] === "undefined") {
+    if ($("#partner-all-checkbox").is(":checked")) {
+      html += "<label>Partners</label> All Partners";
+    }
+  }
+
+  if (typeof data['contact'] === "undefined") {
+    if ($("#contact-all-checkbox").is(":checked")) {
+      html += "<label>Contacts</label> All Contacts";
+    }
+  }
+
   return html;
 };
 
@@ -264,11 +308,41 @@ Report.prototype.render_fields = function(fields) {
 
   // for field in fields render.
   for (i = 0; i < fields.length; i++) {
-    html += fields[i].render();
+    html += fields[i].render(this);
   }
 
-  html += "<br /><a id=\"show-modal\" class=\"btn\">Generate Report</a>";
+  html += "<div class=\"show-modal-holder\"><a id=\"show-modal\" class=\"btn primary\">Generate Report</a></div>";
   container.html(html);
+};
+
+
+Report.prototype.create_clone_report = function(json) {
+  var key,
+      value,
+      field;
+
+  for (key in json) {
+    if (json.hasOwnProperty(key)) {
+      value = json[key];
+      if (key === "partner") {
+        this.find_field("Select Partners").value = value;
+        this.data[key] = value;
+      } else if (key === "contact_name") {
+        this.find_field("Select Contacts").value = value;
+        this.data["contact"] = value;
+      } else if (key.indexOf("date") > 0) {
+        field = this.find_field("Select Date");
+        if (field.value === "") {
+          field.value = {"start_date": '', "end_date": ''};
+        }
+        field.value[key] = value;
+        this.data[key] = value;
+      } else {
+        this.find_field(key.capitalize()).value = value;
+        this.data[key] = value;
+      }
+    }
+  }
 };
 
 
@@ -284,10 +358,14 @@ var Field = function(label, type, required, value) {
 Field.prototype.render = function() {
   var l = $("<label>" + this.label + "</label>"), // label for <input>
       wrapper = $("<div></div>"), // wrapping div
+      field = this,
       html = '',
       input,
       date_widget,
-      date_picker;
+      date_picker,
+      start_date,
+      to,
+      end_date;
 
   // Indication that the field is required.
   if (this.required) {
@@ -299,11 +377,19 @@ Field.prototype.render = function() {
     wrapper.append(l).append(input);
     html = wrapper.prop("outerHTML");
   } else if (this.type === "date") {
-    date_widget = $("<div id='date-filter' class='filter-option'></div>").append("<div class='date-picker'></div>"),
-    date_picker = $(date_widget).children("div")
-                    .append("<input id='start_date' class='datepicker picker-left' type='text' placeholder='Start Date' />")
-                    .append("<span id='activity-to-' class='datepicker'>to</span>")
-                    .append("<input id='end_date' class='datepicker picker-right' type='text' placeholder='End Date' />");
+    date_widget = $("<div id='date-filter' class='filter-option'></div>").append("<div class='date-picker'></div>");
+    date_picker = $(date_widget).children("div");
+
+    if (field.value) {
+      start_date = $("<input id='start_date' class='datepicker picker-left' type='text' value='"+ field.value.start_date +"' placeholder='Start Date' />");
+      end_date = $("<input id='end_date' class='datepicker picker-right' type='text' value='"+ field.value.end_date +"' placeholder='End Date' />");
+    } else {
+      start_date = $("<input id='start_date' class='datepicker picker-left' type='text' placeholder='Start Date' />");
+      end_date = $("<input id='end_date' class='datepicker picker-right' type='text' placeholder='End Date' />");
+    }
+    to = $("<span id='activity-to-' class='datepicker'>to</span>");
+
+    date_picker.append(start_date).append(to).append(end_date);
     date_widget.append(date_picker);
     html += l.prop("outerHTML");
     html += date_widget.prop("outerHTML");
@@ -316,6 +402,9 @@ Field.prototype.render = function() {
         data: {"csrfmiddlewaretoken": read_cookie("csrftoken")},
         success: function(data) {
           $(".state").html(data);
+          if (field.value) {
+            $(".state").find("select").val(field.value);
+          }
         }
       });
     })();
@@ -334,7 +423,7 @@ List.prototype = Object.create(Field.prototype);
 
 // Outputs html based on type using jQuery.
 // Runs ajax asynchronously to render associated lists.
-List.prototype.render = function(filter) {
+List.prototype.render = function(report) {
   var container = $("<div id='"+ this.type +"-header' class='list-header'></div>"),
       icon = $("<i class='fa fa-plus-square-o'></i>"),
       all_checkbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />"),
@@ -342,12 +431,22 @@ List.prototype.render = function(filter) {
       body = $("<div id='"+ this.type +"' class='list-body' style='display: none;'></div>"),
       wrapper = $("<div id='"+ this.type +"-wrapper'></div>"),
       prm_fields = ["start_date", "end_date", "state", "city"],
-      copied_filter = $.extend({}, filter),
+      copied_filter,
       list = this,
       key,
       html;
 
-  container.append(icon).append(all_checkbox).append(" All " + this.type.capitalize() + "s ").append(record_count);
+  if (report.data !== "") {
+    copied_filter = $.extend({}, report.data);
+  }
+
+  if (this.value) {
+    all_checkbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' />");
+  } else {
+    all_checkbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />");
+  }
+
+  container.append(icon).append(all_checkbox).append(" All " + list.type.capitalize() + "s ").append(record_count);
 
   wrapper.append(container).append(body);
   html = wrapper.prop("outerHTML");
@@ -364,17 +463,18 @@ List.prototype.render = function(filter) {
 
   // Asynchronously renders a list of records based on list type.
   (function() {
-    list.filter(list.type, copied_filter);
+    list.filter(copied_filter);
   })();
 
   return html;
 };
 
 // Renders a list of records based on type.
-List.prototype.filter = function(type, filter) {
+List.prototype.filter = function(filter) {
   "use strict";
   var url = location.protocol + "//" + location.host, // https://secure.my.jobs
-      data = {"csrfmiddlewaretoken": read_cookie("csrftoken")};
+      data = {"csrfmiddlewaretoken": read_cookie("csrftoken")},
+      list = this;
 
   // if filter, add to data.
   if (typeof filter !== "undefined") {
@@ -382,11 +482,11 @@ List.prototype.filter = function(type, filter) {
   }
 
   // specific duties based on type.
-  if (type === "partner") {
+  if (list.type === "partner") {
     // annotate how many records a partner has.
     $.extend(data, {"count": "contactrecord"});
     url += "/reports/ajax/get/mypartners/partner";
-  } else if (type === "contact") {
+  } else if (list.type === "contact") {
     url += "/reports/ajax/get/mypartners/contact";
   }
 
@@ -399,17 +499,21 @@ List.prototype.filter = function(type, filter) {
     global: false,
     success: function(data) {
       var ul = $("<ul></ul>"),
-          selected = $("[id^='" + type + "-header'] span span"),
+          selected = $("[id^='" + list.type + "-header'] span span"),
           record,
           li;
 
       // fill ul with li's
       for (var i = 0; i < data.length; i++) {
         record = data[i];
-        li = $("<li><input type='checkbox' value='"+ record.pk +"' checked /> <span>"+ record.name +"</span></li>");
+        if (list.value) {
+          li = $("<li><input type='checkbox' value='"+ record.pk +"' /> <span>"+ record.name +"</span></li>");
+        } else {
+          li = $("<li><input type='checkbox' value='"+ record.pk +"' checked /> <span>"+ record.name +"</span></li>");
+        }
 
         // add record count to right of partners
-        if (type === "partner") {
+        if (list.type === "partner") {
           li.append("<span class='pull-right'>"+ record.count +"</span>");
         }
 
@@ -417,7 +521,20 @@ List.prototype.filter = function(type, filter) {
       }
 
       // render
-      $("#"+ type + ".list-body").html('').append(ul);
+      $("#"+ list.type + ".list-body").html('').append(ul);
+
+      if (list.value) {
+        if (list.type === "partner") {
+          for (var j = 0; j < list.value.length; j++) {
+            $("input[value*=" + list.value[j] + "]").prop("checked", true);
+          }
+        } else if (list.type === "contact") {
+          for (var k = 0; k < list.value.length; k++) {
+            $("li span:contains(" + list.value[k] + ")").siblings("input").prop("checked", true);
+          }
+        }
+      }
+
       $(selected).html(data.length).parent().show("fast");
     },
     error: function(e) {
@@ -436,29 +553,6 @@ String.prototype.capitalize = function() {
 
 $(document).ready(function() {
   var sidebar = $(".sidebar");
-
-
-  // For date widget.
-  $(document.body).on("click", ".datepicker",function(e) {
-   $(this).pickadate({
-     format: "mm/dd/yyyy",
-     selectYears: true,
-     selectMonths: true,
-     today: false,
-     clear: false,
-     close: false,
-     onOpen: function() {
-       if (this.get("id") === "start-date") {
-         var end_date = $("#end-date").val();
-         this.set("max", new Date(end_date || new Date()));
-       } else if (this.get("id") === "end-date") {
-         var start_date = $("#start-date").val();
-         this.set("min", new Date(start_date || new Date(0)));
-       }
-     }
-   });
-  });
-
 
   $(document.body).on("click", "#start-report:not(.disabled)", function(e) {
     e.preventDefault();
@@ -497,23 +591,46 @@ $(document).ready(function() {
 
 
   // View Report
-  sidebar.on("click", ".fa-eye", function() {
-    var report_id = $(this).attr("id").split("-")[1];
-    console.log("View Report ID: ", report_id);
+  sidebar.on("click", ".report > a, .fa-eye", function() {
+    var report_id = $(this).attr("id").split("-")[1],
+        data = {"csrfmiddlewaretoken": read_cookie("csrftoken"),
+                "report": report_id},
+        url = location.protocol + "//" + location.host; // https://secure.my.jobs
+
+
+    $.ajax({
+      type: "POST",
+      url: url + "/reports/ajax/get-report",
+      data: data,
+      success: function(data) {
+        $.getScript("https://www.google.com/jsapi").done(function() {
+          $(".wrapper > .row").html(data);
+        });
+      }
+    });
   });
 
 
   // Clone Report
   sidebar.on("click", ".fa-copy", function() {
-    var report_id = $(this).attr("id").split("-")[1];
-    console.log("Clone Report ID: ", report_id);
-  });
+    var report_id = $(this).attr("id").split("-")[1],
+        data = {"csrfmiddlewaretoken": read_cookie("csrftoken"),
+                "report": report_id},
+        url = location.protocol + "//" + location.host; // https://secure.my.jobs
 
-
-  // Export Report
-  sidebar.on("click", ".fa-download", function() {
-    var report_id = $(this).attr("id").split("-")[1];
-    console.log("Export Report ID: ", report_id);
+    $.ajax({
+      type: "POST",
+      url: url + "/reports/ajax/get-inputs",
+      data: data,
+      success: function(data) {
+        var report = new Report(["prm"]);
+        report.create_clone_report($.parseJSON(data));
+        report.unbind_events();
+        report.bind_events();
+        $("#container").addClass("rpt-container");
+        report.render_fields(report.fields);
+      }
+    });
   });
 });
 

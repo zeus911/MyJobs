@@ -12,5 +12,7 @@ urlpatterns = patterns(
         'create_report',
         {'app': 'mypartners'},
         name='create_report'),
-    url(r'^download$', 'get_report', name='get_report'),
+    url(r'ajax/get-report', 'get_report', name='get_report'),
+    url(r'ajax/get-inputs', 'get_inputs', name='get_inputs'),
+    url(r'^download$', 'download_report', name='download_report'),
 )
