@@ -1154,6 +1154,45 @@ class EmailTests(MyPartnersTestCase):
             result_dt = record.date_time.replace(second=0, microsecond=0)
             self.assertEqual(str(result_dt), str(expected_dt))
 
+    def test_blank_to(self):
+        """
+        Test for PD-1150.
+
+        Forwarded emails with blank or "bad" from/to/cc fields should not
+        result in ContactRecords being created for every Contact with a blank
+        email.
+
+        Additionally, these bad emails and emails to no one except
+        prm@my.jobs should generate useful error messages.
+
+        """
+
+        ContactFactory(partner=self.partner, email='')
+
+        self.data['to'] = ''
+        self.client.post(reverse('process_email'), self.data)
+
+        records = ContactRecord.objects.filter(contact_email='')
+        self.assertEqual(records.count(), 0)
+        self.assertIn('manually create contact records for this email.',
+                      mail.outbox[0].body)
+
+        mail.outbox = []
+
+        self.data['to'] = ''
+        self.data['text'] = '---------- Forwarded message ----------\\r\\n' \
+                            'From: My.jobs Partner Relationship Manager [mailto:prm@my.jobs]\\r\\n' \
+                            'Date: Wed, Mar 26, 2014 at 11:18 AM\\r\\n' \
+                            'Subject: Fwd: Test number 2\\r\\n' \
+                            'To: AJ Selvey\\r\\n\\r\\n\\r' \
+                            '\\n\\r\\n\\r\\n test message'
+        self.client.post(reverse('process_email'), self.data)
+
+        records = ContactRecord.objects.filter(contact_email='')
+        self.assertEqual(records.count(), 0)
+        self.assertIn('manually create contact records for this email',
+                      mail.outbox[0].body)
+
 
 class PartnerLibraryTestCase(MyPartnersTestCase):
     @classmethod
