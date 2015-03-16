@@ -33,7 +33,6 @@ def reports(request):
 
     reports = Report.objects.filter(owner=company).order_by("-created_on")
     report_count = reports.count()
-    print report_count
     past_reports = reports[:10]
 
     ctx = {
@@ -180,7 +179,7 @@ def create_report(request, app, model):
     return HttpResponse()
 
 
-def get_report(request):
+def view_report(request):
     if request.is_ajax() and request.method == "POST":
         report_id = request.POST['report']
         report = Report.objects.get(id=report_id)
