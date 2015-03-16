@@ -28,6 +28,7 @@ from myjobs.models import User
 from mypartners.models import Tag
 from universal.helpers import get_domain, get_object_or_none, has_mx_record
 
+
 import decimal
 
 
@@ -228,7 +229,7 @@ class CustomFacet(BaseSavedSearch):
         then it's possible that the wrong operation will be returned if there
         are multiple site facets for the active site and they have different
         operations.
-        
+
         """
         return getattr(custom_facet, 'boolean_operation',
                        custom_facet.active_site_facet().boolean_operation)
@@ -525,22 +526,23 @@ class SeoSite(Site):
             self.postajob_filter_type, SeoSite.this_site_only)
         return filter_function(self)
 
-    def clear_cache(self):
-        # Increment Configuration revision attribute, which is used
+    @staticmethod
+    def clear_caches(sites):
+        # Increment Configuration revision attributes, which is used
         # when calculating a custom_cache_pages cache key prefix.
         # This will effectively expire the page cache for custom_cache_page
         # views_
-        configs = self.configurations.all()
+        configs = Configuration.objects.filter(seosite__in=sites)
         # https://docs.djangoproject.com/en/dev/topics/db/queries/#query-expressions
         configs.update(revision=models.F('revision') + 1)
-        for config in configs:
-            config.clear_cache()
+        Configuration.clear_caches(configs)
         # Delete domain-based cache entries that don't use the
         # custom_cache_page prefix
-        site_cache_key = '%s:SeoSite' % self.domain
-        buid_cache_key = '%s:buids' % site_cache_key
-        social_cache_key = '%s:social_links' % self.domain
-        cache.delete_many([site_cache_key, buid_cache_key, social_cache_key])
+        site_cache_keys = ['%s:SeoSite' % site.domain for site in sites]
+        buid_cache_keys = ['%s:buids' % key for key in site_cache_keys]
+        social_cache_keys = ['%s:social_links' % site.domain for site in sites]
+        cache.delete_many(site_cache_keys + buid_cache_keys + social_cache_keys)
+
 
     def email_domain_choices(self,):
         from postajob.models import CompanyProfile
@@ -558,7 +560,7 @@ class SeoSite(Site):
 
     def save(self, *args, **kwargs):
         super(SeoSite, self).save(*args, **kwargs)
-        self.clear_cache()
+        self.clear_caches([self])
 
     def user_has_access(self, user):
         """
@@ -963,23 +965,30 @@ class Configuration(models.Model):
         self.browse_mapped_moc_text = self.browse_moc_text
         self.browse_mapped_moc_order = self.browse_moc_order
 
-
-    def clear_cache(self):
+    @staticmethod
+    def clear_caches(configs):
         # Delete all cached configurations used to determine cache key prefixes
         # in directseo.seo.decorators.custom_cache_page because the
         # configuration revision referenced in the key_prefix has changed.
-        cache.delete_many(["%s:config:%s" % (domain, self.status) for domain in
-                           self.seosite_set.all().values_list('domain',
-                                                              flat=True)])
-        cache.delete_many(["jobs_count::%s" % pk for pk in 
-                           self.seosite_set.all().values_list('id', flat=True)])
+        sites = SeoSite.objects.filter(configurations__in=configs)
+        statuses = set()
+        for config in configs:
+            statuses.add(config.status)
+        for status in statuses:
+            cache.delete_many(["%s:config:%s" % (site.domain, status) for
+                               site in sites.all()])
+            cache.delete_many(["jobs_count::%s" % site.pk for
+                               site in  sites.all()])
+
+    def clear_cache(self):
+        self.clear_caches([self])
 
     def save(self, *args, **kwargs):
         # Increment the revision number so a new cache key will be used for urls
         # of the seosites linked to this configuration.
         self.revision += 1
         super(Configuration, self).save(*args, **kwargs)
-        self.clear_cache()
+        self.clear_caches([self])
 
     def status_title(self):
         if self.status == 1:
@@ -1219,6 +1228,13 @@ class BusinessUnit(models.Model):
     enable_markdown = models.BooleanField('Enable Markdown for job '
                                           'descriptions', default=True)
 
+    @staticmethod
+    def clear_cache(buid):
+        """Clears the cache for related sites."""
+        sites = SeoSite.objects.filter(business_units=buid).exclude(
+            site_tags__site_tag='network')
+        SeoSite.clear_caches(sites)
+
 
 class Country(models.Model):
     name = models.CharField(max_length=255, db_index=True)
@@ -1313,7 +1329,7 @@ class CompanyUser(models.Model):
         self.save()
 
 
-@receiver(post_delete, sender=CompanyUser, 
+@receiver(post_delete, sender=CompanyUser,
           dispatch_uid='post_delete_companyuser_signal')
 def remove_user_from_group(sender, instance, **kwargs):
     # if a user is not associated with any more companies, we should remove

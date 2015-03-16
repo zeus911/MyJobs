@@ -19,6 +19,7 @@ from seo_pysolr import Solr
 from xmlparse import DEv2JobFeed
 from seo.helpers import slices, create_businessunit
 from seo.models import BusinessUnit, Company
+import tasks
 from transform import hr_xml_to_json, make_redirect
 
 
@@ -32,7 +33,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'directseo.settings'
 FEED_FILE_PREFIX = "dseo_feed_"
 
 
-def update_job_source(guid, buid, name):
+def update_job_source(guid, buid, name, clear_cache=False):
     """Composed method for resopnding to a guid update."""
 
     logger.info("Updating Job Source %s", guid)
@@ -57,6 +58,9 @@ def update_job_source(guid, buid, name):
     bu.associated_jobs = len(jobs)
     bu.date_updated = datetime.datetime.utcnow()
     bu.save()
+    if clear_cache:
+        # Clear cache in 25 minutes to allow for solr replication
+        tasks.task_clear_bu_cache.delay(buid=bu.id, countdown=1500)
 
 
 def filter_current_jobs(jobs, bu):
@@ -64,7 +68,7 @@ def filter_current_jobs(jobs, bu):
     Inputs:
         :jobs: A iterable of etree objects.
         :bu: The BusinessUnit these jobs are associated with.
-    
+
        Returns: a generator of jobs which pass validation for indexing."""
 
     hr_xml_include_in_index = ".//*[@schemeName='dbextras.tempjobwrappingjobs.includeinindex']"
@@ -78,11 +82,11 @@ def filter_current_jobs(jobs, bu):
 
 
 def get_jobsfs_zipfile(guid):
-    """Get a fileobject for the zipfile from JobsFS.  
-    
-    This has been separated to simplify uncouple parsing zipfiles from jobsFS, so we can more easily test the rest of 
+    """Get a fileobject for the zipfile from JobsFS.
+
+    This has been separated to simplify uncouple parsing zipfiles from jobsFS, so we can more easily test the rest of
     this code.
-     
+
     Inputs:
         :guid: The guid of which to download.
     :return: A urllib2 Response (A filelike object)
@@ -111,7 +115,7 @@ def get_jobs_from_zipfile(zipfileobject, guid):
     if os.path.exists(directory):
         shutil.rmtree(directory)
     os.mkdir(directory)
-    
+
     # Write zipfile to filesystem
     filename = os.path.join(directory, '%s.zip' % guid)
     with open(filename, 'wb') as f:
@@ -126,7 +130,7 @@ def get_jobs_from_zipfile(zipfileobject, guid):
         zf.extractall(directory)
     finally:
         zf.close()
-    
+
     # Process the files.
     active_directory = os.path.join(directory, 'ActiveDirectory_%s' % guid)
     files = os.listdir(active_directory)
@@ -165,7 +169,7 @@ def add_company(bu):
     name change of an existing company.
 
     """
-    # See if there is an existing relationship. For now, we are assuming only 
+    # See if there is an existing relationship. For now, we are assuming only
     # one or zero instances of a company exist in the database--this may change
     companies = bu.company_set.all()
     if companies:
@@ -222,7 +226,7 @@ def add_company(bu):
 
 
 def update_solr(buid, download=True, force=True, set_title=False,
-                delete_feed=True, data_dir=DATA_DIR):
+                delete_feed=True, data_dir=DATA_DIR, clear_cache=False):
     """
     Update the Solr master index with the data contained in a feed file
     for a given buid/jsid.
@@ -376,6 +380,9 @@ def update_solr(buid, download=True, force=True, set_title=False,
                                          updated=updated)
     bu.associated_jobs = len(jobs)
     bu.save()
+    if clear_cache:
+        # Clear cache in 25 minutes to allow for solr replication
+        tasks.task_clear_bu_cache.delay(buid=bu.id, countdown=1500)
     #Update the Django database to reflect company additions and name changes
     add_company(bu)
     if delete_feed:
@@ -548,7 +555,7 @@ def chunk(l, chunk_size=1024):
 def remove_expired_jobs(buid, active_jobs, upload_chunk_size=1024):
     """
     Given a job source id and a list of active jobs for that job source,
-    Remove the jobs on solr that are not among the active jobs.  
+    Remove the jobs on solr that are not among the active jobs.
     """
     conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
     count = conn.search("*:*", fq="buid:%s" % buid, facet="false",
