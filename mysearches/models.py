@@ -122,7 +122,8 @@ class SavedSearch(models.Model):
 
     def get_feed_items(self, num_items=None):
         num_items = num_items or self.jobs_per_email
-        url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency)
+        url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency,
+                                       hasattr(self, 'partnersavedsearch'))
         url_of_feed = update_url_if_protected(url_of_feed, self.user)
         parse_feed_args = {
             'feed_url': url_of_feed,
@@ -573,4 +574,4 @@ class SavedSearchLog(models.Model):
     date_sent = models.DateTimeField(auto_now_add=True)
     contact_record = models.ForeignKey('mypartners.ContactRecord', null=True,
                                        blank=True, on_delete=models.SET_NULL)
-    uuid = models.CharField(max_length=32)
+    uuid = models.CharField(max_length=32, db_index=True)

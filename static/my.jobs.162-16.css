@@ -214,7 +214,7 @@ h1 > small > a:hover {
 }
 
 .product-card {
-    background-color: #F9FAFA;
+    background-color: #F7F7F7;
     box-sizing: border-box;
     padding: 15px 75px 15px 10px;
     border: 1px solid #E5E5E5;
@@ -342,12 +342,13 @@ h1 > small > a:hover {
 }
 
 .sidebar {
-    background-color: #F9FAFA;
+    background-color: #F7F7F7;
     border: 1px solid #E5E5E5;
     border-top: 0;
     box-sizing: border-box;
     box-shadow: 2px 2px 3px #BBB;
     padding: 10px;
+    position: relative;
 }
 
 .sidebar * {
@@ -723,7 +724,7 @@ h1 > small > a:hover {
 .prm-header{
     font-weight: bold;
     padding: 5px 0;
-    background-color: #F9FAFA;
+    background-color: #F7F7F7;
     margin-bottom: 20px;
     border: 1px solid #d5d4d0;
 }
@@ -1325,15 +1326,6 @@ ul.header-menu > li > ul > a > li:hover {
     text-decoration: none;
 }
 
-#menu-inbox ~ ul li > p {
-    color: white;
-    padding-left: 4px;
-}
-
-#menu-inbox > div.icon-envelope {
-    margin-left: 3px;
-}
-
 #date-range-list > li:last-child:hover {
     background-color: #f2f2f2;
 }
@@ -1361,6 +1353,208 @@ ul.header-menu > li > ul > a > li:hover {
 
 .sidebar li i.success {
     color: green;
+}
+
+.panel {
+    background-color: #F7F7F7;
+    border: 1px solid #E5E5E5;
+    box-sizing: border-box;
+    -webkit-box-shadow: 2px 2px 3px #BBB;
+    -moz-box-shadow: 2px 2px 3px  #BBB;
+    box-shadow: 2px 2px 3px  #BBB;
+    padding: 10px;
+}
+
+.panel h1,
+.panel h2,
+.panel h3,
+.panel h4,
+.panel h5,
+.panel h6 {
+    margin: 0;
+}
+
+.panel > #choices input[type="checkbox"] {
+    margin-top: -1px;
+}
+
+.list-header {
+    box-sizing: border-box;
+    background-color: #FFF;
+    border: 1px solid #d5d4d0;
+    padding: 5px;
+    position: relative;
+}
+
+.list-header:hover {
+    cursor: pointer;
+    background-color: #D5FACF;
+}
+
+.list-header i {
+    top: 9px;
+    position: absolute;
+}
+
+.list-header input[type="checkbox"] {
+    margin-top: -1px;
+    margin-left: 15px;
+}
+
+.list-body {
+    box-sizing: border-box;
+    padding: 5px 10px;
+    overflow-y: auto;
+    max-height: 210px;
+}
+
+.list-body ul {
+    box-sizing: border-box;
+    margin: 0 0 0 10px;
+    list-style: none;
+    padding: 0 0 0 10px;
+    border-left: 1px solid #d5d4d0;
+}
+
+.list-body ul li {
+    position: relative;
+}
+
+.list-body li:hover {
+    background-color: #D5FACF;
+    cursor: pointer;
+}
+
+.list-body ul input[type="checkbox"] {
+    margin-top: -1px;
+}
+
+div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
+    border: 0;
+    border-right: 1px solid #d5d4d0;
+    border-bottom: 1px solid #d5d4d0;
+    border-left: 1px solid #d5d4d0;
+}
+
+.rpt-container {
+    background-color: #F7F7F7;
+    border: 1px solid #d5d4d0;
+    box-shadow: 2px 2px 3px #BBB;
+    box-sizing: border-box;
+    padding: 10px;
+    position: relative;
+}
+
+.rpt-container label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #5e6c82;
+}
+
+.rpt-container span.datepicker {
+    margin: -1px;
+}
+
+.rpt-container input[type="text"] {
+    width: 206px;
+}
+
+.show-modal-holder {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.row + .row-add-margin {
+    margin-top: 20px;
+}
+
+h1.bottom-bordered,
+h2.bottom-bordered,
+h3.bottom-bordered {
+    border-bottom: 2px solid #873f3d;
+}
+
+.reporting-breadcrumbs ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.rpt-buttons {
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+}
+
+.sidebar .report {
+    box-sizing: border-box;
+    padding: 2px 0;
+    position: relative;
+}
+
+.sidebar .report > a {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 210px;
+    white-space: nowrap;
+}
+
+.sidebar .report:hover {
+    background-color: #D5FACF;
+}
+
+.sidebar .icon-set {
+    position: absolute;
+    right: 0;
+    top: 3px;
+    width: 40px;
+}
+
+.icon-set i {
+    font-size: 16px;
+}
+
+.icon-set a.icon-link {
+    color: black;
+}
+
+.icon-set i + i,
+.icon-set i + a.icon-link {
+    margin-left: 5px;
+}
+
+.sidebar .report i:hover {
+    cursor: pointer;
+}
+
+.sidebar .report-exports {
+    width: 250px;
+    background-color: white;
+    border: 1px solid #000;
+    border-radius: 5px;
+    box-sizing: border-box;
+    padding: 5px;
+    position: absolute;
+}
+
+.sidebar .center-text {
+    background-color: #EBEBEB;
+    border: 1px solid #fff;
+    text-align: center;
+    margin-top: 5px;
+    padding: 2px 0;
+}
+
+.sidebar .center-text a {
+    text-decoration: underline;
+}
+
+.reporting-modal label {
+    display: inline-block;
+    margin-right: 5px;
+    font-weight: 700;
+    font-size: 16px;
 }
 
 
@@ -1648,11 +1842,16 @@ table#row-link-table {
     border-left: 1px solid #E5E5E5;
 }
 
+.table-scrollable {
+    width: 100%;
+}
+
 .table-scrollable tbody {
     max-height: 200px;
-    width: 300px;
+    width: 100%;
     overflow-y: auto;
     display: block;
+    position: relative;
 }
 
 .table-scrollable tr {

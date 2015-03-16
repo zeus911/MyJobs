@@ -1,11 +1,21 @@
 <div class="sidebar">
-    <h2 id="report-1" class="top">
-            Report 1
-    </h2>
-    <div id="sidebar-content">
-
-    </div>
-    <div class="navigation">
-        <a id="gen-report" class="btn disabled">Generate Report</a>
-    </div>
+    <h2 class="top">Past Reports</h2>
+    {% for report in past_reports %}
+        <div class="report">
+            <a id="report-{{ report.id }}">{{ report.name }}</a>
+            <div class="icon-set">
+                <i id="clone-{{ report.id }}" class="fa fa-copy" title="Clone Report"></i>
+                <a class="icon-link" href="/reports/download?report={{ report.id }}"><i id="export-{{ report.id }}" class="fa fa-download" title="Export"></i></a>
+            </div>
+        </div>
+    {% empty %}
+        No past reports
+    {% endfor %}
+    <!--
+    <h2>Report Queue</h2>
+    {% for report in queued_reports %}
+    {% empty %}
+        No reports generating
+    {% endfor %}
+    -->
 </div>

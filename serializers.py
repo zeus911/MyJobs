@@ -47,7 +47,7 @@ class ExtraValuesSerializer(Serializer):
     TIME_FORMAT = "%H:%M:%S"
 
     def __init__(self, feed_type='xml', publisher='', publisher_url='', 
-            last_build_date='', field_mapping=None, extra_values=None):
+                 last_build_date='', field_mapping=None, extra_values=None):
         """
         Inputs:
         :field_mapping: Dict that maps "object field name":"feed field name"
@@ -76,13 +76,23 @@ class ExtraValuesSerializer(Serializer):
         if isinstance(value, datetime.datetime):
             d = datetime_safe.new_datetime(value)
             value = d.strftime("%s %s" % (self.DATE_FORMAT, self.TIME_FORMAT))
-        self.finish_handle_item(field_name=field_name, value=value, attributes=attributes)
+        self.finish_handle_item(field_name=field_name, value=value,
+                                attributes=attributes)
  
     def handle_item_url(self, item):
-        vs = settings.FEED_VIEW_SOURCES.get(self.feed_type, 20)
-        item_url = "%s/%s%s" % (self.publisher_url, item['guid'], vs)
-        self.finish_handle_item(field_name='url', value=item_url,
-                attributes={})
+        is_posted = item.get('is_posted', False)
+        if is_posted:
+            # If an item is posted, instead of using the
+            # redirect link we use the http://site.jobs/guid/jobs/ link
+            # that goes directly to the microsite.
+            item_url = "%s/%s/job/" % (self.publisher_url, item['guid'])
+            self.finish_handle_item(field_name='url', value=item_url,
+                                    attributes={})
+        else:
+            vs = settings.FEED_VIEW_SOURCES.get(self.feed_type, 20)
+            item_url = "%s/%s%s" % (self.publisher_url, item['guid'], vs)
+            self.finish_handle_item(field_name='url', value=item_url,
+                                    attributes={})
 
     def build_link_name(self, link):
         name = "link href={l} rel={rel}".format(l=link.url, rel=link.rel)
@@ -106,7 +116,11 @@ class ExtraValuesSerializer(Serializer):
         for obj in queryset:
             self.start_object(obj)
             for key, value in obj.iteritems():
-                self.handle_item(key, value)
+                # The is_posted field is used only for building the
+                # url and should not actually show up in the
+                # final results.
+                if key != 'is_posted':
+                    self.handle_item(key, value)
             self.handle_item_url(obj)
             self.end_object(obj)
         self.end_serialization()

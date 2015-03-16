@@ -150,11 +150,10 @@ def retrieve_fields(model):
 
 def contact_record_val_to_str(value):
     """
-    Translates a field value from a contact record into a human-readable string.
-    Dates are formatted "ShortMonth Day, Year Hour:Minute AMorPM"
-    Times are formatted "XX Hours XX Minutes"
-    If the value matches a contact type choice it's translated to the
-    verbose form.
+    Translates a field value from a contact record into a human-readable
+    string.  Dates are formatted "ShortMonth Day, Year Hour:Minute AMorPM"
+    Times are formatted "XX Hours XX Minutes" If the value matches a contact
+    type choice it's translated to the verbose form.
     """
     value = (value.strftime('%b %d, %Y %I:%M %p') if type(value)
              is datetime else value.strftime('%H hours %M minutes')
@@ -185,6 +184,11 @@ def get_records_from_request(request):
             'contact', 'contact_type', 'admin', 'date_start', 'date_end',
             'sort_by', 'desc']]
 
+    tags = [tag.strip()
+            for tag in request.REQUEST.get('tags', '').split(',') if tag]
+    keywords = [keyword.strip() for keyword in request.REQUEST.get(
+        'keywords', '').split(',') if keyword]
+
     if not sort_by and not desc:
         sort_by = 'date'
         desc = '-'
@@ -200,7 +204,7 @@ def get_records_from_request(request):
     records = partner.get_contact_records(
         contact_name=contact, record_type=contact_type, created_by=admin,
         order_by=desc + sort_types[sort_by], date_start=range_start,
-        date_end=range_end)
+        date_end=range_end, tags=tags, keywords=keywords)
 
     if range_start or range_end:
         days = ((range_end or now().date()) -
@@ -319,7 +323,7 @@ def get_library_partners(url, params=None):
 
 def filter_partners(request, partner_library=False):
     """
-    Advanced partner filtering. 
+    Advanced partner filtering.
 
     If True, the partner_library parameter will determine whether or not the
     OFCCP Partner Library should be filtered for results instead of the current
@@ -365,12 +369,12 @@ def filter_partners(request, partner_library=False):
 
     if partner_library:
         special_interest = [
-            si if si != "disability" else "disabled" 
+            si if si != "disability" else "disabled"
             for si in request.REQUEST.getlist('special_interest')]
 
         library_ids = Partner.objects.filter(owner=company).exclude(
             library__isnull=True).values_list('library', flat=True)
-        # hide partners that the user has already added 
+        # hide partners that the user has already added
         partners = PartnerLibrary.objects.exclude(id__in=library_ids)
         contact_city = 'city'
         contact_state = 'st'
@@ -378,7 +382,7 @@ def filter_partners(request, partner_library=False):
         unspecified = Q()
         interests = Q()
         order_by = ['is_veteran', 'is_female', 'is_minority', 'is_disabled',
-                    'is_disabled_veteran'] 
+                    'is_disabled_veteran']
 
         if "unspecified" in special_interest:
             special_interest.remove("unspecified")
@@ -510,11 +514,12 @@ def new_partner_from_library(request):
         library=library)
     partner.tags = tags
 
+    state = request.GET.get("state", library.st)
     location = Location.objects.create(
         address_line_one=library.street1,
         address_line_two=library.street2,
         city=library.city,
-        state=library.st,
+        state=state,
         country_code="USA",
         postal_code=library.zip_code)
 

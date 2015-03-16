@@ -187,6 +187,23 @@ $(document).ready(function() {
         run_ajax();
     });
 
+    $(".sidebar > input[type='text']").on("keyup paste", function() {
+        /* Variables */
+        var wait_time,
+            that = $(this);
+        if($(window).width() < 993) wait_time = 3000;
+        else wait_time = 1000;
+
+        if(this.timer) clearTimeout(this.timer);
+
+        /* Ajax */
+        this.timer = setTimeout(function() {
+            $(that).addClass("loading");
+            run_ajax();
+        }, wait_time);
+    });
+
+
     $(".partner-tag.custom").on("click", function() {
         $(".partner-tag.custom").hide();
         $(".date-picker-widget").show();
@@ -265,7 +282,11 @@ Input:
 :data:  is the event.state from window.onpopstate
  */
 function fill_in_history_state(data){
+    /* Grab inputs */
+    var kw_input = $("#record_keywords");
+
     if(!data){
+        $(kw_input.val(""));
         $("#record_contact option[value='all']").attr("selected", "selected");
         $("#record_contact_type option[value='all']").attr("selected", "selected");
         $(".partner-tag").children('i').remove();
@@ -305,6 +326,12 @@ function fill_in_history_state(data){
         $(".date-picker-widget").hide();
         $("#reset-date-range").css("visibility", "hidden");
     }
+
+    if(typeof(data.keywords) != "undefined")
+        $(kw_input).val(String(data.keywords));
+    else
+        $(kw_input.val(""));
+
     return false
 }
 
@@ -318,6 +345,13 @@ function build_data() {
         end_date = null;
 
     data['partner'] = $(".sidebar #p-id").val();
+
+    $(".sidebar > input[type='text']").each(function() {
+        if($(this).val()) {
+            var data_key = $(this).prev('label').html().replace(":", "").toLowerCase();
+            data[data_key] = $(this).val();
+        }
+    });
 
     $(".sidebar > :input:has(option)").each(function() {
         if($(this).val() != 'all') {
@@ -449,6 +483,10 @@ function send_filter(data_to_send) {
         data: data_to_send,
         success: function(data) {
             $(".span8").html(data);
+            $(".sidebar > input[type='text']").each(function() {
+                if($(this).hasClass("loading"))
+                    $(this).removeClass("loading")
+            });
         }
     });
 }
