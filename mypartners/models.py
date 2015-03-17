@@ -559,15 +559,6 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
         return self.values('contact_name', 'contact_email').annotate(
             count=models.Count('contact_name')).distinct()
 
-        q = models.Q()
-
-        for value in self.values('contact_name',
-                                 'contact_email').distinct().order_by():
-            q |= models.Q(
-                name=value['contact_name'], email=value['contact_email'])
-
-        return Contact.objects.filter(q)
-
 
 class ContactRecordManager(SearchParameterManager):
     def __init__(self, *args, **kwargs):
