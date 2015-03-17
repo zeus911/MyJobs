@@ -1007,6 +1007,7 @@ def partner_main_reports(request):
                               RequestContext(request))
 
 
+# TODO: HERE
 @company_has_access('prm_access')
 def partner_get_records(request):
     if request.method == 'GET':
