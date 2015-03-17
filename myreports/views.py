@@ -7,7 +7,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models.loading import get_model
 from django.db.models import Count
 from django.http import HttpResponse, Http404
-from django.shortcuts import render_to_response
+from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 
 from myreports.decorators import restrict_to_staff
@@ -159,7 +159,6 @@ def view_records(request, app, model, output='json'):
 def create_report(request, app, model):
     company = get_company_or_404(request)
     user = request.user
-    path = request.get_full_path()
     params = parse_params(request.POST)
 
     params.pop('csrfmiddlewaretoken', None)
@@ -171,7 +170,7 @@ def create_report(request, app, model):
     contents = serialize('json', records)
     results = ContentFile(contents)
     report, created = Report.objects.get_or_create(
-        name=name, created_by=user, owner=company, path=path,
+        name=name, created_by=user, owner=company, app=app, model=model,
         params=json.dumps(params))
 
     report.results.save('%s-%s.json' % (name, report.pk), results)
@@ -209,13 +208,13 @@ def get_inputs(request):
 
 def download_report(request):
     report_id = request.GET.get('report', 0)
-    report = get_model('myreports', 'report').objects.get(pk=report_id)
+    report = get_object_or_404(get_model('myreports', 'report'), pk=report_id)
 
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = "attachment; filename='%s-%s.csv'" % (
+    response['Content-Disposition'] = "attachment; filename=%s-%s.csv" % (
         report.name, report.pk)
 
     records = humanize(report.python)
-    response = serialize('csv', records, output=response, as_is=True)
+    response = serialize('csv', records, output=response)
 
     return response

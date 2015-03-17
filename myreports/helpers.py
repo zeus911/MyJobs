@@ -6,16 +6,15 @@ from itertools import chain
 from django.core import serializers
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models.loading import get_model
+from django.db.models.query import QuerySet
 from mypartners.models import CONTACT_TYPE_CHOICES
 
 
-def serialize(fmt, records, output=None, counts=None, as_is=False):
+def serialize(fmt, data, output=None, counts=None):
     # TODO: see if i can preserve annotations using `values`
-    if as_is:
-        data = records
-    else:
+    if isinstance(data, QuerySet):
         data = [dict({'pk': record['pk']}, **record['fields'])
-                for record in serializers.serialize('python', records)]
+                for record in serializers.serialize('python', data)]
 
         if counts:
             data = [dict({'count': counts[record['pk']]}, **record)
@@ -64,7 +63,7 @@ def humanize(records):
     # * allow other models to be humanized, maybe generalize the things being
     # * humanized and create a Humanize object?
 
-    # convert tag ids to values
+    # convert tag ids to names
     contact_types = dict(CONTACT_TYPE_CHOICES)
     tag_ids = set(chain.from_iterable(record['tags'] for record in records))
     tags = dict(get_model('mypartners', 'tag').objects.filter(

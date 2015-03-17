@@ -1,5 +1,6 @@
 import json
 from django.db import models
+from django.db.models.loading import get_model
 
 
 class Report(models.Model):
@@ -7,8 +8,8 @@ class Report(models.Model):
     created_by = models.ForeignKey('myjobs.User')
     owner = models.ForeignKey('seo.Company')
     created_on = models.DateTimeField(auto_now_add=True)
-    # path used to generate the report; identifies the app and model queried on
-    path = models.CharField(max_length=255)
+    app = models.CharField(max_length=50)
+    model = models.CharField(max_length=50)
     # json encoded string of the params used to filter
     params = models.CharField(max_length=255)
     results = models.FileField(upload_to='reports')
@@ -27,3 +28,8 @@ class Report(models.Model):
     @property
     def python(self):
         return json.loads(self._results)
+
+    @property
+    def queryset(self):
+        pks = [record['pk'] for record in self.python]
+        return get_model(self.app, self.model).objects.filter(pk__in=pks)
