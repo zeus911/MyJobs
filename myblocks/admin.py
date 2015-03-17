@@ -30,6 +30,11 @@ class ContentBlockAdmin(admin.ModelAdmin):
     save_as = True
 
 
+class FacetBlurbBlockAdmin(admin.ModelAdmin):
+    form = forms.FacetBlurbBlockForm
+    save_as = True
+
+
 class JobDetailBlockAdmin(admin.ModelAdmin):
     form = forms.JobDetailBlockForm
     save_as = True
@@ -110,6 +115,7 @@ class RowAdmin(admin.ModelAdmin):
 admin.site.register(models.ApplyLinkBlock, ApplyLinkBlockAdmin)
 admin.site.register(models.BreadboxBlock, BreadboxBlockAdmin)
 admin.site.register(models.ContentBlock, ContentBlockAdmin)
+admin.site.register(models.FacetBlurbBlock, FacetBlurbBlockAdmin)
 admin.site.register(models.LoginBlock, LoginBlockAdmin)
 admin.site.register(models.JobDetailBlock, JobDetailBlockAdmin)
 admin.site.register(models.JobDetailBreadboxBlock, JobDetailBreadboxBlockAdmin)

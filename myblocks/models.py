@@ -143,7 +143,7 @@ class FacetBlurbBlock(Block):
 
     def context(self, request, **kwargs):
         return {
-
+            'facet_blurb_facet': context_tools.get_facet_blurb_facet(request)
         }
 
 
