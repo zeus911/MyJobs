@@ -116,7 +116,7 @@ Report.prototype.bind_events = function() {
 
 
   // For date widget.
-  $(document.body).on("click", ".datepicker",function(e) {
+  $(document.body).on("focus", ".datepicker", function(e) {
    $(this).pickadate({
      format: "mm/dd/yyyy",
      selectYears: true,
@@ -275,8 +275,8 @@ Report.prototype.readable_data = function() {
       } else {
         html += key === "state" ? $("#state option[value=" + value + "]").html() : value;
       }
+      html += "</div>";
     }
-    html += "</div>";
   }
   if (typeof data['partner'] === "undefined") {
     if ($("#partner-all-checkbox").is(":checked")) {

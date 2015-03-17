@@ -1343,6 +1343,11 @@ ul.header-menu > li > ul > a > li:hover {
     margin-right: 0;
 }
 
+input[readonly].datepicker {
+    cursor: text;
+    background-color: #FFF;
+}
+
 /* My Reports */
 .sidebar li {
     padding: 3px 5px;
