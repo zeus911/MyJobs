@@ -57,13 +57,13 @@
                     <td>
                         <a class="chart-box-link" href="{% url 'partner_records' %}?partner={{ partner.id }}&contact={{ contact.name }}&contact_type=job&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
                             <div class="chart-box small-chart-box inline-box">
-                                <div class="big-num">{{ contact.ref_count }}</div>
+                                <div class="big-num">{{ contact.referrals.count }}</div>
                                 <div class="reports-record-type">Referral Records</div>
                             </div>
                         </a>
                         <a class="chart-box-link" href="{% url 'partner_records' %}?partner={{ partner.id }}&contact={{ contact.name }}&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
                             <div class="chart-box small-chart-box inline-box">
-                                <div class="big-num">{{ contact.cr_count }}</div>
+                                <div class="big-num">{{ contact.communications.count }}</div>
                                 <div class="reports-record-type">Contact Records</div>
                             </div>
                         </a>
@@ -110,8 +110,8 @@
     google.load("visualization", "1", {packages:["corechart"]});
 </script>
 <script>
-var total_records = {{ total_records }};
-var total_ref = {{ referral }};
+var total_records = {{ records.communication_activity.count }};
+var total_ref = {{ records.referrals }};
 var company_id = {{ company.id }};
 var company = {{ company.id }};
 var partner = {{ partner.id }};

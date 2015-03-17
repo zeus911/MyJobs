@@ -929,8 +929,6 @@ def get_uploaded_file(request):
 def partner_main_reports(request):
     company, partner, user = prm_worthy(request)
     dt_range, date_str, records = get_records_from_request(request)
-    total_records_wo_followup = records.exclude(contact_type='job').count()
-    referral = records.filter(contact_type='job').count()
 
     # need to order_by -count to keep the "All Contacts" list in proper order
     all_contacts_with_records = records\
@@ -990,13 +988,14 @@ def partner_main_reports(request):
         for contact in others:
             total_others += contact['count']
 
+    contacts = records.contacts
+
     ctx = {
         'admin_id': request.REQUEST.get('admin'),
+        'records': records,
         'partner': partner,
         'company': company,
         'contacts': contacts,
-        'total_records': total_records_wo_followup,
-        'referral': referral,
         'top_contacts': contact_records,
         'others': total_others,
         'view_name': 'PRM',
