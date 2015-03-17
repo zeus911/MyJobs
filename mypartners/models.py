@@ -289,11 +289,11 @@ class Contact(models.Model):
             contact_name=self.name, contact_email=self.email)
 
     @property
-    def communication_records(self):
+    def communications(self):
         return self.contact_records.exclude(contact_type='job')
 
     @property
-    def referral_records(self):
+    def referrals(self):
         return self.contact_records.filter(contact_type='job')
 
 
