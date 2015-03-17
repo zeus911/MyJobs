@@ -2840,6 +2840,9 @@ td .gravatar-blank,
         border: 0;
         background-color: transparent;
     }
+    .partner-tags {
+        min-height: 30px;
+    }
 
     .prm-no-partner .span4 {
         margin-left: 0;
