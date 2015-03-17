@@ -556,8 +556,20 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
 
     @property
     def contacts(self):
-        return self.values('contact_name', 'contact_email').annotate(
-            count=models.Count('contact_name')).distinct()
+        contacts = self.exclude(contact_type='job').values(
+            'contact_name', 'contact_email').annotate(
+                records=models.Count('contact_name')).distinct().order_by(
+                    '-records')
+
+        referrals = dict(self.filter(contact_type='job').values_list(
+            'contact_name').annotate(
+                referrals=models.Count('contact_name')).distinct())
+
+        for contact in contacts:
+
+            contact['referrals'] = referrals.get(contact['contact_name'], 0)
+
+        return contacts
 
 
 class ContactRecordManager(SearchParameterManager):
