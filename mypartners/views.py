@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from datetime import date, timedelta
 from email.parser import HeaderParser
 from email.utils import getaddresses
@@ -21,7 +22,6 @@ from django.core.urlresolvers import reverse
 from django.utils.html import strip_tags
 from django.utils.text import force_text
 from django.utils.timezone import localtime, now
-from django.utils.datastructures import SortedDict
 from django.views.decorators.csrf import csrf_exempt
 from urllib2 import HTTPError
 
@@ -963,10 +963,9 @@ def partner_get_records(request):
 
         dt_range, date_str, records = get_records_from_request(request)
         records = records.exclude(contact_type='job')
-        email = records.filter(contact_type='email').count()
-        email += records.filter(contact_type='pssemail').count()
-        phone = records.filter(contact_type='phone').count()
-        meetingorevent = records.filter(contact_type='meetingorevent').count()
+        email = records.emails + records.saved_searches
+        phone = records.phone_calls
+        meetingorevent = records.meetings
 
         # figure names
         if email != 1:
@@ -982,15 +981,12 @@ def partner_get_records(request):
         else:
             meetingorevent_name = 'Meetings & Events'
 
-        data = SortedDict()
-
-        data['email'] = {"count": email, "name": email_name,
-                         'typename': 'email'}
-        data['phone'] = {"count": phone, "name": phone_name,
-                         'typename': 'phone'}
-        data['meetingorevent'] = {"count": meetingorevent,
-                                  "name": meetingorevent_name,
-                                  "typename": "meetingorevent"}
+        data = OrderedDict(
+            email={'count': email, 'name': email_name, 'typename': 'email'},
+            phone={'count': phone, "name": phone_name, 'typename': 'phone'},
+            meetingorevent={'count': meetingorevent,
+                            'name': meetingorevent_name,
+                            'typename': 'meetingorevent'})
 
         return HttpResponse(json.dumps(data))
     else:
