@@ -206,6 +206,25 @@ def get_inputs(request):
         return Http404("This view is only reachable via an AJAX POST request.")
 
 
+def get_counts(request):
+    report_id = request.GET['report']
+    report = Report.objects.get(id=report_id)
+
+    records = report.queryset
+    ctx = {
+        'emails': records.emails,
+        'calls': records.phone_calls,
+        'meetings': records.meetings,
+        'applications': records.applications,
+        'interviews': records.interviews,
+        'hires': records.hires,
+        'communications': records.communication_activity.count(),
+        'referrals': records.referrals,
+        'contacts': list(records.contacts)}
+
+    return HttpResponse(json.dumps(ctx, indent=4), content_type='application/json')
+
+
 def download_report(request):
     report_id = request.GET.get('report', 0)
     report = get_object_or_404(get_model('myreports', 'report'), pk=report_id)
