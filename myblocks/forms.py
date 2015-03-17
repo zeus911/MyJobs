@@ -49,6 +49,11 @@ class JobDetailBreadboxBlockForm(BlockForm):
         model = models.JobDetailBreadboxBlock
 
 
+class JobDetailHeaderBlockForm(BlockForm):
+    class Meta:
+        model = models.JobDetailHeaderBlock
+
+
 class LoginBlockForm(BlockForm):
     class Meta:
         model = models.LoginBlock
@@ -80,6 +85,11 @@ class SearchFilterBlockForm(BlockForm):
 
 
 class SearchResultBlockForm(BlockForm):
+    class Meta:
+        model = models.SearchResultBlock
+
+
+class SearchResultHeaderBlockForm(BlockForm):
     class Meta:
         model = models.SearchResultBlock
 

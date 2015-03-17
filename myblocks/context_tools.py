@@ -3,6 +3,7 @@ import functools
 from itertools import chain
 
 from django.conf import settings
+from django.contrib.humanize.templatetags.humanize import intcomma
 from django.core.urlresolvers import reverse
 from django.http import QueryDict
 
@@ -54,9 +55,26 @@ def get_arranged_jobs(request):
 @Memoized
 def get_breadbox(request):
     filters = get_filters(request)
-    featured_jobs, default_jobs, facet_counts = get_jobs_and_counts(request)
+
+    jobs_and_counts = get_jobs_and_counts(request)
+    default_jobs = jobs_and_counts[0]
+    total_default_jobs = jobs_and_counts[1]
+    featured_jobs = jobs_and_counts[2]
+    total_featured_jobs = jobs_and_counts[3]
+
     jobs = list(chain(featured_jobs, default_jobs))
-    return Breadbox(request.path, filters, jobs, request.GET)
+
+    breadbox = Breadbox(request.path, filters, jobs, request.GET)
+
+    breadbox.job_count = intcomma(total_default_jobs + total_featured_jobs)
+
+    return breadbox
+
+
+@Memoized
+def get_count_heading(request):
+    breadbox = get_breadbox(request)
+    return helpers.build_results_heading(breadbox)
 
 
 @Memoized
@@ -83,7 +101,7 @@ def get_custom_facet_counts(request):
 
 @Memoized
 def get_default_jobs(request):
-    default_jobs, _, _ = get_jobs_and_counts(request)
+    default_jobs, _, _, _, _ = get_jobs_and_counts(request)
     return default_jobs
 
 
@@ -108,7 +126,7 @@ def get_facet_blurb_facet(request):
 
 @Memoized
 def get_featured_jobs(request):
-    _, featured_jobs, _ = get_jobs_and_counts(request)
+    _, _, featured_jobs, _, _ = get_jobs_and_counts(request)
     return featured_jobs
 
 
@@ -141,6 +159,9 @@ def get_jobs_and_counts(request):
     args = (request, filters, num_jobs)
     default_jobs, featured_jobs, facet_counts = helpers.jobs_and_counts(*args)
 
+    total_default_jobs = default_jobs.count()
+    total_featured_jobs = featured_jobs.count()
+
     args = (featured_jobs.count(), default_jobs.count(), num_jobs,
             percent_featured)
     featured_needed, default_needed, _, _ = helpers.featured_default_jobs(*args)
@@ -152,7 +173,8 @@ def get_jobs_and_counts(request):
     for job in jobs:
         helpers.add_text_to_job(job)
 
-    return default_jobs, featured_jobs, facet_counts
+    return (default_jobs, total_default_jobs, featured_jobs,
+            total_featured_jobs, facet_counts)
 
 @Memoized
 def get_job_detail_breadbox(request, job_id):
@@ -239,7 +261,7 @@ def get_total_jobs_count(request):
 @Memoized
 def get_widgets(request):
     filters = get_filters(request)
-    _, _, facet_counts = get_jobs_and_counts(request)
+    _, _, _, _, facet_counts = get_jobs_and_counts(request)
     site_config = get_site_config(request)
 
     custom_facet_counts = get_custom_facet_counts(request)
