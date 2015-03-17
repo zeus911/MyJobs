@@ -46,24 +46,24 @@
             <h4>All Contacts</h4>
             {% for contact in contacts %}
             <table class="all-contacts-table">
-                <tr onclick="window.document.location='{% url 'partner_records' %}?partner={{ partner.id }}&contact={{ contact.name }}&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}';">
+                <tr onclick="window.document.location='{% url 'partner_records' %}?partner={{ partner.id }}&contact={{ contact.contact_name }}&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}';">
                     <td>
-                        <span>{% get_nonuser_gravatar contact.name '55' %}</span>
+                        <span>{% get_nonuser_gravatar contact.contact_name '55' %}</span>
                     </td>
                     <td>
-                        {{ contact.name }}<br>
-                        {{ contact.email }}
+                        {{ contact.contact_name }}<br>
+                        {{ contact.contact_email }}
                     </td>
                     <td>
-                        <a class="chart-box-link" href="{% url 'partner_records' %}?partner={{ partner.id }}&contact={{ contact.name }}&contact_type=job&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
+                        <a class="chart-box-link" href="{% url 'partner_records' %}?partner={{ partner.id }}&contact={{ contact.contact_name }}&contact_type=job&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
                             <div class="chart-box small-chart-box inline-box">
-                                <div class="big-num">{{ contact.referrals.count }}</div>
+                                <div class="big-num">{{ contact.count }}</div>
                                 <div class="reports-record-type">Referral Records</div>
                             </div>
                         </a>
-                        <a class="chart-box-link" href="{% url 'partner_records' %}?partner={{ partner.id }}&contact={{ contact.name }}&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
+                        <a class="chart-box-link" href="{% url 'partner_records' %}?partner={{ partner.id }}&contact={{ contact.contact_name }}&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
                             <div class="chart-box small-chart-box inline-box">
-                                <div class="big-num">{{ contact.communications.count }}</div>
+                                <div class="big-num">{{ contact.count }}</div>
                                 <div class="reports-record-type">Contact Records</div>
                             </div>
                         </a>

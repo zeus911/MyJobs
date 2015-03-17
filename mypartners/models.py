@@ -284,19 +284,6 @@ class Contact(models.Model):
         query_string = urlencode(params)
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
 
-    @property
-    def contact_records(self):
-        return ContactRecord.objects.filter(
-            contact_name=self.name, contact_email=self.email)
-
-    @property
-    def communications(self):
-        return self.contact_records.exclude(contact_type='job')
-
-    @property
-    def referrals(self):
-        return self.contact_records.filter(contact_type='job')
-
 
 @receiver(pre_delete, sender=Contact, dispatch_uid='pre_delete_contact_signal')
 def delete_contact(sender, instance, using, **kwargs):
@@ -569,6 +556,9 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
 
     @property
     def contacts(self):
+        return self.values('contact_name', 'contact_email').annotate(
+            count=models.Count('contact_name')).distinct()
+
         q = models.Q()
 
         for value in self.values('contact_name',
