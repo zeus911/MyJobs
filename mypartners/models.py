@@ -571,7 +571,8 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
     def contacts(self):
         q = models.Q()
 
-        for value in self.values('contact_name', 'contact_email').distinct():
+        for value in self.values('contact_name',
+                                 'contact_email').distinct().order_by():
             q |= models.Q(
                 name=value['contact_name'], email=value['contact_email'])
 
