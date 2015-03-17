@@ -262,7 +262,7 @@ Report.prototype.readable_data = function() {
       }
 
       // If value is an object (aka a list).
-      if (typeof value === "object") {
+      if (typeof value === "object" && value !== null) {
         var items = [],
             i;
 
