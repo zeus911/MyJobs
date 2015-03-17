@@ -57,13 +57,13 @@
                     <td>
                         <a class="chart-box-link" href="{% url 'partner_records' %}?partner={{ partner.id }}&contact={{ contact.contact_name }}&contact_type=job&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
                             <div class="chart-box small-chart-box inline-box">
-                                <div class="big-num">{{ contact.count }}</div>
+                                <div class="big-num">{{ contact.referrals }}</div>
                                 <div class="reports-record-type">Referral Records</div>
                             </div>
                         </a>
                         <a class="chart-box-link" href="{% url 'partner_records' %}?partner={{ partner.id }}&contact={{ contact.contact_name }}&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
                             <div class="chart-box small-chart-box inline-box">
-                                <div class="big-num">{{ contact.count }}</div>
+                                <div class="big-num">{{ contact.records }}</div>
                                 <div class="reports-record-type">Contact Records</div>
                             </div>
                         </a>
@@ -86,7 +86,7 @@
                 {% for contact in top_contacts %}
                 <a class="chart-box-link" href="{% url 'partner_records' %}?partner={{ partner.id }}&contact={{ contact.contact_name }}&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">
                     <div class="chart-box inline-box">
-                        <div class="big-num">{{ contact.count }}</div>
+                        <div class="big-num">{{ contact.records }}</div>
                         <div class="reports-record-type">{{ contact.contact_name|truncatechars:13 }}</div>
                     </div>
                 </a>

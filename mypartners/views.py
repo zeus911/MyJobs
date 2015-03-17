@@ -930,14 +930,14 @@ def partner_main_reports(request):
     company, partner, _ = prm_worthy(request)
     params = parse_params(request.GET)
     records = filter_records(request, ContactRecord, params)
-    contacts = records.contacts.order_by('-count')
+    contacts = records.contacts
     # calculate 'All Others' in Top Contacts (when more than 3)
     total_others = 0
     if contacts.count() > 3:
         others = contacts[3:]
         contact_records = contacts[:3]
 
-    total_others = sum(contact['count'] for contact in others)
+    total_others = sum(contact['records'] for contact in others)
 
     ctx = {
         'admin_id': request.REQUEST.get('admin'),
