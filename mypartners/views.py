@@ -14,7 +14,6 @@ from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
-from django.db.models import Count
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.http import Http404, HttpResponse, HttpResponseRedirect
@@ -30,9 +29,10 @@ from universal.helpers import (get_company_or_404, get_int_or_none,
                                add_pagination, get_object_or_none)
 from universal.decorators import company_has_access, warn_when_inactive
 from myjobs.models import User
+from myreports.views import filter_records
+from myreports.helpers import parse_params
 from mysearches.models import PartnerSavedSearch
-from mysearches.helpers import (url_sort_options, parse_feed,
-                                get_interval_from_frequency)
+from mysearches.helpers import (get_interval_from_frequency)
 from mysearches.forms import PartnerSavedSearchForm
 from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
                               NewPartnerForm, ContactRecordForm, TagForm,
@@ -927,9 +927,9 @@ def get_uploaded_file(request):
 @warn_when_inactive(feature='Partner Relationship Manager is')
 @company_has_access('prm_access')
 def partner_main_reports(request):
-    company, partner, user = prm_worthy(request)
-    dt_range, date_str, records = get_records_from_request(request)
-
+    company, partner, _ = prm_worthy(request)
+    params = parse_params(request.GET)
+    records = filter_records(request, ContactRecord, params)
     contacts = records.contacts.order_by('-count')
     # calculate 'All Others' in Top Contacts (when more than 3)
     total_others = 0
@@ -948,9 +948,6 @@ def partner_main_reports(request):
         'top_contacts': contact_records,
         'others': total_others,
         'view_name': 'PRM',
-        'date_start': dt_range[0],
-        'date_end': dt_range[1],
-        'date_display': date_str,
     }
     return render_to_response('mypartners/partner_reports.html', ctx,
                               RequestContext(request))
@@ -981,12 +978,15 @@ def partner_get_records(request):
         else:
             meetingorevent_name = 'Meetings & Events'
 
-        data = OrderedDict(
-            email={'count': email, 'name': email_name, 'typename': 'email'},
-            phone={'count': phone, "name": phone_name, 'typename': 'phone'},
-            meetingorevent={'count': meetingorevent,
-                            'name': meetingorevent_name,
-                            'typename': 'meetingorevent'})
+        data = OrderedDict()
+        data['email'] = {
+            'count': email, 'name': email_name, 'typename': 'email'}
+        data['phone'] = {
+            'count': phone, "name": phone_name, 'typename': 'phone'}
+        data['meetingorevent'] = {
+            'count': meetingorevent,
+            'name': meetingorevent_name,
+            'typename': 'meetingorevent'}
 
         return HttpResponse(json.dumps(data))
     else:
@@ -997,28 +997,11 @@ def partner_get_records(request):
 def partner_get_referrals(request):
     if request.method == 'GET':
         prm_worthy(request)
-        dt_range, date_str, records = get_records_from_request(request)
-        referrals = records.filter(contact_type='job')
-
-        # (job application, job interviews, job hires)
-        nums = referrals.values_list('job_applications', 'job_interviews',
-                                     'job_hires')
-
-        applications, interviews, hires = 0, 0, 0
-        # add numbers together
-        for num_set in nums:
-            try:
-                applications += int(num_set[0])
-            except (ValueError, KeyError):
-                pass
-            try:
-                interviews += int(num_set[1])
-            except (ValueError, KeyError):
-                pass
-            try:
-                hires += int(num_set[2])
-            except (ValueError, KeyError):
-                pass
+        params = parse_params(request.GET)
+        records = filter_records(request, ContactRecord, params)
+        applications = records.applications
+        interviews = records.interviews
+        hires = records.hires
 
         # figure names
         if applications != 1:
@@ -1039,9 +1022,7 @@ def partner_get_referrals(request):
                              'typename': 'job'},
             'interviews': {'count': interviews, 'name': interview_name,
                            'typename': 'job'},
-            'hires': {'count': hires, 'name': hire_name,
-                      'typename': 'job'},
-        }
+            'hires': {'count': hires, 'name': hire_name, 'typename': 'job'}}
 
         return HttpResponse(json.dumps(data))
     else:
