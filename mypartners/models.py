@@ -284,18 +284,6 @@ class Contact(models.Model):
         query_string = urlencode(params)
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
 
-    def contact_records(self):
-        return ContactRecord.objects.filter(
-            contact_name=self.name, contact_email=self.email)
-
-    @property
-    def communications(self):
-        return self.contact_records.exclude(contact_type='job')
-
-    @property
-    def referrals(self):
-        return self.contact_records.filter(contact_type='job')
-
 
 @receiver(pre_delete, sender=Contact, dispatch_uid='pre_delete_contact_signal')
 def delete_contact(sender, instance, using, **kwargs):
@@ -521,8 +509,7 @@ class PartnerLibrary(models.Model):
 class ContactRecordQuerySet(SearchParameterQuerySet):
     @property
     def communication_activity(self):
-        return dict(self.exclude(contact_type='job').values_list(
-            'contact_type').annotate(models.Count('contact_type')))
+        return self.exclude(contact_type='job')
 
     @property
     def referral_activity(self):
@@ -533,19 +520,23 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
 
     @property
     def emails(self):
-        return self.communication_activity['email']
+        return self.communication_activity.filter(
+            contact_type='email').count()
 
     @property
     def phone_calls(self):
-        return self.communication_activity['phone']
+        return self.communication_activity.filter(
+            contact_type='phone').count()
 
     @property
     def meetings(self):
-        return self.communication_activity['meetingorevent']
+        return self.communication_activity.filter(
+            contact_type='meetingorevent').count()
 
     @property
     def saved_searches(self):
-        return self.communication_activity['pssemail']
+        return self.communication_activity.filter(
+            contact_type='pssemail').count()
 
     @property
     def applications(self):
@@ -560,8 +551,13 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
         return self.referral_activity['hires']
 
     @property
-    def records(self):
+    def referrals(self):
         return self.filter(contact_type='job').count()
+
+    @property
+    def contacts(self):
+        return self.values('contact_name', 'contact_email').annotate(
+            count=models.Count('contact_name')).distinct()
 
 
 class ContactRecordManager(SearchParameterManager):
