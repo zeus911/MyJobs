@@ -423,15 +423,17 @@ class Page(models.Model):
     )
 
     page_type = models.CharField(choices=page_type_choices, max_length=255)
+    name = models.CharField(max_length=255)
+
     rows = models.ManyToManyField('Row', through='RowOrder')
-    site = models.ForeignKey('seo.SeoSite')
+    sites = models.ManyToManyField('seo.SeoSite')
     status = models.CharField(choices=page_status_choices, max_length=255,
                               default='production')
 
     head = models.TextField(blank=True)
 
     def __unicode__(self):
-        return "%s for %s: %s" % (self.page_type, self.site.name, self.pk)
+        return self.name
 
     @context_tools.Memoized
     def all_blocks(self):

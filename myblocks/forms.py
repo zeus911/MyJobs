@@ -1,4 +1,7 @@
+from fsm.widget import FSM
+
 from django import forms
+from django.core.urlresolvers import reverse_lazy
 
 from myblocks import models
 
@@ -106,6 +109,9 @@ class VeteranSearchBoxForm(BlockForm):
 
 class PageForm(forms.ModelForm):
     class Meta:
+        widgets = {
+            'sites': FSM('Site', reverse_lazy('site_admin_fsm'), lazy=True),
+        }
         model = models.Page
 
     def __init__(self, *args, **kwargs):
