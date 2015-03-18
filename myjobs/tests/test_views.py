@@ -133,7 +133,8 @@ class MyJobsViewsTests(MyJobsBase):
         :self:  the calling object
         :when:  timestamp
         :apiversion: the version of the API to mimic
-        :category: category that the originating email was sent with; Optional
+        :category: list of categories that the originating email was sent with;
+            Optional
 
         Returns:
         JSON-esque object if apiversion<3
