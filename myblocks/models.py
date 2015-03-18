@@ -169,6 +169,17 @@ class JobDetailBreadboxBlock(Block):
         }
 
 
+class JobDetailHeaderBlock(Block):
+    base_template = 'myblocks/blocks/jobdetailheader.html'
+
+    def context(self, request, **kwargs):
+        job_id = kwargs.get('job_id', '')
+
+        return {
+            'requested_job': context_tools.get_job(request, job_id),
+        }
+
+
 class LoginBlock(Block):
     base_template = 'myblocks/blocks/login.html'
 
@@ -273,13 +284,6 @@ class RegistrationBlock(Block):
         return 'registration-%s' % self.id
 
 
-class SavedSearchWidgetBlock(Block):
-    base_template = 'myblocks/blocks/savedsearchwidget.html'
-
-    def required_js(self):
-        return ['//d2e48ltfsb5exy.cloudfront.net/myjobs/tools/def.myjobs.widget.153-05.js']
-
-
 class SearchBoxBlock(Block):
     base_template = 'myblocks/blocks/searchbox.html'
 
@@ -307,6 +311,22 @@ class SearchFilterBlock(Block):
         return ['%spager.160-29.js' % settings.STATIC_URL]
 
 
+class SearchResultHeaderBlock(Block):
+    base_template = 'myblocks/blocks/searchresultsheader.html'
+
+    def context(self, request, **kwargs):
+        return {
+            'arranged_jobs': context_tools.get_arranged_jobs(request),
+            'count_heading': context_tools.get_count_heading(request),
+            'default_jobs': context_tools.get_default_jobs(request),
+            'featured_jobs': context_tools.get_featured_jobs(request),
+            'location_term': context_tools.get_location_term(request),
+            'moc_term': context_tools.get_moc_term(request),
+            'query_string': context_tools.get_query_string(request),
+            'title_term': context_tools.get_title_term(request),
+        }
+
+
 class SearchResultBlock(Block):
     base_template = 'myblocks/blocks/searchresult.html'
 
@@ -324,6 +344,13 @@ class SearchResultBlock(Block):
             'site_tags': settings.SITE_TAGS,
             'title_term': context_tools.get_title_term(request),
         }
+
+
+class SavedSearchWidgetBlock(Block):
+    base_template = 'myblocks/blocks/savedsearchwidget.html'
+
+    def required_js(self):
+        return ['//d2e48ltfsb5exy.cloudfront.net/myjobs/tools/def.myjobs.widget.153-05.js']
 
 
 class ShareBlock(Block):
@@ -542,8 +569,8 @@ class Page(models.Model):
 
         jobs_and_counts = context_tools.get_jobs_and_counts(request)
         default_jobs = jobs_and_counts[0]
-        featured_jobs = jobs_and_counts[1]
-        facet_counts = jobs_and_counts[2]
+        featured_jobs = jobs_and_counts[2]
+        facet_counts = jobs_and_counts[4]
         if not facet_counts:
             return redirect("/")
         if (len(default_jobs) == 0 and len(featured_jobs) == 0
