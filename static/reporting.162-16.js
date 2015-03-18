@@ -261,7 +261,7 @@ Report.prototype.readable_data = function() {
         html += "<label>" + key.capitalize() + ":</label>";
       }
 
-      // If value is an object (aka a list).
+      // If value is an object (aka a list). Check if not null as null is an object in js.
       if (typeof value === "object" && value !== null) {
         var items = [],
             i;
