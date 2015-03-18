@@ -10,22 +10,6 @@ from django.db.models.query import QuerySet
 from mypartners.models import CONTACT_TYPE_CHOICES
 
 
-def filter_records(company, user, app, model, params, ignore_cache=False):
-
-    cache_key = (user, company, app, model, tuple(params.items()))
-    filter_records.cached = cache_key in filter_records.cache
-    # fetch results from cache if available
-    if not ignore_cache and filter_records.cached:
-        records = filter_records.cache[cache_key]
-    else:
-        records = get_model(app, model).objects.from_search(company, params)
-        filter_records.cache[cache_key] = records
-
-    return records
-filter_records.cache = {}
-filter_records.cached = False
-
-
 def humanize(records):
     # TODO:
     # * finish humanizing other columns

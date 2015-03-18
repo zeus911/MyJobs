@@ -11,9 +11,8 @@ from django.utils.decorators import method_decorator
 from django.views.generic import View
 
 from myreports.decorators import restrict_to_staff
-from myreports.helpers import filter_records, humanize, parse_params, serialize
+from myreports.helpers import humanize, parse_params, serialize
 from myreports.models import Report
-from myreports.reports import PRMReport
 from universal.helpers import get_company_or_404
 from universal.decorators import company_has_access
 
@@ -74,19 +73,16 @@ def get_states(request):
 def view_records(request, app, model, output='json'):
     if request.is_ajax():
         company = get_company_or_404(request)
-        user = request.user
 
         # parse request into dict, converting singleton lists into single items
         params = parse_params(request.GET)
 
         # remove non-query related params
         params.pop('csrfmiddlewaretoken', None)
-        ignore_cache = params.pop('ignore_cache', False)
         count = params.pop('count', None)
         output = output or params.pop('output', 'json')
 
-        records = filter_records(
-            company, user, app, model, params, ignore_cache)
+        records = get_model(app, model).objects.from_search(company, params)
 
         counts = {}
         if count:
@@ -114,26 +110,6 @@ def get_inputs(request):
         return Http404("This view is only reachable via an AJAX POST request.")
 
 
-def get_counts(request):
-    report_id = request.GET['report']
-    report = Report.objects.get(id=report_id)
-
-    records = report.queryset
-    ctx = {
-        'emails': records.emails,
-        'calls': records.phone_calls,
-        'meetings': records.meetings,
-        'applications': records.applications,
-        'interviews': records.interviews,
-        'hires': records.hires,
-        'communications': records.communication_activity.count(),
-        'referrals': records.referrals,
-        'contacts': list(records.contacts)}
-
-    return HttpResponse(
-        json.dumps(ctx), content_type='application/json; charset=utf-8')
-
-
 class ReportView(View):
     app = 'mypartners'
     model = 'contactrecord'
@@ -143,40 +119,40 @@ class ReportView(View):
         return super(ReportView, self).dispatch(*args, **kwargs)
 
     # view report
-    def get(self, request):
+    def get(self, request, app='mypartners', model='contactrecord'):
         if request.is_ajax():
             report_id = request.GET.get('report', 0)
             report = Report.objects.get(id=report_id)
-            report_graph = PRMReport(report)
+            records = report.queryset
+
             ctx = {
-                "report": report_graph
-            }
+                'emails': records.emails,
+                'calls': records.phone_calls,
+                'meetings': records.meetings,
+                'applications': records.applications,
+                'interviews': records.interviews,
+                'hires': records.hires,
+                'communications': records.communication_activity.count(),
+                'referrals': records.referrals,
+                'contacts': list(records.contacts)}
 
-            response = HttpResponse()
-            html = render_to_response('myreports/prm_report.html', ctx,
-                                      RequestContext(request))
-            response.content = html.content
+            return HttpResponse(
+                json.dumps(ctx), content_type='application/json; charset=utf-8')
 
-            return response
-
-    def post(self, request, *args, **kwargs):
-        app = kwargs.get('app', 'mypartners')
-        model = kwargs.get('model', 'contactrecord')
+    def post(self, request, app='mypartners', model='contactrecords'):
         # create_report(request, app, model)
         company = get_company_or_404(request)
-        user = request.user
         params = parse_params(request.POST)
 
         params.pop('csrfmiddlewaretoken', None)
         name = params.pop('report_name', datetime.now())
-        ignore_cache = params.pop('ignore_cache', False)
-        records = filter_records(
-            company, user, app, model, params, ignore_cache)
+        records = get_model(app, model).objects.from_search(company, params)
 
         contents = serialize('json', records)
         results = ContentFile(contents)
         report, created = Report.objects.get_or_create(
-            name=name, created_by=user, owner=company, app=app, model=model,
+            name=name, created_by=request.user,
+            owner=company, app=app, model=model,
             params=json.dumps(params))
 
         report.results.save('%s-%s.json' % (name, report.pk), results)

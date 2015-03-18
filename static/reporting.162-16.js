@@ -201,7 +201,7 @@ Report.prototype.bind_events = function() {
   // Actually submits the report's data to create a Report object in db.
   $(document.body).on("click", "#gen-report", function(e) {
     var csrf = read_cookie("csrftoken"),
-        data = {"csrfmiddlewaretoken": csrf, "ignore_cache": true},
+        data = {"csrfmiddlewaretoken": csrf},
         url = location.protocol + "//" + location.host + "/reports/view/mypartners/contactrecord";
     if (report.data) {
       $.extend(data, report.data);
@@ -478,7 +478,7 @@ List.prototype.render = function(report) {
 List.prototype.filter = function(filter) {
   "use strict";
   var url = location.protocol + "//" + location.host, // https://secure.my.jobs
-      data = {"csrfmiddlewaretoken": read_cookie("csrftoken")},
+      data = {},
       list = this;
 
   // if filter, add to data.
@@ -600,17 +600,16 @@ $(document).ready(function() {
 
   sidebar.on("click", ".report > a, .fa-eye", function() {
     var report_id = $(this).attr("id").split("-")[1],
-        data = {"csrfmiddlewaretoken": read_cookie("csrftoken"),
-                "report": report_id},
+        data = {"report": report_id},
         url = location.protocol + "//" + location.host; // https://secure.my.jobs
 
     $.ajax({
       type: "GET",
-      url: url + "/reports/",
+      url: url + "/reports/view/mypartners/contactrecord",
       data: data,
       success: function(data) {
-        console.log("yay");
-      }
+        $("#main-container").html(JSON.stringify(data);
+      },
     });
   });
 

@@ -13,6 +13,5 @@ urlpatterns = patterns(
         {'app': 'mypartners', 'output': 'json'},
         name='view_records'),
     url(r'ajax/get-inputs', 'get_inputs', name='get_inputs'),
-    url(r'ajax/get-counts', 'get_counts', name='get_counts'),
     url(r'download$', 'download_report', name='download_report'),
 )
