@@ -114,13 +114,7 @@ def view_records(request, app, model, output='json'):
             counts = {record.pk: record.count for record in records}
 
         if output == 'json':
-            ctx = [dict({'pk': record['pk']}, **record['fields'])
-                   for record in serializers.serialize('python', records)]
-            if counts:
-                ctx = [dict({'count': counts[record['pk']]}, **record)
-                       for record in ctx]
-
-            ctx = json.dumps(ctx, cls=DjangoJSONEncoder)
+            ctx = serialize('json', records, counts=counts)
             response = HttpResponse(
                 ctx, content_type='application/json; charset=utf-8')
 

@@ -11,7 +11,6 @@ from mypartners.models import CONTACT_TYPE_CHOICES
 
 
 def serialize(fmt, data, output=None, counts=None):
-    # TODO: see if i can preserve annotations using `values`
     if isinstance(data, QuerySet):
         data = [dict({'pk': record['pk']}, **record['fields'])
                 for record in serializers.serialize('python', data)]
