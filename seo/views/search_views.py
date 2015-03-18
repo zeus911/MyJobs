@@ -1819,10 +1819,18 @@ class SearchResults(FallbackBlockView):
         self.fallback = search_by_results_and_slugs
 
     def set_page(self, request):
-        default_jobs, featured_jobs, _ = context_tools.get_jobs_and_counts(request)
+        if request.user.is_authenticated() and request.user.is_staff:
+            no_results_pages = Page.objects.filter(page_type=Page.NO_RESULTS,
+                                                   site=settings.SITE)
+        else:
+            no_results_pages = Page.objects.filter(page_type=Page.NO_RESULTS,
+                                                   site=settings.SITE,
+                                                   status=Page.PRODUCTION)
+        if no_results_pages.exists():
+            default_jobs, featured_jobs, _ = context_tools.get_jobs_and_counts(request)
 
-        if not default_jobs and not featured_jobs:
-            self.page_type = Page.NO_RESULTS
+            if not default_jobs and not featured_jobs:
+                self.page_type = Page.NO_RESULTS
 
         return super(SearchResults, self).set_page(request)
 
