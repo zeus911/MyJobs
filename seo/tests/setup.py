@@ -8,6 +8,8 @@ from django.core.cache import cache
 from django.core.urlresolvers import clear_url_caches
 from django.db import connections
 from django.test import TestCase
+from django.conf import settings
+from django.template import context
 
 from seo_pysolr import Solr
 from import_jobs import DATA_DIR
@@ -28,9 +30,6 @@ class TestDESolrEngine(DESolrEngine):
 
 class DirectSEOBase(TestCase):
     def setUp(self):
-        from django.conf import settings
-        from django.template import context
-
         db_backend = settings.DATABASES['default']['ENGINE'].split('.')[-1]
 
         # Set columns that are utf8 in production to utf8
@@ -80,6 +79,8 @@ class DirectSEOBase(TestCase):
         self.engine = 'seo.tests.setup.TestDESolrEngine'
         settings.HAYSTACK_CONNECTIONS['default']['ENGINE'] = self.engine
         haystack_connections.reload('default')
+
+        setattr(settings, 'MEMOIZE', False)
 
     def tearDown(self):
         from django.conf import settings

@@ -1343,6 +1343,11 @@ ul.header-menu > li > ul > a > li:hover {
     margin-right: 0;
 }
 
+input[readonly].datepicker {
+    cursor: text;
+    background-color: #FFF;
+}
+
 /* My Reports */
 .sidebar li {
     padding: 3px 5px;
@@ -2839,6 +2844,9 @@ td .gravatar-blank,
         padding: 0;
         border: 0;
         background-color: transparent;
+    }
+    .partner-tags {
+        min-height: 30px;
     }
 
     .prm-no-partner .span4 {

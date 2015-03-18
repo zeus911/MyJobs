@@ -116,7 +116,7 @@ Report.prototype.bind_events = function() {
 
 
   // For date widget.
-  $(document.body).on("click", ".datepicker",function(e) {
+  $(document.body).on("focus", ".datepicker", function(e) {
    $(this).pickadate({
      format: "mm/dd/yyyy",
      selectYears: true,
@@ -261,8 +261,8 @@ Report.prototype.readable_data = function() {
         html += "<label>" + key.capitalize() + ":</label>";
       }
 
-      // If value is an object (aka a list).
-      if (typeof value === "object") {
+      // If value is an object (aka a list). Check if not null as null is an object in js.
+      if (typeof value === "object" && value !== null) {
         var items = [],
             i;
 
@@ -275,8 +275,8 @@ Report.prototype.readable_data = function() {
       } else {
         html += key === "state" ? $("#state option[value=" + value + "]").html() : value;
       }
+      html += "</div>";
     }
-    html += "</div>";
   }
   if (typeof data['partner'] === "undefined") {
     if ($("#partner-all-checkbox").is(":checked")) {
@@ -534,7 +534,7 @@ List.prototype.filter = function(filter) {
       if (list.value) {
         if (list.type === "partner") {
           for (var j = 0; j < list.value.length; j++) {
-            $("input[value*=" + list.value[j] + "]").prop("checked", true);
+            $("input[value~=" + list.value[j] + "]").prop("checked", true);
           }
         } else if (list.type === "contact") {
           for (var k = 0; k < list.value.length; k++) {
@@ -598,22 +598,18 @@ $(document).ready(function() {
   });
 
 
-  // View Report
   sidebar.on("click", ".report > a, .fa-eye", function() {
     var report_id = $(this).attr("id").split("-")[1],
         data = {"csrfmiddlewaretoken": read_cookie("csrftoken"),
                 "report": report_id},
         url = location.protocol + "//" + location.host; // https://secure.my.jobs
 
-
     $.ajax({
       type: "GET",
       url: url + "/reports/",
       data: data,
       success: function(data) {
-        $.getScript("https://www.google.com/jsapi").done(function() {
-          $(".wrapper > .row").html(data);
-        });
+        console.log("yay");
       }
     });
   });

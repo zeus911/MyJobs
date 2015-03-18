@@ -658,7 +658,9 @@ def partner_view_full_feed(request):
 
     if company == saved_search.partnersavedsearch.provider:
         try:
-            items, count = saved_search.get_feed_items()
+            items, _ = saved_search.get_feed_items()
+            items = [item for item in items if item.get('new')]
+            count = len(items)
         except HTTPError:
             items = None
             count = 0
@@ -680,7 +682,6 @@ def partner_view_full_feed(request):
         'company': company,
         'start_date': start_date,
         'count': count,
-        'new_jobs': len([item for item in items if item.get('new')]),
     }
 
     return render_to_response('mysearches/view_full_feed.html', ctx,
