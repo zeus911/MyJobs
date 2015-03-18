@@ -150,7 +150,7 @@ def view_report(request):
 def get_inputs(request):
     if request.is_ajax() and request.method == "POST":
         report_id = request.POST['report']
-        report = Report.objects.get(id=report_id)
+        report = get_object_or_404(Report, pk=report_id)
         return HttpResponse(report.params)
     else:
         return Http404("This view is only reachable via an AJAX POST request.")
