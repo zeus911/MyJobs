@@ -457,15 +457,31 @@ class MyJobsViewsTests(MyJobsBase):
         self.assertTrue(saved_search_log.was_received)
 
     def test_batch_with_multiple_categories(self):
-        print EmailLog.objects.count()
+        """
+        Manually-sent saved search emails will contain multiple categories.
+        Ensure nothing breaks horribly when multiple categories are used.
+        If one of the categories is Production, remove it and continue
+        processing (creating EmailLogs, etc). If one of the categories is QC,
+        Staging, Jenkins, or Local, stop processing the event.
+        """
+        self.assertEqual(EmailLog.objects.count(), 0)
         now = date.today()
         categories = ["My.jobs Email", "Production"]
-        message = self.make_messages(now, 1, categories)
+        message = self.make_messages(now, categories=categories)
         self.client.post(reverse('batch_message_digest'),
                          data=message,
                          content_type='text/json',
                          HTTP_AUTHORIZATION='BASIC %s' % self.auth)
-        print EmailLog.objects.count()
+        self.assertEqual(EmailLog.objects.count(), 3)
+
+        for category in ['QC', 'Staging', 'Jenkins', 'Local']:
+            categories[1] = category
+            message = self.make_messages(now, categories=categories)
+            self.client.post(reverse('batch_message_digest'),
+                             data=message,
+                             content_type='text/json',
+                             HTTP_AUTHORIZATION='BASIC %s' % self.auth)
+            self.assertEqual(EmailLog.objects.count(), 3)
 
     def test_batch_bounce_message_digest(self):
         now = date.today()
