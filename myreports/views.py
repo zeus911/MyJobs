@@ -77,7 +77,7 @@ def view_records(request, app, model, output='json'):
         user = request.user
 
         # parse request into dict, converting singleton lists into single items
-        params = parse_params(request.POST)
+        params = parse_params(request.GET)
 
         # remove non-query related params
         params.pop('csrfmiddlewaretoken', None)
@@ -105,10 +105,11 @@ def view_records(request, app, model, output='json'):
 
 
 def get_inputs(request):
-    if request.is_ajax() and request.method == "POST":
-        report_id = request.POST['report']
+    if request.is_ajax() and request.method == "GET":
+        report_id = request.GET.get('id', 0)
         report = get_object_or_404(Report, pk=report_id)
-        return HttpResponse(report.params)
+        return HttpResponse(
+            report.params, content_type='application/json; charset=utf-8')
     else:
         return Http404("This view is only reachable via an AJAX POST request.")
 

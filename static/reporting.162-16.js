@@ -328,6 +328,7 @@ Report.prototype.create_clone_report = function(json) {
   for (key in json) {
     if (json.hasOwnProperty(key)) {
       value = json[key];
+
       if (key === "partner") {
         this.find_field("Select Partners").value = value;
         this.data[key] = value;
@@ -622,16 +623,17 @@ $(document).ready(function() {
   sidebar.on("click", ".fa-copy", function() {
     var report_id = $(this).attr("id").split("-")[1],
         data = {"csrfmiddlewaretoken": read_cookie("csrftoken"),
-                "report": report_id},
+                "id": report_id},
         url = location.protocol + "//" + location.host; // https://secure.my.jobs
 
     $.ajax({
-      type: "POST",
+      type: "GET",
       url: url + "/reports/ajax/get-inputs",
       data: data,
+      dataType: "json",
       success: function(data) {
         var report = new Report(["prm"]);
-        report.create_clone_report($.parseJSON(data));
+        report.create_clone_report(data);
         report.unbind_events();
         report.bind_events();
         $("#container").addClass("rpt-container");

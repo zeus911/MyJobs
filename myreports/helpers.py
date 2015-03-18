@@ -53,18 +53,11 @@ def parse_params(querydict):
     # get rid of empty params and flatten single-item lists
     params = {}
     for key in querydict.keys():
-        value = querydict.get(key)
-        value_list = querydict.getlist(key)
+        value = tuple(querydict.getlist(key))
+        if len(value) == 1:
+            value = value[0]
 
-        # parsing a list parameter as a regular parameter only captures the
-        # last item, so if trying both ways returns the same value, we can
-        # be sure that it's not a list
-        if value:
-            if value == value_list[0]:
-                params[key] = value
-            else:
-                # lists are not hashable
-                params[key] = tuple(value_list)
+        params[key] = value
 
     return params
 
