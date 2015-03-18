@@ -11,7 +11,7 @@ class Report(models.Model):
     app = models.CharField(max_length=50)
     model = models.CharField(max_length=50)
     # json encoded string of the params used to filter
-    params = models.CharField(max_length=255)
+    params = models.TextField()
     results = models.FileField(upload_to='reports')
 
     def __init__(self, *args, **kwargs):
