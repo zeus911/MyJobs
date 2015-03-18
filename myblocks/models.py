@@ -493,6 +493,15 @@ class Page(models.Model):
         template = Template(raw_base_template(self))
         return template.render(Context(context))
 
+    def human_readable_page_type(self):
+        page_type_choices_dict = dict(self.page_type_choices)
+        return page_type_choices_dict.get(self.page_type, '')
+    human_readable_page_type.short_description = 'Page Type'
+
+    def human_readable_sites(self):
+        return ''.join(self.sites.values_list('domain', flat=True))
+    human_readable_sites.short_description = 'Sites'
+
     def pixel_template(self):
         return mark_safe("""
             <img style="display: none;" border="0" height="1" width="1" alt="My.jobs"

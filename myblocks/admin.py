@@ -113,7 +113,11 @@ class RowOrderInline(admin.TabularInline):
 class PageAdmin(admin.ModelAdmin):
     form = forms.PageForm
     inlines = (RowOrderInline, )
+    list_display = ('name', 'human_readable_page_type',
+                    'human_readable_sites', )
+    list_filter = ('sites__domain', )
     save_as = True
+    search_fields = ('name', 'sites__domain', )
 
 
 class RowAdmin(admin.ModelAdmin):
