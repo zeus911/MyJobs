@@ -6,7 +6,7 @@
             <div class="icon-set">
                 <i id="view-{{ report.id }}" class="fa fa-eye" title="View"></i>
                 <i id="clone-{{ report.id }}" class="fa fa-copy" title="Clone Report"></i>
-                <a class="icon-link" href="/reports/download?report={{ report.id }}"><i id="export-{{ report.id }}" class="fa fa-download" title="Export"></i></a>
+                <a class="icon-link" href="/reports/download?id={{ report.id }}"><i id="export-{{ report.id }}" class="fa fa-download" title="Export"></i></a>
             </div>
         </div>
     {% empty %}

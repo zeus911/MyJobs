@@ -202,7 +202,7 @@ Report.prototype.bind_events = function() {
   $(document.body).on("click", "#gen-report", function(e) {
     var csrf = read_cookie("csrftoken"),
         data = {"csrfmiddlewaretoken": csrf, "ignore_cache": true},
-        url = location.protocol + "//" + location.host + "/reports/ajax/render/mypartners/contactrecord";
+        url = location.protocol + "//" + location.host + "/reports/view/mypartners/contactrecord";
     if (report.data) {
       $.extend(data, report.data);
     }
@@ -489,17 +489,17 @@ List.prototype.filter = function(filter) {
   if (list.type === "partner") {
     // annotate how many records a partner has.
     $.extend(data, {"count": "contactrecord"});
-    url += "/reports/ajax/get/mypartners/partner";
+    url += "/reports/ajax/mypartners/partner";
     if (typeof data["partner"] !== "undefined") {
       delete data["partner"];
     }
   } else if (list.type === "contact") {
-    url += "/reports/ajax/get/mypartners/contact";
+    url += "/reports/ajax/mypartners/contact";
   }
 
   $.ajaxSettings.traditional = true;
   $.ajax({
-    type: 'POST',
+    type: 'GET',
     url: url,
     data: $.param(data, true),
     dataType: "json",
@@ -606,8 +606,8 @@ $(document).ready(function() {
 
 
     $.ajax({
-      type: "POST",
-      url: url + "/reports/ajax/get-report",
+      type: "GET",
+      url: url + "/reports/",
       data: data,
       success: function(data) {
         $.getScript("https://www.google.com/jsapi").done(function() {

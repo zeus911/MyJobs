@@ -8,8 +8,8 @@ class Report(models.Model):
     created_by = models.ForeignKey('myjobs.User')
     owner = models.ForeignKey('seo.Company')
     created_on = models.DateTimeField(auto_now_add=True)
-    app = models.CharField(max_length=50)
-    model = models.CharField(max_length=50)
+    app = models.CharField(default='mypartners', max_length=50)
+    model = models.CharField(default='contactrecord', max_length=50)
     # json encoded string of the params used to filter
     params = models.TextField()
     results = models.FileField(upload_to='reports')

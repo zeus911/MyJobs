@@ -8,24 +8,44 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'Report'
-        db.create_table(u'myreports_report', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('created_by', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myjobs.User'])),
-            ('owner', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['seo.Company'])),
-            ('created_on', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('path', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('params', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('results', self.gf('django.db.models.fields.files.FileField')(max_length=100)),
-        ))
-        db.send_create_signal(u'myreports', ['Report'])
+        # Deleting field 'Report.path'
+        db.delete_column(u'myreports_report', 'path')
 
+        # Adding field 'Report.app'
+        db.add_column(u'myreports_report', 'app',
+                      self.gf('django.db.models.fields.CharField')(default='mypartners', max_length=50),
+                      keep_default=False)
+
+        # Adding field 'Report.model'
+        db.add_column(u'myreports_report', 'model',
+                      self.gf('django.db.models.fields.CharField')(default='contactrecord', max_length=50),
+                      keep_default=False)
+
+
+        # Changing field 'Report.name'
+        db.alter_column(u'myreports_report', 'name', self.gf('django.db.models.fields.CharField')(max_length=50))
+
+        # Changing field 'Report.params'
+        db.alter_column(u'myreports_report', 'params', self.gf('django.db.models.fields.TextField')())
 
     def backwards(self, orm):
-        # Deleting model 'Report'
-        db.delete_table(u'myreports_report')
+        # Adding field 'Report.path'
+        db.add_column(u'myreports_report', 'path',
+                      self.gf('django.db.models.fields.CharField')(default='/mypartners/contactrecord/', max_length=255),
+                      keep_default=False)
 
+        # Deleting field 'Report.app'
+        db.delete_column(u'myreports_report', 'app')
+
+        # Deleting field 'Report.model'
+        db.delete_column(u'myreports_report', 'model')
+
+
+        # Changing field 'Report.name'
+        db.alter_column(u'myreports_report', 'name', self.gf('django.db.models.fields.CharField')(max_length=100))
+
+        # Changing field 'Report.params'
+        db.alter_column(u'myreports_report', 'params', self.gf('django.db.models.fields.CharField')(max_length=255))
 
     models = {
         u'auth.group': {
@@ -78,13 +98,14 @@ class Migration(SchemaMigration):
         },
         u'myreports.report': {
             'Meta': {'object_name': 'Report'},
+            'app': ('django.db.models.fields.CharField', [], {'default': "'mypartners'", 'max_length': '50'}),
             'created_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"}),
             'created_on': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'model': ('django.db.models.fields.CharField', [], {'default': "'contactrecord'", 'max_length': '50'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
-            'params': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'path': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'params': ('django.db.models.fields.TextField', [], {}),
             'results': ('django.db.models.fields.files.FileField', [], {'max_length': '100'})
         },
         u'postajob.package': {

@@ -50,7 +50,7 @@
                                 <li><a id="partner-tab" href="{{ ABSOLUTE_URL }}prm/view">{% trans "PRM" %}</a></li>
                             {% endif %}
                             {% if user.is_staff %}
-                                <li><a id="reports-tab" href="{{ ABSOLUTE_URL }}reports/view">{% trans "Reports" %}</a></li>
+                                <li><a id="reports-tab" href="{{ ABSOLUTE_URL }}reports/view/overview">{% trans "Reports" %}</a></li>
                             {% endif %}
                             {% if company.product_access %}
                                 <li><a id="purchasedmicrosite-tab" href="{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Partner Microsite" %}</a></li>
