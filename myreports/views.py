@@ -1,9 +1,7 @@
 from datetime import datetime
 import json
 
-from django.core import serializers
 from django.core.files.base import ContentFile
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models.loading import get_model
 from django.db.models import Count
 from django.http import HttpResponse, Http404
@@ -11,7 +9,7 @@ from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 
 from myreports.decorators import restrict_to_staff
-from myreports.helpers import serialize, parse_params, humanize
+from myreports.helpers import filter_records, humanize, parse_params, serialize
 from myreports.models import Report
 from myreports.reports import PRMReport
 from universal.helpers import get_company_or_404
@@ -73,29 +71,12 @@ def get_states(request):
         raise Http404
 
 
-def filter_records(request, model, params, ignore_cache=False):
-    company = get_company_or_404(request)
-    user = request.user
-    path = request.get_full_path()
-
-    # get rid of empty params and flatten single-item lists
-
-    cache_key = (user, company, path, tuple(params.items()))
-    filter_records.cached = cache_key in filter_records.cache
-    # fetch results from cache if available
-    if not ignore_cache and filter_records.cached:
-        records = filter_records.cache[cache_key]
-    else:
-        records = model.objects.from_search(company, params)
-        filter_records.cache[cache_key] = records
-
-    return records
-filter_records.cache = {}
-
-
 # render records?
 def view_records(request, app, model, output='json'):
     if request.is_ajax() and request.method == 'POST':
+        company = get_company_or_404(request)
+        user = request.user
+
         # parse request into dict, converting singleton lists into single items
         params = parse_params(request.POST)
 
@@ -106,7 +87,7 @@ def view_records(request, app, model, output='json'):
         output = output or params.pop('output', 'json')
 
         records = filter_records(
-            request, get_model(app, model), params, ignore_cache)
+            company, user, app, model, params, ignore_cache)
 
         counts = {}
         if count:
@@ -134,7 +115,7 @@ def create_report(request, app, model):
     name = params.pop('report_name', datetime.now())
     ignore_cache = params.pop('ignore_cache', False)
     records = filter_records(
-        request, get_model(app, model), params, ignore_cache)
+        company, user, app, model, params, ignore_cache)
 
     contents = serialize('json', records)
     results = ContentFile(contents)
