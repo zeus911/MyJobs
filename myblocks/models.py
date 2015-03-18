@@ -138,6 +138,15 @@ class ContentBlock(Block):
     base_template = 'myblocks/blocks/content.html'
 
 
+class FacetBlurbBlock(Block):
+    base_template = 'myblocks/blocks/facetblurb.html'
+
+    def context(self, request, **kwargs):
+        return {
+            'facet_blurb_facet': context_tools.get_facet_blurb_facet(request)
+        }
+
+
 class JobDetailBlock(Block):
     base_template = 'myblocks/blocks/jobdetail.html'
 
@@ -472,7 +481,7 @@ class Page(models.Model):
 
     def templatetag_library(self):
         templatetags = ['{% load seo_extras %}', '{% load i18n %}',
-                        '{% load highlight %}', '{% load humanize %}']
+                        '{% load highlight %}', '{% load humanize %}', ]
         return ' '.join(templatetags)
 
     def to_js_tag(self, js_file):

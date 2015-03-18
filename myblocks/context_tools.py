@@ -88,6 +88,25 @@ def get_default_jobs(request):
 
 
 @Memoized
+def get_facet_blurb_facet(request):
+    filters = get_filters(request)
+    facet_blurb_facet = None
+    site_config = get_site_config(request)
+
+    if site_config.browse_facet_show and filters['facet_slug']:
+        facet_slugs = filters['facet_slug'].split('/')
+        active_facets = helpers.standard_facets_by_name_slug(facet_slugs)
+        active_facets = list(set(active_facets))
+
+        # Set the facet blurb only if we have exactly one
+        # CustomFacet applied.
+        if len(active_facets) == 1 and active_facets[0].blurb:
+            facet_blurb_facet = active_facets[0]
+
+    return facet_blurb_facet
+
+
+@Memoized
 def get_featured_jobs(request):
     _, featured_jobs, _ = get_jobs_and_counts(request)
     return featured_jobs

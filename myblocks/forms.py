@@ -34,6 +34,11 @@ class ContentBlockForm(BlockForm):
         model = models.ContentBlock
 
 
+class FacetBlurbBlockForm(BlockForm):
+    class Meta:
+        model = models.FacetBlurbBlock
+
+
 class JobDetailBlockForm(BlockForm):
     class Meta:
         model = models.JobDetailBlock
