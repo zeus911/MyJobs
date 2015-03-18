@@ -222,7 +222,8 @@ def get_counts(request):
         'referrals': records.referrals,
         'contacts': list(records.contacts)}
 
-    return HttpResponse(json.dumps(ctx, indent=4), content_type='application/json')
+    return HttpResponse(
+        json.dumps(ctx), content_type='application/json; charset=utf-8')
 
 
 def download_report(request):
