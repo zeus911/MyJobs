@@ -520,5 +520,6 @@ class LocationForm(NormalizedModelForm):
         widgets = generate_custom_widgets(model)
 
     states = sorted(states.items(), key=lambda s: s[1])
+    states.insert(0, ('', 'Select a State'))
     state = forms.ChoiceField(
         widget=forms.Select(), choices=states, label='State')
