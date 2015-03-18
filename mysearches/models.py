@@ -43,7 +43,7 @@ class SavedSearch(models.Model):
                     ('Date', _('Date')))
 
     user = models.ForeignKey('myjobs.User', editable=False)
-    
+
     created_on = models.DateTimeField(auto_now_add=True)
     label = models.CharField(max_length=60, verbose_name=_("Search Name"))
     url = models.URLField(max_length=300,
@@ -254,16 +254,16 @@ class SavedSearch(models.Model):
     def send_update_email(self, msg, custom_msg=None):
         """
         This function is meant to be called from the shell. It sends a notice to
-        the user that their saved search has been updated by the system or an 
+        the user that their saved search has been updated by the system or an
         admin.
-        
+
         Inputs:
         :msg:   The description of the update. Passed through verbatim to the
                 template.
-                
+
         Returns:
         nothing
-        
+
         """
         context_dict = {
             'saved_searches': [(self,)],

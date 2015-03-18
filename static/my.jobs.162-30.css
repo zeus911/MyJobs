@@ -1513,7 +1513,7 @@ h3.bottom-bordered {
     position: absolute;
     right: 0;
     top: 3px;
-    width: 65px;
+    width: 40px;
 }
 
 .icon-set i {
@@ -2844,6 +2844,9 @@ td .gravatar-blank,
         padding: 0;
         border: 0;
         background-color: transparent;
+    }
+    .partner-tags {
+        min-height: 30px;
     }
 
     .prm-no-partner .span4 {

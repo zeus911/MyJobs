@@ -597,27 +597,6 @@ $(document).ready(function() {
   });
 
 
-  // View Report
-  sidebar.on("click", ".report > a, .fa-eye", function() {
-    var report_id = $(this).attr("id").split("-")[1],
-        data = {"csrfmiddlewaretoken": read_cookie("csrftoken"),
-                "report": report_id},
-        url = location.protocol + "//" + location.host; // https://secure.my.jobs
-
-
-    $.ajax({
-      type: "POST",
-      url: url + "/reports/ajax/get-report",
-      data: data,
-      success: function(data) {
-        $.getScript("https://www.google.com/jsapi").done(function() {
-          $(".wrapper > .row").html(data);
-        });
-      }
-    });
-  });
-
-
   // Clone Report
   sidebar.on("click", ".fa-copy", function() {
     var report_id = $(this).attr("id").split("-")[1],

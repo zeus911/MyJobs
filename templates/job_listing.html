@@ -69,21 +69,22 @@
         <h3>{% trans "Share" %}</h3>
         {% include 'includes/add_this.html' %} <!--replace with my.jobs sharing when ready. JPS 10-4-12-->
     </div>
-<a href="#top" class="direct_mobileJumpLink">{% blocktrans %}Return to top{% endblocktrans %}</a>
+    <a href="#top" class="direct_mobileJumpLink">{% blocktrans %}Return to top{% endblocktrans %}</a>
 
-
+{% endif %}
 <div id="direct_disambiguationDiv" class="direct_rightColBox" role="menu">
     {# If clear_breadcrumb exists, we know at least one search term that can be removed has been applied, so include the breadbox #}
     {% if breadbox.clear_breadcrumb %}
         {% include 'includes/breadbox.html' %}
     {% endif %}
-    {% include 'includes/seo_sort.html' %}
-{% for widget in widgets %}
-{% if widget.render %}
-{{ widget.render }}
-{% endif %}
-{% endfor %}
+    {% if default_jobs or featured_jobs %}
+        {% include 'includes/seo_sort.html' %}
+        {% for widget in widgets %}
+            {% if widget.render %}
+                {{ widget.render }}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
 </div>
-{% endif %}
 {% endblock %}
 {% endcache %}

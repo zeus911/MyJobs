@@ -25,6 +25,8 @@ from moc_coding import models as moc_models
 from moc_coding.tests import factories as moc_factories
 from myjobs.tests.factories import UserFactory
 from postajob.models import SitePackage
+from postajob.tests.factories import (JobFactory, JobLocationFactory,
+                                      SitePackageFactory)
 from seo import helpers
 from seo.tests.setup import (connection, DirectSEOBase, DirectSEOTestCase,
                              patch_settings)
@@ -204,6 +206,7 @@ class SearchBoxTests(DirectSEOTestCase):
         self.config.moc_helptext = custom_moc_helptext
         self.config.save()
         self.check_for_helptext_on_results_pages(custom_moc_helptext)
+
 
 class SeoSiteTestCase(DirectSEOTestCase):
     fixtures = ['seo_views_testdata.json']
@@ -970,10 +973,11 @@ class SeoSiteTestCase(DirectSEOTestCase):
         bu.save()
 
         default_job.update({
-                    'buid':'1',
-                    'mapped_moc':[moc],
-                    'mapped_mocid':[moc.id],
-                    'onet':'1234'})
+            'buid': '1',
+            'mapped_moc': [moc],
+            'mapped_mocid': [moc.id],
+            'onet': '1234'
+        })
 
         self.conn.add([default_job])
 
@@ -1546,7 +1550,6 @@ class SeoViewsTestCase(DirectSEOTestCase):
                 u'/ajax/joblisting/?num_items=q&offset=')
         self.assertEqual(resp.status_code, 200)
 
-
     def test_ajax_get_jobs(self):
         resp = self.client.get(
           u'/ajax/joblisting/')
@@ -1854,7 +1857,7 @@ class SeoViewsTestCase(DirectSEOTestCase):
                        'rss?q=Retail&amp;amp;location=Indianapolis">'
             self.assertIn(rss_link, resp.content)
 
-    def test_syndicate_feed(self):
+    def test_feed_urls(self):
         
         feed_types = {
             'xml': 'xml', 
@@ -1863,7 +1866,7 @@ class SeoViewsTestCase(DirectSEOTestCase):
             'atom': 'atom+xml; charset=utf-8', 
             'rss': 'rss+xml; charset=utf-8',
             'jsonp': 'javascript'
-            }
+        }
         # Since the BusinessUnit id for our test XML feed is set to 0 on the
         # crawler's side, we need to make sure that everything else in the
         # tests is updated to reflect that, including data in our test database
@@ -1871,7 +1874,54 @@ class SeoViewsTestCase(DirectSEOTestCase):
         site = SeoSite.objects.get(id=1)
         site.business_units = [self.buid_id]
         site.save()
-        
+
+        # Set up a site package for the site and add posted job for
+        # that site package.
+        package = SitePackageFactory()
+        package.sites.add(site)
+        package.save()
+        job = JobFactory()
+        job_location = JobLocationFactory()
+        job.locations.add(job_location)
+        job.site_packages.add(package)
+        job.save()
+
+        with connection(connections_info=solr_settings.HAYSTACK_CONNECTIONS):
+            known_url = 'http://testserver/11111111111111111111111111111111'
+            postajob_url = 'http://testserver/%s/job/' % job_location.guid
+            for feed_type in feed_types:
+                resp = self.client.get('/feed/%s' % feed_type)
+
+                # Confirm that the url for a posted job is correct in the
+                # feed.
+                self.assertIn(postajob_url, resp.content)
+                # Confirm that the url for a normal job is correct
+                # in the feed.
+                self.assertIn(known_url, resp.content)
+
+                # Sanity check. Make sure the extra field we've added
+                # to help generate the urls isn't making it to the
+                # final feed.
+                self.assertNotIn('is_posted', resp.content)
+
+    def test_syndicate_feed(self):
+
+        feed_types = {
+            'xml': 'xml',
+            'json': 'json',
+            'indeed': 'xml',
+            'atom': 'atom+xml; charset=utf-8',
+            'rss': 'rss+xml; charset=utf-8',
+            'jsonp': 'javascript'
+        }
+        # Since the BusinessUnit id for our test XML feed is set to 0 on the
+        # crawler's side, we need to make sure that everything else in the
+        # tests is updated to reflect that, including data in our test database
+        # and Solr index.
+        site = SeoSite.objects.get(id=1)
+        site.business_units = [self.buid_id]
+        site.save()
+
         with connection(connections_info=solr_settings.HAYSTACK_CONNECTIONS):
             resp = self.client.get('/feed/xml')
             tree = etree.parse(StringIO(resp.content))
@@ -1883,7 +1933,7 @@ class SeoViewsTestCase(DirectSEOTestCase):
             site = factories.SeoSiteFactory.build()
             site.save()
             for feed_type, ctype in feed_types.items():
-                resp = self.client.get('/jobs/feed/%s' % feed_type, 
+                resp = self.client.get('/jobs/feed/%s' % feed_type,
                                        HTTP_HOST="buckconsultants.jobs")
                 self.assertEqual(resp.status_code, 200)
 
@@ -1891,7 +1941,7 @@ class SeoViewsTestCase(DirectSEOTestCase):
                 vs = feed_type
                 if vs == 'jsonp':
                     vs = 'json'
-                test_str = "http://buckconsultants.jobs/%s%d" %\
+                test_str = "http://buckconsultants.jobs/%s%d" % \
                            (job.docs[0]['guid'],
                             settings.FEED_VIEW_SOURCES[vs])
                 self.assertNotEqual(resp.content.decode('utf-8').find(test_str),

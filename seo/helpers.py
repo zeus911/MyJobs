@@ -390,26 +390,50 @@ def bread_box_company_heading(company_slug_value):
         return None
 
 
+def location_from_job(job, num_locations):
+    try:
+        if num_locations == 3:
+            return job.location
+        elif num_locations == 2:
+            return job.state
+        elif num_locations == 1:
+            return job.country
+    except IndexError:
+        return None
+
+
 def bread_box_location_heading(location_slug_value, jobs=None):
     if not location_slug_value:
         return None
 
     location_slug_value = location_slug_value.strip('/')
-
+    location = None
     locations = location_slug_value.split('/')
     loc_length = len(locations)
 
     try:
-        if loc_length == 3:
-            return jobs[0].location
-        elif loc_length == 2:
-            return jobs[0].state
-        elif loc_length == 1:
-            return jobs[0].country
+        location = location_from_job(jobs[0], loc_length)
     except IndexError:
+        # We don't have a job
+        pass
+
+    if not location:
         # We didn't have a valid job to pull the location, state,
         # or country from.
-        return None
+        sqs = DESearchQuerySet()
+        jobs = filter_sqs_by_location(sqs, location_slug_value)[:1]
+        try:
+            location = location_from_job(jobs[0], loc_length)
+        except IndexError:
+            pass
+
+    if not location:
+        # Solr has no results for it at all either. Resort to
+        # title casing the location term.
+        location = " ".join(locations)
+        location = location.replace('-', ' ').title()
+
+    return location
 
 
 def bread_box_moc_heading(moc_slug_value):
@@ -567,6 +591,22 @@ def get_jobs(custom_facets=None, exclude_facets=None, jsids=None,
     return filter_sqs(sqs, filters)
 
 
+def filter_sqs_by_location(sqs, location_slug):
+    loc = parse_location_slug(location_slug)
+
+    for k, v in loc.items():
+        if v:
+            if k == 'country_short':
+                sqs = sqs.narrow('country_short:(%s)' % v.upper())
+            elif k == 'state':
+                if v != 'none':
+                    sqs = sqs.narrow("state_slug:(%s)" % v)
+            else:
+                if v != 'none':
+                    sqs = sqs.narrow("city_slug:(%s)" % v)
+    return sqs
+
+
 def filter_sqs(sqs, filters):
     """
     Filters a DESearchQuerySet based on the requested URL via
@@ -593,17 +633,7 @@ def filter_sqs(sqs, filters):
 
     for f in _filters:
         if f == 'location_slug':
-            loc = parse_location_slug(filters[f])
-            for k, v in loc.items():
-                if v:
-                    if k == 'country_short':
-                        sqs = sqs.narrow('country_short:(%s)' % v.upper())
-                    elif k == 'state':
-                        if v != 'none':
-                            sqs = sqs.narrow("state_slug:(%s)" % v)
-                    else:
-                        if v != 'none':
-                            sqs = sqs.narrow("city_slug:(%s)" % v)
+            sqs = filter_sqs_by_location(sqs, filters['location_slug'])
 
         elif f == 'moc_slug':
             t = filters[f]
