@@ -74,31 +74,6 @@ def get_states(request):
 
 
 def filter_records(request, model, params, ignore_cache=False):
-    """
-    View that returns a query set based on post data submitted with the
-    request, caching results by default.
-
-    Inputs:
-        :model: The model that should be filtered on.
-
-    Output:
-        A `QueryDict` filtered using params extracted from the request.
-
-    Query Parameters:
-        :start_date: Lower bound for record date-related field (eg. `datetime`
-                     for `ContactRecord`).
-        :end_date: Upper bound for record date-related field (eg. `datetime`
-                   for `ContactRecord`).
-        :ignore_cache: If present, this view's cache is ignored.
-
-        Remaining query parameters are assumed to be field names of the model.
-
-    Examples:
-        The following should return all Contacts who are tagged as 'veteran':
-
-            client.post(reverse('filter_records', kwargs={'model': 'contact'}),
-                        tag=['veteran'])
-    """
     company = get_company_or_404(request)
     user = request.user
     path = request.get_full_path()
