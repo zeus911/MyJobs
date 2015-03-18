@@ -608,7 +608,7 @@ $(document).ready(function() {
       url: url + "/reports/view/mypartners/contactrecord",
       data: data,
       success: function(data) {
-        $("#main-container").html(JSON.stringify(data);
+        $("#main-container").html(JSON.stringify(data));
       },
     });
   });
