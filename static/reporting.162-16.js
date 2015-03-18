@@ -10,12 +10,13 @@ var Report = function(types) {
 
 
 // Pulls the fields required for report type(s)
+// Field Params: label, type, required, value
 Report.prototype.create_fields = function(types) {
    var reports = {"prm":        [new Field("Select Date", "date"),
-                                 new Field("State", "state", true),
+                                 new Field("State", "state"),
                                  new Field("City", "text"),
-                                 new List("Select Partners", "partner"),
-                                 new List("Select Contacts", "contact")]},
+                                 new List("Select Partners", "partner", true),
+                                 new List("Select Contacts", "contact", true)]},
         fields = [],
         key;
 
@@ -24,6 +25,7 @@ Report.prototype.create_fields = function(types) {
       fields.push.apply(fields, reports[types[key]]);
     }
   }
+  fields.unshift(new Field("Report Name", "text", true, format_date(new Date())));
   return fields;
 };
 
@@ -42,9 +44,15 @@ Report.prototype.bind_events = function() {
   });
   */
 
+  // Because this is pre-filled and will normally be a pretty long this
+  // just selects text on focus for easy editing. UX-goodness
+  $(document.body).on("focus", "#report_name", function() {
+    $(this).select();
+  });
+
 
   // Updates data field of Report. Also, if needed, updates Partner and Contact Lists
-  $(document.body).on("change", "input:not([id$=-all-checkbox]), select", function(e) {
+  $(document.body).on("change", "input:not([id$=-all-checkbox]), select:not([class^=picker])", function(e) {
     var in_list = $(this).parents(".list-body").attr("id"),
         contact_wrapper = $("#contact-wrapper"),
         c_field = report.find_field("Select Contacts");
@@ -75,7 +83,7 @@ Report.prototype.bind_events = function() {
         if (typeof report.data.contact !== "undefined") {
           delete report.data.contact;
         }
-        contact_wrapper.html(c_field.render(report.data)).children().unwrap();
+        contact_wrapper.html(c_field.render(report)).children().unwrap();
       }
     } else {
       var partner_wrapper = $("#partner-wrapper"),
@@ -100,10 +108,32 @@ Report.prototype.bind_events = function() {
         if (typeof report.data.contact !== "undefined") {
           delete report.data.contact;
         }
-        partner_wrapper.html(p_field.render(report.data)).children().unwrap();
-        contact_wrapper.html(c_field.render(report.data)).children().unwrap();
+        partner_wrapper.html(p_field.render(report)).children().unwrap();
+        contact_wrapper.html(c_field.render(report)).children().unwrap();
       }
     }
+  });
+
+
+  // For date widget.
+  $(document.body).on("click", ".datepicker",function(e) {
+   $(this).pickadate({
+     format: "mm/dd/yyyy",
+     selectYears: true,
+     selectMonths: true,
+     today: false,
+     clear: false,
+     close: false,
+     onOpen: function() {
+       if (this.get("id") === "start-date") {
+         var end_date = $("#end-date").val();
+         this.set("max", new Date(end_date || new Date()));
+       } else if (this.get("id") === "end-date") {
+         var start_date = $("#start-date").val();
+         this.set("min", new Date(start_date || new Date(0)));
+       }
+     }
+   });
   });
 
 
@@ -158,6 +188,11 @@ Report.prototype.bind_events = function() {
     var modal = $("#report-modal"),
         body = modal.children(".modal-body"),
         footer = modal.children(".modal-footer");
+
+    if (typeof report.data['report_name'] === "undefined") {
+      report.data['report_name'] = $("#report_name").val();
+    }
+
     body.html(report.readable_data());
     modal.modal("show");
   });
@@ -202,6 +237,11 @@ Report.prototype.bind_events = function() {
 };
 
 
+Report.prototype.unbind_events = function() {
+  $(document.body).unbind("click");
+};
+
+
 // Changes report.data from having PKs in lists to show more human friendly data such as names.
 Report.prototype.readable_data = function() {
   var data = this.data,
@@ -211,13 +251,14 @@ Report.prototype.readable_data = function() {
 
   for (key in data) {
     if (data.hasOwnProperty(key)) {
+      html += "<div>";
       value = data[key];
 
       // Replace all '_' instances with spaces
       key = key.replace(/_/g, " ");
 
       if (value) {
-        html += "<label>" + key + ":</label>";
+        html += "<label>" + key.capitalize() + ":</label>";
       }
 
       // If value is an object (aka a list).
@@ -235,7 +276,22 @@ Report.prototype.readable_data = function() {
         html += key === "state" ? $("#state option[value=" + value + "]").html() : value;
       }
     }
+    html += "</div>";
   }
+  if (typeof data['partner'] === "undefined") {
+    if ($("#partner-all-checkbox").is(":checked")) {
+      html += "<div><label>Partners:</label>All Partners</div>";
+    }
+  }
+
+  if (typeof data['contact'] === "undefined") {
+    if ($("#contact-all-checkbox").is(":checked")) {
+      html += "<div><label>Contacts:</label>All Contacts</div>";
+    }
+  }
+
+
+
   return html;
 };
 
@@ -256,18 +312,49 @@ Report.prototype.render_fields = function(fields) {
 
   // for field in fields render.
   for (i = 0; i < fields.length; i++) {
-    html += fields[i].render();
+    html += fields[i].render(this);
   }
 
-  html += "<br /><a id=\"show-modal\" class=\"btn\">Generate Report</a>";
+  html += "<div class=\"show-modal-holder\"><a id=\"show-modal\" class=\"btn primary\">Generate Report</a></div>";
   container.html(html);
 };
 
 
-var Field = function(label, type, required) {
+Report.prototype.create_clone_report = function(json) {
+  var key,
+      value,
+      field;
+
+  for (key in json) {
+    if (json.hasOwnProperty(key)) {
+      value = json[key];
+      if (key === "partner") {
+        this.find_field("Select Partners").value = value;
+        this.data[key] = value;
+      } else if (key === "contact_name") {
+        this.find_field("Select Contacts").value = value;
+        this.data["contact"] = value;
+      } else if (key.indexOf("date") > 0) {
+        field = this.find_field("Select Date");
+        if (field.value === "") {
+          field.value = {"start_date": '', "end_date": ''};
+        }
+        field.value[key] = value;
+        this.data[key] = value;
+      } else {
+        this.find_field(key.capitalize()).value = value;
+        this.data[key] = value;
+      }
+    }
+  }
+};
+
+
+var Field = function(label, type, required, value) {
   this.label = label;
   this.type = type;
   this.required = typeof required !== 'undefined';
+  this.value = value || '';
 };
 
 
@@ -275,26 +362,43 @@ var Field = function(label, type, required) {
 Field.prototype.render = function() {
   var l = $("<label>" + this.label + "</label>"), // label for <input>
       wrapper = $("<div></div>"), // wrapping div
+      field = this,
       html = '',
       input,
       date_widget,
-      date_picker;
+      date_picker,
+      start_date,
+      to,
+      end_date;
+
+  // Indication that the field is required.
+  if (this.required) {
+    l.append("<span style='color: red;'>*</span>");
+  }
 
   if (this.type === "text") {
-    input = $("<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "' type='text' placeholder='"+ this.label +"' />");
+    input = $("<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "' type='text' placeholder='"+ this.label +"' value='" + this.value + "' />");
     wrapper.append(l).append(input);
     html = wrapper.prop("outerHTML");
   } else if (this.type === "date") {
-    date_widget = $("<div id='date-filter' class='filter-option'></div>").append("<div class='date-picker'></div>"),
-    date_picker = $(date_widget).children("div")
-                    .append("<input id='start_date' class='datepicker picker-left' type='text' placeholder='Start Date' />")
-                    .append("<span id='activity-to-' class='datepicker'>to</span>")
-                    .append("<input id='end_date' class='datepicker picker-right' type='text' placeholder='End Date' />");
+    date_widget = $("<div id='date-filter' class='filter-option'></div>").append("<div class='date-picker'></div>");
+    date_picker = $(date_widget).children("div");
+
+    if (field.value) {
+      start_date = $("<input id='start_date' class='datepicker picker-left' type='text' value='"+ field.value.start_date +"' placeholder='Start Date' />");
+      end_date = $("<input id='end_date' class='datepicker picker-right' type='text' value='"+ field.value.end_date +"' placeholder='End Date' />");
+    } else {
+      start_date = $("<input id='start_date' class='datepicker picker-left' type='text' placeholder='Start Date' />");
+      end_date = $("<input id='end_date' class='datepicker picker-right' type='text' placeholder='End Date' />");
+    }
+    to = $("<span id='activity-to-' class='datepicker'>to</span>");
+
+    date_picker.append(start_date).append(to).append(end_date);
     date_widget.append(date_picker);
     html += l.prop("outerHTML");
     html += date_widget.prop("outerHTML");
   } else if (this.type === "state") {
-    html += "<label>State</label><div class='state'></div>";
+    html += l.prop("outerHTML") + "<div class='state'></div>";
     (function() {
       $.ajax({
         type: "POST",
@@ -302,6 +406,9 @@ Field.prototype.render = function() {
         data: {"csrfmiddlewaretoken": read_cookie("csrftoken")},
         success: function(data) {
           $(".state").html(data);
+          if (field.value) {
+            $(".state").find("select").val(field.value);
+          }
         }
       });
     })();
@@ -320,34 +427,58 @@ List.prototype = Object.create(Field.prototype);
 
 // Outputs html based on type using jQuery.
 // Runs ajax asynchronously to render associated lists.
-List.prototype.render = function(filter) {
+List.prototype.render = function(report) {
   var container = $("<div id='"+ this.type +"-header' class='list-header'></div>"),
       icon = $("<i class='fa fa-plus-square-o'></i>"),
       all_checkbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />"),
       record_count = $("<span style='display: none;'>(<span>0</span> "+ this.type.capitalize() +"s Selected)</span>"),
-      html,
       body = $("<div id='"+ this.type +"' class='list-body' style='display: none;'></div>"),
       wrapper = $("<div id='"+ this.type +"-wrapper'></div>"),
-      list = this;
+      prm_fields = ["start_date", "end_date", "state", "city", "partner"],
+      copied_filter,
+      list = this,
+      key,
+      html;
 
-  container.append(icon).append(all_checkbox).append(" All " + this.type.capitalize() + "s ").append(record_count);
+  if (report.data !== "") {
+    copied_filter = $.extend({}, report.data);
+  }
+
+  if (this.value) {
+    all_checkbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' />");
+  } else {
+    all_checkbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />");
+  }
+
+  container.append(icon).append(all_checkbox).append(" All " + list.type.capitalize() + "s ").append(record_count);
 
   wrapper.append(container).append(body);
   html = wrapper.prop("outerHTML");
 
+  if (this.type === "partner" || this.type === "contact") {
+    for (key in copied_filter) {
+      if (copied_filter.hasOwnProperty(key)) {
+        if (prm_fields.indexOf(key) === -1) {
+          delete copied_filter[key];
+        }
+      }
+    }
+  }
+
   // Asynchronously renders a list of records based on list type.
   (function() {
-    list.filter(list.type, filter);
+    list.filter(copied_filter);
   })();
 
   return html;
 };
 
 // Renders a list of records based on type.
-List.prototype.filter = function(type, filter) {
+List.prototype.filter = function(filter) {
   "use strict";
   var url = location.protocol + "//" + location.host, // https://secure.my.jobs
-      data = {"csrfmiddlewaretoken": read_cookie("csrftoken")};
+      data = {"csrfmiddlewaretoken": read_cookie("csrftoken")},
+      list = this;
 
   // if filter, add to data.
   if (typeof filter !== "undefined") {
@@ -355,11 +486,14 @@ List.prototype.filter = function(type, filter) {
   }
 
   // specific duties based on type.
-  if (type === "partner") {
+  if (list.type === "partner") {
     // annotate how many records a partner has.
     $.extend(data, {"count": "contactrecord"});
     url += "/reports/ajax/get/mypartners/partner";
-  } else if (type === "contact") {
+    if (typeof data["partner"] !== "undefined") {
+      delete data["partner"];
+    }
+  } else if (list.type === "contact") {
     url += "/reports/ajax/get/mypartners/contact";
   }
 
@@ -372,17 +506,21 @@ List.prototype.filter = function(type, filter) {
     global: false,
     success: function(data) {
       var ul = $("<ul></ul>"),
-          selected = $("[id^='" + type + "-header'] span span"),
+          selected = $("[id^='" + list.type + "-header'] span span"),
           record,
           li;
 
       // fill ul with li's
       for (var i = 0; i < data.length; i++) {
         record = data[i];
-        li = $("<li><input type='checkbox' value='"+ record.pk +"' checked /> <span>"+ record.name +"</span></li>");
+        if (list.value) {
+          li = $("<li><input type='checkbox' value='"+ record.pk +"' /> <span>"+ record.name +"</span></li>");
+        } else {
+          li = $("<li><input type='checkbox' value='"+ record.pk +"' checked /> <span>"+ record.name +"</span></li>");
+        }
 
         // add record count to right of partners
-        if (type === "partner") {
+        if (list.type === "partner") {
           li.append("<span class='pull-right'>"+ record.count +"</span>");
         }
 
@@ -390,7 +528,20 @@ List.prototype.filter = function(type, filter) {
       }
 
       // render
-      $("#"+ type + ".list-body").html('').append(ul);
+      $("#"+ list.type + ".list-body").html('').append(ul);
+
+      if (list.value) {
+        if (list.type === "partner") {
+          for (var j = 0; j < list.value.length; j++) {
+            $("input[value*=" + list.value[j] + "]").prop("checked", true);
+          }
+        } else if (list.type === "contact") {
+          for (var k = 0; k < list.value.length; k++) {
+            $("li span:contains(" + list.value[k] + ")").siblings("input").prop("checked", true);
+          }
+        }
+      }
+
       $(selected).html(data.length).parent().show("fast");
     },
     error: function(e) {
@@ -408,27 +559,7 @@ String.prototype.capitalize = function() {
 
 
 $(document).ready(function() {
-  // For date widget.
-  $(document.body).on("click", ".datepicker",function(e) {
-   $(this).pickadate({
-     format: "mm/dd/yyyy",
-     selectYears: true,
-     selectMonths: true,
-     today: false,
-     clear: false,
-     close: false,
-     onOpen: function() {
-       if (this.get("id") === "start-date") {
-         var end_date = $("#end-date").val();
-         this.set("max", new Date(end_date || new Date()));
-       } else if (this.get("id") === "end-date") {
-         var start_date = $("#start-date").val();
-         this.set("min", new Date(start_date || new Date(0)));
-       }
-     }
-   });
-  });
-
+  var sidebar = $(".sidebar");
 
   $(document.body).on("click", "#start-report:not(.disabled)", function(e) {
     e.preventDefault();
@@ -464,7 +595,66 @@ $(document).ready(function() {
       $("#start-report").addClass("disabled");
     }
   });
+
+
+  // Clone Report
+  sidebar.on("click", ".fa-copy", function() {
+    var report_id = $(this).attr("id").split("-")[1],
+        data = {"csrfmiddlewaretoken": read_cookie("csrftoken"),
+                "report": report_id},
+        url = location.protocol + "//" + location.host; // https://secure.my.jobs
+
+    $.ajax({
+      type: "POST",
+      url: url + "/reports/ajax/get-inputs",
+      data: data,
+      success: function(data) {
+        var report = new Report(["prm"]);
+        report.create_clone_report($.parseJSON(data));
+        report.unbind_events();
+        report.bind_events();
+        $("#container").addClass("rpt-container");
+        report.render_fields(report.fields);
+      }
+    });
+  });
+
+  // View Archive
+  sidebar.on("click", "#report-archive", function() {
+    var data = {"csrfmiddlewaretoken": read_cookie("csrftoken")};
+    $.ajax({
+      type: "POST",
+      url: "view/archive",
+      data: data,
+      success: function(data) {
+        $("#main-container").html(data);
+      }
+    });
+  });
 });
+
+
+function format_date(date) {
+  var year = date.getFullYear(),
+      month = date.getMonth(),
+      day = date.getDate(),
+      hours = date.getHours(),
+      minutes = date.getMinutes(),
+      seconds = date.getSeconds(),
+      milliseconds = date.getMilliseconds();
+
+  function turn_two_digit(value) {
+    return value < 10 ? "0" + value : value;
+  }
+
+  month = turn_two_digit(parseInt(month) + 1);
+  day = turn_two_digit(day);
+  hours = turn_two_digit(hours);
+  minutes = turn_two_digit(minutes);
+  seconds = turn_two_digit(seconds);
+
+  return year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds + "." + milliseconds;
+}
 
 
 function update_all_checkbox(element) {

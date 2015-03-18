@@ -417,53 +417,25 @@ $(document).ready(function() {
                 var p = document.createElement("p");
                 var note = document.createElement("span");
                 var note_node = document.createTextNode("Note: ");
-                var add_required = false;
                 note.appendChild(note_node);
                 note.setAttribute("style", "color: red");
                 var text = "This partner is missing information from the primary contact. " +
                     "Please contact the partner to obtain this missing data.";
                 var ul = document.createElement("ul");
                 for(var i = 0; i < for_completion.length; i++) {
-                  if(for_completion[i] !== "state") {
-                    var li = document.createElement("li");
-                    var li_node = document.createTextNode(for_completion[i]);
-                    li.appendChild(li_node);
-                    ul.appendChild(li);
-                  }
-                }
-
-                if(for_completion.indexOf("state") !== -1) {
-                  add_required = true;
-                  $("#add-partner-library").addClass("disabled");
-                  var required_ul = $("<ul></ul>"),
-                      required_li = $("<li>state: </li>"),
-                      new_select = $("#state").clone()
-                                              .attr("id", "new_select");
-
-                  $(document.body).on("change", "#new_select", function() {
-                    if($(this).val() !== "")
-                      $("#add-partner-library").removeClass("disabled");
-                    else
-                      $("#add-partner-library").addClass("disabled");
-                  });
-
-                  required_li.append(new_select);
-                  required_ul.append(required_li);
-
+                  var li = document.createElement("li");
+                  var li_node = document.createTextNode(for_completion[i]);
+                  li.appendChild(li_node);
+                  ul.appendChild(li);
                 }
 
                 var node = document.createTextNode(text);
                 p.appendChild(note);
                 p.appendChild(node);
-                required = $("<p><b>Required data</b><br />These fields " +
-                             "must be completed now, prior to adding this " +
-                             "partner:</p>");
 
-                optional = $("<p><b>Optional data</b><br />These fields are " + 
-                             "missing but can be added later:</p>");
+                optional = $("<p>These fields are missing but can be added " +
+                             "later:</p>");
                 $(".modal-body").append(p)
-                if(add_required)
-                  $(".modal-body").append(required).append(required_ul)
                 
                 $(".modal-body").append(optional).append(ul);
 

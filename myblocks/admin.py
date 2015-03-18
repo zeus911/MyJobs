@@ -30,6 +30,11 @@ class ContentBlockAdmin(admin.ModelAdmin):
     save_as = True
 
 
+class FacetBlurbBlockAdmin(admin.ModelAdmin):
+    form = forms.FacetBlurbBlockForm
+    save_as = True
+
+
 class JobDetailBlockAdmin(admin.ModelAdmin):
     form = forms.JobDetailBlockForm
     save_as = True
@@ -37,6 +42,11 @@ class JobDetailBlockAdmin(admin.ModelAdmin):
 
 class JobDetailBreadboxBlockAdmin(admin.ModelAdmin):
     form = forms.JobDetailBreadboxBlockForm
+    save_as = True
+
+
+class JobDetailHeaderBlockAdmin(admin.ModelAdmin):
+    form = forms.JobDetailHeaderBlockForm
     save_as = True
 
 
@@ -80,6 +90,11 @@ class SearchResultBlockAdmin(admin.ModelAdmin):
     save_as = True
 
 
+class SearchResultHeaderBlockAdmin(admin.ModelAdmin):
+    form = forms.SearchResultHeaderBlockForm
+    save_as = True
+
+
 class ShareBlockAdmin(admin.ModelAdmin):
     form = forms.ShareBlockForm
     save_as = True
@@ -110,15 +125,18 @@ class RowAdmin(admin.ModelAdmin):
 admin.site.register(models.ApplyLinkBlock, ApplyLinkBlockAdmin)
 admin.site.register(models.BreadboxBlock, BreadboxBlockAdmin)
 admin.site.register(models.ContentBlock, ContentBlockAdmin)
+admin.site.register(models.FacetBlurbBlock, FacetBlurbBlockAdmin)
 admin.site.register(models.LoginBlock, LoginBlockAdmin)
 admin.site.register(models.JobDetailBlock, JobDetailBlockAdmin)
 admin.site.register(models.JobDetailBreadboxBlock, JobDetailBreadboxBlockAdmin)
+admin.site.register(models.JobDetailHeaderBlock, JobDetailHeaderBlockAdmin)
 admin.site.register(models.MoreButtonBlock, MoreButtonBlockAdmin)
 admin.site.register(models.SavedSearchWidgetBlock, SavedSearchWidgetBlockAdmin)
 admin.site.register(models.SearchBoxBlock, SearchBoxBlockAdmin)
 admin.site.register(models.SearchFilterBlock, SearchFilterBlockAdmin)
 admin.site.register(models.VeteranSearchBox, VeteranSearchBoxAdmin)
 admin.site.register(models.SearchResultBlock, SearchResultBlockAdmin)
+admin.site.register(models.SearchResultHeaderBlock, SearchResultHeaderBlockAdmin)
 admin.site.register(models.ShareBlock, ShareBlockAdmin)
 admin.site.register(models.RegistrationBlock, RegistrationBlockAdmin)
 admin.site.register(models.ColumnBlock, ColumnBlockAdmin)

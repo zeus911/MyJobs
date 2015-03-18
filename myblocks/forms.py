@@ -34,6 +34,11 @@ class ContentBlockForm(BlockForm):
         model = models.ContentBlock
 
 
+class FacetBlurbBlockForm(BlockForm):
+    class Meta:
+        model = models.FacetBlurbBlock
+
+
 class JobDetailBlockForm(BlockForm):
     class Meta:
         model = models.JobDetailBlock
@@ -42,6 +47,11 @@ class JobDetailBlockForm(BlockForm):
 class JobDetailBreadboxBlockForm(BlockForm):
     class Meta:
         model = models.JobDetailBreadboxBlock
+
+
+class JobDetailHeaderBlockForm(BlockForm):
+    class Meta:
+        model = models.JobDetailHeaderBlock
 
 
 class LoginBlockForm(BlockForm):
@@ -75,6 +85,11 @@ class SearchFilterBlockForm(BlockForm):
 
 
 class SearchResultBlockForm(BlockForm):
+    class Meta:
+        model = models.SearchResultBlock
+
+
+class SearchResultHeaderBlockForm(BlockForm):
     class Meta:
         model = models.SearchResultBlock
 
