@@ -3,6 +3,7 @@ from slugify import slugify
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.http import Http404, HttpResponseRedirect
@@ -41,6 +42,8 @@ class Block(models.Model):
     span = models.PositiveIntegerField()
     template = models.TextField()
     head = models.TextField(blank=True)
+
+    updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         return self.name
@@ -377,6 +380,8 @@ class VeteranSearchBox(Block):
 class Row(models.Model):
     blocks = models.ManyToManyField('Block', through='BlockOrder')
 
+    updated = models.DateTimeField(auto_now=True)
+
     def __unicode__(self):
         return ', '.join([block.name for block in self.blocks.all()])
 
@@ -431,6 +436,8 @@ class Page(models.Model):
                               default='production')
 
     head = models.TextField(blank=True)
+
+    updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         return self.name
@@ -514,9 +521,27 @@ class Page(models.Model):
         """)
 
     def render(self, request, **kwargs):
+        key = self.render_cache_prefix(request)
+        rendered_template = cache.get(key)
+        if rendered_template:
+            return rendered_template
         context = self.context(request, **kwargs)
         template = Template(self.get_template(request))
-        return template.render(RequestContext(request, context))
+        rendered_template = template.render(RequestContext(request, context))
+        cache.set(key, rendered_template, settings.MINUTES_TO_CACHE*60)
+        return rendered_template
+
+    def render_cache_prefix(self, request):
+        path = request.path
+        query_string = context_tools.get_query_string(request)
+        blocks = self.all_blocks()
+        blocks = ["%s::%s" % (block.id, block.updated) for block in blocks]
+        rows = self.rows.all()
+        rows = ["%s::%s" % (row.id, row.updated) for row in rows]
+        config = context_tools.get_site_config(request)
+        buids = '#'.join(getattr(settings, 'SITE_BUIDS', []))
+
+        return '###'.join([path, query_string, config, blocks, rows, buids])
 
     def templatetag_library(self):
         templatetags = ['{% load seo_extras %}', '{% load i18n %}',
@@ -609,6 +634,8 @@ class BlockOrder(models.Model):
     row = models.ForeignKey('Row')
     order = models.PositiveIntegerField()
 
+    updated = models.DateTimeField(auto_now=True)
+
     class Meta:
         ordering = ('order', )
 
@@ -619,6 +646,8 @@ class ColumnBlockOrder(models.Model):
                                      related_name='included_column_blocks')
     order = models.PositiveIntegerField()
 
+    updated = models.DateTimeField(auto_now=True)
+
     class Meta:
         ordering = ('order', )
 
@@ -627,6 +656,8 @@ class RowOrder(models.Model):
     row = models.ForeignKey('Row')
     order = models.PositiveIntegerField()
     page = models.ForeignKey('Page')
+
+    updated = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ('order', )
