@@ -833,6 +833,10 @@ def event_list_to_email_log(event_list):
                     pass
                 else:
                     if len(category) == 1:
+                        # This preserves our prior functionality - if there are
+                        # legitimately multiple categories on this email,
+                        # category will remain a list and this will get logged
+                        # by NewRelic.
                         category = category[0]
             elif category == 'Production':
                 category = ''

@@ -1,5 +1,4 @@
 from datetime import datetime
-import json
 from django.contrib.contenttypes.models import ContentType
 from pynliner import Pynliner
 from urlparse import urlparse
