@@ -408,3 +408,18 @@ class MySearchViewTests(MyJobsBase):
             self.assertEqual(send.status_code, 302)
             self.assertEqual(len(mail.outbox), 1)
             mail.outbox = []
+
+    def test_send_link_respects_permissions(self):
+        self.user.is_superuser = True
+        self.user.save()
+        search = SavedSearchFactory(user=self.user)
+        search_2 = SavedSearchFactory(user=UserFactory(email='new@example.com'))
+        send_url = reverse('send_saved_search') + '?id=%s'
+
+        self.assertEqual(len(mail.outbox), 0)
+        response = self.client.get(send_url % search.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        response = self.client.get(send_url % search_2.pk)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(len(mail.outbox), 1)
