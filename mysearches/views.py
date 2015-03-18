@@ -38,7 +38,7 @@ def delete_saved_search(request, user=None):
         search_name = 'all'
 
     return HttpResponseRedirect(
-        reverse('saved_search_main_query')+'?d='+str(search_name))
+        reverse('saved_search_main_query') + '?d=' + str(search_name))
 
 
 @user_is_allowed()
