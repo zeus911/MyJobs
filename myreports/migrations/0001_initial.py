@@ -17,7 +17,7 @@ class Migration(SchemaMigration):
             ('created_on', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('app', self.gf('django.db.models.fields.CharField')(max_length=50)),
             ('model', self.gf('django.db.models.fields.CharField')(max_length=50)),
-            ('params', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('params', self.gf('django.db.models.fields.TextField')()),
             ('results', self.gf('django.db.models.fields.files.FileField')(max_length=100)),
         ))
         db.send_create_signal(u'myreports', ['Report'])
@@ -86,7 +86,7 @@ class Migration(SchemaMigration):
             'model': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
-            'params': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'params': ('django.db.models.fields.TextField', [], {}),
             'results': ('django.db.models.fields.files.FileField', [], {'max_length': '100'})
         },
         u'postajob.package': {
