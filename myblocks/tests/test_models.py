@@ -37,7 +37,7 @@ class ModelsTests(DirectSEOBase):
                                           order=block.id)
          for block in blocks]
 
-        page = factories.PageFactory(sites=(SeoSiteFactory()))
+        page = factories.PageFactory(sites=(SeoSiteFactory(), ))
         models.RowOrder.objects.create(page=page, row=row,
                                        order=row.id)
         models.RowOrder.objects.create(page=page, row=row2,
