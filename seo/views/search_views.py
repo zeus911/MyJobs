@@ -1521,11 +1521,11 @@ def get_group_relationships(request):
                 'google_analytics': []
             }
         else:
+            configurations = site.configurations.values_list('id', flat=True)
+            ga = site.google_analytics.values_list('id', flat=True)
             selected = {
-                'configurations': [c for c in site.configurations\
-                                                  .values_list('id', flat=True)],
-                'google_analytics': [g for g in site.google_analytics\
-                                                    .values_list('id', flat=True)]
+                'configurations': [c for c in configurations],
+                'google_analytics': [g for g in ga]
             }
 
         view_data = {
