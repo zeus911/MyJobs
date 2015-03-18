@@ -1,7 +1,9 @@
 import json
 import urllib2
 
+from django.conf import settings
 from django.contrib.sessions.models import Session
+from django.core import mail
 from django.core.urlresolvers import reverse
 
 from mock import patch
@@ -106,7 +108,7 @@ class MySearchViewTests(MyJobsBase):
 
         search_id += 1
         response = self.client.get(
-            reverse('edit_search')+'id=%s' % search_id)
+            reverse('edit_search')+'?id=%s' % search_id)
         self.assertEqual(response.status_code, 404)
 
     def test_save_edit_form(self):
@@ -371,3 +373,38 @@ class MySearchViewTests(MyJobsBase):
             'view_full_feed') + '?id=%s' % search.id)
         self.assertIn('The domain for this saved search is no longer valid.',
                       response.content)
+
+    def test_send_link_appearance(self):
+        """
+        The button to manually send a saved search should not be displayed
+        when DEBUG=False. If the url is guessed, nothing bad should happen.
+        """
+        self.user.is_superuser = True
+        self.user.save()
+        saved_search = SavedSearchFactory(user=self.user)
+        partner_search = PartnerSavedSearchFactory(user=self.user,
+                                                   created_by=self.user)
+        ContactFactory(partner=partner_search.partner, user=self.user)
+
+        for search in [saved_search, partner_search]:
+            full_feed = reverse('view_full_feed') + '?id=%s' % search.id
+            send_url = reverse('send_saved_search') + '?id=%s' % search.id
+            if hasattr(search, 'partnersavedsearch'):
+                send_url += '&is_pss=True'
+
+            settings.DEBUG = False
+            self.client.login_user(self.user)
+            response = self.client.get(full_feed)
+            self.assertNotIn('>Send</a>', response.content)
+            send = self.client.get(send_url)
+            self.assertEqual(send.status_code, 404)
+            self.assertEqual(len(mail.outbox), 0)
+
+            settings.DEBUG = True
+            self.client.login_user(self.user)
+            response = self.client.get(full_feed)
+            self.assertIn('>Send</a>', response.content)
+            send = self.client.get(send_url)
+            self.assertEqual(send.status_code, 302)
+            self.assertEqual(len(mail.outbox), 1)
+            mail.outbox = []
