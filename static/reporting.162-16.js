@@ -533,7 +533,7 @@ List.prototype.filter = function(filter) {
       if (list.value) {
         if (list.type === "partner") {
           for (var j = 0; j < list.value.length; j++) {
-            $("input[value*=" + list.value[j] + "]").prop("checked", true);
+            $("input[value~=" + list.value[j] + "]").prop("checked", true);
           }
         } else if (list.type === "contact") {
           for (var k = 0; k < list.value.length; k++) {
@@ -594,6 +594,23 @@ $(document).ready(function() {
     if (!checkboxes.is(":checked")) {
       $("#start-report").addClass("disabled");
     }
+  });
+
+
+  sidebar.on("click", ".report > a, .fa-eye", function() {
+    var report_id = $(this).attr("id").split("-")[1],
+        data = {"csrfmiddlewaretoken": read_cookie("csrftoken"),
+                "report": report_id},
+        url = location.protocol + "//" + location.host; // https://secure.my.jobs
+
+    $.ajax({
+      type: "POST",
+      url: url + "/reports/ajax/get-report",
+      data: data,
+      success: function(data) {
+        console.log("yay");
+      }
+    });
   });
 
 
