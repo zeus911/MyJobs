@@ -9,95 +9,82 @@ class ColumnBlockOrderInline(admin.TabularInline):
     save_as = True
 
 
-class ColumnBlockAdmin(admin.ModelAdmin):
+class BlockAdmin(admin.ModelAdmin):
+    list_display = ('__unicode__', 'offset', 'span')
+    save_as = True
+
+
+class ColumnBlockAdmin(BlockAdmin):
     form = forms.ColumnBlockForm
     inlines = (ColumnBlockOrderInline, )
-    save_as = True
 
 
-class ApplyLinkBlockAdmin(admin.ModelAdmin):
+class ApplyLinkBlockAdmin(BlockAdmin):
     form = forms.ApplyLinkBlockForm
-    save_as = True
 
 
-class BreadboxBlockAdmin(admin.ModelAdmin):
+class BreadboxBlockAdmin(BlockAdmin):
     form = forms.BreadboxBlockForm
-    save_as = True
 
 
-class ContentBlockAdmin(admin.ModelAdmin):
+class ContentBlockAdmin(BlockAdmin):
     form = forms.ContentBlockForm
-    save_as = True
 
 
-class FacetBlurbBlockAdmin(admin.ModelAdmin):
+class FacetBlurbBlockAdmin(BlockAdmin):
     form = forms.FacetBlurbBlockForm
-    save_as = True
 
 
-class JobDetailBlockAdmin(admin.ModelAdmin):
+class JobDetailBlockAdmin(BlockAdmin):
     form = forms.JobDetailBlockForm
-    save_as = True
 
 
-class JobDetailBreadboxBlockAdmin(admin.ModelAdmin):
+class JobDetailBreadboxBlockAdmin(BlockAdmin):
     form = forms.JobDetailBreadboxBlockForm
-    save_as = True
 
 
-class JobDetailHeaderBlockAdmin(admin.ModelAdmin):
+class JobDetailHeaderBlockAdmin(BlockAdmin):
     form = forms.JobDetailHeaderBlockForm
-    save_as = True
 
 
-class LoginBlockAdmin(admin.ModelAdmin):
+class LoginBlockAdmin(BlockAdmin):
     form = forms.LoginBlockForm
-    save_as = True
 
 
-class MoreButtonBlockAdmin(admin.ModelAdmin):
+class MoreButtonBlockAdmin(BlockAdmin):
     form = forms.MoreButtonBlockForm
-    save_as = True
 
 
-class RegistrationBlockAdmin(admin.ModelAdmin):
+class RegistrationBlockAdmin(BlockAdmin):
     form = forms.RegistrationBlockForm
-    save_as = True
 
 
-class SavedSearchWidgetBlockAdmin(admin.ModelAdmin):
+class SavedSearchWidgetBlockAdmin(BlockAdmin):
     form = forms.SavedSearchWidgetBlockForm
-    save_as = True
 
 
-class SearchBoxBlockAdmin(admin.ModelAdmin):
+class SearchBoxBlockAdmin(BlockAdmin):
     form = forms.SearchBoxBlockForm
-    save_as = True
 
 
-class SearchFilterBlockAdmin(admin.ModelAdmin):
+class SearchFilterBlockAdmin(BlockAdmin):
     form = forms.SearchFilterBlockForm
-    save_as = True
 
 
-class VeteranSearchBoxAdmin(admin.ModelAdmin):
+class VeteranSearchBoxAdmin(BlockAdmin):
     form = forms.VeteranSearchBoxForm
-    save_as = True
 
 
-class SearchResultBlockAdmin(admin.ModelAdmin):
+class SearchResultBlockAdmin(BlockAdmin):
     form = forms.SearchResultBlockForm
-    save_as = True
 
 
-class SearchResultHeaderBlockAdmin(admin.ModelAdmin):
+class SearchResultHeaderBlockAdmin(BlockAdmin):
     form = forms.SearchResultHeaderBlockForm
-    save_as = True
 
 
-class ShareBlockAdmin(admin.ModelAdmin):
+class ShareBlockAdmin(BlockAdmin):
     form = forms.ShareBlockForm
-    save_as = True
 
 
 class BlockOrderInline(admin.TabularInline):
