@@ -34,6 +34,7 @@ STATIC_URL = "//d2e48ltfsb5exy.cloudfront.net/content_mj/files/"
 ABSOLUTE_URL = "https://secure.my.jobs/"
 
 PROJECT = "myjobs"
+ENVIRONMENT = 'Production'
 
 SESSION_CACHE_ALIAS = 'sessions'
 CACHES = {

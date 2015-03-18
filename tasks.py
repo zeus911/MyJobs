@@ -817,23 +817,43 @@ def event_list_to_email_log(event_list):
                 'issuetype': {'name': 'Bug'}
             }
             log_to_jira(subject, body, issue_dict, event['email'])
-        # These categories resemble the following:
-        # Saved Search Sent (<list of keys>|event_id)
-        try:
-            event_id = category.split('|')[-1][:-1]
-        except AttributeError:
-            newrelic.agent.record_exception(*sys.exc_info())
-            return []
-        if event_id:
+
+        is_list = isinstance(category, list)
+        for env in ['QC', 'Staging', 'Local', 'Jenkins']:
+            # This event has multiple attached categories and env is one of them
+            # or there is only one category, which is env.
+            if (is_list and env in category) or \
+                    (not is_list and category == env):
+                break
+        else:
+            if is_list:
+                try:
+                    category.remove('Production')
+                except ValueError:
+                    pass
+                else:
+                    if len(category) == 1:
+                        category = category[0]
+            elif category == 'Production':
+                category = ''
+
+            # These categories resemble the following:
+            # Saved Search Sent (<list of keys>|event_id)
             try:
-                log = SavedSearchLog.objects.get(uuid=event_id)
-                email_log_args['send_log'] = log
-                if event['event'] not in BAD_EMAIL:
-                    log.was_received = True
-                    log.save()
-            except SavedSearchLog.DoesNotExist:
-                pass
-        events_to_create.append(EmailLog(**email_log_args))
+                event_id = category.split('|')[-1][:-1]
+            except AttributeError:
+                newrelic.agent.record_exception(*sys.exc_info())
+                return []
+            if event_id:
+                try:
+                    log = SavedSearchLog.objects.get(uuid=event_id)
+                    email_log_args['send_log'] = log
+                    if event['event'] not in BAD_EMAIL:
+                        log.was_received = True
+                        log.save()
+                except SavedSearchLog.DoesNotExist:
+                    pass
+            events_to_create.append(EmailLog(**email_log_args))
 
     return events_to_create
 

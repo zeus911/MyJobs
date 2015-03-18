@@ -361,7 +361,8 @@ def send_saved_search(request):
     if settings.DEBUG:
         search_id = request.GET.get('id')
         search = SavedSearch.objects.get(pk=search_id)
-        search.send_email()
+        search.send_email(additional_headers=('"filters":{"clicktrack":{'
+                                              '"settings":{"enable":0}}}'))
         if request.GET.get('is_pss'):
             search = search.partnersavedsearch
             redirect_to = reverse('partner_view_full_feed') + \

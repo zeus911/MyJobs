@@ -125,7 +125,7 @@ class MyJobsViewsTests(MyJobsBase):
                                settings.SENDGRID_BATCH_POST_PASSWORD)
         self.auth = base64.b64encode(self.auth)
 
-    def make_messages(self, when, apiversion=2, category=''):
+    def make_messages(self, when, apiversion=2, categories=None):
         """
         Creates test api messages for sendgrid tests.
 
@@ -143,8 +143,13 @@ class MyJobsViewsTests(MyJobsBase):
         message = '{{"email":"alice@example.com","timestamp":"{0}",' \
             '"event":"{1}"{2}}}'
         messages = []
-        if category:
-            category = ',"category":"%s"' % category
+        category = ''
+        if categories:
+            categories = ['"%s"' % cat for cat in categories]
+            if len(categories) > 1:
+                category = ',"category":[%s]' % ','.join(categories)
+            else:
+                category = ',"category":%s' % categories[0]
         for event in self.events:
             messages.append(message.format(time.mktime(when.timetuple()),
                                            event, category))
@@ -436,7 +441,7 @@ class MyJobsViewsTests(MyJobsBase):
                                       backfill_jobs=0)
         self.events = ['open']
         category = '(stuff|%s)' % log_uuid
-        message = self.make_messages(now, 3, category)
+        message = self.make_messages(now, 3, [category])
         self.client.post(reverse('batch_message_digest'),
                          data=message,
                          content_type='text/json',
@@ -450,6 +455,17 @@ class MyJobsViewsTests(MyJobsBase):
         # (multiple bounces, clicks, opens, etc per email).
         self.assertTrue(email_log in saved_search_log.sendgrid_response.all())
         self.assertTrue(saved_search_log.was_received)
+
+    def test_batch_with_multiple_categories(self):
+        print EmailLog.objects.count()
+        now = date.today()
+        categories = ["My.jobs Email", "Production"]
+        message = self.make_messages(now, 1, categories)
+        self.client.post(reverse('batch_message_digest'),
+                         data=message,
+                         content_type='text/json',
+                         HTTP_AUTHORIZATION='BASIC %s' % self.auth)
+        print EmailLog.objects.count()
 
     def test_batch_bounce_message_digest(self):
         now = date.today()
