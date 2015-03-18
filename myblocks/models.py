@@ -536,8 +536,10 @@ class Page(models.Model):
         query_string = context_tools.get_query_string(request)
         blocks = self.all_blocks()
         blocks = ["%s::%s" % (block.id, block.updated) for block in blocks]
+        blocks = '#'.join(blocks)
         rows = self.rows.all()
         rows = ["%s::%s" % (row.id, row.updated) for row in rows]
+        rows = '#'.join(rows)
         config = context_tools.get_site_config(request)
         buids = '#'.join(getattr(settings, 'SITE_BUIDS', []))
 
