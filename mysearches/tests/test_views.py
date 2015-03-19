@@ -289,7 +289,7 @@ class MySearchViewTests(MyJobsBase):
         search = SavedSearchFactory(user=user)
 
         response = self.client.get(
-            reverse('delete_saved_search')+'?id=%s' % search.id)
+            reverse('delete_saved_search') + '?id=%s' % search.id)
         self.assertEqual(models.SavedSearch.objects.count(), 1)
         self.assertEqual(response.status_code, 404)
 
@@ -305,10 +305,11 @@ class MySearchViewTests(MyJobsBase):
 
         self.assertEqual(models.SavedSearch.objects.count(), 2)
 
-        response = self.client.get(reverse('delete_saved_search')+'?id=digest')
+        response = self.client.get(reverse(
+            'delete_saved_search') + '?id=digest')
         self.assertEqual(models.SavedSearch.objects.count(), 0)
         self.assertRedirects(response, reverse(
-            'saved_search_main_query')+'?d=all')
+            'saved_search_main_query') + '?d=all')
 
     def test_anonymous_delete_searches(self):
         search = SavedSearchFactory(user=self.user)
@@ -316,21 +317,21 @@ class MySearchViewTests(MyJobsBase):
 
         # Navigating to the 'delete saved search' page while logged out...
         response = self.client.get(
-            reverse('delete_saved_search')+'?id='+str(search.id))
+            reverse('delete_saved_search') + '?id=' + str(search.id))
         path = response.request.get('PATH_INFO') + "?id=" + str(search.id)
-        self.assertRedirects(response, reverse('home')+'?next='+path)
+        self.assertRedirects(response, reverse('home') + '?next=' + path)
         self.assertEqual(models.SavedSearch.objects.count(), 1)
         # or with the wrong email address...
         response = self.client.get(
-            reverse('delete_saved_search')+'?id='+str(
-                search.id)+'&verify=wrong@example.com')
+            reverse('delete_saved_search') + '?id=' + str(
+                search.id) + '&verify=wrong@example.com')
         # results in being redirected to the login page and no searches being
         # deleted
         self.assertRedirects(response, reverse('home'))
         self.assertEqual(models.SavedSearch.objects.count(), 1)
 
         response = self.client.get(
-            reverse('delete_saved_search')+'?id=%s&verify=%s' % (
+            reverse('delete_saved_search') + '?id=%s&verify=%s' % (
                 search.id, self.user.user_guid))
         self.assertEqual(models.SavedSearch.objects.count(), 0)
 
@@ -338,8 +339,8 @@ class MySearchViewTests(MyJobsBase):
         # anonymous users will always redirect, never returning a 200.
         self.client.login_user(self.user)
         self.assertRedirects(response, reverse(
-            'saved_search_main_query')+'?d='+str(urllib2.quote(
-                                                 search.label)))
+            'saved_search_main_query') + '?d=' + str(urllib2.quote(
+                search.label)))
 
     def test_widget_with_saved_search(self):
         search = SavedSearchFactory(user=self.user)
