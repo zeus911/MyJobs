@@ -364,7 +364,6 @@ Report.prototype.create_clone_report = function(json) {
       }
     }
   }
-  console.log("Report Data: ", this.data);
 };
 
 
@@ -548,8 +547,6 @@ List.prototype.filter = function(filter) {
       // render
       $("#"+ list.type + ".list-body").html('').append(ul);
 
-      console.log("List Value: ", list.value);
-      console.log()
       if (list.value) {
         if (list.type === "partner") {
           for (var j = 0; j < list.value.length; j++) {
