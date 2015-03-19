@@ -209,7 +209,7 @@ Report.prototype.bind_events = function() {
 
 
   // Actually submits the report's data to create a Report object in db.
-  container.on("click", "#gen-report", function(e) {
+  $(document.body).on("click", "#gen-report", function(e) {
     var csrf = read_cookie("csrftoken"),
         data = {"csrfmiddlewaretoken": csrf},
         url = location.protocol + "//" + location.host + "/reports/view/mypartners/contactrecord";
@@ -247,7 +247,8 @@ Report.prototype.bind_events = function() {
 
 
 Report.prototype.unbind_events = function() {
-  $("#main-container").unbind("click");
+  $("#main-container").off("click");
+  $(document.body).off("click", "#gen-report");
 };
 
 
