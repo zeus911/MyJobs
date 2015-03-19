@@ -13,7 +13,6 @@ from mypartners.tests.factories import (ContactFactory, ContactRecordFactory,
 from seo.tests.factories import CompanyFactory, CompanyUserFactory
 
 
-@unittest.skip("Updating tests in a separate PR...")
 class MyReportsTestCase(TestCase):
     """
     Base class for all MyReports Tests. Identical to `django.test.TestCase`
@@ -32,8 +31,7 @@ class MyReportsTestCase(TestCase):
         self.client.login_user(self.user)
 
 
-@unittest.skip("Updating tests in a separate PR...")
-class TestReports(MyReportsTestCase):
+class TestOverview(MyReportsTestCase):
     """Tests the reports view, which is the landing page for reports."""
 
     def test_unavailable_if_not_staff(self):
@@ -44,25 +42,25 @@ class TestReports(MyReportsTestCase):
 
         self.user.is_staff = False
         self.user.save()
-        response = self.client.post(reverse('reports'))
+        response = self.client.post(reverse('overview'))
 
         self.assertEqual(response.status_code, 404)
 
     def test_available_to_staff(self):
         """Should be available to staff users."""
 
-        response = self.client.get(reverse('reports'))
+        response = self.client.get(reverse('overview'))
 
         self.assertEqual(response.status_code, 200)
 
 
-class TestFilterRecords(MyReportsTestCase):
+class TestViewRecords(MyReportsTestCase):
     """
-    Tests the `filter_records` view which is used to query various models.
+    Tests the `view_records` view which is used to query various models.
     """
 
     def setUp(self):
-        super(TestFilterRecords, self).setUp()
+        super(TestViewRecords, self).setUp()
         self.client = TestClient(path='/reports/ajax/mypartners',
                                  HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.client.login_user(self.user)
@@ -79,11 +77,11 @@ class TestFilterRecords(MyReportsTestCase):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_restricted_to_post(self):
-        """GET requests should raise a 404."""
+    def test_restricted_to_get(self):
+        """POST requests should raise a 404."""
 
         self.client.path += '/partner'
-        response = self.client.get()
+        response = self.client.post()
 
         self.assertEqual(response.status_code, 404)
 
@@ -94,11 +92,11 @@ class TestFilterRecords(MyReportsTestCase):
         ContactRecordFactory.create_batch(10, contact_name='John Doe')
 
         self.client.path += '/contactrecord'
-        response = self.client.post(data={'contact_name': 'Joe Shmoe'})
+        response = self.client.get(data={'contact_name': 'Joe Shmoe'})
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(output['records']), 10)
+        self.assertEqual(len(output), 10)
 
     def test_only_user_results_returned(self):
         """Results should only contain records user has access to."""
@@ -108,11 +106,11 @@ class TestFilterRecords(MyReportsTestCase):
         ContactRecordFactory.create_batch(10, partner=partner)
 
         self.client.path += '/contactrecord'
-        response = self.client.post()
+        response = self.client.get()
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(output['records']), 10)
+        self.assertEqual(len(output), 10)
 
     def test_filtering_on_partner(self):
         """Test the ability to filter by partner."""
@@ -121,12 +119,12 @@ class TestFilterRecords(MyReportsTestCase):
         PartnerFactory.create_batch(9, name="Test Partner", owner=self.company)
 
         self.client.path += '/partner'
-        response = self.client.post(data={'name': 'Test Partner'})
+        response = self.client.get(data={'name': 'Test Partner'})
         output = json.loads(response.content)
 
         # ContactRecordFactory creates 10 partners in setUp
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(output['records']), 10)
+        self.assertEqual(len(output), 10)
 
     def test_list_query_params(self):
         """Test that query parameters that are lists are parsed correctly."""
@@ -134,11 +132,11 @@ class TestFilterRecords(MyReportsTestCase):
         ContactFactory.create_batch(10, partner__owner=self.company)
 
         self.client.path += '/partner'
-        response = self.client.post(data={'contact': range(1, 6)})
+        response = self.client.get(data={'contact': range(1, 6)})
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(output['records']), 5)
+        self.assertEqual(len(output), 5)
 
     def test_filtering_on_contact(self):
         """Test the ability to filter by contact."""
@@ -149,11 +147,11 @@ class TestFilterRecords(MyReportsTestCase):
         ContactFactory.create_batch(10, name="Jen Smith", partner=self.partner)
 
         self.client.path += '/contact'
-        response = self.client.post(data={'name': 'Jen Doe'})
+        response = self.client.get(data={'name': 'Jen Doe'})
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(output['records']), 10)
+        self.assertEqual(len(output), 10)
 
     def test_filter_by_state(self):
         """Tests that filtering by state works."""
@@ -163,10 +161,10 @@ class TestFilterRecords(MyReportsTestCase):
                                     locations=[indiana])
 
         self.client.path += '/contact'
-        response = self.client.post(data={'state': 'IN'})
+        response = self.client.get(data={'state': 'IN'})
         output = json.loads(response.content)
 
-        self.assertEqual(len(output['records']), 10)
+        self.assertEqual(len(output), 10)
 
     def test_filter_by_city(self):
         """Tests that filtering by city works."""
@@ -176,60 +174,20 @@ class TestFilterRecords(MyReportsTestCase):
                                     locations=[indianapolis])
 
         self.client.path += '/contact'
-        response = self.client.post(data={'city': 'indianapolis'})
+        response = self.client.get(data={'city': 'indianapolis'})
         output = json.loads(response.content)
 
-        self.assertEqual(len(output['records']), 10)
+        self.assertEqual(len(output), 10)
 
-    def test_order_by(self):
-        """Tests that `order_by` parameter is passed to `QuerySet`."""
-
-        # mix up the order they are created in so that blanks aren't all next
-        # to each other
-        PartnerFactory.create_batch(10, owner=self.company, name="New Partner")
-        PartnerFactory.create_batch(10, owner=self.company)
-
-        self.client.path += '/partner'
-        response = self.client.post(data={'order_by': 'name'})
-        output = json.loads(response.content)
-        records = output['records']
-
-        self.assertTrue(records[0]['name'] < records[-1]['name'])
-
-    def test_cached_results(self):
-        """
-        Tests that hitting the view multiple times with the same parameters
-        returns a cached result. Also tests that ignoring cache works properly.
-        """
-        ContactRecordFactory.create_batch(10, partner=self.partner)
-
-        self.client.path += '/contactrecord'
-
-        # this request should not be cached
-        response = self.client.post()
-        output = json.loads(response.content)
-        self.assertFalse(output['cached'])
-
-        # this call should be cached
-        response = self.client.post()
-        output = json.loads(response.content)
-        self.assertTrue(output['cached'])
-
-        # this call should not be cached as we ignore the cache
-        self.client.path += '?ignore_cache'
-        response = self.client.post()
-        output = json.loads(response.content)
-        self.assertFalse(output['cached'])
-
-    def test_count_annotation(self):
+    def test_counts(self):
         """
         When `count` is passed to the view, the resulting records should be
         annotated as a `Count` for the field passed to count.
         """
 
         self.client.path += '/partner'
-        response = self.client.post(data={'count': 'contact'})
+        response = self.client.get(data={'count': 'contact'})
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(all('count' in record for record in output['records']))
+        self.assertTrue(all('count' in record for record in output))

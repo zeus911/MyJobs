@@ -133,7 +133,7 @@ class ReportView(View):
         Get a report by ID and return interesting numbers as a JSON
         response. The only expected query parameter is 'id'.
         """
-        if request.is_ajax():
+        if request.method == 'GET':
             report_id = request.GET.get('id', 0)
             report = Report.objects.get(id=report_id)
             records = report.queryset
@@ -153,6 +153,9 @@ class ReportView(View):
             return HttpResponse(
                 json.dumps(ctx),
                 content_type='application/json; charset=utf-8')
+        else:
+            raise Http404(
+                "This view is only reachable via a GET request.")
 
     def post(self, request, app='mypartners', model='contactrecords'):
         """
@@ -169,7 +172,7 @@ class ReportView(View):
            An HttpResponse indicating success or failure of report creation.
         """
 
-        if request.is_ajax() and request.method == 'POST':
+        if request.method == 'POST':
             company = get_company_or_404(request)
             params = parse_params(request.POST)
 
@@ -190,7 +193,7 @@ class ReportView(View):
             return HttpResponse()
         else:
             raise Http404(
-                "This view is only reachable via an AJAX GET request.")
+                "This view is only reachable via a POST request.")
 
 
 def download_report(request):
