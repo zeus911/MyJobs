@@ -3,7 +3,8 @@ from slugify import slugify
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.contenttypes.models import ContentType
-from django.core.cache import cache
+from django.core import cache
+from django.core.cache import InvalidCacheBackendError
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.http import Http404, HttpResponseRedirect
@@ -18,6 +19,12 @@ from myjobs.helpers import expire_login
 from myjobs.models import User
 from registration.forms import CustomAuthForm, RegistrationForm
 from seo import helpers
+
+
+try:
+    blocks_cache = cache.get_cache('blocks')
+except InvalidCacheBackendError:
+    blocks_cache = cache.get_cache('default')
 
 
 def raw_base_head(obj):
@@ -522,13 +529,13 @@ class Page(models.Model):
 
     def render(self, request, **kwargs):
         key = self.render_cache_prefix(request)
-        rendered_template = cache.get(key)
+        rendered_template = blocks_cache.get(key)
         if rendered_template:
             return rendered_template
         context = self.context(request, **kwargs)
         template = Template(self.get_template(request))
         rendered_template = template.render(RequestContext(request, context))
-        cache.set(key, rendered_template, settings.MINUTES_TO_CACHE*60)
+        blocks_cache.set(key, rendered_template, settings.MINUTES_TO_CACHE*60)
         return rendered_template
 
     def render_cache_prefix(self, request):
