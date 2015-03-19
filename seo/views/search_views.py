@@ -1829,10 +1829,10 @@ class SearchResults(FallbackBlockView):
     def set_page(self, request):
         if request.user.is_authenticated() and request.user.is_staff:
             no_results_pages = Page.objects.filter(page_type=Page.NO_RESULTS,
-                                                   site=settings.SITE)
+                                                   sites=settings.SITE)
         else:
             no_results_pages = Page.objects.filter(page_type=Page.NO_RESULTS,
-                                                   site=settings.SITE,
+                                                   sites=settings.SITE,
                                                    status=Page.PRODUCTION)
 
         if no_results_pages.exists():
