@@ -13,18 +13,10 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
                       keep_default=False)
 
-        # Adding field 'Contact.library'
-        db.add_column(u'mypartners_contact', 'library',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mypartners.PartnerLibrary'], null=True, on_delete=models.SET_NULL),
-                      keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Partner.source'
         db.delete_column(u'mypartners_partner', 'source')
-
-        # Deleting field 'Contact.library'
-        db.delete_column(u'mypartners_contact', 'library_id')
 
 
     models = {
