@@ -279,7 +279,6 @@ def ajax_get_jobs(request, filter_path):
     except ValueError:
         num_items = DEFAULT_PAGE_SIZE
     custom_facets = settings.DEFAULT_FACET
-    path = request.META.get('HTTP_REFERER')
     sqs = helpers.prepare_sqs_from_search_params(GET)
     sort_order = request.REQUEST.get('sort', 'relevance')
     default_jobs = helpers.get_jobs(default_sqs=sqs,
