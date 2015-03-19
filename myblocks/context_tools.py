@@ -234,6 +234,12 @@ def get_query_string(request):
 
 
 @Memoized
+def get_results_heading(request):
+    breadbox = get_breadbox(request)
+    return helpers.build_results_heading(breadbox)
+
+
+@Memoized
 def get_search_url(request):
     return request.path if request.path != '/' else reverse('all_jobs')
 

@@ -1161,9 +1161,9 @@ def home_page(request):
         'site_heading': settings.SITE_HEADING,
         'site_tags': settings.SITE_TAGS,
         'site_description': settings.SITE_DESCRIPTION,
-        'host' : str(request.META.get("HTTP_HOST", "localhost")),
+        'host': str(request.META.get("HTTP_HOST", "localhost")),
         'site_config': site_config,
-        'build_num' : settings.BUILD,
+        'build_num': settings.BUILD,
         'company_images': company_images,
         'company_images_json': company_images_json,
         'billboard_images': billboard_images,
@@ -1173,6 +1173,15 @@ def home_page(request):
 
     return render_to_response(home_page_template, data_dict,
                               context_instance=RequestContext(request))
+
+
+class HomePage(FallbackBlockView):
+    page_type = Page.HOME_PAGE
+
+    def __init__(self, **kwargs):
+        super(HomePage, self).__init__(**kwargs)
+        self.fallback = home_page
+
 
 
 @custom_cache_page

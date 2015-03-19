@@ -329,6 +329,7 @@ class SearchResultHeaderBlock(Block):
 
 class SearchResultBlock(Block):
     base_template = 'myblocks/blocks/searchresult.html'
+    base_head = 'myblocks/head/searchresult.html'
 
     def context(self, request, **kwargs):
         return {
@@ -339,6 +340,7 @@ class SearchResultBlock(Block):
             'location_term': context_tools.get_location_term(request),
             'moc_term': context_tools.get_moc_term(request),
             'query_string': context_tools.get_query_string(request),
+            'results_heading': context_tools.get_results_heading(request),
             'site_commitments_string': context_tools.get_site_commitments_string(request),
             'site_config': context_tools.get_site_config(request),
             'site_tags': settings.SITE_TAGS,
@@ -409,7 +411,7 @@ class Page(models.Model):
 
     page_type_choices = (
         (ERROR_404, '404'),
-        # (HOME_PAGE, 'Home Page'),
+        (HOME_PAGE, 'Home Page'),
         (JOB_DETAIL, 'Job Detail Page'),
         (SEARCH_RESULTS, 'Job Search Results Page'),
         (LOGIN, 'Login Page'),
@@ -452,7 +454,6 @@ class Page(models.Model):
         context['site_title'] = settings.SITE_TITLE
         context['site_description'] = settings.SITE_DESCRIPTION
 
-
         return context
 
     def get_body(self):
@@ -473,7 +474,7 @@ class Page(models.Model):
             additional_js += [self.to_js_tag(js) for js in block.required_js()]
 
         head += list(set(additional_js))
-        return self.head + ''.join(head)
+        return ''.join(head) + self.head
 
     def get_template(self, request):
         filters = context_tools.get_filters(request)
