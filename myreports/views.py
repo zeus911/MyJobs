@@ -70,8 +70,19 @@ def get_states(request):
         raise Http404("This view is only reachable via an AJAX request")
 
 
-def view_records(request, app, model, output='json'):
-    if request.is_ajax():
+def view_records(request, app, model):
+    """
+    Returns records as JSON.
+
+    Inputs:
+        :request: Request object to inspect for search parameters.
+        :app: Application to query.
+        :model: Model to query.
+
+    Output:
+       A JSON response. 
+    """
+    if request.is_ajax() and request.method == 'GET':
         company = get_company_or_404(request)
 
         # parse request into dict, converting singleton lists into single items
@@ -80,7 +91,6 @@ def view_records(request, app, model, output='json'):
         # remove non-query related params
         params.pop('csrfmiddlewaretoken', None)
         count = params.pop('count', None)
-        output = output or params.pop('output', 'json')
 
         records = get_model(app, model).objects.from_search(company, params)
 
@@ -89,15 +99,14 @@ def view_records(request, app, model, output='json'):
             records = records.annotate(count=Count(count))
             counts = {record.pk: record.count for record in records}
 
-        if output == 'json':
-            ctx = serialize('json', records, counts=counts)
-            response = HttpResponse(
-                ctx, content_type='application/json; charset=utf-8')
+        ctx = serialize('json', records, counts=counts)
+        response = HttpResponse(
+            ctx, content_type='application/json; charset=utf-8')
 
         return response
 
     else:
-        raise Http404("This view is only reachable via an AJAX POST request.")
+        raise Http404("This view is only reachable via an AJAX GET request.")
 
 
 def get_inputs(request):

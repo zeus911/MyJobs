@@ -10,7 +10,7 @@ urlpatterns = patterns(
     url(r'^ajax/get-states', 'get_states', name='get_states'),
     url(r'^ajax/(?P<app>\w+)/(?P<model>\w+)$',
         'view_records',
-        {'app': 'mypartners', 'output': 'json'},
+        {'app': 'mypartners'},
         name='view_records'),
     url(r'ajax/get-inputs', 'get_inputs', name='get_inputs'),
     url(r'download$', 'download_report', name='download_report'),
