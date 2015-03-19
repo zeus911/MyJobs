@@ -1,3 +1,4 @@
+import hashlib
 from slugify import slugify
 
 from django.conf import settings
@@ -554,9 +555,8 @@ class Page(models.Model):
         config = '%s::%s' % (config.pk, config.revision)
         buids = [str(buid) for buid in getattr(settings, 'SITE_BUIDS', [])]
         buids = '#'.join(buids)
-
-        return '###'.join([page, path, query_string, config, blocks, rows,
-                           buids])
+        return hashlib.sha1('###'.join([page, path, query_string, config,
+                                        blocks, rows, buids])).hexdigest()
 
     def templatetag_library(self):
         templatetags = ['{% load seo_extras %}', '{% load i18n %}',
