@@ -661,7 +661,7 @@ $(document).ready(function() {
     var data = {"csrfmiddlewaretoken": read_cookie("csrftoken")};
     $.ajax({
       type: "POST",
-      url: "view/archive",
+      url: "archive",
       data: data,
       success: function(data) {
         $("#main-container").html(data);
