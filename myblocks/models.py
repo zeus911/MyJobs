@@ -552,7 +552,8 @@ class Page(models.Model):
         rows = '#'.join(rows)
         config = context_tools.get_site_config(request)
         config = '%s::%s' % (config.pk, config.revision)
-        buids = '#'.join(getattr(settings, 'SITE_BUIDS', []))
+        buids = [str(buid) for buid in getattr(settings, 'SITE_BUIDS', [])]
+        buids = '#'.join(buids)
 
         return '###'.join([page, path, query_string, config, blocks, rows,
                            buids])
