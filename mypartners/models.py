@@ -513,10 +513,12 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
 
     @property
     def referral_activity(self):
-        return self.filter(contact_type='job').aggregate(
+        activity = self.filter(contact_type='job').aggregate(
             applications=models.Sum('job_applications'),
             interviews=models.Sum('job_interviews'),
             hires=models.Sum('job_hires'))
+
+        return {key: int(value or 0) for key, value in activity.items()}
 
     @property
     def emails(self):
@@ -524,7 +526,7 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
             contact_type='email').count()
 
     @property
-    def phone_calls(self):
+    def calls(self):
         return self.communication_activity.filter(
             contact_type='phone').count()
 
@@ -534,7 +536,7 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
             contact_type='meetingorevent').count()
 
     @property
-    def saved_searches(self):
+    def searches(self):
         return self.communication_activity.filter(
             contact_type='pssemail').count()
 

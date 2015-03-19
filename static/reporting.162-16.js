@@ -618,7 +618,7 @@ $(document).ready(function() {
 
   sidebar.on("click", ".report > a, .fa-eye", function() {
     var report_id = $(this).attr("id").split("-")[1],
-        data = {"report": report_id},
+        data = {"id": report_id},
         url = location.protocol + "//" + location.host; // https://secure.my.jobs
 
     $.ajax({

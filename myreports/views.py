@@ -80,7 +80,7 @@ def view_records(request, app, model):
         :model: Model to query.
 
     Output:
-       A JSON response. 
+       A JSON response containing the records queried for.
     """
     if request.is_ajax() and request.method == 'GET':
         company = get_company_or_404(request)
@@ -104,7 +104,6 @@ def view_records(request, app, model):
             ctx, content_type='application/json; charset=utf-8')
 
         return response
-
     else:
         raise Http404("This view is only reachable via an AJAX GET request.")
 
@@ -116,10 +115,12 @@ def get_inputs(request):
         return HttpResponse(
             report.params, content_type='application/json; charset=utf-8')
     else:
-        return Http404("This view is only reachable via an AJAX POST request.")
+        return Http404("This view is only reachable via an AJAX GET request.")
 
 
 class ReportView(View):
+    """View for managing report objects."""
+
     app = 'mypartners'
     model = 'contactrecord'
 
@@ -127,16 +128,20 @@ class ReportView(View):
     def dispatch(self, *args, **kwargs):
         return super(ReportView, self).dispatch(*args, **kwargs)
 
-    # view report
-    def get(self, request, app='mypartners', model='contactrecord'):
+    def get(self, request, **kwargs):
+        """
+        Get a report by ID and return interesting numbers as a JSON
+        response. The only expected query parameter is 'id'.
+        """
         if request.is_ajax():
-            report_id = request.GET.get('report', 0)
+            report_id = request.GET.get('id', 0)
             report = Report.objects.get(id=report_id)
             records = report.queryset
 
             ctx = {
                 'emails': records.emails,
-                'calls': records.phone_calls,
+                'calls': records.calls,
+                'searches': records.searches,
                 'meetings': records.meetings,
                 'applications': records.applications,
                 'interviews': records.interviews,
@@ -146,27 +151,46 @@ class ReportView(View):
                 'contacts': list(records.contacts)}
 
             return HttpResponse(
-                json.dumps(ctx), content_type='application/json; charset=utf-8')
+                json.dumps(ctx),
+                content_type='application/json; charset=utf-8')
 
     def post(self, request, app='mypartners', model='contactrecords'):
-        # create_report(request, app, model)
-        company = get_company_or_404(request)
-        params = parse_params(request.POST)
+        """
+        Create a report by querying on a specific model.
 
-        params.pop('csrfmiddlewaretoken', None)
-        name = params.pop('report_name', datetime.now())
-        records = get_model(app, model).objects.from_search(company, params)
+        The request's POST data is parsed for parameters to pass to the model's
+        `from_search` method.
 
-        contents = serialize('json', records)
-        results = ContentFile(contents)
-        report, created = Report.objects.get_or_create(
-            name=name, created_by=request.user,
-            owner=company, app=app, model=model,
-            params=json.dumps(params))
+        Inputs:
+            :app: The app to which the model belongs.
+            :model: The model to query on
 
-        report.results.save('%s-%s.json' % (name, report.pk), results)
+        Outputs:
+           An HttpResponse indicating success or failure of report creation.
+        """
 
-        return HttpResponse()
+        if request.is_ajax() and request.method == 'POST':
+            company = get_company_or_404(request)
+            params = parse_params(request.POST)
+
+            params.pop('csrfmiddlewaretoken', None)
+            name = params.pop('report_name', datetime.now())
+            records = get_model(app, model).objects.from_search(
+                company, params)
+
+            contents = serialize('json', records)
+            results = ContentFile(contents)
+            report, created = Report.objects.get_or_create(
+                name=name, created_by=request.user,
+                owner=company, app=app, model=model,
+                params=json.dumps(params))
+
+            report.results.save('%s-%s.json' % (name, report.pk), results)
+
+            return HttpResponse()
+        else:
+            raise Http404(
+                "This view is only reachable via an AJAX GET request.")
 
 
 def download_report(request):
