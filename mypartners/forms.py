@@ -17,7 +17,6 @@ from mypartners.widgets import (MultipleFileField,
 from universal.forms import NormalizedModelForm
 
 
-
 def init_tags(self):
     if self.instance.id and self.instance.tags:
         tag_names = ",".join([tag.name for tag in self.instance.tags.all()])
@@ -193,6 +192,11 @@ class NewPartnerForm(NormalizedModelForm):
                 widget=forms.TextInput(
                     attrs={'placeholder': 'Partner Organization',
                            'id': 'id_partner-partnername'})),
+            'partnersource': forms.CharField(
+                label="Partner Source", max_length=255, required=False,
+                widget=forms.TextInput(
+                    attrs={'placeholder': 'Partner Source',
+                           'id': 'id_partner-partnersource'})),
             'partnerurl': forms.URLField(
                 label="Partner URL", max_length=255, required=False,
                 widget=forms.TextInput(attrs={'placeholder': 'Partner URL',
@@ -220,9 +224,11 @@ class NewPartnerForm(NormalizedModelForm):
         # self.instance is a Contact instance
         company_id = self.data['company_id']
         partner_url = self.data.get('partnerurl', '')
+        partner_source = self.data.get('partnersource', '')
 
         partner = Partner.objects.create(name=self.data['partnername'],
-                                         uri=partner_url, owner_id=company_id)
+                                         uri=partner_url, owner_id=company_id,
+                                         source=partner_source)
 
         log_change(partner, self, self.user, partner, partner.name,
                    action_type=ADDITION)
@@ -305,7 +311,7 @@ class PartnerForm(NormalizedModelForm):
     class Meta:
         form_name = "Partner Information"
         model = Partner
-        fields = ['name', 'uri', 'tags']
+        fields = ['name', 'source', 'uri', 'tags']
         widgets = generate_custom_widgets(model)
 
     def clean_tags(self):
