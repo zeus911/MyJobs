@@ -3,6 +3,8 @@ from slugify import slugify
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.contenttypes.models import ContentType
+from django.core import cache
+from django.core.cache import InvalidCacheBackendError
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.http import Http404, HttpResponseRedirect
@@ -17,6 +19,12 @@ from myjobs.helpers import expire_login
 from myjobs.models import User
 from registration.forms import CustomAuthForm, RegistrationForm
 from seo import helpers
+
+
+try:
+    blocks_cache = cache.get_cache('blocks')
+except InvalidCacheBackendError:
+    blocks_cache = cache.get_cache('default')
 
 
 def raw_base_head(obj):
@@ -41,6 +49,8 @@ class Block(models.Model):
     span = models.PositiveIntegerField()
     template = models.TextField()
     head = models.TextField(blank=True)
+
+    updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         return self.name
@@ -164,8 +174,9 @@ class JobDetailBreadboxBlock(Block):
 
     def context(self, request, *args, **kwargs):
         job_id = kwargs.get('job_id', '')
+        breadcrumbs = context_tools.get_job_detail_breadbox(request, job_id)
         return {
-            'job_detail_breadcrumbs': context_tools.get_job_detail_breadbox(request, job_id)
+            'job_detail_breadcrumbs': breadcrumbs
         }
 
 
@@ -377,6 +388,8 @@ class VeteranSearchBox(Block):
 class Row(models.Model):
     blocks = models.ManyToManyField('Block', through='BlockOrder')
 
+    updated = models.DateTimeField(auto_now=True)
+
     def __unicode__(self):
         return ', '.join([block.name for block in self.blocks.all()])
 
@@ -423,15 +436,19 @@ class Page(models.Model):
     )
 
     page_type = models.CharField(choices=page_type_choices, max_length=255)
+    name = models.CharField(max_length=255)
+
     rows = models.ManyToManyField('Row', through='RowOrder')
-    site = models.ForeignKey('seo.SeoSite')
+    sites = models.ManyToManyField('seo.SeoSite')
     status = models.CharField(choices=page_status_choices, max_length=255,
                               default='production')
 
     head = models.TextField(blank=True)
 
+    updated = models.DateTimeField(auto_now=True)
+
     def __unicode__(self):
-        return "%s for %s: %s" % (self.page_type, self.site.name, self.pk)
+        return self.name
 
     @context_tools.Memoized
     def all_blocks(self):
@@ -491,6 +508,15 @@ class Page(models.Model):
         template = Template(raw_base_template(self))
         return template.render(Context(context))
 
+    def human_readable_page_type(self):
+        page_type_choices_dict = dict(self.page_type_choices)
+        return page_type_choices_dict.get(self.page_type, '')
+    human_readable_page_type.short_description = 'Page Type'
+
+    def human_readable_sites(self):
+        return ''.join(self.sites.values_list('domain', flat=True))
+    human_readable_sites.short_description = 'Sites'
+
     def pixel_template(self):
         return mark_safe("""
             <img style="display: none;" border="0" height="1" width="1" alt="My.jobs"
@@ -503,9 +529,33 @@ class Page(models.Model):
         """)
 
     def render(self, request, **kwargs):
+        key = self.render_cache_prefix(request)
+        rendered_template = blocks_cache.get(key)
+        if rendered_template:
+            return rendered_template
         context = self.context(request, **kwargs)
         template = Template(self.get_template(request))
-        return template.render(RequestContext(request, context))
+        rendered_template = template.render(RequestContext(request, context))
+        blocks_cache.set(key, rendered_template, settings.MINUTES_TO_CACHE*60)
+        return rendered_template
+
+    def render_cache_prefix(self, request):
+        page = '%s::%s' % (self.pk, self.updated)
+        path = request.path
+        query_string = context_tools.get_query_string(request)
+        blocks = self.all_blocks()
+        blocks = ["%s::%s" % (block.id, str(block.updated)) for block in
+                  blocks]
+        blocks = '#'.join(blocks)
+        rows = self.rows.all()
+        rows = ["%s::%s" % (row.id, str(row.updated)) for row in rows]
+        rows = '#'.join(rows)
+        config = context_tools.get_site_config(request)
+        config = '%s::%s' % (config.pk, config.revision)
+        buids = '#'.join(getattr(settings, 'SITE_BUIDS', []))
+
+        return '###'.join([page, path, query_string, config, blocks, rows,
+                           buids])
 
     def templatetag_library(self):
         templatetags = ['{% load seo_extras %}', '{% load i18n %}',
@@ -598,6 +648,8 @@ class BlockOrder(models.Model):
     row = models.ForeignKey('Row')
     order = models.PositiveIntegerField()
 
+    updated = models.DateTimeField(auto_now=True)
+
     class Meta:
         ordering = ('order', )
 
@@ -608,6 +660,8 @@ class ColumnBlockOrder(models.Model):
                                      related_name='included_column_blocks')
     order = models.PositiveIntegerField()
 
+    updated = models.DateTimeField(auto_now=True)
+
     class Meta:
         ordering = ('order', )
 
@@ -616,6 +670,8 @@ class RowOrder(models.Model):
     row = models.ForeignKey('Row')
     order = models.PositiveIntegerField()
     page = models.ForeignKey('Page')
+
+    updated = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ('order', )

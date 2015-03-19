@@ -1,6 +1,4 @@
-from factory import django, SubFactory
-
-from seo.tests.factories import SeoSiteFactory
+from factory import django, SubFactory, post_generation
 
 
 class BlockFactory(django.DjangoModelFactory):
@@ -49,4 +47,12 @@ class PageFactory(django.DjangoModelFactory):
         model = 'myblocks.Page'
 
     page_type = 'login'
-    site = SubFactory(SeoSiteFactory)
+
+    @post_generation
+    def sites(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            for site in extracted:
+                self.sites.add(site)

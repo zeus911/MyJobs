@@ -1,5 +1,6 @@
 from myblocks import models
 from myblocks.tests import factories
+from seo.tests.factories import SeoSiteFactory
 from seo.tests.setup import DirectSEOBase
 
 
@@ -36,7 +37,7 @@ class ModelsTests(DirectSEOBase):
                                           order=block.id)
          for block in blocks]
 
-        page = factories.PageFactory()
+        page = factories.PageFactory(sites=(SeoSiteFactory(), ))
         models.RowOrder.objects.create(page=page, row=row,
                                        order=row.id)
         models.RowOrder.objects.create(page=page, row=row2,

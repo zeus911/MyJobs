@@ -99,7 +99,7 @@ class FallbackBlockView(BlockView):
     def set_page(self, request):
         if request.user.is_authenticated() and request.user.is_staff:
             try:
-                page = Page.objects.filter(site=settings.SITE,
+                page = Page.objects.filter(sites=settings.SITE,
                                            status=Page.STAGING,
                                            page_type=self.page_type)[0]
                 setattr(self, 'page', page)
@@ -107,12 +107,12 @@ class FallbackBlockView(BlockView):
                 pass
 
         try:
-            page = Page.objects.filter(site=settings.SITE,
+            page = Page.objects.filter(sites=settings.SITE,
                                        status=Page.PRODUCTION,
                                        page_type=self.page_type)[0]
         except IndexError:
             try:
-                page = Page.objects.filter(site_id=1,
+                page = Page.objects.filter(sites__pk=1,
                                            status=Page.PRODUCTION,
                                            page_type=self.page_type)[0]
             except IndexError:
@@ -279,7 +279,6 @@ def ajax_get_jobs(request, filter_path):
     except ValueError:
         num_items = DEFAULT_PAGE_SIZE
     custom_facets = settings.DEFAULT_FACET
-    path = request.META.get('HTTP_REFERER')
     sqs = helpers.prepare_sqs_from_search_params(GET)
     sort_order = request.REQUEST.get('sort', 'relevance')
     default_jobs = helpers.get_jobs(default_sqs=sqs,
@@ -1521,11 +1520,11 @@ def get_group_relationships(request):
                 'google_analytics': []
             }
         else:
+            configurations = site.configurations.values_list('id', flat=True)
+            ga = site.google_analytics.values_list('id', flat=True)
             selected = {
-                'configurations': [c for c in site.configurations\
-                                                  .values_list('id', flat=True)],
-                'google_analytics': [g for g in site.google_analytics\
-                                                    .values_list('id', flat=True)]
+                'configurations': [c for c in configurations],
+                'google_analytics': [g for g in ga]
             }
 
         view_data = {
@@ -1830,10 +1829,10 @@ class SearchResults(FallbackBlockView):
     def set_page(self, request):
         if request.user.is_authenticated() and request.user.is_staff:
             no_results_pages = Page.objects.filter(page_type=Page.NO_RESULTS,
-                                                   site=settings.SITE)
+                                                   sites=settings.SITE)
         else:
             no_results_pages = Page.objects.filter(page_type=Page.NO_RESULTS,
-                                                   site=settings.SITE,
+                                                   sites=settings.SITE,
                                                    status=Page.PRODUCTION)
 
         if no_results_pages.exists():
