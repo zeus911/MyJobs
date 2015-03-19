@@ -541,6 +541,7 @@ class Page(models.Model):
         rows = ["%s::%s" % (row.id, row.updated) for row in rows]
         rows = '#'.join(rows)
         config = context_tools.get_site_config(request)
+        config = '#'.join([str(config.pk), str(config.revision)])
         buids = '#'.join(getattr(settings, 'SITE_BUIDS', []))
 
         return '###'.join([path, query_string, config, blocks, rows, buids])

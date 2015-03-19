@@ -6,17 +6,20 @@
         "span": 5,
         "name": "Default Login Block, Offset 1 Span 5",
         "content_type": ["myblocks", "loginblock"],
-        "offset": 1
+        "offset": 1,
+        "updated": "2015-03-18T04:00:00Z"
     }
 },
 {
     "pk": 4,
     "model": "myblocks.block",
-    "fields": {"template": "{% load i18n %}\r\n\r\n<div class=\"direct-content-block {{ block.bootstrap_classes }}\" id=\"direct-content-block-{{block.id}}\">\r\n<style>\r\n.direct-myjobs-logo {\r\n    background: transparent url('//d2e48ltfsb5exy.cloudfront.net/myjobs/logos/myjobs_logo.145-03.png') 120px 0 no-repeat;\r\n    text-indent: -9000px;\r\n    height: 149px;\r\n}\r\n.direct-myjobs-tagline {\r\n    text-indent: 120px;\r\n    color: #a95051;\r\n    text-shadow: 1px 1px #ccc;\r\n}\r\n</style>\r\n\r\n<div class=\"centered\">\r\n    <h1 class=\"direct-myjobs-logo\">My.jobs</h1>\r\n    <h2 class=\"direct-myjobs-tagline\">The Right Place For<a></a><noscript> You.</noscript></h2>\r\n</div>\r\n\r\n</div>",
-    "span": 10,
-    "name": "My.jobs Logo, Offset 0 Span 10",
-    "content_type": ["myblocks", "contentblock"],
-    "offset": 0
+    "fields": {
+        "template": "{% load i18n %}\r\n\r\n<div class=\"direct-content-block {{ block.bootstrap_classes }}\" id=\"direct-content-block-{{block.id}}\">\r\n<style>\r\n.direct-myjobs-logo {\r\n    background: transparent url('//d2e48ltfsb5exy.cloudfront.net/myjobs/logos/myjobs_logo.145-03.png') 120px 0 no-repeat;\r\n    text-indent: -9000px;\r\n    height: 149px;\r\n}\r\n.direct-myjobs-tagline {\r\n    text-indent: 120px;\r\n    color: #a95051;\r\n    text-shadow: 1px 1px #ccc;\r\n}\r\n</style>\r\n\r\n<div class=\"centered\">\r\n    <h1 class=\"direct-myjobs-logo\">My.jobs</h1>\r\n    <h2 class=\"direct-myjobs-tagline\">The Right Place For<a></a><noscript> You.</noscript></h2>\r\n</div>\r\n\r\n</div>",
+        "span": 10,
+        "name": "My.jobs Logo, Offset 0 Span 10",
+        "content_type": ["myblocks", "contentblock"],
+        "offset": 0,
+        "updated": "2015-03-18T04:00:00Z"
     }
 },
 {
@@ -27,7 +30,8 @@
         "span": 5,
         "name": "Default Registration Block,  Offset 1 Span 5",
         "content_type": ["myblocks", "registrationblock"],
-        "offset": 1
+        "offset": 1,
+        "updated": "2015-03-18T04:00:00Z"
     }
 },
 {
@@ -38,33 +42,34 @@
         "span": 5,
         "name": "Registration + Login Column,  Offset 1 Span 5",
         "content_type": ["myblocks", "columnblock"],
-        "offset": 1
+        "offset": 1,
+        "updated": "2015-03-18T04:00:00Z"
     }
 },
 {
     "pk": 6,
     "model": "myblocks.columnblock",
-    "fields": {}
+    "fields": {"updated": "2015-03-18T04:00:00Z"}
 },
 {
     "pk": 4,
     "model": "myblocks.contentblock",
-    "fields": {}
+    "fields": {"updated": "2015-03-18T04:00:00Z"}
 },
 {
     "pk": 1,
     "model": "myblocks.loginblock",
-    "fields": {}
+    "fields": {"updated": "2015-03-18T04:00:00Z"}
 },
 {
     "pk": 5,
     "model": "myblocks.registrationblock",
-    "fields": {}
+    "fields": {"updated": "2015-03-18T04:00:00Z"}
 },
 {
     "pk": 1,
     "model": "myblocks.row",
-    "fields": {}
+    "fields": {"updated": "2015-03-18T04:00:00Z"}
 },
 {
     "pk": 1,
@@ -72,7 +77,8 @@
     "fields": {
         "status": "production",
         "page_type": "login",
-        "sites": [1]
+        "sites": [1],
+        "updated": "2015-03-18T04:00:00Z"
     }
 },
 {
@@ -81,7 +87,8 @@
     "fields": {
         "order": 1,
         "block": 4,
-        "row": 1
+        "row": 1,
+        "updated": "2015-03-18T04:00:00Z"
     }
 },
 {
@@ -90,7 +97,8 @@
     "fields": {
         "order": 2,
         "block": 6,
-        "row": 1
+        "row": 1,
+        "updated": "2015-03-18T04:00:00Z"
     }
 },
 {
@@ -99,7 +107,8 @@
     "fields": {
         "column_block": 6,
         "order": 1,
-        "block": 5
+        "block": 5,
+        "updated": "2015-03-18T04:00:00Z"
     }
 },
 {
@@ -108,7 +117,8 @@
     "fields": {
         "column_block": 6,
         "order": 2,
-        "block": 1
+        "block": 1,
+        "updated": "2015-03-18T04:00:00Z"
     }
 },
 {
@@ -117,6 +127,7 @@
     "fields": {
         "page": 1,
         "order": 1,
-        "row": 1
+        "row": 1,
+        "updated": "2015-03-18T04:00:00Z"
     }
 }]
