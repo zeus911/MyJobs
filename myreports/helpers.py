@@ -38,7 +38,8 @@ def parse_params(querydict):
     # get rid of empty params and flatten single-item lists
     params = {}
     for key in querydict.keys():
-        value = tuple(querydict.getlist(key))
+        value = tuple(filter(bool, querydict.getlist(key)))
+
         if len(value) == 1:
             value = value[0]
 
