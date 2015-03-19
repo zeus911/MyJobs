@@ -172,6 +172,6 @@ def download_report(request):
         report.name, report.pk)
 
     records = humanize(report.python)
-    response = serialize('csv', records, output=response)
+    response.write(serialize('csv', records))
 
     return response

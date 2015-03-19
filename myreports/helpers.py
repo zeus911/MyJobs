@@ -11,14 +11,27 @@ from django.utils.html import strip_tags
 from mypartners.models import CONTACT_TYPE_CHOICES
 
 
+# TODO:
+# * finish humanizing other columns
+# * allow other models to be humanized, maybe generalize the things being
+# * humanized and create a Humanize object?
+# Note: natural_key wasn't used because i'm already using a dict by the time I
+#       get here.
 def humanize(records):
-    # TODO:
-    # * finish humanizing other columns
-    # * allow other models to be humanized, maybe generalize the things being
-    # * humanized and create a Humanize object?
+    """
+    Converts values in a dict to their human-readable counterparts. At the
+    moment, this means converting tag ids to a list of tag names, removing the
+    primary key, and converting contact types. As such, this is specifically
+    only useful for contact records.
 
-    # convert tag ids to names
+    Inputs:
+        :records: `dict` of records to be humanized
+
+    Outputs:
+        The humanized records.
+    """
     contact_types = dict(CONTACT_TYPE_CHOICES)
+    # convert tag ids to names
     tag_ids = set(chain.from_iterable(record['tags'] for record in records))
     tags = dict(get_model('mypartners', 'tag').objects.filter(
         pk__in=tag_ids).values_list('pk', 'name'))
@@ -35,6 +48,16 @@ def humanize(records):
 
 
 def parse_params(querydict):
+    """
+    Parses a `QueryDict` into a regular dict, discarding falsey values and
+    flattening singleton lists.
+
+    Inputs:
+        :querydict: The `QueryDict` to be pasred (eg. request.GET). 
+
+    Outputs:
+        A dictionary of non-empty parameters.
+    """
     # get rid of empty params and flatten single-item lists
     params = {}
     for key in querydict.keys():
@@ -48,7 +71,26 @@ def parse_params(querydict):
     return params
 
 
-def serialize(fmt, data, output=None, counts=None):
+# TODO: Find a better way to handle counts
+def serialize(fmt, data, counts=None):
+    """
+    Like `django.core.serializers.serialize`, but produces a simpler structure
+    and retains annotated fields*.
+
+    Inputs:
+        :fmt: The format to serialize to. Currently recognizes 'csv', 'json',
+              and 'python'.
+        :data: The data to be serialized.
+        :counts: A dictionary mapping primary keys to actual counts. This is a
+                 cludge which should be deprecated in later version of this
+                 function if at all possible.
+
+    Outputs:
+        Either a Python object or a string represention of the requested
+        format.
+
+    * Currently, only count with values passed in manually through `counts`.
+    """
     if isinstance(data, QuerySet):
         data = [dict({'pk': record['pk']}, **record['fields'])
                 for record in serializers.serialize('python', data)]
@@ -57,6 +99,7 @@ def serialize(fmt, data, output=None, counts=None):
             data = [dict({'count': counts[record['pk']]}, **record)
                     for record in data]
 
+    # strip HTML tags from string values
     for index, record in enumerate(data[:]):
         data[index] = {key: strip_tags(value) if isinstance(value, basestring)
                        else value for key, value in record.items()}
@@ -64,7 +107,7 @@ def serialize(fmt, data, output=None, counts=None):
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)
     elif fmt == 'csv':
-        output = output or StringIO()
+        output = StringIO()
         writer = csv.writer(output)
         columns = sorted(data[0].keys())
         writer.writerow([column.replace('_', ' ').title()
@@ -74,6 +117,6 @@ def serialize(fmt, data, output=None, counts=None):
             writer.writerow([unicode(record[column]).encode('utf-8')
                              for column in columns])
 
-        return output
+        return output.getvalue()
     else:
         return data
