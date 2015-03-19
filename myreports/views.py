@@ -194,7 +194,8 @@ class ReportView(View):
 
 
 def download_report(request):
-    # download report
+    """Download report as csv."""
+
     report_id = request.GET.get('id', 0)
     report = get_object_or_404(
         get_model('myreports', 'report'), pk=report_id)
