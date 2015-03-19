@@ -12,6 +12,11 @@
     {% empty %}
         No past reports
     {% endfor %}
+    {% if report_count > 10 %}
+     <div class="center-text">
+         <a id="report-archive">View Report Archive</a>
+     </div>
+     {% endif %}
     <!--
     <h2>Report Queue</h2>
     {% for report in queued_reports %}

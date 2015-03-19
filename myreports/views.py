@@ -33,7 +33,6 @@ def reports(request):
 
     reports = Report.objects.filter(owner=company).order_by("-created_on")
     report_count = reports.count()
-    print report_count
     past_reports = reports[:10]
 
     ctx = {
