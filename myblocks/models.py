@@ -174,8 +174,9 @@ class JobDetailBreadboxBlock(Block):
 
     def context(self, request, *args, **kwargs):
         job_id = kwargs.get('job_id', '')
+        breadcrumbs = context_tools.get_job_detail_breadbox(request, job_id)
         return {
-            'job_detail_breadcrumbs': context_tools.get_job_detail_breadbox(request, job_id)
+            'job_detail_breadcrumbs': breadcrumbs
         }
 
 
