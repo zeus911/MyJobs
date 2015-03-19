@@ -110,27 +110,6 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
         return self
 
-    def sort_by(self, *fields):
-        """Like `order_by`, but ensures that blank values come at the end of a
-           result. It's not as efficient as `order_by`, so it's best to call as
-           late as possible (eg. after you've finished sorting).
-        """
-        query = models.Q()
-        for field in fields:
-            query |= models.Q(**{field.lstrip('-'): ''}) | models.Q(
-                **{field.lstrip('-') + '__isnull': True})
-
-        blank_records = self.filter(query).order_by(*fields)
-
-        self = self.exclude(id__in=blank_records).order_by(*fields)
-
-        # force evaluation: see http://stackoverflow.com/questions/18235419
-        len(self)
-        for record in blank_records:
-            self._result_cache.append(record)
-
-        return self
-
     def get_field_type(self, name):
         """
         Returns the type of the `model`'s `field` or None if it doesn't
