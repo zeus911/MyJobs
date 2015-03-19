@@ -32,7 +32,8 @@ Report.prototype.create_fields = function(types) {
 
 // Bind events for report, events that use the report object need to be here.
 Report.prototype.bind_events = function() {
-  var report = this;
+  var report = this,
+      container = $("#main-container");
 
   // Send the user a message when they try to unload the page saying their
   // progress will not be saved and will be lost.
@@ -46,13 +47,13 @@ Report.prototype.bind_events = function() {
 
   // Because this is pre-filled and will normally be a pretty long this
   // just selects text on focus for easy editing. UX-goodness
-  $(document.body).on("focus", "#report_name", function() {
+  container.on("focus", "#report_name", function() {
     $(this).select();
   });
 
 
   // Updates data field of Report. Also, if needed, updates Partner and Contact Lists
-  $(document.body).on("change", "input:not([id$=-all-checkbox]), select:not([class^=picker])", function(e) {
+  container.on("change", "input:not([id$=-all-checkbox]), select:not([class^=picker])", function(e) {
     var in_list = $(this).parents(".list-body").attr("id"),
         contact_wrapper = $("#contact-wrapper"),
         c_field = report.find_field("Select Contacts");
@@ -116,7 +117,7 @@ Report.prototype.bind_events = function() {
 
 
   // For date widget.
-  $(document.body).on("focus", ".datepicker", function(e) {
+  container.on("focus", ".datepicker", function(e) {
    $(this).pickadate({
      format: "mm/dd/yyyy",
      selectYears: true,
@@ -138,7 +139,7 @@ Report.prototype.bind_events = function() {
 
 
   // Slides the associated list up or down.
-  $(document.body).on("click", ".list-header", function() {
+  container.on("click", ".list-header", function() {
     var icon = $(this).children("i");
 
     if (icon.hasClass("fa-plus-square-o")) {
@@ -150,7 +151,7 @@ Report.prototype.bind_events = function() {
   });
 
 
-  $(document.body).on("click", ".list-body :checkbox", function(e) {
+  container.on("click", ".list-body :checkbox", function(e) {
     e.stopPropagation();
 
     update_items_selected(this);
@@ -159,7 +160,7 @@ Report.prototype.bind_events = function() {
 
 
   // Clicking on an li in the lists will click the checkbox.
-  $(document.body).on("click", ".list-body li", function() {
+  container.on("click", ".list-body li", function() {
     var checkbox = $(this).children("input");
 
     checkbox.prop("checked", !checkbox.prop("checked")).change();
@@ -170,13 +171,22 @@ Report.prototype.bind_events = function() {
 
 
   // Clicking on all "type" checkbox will check/uncheck all checkboxes in associated list.
-  $(document.body).on("click", "input[id$=-all-checkbox]", function(e) {
+  container.on("click", "input[id$=-all-checkbox]", function(e) {
     e.stopPropagation();
     var checkboxes = $(this).parent().next().find("input"),
-        num_selected = $(this).siblings("span").children("span");
+        num_selected = $(this).siblings("span").children("span"),
+        i;
 
-    // Update all checkboxes with this' current state.
-    checkboxes.prop("checked", $(this).prop("checked")).change();
+    for (i = 0; i < checkboxes.length; i++) {
+      var checkbox = $(checkboxes[i]);
+      checkbox.prop("checked", $(this).prop("checked"));
+
+      // Run ajax on last checkbox to be changed.
+      // Avoids running AJAX checkbox.length times but still triggers update event.
+      if (i === checkboxes.length - 1) {
+        checkbox.change();
+      }
+    }
 
     // Update how many items in the list is selected based on this' current state. All or nothing.
     num_selected.html($(this).prop("checked") ? checkboxes.length : "0");
@@ -184,7 +194,7 @@ Report.prototype.bind_events = function() {
 
 
   // Clicking this button will show the modal with human readable data to review.
-  $(document.body).on("click", "#show-modal", function(e) {
+  container.on("click", "#show-modal", function(e) {
     var modal = $("#report-modal"),
         body = modal.children(".modal-body"),
         footer = modal.children(".modal-footer");
@@ -199,7 +209,7 @@ Report.prototype.bind_events = function() {
 
 
   // Actually submits the report's data to create a Report object in db.
-  $(document.body).on("click", "#gen-report", function(e) {
+  container.on("click", "#gen-report", function(e) {
     var csrf = read_cookie("csrftoken"),
         data = {"csrfmiddlewaretoken": csrf},
         url = location.protocol + "//" + location.host + "/reports/view/mypartners/contactrecord";
@@ -222,7 +232,6 @@ Report.prototype.bind_events = function() {
       url: url,
       data: $.param(data, true),
       dataType: "json",
-      global: false,
       success: function (data) {
         reload = true;
         var new_url = location.protocol + '//' + location.host + location.pathname,
@@ -238,7 +247,7 @@ Report.prototype.bind_events = function() {
 
 
 Report.prototype.unbind_events = function() {
-  $(document.body).unbind("click");
+  $("#main-container").unbind("click");
 };
 
 
@@ -331,9 +340,17 @@ Report.prototype.create_clone_report = function(json) {
 
       if (key === "partner") {
         this.find_field("Select Partners").value = value;
+        // if only one partner was selected it will come back as a string.
+        // expecting a list for rendering.
+        if (typeof value === "string") {
+          value = [value];
+        }
         this.data[key] = value;
       } else if (key === "contact_name") {
         this.find_field("Select Contacts").value = value;
+        if (typeof value === "string") {
+          value = [value];
+        }
         this.data["contact"] = value;
       } else if (key.indexOf("date") > 0) {
         field = this.find_field("Select Date");
@@ -348,6 +365,7 @@ Report.prototype.create_clone_report = function(json) {
       }
     }
   }
+  console.log("Report Data: ", this.data);
 };
 
 
@@ -531,6 +549,8 @@ List.prototype.filter = function(filter) {
       // render
       $("#"+ list.type + ".list-body").html('').append(ul);
 
+      console.log("List Value: ", list.value);
+      console.log()
       if (list.value) {
         if (list.type === "partner") {
           for (var j = 0; j < list.value.length; j++) {
@@ -628,7 +648,8 @@ $(document).ready(function() {
       dataType: "json",
       success: function(data) {
         var report = new Report(["prm"]);
-        report.create_clone_report(data);
+        debugger;
+        report.create_clone_report($.parseJSON(data));
         report.unbind_events();
         report.bind_events();
         $("#container").addClass("rpt-container");
