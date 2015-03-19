@@ -7,6 +7,7 @@ from django.core import serializers
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models.loading import get_model
 from django.db.models.query import QuerySet
+from django.utils.html import strip_tags
 from mypartners.models import CONTACT_TYPE_CHOICES
 
 
@@ -54,6 +55,10 @@ def serialize(fmt, data, output=None, counts=None):
         if counts:
             data = [dict({'count': counts[record['pk']]}, **record)
                     for record in data]
+
+    for index, record in enumerate(data[:]):
+        data[index] = {key: strip_tags(value) if isinstance(value, basestring)
+                       else value for key, value in record.items()}
 
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)
