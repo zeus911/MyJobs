@@ -228,7 +228,7 @@ class NewPartnerForm(NormalizedModelForm):
 
         partner = Partner.objects.create(name=self.data['partnername'],
                                          uri=partner_url, owner_id=company_id,
-                                         source=partner_source)
+                                         data_source=partner_source)
 
         log_change(partner, self, self.user, partner, partner.name,
                    action_type=ADDITION)
@@ -311,7 +311,7 @@ class PartnerForm(NormalizedModelForm):
     class Meta:
         form_name = "Partner Information"
         model = Partner
-        fields = ['name', 'source', 'uri', 'tags']
+        fields = ['name', 'data_source', 'uri', 'tags']
         widgets = generate_custom_widgets(model)
 
     def clean_tags(self):

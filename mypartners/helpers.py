@@ -512,7 +512,7 @@ def new_partner_from_library(request):
         uri=library.uri,
         owner=company,
         library=library,
-        source=library.data_source)
+        data_source=library.data_source)
     partner.tags = tags
 
     state = request.GET.get("state", library.st)

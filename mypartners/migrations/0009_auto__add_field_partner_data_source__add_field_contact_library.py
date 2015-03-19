@@ -8,15 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Partner.source'
-        db.add_column(u'mypartners_partner', 'source',
+        # Adding field 'Partner.data_source'
+        db.add_column(u'mypartners_partner', 'data_source',
                       self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
                       keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting field 'Partner.source'
-        db.delete_column(u'mypartners_partner', 'source')
+        # Deleting field 'Partner.data_source'
+        db.delete_column(u'mypartners_partner', 'data_source')
 
 
     models = {
@@ -128,12 +128,12 @@ class Migration(SchemaMigration):
         },
         u'mypartners.partner': {
             'Meta': {'object_name': 'Partner'},
+            'data_source': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'library': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.PartnerLibrary']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
             'primary_contact': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'primary_contact'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': u"orm['mypartners.Contact']"}),
-            'source': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'tags': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['mypartners.Tag']", 'null': 'True', 'symmetrical': 'False'}),
             'uri': ('django.db.models.fields.URLField', [], {'max_length': '200', 'blank': 'True'})
         },
