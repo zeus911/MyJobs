@@ -532,19 +532,22 @@ class Page(models.Model):
         return rendered_template
 
     def render_cache_prefix(self, request):
+        page = '::'.join([str(self.pk), str(self.updated)])
         path = request.path
         query_string = context_tools.get_query_string(request)
         blocks = self.all_blocks()
-        blocks = ["%s::%s" % (block.id, block.updated) for block in blocks]
+        blocks = ["%s::%s" % (block.id, str(block.updated)) for block in
+                  blocks]
         blocks = '#'.join(blocks)
         rows = self.rows.all()
-        rows = ["%s::%s" % (row.id, row.updated) for row in rows]
+        rows = ["%s::%s" % (row.id, str(row.updated)) for row in rows]
         rows = '#'.join(rows)
         config = context_tools.get_site_config(request)
-        config = '#'.join([str(config.pk), str(config.revision)])
+        config = '::'.join([str(config.pk), str(config.revision)])
         buids = '#'.join(getattr(settings, 'SITE_BUIDS', []))
 
-        return '###'.join([path, query_string, config, blocks, rows, buids])
+        return '###'.join([page, path, query_string, config, blocks, rows,
+                           buids])
 
     def templatetag_library(self):
         templatetags = ['{% load seo_extras %}', '{% load i18n %}',
