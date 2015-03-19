@@ -129,10 +129,11 @@ class TestViewRecords(MyReportsTestCase):
     def test_list_query_params(self):
         """Test that query parameters that are lists are parsed correctly."""
 
-        ContactFactory.create_batch(10, partner__owner=self.company)
+        contacts = ContactFactory.create_batch(10, partner__owner=self.company)
+        pks = [contact.pk for contact in contacts[:5]]
 
         self.client.path += '/partner'
-        response = self.client.get(data={'contact': range(1, 6)})
+        response = self.client.get(data={'contact': pks})
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
