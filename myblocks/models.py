@@ -531,7 +531,7 @@ class Page(models.Model):
     human_readable_sites.short_description = 'Sites'
 
     def human_readable_status(self):
-        status_choices_dict = dict(self.page_type_choices)
+        status_choices_dict = dict(self.page_status_choices)
         return status_choices_dict[self.status]
     human_readable_status.short_description = 'Status'
 
