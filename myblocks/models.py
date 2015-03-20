@@ -142,7 +142,7 @@ class ColumnBlock(Block):
         js = []
         for block in self.blocks.all():
             js += block.cast().required_js()
-        return js
+        return list(set(js))
 
 
 class ContentBlock(Block):
@@ -296,12 +296,19 @@ class RegistrationBlock(Block):
         return 'registration-%s' % self.id
 
 
+class SavedSearchWidgetBlock(Block):
+    base_template = 'myblocks/blocks/savedsearchwidget.html'
+
+    def required_js(self):
+        return ['//d2e48ltfsb5exy.cloudfront.net/myjobs/tools/def.myjobs.widget.153-05.js']
+
+
 class SearchBoxBlock(Block):
     base_template = 'myblocks/blocks/searchbox.html'
 
     def context(self, request, **kwargs):
         return {
-            'location_term': context_tools.get_location_term(request),
+            'location_term': context_tools.get_location_term(request, **kwargs),
             'moc_term': context_tools.get_moc_term(request),
             'moc_id_term': context_tools.get_moc_id_term(request),
             'search_url': context_tools.get_search_url(request),
@@ -321,22 +328,6 @@ class SearchFilterBlock(Block):
 
     def required_js(self):
         return ['%spager.160-29.js' % settings.STATIC_URL]
-
-
-class SearchResultHeaderBlock(Block):
-    base_template = 'myblocks/blocks/searchresultsheader.html'
-
-    def context(self, request, **kwargs):
-        return {
-            'arranged_jobs': context_tools.get_arranged_jobs(request),
-            'count_heading': context_tools.get_count_heading(request),
-            'default_jobs': context_tools.get_default_jobs(request),
-            'featured_jobs': context_tools.get_featured_jobs(request),
-            'location_term': context_tools.get_location_term(request),
-            'moc_term': context_tools.get_moc_term(request),
-            'query_string': context_tools.get_query_string(request),
-            'title_term': context_tools.get_title_term(request),
-        }
 
 
 class SearchResultBlock(Block):
@@ -360,11 +351,20 @@ class SearchResultBlock(Block):
         }
 
 
-class SavedSearchWidgetBlock(Block):
-    base_template = 'myblocks/blocks/savedsearchwidget.html'
+class SearchResultHeaderBlock(Block):
+    base_template = 'myblocks/blocks/searchresultsheader.html'
 
-    def required_js(self):
-        return ['//d2e48ltfsb5exy.cloudfront.net/myjobs/tools/def.myjobs.widget.153-05.js']
+    def context(self, request, **kwargs):
+        return {
+            'arranged_jobs': context_tools.get_arranged_jobs(request),
+            'count_heading': context_tools.get_count_heading(request),
+            'default_jobs': context_tools.get_default_jobs(request),
+            'featured_jobs': context_tools.get_featured_jobs(request),
+            'location_term': context_tools.get_location_term(request),
+            'moc_term': context_tools.get_moc_term(request),
+            'query_string': context_tools.get_query_string(request),
+            'title_term': context_tools.get_title_term(request),
+        }
 
 
 class ShareBlock(Block):
@@ -376,7 +376,7 @@ class VeteranSearchBox(Block):
 
     def context(self, request, **kwargs):
         return {
-            'location_term': context_tools.get_location_term(request),
+            'location_term': context_tools.get_location_term(request, **kwargs),
             'moc_term': context_tools.get_moc_term(request),
             'moc_id_term': context_tools.get_moc_id_term(request),
             'search_url': context_tools.get_search_url(request),

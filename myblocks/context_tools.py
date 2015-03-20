@@ -4,7 +4,7 @@ from itertools import chain
 
 from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import intcomma
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, resolve
 from django.http import QueryDict
 
 from seo import cache, helpers
@@ -141,6 +141,8 @@ def get_google_analytics(request):
 @Memoized
 def get_job(request, job_id):
     search_type = 'guid' if len(job_id) > 31 else 'uid'
+    if not job_id:
+        return None
 
     try:
         query = "%s:(%s)" % (search_type, job_id)
@@ -212,7 +214,14 @@ def get_job_detail_breadbox(request, job_id):
 
 
 @Memoized
-def get_location_term(request):
+def get_location_term(request, **kwargs):
+    function_name = resolve(request.path).func.func_name
+
+    if function_name == 'JobDetail':
+        job_id = kwargs.get('job_id', '')
+        job = get_job(request, job_id)
+        return getattr(job, 'location', '')
+
     breadbox = get_breadbox(request)
     return breadbox.location_display_heading()
 
