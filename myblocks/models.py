@@ -398,8 +398,12 @@ class Row(models.Model):
     def bootstrap_classes():
         return "row"
 
-    def context(self):
-        return {}
+    @context_tools.Memoized
+    def context(self, request, **kwargs):
+        context = {}
+        for block in self.blocks.all():
+            context.update(block.cast().context(request, **kwargs))
+        return context
 
     @context_tools.Memoized
     def get_template(self):
@@ -407,6 +411,14 @@ class Row(models.Model):
                   for block in self.blocks.all().order_by('blockorder__order')]
 
         return '<div class="row">%s</div>' % ''.join(blocks)
+
+
+    @context_tools.Memoized
+    def required_js(self):
+        js = []
+        for block in self.blocks.all():
+            js += block.cast().required_js()
+        return list(set(js))
 
 
 class Page(models.Model):
@@ -518,6 +530,11 @@ class Page(models.Model):
         return ''.join(self.sites.values_list('domain', flat=True))
     human_readable_sites.short_description = 'Sites'
 
+    def human_readable_status(self):
+        status_choices_dict = dict(self.page_type_choices)
+        return status_choices_dict[self.status]
+    human_readable_status.short_description = 'Status'
+
     def pixel_template(self):
         return mark_safe("""
             <img style="display: none;" border="0" height="1" width="1" alt="My.jobs"
@@ -581,6 +598,7 @@ class Page(models.Model):
         title_slug = kwargs.get('title_slug', '')
         location_slug = kwargs.get('location_slug', '')
         job_location_slug = slugify(job.location)
+
         if title_slug == job.title_slug and location_slug == job_location_slug:
             return None
 
@@ -611,7 +629,7 @@ class Page(models.Model):
             redirect_url += "?%s" % query
         return redirect(redirect_url, permanent=True)
 
-    def handle_search_results_redirect(self, request, *args, **kwargs):
+    def handle_search_results_redirect(self, request):
         filters = context_tools.get_filters(request)
         query_string = context_tools.get_query_string(request)
 
@@ -631,16 +649,11 @@ class Page(models.Model):
 
         return
 
-    def handle_postprocessing(self, response, page_type):
-        if page_type == self.JOB_DETAIL:
-            response = response
-        return response
-
     def handle_redirect(self, request, *args, **kwargs):
         if self.page_type == self.JOB_DETAIL:
             return self.handle_job_detail_redirect(request, *args, **kwargs)
         if self.page_type == self.SEARCH_RESULTS:
-            return self.handle_search_results_redirect(request, *args, **kwargs)
+            return self.handle_search_results_redirect(request)
         return None
 
 

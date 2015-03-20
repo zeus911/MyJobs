@@ -1,65 +1,14 @@
+from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.test.client import RequestFactory
+from django.http import Http404
 
 from myblocks import models
 from myblocks.tests import factories
-from myjobs.tests.factories import UserFactory
-from seo.models import Configuration, SeoSite, SiteTag
-from seo.tests.factories import (CustomFacetFactory, SeoSiteFactory,
-                                 SeoSiteFacetFactory, SpecialCommitmentFactory)
-from seo.tests.setup import DirectSEOBase
-from seo.tests.solr_settings import SOLR_FIXTURE
-from universal.helpers import build_url
+from myblocks.tests.setup import BlocksTestBase
+from seo.tests.factories import SeoSiteFactory
 
 
-class ModelsTests(DirectSEOBase):
-    def setUp(self):
-        super(ModelsTests, self).setUp()
-        self.site = SeoSite.objects.get()
-        self.config = Configuration.objects.get(status=2)
-        self.config.browse_facet_show = True
-        self.config.save()
-
-        self.commitment = SpecialCommitmentFactory()
-        self.site.special_commitments.add(self.commitment)
-        self.site.save()
-
-        self.tag = SiteTag.objects.create(site_tag='Test tag')
-        self.site.site_tags.add(self.tag)
-        self.site.save()
-
-        self.job = SOLR_FIXTURE[1]
-        self.conn.add([self.job])
-
-        user = UserFactory()
-
-        url = reverse('all_jobs')
-        self.search_results_request = RequestFactory().get(url)
-        self.search_results_request.user = user
-
-        url = build_url(reverse('all_jobs'), {'q': 'Retail'})
-        self.search_results_with_q_request = RequestFactory().get(url)
-        self.search_results_with_q_request.user = user
-
-        self.facet = CustomFacetFactory(show_production=True,
-                                        name='Retail',
-                                        name_slug='retail',
-                                        querystring='Retail',
-                                        blurb='Test')
-        SeoSiteFacetFactory(customfacet=self.facet, seosite=self.site)
-        url = 'retail/new-jobs/'
-        self.search_results_with_custom_facet = RequestFactory().get(url)
-        self.search_results_with_custom_facet.user = user
-
-        kwargs = {'job_id': self.job['guid']}
-        url = reverse('job_detail_by_job_id', kwargs=kwargs)
-        self.job_detail_request = RequestFactory().get(url)
-        self.job_detail_request.user = user
-
-        # Send a request through middleware so all the required
-        # settings (from MultiHostMiddleware) actually get set.
-        self.client.get('/')
-
+class ModelsTests(BlocksTestBase):
     def test_block_bootstrap_classes(self):
         block = factories.BlockFactory(offset=5, span=3)
         block2 = factories.BlockFactory(offset=3, span=7)
@@ -121,7 +70,7 @@ class ModelsTests(DirectSEOBase):
         context = column_block.context(self.search_results_request)
         keys = context.keys()
 
-        # The context shiould contain the required context for both
+        # The context should contain the required context for both
         # blocks.
         expected_context = ['widgets', 'breadbox']
         for field in expected_context:
@@ -351,6 +300,76 @@ class ModelsTests(DirectSEOBase):
         self.assertEqual(context['location_term'], '')
         self.assertEqual(context['site_config'], self.config)
 
+    def test_row_context(self):
+        row = factories.RowFactory()
+        search_filter_block = factories.SearchFilterBlockFactory()
+        breadbox_block = factories.BreadboxBlockFactory()
+
+        models.BlockOrder.objects.create(block=search_filter_block, row=row,
+                                         order=1)
+        models.BlockOrder.objects.create(block=breadbox_block, row=row,
+                                         order=2)
+
+        context = row.context(self.search_results_request)
+        keys = context.keys()
+
+        # The context should contain the required context for both
+        # blocks.
+        expected_context = ['widgets', 'breadbox']
+        for field in expected_context:
+            self.assertIn(field, keys)
+            self.assertIsNotNone(context[field])
+
+    def test_row_template(self):
+        one = 'template one'
+        two = 'template two'
+
+        row = factories.RowFactory()
+        search_filter_block = factories.SearchFilterBlockFactory(template=one)
+        breadbox_block = factories.BreadboxBlockFactory(template=two)
+
+        models.BlockOrder.objects.create(block=search_filter_block, row=row,
+                                         order=1)
+        models.BlockOrder.objects.create(block=breadbox_block, row=row,
+                                         order=2)
+
+        # Confirm that both templates are joined together in the correct order
+        template = row.get_template()
+        self.assertRegexpMatches(template, '.*%s.*%s.*' % (one, two))
+
+        # Try a new order.
+        reverse_row = factories.RowFactory()
+        models.BlockOrder.objects.create(block=search_filter_block,
+                                         row=reverse_row,
+                                         order=2)
+        models.BlockOrder.objects.create(block=breadbox_block,
+                                         row=reverse_row,
+                                         order=1)
+
+        # Confirm that both templates are again joined in the correct order.
+        template = reverse_row.get_template()
+        self.assertRegexpMatches(template, '.*%s.*%s.*' % (two, one))
+
+    def test_row_required_js(self):
+        row = factories.RowFactory()
+        search_filter_block = factories.SearchFilterBlockFactory()
+        breadbox_block = factories.BreadboxBlockFactory()
+
+        models.BlockOrder.objects.create(block=search_filter_block, row=row,
+                                         order=1)
+        models.BlockOrder.objects.create(block=breadbox_block, row=row,
+                                         order=2)
+        models.BlockOrder.objects.create(block=search_filter_block, row=row,
+                                         order=3)
+
+        js = row.required_js()
+
+        # Only SearchFilterBlock has expected js, and that js should be
+        # included only once.
+        search_filter_block_js = search_filter_block.required_js()
+        self.assertEqual(len(js), len(search_filter_block_js))
+        self.assertEqual(search_filter_block_js, js)
+
     def test_page_all_blocks(self):
         blocks = []
         [blocks.append(factories.ContentBlockFactory()) for x in range(0, 5)]
@@ -378,3 +397,172 @@ class ModelsTests(DirectSEOBase):
         block_ids = [block.id for block in blocks]
 
         self.assertItemsEqual(block_ids, all_blocks_ids)
+
+    def test_page_context(self):
+        row = factories.RowFactory()
+        search_filter_block = factories.SearchFilterBlockFactory()
+        breadbox_block = factories.BreadboxBlockFactory()
+
+        models.BlockOrder.objects.create(block=search_filter_block, row=row,
+                                         order=1)
+        models.BlockOrder.objects.create(block=breadbox_block, row=row,
+                                         order=2)
+
+        page = factories.PageFactory()
+        models.RowOrder.objects.create(page=page, row=row, order=1)
+
+        context = page.context(self.search_results_request)
+        keys = context.keys()
+
+        expected_context = ['widgets', 'breadbox', 'site_description',
+                            'site_title']
+        for field in expected_context:
+            self.assertIn(field, keys)
+
+    def test_page_get_head(self):
+        one = 'head 1'
+        two = 'head 2'
+        three = 'head 3'
+
+        row = factories.RowFactory()
+        search_filter_block = factories.SearchFilterBlockFactory(head=one)
+        breadbox_block = factories.BreadboxBlockFactory(head=two)
+
+        models.BlockOrder.objects.create(block=search_filter_block, row=row,
+                                         order=1)
+        models.BlockOrder.objects.create(block=breadbox_block, row=row,
+                                         order=2)
+
+        page = factories.PageFactory(head=three)
+        models.RowOrder.objects.create(page=page, row=row, order=1)
+
+        head = page.get_head()
+        self.assertRegexpMatches(head, '.*%s.*%s.*%s.*' % (one, two, three))
+        for js in search_filter_block.required_js():
+            self.assertIn(js, head)
+
+    def test_page_template(self):
+        one = 'template one'
+        two = 'template two'
+        three = 'template three'
+        four = 'template four'
+
+        page = factories.PageFactory()
+
+        # Row 1
+        row = factories.RowFactory()
+        search_filter_block = factories.SearchFilterBlockFactory(template=one)
+        breadbox_block = factories.BreadboxBlockFactory(template=two)
+        models.BlockOrder.objects.create(block=search_filter_block, row=row,
+                                         order=1)
+        models.BlockOrder.objects.create(block=breadbox_block, row=row,
+                                         order=2)
+        models.RowOrder.objects.create(page=page, row=row, order=1)
+
+        # Row 2
+        row = factories.RowFactory()
+        search_filter_block = factories.SearchFilterBlockFactory(template=three)
+        breadbox_block = factories.BreadboxBlockFactory(template=four)
+        models.BlockOrder.objects.create(block=search_filter_block, row=row,
+                                         order=1)
+        models.BlockOrder.objects.create(block=breadbox_block, row=row,
+                                         order=2)
+        models.RowOrder.objects.create(page=page, row=row, order=2)
+
+        # Confirm that both templates are joined together in the correct order
+        template = page.get_template(self.search_results_request)
+        pattern = '.*%s.*%s.*%s.*%s.*' % (one, two, three, four)
+        self.assertRegexpMatches(template, pattern)
+
+        # Try a new order.
+        page = factories.PageFactory()
+
+        # Row 1
+        row = factories.RowFactory()
+        search_filter_block = factories.SearchFilterBlockFactory(template=one)
+        breadbox_block = factories.BreadboxBlockFactory(template=two)
+        models.BlockOrder.objects.create(block=search_filter_block, row=row,
+                                         order=2)
+        models.BlockOrder.objects.create(block=breadbox_block, row=row,
+                                         order=1)
+        models.RowOrder.objects.create(page=page, row=row, order=1)
+
+        # Row 2
+        row = factories.RowFactory()
+        search_filter_block = factories.SearchFilterBlockFactory(template=three)
+        breadbox_block = factories.BreadboxBlockFactory(template=four)
+        models.BlockOrder.objects.create(block=search_filter_block, row=row,
+                                         order=2)
+        models.BlockOrder.objects.create(block=breadbox_block, row=row,
+                                         order=1)
+        models.RowOrder.objects.create(page=page, row=row, order=2)
+
+        # Confirm that both templates are joined together in the correct order
+        template = page.get_template(self.search_results_request)
+        pattern = '.*%s.*%s.*%s.*%s.*' % (two, one, four, three)
+        self.assertRegexpMatches(template, pattern)
+
+    def test_page_render_cache_prefix(self):
+        """
+        Changes to any part of a page should change the cache prefix.
+
+        """
+        row = factories.RowFactory()
+        search_filter_block = factories.SearchFilterBlockFactory()
+        breadbox_block = factories.BreadboxBlockFactory()
+
+        models.BlockOrder.objects.create(block=search_filter_block, row=row,
+                                         order=1)
+        models.BlockOrder.objects.create(block=breadbox_block, row=row,
+                                         order=2)
+
+        page = factories.PageFactory()
+        models.RowOrder.objects.create(page=page, row=row, order=1)
+
+        start_prefix = page.render_cache_prefix(self.search_results_request)
+
+        breadbox_block.save()
+
+        end_prefix = page.render_cache_prefix(self.search_results_request)
+
+        self.assertNotEqual(start_prefix, end_prefix)
+
+    def test_page_handle_job_detail_redirect(self):
+        page = factories.PageFactory(page_type=models.Page.JOB_DETAIL)
+
+        # If there's a matching job and the url is correctly formatted
+        # and the job belongs on that site there shouldn't be a redirect.
+        redirect = page.handle_job_detail_redirect(self.job_detail_request,
+                                                   **self.job_detail_kwargs)
+        self.assertIsNone(redirect)
+
+        # If there is no matching job it should result in a 404.
+        self.assertRaises(Http404, page.handle_job_detail_redirect,
+                          self.job_detail_request)
+
+        # If the url is missing the slugs it should redirect to the
+        # slugified version.
+        redirect = page.handle_job_detail_redirect(self.job_detail_redirect_request,
+                                                   job_id=self.job['guid'])
+        self.assertEqual(self.job_detail_request.path, redirect.url)
+
+        # If we don't have access to the job on this site it should
+        # redirect to the home page.
+        settings.SITE_BUIDS = settings.SITE_PACKAGES = [100]
+        redirect = page.handle_job_detail_redirect(self.job_detail_request,
+                                                   **self.job_detail_kwargs)
+        self.assertEqual(redirect.url, reverse('home'))
+
+    def test_page_handle_search_results_redirect(self):
+        page = factories.PageFactory(page_type=models.Page.SEARCH_RESULTS)
+
+        # If there are no jobs and no query string it should
+        # redirect to the homepage.
+        self.conn.delete(q='*:*')
+        redirect = page.handle_search_results_redirect(self.search_results_request)
+        self.assertEqual(redirect.url, reverse('home'))
+
+        # But if there is a query string it should end up on the
+        # no results found page.
+        redirect = page.handle_search_results_redirect(self.search_results_with_q_request)
+        self.assertIsNone(redirect)
