@@ -572,8 +572,9 @@ class Page(models.Model):
         config = '%s::%s' % (config.pk, config.revision)
         buids = [str(buid) for buid in getattr(settings, 'SITE_BUIDS', [])]
         buids = '#'.join(buids)
-        return hashlib.sha1('###'.join([page, path, query_string, config,
-                                        blocks, rows, buids])).hexdigest()
+        key = '###'.join([page, path, query_string, config, blocks, rows,
+                          buids]).encode('utf-8')
+        return hashlib.sha1(key).hexdigest()
 
     def templatetag_library(self):
         templatetags = ['{% load seo_extras %}', '{% load i18n %}',

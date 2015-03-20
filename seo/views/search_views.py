@@ -379,10 +379,8 @@ def ajax_get_jobs_search(request):
 
 def robots_txt(request):
     host = str(request.META["HTTP_HOST"])
-    return render_to_response(
-            'robots.txt', {
-            'host': host},
-            content_type="text/plain")
+    return render_to_response('robots.txt', {'host': host},
+                              content_type="text/plain")
 
 
 @protected_site
