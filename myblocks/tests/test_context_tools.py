@@ -32,7 +32,7 @@ class ContextToolsTests(BlocksTestBase):
         breadbox = context_tools.get_breadbox(self.search_results_with_q_request)
         self.assertEqual(breadbox.path, reverse('all_jobs'))
         self.assertEqual(breadbox.job_count, '1')
-        self.assertEqual(breadbox.q_breadcrumb.display_title, 'Retail')
+        self.assertEqual(breadbox.q_breadcrumb.display_title, self.job['title'])
 
     def test_get_count_heading(self):
         count_heading = context_tools.get_count_heading(self.search_results_request)

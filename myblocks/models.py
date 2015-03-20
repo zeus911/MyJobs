@@ -595,11 +595,12 @@ class Page(models.Model):
             if job.on_sites and not on_this_site:
                 return redirect('home')
 
-        title_slug = kwargs.get('title_slug', '')
-        location_slug = kwargs.get('location_slug', '')
-        job_location_slug = slugify(job.location)
+        title_slug = kwargs.get('title_slug', '').lower()
+        location_slug = kwargs.get('location_slug', '').lower()
+        job_location_slug = slugify(job.location).lower()
 
-        if title_slug == job.title_slug and location_slug == job_location_slug:
+        if (title_slug == job.title_slug.lower() and
+                location_slug == job_location_slug):
             return None
 
         feed = kwargs.get('feed', '')

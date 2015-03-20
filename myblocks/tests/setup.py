@@ -37,13 +37,14 @@ class BlocksTestBase(DirectSEOBase):
         self.search_results_request = RequestFactory().get(url)
         self.search_results_request.user = self.user
 
-        url = build_url(reverse('all_jobs'), {'q': 'Retail'})
+        self.q_kwargs = {'q': self.job['title']}
+        url = build_url(reverse('all_jobs'), self.q_kwargs)
         self.search_results_with_q_request = RequestFactory().get(url)
         self.search_results_with_q_request.user = self.user
 
         self.facet = CustomFacetFactory(show_production=True,
-                                        name='Retail',
-                                        name_slug='retail',
+                                        name='%s' % self.job['title'],
+                                        name_slug='%s' % self.job['title_slug'],
                                         querystring='*',
                                         blurb='Test')
         self.bad_facet = CustomFacetFactory(show_production=True,
@@ -54,13 +55,14 @@ class BlocksTestBase(DirectSEOBase):
                                             always_show=True)
         SeoSiteFacetFactory(customfacet=self.facet, seosite=self.site)
         SeoSiteFacetFactory(customfacet=self.bad_facet, seosite=self.site)
-        url = 'retail/new-jobs/'
+
+        url = '%s/new-jobs/' % self.job['title_slug']
         self.search_results_with_custom_facet = RequestFactory().get(url)
         self.search_results_with_custom_facet.user = self.user
 
         self.job_detail_kwargs = {
             'job_id': self.job['guid'],
-            'title_slug': slugify(self.job['title']),
+            'title_slug': self.job['title_slug'],
             'location_slug': slugify(self.job['location']),
         }
         url = reverse('job_detail_by_location_slug_title_slug_job_id',

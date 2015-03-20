@@ -23,6 +23,9 @@ from import_jobs import clear_solr, download_feed_file, update_solr
 from xmlparse import DEv2JobFeed
 from moc_coding import models as moc_models
 from moc_coding.tests import factories as moc_factories
+from myblocks.models import BlockOrder, Page, RowOrder
+from myblocks.tests.factories import (ContentBlockFactory, PageFactory,
+                                      RowFactory)
 from myjobs.tests.factories import UserFactory
 from postajob.models import SitePackage
 from postajob.tests.factories import (JobFactory, JobLocationFactory,
@@ -30,10 +33,37 @@ from postajob.tests.factories import (JobFactory, JobLocationFactory,
 from seo import helpers
 from seo.tests.setup import (connection, DirectSEOBase, DirectSEOTestCase,
                              patch_settings)
-from seo.models import (BusinessUnit, Company, CustomPage, SeoSite,
-                        SeoSiteFacet, SiteTag, User)
+from seo.models import (BusinessUnit, Company, Configuration, CustomPage,
+                        SeoSite, SeoSiteFacet, SiteTag, User)
 from seo.tests import factories
 import solr_settings
+
+
+class FallbackTestCase(DirectSEOTestCase):
+    def test_home_page_fallback(self):
+        site = SeoSite.objects.get()
+
+        config = Configuration.objects.get(status=2)
+        config.home_page_template = 'home_page/home_page_listing.html'
+        config.footer = ''
+        config.save()
+
+        response = self.client.get(reverse('home'))
+        # The default home_page_listing.html template should
+        # result in a div with the class direct_joblisting.
+        self.assertIn('"direct_joblisting"', response.content)
+
+        content = 'This is a content block'
+        content_block = ContentBlockFactory(template=content)
+        row = RowFactory()
+        BlockOrder.objects.create(row=row, block=content_block, order=1)
+        page = PageFactory(page_type=Page.HOME_PAGE, sites=(site, ))
+        RowOrder.objects.create(page=page, row=row, order=1)
+
+        response = self.client.get(reverse('home'))
+        # The content block should be present, since there's
+        # a Page.
+        self.assertIn(content, response.content)
 
 
 class WidgetsTestCase(DirectSEOTestCase):

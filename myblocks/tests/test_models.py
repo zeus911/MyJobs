@@ -1,3 +1,5 @@
+from urllib import urlencode
+
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -242,9 +244,9 @@ class ModelsTests(BlocksTestBase):
         self.assertEqual(context['title_term'], '')
 
         context = search_result_block.context(self.search_results_with_q_request)
-        q_term = self.search_results_with_q_request.GET['q']
-        self.assertEqual(context['query_string'], 'q=%s' % q_term)
-        self.assertEqual(context['title_term'], q_term)
+        q_term = urlencode(self.q_kwargs)
+        self.assertEqual(context['query_string'], q_term)
+        self.assertEqual(context['title_term'], self.q_kwargs['q'])
 
     def test_search_result_header_context(self):
         search_result_header_block = factories.SearchResultHeaderFactory()
@@ -260,9 +262,9 @@ class ModelsTests(BlocksTestBase):
         self.assertEqual(context['title_term'], '')
 
         context = search_result_header_block.context(self.search_results_with_q_request)
-        q_term = self.search_results_with_q_request.GET['q']
-        self.assertEqual(context['query_string'], 'q=%s' % q_term)
-        self.assertEqual(context['title_term'], q_term)
+        q_term = urlencode(self.q_kwargs)
+        self.assertEqual(context['query_string'], q_term)
+        self.assertEqual(context['title_term'], self.q_kwargs['q'])
 
     def test_veteran_search_box_context(self):
         veteran_search_box_block = factories.VeteranSearchBoxBlockFactory()
@@ -529,6 +531,7 @@ class ModelsTests(BlocksTestBase):
 
         # If there's a matching job and the url is correctly formatted
         # and the job belongs on that site there shouldn't be a redirect.
+
         redirect = page.handle_job_detail_redirect(self.job_detail_request,
                                                    **self.job_detail_kwargs)
         self.assertIsNone(redirect)
