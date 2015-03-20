@@ -1327,7 +1327,8 @@ def solr_ac(request):
     return HttpResponse(jsonpres, content_type="application/json")
 
 
-def v2_redirect(request, v2_redirect=None, country=None, state=None, city=None, onet=None):
+def v2_redirect(request, v2_redirect=None, country=None, state=None, city=None,
+                onet=None):
     v2_redirect_kwargs = {}
     try:
         jobs = DESearchQuerySet();
