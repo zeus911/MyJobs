@@ -46,14 +46,11 @@ class ModelsTests(BlocksTestBase):
         breadbox = context['breadbox']
 
         self.assertEqual(breadbox.path, reverse('all_jobs'))
-        self.assertEqual(breadbox.job_count, '1')
-        self.assertIsNone(breadbox.q_breadcrumb)
+
 
         context = breadbox_block.context(self.search_results_with_q_request)
         breadbox = context['breadbox']
         self.assertEqual(breadbox.path, reverse('all_jobs'))
-        self.assertEqual(breadbox.job_count, '1')
-        self.assertEqual(breadbox.q_breadcrumb.display_title, 'Retail')
 
     def test_column_block_context(self):
         column_block = factories.ColumnBlockFactory()

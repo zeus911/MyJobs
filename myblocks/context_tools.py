@@ -181,6 +181,9 @@ def get_jobs_and_counts(request):
 @Memoized
 def get_job_detail_breadbox(request, job_id):
     job = get_job(request, job_id)
+    if not job:
+        return {}
+
     site_config = get_site_config(request)
 
     breadbox = helpers.job_breadcrumbs(job, site_config.browse_company_show)

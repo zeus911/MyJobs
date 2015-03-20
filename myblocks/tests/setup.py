@@ -44,9 +44,16 @@ class BlocksTestBase(DirectSEOBase):
         self.facet = CustomFacetFactory(show_production=True,
                                         name='Retail',
                                         name_slug='retail',
-                                        querystring='Retail',
+                                        querystring='*',
                                         blurb='Test')
+        self.bad_facet = CustomFacetFactory(show_production=True,
+                                            name='Bad Facet',
+                                            name_slug='bad-facet',
+                                            querystring='asfljasdlfjsadfsdf',
+                                            blurb='Test',
+                                            always_show=True)
         SeoSiteFacetFactory(customfacet=self.facet, seosite=self.site)
+        SeoSiteFacetFactory(customfacet=self.bad_facet, seosite=self.site)
         url = 'retail/new-jobs/'
         self.search_results_with_custom_facet = RequestFactory().get(url)
         self.search_results_with_custom_facet.user = self.user
