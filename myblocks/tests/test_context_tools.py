@@ -3,8 +3,6 @@ from django.core.urlresolvers import reverse
 
 from myblocks import context_tools
 from myblocks.tests.setup import BlocksTestBase
-from seo.models import SeoSiteFacet
-from seo.tests.factories import CustomFacetFactory, SeoSiteFacetFactory
 
 
 class ContextToolsTests(BlocksTestBase):

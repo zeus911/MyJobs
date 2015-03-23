@@ -43,7 +43,15 @@ from universal.helpers import build_url
 class FallbackTestCase(DirectSEOTestCase):
     def setUp(self):
         super(FallbackTestCase, self).setUp()
+
+        self.job = solr_settings.SOLR_FIXTURE[0]
+        self.conn.add([self.job])
+
         self.site = SeoSite.objects.get()
+        self.buid = BusinessUnit.objects.get_or_create(pk=self.job['buid'])
+        self.site.business_units.add(self.job['buid'])
+        self.site.save()
+
         self.content = 'This is a content block'
 
         self.config = Configuration.objects.get(status=2)
@@ -51,8 +59,9 @@ class FallbackTestCase(DirectSEOTestCase):
         self.config.footer = ''
         self.config.save()
 
-        self.job = solr_settings.SOLR_FIXTURE[0]
-        self.conn.add([self.job])
+    def tearDown(self):
+        self.conn.delete(q='*:*')
+
 
     def make_page(self, page_type):
         content = 'This is a content block'

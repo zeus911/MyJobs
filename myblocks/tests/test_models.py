@@ -522,6 +522,9 @@ class ModelsTests(BlocksTestBase):
 
         breadbox_block.save()
 
+        # Get the most recent version of the page, without the old
+        # cached blocks.
+        page = models.Page.objects.get(pk=page.pk)
         end_prefix = page.render_cache_prefix(self.search_results_request)
 
         self.assertNotEqual(start_prefix, end_prefix)
