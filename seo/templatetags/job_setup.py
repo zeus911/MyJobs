@@ -66,7 +66,7 @@ def create_arranged_jobs(request, featured_jobs, default_jobs, site_config):
             'class': 'default_jobListing direct_hiddenOption'
         })
 
-    if not jobs or not jobs[0]['jobs'] or not jobs[1]['jobs']:
+    if not jobs or (not jobs[0]['jobs'] and not jobs[1]['jobs']):
         jobs = []
 
     return jobs
