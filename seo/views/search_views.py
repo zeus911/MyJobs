@@ -1420,7 +1420,7 @@ def new_sitemap_index(request):
     dates = [latest_datetime - datetime.timedelta(days=i) for i in xrange(history)]
     earliest_day = (latest_datetime - datetime.timedelta(days=history)).date()
     datecounts = DateSitemap().numpages(startdate=earliest_day,
-            enddate=latest_datetime)
+                                        enddate=latest_datetime)
     sitemaps = {}
 
     for date in dates:
@@ -1435,15 +1435,18 @@ def new_sitemap_index(request):
         pages = sitemaps[date]['count']
         sitemap_url = urlresolvers.reverse('sitemap_date',
                                            kwargs={'jobdate': date})
-        sites_dates.append(('%s://%s%s' % (protocol, current_site.domain, sitemap_url),
+        sites_dates.append(('%s://%s%s' % (protocol, current_site.domain,
+                                           sitemap_url),
                             date))
         if pages > 1:
             for page in xrange(2, pages+1):
-                sites_dates.append(('%s://%s%s?p=%s' % (protocol, current_site.domain,
-                                                 sitemap_url, page),
+                sites_dates.append(('%s://%s%s?p=%s' % (protocol,
+                                                        current_site.domain,
+                                                        sitemap_url, page),
                                     date))
 
-    xml = loader.render_to_string('sitemaps/sitemap_index_lastmod.xml', {'sitemaps': sites_dates})
+    xml = loader.render_to_string('sitemaps/sitemap_index_lastmod.xml',
+                                  {'sitemaps': sites_dates})
     return HttpResponse(xml, content_type='application/xml')
 
 
