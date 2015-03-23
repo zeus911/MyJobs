@@ -62,7 +62,6 @@ class FallbackTestCase(DirectSEOTestCase):
     def tearDown(self):
         self.conn.delete(q='*:*')
 
-
     def make_page(self, page_type):
         content = 'This is a content block'
         content_block = ContentBlockFactory(template=content)

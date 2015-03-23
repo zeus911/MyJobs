@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.test.client import RequestFactory
 
 from myjobs.tests.factories import UserFactory
-from seo.models import Configuration, SeoSite, SiteTag
+from seo.models import BusinessUnit, Configuration, SeoSite, SiteTag
 from seo.tests.factories import (CustomFacetFactory, SeoSiteFacetFactory,
                                  SpecialCommitmentFactory)
 from seo.tests.setup import DirectSEOBase
@@ -19,6 +19,9 @@ class BlocksTestBase(DirectSEOBase):
         self.config = Configuration.objects.get(status=2)
         self.config.browse_facet_show = True
         self.config.save()
+
+        self.buid = BusinessUnit.objects.get_or_create(pk=0)
+        self.site.business_unit.add(0)
 
         self.commitment = SpecialCommitmentFactory()
         self.site.special_commitments.add(self.commitment)
