@@ -328,8 +328,7 @@ class Partner(models.Model):
     name = models.CharField(max_length=255,
                             verbose_name='Partner Organization')
     data_source = models.CharField(max_length=255,
-                                   verbose_name=('Where this partner was '
-                                                 'discovered'),
+                                   verbose_name='Partner Source',
                                    blank=True)
     uri = models.URLField(verbose_name='Partner URL', blank=True)
     primary_contact = models.ForeignKey('Contact', null=True,
