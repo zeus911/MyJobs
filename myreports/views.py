@@ -18,7 +18,6 @@ from universal.decorators import company_has_access
 
 # TODO:
 # * write unit tests for new report generation stuff
-# * update documentation for views
 
 
 @restrict_to_staff()

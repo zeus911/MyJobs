@@ -1,7 +1,6 @@
 """Tests associated with the various MyReports views."""
 
 import json
-import unittest
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
@@ -192,3 +191,13 @@ class TestViewRecords(MyReportsTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(all('count' in record for record in output))
+
+
+class TestReportView(MyReportsTestCase):
+    def setUp(self):
+        super(TestReportView, self).setUp()
+        self.client = TestClient(path='/reports/view/mypartners')
+        self.client.login_user(self.user)
+
+        ContactRecordFactory.create_batch(10, partner=self.partner,
+                                          contact_name='Joe Shmoe')
