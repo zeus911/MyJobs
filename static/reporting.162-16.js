@@ -65,7 +65,9 @@ Report.prototype.bind_events = function() {
           values = [];
 
       if (all_records.is(":checked") && $(this).is(":checked")) {
-        report.data[in_list] = "";
+        if (typeof report.data.partner !== "undefined") {
+          delete report.data.partner;
+        }
       } else {
         // iterate through all checkboxes and find all the ones that are checked
         // and add to data.
@@ -288,19 +290,17 @@ Report.prototype.readable_data = function() {
       html += "</div>";
     }
   }
-  if (typeof data['partner'] === "undefined") {
+  if (typeof data.partner === "undefined") {
     if ($("#partner-all-checkbox").is(":checked")) {
       html += "<div><label>Partners:</label>All Partners</div>";
     }
   }
 
-  if (typeof data['contact'] === "undefined") {
+  if (typeof data.contact === "undefined") {
     if ($("#contact-all-checkbox").is(":checked")) {
       html += "<div><label>Contacts:</label>All Contacts</div>";
     }
   }
-
-
 
   return html;
 };
@@ -627,7 +627,7 @@ $(document).ready(function() {
       data: data,
       success: function(data) {
         $("#main-container").html(JSON.stringify(data));
-      },
+      }
     });
   });
 
@@ -646,7 +646,6 @@ $(document).ready(function() {
       dataType: "json",
       success: function(data) {
         var report = new Report(["prm"]);
-        debugger;
         report.create_clone_report($.parseJSON(data));
         report.unbind_events();
         report.bind_events();
@@ -661,7 +660,7 @@ $(document).ready(function() {
     var data = {"csrfmiddlewaretoken": read_cookie("csrftoken")};
     $.ajax({
       type: "POST",
-      url: "view/archive",
+      url: "archive",
       data: data,
       success: function(data) {
         $("#main-container").html(data);
