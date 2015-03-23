@@ -171,21 +171,11 @@ def parse_feed(feed_url, frequency='W', num_items=100, offset=0,
     interval = get_interval_from_frequency(frequency)
 
     end = datetime.date.today()
-    new = start = end + datetime.timedelta(days=interval)
+    start = end + datetime.timedelta(days=interval)
     if last_sent is not None:
         last_sent_date = last_sent.date()
         last_sent_diff = last_sent_date - start
-        # interval is always negative.
-        # last_sent_diff is negative if more than one saved search period
-        #     has passed, or positive otherwise.
-        if interval >= last_sent_diff.days:
-            # interval >= last_sent_diff.days indicates that this search was
-            # last sent more than one interval ago; use last_sent_date as the
-            # new start date
-            start = last_sent_date
-
-        # mark all jobs newer than the last sent date for this search as new
-        new = last_sent_date
+        start = min([start, last_sent_date])
 
     item_list = []
 
@@ -231,7 +221,7 @@ def parse_feed(feed_url, frequency='W', num_items=100, offset=0,
 
         if ignore_dates or date_in_range(start, end,
                                          item_dict['pubdate'].date()):
-            if ignore_dates and new <= item_dict['pubdate'].date():
+            if ignore_dates and start <= item_dict['pubdate'].date():
                 item_dict['new'] = True
 
             item_list.append(item_dict)
@@ -246,7 +236,7 @@ def date_in_range(start, end, x):
     return start <= x <= end
 
 
-def url_sort_options(feed_url, sort_by, frequency=None):
+def url_sort_options(feed_url, sort_by, frequency=None, partner=False):
     """
     Updates urls based on sort by option. 
 
@@ -254,6 +244,7 @@ def url_sort_options(feed_url, sort_by, frequency=None):
     :feed_url:      URL of an RSS feed 
     :sort_by:       What the feed should be sorted by ('Relevance' or 'Date')
     :frequency:     Frequency of saved search ('D', 'W', 'M')
+    :partner:       This is a partner saved search; don't add days_ago
 
     Output:
     :feed_url:      URL updated with sorting options. 'Date' has no additions to
@@ -269,7 +260,7 @@ def url_sort_options(feed_url, sort_by, frequency=None):
     if sort_by == "Relevance":
         query.update({'date_sort': 'False'})
 
-    if frequency:
+    if frequency and not partner:
         interval = -get_interval_from_frequency(frequency)
         query.update({'days_ago': interval})
 

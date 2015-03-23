@@ -46,3 +46,5 @@ requests==2.3.0
 selenium==2.42.1
 unicodecsv==0.9.4
 bidict==0.3.1
+django-report-tools==0.2.2
+validate-email==1.2

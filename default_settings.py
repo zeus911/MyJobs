@@ -150,6 +150,10 @@ CELERY_ROUTES = {
         'queue': 'priority',
         'routing_key': 'priority.update_solr'
     },
+    'tasks.task_clear_bu_cache': {
+        'queue': 'priority',
+        'routing_key': 'priority.clear_cache'
+    },
     'tasks.send_search_digest': {
         'queue': 'myjobs',
         'routing_key': 'myjobs.send_search_digest'
@@ -260,6 +264,7 @@ INSTALLED_APPS = (
     'saved_search',
     'taggit',
     'fsm',
+    'report_tools',
 )
 
 # Captcha SSL
@@ -271,7 +276,7 @@ CAPTCHA_AJAX = True
 PROJECT_APPS = ('myjobs', 'myprofile', 'mysearches', 'registration',
                 'mydashboard', 'mysignon', 'mymessages', 'mypartners',
                 'solr', 'postajob', 'moc_coding', 'seo', 'social_links',
-                'wildcard', 'myblocks', 'myemails', )
+                'wildcard', 'myblocks', 'myemails', 'myreports')
 
 INSTALLED_APPS += PROJECT_APPS
 
@@ -576,3 +581,6 @@ EMAIL_FORMATS = {
         'subject': '{company_name} Saved Search Updated - {label}',
     },
 }
+
+
+MEMOIZE = True

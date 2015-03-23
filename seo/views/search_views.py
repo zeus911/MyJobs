@@ -7,7 +7,6 @@ import operator
 from fsm.views import FSMView
 import urllib
 import json as simplejson
-from HTMLParser import HTMLParser
 from types import IntType
 from urlparse import urlparse, urlunparse
 
@@ -30,7 +29,6 @@ from django.template import RequestContext, loader
 from django.template.defaultfilters import safe
 from django.utils.decorators import method_decorator
 from django.utils.encoding import smart_str, iri_to_uri
-from django.utils.html import strip_tags
 from django.utils.feedgenerator import Atom1Feed
 from django.views.decorators.csrf import csrf_exempt
 
@@ -44,6 +42,9 @@ from xmlparse import text_fields
 from import_jobs import add_jobs, delete_by_guid
 from transform import transform_for_postajob
 
+from myblocks.views import BlockView
+from myblocks.models import Page
+from myblocks import context_tools
 from seo.templatetags.seo_extras import facet_text, smart_truncate
 from seo.breadbox import Breadbox
 from seo.cache import get_custom_facets, get_site_config, get_total_jobs_count
@@ -52,7 +53,7 @@ from seo import helpers
 from seo.filters import FacetListWidget
 from seo.forms.admin_forms import UploadJobFileForm
 from seo.models import (BusinessUnit, Company, Configuration, Country,
-                        CustomFacet, GoogleAnalytics, JobFeed, SeoSite, SiteTag)
+                        GoogleAnalytics, JobFeed, SeoSite, SiteTag)
 from seo.decorators import (sns_json_message, custom_cache_page, protected_site,
                             home_page_check)
 from seo.sitemap import DateSitemap
@@ -73,6 +74,50 @@ From this dictionary, we should be able to filter most
 items down to what we actually need.
 """
 LOG = logging.getLogger('views')
+
+
+class FallbackBlockView(BlockView):
+    page_type = Page.SEARCH_RESULTS
+    fallback = None
+
+    def handle_request(self, request, *args, **kwargs):
+        if not self.page:
+            self.set_page(request)
+        if not self.page:
+            return self.fallback(request, *args, **kwargs)
+        required_redirect = self.page.handle_redirect(request, *args, **kwargs)
+        if required_redirect:
+            return required_redirect
+        return HttpResponse(self.page.render(request, **kwargs))
+
+    def post(self, request, *args, **kwargs):
+        self.set_page(request)
+        if not self.page:
+            return self.fallback(request, *args, **kwargs)
+        return super(FallbackBlockView, self).post(request, *args, **kwargs)
+
+    def set_page(self, request):
+        if request.user.is_authenticated() and request.user.is_staff:
+            try:
+                page = Page.objects.filter(site=settings.SITE,
+                                           status=Page.STAGING,
+                                           page_type=self.page_type)[0]
+                setattr(self, 'page', page)
+            except IndexError:
+                pass
+
+        try:
+            page = Page.objects.filter(site=settings.SITE,
+                                       status=Page.PRODUCTION,
+                                       page_type=self.page_type)[0]
+        except IndexError:
+            try:
+                page = Page.objects.filter(site_id=1,
+                                           status=Page.PRODUCTION,
+                                           page_type=self.page_type)[0]
+            except IndexError:
+                page = None
+        setattr(self, 'page', page)
 
 
 def ajax_geolocation_facet(request):
@@ -563,6 +608,14 @@ def job_detail_by_title_slug_job_id(request, job_id, title_slug=None,
         return redirect(redirect_url, permanent=True)
 
 
+class JobDetail(FallbackBlockView):
+    page_type = Page.JOB_DETAIL
+
+    def __init__(self, **kwargs):
+        super(JobDetail, self).__init__(**kwargs)
+        self.fallback = job_detail_by_title_slug_job_id
+
+
 @custom_cache_page
 def stylesheet(request, cid=None, css_file="stylesheet.css"):
     """
@@ -585,6 +638,7 @@ def stylesheet(request, cid=None, css_file="stylesheet.css"):
     return render_to_response(css_file, {'css': selected_stylesheet},
                               context_instance=RequestContext(request),
                               content_type="text/css",)
+
 
 @custom_cache_page
 def posting_stylesheet(request, cid=None, css_file="posting-stylesheet.css"):
@@ -713,6 +767,10 @@ def syndication_feed(request, filter_path, feed_type):
                             jsids=settings.SITE_BUIDS,
                             filters=filters, sort_order=sort_order)
 
+    job_count = jobs.count()
+    num_items = min(num_items, max_items, job_count)
+    jobs[:num_items]
+
     if days_ago:
         now = datetime.datetime.utcnow()
         start_date = now - datetime.timedelta(days=days_ago)
@@ -728,12 +786,10 @@ def syndication_feed(request, filter_path, feed_type):
     else:
         buid_last_written = datetime.datetime.now()
 
-    job_count = jobs.count()
-    num_items = min(num_items, max_items, job_count)
-
-    qs = jobs.values('city', 'company', 'country', 'country_short', 'date_new',
-                     'description', 'location', 'reqid', 'state', 'state_short',
-                     'title', 'uid', 'guid')[offset:offset+num_items]
+    qs = jobs.values('city', 'company', 'country', 'country_short',
+                     'date_new', 'description', 'location', 'reqid', 'state',
+                     'state_short', 'title', 'uid', 'guid',
+                     'is_posted')[offset:offset+num_items]
 
     self_link = ExtraValue(name="link", content="",
                            attributes={'href': request.build_absolute_uri(),
@@ -1033,6 +1089,7 @@ def home_page(request):
     render_to_response call
 
     """
+
     site_config = get_site_config(request)
     num_facet_items = site_config.num_filter_items_to_show
     custom_facet_counts = []
@@ -1152,14 +1209,14 @@ def company_listing(request, alpha=None, group=None):
         companies = Company.objects.filter(job_source_ids__in=buids).\
             exclude(company_slug='').distinct()
 
-        if group=='member':
+        if group == 'member':
             companies = companies.filter(member=True)
 
     # Get ordered list of first character of company names (used to determine
     # what buttons to display).
     alpha_filters = set()
     for co in companies:
-        if (len(alpha_filters)==27):
+        if len(alpha_filters) == 27:
             break
         alpha_filters.add(co.company_slug[0] if co.company_slug[0].isalpha()
                              else '0-9')
@@ -1552,7 +1609,7 @@ def _moc_json(detail):
     mil = detail.military_description
     moc_id = detail.moc.id
     label = "%s - %s (%s - %s)" % (value, civ, branch, mil)
-    return {'label': label, 'value': value, 'moc_id':moc_id}
+    return {'label': label, 'value': value, 'moc_id': moc_id}
 
 
 def dseo_404(request, the_job=None, job_detail=False):
@@ -1595,6 +1652,14 @@ def dseo_404(request, the_job=None, job_detail=False):
         context_instance=RequestContext(request)))
 
 
+class Dseo404(FallbackBlockView):
+    page_type = Page.ERROR_404
+
+    def __init__(self, **kwargs):
+        super(Dseo404, self).__init__(**kwargs)
+        self.fallback = dseo_404
+
+
 def dseo_500(request):
     """
     Handles server errors gracefully.
@@ -1618,8 +1683,8 @@ def dseo_500(request):
         'site_heading': settings.SITE_HEADING,
         'site_tags': settings.SITE_TAGS,
         'site_description': settings.SITE_DESCRIPTION,
-        'build_num' : settings.BUILD,
-        'view_source' : settings.VIEW_SOURCE
+        'build_num': settings.BUILD,
+        'view_source': settings.VIEW_SOURCE
     }
     return HttpResponseServerError(loader.render_to_string(
                                    'dseo_500.html', data_dict,
@@ -1630,29 +1695,23 @@ def dseo_500(request):
 @protected_site
 def search_by_results_and_slugs(request, *args, **kwargs):
     filters = helpers.build_filter_dict(request.path)
-    query_path = request.META.get('QUERY_STRING', None)
 
     redirect_url = helpers.determine_redirect(request, filters)
     if redirect_url:
         return redirect_url
 
-    facet_blurb_facet = None
-    path = "http://%s%s" % (request.META.get('HTTP_HOST', 'localhost'),
-                            request.path)
-    num_filters = len([k for (k, v) in filters.iteritems() if v])
+    query_path = request.META.get('QUERY_STRING', None)
     moc_id_term = request.GET.get('moc_id', None)
     q_term = request.GET.get('q', None)
+    sort_order = request.GET.get('sort', 'relevance')
+    if sort_order not in helpers.sort_order_mapper.keys():
+        sort_order = 'relevance'
 
+    facet_blurb_facet = None
     ga = settings.SITE.google_analytics.all()
-    sitecommit_str = helpers.make_specialcommit_string(
-        settings.COMMITMENTS.all())
+    sitecommit_str = helpers.make_specialcommit_string(settings.COMMITMENTS.all())
     site_config = get_site_config(request)
     num_jobs = int(site_config.num_job_items_to_show) * 2
-    sort_order = request.REQUEST.get('sort', 'relevance')
-    # Apply any parameters in the querystring to the solr search.
-    sqs = (helpers.prepare_sqs_from_search_params(request.GET) if query_path
-           else None)
-    custom_facets = []
 
     custom_facet_counts = []
     if site_config.browse_facet_show:
@@ -1673,76 +1732,32 @@ def search_by_results_and_slugs(request, *args, **kwargs):
             if len(active_facets) == 1 and active_facets[0].blurb:
                 facet_blurb_facet = active_facets[0]
 
-    else:
-        custom_facets = settings.DEFAULT_FACET
+    default_jobs, featured_jobs, facet_counts = helpers.jobs_and_counts(
+        request, filters, num_jobs)
 
-    default_jobs = helpers.get_jobs(default_sqs=sqs,
-                                    custom_facets=settings.DEFAULT_FACET,
-                                    exclude_facets=settings.FEATURED_FACET,
-                                    jsids=settings.SITE_BUIDS, filters=filters,
-                                    facet_limit=num_jobs, sort_order=sort_order)
-    jobs_count = get_total_jobs_count()
-    featured_jobs = helpers.get_featured_jobs(default_sqs=sqs,
-                                              filters=filters,
-                                              jsids=settings.SITE_BUIDS,
-                                              facet_limit=num_jobs,
-                                              sort_order=sort_order)
-    facet_counts = default_jobs.add_facet_count(featured_jobs).get('fields')
+    total_featured_jobs = featured_jobs.count()
+    total_default_jobs = default_jobs.count()
 
     (num_featured_jobs, num_default_jobs, _, _) = helpers.featured_default_jobs(
-        featured_jobs.count(), default_jobs.count(),
+        total_featured_jobs, total_default_jobs,
         num_jobs, site_config.percent_featured)
 
-    # Strip html and markdown formatting from description snippets
-    try:
-        i = text_fields.index('description')
-        text_fields[i] = 'html_description'
-    except ValueError:
-        pass
-    h = HTMLParser()
-    all_jobs = itertools.chain(default_jobs[:num_default_jobs],
-                               featured_jobs[:num_featured_jobs])
-    for job in all_jobs:
-        text = filter(None, [getattr(job, x, "None") for x in text_fields])
-        unformatted_text = h.unescape(strip_tags(" ".join(text)))
-        setattr(job, 'text', unformatted_text)
-
     if not facet_counts:
-        LOG.info("Redirecting to home page after receiving 'None' "
-                 "for facet_counts.",
-                 extra={
-                     'view': 'job_listing_by_slug_tag',
-                     'data': {
-                         'request': request,
-                         'site_id': settings.SITE_ID,
-                         'path': path,
-                         'custom_facets': custom_facets,
-                         'filters': filters
-                     }
-                 })
         return redirect("/")
 
-    if num_default_jobs == 0 and num_featured_jobs == 0 \
-            and not any([i.always_show for i in custom_facets]) \
-            and not query_path:
+    if num_default_jobs == 0 and num_featured_jobs == 0 and not query_path:
         return redirect("/")
 
-    if num_featured_jobs != 0:
-        jobs = featured_jobs[:num_featured_jobs]
-        breadbox = Breadbox(request.path, filters, jobs, request.GET)
-    else:
-        jobs = default_jobs[:num_default_jobs]
-        breadbox = Breadbox(request.path, filters, jobs, request.GET)
+    default_jobs = default_jobs[:num_default_jobs]
+    featured_jobs = featured_jobs[:num_featured_jobs]
 
-    if filters['company_slug']:
-        company_obj = Company.objects.filter(member=True)
-        company_obj = company_obj.filter(company_slug=filters['company_slug'])
-        if company_obj:
-            company_data = helpers.company_thumbnails(company_obj)[0]
-        else:
-            company_data = None
-    else:
-        company_data = None
+    jobs = list(itertools.chain(featured_jobs, default_jobs))
+    for job in jobs:
+        helpers.add_text_to_job(job)
+    
+    breadbox = Breadbox(request.path, filters, jobs, request.GET)
+
+    company_data = helpers.get_company_data(filters)
 
     widgets = helpers.get_widgets(request, site_config, facet_counts,
                                   custom_facet_counts, filters=filters)
@@ -1755,21 +1770,17 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         moc_term = '\*'
 
     results_heading = helpers.build_results_heading(breadbox)
-    breadbox.job_count = intcomma(featured_jobs.count() + default_jobs.count())
+    breadbox.job_count = intcomma(total_default_jobs + total_featured_jobs)
     count_heading = helpers.build_results_heading(breadbox)
-
-    sort_order = request.GET.get('sort', 'relevance')
-    if sort_order not in helpers.sort_order_mapper.keys():
-        sort_order = 'relevance'
 
     data_dict = {
         'breadbox': breadbox,
         'build_num': settings.BUILD,
         'company': company_data,
         'count_heading': count_heading,
-        'default_jobs': default_jobs[:num_default_jobs],
+        'default_jobs': default_jobs,
         'facet_blurb_facet': facet_blurb_facet,
-        'featured_jobs': featured_jobs[:num_featured_jobs],
+        'featured_jobs': featured_jobs,
         'filters': filters,
         'google_analytics': ga,
         'host': str(request.META.get("HTTP_HOST", 'localhost')),
@@ -1777,8 +1788,8 @@ def search_by_results_and_slugs(request, *args, **kwargs):
         'max_filter_settings': settings.ROBOT_FILTER_LEVEL,
         'moc_id_term': moc_id_term if moc_id_term else '\*',
         'moc_term': moc_term,
-        'num_filters': num_filters,
-        'total_jobs_count': jobs_count,
+        'num_filters': len([k for (k, v) in filters.iteritems() if v]),
+        'total_jobs_count': get_total_jobs_count(),
         'results_heading': results_heading,
         'search_url': request.path,
         'site_commitments': settings.COMMITMENTS,
@@ -1798,6 +1809,30 @@ def search_by_results_and_slugs(request, *args, **kwargs):
 
     return render_to_response('job_listing.html', data_dict,
                               context_instance=RequestContext(request))
+
+
+class SearchResults(FallbackBlockView):
+    page_type = Page.SEARCH_RESULTS
+
+    def __init__(self, **kwargs):
+        super(SearchResults, self).__init__(**kwargs)
+        self.fallback = search_by_results_and_slugs
+
+    def set_page(self, request):
+        if request.user.is_authenticated() and request.user.is_staff:
+            no_results_pages = Page.objects.filter(page_type=Page.NO_RESULTS,
+                                                   site=settings.SITE)
+        else:
+            no_results_pages = Page.objects.filter(page_type=Page.NO_RESULTS,
+                                                   site=settings.SITE,
+                                                   status=Page.PRODUCTION)
+        if no_results_pages.exists():
+            default_jobs, featured_jobs, _ = context_tools.get_jobs_and_counts(request)
+
+            if not default_jobs and not featured_jobs:
+                self.page_type = Page.NO_RESULTS
+
+        return super(SearchResults, self).set_page(request)
 
 
 def urls_redirect(request, guid, vsid=None, debug=None):
@@ -1838,6 +1873,7 @@ def post_a_job(request):
         jobs_added = 0
     resp = {'jobs_added': jobs_added}
     return HttpResponse(json.dumps(resp), content_type='application/json')
+
 
 @csrf_exempt
 def delete_a_job(request):

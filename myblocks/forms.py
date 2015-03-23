@@ -10,10 +10,22 @@ class BlockForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(BlockForm, self).__init__(*args, **kwargs)
         self.fields['template'].initial = models.raw_base_template(self.Meta.model)
+        self.fields['head'].initial = models.raw_base_head(self.Meta.model)
 
 
-class ColumnBlockForm(BlockForm):
+class ApplyLinkBlockForm(BlockForm):
     class Meta:
+        model = models.ApplyLinkBlock
+
+
+class BreadboxBlockForm(BlockForm):
+    class Meta:
+        model = models.BreadboxBlock
+
+
+class ColumnBlockForm(forms.ModelForm):
+    class Meta:
+        exclude = ('template', )
         model = models.ColumnBlock
 
 
@@ -22,14 +34,24 @@ class ContentBlockForm(BlockForm):
         model = models.ContentBlock
 
 
-class ImageBlockForm(BlockForm):
+class JobDetailBlockForm(BlockForm):
     class Meta:
-        model = models.ImageBlock
+        model = models.JobDetailBlock
+
+
+class JobDetailBreadboxBlockForm(BlockForm):
+    class Meta:
+        model = models.JobDetailBreadboxBlock
 
 
 class LoginBlockForm(BlockForm):
     class Meta:
         model = models.LoginBlock
+
+
+class MoreButtonBlockForm(BlockForm):
+    class Meta:
+        model = models.MoreButtonBlock
 
 
 class RegistrationBlockForm(BlockForm):
@@ -67,10 +89,15 @@ class VeteranSearchBoxForm(BlockForm):
         model = models.VeteranSearchBox
 
 
+class PageForm(forms.ModelForm):
+    class Meta:
+        model = models.Page
+
+    def __init__(self, *args, **kwargs):
+        super(PageForm, self).__init__(*args, **kwargs)
+        self.fields['head'].initial = models.raw_base_head(self.Meta.model)
+
+
 class RowForm(forms.ModelForm):
     class Meta:
         model = models.Row
-
-    def __init__(self, *args, **kwargs):
-        super(RowForm, self).__init__(*args, **kwargs)
-        self.fields['template'].initial = models.raw_base_template(self.Meta.model)

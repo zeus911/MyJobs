@@ -66,6 +66,9 @@
             {% if partner.phone %}
                 <input id="{{partner.id}}-{{partner.phone}}" class="partner-phone" type="hidden" />
             {% endif %}
+            {% if partner.has_valid_location %}
+                <input id="{{partner.id}}-{{partner.st}}" class="partner-state" type="hidden" />
+            {% endif %}
         {% endif %}
     </div>
     {% if partner.library or partner.data_source %}

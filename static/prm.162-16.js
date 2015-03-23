@@ -387,8 +387,10 @@ $(document).ready(function() {
 
     // Partner Library only logic
     if(location.pathname == '/prm/view/partner-library/'){
+        // make sure add button is enabled by default
         // Partner Library product card click
         $("body").on("click",".product-card:not(.product-card.disabled-card)", function() {
+            $("#add-partner-library").removeClass("disabled");
             /* Variables */
             var library_id = $(this).attr("id").split("-")[1],
                 library_title = $(this).children("div.big-title").children("b").text() +"*",
@@ -399,7 +401,7 @@ $(document).ready(function() {
             $(".modal-body").children(":not(p:first-child)").remove();
             $(".modal-body").children("p").html(body_message);
 
-            var for_completion = ["name", "email", "phone"];
+            var for_completion = ["name", "email", "phone", "state"];
             $(this).children("div.product-details").children("input").each(function() {
                 // if partner has name, email, or phone they will be added via template with type hidden
                 if($(this).is("[type=hidden]")) {
@@ -418,19 +420,25 @@ $(document).ready(function() {
                 note.appendChild(note_node);
                 note.setAttribute("style", "color: red");
                 var text = "This partner is missing information from the primary contact. " +
-                    "Please contact the partner to obtain this missing data:";
+                    "Please contact the partner to obtain this missing data.";
                 var ul = document.createElement("ul");
                 for(var i = 0; i < for_completion.length; i++) {
-                    var li = document.createElement("li");
-                    var li_node = document.createTextNode(for_completion[i]);
-                    li.appendChild(li_node);
-                    ul.appendChild(li);
+                  var li = document.createElement("li");
+                  var li_node = document.createTextNode(for_completion[i]);
+                  li.appendChild(li_node);
+                  ul.appendChild(li);
                 }
 
                 var node = document.createTextNode(text);
                 p.appendChild(note);
                 p.appendChild(node);
-                $(".modal-body").append(p).append(ul);
+
+                optional = $("<p>These fields are missing but can be added " +
+                             "later:</p>");
+                $(".modal-body").append(p)
+                
+                $(".modal-body").append(optional).append(ul);
+
             }
 
             var disclaimer = document.createElement("span"),
@@ -449,10 +457,12 @@ $(document).ready(function() {
     }
 
     // When user clicks "Add" in Partner Library modal
-    $("#add-partner-library").on("click", function(){
+    $(document.body).on("click", "#add-partner-library:not(.disabled)", function(){
         var data_to_send = {};
         // data("num") comes from clicking a product-card. Remember "Important"?
         data_to_send.library_id = $(this).data("num");
+        if($("#new_select").length > 0)
+          data_to_send.state = $("#new_select").val();
         if($("#go-to-partner").is(":checked")) data_to_send.redirect = true;
         $.ajax({
             type: "GET",

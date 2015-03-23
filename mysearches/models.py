@@ -43,7 +43,7 @@ class SavedSearch(models.Model):
                     ('Date', _('Date')))
 
     user = models.ForeignKey('myjobs.User', editable=False)
-    
+
     created_on = models.DateTimeField(auto_now_add=True)
     label = models.CharField(max_length=60, verbose_name=_("Search Name"))
     url = models.URLField(max_length=300,
@@ -122,7 +122,8 @@ class SavedSearch(models.Model):
 
     def get_feed_items(self, num_items=None):
         num_items = num_items or self.jobs_per_email
-        url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency)
+        url_of_feed = url_sort_options(self.feed, self.sort_by, self.frequency,
+                                       hasattr(self, 'partnersavedsearch'))
         url_of_feed = update_url_if_protected(url_of_feed, self.user)
         parse_feed_args = {
             'feed_url': url_of_feed,
@@ -253,16 +254,16 @@ class SavedSearch(models.Model):
     def send_update_email(self, msg, custom_msg=None):
         """
         This function is meant to be called from the shell. It sends a notice to
-        the user that their saved search has been updated by the system or an 
+        the user that their saved search has been updated by the system or an
         admin.
-        
+
         Inputs:
         :msg:   The description of the update. Passed through verbatim to the
                 template.
-                
+
         Returns:
         nothing
-        
+
         """
         context_dict = {
             'saved_searches': [(self,)],
@@ -573,4 +574,4 @@ class SavedSearchLog(models.Model):
     date_sent = models.DateTimeField(auto_now_add=True)
     contact_record = models.ForeignKey('mypartners.ContactRecord', null=True,
                                        blank=True, on_delete=models.SET_NULL)
-    uuid = models.CharField(max_length=32)
+    uuid = models.CharField(max_length=32, db_index=True)

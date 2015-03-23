@@ -1,9 +1,5 @@
-{% load i18n %}
-
-<div class="direct-search-filter-block {{ block.bootstrap_classes }}" id="direct-search-filter-block-{{ block.id }}">
-    {% for widget in widgets %}
-        {% if widget.render %}
-            {{ widget.render }}
-        {% endif %}
-    {% endfor %}
-</div>
+{% for widget in widgets %}
+    {% if widget.render %}
+        {{ widget.render }}
+    {% endif %}
+{% endfor %}
