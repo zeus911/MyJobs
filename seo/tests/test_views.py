@@ -53,6 +53,10 @@ class FallbackTestCase(DirectSEOTestCase):
 
         self.job = solr_settings.SOLR_FIXTURE[0]
 
+    def tearDown(self):
+        super(FallbackTestCase, self).tearDown()
+        Page.objects.all().delete()
+
     def make_page(self, page_type):
         content = 'This is a content block'
         content_block = ContentBlockFactory(template=content)
