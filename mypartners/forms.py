@@ -181,7 +181,6 @@ class NewPartnerForm(NormalizedModelForm):
             self.fields['notes'] = notes
 
         for field in self.fields.itervalues():
-            field.label = "Primary Contact " + field.label
             # primary contact information isn't required to create a partner
             field.required = False
         model_fields = OrderedDict(self.fields)
@@ -193,13 +192,13 @@ class NewPartnerForm(NormalizedModelForm):
                     attrs={'placeholder': 'Partner Organization',
                            'id': 'id_partner-partnername'})),
             'partnersource': forms.CharField(
-                label="Partner Source", max_length=255, required=False,
+                label="Source", max_length=255, required=False,
                 widget=forms.TextInput(
-                    attrs={'placeholder': 'Partner Source',
+                    attrs={'placeholder': 'Source',
                            'id': 'id_partner-partnersource'})),
             'partnerurl': forms.URLField(
-                label="Partner URL", max_length=255, required=False,
-                widget=forms.TextInput(attrs={'placeholder': 'Partner URL',
+                label="URL", max_length=255, required=False,
+                widget=forms.TextInput(attrs={'placeholder': 'URL',
                                               'id': 'id_partner-partnerurl'})),
             'partner-tags': forms.CharField(
                 label='Tags', max_length=255, required=False,
@@ -274,10 +273,14 @@ class NewPartnerForm(NormalizedModelForm):
         return None
 
     def get_field_sets(self):
+        """
+        NewPartnerForm is a combination Partner and Contact form. As
+        self.fields has already been turned into an OrderedDict in __init__,
+        we can easily segment our form into fieldsets.
+        """
         sections = self.fields.keys()[:4], self.fields.keys()[4:]
         field_sets = [
-            [forms.forms.BoundField(self, self.fields.get(field), field) for field in section]
-            for section in sections
+            [self[field] for field in section] for section in sections
         ]
         return field_sets
 
