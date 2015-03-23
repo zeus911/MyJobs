@@ -273,6 +273,14 @@ class NewPartnerForm(NormalizedModelForm):
         # No contact was created
         return None
 
+    def get_field_sets(self):
+        sections = self.fields.keys()[:4], self.fields.keys()[4:]
+        field_sets = [
+            [forms.forms.BoundField(self, self.fields.get(field), field) for field in section]
+            for section in sections
+        ]
+        return field_sets
+
 
 def remove_partner_data(dictionary, keys):
     new_dictionary = dict(dictionary)
