@@ -123,6 +123,8 @@ class ReportView(View):
     app = 'mypartners'
     model = 'contactrecord'
 
+    # TODO: find a way to properly wrap these views as this doesn't seem to
+    #       work
     @method_decorator(company_has_access('prm_access'))
     def dispatch(self, *args, **kwargs):
         return super(ReportView, self).dispatch(*args, **kwargs)
@@ -189,7 +191,7 @@ class ReportView(View):
 
             report.results.save('%s-%s.json' % (name, report.pk), results)
 
-            return HttpResponse()
+            return HttpResponse(name)
         else:
             raise Http404(
                 "This view is only reachable via a POST request.")

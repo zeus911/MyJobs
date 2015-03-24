@@ -9,6 +9,7 @@ from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
 from mypartners.tests.factories import (ContactFactory, ContactRecordFactory,
                                         LocationFactory, PartnerFactory)
+from myreports.models import Report
 from seo.tests.factories import CompanyFactory, CompanyUserFactory
 
 
@@ -64,8 +65,8 @@ class TestViewRecords(MyReportsTestCase):
                                  HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.client.login_user(self.user)
 
-        ContactRecordFactory.create_batch(10, partner=self.partner,
-                                          contact_name='Joe Shmoe')
+        ContactRecordFactory.create_batch(
+            10, partner=self.partner, contact_name='Joe Shmoe')
 
     def test_restricted_to_ajax(self):
         """View should only be reachable through AJAX."""
@@ -194,10 +195,51 @@ class TestViewRecords(MyReportsTestCase):
 
 
 class TestReportView(MyReportsTestCase):
+    """
+    Tests the ReportView class, which is used to create and retrieve
+    reports.
+    """
     def setUp(self):
         super(TestReportView, self).setUp()
-        self.client = TestClient(path='/reports/view/mypartners')
+        self.client = TestClient(path='/reports/view/mypartners/contactrecord')
         self.client.login_user(self.user)
 
-        ContactRecordFactory.create_batch(10, partner=self.partner,
-                                          contact_name='Joe Shmoe')
+        ContactRecordFactory.create_batch(5, partner__owner=self.company)
+        ContactRecordFactory.create_batch(
+            5, contact_type='job', job_applications=1,
+            partner__owner=self.company)
+        ContactRecordFactory.create_batch(
+            5, contact_type='job',
+            job_hires=1, partner__owner=self.company)
+
+    def test_create_report(self):
+        """Test that a report model instance is properly created."""
+
+        # create a report whose results is for all contact records in the
+        # company
+        response = self.client.post()
+        report_name = response.content
+        report = Report.objects.get(name=report_name)
+
+        self.assertEqual(len(report.python), 15)
+
+        # we use this in other tests
+
+        return report_name
+
+    def test_get_report(self):
+        """Test that chart data is retreived from record results."""
+
+        report_name = self.test_create_report()
+        report = Report.objects.get(name=report_name)
+
+        response = self.client.get(data={'id': report.pk})
+        data = json.loads(response.content)
+
+        # check contact record stats
+        for key in ['applications', 'hires', 'communications', 'emails']:
+            self.assertEqual(data[key], 5)
+
+        # check contact stats
+        self.assertEqual(data['contacts'][0]['records'], 5)
+        self.assertEqual(data['contacts'][0]['referrals'], 10)
