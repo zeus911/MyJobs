@@ -125,7 +125,7 @@ class MyJobsViewsTests(MyJobsBase):
                                settings.SENDGRID_BATCH_POST_PASSWORD)
         self.auth = base64.b64encode(self.auth)
 
-    def make_messages(self, when, apiversion=2, category=''):
+    def make_messages(self, when, apiversion=2, categories=None):
         """
         Creates test api messages for sendgrid tests.
 
@@ -133,7 +133,8 @@ class MyJobsViewsTests(MyJobsBase):
         :self:  the calling object
         :when:  timestamp
         :apiversion: the version of the API to mimic
-        :category: category that the originating email was sent with; Optional
+        :category: list of categories that the originating email was sent with;
+            Optional
 
         Returns:
         JSON-esque object if apiversion<3
@@ -143,8 +144,13 @@ class MyJobsViewsTests(MyJobsBase):
         message = '{{"email":"alice@example.com","timestamp":"{0}",' \
             '"event":"{1}"{2}}}'
         messages = []
-        if category:
-            category = ',"category":"%s"' % category
+        category = ''
+        if categories:
+            categories = ['"%s"' % cat for cat in categories]
+            if len(categories) > 1:
+                category = ',"category":[%s]' % ','.join(categories)
+            else:
+                category = ',"category":%s' % categories[0]
         for event in self.events:
             messages.append(message.format(time.mktime(when.timetuple()),
                                            event, category))
@@ -436,7 +442,7 @@ class MyJobsViewsTests(MyJobsBase):
                                       backfill_jobs=0)
         self.events = ['open']
         category = '(stuff|%s)' % log_uuid
-        message = self.make_messages(now, 3, category)
+        message = self.make_messages(now, 3, [category])
         self.client.post(reverse('batch_message_digest'),
                          data=message,
                          content_type='text/json',
@@ -450,6 +456,33 @@ class MyJobsViewsTests(MyJobsBase):
         # (multiple bounces, clicks, opens, etc per email).
         self.assertTrue(email_log in saved_search_log.sendgrid_response.all())
         self.assertTrue(saved_search_log.was_received)
+
+    def test_batch_with_multiple_categories(self):
+        """
+        Manually-sent saved search emails will contain multiple categories.
+        Ensure nothing breaks horribly when multiple categories are used.
+        If one of the categories is Production, remove it and continue
+        processing (creating EmailLogs, etc). If one of the categories is QC,
+        Staging, Jenkins, or Local, stop processing the event.
+        """
+        self.assertEqual(EmailLog.objects.count(), 0)
+        now = date.today()
+        categories = ["My.jobs Email", "Production"]
+        message = self.make_messages(now, categories=categories)
+        self.client.post(reverse('batch_message_digest'),
+                         data=message,
+                         content_type='text/json',
+                         HTTP_AUTHORIZATION='BASIC %s' % self.auth)
+        self.assertEqual(EmailLog.objects.count(), 3)
+
+        for category in ['QC', 'Staging', 'Jenkins', 'Local']:
+            categories[1] = category
+            message = self.make_messages(now, categories=categories)
+            self.client.post(reverse('batch_message_digest'),
+                             data=message,
+                             content_type='text/json',
+                             HTTP_AUTHORIZATION='BASIC %s' % self.auth)
+            self.assertEqual(EmailLog.objects.count(), 3)
 
     def test_batch_bounce_message_digest(self):
         now = date.today()
