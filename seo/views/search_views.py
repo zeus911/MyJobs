@@ -379,10 +379,8 @@ def ajax_get_jobs_search(request):
 
 def robots_txt(request):
     host = str(request.META["HTTP_HOST"])
-    return render_to_response(
-            'robots.txt', {
-            'host': host},
-            content_type="text/plain")
+    return render_to_response('robots.txt', {'host': host},
+                              content_type="text/plain")
 
 
 @protected_site
@@ -1329,7 +1327,8 @@ def solr_ac(request):
     return HttpResponse(jsonpres, content_type="application/json")
 
 
-def v2_redirect(request, v2_redirect=None, country=None, state=None, city=None, onet=None):
+def v2_redirect(request, v2_redirect=None, country=None, state=None, city=None,
+                onet=None):
     v2_redirect_kwargs = {}
     try:
         jobs = DESearchQuerySet();
@@ -1421,7 +1420,7 @@ def new_sitemap_index(request):
     dates = [latest_datetime - datetime.timedelta(days=i) for i in xrange(history)]
     earliest_day = (latest_datetime - datetime.timedelta(days=history)).date()
     datecounts = DateSitemap().numpages(startdate=earliest_day,
-            enddate=latest_datetime)
+                                        enddate=latest_datetime)
     sitemaps = {}
 
     for date in dates:
@@ -1436,15 +1435,18 @@ def new_sitemap_index(request):
         pages = sitemaps[date]['count']
         sitemap_url = urlresolvers.reverse('sitemap_date',
                                            kwargs={'jobdate': date})
-        sites_dates.append(('%s://%s%s' % (protocol, current_site.domain, sitemap_url),
+        sites_dates.append(('%s://%s%s' % (protocol, current_site.domain,
+                                           sitemap_url),
                             date))
         if pages > 1:
             for page in xrange(2, pages+1):
-                sites_dates.append(('%s://%s%s?p=%s' % (protocol, current_site.domain,
-                                                 sitemap_url, page),
+                sites_dates.append(('%s://%s%s?p=%s' % (protocol,
+                                                        current_site.domain,
+                                                        sitemap_url, page),
                                     date))
 
-    xml = loader.render_to_string('sitemaps/sitemap_index_lastmod.xml', {'sitemaps': sites_dates})
+    xml = loader.render_to_string('sitemaps/sitemap_index_lastmod.xml',
+                                  {'sitemaps': sites_dates})
     return HttpResponse(xml, content_type='application/xml')
 
 

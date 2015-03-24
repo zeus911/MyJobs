@@ -142,7 +142,7 @@ class ColumnBlock(Block):
         js = []
         for block in self.blocks.all():
             js += block.cast().required_js()
-        return js
+        return list(set(js))
 
 
 class ContentBlock(Block):
@@ -296,12 +296,19 @@ class RegistrationBlock(Block):
         return 'registration-%s' % self.id
 
 
+class SavedSearchWidgetBlock(Block):
+    base_template = 'myblocks/blocks/savedsearchwidget.html'
+
+    def required_js(self):
+        return ['//d2e48ltfsb5exy.cloudfront.net/myjobs/tools/def.myjobs.widget.153-05.js']
+
+
 class SearchBoxBlock(Block):
     base_template = 'myblocks/blocks/searchbox.html'
 
     def context(self, request, **kwargs):
         return {
-            'location_term': context_tools.get_location_term(request),
+            'location_term': context_tools.get_location_term(request, **kwargs),
             'moc_term': context_tools.get_moc_term(request),
             'moc_id_term': context_tools.get_moc_id_term(request),
             'search_url': context_tools.get_search_url(request),
@@ -321,22 +328,6 @@ class SearchFilterBlock(Block):
 
     def required_js(self):
         return ['%spager.160-29.js' % settings.STATIC_URL]
-
-
-class SearchResultHeaderBlock(Block):
-    base_template = 'myblocks/blocks/searchresultsheader.html'
-
-    def context(self, request, **kwargs):
-        return {
-            'arranged_jobs': context_tools.get_arranged_jobs(request),
-            'count_heading': context_tools.get_count_heading(request),
-            'default_jobs': context_tools.get_default_jobs(request),
-            'featured_jobs': context_tools.get_featured_jobs(request),
-            'location_term': context_tools.get_location_term(request),
-            'moc_term': context_tools.get_moc_term(request),
-            'query_string': context_tools.get_query_string(request),
-            'title_term': context_tools.get_title_term(request),
-        }
 
 
 class SearchResultBlock(Block):
@@ -360,11 +351,20 @@ class SearchResultBlock(Block):
         }
 
 
-class SavedSearchWidgetBlock(Block):
-    base_template = 'myblocks/blocks/savedsearchwidget.html'
+class SearchResultHeaderBlock(Block):
+    base_template = 'myblocks/blocks/searchresultsheader.html'
 
-    def required_js(self):
-        return ['//d2e48ltfsb5exy.cloudfront.net/myjobs/tools/def.myjobs.widget.153-05.js']
+    def context(self, request, **kwargs):
+        return {
+            'arranged_jobs': context_tools.get_arranged_jobs(request),
+            'count_heading': context_tools.get_count_heading(request),
+            'default_jobs': context_tools.get_default_jobs(request),
+            'featured_jobs': context_tools.get_featured_jobs(request),
+            'location_term': context_tools.get_location_term(request),
+            'moc_term': context_tools.get_moc_term(request),
+            'query_string': context_tools.get_query_string(request),
+            'title_term': context_tools.get_title_term(request),
+        }
 
 
 class ShareBlock(Block):
@@ -376,7 +376,7 @@ class VeteranSearchBox(Block):
 
     def context(self, request, **kwargs):
         return {
-            'location_term': context_tools.get_location_term(request),
+            'location_term': context_tools.get_location_term(request, **kwargs),
             'moc_term': context_tools.get_moc_term(request),
             'moc_id_term': context_tools.get_moc_id_term(request),
             'search_url': context_tools.get_search_url(request),
@@ -398,8 +398,12 @@ class Row(models.Model):
     def bootstrap_classes():
         return "row"
 
-    def context(self):
-        return {}
+    @context_tools.Memoized
+    def context(self, request, **kwargs):
+        context = {}
+        for block in self.blocks.all():
+            context.update(block.cast().context(request, **kwargs))
+        return context
 
     @context_tools.Memoized
     def get_template(self):
@@ -407,6 +411,14 @@ class Row(models.Model):
                   for block in self.blocks.all().order_by('blockorder__order')]
 
         return '<div class="row">%s</div>' % ''.join(blocks)
+
+
+    @context_tools.Memoized
+    def required_js(self):
+        js = []
+        for block in self.blocks.all():
+            js += block.cast().required_js()
+        return list(set(js))
 
 
 class Page(models.Model):
@@ -518,6 +530,11 @@ class Page(models.Model):
         return ''.join(self.sites.values_list('domain', flat=True))
     human_readable_sites.short_description = 'Sites'
 
+    def human_readable_status(self):
+        status_choices_dict = dict(self.page_status_choices)
+        return status_choices_dict[self.status]
+    human_readable_status.short_description = 'Status'
+
     def pixel_template(self):
         return mark_safe("""
             <img style="display: none;" border="0" height="1" width="1" alt="My.jobs"
@@ -555,8 +572,9 @@ class Page(models.Model):
         config = '%s::%s' % (config.pk, config.revision)
         buids = [str(buid) for buid in getattr(settings, 'SITE_BUIDS', [])]
         buids = '#'.join(buids)
-        return hashlib.sha1('###'.join([page, path, query_string, config,
-                                        blocks, rows, buids])).hexdigest()
+        key = '###'.join([page, path, query_string, config, blocks, rows,
+                          buids]).encode('utf-8')
+        return hashlib.sha1(key).hexdigest()
 
     def templatetag_library(self):
         templatetags = ['{% load seo_extras %}', '{% load i18n %}',
@@ -578,10 +596,12 @@ class Page(models.Model):
             if job.on_sites and not on_this_site:
                 return redirect('home')
 
-        title_slug = kwargs.get('title_slug', '')
-        location_slug = kwargs.get('location_slug', '')
-        job_location_slug = slugify(job.location)
-        if title_slug == job.title_slug and location_slug == job_location_slug:
+        title_slug = kwargs.get('title_slug', '').lower()
+        location_slug = kwargs.get('location_slug', '').lower()
+        job_location_slug = slugify(job.location).lower()
+
+        if (title_slug == job.title_slug.lower() and
+                location_slug == job_location_slug):
             return None
 
         feed = kwargs.get('feed', '')
@@ -611,7 +631,7 @@ class Page(models.Model):
             redirect_url += "?%s" % query
         return redirect(redirect_url, permanent=True)
 
-    def handle_search_results_redirect(self, request, *args, **kwargs):
+    def handle_search_results_redirect(self, request):
         filters = context_tools.get_filters(request)
         query_string = context_tools.get_query_string(request)
 
@@ -631,16 +651,11 @@ class Page(models.Model):
 
         return
 
-    def handle_postprocessing(self, response, page_type):
-        if page_type == self.JOB_DETAIL:
-            response = response
-        return response
-
     def handle_redirect(self, request, *args, **kwargs):
         if self.page_type == self.JOB_DETAIL:
             return self.handle_job_detail_redirect(request, *args, **kwargs)
         if self.page_type == self.SEARCH_RESULTS:
-            return self.handle_search_results_redirect(request, *args, **kwargs)
+            return self.handle_search_results_redirect(request)
         return None
 
 
