@@ -412,6 +412,8 @@ class MySearchViewTests(MyJobsBase):
             settings.DEBUG = False
 
     def test_send_link_respects_permissions(self):
+        # The send_saved_search view requires that DEBUG be enabled.
+        settings.DEBUG = True
         self.user.is_superuser = True
         self.user.save()
         search = SavedSearchFactory(user=self.user)
@@ -425,3 +427,4 @@ class MySearchViewTests(MyJobsBase):
         response = self.client.get(send_url % search_2.pk)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(len(mail.outbox), 1)
+        settings.DEBUG = False
