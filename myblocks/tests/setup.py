@@ -28,8 +28,7 @@ class BlocksTestBase(DirectSEOBase):
             self.buid = BusinessUnit.objects.get(pk=0)
         except BusinessUnit.DoesNotExist:
             self.buid = BusinessUnitFactory(id=0)
-
-        self.site.business_unit.add(0)
+        self.site.business_units.add(0)
 
         self.commitment = SpecialCommitmentFactory()
         self.site.special_commitments.add(self.commitment)
