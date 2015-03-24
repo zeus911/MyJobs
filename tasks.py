@@ -55,7 +55,7 @@ PARTNER_LIBRARY_SOURCES = {
             'subreg': 'Download'
         }
     },
-    # http://www.dol-esa.gov/errd/resources.html
+    #  http://www.dol-esa.gov/errd/Resources.503VEVRAA.html
     'Disability and Veterans Community Resources Directory': {
         'url': 'http://www.dol-esa.gov/errd/resourcequery.jsp',
         'params': {
