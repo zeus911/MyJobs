@@ -393,7 +393,6 @@ class MySearchViewTests(MyJobsBase):
             if hasattr(search, 'partnersavedsearch'):
                 send_url += '&is_pss=True'
 
-            settings.DEBUG = False
             self.client.login_user(self.user)
             response = self.client.get(full_feed)
             self.assertNotIn('>Send</a>', response.content)
@@ -409,6 +408,8 @@ class MySearchViewTests(MyJobsBase):
             self.assertEqual(send.status_code, 302)
             self.assertEqual(len(mail.outbox), 1)
             mail.outbox = []
+
+            settings.DEBUG = False
 
     def test_send_link_respects_permissions(self):
         self.user.is_superuser = True
