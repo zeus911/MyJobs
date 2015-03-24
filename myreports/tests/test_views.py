@@ -1,6 +1,8 @@
 """Tests associated with the various MyReports views."""
 
+import csv
 import json
+from cStringIO import StringIO
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
@@ -9,6 +11,7 @@ from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
 from mypartners.tests.factories import (ContactFactory, ContactRecordFactory,
                                         LocationFactory, PartnerFactory)
+from mypartners.models import ContactRecord
 from myreports.models import Report
 from seo.tests.factories import CompanyFactory, CompanyUserFactory
 
@@ -243,3 +246,40 @@ class TestReportView(MyReportsTestCase):
         # check contact stats
         self.assertEqual(data['contacts'][0]['records'], 5)
         self.assertEqual(data['contacts'][0]['referrals'], 10)
+
+
+class TestDownloadReport(MyReportsTestCase):
+    """Tests that reports can be downloaded."""
+
+    def setUp(self):
+        super(TestDownloadReport, self).setUp()
+        self.client = TestClient(path='/reports/download')
+        self.client.login_user(self.user)
+
+        ContactRecordFactory.create_batch(5, partner__owner=self.company)
+        ContactRecordFactory.create_batch(
+            5, contact_type='job', job_applications=1,
+            partner__owner=self.company)
+        ContactRecordFactory.create_batch(
+            5, contact_type='job',
+            job_hires=1, partner__owner=self.company)
+
+    def test_download_csv(self):
+        """Test that a report can be downloaded in CSV format."""
+
+        # create a report whose results is for all contact records in the
+        # company
+
+        response = self.client.post(
+            path='/reports/view/mypartners/contactrecord')
+        report_name = response.content
+        report = Report.objects.get(name=report_name)
+
+        # download the report
+        response = self.client.get(data={'id': report.pk})
+
+        f = StringIO(response.content)
+        reader = csv.reader(f, delimiter=',')
+
+        # first row is column names, so ignore that
+        self.assertEqual(len(list(reader)) - 1, ContactRecord.objects.count())
