@@ -5,8 +5,8 @@ from django.test.client import RequestFactory
 
 from myjobs.tests.factories import UserFactory
 from seo.models import BusinessUnit, Configuration, SeoSite, SiteTag
-from seo.tests.factories import (CustomFacetFactory, SeoSiteFacetFactory,
-                                 SpecialCommitmentFactory)
+from seo.tests.factories import (BusinessUnitFactory, CustomFacetFactory,
+                                 SeoSiteFacetFactory, SpecialCommitmentFactory)
 from seo.tests.setup import DirectSEOBase
 from seo.tests.solr_settings import SOLR_FIXTURE
 from universal.helpers import build_url
@@ -20,7 +20,15 @@ class BlocksTestBase(DirectSEOBase):
         self.config.browse_facet_show = True
         self.config.save()
 
-        self.buid = BusinessUnit.objects.get_or_create(pk=0)
+        # Can't do a get_or_create here because we don't
+        # care about the date_crawled/date_updated fields,
+        # but if the BusinessUnit doesn't exist they will need
+        # to be supplied.
+        try:
+            self.buid = BusinessUnit.objects.get(pk=0)
+        except BusinessUnit.DoesNotExist:
+            self.buid = BusinessUnitFactory(id=0)
+
         self.site.business_unit.add(0)
 
         self.commitment = SpecialCommitmentFactory()
