@@ -1118,11 +1118,16 @@ class Configuration(models.Model):
     # home page template settings
     home_page_template = models.CharField('Home Page Template', max_length=200,
                                           default='home_page/home_page_listing.html')
-    show_home_microsite_carousel = models.BooleanField('Show Microsite Carousel\
-                                                        on Home Page', default=False)
-    show_home_social_footer = models.BooleanField('Show Social Footer on Home Page', default=False)
-    publisher = models.CharField('Google plus page id', max_length=50, blank=True,
-                                 help_text="Google plus page id for publisher tag")
+    show_home_microsite_carousel = models.BooleanField('Show Microsite Carousel'
+                                                       ' on Home Page',
+                                                       default=False)
+    show_home_social_footer = models.BooleanField('Show Social Footer on'
+                                                  ' Home Page',
+                                                  default=False)
+    publisher = models.CharField('Google plus page id', max_length=50,
+                                 blank=True,
+                                 help_text="Google plus page id for "
+                                           "publisher tag")
 
     objects = models.Manager()
     this_site = ConfigBySiteManager()

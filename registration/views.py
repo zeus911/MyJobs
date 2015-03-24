@@ -170,7 +170,7 @@ class DseoLogin(BlockView):
         """
         if request.user.is_authenticated() and request.user.is_staff:
             try:
-                page = Page.objects.filter(site=settings.SITE,
+                page = Page.objects.filter(sites=settings.SITE,
                                            status=Page.STAGING,
                                            page_type=self.page_type)[0]
                 setattr(self, 'page', page)
@@ -179,7 +179,7 @@ class DseoLogin(BlockView):
                 pass
 
         try:
-            page = Page.objects.filter(site=settings.SITE,
+            page = Page.objects.filter(sites=settings.SITE,
                                        status=Page.PRODUCTION,
                                        page_type=self.page_type)[0]
         except IndexError:

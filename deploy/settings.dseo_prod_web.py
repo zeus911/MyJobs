@@ -43,6 +43,14 @@ CACHES = {
             'dseomj-mc-cluster.qksjst.0004.use1.cache.amazonaws.com:11211',
         ]
     },
+    'blocks': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'VERSION': str(datetime.date.fromtimestamp(os.path.getmtime(__file__))),
+        'LOCATION': [
+            'blocks.qksjst.0001.use1.cache.amazonaws.com:11211',
+            'blocks.qksjst.0002.use1.cache.amazonaws.com:11211',
+            ]
+    }
 }
 
 # Add newrelic here since it shouldn't be used on non-production servers

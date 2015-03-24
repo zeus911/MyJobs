@@ -23,6 +23,9 @@ from import_jobs import clear_solr, download_feed_file, update_solr
 from xmlparse import DEv2JobFeed
 from moc_coding import models as moc_models
 from moc_coding.tests import factories as moc_factories
+from myblocks.models import BlockOrder, Page, RowOrder
+from myblocks.tests.factories import (ContentBlockFactory, PageFactory,
+                                      RowFactory)
 from myjobs.tests.factories import UserFactory
 from postajob.models import SitePackage
 from postajob.tests.factories import (JobFactory, JobLocationFactory,
@@ -30,10 +33,115 @@ from postajob.tests.factories import (JobFactory, JobLocationFactory,
 from seo import helpers
 from seo.tests.setup import (connection, DirectSEOBase, DirectSEOTestCase,
                              patch_settings)
-from seo.models import (BusinessUnit, Company, CustomPage, SeoSite,
-                        SeoSiteFacet, SiteTag, User)
+from seo.models import (BusinessUnit, Company, Configuration, CustomPage,
+                        SeoSite, SeoSiteFacet, SiteTag, User)
 from seo.tests import factories
 import solr_settings
+from universal.helpers import build_url
+
+
+class FallbackTestCase(DirectSEOTestCase):
+    def setUp(self):
+        super(FallbackTestCase, self).setUp()
+
+        self.job = solr_settings.SOLR_FIXTURE[0]
+        self.conn.add([self.job])
+
+        self.site = SeoSite.objects.get()
+        self.buid = BusinessUnit.objects.get_or_create(pk=self.job['buid'])
+        self.site.business_units.add(self.job['buid'])
+        self.site.save()
+
+        self.content = 'This is a content block'
+
+        self.config = Configuration.objects.get(status=2)
+        self.config.home_page_template = 'home_page/home_page_listing.html'
+        self.config.footer = ''
+        self.config.save()
+
+    def tearDown(self):
+        self.conn.delete(q='*:*')
+
+    def make_page(self, page_type):
+        content = 'This is a content block'
+        content_block = ContentBlockFactory(template=content)
+        row = RowFactory()
+        BlockOrder.objects.create(row=row, block=content_block, order=1)
+        page = PageFactory(page_type=page_type, sites=(self.site, ))
+        RowOrder.objects.create(page=page, row=row, order=1)
+
+        return page
+
+    def test_home_page_fallback(self):
+        response = self.client.get(reverse('home'))
+        # The default home_page_listing.html template should
+        # result in a div with the class direct_joblisting.
+        self.assertIn('"direct_joblisting"', response.content)
+
+        self.make_page(Page.HOME_PAGE)
+
+        response = self.client.get(reverse('home'))
+        # The content block should be present, since there's
+        # a Page.
+        self.assertIn(self.content, response.content)
+        self.assertNotIn('"direct_joblisting"', response.content)
+
+    def test_job_detail_fallback(self):
+        response = self.client.get(reverse('job_detail_by_job_id',
+                                           kwargs={'job_id': self.job['guid']}),
+                                   follow=True)
+        # The job location be in the breadbox on the search results page.
+        self.assertIn(self.job['location'], response.content)
+
+        self.make_page(Page.JOB_DETAIL)
+
+        response = self.client.get(reverse('job_detail_by_job_id',
+                                           kwargs={'job_id': self.job['guid']}),
+                                   follow=True)
+        # The content block should be present, since there's
+        # a Page.
+        self.assertIn(self.content, response.content)
+        self.assertNotIn(self.job['location'], self.content)
+
+    def test_404_fallback(self):
+        error_text = ('If you found this page from a job link, '
+                      'then that job is expired.')
+
+        response = self.client.get('/asldfjsadflasjfsdlafj/', follow=True)
+        # The standard 404 error text should be on the 404 error page.
+        self.assertIn(error_text, response.content)
+
+        self.make_page(Page.ERROR_404)
+
+        response = self.client.get('/asldfjsadflasjfsdlafj/', follow=True)
+        # The content block should be present, since there's
+        # a Page.
+        self.assertIn(self.content, response.content)
+        self.assertNotIn(error_text, self.content)
+
+    def test_search_results_fallback(self):
+        response = self.client.get(reverse('all_jobs'))
+        self.assertIn('"direct_joblisting"', response.content)
+
+        self.make_page(Page.SEARCH_RESULTS)
+
+        response = self.client.get(reverse('all_jobs'))
+        self.assertIn(self.content, response.content)
+        self.assertNotIn('"direct_joblisting"', response.content)
+
+    def test_search_results_no_results_fallback(self):
+        self.conn.delete(q='*:*')
+        error = 'There are no jobs that match:'
+
+        url = build_url(reverse('all_jobs'), {'q': 'something'})
+        response = self.client.get(url)
+        self.assertIn(error, response.content)
+
+        self.make_page(Page.NO_RESULTS)
+
+        response = self.client.get(url)
+        self.assertIn(self.content, response.content)
+        self.assertNotIn(error, response.content)
 
 
 class WidgetsTestCase(DirectSEOTestCase):

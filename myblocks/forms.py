@@ -1,10 +1,14 @@
+from fsm.widget import FSM
+
 from django import forms
+from django.core.urlresolvers import reverse_lazy
 
 from myblocks import models
 
 
 class BlockForm(forms.ModelForm):
     class Meta:
+        exclude = ('updated', )
         model = models.Block
 
     def __init__(self, *args, **kwargs):
@@ -25,7 +29,7 @@ class BreadboxBlockForm(BlockForm):
 
 class ColumnBlockForm(forms.ModelForm):
     class Meta:
-        exclude = ('template', )
+        exclude = ('updated', 'template', )
         model = models.ColumnBlock
 
 
@@ -47,6 +51,11 @@ class JobDetailBlockForm(BlockForm):
 class JobDetailBreadboxBlockForm(BlockForm):
     class Meta:
         model = models.JobDetailBreadboxBlock
+
+
+class JobDetailHeaderBlockForm(BlockForm):
+    class Meta:
+        model = models.JobDetailHeaderBlock
 
 
 class LoginBlockForm(BlockForm):
@@ -84,6 +93,11 @@ class SearchResultBlockForm(BlockForm):
         model = models.SearchResultBlock
 
 
+class SearchResultHeaderBlockForm(BlockForm):
+    class Meta:
+        model = models.SearchResultBlock
+
+
 class ShareBlockForm(BlockForm):
     class Meta:
         model = models.ShareBlock
@@ -96,6 +110,10 @@ class VeteranSearchBoxForm(BlockForm):
 
 class PageForm(forms.ModelForm):
     class Meta:
+        exclude = ('updated', )
+        widgets = {
+            'sites': FSM('Site', reverse_lazy('site_admin_fsm'), lazy=True),
+        }
         model = models.Page
 
     def __init__(self, *args, **kwargs):
@@ -105,4 +123,5 @@ class PageForm(forms.ModelForm):
 
 class RowForm(forms.ModelForm):
     class Meta:
+        exclude = ('updated', )
         model = models.Row
