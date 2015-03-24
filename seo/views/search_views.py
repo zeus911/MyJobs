@@ -99,7 +99,7 @@ class FallbackBlockView(BlockView):
     def set_page(self, request):
         if request.user.is_authenticated() and request.user.is_staff:
             try:
-                page = Page.objects.filter(site=settings.SITE,
+                page = Page.objects.filter(sites=settings.SITE,
                                            status=Page.STAGING,
                                            page_type=self.page_type)[0]
                 setattr(self, 'page', page)
@@ -107,12 +107,12 @@ class FallbackBlockView(BlockView):
                 pass
 
         try:
-            page = Page.objects.filter(site=settings.SITE,
+            page = Page.objects.filter(sites=settings.SITE,
                                        status=Page.PRODUCTION,
                                        page_type=self.page_type)[0]
         except IndexError:
             try:
-                page = Page.objects.filter(site_id=1,
+                page = Page.objects.filter(sites__pk=1,
                                            status=Page.PRODUCTION,
                                            page_type=self.page_type)[0]
             except IndexError:
@@ -279,7 +279,6 @@ def ajax_get_jobs(request, filter_path):
     except ValueError:
         num_items = DEFAULT_PAGE_SIZE
     custom_facets = settings.DEFAULT_FACET
-    path = request.META.get('HTTP_REFERER')
     sqs = helpers.prepare_sqs_from_search_params(GET)
     sort_order = request.REQUEST.get('sort', 'relevance')
     default_jobs = helpers.get_jobs(default_sqs=sqs,
@@ -1161,9 +1160,9 @@ def home_page(request):
         'site_heading': settings.SITE_HEADING,
         'site_tags': settings.SITE_TAGS,
         'site_description': settings.SITE_DESCRIPTION,
-        'host' : str(request.META.get("HTTP_HOST", "localhost")),
+        'host': str(request.META.get("HTTP_HOST", "localhost")),
         'site_config': site_config,
-        'build_num' : settings.BUILD,
+        'build_num': settings.BUILD,
         'company_images': company_images,
         'company_images_json': company_images_json,
         'billboard_images': billboard_images,
@@ -1173,6 +1172,15 @@ def home_page(request):
 
     return render_to_response(home_page_template, data_dict,
                               context_instance=RequestContext(request))
+
+
+class HomePage(FallbackBlockView):
+    page_type = Page.HOME_PAGE
+
+    def __init__(self, **kwargs):
+        super(HomePage, self).__init__(**kwargs)
+        self.fallback = home_page
+
 
 
 @custom_cache_page
@@ -1512,11 +1520,11 @@ def get_group_relationships(request):
                 'google_analytics': []
             }
         else:
+            configurations = site.configurations.values_list('id', flat=True)
+            ga = site.google_analytics.values_list('id', flat=True)
             selected = {
-                'configurations': [c for c in site.configurations\
-                                                  .values_list('id', flat=True)],
-                'google_analytics': [g for g in site.google_analytics\
-                                                    .values_list('id', flat=True)]
+                'configurations': [c for c in configurations],
+                'google_analytics': [g for g in ga]
             }
 
         view_data = {
@@ -1819,14 +1827,22 @@ class SearchResults(FallbackBlockView):
         self.fallback = search_by_results_and_slugs
 
     def set_page(self, request):
-        jobs_and_counts = context_tools.get_jobs_and_counts(request)
+        if request.user.is_authenticated() and request.user.is_staff:
+            no_results_pages = Page.objects.filter(page_type=Page.NO_RESULTS,
+                                                   sites=settings.SITE)
+        else:
+            no_results_pages = Page.objects.filter(page_type=Page.NO_RESULTS,
+                                                   sites=settings.SITE,
+                                                   status=Page.PRODUCTION)
 
-        default_jobs = jobs_and_counts[0]
-        featured_jobs = jobs_and_counts[2]
+        if no_results_pages.exists():
+            jobs_and_counts = context_tools.get_jobs_and_counts(request)
 
-        if not default_jobs and not featured_jobs:
-            self.page_type = Page.NO_RESULTS
+            default_jobs = jobs_and_counts[0]
+            featured_jobs = jobs_and_counts[2]
 
+            if not default_jobs and not featured_jobs:
+                self.page_type = Page.NO_RESULTS
         return super(SearchResults, self).set_page(request)
 
 
