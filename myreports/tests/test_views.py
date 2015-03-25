@@ -1,4 +1,4 @@
-"""Tests associated with the various MyReports views."""
+"""Tests associated with myreports views."""
 
 import csv
 import json
@@ -269,7 +269,6 @@ class TestDownloadReport(MyReportsTestCase):
 
         # create a report whose results is for all contact records in the
         # company
-
         response = self.client.post(
             path='/reports/view/mypartners/contactrecord')
         report_name = response.content
@@ -278,8 +277,4 @@ class TestDownloadReport(MyReportsTestCase):
         # download the report
         response = self.client.get(data={'id': report.pk})
 
-        f = StringIO(response.content)
-        reader = csv.reader(f, delimiter=',')
-
-        # first row is column names, so ignore that
-        self.assertEqual(len(list(reader)) - 1, ContactRecord.objects.count())
+        self.assertEqual(response['Content-Type'], 'text/csv')

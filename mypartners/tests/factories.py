@@ -51,6 +51,15 @@ class ContactRecordFactory(factory.django.DjangoModelFactory):
 
     partner = factory.SubFactory(PartnerFactory)
 
+    @factory.post_generation
+    def tags(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            for tag in extracted:
+                self.tags.add(tag)
+
 
 class ContactLogEntryFactory(factory.django.DjangoModelFactory):
     class Meta:
