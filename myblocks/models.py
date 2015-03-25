@@ -100,7 +100,7 @@ class ApplyLinkBlock(Block):
     def context(self, request, **kwargs):
         job_id = kwargs.get('job_id', '')
         return {
-            'apply_link_job': context_tools.get_job(request, job_id),
+            'requested_job': context_tools.get_job(request, job_id),
         }
 
 
@@ -258,7 +258,7 @@ class RegistrationBlock(Block):
             # the opportunity to render any errors.
             return {
                 'registration_action': querystring,
-                'qs': querystring,
+                'query_string': querystring,
                 'registration_form': RegistrationForm(request.POST,
                                                       auto_id=False),
                 'registration_submit_btn_name': self.submit_btn_name(),
@@ -357,7 +357,7 @@ class SearchResultHeaderBlock(Block):
     def context(self, request, **kwargs):
         return {
             'arranged_jobs': context_tools.get_arranged_jobs(request),
-            'count_heading': context_tools.get_count_heading(request),
+            'results_heading': context_tools.get_results_heading(request),
             'default_jobs': context_tools.get_default_jobs(request),
             'featured_jobs': context_tools.get_featured_jobs(request),
             'location_term': context_tools.get_location_term(request),
@@ -558,6 +558,12 @@ class Page(models.Model):
         return rendered_template
 
     def render_cache_prefix(self, request):
+        domain = ''
+        if request.user.is_authenticated() and request.user.is_staff:
+            domain = request.REQUEST.get('domain')
+        if domain is '':
+            domain = request.get_host()
+
         page = '%s::%s' % (self.pk, self.updated)
         path = request.path
         query_string = context_tools.get_query_string(request)
@@ -573,7 +579,7 @@ class Page(models.Model):
         buids = [str(buid) for buid in getattr(settings, 'SITE_BUIDS', [])]
         buids = '#'.join(buids)
         key = '###'.join([page, path, query_string, config, blocks, rows,
-                          buids]).encode('utf-8')
+                          buids, domain]).encode('utf-8')
         return hashlib.sha1(key).hexdigest()
 
     def templatetag_library(self):
