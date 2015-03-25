@@ -226,6 +226,7 @@ class EditItemTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
 
         self.assertIn("Add Partner", soup.title.text)
+        self.assertEqual("Primary Contact", soup.legend.text)
 
     def test_add_contact_form_loaded(self):
         # 0 is treated as an empty parameter
