@@ -16,11 +16,9 @@ from myreports.models import Report
 from universal.helpers import get_company_or_404
 from universal.decorators import company_has_access
 
-# TODO:
-# * write unit tests for new report generation stuff
-
 
 @restrict_to_staff()
+@company_has_access('prm_access')
 def overview(request):
     """The Reports app landing page."""
     company = get_company_or_404(request)
@@ -42,6 +40,8 @@ def overview(request):
                               RequestContext(request))
 
 
+@restrict_to_staff()
+@company_has_access('prm_access')
 def report_archive(request):
     if request.is_ajax() and request.method == "POST":
         company = get_company_or_404(request)
@@ -69,6 +69,8 @@ def get_states(request):
         raise Http404("This view is only reachable via an AJAX request")
 
 
+@restrict_to_staff()
+@company_has_access('prm_access')
 def view_records(request, app, model):
     """
     Returns records as JSON.
@@ -107,6 +109,8 @@ def view_records(request, app, model):
         raise Http404("This view is only reachable via an AJAX GET request.")
 
 
+@restrict_to_staff()
+@company_has_access('prm_access')
 def get_inputs(request):
     if request.is_ajax() and request.method == "GET":
         report_id = request.GET.get('id', 0)
@@ -123,8 +127,7 @@ class ReportView(View):
     app = 'mypartners'
     model = 'contactrecord'
 
-    # TODO: find a way to properly wrap these views as this doesn't seem to
-    #       work
+    @method_decorator(restrict_to_staff())
     @method_decorator(company_has_access('prm_access'))
     def dispatch(self, *args, **kwargs):
         return super(ReportView, self).dispatch(*args, **kwargs)
@@ -197,6 +200,8 @@ class ReportView(View):
                 "This view is only reachable via a POST request.")
 
 
+@restrict_to_staff()
+@company_has_access('prm_access')
 def download_report(request):
     """Download report as csv."""
 
