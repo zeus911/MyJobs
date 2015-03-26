@@ -341,18 +341,10 @@ Report.prototype.create_clone_report = function(json) {
 
       if (key === "partner") {
         this.find_field("Select Partners").value = value;
-        // if only one partner was selected it will come back as a string.
-        // expecting a list for rendering.
-        if (typeof value === "string") {
-          value = [value];
-        }
         this.data[key] = value;
       } else if (key === "contact_name") {
         this.find_field("Select Contacts").value = value;
-        if (typeof value === "string") {
-          value = [value];
-        }
-        this.data["contact"] = value;
+        this.data.contact = value;
       } else if (key.indexOf("date") > 0) {
         field = this.find_field("Select Date");
         if (field.value === "") {
@@ -629,7 +621,6 @@ $(document).ready(function() {
       data: data,
       success: function(data) {
         var contacts = data.contacts,
-            cLength = contacts.length,
             communications = data.communications || 0,
             emails = data.emails || 0,
             pss = data.searches || 0,
@@ -648,14 +639,17 @@ $(document).ready(function() {
                           2: {'name': "Hires",        'count': hires,        'style': "color: #FAA732"},
                           3: {'name': "Records",      'count': referrals,    'style': "color: #5F6C82"}};
 
+        // Grab google's jsapi to load chart files.
         $.getScript("https://www.google.com/jsapi", function() {
+          // Had to use 'callback' with google.load otherwise after load google makes a new document
+          // with just <html> tags.
           google.load("visualization", "1.0", {'packages':["corechart"], 'callback': function() {
-            var pDataTable = [['Records', 'All Records']],
-                bDataTable = [['Activity', 'Amount', {'role': 'style'}]],
-                $mainContainer = $("#main-container"),
-                pSliceOptions = {},
-                pLegend = [],
-                bLegend = [],
+            var pDataTable = [['Records', 'All Records']], // p for pieChart
+                bDataTable = [['Activity', 'Amount', {'role': 'style'}]], // b for barChart
+                $mainContainer = $("#main-container"),// the container everything goes in
+                pSliceOptions = {}, // slice options for pieChart
+                pLegend = [], // array that will hold the report-boxes for pieChart
+                bLegend = [], // array that will hold the report-boxes for barChart
                 pChartData,
                 pKey,
                 pValue,
@@ -673,12 +667,12 @@ $(document).ready(function() {
                 $bLegend,
                 topThreeRow,
                 restRow,
+                contactContainer,
                 i;
 
             $mainContainer.html('')
               .append("<div class='span6'><h4>Communication Activity</h4><div id='d-chart'></div>" +
                       "</div><div class='span6'><h4>Referral Activity</h4><div id='b-chart'></div></div>");
-
 
             for (pKey in pChartInfo) {
               if (pChartInfo.hasOwnProperty(pKey)) {
@@ -738,47 +732,69 @@ $(document).ready(function() {
 
             $("#b-chart > div").append($bLegend);
 
+            // Show the top three contacts in a different format than the rest.
             topThreeRow = $('<div class="row"></div>').append(function() {
               var html = '',
+                  cLength = contacts.length,
                   contact,
                   name,
                   email,
                   cReferrals,
                   commRecords,
-                  div;
+                  div,
+                  topLength;
+
+              // Determine how long topLength should be.
+              topLength = (cLength > 3) ? 3 : cLength;
+
               // Just run for the first 3 contacts.
-              for (i = 0; i < 3; i++) {
+              for (i = 0; i < topLength; i++) {
+                // remove first contact in array, returns the removed contact.
                 contact = contacts.shift();
                 name = contact.contact_name;
                 email = contact.contact_email;
                 cReferrals = contact.referrals;
                 commRecords = contact.records;
+
+                // create container
                 div = $('<div class="span4 panel top-contacts"></div>');
                 div.append('<div class="name">' + name + '</div><div>' + email + '</div><div class="top-three-box-container">' +
-                           '<div class="report-box small"><div class="big-num">' + cReferrals +
-                           '</div><div class="reports-record-type">Referral Records</div></div>' +
                            '<div class="report-box small"><div class="big-num">' + commRecords +
-                           '</div><div class="reports-record-type">Contact Records</div></div></div>');
+                           '</div><div class="reports-record-type">Contact Records</div></div>' +
+                           '<div class="report-box small"><div class="big-num">' + cReferrals +
+                           '</div><div class="reports-record-type">Referral Records</div></div></div>');
+
+                // add the rendered html as a string.
                 html += div.prop("outerHTML");
               }
               return html;
             });
 
-            restRow = $('<div class="row"></div>').append(function() {
-              var div = $('<div class="span12"></div>'),
-                  table = $('<table class="table table-striped report-table"><thead><tr><th>Name</th>' +
-                            '<th>Email</th><th>Referral Reocrds</th><th>Contact Records</th>' +
-                            '</tr></thead></table>'),
-                  tbody = $('<tbody></tbody>');
-              tbody.append(function() {
-                return "<tr>" + contacts.map(function(contact) {
-                  return "<td>" + contact.contact_name + "</td><td>" + contact.contact_email +
-                         "</td><td>" + contact.records + "</td><td>" + contact.referrals + "</td>";
-                }).join('</tr><tr>') + "</tr>";
+            // Don't generate a table if cLength = 0
+            if (contacts.length) {
+              restRow = $('<div class="row"></div>').append(function() {
+                var div = $('<div class="span12"></div>'),
+                    table = $('<table class="table table-striped report-table"><thead><tr><th>Name</th>' +
+                              '<th>Email</th><th>Contact Records</th><th>Referral Reocrds</th>' +
+                              '</tr></thead></table>'),
+                    tbody = $('<tbody></tbody>');
+                tbody.append(function() {
+                  // turn each element into cells of a table then join each group of cells with rows.
+                  return "<tr>" + contacts.map(function(contact) {
+                    return "<td>" + contact.contact_name + "</td><td>" + contact.contact_email +
+                           "</td><td>" + contact.records + "</td><td>" + contact.referrals + "</td>";
+                  }).join('</tr><tr>') + "</tr>";
+                });
+                return div.append(table.append(tbody));
               });
-              return div.append(table.append(tbody));
-            });
-            var contactContainer = $('<div id="report-contacts" class="span12"></div>').append(topThreeRow).append(restRow);
+            } else {
+              // Make sure topThreeRow didn't run before saying there are no records.
+              if (topThreeRow.find("div.top-contacts").length === 0) {
+                restRow = $('<div class="row"><div class="span12">This report has no contacts with records.</div></div>');
+              }
+            }
+
+            contactContainer = $('<div id="report-contacts" class="span12"></div>').append(topThreeRow).append(restRow);
             $("#main-container").append(contactContainer);
           }});
         });

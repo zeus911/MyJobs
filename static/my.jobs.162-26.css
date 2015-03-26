@@ -1593,8 +1593,7 @@ h3.bottom-bordered {
     font-weight: bold;
     font-size: 2.3em;
     line-height: 30px;
-    margin-bottom: 3px;
-    margin-top: 5px;
+    margin-top: 9px;
 }
 
 .report-box .reports-record-type {
