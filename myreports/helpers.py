@@ -1,5 +1,6 @@
 from cStringIO import StringIO
 import csv
+import HTMLParser
 import json
 from itertools import chain
 
@@ -18,6 +19,8 @@ from mypartners.models import CONTACT_TYPE_CHOICES
 # Note: natural_key wasn't used because i'm already using a dict by the time I
 #       get here.
 def humanize(records):
+    # TODO: This is getting silly. Bite the bullet and use natural keys on the
+    #       next iteration
     """
     Converts values in a dict to their human-readable counterparts. At the
     moment, this means converting tag ids to a list of tag names, removing the
@@ -30,19 +33,44 @@ def humanize(records):
     Outputs:
         The humanized records.
     """
+
+    parser = HTMLParser.HTMLParser()
     contact_types = dict(CONTACT_TYPE_CHOICES)
     # convert tag ids to names
     tag_ids = set(chain.from_iterable(record['tags'] for record in records))
     tags = dict(get_model('mypartners', 'tag').objects.filter(
         pk__in=tag_ids).values_list('pk', 'name'))
 
+    # convert partner ids to names
+    partner_ids = [record['partner'] for record in records]
+    partners = dict(get_model('mypartners', 'partner').objects.filter(
+        pk__in=partner_ids).values_list('pk', 'name'))
+
+    # convert user ids to names
+    user_ids = [record['created_by'] for record in records]
+    users = dict(get_model('myjobs', 'user').objects.filter(
+        pk__in=user_ids).values_list('pk', 'email'))
+
     for record in records:
         # make tag lists look pretty
         record['tags'] = ', '.join([tags[tag] for tag in record['tags']])
         # get rid of pks
         record.pop('pk', None)
-        # human readible contact types
+        # human readable contact types
         record['contact_type'] = contact_types[record['contact_type']]
+        # human readable partners
+        record['partner'] = partners.get(record['partner'], "")
+        # human readable created by users
+        record['created_by'] = users.get(record['created_by'], "")
+        # strip extra newlines from notes and convert HTML entities
+        record['notes'] = parser.unescape('\n'.join(
+            ' '.join(line.split())
+            for line in record['notes'].split('\n') if line))
+        record['notes'] = '\n'.join(
+            filter(bool, record['notes'].split('\n\n')))
+
+        # get rid of None values
+        record['length'] = record['length'] or ''
 
     return records
 
@@ -53,7 +81,7 @@ def parse_params(querydict):
     flattening singleton lists.
 
     Inputs:
-        :querydict: The `QueryDict` to be pasred (eg. request.GET). 
+        :querydict: The `QueryDict` to be pasred (eg. request.GET).
 
     Outputs:
         A dictionary of non-empty parameters.
