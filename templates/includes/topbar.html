@@ -410,34 +410,6 @@
         }
     }
 
-    function set_cookie(company_id, days) {
-        var expires;
-        if(days) {
-            var date = new Date();
-            date.setTime(date.getTime()+(days*24*60*60*1000));
-            expires = "; expires="+date.toGMTString();
-        } else
-            expires = "";
-        document.cookie = "myjobs_company="+company_id+expires+"; path=/";
-    }
-
-    function read_cookie(cookie) {
-        var nameEQ = cookie + "=",
-            ca = document.cookie.split(';');
-        for (var i=0; i< ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) === ' ')
-                c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) === 0)
-                return c.substring(nameEQ.length, c.length);
-        }
-        return null;
-    }
-
-    function delete_cookie() {
-        set_cookie("", -1);
-    }
-
     function process_reload() {
         /*
         Looks at what path the user is currently in.  If the path is showing
@@ -479,4 +451,32 @@
     {% else %}
     });
     {% endif %}
+    
+    function set_cookie(company_id, days) {
+        var expires;
+        if(days) {
+            var date = new Date();
+            date.setTime(date.getTime()+(days*24*60*60*1000));
+            expires = "; expires="+date.toGMTString();
+        } else
+            expires = "";
+        document.cookie = "myjobs_company="+company_id+expires+"; path=/";
+    }
+
+    function read_cookie(cookie) {
+        var nameEQ = cookie + "=",
+            ca = document.cookie.split(';');
+        for (var i=0; i< ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) === ' ')
+                c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0)
+                return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+
+    function delete_cookie() {
+        set_cookie("", -1);
+    }
 </script>
