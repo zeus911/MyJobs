@@ -644,12 +644,12 @@ $(document).ready(function() {
           // Had to use 'callback' with google.load otherwise after load google makes a new document
           // with just <html> tags.
           google.load("visualization", "1.0", {'packages':["corechart"], 'callback': function() {
-            var pDataTable = [['Records', 'All Records']],
-                bDataTable = [['Activity', 'Amount', {'role': 'style'}]],
-                $mainContainer = $("#main-container"),
-                pSliceOptions = {},
-                pLegend = [],
-                bLegend = [],
+            var pDataTable = [['Records', 'All Records']], // p for pieChart
+                bDataTable = [['Activity', 'Amount', {'role': 'style'}]], // b for barChart
+                $mainContainer = $("#main-container"),// the container everything goes in
+                pSliceOptions = {}, // slice options for pieChart
+                pLegend = [], // array that will hold the report-boxes for pieChart
+                bLegend = [], // array that will hold the report-boxes for barChart
                 pChartData,
                 pKey,
                 pValue,
@@ -673,7 +673,6 @@ $(document).ready(function() {
             $mainContainer.html('')
               .append("<div class='span6'><h4>Communication Activity</h4><div id='d-chart'></div>" +
                       "</div><div class='span6'><h4>Referral Activity</h4><div id='b-chart'></div></div>");
-
 
             for (pKey in pChartInfo) {
               if (pChartInfo.hasOwnProperty(pKey)) {
