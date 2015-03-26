@@ -32,7 +32,8 @@ Report.prototype.create_fields = function(types) {
 
 // Bind events for report, events that use the report object need to be here.
 Report.prototype.bind_events = function() {
-  var report = this;
+  var report = this,
+      container = $("#main-container");
 
   // Send the user a message when they try to unload the page saying their
   // progress will not be saved and will be lost.
@@ -46,13 +47,13 @@ Report.prototype.bind_events = function() {
 
   // Because this is pre-filled and will normally be a pretty long this
   // just selects text on focus for easy editing. UX-goodness
-  $(document.body).on("focus", "#report_name", function() {
+  container.on("focus", "#report_name", function() {
     $(this).select();
   });
 
 
   // Updates data field of Report. Also, if needed, updates Partner and Contact Lists
-  $(document.body).on("change", "input:not([id$=-all-checkbox]), select:not([class^=picker])", function(e) {
+  container.on("change", "input:not([id$=-all-checkbox]), select:not([class^=picker])", function(e) {
     var in_list = $(this).parents(".list-body").attr("id"),
         contact_wrapper = $("#contact-wrapper"),
         c_field = report.find_field("Select Contacts");
@@ -116,7 +117,7 @@ Report.prototype.bind_events = function() {
 
 
   // For date widget.
-  $(document.body).on("click", ".datepicker",function(e) {
+  container.on("focus", ".datepicker", function(e) {
    $(this).pickadate({
      format: "mm/dd/yyyy",
      selectYears: true,
@@ -138,7 +139,7 @@ Report.prototype.bind_events = function() {
 
 
   // Slides the associated list up or down.
-  $(document.body).on("click", ".list-header", function() {
+  container.on("click", ".list-header", function() {
     var icon = $(this).children("i");
 
     if (icon.hasClass("fa-plus-square-o")) {
@@ -150,7 +151,7 @@ Report.prototype.bind_events = function() {
   });
 
 
-  $(document.body).on("click", ".list-body :checkbox", function(e) {
+  container.on("click", ".list-body :checkbox", function(e) {
     e.stopPropagation();
 
     update_items_selected(this);
@@ -159,7 +160,7 @@ Report.prototype.bind_events = function() {
 
 
   // Clicking on an li in the lists will click the checkbox.
-  $(document.body).on("click", ".list-body li", function() {
+  container.on("click", ".list-body li", function() {
     var checkbox = $(this).children("input");
 
     checkbox.prop("checked", !checkbox.prop("checked")).change();
@@ -170,13 +171,22 @@ Report.prototype.bind_events = function() {
 
 
   // Clicking on all "type" checkbox will check/uncheck all checkboxes in associated list.
-  $(document.body).on("click", "input[id$=-all-checkbox]", function(e) {
+  container.on("click", "input[id$=-all-checkbox]", function(e) {
     e.stopPropagation();
     var checkboxes = $(this).parent().next().find("input"),
-        num_selected = $(this).siblings("span").children("span");
+        num_selected = $(this).siblings("span").children("span"),
+        i;
 
-    // Update all checkboxes with this' current state.
-    checkboxes.prop("checked", $(this).prop("checked")).change();
+    for (i = 0; i < checkboxes.length; i++) {
+      var checkbox = $(checkboxes[i]);
+      checkbox.prop("checked", $(this).prop("checked"));
+
+      // Run ajax on last checkbox to be changed.
+      // Avoids running AJAX checkbox.length times but still triggers update event.
+      if (i === checkboxes.length - 1) {
+        checkbox.change();
+      }
+    }
 
     // Update how many items in the list is selected based on this' current state. All or nothing.
     num_selected.html($(this).prop("checked") ? checkboxes.length : "0");
@@ -184,7 +194,7 @@ Report.prototype.bind_events = function() {
 
 
   // Clicking this button will show the modal with human readable data to review.
-  $(document.body).on("click", "#show-modal", function(e) {
+  container.on("click", "#show-modal", function(e) {
     var modal = $("#report-modal"),
         body = modal.children(".modal-body"),
         footer = modal.children(".modal-footer");
@@ -201,8 +211,8 @@ Report.prototype.bind_events = function() {
   // Actually submits the report's data to create a Report object in db.
   $(document.body).on("click", "#gen-report", function(e) {
     var csrf = read_cookie("csrftoken"),
-        data = {"csrfmiddlewaretoken": csrf, "ignore_cache": true},
-        url = location.protocol + "//" + location.host + "/reports/ajax/render/mypartners/contactrecord";
+        data = {"csrfmiddlewaretoken": csrf},
+        url = location.protocol + "//" + location.host + "/reports/view/mypartners/contactrecord";
     if (report.data) {
       $.extend(data, report.data);
     }
@@ -222,7 +232,6 @@ Report.prototype.bind_events = function() {
       url: url,
       data: $.param(data, true),
       dataType: "json",
-      global: false,
       success: function (data) {
         reload = true;
         var new_url = location.protocol + '//' + location.host + location.pathname,
@@ -238,7 +247,8 @@ Report.prototype.bind_events = function() {
 
 
 Report.prototype.unbind_events = function() {
-  $(document.body).unbind("click");
+  $("#main-container").off("click");
+  $(document.body).off("click", "#gen-report");
 };
 
 
@@ -261,8 +271,8 @@ Report.prototype.readable_data = function() {
         html += "<label>" + key.capitalize() + ":</label>";
       }
 
-      // If value is an object (aka a list).
-      if (typeof value === "object") {
+      // If value is an object (aka a list). Check if not null as null is an object in js.
+      if (typeof value === "object" && value !== null) {
         var items = [],
             i;
 
@@ -275,8 +285,8 @@ Report.prototype.readable_data = function() {
       } else {
         html += key === "state" ? $("#state option[value=" + value + "]").html() : value;
       }
+      html += "</div>";
     }
-    html += "</div>";
   }
   if (typeof data['partner'] === "undefined") {
     if ($("#partner-all-checkbox").is(":checked")) {
@@ -328,11 +338,20 @@ Report.prototype.create_clone_report = function(json) {
   for (key in json) {
     if (json.hasOwnProperty(key)) {
       value = json[key];
+
       if (key === "partner") {
         this.find_field("Select Partners").value = value;
+        // if only one partner was selected it will come back as a string.
+        // expecting a list for rendering.
+        if (typeof value === "string") {
+          value = [value];
+        }
         this.data[key] = value;
       } else if (key === "contact_name") {
         this.find_field("Select Contacts").value = value;
+        if (typeof value === "string") {
+          value = [value];
+        }
         this.data["contact"] = value;
       } else if (key.indexOf("date") > 0) {
         field = this.find_field("Select Date");
@@ -477,7 +496,7 @@ List.prototype.render = function(report) {
 List.prototype.filter = function(filter) {
   "use strict";
   var url = location.protocol + "//" + location.host, // https://secure.my.jobs
-      data = {"csrfmiddlewaretoken": read_cookie("csrftoken")},
+      data = {},
       list = this;
 
   // if filter, add to data.
@@ -489,17 +508,17 @@ List.prototype.filter = function(filter) {
   if (list.type === "partner") {
     // annotate how many records a partner has.
     $.extend(data, {"count": "contactrecord"});
-    url += "/reports/ajax/get/mypartners/partner";
+    url += "/reports/ajax/mypartners/partner";
     if (typeof data["partner"] !== "undefined") {
       delete data["partner"];
     }
   } else if (list.type === "contact") {
-    url += "/reports/ajax/get/mypartners/contact";
+    url += "/reports/ajax/mypartners/contact";
   }
 
   $.ajaxSettings.traditional = true;
   $.ajax({
-    type: 'POST',
+    type: 'GET',
     url: url,
     data: $.param(data, true),
     dataType: "json",
@@ -533,7 +552,7 @@ List.prototype.filter = function(filter) {
       if (list.value) {
         if (list.type === "partner") {
           for (var j = 0; j < list.value.length; j++) {
-            $("input[value*=" + list.value[j] + "]").prop("checked", true);
+            $("input[value~=" + list.value[j] + "]").prop("checked", true);
           }
         } else if (list.type === "contact") {
           for (var k = 0; k < list.value.length; k++) {
@@ -597,19 +616,37 @@ $(document).ready(function() {
   });
 
 
+  sidebar.on("click", ".report > a, .fa-eye", function() {
+    var report_id = $(this).attr("id").split("-")[1],
+        data = {"id": report_id},
+        url = location.protocol + "//" + location.host; // https://secure.my.jobs
+
+    $.ajax({
+      type: "GET",
+      url: url + "/reports/view/mypartners/contactrecord",
+      data: data,
+      success: function(data) {
+        $("#main-container").html(JSON.stringify(data));
+      },
+    });
+  });
+
+
   // Clone Report
   sidebar.on("click", ".fa-copy", function() {
     var report_id = $(this).attr("id").split("-")[1],
         data = {"csrfmiddlewaretoken": read_cookie("csrftoken"),
-                "report": report_id},
+                "id": report_id},
         url = location.protocol + "//" + location.host; // https://secure.my.jobs
 
     $.ajax({
-      type: "POST",
+      type: "GET",
       url: url + "/reports/ajax/get-inputs",
       data: data,
+      dataType: "json",
       success: function(data) {
         var report = new Report(["prm"]);
+        debugger;
         report.create_clone_report($.parseJSON(data));
         report.unbind_events();
         report.bind_events();
@@ -624,7 +661,7 @@ $(document).ready(function() {
     var data = {"csrfmiddlewaretoken": read_cookie("csrftoken")};
     $.ajax({
       type: "POST",
-      url: "view/archive",
+      url: "archive",
       data: data,
       success: function(data) {
         $("#main-container").html(data);

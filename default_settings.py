@@ -266,7 +266,6 @@ INSTALLED_APPS = (
     'saved_search',
     'taggit',
     'fsm',
-    'report_tools',
 )
 
 # Captcha SSL
