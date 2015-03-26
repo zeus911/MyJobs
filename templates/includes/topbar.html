@@ -49,7 +49,7 @@
                                 <li><a id="candidate-tab" href="{{ ABSOLUTE_URL }}candidates/view">{% trans "Candidates" %}</a></li>
                                 <li><a id="partner-tab" href="{{ ABSOLUTE_URL }}prm/view">{% trans "PRM" %}</a></li>
                             {% endif %}
-                            {% if user.is_staff %}
+                            {% if user.is_staff and company.prm_access %}
                                 <li><a id="reports-tab" href="{{ ABSOLUTE_URL }}reports/view/overview">{% trans "Reports" %}</a></li>
                             {% endif %}
                             {% if company.product_access %}
@@ -124,7 +124,7 @@
                                             <li><a id="partner-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}prm/view?company={{ company.id }}">{% trans "PRM" %}</a></li>
 
                                         {% endif %}
-                                        {% if user.is_staff %}
+                                        {% if user.is_staff and company.prm_access %}
                                             <li><a id="reports-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}reports/view">{% trans "Reports" %}</a></li>
                                         {% endif %}
                                         {% if company.product_access %}

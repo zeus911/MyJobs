@@ -16,12 +16,9 @@ from myreports.models import Report
 from universal.helpers import get_company_or_404
 from universal.decorators import company_has_access
 
-# TODO:
-# * write unit tests for new report generation stuff
-# * update documentation for views
-
 
 @restrict_to_staff()
+@company_has_access('prm_access')
 def overview(request):
     """The Reports app landing page."""
     company = get_company_or_404(request)
@@ -43,6 +40,8 @@ def overview(request):
                               RequestContext(request))
 
 
+@restrict_to_staff()
+@company_has_access('prm_access')
 def report_archive(request):
     if request.is_ajax() and request.method == "POST":
         company = get_company_or_404(request)
@@ -70,6 +69,8 @@ def get_states(request):
         raise Http404("This view is only reachable via an AJAX request")
 
 
+@restrict_to_staff()
+@company_has_access('prm_access')
 def view_records(request, app, model):
     """
     Returns records as JSON.
@@ -108,6 +109,8 @@ def view_records(request, app, model):
         raise Http404("This view is only reachable via an AJAX GET request.")
 
 
+@restrict_to_staff()
+@company_has_access('prm_access')
 def get_inputs(request):
     if request.is_ajax() and request.method == "GET":
         report_id = request.GET.get('id', 0)
@@ -124,6 +127,7 @@ class ReportView(View):
     app = 'mypartners'
     model = 'contactrecord'
 
+    @method_decorator(restrict_to_staff())
     @method_decorator(company_has_access('prm_access'))
     def dispatch(self, *args, **kwargs):
         return super(ReportView, self).dispatch(*args, **kwargs)
@@ -133,7 +137,7 @@ class ReportView(View):
         Get a report by ID and return interesting numbers as a JSON
         response. The only expected query parameter is 'id'.
         """
-        if request.is_ajax():
+        if request.method == 'GET':
             report_id = request.GET.get('id', 0)
             report = Report.objects.get(id=report_id)
             records = report.queryset
@@ -153,6 +157,9 @@ class ReportView(View):
             return HttpResponse(
                 json.dumps(ctx),
                 content_type='application/json; charset=utf-8')
+        else:
+            raise Http404(
+                "This view is only reachable via a GET request.")
 
     def post(self, request, app='mypartners', model='contactrecords'):
         """
@@ -169,7 +176,7 @@ class ReportView(View):
            An HttpResponse indicating success or failure of report creation.
         """
 
-        if request.is_ajax() and request.method == 'POST':
+        if request.method == 'POST':
             company = get_company_or_404(request)
             params = parse_params(request.POST)
 
@@ -187,14 +194,17 @@ class ReportView(View):
 
             report.results.save('%s-%s.json' % (name, report.pk), results)
 
-            return HttpResponse()
+            return HttpResponse(name)
         else:
             raise Http404(
-                "This view is only reachable via an AJAX GET request.")
+                "This view is only reachable via a POST request.")
 
 
+@restrict_to_staff()
+@company_has_access('prm_access')
 def download_report(request):
-    # download report
+    """Download report as csv."""
+
     report_id = request.GET.get('id', 0)
     report = get_object_or_404(
         get_model('myreports', 'report'), pk=report_id)
