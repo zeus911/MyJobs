@@ -78,7 +78,7 @@ def parse_params(querydict):
 
 
 # TODO: Find a better way to handle counts
-def serialize(fmt, data, counts=None):
+def serialize(fmt, data, counts=None, counts2=None):
     """
     Like `django.core.serializers.serialize`, but produces a simpler structure
     and retains annotated fields*.
@@ -103,7 +103,11 @@ def serialize(fmt, data, counts=None):
                     'python', data, use_natural_keys=True)]
 
         if counts:
-            data = [dict({'count': counts[record['pk']]}, **record)
+            data = [dict({'contacts': counts[record['pk']]}, **record)
+                    for record in data]
+
+        if counts2:
+            data = [dict({'records': counts2[record['pk']]}, **record)
                     for record in data]
 
     # strip HTML tags from string values

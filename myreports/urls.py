@@ -14,4 +14,5 @@ urlpatterns = patterns(
         name='view_records'),
     url(r'ajax/get-inputs', 'get_inputs', name='get_inputs'),
     url(r'download$', 'download_report', name='download_report'),
+    url(r'get-lists$', 'get_lists', name='get_lists')
 )

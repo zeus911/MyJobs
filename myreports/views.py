@@ -69,6 +69,28 @@ def get_states(request):
         raise Http404("This view is only reachable via an AJAX request")
 
 
+# TODO:
+#   * documentation
+#   * better variable/argument names
+#   * come up with a decent API
+#   * investigate rolling this into a separate view
+def get_lists(request):
+    if request.method == 'GET':  # request.is_ajax():
+        company = get_company_or_404(request)
+        params = parse_params(request.GET)
+        records = get_model('mypartners', 'partner').objects.from_search(
+            company, params).annotate(
+                records=Count('contactrecord', distinct=True),
+                contacts=Count('contactrecord__contact_name', distinct=True))
+
+        counts = {record.pk: record.contacts for record in records}
+        counts2 = {record.pk: record.records for record in records}
+        ctx = serialize('json', records, counts=counts, counts2=counts2)
+
+        return HttpResponse(
+            ctx, content_type='application/json; charset=utf-8')
+
+
 @restrict_to_staff()
 @company_has_access('prm_access')
 def view_records(request, app, model):
