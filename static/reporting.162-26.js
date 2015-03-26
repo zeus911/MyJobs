@@ -341,18 +341,10 @@ Report.prototype.create_clone_report = function(json) {
 
       if (key === "partner") {
         this.find_field("Select Partners").value = value;
-        // if only one partner was selected it will come back as a string.
-        // expecting a list for rendering.
-        if (typeof value === "string") {
-          value = [value];
-        }
         this.data[key] = value;
       } else if (key === "contact_name") {
         this.find_field("Select Contacts").value = value;
-        if (typeof value === "string") {
-          value = [value];
-        }
-        this.data["contact"] = value;
+        this.data.contact = value;
       } else if (key.indexOf("date") > 0) {
         field = this.find_field("Select Date");
         if (field.value === "") {
