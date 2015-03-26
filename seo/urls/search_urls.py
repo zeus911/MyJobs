@@ -65,28 +65,33 @@ urlpatterns += patterns('seo.views.search_views',
         name="search_by_results_and_slugs"),
 
 
-# home page
-    url(r'^$', 'home_page', name="home"),
+    # home page
+    url(r'^$', search_views.HomePage.as_view(), name="home"),
     # all companies page
-    url(r'^all-companies/$', 'company_listing',{'group':'all'},
+    url(r'^all-companies/$', 'company_listing', {'group': 'all'},
         name='all-companies_home'),
-    url(r'^all-companies/0-9/$', 'company_listing',{'alpha':'0-9','group':'all'},
+    url(r'^all-companies/0-9/$', 'company_listing', {'alpha': '0-9', 'group': 'all'},
         name='all-companies'),
     url(r'^all-companies/(?P<alpha>[a-z])/$', 'company_listing', {'group': 'all'},
         name='all-companies'),
     # featured companies page
-    url(r'^featured-companies/$', 'company_listing',{'group':'featured'},
+    url(r'^featured-companies/$', 'company_listing', {'group': 'featured'},
         name='featured-companies_home'),
-    url(r'^featured-companies/0-9/$', 'company_listing',{'alpha':'0-9', 'group': 'featured'},
+    url(r'^featured-companies/0-9/$', 'company_listing',
+        {'alpha': '0-9', 'group': 'featured'},
         name='featured-companies_home'),
-    url(r'^featured-companies/(?P<alpha>[a-z])/$', 'company_listing', {'group':'featured'},
+    url(r'^featured-companies/(?P<alpha>[a-z])/$', 'company_listing',
+        {'group': 'featured'},
         name='featured-companies'),
     url(r'^ajax/member-companies/jsonp$', 'member_carousel_data'),
-    url(r'^member-companies/$', 'company_listing',{'alpha':'a', 'group':'member'},
+    url(r'^member-companies/$', 'company_listing',
+        {'alpha': 'a', 'group': 'member'},
         name='member-companies_home'),
-    url(r'^member-companies/0-9/$', 'company_listing',{'alpha':'0-9', 'group': 'member'},
+    url(r'^member-companies/0-9/$', 'company_listing',
+        {'alpha': '0-9', 'group': 'member'},
         name='member-companies_home'),
-    url(r'^member-companies/(?P<alpha>[a-z])/$', 'company_listing', {'group':'member'},
+    url(r'^member-companies/(?P<alpha>[a-z])/$', 'company_listing',
+        {'group': 'member'},
         name='member-companies'),
 
     # job detail (aka job view)

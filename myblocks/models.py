@@ -1,8 +1,11 @@
+import hashlib
 from slugify import slugify
 
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.contenttypes.models import ContentType
+from django.core import cache
+from django.core.cache import InvalidCacheBackendError
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.http import Http404, HttpResponseRedirect
@@ -17,6 +20,12 @@ from myjobs.helpers import expire_login
 from myjobs.models import User
 from registration.forms import CustomAuthForm, RegistrationForm
 from seo import helpers
+
+
+try:
+    blocks_cache = cache.get_cache('blocks')
+except InvalidCacheBackendError:
+    blocks_cache = cache.get_cache('default')
 
 
 def raw_base_head(obj):
@@ -41,6 +50,8 @@ class Block(models.Model):
     span = models.PositiveIntegerField()
     template = models.TextField()
     head = models.TextField(blank=True)
+
+    updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         return self.name
@@ -131,7 +142,7 @@ class ColumnBlock(Block):
         js = []
         for block in self.blocks.all():
             js += block.cast().required_js()
-        return js
+        return list(set(js))
 
 
 class ContentBlock(Block):
@@ -164,8 +175,20 @@ class JobDetailBreadboxBlock(Block):
 
     def context(self, request, *args, **kwargs):
         job_id = kwargs.get('job_id', '')
+        breadcrumbs = context_tools.get_job_detail_breadbox(request, job_id)
         return {
-            'job_detail_breadcrumbs': context_tools.get_job_detail_breadbox(request, job_id)
+            'job_detail_breadcrumbs': breadcrumbs
+        }
+
+
+class JobDetailHeaderBlock(Block):
+    base_template = 'myblocks/blocks/jobdetailheader.html'
+
+    def context(self, request, **kwargs):
+        job_id = kwargs.get('job_id', '')
+
+        return {
+            'requested_job': context_tools.get_job(request, job_id),
         }
 
 
@@ -285,7 +308,7 @@ class SearchBoxBlock(Block):
 
     def context(self, request, **kwargs):
         return {
-            'location_term': context_tools.get_location_term(request),
+            'location_term': context_tools.get_location_term(request, **kwargs),
             'moc_term': context_tools.get_moc_term(request),
             'moc_id_term': context_tools.get_moc_id_term(request),
             'search_url': context_tools.get_search_url(request),
@@ -309,6 +332,7 @@ class SearchFilterBlock(Block):
 
 class SearchResultBlock(Block):
     base_template = 'myblocks/blocks/searchresult.html'
+    base_head = 'myblocks/head/searchresult.html'
 
     def context(self, request, **kwargs):
         return {
@@ -319,9 +343,26 @@ class SearchResultBlock(Block):
             'location_term': context_tools.get_location_term(request),
             'moc_term': context_tools.get_moc_term(request),
             'query_string': context_tools.get_query_string(request),
+            'results_heading': context_tools.get_results_heading(request),
             'site_commitments_string': context_tools.get_site_commitments_string(request),
             'site_config': context_tools.get_site_config(request),
             'site_tags': settings.SITE_TAGS,
+            'title_term': context_tools.get_title_term(request),
+        }
+
+
+class SearchResultHeaderBlock(Block):
+    base_template = 'myblocks/blocks/searchresultsheader.html'
+
+    def context(self, request, **kwargs):
+        return {
+            'arranged_jobs': context_tools.get_arranged_jobs(request),
+            'count_heading': context_tools.get_count_heading(request),
+            'default_jobs': context_tools.get_default_jobs(request),
+            'featured_jobs': context_tools.get_featured_jobs(request),
+            'location_term': context_tools.get_location_term(request),
+            'moc_term': context_tools.get_moc_term(request),
+            'query_string': context_tools.get_query_string(request),
             'title_term': context_tools.get_title_term(request),
         }
 
@@ -335,7 +376,7 @@ class VeteranSearchBox(Block):
 
     def context(self, request, **kwargs):
         return {
-            'location_term': context_tools.get_location_term(request),
+            'location_term': context_tools.get_location_term(request, **kwargs),
             'moc_term': context_tools.get_moc_term(request),
             'moc_id_term': context_tools.get_moc_id_term(request),
             'search_url': context_tools.get_search_url(request),
@@ -348,6 +389,8 @@ class VeteranSearchBox(Block):
 class Row(models.Model):
     blocks = models.ManyToManyField('Block', through='BlockOrder')
 
+    updated = models.DateTimeField(auto_now=True)
+
     def __unicode__(self):
         return ', '.join([block.name for block in self.blocks.all()])
 
@@ -355,8 +398,12 @@ class Row(models.Model):
     def bootstrap_classes():
         return "row"
 
-    def context(self):
-        return {}
+    @context_tools.Memoized
+    def context(self, request, **kwargs):
+        context = {}
+        for block in self.blocks.all():
+            context.update(block.cast().context(request, **kwargs))
+        return context
 
     @context_tools.Memoized
     def get_template(self):
@@ -364,6 +411,14 @@ class Row(models.Model):
                   for block in self.blocks.all().order_by('blockorder__order')]
 
         return '<div class="row">%s</div>' % ''.join(blocks)
+
+
+    @context_tools.Memoized
+    def required_js(self):
+        js = []
+        for block in self.blocks.all():
+            js += block.cast().required_js()
+        return list(set(js))
 
 
 class Page(models.Model):
@@ -382,7 +437,7 @@ class Page(models.Model):
 
     page_type_choices = (
         (ERROR_404, '404'),
-        # (HOME_PAGE, 'Home Page'),
+        (HOME_PAGE, 'Home Page'),
         (JOB_DETAIL, 'Job Detail Page'),
         (SEARCH_RESULTS, 'Job Search Results Page'),
         (LOGIN, 'Login Page'),
@@ -394,15 +449,19 @@ class Page(models.Model):
     )
 
     page_type = models.CharField(choices=page_type_choices, max_length=255)
+    name = models.CharField(max_length=255)
+
     rows = models.ManyToManyField('Row', through='RowOrder')
-    site = models.ForeignKey('seo.SeoSite')
+    sites = models.ManyToManyField('seo.SeoSite')
     status = models.CharField(choices=page_status_choices, max_length=255,
                               default='production')
 
     head = models.TextField(blank=True)
 
+    updated = models.DateTimeField(auto_now=True)
+
     def __unicode__(self):
-        return "%s for %s: %s" % (self.page_type, self.site.name, self.pk)
+        return self.name
 
     @context_tools.Memoized
     def all_blocks(self):
@@ -425,7 +484,6 @@ class Page(models.Model):
         context['site_title'] = settings.SITE_TITLE
         context['site_description'] = settings.SITE_DESCRIPTION
 
-
         return context
 
     def get_body(self):
@@ -446,7 +504,7 @@ class Page(models.Model):
             additional_js += [self.to_js_tag(js) for js in block.required_js()]
 
         head += list(set(additional_js))
-        return self.head + ''.join(head)
+        return ''.join(head) + self.head
 
     def get_template(self, request):
         filters = context_tools.get_filters(request)
@@ -463,6 +521,20 @@ class Page(models.Model):
         template = Template(raw_base_template(self))
         return template.render(Context(context))
 
+    def human_readable_page_type(self):
+        page_type_choices_dict = dict(self.page_type_choices)
+        return page_type_choices_dict.get(self.page_type, '')
+    human_readable_page_type.short_description = 'Page Type'
+
+    def human_readable_sites(self):
+        return ''.join(self.sites.values_list('domain', flat=True))
+    human_readable_sites.short_description = 'Sites'
+
+    def human_readable_status(self):
+        status_choices_dict = dict(self.page_status_choices)
+        return status_choices_dict[self.status]
+    human_readable_status.short_description = 'Status'
+
     def pixel_template(self):
         return mark_safe("""
             <img style="display: none;" border="0" height="1" width="1" alt="My.jobs"
@@ -475,9 +547,34 @@ class Page(models.Model):
         """)
 
     def render(self, request, **kwargs):
+        key = self.render_cache_prefix(request)
+        rendered_template = blocks_cache.get(key)
+        if rendered_template:
+            return rendered_template
         context = self.context(request, **kwargs)
         template = Template(self.get_template(request))
-        return template.render(RequestContext(request, context))
+        rendered_template = template.render(RequestContext(request, context))
+        blocks_cache.set(key, rendered_template, settings.MINUTES_TO_CACHE*60)
+        return rendered_template
+
+    def render_cache_prefix(self, request):
+        page = '%s::%s' % (self.pk, self.updated)
+        path = request.path
+        query_string = context_tools.get_query_string(request)
+        blocks = self.all_blocks()
+        blocks = ["%s::%s" % (block.id, str(block.updated)) for block in
+                  blocks]
+        blocks = '#'.join(blocks)
+        rows = self.rows.all()
+        rows = ["%s::%s" % (row.id, str(row.updated)) for row in rows]
+        rows = '#'.join(rows)
+        config = context_tools.get_site_config(request)
+        config = '%s::%s' % (config.pk, config.revision)
+        buids = [str(buid) for buid in getattr(settings, 'SITE_BUIDS', [])]
+        buids = '#'.join(buids)
+        key = '###'.join([page, path, query_string, config, blocks, rows,
+                          buids]).encode('utf-8')
+        return hashlib.sha1(key).hexdigest()
 
     def templatetag_library(self):
         templatetags = ['{% load seo_extras %}', '{% load i18n %}',
@@ -499,10 +596,12 @@ class Page(models.Model):
             if job.on_sites and not on_this_site:
                 return redirect('home')
 
-        title_slug = kwargs.get('title_slug', '')
-        location_slug = kwargs.get('location_slug', '')
-        job_location_slug = slugify(job.location)
-        if title_slug == job.title_slug and location_slug == job_location_slug:
+        title_slug = kwargs.get('title_slug', '').lower()
+        location_slug = kwargs.get('location_slug', '').lower()
+        job_location_slug = slugify(job.location).lower()
+
+        if (title_slug == job.title_slug.lower() and
+                location_slug == job_location_slug):
             return None
 
         feed = kwargs.get('feed', '')
@@ -532,7 +631,7 @@ class Page(models.Model):
             redirect_url += "?%s" % query
         return redirect(redirect_url, permanent=True)
 
-    def handle_search_results_redirect(self, request, *args, **kwargs):
+    def handle_search_results_redirect(self, request):
         filters = context_tools.get_filters(request)
         query_string = context_tools.get_query_string(request)
 
@@ -542,8 +641,8 @@ class Page(models.Model):
 
         jobs_and_counts = context_tools.get_jobs_and_counts(request)
         default_jobs = jobs_and_counts[0]
-        featured_jobs = jobs_and_counts[1]
-        facet_counts = jobs_and_counts[2]
+        featured_jobs = jobs_and_counts[2]
+        facet_counts = jobs_and_counts[4]
         if not facet_counts:
             return redirect("/")
         if (len(default_jobs) == 0 and len(featured_jobs) == 0
@@ -552,16 +651,11 @@ class Page(models.Model):
 
         return
 
-    def handle_postprocessing(self, response, page_type):
-        if page_type == self.JOB_DETAIL:
-            response = response
-        return response
-
     def handle_redirect(self, request, *args, **kwargs):
         if self.page_type == self.JOB_DETAIL:
             return self.handle_job_detail_redirect(request, *args, **kwargs)
         if self.page_type == self.SEARCH_RESULTS:
-            return self.handle_search_results_redirect(request, *args, **kwargs)
+            return self.handle_search_results_redirect(request)
         return None
 
 
@@ -569,6 +663,8 @@ class BlockOrder(models.Model):
     block = models.ForeignKey('Block')
     row = models.ForeignKey('Row')
     order = models.PositiveIntegerField()
+
+    updated = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ('order', )
@@ -580,6 +676,8 @@ class ColumnBlockOrder(models.Model):
                                      related_name='included_column_blocks')
     order = models.PositiveIntegerField()
 
+    updated = models.DateTimeField(auto_now=True)
+
     class Meta:
         ordering = ('order', )
 
@@ -588,6 +686,8 @@ class RowOrder(models.Model):
     row = models.ForeignKey('Row')
     order = models.PositiveIntegerField()
     page = models.ForeignKey('Page')
+
+    updated = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ('order', )

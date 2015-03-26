@@ -70,7 +70,7 @@ def protected_site(view_func):
                     # should've just authenticated them.
                     try:
                         the_ticket = Ticket.objects.get(user__user_guid=guid,
-                                                         ticket=ticket)
+                                                        ticket=ticket)
                     except Ticket.DoesNotExist:
                         # If this failed, there's probably some url hacking
                         # going on.

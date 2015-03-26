@@ -26,7 +26,7 @@ from seo.models import CompanyUser
 from mydashboard.tests.factories import CompanyFactory, CompanyUserFactory
 from mypartners.tests.factories import (PartnerFactory, ContactFactory,
                                         ContactLogEntryFactory,
-                                        ContactRecordFactory)
+                                        ContactRecordFactory, TagFactory)
 from mysearches.tests.factories import PartnerSavedSearchFactory
 from datetime import datetime, timedelta, date
 from mypartners import views
@@ -226,6 +226,7 @@ class EditItemTests(MyPartnersTestCase):
         soup = BeautifulSoup(response.content)
 
         self.assertIn("Add Partner", soup.title.text)
+        self.assertEqual("Primary Contact", soup.legend.text)
 
     def test_add_contact_form_loaded(self):
         # 0 is treated as an empty parameter
@@ -706,6 +707,7 @@ class SearchFeedTests(MyPartnersTestCase):
         self.search = PartnerSavedSearchFactory(
             provider=self.company, created_by=self.staff_user,
             user=self.contact.user, partner=self.partner)
+        self.search.tags.add(TagFactory())
 
         # Create a TestClient
         self.client = TestClient()
@@ -722,15 +724,19 @@ class SearchFeedTests(MyPartnersTestCase):
         self.assertEqual(response.status_code, 200)
         details = soup.find(class_="sidebar")
         self.assertIn('Active', details.find('h2').get_text())
-        texts = ['http://www.my.jobs/jobs',
-                 'None',
+        texts = ['None',
                  'Weekly on Monday',
                  'Relevance',
                  'Never',
                  'alice@example.com',
                  str(self.search.jobs_per_email),
+                 self.search.tags.first().name,
                  'All jobs from www.my.jobs']
+        anchor = details('a', recursive=False)
         details = details('span', recursive=False)
+
+        self.assertEqual(anchor[0].get_text().strip(),
+                         self.search.url)
         for i, text in enumerate(texts):
             self.assertIn(text, details[i].get_text().strip())
 

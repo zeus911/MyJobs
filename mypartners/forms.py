@@ -17,7 +17,6 @@ from mypartners.widgets import (MultipleFileField,
 from universal.forms import NormalizedModelForm
 
 
-
 def init_tags(self):
     if self.instance.id and self.instance.tags:
         tag_names = ",".join([tag.name for tag in self.instance.tags.all()])
@@ -182,7 +181,6 @@ class NewPartnerForm(NormalizedModelForm):
             self.fields['notes'] = notes
 
         for field in self.fields.itervalues():
-            field.label = "Primary Contact " + field.label
             # primary contact information isn't required to create a partner
             field.required = False
         model_fields = OrderedDict(self.fields)
@@ -193,9 +191,14 @@ class NewPartnerForm(NormalizedModelForm):
                 widget=forms.TextInput(
                     attrs={'placeholder': 'Partner Organization',
                            'id': 'id_partner-partnername'})),
+            'partnersource': forms.CharField(
+                label="Source", max_length=255, required=False,
+                widget=forms.TextInput(
+                    attrs={'placeholder': 'Source',
+                           'id': 'id_partner-partnersource'})),
             'partnerurl': forms.URLField(
-                label="Partner URL", max_length=255, required=False,
-                widget=forms.TextInput(attrs={'placeholder': 'Partner URL',
+                label="URL", max_length=255, required=False,
+                widget=forms.TextInput(attrs={'placeholder': 'URL',
                                               'id': 'id_partner-partnerurl'})),
             'partner-tags': forms.CharField(
                 label='Tags', max_length=255, required=False,
@@ -220,9 +223,11 @@ class NewPartnerForm(NormalizedModelForm):
         # self.instance is a Contact instance
         company_id = self.data['company_id']
         partner_url = self.data.get('partnerurl', '')
+        partner_source = self.data.get('partnersource', '')
 
         partner = Partner.objects.create(name=self.data['partnername'],
-                                         uri=partner_url, owner_id=company_id)
+                                         uri=partner_url, owner_id=company_id,
+                                         data_source=partner_source)
 
         log_change(partner, self, self.user, partner, partner.name,
                    action_type=ADDITION)
@@ -267,6 +272,18 @@ class NewPartnerForm(NormalizedModelForm):
         # No contact was created
         return None
 
+    def get_field_sets(self):
+        """
+        NewPartnerForm is a combination Partner and Contact form. As
+        self.fields has already been turned into an OrderedDict in __init__,
+        we can easily segment our form into fieldsets.
+        """
+        sections = self.fields.keys()[:4], self.fields.keys()[4:]
+        field_sets = [
+            [self[field] for field in section] for section in sections
+        ]
+        return field_sets
+
 
 def remove_partner_data(dictionary, keys):
     new_dictionary = dict(dictionary)
@@ -305,7 +322,7 @@ class PartnerForm(NormalizedModelForm):
     class Meta:
         form_name = "Partner Information"
         model = Partner
-        fields = ['name', 'uri', 'tags']
+        fields = ['name', 'data_source', 'uri', 'tags']
         widgets = generate_custom_widgets(model)
 
     def clean_tags(self):
