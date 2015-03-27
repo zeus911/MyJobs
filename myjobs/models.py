@@ -296,6 +296,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     objects = CustomUserManager()
 
+    def natural_key(self):
+        return self.email
+
     def __init__(self, *args, **kwargs):
         super(User, self).__init__(*args, **kwargs)
         # Get a copy of the original password so we can determine if

@@ -22,6 +22,7 @@ CONTACT_TYPE_CHOICES = (('email', 'Email'),
                         ('meetingorevent', 'Meeting or Event'),
                         ('job', 'Job Followup'),
                         ('pssemail', "Partner Saved Search Email"))
+CONTACT_TYPES = dict(CONTACT_TYPE_CHOICES)
 
 # Flags for ContactLogEntry action_flag. Based on django.contrib.admin.models
 # action flags.
@@ -356,6 +357,9 @@ class Partner(models.Model):
         return records
 
     def __unicode__(self):
+        return self.name
+
+    def natural_key(self):
         return self.name
 
     # get_searches_for_partner
@@ -818,6 +822,9 @@ class Tag(models.Model):
 
     def __unicode__(self):
         return "%s for %s" % (self.name, self.company.name)
+
+    def natural_key(self):
+        return self.name
 
     class Meta:
         unique_together = ('name', 'company')
