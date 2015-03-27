@@ -34,12 +34,12 @@ class ModelsTests(BlocksTestBase):
         # the one requested.
         context = apply_link_block.context(self.job_detail_request,
                                            job_id=self.job['guid'])
-        self.assertEqual(context['apply_link_job'].guid, self.job['guid'])
+        self.assertEqual(context['requested_job'].guid, self.job['guid'])
 
         # When there isn't actually a job being requested we shouldn't
         # get a job populating the apply link field.
         context = apply_link_block.context(self.job_detail_request)
-        self.assertIsNone(context['apply_link_job'])
+        self.assertIsNone(context['requested_job'])
 
     def test_breadbox_context(self):
         breadbox_block = factories.BreadboxBlockFactory()
@@ -253,7 +253,7 @@ class ModelsTests(BlocksTestBase):
 
         context = search_result_header_block.context(self.search_results_request)
         self.assertIsNotNone(context['arranged_jobs'])
-        self.assertNotEqual(context['count_heading'], '')
+        self.assertNotEqual(context['results_heading'], '')
         self.assertEqual(len(context['default_jobs']), 1)
         self.assertEqual(len(context['featured_jobs']), 0)
         self.assertEqual(context['location_term'], '')
