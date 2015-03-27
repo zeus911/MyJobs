@@ -1,3 +1,7 @@
+window.onpopstate = function(event) {
+  console.log(event);
+};
+
 // Variable to get through beforeunload listener without displaying message.
 var reload = false;
 
@@ -235,12 +239,7 @@ Report.prototype.bind_events = function() {
       data: $.param(data, true),
       success: function (data) {
         reload = true;
-        var new_url = location.protocol + '//' + location.host + location.pathname,
-            form = $('<form action="'+ new_url +'" method="POST" style="display: none;">' +
-          '<input type="hidden" name="csrfmiddlewaretoken" value="' + csrf + '" />"' +
-          '<input type="hidden" name="success" value="true" /> </form>');
-        $('body').append(form);
-        form.submit();
+        window.location = location.protocol + '//' + location.host + location.pathname;
       }
     });
   });
@@ -591,7 +590,9 @@ $(document).ready(function() {
     }
 
     // Create js Report object and set up next step.
+
     report = new Report(types);
+    history.pushState({'report': report}, 'Create Report', 'new');
     report.bind_events();
     $("#container").addClass("rpt-container");
     report.render_fields(report.fields);
