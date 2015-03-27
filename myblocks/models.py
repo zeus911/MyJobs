@@ -22,6 +22,9 @@ from registration.forms import CustomAuthForm, RegistrationForm
 from seo import helpers
 
 
+# Attempt to use a secondary cache for blocks. This
+# allows us to monitor and clear the block cache apart
+# from session and page caching.
 try:
     blocks_cache = cache.get_cache('blocks')
 except InvalidCacheBackendError:
@@ -29,6 +32,13 @@ except InvalidCacheBackendError:
 
 
 def raw_base_head(obj):
+    """
+    Gets the base head template for an object if one exists.
+
+    :param obj: A myblocks object.
+    :return: If the object has a base_head attribute, a string
+             containing the base_head template. Otherwise a blank string.
+    """
     if obj.base_head:
         loader = Loader()
         return loader.load_template_source(obj.base_head)[0]
@@ -36,6 +46,12 @@ def raw_base_head(obj):
 
 
 def raw_base_template(obj):
+    """
+    Gets the base body template for an object.
+
+    :param obj: A myblocks object with a valid base_template.
+    :return: The base_template as a string.
+    """
     loader = Loader()
     return loader.load_template_source(obj.base_template)[0]
 
@@ -76,14 +92,28 @@ class Block(models.Model):
         return self.content_type.get_object_for_this_type(pk=self.pk)
 
     def context(self, request, **kwargs):
+        """
+        Provides the context required to render a block. In most
+        cases this should be overriden in the subclass.
+
+        """
         return {}
 
     def get_template(self):
+        """
+        Provides the final template for a block.
+
+        """
         return '<div class="block-%s %s">%s</div>' % (self.id,
                                                       self.bootstrap_classes(),
                                                       self.template)
 
     def required_js(self):
+        """
+        Provides any javascript required by a block. In most cases
+        this will be overriden by the subclass.
+
+        """
         return []
 
     def save(self, *args, **kwargs):
@@ -128,6 +158,13 @@ class ColumnBlock(Block):
 
     @context_tools.Memoized
     def get_template(self):
+        """
+        Combines all the templates for each block in the ColumnBlock
+        in the order specified by the matching ColumnBlockOrder.
+        Each block is wrapped in a row div.
+
+        """
+
         blocks = []
         for block in self.blocks.all().order_by('columnblockorder__order'):
             blocks.append('<div class="row">%s</div>'
@@ -139,6 +176,11 @@ class ColumnBlock(Block):
 
     @context_tools.Memoized
     def required_js(self):
+        """
+        Combines and de-duplicates any javascript required by the
+        blocks in the ColumnBlock.
+
+        """
         js = []
         for block in self.blocks.all():
             js += block.cast().required_js()
@@ -212,6 +254,11 @@ class LoginBlock(Block):
         }
 
     def handle_post(self, request):
+        """
+        Logs a user in if it was a request to log a user in and
+        the login attempt was successful.
+
+        """
         # Confirm that the requst is a post, and that this form is
         # the intended recipient of the posted data.
         if not request.POST or self.submit_btn_name() not in request.POST:
@@ -270,6 +317,11 @@ class RegistrationBlock(Block):
         }
 
     def handle_post(self, request):
+        """
+        Registers a user if it was a request to register a user
+        and the registration form was correctly completed.
+
+        """
         # Confirm that the requst is a post, and that this form is
         # the intended recipient of the posted data.
         if not request.POST or self.submit_btn_name() not in request.POST:
@@ -407,6 +459,12 @@ class Row(models.Model):
 
     @context_tools.Memoized
     def get_template(self):
+        """
+        Combines all the templates for each block in the Row
+        in the order specified by the matching BlockOrder.
+        The combined templates are then wrapped in a row div.
+
+        """
         blocks = [block.cast().get_template()
                   for block in self.blocks.all().order_by('blockorder__order')]
 
@@ -415,6 +473,11 @@ class Row(models.Model):
 
     @context_tools.Memoized
     def required_js(self):
+        """
+        Combines and de-duplicates any javascript required by the
+        blocks in the Row.
+
+        """
         js = []
         for block in self.blocks.all():
             js += block.cast().required_js()
@@ -494,16 +557,27 @@ class Page(models.Model):
 
     @context_tools.Memoized
     def get_head(self):
+        """
+        Combines the page head with all of the heads for each
+        individual block on the page.
+
+        """
         blocks = self.all_blocks()
 
+        # Combine the block head
         head = [block.head for block in blocks]
 
         additional_js = []
 
+        # Combine, convert to script tags, and de-duplicate all of the
+        # js required for each page.
         for block in self.all_blocks():
             additional_js += [self.to_js_tag(js) for js in block.required_js()]
 
         head += list(set(additional_js))
+
+        # Apply Page.head last so that any CSS in Page.head overwrites
+        # the block-level CSS.
         return ''.join(head) + self.head
 
     def get_template(self, request):
@@ -522,20 +596,37 @@ class Page(models.Model):
         return template.render(Context(context))
 
     def human_readable_page_type(self):
+        """
+        Converts the page_type into a human readable format for use
+        in the admin.
+
+        """
         page_type_choices_dict = dict(self.page_type_choices)
         return page_type_choices_dict.get(self.page_type, '')
     human_readable_page_type.short_description = 'Page Type'
 
     def human_readable_sites(self):
+        """
+        Converts sites into a list of matching domains for use in the
+        admin.
+
+        """
         return ''.join(self.sites.values_list('domain', flat=True))
     human_readable_sites.short_description = 'Sites'
 
     def human_readable_status(self):
+        """
+        Converts status into a human readable format for use in the admin.
+        """
         status_choices_dict = dict(self.page_status_choices)
         return status_choices_dict[self.status]
     human_readable_status.short_description = 'Status'
 
     def pixel_template(self):
+        """
+        Returns the template for the tracking pixel.
+
+        """
         return mark_safe("""
             <img style="display: none;" border="0" height="1" width="1" alt="My.jobs"
             {% if the_job %}
@@ -547,6 +638,11 @@ class Page(models.Model):
         """)
 
     def render(self, request, **kwargs):
+        """
+        Gets the template for a Page and renders it. Results are cached
+        in the blocks_cache using render_cache_prefix as the cache key.
+
+        """
         key = self.render_cache_prefix(request)
         rendered_template = blocks_cache.get(key)
         if rendered_template:
@@ -558,10 +654,21 @@ class Page(models.Model):
         return rendered_template
 
     def render_cache_prefix(self, request):
-        domain = ''
+        """
+        Combines the current domain, the page, the current path,
+        the current query string, all of the blocks for a page, all
+        of the rows for a page, the current site configuration,
+        and all business units for the current site into a
+        single string and then hashes it.
+
+        This can be used as a cache key for a Page. It will be change any
+        time any block, row, page, or configuration is updated.
+
+        """
+        domain = None
         if request.user.is_authenticated() and request.user.is_staff:
             domain = request.REQUEST.get('domain')
-        if domain is '':
+        if domain is None:
             domain = request.get_host()
 
         page = '%s::%s' % (self.pk, self.updated)
@@ -583,14 +690,34 @@ class Page(models.Model):
         return hashlib.sha1(key).hexdigest()
 
     def templatetag_library(self):
+        """
+        Supplies any templatetags necessary for page rendering.
+
+        """
         templatetags = ['{% load seo_extras %}', '{% load i18n %}',
                         '{% load highlight %}', '{% load humanize %}', ]
         return ' '.join(templatetags)
 
     def to_js_tag(self, js_file):
+        """
+        :param js_file: The location of a javascript file as a string.
+        :return: A script tag for js_file.
+        """
         return '<script type="text/javascript" src="%s"></script>' % js_file
 
     def handle_job_detail_redirect(self, request, *args, **kwargs):
+        """
+        Used on job detail pages, this returns a redirect to the
+        appropriate url if:
+            1. There is no matching job (404).
+            2. The matching job isn't actually available on the site
+               because it belongs to a business unit or site package
+               not associated with that site (Redirect to home page).
+            3. It's missing slugs or the slugs are out of order
+               (Redirect to the page with slugs in the correct order).
+
+        If there is no redirect, returns None.
+        """
         job_id = kwargs.get('job_id', '')
         job = context_tools.get_job(request, job_id)
 
@@ -638,6 +765,22 @@ class Page(models.Model):
         return redirect(redirect_url, permanent=True)
 
     def handle_search_results_redirect(self, request):
+        """
+        Used on search result pages, this returns a redirect to the
+        appropriate url if:
+            1. helpers.determine_redirect() supplies a redirect.
+               The redirect rules that function uses are defined
+               in the determine_redirect function.
+            2. There are no facet_counts (Redirect to home page).
+            3. There are no featured jobs, no default jobs, and
+               no query term applied. This means there are either
+               no jobs for the site or a series of filters that
+               should not be able to be applied were applied
+               (Redirects to home page).
+
+        If there is no redirect, returns None.
+        """
+
         filters = context_tools.get_filters(request)
         query_string = context_tools.get_query_string(request)
 
@@ -658,6 +801,11 @@ class Page(models.Model):
         return
 
     def handle_redirect(self, request, *args, **kwargs):
+        """
+        Allows for each page type to handle the possibility of redirecting
+        if necessary.
+
+        """
         if self.page_type == self.JOB_DETAIL:
             return self.handle_job_detail_redirect(request, *args, **kwargs)
         if self.page_type == self.SEARCH_RESULTS:
