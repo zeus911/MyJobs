@@ -28,7 +28,8 @@
                     <fieldset>
                         {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.0 %}
                     </fieldset>
-                    <fieldset>
+                    <a class="btn desktop_hide" id="add-primary-contact">Add Primary Contact</a>
+                    <fieldset id="primary-contact" class="mobile_hide">
                         <legend>{% trans 'Primary Contact' %}</legend>
                         {% include 'includes/fieldset-error-highlight.html' with fieldset=form.get_field_sets.1 %}
                     </fieldset>
@@ -145,5 +146,5 @@
     });
 </script>
 <script src="{{ STATIC_URL }}tag-it.min.js{{ gz }}"></script>
-<script src="{{ STATIC_URL }}prm.162-16.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}prm.162-25.js{{ gz }}"></script>
 {% endblock %}

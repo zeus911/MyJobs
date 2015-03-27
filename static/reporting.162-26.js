@@ -505,6 +505,7 @@ List.prototype.filter = function(filter) {
     }
   } else if (list.type === "contact") {
     url += "/reports/ajax/mypartners/contact";
+    data['values'] = true;
   }
 
   $.ajaxSettings.traditional = true;
@@ -530,6 +531,10 @@ List.prototype.filter = function(filter) {
         // add record count to right of partners
         if (list.type === "partner") {
           li.append("<span class='pull-right'>"+ record.count +"</span>");
+        }
+
+        if (list.type === "contact" && record.email) {
+          li.append(" <span>("+ record.email + ")</span>");
         }
 
         ul.append(li);
