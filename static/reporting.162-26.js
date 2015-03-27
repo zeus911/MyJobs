@@ -233,7 +233,6 @@ Report.prototype.bind_events = function() {
       type: 'POST',
       url: url,
       data: $.param(data, true),
-      dataType: "json",
       success: function (data) {
         reload = true;
         var new_url = location.protocol + '//' + location.host + location.pathname,
