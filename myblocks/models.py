@@ -470,7 +470,6 @@ class Row(models.Model):
 
         return '<div class="row">%s</div>' % ''.join(blocks)
 
-
     @context_tools.Memoized
     def required_js(self):
         """
