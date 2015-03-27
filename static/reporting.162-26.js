@@ -533,6 +533,10 @@ List.prototype.filter = function(filter) {
           li.append("<span class='pull-right'>"+ record.count +"</span>");
         }
 
+        if (list.type === "contact" && record.email) {
+          li.append(" <span>("+ record.email + ")</span>");
+        }
+
         ul.append(li);
       }
 

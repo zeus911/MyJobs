@@ -93,14 +93,32 @@ def view_records(request, app, model):
         params.pop('csrfmiddlewaretoken', None)
         count = params.pop('count', None)
 
-        records = get_model(app, model).objects.from_search(company, params)
+        # TODO: REMOVE THIS ---------------------------------------------------
+        if model == 'contact':
+            records = get_model(app, 'contactrecord').objects.from_search(
+                company, params).values(
+                    'contact_name', 'contact_email').distinct()
+
+            records = [{'name': record['contact_name'],
+                        'email': record['contact_email']}
+                       for record in records]
+        # ---------------------------------------------------------------------
+        else:
+            records = get_model(app, model).objects.from_search(
+                company, params)
 
         counts = {}
         if count:
-            records = records.annotate(count=Count(count))
+            records = records.annotate(count=Count(count, distinct=True))
             counts = {record.pk: record.count for record in records}
 
-        ctx = serialize('json', records, counts=counts)
+        # TODO: REMOVE THIS ---------------------------------------------------
+        if model == 'contact':
+            ctx = json.dumps(records)
+        # --------------------------------------------------------------
+        else:
+            ctx = serialize('json', records, counts=counts)
+
         response = HttpResponse(
             ctx, content_type='application/json; charset=utf-8')
 
