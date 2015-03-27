@@ -194,7 +194,7 @@ class ReportView(View):
 
             report.results.save('%s-%s.json' % (name, report.pk), results)
 
-            return HttpResponse(name)
+            return HttpResponse(name, content_type='text/plain')
         else:
             raise Http404(
                 "This view is only reachable via a POST request.")
