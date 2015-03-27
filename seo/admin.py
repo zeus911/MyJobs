@@ -93,7 +93,7 @@ class SeoCeleryTaskAdmin(djcelery.admin.TaskMonitor):
                     kwargs = ast.literal_eval(state.kwargs)
                     tasks.task_update_solr.delay(*args, **kwargs)
                 else:
-                    messages.info(request, 
+                    messages.info(request,
                                   u"Resend not supported for that task type")
 
 admin.site.unregister(djcelery.models.TaskState)
@@ -101,6 +101,15 @@ admin.site.register(djcelery.models.TaskState, SeoCeleryTaskAdmin)
 
 
 class ConfigurationAdmin (admin.ModelAdmin):
+    formfield_overrides = {
+        models.TextField: {
+            'widget': forms.Textarea(attrs={
+                'style': 'width:80%;',
+                'rows': 40,
+            })
+        }
+    }
+
     form = ConfigurationForm
     list_display = ('__unicode__', 'show_sites', 'group', 'status_title')
     list_filter = [GroupListFilter]
