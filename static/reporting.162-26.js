@@ -65,7 +65,9 @@ Report.prototype.bind_events = function() {
           values = [];
 
       if (all_records.is(":checked") && $(this).is(":checked")) {
-        report.data[in_list] = "";
+        if (typeof report.data.partner !== "undefined") {
+          delete report.data.partner;
+        }
       } else {
         // iterate through all checkboxes and find all the ones that are checked
         // and add to data.
@@ -288,19 +290,17 @@ Report.prototype.readable_data = function() {
       html += "</div>";
     }
   }
-  if (typeof data['partner'] === "undefined") {
+  if (typeof data.partner === "undefined") {
     if ($("#partner-all-checkbox").is(":checked")) {
       html += "<div><label>Partners:</label>All Partners</div>";
     }
   }
 
-  if (typeof data['contact'] === "undefined") {
+  if (typeof data.contact === "undefined") {
     if ($("#contact-all-checkbox").is(":checked")) {
       html += "<div><label>Contacts:</label>All Contacts</div>";
     }
   }
-
-
 
   return html;
 };
@@ -341,18 +341,10 @@ Report.prototype.create_clone_report = function(json) {
 
       if (key === "partner") {
         this.find_field("Select Partners").value = value;
-        // if only one partner was selected it will come back as a string.
-        // expecting a list for rendering.
-        if (typeof value === "string") {
-          value = [value];
-        }
         this.data[key] = value;
       } else if (key === "contact_name") {
         this.find_field("Select Contacts").value = value;
-        if (typeof value === "string") {
-          value = [value];
-        }
-        this.data["contact"] = value;
+        this.data.contact = value;
       } else if (key.indexOf("date") > 0) {
         field = this.find_field("Select Date");
         if (field.value === "") {
@@ -532,11 +524,9 @@ List.prototype.filter = function(filter) {
       // fill ul with li's
       for (var i = 0; i < data.length; i++) {
         record = data[i];
-        if (list.value) {
-          li = $("<li><input type='checkbox' value='"+ record.pk +"' /> <span>"+ record.name +"</span></li>");
-        } else {
-          li = $("<li><input type='checkbox' value='"+ record.pk +"' checked /> <span>"+ record.name +"</span></li>");
-        }
+
+        li = $("<li><input type='checkbox' value='"+ record.pk +"' /> <span>"+ record.name +"</span></li>");
+        li.find("input").prop("checked", Boolean(!list.value));
 
         // add record count to right of partners
         if (list.type === "partner") {
@@ -548,6 +538,10 @@ List.prototype.filter = function(filter) {
 
       // render
       $("#"+ list.type + ".list-body").html('').append(ul);
+
+      if (typeof list.value === "string" && list.value !== "") {
+        list.value = [list.value];
+      }
 
       if (list.value) {
         if (list.type === "partner") {
@@ -615,7 +609,7 @@ $(document).ready(function() {
     }
   });
 
-
+  // View Report
   sidebar.on("click", ".report > a, .fa-eye", function() {
     var report_id = $(this).attr("id").split("-")[1],
         data = {"id": report_id},
@@ -626,8 +620,185 @@ $(document).ready(function() {
       url: url + "/reports/view/mypartners/contactrecord",
       data: data,
       success: function(data) {
-        $("#main-container").html(JSON.stringify(data));
-      },
+        var contacts = data.contacts,
+            communications = data.communications || 0,
+            emails = data.emails || 0,
+            pss = data.searches || 0,
+            calls = data.calls || 0,
+            meetings = data.meetings || 0,
+            referrals = data.referrals || 0,
+            applications = data.applications || 0,
+            interviews = data.interviews || 0,
+            hires = data.hires || 0,
+            pChartInfo = {0: {'name': "Emails",            'count': emails,   'color': "#5EB95E"},
+                          1: {'name': "PSS Emails",        'count': pss,      'color': "#4BB1CF"},
+                          2: {'name': "Phone Calls",       'count': calls,    'color': "#FAA732"},
+                          3: {'name': "Meetings & Events", 'count': meetings, 'color': "#5F6C82"}},
+            bChartInfo = {0: {'name': "Applications", 'count': applications, 'style': "color: #5EB95E"},
+                          1: {'name': "Interviews",   'count': interviews,   'style': "color: #4BB1CF"},
+                          2: {'name': "Hires",        'count': hires,        'style': "color: #FAA732"},
+                          3: {'name': "Records",      'count': referrals,    'style': "color: #5F6C82"}};
+
+        // Grab google's jsapi to load chart files.
+        $.getScript("https://www.google.com/jsapi", function() {
+          // Had to use 'callback' with google.load otherwise after load google makes a new document
+          // with just <html> tags.
+          google.load("visualization", "1.0", {'packages':["corechart"], 'callback': function() {
+            var pDataTable = [['Records', 'All Records']], // p for pieChart
+                bDataTable = [['Activity', 'Amount', {'role': 'style'}]], // b for barChart
+                $mainContainer = $("#main-container"),// the container everything goes in
+                pSliceOptions = {}, // slice options for pieChart
+                pLegend = [], // array that will hold the report-boxes for pieChart
+                bLegend = [], // array that will hold the report-boxes for barChart
+                pChartData,
+                pKey,
+                pValue,
+                pBox,
+                pOptions,
+                pChart,
+                $pLegend,
+                $pChart,
+                bChartData,
+                bValue,
+                bKey,
+                bBox,
+                bOptions,
+                bChart,
+                $bLegend,
+                topThreeRow,
+                restRow,
+                contactContainer,
+                i;
+
+            $mainContainer.html('')
+              .append("<div class='span6'><h4>Communication Activity</h4><div id='d-chart'></div>" +
+                      "</div><div class='span6'><h4>Referral Activity</h4><div id='b-chart'></div></div>");
+
+            for (pKey in pChartInfo) {
+              if (pChartInfo.hasOwnProperty(pKey)) {
+                pValue = pChartInfo[pKey];
+                pDataTable.push([pValue.name, pValue.count]);
+
+                // Used for PieChart to give data 'slices' color.
+                pSliceOptions[pKey] = {'color': pValue.color};
+
+                // Create legend boxes
+                pBox = $('<div class="report-box" style="background-color: ' +
+                         pValue.color + '"><div class="big-num">' + pValue.count +
+                         '</div><div class="reports-record-type">' + pValue.name + '</div></div>');
+                pLegend.push(pBox);
+              }
+            }
+
+            pChartData = google.visualization.arrayToDataTable(pDataTable);
+            pOptions = pieOptions(330, 350, 12, 12, 300, 330, 0.6, pSliceOptions, true);
+            pChart = new google.visualization.PieChart(document.getElementById('d-chart'));
+            pChart.draw(pChartData, pOptions);
+
+            $pChart = $("#d-chart > div");
+            $pChart.append("<div class='chart-box-holder legend'></div>");
+            $pLegend = $("#d-chart .legend");
+            pLegend.forEach(function(element) {
+              $pLegend.append(element);
+            });
+
+            $pChart.append('<div class="piehole report"><div class="piehole-big">' + communications +
+                           '</div><div class="piehole-topic">Contact Records</div></div>');
+
+            for (bKey in bChartInfo) {
+              if (bChartInfo.hasOwnProperty(bKey)) {
+                bValue = bChartInfo[bKey];
+                bDataTable.push([bValue.name, bValue.count, bValue.style]);
+
+                bBox = $('<div class="report-box" style="background-' + bValue.style +
+                         '"><div class="big-num">' + bValue.count +
+                         '</div><div class="reports-record-type">' + bValue.name + '</div></div>');
+                bLegend.push(bBox);
+              }
+            }
+
+            bChartData = google.visualization.arrayToDataTable(bDataTable);
+            bOptions = {title: 'Referral Records', width: 356, height: 360, legend: { position: "none" },
+                        chartArea: {top: 22, left: 37, height: 270, width: 290},
+                        animation: {startup: true, duration: 400}};
+            bChart = new google.visualization.ColumnChart(document.getElementById('b-chart'));
+            bChart.draw(bChartData, bOptions);
+
+            $bLegend = $('<div class="chart-box-holder legend"></div>').append(function() {
+              return bLegend.map(function(element) {
+                return element.prop("outerHTML");
+              }).join('');
+            });
+
+            $("#b-chart > div").append($bLegend);
+
+            // Show the top three contacts in a different format than the rest.
+            topThreeRow = $('<div class="row"></div>').append(function() {
+              var html = '',
+                  cLength = contacts.length,
+                  contact,
+                  name,
+                  email,
+                  cReferrals,
+                  commRecords,
+                  div,
+                  topLength;
+
+              // Determine how long topLength should be.
+              topLength = (cLength > 3) ? 3 : cLength;
+
+              // Just run for the first 3 contacts.
+              for (i = 0; i < topLength; i++) {
+                // remove first contact in array, returns the removed contact.
+                contact = contacts.shift();
+                name = contact.contact_name;
+                email = contact.contact_email;
+                cReferrals = contact.referrals;
+                commRecords = contact.records;
+
+                // create container
+                div = $('<div class="span4 panel top-contacts"></div>');
+                div.append('<div class="name">' + name + '</div><div>' + email + '</div><div class="top-three-box-container">' +
+                           '<div class="report-box small"><div class="big-num">' + commRecords +
+                           '</div><div class="reports-record-type">Contact Records</div></div>' +
+                           '<div class="report-box small"><div class="big-num">' + cReferrals +
+                           '</div><div class="reports-record-type">Referral Records</div></div></div>');
+
+                // add the rendered html as a string.
+                html += div.prop("outerHTML");
+              }
+              return html;
+            });
+
+            // Don't generate a table if cLength = 0
+            if (contacts.length) {
+              restRow = $('<div class="row"></div>').append(function() {
+                var div = $('<div class="span12"></div>'),
+                    table = $('<table class="table table-striped report-table"><thead><tr><th>Name</th>' +
+                              '<th>Email</th><th>Contact Records</th><th>Referral Reocrds</th>' +
+                              '</tr></thead></table>'),
+                    tbody = $('<tbody></tbody>');
+                tbody.append(function() {
+                  // turn each element into cells of a table then join each group of cells with rows.
+                  return "<tr>" + contacts.map(function(contact) {
+                    return "<td>" + contact.contact_name + "</td><td>" + contact.contact_email +
+                           "</td><td>" + contact.records + "</td><td>" + contact.referrals + "</td>";
+                  }).join('</tr><tr>') + "</tr>";
+                });
+                return div.append(table.append(tbody));
+              });
+            } else {
+              // Make sure topThreeRow didn't run before saying there are no records.
+              if (topThreeRow.find("div.top-contacts").length === 0) {
+                restRow = $('<div class="row"><div class="span12">This report has no contacts with records.</div></div>');
+              }
+            }
+
+            contactContainer = $('<div id="report-contacts" class="span12"></div>').append(topThreeRow).append(restRow);
+            $("#main-container").append(contactContainer);
+          }});
+        });
+      }
     });
   });
 
@@ -646,8 +817,7 @@ $(document).ready(function() {
       dataType: "json",
       success: function(data) {
         var report = new Report(["prm"]);
-        debugger;
-        report.create_clone_report($.parseJSON(data));
+        report.create_clone_report(data);
         report.unbind_events();
         report.bind_events();
         $("#container").addClass("rpt-container");
@@ -708,4 +878,19 @@ function update_items_selected(element) {
       num_selected = $(element).parents(".list-body").prev().children("span").children("span");
 
   num_selected.html(checked.length);
+}
+
+
+function pieOptions(height, width, chartArea_top, chartArea_left, chartArea_height, chartArea_width,
+                    piehole_radius, slice_colors, show_tooltips) {
+  var options = {legend: 'none', pieHole: piehole_radius, pieSliceText: 'none',
+                 height: height, width: width,
+                 chartArea: {top:chartArea_top, left:chartArea_left,
+                             height: chartArea_height, width: chartArea_width},
+                 slices: slice_colors
+                };
+  if(!show_tooltips) {
+    options.tooltip = { trigger: 'none' };
+  }
+  return options;
 }
