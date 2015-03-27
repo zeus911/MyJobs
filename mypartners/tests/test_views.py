@@ -2,14 +2,10 @@
 from bs4 import BeautifulSoup
 import csv
 import json
-import re
-from time import sleep
-import os
 import random
 from StringIO import StringIO
 
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.core import mail
@@ -22,13 +18,12 @@ from tasks import PARTNER_LIBRARY_SOURCES
 from myjobs.tests.setup import MyJobsBase
 from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
-from seo.models import CompanyUser
 from mydashboard.tests.factories import CompanyFactory, CompanyUserFactory
 from mypartners.tests.factories import (PartnerFactory, ContactFactory,
                                         ContactLogEntryFactory,
                                         ContactRecordFactory, TagFactory)
 from mysearches.tests.factories import PartnerSavedSearchFactory
-from datetime import datetime, timedelta, date
+from datetime import datetime, date
 from mypartners import views
 from mypartners.models import (Contact, ContactRecord, ContactLogEntry, 
                                Partner, PartnerLibrary, ADDITION)
@@ -68,7 +63,7 @@ class MyPartnersTestCase(MyJobsBase):
         self.client.login_user(self.staff_user)
 
     def get_url(self, view=None, **kwargs):
-        if view == None:
+        if view is None:
             view = self.default_view
         args = ["%s=%s" % (k, v) for k, v in kwargs.items()]
         args = '&'.join(args)
@@ -132,7 +127,7 @@ class MyPartnerViewsTests(MyPartnersTestCase):
 
         x = 0
         while x < 9:
-            contact = ContactFactory(partner=self.partner)
+            ContactFactory(partner=self.partner)
             x += 1
 
         response = self.client.post(reverse('partner_details') +
@@ -144,7 +139,6 @@ class MyPartnerViewsTests(MyPartnersTestCase):
         self.assertEqual(len(soup.select('div.product-card')), 10)
 
 
-        
 class EditItemTests(MyPartnersTestCase):
     """ Test the `edit_item` view functio. 
         
@@ -161,7 +155,7 @@ class EditItemTests(MyPartnersTestCase):
         # so I'm opting for lambdas here.
         self.requests = dict(
             partner=lambda **kwargs: self.request_factory.get('/prm/view/edit',
-                **kwargs),
+                                                              **kwargs),
             contact=lambda **kwargs: self.request_factory.get(
                 '/prm/view/details/edit', dict({'partner': 1}, **kwargs)))
 
@@ -209,7 +203,6 @@ class EditItemTests(MyPartnersTestCase):
             # This URL is reached when editing a partner
             partner_request = self.requests['partner'](ct=ct)
             partner_request.user = self.staff_user
-
 
             # test content id for partner
             self.assertEqual(
@@ -320,7 +313,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
             if len(month) == 3:
                 month += "."
             sub_title = "%s %s, %s" % (month, today.day,
-                                        today.year)
+                                       today.year)
             self.assertIn(title,
                           row('div', class_="big-title")[0].get_text().strip())
             self.assertIn(sub_title,
@@ -481,18 +474,16 @@ class RecordsDetailsTests(MyPartnersTestCase):
 
         self.default_view = 'prm_export'
 
-        records = ContactRecordFactory.create_batch(3, partner=self.partner)
+        ContactRecordFactory.create_batch(3, partner=self.partner)
 
         # this should be the only record to show up in the result
         ContactRecordFactory(partner=self.partner,
                              date_time=datetime(3025, 2, 1))
 
-
-
-        url= self.get_url(partner=self.partner.id,
-                          company=self.company.id,
-                          file_format='csv',
-                          date_start='2/1/3025')
+        url = self.get_url(partner=self.partner.id,
+                           company=self.company.id,
+                           file_format='csv',
+                           date_start='2/1/3025')
 
         response = self.client.get(url)
         # parse the response into elements so we can count them.
@@ -521,7 +512,6 @@ class RecordsEditTests(MyPartnersTestCase):
     def setUp(self):
         super(RecordsEditTests, self).setUp()
 
-
         self.default_view = 'partner_edit_record'
 
         # Create a primary contact
@@ -534,10 +524,10 @@ class RecordsEditTests(MyPartnersTestCase):
 
         # Create a ContactRecord
         self.contact_record = ContactRecordFactory(partner=self.partner,
-                                     contact_name=self.contact.name)
+                                                   contact_name=self.contact.name)
         self.contact_log_entry = ContactLogEntryFactory(partner=self.partner,
-                                     user=self.contact.user,
-                                     object_id=self.contact_record.id)
+                                                        user=self.contact.user,
+                                                        object_id=self.contact_record.id)
         self.contact_log_entry.save()
 
     def test_render_new_form(self):
@@ -900,8 +890,9 @@ class SearchEditTests(MyPartnersTestCase):
     def test_copy_existing_saved_search(self):
         saved_search = PartnerSavedSearch.objects.first()
         response = self.client.post('%s?company=%s&partner=%s&copies=%s' %
-            (reverse('partner_edit_search'), self.company.id,
-             self.partner.id, saved_search.id))
+                                    (reverse('partner_edit_search'),
+                                     self.company.id,
+                                     self.partner.id, saved_search.id))
 
         self.assertEqual(response.status_code, 200)
 
@@ -1122,7 +1113,8 @@ class EmailTests(MyPartnersTestCase):
         ContactRecord.objects.get(contact_email='anewperson@my.jobs')
         ContactRecord.objects.all().delete()
 
-        self.data['text'] = ("From: A New Person [mailto:anewperson@my.jobs] On Behalf Of Someone Else\n"
+        self.data['text'] = ("From: A New Person [mailto:anewperson@my.jobs] "
+                             "On Behalf Of Someone Else\n"
                              "Sent: Wednesday, October 05, 2011 5:17 PM\n"
                              "To: prm@my.jobs\n"
                              "Subject: Stuff\n")
@@ -1252,7 +1244,7 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
 
         # ensure that the associated contact was created as well
         try:
-            contact = Contact.objects.get(library=library_id)
+            Contact.objects.get(library=library_id)
         except Partner.DoesNotExist:
             self.fail("Contact with an ID of %s not created!" % library_id)
 

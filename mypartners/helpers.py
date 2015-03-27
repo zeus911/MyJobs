@@ -125,6 +125,7 @@ def get_change_message(form):
     change_message = []
     if not form:
         return ''
+    print form.changed_data
     if form.changed_data:
         change_message = (ugettext('Changed %s.') %
                           get_text_list(form.changed_data, ugettext('and')))
