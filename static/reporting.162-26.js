@@ -505,6 +505,7 @@ List.prototype.filter = function(filter) {
     }
   } else if (list.type === "contact") {
     url += "/reports/ajax/mypartners/contact";
+    data['values'] = true;
   }
 
   $.ajaxSettings.traditional = true;

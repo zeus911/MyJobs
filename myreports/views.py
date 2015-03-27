@@ -94,7 +94,8 @@ def view_records(request, app, model):
         count = params.pop('count', None)
 
         # TODO: REMOVE THIS ---------------------------------------------------
-        if model == 'contact':
+        values = params.pop('values', False)
+        if model == 'contact' and values:
             records = get_model(app, 'contactrecord').objects.from_search(
                 company, params).values(
                     'contact_name', 'contact_email').distinct()
@@ -113,7 +114,7 @@ def view_records(request, app, model):
             counts = {record.pk: record.count for record in records}
 
         # TODO: REMOVE THIS ---------------------------------------------------
-        if model == 'contact':
+        if model == 'contact' and values:
             ctx = json.dumps(records)
         # --------------------------------------------------------------
         else:
