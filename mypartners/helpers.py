@@ -117,6 +117,18 @@ def log_change(obj, form, user, partner, contact_identifier,
     )
 
 
+def get_delta(form):
+    delta = {}
+    if form.changed_data:
+        for field in form.changed_data:
+            delta[field] = {
+                'initial': form.initial.get(field, ''),
+                'new': form.cleaned_data.get(field, '')
+            }
+    import ipdb; ipdb.set_trace()
+    return delta
+
+
 def get_change_message(form):
     """
     Creates a list of changes made from a form.
@@ -125,10 +137,11 @@ def get_change_message(form):
     change_message = []
     if not form:
         return ''
-    print form.changed_data
+
     if form.changed_data:
         change_message = (ugettext('Changed %s.') %
                           get_text_list(form.changed_data, ugettext('and')))
+    get_delta(form)
     return change_message or ugettext('No fields changed.')
 
 
