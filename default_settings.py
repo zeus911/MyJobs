@@ -21,6 +21,8 @@ sys.path.append(APP)
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
+ENVIRONMENT = 'Local'
+
 WILDCARD_REDIRECT = True
 NEVER_REDIRECT = ['amazonaws', ]
 
@@ -264,7 +266,6 @@ INSTALLED_APPS = (
     'saved_search',
     'taggit',
     'fsm',
-    'report_tools',
 )
 
 # Captcha SSL
@@ -581,6 +582,5 @@ EMAIL_FORMATS = {
         'subject': '{company_name} Saved Search Updated - {label}',
     },
 }
-
 
 MEMOIZE = True

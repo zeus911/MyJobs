@@ -119,11 +119,8 @@ $(document).ready(function() {
                 $(this).removeClass("descending").addClass("ascending");
             }
         } else {
-            if($(this).text() == 'Activity'){
-                $(this).addClass("active descending");
-            } else {
-                $(this).addClass("active ascending");
-            }
+            $(".sort-by.active").removeClass("active descending ascending");
+            $(this).addClass("active ascending");
         }
         run_ajax();
     });

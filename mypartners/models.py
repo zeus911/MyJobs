@@ -22,6 +22,7 @@ CONTACT_TYPE_CHOICES = (('email', 'Email'),
                         ('meetingorevent', 'Meeting or Event'),
                         ('job', 'Job Followup'),
                         ('pssemail', "Partner Saved Search Email"))
+CONTACT_TYPES = dict(CONTACT_TYPE_CHOICES)
 
 # Flags for ContactLogEntry action_flag. Based on django.contrib.admin.models
 # action flags.
@@ -110,27 +111,6 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
         return self
 
-    def sort_by(self, *fields):
-        """Like `order_by`, but ensures that blank values come at the end of a
-           result. It's not as efficient as `order_by`, so it's best to call as
-           late as possible (eg. after you've finished sorting).
-        """
-        query = models.Q()
-        for field in fields:
-            query |= models.Q(**{field.lstrip('-'): ''}) | models.Q(
-                **{field.lstrip('-') + '__isnull': True})
-
-        blank_records = self.filter(query).order_by(*fields)
-
-        self = self.exclude(id__in=blank_records).order_by(*fields)
-
-        # force evaluation: see http://stackoverflow.com/questions/18235419
-        len(self)
-        for record in blank_records:
-            self._result_cache.append(record)
-
-        return self
-
     def get_field_type(self, name):
         """
         Returns the type of the `model`'s `field` or None if it doesn't
@@ -175,7 +155,7 @@ class Location(models.Model):
                                         blank=True)
     city = models.CharField(max_length=255, verbose_name='City')
     state = models.CharField(max_length=200, verbose_name='State/Region')
-    country_code = models.CharField(max_length=3, verbose_name='Country', 
+    country_code = models.CharField(max_length=3, verbose_name='Country',
                                     default='USA')
     postal_code = models.CharField(max_length=12, verbose_name='Postal Code',
                                    blank=True)
@@ -327,7 +307,10 @@ class Partner(models.Model):
     """
     name = models.CharField(max_length=255,
                             verbose_name='Partner Organization')
-    uri = models.URLField(verbose_name='Partner URL', blank=True)
+    data_source = models.CharField(max_length=255,
+                                   verbose_name='Source',
+                                   blank=True)
+    uri = models.URLField(verbose_name='URL', blank=True)
     primary_contact = models.ForeignKey('Contact', null=True,
                                         related_name='primary_contact',
                                         on_delete=models.SET_NULL)
@@ -374,6 +357,9 @@ class Partner(models.Model):
         return records
 
     def __unicode__(self):
+        return self.name
+
+    def natural_key(self):
         return self.name
 
     # get_searches_for_partner
@@ -506,13 +492,92 @@ class PartnerLibrary(models.Model):
         super(PartnerLibrary, self).save(*args, **kwargs)
 
 
+class ContactRecordQuerySet(SearchParameterQuerySet):
+    @property
+    def communication_activity(self):
+        return self.exclude(contact_type='job')
+
+    @property
+    def referral_activity(self):
+        activity = self.filter(contact_type='job').aggregate(
+            applications=models.Sum('job_applications'),
+            interviews=models.Sum('job_interviews'),
+            hires=models.Sum('job_hires'))
+
+        return {key: int(value or 0) for key, value in activity.items()}
+
+    @property
+    def emails(self):
+        return self.communication_activity.filter(
+            contact_type='email').count()
+
+    @property
+    def calls(self):
+        return self.communication_activity.filter(
+            contact_type='phone').count()
+
+    @property
+    def meetings(self):
+        return self.communication_activity.filter(
+            contact_type='meetingorevent').count()
+
+    @property
+    def searches(self):
+        return self.communication_activity.filter(
+            contact_type='pssemail').count()
+
+    @property
+    def applications(self):
+        return self.referral_activity['applications']
+
+    @property
+    def interviews(self):
+        return self.referral_activity['interviews']
+
+    @property
+    def hires(self):
+        return self.referral_activity['hires']
+
+    @property
+    def referrals(self):
+        return self.filter(contact_type='job').count()
+
+    @property
+    def contacts(self):
+        contacts = self.exclude(contact_type='job').values(
+            'contact_name', 'contact_email').annotate(
+                records=models.Count('contact_name')).distinct().order_by(
+                    '-records')
+
+        referrals = dict(self.filter(contact_type='job').values_list(
+            'contact_name').annotate(
+                referrals=models.Count('contact_name')).distinct())
+
+        for contact in contacts:
+
+            contact['referrals'] = referrals.get(contact['contact_name'], 0)
+
+        return contacts
+
+
+class ContactRecordManager(SearchParameterManager):
+    def __init__(self, *args, **kwargs):
+        super(ContactRecordManager, self).__init__(*args, **kwargs)
+
+    def get_query_set(self):
+        return ContactRecordQuerySet(self.model, using=self._db)
+
+    def communication_activity(self):
+        return self.get_query_set().communication_activity()
+
+
 class ContactRecord(models.Model):
     """
     Object for Communication Records
     """
 
     company_ref = 'partner__owner'
-    objects = SearchParameterManager()
+    objects = ContactRecordManager()
 
     created_on = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
@@ -552,13 +617,13 @@ class ContactRecord(models.Model):
     tags = models.ManyToManyField('Tag', null=True)
 
     @classmethod
-    def _parse_parameters(self, parameters, records):
+    def _parse_parameters(cls, parameters, records):
         """Used to parse state during `from_search()`."""
 
         start_date = parameters.pop('start_date', None)
         end_date = parameters.pop('end_date', None)
         # popping state so it doesn't get parsed again
-        state = parameters.pop('state', None)
+        parameters.pop('state', None)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -607,7 +672,7 @@ class ContactRecord(models.Model):
 
     def get_human_readable_contact_type(self):
         contact_types = dict(CONTACT_TYPE_CHOICES)
-        return contact_types[self.contact_type].title()
+        return contact_types[self.contact_type]
 
     def get_record_url(self):
         params = {
@@ -758,6 +823,9 @@ class Tag(models.Model):
 
     def __unicode__(self):
         return "%s for %s" % (self.name, self.company.name)
+
+    def natural_key(self):
+        return self.name
 
     class Meta:
         unique_together = ('name', 'company')

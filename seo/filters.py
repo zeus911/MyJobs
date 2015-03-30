@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from collections import namedtuple
 from itertools import ifilter
 
 from django.conf import settings
@@ -76,8 +77,51 @@ class FacetListWidget(object):
         self._num_items_rendered = 0
         self._has_hidden_items = False
 
+        self.items_to_show = None
+        self.items_to_hide = None
+
+        self.FilterItem = namedtuple('FilterItem', 'name count url')
+
     def get_req_path(self):
         return self.request.path
+
+    def shown_items(self):
+        if self.items_to_show:
+            return self.items_to_show
+
+        shown_items = []
+        counter = 0
+        for item in self.items:
+            item_name = self.item_name(item)
+            if item_name:
+                counter += 1
+            if item_name and counter <= self.num_to_show:
+                item_count = intcomma(item[1]) if item[1] else False
+                item_tuple = (item_name, item_count, self.item_url(item))
+                shown_items.append(self.FilterItem(*item_tuple))
+
+        self.items_to_show = shown_items
+        return shown_items
+
+    def hidden_items(self):
+        if self.items_to_hide is not None:
+            return self.items_to_hide
+
+        hidden_items = []
+        counter = 0
+        for item in self.items:
+            item_name = self.item_name(item)
+            if item_name:
+                counter += 1
+            if self.item_name(item) and counter > self.num_to_show:
+                item_count = intcomma(item[1]) if item[1] else False
+                item_tuple = (self.item_name(item), item_count,
+                              self.item_url(item))
+                hidden_items.append(self.FilterItem(*item_tuple))
+
+        self.items_to_hide = hidden_items
+        return hidden_items
+
 
     @staticmethod
     def filters_to_paths(filters):
@@ -120,7 +164,7 @@ class FacetListWidget(object):
         self._has_hidden_items = False
         self._num_items_rendered = 1
 
-        if not self._show_widget(self.items):
+        if not self.show_widget():
             return
 
         output = [self._as_ul()]
@@ -131,7 +175,7 @@ class FacetListWidget(object):
 
         return mark_safe('\n'.join(output))
 
-    def _item_name(self, item):
+    def item_name(self, item):
         try:
             item_name = safe(smart_truncate(facet_text(item[0])))
         except IndexError:
@@ -145,10 +189,10 @@ class FacetListWidget(object):
             return None
         return item_name
 
-    def _item_url(self, item):
+    def item_url(self, item):
         return self.get_abs_url(item)
 
-    def _render_li(self, item):
+    def render_li(self, item):
         """
         Turns a facet tuple into an li containing the correct link
         to the item.
@@ -157,10 +201,10 @@ class FacetListWidget(object):
         :return: The <li></li> block representing the item.
 
         """
-        item_name = self._item_name(item)
+        item_name = self.item_name(item)
         if not item_name:
             return None
-        item_url = self._item_url(item)
+        item_url = self.item_url(item)
 
         if self._num_items_rendered <= self.num_to_show:
             li_class = ""
@@ -172,7 +216,6 @@ class FacetListWidget(object):
         # django template, but this widget doesn't use a specific template
         # so it makes more sense to do it directly in the python here.
         item_count = intcomma(item[1]) if item[1] else False
-
 
         # Use the django templating system to provide richer string parsing
         item_context = Context({
@@ -201,7 +244,7 @@ class FacetListWidget(object):
         """
         rendered_items = []
         for item in self.items:
-            rendered_item = self._render_li(item)
+            rendered_item = self.render_li(item)
             if rendered_item:
                 rendered_items.append(rendered_item)
                 self._num_items_rendered += 1
@@ -267,7 +310,7 @@ class FacetListWidget(object):
         # by helpers.get_widgets
         return len(items) >= 2 * self.num_to_show
 
-    def _show_widget(self, items):
+    def show_widget(self):
         if self.widget_type == 'featured':
             return True
 
@@ -275,9 +318,9 @@ class FacetListWidget(object):
         show = getattr(self.site_config, show_field)
 
         if self.widget_type == 'facet':
-            retval = (bool(len(items)) and show)
+            retval = (bool(len(self.items)) and show)
         else:
-            retval = (len(items) > 1 and show)
+            retval = (len(self.items) > 1 and show)
 
         return retval
 
@@ -367,7 +410,7 @@ class CustomFacetListWidget(FacetListWidget):
         if self.group_num != 1:
             self.selector_type = '%s-%s' % (self.selector_type, group_num)
 
-    def _item_name(self, item):
+    def item_name(self, item):
         facet, count = item
 
         item_name = facet.name
@@ -382,7 +425,7 @@ class CustomFacetListWidget(FacetListWidget):
 
         return item_name
 
-    def _item_url(self, item):
+    def item_url(self, item):
         facet, count = item
         return self.get_abs_url((facet.url_slab, count))
 
