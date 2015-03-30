@@ -101,15 +101,6 @@ admin.site.register(djcelery.models.TaskState, SeoCeleryTaskAdmin)
 
 
 class ConfigurationAdmin (admin.ModelAdmin):
-    formfield_overrides = {
-        models.TextField: {
-            'widget': forms.Textarea(attrs={
-                'style': 'width:80%;',
-                'rows': 40,
-            })
-        }
-    }
-
     form = ConfigurationForm
     list_display = ('__unicode__', 'show_sites', 'group', 'status_title')
     list_filter = [GroupListFilter]
