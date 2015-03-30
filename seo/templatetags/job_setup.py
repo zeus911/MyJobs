@@ -66,6 +66,9 @@ def create_arranged_jobs(request, featured_jobs, default_jobs, site_config):
             'class': 'default_jobListing direct_hiddenOption'
         })
 
+    # There are no jobs at all, or there are no default jobs and no
+    # featured jobs. This allows us to easily know whether or not there
+    # are any jobs inside the templates.
     if not jobs or (not jobs[0]['jobs'] and not jobs[1]['jobs']):
         jobs = []
 

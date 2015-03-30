@@ -1,50 +1,12 @@
-{% extends "base.html" %}
-{% block meta-extra %}
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-{% endblock %}
-
-{% block content %}
-<div class="row">
-    <div class="span6">
-        <h4 class="chart-header">{{ report.communication_activity.title }}</h4>
-
-        <div class="chart-container">
-            {{ report.communication_activity }}
-        </div>
-        <div class="chart-box-holder">
-            <div id="email" class="chart-box">
-                <div class="big-num">
-                    {# add count for this item #}
-                    441
-                </div>
-                <div class="reports-record-type">
-                    Emails
-                </div>
-            </div>
-            <div id="phone" class="chart-box">
-                <div class="big-num">
-                    28
-                </div>
-                <div class="reports-record-type">
-                    Phone Calls
-                </div>
-            </div>
-            <div id="meetingorevent" class="chart-box">
-                <div class="big-num">
-                    6
-                </div>
-                <div class="reports-record-type">
-                    Meeting or Event
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="span6">
-        <h4 class="chart-header">{{ report.referral_activity.title }}</h4>
-
-        <div class="chart-container">
-            {{ report.referral_activity }}
-        </div>
-    </div>
-</div>
-{% endblock %}
+<script>
+var emails = {{ emails }},
+    calls = {{ calls }},
+    meetings = {{ mettings|default:"0" }},
+    applications = {{ applications }},
+    interviews = {{ interviews }},
+    hires = {{ hires }},
+    communications = {{ communicatiosn }},
+    referrals = {{ referrals }},
+    contacts = {{ contacts }};
+</script>

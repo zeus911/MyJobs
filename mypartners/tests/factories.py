@@ -1,13 +1,11 @@
 import factory
 from factory import fuzzy
-from factory import django
 import string
 
 from datetime import datetime
 from django.contrib.contenttypes.models import ContentType
 
 from seo.tests.factories import CompanyFactory
-from mydashboard.tests.factories import CompanyFactory
 
 
 class PartnerFactory(factory.django.DjangoModelFactory):
@@ -53,6 +51,15 @@ class ContactRecordFactory(factory.django.DjangoModelFactory):
 
     partner = factory.SubFactory(PartnerFactory)
 
+    @factory.post_generation
+    def tags(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            for tag in extracted:
+                self.tags.add(tag)
+
 
 class ContactLogEntryFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -72,7 +79,7 @@ class TagFactory(factory.django.DjangoModelFactory):
     company = factory.SubFactory(CompanyFactory)
 
 
-class LocationFactory(django.DjangoModelFactory):
+class LocationFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = "mypartners.Location"
 

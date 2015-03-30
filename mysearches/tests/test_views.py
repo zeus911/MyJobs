@@ -1,7 +1,9 @@
 import json
 import urllib2
 
+from django.conf import settings
 from django.contrib.sessions.models import Session
+from django.core import mail
 from django.core.urlresolvers import reverse
 
 from mock import patch
@@ -106,7 +108,7 @@ class MySearchViewTests(MyJobsBase):
 
         search_id += 1
         response = self.client.get(
-            reverse('edit_search')+'id=%s' % search_id)
+            reverse('edit_search')+'?id=%s' % search_id)
         self.assertEqual(response.status_code, 404)
 
     def test_save_edit_form(self):
@@ -287,7 +289,7 @@ class MySearchViewTests(MyJobsBase):
         search = SavedSearchFactory(user=user)
 
         response = self.client.get(
-            reverse('delete_saved_search')+'?id=%s' % search.id)
+            reverse('delete_saved_search') + '?id=%s' % search.id)
         self.assertEqual(models.SavedSearch.objects.count(), 1)
         self.assertEqual(response.status_code, 404)
 
@@ -303,10 +305,11 @@ class MySearchViewTests(MyJobsBase):
 
         self.assertEqual(models.SavedSearch.objects.count(), 2)
 
-        response = self.client.get(reverse('delete_saved_search')+'?id=digest')
+        response = self.client.get(reverse(
+            'delete_saved_search') + '?id=digest')
         self.assertEqual(models.SavedSearch.objects.count(), 0)
         self.assertRedirects(response, reverse(
-            'saved_search_main_query')+'?d=all')
+            'saved_search_main_query') + '?d=all')
 
     def test_anonymous_delete_searches(self):
         search = SavedSearchFactory(user=self.user)
@@ -314,21 +317,21 @@ class MySearchViewTests(MyJobsBase):
 
         # Navigating to the 'delete saved search' page while logged out...
         response = self.client.get(
-            reverse('delete_saved_search')+'?id='+str(search.id))
+            reverse('delete_saved_search') + '?id=' + str(search.id))
         path = response.request.get('PATH_INFO') + "?id=" + str(search.id)
-        self.assertRedirects(response, reverse('home')+'?next='+path)
+        self.assertRedirects(response, reverse('home') + '?next=' + path)
         self.assertEqual(models.SavedSearch.objects.count(), 1)
         # or with the wrong email address...
         response = self.client.get(
-            reverse('delete_saved_search')+'?id='+str(
-                search.id)+'&verify=wrong@example.com')
+            reverse('delete_saved_search') + '?id=' + str(
+                search.id) + '&verify=wrong@example.com')
         # results in being redirected to the login page and no searches being
         # deleted
         self.assertRedirects(response, reverse('home'))
         self.assertEqual(models.SavedSearch.objects.count(), 1)
 
         response = self.client.get(
-            reverse('delete_saved_search')+'?id=%s&verify=%s' % (
+            reverse('delete_saved_search') + '?id=%s&verify=%s' % (
                 search.id, self.user.user_guid))
         self.assertEqual(models.SavedSearch.objects.count(), 0)
 
@@ -336,8 +339,8 @@ class MySearchViewTests(MyJobsBase):
         # anonymous users will always redirect, never returning a 200.
         self.client.login_user(self.user)
         self.assertRedirects(response, reverse(
-            'saved_search_main_query')+'?d='+str(urllib2.quote(
-                                                 search.label)))
+            'saved_search_main_query') + '?d=' + str(urllib2.quote(
+                search.label)))
 
     def test_widget_with_saved_search(self):
         search = SavedSearchFactory(user=self.user)
@@ -371,3 +374,57 @@ class MySearchViewTests(MyJobsBase):
             'view_full_feed') + '?id=%s' % search.id)
         self.assertIn('The domain for this saved search is no longer valid.',
                       response.content)
+
+    def test_send_link_appearance(self):
+        """
+        The button to manually send a saved search should not be displayed
+        when DEBUG=False. If the url is guessed, nothing bad should happen.
+        """
+        self.user.is_superuser = True
+        self.user.save()
+        saved_search = SavedSearchFactory(user=self.user)
+        partner_search = PartnerSavedSearchFactory(user=self.user,
+                                                   created_by=self.user)
+        ContactFactory(partner=partner_search.partner, user=self.user)
+
+        for search in [saved_search, partner_search]:
+            full_feed = reverse('view_full_feed') + '?id=%s' % search.id
+            send_url = reverse('send_saved_search') + '?id=%s' % search.id
+            if hasattr(search, 'partnersavedsearch'):
+                send_url += '&is_pss=True'
+
+            self.client.login_user(self.user)
+            response = self.client.get(full_feed)
+            self.assertNotIn('>Send</a>', response.content)
+            send = self.client.get(send_url)
+            self.assertEqual(send.status_code, 404)
+            self.assertEqual(len(mail.outbox), 0)
+
+            settings.DEBUG = True
+            self.client.login_user(self.user)
+            response = self.client.get(full_feed)
+            self.assertIn('>Send</a>', response.content)
+            send = self.client.get(send_url)
+            self.assertEqual(send.status_code, 302)
+            self.assertEqual(len(mail.outbox), 1)
+            mail.outbox = []
+
+            settings.DEBUG = False
+
+    def test_send_link_respects_permissions(self):
+        # The send_saved_search view requires that DEBUG be enabled.
+        settings.DEBUG = True
+        self.user.is_superuser = True
+        self.user.save()
+        search = SavedSearchFactory(user=self.user)
+        search_2 = SavedSearchFactory(user=UserFactory(email='new@example.com'))
+        send_url = reverse('send_saved_search') + '?id=%s'
+
+        self.assertEqual(len(mail.outbox), 0)
+        response = self.client.get(send_url % search.pk)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        response = self.client.get(send_url % search_2.pk)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(len(mail.outbox), 1)
+        settings.DEBUG = False
