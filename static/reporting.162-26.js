@@ -488,7 +488,9 @@ List.prototype.filter = function(filter) {
   "use strict";
   var url = location.protocol + "//" + location.host, // https://secure.my.jobs
       data = {},
-      list = this;
+      list = this,
+      name = "name",
+      email = "email";
 
   // if filter, add to data.
   if (typeof filter !== "undefined") {
@@ -498,14 +500,18 @@ List.prototype.filter = function(filter) {
   // specific duties based on type.
   if (list.type === "partner") {
     // annotate how many records a partner has.
-    $.extend(data, {"count": "contactrecord"});
+    $.extend(data, {"count": "contactrecord",
+                    "values": ["pk", "name", "count"]}
+    );
     url += "/reports/ajax/mypartners/partner";
     if (typeof data["partner"] !== "undefined") {
       delete data["partner"];
     }
   } else if (list.type === "contact") {
-    url += "/reports/ajax/mypartners/contact";
-    data['values'] = true;
+    name = "contact_name";
+    email = "contact_email";
+    url += "/reports/ajax/mypartners/contactrecord";
+    $.extend(data, {"values": ["contact_name", "contact_email"]});
   }
 
   $.ajaxSettings.traditional = true;
@@ -525,7 +531,7 @@ List.prototype.filter = function(filter) {
       for (var i = 0; i < data.length; i++) {
         record = data[i];
 
-        li = $("<li><input type='checkbox' value='"+ record.pk +"' /> <span>"+ record.name +"</span></li>");
+        li = $("<li><input type='checkbox' value='"+ record.pk +"' /> <span>"+ record[name] +"</span></li>");
         li.find("input").prop("checked", Boolean(!list.value));
 
         // add record count to right of partners
@@ -533,8 +539,8 @@ List.prototype.filter = function(filter) {
           li.append("<span class='pull-right'>"+ record.count +"</span>");
         }
 
-        if (list.type === "contact" && record.email) {
-          li.append(" <span>("+ record.email + ")</span>");
+        if (list.type === "contact" && record[email]) {
+          li.append(" <span>("+ record[email] + ")</span>");
         }
 
         ul.append(li);

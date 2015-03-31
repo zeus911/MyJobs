@@ -2,12 +2,10 @@ from cStringIO import StringIO
 import csv
 import HTMLParser
 import json
-from itertools import chain
 
 from django.core import serializers
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models.loading import get_model
-from django.db.models.query import QuerySet
+from django.db.models import query
 from django.utils.html import strip_tags
 from mypartners.models import CONTACT_TYPES
 
@@ -77,7 +75,10 @@ def parse_params(querydict):
     return params
 
 
-# TODO: Find a better way to handle counts
+# TODO:
+#   * find a better way to handle counts
+#   * do something other than isinstance checks (duck typing anyone?)
+
 def serialize(fmt, data, counts=None):
     """
     Like `django.core.serializers.serialize`, but produces a simpler structure
@@ -97,7 +98,9 @@ def serialize(fmt, data, counts=None):
 
     * Currently, only count with values passed in manually through `counts`.
     """
-    if isinstance(data, QuerySet):
+    if isinstance(data, query.ValuesQuerySet):
+        data = list(data)
+    elif isinstance(data, query.QuerySet):
         data = [dict({'pk': record['pk']}, **record['fields'])
                 for record in serializers.serialize(
                     'python', data, use_natural_keys=True)]
