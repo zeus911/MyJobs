@@ -84,7 +84,7 @@ def parse_params(querydict):
 #   * find a better way to handle counts
 #   * do something other than isinstance checks (duck typing anyone?)
 
-def serialize(fmt, data, counts=None):
+def serialize(fmt, data, counts=None, values=None):
     """
     Like `django.core.serializers.serialize`, but produces a simpler structure
     and retains annotated fields*.
@@ -103,16 +103,26 @@ def serialize(fmt, data, counts=None):
 
     * Currently, only count with values passed in manually through `counts`.
     """
-    if isinstance(data, query.ValuesQuerySet):
-        data = list(data)
-    elif isinstance(data, query.QuerySet):
+    if isinstance(data, query.QuerySet):
         data = [dict({'pk': record['pk']}, **record['fields'])
                 for record in serializers.serialize(
-                    'python', data, use_natural_keys=True)]
+                    'python', data, use_natural_keys=True, fields=values)]
 
         if counts:
             data = [dict({'count': counts[record['pk']]}, **record)
                     for record in data]
+
+        # Cant' use a ValueQuerSet for serialize, which means we lose the
+        # ability to use distinct. As such, we fake it by doing so manually
+        records = []
+        haystack = []
+        for record in data:
+            needle = [record[value] for value in values]
+            if needle not in haystack:
+                haystack.append(needle)
+                records.append(record)
+
+        data = records
 
     # strip HTML tags from string values
     for index, record in enumerate(data[:]):
