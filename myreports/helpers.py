@@ -31,22 +31,27 @@ def humanize(records):
 
     for record in records:
         # make tag lists look pretty
-        record['tags'] = ', '.join(record['tags'])
+        if 'tags' in record:
+            record['tags'] = ', '.join(record['tags'])
         # get rid of pks
         record.pop('pk', None)
         # human readable contact types
-        record['contact_type'] = CONTACT_TYPES[record['contact_type']]
+        if 'contact_type' in record:
+            record['contact_type'] = CONTACT_TYPES[record['contact_type']]
         # strip html and extra whitespace from notes
-        record['notes'] = parser.unescape('\n'.join(
-            ' '.join(line.split())
-            for line in record['notes'].split('\n') if line))
-        # second pass to take care of extra new lines
-        record['notes'] = '\n'.join(
-            filter(bool, record['notes'].split('\n\n')))
+        if 'notes' in record:
+            record['notes'] = parser.unescape('\n'.join(
+                ' '.join(line.split())
+                for line in record['notes'].split('\n') if line))
+            # second pass to take care of extra new lines
+            record['notes'] = '\n'.join(
+                filter(bool, record['notes'].split('\n\n')))
 
         # get rid of nones
-        record['created_by'] = record['created_by'] or ''
-        record['length'] = record['length'] or ''
+        if 'created_by' in record:
+            record['created_by'] = record['created_by'] or ''
+        if 'length' in record:
+            record['length'] = record['length'] or ''
 
     return records
 
