@@ -105,10 +105,7 @@ def view_records(request, app, model):
             records = records.annotate(count=Count(count, distinct=True))
             counts = {record.pk: record.count for record in records}
 
-        if values:
-            records = records.values(*values).distinct()
-
-        ctx = serialize('json', records, counts=counts)
+        ctx = serialize('json', records, counts=counts, values=values)
 
         response = HttpResponse(
             ctx, content_type='application/json; charset=utf-8')
@@ -197,10 +194,7 @@ class ReportView(View):
             records = get_model(app, model).objects.from_search(
                 company, params)
 
-            if values:
-                records = records.values(*values).distinct()
-
-            contents = serialize('json', records)
+            contents = serialize('json', records, values=values)
             results = ContentFile(contents)
             report, created = Report.objects.get_or_create(
                 name=name, created_by=request.user,
