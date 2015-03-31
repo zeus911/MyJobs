@@ -1233,7 +1233,7 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
 
     def test_errd_reachable(self):
         # Employment Referral Resource Directory
-        url, params = PARTNER_LIBRARY_SOURCES.values()[0].items()
+        url, params = PARTNER_LIBRARY_SOURCES.values()[0].values()
 
         response = requests.post(url, params)
         self.assertEqual(response.status_code, 200)
