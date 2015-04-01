@@ -621,7 +621,8 @@ class Company(models.Model):
     """
     def __unicode__(self):
         if self.company_user_count == 0:
-            return "%s (%s users) **Might be a duplicate**" % (self.name, self.company_user_count)
+            return "%s (%s users) **Might be a duplicate**" % (
+                self.name, self.company_user_count)
         else:
             return "%s (%s users)" % (self.name, self.company_user_count)
 
