@@ -1,5 +1,39 @@
 window.onpopstate = function(event) {
-  console.log(event);
+  var state = event.state,
+      $sidebar = $(".sidebar"),
+      historyNew,
+      historyClone,
+      inputs,
+      report;
+
+  if (state.page && state.page === 'overview') {
+    renderOverview();
+  } else if (state.page && state.page === 'new') {
+    historyNew = function() {
+      report = new Report(state.report.types);
+      report.bindEvents();
+      $("#container").addClass("rpt-container");
+      report.renderFields(report.fields);
+    };
+
+    $sidebar.length > 0 ? historyNew() : renderOverview(historyNew);
+  } else if (state.page && state.page === 'view-report') {
+    renderGraphs(state.reportId);
+  } else if (state.page && state.page === 'report-archive') {
+    renderArchive();
+  } else if (state.page && state.page === 'clone') {
+    historyClone = function() {
+      inputs = state.inputs;
+      report = new Report(["prm"]);
+      report.createCloneReport(inputs);
+      report.unbindEvents();
+      report.bindEvents();
+      $("#container").addClass("rpt-container");
+      report.renderFields(report.fields);
+    };
+
+    $sidebar.length > 0 ? historyClone() : renderOverview(historyClone);
+  }
 };
 
 // Variable to get through beforeunload listener without displaying message.
@@ -9,18 +43,18 @@ var reload = false;
 var Report = function(types) {
   this.types = types;
   this.data = {};
-  this.fields = this.create_fields(types);
+  this.fields = this.createFields(types);
 };
 
 
 // Pulls the fields required for report type(s)
 // Field Params: label, type, required, value
-Report.prototype.create_fields = function(types) {
-   var reports = {"prm":        [new Field("Select Date", "date"),
-                                 new Field("State", "state"),
-                                 new Field("City", "text"),
-                                 new List("Select Partners", "partner", true),
-                                 new List("Select Contacts", "contact", true)]},
+Report.prototype.createFields = function(types) {
+  var reports = {"prm": [new Field("Select Date", "date"),
+                         new Field("State", "state"),
+                         new Field("City", "text"),
+                         new List("Select Partners", "partner", true),
+                         new List("Select Contacts", "contact", true)]},
         fields = [],
         key;
 
@@ -29,13 +63,13 @@ Report.prototype.create_fields = function(types) {
       fields.push.apply(fields, reports[types[key]]);
     }
   }
-  fields.unshift(new Field("Report Name", "text", true, format_date(new Date())));
+  fields.unshift(new Field("Report Name", "text", true, formatDate(new Date())));
   return fields;
 };
 
 
 // Bind events for report, events that use the report object need to be here.
-Report.prototype.bind_events = function() {
+Report.prototype.bindEvents = function() {
   var report = this,
       container = $("#main-container");
 
@@ -60,7 +94,7 @@ Report.prototype.bind_events = function() {
   container.on("change", "input:not([id$=-all-checkbox]), select:not([class^=picker])", function(e) {
     var in_list = $(this).parents(".list-body").attr("id"),
         contact_wrapper = $("#contact-wrapper"),
-        c_field = report.find_field("Select Contacts");
+        c_field = report.findField("Select Contacts");
 
     // Check to see if the triggering even was in a list.
     if (typeof in_list !== "undefined") {
@@ -94,7 +128,7 @@ Report.prototype.bind_events = function() {
       }
     } else {
       var partner_wrapper = $("#partner-wrapper"),
-          p_field = report.find_field("Select Partners"),
+          p_field = report.findField("Select Partners"),
           is_prm_field = function(e) {
             // This list will need to be updated if more is added to the PRM report
             // if they filter down partners/contacts
@@ -160,8 +194,8 @@ Report.prototype.bind_events = function() {
   container.on("click", ".list-body :checkbox", function(e) {
     e.stopPropagation();
 
-    update_items_selected(this);
-    update_all_checkbox(this);
+    updateItemsSelected(this);
+    updateAllCheckbox(this);
   });
 
 
@@ -171,8 +205,8 @@ Report.prototype.bind_events = function() {
 
     checkbox.prop("checked", !checkbox.prop("checked")).change();
 
-    update_items_selected(this);
-    update_all_checkbox(this);
+    updateItemsSelected(this);
+    updateAllCheckbox(this);
   });
 
 
@@ -205,8 +239,8 @@ Report.prototype.bind_events = function() {
         body = modal.children(".modal-body"),
         footer = modal.children(".modal-footer");
 
-    if (typeof report.data['report_name'] === "undefined") {
-      report.data['report_name'] = $("#report_name").val();
+    if (typeof report.data.report_name === "undefined") {
+      report.data.report_name = $("#report_name").val();
     }
 
     body.html(report.readable_data());
@@ -218,19 +252,19 @@ Report.prototype.bind_events = function() {
   $(document.body).on("click", "#gen-report", function(e) {
     var csrf = read_cookie("csrftoken"),
         data = {"csrfmiddlewaretoken": csrf},
-        url = location.protocol + "//" + location.host + "/reports/view/mypartners/contactrecord";
+        url = location.protocol + "//" + location.host + "/reports/view/mypartners/contactrecord",
+        newList = [];
     if (report.data) {
       $.extend(data, report.data);
     }
     if (data.contact) {
-      var new_list = [];
       for (var i = 0; i < data.contact.length; i++) {
         var value = data.contact[i],
             name = $("#contact input[value='" + value + "']").next("span").html();
-        new_list.push(name);
+        newList.push(name);
       }
       delete data.contact;
-      data.contact_name = new_list;
+      data.contact_name = newList;
     }
     $.ajaxSettings.traditional = true;
     $.ajax({
@@ -247,7 +281,7 @@ Report.prototype.bind_events = function() {
 };
 
 
-Report.prototype.unbind_events = function() {
+Report.prototype.unbindEvents = function() {
   $("#main-container").off("click");
   $(document.body).off("click", "#gen-report");
 };
@@ -306,7 +340,7 @@ Report.prototype.readable_data = function() {
 
 
 // Takes a field label (or name) and finds the associated field/list/widget.
-Report.prototype.find_field = function(field_label) {
+Report.prototype.findField = function(field_label) {
   return ($.grep(this.fields, function(field) {
     return field.label === field_label;
   })[0]);
@@ -314,7 +348,7 @@ Report.prototype.find_field = function(field_label) {
 
 
 // Takes a list of Fields and renders them.
-Report.prototype.render_fields = function(fields) {
+Report.prototype.renderFields = function(fields) {
   var container = $("#container"),
       html = '',
       i;
@@ -329,7 +363,7 @@ Report.prototype.render_fields = function(fields) {
 };
 
 
-Report.prototype.create_clone_report = function(json) {
+Report.prototype.createCloneReport = function(json) {
   var key,
       value,
       field;
@@ -339,20 +373,20 @@ Report.prototype.create_clone_report = function(json) {
       value = json[key];
 
       if (key === "partner") {
-        this.find_field("Select Partners").value = value;
+        this.findField("Select Partners").value = value;
         this.data[key] = value;
       } else if (key === "contact_name") {
-        this.find_field("Select Contacts").value = value;
+        this.findField("Select Contacts").value = value;
         this.data.contact = value;
       } else if (key.indexOf("date") > 0) {
-        field = this.find_field("Select Date");
+        field = this.findField("Select Date");
         if (field.value === "") {
           field.value = {"start_date": '', "end_date": ''};
         }
         field.value[key] = value;
         this.data[key] = value;
       } else {
-        this.find_field(key.capitalize()).value = value;
+        this.findField(key.capitalize()).value = value;
         this.data[key] = value;
       }
     }
@@ -375,8 +409,8 @@ Field.prototype.render = function() {
       field = this,
       html = '',
       input,
-      date_widget,
-      date_picker,
+      dateWidget,
+      datePicker,
       start_date,
       to,
       end_date;
@@ -391,8 +425,8 @@ Field.prototype.render = function() {
     wrapper.append(l).append(input);
     html = wrapper.prop("outerHTML");
   } else if (this.type === "date") {
-    date_widget = $("<div id='date-filter' class='filter-option'></div>").append("<div class='date-picker'></div>");
-    date_picker = $(date_widget).children("div");
+    dateWidget = $("<div id='date-filter' class='filter-option'></div>").append("<div class='date-picker'></div>");
+    datePicker = $(dateWidget).children("div");
 
     if (field.value) {
       start_date = $("<input id='start_date' class='datepicker picker-left' type='text' value='"+ field.value.start_date +"' placeholder='Start Date' />");
@@ -403,10 +437,10 @@ Field.prototype.render = function() {
     }
     to = $("<span id='activity-to-' class='datepicker'>to</span>");
 
-    date_picker.append(start_date).append(to).append(end_date);
-    date_widget.append(date_picker);
+    datePicker.append(start_date).append(to).append(end_date);
+    dateWidget.append(datePicker);
     html += l.prop("outerHTML");
-    html += date_widget.prop("outerHTML");
+    html += dateWidget.prop("outerHTML");
   } else if (this.type === "state") {
     html += l.prop("outerHTML") + "<div class='state'></div>";
     (function() {
@@ -440,36 +474,36 @@ List.prototype = Object.create(Field.prototype);
 List.prototype.render = function(report) {
   var container = $("<div id='"+ this.type +"-header' class='list-header'></div>"),
       icon = $("<i class='fa fa-plus-square-o'></i>"),
-      all_checkbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />"),
+      allCheckbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />"),
       record_count = $("<span style='display: none;'>(<span>0</span> "+ this.type.capitalize() +"s Selected)</span>"),
       body = $("<div id='"+ this.type +"' class='list-body' style='display: none;'></div>"),
       wrapper = $("<div id='"+ this.type +"-wrapper'></div>"),
-      prm_fields = ["start_date", "end_date", "state", "city", "partner"],
-      copied_filter,
+      prmFields = ["start_date", "end_date", "state", "city", "partner"],
+      copiedFilter,
       list = this,
       key,
       html;
 
   if (report.data !== "") {
-    copied_filter = $.extend({}, report.data);
+    copiedFilter = $.extend({}, report.data);
   }
 
   if (this.value) {
-    all_checkbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' />");
+    allCheckbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' />");
   } else {
-    all_checkbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />");
+    allCheckbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />");
   }
 
-  container.append(icon).append(all_checkbox).append(" All " + list.type.capitalize() + "s ").append(record_count);
+  container.append(icon).append(allCheckbox).append(" All " + list.type.capitalize() + "s ").append(record_count);
 
   wrapper.append(container).append(body);
   html = wrapper.prop("outerHTML");
 
   if (this.type === "partner" || this.type === "contact") {
-    for (key in copied_filter) {
-      if (copied_filter.hasOwnProperty(key)) {
-        if (prm_fields.indexOf(key) === -1) {
-          delete copied_filter[key];
+    for (key in copiedFilter) {
+      if (copiedFilter.hasOwnProperty(key)) {
+        if (prmFields.indexOf(key) === -1) {
+          delete copiedFilter[key];
         }
       }
     }
@@ -477,7 +511,7 @@ List.prototype.render = function(report) {
 
   // Asynchronously renders a list of records based on list type.
   (function() {
-    list.filter(copied_filter);
+    list.filter(copiedFilter);
   })();
 
   return html;
@@ -500,8 +534,8 @@ List.prototype.filter = function(filter) {
     // annotate how many records a partner has.
     $.extend(data, {"count": "contactrecord"});
     url += "/reports/ajax/mypartners/partner";
-    if (typeof data["partner"] !== "undefined") {
-      delete data["partner"];
+    if (typeof data.partner !== "undefined") {
+      delete data.partner;
     }
   } else if (list.type === "contact") {
     url += "/reports/ajax/mypartners/contact";
@@ -571,9 +605,11 @@ String.prototype.capitalize = function() {
 
 
 $(document).ready(function() {
-  var sidebar = $(".sidebar");
+  var subpage = $(".subpage");
 
-  $(document.body).on("click", "#start-report:not(.disabled)", function(e) {
+  history.replaceState({'page': 'overview'}, "Report Overview");
+
+  subpage.on("click", "#start-report:not(.disabled)", function(e) {
     e.preventDefault();
     var choices = $("#choices input[type='checkbox']:checked"),
         types = [],
@@ -586,229 +622,38 @@ $(document).ready(function() {
     }
 
     // Create js Report object and set up next step.
-
     report = new Report(types);
-    history.pushState({'report': report}, 'Create Report', 'new');
-    report.bind_events();
+    history.pushState({'page': 'new', 'report': report}, 'Create Report');
+    report.bindEvents();
     $("#container").addClass("rpt-container");
-    report.render_fields(report.fields);
+    report.renderFields(report.fields);
   });
 
+  subpage.on("click", "#choices input[type='checkbox']", function() {
+    var $checkboxes = $("#choices input[type='checkbox']"),
+        $startReport = $("#start-report");
 
-  // On initial page, when a type gets checked remove disabled from "Next" button.
-  $(document.body).on("click", "#choices input[type='checkbox']:checked", function() {
-    $("#start-report").removeClass("disabled");
-  });
-
-
-  // On initial page, when a checkbox is unchecked look to see if any others are checked.
-  // If not then disable "Next" button.
-  $(document.body).on("click", "#choices input[type='checkbox']:not(:checked)", function() {
-    var checkboxes = $("#choices input[type='checkbox']");
-    if (!checkboxes.is(":checked")) {
-      $("#start-report").addClass("disabled");
+    if ($checkboxes.is(":checked")) {
+      $startReport.removeClass("disabled");
+    } else {
+      $startReport.addClass("disabled");
     }
   });
 
   // View Report
-  sidebar.on("click", ".report > a, .fa-eye", function() {
-    var report_id = $(this).attr("id").split("-")[1],
-        data = {"id": report_id},
-        url = location.protocol + "//" + location.host; // https://secure.my.jobs
+  subpage.on("click", ".report > a, .fa-eye", function() {
+    var report_id = $(this).attr("id").split("-")[1];
 
-    $.ajax({
-      type: "GET",
-      url: url + "/reports/view/mypartners/contactrecord",
-      data: data,
-      success: function(data) {
-        var contacts = data.contacts,
-            communications = data.communications || 0,
-            emails = data.emails || 0,
-            pss = data.searches || 0,
-            calls = data.calls || 0,
-            meetings = data.meetings || 0,
-            referrals = data.referrals || 0,
-            applications = data.applications || 0,
-            interviews = data.interviews || 0,
-            hires = data.hires || 0,
-            pChartInfo = {0: {'name': "Emails",            'count': emails,   'color': "#5EB95E"},
-                          1: {'name': "PSS Emails",        'count': pss,      'color': "#4BB1CF"},
-                          2: {'name': "Phone Calls",       'count': calls,    'color': "#FAA732"},
-                          3: {'name': "Meetings & Events", 'count': meetings, 'color': "#5F6C82"}},
-            bChartInfo = {0: {'name': "Applications", 'count': applications, 'style': "color: #5EB95E"},
-                          1: {'name': "Interviews",   'count': interviews,   'style': "color: #4BB1CF"},
-                          2: {'name': "Hires",        'count': hires,        'style': "color: #FAA732"},
-                          3: {'name': "Records",      'count': referrals,    'style': "color: #5F6C82"}};
+    history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
 
-        // Grab google's jsapi to load chart files.
-        $.getScript("https://www.google.com/jsapi", function() {
-          // Had to use 'callback' with google.load otherwise after load google makes a new document
-          // with just <html> tags.
-          google.load("visualization", "1.0", {'packages':["corechart"], 'callback': function() {
-            var pDataTable = [['Records', 'All Records']], // p for pieChart
-                bDataTable = [['Activity', 'Amount', {'role': 'style'}]], // b for barChart
-                $mainContainer = $("#main-container"),// the container everything goes in
-                pSliceOptions = {}, // slice options for pieChart
-                pLegend = [], // array that will hold the report-boxes for pieChart
-                bLegend = [], // array that will hold the report-boxes for barChart
-                pChartData,
-                pKey,
-                pValue,
-                pBox,
-                pOptions,
-                pChart,
-                $pLegend,
-                $pChart,
-                bChartData,
-                bValue,
-                bKey,
-                bBox,
-                bOptions,
-                bChart,
-                $bLegend,
-                topThreeRow,
-                restRow,
-                contactContainer,
-                i;
-
-            $mainContainer.html('')
-              .append("<div class='span6'><h4>Communication Activity</h4><div id='d-chart'></div>" +
-                      "</div><div class='span6'><h4>Referral Activity</h4><div id='b-chart'></div></div>");
-
-            for (pKey in pChartInfo) {
-              if (pChartInfo.hasOwnProperty(pKey)) {
-                pValue = pChartInfo[pKey];
-                pDataTable.push([pValue.name, pValue.count]);
-
-                // Used for PieChart to give data 'slices' color.
-                pSliceOptions[pKey] = {'color': pValue.color};
-
-                // Create legend boxes
-                pBox = $('<div class="report-box" style="background-color: ' +
-                         pValue.color + '"><div class="big-num">' + pValue.count +
-                         '</div><div class="reports-record-type">' + pValue.name + '</div></div>');
-                pLegend.push(pBox);
-              }
-            }
-
-            pChartData = google.visualization.arrayToDataTable(pDataTable);
-            pOptions = pieOptions(330, 350, 12, 12, 300, 330, 0.6, pSliceOptions, true);
-            pChart = new google.visualization.PieChart(document.getElementById('d-chart'));
-            pChart.draw(pChartData, pOptions);
-
-            $pChart = $("#d-chart > div");
-            $pChart.append("<div class='chart-box-holder legend'></div>");
-            $pLegend = $("#d-chart .legend");
-            pLegend.forEach(function(element) {
-              $pLegend.append(element);
-            });
-
-            $pChart.append('<div class="piehole report"><div class="piehole-big">' + communications +
-                           '</div><div class="piehole-topic">Contact Records</div></div>');
-
-            for (bKey in bChartInfo) {
-              if (bChartInfo.hasOwnProperty(bKey)) {
-                bValue = bChartInfo[bKey];
-                bDataTable.push([bValue.name, bValue.count, bValue.style]);
-
-                bBox = $('<div class="report-box" style="background-' + bValue.style +
-                         '"><div class="big-num">' + bValue.count +
-                         '</div><div class="reports-record-type">' + bValue.name + '</div></div>');
-                bLegend.push(bBox);
-              }
-            }
-
-            bChartData = google.visualization.arrayToDataTable(bDataTable);
-            bOptions = {title: 'Referral Records', width: 356, height: 360, legend: { position: "none" },
-                        chartArea: {top: 22, left: 37, height: 270, width: 290},
-                        animation: {startup: true, duration: 400}};
-            bChart = new google.visualization.ColumnChart(document.getElementById('b-chart'));
-            bChart.draw(bChartData, bOptions);
-
-            $bLegend = $('<div class="chart-box-holder legend"></div>').append(function() {
-              return bLegend.map(function(element) {
-                return element.prop("outerHTML");
-              }).join('');
-            });
-
-            $("#b-chart > div").append($bLegend);
-
-            // Show the top three contacts in a different format than the rest.
-            topThreeRow = $('<div class="row"></div>').append(function() {
-              var html = '',
-                  cLength = contacts.length,
-                  contact,
-                  name,
-                  email,
-                  cReferrals,
-                  commRecords,
-                  div,
-                  topLength;
-
-              // Determine how long topLength should be.
-              topLength = (cLength > 3) ? 3 : cLength;
-
-              // Just run for the first 3 contacts.
-              for (i = 0; i < topLength; i++) {
-                // remove first contact in array, returns the removed contact.
-                contact = contacts.shift();
-                name = contact.contact_name;
-                email = contact.contact_email;
-                cReferrals = contact.referrals;
-                commRecords = contact.records;
-
-                // create container
-                div = $('<div class="span4 panel top-contacts"></div>');
-                div.append('<div class="name">' + name + '</div><div>' + email + '</div><div class="top-three-box-container">' +
-                           '<div class="report-box small"><div class="big-num">' + commRecords +
-                           '</div><div class="reports-record-type">Contact Records</div></div>' +
-                           '<div class="report-box small"><div class="big-num">' + cReferrals +
-                           '</div><div class="reports-record-type">Referral Records</div></div></div>');
-
-                // add the rendered html as a string.
-                html += div.prop("outerHTML");
-              }
-              return html;
-            });
-
-            // Don't generate a table if cLength = 0
-            if (contacts.length) {
-              restRow = $('<div class="row"></div>').append(function() {
-                var div = $('<div class="span12"></div>'),
-                    table = $('<table class="table table-striped report-table"><thead><tr><th>Name</th>' +
-                              '<th>Email</th><th>Contact Records</th><th>Referral Reocrds</th>' +
-                              '</tr></thead></table>'),
-                    tbody = $('<tbody></tbody>');
-                tbody.append(function() {
-                  // turn each element into cells of a table then join each group of cells with rows.
-                  return "<tr>" + contacts.map(function(contact) {
-                    return "<td>" + contact.contact_name + "</td><td>" + contact.contact_email +
-                           "</td><td>" + contact.records + "</td><td>" + contact.referrals + "</td>";
-                  }).join('</tr><tr>') + "</tr>";
-                });
-                return div.append(table.append(tbody));
-              });
-            } else {
-              // Make sure topThreeRow didn't run before saying there are no records.
-              if (topThreeRow.find("div.top-contacts").length === 0) {
-                restRow = $('<div class="row"><div class="span12">This report has no contacts with records.</div></div>');
-              }
-            }
-
-            contactContainer = $('<div id="report-contacts" class="span12"></div>').append(topThreeRow).append(restRow);
-            $("#main-container").append(contactContainer);
-          }});
-        });
-      }
-    });
+    renderGraphs(report_id);
   });
 
 
   // Clone Report
-  sidebar.on("click", ".fa-copy", function() {
+  subpage.on("click", ".fa-copy", function() {
     var report_id = $(this).attr("id").split("-")[1],
-        data = {"csrfmiddlewaretoken": read_cookie("csrftoken"),
-                "id": report_id},
+        data = {"id": report_id},
         url = location.protocol + "//" + location.host; // https://secure.my.jobs
 
     $.ajax({
@@ -817,32 +662,26 @@ $(document).ready(function() {
       data: data,
       dataType: "json",
       success: function(data) {
+        history.pushState({'page': 'clone', 'inputs': data, 'reportId': report_id}, "Clone Report");
         var report = new Report(["prm"]);
-        report.create_clone_report(data);
-        report.unbind_events();
-        report.bind_events();
+        report.createCloneReport(data);
+        report.unbindEvents();
+        report.bindEvents();
         $("#container").addClass("rpt-container");
-        report.render_fields(report.fields);
+        report.renderFields(report.fields);
       }
     });
   });
 
   // View Archive
-  sidebar.on("click", "#report-archive", function() {
-    var data = {"csrfmiddlewaretoken": read_cookie("csrftoken")};
-    $.ajax({
-      type: "POST",
-      url: "archive",
-      data: data,
-      success: function(data) {
-        $("#main-container").html(data);
-      }
-    });
+  subpage.on("click", "#report-archive", function() {
+    history.pushState({'page': 'report-archive'}, "Report Archive");
+    renderArchive();
   });
 });
 
 
-function format_date(date) {
+function formatDate(date) {
   var year = date.getFullYear(),
       month = date.getMonth(),
       day = date.getDate(),
@@ -851,30 +690,30 @@ function format_date(date) {
       seconds = date.getSeconds(),
       milliseconds = date.getMilliseconds();
 
-  function turn_two_digit(value) {
+  function turnTwoDigit(value) {
     return value < 10 ? "0" + value : value;
   }
 
-  month = turn_two_digit(parseInt(month) + 1);
-  day = turn_two_digit(day);
-  hours = turn_two_digit(hours);
-  minutes = turn_two_digit(minutes);
-  seconds = turn_two_digit(seconds);
+  month = turnTwoDigit(parseInt(month) + 1);
+  day = turnTwoDigit(day);
+  hours = turnTwoDigit(hours);
+  minutes = turnTwoDigit(minutes);
+  seconds = turnTwoDigit(seconds);
 
   return year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds + "." + milliseconds;
 }
 
 
-function update_all_checkbox(element) {
-  var all_checkbox = $(element).parents("div.list-body").prev().children("input"),
+function updateAllCheckbox(element) {
+  var allCheckbox = $(element).parents("div.list-body").prev().children("input"),
       checkboxes = $(element).parents(".list-body").find("input"),
       checked = $(element).parents(".list-body").find(":checked");
 
-  all_checkbox.prop("checked", checked.length === checkboxes.length);
+  allCheckbox.prop("checked", checked.length === checkboxes.length);
 }
 
 
-function update_items_selected(element) {
+function updateItemsSelected(element) {
   var checked = $(element).parents(".list-body").find(":checked"),
       num_selected = $(element).parents(".list-body").prev().children("span").children("span");
 
@@ -894,4 +733,260 @@ function pieOptions(height, width, chartArea_top, chartArea_left, chartArea_heig
     options.tooltip = { trigger: 'none' };
   }
   return options;
+}
+
+function renderNavigation(download) {
+  var mainContainer = $('#main-container'),
+      navigationBar;
+  if (navigation) {
+    console.log('navigation');
+    navigationBar = $('<div id="navigation" class="span12"></div>').append(function() {
+      var $row = $('<div class="row"></div>'),
+          $column1 = $('<div class="span4"></div>'),
+          $column2 = $column1.clone(),
+          $column3 = $column1.clone(),
+          $span = $('<span id="goBack"> Back</span>'),
+          $i = $('<i class="fa fa-arrow-circle-o-left fa-3x"></i>'),
+          $download;
+
+      $span.prepend($i).append($download);
+      $span.on("click", function() {
+        renderOverview(download);
+      });
+      $row.append($column1.append($span));
+
+      if (download) {
+        $download = $('<i class="fa fa-download"></i>');
+      }
+
+      $row.append($column2).append($column3);
+
+      return $row;
+    });
+    mainContainer.prepend(navigationBar);
+  } else {
+    $("#navigation").remove();
+  }
+}
+
+
+function renderOverview(callback) {
+  $.ajax({
+    type: 'GET',
+    url: window.location,
+    data: {},
+    global: false,
+    success: function(data) {
+      $(".subpage > .wrapper").html(data);
+    }
+  }).complete(function() {
+    if (typeof callback === "function") {
+      callback();
+    }
+  });
+}
+
+function renderGraphs(report_id) {
+  var data = {'id': report_id},
+      url = location.protocol + "//" + location.host; // https://secure.my.jobs
+
+  $.ajax({
+    type: "GET",
+    url: url + "/reports/view/mypartners/contactrecord",
+    data: data,
+    success: function(data) {
+      var contacts = data.contacts,
+          communications = data.communications || 0,
+          emails = data.emails || 0,
+          pss = data.searches || 0,
+          calls = data.calls || 0,
+          meetings = data.meetings || 0,
+          referrals = data.referrals || 0,
+          applications = data.applications || 0,
+          interviews = data.interviews || 0,
+          hires = data.hires || 0,
+          pChartInfo = {0: {'name': "Emails",            'count': emails,   'color': "#5EB95E"},
+                        1: {'name': "PSS Emails",        'count': pss,      'color': "#4BB1CF"},
+                        2: {'name': "Phone Calls",       'count': calls,    'color': "#FAA732"},
+                        3: {'name': "Meetings & Events", 'count': meetings, 'color': "#5F6C82"}},
+          bChartInfo = {0: {'name': "Applications", 'count': applications, 'style': "color: #5EB95E"},
+                        1: {'name': "Interviews",   'count': interviews,   'style': "color: #4BB1CF"},
+                        2: {'name': "Hires",        'count': hires,        'style': "color: #FAA732"},
+                        3: {'name': "Records",      'count': referrals,    'style': "color: #5F6C82"}};
+
+      // Grab google's jsapi to load chart files.
+      $.getScript("https://www.google.com/jsapi", function() {
+        // Had to use 'callback' with google.load otherwise after load google makes a new document
+        // with just <html> tags.
+        google.load("visualization", "1.0", {'packages':["corechart"], 'callback': function() {
+          var pDataTable = [['Records', 'All Records']], // p for pieChart
+              bDataTable = [['Activity', 'Amount', {'role': 'style'}]], // b for barChart
+              $mainContainer = $("#main-container"),// the container everything goes in
+              pSliceOptions = {}, // slice options for pieChart
+              pLegend = [], // array that will hold the report-boxes for pieChart
+              bLegend = [], // array that will hold the report-boxes for barChart
+              pChartData,
+              pKey,
+              pValue,
+              pBox,
+              pOptions,
+              pChart,
+              $pLegend,
+              $pChart,
+              bChartData,
+              bValue,
+              bKey,
+              bBox,
+              bOptions,
+              bChart,
+              $bLegend,
+              topThreeRow,
+              restRow,
+              contactContainer,
+              i;
+
+          $mainContainer.html('').append("<div class='span6'><h4>Communication Activity</h4><div id='d-chart'></div>" +
+                                         "</div><div class='span6'><h4>Referral Activity</h4><div id='b-chart'></div></div>");
+
+          for (pKey in pChartInfo) {
+            if (pChartInfo.hasOwnProperty(pKey)) {
+              pValue = pChartInfo[pKey];
+              pDataTable.push([pValue.name, pValue.count]);
+
+              // Used for PieChart to give data 'slices' color.
+              pSliceOptions[pKey] = {'color': pValue.color};
+
+              // Create legend boxes
+              pBox = $('<div class="report-box" style="background-color: ' +
+                       pValue.color + '"><div class="big-num">' + pValue.count +
+                       '</div><div class="reports-record-type">' + pValue.name + '</div></div>');
+              pLegend.push(pBox);
+            }
+          }
+
+          pChartData = google.visualization.arrayToDataTable(pDataTable);
+          pOptions = pieOptions(330, 350, 12, 12, 300, 330, 0.6, pSliceOptions, true);
+          pChart = new google.visualization.PieChart(document.getElementById('d-chart'));
+          pChart.draw(pChartData, pOptions);
+
+          $pChart = $("#d-chart > div");
+          $pChart.append("<div class='chart-box-holder legend'></div>");
+          $pLegend = $("#d-chart .legend");
+          pLegend.forEach(function(element) {
+            $pLegend.append(element);
+          });
+
+          $pChart.append('<div class="piehole report"><div class="piehole-big">' + communications +
+                         '</div><div class="piehole-topic">Contact Records</div></div>');
+
+          for (bKey in bChartInfo) {
+            if (bChartInfo.hasOwnProperty(bKey)) {
+              bValue = bChartInfo[bKey];
+              bDataTable.push([bValue.name, bValue.count, bValue.style]);
+
+              bBox = $('<div class="report-box" style="background-' + bValue.style +
+                       '"><div class="big-num">' + bValue.count +
+                       '</div><div class="reports-record-type">' + bValue.name + '</div></div>');
+              bLegend.push(bBox);
+            }
+          }
+
+          bChartData = google.visualization.arrayToDataTable(bDataTable);
+          bOptions = {title: 'Referral Records', width: 356, height: 360, legend: { position: "none" },
+                      chartArea: {top: 22, left: 37, height: 270, width: 290},
+                      animation: {startup: true, duration: 400}};
+          bChart = new google.visualization.ColumnChart(document.getElementById('b-chart'));
+          bChart.draw(bChartData, bOptions);
+
+          $bLegend = $('<div class="chart-box-holder legend"></div>').append(function() {
+            return bLegend.map(function(element) {
+              return element.prop("outerHTML");
+            }).join('');
+          });
+
+          $("#b-chart > div").append($bLegend);
+
+          // Show the top three contacts in a different format than the rest.
+          topThreeRow = $('<div class="row"></div>').append(function() {
+            var html = '',
+                cLength = contacts.length,
+                contact,
+                name,
+                email,
+                cReferrals,
+                commRecords,
+                div,
+                topLength;
+
+            // Determine how long topLength should be.
+            topLength = (cLength > 3) ? 3 : cLength;
+
+            // Just run for the first 3 contacts.
+            for (i = 0; i < topLength; i++) {
+              // remove first contact in array, returns the removed contact.
+              contact = contacts.shift();
+              name = contact.contact_name;
+              email = contact.contact_email;
+              cReferrals = contact.referrals;
+              commRecords = contact.records;
+
+              // create container
+              div = $('<div class="span4 panel top-contacts"></div>');
+              div.append('<div class="name">' + name + '</div><div>' + email + '</div><div class="top-three-box-container">' +
+                         '<div class="report-box small"><div class="big-num">' + commRecords +
+                         '</div><div class="reports-record-type">Contact Records</div></div>' +
+                         '<div class="report-box small"><div class="big-num">' + cReferrals +
+                         '</div><div class="reports-record-type">Referral Records</div></div></div>');
+
+              // add the rendered html as a string.
+              html += div.prop("outerHTML");
+            }
+            return html;
+          });
+
+          // Don't generate a table if cLength = 0
+          if (contacts.length) {
+            restRow = $('<div class="row"></div>').append(function() {
+              var div = $('<div class="span12"></div>'),
+                  table = $('<table class="table table-striped report-table"><thead><tr><th>Name</th>' +
+                            '<th>Email</th><th>Contact Records</th><th>Referral Reocrds</th>' +
+                            '</tr></thead></table>'),
+                  tbody = $('<tbody></tbody>');
+              tbody.append(function() {
+                // turn each element into cells of a table then join each group of cells with rows.
+                return "<tr>" + contacts.map(function(contact) {
+                  return "<td>" + contact.contact_name + "</td><td>" + contact.contact_email +
+                         "</td><td>" + contact.records + "</td><td>" + contact.referrals + "</td>";
+                }).join('</tr><tr>') + "</tr>";
+              });
+              return div.append(table.append(tbody));
+            });
+          } else {
+            // Make sure topThreeRow didn't run before saying there are no records.
+            if (topThreeRow.find("div.top-contacts").length === 0) {
+              restRow = $('<div class="row"><div class="span12">This report has no contacts with records.</div></div>');
+            }
+          }
+
+          contactContainer = $('<div id="report-contacts" class="span12"></div>').append(topThreeRow).append(restRow);
+          $("#main-container").append(contactContainer);
+        }});
+      });
+    }
+  });
+}
+
+function renderArchive(callback) {
+  $.ajax({
+    type: "GET",
+    url: "archive",
+    data: {},
+    success: function(data) {
+      $("#main-container").html(data);
+    }
+  }).complete(function() {
+    if (typeof callback === "function") {
+      callback();
+    }
+  });
 }
