@@ -31,7 +31,7 @@ git+git://github.com/DirectEmployers/solrsitemap.git
 git+git://github.com/DirectEmployers/unicode-slugify.git
 git+git://github.com/arneb/django-messages.git@bc443623fde4945a841c48665b477a529f4ec676
 git+git://github.com/frankban/django-endless-pagination.git@725bde91db6da2be0663652b0df4501ba72306e7
-jira-python==0.13
+jira==0.41
 lxml==3.2.4
 markdown2==2.1.0
 mock==1.0.1

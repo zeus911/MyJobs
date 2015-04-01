@@ -32,10 +32,6 @@ class ContextToolsTests(BlocksTestBase):
         self.assertEqual(breadbox.job_count, '1')
         self.assertEqual(breadbox.q_breadcrumb.display_title, self.job['title'])
 
-    def test_get_count_heading(self):
-        count_heading = context_tools.get_count_heading(self.search_results_request)
-        self.assertEqual(count_heading, '1 Jobs')
-
     def test_get_custom_facet_counts(self):
         custom_facet_counts = context_tools.get_custom_facet_counts(self.search_results_request)
         self.assertGreaterEqual(len(custom_facet_counts), 1)

@@ -72,12 +72,6 @@ def get_breadbox(request):
 
 
 @Memoized
-def get_count_heading(request):
-    breadbox = get_breadbox(request)
-    return helpers.build_results_heading(breadbox)
-
-
-@Memoized
 def get_custom_facet_counts(request):
     custom_facet_counts = []
     filters = get_filters(request)
