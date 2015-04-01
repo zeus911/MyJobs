@@ -117,18 +117,18 @@ def serialize(fmt, data, counts=None, values=None):
         if values:
             records = []
             haystack = []
+
             for record in data:
-                needle = [record[value] for value in values]
+                needle = [record[value] for value in values] or record['pk']
+
                 if needle not in haystack:
                     haystack.append(needle)
-                    records.append(record)
+                    # strip HTML tags from string values
+                    records.append({
+                        key: strip_tags(value) if isinstance(value, basestring)
+                        else value for key, value in record.items()})
 
             data = records
-
-    # strip HTML tags from string values
-    for index, record in enumerate(data[:]):
-        data[index] = {key: strip_tags(value) if isinstance(value, basestring)
-                       else value for key, value in record.items()}
 
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)
