@@ -320,58 +320,6 @@ def ajax_get_jobs(request, filter_path):
                               content_type='text/html')
 
 
-def ajax_get_jobs_search(request):
-    """
-    Return async requests for more jobs on search result pages.
-
-    """
-    # This has a significant amount of overlap with the search_results
-    # view. Definitely a candidate for refactoring these two together.
-    site_config = get_site_config(request)
-    sqs = helpers.prepare_sqs_from_search_params(request.GET)
-    try:
-        offset = int(request.GET.get(u'offset', 0))
-    except ValueError:
-        offset = 0
-    try:
-        pagesize = int(site_config.num_job_items_to_show)
-    except ValueError:
-        pagesize = 0
-    sort_order = request.REQUEST.get('sort', 'relevance')
-    default_jobs = helpers.get_jobs(default_sqs=sqs,
-                                    custom_facets=settings.DEFAULT_FACET,
-                                    exclude_facets=settings.FEATURED_FACET,
-                                    jsids=settings.SITE_BUIDS,
-                                    facet_limit=pagesize, sort_order=sort_order)
-
-    featured_jobs = helpers.get_featured_jobs(default_sqs=sqs,
-                                              jsids=settings.SITE_BUIDS,
-                                              facet_limit=pagesize,
-                                              sort_order=sort_order)
-
-    (num_featured_jobs, num_default_jobs, featured_offset, default_offset) = \
-        helpers.featured_default_jobs(featured_jobs.count(),
-                                      default_jobs.count(),
-                                      pagesize,
-                                      site_config.percent_featured,
-                                      offset)
-
-    sitecommit_str = helpers.make_specialcommit_string(settings.COMMITMENTS.all())
-
-    data_dict = {
-        'default_jobs': default_jobs[default_offset:default_offset+num_default_jobs],
-        'featured_jobs': featured_jobs[featured_offset:featured_offset+num_featured_jobs],
-        'site_config': site_config,
-        'title_term': request.GET.get('q') or '\*',
-        'site_commitments_string': sitecommit_str
-    }
-
-    return render_to_response('listing_items.html',
-                              data_dict,
-                              context_instance=RequestContext(request),
-                              content_type="text/html")
-
-
 def robots_txt(request):
     host = str(request.META["HTTP_HOST"])
     return render_to_response('robots.txt', {'host': host},

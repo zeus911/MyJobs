@@ -1,17 +1,6 @@
 function Pager() {
-    this._MIN_VISIBLE = 10;
     this._PAGE_SIZE = 20;
     this._HIDDEN_CLASS_NAME = "direct_hiddenOption";
-
-    // -count
-    this._sortType = 'count';
-
-    this._alpha_sort_direction = "-index";
-    this._numeric_sort_direction = "count";
-    this._current_sort_direction = this._numeric_sort_direction;
-
-    this._subnav_cache = {};
-    this._subnav_cache[this._current_sort_direction] = $('#direct_subnav_ul').html();
 }
 
 
@@ -46,87 +35,6 @@ Pager.prototype = {
         // toggle more/less links, if needed
         this._toggleLessLink(itemListId, num_items);
 
-        // stop default behavior of the link, since we're
-        // not really using it as a link.  yeah, its not ideal.
-        return false;
-    },
-
-    sortNumericHandler: function(e) {
-        this._numeric_sort_direction = (this._numeric_sort_direction == '-count') ? 'count' : '-count';
-        this._current_sort_direction = this._numeric_sort_direction;
-
-        if(this._subnav_cache[this._numeric_sort_direction]) {
-            $('#direct_subnavUl').html(this._subnav_cache[this._numeric_sort_direction]);
-            $('#direct_moreLessLinks_subnavUl .direct_optionsLess').hide();
-            $('#direct_moreLessLinks_subnavUl .direct_optionsMore').show();
-        } else {
-            if(this._numeric_sort_direction[0] == '-') {
-                sort_direction = 'reverse';
-            } else {
-                sort_direction = 'standard';
-            }
-            sort_by = 'count';
-
-            data = {
-                'offset': 0,
-                'num_items': pager_num_items, // declared in seo_base.html
-                'sort': sort_by,
-                'sort_direction': sort_direction,
-                'type': 'subNav'
-            };
-
-            var that = this;
-            var url = this._build_url('subNav');
-            $.get(
-                url,
-                data,
-                function(data){
-                    $('#direct_subnavUl').html(data);
-                    $('#direct_moreLessLinks_subnavUl .direct_optionsLess').hide();
-                    $('#direct_moreLessLinks_subnavUl .direct_optionsMore').show();
-                    that._subnav_cache[that._numeric_sort_direction] = $('#direct_subnav_ul').html();
-                });
-        }
-        // stop default behavior of the link, since we're
-        // not really using it as a link.  yeah, its not ideal.
-        return false;
-    },
-
-    sortAlphaHandler: function(e) {
-        this._alpha_sort_direction = (this._alpha_sort_direction == 'index') ? '-index' : 'index';
-        this._current_sort_direction = this._alpha_sort_direction;
-
-        if(this._subnav_cache[this._alpha_sort_direction]) {
-            $('#direct_subnavUl').html(this._subnav_cache[_alpha_sort_direction]);
-            $('#direct_moreLessLinks_subnavUl .direct_optionsLess').hide();
-            $('#direct_moreLessLinks_subnavUl .direct_optionsMore').show();
-        } else {
-            if(this._alpha_sort_direction[0] == '-') {
-                sort_direction = 'reverse';
-            } else {
-                sort_direction = 'standard';
-            }
-            sort_by = 'index';
-            data = {
-                'offset': 0,
-                'num_items': pager_num_items, // declared in seo_base.html
-                'sort': sort_by,
-                'sort_direction': sort_direction,
-                'type': 'subNav'
-            };
-
-            var that = this;
-            var url = this._build_url('subNav');
-            $.get(
-                url,
-                data,
-                function(data){
-                    $('#direct_subnavUl').html(data);
-                    $('#direct_moreLessLinks_subnavUl .direct_optionsLess').hide();
-                    $('#direct_moreLessLinks_subnavUl .direct_optionsMore').show();
-                    that._subnav_cache[that._current_sort_direction] = $('#direct_subnav_ul').html();
-                });
-        }
         // stop default behavior of the link, since we're
         // not really using it as a link.  yeah, its not ideal.
         return false;
@@ -263,7 +171,6 @@ Pager.prototype = {
     _build_url: function(type){
         // Build the URL with the current path as our
         // 'filter' that is sent into to filter objects
-        var path = window.location.pathname;
         var urls = {
             "title": "/ajax/titles/",
             "city": "/ajax/cities/",
@@ -276,20 +183,16 @@ Pager.prototype = {
             "mappedmoc": "/ajax/mapped/",
             "company": "/ajax/company-ajax/",
             "listing": "/ajax/joblisting/",
-            "subNav": "/ajax/primary_nav_items/"
+            "search": "/ajax/joblisting/"
         };
 
-        if (type == "search") {
-            return "/ajax/joblisting/";
-        } else {
-            return urls[type];
-        }
+        return urls[type];
     },
 
     _getItemsSuccessHandler: function(html, insertIntoElem, parent){
         // Since the update was successful, the offset can be updated to
         // reflect the requested amount.
-        parent.attr('data-offset', parseInt(parent.attr('data-offset')) + this._PAGE_SIZE)
+        parent.attr('data-offset', parseInt(parent.attr('data-offset')) + this._PAGE_SIZE);
 
         // From the Django templates we get a lot of line breaks,
         // so we'll remove them right here, just to be safe
@@ -322,7 +225,7 @@ $(document).ready(function(){
 		var type = parent.attr('data-type');
 		var path = window.location.pathname;
 		var query = window.location.search;
-		var ajax_url = (type == "search") ? "/ajax/moresearch/" + query : path + "ajax/joblisting/" + query
+		var ajax_url = path + "ajax/joblisting/" + query;
 		focus_item = $('#direct_listingDiv .direct_hiddenOption .direct_joblisting:first-child h4 a');
 		$('#direct_listingDiv .direct_hiddenOption').removeClass('direct_hiddenOption');
 		focus_item.focus();
@@ -361,15 +264,5 @@ $(document).ready(function(){
 	$('.direct_socialLink').click(function(){
 		goalClick('/G/social-media-click', this.href);
 		return false;
-	});
-	
-	// numeric sort link
-	$('#direct_numeric').click(function(e) {
-		return pager.sortNumericHandler(e);
-	});
-	
-	// alphabetic sort link
-	$('#direct_alpha').click(function(e) {
-		return pager.sortAlphaHandler(e);
 	});
 });

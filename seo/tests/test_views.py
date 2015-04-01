@@ -1645,11 +1645,6 @@ class SeoViewsTestCase(DirectSEOTestCase):
           follow=True)
         self.assertEqual(resp.status_code, 200)
 
-    def test_ajax_get_jobs_search(self):
-        resp = self.client.get(
-          u'/ajax/moresearch/?q=Oil+%26+Gas+Upstream+Project+Manager')
-        self.assertEqual(resp.status_code, 200)
-
     def test_ajax_get_jobs_bad_params(self):
         resp = self.client.get(
                 u'/ajax/moresearch/?num_items=q&offset=')
@@ -1659,8 +1654,7 @@ class SeoViewsTestCase(DirectSEOTestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_ajax_get_jobs(self):
-        resp = self.client.get(
-          u'/ajax/joblisting/')
+        resp = self.client.get(u'/ajax/joblisting/')
         self.assertEqual(resp.status_code, 200)
 
     def test_search(self):
