@@ -152,12 +152,12 @@ def get_form_delta(form):
             new_val = form.data.get(field, '')
             new_val = form.fields[field].to_python(new_val)
 
-            if type(form.fields[field]) == MultipleFileField:
+            if isinstance(form.fields[field], MultipleFileField):
                 # Multiple file added results in a MultiValueDict.
                 # MultiValueDict.get() just gets the last item in the list,
                 # so we need to use MultiValueDict.getlist() to account
                 # for all the added attachments.
-                if type(form.files) == MultiValueDict:
+                if isinstance(form.files, MultiValueDict):
                     initial_val = None
                     new_val = [f.name for f in form.files.getlist(field)]
 
@@ -170,8 +170,7 @@ def get_form_delta(form):
                 initial_val = choices_dict.get(initial_val, initial_val)
                 new_val = choices_dict.get(new_val, new_val)
 
-            if ((initial_val != new_val)
-                    and (bool(initial_val) or bool(new_val))):
+            if (initial_val != new_val) and (initial_val or new_val):
                 delta[field] = {
                     'initial': force_unicode(initial_val),
                     'new': force_unicode(new_val)
