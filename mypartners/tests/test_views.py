@@ -1241,7 +1241,7 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
     def test_dvcrd_reachable(self):
 
         # Disability and Veterans Community Resources Directory
-        url, params = PARTNER_LIBRARY_SOURCES.values()[1].items()
+        url, params = PARTNER_LIBRARY_SOURCES.values()[1].values()
 
         response = requests.post(url, params)
         self.assertEqual(response.status_code, 200)
