@@ -186,9 +186,6 @@ class ReportView(View):
             params.pop('csrfmiddlewaretoken', None)
             name = params.pop('report_name', datetime.now())
             values = params.pop('values', None)
-            # TESTING #######
-            values = ['partner', 'contact_name', 'contact_email']
-            # ###############
 
             records = get_model(app, model).objects.from_search(
                 company, params)

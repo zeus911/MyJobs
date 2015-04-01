@@ -33,12 +33,15 @@ class Report(models.Model):
 
     @property
     def queryset(self):
+        model = get_model(self.app, self.model)
         params = json.loads(self.params)
         values = json.loads(self.values)
-        model = get_model(self.app, self.model)
 
         queryset = model.objects.from_search(self.owner, params)
 
+        # If a report has values, we want specific columns, and rows which are
+        # distinct on those columns. However, we also want access to the other
+        # attributes of hte model, so `values()` isn't sufficient.
         if values:
             # Dear Django, please devise a way to do distinct on column with
             # MySQL so I don't have to do such hackery
