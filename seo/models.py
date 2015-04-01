@@ -620,7 +620,10 @@ class Company(models.Model):
 
     """
     def __unicode__(self):
-        return "%s" % self.name
+        if self.company_user_count == 0:
+            return "%s (%s users) **Might be a duplicate**" % (self.name, self.company_user_count)
+        else:
+            return "%s (%s users)" % (self.name, self.company_user_count)
 
     class Meta:
         verbose_name = 'Company'
@@ -655,7 +658,10 @@ class Company(models.Model):
     def featured_on(self):
         return ", ".join(self.seosite_set.all().values_list("domain",
                                                             flat=True))
-
+    def get_company_user_count(self):
+        return len(CompanyUser.objects.filter(company=self))
+    company_user_count = property(get_company_user_count)
+    
     admins = models.ManyToManyField(User, through='CompanyUser')
     name = models.CharField('Name', max_length=200)
     company_slug = models.SlugField('Company Slug', max_length=200, null=True,
