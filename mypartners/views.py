@@ -426,7 +426,10 @@ def edit_location(request):
         Location, id=request.REQUEST.get('location'))
 
     if request.method == 'POST':
-        form = LocationForm(request.POST)
+        if location:
+            form = LocationForm(request.POST, instance=location)
+        else:
+            form = LocationForm(request.POST)
 
         if form.is_valid():
             location = form.save(request)
@@ -450,7 +453,6 @@ def edit_location(request):
         ctx['contact'] = str(contact.id)
     if location:
         ctx['location'] = str(location.id)
-
 
     return render_to_response(
         'mypartners/edit_location.html', ctx, RequestContext(request))

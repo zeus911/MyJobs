@@ -107,7 +107,6 @@ def log_change(obj, form, user, partner, contact_identifier,
     """
     if not change_msg:
         change_msg = get_change_message(form) if action_type == CHANGE else ''
-
     delta = get_form_delta(form) if action_type == CHANGE else {}
 
     ContactLogEntry.objects.create(
@@ -139,6 +138,7 @@ def get_form_delta(form):
 
     """
     delta = {}
+
     if form.changed_data:
 
         for field in form.changed_data:
@@ -173,8 +173,8 @@ def get_form_delta(form):
             if ((initial_val != new_val)
                     and (bool(initial_val) or bool(new_val))):
                 delta[field] = {
-                    'initial': repr(initial_val),
-                    'new': repr(new_val)
+                    'initial': force_unicode(initial_val),
+                    'new': force_unicode(new_val)
                 }
     return delta
 

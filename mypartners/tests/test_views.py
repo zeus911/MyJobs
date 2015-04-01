@@ -20,7 +20,7 @@ from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
 from mydashboard.tests.factories import CompanyFactory, CompanyUserFactory
 from mypartners.tests.factories import (PartnerFactory, ContactFactory,
-                                        ContactLogEntryFactory,
+                                        ContactLogEntryFactory, LocationFactory,
                                         ContactRecordFactory, TagFactory)
 from mysearches.tests.factories import PartnerSavedSearchFactory
 from datetime import datetime, date
@@ -54,8 +54,9 @@ class MyPartnersTestCase(MyJobsBase):
         self.partner = PartnerFactory(owner=self.company, pk=1)
 
         # Create a contact
+        self.contact_user = UserFactory(email="contact@user.com")
         self.contact = ContactFactory(partner=self.partner,
-                                      user=UserFactory(email="contact@user.com"),
+                                      user=self.contact_user,
                                       email="contact@user.com")
 
         # Create a TestClient
@@ -1258,3 +1259,159 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
         if library.is_disabled:
             self.assertIn('Disability',
                           partner.tags.values_list('name', flat=True))
+
+
+class ContactLogEntryTests(MyPartnersTestCase):
+    def test_contact_record_update(self):
+        record = ContactRecordFactory()
+
+        url = self.get_url(partner=self.partner.id, company=self.company.id,
+                           id=record.id, view='partner_edit_record')
+
+        data = {
+            'contact_type': 'email',
+            'contact_name': self.contact.id,
+            'contact_email': 'test@email.com',
+            'contact_phone': '',
+            'location': '',
+            'length_0': '00',
+            'length_1': '00',
+            'subject': '',
+            'date_time_0': 'Jan',
+            'date_time_1': '01',
+            'date_time_2': '2005',
+            'date_time_3': '01',
+            'date_time_4': '00',
+            'date_time_5': 'AM',
+            'job_id': '',
+            'job_applications': '',
+            'job_interviews': '',
+            'job_hires': '',
+            'notes': 'A few notes here',
+            'company': self.company.id,
+            'partner': self.partner.id
+        }
+
+        response = self.client.post(url, data=data, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        log = ContactLogEntry.objects.get()
+
+        delta = json.loads(log.delta)
+        self.assertEqual(record.contact_email, delta['contact_email']['initial'])
+        self.assertEqual(data['contact_email'], delta['contact_email']['new'])
+
+    def test_partner_saved_search_update(self):
+        search = PartnerSavedSearchFactory(created_by=self.staff_user,
+                                           partner=self.partner,
+                                           provider=self.company,
+                                           user=self.contact_user)
+
+        url = self.get_url('partner_savedsearch_save',
+                           company=self.company.id,
+                           partner=self.partner.id,
+                           id=search.id)
+
+        data = {
+            'feed': 'http://www.jobs.jobs/jobs/rss/jobs',
+            'label': 'Test',
+            'url': 'http://www.jobs.jobs/jobs',
+            'url_extras': '',
+            'email': self.contact.user.email,
+            'frequency': 'W',
+            'day_of_month': '',
+            'day_of_week': '3',
+            'jobs_per_email': 5,
+            'partner_message': '',
+            'notes': '',
+            'company': self.company.id,
+            'partner': self.partner.id,
+            'id': search.id
+        }
+
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 200)
+
+        log = ContactLogEntry.objects.get()
+
+        delta = json.loads(log.delta)
+
+        self.assertEqual(search.url, delta['url']['initial'])
+        self.assertEqual(data['url'], delta['url']['new'])
+
+    def test_partner_update(self):
+
+        url = self.get_url(partner=self.partner.id, company=self.company.pk,
+                           id=self.partner.id,
+                           ct=ContentType.objects.get_for_model(Partner).pk,
+                           view='save_item')
+
+        new_contact_user = UserFactory(email="newcontact@user.com")
+        new_contact = ContactFactory(partner=self.partner,
+                                     user=new_contact_user,
+                                     name='Fred', email=new_contact_user.email)
+
+        data = {
+            'company_id': self.company.pk,
+            'name': self.partner.name,
+            'primary_contact': new_contact.pk,
+            'uri': 'www.google.com',
+        }
+
+        response = self.client.post(url, data=data, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        log = ContactLogEntry.objects.get()
+
+        delta = json.loads(log.delta)
+
+        self.assertEqual(new_contact.name, delta['primary_contact']['new'])
+
+    def test_contact_update(self):
+
+        url = self.get_url(partner=self.partner.id, company=self.company.pk,
+                           id=self.contact.id, view='save_item',
+                           ct=ContentType.objects.get_for_model(Contact).pk)
+
+        data = {
+            'company_id': self.company.pk,
+            'partner': self.partner.pk,
+            'name': 'George',
+        }
+
+        response = self.client.post(url, data=data, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        log = ContactLogEntry.objects.get()
+
+        delta = json.loads(log.delta)
+
+        self.assertEqual(self.contact.name, delta['name']['initial'])
+        self.assertEqual(data['name'], delta['name']['new'])
+
+    def test_location_update(self):
+        location = LocationFactory()
+        self.contact.locations.add(location)
+        self.contact.save()
+
+        url = self.get_url(partner=self.partner.id, company=self.company.pk,
+                           id=self.contact.id, location=location.id,
+                           view='edit_location')
+
+        data = {
+            'company_id': self.company.pk,
+            'partner': self.partner.pk,
+            'label': 'The label has changed.',
+            'city': 'Fargo',
+            'state': 'ND',
+        }
+
+        response = self.client.post(url, data=data, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        log = ContactLogEntry.objects.get()
+
+        delta = json.loads(log.delta)
+
+        self.assertEqual(location.city, delta['city']['initial'])
+        self.assertEqual(data['city'], delta['city']['new'])
