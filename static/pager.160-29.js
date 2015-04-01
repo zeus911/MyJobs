@@ -6,7 +6,7 @@ function Pager() {
 
 Pager.prototype = {
 
-    showLessHandler: function(e, num_items) {
+    showLessHandler: function (e, num_items) {
         // get the list to act on
         var clickedLink = e.target;
         var parentEl = $(clickedLink).parent();
@@ -54,7 +54,7 @@ Pager.prototype = {
         var jqMoreLink = this._getLinkForItemList(jqItemList, "more");
 
         if(currNumVisible > minVisible){
-            jqLessLink.show()
+            jqLessLink.show();
         }else{
             jqLessLink.hide();
             jqMoreLink.focus();
@@ -108,7 +108,7 @@ Pager.prototype = {
         var hiddenItems = itemList.children("." + this._HIDDEN_CLASS_NAME);
         var currNumHidden = hiddenItems.length;
         var offset = parent.attr('data-offset');
-        focus_item = $("#" + listId + " .direct_hiddenOption:first a");
+        var focus_item = $("#" + listId + " .direct_hiddenOption:first a");
 
         // if we have current hidden ones, lets show those
         if(currNumHidden > 0) {
@@ -122,18 +122,18 @@ Pager.prototype = {
             currNumHidden -= numToShow;
         }
 
-        if(currNumHidden == 0) {
+        if(currNumHidden === 0) {
             // lets see if we have any to get from the server
             var data = {
                 'offset': offset,
                 'num_items': this._PAGE_SIZE
             };
             var qsParams = this._getQueryParams();
-            data['q'] = qsParams['q'];
-            data['location'] = qsParams['location'];
-            data['moc'] = qsParams['moc'];
-            data['company'] = qsParams['company'];
-            data['filter_path'] = window.location.pathname;
+            data.q = qsParams.q;
+            data.location = qsParams.location;
+            data.moc = qsParams.moc;
+            data.company = qsParams.company;
+            data.filter_path = window.location.pathname;
 
             this._ajax_getItems(type, data, listId, parent);
         }
@@ -214,19 +214,20 @@ Pager.prototype = {
 
 $(document).ready(function(){
 	var pager = new Pager();
+
     $(document).on("click", "a.direct_optionsMore", function(e) {
         return pager.showMoreHandler(e, $(this).parent().attr('data-num-items'), $(this).parent());
     });
+
 	$('#button_moreJobs').click(function(e) {
 		e.preventDefault();
 		var parent = $(this).parent();
 		var num_items = parseInt(parent.attr('data-num-items'));
 		var offset = parseInt(parent.attr('offset'));
-		var type = parent.attr('data-type');
 		var path = window.location.pathname;
 		var query = window.location.search;
 		var ajax_url = path + "ajax/joblisting/" + query;
-		focus_item = $('#direct_listingDiv .direct_hiddenOption .direct_joblisting:first-child h4 a');
+		var focus_item = $('#direct_listingDiv .direct_hiddenOption .direct_joblisting:first-child h4 a');
 		$('#direct_listingDiv .direct_hiddenOption').removeClass('direct_hiddenOption');
 		focus_item.focus();
 		$.ajax({
@@ -238,9 +239,11 @@ $(document).ready(function(){
 					}
 			});
 	});
+
 	$('a.direct_optionsLess').click(function(e) {
 		return pager.showLessHandler(e, $(this).parent().attr('data-num-items'));
 	});
+
 	$(".direct_offsiteContainer").hover(function() {
 		$(this).children('.direct_offsiteHoverDiv').show();
 			}, function() {
