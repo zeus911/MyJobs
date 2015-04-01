@@ -191,7 +191,6 @@ def get_change_message(form):
     if form.changed_data:
         change_message = (ugettext('Changed %s.') %
                           get_text_list(form.changed_data, ugettext('and')))
-    get_form_delta(form)
     return change_message or ugettext('No fields changed.')
 
 
