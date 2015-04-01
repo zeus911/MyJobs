@@ -271,7 +271,6 @@ Report.prototype.bindEvents = function() {
       type: 'POST',
       url: url,
       data: $.param(data, true),
-      dataType: "json",
       success: function (data) {
         reload = true;
         window.location = location.protocol + '//' + location.host + location.pathname;
@@ -539,6 +538,7 @@ List.prototype.filter = function(filter) {
     }
   } else if (list.type === "contact") {
     url += "/reports/ajax/mypartners/contact";
+    data['values'] = true;
   }
 
   $.ajaxSettings.traditional = true;
@@ -564,6 +564,10 @@ List.prototype.filter = function(filter) {
         // add record count to right of partners
         if (list.type === "partner") {
           li.append("<span class='pull-right'>"+ record.count +"</span>");
+        }
+
+        if (list.type === "contact" && record.email) {
+          li.append(" <span>("+ record.email + ")</span>");
         }
 
         ul.append(li);

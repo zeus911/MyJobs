@@ -93,7 +93,7 @@ class SeoCeleryTaskAdmin(djcelery.admin.TaskMonitor):
                     kwargs = ast.literal_eval(state.kwargs)
                     tasks.task_update_solr.delay(*args, **kwargs)
                 else:
-                    messages.info(request, 
+                    messages.info(request,
                                   u"Resend not supported for that task type")
 
 admin.site.unregister(djcelery.models.TaskState)

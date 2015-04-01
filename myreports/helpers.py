@@ -9,18 +9,13 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models.loading import get_model
 from django.db.models.query import QuerySet
 from django.utils.html import strip_tags
-from mypartners.models import CONTACT_TYPE_CHOICES
+from mypartners.models import CONTACT_TYPES
 
 
 # TODO:
-# * finish humanizing other columns
 # * allow other models to be humanized, maybe generalize the things being
 # * humanized and create a Humanize object?
-# Note: natural_key wasn't used because i'm already using a dict by the time I
-#       get here.
 def humanize(records):
-    # TODO: This is getting silly. Bite the bullet and use natural keys on the
-    #       next iteration
     """
     Converts values in a dict to their human-readable counterparts. At the
     moment, this means converting tag ids to a list of tag names, removing the
@@ -35,41 +30,24 @@ def humanize(records):
     """
 
     parser = HTMLParser.HTMLParser()
-    contact_types = dict(CONTACT_TYPE_CHOICES)
-    # convert tag ids to names
-    tag_ids = set(chain.from_iterable(record['tags'] for record in records))
-    tags = dict(get_model('mypartners', 'tag').objects.filter(
-        pk__in=tag_ids).values_list('pk', 'name'))
-
-    # convert partner ids to names
-    partner_ids = [record['partner'] for record in records]
-    partners = dict(get_model('mypartners', 'partner').objects.filter(
-        pk__in=partner_ids).values_list('pk', 'name'))
-
-    # convert user ids to names
-    user_ids = [record['created_by'] for record in records]
-    users = dict(get_model('myjobs', 'user').objects.filter(
-        pk__in=user_ids).values_list('pk', 'email'))
 
     for record in records:
         # make tag lists look pretty
-        record['tags'] = ', '.join([tags[tag] for tag in record['tags']])
+        record['tags'] = ', '.join(record['tags'])
         # get rid of pks
         record.pop('pk', None)
         # human readable contact types
-        record['contact_type'] = contact_types[record['contact_type']]
-        # human readable partners
-        record['partner'] = partners.get(record['partner'], "")
-        # human readable created by users
-        record['created_by'] = users.get(record['created_by'], "")
-        # strip extra newlines from notes and convert HTML entities
+        record['contact_type'] = CONTACT_TYPES[record['contact_type']]
+        # strip html and extra whitespace from notes
         record['notes'] = parser.unescape('\n'.join(
             ' '.join(line.split())
             for line in record['notes'].split('\n') if line))
+        # second pass to take care of extra new lines
         record['notes'] = '\n'.join(
             filter(bool, record['notes'].split('\n\n')))
 
-        # get rid of None values
+        # get rid of nones
+        record['created_by'] = record['created_by'] or ''
         record['length'] = record['length'] or ''
 
     return records
@@ -121,7 +99,8 @@ def serialize(fmt, data, counts=None):
     """
     if isinstance(data, QuerySet):
         data = [dict({'pk': record['pk']}, **record['fields'])
-                for record in serializers.serialize('python', data)]
+                for record in serializers.serialize(
+                    'python', data, use_natural_keys=True)]
 
         if counts:
             data = [dict({'count': counts[record['pk']]}, **record)

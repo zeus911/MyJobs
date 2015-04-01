@@ -97,26 +97,21 @@ class FallbackBlockView(BlockView):
         return super(FallbackBlockView, self).post(request, *args, **kwargs)
 
     def set_page(self, request):
+        page = None
         if request.user.is_authenticated() and request.user.is_staff:
-            try:
-                page = Page.objects.filter(sites=settings.SITE,
-                                           status=Page.STAGING,
-                                           page_type=self.page_type)[0]
-                setattr(self, 'page', page)
-            except IndexError:
-                pass
+            page = Page.objects.filter(sites=settings.SITE,
+                                       status=Page.STAGING,
+                                       page_type=self.page_type).first()
 
-        try:
+        if not page:
             page = Page.objects.filter(sites=settings.SITE,
                                        status=Page.PRODUCTION,
-                                       page_type=self.page_type)[0]
-        except IndexError:
-            try:
-                page = Page.objects.filter(sites__pk=1,
-                                           status=Page.PRODUCTION,
-                                           page_type=self.page_type)[0]
-            except IndexError:
-                page = None
+                                       page_type=self.page_type).first()
+
+        if not page:
+            page = Page.objects.filter(sites__pk=1,
+                                       status=Page.PRODUCTION,
+                                       page_type=self.page_type).first()
         setattr(self, 'page', page)
 
 
