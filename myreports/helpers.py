@@ -114,15 +114,16 @@ def serialize(fmt, data, counts=None, values=None):
 
         # Cant' use a ValueQuerSet for serialize, which means we lose the
         # ability to use distinct. As such, we fake it by doing so manually
-        records = []
-        haystack = []
-        for record in data:
-            needle = [record[value] for value in values]
-            if needle not in haystack:
-                haystack.append(needle)
-                records.append(record)
+        if values:
+            records = []
+            haystack = []
+            for record in data:
+                needle = [record[value] for value in values]
+                if needle not in haystack:
+                    haystack.append(needle)
+                    records.append(record)
 
-        data = records
+            data = records
 
     # strip HTML tags from string values
     for index, record in enumerate(data[:]):
