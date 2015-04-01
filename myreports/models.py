@@ -33,10 +33,19 @@ class Report(models.Model):
 
     @property
     def queryset(self):
-        q = models.Q()
-        for record in self.python:
-            q |= models.Q(**record)
+        params = json.loads(self.params)
+        values = json.loads(self.values)
+        model = get_model(self.app, self.model)
 
-        queryset = get_model(self.app, self.model).objects.filter(q)
+        queryset = model.objects.from_search(self.owner, params)
+
+        if values:
+            # Dear Django, please devise a way to do distinct on column with
+            # MySQL so I don't have to do such hackery
+            queryset = queryset.values(*values).distinct()
+            pks = [model.objects.filter(**query).first().pk
+                   for query in queryset]
+
+            queryset = model.objects.filter(pk__in=pks)
 
         return queryset
