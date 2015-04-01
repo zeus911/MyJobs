@@ -1160,7 +1160,7 @@ class SiteTagAdmin(admin.ModelAdmin):
     form = SiteTagForm 
     save_on_top = True
     fieldsets = [
-        (None, {'fields': ['site_tag', 'tag_navigation']}),
+        (None, {'fields': ['site_tag', 'tag_navigation', 'is_site_family']}),
     ]
 
 

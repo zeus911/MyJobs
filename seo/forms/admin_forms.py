@@ -613,7 +613,7 @@ class SpecialCommitmentForm(SeoSiteReverseForm):
         model = SpecialCommitment
 
 
-class SiteTagForm(RowPermissionsForm):
+class SiteTagForm(forms.ModelForm):
     class Meta:
         model = SiteTag
 

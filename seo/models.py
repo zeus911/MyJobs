@@ -915,6 +915,10 @@ class SiteTag(models.Model):
                                          help_text='Tag can be used for '
                                                    'navigation by users. '
                                                    'Viewable by public.')
+    is_site_family = models.BooleanField('Tag represents site family',
+                                         default=False,
+                                         help_text='Site tag represents '
+                                                   'a family of sites.')
 
     def __unicode__(self):
         return "%s" % self.site_tag
