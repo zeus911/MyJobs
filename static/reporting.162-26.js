@@ -168,6 +168,14 @@ Report.prototype.bindEvents = function() {
         contact_wrapper.html(c_field.render(report)).children().unwrap();
       }
     }
+
+    var enable = $(".record-count").text().replace(/0/g, "");
+    console.log(enable);
+    if ($(".record-count").text().replace(/0/g, "")) {
+      $("#show-modal").removeClass("disabled");
+    } else {
+      $("#show-modal").addClass("disabled");
+    }
   });
 
 
