@@ -6,18 +6,13 @@ function Pager() {
 
 Pager.prototype = {
 
-    showLessHandler: function (e, num_items) {
-        // get the list to act on
-        var clickedLink = e.target;
-        var parentEl = $(clickedLink).parent();
-        var itemListId = this._getListElementFromContainerId(parentEl.attr('id'));
-
+    showLessHandler: function (e, num_items, parent) {
         // hide the items
-        this._showLessItems(itemListId, num_items, num_items);
+        this._showLessItems(parent, num_items, num_items);
 
         // toggle more/less link, if needed
-        this._toggleLessLink(itemListId, num_items);
-        this._toggleMoreLink(itemListId);
+        this._toggleLessLink(parent, num_items);
+        this._toggleMoreLink(parent);
 
         // stop default behavior of the link, since we're
         // not really using it as a link.  yeah, its not ideal.
@@ -25,58 +20,54 @@ Pager.prototype = {
     },
 
     showMoreHandler: function(e, num_items, parent) {
-        var clickedLink = e.target;
-        var parentEl = $(clickedLink).parent();
-        var type = parentEl.attr('data-type');
-        var itemListId = this._getListElementFromContainerId(parentEl.attr('id'));
+        var type = parent.attr('data-type');
 
-        this._showMoreItems(itemListId, num_items, type, parent);
+        this._showMoreItems(num_items, type, parent);
 
         // toggle more/less links, if needed
-        this._toggleLessLink(itemListId, num_items);
+        this._toggleLessLink(parent, num_items);
 
         // stop default behavior of the link, since we're
         // not really using it as a link.  yeah, its not ideal.
         return false;
     },
 
-    _toggleLessLink: function(itemListId, minVisible) {
-        // we want to turn the 'Less' link off when
-        // we're at the minVisible limit.
+    _toggleLessLink: function(moreLessSpan, minVisible) {
+        /* Turn the 'Less' link off when we're at the minVisible limit. */
+        var relatedList = this._getListFromMoreLessLinksSpan(moreLessSpan);
 
-        // if minVisible = 10 and there's 11, we want
-        // to just hide 1 element, if there's 16 showing
-        // we'd want to hide 6
-        var jqItemList = $("#"+itemListId);
-        var currNumVisible = jqItemList.children(':visible').length;
+        var lessLink = moreLessSpan.children('.direct_optionsLess')[0];
+        var moreLink = moreLessSpan.children('.direct_optionsMore')[0];
 
-        var jqLessLink = this._getLinkForItemList(jqItemList, "less");
-        var jqMoreLink = this._getLinkForItemList(jqItemList, "more");
-
-        if(currNumVisible > minVisible){
-            jqLessLink.show();
-        }else{
-            jqLessLink.hide();
-            jqMoreLink.focus();
+        var currNumVisible = relatedList.children(':visible').length;
+        if(currNumVisible > minVisible) {
+            $(lessLink).show();
+        }
+        else {
+            $(lessLink).hide();
+            $(moreLink).focus();
         }
     },
 
-    _toggleMoreLink: function(itemListId) {
-        var jqItemList = $("#"+itemListId);
-        var numHiddenItems = jqItemList.children("."+this._HIDDEN_CLASS_NAME).length;
+    _toggleMoreLink: function(moreLessSpan) {
+        var relatedList =  this._getListFromMoreLessLinksSpan(moreLessSpan);
 
-        var jqMoreLink = this._getLinkForItemList(jqItemList, "more");
-        (numHiddenItems > 0) ? jqMoreLink.show() : jqMoreLink.hide();
+        var numHiddenItems = relatedList.children("."+this._HIDDEN_CLASS_NAME).length;
+
+        var moreLink = moreLessSpan.children('.direct_optionsMore')[0];
+
+        (numHiddenItems > 0) ? $(moreLink).show() : $(moreLink).hide();
     },
 
-    _getLinkForItemList: function(jqItemList, moreOrLess) {
-        var itemListId = jqItemList.attr('id');
-        var linkClassNames = {
-            'more': ".direct_optionsMore",
-            'less': ".direct_optionsLess"
-        };
-        var selector = "#direct_moreLessLinks_" + itemListId.split('_')[1] + " " + linkClassNames[moreOrLess];
-        return $(selector);
+    _getListFromMoreLessLinksSpan: function(moreLessSpan) {
+        // The container for all the facet blocks.
+        var parentDiv = $(moreLessSpan).parent();
+
+        // From the container for all the facet blocks we can get the
+        // exact list we want to work with.
+        var itemListId = this._getListElementFromContainerId(moreLessSpan.attr('id'));
+
+        return $(parentDiv).children("#" + itemListId);
     },
 
     _getListElementFromContainerId: function(linkContainerId) {
@@ -102,13 +93,14 @@ Pager.prototype = {
         return baseElementId.replace('%s', listId);
     },
 
-    _showMoreItems: function(listId, numToShow, type, parent){
-        var itemList = $("#" + listId);
+    _showMoreItems: function(numToShow, type, parent) {
+        var relatedList = this._getListFromMoreLessLinksSpan(parent);
 
-        var hiddenItems = itemList.children("." + this._HIDDEN_CLASS_NAME);
+        var hiddenItems = relatedList.children("." + this._HIDDEN_CLASS_NAME);
         var currNumHidden = hiddenItems.length;
-        var offset = parent.attr('data-offset');
-        var focus_item = $("#" + listId + " .direct_hiddenOption:first a");
+
+        var itemListId = this._getListElementFromContainerId(parent.attr('id'));
+        var focus_item = $("#" + itemListId + " ." + this._HIDDEN_CLASS_NAME + ":first a");
 
         // if we have current hidden ones, lets show those
         if(currNumHidden > 0) {
@@ -125,24 +117,27 @@ Pager.prototype = {
         if(currNumHidden === 0) {
             // lets see if we have any to get from the server
             var data = {
-                'offset': offset,
+                'offset': parent.attr('data-offset'),
                 'num_items': this._PAGE_SIZE
             };
+
             var qsParams = this._getQueryParams();
+
             data.q = qsParams.q;
             data.location = qsParams.location;
             data.moc = qsParams.moc;
             data.company = qsParams.company;
             data.filter_path = window.location.pathname;
 
-            this._ajax_getItems(type, data, listId, parent);
+            this._ajax_getItems(type, data, parent);
         }
         focus_item.focus();
     },
 
-    _showLessItems: function(listId, numToHide, minVisible){
-        var itemList = $("#" + listId);
-        var visibleItems = itemList.children(':visible');
+    _showLessItems: function(parent, numToHide, minVisible){
+        var relatedList = this._getListFromMoreLessLinksSpan(parent);
+
+        var visibleItems = relatedList.children(':visible');
         var numVisible = visibleItems.length;
         var numAvailableToHide = numVisible - minVisible;
 
@@ -156,14 +151,16 @@ Pager.prototype = {
 
     },
 
-    _ajax_getItems: function(type, data, elem, parent){
-        var that = this;
+    _ajax_getItems: function(type, data, parent){
+        // Preserve the reference to "this" so it can be used inside the
+        // ajax call.
+        var alsoThis = this;
         var url = this._build_url(type);
         $.get(
             url,
             data,
             function(html) {
-                that._getItemsSuccessHandler(html, elem, parent);
+                alsoThis._getItemsSuccessHandler(html, parent);
             }
         );
     },
@@ -189,16 +186,22 @@ Pager.prototype = {
         return urls[type];
     },
 
-    _getItemsSuccessHandler: function(html, insertIntoElem, parent){
+    _getItemsSuccessHandler: function(html, parent) {
         // Since the update was successful, the offset can be updated to
         // reflect the requested amount.
         parent.attr('data-offset', parseInt(parent.attr('data-offset')) + this._PAGE_SIZE);
 
         // From the Django templates we get a lot of line breaks,
-        // so we'll remove them right here, just to be safe
+        // so we'll remove them right here, just to be safe.
         html = html.replace(/\n/g, "");
-        $("#" + insertIntoElem).children(":last").after(html);
-        this._toggleMoreLink(insertIntoElem);
+
+        var parentDiv = $(parent).parent();
+
+        var itemListId = this._getListElementFromContainerId(parent.attr('id'));
+        var relatedList = $(parentDiv).children("#" + itemListId);
+
+        $(relatedList).children(":last").after(html);
+        this._toggleMoreLink(parent);
     },
 
     _getQueryParams: function() {
@@ -210,13 +213,16 @@ Pager.prototype = {
 
         return result;
     }
+
 };
 
 $(document).ready(function(){
 	var pager = new Pager();
 
     $(document).on("click", "a.direct_optionsMore", function(e) {
-        return pager.showMoreHandler(e, $(this).parent().attr('data-num-items'), $(this).parent());
+        var parent = $(this).parent();
+        var num_items = parent.attr('data-num-items');
+        return pager.showMoreHandler(e, num_items, parent);
     });
 
 	$('#button_moreJobs').click(function(e) {
@@ -235,13 +241,15 @@ $(document).ready(function(){
 			data: {'num_items': num_items, 'offset': offset},
 			success: function (data) {
 						$('#direct_listingDiv ul:last').after(data);
-						parent.attr('offset', (offset + num_items).toString());						
+						parent.attr('offset', (offset + num_items).toString());
 					}
 			});
 	});
 
 	$('a.direct_optionsLess').click(function(e) {
-		return pager.showLessHandler(e, $(this).parent().attr('data-num-items'));
+        var parent = $(this).parent();
+        var num_items = parent.attr('data-num-items');
+		return pager.showLessHandler(e, num_items, parent);
 	});
 
 	$(".direct_offsiteContainer").hover(function() {
