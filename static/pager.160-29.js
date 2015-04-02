@@ -99,8 +99,7 @@ Pager.prototype = {
         var hiddenItems = relatedList.children("." + this._HIDDEN_CLASS_NAME);
         var currNumHidden = hiddenItems.length;
 
-        var itemListId = this._getListElementFromContainerId(parent.attr('id'));
-        var focus_item = $("#" + itemListId + " ." + this._HIDDEN_CLASS_NAME + ":first a");
+        var focus_item = relatedList.children(this._HIDDEN_CLASS_NAME + ":first li");
 
         // if we have current hidden ones, lets show those
         if(currNumHidden > 0) {

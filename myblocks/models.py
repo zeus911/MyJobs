@@ -610,7 +610,7 @@ class Page(models.Model):
         admin.
 
         """
-        return ''.join(self.sites.values_list('domain', flat=True))
+        return ', '.join(self.sites.values_list('domain', flat=True))
     human_readable_sites.short_description = 'Sites'
 
     def human_readable_status(self):
