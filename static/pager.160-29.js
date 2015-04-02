@@ -232,9 +232,23 @@ $(document).ready(function(){
 		var path = window.location.pathname;
 		var query = window.location.search;
 		var ajax_url = path + "ajax/joblisting/" + query;
-		var focus_item = $('#direct_listingDiv .direct_hiddenOption .direct_joblisting:first-child h4 a');
-		$('#direct_listingDiv .direct_hiddenOption').removeClass('direct_hiddenOption');
-		focus_item.focus();
+
+        var hiddenFeaturedList = $('#direct_listingDiv .featured_jobListing.direct_hiddenOption .direct_joblisting');
+        var hiddenDefaultList = $('#direct_listingDiv .default_jobListing.direct_hiddenOption .direct_joblisting');
+
+        var focus_item;
+        var firstItem;
+        if(hiddenFeaturedList.length > 0) {
+            firstItem = $(hiddenFeaturedList)[0];
+        }
+        else {
+            firstItem = $(hiddenDefaultList)[0];
+        }
+        focus_item = $(firstItem).find('a');
+        focus_item.focus();
+
+        $('#direct_listingDiv .direct_hiddenOption').removeClass('direct_hiddenOption');
+
 		$.ajax({
 			url: ajax_url,
 			data: {'num_items': num_items, 'offset': offset},
