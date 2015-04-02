@@ -875,18 +875,6 @@ class SeoSiteTestCase(DirectSEOTestCase):
         featured_jobs = resp.context['featured_jobs']
         self.assertEqual(len(featured_jobs), 1)
 
-        #ajax_get_job_search doesn't currently take a num_items argument
-        #It defaults to the site config's page size. 10/11/2012
-        resp = self.client.get('/ajax/moresearch/?offset=1',
-                               HTTP_HOST='buckconsultants.jobs')
-        self.assertEqual(resp.status_code, 200)
-
-        default_jobs = resp.context['default_jobs']
-        self.assertEqual(len(default_jobs), 1)
-
-        featured_jobs = resp.context['featured_jobs']
-        self.assertEqual(len(featured_jobs), 0)
-
     def test_default_custom_facets_homepage(self):
         """
         Tests that custom facets are applied to ajax_get_jobs when viewing all
@@ -1646,9 +1634,6 @@ class SeoViewsTestCase(DirectSEOTestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_ajax_get_jobs_bad_params(self):
-        resp = self.client.get(
-                u'/ajax/moresearch/?num_items=q&offset=')
-        self.assertEqual(resp.status_code, 200)
         resp = self.client.get(
                 u'/ajax/joblisting/?num_items=q&offset=')
         self.assertEqual(resp.status_code, 200)
