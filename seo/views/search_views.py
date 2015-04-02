@@ -43,7 +43,7 @@ from import_jobs import add_jobs, delete_by_guid
 from transform import transform_for_postajob
 
 from myblocks.views import BlockView
-from myblocks.models import Page
+from myblocks.models import SearchResultBlock, Page
 from myblocks import context_tools
 from seo.templatetags.seo_extras import facet_text, smart_truncate
 from seo.breadbox import Breadbox
@@ -76,6 +76,25 @@ items down to what we actually need.
 LOG = logging.getLogger('views')
 
 
+def find_page(request, page_type):
+    page = None
+    if request.user.is_authenticated() and request.user.is_staff:
+        page = Page.objects.filter(sites=settings.SITE,
+                                   status=Page.STAGING,
+                                   page_type=page_type).first()
+
+    if not page:
+        page = Page.objects.filter(sites=settings.SITE,
+                                   status=Page.PRODUCTION,
+                                   page_type=page_type).first()
+
+    if not page:
+        page = Page.objects.filter(sites__pk=1,
+                                   status=Page.PRODUCTION,
+                                   page_type=page_type).first()
+    return page
+
+
 class FallbackBlockView(BlockView):
     page_type = Page.SEARCH_RESULTS
     fallback = None
@@ -97,21 +116,7 @@ class FallbackBlockView(BlockView):
         return super(FallbackBlockView, self).post(request, *args, **kwargs)
 
     def set_page(self, request):
-        page = None
-        if request.user.is_authenticated() and request.user.is_staff:
-            page = Page.objects.filter(sites=settings.SITE,
-                                       status=Page.STAGING,
-                                       page_type=self.page_type).first()
-
-        if not page:
-            page = Page.objects.filter(sites=settings.SITE,
-                                       status=Page.PRODUCTION,
-                                       page_type=self.page_type).first()
-
-        if not page:
-            page = Page.objects.filter(sites__pk=1,
-                                       status=Page.PRODUCTION,
-                                       page_type=self.page_type).first()
+        page = find_page(request, self.page_type)
         setattr(self, 'page', page)
 
 
@@ -260,6 +265,21 @@ def ajax_get_facets(request, filter_path, facet_type):
 
 
 def ajax_get_jobs(request, filter_path):
+    # Allow for a SearchResult block to handle the requests if
+    # there is a SearchResult block associated with a SEARCH_RESULTS
+    # page for this site.
+    page = find_page(request, Page.SEARCH_RESULTS)
+    if page:
+        search_result_block = None
+        for block in page.all_blocks():
+            if isinstance(block, SearchResultBlock):
+                search_result_block = block
+                break
+
+        if search_result_block:
+            return HttpResponse(search_result_block.render_for_ajax(request))
+
+
     GET = request.GET
     # TODO: let's put the site_config onto the request object
     site_config = get_site_config(request)
@@ -314,6 +334,7 @@ def ajax_get_jobs(request, filter_path):
         'site_commitments_string': sitecommit_str,
         'site_tags': settings.SITE_TAGS
     }
+
     return render_to_response('listing_items.html',
                               data_dict,
                               context_instance=RequestContext(request),
