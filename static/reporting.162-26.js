@@ -53,6 +53,7 @@ Report.prototype.createFields = function(types) {
   var reports = {"prm": [new Field("Select Date", "date"),
                          new Field("State", "state"),
                          new Field("City", "text"),
+                         new Field("Select Contact Types", "checklis"),
                          new List("Select Partners", "partner", true),
                          new List("Select Contacts", "contact", true)]},
         fields = [],
@@ -455,6 +456,8 @@ Field.prototype.render = function() {
         }
       });
     })();
+  } else if (this.type === "checklist") {
+    console.log("here");
   }
   return html;
 };
