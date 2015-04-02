@@ -1,6 +1,7 @@
 from collections import namedtuple
 from datetime import datetime, time
 import json
+import os
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
@@ -327,6 +328,7 @@ def find_partner_from_email(partner_list, email):
     return None
 
 
+
 def get_library_partners(url, params=None):
     """
     Returns a generator that yields `CompliancePartner` objects, which can then
@@ -343,9 +345,12 @@ def get_library_partners(url, params=None):
     with the excel table.
     """
 
-    params = params or {}
-    response = requests.post(url, params=params)
-    tree = html.fromstring(response.text)
+    if os.path.isfile(url):
+        tree = html.parse(url)
+    else:
+        params = params or {}
+        response = requests.post(url, params=params)
+        tree = html.fromstring(response.text)
 
     # convert column headers to valid Python identifiers, and rename duplicates
     cols = []
