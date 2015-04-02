@@ -229,7 +229,7 @@ Report.prototype.bindEvents = function() {
   container.on("click", "input[id$=-all-checkbox]", function(e) {
     e.stopPropagation();
     var checkboxes = $(this).parent().next().find("input"),
-        num_selected = $(this).siblings("span").children("span"),
+        $recordCount = $(".record-count"),
         i;
 
     for (i = 0; i < checkboxes.length; i++) {
@@ -244,7 +244,7 @@ Report.prototype.bindEvents = function() {
     }
 
     // Update how many items in the list is selected based on this' current state. All or nothing.
-    num_selected.html($(this).prop("checked") ? checkboxes.length : "0");
+    $recordCount.html($(this).prop("checked") ? checkboxes.length : "0");
   });
 
 
@@ -518,7 +518,7 @@ List.prototype.render = function(report) {
   var container = $("<div id='"+ this.type +"-header' class='list-header'></div>"),
       icon = $("<i class='fa fa-plus-square-o'></i>"),
       allCheckbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />"),
-      record_count = $("<span style='display: none;'>(<span>0</span> "+ this.type.capitalize() +"s Selected)</span>"),
+      $recordCount = $("<span style='display: none;'>(<span class='record-count'>0</span> "+ this.type.capitalize() +"s Selected)</span>"),
       body = $("<div id='"+ this.type +"' class='list-body' style='display: none;'></div>"),
       wrapper = $("<div id='"+ this.type +"-wrapper'></div>"),
       prmFields = ["start_date", "end_date", "state", "city", "contact_type", "partner"],
@@ -537,7 +537,7 @@ List.prototype.render = function(report) {
     allCheckbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />");
   }
 
-  container.append(icon).append(allCheckbox).append(" All " + list.type.capitalize() + "s ").append(record_count);
+  container.append(icon).append(allCheckbox).append(" All " + list.type.capitalize() + "s ").append($recordCount);
 
   wrapper.append(container).append(body);
   html = wrapper.prop("outerHTML");
@@ -597,7 +597,7 @@ List.prototype.filter = function(filter) {
     global: false,
     success: function(data) {
       var ul = $("<ul></ul>"),
-          selected = $("[id^='" + list.type + "-header'] span span"),
+          recordCount = $("[id^='" + list.type + "-header'] .record-count"),
           record,
           li;
 
@@ -639,7 +639,7 @@ List.prototype.filter = function(filter) {
         }
       }
 
-      $(selected).html(data.length).parent().show("fast");
+      $(recordCount).html(data.length).parent().show("fast");
     },
     error: function(e) {
       // TODO: change when testing is done to something more useful.
@@ -766,9 +766,9 @@ function updateAllCheckbox(element) {
 
 function updateItemsSelected(element) {
   var checked = $(element).parents(".list-body").find(":checked"),
-      num_selected = $(element).parents(".list-body").prev().children("span").children("span");
+      $recordCount = $(".record-count");
 
-  num_selected.html(checked.length);
+  $recordCount.html(checked.length);
 }
 
 
