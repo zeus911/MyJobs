@@ -168,14 +168,6 @@ Report.prototype.bindEvents = function() {
         contact_wrapper.html(c_field.render(report)).children().unwrap();
       }
     }
-
-    var enable = $(".record-count").text().replace(/0/g, "");
-    console.log(enable);
-    if ($(".record-count").text().replace(/0/g, "")) {
-      $("#show-modal").removeClass("disabled");
-    } else {
-      $("#show-modal").addClass("disabled");
-    }
   });
 
 
@@ -253,11 +245,12 @@ Report.prototype.bindEvents = function() {
 
     // Update how many items in the list is selected based on this' current state. All or nothing.
     $recordCount.html($(this).prop("checked") ? checkboxes.length : "0");
+    updateShowModal();
   });
 
 
   // Clicking this button will show the modal with human readable data to review.
-  container.on("click", "#show-modal", function(e) {
+  container.on("click", "#show-modal:not(.disabled)", function(e) {
     var modal = $("#report-modal"),
         body = modal.children(".modal-body"),
         footer = modal.children(".modal-footer");
@@ -648,6 +641,7 @@ List.prototype.filter = function(filter) {
       }
 
       $(recordCount).html(data.length).parent().show("fast");
+      updateShowModal();
     },
     error: function(e) {
       // TODO: change when testing is done to something more useful.
@@ -777,6 +771,20 @@ function updateItemsSelected(element) {
       $recordCount = $(".record-count");
 
   $recordCount.html(checked.length);
+  updateShowModal();
+}
+
+function updateShowModal() {
+  var counts = [];
+  $(".record-count").map(function() {
+    counts.push($(this).text());
+  });
+
+  if (counts.indexOf("0") === -1) {
+    $("#show-modal").removeClass("disabled");
+  } else {
+    $("#show-modal").addClass("disabled");
+  }
 }
 
 
