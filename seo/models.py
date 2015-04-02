@@ -659,7 +659,9 @@ class Company(models.Model):
     def featured_on(self):
         return ", ".join(self.seosite_set.all().values_list("domain",
                                                             flat=True))
-    def get_company_user_count(self):
+    
+    @property
+    def company_user_count(self):
         """
         Counts how many users are mapped to this company. This is useful for
         determining which company to map companyusers to when two company
@@ -668,10 +670,8 @@ class Company(models.Model):
         It is treated as a property of the model.
         
         """
-        return len(CompanyUser.objects.filter(company=self))
+        return self.companyuser_set.count()
         
-    company_user_count = property(get_company_user_count)
-    
     admins = models.ManyToManyField(User, through='CompanyUser')
     name = models.CharField('Name', max_length=200)
     company_slug = models.SlugField('Company Slug', max_length=200, null=True,
