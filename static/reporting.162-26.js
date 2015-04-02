@@ -51,9 +51,9 @@ var Report = function(types) {
 // Field Params: label, type, required, value
 Report.prototype.createFields = function(types) {
   var reports = {"prm": [new Field("Select Date", "date"),
+                         new Field("Contact Type", "checklist"),
                          new Field("State", "state"),
                          new Field("City", "text"),
-                         new Field("Select Contact Types", "checklis"),
                          new List("Select Partners", "partner", true),
                          new List("Select Contacts", "contact", true)]},
         fields = [],
@@ -88,6 +88,18 @@ Report.prototype.bindEvents = function() {
   // just selects text on focus for easy editing. UX-goodness
   container.on("focus", "#report_name", function() {
     $(this).select();
+  });
+
+
+  // Populate contact types from selected check boxes
+  container.on("click", "#contact_type > input", function(e) {
+    var values = [];
+        
+    $("input[name='checklist[]']:checked").each(function() {
+      values.push($(this).val());
+    });
+
+    report.data.contact_type = values.length ? values : "0";
   });
 
 
@@ -133,7 +145,7 @@ Report.prototype.bindEvents = function() {
           is_prm_field = function(e) {
             // This list will need to be updated if more is added to the PRM report
             // if they filter down partners/contacts
-            var prm_field = ["start_date", "end_date", "state", "city"],
+            var prm_field = ["start_date", "end_date", "contact_type", "state", "city"],
                 e_id = $(e.currentTarget).attr("id");
 
             // returns true or false
@@ -141,7 +153,9 @@ Report.prototype.bindEvents = function() {
           };
 
       // Default update/save data
-      report.data[$(e.currentTarget).attr("id")] = $(e.currentTarget).val();
+      if ($(e.currentTarget).attr("id") !== "contact_type") {
+        report.data[$(e.currentTarget).attr("id")] = $(e.currentTarget).val();
+      }
 
       if (is_prm_field(e)) {
         if (typeof report.data.partner !== "undefined") {
@@ -312,17 +326,34 @@ Report.prototype.readable_data = function() {
             i;
 
         // grab names associated by value.
-        for (i = 0; i < value.length; i++) {
-          items.push($("#" + key + " input[value='" + value[i] + "']").next("span").html());
-        }
 
-        html += "<ul><li>" + items.join('</li><li>') + '</li></ul>';
+        if (key === "contact type") {
+          var $all = $("input[name='checklist[]']"),
+              $checked = $("input[name='checklist[]']:checked");
+
+          if ($all.length === $checked.length) {
+            html += ": All Contact Types";
+          } else {
+            html += "<ul><li>" + value.join("</li><li>") + "</li></ul>";
+          }
+        } else {
+          for (i = 0; i < value.length; i++) {
+            items.push($("#" + key + " input[value='" + value[i] + "']").next("span").html());
+          }
+
+          html += "<ul><li>" + items.join('</li><li>') + '</li></ul>';
+        }
       } else {
         html += key === "state" ? $("#state option[value=" + value + "]").html() : value;
       }
       html += "</div>";
     }
   }
+
+  if (typeof data.contact_type === "undefined") {
+    html += "<div><label>Contact type:</label>All Contact Types</div>";
+  }
+
   if (typeof data.partner === "undefined") {
     if ($("#partner-all-checkbox").is(":checked")) {
       html += "<div><label>Partners:</label>All Partners</div>";
@@ -405,7 +436,7 @@ var Field = function(label, type, required, value) {
 // Outputs html based on type using jQuery.
 Field.prototype.render = function() {
   var l = $("<label>" + this.label + "</label>"), // label for <input>
-      wrapper = $("<div></div>"), // wrapping div
+      $wrapper = $("<div></div>"), // wrapping div
       field = this,
       html = '',
       input,
@@ -421,21 +452,21 @@ Field.prototype.render = function() {
   }
 
   if (this.type === "text") {
-    input = $("<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "' type='text' placeholder='"+ this.label +"' value='" + this.value + "' />");
-    wrapper.append(l).append(input);
-    html = wrapper.prop("outerHTML");
+    input = "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "' type='text' placeholder='"+ this.label + "' value='" + this.value + "' />";
+    $wrapper.append(l).append(input);
+    html = $wrapper.prop("outerHTML");
   } else if (this.type === "date") {
     dateWidget = $("<div id='date-filter' class='filter-option'></div>").append("<div class='date-picker'></div>");
     datePicker = $(dateWidget).children("div");
 
     if (field.value) {
-      start_date = $("<input id='start_date' class='datepicker picker-left' type='text' value='"+ field.value.start_date +"' placeholder='Start Date' />");
-      end_date = $("<input id='end_date' class='datepicker picker-right' type='text' value='"+ field.value.end_date +"' placeholder='End Date' />");
+      start_date = "<input id='start_date' class='datepicker picker-left' type='text' value='" + field.value.start_date + "' placeholder='Start Date' />";
+      end_date = "<input id='end_date' class='datepicker picker-right' type='text' value='" + field.value.end_date + "' placeholder='End Date' />";
     } else {
-      start_date = $("<input id='start_date' class='datepicker picker-left' type='text' placeholder='Start Date' />");
-      end_date = $("<input id='end_date' class='datepicker picker-right' type='text' placeholder='End Date' />");
+      start_date = "<input id='start_date' class='datepicker picker-left' type='text' placeholder='Start Date' />";
+      end_date = "<input id='end_date' class='datepicker picker-right' type='text' placeholder='End Date' />";
     }
-    to = $("<span id='activity-to-' class='datepicker'>to</span>");
+    to = "<span id='activity-to-' class='datepicker'>to</span>";
 
     datePicker.append(start_date).append(to).append(end_date);
     dateWidget.append(datePicker);
@@ -457,7 +488,17 @@ Field.prototype.render = function() {
       });
     })();
   } else if (this.type === "checklist") {
-    console.log("here");
+    // TODO: use map to go through a list of options
+    input = "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "' type='checkbox' name='checklist[]' value='email' checked />Email" +
+            "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "'type='checkbox' name='checklist[]' value='phone' checked />Phone Call" +
+            "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "'type='checkbox' name='checklist[]' value='meetingorevent' checked />Meeting or Event" + 
+            "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "'type='checkbox' name='checklist[]' value='job' checked />Job Followup" + 
+            "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "'type='checkbox' name='checklist[]' value='pssemail' checked />Saved Search Email";
+
+    $wrapper.attr("id", this.label.toLowerCase().replace(/ /g, "_"));
+    $wrapper.append(l).append(input);
+    $wrapper.children("input").css("margin", "10px 5px");
+    html = $wrapper.prop("outerHTML");
   }
   return html;
 };
@@ -480,7 +521,7 @@ List.prototype.render = function(report) {
       record_count = $("<span style='display: none;'>(<span>0</span> "+ this.type.capitalize() +"s Selected)</span>"),
       body = $("<div id='"+ this.type +"' class='list-body' style='display: none;'></div>"),
       wrapper = $("<div id='"+ this.type +"-wrapper'></div>"),
-      prmFields = ["start_date", "end_date", "state", "city", "partner"],
+      prmFields = ["start_date", "end_date", "state", "city", "contact_type", "partner"],
       copiedFilter,
       list = this,
       key,
@@ -536,13 +577,16 @@ List.prototype.filter = function(filter) {
     // annotate how many records a partner has.
     $.extend(data, {"count": "contactrecord"});
     url += "/reports/ajax/mypartners/partner";
+    // partners don't have a contact type
+    delete data.contact_type;
     if (typeof data.partner !== "undefined") {
       delete data.partner;
     }
   } else if (list.type === "contact") {
     url += "/reports/ajax/mypartners/contact";
-    data['values'] = true;
+    data.values = true;
   }
+
 
   $.ajaxSettings.traditional = true;
   $.ajax({
@@ -746,7 +790,6 @@ function renderNavigation(download) {
   var mainContainer = $('#main-container'),
       navigationBar;
   if (navigation) {
-    console.log('navigation');
     navigationBar = $('<div id="navigation" class="span12"></div>').append(function() {
       var $row = $('<div class="row"></div>'),
           $column1 = $('<div class="span4"></div>'),
