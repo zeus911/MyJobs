@@ -13,10 +13,18 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
+        # Adding field 'SiteTag.parent'
+        db.add_column(u'seo_sitetag', 'parent',
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['seo.SeoSite'], null=True, blank=True),
+                      keep_default=False)
+
 
     def backwards(self, orm):
         # Deleting field 'SiteTag.is_site_family'
         db.delete_column(u'seo_sitetag', 'is_site_family')
+
+        # Deleting field 'SiteTag.parent'
+        db.delete_column(u'seo_sitetag', 'parent_id')
 
 
     models = {
@@ -381,6 +389,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'SiteTag'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_site_family': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'parent': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.SeoSite']", 'null': 'True', 'blank': 'True'}),
             'site_tag': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
             'tag_navigation': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },

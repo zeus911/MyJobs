@@ -919,6 +919,9 @@ class SiteTag(models.Model):
                                          default=False,
                                          help_text='Site tag represents '
                                                    'a family of sites.')
+    parent = models.ForeignKey(SeoSite, blank=True, null=True,
+                               help_text='The parent site if the tag is a '
+                                         'for a site family.')
 
     def __unicode__(self):
         return "%s" % self.site_tag
