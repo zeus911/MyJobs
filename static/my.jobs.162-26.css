@@ -850,7 +850,7 @@ input.datepicker {
     margin-bottom: 0;
 }
 
-.sidebar a {
+.sidebar a, .report a {
     cursor: pointer;
 }
 
@@ -1529,7 +1529,7 @@ h3.bottom-bordered {
     margin-left: 5px;
 }
 
-.sidebar .report i:hover {
+.report i:hover {
     cursor: pointer;
 }
 

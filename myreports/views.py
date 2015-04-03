@@ -34,13 +34,20 @@ def overview(request):
         "report_count": report_count
     }
 
+    if request.is_ajax():
+        response = HttpResponse()
+        html = render_to_response('myreports/report_overview.html', ctx,
+                                  RequestContext(request)).content
+        response.content = html
+        return response
+
     return render_to_response('myreports/reports.html', ctx,
                               RequestContext(request))
 
 
 @company_has_access('prm_access')
 def report_archive(request):
-    if request.is_ajax() and request.method == "POST":
+    if request.is_ajax():
         company = get_company_or_404(request)
         reports = Report.objects.filter(owner=company).order_by("-created_on")
         ctx = {
