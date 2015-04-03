@@ -62,7 +62,7 @@ var checklists = {
 // Field Params: label, type, required, value
 Report.prototype.createFields = function(types) {
   var reports = {"prm": [new Field("Select Date", "date"),
-                         new Field("Contact Type", "checklist", checklists.contact_type),
+                         new Field("Contact Type", "checklist", false, checklists.contact_type),
                          new Field("State", "state"),
                          new Field("City", "text"), 
                          new List("Select Partners", "partner", true),
@@ -501,20 +501,14 @@ Field.prototype.render = function() {
     })();
   } else if (this.type === "checklist") {
     // TODO: use map to go through a list of options
-    input = $.each(this.value, function() {
-      return "<input id='" + this.label.toLowerCase().replace(/ /g, "_") +
-             "'type='checkbox' name='checklist[]' value='" + $(this).value +
-             "' checked />" + $(this).label;
-    });
+    var field_label = this.label.toLowerCase().replace(/ /g, "_");
+    input = $.map(this.value, function(item, index) {
+      return "<input id='" + field_label +
+             "'type='checkbox' name='checklist[]' value='" + item.value +
+             "' checked />" + item.label;
+    }).join("");
 
-    console.log(input);
-    input = "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "' type='checkbox' name='checklist[]' value='email' checked />Email" +
-            "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "'type='checkbox' name='checklist[]' value='phone' checked />Phone Call" +
-            "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "'type='checkbox' name='checklist[]' value='meetingorevent' checked />Meeting or Event" + 
-            "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "'type='checkbox' name='checklist[]' value='job' checked />Job Followup" + 
-            "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "'type='checkbox' name='checklist[]' value='pssemail' checked />Saved Search Email";
-
-    $wrapper.attr("id", this.label.toLowerCase().replace(/ /g, "_"));
+    $wrapper.attr("id", field_label);
     $wrapper.append(l).append(input);
     $wrapper.children("input").css("margin", "10px 5px");
     html = $wrapper.prop("outerHTML");
