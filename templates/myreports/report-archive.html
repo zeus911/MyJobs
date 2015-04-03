@@ -4,14 +4,12 @@
             <div class="span6">
                 {{ report.name }}
             </div>
-            <div class="span2">
-                View Report <i class="fa fa-eye"></i>
-            </div>
-            <div class="span2">
-                Clone Report <i class="fa fa-copy"></i>
-            </div>
-            <div class="span2">
-                Download Report <i class="fa fa-download"></i>
+            <div class="icon-set">
+                <div class="span2">
+                    <i id="view-{{ report.id }}" class="fa fa-eye"></i>
+                    <i style="display: none;" id="clone-{{ report.id }}" class="fa fa-copy"></i>
+                    <a class="icon-link" href="/reports/download?id={{ report.id }}"><i id="export-{{ report.id }}" class="fa fa-download"></i></a>
+                </div>
             </div>
         </div>
     {% endfor %}
