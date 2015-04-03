@@ -370,8 +370,7 @@ def clear_page_cache(sender, **kwargs):
     if not obj.seosite_set.all():
         return
 
-    config_ids = obj.seosite_set.values_list('configurations', flat=True)
-    configs = Configuration.objects.filter(id__in=config_ids)
+    configs = Configuration.objects.filter(seosite__facets=obj)
 
     for config in configs:
         config.save()
