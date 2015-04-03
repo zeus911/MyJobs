@@ -46,14 +46,25 @@ var Report = function(types) {
   this.fields = this.createFields(types);
 };
 
+// checklist  values
+var checklists = {
+  'contact_type': [
+    {'value': 'email', 'label': 'Email'},
+    {'value': 'phone', 'label': 'Phone Call'},
+    {'value': 'meetingorevent', 'label': 'Meeting or Event'},
+    {'value': 'job', 'label': 'Job Followup'},
+    {'value': 'pssemail', 'label': 'Saved Search Email'}
+  ]
+};
+
 
 // Pulls the fields required for report type(s)
 // Field Params: label, type, required, value
 Report.prototype.createFields = function(types) {
   var reports = {"prm": [new Field("Select Date", "date"),
-                         new Field("Contact Type", "checklist"),
+                         new Field("Contact Type", "checklist", checklists.contact_type),
                          new Field("State", "state"),
-                         new Field("City", "text"),
+                         new Field("City", "text"), 
                          new List("Select Partners", "partner", true),
                          new List("Select Contacts", "contact", true)]},
         fields = [],
@@ -490,6 +501,13 @@ Field.prototype.render = function() {
     })();
   } else if (this.type === "checklist") {
     // TODO: use map to go through a list of options
+    input = $.each(this.value, function() {
+      return "<input id='" + this.label.toLowerCase().replace(/ /g, "_") +
+             "'type='checkbox' name='checklist[]' value='" + $(this).value +
+             "' checked />" + $(this).label;
+    });
+
+    console.log(input);
     input = "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "' type='checkbox' name='checklist[]' value='email' checked />Email" +
             "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "'type='checkbox' name='checklist[]' value='phone' checked />Phone Call" +
             "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "'type='checkbox' name='checklist[]' value='meetingorevent' checked />Meeting or Event" + 
