@@ -547,8 +547,7 @@ def tag_get_or_create(company_id, data):
     tags = []
     for tag in data:
         obj, _ = Tag.objects.get_or_create(
-            company_id=company_id, name__iexact=tag, defaults={"name": tag}
-        )
+            company_id=company_id, name__iexact=tag, defaults={"name": tag})
         tags.append(obj.id)
 
     return tags
