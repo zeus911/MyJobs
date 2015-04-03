@@ -1,5 +1,6 @@
 from collections import namedtuple
 from datetime import datetime, time
+import os
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
@@ -274,7 +275,8 @@ def get_library_partners(url, params=None):
     "Export to Excel" button used at wwww.dol-esa.gov/errd/directory.jsp.
 
     Inputs:
-    :url: The post url (str) used to generate the data.
+    :url: The post url (str) used to generate the data or the file to read
+          from.
     :params: POST data (dict) passed to the :url:
 
     Outputs:
@@ -282,9 +284,12 @@ def get_library_partners(url, params=None):
     with the excel table.
     """
 
-    params = params or {}
-    response = requests.post(url, params=params)
-    tree = html.fromstring(response.text)
+    if os.path.isfile(url):
+        tree = html.parse(url)
+    else:
+        params = params or {}
+        response = requests.post(url, params=params)
+        tree = html.fromstring(response.text)
 
     # convert column headers to valid Python identifiers, and rename duplicates
     cols = []

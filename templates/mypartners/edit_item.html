@@ -84,7 +84,6 @@
                 <ul>
                     <li>- City</li>
                     <li>- State/Region</li>
-                    <li>- Country</li>
                 </ul>
                 {% endif %}
                 {% if contact %}
@@ -94,6 +93,21 @@
                 </div>
                 {% endif %}
             </div>
+        </div>
+    </div>
+    <div id="edit-item-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+            <h3>{% if partner %}Contact {% else %}Partner {% endif %}Already Exists</h3>
+        </div>
+        <div class="modal-body">
+            <strong>Existing {% if partner %}Contact {% else %}Partner {% endif %} Details:</strong>
+            <ul class="record-info">
+            </ul>
+        </div>
+        <div class="modal-footer">
+            <a class="btn" data-dismiss="modal" aria-hidden="true">Cancel</a>
+            <a id="edit-record-button" class="btn primary">Edit</a>
         </div>
     </div>
     {% if contact %}
@@ -139,12 +153,56 @@
 
 {% block extra-js %}
 <script type="text/javascript">
+
     $(document).ready(function() {
-        $(".product-card:not(.no-highlight)").on("click", function() {
-           window.location = $(this).find("a").attr("href");
+        {# we'll only have a partner when editing a contact #}
+        var partner = {{ partner.pk|default:"0" }},
+            partners = {{ partners|safe }},
+            contacts = {{ contacts|safe }},
+            $partnerInput = $("#id_partner-partnername"),
+            $contactInput = $("#id_contact-name"),
+            $editModal = $("#edit-item-modal"),
+            partnerNames = $.map(partners, function(e) { return e.name; }),
+            contactNames = $.map(contacts, function(e) { return e.name; });
+
+        $partnerInput.on("blur", function() {
+            var index = partnerNames.indexOf($(this).val().trim());
+            if (index > -1) {
+                $("ul.record-info").html(
+                    "<li>Name: " + partners[index].name + "</li>" +
+                    "<li>URL: " + partners[index].uri + "</li>"
+                );
+
+                {# avoiding {{ url }} so that this code isn't tied to the template and can be more easily relocated #}
+                $("#edit-record-button").attr("href", "/prm/view/details?partner=" + partners[index].pk);
+
+                $editModal.modal("show").on("hidden", function() {
+                    $partnerInput.select();
+                });
+            }
+        });
+
+        $contactInput.on("blur", function() {
+            var index = contactNames.indexOf($(this).val().trim());
+            if (index > -1) {
+                $("ul.record-info").html(
+                    "<li>Name: " + contacts[index].name + "</li>" +
+                    "<li>Email: " + contacts[index].email + "</li>" +
+                    "<li>Phone: " + contacts[index].phone + "</li>"
+                );
+
+                {# avoiding {{ url }} so that this code isn't tied to the template and can be more easily relocated #}
+                $("#edit-record-button").attr("href", "/prm/view/details/edit?partner=" + partner + "&id=" + contacts[index].pk + "&ct=25071");
+                $editModal.modal("show").on("hidden", function() {
+                    $contactInput.select()
+                });
+            }
         });
     });
+
 </script>
 <script src="{{ STATIC_URL }}tag-it.min.js{{ gz }}"></script>
 <script src="{{ STATIC_URL }}prm.162-25.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
+<script src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
 {% endblock %}

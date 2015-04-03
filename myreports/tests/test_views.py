@@ -23,8 +23,7 @@ class MyReportsTestCase(TestCase):
     """
     def setUp(self):
         self.client = TestClient()
-        self.user = UserFactory(email='testuser@directemployers.org',
-                                is_staff=True)
+        self.user = UserFactory(email='testuser@directemployers.org')
         self.company = CompanyFactory(name='Test Company')
         self.partner = PartnerFactory(name='Test Partner', owner=self.company)
 
@@ -36,18 +35,6 @@ class MyReportsTestCase(TestCase):
 
 class TestOverview(MyReportsTestCase):
     """Tests the reports view, which is the landing page for reports."""
-
-    def test_unavailable_if_not_staff(self):
-        """
-        Until release, MyReports should not be accessible by users who aren't
-        staff.
-        """
-
-        self.user.is_staff = False
-        self.user.save()
-        response = self.client.post(reverse('overview'))
-
-        self.assertEqual(response.status_code, 404)
 
     def test_available_to_staff(self):
         """Should be available to staff users."""

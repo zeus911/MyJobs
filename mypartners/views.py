@@ -180,12 +180,16 @@ def edit_item(request):
         raise Http404
 
     company = get_company_or_404(request)
+    partners = []
+    contacts = []
     if partner_id and request.path == reverse('edit_contact'):
         partner = get_object_or_404(company.partner_set.all(), id=partner_id)
         if item_id:
             item = get_object_or_404(Contact, partner=partner, pk=item_id)
             form = ContactForm(instance=item, auto_id=False)
         else:
+            contacts = list(partner.contact_set.values(
+                'pk', 'name', 'email', 'phone'))
             form = ContactForm()
             item = None
     elif request.path == reverse('create_partner'):
@@ -194,6 +198,8 @@ def edit_item(request):
             item = get_object_or_404(Partner, pk=item_id)
             form = PartnerForm(instance=item)
         else:
+            partners = list(company.partner_set.values(
+                'pk', 'name', 'uri'))
             item = None
             form = NewPartnerForm()
     else:
@@ -202,8 +208,10 @@ def edit_item(request):
     ctx = {
         'form': form,
         'partner': partner,
+        'partners': json.dumps(partners),
         'company': company,
         'contact': item,
+        'contacts': json.dumps(contacts),
         'content_id': content_id,
         'view_name': 'PRM',
     }
