@@ -14,6 +14,7 @@ from slugify import slugify
 from lxml import etree
 from django.conf import settings
 from django.db import IntegrityError
+from billiard import current_process
 
 from seo_pysolr import Solr
 from xmlparse import DEv2JobFeed
@@ -110,11 +111,19 @@ def get_jobs_from_zipfile(zipfileobject, guid):
     :return: [lxml.eTree, lxml.eTree,...]"""
     logger.debug("Getting current Jobs for guid: %s", guid)
 
+
+    try:
+        p = current_process()
+        process_id =  p.index
+    except:
+        process_id = 0
+
+
     # Delete any existing data and use the guid to create a unique folder.
-    directory = "/tmp/%s" % guid
+    directory = "/tmp/%s/%s" % (process_id, guid)
     if os.path.exists(directory):
         shutil.rmtree(directory)
-    os.mkdir(directory)
+    os.makedirs(directory)
 
     # Write zipfile to filesystem
     filename = os.path.join(directory, '%s.zip' % guid)
@@ -434,10 +443,20 @@ def download_feed_file(buid, data_dir=DATA_DIR):
     Downloads the job feed data for a particular job source id.
 
     """
-    full_file_path = os.path.join(data_dir, FEED_FILE_PREFIX + str(buid) +
+    
+    
+    try:
+        p = current_process()
+        process_id =  p.index
+    except:
+        process_id = 0
+
+    full_file_path = os.path.join(data_dir, str(process_id), FEED_FILE_PREFIX + str(buid) +
                                   '.xml')
     # Download new feed file for today
     logging.info("Downloading new file for BUID %s..." % buid)
+    if not os.path.exists(os.path.dirname(full_file_path)):
+        os.makedirs(os.path.dirname(full_file_path))
     urllib.urlretrieve(generate_feed_url(buid), full_file_path)
     logging.info("Download complete for BUID %s" % buid)
     return full_file_path
