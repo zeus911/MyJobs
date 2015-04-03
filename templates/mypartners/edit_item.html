@@ -154,7 +154,6 @@
 {% block extra-js %}
 <script type="text/javascript">
 
-    var p = {{ partners|safe }};
     $(document).ready(function() {
         {# we'll only have a partner when editing a contact #}
         var partner = {{ partner.pk|default:"0" }},
