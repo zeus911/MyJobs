@@ -1,10 +1,7 @@
 from django.conf.urls import patterns, url
 from django.conf import settings
-from django.db.models.signals import post_save, pre_delete
-from django.dispatch import receiver
 from django.views.generic import TemplateView
 
-from seo.models import CustomFacet
 from seo.views import search_views
 
 #Lazily matches any repition of alphanumeric characters, /, or -
@@ -167,23 +164,3 @@ urlpatterns += patterns('seo.views.search_views',
     url(r'^(?P<guid>[0-9A-Fa-f]{32})(?P<vsid>\d+)?(?P<debug>\+)?$',
         'urls_redirect', name='urls_redirect'),
 )
-
-
-@receiver(post_save, sender=CustomFacet)
-@receiver(pre_delete, sender=CustomFacet)
-def clear_page_cache(sender, **kwargs):
-    """
-    Clear cache for given domains after CustomFacet object is changed
-    in some way.
-
-    """
-    # Can't put this in models.py since importing CustomFacet creates a
-    # circular import condition. 
-    obj = kwargs['instance']
-    
-    if not obj.seosite_set.all():
-        return
-
-    for i in obj.seosite_set.all():
-        for j in i.configurations.all():
-            j.save()
