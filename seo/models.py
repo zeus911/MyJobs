@@ -620,7 +620,11 @@ class Company(models.Model):
 
     """
     def __unicode__(self):
-        return "%s" % self.name
+        if self.company_user_count == 0:
+            return "%s (%s users) **Might be a duplicate**" % (
+                self.name, self.company_user_count)
+        else:
+            return "%s (%s users)" % (self.name, self.company_user_count)
 
     class Meta:
         verbose_name = 'Company'
@@ -655,7 +659,19 @@ class Company(models.Model):
     def featured_on(self):
         return ", ".join(self.seosite_set.all().values_list("domain",
                                                             flat=True))
-
+    
+    @property
+    def company_user_count(self):
+        """
+        Counts how many users are mapped to this company. This is useful for
+        determining which company to map companyusers to when two company
+        instances have very similar names.
+        
+        It is treated as a property of the model.
+        
+        """
+        return self.companyuser_set.count()
+        
     admins = models.ManyToManyField(User, through='CompanyUser')
     name = models.CharField('Name', max_length=200)
     company_slug = models.SlugField('Company Slug', max_length=200, null=True,

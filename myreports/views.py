@@ -10,14 +10,12 @@ from django.template import RequestContext
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 
-from myreports.decorators import restrict_to_staff
 from myreports.helpers import humanize, parse_params, serialize
 from myreports.models import Report
 from universal.helpers import get_company_or_404
 from universal.decorators import company_has_access
 
 
-@restrict_to_staff()
 @company_has_access('prm_access')
 def overview(request):
     """The Reports app landing page."""
@@ -47,7 +45,6 @@ def overview(request):
                               RequestContext(request))
 
 
-@restrict_to_staff()
 @company_has_access('prm_access')
 def report_archive(request):
     if request.is_ajax():
@@ -76,7 +73,6 @@ def get_states(request):
         raise Http404("This view is only reachable via an AJAX request")
 
 
-@restrict_to_staff()
 @company_has_access('prm_access')
 def view_records(request, app, model):
     """
@@ -135,7 +131,6 @@ def view_records(request, app, model):
         raise Http404("This view is only reachable via an AJAX GET request.")
 
 
-@restrict_to_staff()
 @company_has_access('prm_access')
 def get_inputs(request):
     if request.is_ajax() and request.method == "GET":
@@ -153,7 +148,6 @@ class ReportView(View):
     app = 'mypartners'
     model = 'contactrecord'
 
-    @method_decorator(restrict_to_staff())
     @method_decorator(company_has_access('prm_access'))
     def dispatch(self, *args, **kwargs):
         return super(ReportView, self).dispatch(*args, **kwargs)
@@ -226,7 +220,6 @@ class ReportView(View):
                 "This view is only reachable via a POST request.")
 
 
-@restrict_to_staff()
 @company_has_access('prm_access')
 def download_report(request):
     """Download report as csv."""
