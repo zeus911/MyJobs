@@ -99,33 +99,17 @@ def view_records(request, app, model):
         # remove non-query related params
         params.pop('csrfmiddlewaretoken', None)
         count = params.pop('count', None)
+        values = params.pop('values', [])
 
-        # TODO: REMOVE THIS ---------------------------------------------------
-        values = params.pop('values', False)
-        if model == 'contact' and values:
-            records = get_model(app, 'contactrecord').objects.from_search(
-                company, params).values(
-                    'contact_name', 'contact_email').distinct()
-
-            records = [{'name': record['contact_name'],
-                        'email': record['contact_email']}
-                       for record in records]
-        # ---------------------------------------------------------------------
-        else:
-            records = get_model(app, model).objects.from_search(
-                company, params)
+        records = get_model(app, model).objects.from_search(
+            company, params)
 
         counts = {}
         if count:
             records = records.annotate(count=Count(count, distinct=True))
             counts = {record.pk: record.count for record in records}
 
-        # TODO: REMOVE THIS ---------------------------------------------------
-        if model == 'contact' and values:
-            ctx = json.dumps(records)
-        # --------------------------------------------------------------
-        else:
-            ctx = serialize('json', records, counts=counts)
+        ctx = serialize('json', records, counts=counts, values=values)
 
         response = HttpResponse(
             ctx, content_type='application/json; charset=utf-8')
@@ -208,15 +192,17 @@ class ReportView(View):
 
             params.pop('csrfmiddlewaretoken', None)
             name = params.pop('report_name', datetime.now())
+            values = params.pop('values', None)
+
             records = get_model(app, model).objects.from_search(
                 company, params)
 
-            contents = serialize('json', records)
+            contents = serialize('json', records, values=values)
             results = ContentFile(contents)
             report, created = Report.objects.get_or_create(
                 name=name, created_by=request.user,
                 owner=company, app=app, model=model,
-                params=json.dumps(params))
+                values=json.dumps(values), params=json.dumps(params))
 
             report.results.save('%s-%s.json' % (name, report.pk), results)
 

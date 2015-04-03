@@ -2,12 +2,10 @@ from cStringIO import StringIO
 import csv
 import HTMLParser
 import json
-from itertools import chain
 
 from django.core import serializers
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models.loading import get_model
-from django.db.models.query import QuerySet
+from django.db.models import query
 from django.utils.html import strip_tags
 from mypartners.models import CONTACT_TYPES
 
@@ -33,22 +31,27 @@ def humanize(records):
 
     for record in records:
         # make tag lists look pretty
-        record['tags'] = ', '.join(record['tags'])
+        if 'tags' in record:
+            record['tags'] = ', '.join(record['tags'])
         # get rid of pks
         record.pop('pk', None)
         # human readable contact types
-        record['contact_type'] = CONTACT_TYPES[record['contact_type']]
+        if 'contact_type' in record:
+            record['contact_type'] = CONTACT_TYPES[record['contact_type']]
         # strip html and extra whitespace from notes
-        record['notes'] = parser.unescape('\n'.join(
-            ' '.join(line.split())
-            for line in record['notes'].split('\n') if line))
-        # second pass to take care of extra new lines
-        record['notes'] = '\n'.join(
-            filter(bool, record['notes'].split('\n\n')))
+        if 'notes' in record:
+            record['notes'] = parser.unescape('\n'.join(
+                ' '.join(line.split())
+                for line in record['notes'].split('\n') if line))
+            # second pass to take care of extra new lines
+            record['notes'] = '\n'.join(
+                filter(bool, record['notes'].split('\n\n')))
 
         # get rid of nones
-        record['created_by'] = record['created_by'] or ''
-        record['length'] = record['length'] or ''
+        if 'created_by' in record:
+            record['created_by'] = record['created_by'] or ''
+        if 'length' in record:
+            record['length'] = record['length'] or ''
 
     return records
 
@@ -77,8 +80,11 @@ def parse_params(querydict):
     return params
 
 
-# TODO: Find a better way to handle counts
-def serialize(fmt, data, counts=None):
+# TODO:
+#   * find a better way to handle counts
+#   * do something other than isinstance checks (duck typing anyone?)
+
+def serialize(fmt, data, counts=None, values=None):
     """
     Like `django.core.serializers.serialize`, but produces a simpler structure
     and retains annotated fields*.
@@ -97,19 +103,32 @@ def serialize(fmt, data, counts=None):
 
     * Currently, only count with values passed in manually through `counts`.
     """
-    if isinstance(data, QuerySet):
+    if isinstance(data, query.QuerySet):
         data = [dict({'pk': record['pk']}, **record['fields'])
                 for record in serializers.serialize(
-                    'python', data, use_natural_keys=True)]
+                    'python', data, use_natural_keys=True, fields=values)]
 
         if counts:
             data = [dict({'count': counts[record['pk']]}, **record)
                     for record in data]
 
-    # strip HTML tags from string values
-    for index, record in enumerate(data[:]):
-        data[index] = {key: strip_tags(value) if isinstance(value, basestring)
-                       else value for key, value in record.items()}
+        # Cant' use a ValueQuerSet for serialize, which means we lose the
+        # ability to use distinct. As such, we fake it by doing so manually
+        if values:
+            records = []
+            haystack = []
+
+            for record in data:
+                needle = [record[value] for value in values] or record['pk']
+
+                if needle not in haystack:
+                    haystack.append(needle)
+                    # strip HTML tags from string values
+                    records.append({
+                        key: strip_tags(value) if isinstance(value, basestring)
+                        else value for key, value in record.items()})
+
+            data = records
 
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)
