@@ -531,14 +531,16 @@ List.prototype.filter = function(filter) {
   // specific duties based on type.
   if (list.type === "partner") {
     // annotate how many records a partner has.
-    $.extend(data, {"count": "contactrecord"});
+    $.extend(data, {"count": "contactrecord",
+                    "values": ["pk", "name", "count"]}
+    );
     url += "/reports/ajax/mypartners/partner";
     if (typeof data.partner !== "undefined") {
       delete data.partner;
     }
   } else if (list.type === "contact") {
     url += "/reports/ajax/mypartners/contact";
-    data.values = true;
+    $.extend(data, {"values": ["name", "email"]});
   }
 
   $.ajaxSettings.traditional = true;

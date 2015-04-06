@@ -99,8 +99,9 @@ def log_change(obj, form, user, partner, contact_identifier,
         email, phone number) that identifies the person being contacted.
     :action_type: The action being taken. Available types are in
         mypartners.models.
-    :change_msg: A short description of the changes made. If one isn't provided,
-        the change_msg will attempt to be created from the form.
+    :change_msg: A short description of the changes made. If one isn't
+                 provided, the change_msg will attempt to be created from the
+                 form.
 
     """
     if not change_msg:
@@ -366,8 +367,8 @@ def filter_partners(request, partner_library=False):
     sort_by = sort_order + request.REQUEST.get('sort_by', 'name')
     city = request.REQUEST.get('city', '').strip()
     state = request.REQUEST.get('state', '').strip()
-    tags = [
-        tag.strip() for tag in request.REQUEST.get('tag', '').split(',') if tag]
+    tags = [tag.strip()
+            for tag in request.REQUEST.get('tag', '').split(',') if tag]
     keywords = [keyword.strip() for keyword in request.REQUEST.get(
         'keywords', '').split(',') if keyword]
 
@@ -551,8 +552,7 @@ def tag_get_or_create(company_id, data):
     tags = []
     for tag in data:
         obj, _ = Tag.objects.get_or_create(
-            company_id=company_id, name__iexact=tag, defaults={"name": tag}
-        )
+            company_id=company_id, name__iexact=tag, defaults={"name": tag})
         tags.append(obj.id)
 
     return tags
