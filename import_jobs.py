@@ -112,6 +112,7 @@ def get_jobs_from_zipfile(zipfileobject, guid):
     logger.debug("Getting current Jobs for guid: %s", guid)
 
 
+    # Get current worker process id, to prevent race conditions.
     try:
         p = current_process()
         process_id =  p.index
@@ -443,8 +444,8 @@ def download_feed_file(buid, data_dir=DATA_DIR):
     Downloads the job feed data for a particular job source id.
 
     """
-    
-    
+
+    # Get current worker process id, to prevent race conditions.
     try:
         p = current_process()
         process_id =  p.index
