@@ -267,7 +267,13 @@ def update_solr(buid, download=True, force=True, set_title=False,
     if download:
         filepath = download_feed_file(buid, data_dir=data_dir)
     else:
-        filepath = os.path.join(data_dir, FEED_FILE_PREFIX + str(buid) +
+        # Get current worker process id, to prevent race conditions.
+        try:
+            p = current_process()
+            process_id =  p.index
+        except:
+            process_id = 0
+        filepath = os.path.join(data_dir, str(process_id), FEED_FILE_PREFIX + str(buid) +
                                 '.xml')
     bu = BusinessUnit.objects.get(id=buid)
     try:
