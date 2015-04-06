@@ -367,7 +367,7 @@ def clear_page_cache(sender, **kwargs):
     # circular import condition.
     obj = kwargs['instance']
 
-    if not obj.seosite_set.all():
+    if not obj.seosite_set.exists():
         return
 
     configs = Configuration.objects.filter(seosite__facets=obj)
