@@ -113,8 +113,11 @@ def get_jobs_from_zipfile(zipfileobject, guid):
 
 
     # Get current worker process id, to prevent race conditions.
-    p = current_process()
-    process_id =  p.index
+    try:
+        p = current_process()
+        process_id =  p.index
+    except:
+        process_id = 0
 
 
     # Delete any existing data and use the guid to create a unique folder.
@@ -449,9 +452,11 @@ def download_feed_file(buid, data_dir=DATA_DIR):
     """
 
     # Get current worker process id, to prevent race conditions.
-    p = current_process()
-    process_id =  p.index
-
+    try:
+        p = current_process()
+        process_id =  p.index
+    except:
+        process_id = 0
 
     full_file_path = os.path.join(data_dir, str(process_id), FEED_FILE_PREFIX + str(buid) +
                                   '.xml')
