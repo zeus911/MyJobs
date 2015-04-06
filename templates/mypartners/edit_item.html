@@ -44,7 +44,7 @@
                 <div class="actions pull-right">
                     {% if contact %}<button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
                     <a class="btn" href="{% if partner %}{% url 'partner_details' %}?partner={{ partner.id }}{% else %}{% url 'prm' %}{% endif %}">{% trans 'Cancel' %}</a>
-                    <button type="submit" class="btn primary" id="{% if not partner %}init-partner-save{% else %}item-save{% endif %}">{% trans 'Save' %}</button>
+                    <button type="submit" class="btn primary" id="{% if not partner %}init-partner-save{% else %}item-save{% endif %}" disabled>{% trans 'Save' %}</button>
                 </div>
                 <div class="clear"></div>
             </form>
@@ -158,16 +158,21 @@
         {# we'll only have a partner when editing a contact #}
         var partner = {{ partner.pk|default:"0" }},
             partners = {{ partners|safe }},
-            contacts = {{ contacts|safe }},
+            contacts = {{ contacts|safe }};
+
             $partnerInput = $("#id_partner-partnername"),
             $contactInput = $("#id_contact-name"),
             $editModal = $("#edit-item-modal"),
-            partnerNames = $.map(partners, function(e) { return e.name; }),
-            contactNames = $.map(contacts, function(e) { return e.name; });
+            partnerNames = $.map(partners, function(e) { return e.name.toLowerCase(); }),
+            contactNames = $.map(contacts, function(e) { return e.name.toLowerCase(); });
 
         $partnerInput.on("blur", function() {
-            var index = partnerNames.indexOf($(this).val().trim());
+            var index = partnerNames.indexOf($(this).val().trim().toLowerCase()),
+                isFormValid = false;
+
             if (index > -1) {
+                isFormValid = false;
+
                 $("ul.record-info").html(
                     "<li>Name: " + partners[index].name + "</li>" +
                     "<li>URL: " + partners[index].uri + "</li>"
@@ -179,12 +184,21 @@
                 $editModal.modal("show").on("hidden", function() {
                     $partnerInput.select();
                 });
+            } else {
+                isFormValid = $(this).val().length;
             }
+
+            $("#init-partner-save").prop("disabled", !isFormValid);
+
         });
 
         $contactInput.on("blur", function() {
-            var index = contactNames.indexOf($(this).val().trim());
+            var index = contactNames.indexOf($(this).val().trim().toLowerCase()),
+                isFormValid = false;
+
             if (index > -1) {
+                isFormValid = false;
+
                 $("ul.record-info").html(
                     "<li>Name: " + contacts[index].name + "</li>" +
                     "<li>Email: " + contacts[index].email + "</li>" +
@@ -196,7 +210,12 @@
                 $editModal.modal("show").on("hidden", function() {
                     $contactInput.select()
                 });
+            } else {
+                isFormValid = $(this).val().length;
             }
+
+            $("#item-save").prop("disabled", !isFormValid);
+
         });
     });
 
