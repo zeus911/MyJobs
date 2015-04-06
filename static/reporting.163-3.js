@@ -594,8 +594,12 @@ List.prototype.filter = function(filter) {
                     "values": ["pk", "name", "count"]}
     );
     url += "/reports/ajax/mypartners/partner";
-    // partners don't have a contact type
-    delete data.contact_type;
+
+    if (typeof data.contact_type !== "undefined") {
+      data.contactrecord__contact_type = data.contact_type;
+      delete data.contact_type;
+    }
+
     if (typeof data.partner !== "undefined") {
       delete data.partner;
     }
