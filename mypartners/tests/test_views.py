@@ -16,6 +16,7 @@ from django.core import mail
 from django.http import Http404
 from django.test.client import RequestFactory 
 from django.utils.timezone import utc
+import requests
 
 from tasks import PARTNER_LIBRARY_SOURCES
 
@@ -1203,10 +1204,10 @@ class EmailTests(MyPartnersTestCase):
 class PartnerLibraryTestCase(MyPartnersTestCase):
     @classmethod
     def setUpClass(cls):
-        url, params = PARTNER_LIBRARY_SOURCES.items()[0][1].values()
+        url = 'mypartners/tests/data/library.html'
 
         super(PartnerLibraryTestCase, cls).setUpClass()
-        for partner in get_library_partners(url, params):
+        for partner in get_library_partners(url):
             fullname = " ".join(" ".join([partner.first_name,
                                           partner.middle_name,
                                           partner.last_name]).split())
@@ -1215,7 +1216,7 @@ class PartnerLibraryTestCase(MyPartnersTestCase):
                     contact_name=fullname, st=partner.st, city=partner.city):
                 PartnerLibrary(
                     name=partner.organization_name, uri=partner.website,
-                    region=partner.region, state=partner.state, 
+                    region=partner.region, state=partner.state,
                     area=partner.area, contact_name=fullname,
                     phone=partner.phone, phone_ext=partner.phone_ext,
                     alt_phone=partner.alt_phone, fax=partner.fax,
@@ -1229,6 +1230,21 @@ class PartnerLibraryTestCase(MyPartnersTestCase):
 
 
 class PartnerLibraryViewTests(PartnerLibraryTestCase):
+
+    def test_errd_reachable(self):
+        # Employment Referral Resource Directory
+        url, params = PARTNER_LIBRARY_SOURCES.values()[0].values()
+
+        response = requests.post(url, params)
+        self.assertEqual(response.status_code, 200)
+
+    def test_dvcrd_reachable(self):
+
+        # Disability and Veterans Community Resources Directory
+        url, params = PARTNER_LIBRARY_SOURCES.values()[1].values()
+
+        response = requests.post(url, params)
+        self.assertEqual(response.status_code, 200)
 
     def test_can_create_partner_from_library(self):
         """
