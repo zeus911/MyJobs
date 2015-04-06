@@ -595,11 +595,6 @@ List.prototype.filter = function(filter) {
     );
     url += "/reports/ajax/mypartners/partner";
 
-    if (typeof data.contact_type !== "undefined") {
-      data.contactrecord__contact_type = data.contact_type;
-      delete data.contact_type;
-    }
-
     if (typeof data.partner !== "undefined") {
       delete data.partner;
     }
