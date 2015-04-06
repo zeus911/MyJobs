@@ -49,11 +49,11 @@ var Report = function(types) {
 // checklist  values
 var checklists = {
   'contact_type': [
-    {'value': 'email', 'label': 'Email'},
-    {'value': 'phone', 'label': 'Phone Call'},
-    {'value': 'meetingorevent', 'label': 'Meeting or Event'},
-    {'value': 'job', 'label': 'Job Followup'},
-    {'value': 'pssemail', 'label': 'Saved Search Email'}
+    {'value': 'email', 'label': 'Email', 'checked': true},
+    {'value': 'phone', 'label': 'Phone Call', 'checked': true},
+    {'value': 'meetingorevent', 'label': 'Meeting or Event', 'checked': true},
+    {'value': 'job', 'label': 'Job Followup', 'checked': true},
+    {'value': 'pssemail', 'label': 'Saved Search Email', 'checked': true}
   ]
 };
 
@@ -428,6 +428,15 @@ Report.prototype.createCloneReport = function(json) {
         }
         field.value[key] = value;
         this.data[key] = value;
+      } else if (key === "contact_type") {
+        var values = checklists.contact_type;
+
+        $.map(values, function(item, index) {
+          item.checked = value.indexOf(item.value) !== -1;
+        });
+
+        field = this.findField("Contact Type").value = values;
+        this.data[key] = value;
       } else {
         this.findField(key.capitalize()).value = value;
         this.data[key] = value;
@@ -500,12 +509,11 @@ Field.prototype.render = function() {
       });
     })();
   } else if (this.type === "checklist") {
-    // TODO: use map to go through a list of options
     var field_label = this.label.toLowerCase().replace(/ /g, "_");
     input = $.map(this.value, function(item, index) {
       return "<input id='" + field_label +
              "'type='checkbox' name='checklist[]' value='" + item.value +
-             "' checked />" + item.label;
+             (item.checked ? "' checked />" : "' />") + item.label;
     }).join("");
 
     $wrapper.attr("id", field_label);
