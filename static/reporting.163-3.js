@@ -349,14 +349,14 @@ Report.prototype.readable_data = function() {
           if ($all.length === $checked.length) {
             html += ": All Contact Types";
           } else {
-            html += "<ul><li>" + value.join("</li><li>") + "</li></ul>";
+            html += "<ul class='short-list'><li>" + value.join("</li><li>") + "</li></ul>";
           }
         } else {
           for (i = 0; i < value.length; i++) {
             items.push($("#" + key + " input[value='" + value[i] + "']").next("span").html());
           }
 
-          html += "<ul><li>" + items.join('</li><li>') + '</li></ul>';
+          html += "<ul class='short-list'><li>" + items.join('</li><li>') + '</li></ul>';
         }
       } else {
         html += key === "state" ? $("#state option[value=" + value + "]").html() : value;
