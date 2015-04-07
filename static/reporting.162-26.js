@@ -647,8 +647,14 @@ $(document).ready(function() {
   });
 
   // View Report
-  subpage.on("click", ".report > a, .fa-eye", function() {
-    var report_id = $(this).attr("id").split("-")[1];
+  subpage.on("click", ".report > a, .fa-eye, .view-report", function() {
+    var report_id;
+
+    if ($(this).attr("id") !== undefined) {
+      report_id = $(this).attr("id").split("-")[1];
+    } else {
+      report_id = $(this).parents("tr").data("report");
+    }
 
     history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
 
@@ -657,26 +663,35 @@ $(document).ready(function() {
 
 
   // Clone Report
-  subpage.on("click", ".fa-copy", function() {
-    var report_id = $(this).attr("id").split("-")[1],
-        data = {"id": report_id},
-        url = location.protocol + "//" + location.host; // https://secure.my.jobs
+  subpage.on("click", ".fa-copy, .clone-report", function() {
+    var data = {},
+        url = location.protocol + "//" + location.host, // https://secure.my.jobs
+        cloneReport = function() {
+          $.ajax({
+            type: "GET",
+            url: url + "/reports/ajax/get-inputs",
+            data: data,
+            dataType: "json",
+            success: function(data) {
+              history.pushState({'page': 'clone', 'inputs': data, 'reportId': report_id}, "Clone Report");
+              var report = new Report(["prm"]);
+              report.createCloneReport(data);
+              report.unbindEvents();
+              report.bindEvents();
+              $("#container").addClass("rpt-container");
+              report.renderFields(report.fields);
+            }
+          });
+        },
+        report_id;
 
-    $.ajax({
-      type: "GET",
-      url: url + "/reports/ajax/get-inputs",
-      data: data,
-      dataType: "json",
-      success: function(data) {
-        history.pushState({'page': 'clone', 'inputs': data, 'reportId': report_id}, "Clone Report");
-        var report = new Report(["prm"]);
-        report.createCloneReport(data);
-        report.unbindEvents();
-        report.bindEvents();
-        $("#container").addClass("rpt-container");
-        report.renderFields(report.fields);
-      }
-    });
+    if ($(this).attr("id") !== undefined) {
+      data.id = $(this).attr("id").split("-")[1];
+      cloneReport();
+    } else {
+      data.id = $(this).parents("tr").data("report");
+      renderOverview(cloneReport);
+    }
   });
 
   // View Archive
