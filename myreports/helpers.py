@@ -83,7 +83,6 @@ def parse_params(querydict):
 # TODO:
 #   * find a better way to handle counts
 #   * do something other than isinstance checks (duck typing anyone?)
-
 def serialize(fmt, data, counts=None, values=None):
     """
     Like `django.core.serializers.serialize`, but produces a simpler structure
