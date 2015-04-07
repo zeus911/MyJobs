@@ -1680,6 +1680,11 @@ h3.bottom-bordered {
     text-decoration: none;
 }
 
+span.small {
+    font-size: 0.9em;
+    color: #444;
+}
+
 /* Sort by field in saved search save/edit */
 #saved-search-form label[for^='id_sort_by'],
 #saved-search-form label[for^='id_edit_sort_by'] {

@@ -569,7 +569,7 @@ List.prototype.filter = function(filter) {
         }
 
         if (list.type === "contact" && record.email) {
-          li.append(" <span>("+ record.email + ")</span>");
+          li.append(" <span class='small'>("+ record.email + ")</span>");
         }
 
         ul.append(li);
