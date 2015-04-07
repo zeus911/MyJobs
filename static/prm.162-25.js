@@ -888,4 +888,9 @@ function show_selected() {
             $("#reset-date-range").css("visibility", "visible");
         }
     }
+
+    $('#add-primary-contact').click(function() {
+        $(this).remove();
+        $('#primary-contact').removeClass('mobile_hide');
+    })
 }

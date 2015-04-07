@@ -137,7 +137,8 @@ class SavedSearch(models.Model):
         items = parse_feed(**parse_feed_args)
         return items
 
-    def send_email(self, custom_msg=None):
+    def send_email(self, custom_msg=None, additional_categories=None,
+                   additional_headers=None):
         log_kwargs = {
             'was_sent': False,
             'was_received': False,
@@ -167,12 +168,31 @@ class SavedSearch(models.Model):
                                 'contains_pss': is_pss}
                 message = render_to_string('mysearches/email_single.html',
                                            context_dict)
-                category = ('{"category": "My.jobs Saved Search Sent '
-                            '(%s:%s|%s)"}') % (
-                                self.content_type,
-                                self.pk,
-                                log_kwargs['uuid'])
-                headers = {'X-SMTPAPI': category}
+                categories = [('My.jobs Saved Search Sent '
+                               '({content_type}:{pk}|{uuid})').format(
+                                   content_type=self.content_type,
+                                   pk=self.pk, uuid=log_kwargs['uuid']),
+                              settings.ENVIRONMENT]
+
+                # additional_categories and additional_headers are used when
+                # sending email from qc/staging to stop SendGrid's url
+                # redirection and to enable us to drop events that we shouldn't
+                # be processing (QC emails getting posted to Production)
+                if additional_categories is not None:
+                    categories.extend(
+                        additional_categories if isinstance(
+                            additional_categories, list)
+                        else [additional_categories])
+                categories = ['"%s"' % category for category in categories]
+                category = '[%s]' % ','.join(categories)
+                header = ['"category": ' + category]
+                if additional_headers is not None:
+                    header.extend(
+                        additional_headers if isinstance(
+                            additional_headers, list)
+                        else [additional_headers])
+                header = '{%s}' % (','.join(header), )
+                headers = {'X-SMTPAPI': header}
 
                 send_email(message, email_type=settings.SAVED_SEARCH,
                            recipients=[self.email], label=self.label.strip(),

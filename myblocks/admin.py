@@ -9,80 +9,82 @@ class ColumnBlockOrderInline(admin.TabularInline):
     save_as = True
 
 
-class ColumnBlockAdmin(admin.ModelAdmin):
+class BlockAdmin(admin.ModelAdmin):
+    list_display = ('__unicode__', 'offset', 'span')
+    save_as = True
+
+
+class ColumnBlockAdmin(BlockAdmin):
     form = forms.ColumnBlockForm
     inlines = (ColumnBlockOrderInline, )
-    save_as = True
 
 
-class ApplyLinkBlockAdmin(admin.ModelAdmin):
+class ApplyLinkBlockAdmin(BlockAdmin):
     form = forms.ApplyLinkBlockForm
-    save_as = True
 
 
-class BreadboxBlockAdmin(admin.ModelAdmin):
+class BreadboxBlockAdmin(BlockAdmin):
     form = forms.BreadboxBlockForm
-    save_as = True
 
 
-class ContentBlockAdmin(admin.ModelAdmin):
+class ContentBlockAdmin(BlockAdmin):
     form = forms.ContentBlockForm
-    save_as = True
 
 
-class JobDetailBlockAdmin(admin.ModelAdmin):
+class FacetBlurbBlockAdmin(BlockAdmin):
+    form = forms.FacetBlurbBlockForm
+
+
+class JobDetailBlockAdmin(BlockAdmin):
     form = forms.JobDetailBlockForm
-    save_as = True
 
 
-class JobDetailBreadboxBlockAdmin(admin.ModelAdmin):
+class JobDetailBreadboxBlockAdmin(BlockAdmin):
     form = forms.JobDetailBreadboxBlockForm
-    save_as = True
 
 
-class LoginBlockAdmin(admin.ModelAdmin):
+class JobDetailHeaderBlockAdmin(BlockAdmin):
+    form = forms.JobDetailHeaderBlockForm
+
+
+class LoginBlockAdmin(BlockAdmin):
     form = forms.LoginBlockForm
-    save_as = True
 
 
-class MoreButtonBlockAdmin(admin.ModelAdmin):
+class MoreButtonBlockAdmin(BlockAdmin):
     form = forms.MoreButtonBlockForm
-    save_as = True
 
 
-class RegistrationBlockAdmin(admin.ModelAdmin):
+class RegistrationBlockAdmin(BlockAdmin):
     form = forms.RegistrationBlockForm
-    save_as = True
 
 
-class SavedSearchWidgetBlockAdmin(admin.ModelAdmin):
+class SavedSearchWidgetBlockAdmin(BlockAdmin):
     form = forms.SavedSearchWidgetBlockForm
-    save_as = True
 
 
-class SearchBoxBlockAdmin(admin.ModelAdmin):
+class SearchBoxBlockAdmin(BlockAdmin):
     form = forms.SearchBoxBlockForm
-    save_as = True
 
 
-class SearchFilterBlockAdmin(admin.ModelAdmin):
+class SearchFilterBlockAdmin(BlockAdmin):
     form = forms.SearchFilterBlockForm
-    save_as = True
 
 
-class VeteranSearchBoxAdmin(admin.ModelAdmin):
+class VeteranSearchBoxAdmin(BlockAdmin):
     form = forms.VeteranSearchBoxForm
-    save_as = True
 
 
-class SearchResultBlockAdmin(admin.ModelAdmin):
+class SearchResultBlockAdmin(BlockAdmin):
     form = forms.SearchResultBlockForm
-    save_as = True
 
 
-class ShareBlockAdmin(admin.ModelAdmin):
+class SearchResultHeaderBlockAdmin(BlockAdmin):
+    form = forms.SearchResultHeaderBlockForm
+
+
+class ShareBlockAdmin(BlockAdmin):
     form = forms.ShareBlockForm
-    save_as = True
 
 
 class BlockOrderInline(admin.TabularInline):
@@ -98,7 +100,11 @@ class RowOrderInline(admin.TabularInline):
 class PageAdmin(admin.ModelAdmin):
     form = forms.PageForm
     inlines = (RowOrderInline, )
+    list_display = ('name', 'human_readable_page_type',
+                    'human_readable_sites', 'human_readable_status')
+    list_filter = ('sites__domain', )
     save_as = True
+    search_fields = ('name', 'sites__domain', )
 
 
 class RowAdmin(admin.ModelAdmin):
@@ -110,15 +116,18 @@ class RowAdmin(admin.ModelAdmin):
 admin.site.register(models.ApplyLinkBlock, ApplyLinkBlockAdmin)
 admin.site.register(models.BreadboxBlock, BreadboxBlockAdmin)
 admin.site.register(models.ContentBlock, ContentBlockAdmin)
+admin.site.register(models.FacetBlurbBlock, FacetBlurbBlockAdmin)
 admin.site.register(models.LoginBlock, LoginBlockAdmin)
 admin.site.register(models.JobDetailBlock, JobDetailBlockAdmin)
 admin.site.register(models.JobDetailBreadboxBlock, JobDetailBreadboxBlockAdmin)
+admin.site.register(models.JobDetailHeaderBlock, JobDetailHeaderBlockAdmin)
 admin.site.register(models.MoreButtonBlock, MoreButtonBlockAdmin)
 admin.site.register(models.SavedSearchWidgetBlock, SavedSearchWidgetBlockAdmin)
 admin.site.register(models.SearchBoxBlock, SearchBoxBlockAdmin)
 admin.site.register(models.SearchFilterBlock, SearchFilterBlockAdmin)
 admin.site.register(models.VeteranSearchBox, VeteranSearchBoxAdmin)
 admin.site.register(models.SearchResultBlock, SearchResultBlockAdmin)
+admin.site.register(models.SearchResultHeaderBlock, SearchResultHeaderBlockAdmin)
 admin.site.register(models.ShareBlock, ShareBlockAdmin)
 admin.site.register(models.RegistrationBlock, RegistrationBlockAdmin)
 admin.site.register(models.ColumnBlock, ColumnBlockAdmin)

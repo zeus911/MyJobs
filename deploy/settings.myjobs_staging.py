@@ -26,6 +26,7 @@ _PATH = os.path.abspath(os.path.dirname(__file__))
 ABSOLUTE_URL = '/'
 
 PROJECT = "myjobs"
+ENVIRONMENT = 'Staging'
 
 SESSION_CACHE_ALIAS = 'sessions'
 CACHES = {

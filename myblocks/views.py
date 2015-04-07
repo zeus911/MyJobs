@@ -47,7 +47,7 @@ class BlockView(View):
         """
         if request.user.is_authenticated() and request.user.is_staff:
             try:
-                page = Page.objects.filter(site=settings.SITE,
+                page = Page.objects.filter(sites=settings.SITE,
                                            status=Page.STAGING,
                                            page_type=self.page_type)[0]
                 setattr(self, 'page', page)
@@ -55,12 +55,12 @@ class BlockView(View):
                 pass
 
         try:
-            page = Page.objects.filter(site=settings.SITE,
+            page = Page.objects.filter(sites=settings.SITE,
                                        status=Page.PRODUCTION,
                                        page_type=self.page_type)[0]
         except IndexError:
             try:
-                page = Page.objects.filter(site_id=1,
+                page = Page.objects.filter(sites__pk=1,
                                            status=Page.PRODUCTION,
                                            page_type=self.page_type)[0]
             except IndexError:

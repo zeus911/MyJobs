@@ -3,7 +3,8 @@ import functools
 from itertools import chain
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.contrib.humanize.templatetags.humanize import intcomma
+from django.core.urlresolvers import reverse, resolve
 from django.http import QueryDict
 
 from seo import cache, helpers
@@ -54,9 +55,20 @@ def get_arranged_jobs(request):
 @Memoized
 def get_breadbox(request):
     filters = get_filters(request)
-    featured_jobs, default_jobs, facet_counts = get_jobs_and_counts(request)
+
+    jobs_and_counts = get_jobs_and_counts(request)
+    default_jobs = jobs_and_counts[0]
+    total_default_jobs = jobs_and_counts[1]
+    featured_jobs = jobs_and_counts[2]
+    total_featured_jobs = jobs_and_counts[3]
+
     jobs = list(chain(featured_jobs, default_jobs))
-    return Breadbox(request.path, filters, jobs, request.GET)
+
+    breadbox = Breadbox(request.path, filters, jobs, request.GET)
+
+    breadbox.job_count = intcomma(total_default_jobs + total_featured_jobs)
+
+    return breadbox
 
 
 @Memoized
@@ -83,13 +95,32 @@ def get_custom_facet_counts(request):
 
 @Memoized
 def get_default_jobs(request):
-    default_jobs, _, _ = get_jobs_and_counts(request)
+    default_jobs, _, _, _, _ = get_jobs_and_counts(request)
     return default_jobs
 
 
 @Memoized
+def get_facet_blurb_facet(request):
+    filters = get_filters(request)
+    facet_blurb_facet = None
+    site_config = get_site_config(request)
+
+    if site_config.browse_facet_show and filters['facet_slug']:
+        facet_slugs = filters['facet_slug'].split('/')
+        active_facets = helpers.standard_facets_by_name_slug(facet_slugs)
+        active_facets = list(set(active_facets))
+
+        # Set the facet blurb only if we have exactly one
+        # CustomFacet applied.
+        if len(active_facets) == 1 and active_facets[0].blurb:
+            facet_blurb_facet = active_facets[0]
+
+    return facet_blurb_facet
+
+
+@Memoized
 def get_featured_jobs(request):
-    _, featured_jobs, _ = get_jobs_and_counts(request)
+    _, _, featured_jobs, _, _ = get_jobs_and_counts(request)
     return featured_jobs
 
 
@@ -104,6 +135,8 @@ def get_google_analytics(request):
 @Memoized
 def get_job(request, job_id):
     search_type = 'guid' if len(job_id) > 31 else 'uid'
+    if not job_id:
+        return None
 
     try:
         query = "%s:(%s)" % (search_type, job_id)
@@ -122,6 +155,9 @@ def get_jobs_and_counts(request):
     args = (request, filters, num_jobs)
     default_jobs, featured_jobs, facet_counts = helpers.jobs_and_counts(*args)
 
+    total_default_jobs = default_jobs.count()
+    total_featured_jobs = featured_jobs.count()
+
     args = (featured_jobs.count(), default_jobs.count(), num_jobs,
             percent_featured)
     featured_needed, default_needed, _, _ = helpers.featured_default_jobs(*args)
@@ -133,11 +169,15 @@ def get_jobs_and_counts(request):
     for job in jobs:
         helpers.add_text_to_job(job)
 
-    return default_jobs, featured_jobs, facet_counts
+    return (default_jobs, total_default_jobs, featured_jobs,
+            total_featured_jobs, facet_counts)
 
 @Memoized
 def get_job_detail_breadbox(request, job_id):
     job = get_job(request, job_id)
+    if not job:
+        return {}
+
     site_config = get_site_config(request)
 
     breadbox = helpers.job_breadcrumbs(job, site_config.browse_company_show)
@@ -171,7 +211,14 @@ def get_job_detail_breadbox(request, job_id):
 
 
 @Memoized
-def get_location_term(request):
+def get_location_term(request, **kwargs):
+    function_name = resolve(request.path).func.func_name
+
+    if function_name == 'JobDetail':
+        job_id = kwargs.get('job_id', '')
+        job = get_job(request, job_id)
+        return getattr(job, 'location', '')
+
     breadbox = get_breadbox(request)
     return breadbox.location_display_heading()
 
@@ -190,6 +237,12 @@ def get_moc_id_term(request):
 @Memoized
 def get_query_string(request):
     return request.META.get('QUERY_STRING', None)
+
+
+@Memoized
+def get_results_heading(request):
+    breadbox = get_breadbox(request)
+    return helpers.build_results_heading(breadbox)
 
 
 @Memoized
@@ -220,7 +273,7 @@ def get_total_jobs_count(request):
 @Memoized
 def get_widgets(request):
     filters = get_filters(request)
-    _, _, facet_counts = get_jobs_and_counts(request)
+    _, _, _, _, facet_counts = get_jobs_and_counts(request)
     site_config = get_site_config(request)
 
     custom_facet_counts = get_custom_facet_counts(request)

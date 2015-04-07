@@ -5,6 +5,7 @@ DEBUG = True
 ABSOLUTE_URL = "/"
 
 PROJECT = 'myjobs'
+ENVIRONMENT = 'Jenkins'
 
 DATABASES = {
     'default': {
