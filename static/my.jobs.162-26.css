@@ -1973,11 +1973,19 @@ table#row-link-table {
     width: 100%;
 }
 
-.table-scrollable tbody {
+.table-scrollable tbody{
     max-height: 200px;
     width: 100%;
     overflow-y: auto;
     display: block;
+    position: relative;
+}
+
+.short-list {
+    margin: 0;
+    max-height: 160px;
+    overflow-y: auto;
+    padding-left: 35px;
     position: relative;
 }
 
