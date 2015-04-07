@@ -36,7 +36,7 @@ def overview(request):
 
     if request.is_ajax():
         response = HttpResponse()
-        html = render_to_response('myreports/report_overview.html', ctx,
+        html = render_to_response('myreports/includes/report_overview.html', ctx,
                                   RequestContext(request)).content
         response.content = html
         return response
@@ -55,7 +55,7 @@ def report_archive(request):
         }
 
         response = HttpResponse()
-        html = render_to_response('myreports/report-archive.html', ctx,
+        html = render_to_response('myreports/includes/report-archive.html', ctx,
                                   RequestContext(request))
         response.content = html.content
 
