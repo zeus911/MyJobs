@@ -996,3 +996,18 @@ function renderArchive(callback) {
     }
   });
 }
+
+function renderDownload(callback) {
+  $.ajax({
+    type: "GET",
+    url: "download",
+    data: {},
+    success: function(data) {
+      $("#main-container").html(data);
+    }
+  }).complete(function() {
+    if (typeof callback === "function") {
+      callback();
+    }
+  });
+}

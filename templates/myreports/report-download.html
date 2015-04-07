@@ -2,7 +2,11 @@
 
 <script type="text/javascript">
 $(document).on("ready", function() {
+    var columns = [];
     $(".cardHolder").sortable({
+        'update': function(e, ui) {
+            columns = $(this).sortable("toArray");
+        }
     });
 });
 </script>
