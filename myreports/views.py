@@ -207,21 +207,29 @@ class ReportView(View):
 
 
 @company_has_access('prm_access')
-def download_report(request):
-    """Download report as csv."""
+def downloads(request):
     report_id = request.GET.get('id', 0)
     report = get_object_or_404(
         get_model('myreports', 'report'), pk=report_id)
 
     ctx = {'columns': [column.replace('_', ' ').title()
                        for column in report.python[0].keys()]}
+
     return render_to_response('myreports/report-download.html', ctx,
                               RequestContext(request))
 
-    """
+
+@company_has_access('prm_access')
+def download_report(request):
+    """Download report as csv."""
+
     report_id = request.GET.get('id', 0)
+    values = request.GET.getlist('values', None)
+
     report = get_object_or_404(
         get_model('myreports', 'report'), pk=report_id)
+    report.values = json.dumps(values)
+    report.save()
 
     response = HttpResponse(content_type='text/csv')
     content_disposition = "attachment; filename=%s-%s.csv"
@@ -232,4 +240,3 @@ def download_report(request):
     response.write(serialize('csv', records))
 
     return response
-    """

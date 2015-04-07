@@ -1464,6 +1464,21 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
     width: 206px;
 }
 
+/* Report Download */
+.field-card {
+    border: 1px solid black;
+    margin: 5px;
+}
+
+.field-card > .fa {
+    margin: 5px;
+}
+
+.field-card > .enable-column {
+    margin: 5px;
+    margin-left: 0;
+}
+
 .show-modal-holder {
     margin-top: 20px;
     text-align: center;

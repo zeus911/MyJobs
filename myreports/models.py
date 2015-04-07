@@ -29,7 +29,14 @@ class Report(models.Model):
 
     @property
     def python(self):
-        return json.loads(self._results)
+        python = json.loads(self._results)
+        values = json.loads(self.values)
+
+        if values:
+            python = [{val: record[val] for val in values}
+                      for record in python]
+
+        return python
 
     @property
     def queryset(self):

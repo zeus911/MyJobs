@@ -1,29 +1,18 @@
-<script type="text/javascript" src="{{ STATIC_URL }}custom.154-10.js{{ gz }}"></script>
-
-<script type="text/javascript">
-$(document).on("ready", function() {
-    var columns = [];
-    $(".cardHolder").sortable({
-        'update': function(e, ui) {
-            columns = $(this).sortable("toArray");
-        }
-    });
-});
-</script>
-
-<style>
-.fieldCard {
-    border: 1px solid black;
-    margin: 5px;
-}
-</style>
-
 <div class="span8">
-    <div class="cardHolder">
+    <div class="card-holder">
         {% for col in columns %}
-        <div class="fieldCard" id="{{ col.split|join:"_"|lower }}">
-            {{ col }}
+        <div class="field-card" id="{{ col.split|join:"_"|lower }}">
+            <span class="fa fa-bars" title="Sort"></span>
+            <input class="enable-column" type="checkbox" value="{{ col.split|join:"_"|lower }}"/>{{ col }}
         </div>
         {% endfor %}
+    </div>
+</div>
+<div class="span4">
+    <div class="sidebar">
+        <h2 class="top">Navigation</h2>
+        <div class="navigation">
+            <a id="download-report" class="btn">Download CSV</a>
+        </div>
     </div>
 </div>

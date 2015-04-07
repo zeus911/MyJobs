@@ -655,6 +655,14 @@ $(document).ready(function() {
     renderGraphs(report_id);
   });
 
+  subpage.on("click", ".report > a, .fa-download", function() {
+    var report_id = $(this).attr("id").split("-")[1];
+
+    //history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
+
+    renderDownload(report_id);
+  });
+
 
   // Clone Report
   subpage.on("click", ".fa-copy", function() {
@@ -788,6 +796,50 @@ function renderOverview(callback) {
   }).complete(function() {
     if (typeof callback === "function") {
       callback();
+    }
+  });
+}
+
+function renderDownload(report_id) {
+  var data = {'id': report_id};
+
+  $.ajaxSettings.traditional = true;
+  $.ajax({
+    type: "GET",
+    url: "downloads",
+    data: data,
+    success: function(data) {
+      $("#main-container").html(data);
+
+      var values = $.map($(".enable-column:checked"), function(item, index) {
+        return $(item).val();
+      });
+
+      var ctx = {'id': report_id, 'values': values};
+      $("#download-report").attr("href", "download?" + $.param(ctx));
+
+      $(".card-holder").sortable({
+        //"handle": "span.fa-bars",
+        "axis": "y",
+        "update": function(e, ui) {
+          values = $.map($(".enable-column:checked"), function(item, index) {
+            return $(item).val();
+          });
+
+          var data = {'id': report_id, 'values': values};
+
+          $("#download-report").attr("href", "download?" + $.param(data));
+        }
+      });
+
+      $("input.enable-column").on("click", function() {
+        values = $.map($(".enable-column:checked"), function(item, index) {
+          return $(item).val();
+        });
+
+        var ctx = {'id': report_id, 'values': values};
+        $("#download-report").attr("href", "download?" + $.param(ctx));
+      });
     }
   });
 }
@@ -997,17 +1049,3 @@ function renderArchive(callback) {
   });
 }
 
-function renderDownload(callback) {
-  $.ajax({
-    type: "GET",
-    url: "download",
-    data: {},
-    success: function(data) {
-      $("#main-container").html(data);
-    }
-  }).complete(function() {
-    if (typeof callback === "function") {
-      callback();
-    }
-  });
-}
