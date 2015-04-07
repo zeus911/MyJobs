@@ -46,13 +46,25 @@ var Report = function(types) {
   this.fields = this.createFields(types);
 };
 
+// checklist  values
+var checklists = {
+  'contact_type': [
+    {'value': 'email', 'label': 'Email', 'checked': true},
+    {'value': 'phone', 'label': 'Phone Call', 'checked': true},
+    {'value': 'meetingorevent', 'label': 'Meeting or Event', 'checked': true},
+    {'value': 'job', 'label': 'Job Followup', 'checked': true},
+    {'value': 'pssemail', 'label': 'Saved Search Email', 'checked': true}
+  ]
+};
+
 
 // Pulls the fields required for report type(s)
 // Field Params: label, type, required, value
 Report.prototype.createFields = function(types) {
   var reports = {"prm": [new Field("Select Date", "date"),
+                         new Field("Contact Type", "checklist", false, checklists.contact_type),
                          new Field("State", "state"),
-                         new Field("City", "text"),
+                         new Field("City", "text"), 
                          new List("Select Partners", "partner", true),
                          new List("Select Contacts", "contact", true)]},
         fields = [],
@@ -87,6 +99,18 @@ Report.prototype.bindEvents = function() {
   // just selects text on focus for easy editing. UX-goodness
   container.on("focus", "#report_name", function() {
     $(this).select();
+  });
+
+
+  // Populate contact types from selected check boxes
+  container.on("click", "#contact_type > input", function(e) {
+    var values = [];
+        
+    $("input[name='checklist[]']:checked").each(function() {
+      values.push($(this).val());
+    });
+
+    report.data.contact_type = values.length ? values : "0";
   });
 
 
@@ -132,7 +156,7 @@ Report.prototype.bindEvents = function() {
           is_prm_field = function(e) {
             // This list will need to be updated if more is added to the PRM report
             // if they filter down partners/contacts
-            var prm_field = ["start_date", "end_date", "state", "city"],
+            var prm_field = ["start_date", "end_date", "contact_type", "state", "city"],
                 e_id = $(e.currentTarget).attr("id");
 
             // returns true or false
@@ -140,7 +164,9 @@ Report.prototype.bindEvents = function() {
           };
 
       // Default update/save data
-      report.data[$(e.currentTarget).attr("id")] = $(e.currentTarget).val();
+      if ($(e.currentTarget).attr("id") !== "contact_type") {
+        report.data[$(e.currentTarget).attr("id")] = $(e.currentTarget).val();
+      }
 
       if (is_prm_field(e)) {
         if (typeof report.data.partner !== "undefined") {
@@ -214,7 +240,7 @@ Report.prototype.bindEvents = function() {
   container.on("click", "input[id$=-all-checkbox]", function(e) {
     e.stopPropagation();
     var checkboxes = $(this).parent().next().find("input"),
-        num_selected = $(this).siblings("span").children("span"),
+        $recordCount = $(".record-count"),
         i;
 
     for (i = 0; i < checkboxes.length; i++) {
@@ -229,12 +255,13 @@ Report.prototype.bindEvents = function() {
     }
 
     // Update how many items in the list is selected based on this' current state. All or nothing.
-    num_selected.html($(this).prop("checked") ? checkboxes.length : "0");
+    $recordCount.html($(this).prop("checked") ? checkboxes.length : "0");
+    updateShowModal();
   });
 
 
   // Clicking this button will show the modal with human readable data to review.
-  container.on("click", "#show-modal", function(e) {
+  container.on("click", "#show-modal:not(.disabled)", function(e) {
     var modal = $("#report-modal"),
         body = modal.children(".modal-body"),
         footer = modal.children(".modal-footer");
@@ -311,17 +338,34 @@ Report.prototype.readable_data = function() {
             i;
 
         // grab names associated by value.
-        for (i = 0; i < value.length; i++) {
-          items.push($("#" + key + " input[value='" + value[i] + "']").next("span").html());
-        }
 
-        html += "<ul><li>" + items.join('</li><li>') + '</li></ul>';
+        if (key === "contact type") {
+          var $all = $("input[name='checklist[]']"),
+              $checked = $("input[name='checklist[]']:checked");
+
+          if ($all.length === $checked.length) {
+            html += ": All Contact Types";
+          } else {
+            html += "<ul><li>" + value.join("</li><li>") + "</li></ul>";
+          }
+        } else {
+          for (i = 0; i < value.length; i++) {
+            items.push($("#" + key + " input[value='" + value[i] + "']").next("span").html());
+          }
+
+          html += "<ul><li>" + items.join('</li><li>') + '</li></ul>';
+        }
       } else {
         html += key === "state" ? $("#state option[value=" + value + "]").html() : value;
       }
       html += "</div>";
     }
   }
+
+  if (typeof data.contact_type === "undefined") {
+    html += "<div><label>Contact type:</label>All Contact Types</div>";
+  }
+
   if (typeof data.partner === "undefined") {
     if ($("#partner-all-checkbox").is(":checked")) {
       html += "<div><label>Partners:</label>All Partners</div>";
@@ -384,6 +428,15 @@ Report.prototype.createCloneReport = function(json) {
         }
         field.value[key] = value;
         this.data[key] = value;
+      } else if (key === "contact_type") {
+        var values = checklists.contact_type;
+
+        $.map(values, function(item, index) {
+          item.checked = value.indexOf(item.value) !== -1;
+        });
+
+        field = this.findField("Contact Type").value = values;
+        this.data[key] = value;
       } else {
         this.findField(key.capitalize()).value = value;
         this.data[key] = value;
@@ -404,7 +457,7 @@ var Field = function(label, type, required, value) {
 // Outputs html based on type using jQuery.
 Field.prototype.render = function() {
   var l = $("<label>" + this.label + "</label>"), // label for <input>
-      wrapper = $("<div></div>"), // wrapping div
+      $wrapper = $("<div></div>"), // wrapping div
       field = this,
       html = '',
       input,
@@ -420,21 +473,21 @@ Field.prototype.render = function() {
   }
 
   if (this.type === "text") {
-    input = $("<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "' type='text' placeholder='"+ this.label +"' value='" + this.value + "' />");
-    wrapper.append(l).append(input);
-    html = wrapper.prop("outerHTML");
+    input = "<input id='" + this.label.toLowerCase().replace(/ /g, "_") + "' type='text' placeholder='"+ this.label + "' value='" + this.value + "' />";
+    $wrapper.append(l).append(input);
+    html = $wrapper.prop("outerHTML");
   } else if (this.type === "date") {
     dateWidget = $("<div id='date-filter' class='filter-option'></div>").append("<div class='date-picker'></div>");
     datePicker = $(dateWidget).children("div");
 
     if (field.value) {
-      start_date = $("<input id='start_date' class='datepicker picker-left' type='text' value='"+ field.value.start_date +"' placeholder='Start Date' />");
-      end_date = $("<input id='end_date' class='datepicker picker-right' type='text' value='"+ field.value.end_date +"' placeholder='End Date' />");
+      start_date = "<input id='start_date' class='datepicker picker-left' type='text' value='" + field.value.start_date + "' placeholder='Start Date' />";
+      end_date = "<input id='end_date' class='datepicker picker-right' type='text' value='" + field.value.end_date + "' placeholder='End Date' />";
     } else {
-      start_date = $("<input id='start_date' class='datepicker picker-left' type='text' placeholder='Start Date' />");
-      end_date = $("<input id='end_date' class='datepicker picker-right' type='text' placeholder='End Date' />");
+      start_date = "<input id='start_date' class='datepicker picker-left' type='text' placeholder='Start Date' />";
+      end_date = "<input id='end_date' class='datepicker picker-right' type='text' placeholder='End Date' />";
     }
-    to = $("<span id='activity-to-' class='datepicker'>to</span>");
+    to = "<span id='activity-to-' class='datepicker'>to</span>";
 
     datePicker.append(start_date).append(to).append(end_date);
     dateWidget.append(datePicker);
@@ -455,6 +508,18 @@ Field.prototype.render = function() {
         }
       });
     })();
+  } else if (this.type === "checklist") {
+    var field_label = this.label.toLowerCase().replace(/ /g, "_");
+    input = $.map(this.value, function(item, index) {
+      return "<input id='" + field_label +
+             "'type='checkbox' name='checklist[]' value='" + item.value +
+             (item.checked ? "' checked />" : "' />") + item.label;
+    }).join("");
+
+    $wrapper.attr("id", field_label);
+    $wrapper.append(l).append(input);
+    $wrapper.children("input").css("margin", "10px 5px");
+    html = $wrapper.prop("outerHTML");
   }
   return html;
 };
@@ -474,10 +539,10 @@ List.prototype.render = function(report) {
   var container = $("<div id='"+ this.type +"-header' class='list-header'></div>"),
       icon = $("<i class='fa fa-plus-square-o'></i>"),
       allCheckbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />"),
-      record_count = $("<span style='display: none;'>(<span>0</span> "+ this.type.capitalize() +"s Selected)</span>"),
+      $recordCount = $("<span style='display: none;'>(<span class='record-count'>0</span> "+ this.type.capitalize() +"s Selected)</span>"),
       body = $("<div id='"+ this.type +"' class='list-body' style='display: none;'></div>"),
       wrapper = $("<div id='"+ this.type +"-wrapper'></div>"),
-      prmFields = ["start_date", "end_date", "state", "city", "partner"],
+      prmFields = ["start_date", "end_date", "state", "city", "contact_type", "partner"],
       copiedFilter,
       list = this,
       key,
@@ -493,7 +558,7 @@ List.prototype.render = function(report) {
     allCheckbox = $("<input id='"+ this.type +"-all-checkbox' type='checkbox' checked />");
   }
 
-  container.append(icon).append(allCheckbox).append(" All " + list.type.capitalize() + "s ").append(record_count);
+  container.append(icon).append(allCheckbox).append(" All " + list.type.capitalize() + "s ").append($recordCount);
 
   wrapper.append(container).append(body);
   html = wrapper.prop("outerHTML");
@@ -535,6 +600,7 @@ List.prototype.filter = function(filter) {
                     "values": ["pk", "name", "count"]}
     );
     url += "/reports/ajax/mypartners/partner";
+
     if (typeof data.partner !== "undefined") {
       delete data.partner;
     }
@@ -542,6 +608,7 @@ List.prototype.filter = function(filter) {
     url += "/reports/ajax/mypartners/contact";
     $.extend(data, {"values": ["name", "email"]});
   }
+
 
   $.ajaxSettings.traditional = true;
   $.ajax({
@@ -552,7 +619,7 @@ List.prototype.filter = function(filter) {
     global: false,
     success: function(data) {
       var ul = $("<ul></ul>"),
-          selected = $("[id^='" + list.type + "-header'] span span"),
+          recordCount = $("[id^='" + list.type + "-header'] .record-count"),
           record,
           li;
 
@@ -594,7 +661,8 @@ List.prototype.filter = function(filter) {
         }
       }
 
-      $(selected).html(data.length).parent().show("fast");
+      $(recordCount).html(data.length).parent().show("fast");
+      updateShowModal();
     },
     error: function(e) {
       // TODO: change when testing is done to something more useful.
@@ -721,9 +789,23 @@ function updateAllCheckbox(element) {
 
 function updateItemsSelected(element) {
   var checked = $(element).parents(".list-body").find(":checked"),
-      num_selected = $(element).parents(".list-body").prev().children("span").children("span");
+      $recordCount = $(".record-count");
 
-  num_selected.html(checked.length);
+  $recordCount.html(checked.length);
+  updateShowModal();
+}
+
+function updateShowModal() {
+  var counts = [];
+  $(".record-count").map(function() {
+    counts.push($(this).text());
+  });
+
+  if (counts.indexOf("0") === -1) {
+    $("#show-modal").removeClass("disabled");
+  } else {
+    $("#show-modal").addClass("disabled");
+  }
 }
 
 
@@ -745,7 +827,6 @@ function renderNavigation(download) {
   var mainContainer = $('#main-container'),
       navigationBar;
   if (navigation) {
-    console.log('navigation');
     navigationBar = $('<div id="navigation" class="span12"></div>').append(function() {
       var $row = $('<div class="row"></div>'),
           $column1 = $('<div class="span4"></div>'),
