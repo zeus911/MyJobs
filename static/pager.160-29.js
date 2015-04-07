@@ -1,34 +1,18 @@
 function Pager() {
-    this._MIN_VISIBLE = 10;
     this._PAGE_SIZE = 20;
     this._HIDDEN_CLASS_NAME = "direct_hiddenOption";
-
-    // -count
-    this._sortType = 'count';
-
-    this._alpha_sort_direction = "-index";
-    this._numeric_sort_direction = "count";
-    this._current_sort_direction = this._numeric_sort_direction;
-
-    this._subnav_cache = {};
-    this._subnav_cache[this._current_sort_direction] = $('#direct_subnav_ul').html();
 }
 
 
 Pager.prototype = {
 
-    showLessHandler: function(e, num_items) {
-        // get the list to act on
-        var clickedLink = e.target;
-        var parentEl = $(clickedLink).parent();
-        var itemListId = this._getListElementFromContainerId(parentEl.attr('id'));
-
+    showLessHandler: function (e, num_items, parent) {
         // hide the items
-        this._showLessItems(itemListId, num_items, num_items);
+        this._showLessItems(parent, num_items, num_items);
 
         // toggle more/less link, if needed
-        this._toggleLessLink(itemListId, num_items);
-        this._toggleMoreLink(itemListId);
+        this._toggleLessLink(parent, num_items);
+        this._toggleMoreLink(parent);
 
         // stop default behavior of the link, since we're
         // not really using it as a link.  yeah, its not ideal.
@@ -36,139 +20,54 @@ Pager.prototype = {
     },
 
     showMoreHandler: function(e, num_items, parent) {
-        var clickedLink = e.target;
-        var parentEl = $(clickedLink).parent();
-        var type = parentEl.attr('data-type');
-        var itemListId = this._getListElementFromContainerId(parentEl.attr('id'));
+        var type = parent.attr('data-type');
 
-        this._showMoreItems(itemListId, num_items, type, parent);
+        this._showMoreItems(num_items, type, parent);
 
         // toggle more/less links, if needed
-        this._toggleLessLink(itemListId, num_items);
+        this._toggleLessLink(parent, num_items);
 
         // stop default behavior of the link, since we're
         // not really using it as a link.  yeah, its not ideal.
         return false;
     },
 
-    sortNumericHandler: function(e) {
-        this._numeric_sort_direction = (this._numeric_sort_direction == '-count') ? 'count' : '-count';
-        this._current_sort_direction = this._numeric_sort_direction;
+    _toggleLessLink: function(moreLessSpan, minVisible) {
+        /* Turn the 'Less' link off when we're at the minVisible limit. */
+        var relatedList = this._getListFromMoreLessLinksSpan(moreLessSpan);
 
-        if(this._subnav_cache[this._numeric_sort_direction]) {
-            $('#direct_subnavUl').html(this._subnav_cache[this._numeric_sort_direction]);
-            $('#direct_moreLessLinks_subnavUl .direct_optionsLess').hide();
-            $('#direct_moreLessLinks_subnavUl .direct_optionsMore').show();
-        } else {
-            if(this._numeric_sort_direction[0] == '-') {
-                sort_direction = 'reverse';
-            } else {
-                sort_direction = 'standard';
-            }
-            sort_by = 'count';
+        var lessLink = moreLessSpan.children('.direct_optionsLess')[0];
+        var moreLink = moreLessSpan.children('.direct_optionsMore')[0];
 
-            data = {
-                'offset': 0,
-                'num_items': pager_num_items, // declared in seo_base.html
-                'sort': sort_by,
-                'sort_direction': sort_direction,
-                'type': 'subNav'
-            };
-
-            var that = this;
-            var url = this._build_url('subNav');
-            $.get(
-                url,
-                data,
-                function(data){
-                    $('#direct_subnavUl').html(data);
-                    $('#direct_moreLessLinks_subnavUl .direct_optionsLess').hide();
-                    $('#direct_moreLessLinks_subnavUl .direct_optionsMore').show();
-                    that._subnav_cache[that._numeric_sort_direction] = $('#direct_subnav_ul').html();
-                });
+        var currNumVisible = relatedList.children(':visible').length;
+        if(currNumVisible > minVisible) {
+            $(lessLink).show();
         }
-        // stop default behavior of the link, since we're
-        // not really using it as a link.  yeah, its not ideal.
-        return false;
-    },
-
-    sortAlphaHandler: function(e) {
-        this._alpha_sort_direction = (this._alpha_sort_direction == 'index') ? '-index' : 'index';
-        this._current_sort_direction = this._alpha_sort_direction;
-
-        if(this._subnav_cache[this._alpha_sort_direction]) {
-            $('#direct_subnavUl').html(this._subnav_cache[_alpha_sort_direction]);
-            $('#direct_moreLessLinks_subnavUl .direct_optionsLess').hide();
-            $('#direct_moreLessLinks_subnavUl .direct_optionsMore').show();
-        } else {
-            if(this._alpha_sort_direction[0] == '-') {
-                sort_direction = 'reverse';
-            } else {
-                sort_direction = 'standard';
-            }
-            sort_by = 'index';
-            data = {
-                'offset': 0,
-                'num_items': pager_num_items, // declared in seo_base.html
-                'sort': sort_by,
-                'sort_direction': sort_direction,
-                'type': 'subNav'
-            };
-
-            var that = this;
-            var url = this._build_url('subNav');
-            $.get(
-                url,
-                data,
-                function(data){
-                    $('#direct_subnavUl').html(data);
-                    $('#direct_moreLessLinks_subnavUl .direct_optionsLess').hide();
-                    $('#direct_moreLessLinks_subnavUl .direct_optionsMore').show();
-                    that._subnav_cache[that._current_sort_direction] = $('#direct_subnav_ul').html();
-                });
-        }
-        // stop default behavior of the link, since we're
-        // not really using it as a link.  yeah, its not ideal.
-        return false;
-    },
-
-    _toggleLessLink: function(itemListId, minVisible) {
-        // we want to turn the 'Less' link off when
-        // we're at the minVisible limit.
-
-        // if minVisible = 10 and there's 11, we want
-        // to just hide 1 element, if there's 16 showing
-        // we'd want to hide 6
-        var jqItemList = $("#"+itemListId);
-        var currNumVisible = jqItemList.children(':visible').length;
-
-        var jqLessLink = this._getLinkForItemList(jqItemList, "less");
-        var jqMoreLink = this._getLinkForItemList(jqItemList, "more");
-
-        if(currNumVisible > minVisible){
-            jqLessLink.show()
-        }else{
-            jqLessLink.hide();
-            jqMoreLink.focus();
+        else {
+            $(lessLink).hide();
+            $(moreLink).focus();
         }
     },
 
-    _toggleMoreLink: function(itemListId) {
-        var jqItemList = $("#"+itemListId);
-        var numHiddenItems = jqItemList.children("."+this._HIDDEN_CLASS_NAME).length;
+    _toggleMoreLink: function(moreLessSpan) {
+        var relatedList =  this._getListFromMoreLessLinksSpan(moreLessSpan);
 
-        var jqMoreLink = this._getLinkForItemList(jqItemList, "more");
-        (numHiddenItems > 0) ? jqMoreLink.show() : jqMoreLink.hide();
+        var numHiddenItems = relatedList.children("."+this._HIDDEN_CLASS_NAME).length;
+
+        var moreLink = moreLessSpan.children('.direct_optionsMore')[0];
+
+        (numHiddenItems > 0) ? $(moreLink).show() : $(moreLink).hide();
     },
 
-    _getLinkForItemList: function(jqItemList, moreOrLess) {
-        var itemListId = jqItemList.attr('id');
-        var linkClassNames = {
-            'more': ".direct_optionsMore",
-            'less': ".direct_optionsLess"
-        };
-        var selector = "#direct_moreLessLinks_" + itemListId.split('_')[1] + " " + linkClassNames[moreOrLess];
-        return $(selector);
+    _getListFromMoreLessLinksSpan: function(moreLessSpan) {
+        // The container for all the facet blocks.
+        var parentDiv = $(moreLessSpan).parent();
+
+        // From the container for all the facet blocks we can get the
+        // exact list we want to work with.
+        var itemListId = this._getListElementFromContainerId(moreLessSpan.attr('id'));
+
+        return $(parentDiv).children("#" + itemListId);
     },
 
     _getListElementFromContainerId: function(linkContainerId) {
@@ -194,13 +93,13 @@ Pager.prototype = {
         return baseElementId.replace('%s', listId);
     },
 
-    _showMoreItems: function(listId, numToShow, type, parent){
-        var itemList = $("#" + listId);
+    _showMoreItems: function(numToShow, type, parent) {
+        var relatedList = this._getListFromMoreLessLinksSpan(parent);
 
-        var hiddenItems = itemList.children("." + this._HIDDEN_CLASS_NAME);
+        var hiddenItems = relatedList.children("." + this._HIDDEN_CLASS_NAME);
         var currNumHidden = hiddenItems.length;
-        var offset = parent.attr('data-offset');
-        focus_item = $("#" + listId + " .direct_hiddenOption:first a");
+
+        var focus_item = relatedList.children(this._HIDDEN_CLASS_NAME + ":first li");
 
         // if we have current hidden ones, lets show those
         if(currNumHidden > 0) {
@@ -214,27 +113,30 @@ Pager.prototype = {
             currNumHidden -= numToShow;
         }
 
-        if(currNumHidden == 0) {
+        if(currNumHidden === 0) {
             // lets see if we have any to get from the server
             var data = {
-                'offset': offset,
+                'offset': parent.attr('data-offset'),
                 'num_items': this._PAGE_SIZE
             };
-            var qsParams = this._getQueryParams();
-            data['q'] = qsParams['q'];
-            data['location'] = qsParams['location'];
-            data['moc'] = qsParams['moc'];
-            data['company'] = qsParams['company'];
-            data['filter_path'] = window.location.pathname;
 
-            this._ajax_getItems(type, data, listId, parent);
+            var qsParams = this._getQueryParams();
+
+            data.q = qsParams.q;
+            data.location = qsParams.location;
+            data.moc = qsParams.moc;
+            data.company = qsParams.company;
+            data.filter_path = window.location.pathname;
+
+            this._ajax_getItems(type, data, parent);
         }
         focus_item.focus();
     },
 
-    _showLessItems: function(listId, numToHide, minVisible){
-        var itemList = $("#" + listId);
-        var visibleItems = itemList.children(':visible');
+    _showLessItems: function(parent, numToHide, minVisible){
+        var relatedList = this._getListFromMoreLessLinksSpan(parent);
+
+        var visibleItems = relatedList.children(':visible');
         var numVisible = visibleItems.length;
         var numAvailableToHide = numVisible - minVisible;
 
@@ -248,14 +150,16 @@ Pager.prototype = {
 
     },
 
-    _ajax_getItems: function(type, data, elem, parent){
-        var that = this;
+    _ajax_getItems: function(type, data, parent){
+        // Preserve the reference to "this" so it can be used inside the
+        // ajax call.
+        var alsoThis = this;
         var url = this._build_url(type);
         $.get(
             url,
             data,
             function(html) {
-                that._getItemsSuccessHandler(html, elem, parent);
+                alsoThis._getItemsSuccessHandler(html, parent);
             }
         );
     },
@@ -263,7 +167,6 @@ Pager.prototype = {
     _build_url: function(type){
         // Build the URL with the current path as our
         // 'filter' that is sent into to filter objects
-        var path = window.location.pathname;
         var urls = {
             "title": "/ajax/titles/",
             "city": "/ajax/cities/",
@@ -276,26 +179,28 @@ Pager.prototype = {
             "mappedmoc": "/ajax/mapped/",
             "company": "/ajax/company-ajax/",
             "listing": "/ajax/joblisting/",
-            "subNav": "/ajax/primary_nav_items/"
+            "search": "/ajax/joblisting/"
         };
 
-        if (type == "search") {
-            return "/ajax/joblisting/";
-        } else {
-            return urls[type];
-        }
+        return urls[type];
     },
 
-    _getItemsSuccessHandler: function(html, insertIntoElem, parent){
+    _getItemsSuccessHandler: function(html, parent) {
         // Since the update was successful, the offset can be updated to
         // reflect the requested amount.
-        parent.attr('data-offset', parseInt(parent.attr('data-offset')) + this._PAGE_SIZE)
+        parent.attr('data-offset', parseInt(parent.attr('data-offset')) + this._PAGE_SIZE);
 
         // From the Django templates we get a lot of line breaks,
-        // so we'll remove them right here, just to be safe
+        // so we'll remove them right here, just to be safe.
         html = html.replace(/\n/g, "");
-        $("#" + insertIntoElem).children(":last").after(html);
-        this._toggleMoreLink(insertIntoElem);
+
+        var parentDiv = $(parent).parent();
+
+        var itemListId = this._getListElementFromContainerId(parent.attr('id'));
+        var relatedList = $(parentDiv).children("#" + itemListId);
+
+        $(relatedList).children(":last").after(html);
+        this._toggleMoreLink(parent);
     },
 
     _getQueryParams: function() {
@@ -307,37 +212,59 @@ Pager.prototype = {
 
         return result;
     }
+
 };
 
 $(document).ready(function(){
 	var pager = new Pager();
+
     $(document).on("click", "a.direct_optionsMore", function(e) {
-        return pager.showMoreHandler(e, $(this).parent().attr('data-num-items'), $(this).parent());
+        var parent = $(this).parent();
+        var num_items = parent.attr('data-num-items');
+        return pager.showMoreHandler(e, num_items, parent);
     });
+
 	$('#button_moreJobs').click(function(e) {
 		e.preventDefault();
 		var parent = $(this).parent();
 		var num_items = parseInt(parent.attr('data-num-items'));
 		var offset = parseInt(parent.attr('offset'));
-		var type = parent.attr('data-type');
 		var path = window.location.pathname;
 		var query = window.location.search;
-		var ajax_url = (type == "search") ? "/ajax/moresearch/" + query : path + "ajax/joblisting/" + query
-		focus_item = $('#direct_listingDiv .direct_hiddenOption .direct_joblisting:first-child h4 a');
-		$('#direct_listingDiv .direct_hiddenOption').removeClass('direct_hiddenOption');
-		focus_item.focus();
+		var ajax_url = path + "ajax/joblisting/" + query;
+
+        var hiddenFeaturedList = $('#direct_listingDiv .featured_jobListing.direct_hiddenOption .direct_joblisting');
+        var hiddenDefaultList = $('#direct_listingDiv .default_jobListing.direct_hiddenOption .direct_joblisting');
+
+        var focus_item;
+        var firstItem;
+        if(hiddenFeaturedList.length > 0) {
+            firstItem = $(hiddenFeaturedList)[0];
+        }
+        else {
+            firstItem = $(hiddenDefaultList)[0];
+        }
+        focus_item = $(firstItem).find('a');
+        focus_item.focus();
+
+        $('#direct_listingDiv .direct_hiddenOption').removeClass('direct_hiddenOption');
+
 		$.ajax({
 			url: ajax_url,
 			data: {'num_items': num_items, 'offset': offset},
 			success: function (data) {
 						$('#direct_listingDiv ul:last').after(data);
-						parent.attr('offset', (offset + num_items).toString());						
+						parent.attr('offset', (offset + num_items).toString());
 					}
 			});
 	});
+
 	$('a.direct_optionsLess').click(function(e) {
-		return pager.showLessHandler(e, $(this).parent().attr('data-num-items'));
+        var parent = $(this).parent();
+        var num_items = parent.attr('data-num-items');
+		return pager.showLessHandler(e, num_items, parent);
 	});
+
 	$(".direct_offsiteContainer").hover(function() {
 		$(this).children('.direct_offsiteHoverDiv').show();
 			}, function() {
@@ -361,15 +288,5 @@ $(document).ready(function(){
 	$('.direct_socialLink').click(function(){
 		goalClick('/G/social-media-click', this.href);
 		return false;
-	});
-	
-	// numeric sort link
-	$('#direct_numeric').click(function(e) {
-		return pager.sortNumericHandler(e);
-	});
-	
-	// alphabetic sort link
-	$('#direct_alpha').click(function(e) {
-		return pager.sortAlphaHandler(e);
 	});
 });
