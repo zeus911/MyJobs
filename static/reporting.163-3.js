@@ -808,7 +808,9 @@ function updateAllCheckbox(element) {
 
 function updateItemsSelected(element) {
   var checked = $(element).parents(".list-body").find(":checked"),
-      $recordCount = $(".record-count");
+      $recordCount = $(element).parents(".list-body").prev().find(".record-count");
+
+  console.log(element);
 
   $recordCount.html(checked.length);
   updateShowModal();
