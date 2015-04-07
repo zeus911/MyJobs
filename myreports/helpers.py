@@ -83,7 +83,6 @@ def parse_params(querydict):
 # TODO:
 #   * find a better way to handle counts
 #   * do something other than isinstance checks (duck typing anyone?)
-
 def serialize(fmt, data, counts=None, values=None):
     """
     Like `django.core.serializers.serialize`, but produces a simpler structure
@@ -123,12 +122,15 @@ def serialize(fmt, data, counts=None, values=None):
 
             if needle not in haystack:
                 haystack.append(needle)
-                # strip HTML tags from string values
-                records.append({
-                    key: strip_tags(value) if isinstance(value, basestring)
-                    else value for key, value in record.items()})
+                records.append(record)
 
         data = records
+
+        # strip HTML tags from string values
+        for index, record in enumerate(data[:]):
+            data[index] = {
+                key: strip_tags(value) if isinstance(value, basestring)
+                else value for key, value in record.items()}
 
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)
