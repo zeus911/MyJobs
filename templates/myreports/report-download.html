@@ -1,0 +1,25 @@
+<script type="text/javascript" src="{{ STATIC_URL }}custom.154-10.js{{ gz }}"></script>
+
+<script type="text/javascript">
+$(document).on("ready", function() {
+    $(".cardHolder").sortable({
+    });
+});
+</script>
+
+<style>
+.fieldCard {
+    border: 1px solid black;
+    margin: 5px;
+}
+</style>
+
+<div class="span8">
+    <div class="cardHolder">
+        {% for col in columns %}
+        <div class="fieldCard" id="{{ col.split|join:"_"|lower }}">
+            {{ col }}
+        </div>
+        {% endfor %}
+    </div>
+</div>
