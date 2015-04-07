@@ -95,7 +95,7 @@ class PartnerSavedSearchFormTests(MyJobsBase):
             'sort_by': 'Relevance',
             'jobs_per_email': 5,
             'email': self.contact.email,
-            }
+        }
 
         settings.SITE = SeoSite.objects.first()
         # This request is only used in RequestForms, where all we care about
