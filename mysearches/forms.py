@@ -1,5 +1,5 @@
 from django.forms import (BooleanField, CharField, CheckboxInput, ChoiceField,
-                          HiddenInput, ModelForm, RadioSelect, Select,
+                          HiddenInput, RadioSelect, Select,
                           TextInput, Textarea, URLField, ValidationError)
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe

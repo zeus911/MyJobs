@@ -98,6 +98,8 @@ class PartnerSavedSearchFormTests(MyJobsBase):
             }
 
         settings.SITE = SeoSite.objects.first()
+        # This request is only used in RequestForms, where all we care about
+        # is request.user.
         self.request = RequestFactory().get(
             reverse('partner_savedsearch_save'))
         self.request.user = self.user
@@ -153,6 +155,8 @@ class PartnerSavedSearchFormTests(MyJobsBase):
     def test_disable_partner_saved_search(self):
         pss = PartnerSavedSearch.objects.get()
 
+        # Partner saved search can be activated/deactivated if unsubscriber
+        # is not one of the recipient's email addresses.
         form = PartnerSavedSearchForm(instance=pss, request=self.request,
                                       data=self.partner_search_data)
         self.assertFalse(form.fields['is_active'].widget.attrs.get('disabled',
@@ -161,11 +165,15 @@ class PartnerSavedSearchFormTests(MyJobsBase):
         pss.unsubscriber = pss.email
         pss.save()
 
+        # PRM users can no longer toggle the state of this partner saved search
+        # as the user has unsubscribed.
         form = PartnerSavedSearchForm(instance=pss, request=self.request,
                                       data=self.partner_search_data)
         self.assertTrue(form.fields['is_active'].widget.attrs.get('disabled',
                                                                   False))
 
+        # Since the unsubscriber is also the recipient, the recipient can still
+        # toggle the state of this partner saved search.
         self.request.user = pss.user
         form = PartnerSubSavedSearchForm(instance=pss, request=self.request,
                                          data=self.partner_search_data)
