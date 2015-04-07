@@ -11,7 +11,7 @@ window.onpopstate = function(event) {
   } else if (state.page && state.page === 'new') {
     historyNew = function() {
       report = new Report(state.report.types);
-      report.bindEvents();
+      report.unbindEvents().bindEvents();
       $("#container").addClass("rpt-container");
       report.renderFields(report.fields);
     };
@@ -26,8 +26,7 @@ window.onpopstate = function(event) {
       inputs = state.inputs;
       report = new Report(["prm"]);
       report.createCloneReport(inputs);
-      report.unbindEvents();
-      report.bindEvents();
+      report.unbindEvents().bindEvents();
       $("#container").addClass("rpt-container");
       report.renderFields(report.fields);
     };
@@ -249,7 +248,7 @@ Report.prototype.bindEvents = function() {
 
 
   // Actually submits the report's data to create a Report object in db.
-  $(document.body).on("click", "#gen-report", function(e) {
+  $("body").on("click", "#gen-report", function(e) {
     var csrf = read_cookie("csrftoken"),
         data = {"csrfmiddlewaretoken": csrf},
         url = location.protocol + "//" + location.host + "/reports/view/mypartners/contactrecord",
@@ -277,12 +276,16 @@ Report.prototype.bindEvents = function() {
       }
     });
   });
+
+  return this;
 };
 
 
 Report.prototype.unbindEvents = function() {
   $("#main-container").off("click");
-  $(document.body).off("click", "#gen-report");
+  $("body").off("click", "#gen-report");
+
+  return this;
 };
 
 
@@ -359,6 +362,8 @@ Report.prototype.renderFields = function(fields) {
 
   html += "<div class=\"show-modal-holder\"><a id=\"show-modal\" class=\"btn primary\">Generate Report</a></div>";
   container.html(html);
+
+
 };
 
 
@@ -390,6 +395,8 @@ Report.prototype.createCloneReport = function(json) {
       }
     }
   }
+
+  return this;
 };
 
 
@@ -630,7 +637,7 @@ $(document).ready(function() {
     // Create js Report object and set up next step.
     report = new Report(types);
     history.pushState({'page': 'new', 'report': report}, 'Create Report');
-    report.bindEvents();
+    report.unbindEvents().bindEvents();
     $("#container").addClass("rpt-container");
     report.renderFields(report.fields);
   });
