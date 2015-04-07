@@ -61,9 +61,9 @@ var checklists = {
 // Field Params: label, type, required, value
 Report.prototype.createFields = function(types) {
   var reports = {"prm": [new Field("Select Date", "date"),
-                         new Field("Contact Type", "checklist", false, checklists.contact_type),
                          new Field("State", "state"),
                          new Field("City", "text"),
+                         new Field("Contact Type", "checklist", false, checklists.contact_type),
                          new List("Select Partners", "partner", true),
                          new List("Select Contacts", "contact", true)]},
         fields = [],
@@ -454,7 +454,7 @@ Report.prototype.createCloneReport = function(json) {
 var Field = function(label, type, required, value) {
   this.label = label;
   this.type = type;
-  this.required = typeof required !== 'undefined';
+  this.required = !!required || false;
   this.value = value || '';
 };
 
