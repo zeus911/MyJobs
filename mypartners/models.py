@@ -197,6 +197,7 @@ class Contact(models.Model):
     def _parse_parameters(self, parameters, records):
         """Used to parse state during `from_search()`."""
 
+        parameters.pop('contact_type', None)
         start_date = parameters.pop('start_date', None)
         end_date = parameters.pop('end_date', None)
         state = parameters.pop('state', None)
