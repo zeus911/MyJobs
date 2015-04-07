@@ -819,7 +819,7 @@ function renderDownload(report_id) {
       $("#download-report").attr("href", "download?" + $.param(ctx));
 
       $(".card-holder").sortable({
-        //"handle": "span.fa-bars",
+        "handle": "span.fa-bars",
         "axis": "y",
         "update": function(e, ui) {
           values = $.map($(".enable-column:checked"), function(item, index) {
