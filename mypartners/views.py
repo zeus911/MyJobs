@@ -434,18 +434,17 @@ def edit_location(request):
         Location, id=request.REQUEST.get('location'))
 
     if request.method == 'POST':
-        form = LocationForm(request.POST)
+        if location:
+            form = LocationForm(request.POST, instance=location)
+        else:
+            form = LocationForm(request.POST)
 
         if form.is_valid():
-            if location:
-                Location.objects.filter(
-                    id=location.id).update(**form.cleaned_data)
-            else:
-                location = Location.objects.create(**form.cleaned_data)
+            location = form.save(request)
 
-                if location not in contact.locations.all():
-                    contact.locations.add(location)
-                    contact.save()
+            if location not in contact.locations.all():
+                contact.locations.add(location)
+                contact.save()
 
             return HttpResponseRedirect(
                 reverse('edit_contact') + "?partner=%s&id=%s" % (
@@ -462,7 +461,6 @@ def edit_location(request):
         ctx['contact'] = str(contact.id)
     if location:
         ctx['location'] = str(location.id)
-
 
     return render_to_response(
         'mypartners/edit_location.html', ctx, RequestContext(request))
