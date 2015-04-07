@@ -1470,13 +1470,8 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
     margin: 5px;
 }
 
-.field-card > .fa {
-    margin: 5px;
-}
-
 .field-card > .enable-column {
     margin: 5px;
-    margin-left: 0;
 }
 
 .show-modal-holder {

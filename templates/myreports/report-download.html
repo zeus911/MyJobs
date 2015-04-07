@@ -2,7 +2,6 @@
     <div class="card-holder">
         {% for col in columns %}
         <div class="field-card" id="{{ col.split|join:"_"|lower }}">
-            <span class="fa fa-bars" title="Sort"></span>
             <input class="enable-column" type="checkbox" value="{{ col.split|join:"_"|lower }}"/>{{ col }}
         </div>
         {% endfor %}
