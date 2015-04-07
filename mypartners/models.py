@@ -763,6 +763,7 @@ class ContactLogEntry(models.Model):
     # A value that can meaningfully (email, name) identify the contact.
     contact_identifier = models.CharField(max_length=255)
     content_type = models.ForeignKey(ContentType, blank=True, null=True)
+    delta = models.TextField(blank=True)
     object_id = models.TextField('object id', blank=True, null=True)
     object_repr = models.CharField('object repr', max_length=200)
     partner = models.ForeignKey(Partner, null=True, on_delete=models.SET_NULL)
@@ -774,8 +775,7 @@ class ContactLogEntry(models.Model):
 
         """
         try:
-            return self.content_type.get_object_for_this_type(
-                pk=self.object_id)
+            return self.content_type.get_object_for_this_type(pk=self.object_id)
         except self.content_type.model_class().DoesNotExist:
             return None
 
