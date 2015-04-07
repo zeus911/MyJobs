@@ -728,8 +728,6 @@ $(document).ready(function() {
       report_id = $(this).parents("tr").data("report");
     }
 
-    history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
-
     renderGraphs(report_id);
   });
 
@@ -768,7 +766,6 @@ $(document).ready(function() {
 
   // View Archive
   subpage.on("click", "#report-archive", function() {
-    history.pushState({'page': 'report-archive'}, "Report Archive");
     renderArchive();
   });
 });
@@ -921,6 +918,8 @@ function renderGraphs(report_id) {
                         1: {'name': "Interviews",   'count': interviews,   'style': "color: #4BB1CF"},
                         2: {'name': "Hires",        'count': hires,        'style': "color: #FAA732"},
                         3: {'name': "Records",      'count': referrals,    'style': "color: #5F6C82"}};
+
+      history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
 
       // Grab google's jsapi to load chart files.
       $.getScript("https://www.google.com/jsapi", function() {
@@ -1090,6 +1089,7 @@ function renderArchive(callback) {
     url: "archive",
     data: {},
     success: function(data) {
+      history.pushState({'page': 'report-archive'}, "Report Archive");
       $("#main-container").html(data);
     }
   }).complete(function() {
