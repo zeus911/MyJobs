@@ -332,6 +332,7 @@ class Partner(models.Model):
         end_date = parameters.pop('end_date', None)
         state = parameters.pop('state', None)
         city = parameters.pop('city', None)
+        contact_type = parameters.pop('contact_type', None)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -353,6 +354,13 @@ class Partner(models.Model):
 
         if city:
             records = records.filter(contact__locations__city__icontains=city)
+
+        if contact_type:
+            if not hasattr(contact_type, '__iter__'):
+                contact_type = [contact_type]
+
+            records = records.filter(
+                contactrecord__contact_type__in=contact_type)
 
         return records
 
