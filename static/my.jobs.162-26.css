@@ -1973,7 +1973,7 @@ table#row-link-table {
     width: 100%;
 }
 
-.table-scrollable tbody{
+.table-scrollable tbody {
     max-height: 200px;
     width: 100%;
     overflow-y: auto;

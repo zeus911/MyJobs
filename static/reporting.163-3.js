@@ -7,6 +7,7 @@ window.onpopstate = function(event) {
       report;
 
   if (state.page && state.page === 'overview') {
+    navigation = false;
     renderOverview();
   } else if (state.page && state.page === 'new') {
     historyNew = function() {
@@ -14,13 +15,20 @@ window.onpopstate = function(event) {
       report.unbindEvents().bindEvents();
       $("#container").addClass("rpt-container");
       report.renderFields(report.fields);
+      renderNavigation();
     };
 
+    navigation = true;
     $sidebar.length > 0 ? historyNew() : renderOverview(historyNew);
   } else if (state.page && state.page === 'view-report') {
-    renderGraphs(state.reportId);
+    var callback = function() {
+      renderNavigation(true);
+    };
+    navigation = true;
+    renderGraphs(state.reportId, callback);
   } else if (state.page && state.page === 'report-archive') {
-    renderArchive();
+    navigation = true;
+    renderArchive(renderNavigation);
   } else if (state.page && state.page === 'clone') {
     historyClone = function() {
       inputs = state.inputs;
@@ -29,14 +37,22 @@ window.onpopstate = function(event) {
       report.unbindEvents().bindEvents();
       $("#container").addClass("rpt-container");
       report.renderFields(report.fields);
+      renderNavigation();
     };
 
+    navigation = true;
     $sidebar.length > 0 ? historyClone() : renderOverview(historyClone);
   }
 };
 
-// Variable to get through beforeunload listener without displaying message.
+// Determines if IE is being used. If it is IE returns IE version #. If not will return false.
+var IE = isIE();
+
+// Used to get through beforeunload listener without displaying message.
 var reload = false;
+
+// Determines if a navigation bar is needed.
+var navigation = false;
 
 // Handles storing data, rendering fields, and submitting report. See prototype functions
 var Report = function(types) {
@@ -702,6 +718,8 @@ $(document).ready(function() {
     // Create js Report object and set up next step.
     report = new Report(types);
     history.pushState({'page': 'new', 'report': report}, 'Create Report');
+    navigation = true;
+    renderNavigation();
     report.unbindEvents().bindEvents();
     $("#container").addClass("rpt-container");
     report.renderFields(report.fields);
@@ -720,7 +738,10 @@ $(document).ready(function() {
 
   // View Report
   subpage.on("click", ".report > a, .fa-eye, .view-report", function() {
-    var report_id;
+    var report_id,
+        callback = function() {
+          renderNavigation(true);
+        };
 
     if ($(this).attr("id") !== undefined) {
       report_id = $(this).attr("id").split("-")[1];
@@ -730,7 +751,8 @@ $(document).ready(function() {
 
     history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
 
-    renderGraphs(report_id);
+    navigation = true;
+    renderGraphs(report_id, callback);
   });
 
 
@@ -764,12 +786,16 @@ $(document).ready(function() {
       data.id = $(this).parents("tr").data("report");
       renderOverview(cloneReport);
     }
+
+    navigation = true;
+    renderNavigation();
   });
 
   // View Archive
   subpage.on("click", "#report-archive", function() {
     history.pushState({'page': 'report-archive'}, "Report Archive");
-    renderArchive();
+    navigation = true;
+    renderArchive(renderNavigation);
   });
 });
 
@@ -810,11 +836,10 @@ function updateItemsSelected(element) {
   var checked = $(element).parents(".list-body").find(":checked"),
       $recordCount = $(element).parents(".list-body").prev().find(".record-count");
 
-  console.log(element);
-
   $recordCount.html(checked.length);
   updateShowModal();
 }
+
 
 function updateShowModal() {
   var counts = [];
@@ -844,36 +869,48 @@ function pieOptions(height, width, chartArea_top, chartArea_left, chartArea_heig
   return options;
 }
 
+
+var $navigationBar = $("#navigation");
+
 function renderNavigation(download) {
   var mainContainer = $('#main-container'),
-      navigationBar;
+      $navigationBar = $navigationBar || $("#navigation");
+
   if (navigation) {
-    navigationBar = $('<div id="navigation" class="span12"></div>').append(function() {
-      var $row = $('<div class="row"></div>'),
-          $column1 = $('<div class="span4"></div>'),
-          $column2 = $column1.clone(),
-          $column3 = $column1.clone(),
-          $span = $('<span id="goBack"> Back</span>'),
-          $i = $('<i class="fa fa-arrow-circle-o-left fa-3x"></i>'),
-          $download;
+    if (!$navigationBar.length) {
+      $navigationBar = $('<div id="navigation" class="span12" style="display:none;"></div>').append(function() {
+        var $row = $('<div class="row"></div>'),
+            $column1 = $('<div class="span4"></div>'),
+            $column2 = $column1.clone(),
+            $column3 = $column1.clone(),
+            $span = $('<span id="goBack"> Back</span>'),
+            $i = $('<i class="fa fa-arrow-circle-o-left fa-3x"></i>'),
+            $download;
 
-      $span.prepend($i).append($download);
-      $span.on("click", function() {
-        renderOverview(download);
+        $span.prepend($i);
+        $span.on("click", function() {
+          if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+            history.back();
+          } else {
+            renderOverview();
+          }
+        });
+        $row.append($column1.append($span));
+
+        if (download) {
+          $download = $('<i class="fa fa-download"></i>');
+          $column3.append($download);
+        }
+
+        $row.append($column2).append($column3);
+
+        return $row;
       });
-      $row.append($column1.append($span));
-
-      if (download) {
-        $download = $('<i class="fa fa-download"></i>');
-      }
-
-      $row.append($column2).append($column3);
-
-      return $row;
-    });
-    mainContainer.prepend(navigationBar);
+      mainContainer.prepend($navigationBar);
+    }
+    $navigationBar.show();
   } else {
-    $("#navigation").remove();
+    $navigationBar.remove();
   }
 }
 
@@ -894,9 +931,12 @@ function renderOverview(callback) {
   });
 }
 
-function renderGraphs(report_id) {
+
+function renderGraphs(report_id, callback) {
   var data = {'id': report_id},
       url = location.protocol + "//" + location.host; // https://secure.my.jobs
+
+  navigation = true;
 
   $.ajax({
     type: "GET",
@@ -1078,11 +1118,16 @@ function renderGraphs(report_id) {
 
           contactContainer = $('<div id="report-contacts" class="span12"></div>').append(topThreeRow).append(restRow);
           $("#main-container").append(contactContainer);
+
+          if (typeof callback === "function") {
+            callback();
+          }
         }});
       });
     }
   });
 }
+
 
 function renderArchive(callback) {
   $.ajax({
@@ -1097,4 +1142,11 @@ function renderArchive(callback) {
       callback();
     }
   });
+}
+
+
+// Checks to see if browser is IE. If it is then get version.
+function isIE() {
+    var myNav = navigator.userAgent.toLowerCase();
+    return (myNav.indexOf('msie') !== -1) ? parseInt(myNav.split('msie')[1]) : false;
 }
