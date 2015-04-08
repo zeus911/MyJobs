@@ -169,8 +169,8 @@ class PartnerSavedSearchForm(RequestForm):
     class Meta:
         model = PartnerSavedSearch
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
-                  'frequency', 'day_of_month',
-                  'day_of_week', 'jobs_per_email', 'partner_message', 'notes')
+                  'frequency', 'day_of_month', 'day_of_week', 'jobs_per_email',
+                  'partner_message', 'notes')
         exclude = ('provider', 'sort_by', 'unsubscriber')
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
@@ -232,7 +232,6 @@ class PartnerSavedSearchForm(RequestForm):
         self.cleaned_data['feed'] = feed
 
         if 'is_active' in self.changed_data:
-            self.changed_data.append('unsubscriber')
             if self.instance.is_active:
                 # Saved search is being deactivated; set unsubscriber
                 self.instance.unsubscriber = self.request.user.email
