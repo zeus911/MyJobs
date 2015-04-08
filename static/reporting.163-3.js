@@ -919,7 +919,8 @@ function renderNavigation(download) {
       });
       mainContainer.prepend($navigationBar);
     }
-    $navigationBar.show();
+    // TODO: Uncomment once UI for navbar is done.
+    //$navigationBar.show();
   } else {
     $navigationBar.remove();
   }
