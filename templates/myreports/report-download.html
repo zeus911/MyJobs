@@ -1,8 +1,8 @@
 <div class="span8">
     <div class="card-holder">
-        {% for col in columns %}
+        {% for name, checked in columns.items %}
         <div class="field-card" id="{{ col.split|join:"_"|lower }}">
-            <input class="enable-column" type="checkbox" value="{{ col.split|join:"_"|lower }}"/>{{ col }}
+            <input class="enable-column" type="checkbox" value="{{ name.split|join:"_"|lower }}"{% if checked %}checked{% endif %} />{{ name }}
         </div>
         {% endfor %}
     </div>

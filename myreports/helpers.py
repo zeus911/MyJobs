@@ -112,23 +112,26 @@ def serialize(fmt, data, counts=None, values=None):
             data = [dict({'count': counts[record['pk']]}, **record)
                     for record in data]
 
-        # Cant' use a ValueQuerSet for serialize, which means we lose the
-        # ability to use distinct. As such, we fake it by doing so manually
-        if values:
-            records = []
-            haystack = []
+    # Cant' use a ValueQuerSet for serialize, which means we lose the
+    # ability to use distinct. As such, we fake it by doing so manually
+    if values:
+        # using a list comprehension to preserve order
+        values = [value for value in values if value in data[0].keys()]
+        records = []
+        haystack = []
 
-            for record in data:
-                needle = [record[value] for value in values] or record['pk']
+        for record in data:
+            needle = [record[value] for value in values] or record['pk']
 
-                if needle not in haystack:
-                    haystack.append(needle)
-                    # strip HTML tags from string values
-                    records.append({
-                        key: strip_tags(value) if isinstance(value, basestring)
-                        else value for key, value in record.items()})
+            if needle not in haystack:
+                haystack.append(needle)
+                # strip HTML tags from string values
+                records.append({
+                    key: strip_tags(record[key])
+                    if isinstance(record[key], basestring) else record[key]
+                    for key in values})
 
-            data = records
+        data = records
 
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)

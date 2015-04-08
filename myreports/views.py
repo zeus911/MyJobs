@@ -186,17 +186,16 @@ class ReportView(View):
 
             params.pop('csrfmiddlewaretoken', None)
             name = params.pop('report_name', datetime.now())
-            values = params.pop('values', None)
 
             records = get_model(app, model).objects.from_search(
                 company, params)
 
-            contents = serialize('json', records, values=values)
+            contents = serialize('json', records)
             results = ContentFile(contents)
             report, created = Report.objects.get_or_create(
                 name=name, created_by=request.user,
                 owner=company, app=app, model=model,
-                values=json.dumps(values), params=json.dumps(params))
+                params=json.dumps(params))
 
             report.results.save('%s-%s.json' % (name, report.pk), results)
 
@@ -212,8 +211,13 @@ def downloads(request):
     report = get_object_or_404(
         get_model('myreports', 'report'), pk=report_id)
 
-    ctx = {'columns': [column.replace('_', ' ').title()
-                       for column in report.python[0].keys()]}
+    fields = [field for field in report.python[0].keys() if field != 'pk']
+
+    values = json.loads(report.values) or fields
+    columns = {field.replace('_', ' ').title(): field in values
+               for field in fields}
+
+    ctx = {'columns': columns}
 
     return render_to_response('myreports/report-download.html', ctx,
                               RequestContext(request))
@@ -228,15 +232,22 @@ def download_report(request):
 
     report = get_object_or_404(
         get_model('myreports', 'report'), pk=report_id)
-    report.values = json.dumps(values)
-    report.save()
+
+    #records = report.python
+
+    if values:
+        report.values = json.dumps(values)
+        report.save()
+
+        #records = [{val: record[val] for val in values} for record in records]
+
+    records = humanize(report.python)
 
     response = HttpResponse(content_type='text/csv')
     content_disposition = "attachment; filename=%s-%s.csv"
     response['Content-Disposition'] = content_disposition % (
         report.name, report.pk)
 
-    records = humanize(report.python)
-    response.write(serialize('csv', records))
+    response.write(serialize('csv', records, values=values))
 
     return response
