@@ -61,12 +61,12 @@ var checklists = {
 // Pulls the fields required for report type(s)
 // Field Params: label, type, required, value
 Report.prototype.createFields = function(types) {
-  var reports = {"prm": [new Field("Select Date", "date"),
-                         new Field("Contact Type", "checklist", false, checklists.contact_type),
-                         new Field("State", "state"),
-                         new Field("City", "text"), 
-                         new List("Select Partners", "partner", true),
-                         new List("Select Contacts", "contact", true)]},
+  var reports = {"prm": [new Field(this, "Select Date", "date"),
+                         new Field(this, "Contact Type", "checklist", false, checklists.contact_type),
+                         new Field(this, "State", "state"),
+                         new Field(this, "City", "text"), 
+                         new List(this, "Select Partners", "partner", true),
+                         new List(this, "Select Contacts", "contact", true)]},
         fields = [],
         key;
 
@@ -75,7 +75,7 @@ Report.prototype.createFields = function(types) {
       fields.push.apply(fields, reports[types[key]]);
     }
   }
-  fields.unshift(new Field("Report Name", "text", true, formatDate(new Date())));
+  fields.unshift(new Field(this, "Report Name", "text", true, formatDate(new Date())));
   return fields;
 };
 
@@ -383,10 +383,6 @@ Report.prototype.readable_data = function() {
     }
   }
 
-  if (typeof data.contact_type === "undefined") {
-    html += "<div><label>Contact type:</label>All Contact Types</div>";
-  }
-
   if (typeof data.partner === "undefined") {
     if ($("#partner-all-checkbox").is(":checked")) {
       html += "<div><label>Partners:</label>All Partners</div>";
@@ -397,6 +393,10 @@ Report.prototype.readable_data = function() {
     if ($("#contact-all-checkbox").is(":checked")) {
       html += "<div><label>Contacts:</label>All Contacts</div>";
     }
+  }
+
+  if (typeof data.contact_type === "undefined") {
+    html += "<div><label>Contact type:</label>All Contact Types</div>";
   }
 
   return html;
@@ -422,7 +422,6 @@ Report.prototype.renderFields = function(fields) {
     html += fields[i].render(this);
   }
 
-  console.log($("#all_contact_type"));
   html += "<div class=\"show-modal-holder\"><a id=\"show-modal\" class=\"btn primary\">Generate Report</a></div>";
   container.html(html);
 
@@ -469,7 +468,8 @@ Report.prototype.createCloneReport = function(json) {
 };
 
 
-var Field = function(label, type, required, value) {
+var Field = function(report, label, type, required, value) {
+  this.report = report
   this.label = label;
   this.type = type;
   this.required = typeof required !== 'undefined';
@@ -531,13 +531,13 @@ Field.prototype.render = function() {
         }
       });
     })();
-  } else if (this.type === "checklist") {
-    var field_label = this.label.toLowerCase().replace(/ /g, "_"),
-        all_checked = this.value.every(function(item, index, array) {
+  } else if (field.type === "checklist") {
+    var field_label = field.label.toLowerCase().replace(/ /g, "_"),
+        all_checked = field.value.every(function(item, index, array) {
           return item.checked;
         });
 
-    input = $.map(this.value, function(item, index) {
+    input = $.map(field.value, function(item, index) {
       return "<input id='" + field_label +
              "'type='checkbox' name='checklist[]' value='" + item.value +
              (item.checked ? "' checked />" : "' />") + item.label;
@@ -551,13 +551,17 @@ Field.prototype.render = function() {
     $wrapper.append(l).append(input);
     $wrapper.children("input").css("margin", "10px 5px");
     html = $wrapper.prop("outerHTML");
+
+    field.report.data[field_label] = $.map(field.value, function(item, index) {
+      return item.value;
+    });
   }
   return html;
 };
 
 
-var List = function(label, type, required) {
-  Field.call(this, label, type, required);
+var List = function(report, label, type, required) {
+  Field.call(this, report, label, type, required);
 };
 
 
