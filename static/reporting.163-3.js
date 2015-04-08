@@ -703,7 +703,9 @@ $(document).ready(function() {
 
   $("#choices input[type='checkbox']:checked").prop("checked", false);
 
-  history.replaceState({'page': 'overview'}, "Report Overview");
+  if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+    history.replaceState({'page': 'overview'}, "Report Overview");
+  }
 
   subpage.on("click", "#start-report:not(.disabled)", function(e) {
     e.preventDefault();
@@ -719,7 +721,9 @@ $(document).ready(function() {
 
     // Create js Report object and set up next step.
     report = new Report(types);
-    history.pushState({'page': 'new', 'report': report}, 'Create Report');
+    if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+      history.pushState({'page': 'new', 'report': report}, 'Create Report');
+    }
     navigation = true;
     renderNavigation();
     report.unbindEvents().bindEvents();
@@ -751,7 +755,9 @@ $(document).ready(function() {
       report_id = $(this).parents("tr").data("report");
     }
 
-    history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
+    if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+      history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
+    }
 
     navigation = true;
     renderGraphs(report_id, callback);
@@ -769,7 +775,9 @@ $(document).ready(function() {
             data: data,
             dataType: "json",
             success: function(data) {
-              history.pushState({'page': 'clone', 'inputs': data, 'reportId': report_id}, "Clone Report");
+              if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+                history.pushState({'page': 'clone', 'inputs': data, 'reportId': report_id}, "Clone Report");
+              }
               var report = new Report(["prm"]);
               report.createCloneReport(data);
               report.unbindEvents();
@@ -795,7 +803,9 @@ $(document).ready(function() {
 
   // View Archive
   subpage.on("click", "#report-archive", function() {
-    history.pushState({'page': 'report-archive'}, "Report Archive");
+    if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+      history.pushState({'page': 'report-archive'}, "Report Archive");
+    }
     navigation = true;
     renderArchive(renderNavigation);
   });
@@ -886,7 +896,7 @@ function renderNavigation(download) {
             $column2 = $column1.clone(),
             $column3 = $column1.clone(),
             $span = $('<span id="goBack"> Back</span>'),
-            $i = $('<i class="fa fa-arrow-circle-o-left fa-3x"></i>'),
+            $i = $('<i class="fa fa-arrow-circle-o-left fa-2x"></i>'),
             $download;
 
         $span.prepend($i);
