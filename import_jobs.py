@@ -116,11 +116,12 @@ def get_jobs_from_zipfile(zipfileobject, guid):
     try:
         p = current_process()
         process_id =  p.index
-    except:
+    except AttributeError:
         process_id = 0
 
 
     # Delete any existing data and use the guid to create a unique folder.
+    assert "/" not in guid, "GUID: %s should not contain slashes." % guid
     directory = "/tmp/%s/%s" % (process_id, guid)
     if os.path.exists(directory):
         shutil.rmtree(directory)
@@ -455,7 +456,7 @@ def download_feed_file(buid, data_dir=DATA_DIR):
     try:
         p = current_process()
         process_id =  p.index
-    except:
+    except AttributeError:
         process_id = 0
 
     full_file_path = os.path.join(data_dir, str(process_id), FEED_FILE_PREFIX + str(buid) +
