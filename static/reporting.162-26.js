@@ -21,6 +21,8 @@ window.onpopstate = function(event) {
     renderGraphs(state.reportId);
   } else if (state.page && state.page === 'report-archive') {
     renderArchive();
+  } else if (state.page && state.page === 'report-download') {
+    renderDownload(state.reportId);
   } else if (state.page && state.page === 'clone') {
     historyClone = function() {
       inputs = state.inputs;
@@ -658,7 +660,7 @@ $(document).ready(function() {
   subpage.on("click", ".report > a, .fa-download", function() {
     var report_id = $(this).attr("id").split("-")[1];
 
-    //history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
+    history.pushState({'page': 'report-download', 'reportId': report_id}, 'Download Report');
 
     renderDownload(report_id);
   });
@@ -809,14 +811,22 @@ function renderDownload(report_id) {
     url: "downloads",
     data: data,
     success: function(data) {
-      $("#main-container").html(data);
+      var sidebarNavigation = $(".sidebar .navigation");
+
+      $("#container").removeClass("rpt-container").html(data);
+
+      if (!sidebarNavigation.length) {
+        $(".sidebar").append("<h2>Navigation</h2>" +
+                             "<div class='navigation'>" +
+                             "<a class='btn' id='download-csv'>Download CSV</a>");
+      }
 
       var values = $.map($(".enable-column:checked"), function(item, index) {
         return $(item).val();
       });
 
       var ctx = {'id': report_id, 'values': values};
-      $("#download-report").attr("href", "download?" + $.param(ctx));
+      $("#download-csv").attr("href", "download?" + $.param(ctx));
 
       $(".card-holder").sortable({
         "axis": "y",
@@ -827,7 +837,7 @@ function renderDownload(report_id) {
 
           var data = {'id': report_id, 'values': values};
 
-          $("#download-report").attr("href", "download?" + $.param(data));
+          $("#download-csv").attr("href", "download?" + $.param(data));
         }
       });
 
@@ -837,7 +847,7 @@ function renderDownload(report_id) {
         });
 
         var ctx = {'id': report_id, 'values': values};
-        $("#download-report").attr("href", "download?" + $.param(ctx));
+        $("#download-csv").attr("href", "download?" + $.param(ctx));
       });
     }
   });

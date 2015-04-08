@@ -37,3 +37,6 @@ class Report(models.Model):
         params = json.loads(self.params)
 
         return model.objects.from_search(self.owner, params)
+
+    def __unicode__(self):
+        return self.name

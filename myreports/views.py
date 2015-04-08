@@ -233,13 +233,9 @@ def download_report(request):
     report = get_object_or_404(
         get_model('myreports', 'report'), pk=report_id)
 
-    #records = report.python
-
     if values:
         report.values = json.dumps(values)
         report.save()
-
-        #records = [{val: record[val] for val in values} for record in records]
 
     records = humanize(report.python)
 
