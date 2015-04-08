@@ -103,14 +103,29 @@ Report.prototype.bindEvents = function() {
 
 
   // Populate contact types from selected check boxes
-  container.on("click", "#contact_type > input", function(e) {
-    var values = [];
-        
-    $("input[name='checklist[]']:checked").each(function() {
+  container.on("change", "input#contact_type", function(e) {
+    var values = [],
+        $checkboxes = $("input#contact_type"),
+        $checked = $("input#contact_type:checked"),
+        $allCheckbox = $("input#all_contact_type");
+
+    $("input#contact_type:checked").each(function() {
       values.push($(this).val());
     });
 
+    $allCheckbox.prop("checked", $checkboxes.length === $checked.length);
     report.data.contact_type = values.length ? values : "0";
+  });
+
+  container.on("click", "input#all_contact_type", function(e) {
+    var $checkboxes = $("input#contact_type");
+
+    $checkboxes.prop("checked", $(this).is(":checked"));
+    $.each($checkboxes, function(index, value) {
+      if (index === $checkboxes.length - 1) {
+        $(this).change();
+      }
+    });
   });
 
 
@@ -118,7 +133,8 @@ Report.prototype.bindEvents = function() {
   container.on("change", "input:not([id$=-all-checkbox]), select:not([class^=picker])", function(e) {
     var in_list = $(this).parents(".list-body").attr("id"),
         contact_wrapper = $("#contact-wrapper"),
-        c_field = report.findField("Select Contacts");
+        c_field = report.findField("Select Contacts"),
+        ignore_data = ['contact_type', 'all_contact_type'];
 
     // Check to see if the triggering even was in a list.
     if (typeof in_list !== "undefined") {
@@ -164,7 +180,7 @@ Report.prototype.bindEvents = function() {
           };
 
       // Default update/save data
-      if ($(e.currentTarget).attr("id") !== "contact_type") {
+      if (ignore_data.indexOf($(e.currentTarget).attr("id")) === -1) {
         report.data[$(e.currentTarget).attr("id")] = $(e.currentTarget).val();
       }
 
@@ -509,12 +525,20 @@ Field.prototype.render = function() {
       });
     })();
   } else if (this.type === "checklist") {
-    var field_label = this.label.toLowerCase().replace(/ /g, "_");
+    var field_label = this.label.toLowerCase().replace(/ /g, "_"),
+        all_checked = this.value.every(function(item, index, array) {
+          return item.checked;
+        });
+
     input = $.map(this.value, function(item, index) {
       return "<input id='" + field_label +
              "'type='checkbox' name='checklist[]' value='" + item.value +
              (item.checked ? "' checked />" : "' />") + item.label;
     }).join("");
+
+    input = "<input id='all_" + field_label +
+            "'type='checkbox' name='checklist[]' value='all' " +
+            (all_checked ? "' checked />" : "' />") + "All" + input;
 
     $wrapper.attr("id", field_label);
     $wrapper.append(l).append(input);
