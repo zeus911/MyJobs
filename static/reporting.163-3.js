@@ -701,6 +701,8 @@ String.prototype.capitalize = function() {
 $(document).ready(function() {
   var subpage = $(".subpage");
 
+  $("#choices input[type='checkbox']").prop("checked", false);
+
   history.replaceState({'page': 'overview'}, "Report Overview");
 
   subpage.on("click", "#start-report:not(.disabled)", function(e) {
