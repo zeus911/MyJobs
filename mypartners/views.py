@@ -180,12 +180,16 @@ def edit_item(request):
         raise Http404
 
     company = get_company_or_404(request)
+    partners = []
+    contacts = []
     if partner_id and request.path == reverse('edit_contact'):
         partner = get_object_or_404(company.partner_set.all(), id=partner_id)
         if item_id:
             item = get_object_or_404(Contact, partner=partner, pk=item_id)
             form = ContactForm(instance=item, auto_id=False)
         else:
+            contacts = list(partner.contact_set.values(
+                'pk', 'name', 'email', 'phone'))
             form = ContactForm()
             item = None
     elif request.path == reverse('create_partner'):
@@ -194,6 +198,8 @@ def edit_item(request):
             item = get_object_or_404(Partner, pk=item_id)
             form = PartnerForm(instance=item)
         else:
+            partners = list(company.partner_set.values(
+                'pk', 'name', 'uri'))
             item = None
             form = NewPartnerForm()
     else:
@@ -202,8 +208,10 @@ def edit_item(request):
     ctx = {
         'form': form,
         'partner': partner,
+        'partners': json.dumps(partners),
         'company': company,
         'contact': item,
+        'contacts': json.dumps(contacts),
         'content_id': content_id,
         'view_name': 'PRM',
     }
@@ -426,18 +434,17 @@ def edit_location(request):
         Location, id=request.REQUEST.get('location'))
 
     if request.method == 'POST':
-        form = LocationForm(request.POST)
+        if location:
+            form = LocationForm(request.POST, instance=location)
+        else:
+            form = LocationForm(request.POST)
 
         if form.is_valid():
-            if location:
-                Location.objects.filter(
-                    id=location.id).update(**form.cleaned_data)
-            else:
-                location = Location.objects.create(**form.cleaned_data)
+            location = form.save(request)
 
-                if location not in contact.locations.all():
-                    contact.locations.add(location)
-                    contact.save()
+            if location not in contact.locations.all():
+                contact.locations.add(location)
+                contact.save()
 
             return HttpResponseRedirect(
                 reverse('edit_contact') + "?partner=%s&id=%s" % (
@@ -454,7 +461,6 @@ def edit_location(request):
         ctx['contact'] = str(contact.id)
     if location:
         ctx['location'] = str(location.id)
-
 
     return render_to_response(
         'mypartners/edit_location.html', ctx, RequestContext(request))

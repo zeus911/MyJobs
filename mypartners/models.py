@@ -197,6 +197,7 @@ class Contact(models.Model):
     def _parse_parameters(self, parameters, records):
         """Used to parse state during `from_search()`."""
 
+        parameters.pop('contact_type', None)
         start_date = parameters.pop('start_date', None)
         end_date = parameters.pop('end_date', None)
         state = parameters.pop('state', None)
@@ -332,6 +333,7 @@ class Partner(models.Model):
         end_date = parameters.pop('end_date', None)
         state = parameters.pop('state', None)
         city = parameters.pop('city', None)
+        contact_type = parameters.pop('contact_type', None)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -353,6 +355,13 @@ class Partner(models.Model):
 
         if city:
             records = records.filter(contact__locations__city__icontains=city)
+
+        if contact_type:
+            if not hasattr(contact_type, '__iter__'):
+                contact_type = [contact_type]
+
+            records = records.filter(
+                contactrecord__contact_type__in=contact_type)
 
         return records
 
@@ -622,8 +631,9 @@ class ContactRecord(models.Model):
 
         start_date = parameters.pop('start_date', None)
         end_date = parameters.pop('end_date', None)
-        # popping state so it doesn't get parsed again
+        # popping city and state so it doesn't get parsed again
         parameters.pop('state', None)
+        parameters.pop('city', None)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -762,6 +772,7 @@ class ContactLogEntry(models.Model):
     # A value that can meaningfully (email, name) identify the contact.
     contact_identifier = models.CharField(max_length=255)
     content_type = models.ForeignKey(ContentType, blank=True, null=True)
+    delta = models.TextField(blank=True)
     object_id = models.TextField('object id', blank=True, null=True)
     object_repr = models.CharField('object repr', max_length=200)
     partner = models.ForeignKey(Partner, null=True, on_delete=models.SET_NULL)
@@ -773,8 +784,7 @@ class ContactLogEntry(models.Model):
 
         """
         try:
-            return self.content_type.get_object_for_this_type(
-                pk=self.object_id)
+            return self.content_type.get_object_for_this_type(pk=self.object_id)
         except self.content_type.model_class().DoesNotExist:
             return None
 

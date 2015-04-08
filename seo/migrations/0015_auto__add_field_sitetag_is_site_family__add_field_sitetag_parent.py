@@ -1,21 +1,31 @@
 # -*- coding: utf-8 -*-
 from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import DataMigration
-from django.db import models, connection
+from south.v2 import SchemaMigration
+from django.db import models
 
-class Migration(DataMigration):
+
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        if connection.vendor == 'sqlite':
-            return True
-        # Convert Configuration model to UTF-8
-        db.execute("ALTER TABLE seo_configuration "
-                   "CONVERT TO CHARACTER SET utf8 "
-                   "COLLATE utf8_general_ci")
+        # Adding field 'SiteTag.is_site_family'
+        db.add_column(u'seo_sitetag', 'is_site_family',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
+        # Adding field 'SiteTag.parent'
+        db.add_column(u'seo_sitetag', 'parent',
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['seo.SeoSite'], null=True, blank=True),
+                      keep_default=False)
+
+
     def backwards(self, orm):
-        "Write your backwards methods here."
-        pass
+        # Deleting field 'SiteTag.is_site_family'
+        db.delete_column(u'seo_sitetag', 'is_site_family')
+
+        # Deleting field 'SiteTag.parent'
+        db.delete_column(u'seo_sitetag', 'parent_id')
+
 
     models = {
         u'auth.group': {
@@ -378,6 +388,8 @@ class Migration(DataMigration):
         u'seo.sitetag': {
             'Meta': {'object_name': 'SiteTag'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_site_family': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'parent': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.SeoSite']", 'null': 'True', 'blank': 'True'}),
             'site_tag': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
             'tag_navigation': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
@@ -418,4 +430,3 @@ class Migration(DataMigration):
     }
 
     complete_apps = ['seo']
-    symmetrical = True

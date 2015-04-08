@@ -10,14 +10,12 @@ from django.template import RequestContext
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 
-from myreports.decorators import restrict_to_staff
 from myreports.helpers import humanize, parse_params, serialize
 from myreports.models import Report
 from universal.helpers import get_company_or_404
 from universal.decorators import company_has_access
 
 
-@restrict_to_staff()
 @company_has_access('prm_access')
 def overview(request):
     """The Reports app landing page."""
@@ -36,14 +34,20 @@ def overview(request):
         "report_count": report_count
     }
 
+    if request.is_ajax():
+        response = HttpResponse()
+        html = render_to_response('myreports/report_overview.html', ctx,
+                                  RequestContext(request)).content
+        response.content = html
+        return response
+
     return render_to_response('myreports/reports.html', ctx,
                               RequestContext(request))
 
 
-@restrict_to_staff()
 @company_has_access('prm_access')
 def report_archive(request):
-    if request.is_ajax() and request.method == "POST":
+    if request.is_ajax():
         company = get_company_or_404(request)
         reports = Report.objects.filter(owner=company).order_by("-created_on")
         ctx = {
@@ -69,7 +73,6 @@ def get_states(request):
         raise Http404("This view is only reachable via an AJAX request")
 
 
-@restrict_to_staff()
 @company_has_access('prm_access')
 def view_records(request, app, model):
     """
@@ -92,33 +95,17 @@ def view_records(request, app, model):
         # remove non-query related params
         params.pop('csrfmiddlewaretoken', None)
         count = params.pop('count', None)
+        values = params.pop('values', [])
 
-        # TODO: REMOVE THIS ---------------------------------------------------
-        values = params.pop('values', False)
-        if model == 'contact' and values:
-            records = get_model(app, 'contactrecord').objects.from_search(
-                company, params).values(
-                    'contact_name', 'contact_email').distinct()
-
-            records = [{'name': record['contact_name'],
-                        'email': record['contact_email']}
-                       for record in records]
-        # ---------------------------------------------------------------------
-        else:
-            records = get_model(app, model).objects.from_search(
-                company, params)
+        records = get_model(app, model).objects.from_search(
+            company, params)
 
         counts = {}
         if count:
             records = records.annotate(count=Count(count, distinct=True))
             counts = {record.pk: record.count for record in records}
 
-        # TODO: REMOVE THIS ---------------------------------------------------
-        if model == 'contact' and values:
-            ctx = json.dumps(records)
-        # --------------------------------------------------------------
-        else:
-            ctx = serialize('json', records, counts=counts)
+        ctx = serialize('json', records, counts=counts, values=values)
 
         response = HttpResponse(
             ctx, content_type='application/json; charset=utf-8')
@@ -128,7 +115,6 @@ def view_records(request, app, model):
         raise Http404("This view is only reachable via an AJAX GET request.")
 
 
-@restrict_to_staff()
 @company_has_access('prm_access')
 def get_inputs(request):
     if request.is_ajax() and request.method == "GET":
@@ -146,7 +132,6 @@ class ReportView(View):
     app = 'mypartners'
     model = 'contactrecord'
 
-    @method_decorator(restrict_to_staff())
     @method_decorator(company_has_access('prm_access'))
     def dispatch(self, *args, **kwargs):
         return super(ReportView, self).dispatch(*args, **kwargs)
@@ -201,15 +186,17 @@ class ReportView(View):
 
             params.pop('csrfmiddlewaretoken', None)
             name = params.pop('report_name', datetime.now())
+            values = params.pop('values', None)
+
             records = get_model(app, model).objects.from_search(
                 company, params)
 
-            contents = serialize('json', records)
+            contents = serialize('json', records, values=values)
             results = ContentFile(contents)
             report, created = Report.objects.get_or_create(
                 name=name, created_by=request.user,
                 owner=company, app=app, model=model,
-                params=json.dumps(params))
+                values=json.dumps(values), params=json.dumps(params))
 
             report.results.save('%s-%s.json' % (name, report.pk), results)
 
@@ -219,7 +206,6 @@ class ReportView(View):
                 "This view is only reachable via a POST request.")
 
 
-@restrict_to_staff()
 @company_has_access('prm_access')
 def download_report(request):
     """Download report as csv."""

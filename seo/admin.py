@@ -1129,7 +1129,7 @@ class CompanyAdmin(admin.ModelAdmin):
     form = CompanyForm
     save_on_top = True
     filter_horizontal = ('job_source_ids', 'prm_saved_search_sites')
-    list_display = ('name', 'featured_on')
+    list_display = ('name', 'featured_on','company_user_count')
     list_filter = ('enhanced', 'digital_strategies_customer')
     search_fields = ['name', 'seosite__name', 'seosite__domain']
     fieldsets = [
@@ -1160,7 +1160,8 @@ class SiteTagAdmin(admin.ModelAdmin):
     form = SiteTagForm 
     save_on_top = True
     fieldsets = [
-        (None, {'fields': ['site_tag', 'tag_navigation']}),
+        (None, {'fields': ['site_tag', 'tag_navigation',
+                           ('is_site_family', 'parent')]}),
     ]
 
 
