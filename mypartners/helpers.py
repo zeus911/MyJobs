@@ -430,7 +430,7 @@ def filter_partners(request, partner_library=False):
     city = request.REQUEST.get('city', '').strip()
     state = request.REQUEST.get('state', '').strip()
     tags = [tag.strip()
-            for tag in request.REQUEST.get('tag', '').split(',') if tag]
+            for tag in request.REQUEST.get('tags', '').split(',') if tag]
     keywords = [keyword.strip() for keyword in request.REQUEST.get(
         'keywords', '').split(',') if keyword]
 
