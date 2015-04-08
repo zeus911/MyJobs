@@ -811,43 +811,38 @@ function renderDownload(report_id) {
     url: "downloads",
     data: data,
     success: function(data) {
-      var sidebarNavigation = $(".sidebar .navigation");
+      var $sidebarNavigation = $(".sidebar .navigation"),
+          ctx,
+          values;
 
-      $("#container").removeClass("rpt-container").html(data);
-
-      if (!sidebarNavigation.length) {
-        $(".sidebar").append("<h2>Navigation</h2>" +
-                             "<div class='navigation'>" +
-                             "<a class='btn' id='download-csv'>Download CSV</a>");
-      }
-
-      var values = $.map($(".enable-column:checked"), function(item, index) {
-        return $(item).val();
-      });
-
-      var ctx = {'id': report_id, 'values': values};
-      $("#download-csv").attr("href", "download?" + $.param(ctx));
-
-      $(".card-holder").sortable({
-        "axis": "y",
-        "update": function(e, ui) {
-          values = $.map($(".enable-column:checked"), function(item, index) {
-            return $(item).val();
-          });
-
-          var data = {'id': report_id, 'values': values};
-
-          $("#download-csv").attr("href", "download?" + $.param(data));
-        }
-      });
-
-      $("input.enable-column").on("click", function() {
+      function updateValues() {
         values = $.map($(".enable-column:checked"), function(item, index) {
           return $(item).val();
         });
 
         var ctx = {'id': report_id, 'values': values};
         $("#download-csv").attr("href", "download?" + $.param(ctx));
+      }
+
+      $("#container").removeClass("rpt-container").html(data);
+
+      if (!$sidebarNavigation.length) {
+        $(".sidebar").append("<h2>Navigation</h2>" +
+                             "<div class='navigation'>" +
+                             "<a class='btn' id='download-csv'>Download CSV</a>");
+      }
+
+      updateValues();
+
+      $(".card-holder").sortable({
+        "axis": "y",
+        "update": function(e, ui) {
+          updateValues();
+        }
+      });
+
+      $("input.enable-column").on("click", function() {
+        updateValues();
       });
     }
   });
