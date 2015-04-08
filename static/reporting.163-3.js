@@ -104,20 +104,19 @@ Report.prototype.bindEvents = function() {
 
   // Populate contact types from selected check boxes
   container.on("change", "input#contact_type", function(e) {
-    var values = [],
-        $checkboxes = $("input#contact_type"),
+    var $checkboxes = $("input#contact_type"),
         $checked = $("input#contact_type:checked"),
         $allCheckbox = $("input#all_contact_type");
 
-    $("input#contact_type:checked").each(function() {
-      values.push($(this).val());
+    var values = $.map($("input#contact_type:checked"), function(item, index) {
+      return $(item).val();
     });
 
     $allCheckbox.prop("checked", $checkboxes.length === $checked.length);
     report.data.contact_type = values.length ? values : "0";
   });
 
-  container.on("click", "input#all_contact_type", function(e) {
+  container.on("change", "input#all_contact_type", function(e) {
     var $checkboxes = $("input#contact_type");
 
     $checkboxes.prop("checked", $(this).is(":checked"));
@@ -423,8 +422,10 @@ Report.prototype.renderFields = function(fields) {
     html += fields[i].render(this);
   }
 
+  console.log($("#all_contact_type"));
   html += "<div class=\"show-modal-holder\"><a id=\"show-modal\" class=\"btn primary\">Generate Report</a></div>";
   container.html(html);
+
 };
 
 
