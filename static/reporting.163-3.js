@@ -325,7 +325,7 @@ Report.prototype.bindEvents = function() {
 
 
 Report.prototype.unbindEvents = function() {
-  $("#main-container").off("click");
+  $("#main-container").off("click change");
   $("body").off("click", "#gen-report");
 
   return this;
@@ -604,7 +604,6 @@ List.prototype.render = function(report) {
 
 // Renders a list of records based on type.
 List.prototype.filter = function(filter) {
-  "use strict";
   var url = location.protocol + "//" + location.host, // https://secure.my.jobs
       data = {},
       list = this;
