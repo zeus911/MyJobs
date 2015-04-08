@@ -356,6 +356,12 @@ Report.prototype.readable_data = function() {
         // grab names associated by value.
 
         if (key === "contact type") {
+          value = $.map(checklists.contact_type, function(item, index) {
+            if (value.indexOf(item.value) > 0) {
+              return item.label;
+            }
+          });
+
           var $all = $("input[name='checklist[]']"),
               $checked = $("input[name='checklist[]']:checked");
 
