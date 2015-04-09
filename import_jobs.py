@@ -121,8 +121,10 @@ def get_jobs_from_zipfile(zipfileobject, guid):
 
 
     # Delete any existing data and use the guid to create a unique folder.
-    assert "/" not in guid, "GUID: %s should not contain slashes." % guid
     directory = "/tmp/%s/%s" % (process_id, guid)
+    prefix =  os.path.commonprefix(['/tmp/%s' % process_id, os.path.abspath(directory)])
+    assert prefix == '/tmp/%s' % process_id, "Directory should be located in /tmp/%s" % process_id
+
     if os.path.exists(directory):
         shutil.rmtree(directory)
     os.makedirs(directory)
