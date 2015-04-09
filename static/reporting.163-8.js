@@ -1005,27 +1005,48 @@ function renderDownload(report_id) {
     data: data,
     success: function(data) {
       var ctx,
-          values,
-          updateValues = function() {
-            values = $.map($(".enable-column:checked"), function(item, index) {
-              return $(item).val();
-            });
+          values;
 
-            ctx = {'id': report_id, 'values': values};
-            $("#download-csv").attr("href", "download?" + $.param(ctx));
-          };
+    function updateValues() {
+      values = $.map($(".enable-column:checked"), function(item, index) {
+        return $(item).val();
+      });
+
+      ctx = {'id': report_id, 'values': values};
+      $("#download-csv").attr("href", "download?" + $.param(ctx));
+    }
 
       $("#main-container").html(data);
 
       updateValues();
 
       // Event Handlers
-      $(".card-holder").sortable({
-        "axis": "y",
-        "update": updateValues
+      $(".column-holder").sortable({
+        axis: "y",
+        placeholder: "placeholder",
+        start: function(e, ui) {
+          ui.placeholder.height(ui.item.outerHeight());
+          ui.placeholder.width(ui.item.outerWidth() - 2);
+          ui.item.addClass("drag");
+        },
+        stop: function(e, ui) {
+          ui.item.removeClass("drag");
+        },
+        update: updateValues
       });
 
-      $("input.enable-column").on("click", updateValues);
+      $("#all-columns").on("change", function() {
+        $("input.enable-column").prop("checked", $(this).is(":checked"));
+      });
+
+      $("input.enable-column").on("change", function() {
+        var $checkboxes = $("input.enable-column"),
+            $checked = $("input.enable-column:checked"),
+            $allCheckbox = $("input#all-columns");
+
+        $allCheckbox.prop("checked", $checkboxes.length === $checked.length);
+      });
+
       $("#download-cancel").on("click", function() {
         if (modernBrowser) {
           history.back();
@@ -1033,6 +1054,8 @@ function renderDownload(report_id) {
           renderOverview();
         }
       });
+
+      $("input.enable-column").on("click", updateValues);
     }
   });
 }

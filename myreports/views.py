@@ -224,7 +224,7 @@ def downloads(request):
 
     ctx = {'columns': columns}
 
-    return render_to_response('myreports/report-download.html', ctx,
+    return render_to_response('myreports/includes/report-download.html', ctx,
                               RequestContext(request))
 
 

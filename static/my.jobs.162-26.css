@@ -1465,13 +1465,40 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
 }
 
 /* Report Download */
-.field-card {
+.column-wrapper {
     border: 1px solid black;
-    margin: 5px;
+    padding: 5px;
+    margin: 0;
 }
 
-.field-card > .enable-column {
-    margin: 5px;
+.ui-sortable-helper {
+    background-color: pink;
+}
+
+.column-wrapper + .column-wrapper:not(.drag) {
+    border-top: 0;
+}
+
+.placeholder {
+    background-color: #F0FDD2;
+    margin-right: 5px;
+    border-left: 1px dashed black;
+    border-right: 1px dashed black;
+}
+
+.drag {
+    border-top: 1px solid black;
+    cursor: move;
+    background-color: #D5FACF;
+}
+
+.column-wrapper:hover {
+    cursor: move;
+    background-color: #D5FACF;
+}
+
+.column-wrapper > .column-holder {
+    margin: 5px 5px 5px 5px;
 }
 
 .show-modal-holder {

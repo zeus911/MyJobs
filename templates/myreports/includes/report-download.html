@@ -1,0 +1,60 @@
+{# TODO: Add a "Select All" div #}
+<style>
+    p.blurb {
+        margin-left: 0; 
+        padding-left: 0;
+    }
+
+    #sort-label {
+        display: inline-block;
+    }
+
+    #sort-order {
+        width: 100px;
+    }
+
+    #all-columns {
+        margin: 0 5px 0 5px;
+    }
+
+</style>
+<div class="span8">
+    <h2>Customize Download File</h2>
+    <p class="blurb">
+        Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod
+        tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At
+        vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,
+        no sea takimata sanctus est Lorem ipsum dolor sit amet.
+    </p>
+    <div>
+        <div>
+            <label id="sort-label" for="some_name">Sort by:</label>
+            <select name="some_name" id="some_name">
+                {% for name in columns.keys %}
+                <option value="option1">{{ name }}</option>
+                {% endfor %}
+            </select>
+            <select name="some_name" id="sort-order">
+                <option value="option1">Ascending</option>
+                <option value="option1">Descending</option>
+            </select>
+        </div>
+            <input id="all-columns" type="checkbox" value="all" checked />Select All Columns Names
+    </div>
+    <div class="column-holder">
+        {% for name, checked in columns.items %}
+        <div class="column-wrapper" id="{{ col.split|join:"_"|lower }}">
+            <input class="enable-column" type="checkbox" value="{{ name.split|join:"_"|lower }}"{% if checked %}checked{% endif %} />{{ name }}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<div class="span4">
+    <div class="sidebar">
+        <h2 class="top">Navigation</h2>
+        <div class="navigation">
+            <a class="btn" id="download-csv">Download CSV</a> 
+            <a class="btn" id="download-cancel">Cancel</a> 
+        </div>
+    </div>
+</div>
