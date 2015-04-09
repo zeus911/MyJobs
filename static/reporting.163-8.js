@@ -29,6 +29,8 @@ window.onpopstate = function(event) {
   } else if (state.page && state.page === 'report-archive') {
     navigation = true;
     renderArchive(renderNavigation);
+  } else if (state.page && state.page === 'report-download') {
+    renderDownload(state.report);
   } else if (state.page && state.page === 'clone') {
     historyClone = function() {
       inputs = state.inputs;
@@ -807,7 +809,7 @@ $(document).ready(function() {
   subpage.on("click", ".report > a, .fa-download", function() {
     var report_id = $(this).attr("id").split("-")[1];
 
-    history.pushState({'page': 'report-download', 'reportId': report_id}, 'Download Report');
+    history.pushState({'page': 'report-download', 'report': report_id}, 'Download Report');
 
     renderDownload(report_id);
   });
