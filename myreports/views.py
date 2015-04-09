@@ -184,7 +184,8 @@ class ReportView(View):
             params = parse_params(request.POST)
 
             params.pop('csrfmiddlewaretoken', None)
-            name = params.pop('report_name', datetime.now())
+            name = params.pop(
+                'report_name', str(datetime.now())).replace(' ', '_')
             values = params.pop('values', None)
 
             records = get_model(app, model).objects.from_search(
