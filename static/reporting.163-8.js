@@ -7,37 +7,52 @@ window.onpopstate = function(event) {
       report;
 
   if (state.page && state.page === 'overview') {
+    navigation = false;
     renderOverview();
   } else if (state.page && state.page === 'new') {
     historyNew = function() {
       report = new Report(state.report.types);
-      report.bindEvents();
+      report.unbindEvents().bindEvents();
       $("#container").addClass("rpt-container");
       report.renderFields(report.fields);
+      renderNavigation();
     };
 
+    navigation = true;
     $sidebar.length > 0 ? historyNew() : renderOverview(historyNew);
   } else if (state.page && state.page === 'view-report') {
-    renderGraphs(state.reportId);
+    var callback = function() {
+      renderNavigation(true);
+    };
+    navigation = true;
+    renderGraphs(state.reportId, callback);
   } else if (state.page && state.page === 'report-archive') {
-    renderArchive();
+    navigation = true;
+    renderArchive(renderNavigation);
   } else if (state.page && state.page === 'clone') {
     historyClone = function() {
       inputs = state.inputs;
       report = new Report(["prm"]);
       report.createCloneReport(inputs);
-      report.unbindEvents();
-      report.bindEvents();
+      report.unbindEvents().bindEvents();
       $("#container").addClass("rpt-container");
       report.renderFields(report.fields);
+      renderNavigation();
     };
 
+    navigation = true;
     $sidebar.length > 0 ? historyClone() : renderOverview(historyClone);
   }
 };
 
-// Variable to get through beforeunload listener without displaying message.
+// Determines if IE is being used. If it is IE returns IE version #. If not will return false.
+var IE = isIE();
+
+// Used to get through beforeunload listener without displaying message.
 var reload = false;
+
+// Determines if a navigation bar is needed.
+var navigation = false;
 
 // Handles storing data, rendering fields, and submitting report. See prototype functions
 var Report = function(types) {
@@ -62,9 +77,9 @@ var checklists = {
 // Field Params: label, type, required, value
 Report.prototype.createFields = function(types) {
   var reports = {"prm": [new Field(this, "Select Date", "date"),
-                         new Field(this, "Contact Type", "checklist", false, checklists.contact_type),
                          new Field(this, "State", "state"),
-                         new Field(this, "City", "text"), 
+                         new Field(this, "City", "text"),
+                         new Field(this, "Contact Type", "checklist", false, checklists.contact_type),
                          new List(this, "Select Partners", "partner", true),
                          new List(this, "Select Contacts", "contact", true)]},
         fields = [],
@@ -291,7 +306,7 @@ Report.prototype.bindEvents = function() {
 
 
   // Actually submits the report's data to create a Report object in db.
-  $(document.body).on("click", "#gen-report", function(e) {
+  $("body").on("click", "#gen-report", function(e) {
     var csrf = read_cookie("csrftoken"),
         data = {"csrfmiddlewaretoken": csrf},
         url = location.protocol + "//" + location.host + "/reports/view/mypartners/contactrecord",
@@ -319,12 +334,16 @@ Report.prototype.bindEvents = function() {
       }
     });
   });
+
+  return this;
 };
 
 
 Report.prototype.unbindEvents = function() {
-  $("#main-container").off("click");
-  $(document.body).off("click", "#gen-report");
+  $("#main-container").off("click change");
+  $("body").off("click", "#gen-report");
+
+  return this;
 };
 
 
@@ -367,20 +386,24 @@ Report.prototype.readable_data = function() {
           if ($all.length === $checked.length) {
             html += ": All Contact Types";
           } else {
-            html += "<ul><li>" + value.join("</li><li>") + "</li></ul>";
+            html += "<ul class='short-list'><li>" + value.join("</li><li>") + "</li></ul>";
           }
         } else {
           for (i = 0; i < value.length; i++) {
             items.push($("#" + key + " input[value='" + value[i] + "']").next("span").html());
           }
 
-          html += "<ul><li>" + items.join('</li><li>') + '</li></ul>';
+          html += "<ul class='short-list'><li>" + items.join('</li><li>') + '</li></ul>';
         }
       } else {
         html += key === "state" ? $("#state option[value=" + value + "]").html() : value;
       }
       html += "</div>";
     }
+  }
+
+  if (typeof data.contact_type === "undefined") {
+    html += "<div><label>Contact type:</label>All Contact Types</div>";
   }
 
   if (typeof data.partner === "undefined") {
@@ -393,10 +416,6 @@ Report.prototype.readable_data = function() {
     if ($("#contact-all-checkbox").is(":checked")) {
       html += "<div><label>Contacts:</label>All Contacts</div>";
     }
-  }
-
-  if (typeof data.contact_type === "undefined") {
-    html += "<div><label>Contact type:</label>All Contact Types</div>";
   }
 
   return html;
@@ -424,7 +443,6 @@ Report.prototype.renderFields = function(fields) {
 
   html += "<div class=\"show-modal-holder\"><a id=\"show-modal\" class=\"btn primary\">Generate Report</a></div>";
   container.html(html);
-
 };
 
 
@@ -465,6 +483,8 @@ Report.prototype.createCloneReport = function(json) {
       }
     }
   }
+
+  return this;
 };
 
 
@@ -472,7 +492,7 @@ var Field = function(report, label, type, required, value) {
   this.report = report
   this.label = label;
   this.type = type;
-  this.required = typeof required !== 'undefined';
+  this.required = !!required || false;
   this.value = value || '';
 };
 
@@ -618,7 +638,6 @@ List.prototype.render = function(report) {
 
 // Renders a list of records based on type.
 List.prototype.filter = function(filter) {
-  "use strict";
   var url = location.protocol + "//" + location.host, // https://secure.my.jobs
       data = {},
       list = this;
@@ -643,7 +662,6 @@ List.prototype.filter = function(filter) {
     url += "/reports/ajax/mypartners/contact";
     $.extend(data, {"values": ["name", "email"]});
   }
-
 
   $.ajaxSettings.traditional = true;
   $.ajax({
@@ -671,7 +689,7 @@ List.prototype.filter = function(filter) {
         }
 
         if (list.type === "contact" && record.email) {
-          li.append(" <span>("+ record.email + ")</span>");
+          li.append(" <span class='small'>("+ record.email + ")</span>");
         }
 
         ul.append(li);
@@ -716,7 +734,11 @@ String.prototype.capitalize = function() {
 $(document).ready(function() {
   var subpage = $(".subpage");
 
-  history.replaceState({'page': 'overview'}, "Report Overview");
+  $("#choices input[type='checkbox']:checked").prop("checked", false);
+
+  if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+    history.replaceState({'page': 'overview'}, "Report Overview");
+  }
 
   subpage.on("click", "#start-report:not(.disabled)", function(e) {
     e.preventDefault();
@@ -732,8 +754,12 @@ $(document).ready(function() {
 
     // Create js Report object and set up next step.
     report = new Report(types);
-    history.pushState({'page': 'new', 'report': report}, 'Create Report');
-    report.bindEvents();
+    if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+      history.pushState({'page': 'new', 'report': report}, 'Create Report');
+    }
+    navigation = true;
+    renderNavigation();
+    report.unbindEvents().bindEvents();
     $("#container").addClass("rpt-container");
     report.renderFields(report.fields);
   });
@@ -750,42 +776,71 @@ $(document).ready(function() {
   });
 
   // View Report
-  subpage.on("click", ".report > a, .fa-eye", function() {
-    var report_id = $(this).attr("id").split("-")[1];
+  subpage.on("click", ".report > a, .fa-eye, .view-report", function() {
+    var report_id,
+        callback = function() {
+          renderNavigation(true);
+        };
 
-    history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
+    if ($(this).attr("id") !== undefined) {
+      report_id = $(this).attr("id").split("-")[1];
+    } else {
+      report_id = $(this).parents("tr").data("report");
+    }
 
-    renderGraphs(report_id);
+    if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+      history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
+    }
+
+    navigation = true;
+    renderGraphs(report_id, callback);
   });
 
 
   // Clone Report
-  subpage.on("click", ".fa-copy", function() {
-    var report_id = $(this).attr("id").split("-")[1],
-        data = {"id": report_id},
-        url = location.protocol + "//" + location.host; // https://secure.my.jobs
+  subpage.on("click", ".fa-copy, .clone-report", function() {
+    var data = {},
+        url = location.protocol + "//" + location.host, // https://secure.my.jobs
+        cloneReport = function() {
+          $.ajax({
+            type: "GET",
+            url: url + "/reports/ajax/get-inputs",
+            data: data,
+            dataType: "json",
+            success: function(data) {
+              if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+                history.pushState({'page': 'clone', 'inputs': data, 'reportId': report_id}, "Clone Report");
+              }
+              var report = new Report(["prm"]);
+              report.createCloneReport(data);
+              report.unbindEvents();
+              report.bindEvents();
+              $("#container").addClass("rpt-container");
+              report.renderFields(report.fields);
+            }
+          });
+        },
+        report_id;
 
-    $.ajax({
-      type: "GET",
-      url: url + "/reports/ajax/get-inputs",
-      data: data,
-      dataType: "json",
-      success: function(data) {
-        history.pushState({'page': 'clone', 'inputs': data, 'reportId': report_id}, "Clone Report");
-        var report = new Report(["prm"]);
-        report.createCloneReport(data);
-        report.unbindEvents();
-        report.bindEvents();
-        $("#container").addClass("rpt-container");
-        report.renderFields(report.fields);
-      }
-    });
+    if ($(this).attr("id") !== undefined) {
+      data.id = $(this).attr("id").split("-")[1];
+      cloneReport();
+    } else {
+      data.id = $(this).parents("tr").data("report");
+      renderOverview(cloneReport);
+    }
+
+    navigation = true;
+    renderNavigation();
   });
 
   // View Archive
   subpage.on("click", "#report-archive", function() {
-    history.pushState({'page': 'report-archive'}, "Report Archive");
-    renderArchive();
+    if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+      history.pushState({'page': 'report-archive'}, "Report Archive");
+    }
+    navigation = true;
+    renderArchive(renderNavigation);
   });
 });
 
@@ -824,11 +879,12 @@ function updateAllCheckbox(element) {
 
 function updateItemsSelected(element) {
   var checked = $(element).parents(".list-body").find(":checked"),
-      $recordCount = $(".record-count");
+      $recordCount = $(element).parents(".list-body").prev().find(".record-count");
 
   $recordCount.html(checked.length);
   updateShowModal();
 }
+
 
 function updateShowModal() {
   var counts = [];
@@ -858,36 +914,49 @@ function pieOptions(height, width, chartArea_top, chartArea_left, chartArea_heig
   return options;
 }
 
+
+var $navigationBar = $("#navigation");
+
 function renderNavigation(download) {
   var mainContainer = $('#main-container'),
-      navigationBar;
+      $navigationBar = $navigationBar || $("#navigation");
+
   if (navigation) {
-    navigationBar = $('<div id="navigation" class="span12"></div>').append(function() {
-      var $row = $('<div class="row"></div>'),
-          $column1 = $('<div class="span4"></div>'),
-          $column2 = $column1.clone(),
-          $column3 = $column1.clone(),
-          $span = $('<span id="goBack"> Back</span>'),
-          $i = $('<i class="fa fa-arrow-circle-o-left fa-3x"></i>'),
-          $download;
+    if (!$navigationBar.length) {
+      $navigationBar = $('<div id="navigation" class="span12" style="display:none;"></div>').append(function() {
+        var $row = $('<div class="row"></div>'),
+            $column1 = $('<div class="span4"></div>'),
+            $column2 = $column1.clone(),
+            $column3 = $column1.clone(),
+            $span = $('<span id="goBack"> Back</span>'),
+            $i = $('<i class="fa fa-arrow-circle-o-left fa-2x"></i>'),
+            $download;
 
-      $span.prepend($i).append($download);
-      $span.on("click", function() {
-        renderOverview(download);
+        $span.prepend($i);
+        $span.on("click", function() {
+          if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+            history.back();
+          } else {
+            renderOverview();
+          }
+        });
+        $row.append($column1.append($span));
+
+        if (download) {
+          $download = $('<i class="fa fa-download"></i>');
+          $column3.append($download);
+        }
+
+        $row.append($column2).append($column3);
+
+        return $row;
       });
-      $row.append($column1.append($span));
-
-      if (download) {
-        $download = $('<i class="fa fa-download"></i>');
-      }
-
-      $row.append($column2).append($column3);
-
-      return $row;
-    });
-    mainContainer.prepend(navigationBar);
+      mainContainer.prepend($navigationBar);
+    }
+    // TODO: Uncomment once UI for navbar is done.
+    //$navigationBar.show();
   } else {
-    $("#navigation").remove();
+    $navigationBar.remove();
   }
 }
 
@@ -908,9 +977,12 @@ function renderOverview(callback) {
   });
 }
 
-function renderGraphs(report_id) {
+
+function renderGraphs(report_id, callback) {
   var data = {'id': report_id},
       url = location.protocol + "//" + location.host; // https://secure.my.jobs
+
+  navigation = true;
 
   $.ajax({
     type: "GET",
@@ -1092,11 +1164,16 @@ function renderGraphs(report_id) {
 
           contactContainer = $('<div id="report-contacts" class="span12"></div>').append(topThreeRow).append(restRow);
           $("#main-container").append(contactContainer);
+
+          if (typeof callback === "function") {
+            callback();
+          }
         }});
       });
     }
   });
 }
+
 
 function renderArchive(callback) {
   $.ajax({
@@ -1111,4 +1188,11 @@ function renderArchive(callback) {
       callback();
     }
   });
+}
+
+
+// Checks to see if browser is IE. If it is then get version.
+function isIE() {
+    var myNav = navigator.userAgent.toLowerCase();
+    return (myNav.indexOf('msie') !== -1) ? parseInt(myNav.split('msie')[1]) : false;
 }

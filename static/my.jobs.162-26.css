@@ -1662,6 +1662,29 @@ h3.bottom-bordered {
     background-color: #F7F7F7;
 }
 
+.table-striped.report-table tbody tr:last-of-type td {
+    border-bottom: 1px solid #ddd;
+}
+
+.view-report:hover,
+.clone-report:hover,
+.export-report:hover {
+    cursor: pointer;
+}
+
+.export-report a {
+    color: #000;
+}
+
+.export-report a:hover {
+    text-decoration: none;
+}
+
+span.small {
+    font-size: 0.9em;
+    color: #444;
+}
+
 /* Sort by field in saved search save/edit */
 #saved-search-form label[for^='id_sort_by'],
 #saved-search-form label[for^='id_edit_sort_by'] {
@@ -1955,6 +1978,14 @@ table#row-link-table {
     width: 100%;
     overflow-y: auto;
     display: block;
+    position: relative;
+}
+
+.short-list {
+    margin: 0;
+    max-height: 160px;
+    overflow-y: auto;
+    padding-left: 35px;
     position: relative;
 }
 
