@@ -197,7 +197,7 @@ class Contact(models.Model):
     def _parse_parameters(self, parameters, records):
         """Used to parse state during `from_search()`."""
 
-        parameters.pop('contact_type', None)
+        contact_type = parameters.pop('contact_type', None)
         start_date = parameters.pop('start_date', None)
         end_date = parameters.pop('end_date', None)
         state = parameters.pop('state', None)
@@ -226,6 +226,25 @@ class Contact(models.Model):
 
         if city:
             records = records.filter(locations__city__icontains=city)
+
+        if contact_type and records:
+            if contact_type == '0':
+                return records.none()
+
+            if not hasattr(contact_type, '__iter__'):
+                contact_type = [contact_type]
+
+            owner = records.first().partner.owner
+            contacts = ContactRecord.objects.filter(
+                partner__owner=owner, contact_type__in=contact_type).values(
+                    'contact_name', 'contact_email').distinct()
+
+            q = models.Q()
+            for contact in contacts:
+                q |= models.Q(name=contact['contact_name'],
+                              email=contact['contact_email'])
+
+            records = records.filter(q)
 
         return records
 
