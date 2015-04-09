@@ -46,7 +46,7 @@ window.onpopstate = function(event) {
 };
 
 // Determines if IE is being used. If it is IE returns IE version #. If not will return false.
-var IE = isIE();
+var modernBrowser = !(isIE() && isIE() < 10);
 
 // Used to get through beforeunload listener without displaying message.
 var reload = false;
@@ -305,7 +305,11 @@ Report.prototype.bindEvents = function() {
   });
 
   container.on("click", "#cancel-modal", function() {
-    history.back();
+    if (modernBrowser) {
+      history.back();
+    } else {
+      renderOverview();
+    }
   });
 
 
@@ -740,7 +744,7 @@ $(document).ready(function() {
 
   $("#choices input[type='checkbox']:checked").prop("checked", false);
 
-  if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+  if (modernBrowser) {
     history.replaceState({'page': 'overview'}, "Report Overview");
   }
 
@@ -758,7 +762,7 @@ $(document).ready(function() {
 
     // Create js Report object and set up next step.
     report = new Report(types);
-    if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+    if (modernBrowser) {
       history.pushState({'page': 'new', 'report': report}, 'Create Report');
     }
     navigation = true;
@@ -792,7 +796,7 @@ $(document).ready(function() {
       report_id = $(this).parents("tr").data("report");
     }
 
-    if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+    if (modernBrowser) {
       history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
     }
 
@@ -820,7 +824,7 @@ $(document).ready(function() {
             data: data,
             dataType: "json",
             success: function(data) {
-              if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+              if (modernBrowser) {
                 history.pushState({'page': 'clone', 'inputs': data, 'reportId': report_id}, "Clone Report");
               }
               var report = new Report(["prm"]);
@@ -848,7 +852,7 @@ $(document).ready(function() {
 
   // View Archive
   subpage.on("click", "#report-archive", function() {
-    if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+    if (modernBrowser) {
       history.pushState({'page': 'report-archive'}, "Report Archive");
     }
     navigation = true;
@@ -946,7 +950,7 @@ function renderNavigation(download) {
 
         $span.prepend($i);
         $span.on("click", function() {
-          if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+          if (modernBrowser) {
             history.back();
           } else {
             renderOverview();
@@ -989,7 +993,6 @@ function renderOverview(callback) {
   });
 }
 
-<<<<<<< HEAD:static/reporting.163-8.js
 function renderDownload(report_id) {
   var data = {'id': report_id};
 
@@ -1022,7 +1025,11 @@ function renderDownload(report_id) {
 
       $("input.enable-column").on("click", updateValues);
       $("#download-cancel").on("click", function() {
-        history.back();
+        if (modernBrowser) {
+          history.back();
+        } else {
+          renderOverview();
+        }
       });
     }
   });
