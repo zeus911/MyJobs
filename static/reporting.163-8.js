@@ -61,12 +61,12 @@ var checklists = {
 // Pulls the fields required for report type(s)
 // Field Params: label, type, required, value
 Report.prototype.createFields = function(types) {
-  var reports = {"prm": [new Field("Select Date", "date"),
-                         new Field("Contact Type", "checklist", false, checklists.contact_type),
-                         new Field("State", "state"),
-                         new Field("City", "text"), 
-                         new List("Select Partners", "partner", true),
-                         new List("Select Contacts", "contact", true)]},
+  var reports = {"prm": [new Field(this, "Select Date", "date"),
+                         new Field(this, "Contact Type", "checklist", false, checklists.contact_type),
+                         new Field(this, "State", "state"),
+                         new Field(this, "City", "text"), 
+                         new List(this, "Select Partners", "partner", true),
+                         new List(this, "Select Contacts", "contact", true)]},
         fields = [],
         key;
 
@@ -75,7 +75,7 @@ Report.prototype.createFields = function(types) {
       fields.push.apply(fields, reports[types[key]]);
     }
   }
-  fields.unshift(new Field("Report Name", "text", true, formatDate(new Date())));
+  fields.unshift(new Field(this, "Report Name", "text", true, formatDate(new Date())));
   return fields;
 };
 
@@ -103,14 +103,28 @@ Report.prototype.bindEvents = function() {
 
 
   // Populate contact types from selected check boxes
-  container.on("click", "#contact_type > input", function(e) {
-    var values = [];
-        
-    $("input[name='checklist[]']:checked").each(function() {
-      values.push($(this).val());
+  container.on("change", "input#contact_type", function(e) {
+    var $checkboxes = $("input#contact_type"),
+        $checked = $("input#contact_type:checked"),
+        $allCheckbox = $("input#all_contact_type");
+
+    var values = $.map($("input#contact_type:checked"), function(item, index) {
+      return $(item).val();
     });
 
+    $allCheckbox.prop("checked", $checkboxes.length === $checked.length);
     report.data.contact_type = values.length ? values : "0";
+  });
+
+  container.on("change", "input#all_contact_type", function(e) {
+    var $checkboxes = $("input#contact_type");
+
+    $checkboxes.prop("checked", $(this).is(":checked"));
+    $.each($checkboxes, function(index, value) {
+      if (index === $checkboxes.length - 1) {
+        $(this).change();
+      }
+    });
   });
 
 
@@ -118,7 +132,8 @@ Report.prototype.bindEvents = function() {
   container.on("change", "input:not([id$=-all-checkbox]), select:not([class^=picker])", function(e) {
     var in_list = $(this).parents(".list-body").attr("id"),
         contact_wrapper = $("#contact-wrapper"),
-        c_field = report.findField("Select Contacts");
+        c_field = report.findField("Select Contacts"),
+        ignore_data = ['contact_type', 'all_contact_type'];
 
     // Check to see if the triggering even was in a list.
     if (typeof in_list !== "undefined") {
@@ -164,7 +179,7 @@ Report.prototype.bindEvents = function() {
           };
 
       // Default update/save data
-      if ($(e.currentTarget).attr("id") !== "contact_type") {
+      if (ignore_data.indexOf($(e.currentTarget).attr("id")) === -1) {
         report.data[$(e.currentTarget).attr("id")] = $(e.currentTarget).val();
       }
 
@@ -340,6 +355,12 @@ Report.prototype.readable_data = function() {
         // grab names associated by value.
 
         if (key === "contact type") {
+          value = $.map(checklists.contact_type, function(item, index) {
+            if (value.indexOf(item.value) > 0) {
+              return item.label;
+            }
+          });
+
           var $all = $("input[name='checklist[]']"),
               $checked = $("input[name='checklist[]']:checked");
 
@@ -362,10 +383,6 @@ Report.prototype.readable_data = function() {
     }
   }
 
-  if (typeof data.contact_type === "undefined") {
-    html += "<div><label>Contact type:</label>All Contact Types</div>";
-  }
-
   if (typeof data.partner === "undefined") {
     if ($("#partner-all-checkbox").is(":checked")) {
       html += "<div><label>Partners:</label>All Partners</div>";
@@ -376,6 +393,10 @@ Report.prototype.readable_data = function() {
     if ($("#contact-all-checkbox").is(":checked")) {
       html += "<div><label>Contacts:</label>All Contacts</div>";
     }
+  }
+
+  if (typeof data.contact_type === "undefined") {
+    html += "<div><label>Contact type:</label>All Contact Types</div>";
   }
 
   return html;
@@ -403,6 +424,7 @@ Report.prototype.renderFields = function(fields) {
 
   html += "<div class=\"show-modal-holder\"><a id=\"show-modal\" class=\"btn primary\">Generate Report</a></div>";
   container.html(html);
+
 };
 
 
@@ -446,7 +468,8 @@ Report.prototype.createCloneReport = function(json) {
 };
 
 
-var Field = function(label, type, required, value) {
+var Field = function(report, label, type, required, value) {
+  this.report = report
   this.label = label;
   this.type = type;
   this.required = typeof required !== 'undefined';
@@ -508,25 +531,37 @@ Field.prototype.render = function() {
         }
       });
     })();
-  } else if (this.type === "checklist") {
-    var field_label = this.label.toLowerCase().replace(/ /g, "_");
-    input = $.map(this.value, function(item, index) {
+  } else if (field.type === "checklist") {
+    var field_label = field.label.toLowerCase().replace(/ /g, "_"),
+        all_checked = field.value.every(function(item, index, array) {
+          return item.checked;
+        });
+
+    input = $.map(field.value, function(item, index) {
       return "<input id='" + field_label +
              "'type='checkbox' name='checklist[]' value='" + item.value +
              (item.checked ? "' checked />" : "' />") + item.label;
     }).join("");
 
+    input = "<input id='all_" + field_label +
+            "'type='checkbox' name='checklist[]' value='all' " +
+            (all_checked ? "' checked />" : "' />") + "All" + input;
+
     $wrapper.attr("id", field_label);
     $wrapper.append(l).append(input);
     $wrapper.children("input").css("margin", "10px 5px");
     html = $wrapper.prop("outerHTML");
+
+    field.report.data[field_label] = $.map(field.value, function(item, index) {
+      return item.value;
+    });
   }
   return html;
 };
 
 
-var List = function(label, type, required) {
-  Field.call(this, label, type, required);
+var List = function(report, label, type, required) {
+  Field.call(this, report, label, type, required);
 };
 
 

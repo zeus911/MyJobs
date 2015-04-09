@@ -93,7 +93,6 @@ def view_records(request, app, model):
         params = parse_params(request.GET)
 
         # remove non-query related params
-        params.pop('csrfmiddlewaretoken', None)
         count = params.pop('count', None)
         values = params.pop('values', [])
 
