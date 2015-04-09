@@ -813,16 +813,15 @@ function renderDownload(report_id) {
     success: function(data) {
       var $sidebarNavigation = $(".sidebar .navigation"),
           ctx,
-          values;
+          values,
+          updateValues = function() {
+            values = $.map($(".enable-column:checked"), function(item, index) {
+              return $(item).val();
+            });
 
-      function updateValues() {
-        values = $.map($(".enable-column:checked"), function(item, index) {
-          return $(item).val();
-        });
-
-        var ctx = {'id': report_id, 'values': values};
-        $("#download-csv").attr("href", "download?" + $.param(ctx));
-      }
+            ctx = {'id': report_id, 'values': values};
+            $("#download-csv").attr("href", "download?" + $.param(ctx));
+          };
 
       $("#container").removeClass("rpt-container").html(data);
 
@@ -834,16 +833,13 @@ function renderDownload(report_id) {
 
       updateValues();
 
+      // Event Handlers
       $(".card-holder").sortable({
         "axis": "y",
-        "update": function(e, ui) {
-          updateValues();
-        }
+        "update": updateValues
       });
 
-      $("input.enable-column").on("click", function() {
-        updateValues();
-      });
+      $("input.enable-column").on("click", updateValues);
     }
   });
 }
