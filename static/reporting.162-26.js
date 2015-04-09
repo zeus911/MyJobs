@@ -249,6 +249,10 @@ Report.prototype.bindEvents = function() {
     modal.modal("show");
   });
 
+  container.on("click", "#cancel-modal", function() {
+    history.back();
+  });
+
 
   // Actually submits the report's data to create a Report object in db.
   $(document.body).on("click", "#gen-report", function(e) {
@@ -359,7 +363,7 @@ Report.prototype.renderFields = function(fields) {
     html += fields[i].render(this);
   }
 
-  html += "<div class=\"show-modal-holder\"><a id=\"show-modal\" class=\"btn primary\">Generate Report</a></div>";
+  html += "<div class='show-modal-holder'><a id='cancel-modal' class='btn secondary'>Cancel</a><a id='show-modal' class='btn primary'>Generate Report</a></div>";
   container.html(html);
 };
 
@@ -811,8 +815,7 @@ function renderDownload(report_id) {
     url: "downloads",
     data: data,
     success: function(data) {
-      var $sidebarNavigation = $(".sidebar .navigation"),
-          ctx,
+      var ctx,
           values,
           updateValues = function() {
             values = $.map($(".enable-column:checked"), function(item, index) {
@@ -823,13 +826,7 @@ function renderDownload(report_id) {
             $("#download-csv").attr("href", "download?" + $.param(ctx));
           };
 
-      $("#container").removeClass("rpt-container").html(data);
-
-      if (!$sidebarNavigation.length) {
-        $(".sidebar").append("<h2>Navigation</h2>" +
-                             "<div class='navigation'>" +
-                             "<a class='btn' id='download-csv'>Download CSV</a>");
-      }
+      $("#main-container").html(data);
 
       updateValues();
 
@@ -840,6 +837,9 @@ function renderDownload(report_id) {
       });
 
       $("input.enable-column").on("click", updateValues);
+      $("#download-cancel").on("click", function() {
+        history.back();
+      });
     }
   });
 }

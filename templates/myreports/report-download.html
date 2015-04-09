@@ -1,8 +1,19 @@
 {# TODO: Add a "Select All" div #}
-<div class="card-holder">
-    {% for name, checked in columns.items %}
-    <div class="field-card" id="{{ col.split|join:"_"|lower }}">
-        <input class="enable-column" type="checkbox" value="{{ name.split|join:"_"|lower }}"{% if checked %}checked{% endif %} />{{ name }}
+<div class="span8">
+    <div class="card-holder">
+        {% for name, checked in columns.items %}
+        <div class="field-card" id="{{ col.split|join:"_"|lower }}">
+            <input class="enable-column" type="checkbox" value="{{ name.split|join:"_"|lower }}"{% if checked %}checked{% endif %} />{{ name }}
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
+</div>
+<div class="span4">
+    <div class="sidebar">
+        <h2 class="top">Navigation</h2>
+        <div class="navigation">
+            <a class="btn" id="download-csv">Download CSV</a> 
+            <a class="btn" id="download-cancel">Cancel</a> 
+        </div>
+    </div>
 </div>

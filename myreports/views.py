@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from datetime import datetime
 import json
 
@@ -211,11 +212,14 @@ def downloads(request):
     report = get_object_or_404(
         get_model('myreports', 'report'), pk=report_id)
 
-    fields = [field for field in report.python[0].keys() if field != 'pk']
-
+    fields = sorted([field for field in report.python[0].keys()
+                     if field != 'pk'])
     values = json.loads(report.values) or fields
-    columns = {field.replace('_', ' ').title(): field in values
-               for field in fields}
+    fields = values + [field for field in fields if field not in values]
+
+    columns = OrderedDict()
+    for field in fields:
+        columns[field.replace('_', ' ').title()] = field in values
 
     ctx = {'columns': columns}
 

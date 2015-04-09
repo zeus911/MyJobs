@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from cStringIO import StringIO
 import csv
 import HTMLParser
@@ -133,12 +134,24 @@ def serialize(fmt, data, counts=None, values=None):
 
         data = records
 
+    if data:
+        values = values or data[0].keys()
+        d = []
+        for record in data:
+            o = OrderedDict()
+            for value in values:
+                o[value] = record[value]
+
+            d.append(o)
+
+    data = d
+
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)
     elif fmt == 'csv':
         output = StringIO()
         writer = csv.writer(output)
-        columns = sorted(data[0].keys())
+        columns = data[0].keys()
         writer.writerow([column.replace('_', ' ').title()
                          for column in columns])
 
