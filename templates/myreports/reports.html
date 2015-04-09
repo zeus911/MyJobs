@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block site-title %}
-    <title>My.jobs - Reports - {{ company.name }}</title>
+    <title>My.jobs - Reports - {{ company.name }} (beta)</title>
     <meta name="title" content="My.jobs - Reports - {{ company.name }}">
 {% endblock %}
 
@@ -12,7 +12,7 @@
 {% endblock %}
 
 {% block content %}
-    {% include "myreports/report_overview.html" %}
+    {% include "myreports/includes/report_overview.html" %}
 {% endblock %}
 
 {% block extra-js %}

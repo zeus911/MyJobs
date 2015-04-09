@@ -37,7 +37,7 @@ def overview(request):
 
     if request.is_ajax():
         response = HttpResponse()
-        html = render_to_response('myreports/report_overview.html', ctx,
+        html = render_to_response('myreports/includes/report_overview.html', ctx,
                                   RequestContext(request)).content
         response.content = html
         return response
@@ -56,7 +56,7 @@ def report_archive(request):
         }
 
         response = HttpResponse()
-        html = render_to_response('myreports/report-archive.html', ctx,
+        html = render_to_response('myreports/includes/report-archive.html', ctx,
                                   RequestContext(request))
         response.content = html.content
 
@@ -94,7 +94,6 @@ def view_records(request, app, model):
         params = parse_params(request.GET)
 
         # remove non-query related params
-        params.pop('csrfmiddlewaretoken', None)
         count = params.pop('count', None)
         values = params.pop('values', [])
 
@@ -186,7 +185,9 @@ class ReportView(View):
             params = parse_params(request.POST)
 
             params.pop('csrfmiddlewaretoken', None)
-            name = params.pop('report_name', datetime.now())
+            name = params.pop(
+                'report_name', str(datetime.now())).replace(' ', '_')
+            values = params.pop('values', None)
 
             records = get_model(app, model).objects.from_search(
                 company, params)

@@ -113,11 +113,8 @@ def serialize(fmt, data, counts=None, values=None):
             data = [dict({'count': counts[record['pk']]}, **record)
                     for record in data]
 
-    # Cant' use a ValueQuerSet for serialize, which means we lose the
-    # ability to use distinct. As such, we fake it by doing so manually
-    if values:
-        # using a list comprehension to preserve order
-        values = [value for value in values if value in data[0].keys()]
+        # Cant' use a ValueQuerSet for serialize, which means we lose the
+        # ability to use distinct. As such, we fake it by doing so manually
         records = []
         haystack = []
 
