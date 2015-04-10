@@ -375,10 +375,11 @@ Report.prototype.readable_data = function() {
 
         if (key === "contact type") {
           value = $.map(checklists.contact_type, function(item, index) {
-            if (value.indexOf(item.value) > 0) {
+            if (value.indexOf(item.value) !== -1) {
               return item.label;
             }
           });
+          console.log(value);
 
           var $all = $("input[name='checklist[]']"),
               $checked = $("input[name='checklist[]']:checked");
@@ -461,7 +462,7 @@ Report.prototype.createCloneReport = function(json) {
       } else if (key === "contact_name") {
         this.findField("Select Contacts").value = value;
         this.data.contact = value;
-      } else if (key.indexOf("date") > 0) {
+      } else if (key.indexOf("date") !== -1) {
         field = this.findField("Select Date");
         if (field.value === "") {
           field.value = {"start_date": '', "end_date": ''};
