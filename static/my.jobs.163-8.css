@@ -1516,7 +1516,7 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
 }
 
 .sort-order {
-    width: 100px;
+    width: 110px;
 }
 
 .sort-container {
@@ -1533,7 +1533,7 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
 }
 
 .enable-all-columns .enable-column {
-  margin: 10px;
+  margin: 10px 5px;
 }
 
 .show-modal-holder {
