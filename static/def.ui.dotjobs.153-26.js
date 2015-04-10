@@ -262,7 +262,6 @@ function toggleCopyright(copyControl){
         None
     **/
     html = copyControl.html();
-    console.log(copyControl.hasClass("copyrightControlActive"));
     if(!copyControl.hasClass("copyrightControlActive")){
         html = copyControl.attr("data-copyright");
         html+= "<br/><a href='"+copyControl.attr("data-source")+"'>"+copyControl.attr("data-source")+"</a>";
