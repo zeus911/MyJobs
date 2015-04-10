@@ -217,6 +217,8 @@ Pager.prototype = {
 
 $(document).ready(function(){
 	var pager = new Pager();
+    var total_clicks = parseInt(window.location.hash.slice(1, 10));
+    window.location.hash = "";
 
     $(document).on("click", "a.direct_optionsMore", function(e) {
         var parent = $(this).parent();
@@ -253,11 +255,27 @@ $(document).ready(function(){
 			url: ajax_url,
 			data: {'num_items': num_items, 'offset': offset},
 			success: function (data) {
-						$('#direct_listingDiv ul:last').after(data);
-						parent.attr('offset', (offset + num_items).toString());
-					}
-			});
-	});
+                $('#direct_listingDiv ul:last').after(data);
+                parent.attr('offset', (offset + num_items).toString());
+                var num_clicks = parseInt(window.location.hash.slice(1, 10));
+                if (isNaN(num_clicks) && isNaN(total_clicks)) {
+                    window.location.hash = "1";
+                } else {
+                    if (isNaN(num_clicks)) {
+                        num_clicks = 0;
+                    }
+                    window.location.hash = (++num_clicks).toString();
+                    if (!isNaN(total_clicks) && num_clicks < total_clicks) {
+                        $('#button_moreJobs').click();
+                    }
+                }
+            }
+        });
+    });
+
+    if (!isNaN(total_clicks)) {
+        $('#button_moreJobs').trigger('click');
+    }
 
 	$('a.direct_optionsLess').click(function(e) {
         var parent = $(this).parent();
