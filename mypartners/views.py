@@ -533,7 +533,8 @@ def prm_edit_saved_search(request):
 
     if item_id:
         instance = get_object_or_404(PartnerSavedSearch, id=item_id)
-        form = PartnerSavedSearchForm(partner=partner, instance=instance)
+        form = PartnerSavedSearchForm(partner=partner, instance=instance,
+                                      request=request)
     elif copy_id:
         try:
             values = PartnerSavedSearch.objects.filter(pk=copy_id).values()[0]
@@ -546,9 +547,10 @@ def prm_edit_saved_search(request):
             values.pop('notes', None)
             values.pop('custom_message', None)
             values.pop('partner_message', None)
-            form = PartnerSavedSearchForm(initial=values, partner=partner)
+            form = PartnerSavedSearchForm(initial=values, partner=partner,
+                                          request=request)
     else:
-        form = PartnerSavedSearchForm(partner=partner)
+        form = PartnerSavedSearchForm(partner=partner, request=request)
 
 
     microsites = company.prm_saved_search_sites.values_list('domain', flat=True)
@@ -627,13 +629,15 @@ def partner_savedsearch_save(request):
                                  provider=company.id)
         form = PartnerSavedSearchForm(instance=item, auto_id=False,
                                       data=request.POST,
-                                      partner=partner)
+                                      partner=partner,
+                                      request=request)
         if form.is_valid():
             form.save()
             return HttpResponse(status=200)
         else:
             return HttpResponse(json.dumps(form.errors))
-    form = PartnerSavedSearchForm(request.POST, partner=partner)
+    form = PartnerSavedSearchForm(request.POST, partner=partner,
+                                  request=request)
 
     # Since the feed is created below, this will always be invalid.
     if 'feed' in form.errors:
