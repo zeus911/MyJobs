@@ -222,7 +222,10 @@ def downloads(request):
     for field in fields:
         columns[field.replace('_', ' ').title()] = field in values
 
-    ctx = {'columns': columns}
+    names = [key for key, value in columns.items() if value]
+
+    ctx = {'columns': columns,
+           'names': names}
 
     return render_to_response('myreports/includes/report-download.html', ctx,
                               RequestContext(request))
@@ -234,9 +237,17 @@ def download_report(request):
 
     report_id = request.GET.get('id', 0)
     values = request.GET.getlist('values', None)
+    order_by = request.GET.get('order_by')
 
     report = get_object_or_404(
         get_model('myreports', 'report'), pk=report_id)
+
+    if order_by:
+        records = report.queryset.order_by(order_by)
+        contents = serialize('json', records)
+        results = ContentFile(contents)
+        report.results.save('%s-%s.json' % (report.name, report.pk), results)
+        report.save()
 
     if values:
         report.values = json.dumps(values)

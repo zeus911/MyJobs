@@ -1,23 +1,4 @@
 {# TODO: Add a "Select All" div #}
-<style>
-    p.blurb {
-        margin-left: 0; 
-        padding-left: 0;
-    }
-
-    #sort-label {
-        display: inline-block;
-    }
-
-    #sort-order {
-        width: 100px;
-    }
-
-    #all-columns {
-        margin: 0 5px 0 5px;
-    }
-
-</style>
 <div class="span8">
     <h2>Customize Download File</h2>
     <p class="blurb">
@@ -26,22 +7,25 @@
         vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,
         no sea takimata sanctus est Lorem ipsum dolor sit amet.
     </p>
-    <div>
+    <div class="sort-container">
         <div>
-            <label id="sort-label" for="some_name">Sort by:</label>
-            <select name="some_name" id="some_name">
-                {% for name in columns.keys %}
-                <option value="option1">{{ name }}</option>
+            <span id="column-choices-label">Sort by:</span>
+            <select  id="column-choices">
+                <option value="">Select a Column</option>
+                {% for name in names %}
+                <option value="{{ name.split|join:"_"|lower }}">{{ name }}</option>
                 {% endfor %}
             </select>
-            <select name="some_name" id="sort-order">
-                <option value="option1">Ascending</option>
-                <option value="option1">Descending</option>
+            <select class="sort-order">
+                <option value="">Ascending</option>
+                <option value="-">Descending</option>
             </select>
         </div>
-            <input id="all-columns" type="checkbox" value="all" checked />Select All Columns Names
+        <div class="enable-all-columns">
+          <input class="enable-column" type="checkbox" value="all" />Select All
+        </div>
     </div>
-    <div class="column-holder">
+    <div class="column-container">
         {% for name, checked in columns.items %}
         <div class="column-wrapper" id="{{ col.split|join:"_"|lower }}">
             <input class="enable-column" type="checkbox" value="{{ name.split|join:"_"|lower }}"{% if checked %}checked{% endif %} />{{ name }}

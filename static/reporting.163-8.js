@@ -1005,28 +1005,46 @@ function renderDownload(report_id) {
     data: data,
     success: function(data) {
       var ctx,
-          values;
+          values,
+          order,
+          column,
+          $allCheckbox,
+          $checkboxes,
+          $checked;
 
-    function updateValues() {
-      values = $.map($(".enable-column:checked"), function(item, index) {
-        return $(item).val();
-      });
+      function updateValues() {
+        $checked = $(".column-container .enable-column:checked");
+        order = $(".sort-order");
+        column = $("#column-choices");
 
-      ctx = {'id': report_id, 'values': values};
-      $("#download-csv").attr("href", "download?" + $.param(ctx));
-    }
+        values = $.map($checked, function(item, index) {
+          return $(item).val();
+        });
+
+        ctx = {'id': report_id, 'values': values};
+        if (column.val()) {
+          ctx.order_by = order.val() + column.val();
+        }
+
+        $("#download-csv").attr("href", "download?" + $.param(ctx));
+      }
 
       $("#main-container").html(data);
 
+      $allCheckbox = $(".enable-all-columns .enable-column");
+      $checkboxes = $(".column-container .enable-column");
+      $checked = $(".column-container .enable-column:checked");
+
+      $allCheckbox.prop("checked", $checkboxes.length === $checked.length);
       updateValues();
 
       // Event Handlers
-      $(".column-holder").sortable({
+      $(".column-container").sortable({
         axis: "y",
         placeholder: "placeholder",
+        containment: "parent",
+        tolerance: "pointer",
         start: function(e, ui) {
-          ui.placeholder.height(ui.item.outerHeight());
-          ui.placeholder.width(ui.item.outerWidth() - 2);
           ui.item.addClass("drag");
         },
         stop: function(e, ui) {
@@ -1035,14 +1053,14 @@ function renderDownload(report_id) {
         update: updateValues
       });
 
-      $("#all-columns").on("change", function() {
+      $(".enable-all-columns .enable-column").on("change", function() {
         $("input.enable-column").prop("checked", $(this).is(":checked"));
       });
 
       $("input.enable-column").on("change", function() {
-        var $checkboxes = $("input.enable-column"),
-            $checked = $("input.enable-column:checked"),
-            $allCheckbox = $("input#all-columns");
+        $checkboxes = $(".column-wrapper .enable-column");
+        $checked = $(".column-wrapper .enable-column:checked");
+        $allCheckbox = $(".enable-all-columns .enable-column");
 
         $allCheckbox.prop("checked", $checkboxes.length === $checked.length);
       });
@@ -1055,6 +1073,8 @@ function renderDownload(report_id) {
         }
       });
 
+      $(".sort-order").on("change", updateValues);
+      $("#column-choices").on("change", updateValues);
       $("input.enable-column").on("click", updateValues);
     }
   });
