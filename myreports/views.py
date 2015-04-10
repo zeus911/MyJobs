@@ -237,16 +237,13 @@ def download_report(request):
 
     report_id = request.GET.get('id', 0)
     values = request.GET.getlist('values', None)
-    order_by = request.GET.get('order_by')
+    order_by = request.GET.get('order_by', None)
 
     report = get_object_or_404(
         get_model('myreports', 'report'), pk=report_id)
 
     if order_by:
-        records = report.queryset.order_by(order_by)
-        contents = serialize('json', records)
-        results = ContentFile(contents)
-        report.results.save('%s-%s.json' % (report.name, report.pk), results)
+        report.order_by = order_by
         report.save()
 
     if values:
@@ -260,6 +257,6 @@ def download_report(request):
     response['Content-Disposition'] = content_disposition % (
         report.name, report.pk)
 
-    response.write(serialize('csv', records, values=values))
+    response.write(serialize('csv', records, values=values, order_by=order_by))
 
     return response

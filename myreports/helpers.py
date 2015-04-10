@@ -85,7 +85,7 @@ def parse_params(querydict):
 #   * find a better way to handle counts
 #   * do something other than isinstance checks (duck typing anyone?)
 
-def serialize(fmt, data, counts=None, values=None):
+def serialize(fmt, data, counts=None, values=None, order_by=None):
     """
     Like `django.core.serializers.serialize`, but produces a simpler structure
     and retains annotated fields*.
@@ -119,17 +119,21 @@ def serialize(fmt, data, counts=None, values=None):
         haystack = []
 
         for record in data:
-            needle = [record[value] for value in values] or record['pk']
+            needle = [record[value]
+                      for value in values] if values else record['pk']
 
             if needle not in haystack:
                 haystack.append(needle)
-                # strip HTML tags from string values
-                records.append({
-                    key: strip_tags(record[key])
-                    if isinstance(record[key], basestring) else record[key]
-                    for key in values})
+                records.append(record)
 
         data = records
+
+        # strip HTML tags from string values
+        for index, record in enumerate(data[:]):
+            data[index] = {
+                key: strip_tags(record[key])
+                if isinstance(record[key], basestring) else value
+                for key, value in record.items()}
 
     if data:
         values = values or data[0].keys()
@@ -140,6 +144,16 @@ def serialize(fmt, data, counts=None, values=None):
                 o[value] = record[value]
 
             d.append(o)
+
+        if order_by:
+            if '-' in order_by:
+                reverse = True
+                order_by = order_by[1:]
+            else:
+                reverse = False
+
+            d = sorted(
+                d, key=lambda record: record[order_by], reverse=bool(reverse))
 
     data = d
 
