@@ -136,6 +136,12 @@
             _gaq.push(['_setAccount', 'UA-16316580-1']);
             _gaq.push(['_trackPageview']);
             _gaq.push(['_setCustomVar', 2, 'View Source', 'Dot Jobs (88)', 2]);
+            _gaq.push(function() {
+                // Unique analytics property for secure.my.jobs
+                _gaq._createAsyncTracker('UA-16316580-6', 'secureMyJobs');
+            });
+            _gaq.push(['secureMyJobs._setDomainName','secure.my.jobs']);
+            _gaq.push(['secureMyJobs.trackPageView']);
 
             (function() {
                 var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
