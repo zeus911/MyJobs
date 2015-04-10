@@ -222,10 +222,7 @@ def downloads(request):
     for field in fields:
         columns[field.replace('_', ' ').title()] = field in values
 
-    names = [key for key, value in columns.items() if value]
-
-    ctx = {'columns': columns,
-           'names': names}
+    ctx = {'columns': columns}
 
     return render_to_response('myreports/includes/report-download.html', ctx,
                               RequestContext(request))

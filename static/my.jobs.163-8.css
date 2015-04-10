@@ -1486,8 +1486,12 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
 }
 
 .column-wrapper:hover {
-    cursor: move;
+    cursor: pointer;
     background-color: #D5FACF;
+}
+
+.column-wrapper i:hover {
+    cursor: move;
 }
 
 .placeholder {
@@ -1508,6 +1512,7 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
 .span8 .blurb {
     margin-left: 0; 
     padding-left: 0;
+    padding-bottom: 0;
 }
 
 .sort-order {
@@ -1518,8 +1523,13 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
   margin: 0;
 }
 
+.blurb + ul {
+    padding: 0;
+}
+
 .column-wrapper .enable-column {
     margin: 5px;
+    margin-left: 0;
 }
 
 .enable-all-columns .enable-column {

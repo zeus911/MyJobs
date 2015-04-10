@@ -1,19 +1,21 @@
 {# TODO: Add a "Select All" div #}
 <div class="span8">
-    <h2>Customize Download File</h2>
+    <h2>Download Options</h2>
     <p class="blurb">
-        Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod
-        tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At
-        vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,
-        no sea takimata sanctus est Lorem ipsum dolor sit amet.
+        Please specify which fields you would like included, as well as their order an sorting.
     </p>
+    <ul>
+        <li>Drag the field names to the order you would like.</li>
+        <li>Use the check boxes to include or exclude that column.</li>
+        <li>Use the drop-down to determine which column to sort by and whether that column should be sorted in ascending or descending order.</li>
+    </ul>
     <div class="sort-container">
         <div>
             <span id="column-choices-label">Sort by:</span>
             <select  id="column-choices">
                 <option value="">Select a Column</option>
-                {% for name in names %}
-                <option value="{{ name.split|join:"_"|lower }}">{{ name }}</option>
+                {% for name, checked in columns.items %}
+                <option value="{{ name.split|join:"_"|lower }}"{% if not checked %}disabled{% endif %}>{{ name }}</option>
                 {% endfor %}
             </select>
             <select class="sort-order">

@@ -1006,24 +1006,31 @@ function renderDownload(report_id) {
     success: function(data) {
       var ctx,
           values,
-          order,
-          column,
+          dragged,
+          $order,
+          $column,
+          $columnNames,
           $allCheckbox,
           $checkboxes,
           $checked;
 
       function updateValues() {
         $checked = $(".column-container .enable-column:checked");
-        order = $(".sort-order");
-        column = $("#column-choices");
+        $order = $(".sort-order");
+        $column = $("#column-choices");
+        $columnNames = $("#column-choices option:not([value=''])");
 
         values = $.map($checked, function(item, index) {
           return $(item).val();
         });
 
+        $columnNames.each(function() {
+          $(this).prop("disabled", values.indexOf($(this).val()) === -1);
+        });
+
         ctx = {'id': report_id, 'values': values};
-        if (column.val()) {
-          ctx.order_by = order.val() + column.val();
+        if ($column.val()) {
+          ctx.order_by = $order.val() + $column.val();
         }
 
         $("#download-csv").attr("href", "download?" + $.param(ctx));
@@ -1044,10 +1051,13 @@ function renderDownload(report_id) {
         placeholder: "placeholder",
         containment: "parent",
         tolerance: "pointer",
+        distance: 10,
         start: function(e, ui) {
+          dragged = true;
           ui.item.addClass("drag");
         },
         stop: function(e, ui) {
+          dragged = false;
           ui.item.removeClass("drag");
         },
         update: updateValues
@@ -1073,9 +1083,23 @@ function renderDownload(report_id) {
         }
       });
 
-      $(".sort-order").on("change", updateValues);
       $("#column-choices").on("change", updateValues);
-      $("input.enable-column").on("click", updateValues);
+      $(".sort-order").on("change", updateValues);
+
+      $(".enable-column").on("change", function(e) {
+        updateValues();
+      });
+
+      $(".enable-column").on("click", function(e) {
+        e.stopPropagation();
+      });
+
+      $(".column-wrapper").on("mouseup", function() {
+        if (!dragged) {
+          var $checkbox = $(this).children(".enable-column");
+          $checkbox.prop("checked", !$checkbox.prop("checked")).change();
+        }
+      });
     }
   });
 }
