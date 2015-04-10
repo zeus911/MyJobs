@@ -145,12 +145,12 @@ def serialize(fmt, data, counts=None, values=None, order_by=None):
 
             d.append(o)
 
+        
+        reverse = False
         if order_by:
             if '-' in order_by:
-                reverse = True
                 order_by = order_by[1:]
-            else:
-                reverse = False
+                reverse = True
 
             d = sorted(
                 d, key=lambda record: record[order_by], reverse=bool(reverse))

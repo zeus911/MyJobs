@@ -218,11 +218,22 @@ def downloads(request):
     values = json.loads(report.values) or fields
     fields = values + [field for field in fields if field not in values]
 
+    column_choice = ''
+    sort_order = ''
+    if report.order_by:
+        if '-' in report.order_by:
+            sort_order = '-'
+            column_choice = report.order_by[1:]
+        else:
+            column_choice = report.order_by
+
     columns = OrderedDict()
     for field in fields:
         columns[field.replace('_', ' ').title()] = field in values
 
-    ctx = {'columns': columns}
+    ctx = {'columns': columns,
+           'sort_order': sort_order,
+           'column_choice': column_choice}
 
     return render_to_response('myreports/includes/report-download.html', ctx,
                               RequestContext(request))

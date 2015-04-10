@@ -8,6 +8,7 @@ class Report(models.Model):
     created_by = models.ForeignKey('myjobs.User')
     owner = models.ForeignKey('seo.Company')
     created_on = models.DateTimeField(auto_now_add=True)
+    order_by = models.CharField(max_length=50, blank=True, null=True)
     app = models.CharField(default='mypartners', max_length=50)
     model = models.CharField(default='contactrecord', max_length=50)
     # included columns and sort order

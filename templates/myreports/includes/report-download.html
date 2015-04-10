@@ -12,15 +12,15 @@
     <div class="sort-container">
         <div>
             <span id="column-choices-label">Sort by:</span>
-            <select  id="column-choices">
+            <select  id="column-choices" value="{{ column_choice }}">
                 <option value="">Select a Column</option>
                 {% for name, checked in columns.items %}
-                <option value="{{ name.split|join:"_"|lower }}"{% if not checked %}disabled{% endif %}>{{ name }}</option>
+                <option value="{{ name.split|join:"_"|lower }}"{% if column_choice == name.split|join:"_"|lower %}selected="selected"{% endif %}{% if not checked %}disabled{% endif %}>{{ name }}</option>
                 {% endfor %}
             </select>
             <select class="sort-order">
-                <option value="">Ascending</option>
-                <option value="-">Descending</option>
+                <option value="" {% if sort_order == "" %}selected="selected"{% endif %}>Ascending</option>
+                <option value="-" {% if sort_order == "-" %}selected="selected"{% endif %}>Descending</option>
             </select>
         </div>
         <div class="enable-all-columns">
