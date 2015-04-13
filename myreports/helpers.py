@@ -84,12 +84,7 @@ def parse_params(querydict):
 # TODO:
 #   * find a better way to handle counts
 #   * do something other than isinstance checks (duck typing anyone?)
-<<<<<<< HEAD
-def serialize(fmt, data, counts=None, values=None):
-=======
-
 def serialize(fmt, data, counts=None, values=None, order_by=None):
->>>>>>> quality-control
     """
     Like `django.core.serializers.serialize`, but produces a simpler structure
     and retains annotated fields*.
@@ -135,10 +130,6 @@ def serialize(fmt, data, counts=None, values=None, order_by=None):
         # strip HTML tags from string values
         for index, record in enumerate(data[:]):
             data[index] = {
-<<<<<<< HEAD
-                key: strip_tags(value) if isinstance(value, basestring)
-                else value for key, value in record.items()}
-=======
                 key: strip_tags(record[key])
                 if isinstance(record[key], basestring) else value
                 for key, value in record.items()}
@@ -164,7 +155,6 @@ def serialize(fmt, data, counts=None, values=None, order_by=None):
                 d, key=lambda record: record[order_by], reverse=bool(reverse))
 
     data = d
->>>>>>> quality-control
 
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)

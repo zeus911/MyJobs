@@ -12,11 +12,7 @@ class Report(models.Model):
     app = models.CharField(default='mypartners', max_length=50)
     model = models.CharField(default='contactrecord', max_length=50)
     # included columns and sort order
-<<<<<<< HEAD
-    values = models.CharField(null=True, max_length=500)
-=======
     values = models.CharField(max_length=500, default='[]')
->>>>>>> quality-control
     # json encoded string of the params used to filter
     params = models.TextField()
     results = models.FileField(upload_to='reports')
@@ -40,28 +36,7 @@ class Report(models.Model):
     def queryset(self):
         model = get_model(self.app, self.model)
         params = json.loads(self.params)
-<<<<<<< HEAD
-        values = json.loads(self.values)
-
-        queryset = model.objects.from_search(self.owner, params)
-
-        # If a report has values, we want specific columns, and rows which are
-        # distinct on those columns. However, we also want access to the other
-        # attributes of hte model, so `values()` isn't sufficient.
-        if values:
-            # Dear Django, please devise a way to do distinct on column with
-            # MySQL so I don't have to do such hackery
-            queryset = queryset.values(*values).distinct()
-            pks = [model.objects.filter(**query).first().pk
-                   for query in queryset]
-
-            queryset = model.objects.filter(pk__in=pks)
-
-        return queryset
-=======
-
         return model.objects.from_search(self.owner, params)
 
     def __unicode__(self):
         return self.name
->>>>>>> quality-control

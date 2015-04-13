@@ -37,11 +37,7 @@ def overview(request):
 
     if request.is_ajax():
         response = HttpResponse()
-<<<<<<< HEAD
-        html = render_to_response('myreports/report_overview.html', ctx,
-=======
         html = render_to_response('myreports/includes/report_overview.html', ctx,
->>>>>>> quality-control
                                   RequestContext(request)).content
         response.content = html
         return response
@@ -100,10 +96,7 @@ def view_records(request, app, model):
         # remove non-query related params
         count = params.pop('count', None)
         values = params.pop('values', [])
-<<<<<<< HEAD
-=======
         order_by = params.pop('order_by', None)
->>>>>>> quality-control
 
         records = get_model(app, model).objects.from_search(
             company, params)
@@ -113,15 +106,12 @@ def view_records(request, app, model):
             records = records.annotate(count=Count(count, distinct=True))
             counts = {record.pk: record.count for record in records}
 
-<<<<<<< HEAD
-=======
         if order_by:
             if not hasattr(order_by, '__iter__'):
                 order_by = [order_by]
 
             records = records.order_by(*order_by)
 
->>>>>>> quality-control
         ctx = serialize('json', records, counts=counts, values=values)
 
         response = HttpResponse(
@@ -202,12 +192,8 @@ class ReportView(View):
             params = parse_params(request.POST)
 
             params.pop('csrfmiddlewaretoken', None)
-<<<<<<< HEAD
-            name = params.pop('report_name', datetime.now())
-=======
-            name = params.pop(
-                'report_name', str(datetime.now())).replace(' ', '_')
->>>>>>> quality-control
+            name = params.pop('report_name', 
+                              str(datetime.now())).replace(' ', '_')
             values = params.pop('values', None)
 
             records = get_model(app, model).objects.from_search(
@@ -228,8 +214,6 @@ class ReportView(View):
                 "This view is only reachable via a POST request.")
 
 
-<<<<<<< HEAD
-=======
 @company_has_access('prm_access')
 def downloads(request):
     report_id = request.GET.get('id', 0)
@@ -262,7 +246,6 @@ def downloads(request):
                               RequestContext(request))
 
 
->>>>>>> quality-control
 @company_has_access('prm_access')
 def download_report(request):
     """Download report as csv."""
