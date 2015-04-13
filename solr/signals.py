@@ -11,6 +11,7 @@ from solr.models import Update
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 
+
 def presave_solr(sender, instance, *args, **kwargs):
     """
     Flag an instance for being uploaded to solr in the post-save if anything

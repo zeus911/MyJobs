@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from datetime import datetime
 import json
 
@@ -36,7 +37,11 @@ def overview(request):
 
     if request.is_ajax():
         response = HttpResponse()
+<<<<<<< HEAD
         html = render_to_response('myreports/report_overview.html', ctx,
+=======
+        html = render_to_response('myreports/includes/report_overview.html', ctx,
+>>>>>>> quality-control
                                   RequestContext(request)).content
         response.content = html
         return response
@@ -55,7 +60,7 @@ def report_archive(request):
         }
 
         response = HttpResponse()
-        html = render_to_response('myreports/report-archive.html', ctx,
+        html = render_to_response('myreports/includes/report-archive.html', ctx,
                                   RequestContext(request))
         response.content = html.content
 
@@ -93,9 +98,12 @@ def view_records(request, app, model):
         params = parse_params(request.GET)
 
         # remove non-query related params
-        params.pop('csrfmiddlewaretoken', None)
         count = params.pop('count', None)
         values = params.pop('values', [])
+<<<<<<< HEAD
+=======
+        order_by = params.pop('order_by', None)
+>>>>>>> quality-control
 
         records = get_model(app, model).objects.from_search(
             company, params)
@@ -105,6 +113,15 @@ def view_records(request, app, model):
             records = records.annotate(count=Count(count, distinct=True))
             counts = {record.pk: record.count for record in records}
 
+<<<<<<< HEAD
+=======
+        if order_by:
+            if not hasattr(order_by, '__iter__'):
+                order_by = [order_by]
+
+            records = records.order_by(*order_by)
+
+>>>>>>> quality-control
         ctx = serialize('json', records, counts=counts, values=values)
 
         response = HttpResponse(
@@ -185,7 +202,12 @@ class ReportView(View):
             params = parse_params(request.POST)
 
             params.pop('csrfmiddlewaretoken', None)
+<<<<<<< HEAD
             name = params.pop('report_name', datetime.now())
+=======
+            name = params.pop(
+                'report_name', str(datetime.now())).replace(' ', '_')
+>>>>>>> quality-control
             values = params.pop('values', None)
 
             records = get_model(app, model).objects.from_search(
@@ -206,20 +228,67 @@ class ReportView(View):
                 "This view is only reachable via a POST request.")
 
 
+<<<<<<< HEAD
+=======
+@company_has_access('prm_access')
+def downloads(request):
+    report_id = request.GET.get('id', 0)
+    report = get_object_or_404(
+        get_model('myreports', 'report'), pk=report_id)
+
+    fields = sorted([field for field in report.python[0].keys()
+                     if field != 'pk'])
+    values = json.loads(report.values) or fields
+    fields = values + [field for field in fields if field not in values]
+
+    column_choice = ''
+    sort_order = ''
+    if report.order_by:
+        if '-' in report.order_by:
+            sort_order = '-'
+            column_choice = report.order_by[1:]
+        else:
+            column_choice = report.order_by
+
+    columns = OrderedDict()
+    for field in fields:
+        columns[field.replace('_', ' ').title()] = field in values
+
+    ctx = {'columns': columns,
+           'sort_order': sort_order,
+           'column_choice': column_choice}
+
+    return render_to_response('myreports/includes/report-download.html', ctx,
+                              RequestContext(request))
+
+
+>>>>>>> quality-control
 @company_has_access('prm_access')
 def download_report(request):
     """Download report as csv."""
 
     report_id = request.GET.get('id', 0)
+    values = request.GET.getlist('values', None)
+    order_by = request.GET.get('order_by', None)
+
     report = get_object_or_404(
         get_model('myreports', 'report'), pk=report_id)
+
+    if order_by:
+        report.order_by = order_by
+        report.save()
+
+    if values:
+        report.values = json.dumps(values)
+        report.save()
+
+    records = humanize(report.python)
 
     response = HttpResponse(content_type='text/csv')
     content_disposition = "attachment; filename=%s-%s.csv"
     response['Content-Disposition'] = content_disposition % (
         report.name, report.pk)
 
-    records = humanize(report.python)
-    response.write(serialize('csv', records))
+    response.write(serialize('csv', records, values=values, order_by=order_by))
 
     return response

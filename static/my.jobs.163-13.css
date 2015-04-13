@@ -1223,6 +1223,12 @@ input.picker-right {
     margin-right: 0;
 }
 
+#id_attach_delete {
+    margin-left: 270px;
+    overflow-wrap: break-word;
+    max-width: 251px;
+}
+
 .hover-element::after {
     content: "";
     position: absolute;
@@ -1464,6 +1470,78 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
     width: 206px;
 }
 
+/* Report Download */
+.column-container {
+  border: 1px solid #E5E5E5;
+  border-bottom: 0;
+  box-shadow: 2px 2px 3px #BBB;
+}
+
+.column-wrapper {
+    border-bottom: 1px solid #E5E5E5;
+    padding: 5px;
+    margin: 0;
+    background-color: #F7F7F7;
+}
+
+.enable-all-columns {
+  background-color: #FFF;
+  border: 1px solid #D5D4D0;
+  border-bottom: 0;
+  box-shadow: 2px 2px 3px #BBB;
+}
+
+.column-wrapper:hover {
+    cursor: pointer;
+    background-color: #D5FACF;
+}
+
+.column-wrapper i:hover {
+    cursor: move;
+}
+
+.placeholder {
+    background-color: #F0FDD2;
+    margin-right: 5px;
+    border-bottom: 1px solid #E5E5E5;
+    line-height: 30px;
+    height: 30px;
+    width: 100%;
+}
+
+.drag {
+    border-top: 1px solid #E5E5E5;
+    cursor: move;
+    background-color: #D5FACF;
+}
+
+.span8 .blurb {
+    margin-left: 0; 
+    padding-left: 0;
+    padding-bottom: 0;
+}
+
+.sort-order {
+    width: 110px;
+}
+
+.sort-container {
+  margin: 0;
+}
+
+.blurb + ul {
+    padding: 0;
+}
+
+.column-wrapper .enable-column {
+    margin: 5px;
+    margin-left: 0;
+}
+
+.enable-all-columns .enable-column {
+  margin: 10px 5px;
+}
+
 .show-modal-holder {
     margin-top: 20px;
     text-align: center;
@@ -1472,6 +1550,7 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
 .row + .row-add-margin {
     margin-top: 20px;
 }
+
 
 h1.bottom-bordered,
 h2.bottom-bordered,
@@ -1660,6 +1739,29 @@ h3.bottom-bordered {
 
 .table-striped.report-table tbody tr:nth-child(odd) td {
     background-color: #F7F7F7;
+}
+
+.table-striped.report-table tbody tr:last-of-type td {
+    border-bottom: 1px solid #ddd;
+}
+
+.view-report:hover,
+.clone-report:hover,
+.export-report:hover {
+    cursor: pointer;
+}
+
+.export-report a {
+    color: #000;
+}
+
+.export-report a:hover {
+    text-decoration: none;
+}
+
+span.small {
+    font-size: 0.9em;
+    color: #444;
 }
 
 /* Sort by field in saved search save/edit */
@@ -1955,6 +2057,14 @@ table#row-link-table {
     width: 100%;
     overflow-y: auto;
     display: block;
+    position: relative;
+}
+
+.short-list {
+    margin: 0;
+    max-height: 160px;
+    overflow-y: auto;
+    padding-left: 35px;
     position: relative;
 }
 
@@ -3024,6 +3134,13 @@ td .gravatar-blank,
     #dashboard-time-filter {
         margin-right: 0;
         margin-top: 0;
+        width: 100%;
+    }
+
+    #id_attach_delete {
+        box-sizing: border-box;
+        margin-left: 0;
+        max-width: inherit;
         width: 100%;
     }
 

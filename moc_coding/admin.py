@@ -6,6 +6,7 @@ from moc_coding.models import CustomCareer
 class CustomCareerInline(admin.StackedInline):
     model = CustomCareer
     extra = 1
+
     
 class CustomCareerAdmin(admin.ModelAdmin):
     list_display = ('moc', 'onet','content_object')

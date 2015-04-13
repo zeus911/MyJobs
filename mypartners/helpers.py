@@ -1,5 +1,7 @@
 from collections import namedtuple
 from datetime import datetime, time
+import json
+import os
 from urlparse import urlparse, parse_qsl, urlunparse
 from urllib import urlencode
 
@@ -9,6 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
+from django.utils.datastructures import MultiValueDict
 from django.utils.safestring import mark_safe
 from django.utils.text import get_text_list, force_unicode, force_text
 from django.utils.timezone import now
@@ -22,6 +25,7 @@ from universal.helpers import (get_domain, get_company, get_company_or_404,
                                get_int_or_none, send_email)
 from mypartners.models import (Contact, ContactLogEntry, CONTACT_TYPE_CHOICES,
                                CHANGE, Location, Partner, PartnerLibrary, Tag)
+from mypartners.widgets import MultipleFileField
 
 
 def prm_worthy(request):
@@ -105,17 +109,75 @@ def log_change(obj, form, user, partner, contact_identifier,
     """
     if not change_msg:
         change_msg = get_change_message(form) if action_type == CHANGE else ''
+    delta = get_form_delta(form) if action_type == CHANGE else {}
 
     ContactLogEntry.objects.create(
         action_flag=action_type,
         change_message=change_msg,
         contact_identifier=contact_identifier,
         content_type=ContentType.objects.get_for_model(obj),
+        delta=json.dumps(delta),
         object_id=obj.pk,
         object_repr=force_text(obj)[:200],
         partner=partner,
         user=user,
     )
+
+
+def get_form_delta(form):
+    """
+    Determines the changes made by a newly submitted form. Provided delta
+    values should be at least semi-human readable.
+
+    :param form: The form that is being checked for changes.
+    :return: A dictionary of changes. The format is:
+                {
+                    form_field_name: {
+                        'initial': The starting value,
+                        'new':  The updated value,
+                    }
+                }
+
+    """
+    delta = {}
+
+    if form.changed_data:
+
+        for field in form.changed_data:
+            # There are two places that initial data can come from:
+            # form.initial or form.fields[field].initial. Django
+            # favors form.initial in their code, so this code prefers
+            # form.initial first as well.
+            initial_val = form.initial.get(field, form.fields[field].initial)
+            initial_val = form.fields[field].to_python(initial_val)
+
+            new_val = form.data.get(field, '')
+            new_val = form.fields[field].to_python(new_val)
+
+            if isinstance(form.fields[field], MultipleFileField):
+                # Multiple file added results in a MultiValueDict.
+                # MultiValueDict.get() just gets the last item in the list,
+                # so we need to use MultiValueDict.getlist() to account
+                # for all the added attachments.
+                if isinstance(form.files, MultiValueDict):
+                    initial_val = None
+                    new_val = [f.name for f in form.files.getlist(field)]
+
+            elif hasattr(form.fields[field], 'choices'):
+                # Coerce the keys to unicode, since the data values
+                # we will be getting back should be unicode.
+                choices = form.fields[field].choices
+                choices_dict = {unicode(x[0]): x[1] for x in choices}
+
+                initial_val = choices_dict.get(initial_val, initial_val)
+                new_val = choices_dict.get(new_val, new_val)
+
+            if (initial_val != new_val) and (initial_val or new_val):
+                delta[field] = {
+                    'initial': force_unicode(initial_val),
+                    'new': force_unicode(new_val)
+                }
+    return delta
 
 
 def get_change_message(form):
@@ -126,6 +188,7 @@ def get_change_message(form):
     change_message = []
     if not form:
         return ''
+
     if form.changed_data:
         change_message = (ugettext('Changed %s.') %
                           get_text_list(form.changed_data, ugettext('and')))
@@ -139,8 +202,8 @@ def get_attachment_link(partner_id, attachment_id, attachment_name):
     """
     url = '/prm/download?partner=%s&id=%s' % (partner_id, attachment_id)
 
-    html = "<a href='{url}' target='_blank'>{attachment_name}</a>"
-    return mark_safe(html.format(url=url, attachment_name=attachment_name))
+    link = "<a href='{url}' target='_blank'>{attachment_name}</a>"
+    return mark_safe(link.format(url=url, attachment_name=attachment_name))
 
 
 def retrieve_fields(model):
@@ -282,9 +345,12 @@ def get_library_partners(url, params=None):
     with the excel table.
     """
 
-    params = params or {}
-    response = requests.post(url, params=params)
-    tree = html.fromstring(response.text)
+    if os.path.isfile(url):
+        tree = html.parse(url)
+    else:
+        params = params or {}
+        response = requests.post(url, params=params)
+        tree = html.fromstring(response.text)
 
     # convert column headers to valid Python identifiers, and rename duplicates
     cols = []
@@ -363,7 +429,11 @@ def filter_partners(request, partner_library=False):
     city = request.REQUEST.get('city', '').strip()
     state = request.REQUEST.get('state', '').strip()
     tags = [tag.strip()
+<<<<<<< HEAD
             for tag in request.REQUEST.get('tag', '').split(',') if tag]
+=======
+            for tag in request.REQUEST.get('tags', '').split(',') if tag]
+>>>>>>> quality-control
     keywords = [keyword.strip() for keyword in request.REQUEST.get(
         'keywords', '').split(',') if keyword]
 

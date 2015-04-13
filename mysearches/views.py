@@ -179,7 +179,9 @@ def save_search_form(request):
         original = None
 
     if hasattr(original, 'partnersavedsearch'):
-        form = PartnerSubSavedSearchForm(data=request.POST, instance=original)
+        form = PartnerSubSavedSearchForm(data=request.POST,
+                                         instance=original.partnersavedsearch,
+                                         request=request)
     else:
         form = SavedSearchForm(user=request.user, data=request.POST,
                                instance=original)
@@ -227,7 +229,8 @@ def edit_search(request):
                 is_pss = True
                 form = PartnerSubSavedSearchForm(
                     instance=saved_search.partnersavedsearch,
-                    auto_id=False)
+                    auto_id=False,
+                    request=request)
         else:
             raise Http404
 

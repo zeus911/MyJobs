@@ -197,6 +197,7 @@ class Contact(models.Model):
     def _parse_parameters(self, parameters, records):
         """Used to parse state during `from_search()`."""
 
+        contact_type = parameters.pop('contact_type', None)
         start_date = parameters.pop('start_date', None)
         end_date = parameters.pop('end_date', None)
         state = parameters.pop('state', None)
@@ -225,6 +226,25 @@ class Contact(models.Model):
 
         if city:
             records = records.filter(locations__city__icontains=city)
+
+        if contact_type and records:
+            if contact_type == '0':
+                return records.none()
+
+            if not hasattr(contact_type, '__iter__'):
+                contact_type = [contact_type]
+
+            owner = records.first().partner.owner
+            contacts = ContactRecord.objects.filter(
+                partner__owner=owner, contact_type__in=contact_type).values(
+                    'contact_name', 'contact_email').distinct()
+
+            q = models.Q()
+            for contact in contacts:
+                q |= models.Q(name=contact['contact_name'],
+                              email=contact['contact_email'])
+
+            records = records.filter(q)
 
         return records
 
@@ -332,6 +352,7 @@ class Partner(models.Model):
         end_date = parameters.pop('end_date', None)
         state = parameters.pop('state', None)
         city = parameters.pop('city', None)
+        contact_type = parameters.pop('contact_type', None)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -353,6 +374,13 @@ class Partner(models.Model):
 
         if city:
             records = records.filter(contact__locations__city__icontains=city)
+
+        if contact_type:
+            if not hasattr(contact_type, '__iter__'):
+                contact_type = [contact_type]
+
+            records = records.filter(
+                contactrecord__contact_type__in=contact_type)
 
         return records
 
@@ -763,6 +791,7 @@ class ContactLogEntry(models.Model):
     # A value that can meaningfully (email, name) identify the contact.
     contact_identifier = models.CharField(max_length=255)
     content_type = models.ForeignKey(ContentType, blank=True, null=True)
+    delta = models.TextField(blank=True)
     object_id = models.TextField('object id', blank=True, null=True)
     object_repr = models.CharField('object repr', max_length=200)
     partner = models.ForeignKey(Partner, null=True, on_delete=models.SET_NULL)
@@ -774,8 +803,7 @@ class ContactLogEntry(models.Model):
 
         """
         try:
-            return self.content_type.get_object_for_this_type(
-                pk=self.object_id)
+            return self.content_type.get_object_for_this_type(pk=self.object_id)
         except self.content_type.model_class().DoesNotExist:
             return None
 

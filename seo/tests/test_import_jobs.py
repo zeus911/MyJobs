@@ -19,7 +19,7 @@ class ImportJobsTestCase(DirectSEOBase):
         super(ImportJobsTestCase, self).setUp()
         self.businessunit = BusinessUnitFactory(id=0)
         self.buid_id = self.businessunit.id        
-        self.filepath = os.path.join(DATA_DIR, 'dseo_feed_%s.xml' % self.buid_id)
+        self.filepath = os.path.join(DATA_DIR, '0', 'dseo_feed_%s.xml' % self.buid_id)
         self.solr_settings = {
             'default': {'URL': 'http://127.0.0.1:8983/solr/seo'}
         }

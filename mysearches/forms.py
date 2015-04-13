@@ -1,5 +1,5 @@
 from django.forms import (BooleanField, CharField, CheckboxInput, ChoiceField,
-                          HiddenInput, ModelForm, RadioSelect, Select,
+                          HiddenInput, RadioSelect, Select,
                           TextInput, Textarea, URLField, ValidationError)
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
@@ -13,6 +13,7 @@ from mypartners.forms import PartnerEmailChoices
 from mypartners.models import Contact, ADDITION, CHANGE
 from registration.models import Invitation
 from mypartners.helpers import log_change, tag_get_or_create
+from universal.forms import RequestForm
 
 
 class HorizontalRadioRenderer(RadioSelect.renderer):
@@ -122,7 +123,7 @@ class DigestForm(BaseUserForm):
         model = SavedSearchDigest
 
 
-class PartnerSavedSearchForm(ModelForm):
+class PartnerSavedSearchForm(RequestForm):
     def __init__(self, *args, **kwargs):
         choices = PartnerEmailChoices(kwargs.pop('partner', None))
         super(PartnerSavedSearchForm, self).__init__(*args, **kwargs)
@@ -142,10 +143,22 @@ class PartnerSavedSearchForm(ModelForm):
             widget=TextInput(attrs={'id': 'p-tags', 'placeholder': 'Tags'})
         )
 
-        # If it's an edit make the email recipient unchangable (for
-        # compliance purposes).
         if self.instance and self.instance.pk:
+            # If it's an edit make the email recipient unchangeable (for
+            # compliance purposes).
             self.fields['email'].widget.attrs['disabled'] = True
+
+            # Disallow modifying the activation status of a saved search if
+            # ALL of the following are true:
+            # - The current instance has a value stored in unsubscriber
+            # - The value in unsubscriber is an email address used by the
+            #   recipient
+            # - The editor is not the recipient
+            if all([self.instance.unsubscriber,
+                    self.instance.user == User.objects.get_email_owner(
+                        self.instance.unsubscriber),
+                    self.instance.user != self.request.user]):
+                self.fields['is_active'].widget.attrs['disabled'] = True
 
         initial = kwargs.get("instance")
         feed_args = {"widget": HiddenInput()}
@@ -156,9 +169,9 @@ class PartnerSavedSearchForm(ModelForm):
     class Meta:
         model = PartnerSavedSearch
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
-                  'frequency', 'day_of_month',
-                  'day_of_week', 'jobs_per_email', 'partner_message', 'notes')
-        exclude = ('provider', 'sort_by', )
+                  'frequency', 'day_of_month', 'day_of_week', 'jobs_per_email',
+                  'partner_message', 'notes')
+        exclude = ('provider', 'sort_by', 'unsubscriber')
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
             'url_extras': TextInput(attrs={
@@ -217,6 +230,14 @@ class PartnerSavedSearchForm(ModelForm):
             self._errors.setdefault('url', []).append(error_msg)
 
         self.cleaned_data['feed'] = feed
+
+        if 'is_active' in self.changed_data:
+            if self.instance.is_active:
+                # Saved search is being deactivated; set unsubscriber
+                self.instance.unsubscriber = self.request.user.email
+            else:
+                # Saved search is being activated; unset unsubscriber
+                self.instance.unsubscriber = ''
         return cleaned_data
 
     def save(self, commit=True):
@@ -246,14 +267,26 @@ class PartnerSavedSearchForm(ModelForm):
         return instance
 
 
-class PartnerSubSavedSearchForm(ModelForm):
+class PartnerSubSavedSearchForm(RequestForm):
+    def clean(self):
+        if 'is_active' in self.changed_data:
+            #self.changed_data.append('unsubscriber')
+            if self.instance.is_active:
+                # Saved search is being deactivated; set unsubscriber
+                self.instance.unsubscriber = self.request.user.email
+            else:
+                # Saved search is being activated; unset unsubscriber
+                self.instance.unsubscriber = ''
+        return self.cleaned_data
+
     class Meta:
         model = PartnerSavedSearch
-        fields = ('sort_by', 'frequency', 'day_of_month', 'day_of_week')
+        fields = ('sort_by', 'frequency', 'day_of_month', 'day_of_week',
+                  'is_active')
         exclude = ('provider', 'url_extras', 'partner_message',
                    'created_by', 'user',
                    'created_on', 'label', 'url', 'feed', 'email', 'notes',
-                   'custom_message', 'tags', )
+                   'custom_message', 'tags', 'unsubscriber')
         widgets = {
             'sort_by': RadioSelect(renderer=HorizontalRadioRenderer,
                                    attrs={'id': 'sort_by'}),

@@ -456,11 +456,14 @@ class CustomFacetForm(SiteRowPermissionsForm):
 class CustomPageForm(SiteRowPermissionsForm):
     def __init__(self, data=None, user=None, *args, **kwargs):
         super(CustomPageForm, self).__init__(data, user, *args, **kwargs)
-        templates = filter(lambda x:x.endswith('.html'), 
+        templates = filter(lambda x: x.endswith('.html'), 
                            os.listdir('%s/templates/flatpages' % settings.PROJECT_PATH))
         template_choices = (("flatpages/%s" % temp, temp) for temp in templates)
-        self.fields['template_name'].widget = forms.widgets.Select(choices = template_choices)
+        self.fields['template_name'].widget = forms.widgets.Select(
+            choices = template_choices)
         self.fields['template_name'].help_text = None
+        self.fields['content'].widget.attrs.update({
+            'style': 'width: 80%; height: 440px'})
         
     url = forms.RegexField(label=_("URL"), max_length=100, regex=r'^[-\w/\.~]+$',
         help_text = _("Example: '/about/contact/'. Make sure to have leading"
@@ -536,9 +539,15 @@ class ConfigurationForm(RowPermissionsForm):
         else:
             self.grp = Group()
 
-        self.fields['home_page_template'].widget = forms.widgets.Select(choices=template_choices)
+        self.fields['home_page_template'].widget = forms.widgets.Select(
+            choices=template_choices)
         self.fields['meta'].widget.attrs['rows'] = '30'
-          
+        # widen text areas
+        for field in ['defaultBlurb', 'meta', 'wide_header', 'header', 'body',
+                      'footer', 'wide_footer']:
+            self.fields[field].widget.attrs.update({
+                'style': 'width: 80%; height: 440px;'})
+
     def save(self, commit=True):
         # Associate the SeoSite selection from the UI with the Configuration
         # specified by this form. We've got to first save the form with
@@ -604,7 +613,7 @@ class SpecialCommitmentForm(SeoSiteReverseForm):
         model = SpecialCommitment
 
 
-class SiteTagForm(RowPermissionsForm):
+class SiteTagForm(forms.ModelForm):
     class Meta:
         model = SiteTag
 
