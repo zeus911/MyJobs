@@ -84,6 +84,7 @@ class Message(models.Model):
     body = models.TextField('Body')
     start_on = models.DateTimeField('Start on', default=start_default)
     expire_at = models.DateTimeField('Expire at',
+                                     db_index=True,
                                      default=expire_default,
                                      null=True,
                                      help_text="Default is two weeks " +

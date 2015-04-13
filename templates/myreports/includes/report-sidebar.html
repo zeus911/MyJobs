@@ -6,22 +6,15 @@
             <div class="icon-set">
                 <i id="view-{{ report.id }}" class="fa fa-eye" title="View"></i>
                 <i id="clone-{{ report.id }}" class="fa fa-copy" title="Clone Report"></i>
-                <a class="icon-link" href="/reports/download?id={{ report.id }}"><i id="export-{{ report.id }}" class="fa fa-download" title="Export"></i></a>
+                <i id="export-{{ report.id }}" class="fa fa-download" title="Export"></i>
             </div>
         </div>
     {% empty %}
         No past reports
     {% endfor %}
-    {% if report_count > 10 %}
+    {% if report_count > 0 %}
      <div class="center-text">
-         <a id="report-archive">View Report Archive</a>
+         <a id="report-archive">View All Reports</a>
      </div>
      {% endif %}
-    <!--
-    <h2>Report Queue</h2>
-    {% for report in queued_reports %}
-    {% empty %}
-        No reports generating
-    {% endfor %}
-    -->
 </div>

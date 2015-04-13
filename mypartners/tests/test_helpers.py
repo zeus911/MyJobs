@@ -161,14 +161,14 @@ class PartnerLibraryFilterTests(PartnerLibraryTestCase):
         request = self.request_factory.get(
             'prm/view/partner-library/', dict(
                 company=self.company.id,
-                city='Beaumont'))
+                city='Pittsburgh'))
         request.user = self.staff_user
 
         partners = helpers.filter_partners(request, partner_library=True)
         self.assertTrue(partners)
 
         for partner in partners:
-            self.assertEqual(partner.city, 'Beaumont')
+            self.assertEqual(partner.city, 'Pittsburgh')
 
     def test_date_filters(self):
         """

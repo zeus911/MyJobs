@@ -33,11 +33,11 @@ class Moc(models.Model):
     """
     def __unicode__(self):
         SERVICE_CHOICES = {
-            u'air-force':u'USAF',
-            u'army':u'USA',
-            u'coast-guard':u'USCG',
-            u'marines':u'USMC',
-            u'navy':u'USN'
+            u'air-force': u'USAF',
+            u'army': u'USA',
+            u'coast-guard': u'USCG',
+            u'marines': u'USMC',
+            u'navy': u'USN'
         }
         # MOC titles can be extremely long, so we'll truncate them to a
         # reasonable length to display in the UI.
@@ -66,11 +66,11 @@ class MocDetail(models.Model):
     # difference between this model and the `Moc` model is the
     # `civilian_description` field.
     SERVICE_CHOICES = (
-        (u'f',u'Air Force'),
-        (u'a',u'Army'),
-        (u'c',u'Coast Guard'),
-        (u'm',u'Marines'),
-        (u'n',u'Navy'),
+        (u'f', u'Air Force'),
+        (u'a', u'Army'),
+        (u'c', u'Coast Guard'),
+        (u'm', u'Marines'),
+        (u'n', u'Navy'),
     )
     
     primary_value = models.CharField(max_length=255)
@@ -90,12 +90,12 @@ class CustomCareer(models.Model):
     
     def __repr__(self):
         return "<CustomCareer Military Code:%s O*NET-SOC:%s>" % (self.moc.id or 0,
-                                                       self.onet.code or 0)
+                                                                 self.onet.code or 0)
     
     def __str__(self):
         return "Military Code:%s:%s -> O*NET-SOC:%s" % (self.moc.id or 0,
-                                              self.moc.branch,
-                                              self.onet.code or 0)
+                                                        self.moc.branch,
+                                                        self.onet.code or 0)
     
     moc = models.ForeignKey(Moc, verbose_name="Military Occupational Code",
                             help_text="""Sorted by branch, then MOC, then MOC \
