@@ -96,6 +96,7 @@ def view_records(request, app, model):
         # remove non-query related params
         count = params.pop('count', None)
         values = params.pop('values', [])
+        order_by = params.pop('order_by', None)
 
         records = get_model(app, model).objects.from_search(
             company, params)
@@ -104,6 +105,12 @@ def view_records(request, app, model):
         if count:
             records = records.annotate(count=Count(count, distinct=True))
             counts = {record.pk: record.count for record in records}
+
+        if order_by:
+            if not hasattr(order_by, '__iter__'):
+                order_by = [order_by]
+
+            records = records.order_by(*order_by)
 
         ctx = serialize('json', records, counts=counts, values=values)
 

@@ -660,8 +660,9 @@ List.prototype.filter = function(filter) {
   // specific duties based on type.
   if (list.type === "partner") {
     // annotate how many records a partner has.
-    $.extend(data, {"count": "contactrecord",
-                    "values": ["pk", "name", "count"]}
+    $.extend(data, {count: "contactrecord",
+                    values: ["pk", "name", "count"],
+                    order_by: ["name"]}
     );
     url += "/reports/ajax/mypartners/partner";
 
@@ -670,7 +671,7 @@ List.prototype.filter = function(filter) {
     }
   } else if (list.type === "contact") {
     url += "/reports/ajax/mypartners/contact";
-    $.extend(data, {"values": ["name", "email"]});
+    $.extend(data, {values: ["name", "email"], order_by: "name"});
   }
 
   $.ajaxSettings.traditional = true;
