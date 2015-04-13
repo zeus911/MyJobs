@@ -44,7 +44,7 @@
                 <div class="actions pull-right">
                     {% if contact %}<button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
                     <a class="btn" href="{% if partner %}{% url 'partner_details' %}?partner={{ partner.id }}{% else %}{% url 'prm' %}{% endif %}">{% trans 'Cancel' %}</a>
-                    <button type="submit" class="btn primary" id="{% if not partner %}init-partner-save{% elif not contact %}item-save{% else %}contact-save{% endif %}" {% if not contact %}disabled{% endif %}>{% trans 'Save' %}</button>
+                    <button type="submit" class="btn primary" id="{% if not partner %}init-partner-save{% elif not contact %}item-save{% else %}contact-save{% endif %}" >{% trans 'Save' %}</button>
                 </div>
                 <div class="clear"></div>
             </form>
@@ -154,69 +154,54 @@
 {% block extra-js %}
 <script type="text/javascript">
 
+    function checkDuplicates(elementID, values, url) {
+        var $element = $(elementID),
+            names = $.map(values, function(item, index) { return item.name.toLowerCase(); }),
+            index = names.indexOf($element.val().trim().toLowerCase()),
+            $editModal = $("#edit-item-modal");
+
+        if (index > -1) {
+            $("ul.record-info").html(
+                "<li>Name: " + values[index].name + "</li>" +
+                (values[index].uri ? "<li>URL: " + values[index].uri + "</li>" : "") +
+                (values[index].email ? "<li>Email: " + values[index].email + "</li>" : "") +
+                (values[index].phone ? "<li>Phone: " + values[index].phone + "</li>" : "")
+            );
+
+            {# avoiding {{ url }} so that this code isn't tied to the template and can be more easily relocated #}
+            $("#edit-record-button").attr("href", url + values[index].pk);
+
+            $editModal.modal("show").on("hidden", function() {
+                $element.select();
+            });
+        }
+    }
+
     $(document).ready(function() {
         {# we'll only have a partner when editing a contact #}
         var partner = {{ partner.pk|default:"0" }},
             partners = {{ partners|safe }},
-            contacts = {{ contacts|safe }};
+            contacts = {{ contacts|safe }},
+            $otherInputs = $("input:gt(0)"),
+            $saveButton = $("#item-save");
 
-            $partnerInput = $("#id_partner-partnername"),
-            $contactInput = $("#id_contact-name"),
-            $editModal = $("#edit-item-modal"),
-            partnerNames = $.map(partners, function(e) { return e.name.toLowerCase(); }),
-            contactNames = $.map(contacts, function(e) { return e.name.toLowerCase(); });
-
-        $partnerInput.on("blur", function() {
-            var index = partnerNames.indexOf($(this).val().trim().toLowerCase()),
-                isFormValid = false;
-
-            if (index > -1) {
-                isFormValid = false;
-
-                $("ul.record-info").html(
-                    "<li>Name: " + partners[index].name + "</li>" +
-                    "<li>URL: " + partners[index].uri + "</li>"
-                );
-
-                {# avoiding {{ url }} so that this code isn't tied to the template and can be more easily relocated #}
-                $("#edit-record-button").attr("href", "/prm/view/details?partner=" + partners[index].pk);
-
-                $editModal.modal("show").on("hidden", function() {
-                    $partnerInput.select();
-                });
-            } else {
-                isFormValid = $(this).val().length;
+        $otherInputs.on("focus", function() {
+            if ($("#id_partner-partnername").length) {
+                checkDuplicates("#id_partner-partnername", partners, "/prm/view/details?partner=");
+            } else if ($("#id_contact-name").length) {
+                checkDuplicates("#id_contact-name", contacts, "/prm/view/details/edit?partner=" + partner + "&id=");
             }
-
-            $("#init-partner-save").prop("disabled", !isFormValid);
-
+        });
+        
+        $saveButton.on("click", function(e) {
+            e.stopPropagation();
+            if ($("#id_partner-partnername").length) {
+                checkDuplicates("#id_partner-partnername", partners, "/prm/view/details?partner=");
+            } else if ($("#id_contact-name").length) {
+                checkDuplicates("#id_contact-name", contacts, "/prm/view/details/edit?partner=" + partner + "&id=");
+            }
         });
 
-        $contactInput.on("blur", function() {
-            var index = contactNames.indexOf($(this).val().trim().toLowerCase()),
-                isFormValid = false;
-
-            if (index !== -1) {
-                isFormValid = false;
-
-                $("ul.record-info").html(
-                    "<li>Name: " + contacts[index].name + "</li>" +
-                    "<li>Email: " + contacts[index].email + "</li>" +
-                    "<li>Phone: " + contacts[index].phone + "</li>"
-                );
-
-                {# avoiding {{ url }} so that this code isn't tied to the template and can be more easily relocated #}
-                $("#edit-record-button").attr("href", "/prm/view/details/edit?partner=" + partner + "&id=" + contacts[index].pk + "&ct=25071");
-                $editModal.modal("show").on("hidden", function() {
-                    $contactInput.select()
-                });
-            } else {
-                isFormValid = $(this).val().length;
-            }
-
-            $("#item-save").prop("disabled", !isFormValid);
-
-        });
     });
 
 </script>
