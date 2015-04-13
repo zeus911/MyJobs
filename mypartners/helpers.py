@@ -329,7 +329,6 @@ def find_partner_from_email(partner_list, email):
     return None
 
 
-
 def get_library_partners(url, params=None):
     """
     Returns a generator that yields `CompliancePartner` objects, which can then

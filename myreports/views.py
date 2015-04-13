@@ -192,19 +192,19 @@ class ReportView(View):
             params = parse_params(request.POST)
 
             params.pop('csrfmiddlewaretoken', None)
-            name = params.pop(
-                'report_name', str(datetime.now())).replace(' ', '_')
+            name = params.pop('report_name', 
+                              str(datetime.now())).replace(' ', '_')
             values = params.pop('values', None)
 
             records = get_model(app, model).objects.from_search(
                 company, params)
 
-            contents = serialize('json', records)
+            contents = serialize('json', records, values=values)
             results = ContentFile(contents)
             report, created = Report.objects.get_or_create(
                 name=name, created_by=request.user,
                 owner=company, app=app, model=model,
-                params=json.dumps(params))
+                values=json.dumps(values), params=json.dumps(params))
 
             report.results.save('%s-%s.json' % (name, report.pk), results)
 

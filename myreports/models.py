@@ -36,7 +36,6 @@ class Report(models.Model):
     def queryset(self):
         model = get_model(self.app, self.model)
         params = json.loads(self.params)
-
         return model.objects.from_search(self.owner, params)
 
     def __unicode__(self):
