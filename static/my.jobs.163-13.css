@@ -1470,6 +1470,78 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
     width: 206px;
 }
 
+/* Report Download */
+.column-container {
+  border: 1px solid #E5E5E5;
+  border-bottom: 0;
+  box-shadow: 2px 2px 3px #BBB;
+}
+
+.column-wrapper {
+    border-bottom: 1px solid #E5E5E5;
+    padding: 5px;
+    margin: 0;
+    background-color: #F7F7F7;
+}
+
+.enable-all-columns {
+  background-color: #FFF;
+  border: 1px solid #D5D4D0;
+  border-bottom: 0;
+  box-shadow: 2px 2px 3px #BBB;
+}
+
+.column-wrapper:hover {
+    cursor: pointer;
+    background-color: #D5FACF;
+}
+
+.column-wrapper i:hover {
+    cursor: move;
+}
+
+.placeholder {
+    background-color: #F0FDD2;
+    margin-right: 5px;
+    border-bottom: 1px solid #E5E5E5;
+    line-height: 30px;
+    height: 30px;
+    width: 100%;
+}
+
+.drag {
+    border-top: 1px solid #E5E5E5;
+    cursor: move;
+    background-color: #D5FACF;
+}
+
+.span8 .blurb {
+    margin-left: 0; 
+    padding-left: 0;
+    padding-bottom: 0;
+}
+
+.sort-order {
+    width: 110px;
+}
+
+.sort-container {
+  margin: 0;
+}
+
+.blurb + ul {
+    padding: 0;
+}
+
+.column-wrapper .enable-column {
+    margin: 5px;
+    margin-left: 0;
+}
+
+.enable-all-columns .enable-column {
+  margin: 10px 5px;
+}
+
 .show-modal-holder {
     margin-top: 20px;
     text-align: center;
@@ -1478,6 +1550,7 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
 .row + .row-add-margin {
     margin-top: 20px;
 }
+
 
 h1.bottom-bordered,
 h2.bottom-bordered,

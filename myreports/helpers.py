@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from cStringIO import StringIO
 import csv
 import HTMLParser
@@ -84,7 +85,7 @@ def parse_params(querydict):
 #   * find a better way to handle counts
 #   * do something other than isinstance checks (duck typing anyone?)
 
-def serialize(fmt, data, counts=None, values=None):
+def serialize(fmt, data, counts=None, values=None, order_by=None):
     """
     Like `django.core.serializers.serialize`, but produces a simpler structure
     and retains annotated fields*.
@@ -130,15 +131,38 @@ def serialize(fmt, data, counts=None, values=None):
         # strip HTML tags from string values
         for index, record in enumerate(data[:]):
             data[index] = {
-                key: strip_tags(value) if isinstance(value, basestring)
-                else value for key, value in record.items()}
+                key: strip_tags(record[key])
+                if isinstance(record[key], basestring) else value
+                for key, value in record.items()}
+
+    if data:
+        values = values or data[0].keys()
+        d = []
+        for record in data:
+            o = OrderedDict()
+            for value in values:
+                o[value] = record[value]
+
+            d.append(o)
+
+        
+        reverse = False
+        if order_by:
+            if '-' in order_by:
+                order_by = order_by[1:]
+                reverse = True
+
+            d = sorted(
+                d, key=lambda record: record[order_by], reverse=bool(reverse))
+
+    data = d
 
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)
     elif fmt == 'csv':
         output = StringIO()
         writer = csv.writer(output)
-        columns = sorted(data[0].keys())
+        columns = data[0].keys()
         writer.writerow([column.replace('_', ' ').title()
                          for column in columns])
 

@@ -29,6 +29,8 @@ window.onpopstate = function(event) {
   } else if (state.page && state.page === 'report-archive') {
     navigation = true;
     renderArchive(renderNavigation);
+  } else if (state.page && state.page === 'report-download') {
+    renderDownload(state.report);
   } else if (state.page && state.page === 'clone') {
     historyClone = function() {
       inputs = state.inputs;
@@ -46,7 +48,7 @@ window.onpopstate = function(event) {
 };
 
 // Determines if IE is being used. If it is IE returns IE version #. If not will return false.
-var IE = isIE();
+var modernBrowser = !(isIE() && isIE() < 10);
 
 // Used to get through beforeunload listener without displaying message.
 var reload = false;
@@ -304,6 +306,14 @@ Report.prototype.bindEvents = function() {
     modal.modal("show");
   });
 
+  container.on("click", "#cancel-modal", function() {
+    if (modernBrowser) {
+      history.back();
+    } else {
+      renderOverview();
+    }
+  });
+
 
   // Actually submits the report's data to create a Report object in db.
   $("body").on("click", "#gen-report", function(e) {
@@ -440,7 +450,7 @@ Report.prototype.renderFields = function(fields) {
     html += fields[i].render(this);
   }
 
-  html += "<div class=\"show-modal-holder\"><a id=\"show-modal\" class=\"btn primary\">Generate Report</a></div>";
+  html += "<div class='show-modal-holder'><a id='cancel-modal' class='btn secondary'>Cancel</a><a id='show-modal' class='btn primary'>Generate Report</a></div>";
   container.html(html);
 };
 
@@ -649,8 +659,9 @@ List.prototype.filter = function(filter) {
   // specific duties based on type.
   if (list.type === "partner") {
     // annotate how many records a partner has.
-    $.extend(data, {"count": "contactrecord",
-                    "values": ["pk", "name", "count"]}
+    $.extend(data, {count: "contactrecord",
+                    values: ["pk", "name", "count"],
+                    order_by: ["name"]}
     );
     url += "/reports/ajax/mypartners/partner";
 
@@ -659,7 +670,7 @@ List.prototype.filter = function(filter) {
     }
   } else if (list.type === "contact") {
     url += "/reports/ajax/mypartners/contact";
-    $.extend(data, {"values": ["name", "email"]});
+    $.extend(data, {values: ["name", "email"], order_by: "name"});
   }
 
   $.ajaxSettings.traditional = true;
@@ -735,7 +746,7 @@ $(document).ready(function() {
 
   $("#choices input[type='checkbox']:checked").prop("checked", false);
 
-  if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+  if (modernBrowser) {
     history.replaceState({'page': 'overview'}, "Report Overview");
   }
 
@@ -753,7 +764,7 @@ $(document).ready(function() {
 
     // Create js Report object and set up next step.
     report = new Report(types);
-    if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+    if (modernBrowser) {
       history.pushState({'page': 'new', 'report': report}, 'Create Report');
     }
     navigation = true;
@@ -787,12 +798,20 @@ $(document).ready(function() {
       report_id = $(this).parents("tr").data("report");
     }
 
-    if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+    if (modernBrowser) {
       history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
     }
 
     navigation = true;
     renderGraphs(report_id, callback);
+  });
+
+  subpage.on("click", ".report > a, .fa-download", function() {
+    var report_id = $(this).attr("id").split("-")[1];
+
+    history.pushState({'page': 'report-download', 'report': report_id}, 'Download Report');
+
+    renderDownload(report_id);
   });
 
 
@@ -807,7 +826,7 @@ $(document).ready(function() {
             data: data,
             dataType: "json",
             success: function(data) {
-              if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+              if (modernBrowser) {
                 history.pushState({'page': 'clone', 'inputs': data, 'reportId': report_id}, "Clone Report");
               }
               var report = new Report(["prm"]);
@@ -835,7 +854,7 @@ $(document).ready(function() {
 
   // View Archive
   subpage.on("click", "#report-archive", function() {
-    if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+    if (modernBrowser) {
       history.pushState({'page': 'report-archive'}, "Report Archive");
     }
     navigation = true;
@@ -933,7 +952,7 @@ function renderNavigation(download) {
 
         $span.prepend($i);
         $span.on("click", function() {
-          if (typeof(IE) === "number" && IE > 9 || typeof(IE) === 'boolean' && IE === false) {
+          if (modernBrowser) {
             history.back();
           } else {
             renderOverview();
@@ -972,6 +991,115 @@ function renderOverview(callback) {
   }).complete(function() {
     if (typeof callback === "function") {
       callback();
+    }
+  });
+}
+
+function renderDownload(report_id) {
+  var data = {'id': report_id};
+
+  $.ajaxSettings.traditional = true;
+  $.ajax({
+    type: "GET",
+    url: "downloads",
+    data: data,
+    success: function(data) {
+      var ctx,
+          values,
+          dragged,
+          $order,
+          $column,
+          $columnNames,
+          $allCheckbox,
+          $checkboxes,
+          $checked;
+
+      function updateValues() {
+        $checked = $(".column-container .enable-column:checked");
+        $order = $(".sort-order");
+        $column = $("#column-choices");
+        $columnNames = $("#column-choices option:not([value=''])");
+
+        values = $.map($checked, function(item, index) {
+          return $(item).val();
+        });
+
+        $columnNames.each(function() {
+          $(this).prop("disabled", values.indexOf($(this).val()) === -1);
+        });
+
+        ctx = {'id': report_id, 'values': values};
+        if ($column.val()) {
+          ctx.order_by = $order.val() + $column.val();
+        }
+
+        $("#download-csv").attr("href", "download?" + $.param(ctx));
+      }
+
+      $("#main-container").html(data);
+
+      $allCheckbox = $(".enable-all-columns .enable-column");
+      $checkboxes = $(".column-container .enable-column");
+      $checked = $(".column-container .enable-column:checked");
+
+      $allCheckbox.prop("checked", $checkboxes.length === $checked.length);
+      updateValues();
+
+      // Event Handlers
+      $(".column-container").sortable({
+        axis: "y",
+        placeholder: "placeholder",
+        containment: "parent",
+        tolerance: "pointer",
+        distance: 10,
+        start: function(e, ui) {
+          dragged = true;
+          ui.item.addClass("drag");
+        },
+        stop: function(e, ui) {
+          dragged = false;
+          ui.item.removeClass("drag");
+        },
+        update: updateValues
+      });
+
+      $(".enable-all-columns .enable-column").on("change", function() {
+        $("input.enable-column").prop("checked", $(this).is(":checked"));
+      });
+
+      $("input.enable-column").on("change", function() {
+        $checkboxes = $(".column-wrapper .enable-column");
+        $checked = $(".column-wrapper .enable-column:checked");
+        $allCheckbox = $(".enable-all-columns .enable-column");
+
+        $allCheckbox.prop("checked", $checkboxes.length === $checked.length);
+      });
+
+      $("#download-cancel").on("click", function() {
+        if (modernBrowser) {
+          history.back();
+        } else {
+          renderOverview();
+        }
+      });
+
+      $("#column-choices").on("change", updateValues);
+      $(".sort-order").on("change", updateValues);
+
+      $(".enable-column").on("change", function(e) {
+        updateValues();
+      });
+
+      $(".enable-column").on("click", function(e) {
+        e.stopPropagation();
+      });
+
+      $(".column-wrapper").on("mouseup", function() {
+        if (!dragged) {
+          var $checkbox = $(this).children(".enable-column");
+          $checkbox.prop("checked", !$checkbox.prop("checked")).change();
+        }
+      });
     }
   });
 }
