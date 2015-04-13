@@ -44,7 +44,7 @@
                 <div class="actions pull-right">
                     {% if contact %}<button id="delete" type="button" data-toggle="modal" data-target="#delete-confirm" class="btn">{% trans 'Delete' %}</button>{% endif %}
                     <a class="btn" href="{% if partner %}{% url 'partner_details' %}?partner={{ partner.id }}{% else %}{% url 'prm' %}{% endif %}">{% trans 'Cancel' %}</a>
-                    <button type="submit" class="btn primary" id="{% if not partner %}init-partner-save{% else %}item-save{% endif %}" disabled>{% trans 'Save' %}</button>
+                    <button type="submit" class="btn primary" id="{% if not partner %}init-partner-save{% elif not contact %}item-save{% else %}contact-save{% endif %}" {% if not contact %}disabled{% endif %}>{% trans 'Save' %}</button>
                 </div>
                 <div class="clear"></div>
             </form>
@@ -196,7 +196,7 @@
             var index = contactNames.indexOf($(this).val().trim().toLowerCase()),
                 isFormValid = false;
 
-            if (index > -1) {
+            if (index !== -1) {
                 isFormValid = false;
 
                 $("ul.record-info").html(
@@ -221,7 +221,7 @@
 
 </script>
 <script src="{{ STATIC_URL }}tag-it.min.js{{ gz }}"></script>
-<script src="{{ STATIC_URL }}prm.162-25.js{{ gz }}"></script>
+<script src="{{ STATIC_URL }}prm.163-8.js{{ gz }}"></script>
 <script src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
 <script src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
 {% endblock %}

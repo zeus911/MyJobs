@@ -208,8 +208,9 @@ $(document).ready(function() {
         });
     });
 
-    $('#item-save').on("click", function(e) {
+    $('#item-save, #contact-save').on("click", function(e) {
         // interrupts default functionality of the button with code below
+        console.log("clicked");
         e.preventDefault();
 
         var is_c_form_there = $('#contact-form').length;
