@@ -370,8 +370,8 @@ def clear_page_cache(sender, **kwargs):
     if not obj.seosite_set.exists():
         return
 
-    configs = Configuration.objects.filter(seosite__facets=obj)
-
+    configs = Configuration.objects.filter(seosite__facets=obj).distinct()
+    print configs.count()
     for config in configs:
         config.save()
 
