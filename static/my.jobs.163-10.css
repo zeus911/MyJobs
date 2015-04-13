@@ -1223,6 +1223,12 @@ input.picker-right {
     margin-right: 0;
 }
 
+#id_attach_delete {
+    margin-left: 270px;
+    overflow-wrap: break-word;
+    max-width: 251px;
+}
+
 .hover-element::after {
     content: "";
     position: absolute;
