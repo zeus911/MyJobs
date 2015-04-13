@@ -3064,6 +3064,13 @@ td .gravatar-blank,
         width: 100%;
     }
 
+    #id_attach_delete {
+        box-sizing: border-box;
+        margin-left: 0;
+        max-width: inherit;
+        width: 100%;
+    }
+
     #candidate-time-filter {
         margin-top: 15px;
     }
