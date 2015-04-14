@@ -3,28 +3,12 @@ import datetime
 import socket
 
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
 
-from api.decorators import authorize_user, sns_json_message
+from api.decorators import authorize_user
 from api.helpers import (get_cntl_query, get_rc_query,
                          get_query, get_query_as_string,
                          grouper)
-from api.xmlparse import JobFeed
-from tasks import task_update_solr
-
-
-@csrf_exempt
-@sns_json_message
-def update(request):
-    """
-    Called when a job feed file is ready to be imported. Calls celery update
-    tasks.
-
-    """
-    if request:
-        if request.get('Subject', '') != 'END':
-            buid = request.get('Subject', '')
-            task_update_solr.delay(buid)
+from xmlparse import JobFeed
 
 
 @authorize_user
