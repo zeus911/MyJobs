@@ -25,6 +25,21 @@ var Field = function(report, label, id, required, defaultVal, helpText) {
 };
 
 
+Field.prototype.renderLabel = function() {
+  return '<label for="' + this.id + '">' + this.label + (this.required ? '*' : '') + '</label>';
+};
+
+
+Field.prototype.dom = function() {
+  return document.getElementById(this.id);
+};
+
+
+Field.prototype.currentVal = function() {
+  return this.dom().value;
+};
+
+
 // Checks to see if browser is IE. If it is then get version.
 function isIE() {
     var myNav = navigator.userAgent.toLowerCase();
