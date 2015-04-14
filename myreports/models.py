@@ -26,12 +26,7 @@ class Report(models.Model):
             try:
                 self._results = self.results.read()
             except IOError:
-                values = json.loads(self.values)
-                contents = serialize('json', self.queryset, values=values)
-                results = ContentFile(contents)
-
-                self.results.save('%s-%s.json' % (self.name, self.pk), results)
-                self._results = contents
+                self.results.delete()
         else:
             self._results = '{}'
 
@@ -51,3 +46,14 @@ class Report(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def regenerate(self):
+        if self.results:
+            return False
+        else:
+            values = json.loads(self.values)
+            contents = serialize('json', self.queryset, values=values)
+            results = ContentFile(contents)
+
+            self.results.save('%s-%s.json' % (self.name, self.pk), results)
+            self._results = contents
