@@ -15,6 +15,52 @@ var Report = function(types) {
 };
 
 
+Report.prototype.createFields = function(types) {
+  var fields = {"prm": [new TextField(this, "Required1", "required1", true),
+                        new TextField(this, "Not Required", "notrequired1", false),
+                        new TextField(this, "Default Value 5", "defaultvalue", false, "5")]};
+
+
+  return fields[types[0]];
+};
+
+
+Report.prototype.renderFields = function(renderAt, fields) {
+  var $renderAt = $(renderAt),
+      field,
+      i;
+
+  // Clear what is currently in the container.
+  $renderAt.html("");
+
+  // for field in fields render.
+  for (i = 0; i < fields.length; i++) {
+    field = fields[i];
+    $renderAt.append(field.render());
+    if (typeof field.bindEvents !== "undefined") {
+      field.bindEvents();
+    }
+  }
+};
+
+
+Report.prototype.findField = function(fieldID) {
+  return this.fields.filter(function(field) {
+    return (field.id === fieldID ? field : undefined);
+  })[0];
+};
+
+
+Report.prototype.save = function() {
+  var field,
+      i;
+  for(i = 0; i < this.fields.length; i++) {
+    field = this.fields[i];
+    $.extend(this.data, field.onSave());
+  }
+};
+
+
 var Field = function(report, label, id, required, defaultVal, helpText) {
   this.report = report;
   this.label = label;
