@@ -40,6 +40,28 @@ Field.prototype.currentVal = function() {
 };
 
 
+// TODO: Document namespacing for binding events.
+Field.prototype.bind = function(event, callback) {
+  if (typeof callback !== "function") {
+    throw "Callback parameter expecting function.";
+  }
+
+  $(this.dom()).on(event, function(e) {
+    callback(e);
+  });
+
+  return this;
+};
+
+
+// Unbinds all events of event type on this field.
+Field.prototype.unbind = function(event) {
+  $(this.dom()).off(event);
+
+  return this;
+};
+
+
 // Checks to see if browser is IE. If it is then get version.
 function isIE() {
     var myNav = navigator.userAgent.toLowerCase();
