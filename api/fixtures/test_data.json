@@ -1,0 +1,30 @@
+[
+    {"pk": 1,
+    "model": "api.Onet",
+    "fields": {"code": "12345678", "title": "onet-title"}},
+
+    {"pk": 1,
+    "model": "api.Moc",
+    "fields": {"code": "mmmm", "branch": "army", "title": "moc title", "title_slug": "moc-title", "onets": ["12345678"]}},
+
+    {"pk": 1,
+     "model": "api.Country",
+     "fields": {"country": "country_name", "country_code": 100}},
+
+    {"pk": 1,
+     "model": "api.ZipCodeToCentroidMapping",
+     "fields": {"zip_code": "12345", "centroid_lat": "42.815656", "centroid_lon": "-73.942324"}},
+
+    {"pk": 2,
+     "model": "api.ZipCodeToCentroidMapping",
+     "fields": {"zip_code": "07054", "centroid_lat": "40.859388", "centroid_lon": "-74.413425"}},
+
+    {"pk": 1,
+     "model": "api.CityToCentroidMapping",
+     "fields": {"city": "city_name", "state": "IN", "centroid_lat": "0", "centroid_lon": "0"}},
+
+    {"pk": 1,
+    "model": "api.Industry",
+    "fields": {"industry": "Consumer Services", "industry_id": 1}}
+
+]
