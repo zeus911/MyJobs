@@ -62,6 +62,13 @@ Field.prototype.unbind = function(event) {
 };
 
 
+var TextField = function(report, label, id, required, defaultVal, helpText) {
+  Field.call(this, report, label, id, required, defaultVal, helpText);
+};
+
+TextField.prototype = Object.create(Field.prototype);
+
+
 // Checks to see if browser is IE. If it is then get version.
 function isIE() {
     var myNav = navigator.userAgent.toLowerCase();
