@@ -806,7 +806,7 @@ $(document).ready(function() {
     renderGraphs(report_id, callback);
   });
 
-  subpage.on("click", ".report > a, .fa-download", function() {
+  subpage.on("click", ".fa-download", function() {
     var report_id = $(this).attr("id").split("-")[1];
 
     history.pushState({'page': 'report-download', 'report': report_id}, 'Download Report');
@@ -814,6 +814,25 @@ $(document).ready(function() {
     renderDownload(report_id);
   });
 
+  subpage.on("click", ".fa-refresh:not('.fa-spin')", function() {
+    var report_id = $(this).attr("id").split("-")[1],
+        data = {'id': report_id},
+        $icon = $(this),
+        url = location.protocol + "//" + location.host; // https://secure.my.jobs
+
+    $.ajax({
+      type: "GET",
+      url: url + "/reports/ajax/regenerate",
+      global: false,
+      data: data,
+      beforeSend: function() {
+        $icon.addClass("fa-spin");
+      },
+      success: function(data) {
+        $icon.removeClass("fa-refresh fa-spin").addClass("fa-download");
+      },
+    });
+  });
 
   // Clone Report
   subpage.on("click", ".fa-copy, .clone-report", function() {
