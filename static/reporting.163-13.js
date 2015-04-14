@@ -166,6 +166,27 @@ var StateField = function(report, label, id, required, defaultVal, helpText) {
 StateField.prototype = Object.create(Field.prototype);
 
 
+StateField.prototype.render = function() {
+  var label = this.renderLabel(),
+      field = this;
+  (function() {
+    $.ajax({
+      type: "POST",
+      url: location.protocol + "//" + location.host + "/reports/ajax/get-states",
+      data: {"csrfmiddlewaretoken": read_cookie("csrftoken")},
+      success: function(data) {
+        var $state = $(".state");
+        $state.html(data);
+        if (field.defaultVal) {
+          $state.find("select").val(field.defaultVal);
+        }
+      }
+    });
+  })();
+  return label + '<div class="state"></div>';
+};
+
+
 // Checks to see if browser is IE. If it is then get version.
 function isIE() {
     var myNav = navigator.userAgent.toLowerCase();
