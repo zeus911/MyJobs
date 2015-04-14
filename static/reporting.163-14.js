@@ -806,19 +806,42 @@ $(document).ready(function() {
     renderGraphs(report_id, callback);
   });
 
-  subpage.on("click", ".fa-download", function() {
-    var report_id = $(this).attr("id").split("-")[1];
+  subpage.on("click", ".fa-download, .export-report", function() {
+    var report_id;
+    
+    if (typeof $(this).attr("id") !== "undefined") {
+      report_id = $(this).attr("id").split("-")[1];
+    } else {
+      report_id = $(this).parents("tr").data("report");
+    }
 
     history.pushState({'page': 'report-download', 'report': report_id}, 'Download Report');
 
     renderDownload(report_id);
   });
 
-  subpage.on("click", ".fa-refresh:not('.fa-spin')", function() {
-    var report_id = $(this).attr("id").split("-")[1],
-        data = {'id': report_id},
+  subpage.on("click", ".fa-refresh:not('.fa-spin'), .regenerate-report", function() {
+    var report_id,
+        data,
         $icon = $(this),
+        $div,
+        archive = false,
         url = location.protocol + "//" + location.host; // https://secure.my.jobs
+
+    if (typeof $(this).attr("id") !== "undefined") {
+      report_id = $(this).attr("id").split("-")[1];
+    } else {
+      $icon = $(this).children(".fa-refresh");
+      $div = $(this);
+      report_id = $(this).parents("tr").data("report");
+      archive = true;
+
+      if ($(this).children(".fa-spin").length) {
+        return false;
+      }
+    }
+
+    data = {'id': report_id};
 
     $.ajax({
       type: "GET",
@@ -830,6 +853,11 @@ $(document).ready(function() {
       },
       success: function(data) {
         $icon.removeClass("fa-refresh fa-spin").addClass("fa-download");
+
+        if (archive) {
+          $div.removeClass("regenerate-report").addClass("export-report");
+          $div.html($icon.prop("outerHTML") + " Export Report");
+        }
       },
     });
   });
