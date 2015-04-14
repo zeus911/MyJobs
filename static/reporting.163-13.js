@@ -69,6 +69,43 @@ var TextField = function(report, label, id, required, defaultVal, helpText) {
 TextField.prototype = Object.create(Field.prototype);
 
 
+TextField.prototype.render = function() {
+  var label = this.renderLabel(),
+      field = '<input id="' + this.id + '" value="' + this.defaultVal +
+              '" type="text" placeholder="' + this.label + '" />';
+  return label + field;
+};
+
+
+TextField.prototype.validate = function() {
+  if (this.required && this.currentVal().trim() === "") {
+    return {error: "This field is required"};
+  } else {
+    return {success: true};
+  }
+};
+
+
+TextField.prototype.bindEvents = function() {
+  var textField = this,
+      validate = function(e) {
+        var validation = textField.validate(),
+            $field = $(textField.dom());
+        if ("error" in validation && !$field.parent().hasClass("required")) {
+          $field.wrap('<div class="required"></div>');
+          $field.after('<div style="color: #990000;">' + validation.error + '</div>');
+        }
+      };
+  this.bind("change", validate);
+};
+
+TextField.prototype.onSave = function() {
+  var data = {};
+  data[this.id] = this.currentVal();
+  return data;
+};
+
+
 // Checks to see if browser is IE. If it is then get version.
 function isIE() {
     var myNav = navigator.userAgent.toLowerCase();
