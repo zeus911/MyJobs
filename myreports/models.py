@@ -1,6 +1,9 @@
 import json
+from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models.loading import get_model
+
+from myreports.helpers import serialize
 
 
 class Report(models.Model):
@@ -20,7 +23,15 @@ class Report(models.Model):
     def __init__(self, *args, **kwargs):
         super(Report, self).__init__(*args, **kwargs)
         if self.results:
-            self._results = self.results.read()
+            try:
+                self._results = self.results.read()
+            except IOError:
+                values = json.loads(self.values)
+                contents = serialize('json', self.queryset, values=values)
+                results = ContentFile(contents)
+
+                self.results.save('%s-%s.json' % (self.name, self.pk), results)
+                self._results = contents
         else:
             self._results = '{}'
 
