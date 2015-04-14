@@ -182,7 +182,6 @@
     }
 
     $(document).ready(function() {
-        {# we'll only have a partner when editing a contact #}
         var partner = {{ partner.pk|default:"0" }},
             partners = {{ partners|safe }},
             contacts = {{ contacts|safe }},
@@ -198,21 +197,23 @@
             }
         });
 
-        $saveButton.unbind("click");
-        $saveButton.on("click", function(e) {
-            e.preventDefault();
+        if ($saveButton.length) {
+            oldCallback = $._data($saveButton[0], "events").click[0];
+            $saveButton.unbind("click");
+            $saveButton.on("click", function(e) {
+                e.preventDefault();
 
-            if ($("#id_partner-partnername").length) {
-                validForm = checkDuplicates("#id_partner-partnername", partners, "/prm/view/details?partner=");
-            } else if ($("#id_contact-name").length) {
-                validForm = checkDuplicates("#id_contact-name", contacts, "/prm/view/details/edit?partner=" + partner + "&id=");
-            }
+                if ($("#id_partner-partnername").length) {
+                    validForm = checkDuplicates("#id_partner-partnername", partners, "/prm/view/details?partner=");
+                } else if ($("#id_contact-name").length) {
+                    validForm = checkDuplicates("#id_contact-name", contacts, "/prm/view/details/edit?partner=" + partner + "&id=");
+                }
 
-            if (validForm) {
-                $saveButton.unbind("click").bind("click", itemSaveCallback).click();
-            }
-        });
-
+                if (validForm) {
+                    $saveButton.unbind("click").bind("click", oldCallback).click();
+                }
+            });
+        }
     });
 
 </script>
