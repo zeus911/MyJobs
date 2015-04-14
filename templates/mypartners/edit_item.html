@@ -152,6 +152,7 @@
 {% endblock %}
 
 {% block extra-js %}
+<script src="{{ STATIC_URL }}prm.163-8.js{{ gz }}"></script>
 <script type="text/javascript">
 
     function checkDuplicates(elementID, values, url) {
@@ -174,7 +175,10 @@
             $editModal.modal("show").on("hidden", function() {
                 $element.select();
             });
+
+            return false;
         }
+        return true;
     }
 
     $(document).ready(function() {
@@ -183,8 +187,9 @@
             partners = {{ partners|safe }},
             contacts = {{ contacts|safe }},
             $otherInputs = $("input:gt(0)"),
-            $saveButton = $("#item-save");
-
+            $saveButton = $("#item-save"),
+            validForm = false;
+        
         $otherInputs.on("focus", function() {
             if ($("#id_partner-partnername").length) {
                 checkDuplicates("#id_partner-partnername", partners, "/prm/view/details?partner=");
@@ -192,13 +197,19 @@
                 checkDuplicates("#id_contact-name", contacts, "/prm/view/details/edit?partner=" + partner + "&id=");
             }
         });
-        
+
+        $saveButton.unbind("click");
         $saveButton.on("click", function(e) {
-            e.stopPropagation();
+            e.preventDefault();
+
             if ($("#id_partner-partnername").length) {
-                checkDuplicates("#id_partner-partnername", partners, "/prm/view/details?partner=");
+                validForm = checkDuplicates("#id_partner-partnername", partners, "/prm/view/details?partner=");
             } else if ($("#id_contact-name").length) {
-                checkDuplicates("#id_contact-name", contacts, "/prm/view/details/edit?partner=" + partner + "&id=");
+                validForm = checkDuplicates("#id_contact-name", contacts, "/prm/view/details/edit?partner=" + partner + "&id=");
+            }
+
+            if (validForm) {
+                $saveButton.unbind("click").bind("click", itemSaveCallback).click();
             }
         });
 
@@ -206,7 +217,6 @@
 
 </script>
 <script src="{{ STATIC_URL }}tag-it.min.js{{ gz }}"></script>
-<script src="{{ STATIC_URL }}prm.163-8.js{{ gz }}"></script>
 <script src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
 <script src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
 {% endblock %}
