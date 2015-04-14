@@ -10,7 +10,7 @@ var modernBrowser = !(isIE() && isIE() < 10);
 // Handles storing data, rendering fields, and submitting report. See prototype functions
 var Report = function(types) {
   this.data = {};
-  this.fields = [];
+  this.fields = this.createFields(types);
   this.types = types;
 };
 
@@ -43,6 +43,8 @@ Report.prototype.renderFields = function(renderAt, fields) {
       field.bindEvents();
     }
   }
+
+  return this;
 };
 
 
@@ -61,6 +63,8 @@ Report.prototype.save = function() {
     field = this.fields[i];
     $.extend(this.data, field.onSave());
   }
+
+  return this;
 };
 
 
@@ -75,7 +79,7 @@ var Field = function(report, label, id, required, defaultVal, helpText) {
 
 
 Field.prototype.renderLabel = function() {
-  return '<label for="' + this.id + '">' + this.label + (this.required ? '*' : '') + '</label>';
+  return '<label for="' + this.id + '">' + this.label + (this.required ? ' *' : '') + '</label>';
 };
 
 
@@ -111,6 +115,13 @@ Field.prototype.unbind = function(event) {
 };
 
 
+Field.prototype.onSave = function() {
+  var data = {};
+  data[this.id] = this.currentVal();
+  return data;
+};
+
+
 var TextField = function(report, label, id, required, defaultVal, helpText) {
   Field.call(this, report, label, id, required, defaultVal, helpText);
 };
@@ -140,18 +151,15 @@ TextField.prototype.bindEvents = function() {
       validate = function(e) {
         var validation = textField.validate(),
             $field = $(textField.dom());
-        if ("error" in validation && !$field.parent().hasClass("required")) {
-          $field.wrap('<div class="required"></div>');
-          $field.after('<div style="color: #990000;">' + validation.error + '</div>');
+        if ("error" in validation) {
+          $field.val("");
+          if (!$field.parent().hasClass("required")) {
+            $field.wrap('<div class="required"></div>');
+            $field.attr("placeholder", validation.error);
+          }
         }
       };
   this.bind("change", validate);
-};
-
-TextField.prototype.onSave = function() {
-  var data = {};
-  data[this.id] = this.currentVal();
-  return data;
 };
 
 
@@ -160,6 +168,11 @@ var DateField = function(report, label, id, required, defaultVal, helpText) {
 };
 
 DateField.prototype = Object.create(Field.prototype);
+
+
+DateField.prototype.currentVal = function(id) {
+  return $(this.dom()).find("#" + id).val();
+};
 
 
 DateField.prototype.render = function() {
@@ -202,7 +215,8 @@ DateField.prototype.bindEvents = function() {
 
 DateField.prototype.onSave = function() {
   var data = {};
-  data.start_date = '';
+  data.start_date = this.currentVal("start-date");
+  data.end_date = this.currentVal("end-date");
   return data;
 };
 
