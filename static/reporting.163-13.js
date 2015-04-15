@@ -214,28 +214,44 @@ DateField.prototype.render = function() {
   return label + dateWidget.prop("outerHTML");
 };
 
+DateField.prototype.bind = function(event, selector, callback) {
+  if (typeof callback !== "function") {
+    throw "Callback parameter expecting function.";
+  }
+
+  $(this.dom()).on(event, selector, function(e) {
+    callback(e);
+  });
+
+  return this;
+};
+
 
 DateField.prototype.bindEvents = function() {
-  var $element = $(this.dom());
-  $element.on("focus.datepicker", ".datepicker", function() {
-    $(this).pickadate({
-      format: "mm/dd/yyyy",
-      selectYears: true,
-      selectMonths: true,
-      today: false,
-      clear: false,
-      close: false,
-      onOpen: function () {
-        if (this.get("id") === "start-date") {
-          var end_date = $("#end-date").val();
-          this.set("max", new Date(end_date || new Date()));
-        } else if (this.get("id") === "end-date") {
-          var start_date = $("#start-date").val();
-          this.set("min", new Date(start_date || new Date(0)));
-        }
-      }
-    });
-  });
+  var datePicker = function(e) {
+        var $targeted = $(e.currentTarget);
+        $targeted.pickadate({
+          format: "mm/dd/yyyy",
+          selectYears: true,
+          selectMonths: true,
+          min: [2014, 0, 1], // PRM started in 2014/1/1
+          max: true,
+          today: false,
+          clear: false,
+          close: false,
+          onOpen: function() {
+            if(this.get("id") === "start-date") {
+              var end_date = $("#end-date").val();
+              this.set("max", end_date ? new Date(end_date) : true);
+            } else if (this.get("id") === "end-date") {
+              var start_date = $("#start-date").val();
+              this.set("min", start_date ? new Date(start_date) : [2014, 0, 1]);
+            }
+          }
+        });
+      };
+
+  this.bind("focus.datepicker", ".datepicker", datePicker);
 };
 
 
