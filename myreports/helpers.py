@@ -139,12 +139,9 @@ def serialize(fmt, data, counts=None, values=None, order_by=None):
         data = [OrderedDict([(value, record[value]) for value in values])
                 for record in data]
 
-        reverse = False
         if order_by:
-            if '-' in order_by:
-                order_by = order_by[1:]
-                reverse = True
-
+            # if '-' isn't in order_by, reverse will be an empty string
+            _, reverse, order_by = sorted(order_by.partition('-'))
             data = sorted(
                 data, key=lambda record:
                     record[order_by], reverse=bool(reverse))
