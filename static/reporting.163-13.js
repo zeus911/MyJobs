@@ -12,6 +12,8 @@ var Report = function(types) {
   this.data = {};
   this.fields = this.createFields(types);
   this.types = types;
+
+  this.events();
 };
 
 
@@ -68,6 +70,16 @@ Report.prototype.save = function() {
   }
 
   return this;
+};
+
+
+Report.prototype.events = function() {
+  var report = this,
+      container = $("#main-container");
+
+  container.on("click", "#show-modal:not('.disabled')", function() {
+    console.log("click");
+  });
 };
 
 
@@ -154,12 +166,19 @@ TextField.prototype.bindEvents = function() {
   var textField = this,
       validate = function(e) {
         var validation = textField.validate(),
-            $field = $(textField.dom());
+            $field = $(textField.dom()),
+            $modalBtn = $("#show-modal");
         if ("error" in validation) {
           $field.val("");
-          if (!$field.parent().hasClass("required")) {
+          if (!$field.parent().hasClass('required')) {
             $field.wrap('<div class="required"></div>');
-            $field.attr("placeholder", validation.error);
+            $field.attr('placeholder', validation.error);
+            $modalBtn.addClass('disabled');
+          }
+        } else {
+          if ($field.parent().hasClass('required')) {
+            $field.unwrap();
+            $modalBtn.removeClass('disabled');
           }
         }
       };
