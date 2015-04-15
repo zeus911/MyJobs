@@ -425,6 +425,6 @@ class MySearchViewTests(MyJobsBase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(len(mail.outbox), 1)
         response = self.client.get(send_url % search_2.pk)
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 2)
         settings.DEBUG = False
