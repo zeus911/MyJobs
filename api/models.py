@@ -20,12 +20,10 @@ class APIUser(models.Model):
     phone = models.CharField(max_length=30,  blank=True, default='')
 
     scope = models.CharField(max_length=1, choices=SCOPE_CHOICES, default=1)
-    jv_api_access = models.BooleanField(default=0,
-                                        verbose_name='Job View Access')
+    jv_api_access = models.BooleanField(default=0, verbose_name='Job View Access')
     onet_access = models.BooleanField(default=0, verbose_name='Onet Access')
 
-    view_source = models.IntegerField('seo.ViewSource', null=True,
-                                      db_column='view_source_id')
+    view_source = models.IntegerField('ViewSource', null=True, db_column='view_source_id')
     disable = models.BooleanField(default=False)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
     date_disabled = models.DateTimeField(null=True, blank=True)
@@ -41,6 +39,21 @@ class APIUser(models.Model):
         if not self.key:
             self.create_key()
         return super(APIUser, self).save(*args, **kwargs)
+
+
+class ViewSource(models.Model):
+    view_source_id = models.IntegerField(primary_key=True, blank=True,
+                                         default=None)
+    name = models.CharField(max_length=255, blank=True)
+    friendly_name = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        get_latest_by = 'view_source_id'
+        verbose_name = 'View Source'
+        db_table = 'redirect_viewsource'
+
+    def __unicode__(self):
+        return u'%s (%d)' % (self.name, self.view_source_id)
 
 
 class CityToCentroidMapping(models.Model):

@@ -27,6 +27,14 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'api', ['APIUser'])
 
+        # Adding model 'ViewSource'
+        db.create_table('redirect_viewsource', (
+            ('view_source_id', self.gf('django.db.models.fields.IntegerField')(default=None, primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('friendly_name', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+        ))
+        db.send_create_signal(u'api', ['ViewSource'])
+
         # Adding model 'CityToCentroidMapping'
         db.create_table(u'api_citytocentroidmapping', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -74,6 +82,9 @@ class Migration(SchemaMigration):
     def backwards(self, orm):
         # Deleting model 'APIUser'
         db.delete_table(u'api_apiuser')
+
+        # Deleting model 'ViewSource'
+        db.delete_table('redirect_viewsource')
 
         # Deleting model 'CityToCentroidMapping'
         db.delete_table(u'api_citytocentroidmapping')
@@ -134,6 +145,12 @@ class Migration(SchemaMigration):
             'query': ('django.db.models.fields.TextField', [], {}),
             'solr_params': ('django.db.models.fields.TextField', [], {}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['api.APIUser']"})
+        },
+        u'api.viewsource': {
+            'Meta': {'object_name': 'ViewSource', 'db_table': "'redirect_viewsource'"},
+            'friendly_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'view_source_id': ('django.db.models.fields.IntegerField', [], {'default': 'None', 'primary_key': 'True'})
         },
         u'api.zipcodetocentroidmapping': {
             'Meta': {'object_name': 'ZipCodeToCentroidMapping'},
