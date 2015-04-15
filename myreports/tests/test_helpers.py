@@ -48,6 +48,26 @@ class TestHelpers(MyReportsTestCase):
 
         self.assertEqual(len(data), self.records.count())
 
+    def test_serialize_values(self):
+        """
+        Test that if the `values` parameter is specified, column
+        inclusion/exclusion as well as column ordering is respected.
+        """
+
+        # by default, all fields except pk should be inclued, and columns
+        # should be sorted alphabetically
+        data = helpers.serialize('python', self.records)
+        values = data[-1].keys()
+
+        self.assertEqual(data[0].keys(), sorted(values))
+
+        # when values are specified, output records should respec the nubmer
+        # and order of fields specified
+        values = ['contact_name', 'contact_email', 'tags']
+        data = helpers.serialize('python', self.records, values=values)
+
+        self.assertEqual(data[0].keys(), values)
+
     def test_serialize_csv(self):
         """Test that serializing to CSV creates the correct number of rows."""
 

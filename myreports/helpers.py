@@ -135,7 +135,7 @@ def serialize(fmt, data, counts=None, values=None, order_by=None):
                 for key, value in record.items()}
 
     if data:
-        values = values or data[0].keys()
+        values = values or sorted(data[0].keys())
         d = []
         for record in data:
             o = OrderedDict()
