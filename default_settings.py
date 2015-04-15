@@ -21,6 +21,8 @@ sys.path.append(APP)
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
+DATABASE_ROUTERS = ['routers.APIRouter']
+
 ENVIRONMENT = 'Local'
 
 WILDCARD_REDIRECT = True

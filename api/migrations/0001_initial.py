@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 from south.utils import datetime_utils as datetime
-from south.db import db
+from south.db import db, dbs
 from south.v2 import SchemaMigration
 from django.db import models
 
 
+db = dbs['api']
+
+
 class Migration(SchemaMigration):
+    no_dry_run = True
 
     def forwards(self, orm):
         # Adding model 'APIUser'
