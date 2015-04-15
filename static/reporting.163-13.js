@@ -154,35 +154,38 @@ TextField.prototype.render = function() {
 
 
 TextField.prototype.validate = function() {
-  if (this.required && this.currentVal().trim() === "") {
-    return {error: "This field is required"};
-  } else {
-    return {success: true};
-  }
+  return this.required && this.currentVal().trim() === "" ? {error: "This field is required"} : {success: true};
 };
 
 
 TextField.prototype.bindEvents = function() {
   var textField = this,
-      validate = function(e) {
+      $field = $(textField.dom()),
+      validate = function() {
         var validation = textField.validate(),
-            $field = $(textField.dom()),
-            $modalBtn = $("#show-modal");
+            $modalBtn = $("#show-modal"),
+            hasRequired = $field.parent('div.required').length; // will return 0 or 1
         if ("error" in validation) {
           $field.val("");
-          if (!$field.parent().hasClass('required')) {
+          if (!hasRequired) {
             $field.wrap('<div class="required"></div>');
             $field.attr('placeholder', validation.error);
             $modalBtn.addClass('disabled');
           }
         } else {
-          if ($field.parent().hasClass('required')) {
+          if (hasRequired) {
             $field.unwrap();
             $modalBtn.removeClass('disabled');
           }
         }
+      },
+      trim = function() {
+        var value = $field.val().trim();
+        $field.val(value);
       };
-  this.bind("change", validate);
+
+  this.bind("change.validate", validate);
+  this.bind("change.trim", trim);
 };
 
 
