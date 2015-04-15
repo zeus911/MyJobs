@@ -16,11 +16,10 @@ var Report = function(types) {
 
 
 Report.prototype.createFields = function(types) {
-  var fields = {"prm": [new TextField(this, "Required1", "required1", true),
-                        new TextField(this, "Not Required", "notrequired1", false),
-                        new TextField(this, "Default Value 5", "defaultvalue", false, "5"),
+  var fields = {"prm": [new TextField(this, "Report Name", "report_name", true),
+                        new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: "04/14/2015"}),
                         new StateField(this, "State", 'state', false, 'IN'),
-                        new DateField(this, "Select Date", "date", true, {start_date: "02/23/1991", end_date: "04/14/2015"})]};
+                        new TextField(this, "City", "city", false)]};
 
 
   return fields[types[0]];
@@ -44,6 +43,10 @@ Report.prototype.renderFields = function(renderAt, fields) {
     }
   }
 
+  $renderAt.append('<div class="show-modal-holder">' +
+                   '<a id="show-modal" class="btn primary">Generate Report</a>' +
+                   '</div>');
+
   return this;
 };
 
@@ -59,7 +62,7 @@ Report.prototype.save = function() {
   var field,
       i;
 
-  for(i = 0; i < this.fields.length; i++) {
+  for (i = 0; i < this.fields.length; i++) {
     field = this.fields[i];
     $.extend(this.data, field.onSave());
   }
@@ -74,12 +77,12 @@ var Field = function(report, label, id, required, defaultVal, helpText) {
   this.id = id;
   this.required = !!required || false;
   this.defaultVal = defaultVal || '';
-  this.helpText = helpText;
+  this.helpText = helpText || '';
 };
 
 
 Field.prototype.renderLabel = function() {
-  return '<label for="' + this.id + '">' + this.label + (this.required ? ' *' : '') + '</label>';
+  return '<label for="' + this.id + '">' + this.label + (this.required ? '<span style="color: red;">*</span>' : '') + '</label>';
 };
 
 
@@ -132,8 +135,9 @@ TextField.prototype = Object.create(Field.prototype);
 TextField.prototype.render = function() {
   var label = this.renderLabel(),
       field = '<input id="' + this.id + '" value="' + this.defaultVal +
-              '" type="text" placeholder="' + this.label + '" />';
-  return label + field;
+              '" type="text" placeholder="' + this.label + '" />',
+      helpText = '<div class="help-text">' + this.helpText + '</div>';
+  return label + field + (this.helpText ? helpText : '');
 };
 
 

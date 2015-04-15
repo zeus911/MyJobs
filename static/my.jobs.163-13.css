@@ -1385,6 +1385,17 @@ input[readonly].datepicker {
     margin: 0;
 }
 
+.help-text {
+    color: #666;
+    font-size: 0.9em;
+    font-style: italic;
+    line-height: 0.9em;
+    margin-bottom: 7px;
+    margin-left: 1px;
+    margin-top: -6px;
+    text-shadow: 0 1px 0 #FFF;
+}
+
 .panel > #choices input[type="checkbox"] {
     margin-top: -1px;
 }
