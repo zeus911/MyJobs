@@ -1,10 +1,10 @@
 [
     {"pk": 1,
-    "model": "api.Onet",
+    "model": "moc_coding.Onet",
     "fields": {"code": "12345678", "title": "onet-title"}},
 
     {"pk": 1,
-    "model": "api.Moc",
+    "model": "moc_coding.Moc",
     "fields": {"code": "mmmm", "branch": "army", "title": "moc title", "title_slug": "moc-title", "onets": ["12345678"]}},
 
     {"pk": 1,

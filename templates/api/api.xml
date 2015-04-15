@@ -1,0 +1,30 @@
+{% load job_tags %}
+<api version="1.0">
+    <id>{{ search_id }}</id>
+    <time>{{ search_time|search_datetime_format }}</time>
+    <error>{{ error }}</error>
+    <machine>{{ server }}</machine>
+    <query>{{ query }}</query>
+    <recordcount>{{ record_count }}</recordcount>
+    <startrow>{{ start_row }}</startrow>
+    <endrow>{{ end_row }}</endrow>
+    <order>{{ sort_order }}</order>
+    {% if jobs %}
+        <jobs>
+        {% for job in jobs %}
+            <job>
+                <title>{{ job.title }}</title>
+                <url>{{ job.link|update_url }}{% if user.view_source %}{{ user.view_source }}{% endif %}</url>
+                <company>{{ job.company }}</company>
+                <location>{% get_location job %}</location>
+                <dateacquired>{{ job.date_new|job_datetime_format }}</dateacquired>
+                {% if is_counts and user.onet_access %}<onet>{{ job.onet|join:", " }}</onet>{% endif %}
+                {% if is_counts %}<fc>{{ job.federal_contractor }}</fc>{% endif %}
+                <jvid>{{ job.guid }}{% if user.view_source %}{{ user.view_source }}{% endif %}</jvid>
+            </job>
+        {% endfor %}
+        </jobs>
+    {% else %}
+    <jobs/>
+    {% endif %}
+</api>

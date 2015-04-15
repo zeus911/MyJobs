@@ -6,10 +6,10 @@ import pysolr
 
 from django.conf import settings
 
-from api.models import Search, Industry, Moc, Onet, Country
+from api.models import Search, Industry, Country
 from api.models import CityToCentroidMapping as C2CM
 from api.models import ZipCodeToCentroidMapping as ZC2CM
-
+from moc_coding.models import Moc, Onet
 
 # List of supported search parameters that have straight-foward
 # translations into solr fq queries

@@ -1,0 +1,19 @@
+<api version="1.0">
+    <error>{{ error }}</error>
+    {% if onets %}
+        {% if onets|length > 1 %}
+            <recordcounts>
+        {% endif %}
+        {% for onet in onets %}
+            <item>
+                <onet>{{ onet.code }}</onet>
+                <recordcount>{{ onet.count }}</recordcount>
+            </item>
+        {% endfor %}
+        {% if onets|length > 1 %}
+            </recordcounts>
+        {% endif %}
+    {% else %}
+        <recordcount>{{ record_count }}</recordcount>
+    {% endif %}
+</api>

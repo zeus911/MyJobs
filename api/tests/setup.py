@@ -1,19 +1,23 @@
-import os
 import pysolr
 
 from django.conf import settings
+from django.core.urlresolvers import clear_url_caches
 from django.test import TestCase
 
-from api.import_jobs import clear_solr, import_from_file
+from api.tests.data.job_data import JOBS
 from api.tests.factories import APIUserFactory
 
 
-class BaseTestCase(TestCase):
+class APIBaseTestCase(TestCase):
     fixtures = ['test_data.json']
 
     def setUp(self):
-        super(BaseTestCase, self).setUp()
-        settings.SOLR_LOCATION = settings.TESTING_SOLR_LOCATION
+        super(APIBaseTestCase, self).setUp()
+        setattr(settings, 'ROOT_URLCONF', 'api_urls')
+        setattr(settings, "PROJECT", 'api')
+        clear_url_caches()
+
+        settings.SOLR_LOCATION = 'http://127.0.0.1:8983/solr/api'
         self.solr = pysolr.Solr(settings.SOLR_LOCATION)
         self.user = APIUserFactory()
         self.path = '/?key=%s&' % self.user.key
@@ -29,12 +33,9 @@ class BaseTestCase(TestCase):
         self.fixture_jvid = '0F21D879F4904BDB90EC27A3843A1B0910'
         self.fixture_onets = '12345678'
 
-        testdir = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                               'data')
-        feed = os.path.join(testdir, 'dseo_feed_1.xml')
-        import_from_file(feed, testing=True)
+        self.solr.add(JOBS)
 
     def tearDown(self):
-        super(BaseTestCase, self).tearDown()
-        clear_solr()
+        super(APIBaseTestCase, self).tearDown()
+        self.solr.delete(q='*:*')
         self.assertEqual(self.solr.search('*:*').hits, 0)

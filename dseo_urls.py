@@ -21,42 +21,12 @@ from registration import views as registration_views
 if not model_cache.loaded:
     model_cache.get_models()
 
-from tastypie.api import Api
-from seo.api.resources import *
-
-v1_api = Api(api_name="v1")
-v1_api.register(SeoSiteResource())
-v1_api.register(ATSResource())
-v1_api.register(GroupResource())
-v1_api.register(ViewSourceResource())
-v1_api.register(BusinessUnitResource())
-v1_api.register(GoogleAnalyticsResource())
-v1_api.register(GoogleAnalyticsCampaignResource())
-v1_api.register(SpecialCommitmentResource())
-v1_api.register(CustomFacetResource())
-v1_api.register(ConfigurationResource())
-v1_api.register(FeaturedCompanyResource())
-v1_api.register(CompanyResource())
-v1_api.register(BillboardImageResource())
-v1_api.register(BillboardHotspotResource())
-v1_api.register(MocResource())
-v1_api.register(MocDetailResource())
-v1_api.register(OnetResource())
-v1_api.register(JobSearchResource())
-v1_api.register(JobResource())
-
 admin.autodiscover()
 handler404 = Dseo404.as_view()
 handler500 = 'seo.views.search_views.dseo_500'
 
-
-# API endpoints
-urlpatterns = patterns('',
-    url('^api/', include(v1_api.urls))
-)
-
 # secure.my.jobs redirects
-urlpatterns += patterns('',
+urlpatterns = patterns('',
     url(r'^about/$',
         RedirectView.as_view(url='https://secure.my.jobs/about')),
     url(r'^account/$',

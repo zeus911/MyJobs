@@ -40,6 +40,7 @@ def api(request, api_user, counts_api=False):
         'jobs': solr_search.results.docs if solr_search.results else None,
         'query': query,
         'record_count': hits or 0,
+        'request': request,
         'search_id': solr_search.search.id if solr_search.search else 0,
         'search_time': datetime.datetime.now(),
         'server': socket.gethostname(),
@@ -47,7 +48,7 @@ def api(request, api_user, counts_api=False):
         'start_row': start_row,
         'user': api_user,
     }
-    template = 'api.xml' if not jvid else 'job_view.xml'
+    template = 'api/api.xml' if not jvid else 'api/job_view.xml'
     if solr_search.error:
         status_code = 400
     return render(request, template, data, content_type="application/xml",
@@ -57,7 +58,7 @@ def api(request, api_user, counts_api=False):
 @authorize_user
 def countsapi(request, api_user):
     status_code = 200
-    params = request.REQUES
+    params = request.REQUEST
     cntl = params.get('cntl', 0)
     rc = params.get('rc', 0)
     param_onets = []
@@ -72,7 +73,7 @@ def countsapi(request, api_user):
         return api(request, counts_api=True)
 
     if cntl:
-        template = 'cntl.xml'
+        template = 'api/cntl.xml'
         data = {
             'companies': None,
             'locations': None,
@@ -80,7 +81,7 @@ def countsapi(request, api_user):
         }
         solr_search = get_cntl_query(request.GET, api_user)
     else:
-        template = 'rc.xml'
+        template = 'api/rc.xml'
 
         param_onets = params.get('onets', '').replace(" ", "").split(',')
         param_onets = param_onets + params.get('onet', '').split(',')
@@ -109,6 +110,7 @@ def countsapi(request, api_user):
             'companies': sorted(companies, key=lambda x: x.count, reverse=True),
             'locations': sorted(locations, key=lambda x: x.count, reverse=True),
             'onets': sorted(onets, key=lambda x: x.count, reverse=True),
+            'request': request,
         }
     elif rc and solr_search.results is not None:
         solr_facets = solr_search.results.facets['facet_fields']
@@ -122,6 +124,7 @@ def countsapi(request, api_user):
         data = {
             'onets': onets,
             'record_count': solr_search.results.hits,
+            'request': request,
         }
 
     if solr_search.error:

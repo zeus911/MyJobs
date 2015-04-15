@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from api.helpers import get_query
-from api.tests.setup import BaseTestCase
+from api.tests.setup import APIBaseTestCase
 
 
-class Helpers(BaseTestCase):
+class Helpers(APIBaseTestCase):
     def test_bad_tm(self):
         query_dict = {'tm': 'oranges', }
         solr_search = get_query(query_dict, self.user)

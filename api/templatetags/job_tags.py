@@ -4,7 +4,7 @@ from xml.sax.saxutils import escape
 
 from django import template
 
-from api.models import Onet
+from moc_coding.models import Onet
 
 
 register = template.Library()

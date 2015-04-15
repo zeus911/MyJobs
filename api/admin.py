@@ -1,7 +1,5 @@
 from django.contrib import admin
-from api.models import APIUser, Industry, ViewSource
-
-admin.site.register(ViewSource)
+from api.models import APIUser, Industry
 
 
 class APIUserAdmin(admin.ModelAdmin):

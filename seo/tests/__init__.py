@@ -1,4 +1,3 @@
-from seo.tests.test_api import *
 from seo.tests.test_import_jobs import *
 from seo.tests.test_middleware import *
 from seo.tests.test_models import *

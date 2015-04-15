@@ -1,0 +1,23 @@
+<counts>
+    {% if companies %}
+        <companies>
+            {% for company in companies %}
+                <company bu="{{ company.buid }}" num="{{ company.count}}">{{ company.name }}</company>
+            {% endfor %}
+        </companies>
+    {% endif %}
+    {% if locations %}
+        <locations>
+            {% for location in locations %}
+                <location num="{{ location.count }}">{{ location.location }}</location>
+            {% endfor %}
+        </locations>
+    {% endif %}
+    {% if onets %}
+        <onets>
+            {% for onet in onets %}
+                <onet num="{{ onet.count }}">{{ onet.code }}</onet>
+            {% endfor %}
+        </onets>
+    {% endif %}
+</counts>

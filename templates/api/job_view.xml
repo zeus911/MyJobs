@@ -1,0 +1,35 @@
+{% load job_tags %}
+{% if jobs %}
+<API version="1.0">
+    <Time>{{ search_time|search_datetime_format }}</Time>
+    <Machine>{{ server }}</Machine>
+        <Job>
+            <Title>{{ jobs.0.title }}</Title>
+            <URL>{{ jobs.0.link|update_url }}</URL>
+            <Company>{{ jobs.0.company }}</Company>
+            <Location>{% get_location jobs.0 %}</Location>
+            <DateAcquired>{{ jobs.0.date_new|job_datetime_format }}</DateAcquired>
+            {% get_onets jobs.0 as onets %}
+            {% if onets and user.onet_access %}
+                {% for onet in onets %}
+                    <Onet>
+                        <OnetCode>{{ onet.code|readable_onet_code }}</OnetCode>
+                        <OnetTitle>{{ onet.title }}</OnetTitle>
+                    </Onet>
+                {% endfor %}
+            {% elif user.onet_access %}
+                <Onet>
+                    <OnetCode>99-9999.99</OnetCode>
+                    <OnetTitle>Unknown</OnetTitle>
+                </Onet>
+            {% endif %}
+            <Description>{{ jobs.0.description }}</Description>
+            <JVID>{{ jobs.0.guid }}</JVID>
+        </Job>
+</API>
+{% else %}
+<api version="1.0">
+    <error>Job No Longer Available</error>
+</api>
+{% endif %}
+

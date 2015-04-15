@@ -5,10 +5,10 @@ import re
 
 from api.helpers import simple_api_fields
 from api.models import CityToCentroidMapping, Search
-from api.tests.setup import BaseTestCase
+from api.tests.setup import APIBaseTestCase
 
 
-class Views(BaseTestCase):
+class Views(APIBaseTestCase):
     def test_individual_query_parameters(self):
         """
         Test confirms that all individual query parameters are not causing
