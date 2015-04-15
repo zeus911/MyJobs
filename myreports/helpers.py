@@ -136,25 +136,18 @@ def serialize(fmt, data, counts=None, values=None, order_by=None):
 
     if data:
         values = values or sorted(data[0].keys())
-        d = []
-        for record in data:
-            o = OrderedDict()
-            for value in values:
-                o[value] = record[value]
+        data = [OrderedDict([(value, record[value]) for value in values])
+                for record in data]
 
-            d.append(o)
-
-        
         reverse = False
         if order_by:
             if '-' in order_by:
                 order_by = order_by[1:]
                 reverse = True
 
-            d = sorted(
-                d, key=lambda record: record[order_by], reverse=bool(reverse))
-
-    data = d
+            data = sorted(
+                data, key=lambda record:
+                    record[order_by], reverse=bool(reverse))
 
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)
