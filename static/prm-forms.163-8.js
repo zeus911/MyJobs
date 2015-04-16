@@ -47,7 +47,7 @@ function checkDuplicates(elementID, values, url) {
 }
 
 $(document).ready(function() {
-  var $otherInputs = $("input:gt(0)"),
+  var $otherInputs = $("input:gt(0), textarea"),
       $saveButton = $("#item-save, #init-partner-save"),
       validForm = false;
   
