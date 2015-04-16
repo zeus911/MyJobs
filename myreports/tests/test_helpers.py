@@ -22,7 +22,6 @@ class TestHelpers(MyReportsTestCase):
         # functions use, so saving this to a variable isn't really helpful
         ContactRecordFactory.create_batch(
             10, partner=self.partner, contact_name='Joe Shmoe', tags=tags)
-
         self.records = ContactRecord.objects.all()
 
     def test_serialize_python(self):
@@ -32,19 +31,6 @@ class TestHelpers(MyReportsTestCase):
         """
 
         data = helpers.serialize('python', self.records)
-
-        self.assertEqual(len(data), self.records.count())
-
-    def test_serialize_json(self):
-        """
-        Test that serializing to JSON creates the correct number of
-        objects.
-        """
-
-        # JSON is returned as a string, but deserializing it after serializing
-        # it should create a list of dicts comparable to the number of records
-        # that actually exist.
-        data = json.loads(helpers.serialize('json', self.records))
 
         self.assertEqual(len(data), self.records.count())
 
@@ -70,8 +56,8 @@ class TestHelpers(MyReportsTestCase):
 
     def test_serialize_order_by(self):
         """
-        Test that if the `order_by` parameter is specified, records are 
-        ordered by that parameter's value.
+        Test that if the `order_by` parameter is specified, records are ordered
+        by that parameter's value.
         """
 
         data = helpers.serialize(
@@ -83,6 +69,38 @@ class TestHelpers(MyReportsTestCase):
         # make sure that the latest time is last
         self.assertTrue(min(datetimes) == datetimes[-1])
 
+    def test_serialize_strip_html(self):
+        """
+        Test that HTML is properly stripped from fields when being serialized.
+        """
+
+        notes = """
+        <div class="tip-content">
+            Saved Search Notification<br />
+            <a href="https://secure.my.jobs">My.jobs</a>
+            <p>Saved search was created on your behalf</p>
+        </div>
+        """
+        self.records.update(notes=notes)
+        data = helpers.serialize('python', self.records)
+
+        for record in data:
+            text = ''.join(str(value) for value in record.values())
+            self.assertTrue('<' not in text, text)
+            self.assertTrue('>' not in text, text)
+
+    def test_serialize_json(self):
+        """
+        Test that serializing to JSON creates the correct number of
+        objects.
+        """
+
+        # JSON is returned as a string, but deserializing it after serializing
+        # it should create a list of dicts comparable to the number of records
+        # that actually exist.
+        data = json.loads(helpers.serialize('json', self.records))
+
+        self.assertEqual(len(data), self.records.count())
 
     def test_serialize_csv(self):
         """Test that serializing to CSV creates the correct number of rows."""
