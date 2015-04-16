@@ -482,7 +482,10 @@ class DESolrSearchBackend(SolrSearchBackend):
             field_mapper = {'datetime': 'date',
                             'integer': 'long',
                             'string': 'text_en'}
-            if field_class.field_type:
+            if getattr(field_class, 'trust_field_type', False):
+                field_data['type'] = field_class.field_type
+
+            elif field_class.field_type:
                 field_data['type'] = field_mapper.get(field_class.field_type,
                                                       field_class.field_type)
 
