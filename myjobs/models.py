@@ -637,6 +637,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 @receiver(pre_delete, sender=User, dispatch_uid='pre_delete_user')
 def delete_user(sender, instance, using, **kwargs):
+    """
+    Fakes a combination of SET_NULL and CASCADE on_delete handlers. The user's
+    saved searches will be deleted and partner saved searches will have the user
+    nullified.
+    """
     instance.savedsearch_set.filter(partnersavedsearch__isnull=False).update(
         user=None)
     instance.savedsearch_set.filter(partnersavedsearch__isnull=True).delete()
