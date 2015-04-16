@@ -349,7 +349,7 @@ class Views(APIBaseTestCase):
         # City, State combo should also work in both when there is a valid
         # CityToCentroidMapping for the location.
         CityToCentroidMapping.objects.create(city='Parsippany',
-                                             state='New Jersey',
+                                             state='NJ',
                                              centroid_lat='40.859388',
                                              centroid_lon='-74.413425')
         expected_query = '<query>in Parsippany, New Jersey</query>'
