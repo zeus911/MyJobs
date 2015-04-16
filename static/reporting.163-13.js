@@ -124,7 +124,7 @@ var Field = function(report, label, id, required, defaultVal, helpText) {
 
 
 Field.prototype.renderLabel = function() {
-  return '<label for="' + this.id + '">' + this.label + (this.required ? '<span style="color: red;">*</span>' : '') + '</label>';
+  return '<label for="' + this.id + '">' + this.label + (this.required ? '<span style="color: #990000;">*</span>' : '') + '</label>';
 };
 
 
@@ -170,7 +170,7 @@ Field.prototype.showErrors = function() {
     }
 
     if (!$field.prev('.show-errors').length) {
-      $field.before('<div class="show-errors">' + this.errors.join(',') + '</div>');
+      $field.before('<div class="show-errors">' + this.errors.join(', ') + '</div>');
     } else {
       $field.prev().html(this.errors.join(','));
     }
@@ -283,6 +283,7 @@ DateField.prototype.render = function() {
   return label + dateWidget.prop("outerHTML");
 };
 
+
 DateField.prototype.bind = function(event, selector, callback) {
   if (typeof callback !== "function") {
     throw "Callback parameter expecting function.";
@@ -296,8 +297,34 @@ DateField.prototype.bind = function(event, selector, callback) {
 };
 
 
+DateField.prototype.validate = function() {
+  var dateField = this,
+      $dom = $(this.dom()),
+      $fields = $dom.find("input.datepicker"), // Both start and end inputs.
+      label,
+      err,
+      index;
+
+  $.each($fields, function(index, field) {
+    label = $(field).attr('placeholder');
+    err = label + " is required";
+    index = dateField.errors.indexOf(err);
+    if ($(field).val() === "") {
+      if (index === -1) {
+        dateField.errors.push(label + " is required");
+      }
+    } else {
+      if (index !== -1) {
+        dateField.errors.splice(index, 1);
+      }
+    }
+  });
+};
+
+
 DateField.prototype.bindEvents = function() {
-  var datePicker = function(e) {
+  var dateField = this,
+      datePicker = function(e) {
         var $targeted = $(e.currentTarget);
         $targeted.pickadate({
           format: "mm/dd/yyyy",
@@ -318,9 +345,19 @@ DateField.prototype.bindEvents = function() {
             }
           }
         });
-      };
+    },
+    validate = function(e) {
+      var $targeted = $(e.currentTarget);
+      dateField.validate();
+      if (dateField.errors.length) {
+        dateField.showErrors();
+      } else {
+        dateField.removeErrors();
+      }
+    };
 
   this.bind("focus.datepicker", ".datepicker", datePicker);
+  this.bind("change.validate", ".datepicker", validate);
 };
 
 
