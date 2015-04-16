@@ -327,7 +327,7 @@ class DEJobFeed(JobFeed):
                                                 self.datetime_pattern)
         job_node['date_modified'] = get_strptime(job_node['date_modified'], 
                                                 self.datetime_pattern)
-        job_node['date_created'] = datetime.datetime.now()
+        job_node['date_added'] = datetime.datetime.now()
 
         onets = job_node.get('onet_code', '')
         if onets:
