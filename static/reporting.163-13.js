@@ -347,7 +347,6 @@ DateField.prototype.bindEvents = function() {
         });
     },
     validate = function(e) {
-      var $targeted = $(e.currentTarget);
       dateField.validate();
       if (dateField.errors.length) {
         dateField.showErrors();
