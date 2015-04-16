@@ -240,6 +240,8 @@ def hr_xml_to_json(xml, business_unit):
     title = data.find('.//PositionTitle').text
     description = data.find('.//PositionFormattedDescription/Content').text
     link = data.find('.//Communication/URI').text
+    zipcode = data.find('.//PostalCode')
+    zipcode = zipcode.text if zipcode != None else ""
 
     latitude = data.find('.//SpatialLocation/Latitude').text
     longitude = data.find('.//SpatialLocation/Longitude').text
@@ -259,6 +261,7 @@ def hr_xml_to_json(xml, business_unit):
         job['date_new'] = date_parse(date_new).replace(tzinfo=None)
         updated = date_parse(app.find('.//CreationDateTime').text)
         job['date_updated'] = updated.replace(tzinfo=None)
+        job['date_added'] = datetime.datetime.now()
     except ValueError:
         logger.error("Unable to parse string %s as a date", date_new)
         raise
@@ -272,7 +275,8 @@ def hr_xml_to_json(xml, business_unit):
     # This has to be seo.joblisting, otherwise the jobs won't be included
     # in the search results.
     job['id'] = 'seo.joblisting.%s' % guid.replace('-', '')
-
+    job['all_locations'] = [zipcode, city, state, state_short,
+                                "%s, %s" % (city, state), country]
     job['django_ct'] = 'seo.joblisting'
     job['django_id'] = 0
     job['city_slug'] = slugify(city)
@@ -301,6 +305,7 @@ def hr_xml_to_json(xml, business_unit):
     job['description'] = description
     job['state_ac'] = state
     job['company'] = company.name
+    job['company_buid_slab'] = "%s::%s" % (company.name, business_unit.id)
     job['state_short'] = state_short
     job['title_exact'] = title
     job['link'] = link
@@ -309,8 +314,7 @@ def hr_xml_to_json(xml, business_unit):
     job['city_exact'] = city
     job['title_slug'] = slugify(title)
     job['state_exact'] = state
-    zipcode = data.find('.//PostalCode')
-    job['zipcode'] = zipcode.text if zipcode != None else ""
+    job['zipcode'] = zipcode
     job['title'] = title
     job['date_new_exact'] = job['date_new']
     job['country'] = country
@@ -339,6 +343,7 @@ def hr_xml_to_json(xml, business_unit):
     job['location_exact'] = job['location']
     job['state_slab_exact'] = job['state_slab']
     job['company_slab_exact'] = job['company_slab']
+    job['company_buid_slab_exact'] = job['company_buid_slab']
     job['country_slab_exact'] = job['country_slab']
     job['city_slab_exact'] = job['city_slab']
     job['title_slab_exact'] = job['title_slab']

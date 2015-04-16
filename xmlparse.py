@@ -64,6 +64,7 @@ class JobFeed(object):
                                          self.datetime_pattern)
         self.markdown = markdown
         self.company = company
+        self.industries = self.get_industry()
         if jsid is None:
             jsid=self.parse_doc('job_source_id')
             if jsid:
@@ -181,6 +182,13 @@ class JobFeed(object):
 
         if val:
             return h.unescape(val.strip())
+
+    def get_industry(self):
+        results = self.doc.findall('.//industry')
+        industries = []
+        if results:
+            industries = [result.text for result in results]
+        return industries
 
     @staticmethod
     def full_loc(obj):
@@ -319,6 +327,7 @@ class DEJobFeed(JobFeed):
                                                 self.datetime_pattern)
         job_node['date_modified'] = get_strptime(job_node['date_modified'], 
                                                 self.datetime_pattern)
+        job_node['date_created'] = datetime.datetime.now()
 
         onets = job_node.get('onet_code', '')
         if onets:
@@ -342,6 +351,9 @@ class DEJobFeed(JobFeed):
         mapped_moc_tups = self.mapped_mocs(mocs, job_node)
         
         job_dict['job_source_name'] = self.job_source_name
+        job_dict['all_locations'] = [job_node['zip'], job_node['city'], job_node['state'],
+                                     job_node['state_short'], "%s, %s" % (job_node['city'], job_node['state']),
+                                     job_node['country']]
         job_dict['buid'] = self.jsid 
         job_dict['city'] = job_node['city']
         job_dict['city_ac'] = job_node['city']
@@ -351,6 +363,7 @@ class DEJobFeed(JobFeed):
         job_dict['city_slug'] = slugify(job_node['city'])
         job_dict['company'] = job_node['company']
         company_slab = self.co_slab(job_dict['company'])
+        company_buid_slab = "%s::%s" % (job_node['company'], self.jsid)
         if self.company:
             job_dict['company_canonical_microsite'] = getattr(self.company, "canonical_microsite", "")
             job_dict['company_canonical_microsite_exact'] = getattr(self.company, "canonical_microsite", "")
@@ -361,6 +374,8 @@ class DEJobFeed(JobFeed):
         job_dict['company_exact'] = job_node['company']
         job_dict['company_slab'] = company_slab
         job_dict['company_slab_exact'] = company_slab
+        job_dict['company_buid_slab'] = company_buid_slab
+        job_dict['company_buid_slab_exact'] = company_buid_slab
         job_dict['country'] = job_node['country']
         job_dict['country_ac'] = job_node['country']
         job_dict['country_exact'] = job_node['country']
@@ -370,13 +385,14 @@ class DEJobFeed(JobFeed):
         job_dict['country_slug'] = slugify(job_node['country'])
         job_dict['date_new'] = job_node['date_created']
         job_dict['date_new_exact'] = job_node['date_created']
-
         job_dict['date_updated'] = job_node['date_modified']
         job_dict['date_updated_exact'] = job_node['date_modified']
         job_dict['description'] = job_node['description']
+        job_dict['federal_contractor'] = job_node['fc']
         job_dict['full_loc'] = self.full_loc(job_node)
         job_dict['full_loc_exact'] = self.full_loc(job_node)
         job_dict['html_description'] = html_description
+        job_dict['ind'] = self.industries
         job_dict['link'] = job_node['link']
         job_dict['guid'] = guid_from_link(job_node['link'])
         job_dict['location'] = job_node['location']
@@ -390,10 +406,12 @@ class DEJobFeed(JobFeed):
         job_dict['mapped_moc_slab'] = mapped_moc_tups.slabs
         job_dict['mapped_moc_slab_exact'] = mapped_moc_tups.slabs
         job_dict['mapped_mocid'] = mapped_moc_tups.ids
+        job_dict['network'] = 'false' if 2649 < self.jsid < 2704 else 'true'
         job_dict['onet'] = job_node['onet_code']
         job_dict['onet_exact'] = job_node['onet_code']
         job_dict['reqid'] = job_node['reqid']
         job_dict['salted_date'] = self.date_salt(job_node['date_created'])
+        job_dict['staffing_code'] = job_node['staffing_code']
         job_dict['state'] = job_node['state']
         job_dict['state_ac'] = job_node['state']
         job_dict['state_exact'] = job_node['state']

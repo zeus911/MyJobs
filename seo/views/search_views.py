@@ -1942,14 +1942,17 @@ def confirm_load_jobs_from_etl(response):
             buid = msg['buid']
             name = msg['name']
             prio = msg["priority"]
+            fc   = msg['fc']
+            staffing_code = msg["staffing_firm"]
+            industries = msg["industry"]
             if jsid.lower() in blocked_jsids:
                 LOG.info("Ignoring sns for %s", jsid)
                 return None
             LOG.info("Creating ETL Task (%s, %s, %s" % (jsid, buid, name))
             if int(prio) == 1:
-                task_priority_etl_to_solr.delay(jsid, buid, name)
+                task_priority_etl_to_solr.delay(jsid, buid, name, fc, staffing_code, industries)
             else:
-                task_etl_to_solr.delay(jsid, buid, name)
+                task_etl_to_solr.delay(jsid, buid, name, fc, staffing_code, industries)
 
 
 @staff_member_required

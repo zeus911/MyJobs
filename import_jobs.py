@@ -34,7 +34,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'directseo.settings'
 FEED_FILE_PREFIX = "dseo_feed_"
 
 
-def update_job_source(guid, buid, name, clear_cache=False):
+def update_job_source(guid, buid, name, fc, staffing_code, industries, clear_cache=False):
     """Composed method for resopnding to a guid update."""
 
     logger.info("Updating Job Source %s", guid)
@@ -52,6 +52,10 @@ def update_job_source(guid, buid, name, clear_cache=False):
     jobs = [hr_xml_to_json(job, bu) for job in jobs]
     for job in jobs:
         job['link'] = make_redirect(job, bu).make_link()
+        job['ind'] = industries
+        job['federal_contractor'] = "True" if fc == "1" else "False"
+        job['staffing_code'] = "True" if staffing_code == "1" else "False"
+        job['network'] = 'False' if 2649 < bu.id < 2704 else 'True'
     remove_expired_jobs(buid, jobs)
     add_jobs(jobs)
 

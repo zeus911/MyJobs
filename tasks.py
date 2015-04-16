@@ -700,9 +700,9 @@ def task_update_solr(jsid, **kwargs):
 
 
 @task(name='tasks.etl_to_solr', ignore_result=True, send_error_emails=True)
-def task_etl_to_solr(guid, buid, name):
+def task_etl_to_solr(guid, buid, name, fc, staffing_firm, industries):
     try:
-        import_jobs.update_job_source(guid, buid, name)
+        import_jobs.update_job_source(guid, buid, name, fc, staffing_firm, industries)
     except Exception as e:
         logging.error("Error loading jobs for jobsource: %s", guid)
         logging.exception(e)
@@ -710,9 +710,9 @@ def task_etl_to_solr(guid, buid, name):
 
 
 @task(name='tasks.priority_etl_to_solr', ignore_result=True)
-def task_priority_etl_to_solr(guid, buid, name):
+def task_priority_etl_to_solr(guid, buid, name, fc, staffing_code, industries):
     try:
-        import_jobs.update_job_source(guid, buid, name, clear_cache=True)
+        import_jobs.update_job_source(guid, buid, name, fc, staffing_code, industries, clear_cache=True)
     except Exception as e:
         logging.error("Error loading jobs for jobsource: %s", guid)
         logging.exception(e)
