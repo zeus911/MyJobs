@@ -324,8 +324,7 @@ class SavedSearch(models.Model):
         Create a new saved search digest if one doesn't exist yet
         """
 
-        if (self.user is not None and
-                not SavedSearchDigest.objects.filter(user=self.user)):
+        if self.user and not SavedSearchDigest.objects.filter(user=self.user):
             SavedSearchDigest.objects.create(user=self.user, email=self.email)
 
         super(SavedSearch, self).save(*args, **kwargs)
