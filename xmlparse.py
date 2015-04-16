@@ -406,7 +406,7 @@ class DEJobFeed(JobFeed):
         job_dict['mapped_moc_slab'] = mapped_moc_tups.slabs
         job_dict['mapped_moc_slab_exact'] = mapped_moc_tups.slabs
         job_dict['mapped_mocid'] = mapped_moc_tups.ids
-        job_dict['network'] = 'false' if 2649 < self.jsid < 2704 else 'true'
+        job_dict['network'] = 'False' if 2649 < self.jsid < 2704 else 'True'
         job_dict['onet'] = job_node['onet_code']
         job_dict['onet_exact'] = job_node['onet_code']
         job_dict['reqid'] = job_node['reqid']
