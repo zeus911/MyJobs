@@ -48,9 +48,7 @@ class Report(models.Model):
         return self.name
 
     def regenerate(self):
-        if self.results:
-            return False
-        else:
+        if not self.results:
             values = json.loads(self.values)
             contents = serialize('json', self.queryset, values=values)
             results = ContentFile(contents)
