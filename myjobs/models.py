@@ -4,6 +4,8 @@ import string
 import urllib
 import uuid
 from django.db.models import Q
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 import pytz
 
@@ -631,6 +633,13 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         return not packages.exists() or packages.filter(
             owner__in=self.company_set.all()).exists()
+
+
+@receiver(pre_delete, sender=User, dispatch_uid='pre_delete_user')
+def delete_user(sender, instance, using, **kwargs):
+    instance.savedsearch_set.filter(partnersavedsearch__isnull=False).update(
+        user=None)
+    instance.savedsearch_set.filter(partnersavedsearch__isnull=True).delete()
 
 
 class EmailLog(models.Model):
