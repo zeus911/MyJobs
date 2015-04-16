@@ -2,14 +2,15 @@ import pysolr
 
 from django.conf import settings
 from django.core.urlresolvers import clear_url_caches
-from django.test import TestCase
+from django.test import TransactionTestCase
 
 from api.tests.data.job_data import JOBS
 from api.tests.factories import APIUserFactory
 
 
-class APIBaseTestCase(TestCase):
+class APIBaseTestCase(TransactionTestCase):
     fixtures = ['test_data.json']
+    multi_db = True
 
     def setUp(self):
         super(APIBaseTestCase, self).setUp()
@@ -17,7 +18,7 @@ class APIBaseTestCase(TestCase):
         setattr(settings, "PROJECT", 'api')
         clear_url_caches()
 
-        settings.SOLR_LOCATION = 'http://127.0.0.1:8983/solr/api'
+        settings.SOLR_LOCATION = 'http://127.0.0.1:8983/solr/api_test'
         self.solr = pysolr.Solr(settings.SOLR_LOCATION)
         self.user = APIUserFactory()
         self.path = '/?key=%s&' % self.user.key
@@ -34,6 +35,7 @@ class APIBaseTestCase(TestCase):
         self.fixture_onets = '12345678'
 
         self.solr.add(JOBS)
+        self.assertEqual(self.solr.search('*:*').hits, 2)
 
     def tearDown(self):
         super(APIBaseTestCase, self).tearDown()
