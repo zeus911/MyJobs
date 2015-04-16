@@ -45,15 +45,10 @@ class ExactStringField(CharField):
         self.trust_field_type = True
 
 
-class MultiValueIntegerField(indexes.MultiValueField):
-    field_type = 'int'
-
-
-class MultiValueStringField(indexes.MultiValueField):
-    field_type = 'string'
-
+class MultiValueSpecialField(indexes.MultiValueField):
     def __init__(self, *args, **kwargs):
-        super(MultiValueStringField, self).__init__(*args, **kwargs)
+        self.field_type = kwargs.pop('field_type', 'text_en')
+        super(MultiValueSpecialField, self).__init__(*args, **kwargs)
         # This attribute is checked in the search backend. If facet_for is
         # blank, the type gets overridden from string to text_en
         self.trust_field_type = True
@@ -63,12 +58,14 @@ class JobIndex(indexes.SearchIndex, indexes.Indexable):
     """
     All fields that you want stored will be put here, in django model form
     """
+    all_locations = MultiValueSpecialField(field_type='location_char')
     buid = indexes.IntegerField(model_attr='buid_id')
     city = LocationCharField(faceted=True, model_attr='city', null=True)
     city_ac = indexes.EdgeNgramField(model_attr='city', null=True, stored=False)
     city_slab = indexes.CharField(faceted=True)
     city_slug = indexes.CharField(model_attr="citySlug", stored=False)
     company = indexes.CharField(faceted=True)
+    company_buid_slab = indexes.CharField(faceted=True)
     company_canonical_microsite = indexes.CharField(faceted=True)
     company_enhanced = indexes.BooleanField(indexed=True, stored=True)
     company_member = indexes.BooleanField(indexed=True, stored=True)
@@ -94,7 +91,7 @@ class JobIndex(indexes.SearchIndex, indexes.Indexable):
     guid = ExactStringField(model_attr='guid')
     html_description = indexes.CharField(model_attr="html_description",
                                          stored=True, indexed=False)
-    ind = MultiValueStringField()
+    ind = MultiValueSpecialField(field_type='string')
     job_source_name = indexes.CharField()
     link = indexes.CharField(stored=True, indexed=False)
     location = LocationCharField(model_attr='location', faceted=True, null=True)
@@ -106,7 +103,7 @@ class JobIndex(indexes.SearchIndex, indexes.Indexable):
     mapped_mocid = indexes.MultiValueField(null=True, stored=False)
     mapped_moc_slab = indexes.MultiValueField(faceted=True, null=True,
                                               stored=False)
-    network = indexes.CharField()
+    network = indexes.BooleanField()
     onet = indexes.MultiValueField(model_attr='onet_id', faceted=True,
                                    null=True)
     reqid = ExactStringField(model_attr='reqid', null=True)
@@ -130,7 +127,7 @@ class JobIndex(indexes.SearchIndex, indexes.Indexable):
 
     # Fields for post-a-job
     is_posted = indexes.BooleanField()
-    on_sites = MultiValueIntegerField()
+    on_sites = MultiValueSpecialField(field_type='int')
     apply_info = ExactStringField(indexed=False)
 
     def get_model(self):

@@ -18,7 +18,7 @@ class APIBaseTestCase(TransactionTestCase):
         setattr(settings, "PROJECT", 'api')
         clear_url_caches()
 
-        settings.SOLR_LOCATION = 'http://127.0.0.1:8983/solr/api_test'
+        settings.SOLR_LOCATION = 'http://127.0.0.1:8983/solr/seo'
         self.solr = pysolr.Solr(settings.SOLR_LOCATION)
         self.user = APIUserFactory()
         self.path = '/?key=%s&' % self.user.key

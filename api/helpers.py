@@ -27,9 +27,9 @@ api_to_solr = {
     'moc': 'moc',
     'rank': 'moc_slab',
     'branch': 'moc_slab',
-    'location': 'location',
+    'location': 'all_locations',
     'fc': 'federal_contractor',
-    'zc': 'location',
+    'zc': 'all_locations',
 }
 
 # Field mapping for {search parameter: pysolr kwarg}
@@ -100,7 +100,7 @@ def get_cntl_query(query_dict, api_user):
     solr_search.solr_parameters['facet'] = "true"
     solr_search.solr_parameters['facet.mincount'] = 1
     solr_search.solr_parameters['facet.limit'] = -1
-    solr_search.solr_parameters['facet.field'] = ['company_slab_exact',
+    solr_search.solr_parameters['facet.field'] = ['company_buid_slab_exact',
                                                   'city_slab_exact',
                                                   'onet']
     return get_query(query_dict, api_user, solr_search=solr_search)
@@ -371,7 +371,7 @@ def add_geolocation(location, radius, solr_search):
     else:
         # This means a matching city, state combo or zipcode couldn't be found
         # in our database, so we can't do a proper radius search.
-        location_search = "(location:({location}))".format(location=location)
+        location_search = "(all_locations:({location}))".format(location=location)
         location_search = location_search.replace("OR", "\OR")
         solr_search.solr_parameters['fq'].append(location_search)
 

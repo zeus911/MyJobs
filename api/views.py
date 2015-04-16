@@ -96,7 +96,7 @@ def countsapi(request, api_user):
     if cntl and solr_search.results is not None:
         companies = []
         solr_facets = solr_search.results.facets['facet_fields']
-        for c in grouper(solr_facets['company_slab_exact']):
+        for c in grouper(solr_facets['company_buid_slab_exact']):
             name, buid = c[0].split('::')
             companies.append(company_facet(name, buid, c[1]))
         locations = []
