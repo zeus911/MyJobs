@@ -60,16 +60,35 @@ Report.prototype.findField = function(fieldID) {
 };
 
 
+Report.prototype.hasErrors = function() {
+  return this.fields.some(function(field) {
+    return field.errors.length;
+  });
+};
+
+
 Report.prototype.save = function() {
-  var field,
-      i;
+  var errors;
 
-  for (i = 0; i < this.fields.length; i++) {
-    field = this.fields[i];
-    $.extend(this.data, field.onSave());
+  this.fields.every(function(field) {
+    field.validate();
+  });
+
+  errors = this.fields.filter(function(field) {
+    return field.errors.length > 0;
+  });
+
+  if (errors.length) {
+    errors.every(function(field) {
+      field.showErrors();
+    });
+    return false;
+  } else {
+    this.fields.every(function(field) {
+      field.onSave();
+    });
   }
-
-  return this;
+  return true;
 };
 
 
@@ -78,7 +97,17 @@ Report.prototype.events = function() {
       container = $("#main-container");
 
   container.on("click", "#show-modal:not('.disabled')", function() {
-    console.log("click");
+    var modal = $("#report-modal"),
+        body = modal.children(".modal-body"),
+        footer = modal.children(".modal-footer"),
+        saved;
+
+    saved = report.save();
+
+    if (saved) {
+      body.html();
+      modal.modal("show");
+    }
   });
 };
 
@@ -90,6 +119,7 @@ var Field = function(report, label, id, required, defaultVal, helpText) {
   this.required = !!required || false;
   this.defaultVal = defaultVal || '';
   this.helpText = helpText || '';
+  this.errors = [];
 };
 
 
@@ -130,6 +160,60 @@ Field.prototype.unbind = function(event) {
 };
 
 
+Field.prototype.showErrors = function() {
+  var $field = $(this.dom()),
+      $showModal = $("#show-modal");
+
+  if (this.errors.length) {
+    if (!$field.parent('div.required').length) {
+      $field.wrap('<div class="required"></div>');
+    }
+
+    if (!$field.prev('.show-errors').length) {
+      $field.before('<div class="show-errors">' + this.errors.join(',') + '</div>');
+    } else {
+      $field.prev().html(this.errors.join(','));
+    }
+    $showModal.addClass("disabled");
+  }
+};
+
+
+Field.prototype.removeErrors = function() {
+  var $field = $(this.dom()),
+      $showModal = $("#show-modal");
+
+  if ($field.parent('div.required').length) {
+    $field.prev('.show-errors').remove();
+    $field.unwrap();
+  }
+
+  if (!this.report.hasErrors()) {
+    $showModal.removeClass("disabled");
+  }
+
+  return this;
+};
+
+
+Field.prototype.validate = function() {
+  var err = this.label + " is required",
+      index = this.errors.indexOf(err);
+
+  if (this.required && this.currentVal().trim() === "") {
+    if (index === -1) {
+      this.errors.push(err);
+    }
+  } else {
+    if (index !== -1) {
+      this.errors.splice(index, 1);
+    }
+  }
+
+  return this;
+};
+
+
 Field.prototype.onSave = function() {
   var data = {};
   data[this.id] = this.currentVal();
@@ -153,30 +237,15 @@ TextField.prototype.render = function() {
 };
 
 
-TextField.prototype.validate = function() {
-  return this.required && this.currentVal().trim() === "" ? {error: "This field is required"} : {success: true};
-};
-
-
 TextField.prototype.bindEvents = function() {
   var textField = this,
       $field = $(textField.dom()),
       validate = function() {
-        var validation = textField.validate(),
-            $modalBtn = $("#show-modal"),
-            hasRequired = $field.parent('div.required').length; // will return 0 or 1
-        if ("error" in validation) {
-          $field.val("");
-          if (!hasRequired) {
-            $field.wrap('<div class="required"></div>');
-            $field.attr('placeholder', validation.error);
-            $modalBtn.addClass('disabled');
-          }
+        textField.validate();
+        if (textField.errors.length) {
+          textField.showErrors();
         } else {
-          if (hasRequired) {
-            $field.unwrap();
-            $modalBtn.removeClass('disabled');
-          }
+          textField.removeErrors();
         }
       },
       trim = function() {

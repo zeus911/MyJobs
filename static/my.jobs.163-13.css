@@ -1396,6 +1396,10 @@ input[readonly].datepicker {
     text-shadow: 0 1px 0 #FFF;
 }
 
+.show-errors {
+    color: #990000;
+}
+
 .panel > #choices input[type="checkbox"] {
     margin-top: -1px;
 }
