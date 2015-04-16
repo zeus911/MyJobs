@@ -74,14 +74,18 @@ class TestHelpers(MyReportsTestCase):
         Test that HTML is properly stripped from fields when being serialized.
         """
 
-        notes = """
+        # Only adding notes to one recod so that we can test that empty notes
+        # are parsed correctly as well
+        record = self.records[0]
+        record.notes = """
         <div class="tip-content">
             Saved Search Notification<br />
             <a href="https://secure.my.jobs">My.jobs</a>
             <p>Saved search was created on your behalf</p>
         </div>
         """
-        self.records.update(notes=notes)
+        record.save()
+
         data = helpers.serialize('python', self.records)
 
         for record in data:
