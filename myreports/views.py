@@ -37,8 +37,8 @@ def overview(request):
 
     if request.is_ajax():
         response = HttpResponse()
-        html = render_to_response('myreports/includes/report_overview.html', ctx,
-                                  RequestContext(request)).content
+        html = render_to_response('myreports/includes/report_overview.html',
+                                  ctx, RequestContext(request)).content
         response.content = html
         return response
 
@@ -56,8 +56,8 @@ def report_archive(request):
         }
 
         response = HttpResponse()
-        html = render_to_response('myreports/includes/report-archive.html', ctx,
-                                  RequestContext(request))
+        html = render_to_response('myreports/includes/report-archive.html',
+                                  ctx, RequestContext(request))
         response.content = html.content
 
         return response
@@ -202,6 +202,9 @@ class ReportView(View):
             records = get_model(app, model).objects.from_search(
                 company, params)
 
+            if values:
+                records = records.values(*values)
+
             contents = serialize('json', records, values=values)
             results = ContentFile(contents)
             report, created = Report.objects.get_or_create(
@@ -219,34 +222,37 @@ class ReportView(View):
 
 @company_has_access('prm_access')
 def downloads(request):
-    report_id = request.GET.get('id', 0)
-    report = get_object_or_404(
-        get_model('myreports', 'report'), pk=report_id)
+    if request.is_ajax() and request.method == 'GET':
+        report_id = request.GET.get('id', 0)
+        report = get_object_or_404(
+            get_model('myreports', 'report'), pk=report_id)
 
-    fields = sorted([field for field in report.python[0].keys()
-                     if field != 'pk'])
-    values = json.loads(report.values) or fields
-    fields = values + [field for field in fields if field not in values]
+        fields = sorted([field for field in report.python[0].keys()
+                         if field != 'pk'])
+        values = json.loads(report.values) or fields
+        fields = values + [field for field in fields if field not in values]
 
-    column_choice = ''
-    sort_order = ''
-    if report.order_by:
-        if '-' in report.order_by:
-            sort_order = '-'
-            column_choice = report.order_by[1:]
-        else:
-            column_choice = report.order_by
+        column_choice = ''
+        sort_order = ''
+        if report.order_by:
+            if '-' in report.order_by:
+                sort_order = '-'
+                column_choice = report.order_by[1:]
+            else:
+                column_choice = report.order_by
 
-    columns = OrderedDict()
-    for field in fields:
-        columns[field.replace('_', ' ').title()] = field in values
+        columns = OrderedDict()
+        for field in fields:
+            columns[field.replace('_', ' ').title()] = field in values
 
-    ctx = {'columns': columns,
-           'sort_order': sort_order,
-           'column_choice': column_choice}
+        ctx = {'columns': columns,
+               'sort_order': sort_order,
+               'column_choice': column_choice}
 
-    return render_to_response('myreports/includes/report-download.html', ctx,
-                              RequestContext(request))
+        return render_to_response('myreports/includes/report-download.html',
+                                  ctx, RequestContext(request))
+    else:
+        raise Http404("This view is only reachable via an AJAX request")
 
 
 @company_has_access('prm_access')

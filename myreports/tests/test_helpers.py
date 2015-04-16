@@ -123,9 +123,6 @@ class TestHelpers(MyReportsTestCase):
             # ensure tags were converted
             self.assertEqual(record['tags'], 'test, stuff, working')
 
-            # ensure pk was removed
-            self.assertFalse('pk' in record.keys())
-
             # ensure contact type was converted
             self.assertTrue(record['contact_type'] == 'Email')
 
