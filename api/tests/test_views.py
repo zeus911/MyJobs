@@ -359,8 +359,8 @@ class Views(APIBaseTestCase):
         self.assertIn(expected_query, response.content)
         assert_guid()
 
-        expected_query = '<query>in Parsippany, New Jersey (within 25 miles)</query>'
-        path = "%szc1=%s" % (self.path, 'Parsippany, New Jersey')
+        expected_query = '<query>in Parsippany, NJ (within 25 miles)</query>'
+        path = "%szc1=%s" % (self.path, 'Parsippany, NJ')
         response = self.client.get(path)
         self.assertIn(expected_query, response.content)
         assert_guid()
@@ -483,3 +483,5 @@ class Views(APIBaseTestCase):
         self.assertIn('<startrow>1</startrow>', response.content)
         self.assertIn('<endrow>50</endrow>', response.content)
         self.assertEqual(response.content.count('<job>'), 50)
+
+        self.solr.delete(q='*:*')
