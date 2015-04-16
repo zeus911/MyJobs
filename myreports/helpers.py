@@ -7,7 +7,7 @@ import json
 from django.core import serializers
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import query
-from django.utils.html import strip_tags
+from lxml import html
 from mypartners.models import CONTACT_TYPES
 
 
@@ -128,11 +128,10 @@ def serialize(fmt, data, counts=None, values=None, order_by=None):
         data = records
 
         # strip HTML tags from string values
-        for index, record in enumerate(data[:]):
-            data[index] = {
-                key: strip_tags(record[key])
-                if isinstance(record[key], basestring) else value
-                for key, value in record.items()}
+        data = [{key: html.fromstring(value).text_content()
+                 if isinstance(value, basestring) and value else value
+                 for key, value in record.items()}
+                for record in data]
 
     if data:
         values = values or sorted(data[0].keys())
