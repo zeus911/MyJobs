@@ -106,6 +106,9 @@ def view_records(request, app, model):
             records = records.annotate(count=Count(count, distinct=True))
             counts = {record.pk: record.count for record in records}
 
+        if values:
+            records = records.values(*values)
+
         if order_by:
             if not hasattr(order_by, '__iter__'):
                 order_by = [order_by]
