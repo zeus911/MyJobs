@@ -2,6 +2,7 @@ import pysolr
 
 from django.conf import settings
 from django.core.urlresolvers import clear_url_caches
+from django.db import connections
 from django.test import TransactionTestCase
 
 from api.tests.data.job_data import JOBS
@@ -14,6 +15,15 @@ class APIBaseTestCase(TransactionTestCase):
 
     def setUp(self):
         super(APIBaseTestCase, self).setUp()
+
+        db_backend = settings.DATABASES['default']['ENGINE'].split('.')[-1]
+
+        # Set columns that are utf8 in production to utf8
+        if db_backend == 'mysql':
+            cursor = connections['api'].cursor()
+            cursor.execute("alter table api_search convert to "
+                           "character set utf8 collate utf8_unicode_ci")
+
         setattr(settings, 'ROOT_URLCONF', 'api_urls')
         setattr(settings, "PROJECT", 'api')
         clear_url_caches()
