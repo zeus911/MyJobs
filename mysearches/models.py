@@ -42,6 +42,10 @@ class SavedSearch(models.Model):
     SORT_CHOICES = (('Relevance', _('Relevance')),
                     ('Date', _('Date')))
 
+    # User can be null on PartnerSavedSearch. As South doesn't like custom
+    # on_delete handlers and I'm not sure when 1.7 is coming, the actual
+    # decision on setting this to null or cascading the delete is done
+    # in the delete_user pre_delete signal defined in myjobs/models.py.
     user = models.ForeignKey('myjobs.User', editable=False, null=True,
                              on_delete=models.DO_NOTHING)
 
@@ -325,6 +329,8 @@ class SavedSearch(models.Model):
         """
 
         if self.user and not SavedSearchDigest.objects.filter(user=self.user):
+            # Since user can be null on SavedSearch but not SavedSearchDigest,
+            # we need to ensure that a user exists before trying to use it.
             SavedSearchDigest.objects.create(user=self.user, email=self.email)
 
         super(SavedSearch, self).save(*args, **kwargs)

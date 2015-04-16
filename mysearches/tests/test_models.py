@@ -628,6 +628,8 @@ class SavedSearchSendingTests(MyJobsBase):
 
 
 class SavedSearchDeletionTests(MyJobsBase):
+    # Creating an entire test class for this is kind of overkill but it doesn't
+    # fit with any of the others.
     def setUp(self):
         super(SavedSearchDeletionTests, self).setUp()
         self.user = UserFactory()
@@ -637,6 +639,11 @@ class SavedSearchDeletionTests(MyJobsBase):
                                                         created_by=self.creator)
 
     def test_deletion_and_preservation(self):
+        """
+        When a user is deleted, that user's saved searches should be deleted.
+        Partner saved searches should be left alone with the exception of
+        nullifying the recipient.
+        """
         self.user.delete()
         with self.assertRaises(SavedSearch.DoesNotExist):
             SavedSearch.objects.get(pk=self.search.pk)
