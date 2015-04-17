@@ -302,8 +302,7 @@ DateField.prototype.validate = function() {
       $dom = $(this.dom()),
       $fields = $dom.find("input.datepicker"), // Both start and end inputs.
       label,
-      err,
-      index;
+      err;
 
   $.each($fields, function(index, field) {
     label = $(field).attr('placeholder');
