@@ -220,6 +220,16 @@ Field.prototype.onSave = function() {
   return data;
 };
 
+var CheckListField = function(report, label, id, required, choices, helpText ) {
+  this.choices = choices;
+  defaultValu = this.choices[0];
+
+  Field.call(this, report, label, id, required, defaultVal, helpText);
+};
+
+CheckListField.prototype = Object.create(Field.prototype);
+
+
 
 var TextField = function(report, label, id, required, defaultVal, helpText) {
   Field.call(this, report, label, id, required, defaultVal, helpText);
