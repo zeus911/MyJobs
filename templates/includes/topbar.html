@@ -125,7 +125,7 @@
 
                                         {% endif %}
                                         {% if company.prm_access %}
-                                            <li><a id="reports-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}reports/view">{% trans "Reports" %}</a></li>
+                                            <li><a id="reports-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}reports/view/overview">{% trans "Reports" %}</a></li>
                                         {% endif %}
                                         {% if company.product_access %}
                                             <li><a id="purchased-microsite-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}{% url 'purchasedmicrosite_admin_overview' %}">{% trans "Partner Microsite" %}</a></li>
