@@ -28,13 +28,15 @@ Report.prototype.createFields = function(types) {
 };
 
 
-Report.prototype.renderFields = function(renderAt, fields) {
+Report.prototype.renderFields = function(renderAt, fields, clear) {
   var $renderAt = $(renderAt),
       field,
       i;
 
   // Clear what is currently in the container.
-  $renderAt.html("");
+  if (clear) {
+    $renderAt.html("");
+  }
 
   // for field in fields render.
   for (i = 0; i < fields.length; i++) {
@@ -395,12 +397,18 @@ StateField.prototype.render = function() {
 };
 
 
+// Capitalize first letter of a string.
+String.prototype.capitalize = function() {
+  return this.charAt(0).toUpperCase() + this.slice(1);
+};
+
+
 $(document).ready(function() {
   $("body").append('<a id="test" class="btn">Click me!</a>').append('<div class="meh"></div>');
   $("#test").on("click", function() {
     $("#container").html("").addClass("rpt-container");
     report = new Report(['prm']);
-    report.renderFields(".rpt-container", report.fields);
+    report.renderFields(".rpt-container", report.fields, true);
   });
 });
 
