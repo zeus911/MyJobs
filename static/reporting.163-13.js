@@ -392,6 +392,23 @@ var FilteredList = function(report, label, id, required, defaultVal, helpText) {
   Field.call(this, report, label, id, required, defaultVal, helpText);
 };
 
+FilteredList.prototype = Object.create(Field.prototype);
+
+
+FilteredList.prototype.renderLabel = function() {
+  return '<div id="'+ this.id +'-header" class="list-header">' +
+         '<input id="' + this.id + '-all-checkbox" type="checkbox" ' + (this.value ? "" : "checked") + ' />' +
+         ' All ' + this.label + ' ' +
+         '<span>(<span class="record-count">0</span> ' + this.label + ' Selected)</span>' +
+         '</div>';
+};
+
+
+FilteredList.prototype.render = function() {
+  var label = this.renderLabel(),
+      body = '<div id="' + this.type + '" class="list-body no-show"></div>';
+  return label + body;
+};
 
 // Capitalize first letter of a string.
 String.prototype.capitalize = function() {
