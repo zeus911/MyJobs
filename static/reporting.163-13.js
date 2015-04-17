@@ -21,7 +21,10 @@ Report.prototype.createFields = function(types) {
   var fields = {"prm": [new TextField(this, "Report Name", "report_name", true),
                         new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: "04/14/2015"}),
                         new StateField(this, "State", 'state', false, 'IN'),
-                        new TextField(this, "City", "city", false)]};
+                        new TextField(this, "City", "city", false),
+                        new FilteredList(this, "Partners", "partner", false),
+                        new FilteredList(this, "Contacts", "contact", false)
+  ]};
 
 
   return fields[types[0]];
@@ -141,12 +144,13 @@ Field.prototype.currentVal = function() {
 
 
 // TODO: Document namespacing for binding events.
-Field.prototype.bind = function(event, callback) {
-  if (typeof callback !== "function") {
-    throw "Callback parameter expecting function.";
+Field.prototype.bind = function(event, selector, callback) {
+  if (arguments.length === 2) {
+    callback = selector;
+    selector = undefined;
   }
 
-  $(this.dom()).on(event, function(e) {
+  $(this.dom()).on(event, selector, function(e) {
     callback(e);
   });
 
@@ -283,19 +287,6 @@ DateField.prototype.render = function() {
   datePicker.append(start).append(to).append(end);
   dateWidget.append(datePicker);
   return label + dateWidget.prop("outerHTML");
-};
-
-
-DateField.prototype.bind = function(event, selector, callback) {
-  if (typeof callback !== "function") {
-    throw "Callback parameter expecting function.";
-  }
-
-  $(this.dom()).on(event, selector, function(e) {
-    callback(e);
-  });
-
-  return this;
 };
 
 
