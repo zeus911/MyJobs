@@ -32,7 +32,7 @@ class JobFeedTestCase(DirectSEOBase):
         super(JobFeedTestCase, self).setUp()
         self.businessunit = BusinessUnitFactory(id=0)
         self.buid_id = self.businessunit.id
-        self.numjobs = 4
+        self.numjobs = 14
         self.testdir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 
                                     'data')
         self.company = CompanyFactory()
@@ -262,7 +262,10 @@ class JobFeedTestCase(DirectSEOBase):
         dbresults = DEv2JobFeed(filepath)
         solrresults = dbresults.solr_jobs()
 
-        zips_from_feedfile = ["28243", "10095", "90212", "30309"]
+        zips_from_feedfile = ['30269', '30269', '48332', '30269', '30269',
+                              '30269', '30269', '30269', '48332', '48332',
+                              '30269', None, '30269', '30269']
+
         solrzips = [i['zipcode'] for i in solrresults]
         for coll in [solrzips]:
             self.assertItemsEqual(zips_from_feedfile, coll)
@@ -295,12 +298,15 @@ class JobFeedTestCase(DirectSEOBase):
         jobs = DEv2JobFeed(filepath)
         solrjobs = jobs.solr_jobs()
         self.conn.add(solrjobs)
-        date_updated = datetime.datetime.strptime("5/17/2012 12:01:05 PM",
-                                                  "%m/%d/%Y %I:%M:%S %p")
+        dates_updated = [datetime.datetime.strptime("4/16/2015 11:35:13 PM",
+                                                    "%m/%d/%Y %I:%M:%S %p"),
+                         datetime.datetime.strptime("4/16/2015 11:35:14 PM",
+                                                    "%m/%d/%Y %I:%M:%S %p"),
+                         datetime.datetime.strptime("4/16/2015 11:35:15 PM",
+                                                    "%m/%d/%Y %I:%M:%S %p")]
         solr_dates = [i['date_updated'] for i in solrjobs]
-
         for solr_date in solr_dates:
-            self.assertEqual(solr_date, date_updated)
+            self.assertIn(solr_date, dates_updated)
         
     def _get_feedfile(self):
         # Download the 'real' feed file then copy the empty feed file in its

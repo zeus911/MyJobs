@@ -104,8 +104,9 @@ class DirectSEOTestCase(DirectSEOBase):
         self.conn.add(self.solr_docs)
 
         #uids and numjobs in feed file for test business unit 0
-        self.feed_uids = [25599525, 25599523, 25611673, 25622522]
-        self.feed_numjobs = 4
+        self.feed_uids = [57621597, 57311147, 60351047, 59891656, 58867671,
+                          57495178, 59773973, 59326433, 57311143, 57311166]
+        self.feed_numjobs = 14
 
         self.businessunit = BusinessUnitFactory(id=0)
         self.buid_id = self.businessunit.id        
