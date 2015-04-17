@@ -38,3 +38,7 @@ HAYSTACK_CONNECTIONS = {
         'HTTP_AUTH_PASSWORD': SOLR_AUTH['password']
     },
 }
+
+ROOT_URLCONF = 'api_urls'
+
+PROJECT = 'api'
