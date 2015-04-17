@@ -23,7 +23,6 @@ Report.prototype.createFields = function(types) {
                         new StateField(this, "State", 'state', false, 'IN'),
                         new TextField(this, "City", "city", false)]};
 
-
   return fields[types[0]];
 };
 
@@ -219,17 +218,6 @@ Field.prototype.onSave = function() {
   data[this.id] = this.currentVal();
   return data;
 };
-
-var CheckListField = function(report, label, id, required, choices, helpText ) {
-  this.choices = choices;
-  defaultValu = this.choices[0];
-
-  Field.call(this, report, label, id, required, defaultVal, helpText);
-};
-
-CheckListField.prototype = Object.create(Field.prototype);
-
-
 
 var TextField = function(report, label, id, required, defaultVal, helpText) {
   Field.call(this, report, label, id, required, defaultVal, helpText);
