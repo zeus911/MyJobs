@@ -27,13 +27,15 @@ Report.prototype.createFields = function(types) {
 };
 
 
-Report.prototype.renderFields = function(renderAt, fields) {
+Report.prototype.renderFields = function(renderAt, fields, clear) {
   var $renderAt = $(renderAt),
       field,
       i;
 
   // Clear what is currently in the container.
-  $renderAt.html("");
+  if (clear) {
+    $renderAt.html("");
+  }
 
   // for field in fields render.
   for (i = 0; i < fields.length; i++) {
@@ -123,7 +125,7 @@ var Field = function(report, label, id, required, defaultVal, helpText) {
 
 
 Field.prototype.renderLabel = function() {
-  return '<label for="' + this.id + '">' + this.label + (this.required ? '<span style="color: red;">*</span>' : '') + '</label>';
+  return '<label for="' + this.id + '">' + this.label + (this.required ? '<span style="color: #990000;">*</span>' : '') + '</label>';
 };
 
 
@@ -169,7 +171,7 @@ Field.prototype.showErrors = function() {
     }
 
     if (!$field.prev('.show-errors').length) {
-      $field.before('<div class="show-errors">' + this.errors.join(',') + '</div>');
+      $field.before('<div class="show-errors">' + this.errors.join(', ') + '</div>');
     } else {
       $field.prev().html(this.errors.join(','));
     }
@@ -281,6 +283,7 @@ DateField.prototype.render = function() {
   return label + dateWidget.prop("outerHTML");
 };
 
+
 DateField.prototype.bind = function(event, selector, callback) {
   if (typeof callback !== "function") {
     throw "Callback parameter expecting function.";
@@ -294,8 +297,33 @@ DateField.prototype.bind = function(event, selector, callback) {
 };
 
 
+DateField.prototype.validate = function() {
+  var dateField = this,
+      $dom = $(this.dom()),
+      $fields = $dom.find("input.datepicker"), // Both start and end inputs.
+      label,
+      err;
+
+  $.each($fields, function(index, field) {
+    label = $(field).attr('placeholder');
+    err = label + " is required";
+    index = dateField.errors.indexOf(err);
+    if ($(field).val() === "") {
+      if (index === -1) {
+        dateField.errors.push(label + " is required");
+      }
+    } else {
+      if (index !== -1) {
+        dateField.errors.splice(index, 1);
+      }
+    }
+  });
+};
+
+
 DateField.prototype.bindEvents = function() {
-  var datePicker = function(e) {
+  var dateField = this,
+      datePicker = function(e) {
         var $targeted = $(e.currentTarget);
         $targeted.pickadate({
           format: "mm/dd/yyyy",
@@ -316,9 +344,18 @@ DateField.prototype.bindEvents = function() {
             }
           }
         });
-      };
+    },
+    validate = function(e) {
+      dateField.validate();
+      if (dateField.errors.length) {
+        dateField.showErrors();
+      } else {
+        dateField.removeErrors();
+      }
+    };
 
   this.bind("focus.datepicker", ".datepicker", datePicker);
+  this.bind("change.validate", ".datepicker", validate);
 };
 
 
@@ -358,12 +395,18 @@ StateField.prototype.render = function() {
 };
 
 
+// Capitalize first letter of a string.
+String.prototype.capitalize = function() {
+  return this.charAt(0).toUpperCase() + this.slice(1);
+};
+
+
 $(document).ready(function() {
   $("body").append('<a id="test" class="btn">Click me!</a>').append('<div class="meh"></div>');
   $("#test").on("click", function() {
     $("#container").html("").addClass("rpt-container");
     report = new Report(['prm']);
-    report.renderFields(".rpt-container", report.fields);
+    report.renderFields(".rpt-container", report.fields, true);
   });
 });
 
