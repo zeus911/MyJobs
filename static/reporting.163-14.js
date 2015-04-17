@@ -17,11 +17,21 @@ var Report = function(types) {
 };
 
 
+
+
 Report.prototype.createFields = function(types) {
-  var fields = {"prm": [new TextField(this, "Report Name", "report_name", true),
+  var contactTypeChoices = [new CheckBoxField(this, "Email", "contact_type", "email"),
+                            new CheckBoxField(this,"Phone Call", "contact_type", "phone"),
+                            new CheckBoxField(this,"Meeting or Event", "contact_type", "meetingorevent"),
+                            new CheckBoxField(this,"Job Followup", "contact_type", "job"),
+                            new CheckBoxField(this,"Saved Search Email", "contact_type", "pssemail"),
+                            ],
+      fields = {"prm": [new TextField(this, "Report Name", "report_name", true),
                         new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: "04/14/2015"}),
                         new StateField(this, "State", 'state', false, 'IN'),
-                        new TextField(this, "City", "city", false)]};
+                        new TextField(this, "City", "city", false),
+                        //id should be what you want to use for the key in data
+                        new CheckListField(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all')]};
 
   return fields[types[0]];
 };
@@ -71,7 +81,7 @@ Report.prototype.hasErrors = function() {
 Report.prototype.save = function() {
   var errors;
 
-  this.fields.every(function(field) {
+  this.fields.map(function(field) {
     field.validate();
   });
 
@@ -85,7 +95,7 @@ Report.prototype.save = function() {
     });
     return false;
   } else {
-    this.fields.every(function(field) {
+    this.fields.map(function(field) {
       field.onSave();
     });
   }
@@ -125,7 +135,7 @@ var Field = function(report, label, id, required, defaultVal, helpText) {
 
 
 Field.prototype.renderLabel = function() {
-  return '<label for="' + this.id + '">' + this.label + (this.required ? '<span style="color: #990000;">*</span>' : '') + '</label>';
+  return '<label class="rpt" for="' + this.id + '">' + this.label + (this.required ? '<span style="color: #990000;">*</span>' : '') + '</label>';
 };
 
 
@@ -257,6 +267,130 @@ TextField.prototype.bindEvents = function() {
   this.bind("change.trim", trim);
 };
 
+var CheckBoxField = function(report, label, name, defaultVal, checked, helpText) {
+  this.checked = typeof checked === 'undefined' ? true : checked;
+  this.name = name;
+  id = name + '_' + defaultVal;
+
+  Field.call(this, report, label, id, false, defaultVal, helpText);
+};
+
+CheckBoxField.prototype = Object.create(Field.prototype);
+
+
+
+CheckBoxField.prototype.render = function(createLabel) {
+  createLabel = typeof createLabel === 'undefined' ? true : createLabel;
+
+  var label = this.renderLabel();
+      field = '<label class="field"><input id="' + this.id + '" name="' + this.name +
+              '" type="checkbox" value="' + this.defaultVal + 
+              (this.checked ? '" checked />' : '" />') + this.label + '</label>';
+      helpText = '<div class="help-text">' + this.helpText + '</div>';
+
+  return (createLabel ? label : '') + field + (this.helpText ? helpText : '');
+};
+
+var CheckListField = function(report, label, id, choices, required, defaultVal, helpText) {
+  this.choices = choices;
+
+  Field.call(this, report, label, id, required, defaultVal, helpText);
+};
+
+CheckListField.prototype = Object.create(Field.prototype);
+
+
+CheckListField.prototype.currentVal = function() {
+  return $.map(this.choices, function(c) {
+    if (c.checked) {
+      return c.currentVal();
+    }
+  });
+};
+
+
+CheckListField.prototype.render = function() {
+  var label = this.renderLabel();
+      html = $.map(this.choices, function(choice) {
+        return choice.render(false);
+      }).join("");
+
+  return label + '<div id="' + this.id + 
+                 '"><label><input value="all" type="checkbox" checked/ >All' + html +
+                 '</label></div>';
+};
+
+CheckListField.prototype.bind = function(event, selector, callback) {
+  if (typeof callback !== "function") {
+    throw "Callback parameter expecting function.";
+  }
+
+  $(this.dom()).on(event, selector, function(e) {
+    callback(e);
+  });
+
+  return this;
+};
+
+
+CheckListField.prototype.findChoice = function(choiceID) {
+  return this.choices.filter(function(choice) {
+    return (choice.id == choiceID ? choice : undefined);
+  })[0];
+};
+
+
+CheckListField.prototype.bindEvents = function() {
+  var checklist = this,
+      validate = function(e) {
+        checklist.validate();
+        if (checklist.errors.length) {
+          checklist.showErrors();
+        } else {
+          checklist.removeErrors();
+        }
+      };
+
+  this.bind("change", "[value='all']", function(e) {
+    var $all = $(e.currentTarget);
+        $choices = $(checklist.dom()).find(".field input");
+
+    $choices.prop("checked", $all.is(":checked")).change();
+  });
+
+  this.bind("change", ".field input", function(e) {
+    var $choice = $(e.currentTarget),
+        choices = $(checklist.dom()).find(".field input").toArray(),
+        $all = $(checklist.dom()).find("[value='all']");
+
+    checked = choices.every(function(c) { return $(c).is(":checked"); });
+    $all.prop("checked", checked);
+
+    checklist.findChoice($choice.attr("id")).checked = $choice.is(":checked");
+  });
+
+  this.bind("change.validate", "[value='all']", validate);
+  this.bind("change.validate", ".field input", validate);
+
+};
+
+
+CheckListField.prototype.validate = function() {
+  var err = this.label + " is required",
+      index = this.errors.indexOf(err);
+
+  if (this.required && !this.currentVal().length) {
+    if (index === -1) {
+      this.errors.push(err);
+    }
+  } else {
+    if (index !== -1) {
+      this.errors.splice(index, 1);
+    }
+  }
+
+  return this;
+};
 
 var DateField = function(report, label, id, required, defaultVal, helpText) {
   Field.call(this, report, label, id, required, defaultVal, helpText);

@@ -1471,12 +1471,19 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
     position: relative;
 }
 
-.rpt-container label {
+.rpt-container .rpt {
     font-size: 16px;
     font-weight: 700;
     color: #5e6c82;
 }
 
+.rpt-container .field {
+    display: inline;
+}
+
+.rpt-container input[type="checkbox"] {
+    margin: 5px;
+}
 .rpt-container span.datepicker {
     margin: -1px;
 }
