@@ -57,7 +57,7 @@ class JobFeed(object):
         self.parser = etree.XMLParser(recover=False, schema=schema)
         self.doc = etree.parse(self.filepath, self.parser)
         self.datetime_pattern = datetime_pattern
-        self.jsid=jsid
+        self.jsid = jsid
         self.node_tag = node_tag
         self.job_source_name = self.unescape(self.parse_doc(js_field))
         self.crawled_date = get_strptime(self.parse_doc(crawl_field),
@@ -66,15 +66,13 @@ class JobFeed(object):
         self.company = company
         self.industries = self.get_industry()
         if jsid is None:
-            jsid=self.parse_doc('job_source_id')
+            jsid = self.parse_doc('job_source_id')
             if jsid:
-                self.jsid=int(jsid)
+                self.jsid = int(jsid)
         else:
             self.jsid = jsid
         
     def jobparse(self):
-        """
-        """
         raise NotImplementedError
 
     def solr_job_dict(self, job_node):
@@ -291,7 +289,7 @@ class DEJobFeed(JobFeed):
         html_description = markdowner.convert(description)
         # Remove code blocks
         html_description = html_description.replace('<code>', '').replace(
-               '</code>','').replace('<pre>','').replace('</pre>','')
+            '</code>', '').replace('<pre>', '').replace('</pre>', '')
         return html_description
 
     @staticmethod
@@ -326,7 +324,7 @@ class DEJobFeed(JobFeed):
         job_node['date_created'] = get_strptime(job_node['date_created'], 
                                                 self.datetime_pattern)
         job_node['date_modified'] = get_strptime(job_node['date_modified'], 
-                                                self.datetime_pattern)
+                                                 self.datetime_pattern)
         job_node['date_added'] = datetime.datetime.now()
 
         onets = job_node.get('onet_code', '')

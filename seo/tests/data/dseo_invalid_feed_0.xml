@@ -1,4 +1,36 @@
-﻿<?xml version="1.0" encoding="utf-8"?><feed><meta><job_source_name>HSBC</job_source_name><job_source_id_fail>0</job_source_id_fail><job_source_industries><industry>Banking</industry><industry>Financial Services</industry><industry>Insurance</industry></job_source_industries><date_modified>5/18/2012 9:58:57 AM</date_modified></meta><jobs><job><company>HSBC</company><onet_code version="14">11-3031.02</onet_code><uid>25599525</uid><link>http://my.jobs/2C690B805D0C4AD6AC520D19BB2554C110</link><title>VP Relationship Mgr</title><date_modified>5/17/2012 12:01:05 PM</date_modified><hitkey>00001P2M</hitkey><reqid>00001P2M</reqid><date_created>12/29/2011 12:01:12 PM</date_created><original>NC-Charlotte</original><country_short>USA</country_short><country>United States</country><state_short>NC</state_short><state>North Carolina</state><city>Charlotte</city><zip>28243</zip><description><![CDATA[- Bachelor's degree in business, finance, accounting, related field or equivalent experience.<?xml:namespace prefix = o ns = "urn:schemas-microsoft-com:office:office" />
+﻿<?xml version="1.0" encoding="utf-8"?>
+<feed>
+    <meta>
+        <job_source_name>HSBC</job_source_name>
+        <job_source_id_fail>0</job_source_id_fail>
+        <job_source_industries>
+            <industry>Banking</industry>
+            <industry>Financial Services</industry>
+            <industry>Insurance</industry>
+        </job_source_industries>
+        <date_modified>5/18/2012 9:58:57 AM</date_modified>
+    </meta>
+    <jobs>
+        <job>
+            <company>HSBC</company>
+            <onet_code version="14">11-3031.02</onet_code>
+            <uid>25599525</uid>
+            <link>http://my.jobs/2C690B805D0C4AD6AC520D19BB2554C110</link>
+            <title>VP Relationship Mgr</title>
+            <date_modified>5/17/2012 12:01:05 PM</date_modified>
+            <hitkey>00001P2M</hitkey>
+            <fc>True</fc>
+            <reqid>00001P2M</reqid>
+            <staffing_code>False</staffing_code>
+            <date_created>12/29/2011 12:01:12 PM</date_created>
+            <original>NC-Charlotte</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>NC</state_short>
+            <state>North Carolina</state>
+            <city>Charlotte</city>
+            <zip>28243</zip>
+            <description><![CDATA[- Bachelor's degree in business, finance, accounting, related field or equivalent experience.<?xml:namespace prefix = o ns = "urn:schemas-microsoft-com:office:office" />
 - Minimum of six years proven and progressive commercial lending/credit experience or equivalent.
 - Credit training or equivalent experience.
 - Strong credit, planning, negotiations, communications, sales, analytical and organizational skills.
@@ -22,7 +54,28 @@ Management of Risk
 - Promote an environment that supports diversity and reflects the HSBC brand.
 
 Observation of Internal Controls
-- Maintains HSBC internal control standards, including timely implementation of internal and external audit points together with any issues raised by external regulators.]]></description></job><job><company>HSBC</company><onet_code version="14">41-3031.02</onet_code><uid>25599523</uid><link>http://my.jobs/DAA7A8B7F3324882A6B3184E54D9278A10</link><title>VP Sr Premier Relationship Mgr</title><date_modified>5/17/2012 12:01:05 PM</date_modified><hitkey>00001NG3</hitkey><reqid>00001NG3</reqid><date_created>12/29/2011 12:01:12 PM</date_created><original>NY-New york</original><country_short>USA</country_short><country>United States</country><state_short>NY</state_short><state>New York</state><city>New york</city><zip>10095</zip><description><![CDATA[- Bachelor's degree or equivalent experience.
+- Maintains HSBC internal control standards, including timely implementation of internal and external audit points together with any issues raised by external regulators.]]></description>
+        </job>
+        <job>
+            <company>HSBC</company>
+            <onet_code version="14">41-3031.02</onet_code>
+            <uid>25599523</uid>
+            <link>http://my.jobs/DAA7A8B7F3324882A6B3184E54D9278A10</link>
+            <title>VP Sr Premier Relationship Mgr</title>
+            <date_modified>5/17/2012 12:01:05 PM</date_modified>
+            <hitkey>00001NG3</hitkey>
+            <fc>True</fc>
+            <reqid>00001NG3</reqid>
+            <staffing_code>False</staffing_code>
+            <date_created>12/29/2011 12:01:12 PM</date_created>
+            <original>NY-New york</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>NY</state_short>
+            <state>New York</state>
+            <city>New york</city>
+            <zip>10095</zip>
+            <description><![CDATA[- Bachelor's degree or equivalent experience.
 - Minimum of seven years proven and progressive financial services and/or retail sales experience with high net worth customers or equivalent, including proven and sustained sales results in insurance and investment products and ability to close a sale.
 - Series 6, 63, Life and Health Insurance licenses required. On an exception basis, a 60 day contingency may be granted solely at management's discretion (this period is full-time study, with no client contact). Licenses are required to discuss and sell investment or insurance products with potential and existing customers.
 - Strong sales, communication, cross-selling, sales planning, mathematical, decision-making and analytical skills.
@@ -60,7 +113,28 @@ Management of Risk
 - Promote an environment that supports diversity and reflects the HSBC brand.
 
 Observation of Internal Controls
-- Maintains HSBC internal control standards, including timely implementation of internal and external audit points together with any issues raised by external regulators.]]></description></job><job><company>HSBC</company><onet_code version="14">41-3031.02</onet_code><uid>25611673</uid><link>http://my.jobs/F54A27D888C44B7EB5A275CE39BE5D3B10</link><title>VP Sr Premier Relationship Mgr</title><date_modified>5/17/2012 12:01:05 PM</date_modified><hitkey>00001K3U</hitkey><reqid>00001K3U</reqid><date_created>12/30/2011 12:01:17 PM</date_created><original>CA-Beverly Hills</original><country_short>USA</country_short><country>United States</country><state_short>CA</state_short><state>California</state><city>Beverly Hills</city><zip>90212</zip><description><![CDATA[- Bachelorâ€™s degree or equivalent experience.<?xml:namespace prefix = o ns = "urn:schemas-microsoft-com:office:office" />
+- Maintains HSBC internal control standards, including timely implementation of internal and external audit points together with any issues raised by external regulators.]]></description>
+        </job>
+        <job>
+            <company>HSBC</company>
+            <onet_code version="14">41-3031.02</onet_code>
+            <uid>25611673</uid>
+            <link>http://my.jobs/F54A27D888C44B7EB5A275CE39BE5D3B10</link>
+            <title>VP Sr Premier Relationship Mgr</title>
+            <date_modified>5/17/2012 12:01:05 PM</date_modified>
+            <hitkey>00001K3U</hitkey>
+            <fc>True</fc>
+            <reqid>00001K3U</reqid>
+            <staffing_code>False</staffing_code>
+            <date_created>12/30/2011 12:01:17 PM</date_created>
+            <original>CA-Beverly Hills</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>CA</state_short>
+            <state>California</state>
+            <city>Beverly Hills</city>
+            <zip>90212</zip>
+            <description><![CDATA[- Bachelorâ€™s degree or equivalent experience.<?xml:namespace prefix = o ns = "urn:schemas-microsoft-com:office:office" />
 - Minimum of seven years proven and progressive financial services and/or retail sales experience with high net worth customers or equivalent, including proven and sustained sales results in insurance and investment products and ability to close a sale.
 - Series 6, 63, Life and Health Insurance licenses required. On an exception basis, a 60 day contingency may be granted solely at management's discretion (this period is full-time study, with no client contact). Licenses are required to discuss and sell investment or insurance products with potential and existing customers.
 - Strong sales, communication, cross-selling, sales planning, mathematical, decision-making and analytical skills.
@@ -98,7 +172,28 @@ Management of Risk
 - Promote an environment that supports diversity and reflects the HSBC brand. 
 
 Observation of Internal Controls
-- Maintains HSBC internal control standards, including timely implementation of internal and external audit points together with any issues raised by external regulators.]]></description></job><job><company>HSBC</company><onet_code version="14">11-3031.02</onet_code><uid>25622522</uid><link>http://my.jobs/394587B1BCC44A38B414AE8290B292D810</link><title>VP Portfolio Mgr</title><date_modified>5/17/2012 12:01:05 PM</date_modified><hitkey>00001PCX</hitkey><reqid>00001PCX</reqid><date_created>12/31/2011 12:01:10 PM</date_created><original>GA-Atlanta</original><country_short>USA</country_short><country>United States</country><state_short>GA</state_short><state>Georgia</state><city>Atlanta</city><zip>30309</zip><description><![CDATA[- Bachelor's degree in accounting, business, finance, related field or equivalent experience.
+- Maintains HSBC internal control standards, including timely implementation of internal and external audit points together with any issues raised by external regulators.]]></description>
+        </job>
+        <job>
+            <company>HSBC</company>
+            <onet_code version="14">11-3031.02</onet_code>
+            <uid>25622522</uid>
+            <link>http://my.jobs/394587B1BCC44A38B414AE8290B292D810</link>
+            <title>VP Portfolio Mgr</title>
+            <date_modified>5/17/2012 12:01:05 PM</date_modified>
+            <hitkey>00001PCX</hitkey>
+            <fc>True</fc>
+            <reqid>00001PCX</reqid>
+            <staffing_code>False</staffing_code>
+            <date_created>12/31/2011 12:01:10 PM</date_created>
+            <original>GA-Atlanta</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>GA</state_short>
+            <state>Georgia</state>
+            <city>Atlanta</city>
+            <zip>30309</zip>
+            <description><![CDATA[- Bachelor's degree in accounting, business, finance, related field or equivalent experience.
 - Minimum of five years proven and progressive commercial credit analysis and/or portfolio management experience or equivalent.
 - Proven financial, analytical, mathematical, decision-making, lateral thinking, interpersonal and communication skills.
 - Sound credit skills in underwriting, financial modeling, valuations and adherence to policy.
@@ -137,4 +232,7 @@ Management of Risk
 - Promote an environment that supports diversity and reflects the HSBC brand.
 
 Observation of Internal Controls
-- Maintains HSBC internal control standards, including timely implementation of internal and external audit points together with any issues raised by external regulators.]]></description></job></jobs></feed>
+- Maintains HSBC internal control standards, including timely implementation of internal and external audit points together with any issues raised by external regulators.]]></description>
+        </job>
+    </jobs>
+</feed>

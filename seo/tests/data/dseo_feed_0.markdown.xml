@@ -1,4 +1,36 @@
-﻿<?xml version="1.0" encoding="utf-8"?><feed><meta><parent_company_name>Test Company</parent_company_name><parent_company_id>1505</parent_company_id><job_source_name>Test Company</job_source_name><job_source_id>1746</job_source_id><job_source_industries><industry>Food, Beverage &amp; Tobacco</industry></job_source_industries><date_modified>3/26/2020 10:39:19 AM</date_modified></meta><jobs><job><company>Test Company</company><onet_code version="14">11-2021.00</onet_code><uid>32523286</uid><link>http://fakelink.com/63FE7FD473EBFF476401F35705100010</link><title><![CDATA[Director, Field Marketing]]></title><date_modified>3/26/2020 9:38:48 AM</date_modified><hitkey>1985801</hitkey><reqid /><date_created>11/5/2012 6:16:42 PM</date_created><original>USA-San Francisco or Chicago</original><country_short>USA</country_short><country>United States</country><state_short /><state /><city>null</city><zip /><description><![CDATA[Senior QA Specialist
+﻿<?xml version="1.0" encoding="utf-8"?>
+<feed>
+    <meta>
+        <parent_company_name>Test Company</parent_company_name>
+        <parent_company_id>1505</parent_company_id>
+        <job_source_name>Test Company</job_source_name>
+        <job_source_id>1746</job_source_id>
+        <job_source_industries>
+            <industry>Food, Beverage &amp; Tobacco</industry>
+        </job_source_industries>
+        <date_modified>3/26/2020 10:39:19 AM</date_modified>
+    </meta>
+    <jobs>
+        <job>
+            <company>Test Company</company>
+            <onet_code version="14">11-2021.00</onet_code>
+            <uid>32523286</uid>
+            <link>http://fakelink.com/63FE7FD473EBFF476401F35705100010</link>
+            <title><![CDATA[Director, Field Marketing]]></title>
+            <date_modified>3/26/2020 9:38:48 AM</date_modified>
+            <hitkey>1985801</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>11/5/2012 6:16:42 PM</date_created>
+            <original>USA-San Francisco or Chicago</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short/>
+            <state/>
+            <city>null</city>
+            <zip/>
+            <description><![CDATA[Senior QA Specialist
 
 Job ID 2013-2074
 # Positions 1
@@ -86,4 +118,7 @@ Personal qualities:    -Analytical, observant and meticulous.
 Apply for this job:
  
 * Apply for this job online 
-* Refer a friend to this job]]></description></job></jobs></feed>
+* Refer a friend to this job]]></description>
+        </job>
+    </jobs>
+</feed>

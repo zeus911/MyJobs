@@ -1,4 +1,34 @@
-﻿<?xml version="1.0" encoding="utf-8"?><feed><meta><job_source_name>NIC</job_source_name><job_source_id>0</job_source_id><job_source_industries><industry>Business Services</industry></job_source_industries><date_modified>7/19/2012 3:48:56 AM</date_modified></meta><jobs><job><company>NIC</company><onet_code version="14">11-2021.00</onet_code><uid>28666523</uid><link>http://my.jobs/683A40E1A96841B0988CDD53B579A44D10</link><title>Manager Of Product Management</title><date_modified>7/17/2012 9:16:11 AM</date_modified><hitkey>ProductManagerTX.docx</hitkey><reqid /><date_created>5/14/2012 9:52:49 AM</date_created><original>TX-Austin</original><country_short>USA</country_short><country>United States</country><state_short>TX</state_short><state>Texas</state><city>Austin</city><zip>78789</zip><description><![CDATA[The Texas NIC Quality and Service Team  is currently searching for a Manager of Product Management
+﻿<?xml version="1.0" encoding="utf-8"?>
+<feed>
+    <meta>
+        <job_source_name>NIC</job_source_name>
+        <job_source_id>0</job_source_id>
+        <job_source_industries>
+            <industry>Business Services</industry>
+        </job_source_industries>
+        <date_modified>7/19/2012 3:48:56 AM</date_modified>
+    </meta>
+    <jobs>
+        <job>
+            <company>NIC</company>
+            <onet_code version="14">11-2021.00</onet_code>
+            <uid>28666523</uid>
+            <link>http://my.jobs/683A40E1A96841B0988CDD53B579A44D10</link>
+            <title>Manager Of Product Management</title>
+            <date_modified>7/17/2012 9:16:11 AM</date_modified>
+            <hitkey>ProductManagerTX.docx</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>5/14/2012 9:52:49 AM</date_created>
+            <original>TX-Austin</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>TX</state_short>
+            <state>Texas</state>
+            <city>Austin</city>
+            <zip>78789</zip>
+            <description><![CDATA[The Texas NIC Quality and Service Team  is currently searching for a Manager of Product Management
 Reports to:  Director of Quality and Service
 Classification: Exempt
 
@@ -63,7 +93,28 @@ Strong verbal and written communication skills
 A passionate, performance-driven self-starter
 
 Interested applicants please send your resume to: erin@egov.com 
-NIC is an Equal Opportunity Employer.]]></description></job><job><company>NIC</company><onet_code version="14">15-1051.00</onet_code><uid>29025983</uid><link>http://my.jobs/17DEE29F86C144A993BE5F6350320C8410</link><title>Technical Analyst</title><date_modified>7/17/2012 9:16:13 AM</date_modified><hitkey>TechnicalAnalystKS.docx</hitkey><reqid /><date_created>5/30/2012 10:23:26 AM</date_created><original>KS-Topeka</original><country_short>USA</country_short><country>United States</country><state_short>KS</state_short><state>Kansas</state><city>Topeka</city><zip>66658</zip><description><![CDATA[Job Description 
+NIC is an Equal Opportunity Employer.]]></description>
+        </job>
+        <job>
+            <company>NIC</company>
+            <onet_code version="14">15-1051.00</onet_code>
+            <uid>29025983</uid>
+            <link>http://my.jobs/17DEE29F86C144A993BE5F6350320C8410</link>
+            <title>Technical Analyst</title>
+            <date_modified>7/17/2012 9:16:13 AM</date_modified>
+            <hitkey>TechnicalAnalystKS.docx</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>5/30/2012 10:23:26 AM</date_created>
+            <original>KS-Topeka</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>KS</state_short>
+            <state>Kansas</state>
+            <city>Topeka</city>
+            <zip>66658</zip>
+            <description><![CDATA[Job Description
 NIC Inc.
 Title: Technical Analyst
 Reports to: Director of Project Management
@@ -101,7 +152,28 @@ Stock purchase plan
 Company wellness program 
 Casual and fun office environment
 
-NIC Confidential]]></description></job><job><company>NIC</company><onet_code version="14">15-1099.04</onet_code><uid>28666519</uid><link>http://my.jobs/0BB6E334B4FC460096F3430126F4427210</link><title>Java Developer</title><date_modified>7/17/2012 9:16:15 AM</date_modified><hitkey>JavaDeveloperAZ042712.docx</hitkey><reqid /><date_created>5/14/2012 9:52:46 AM</date_created><original>AZ-Phoenix</original><country_short>USA</country_short><country>United States</country><state_short>AZ</state_short><state>Arizona</state><city>Phoenix</city><zip>85067</zip><description><![CDATA[Java Developer/J2EE Developer
+NIC Confidential]]></description>
+        </job>
+        <job>
+            <company>NIC</company>
+            <onet_code version="14">15-1099.04</onet_code>
+            <uid>28666519</uid>
+            <link>http://my.jobs/0BB6E334B4FC460096F3430126F4427210</link>
+            <title>Java Developer</title>
+            <date_modified>7/17/2012 9:16:15 AM</date_modified>
+            <hitkey>JavaDeveloperAZ042712.docx</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>5/14/2012 9:52:46 AM</date_created>
+            <original>AZ-Phoenix</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>AZ</state_short>
+            <state>Arizona</state>
+            <city>Phoenix</city>
+            <zip>85067</zip>
+            <description><![CDATA[Java Developer/J2EE Developer
  
 NIC Arizona is currently seeking a full-time J2EE Developer.  Experience delivering Web applications using J2EE and related technologies is a major plus, but all candidates with generally strong object-oriented design and programming skills are encouraged to apply.  The selected candidate will be part of a strong Java development team, and will be responsible for both enhancing existing Web applications and developing new Web applications.
  
@@ -143,7 +215,28 @@ Paid State holidays/vacation
 
 Interested candidates, please send a resume to azresumes@egov.com.
 
-NIC, Inc.is an Equal Opportunity Employer.]]></description></job><job><company>NIC</company><onet_code version="14">15-1099.11</onet_code><uid>29025984</uid><link>http://my.jobs/9A845C11E79E493799BBB1617044672210</link><title>Project Manager</title><date_modified>7/17/2012 9:16:15 AM</date_modified><hitkey>ProjectManagerKS.docx</hitkey><reqid /><date_created>5/30/2012 10:23:29 AM</date_created><original>KS-Topeka</original><country_short>USA</country_short><country>United States</country><state_short>KS</state_short><state>Kansas</state><city>Topeka</city><zip>66658</zip><description><![CDATA[Job Description 
+NIC, Inc.is an Equal Opportunity Employer.]]></description>
+        </job>
+        <job>
+            <company>NIC</company>
+            <onet_code version="14">15-1099.11</onet_code>
+            <uid>29025984</uid>
+            <link>http://my.jobs/9A845C11E79E493799BBB1617044672210</link>
+            <title>Project Manager</title>
+            <date_modified>7/17/2012 9:16:15 AM</date_modified>
+            <hitkey>ProjectManagerKS.docx</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>5/30/2012 10:23:29 AM</date_created>
+            <original>KS-Topeka</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>KS</state_short>
+            <state>Kansas</state>
+            <city>Topeka</city>
+            <zip>66658</zip>
+            <description><![CDATA[Job Description
 NIC Inc.
 Title: Project Manager
 Reports to: Director of Project Management
@@ -186,7 +279,28 @@ Stock purchase plan
 Company wellness program 
 Casual and fun office environment
 
-NIC Confidential]]></description></job><job><company>NIC</company><onet_code version="14">15-1099.04</onet_code><uid>28666517</uid><link>http://my.jobs/C5A8681CFAD74902A2F025552038F0B910</link><title>Senior SOA Developer</title><date_modified>7/17/2012 9:16:17 AM</date_modified><hitkey>Senior%20SOA%20Developer_TX%20Feb12.docx</hitkey><reqid /><date_created>5/14/2012 9:52:46 AM</date_created><original>TX-Austin</original><country_short>USA</country_short><country>United States</country><state_short>TX</state_short><state>Texas</state><city>Austin</city><zip>78789</zip><description><![CDATA[Senior SOA Developer
+NIC Confidential]]></description>
+        </job>
+        <job>
+            <company>NIC</company>
+            <onet_code version="14">15-1099.04</onet_code>
+            <uid>28666517</uid>
+            <link>http://my.jobs/C5A8681CFAD74902A2F025552038F0B910</link>
+            <title>Senior SOA Developer</title>
+            <date_modified>7/17/2012 9:16:17 AM</date_modified>
+            <hitkey>Senior%20SOA%20Developer_TX%20Feb12.docx</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>5/14/2012 9:52:46 AM</date_created>
+            <original>TX-Austin</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>TX</state_short>
+            <state>Texas</state>
+            <city>Austin</city>
+            <zip>78789</zip>
+            <description><![CDATA[Senior SOA Developer
 Texas.gov is a subdivision of NIC Inc, located in Austin, TX. NIC is the leading provider of outsourced eGovernment services. We build and manage official government Web sites and eGovernment services for 23 states and hundreds of local governments in the United States. NIC designs, manages, and markets eGovernment services on behalf of state and local governments. We partner with government leaders and establish local offices to provide customized solutions for each government we serve. Our electronic government solutions use technology to increase efficiency and reduce costs for governments and their constituents. We are currently looking for an experienced Senior SOA Developer.
 
 Responsibilities 
@@ -217,7 +331,28 @@ Paid State holidays/vacation
 Tuition Reimbursement
 
 Interested applicants please send your resume to: rpolikepati@egov.com
-NIC is an Equal Opportunity Employer.]]></description></job><job><company>NIC</company><onet_code version="14">15-1031.00</onet_code><uid>28666524</uid><link>http://my.jobs/A0BC8380E7ED4815AA925C37A65DB3FB10</link><title>Business Intelligence Architect</title><date_modified>7/17/2012 9:16:17 AM</date_modified><hitkey>Business%20Intelligence%20Architect_TX%20Feb12.docx</hitkey><reqid /><date_created>5/14/2012 9:52:49 AM</date_created><original>TX-Austin</original><country_short>USA</country_short><country>United States</country><state_short>TX</state_short><state>Texas</state><city>Austin</city><zip>78789</zip><description><![CDATA[Business Intelligence Architect
+NIC is an Equal Opportunity Employer.]]></description>
+        </job>
+        <job>
+            <company>NIC</company>
+            <onet_code version="14">15-1031.00</onet_code>
+            <uid>28666524</uid>
+            <link>http://my.jobs/A0BC8380E7ED4815AA925C37A65DB3FB10</link>
+            <title>Business Intelligence Architect</title>
+            <date_modified>7/17/2012 9:16:17 AM</date_modified>
+            <hitkey>Business%20Intelligence%20Architect_TX%20Feb12.docx</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>5/14/2012 9:52:49 AM</date_created>
+            <original>TX-Austin</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>TX</state_short>
+            <state>Texas</state>
+            <city>Austin</city>
+            <zip>78789</zip>
+            <description><![CDATA[Business Intelligence Architect
 Texas.gov is a subdivision of NIC Inc, located in Austin, TX. NIC is the leading provider of outsourced eGovernment services. We build and manage official government Web sites and eGovernment services for 23 states and hundreds of local governments in the United States. NIC designs, manages, and markets eGovernment services on behalf of state and local governments. We partner with government leaders and establish local offices to provide customized solutions for each government we serve. Our electronic government solutions use technology to increase efficiency and reduce costs for governments and their constituents.
 This position is responsible for performing high-level activities (e.g. client requirements collection/analysis, systems design etc.) related to all phases of the Business Intelligence life cycle. The incumbent acts independently, and provides technical leadership and/or business-related subject matter expertise. The member of development staff is also responsible for evaluating and developing reliable and efficient automated solutions to fulfill complex business requirements. Works as a team member and provides technical leadership and/or business-related subject matter expertise on Business Intelligence projects. Regularly leads other team members in selected project activities. Provides direction to staff members and peers. Collects client requirements, performs analysis, writes program specifications and develops and implements designs. Responsible for producing high quality deliverables in a timely fashion.
 
@@ -268,7 +403,28 @@ Paid State holidays/vacation
 Tuition Reimbursement
 
 Interested applicants please send your resume to: rpolikepati@egov.com
-NIC is an Equal Opportunity Employer.]]></description></job><job><company>NIC</company><onet_code version="14">15-1099.04</onet_code><uid>28786334</uid><link>http://my.jobs/80348F8490D649EB9B8A043C1FAF2E1710</link><title>Application Developer</title><date_modified>7/17/2012 9:16:18 AM</date_modified><hitkey>IADeveloperJobPosting.pdf</hitkey><reqid /><date_created>5/18/2012 9:55:52 AM</date_created><original>IA-Des Moines</original><country_short>USA</country_short><country>United States</country><state_short>IA</state_short><state>Iowa</state><city>Des Moines</city><zip>50312</zip><description><![CDATA[Title: Developer 
+NIC is an Equal Opportunity Employer.]]></description>
+        </job>
+        <job>
+            <company>NIC</company>
+            <onet_code version="14">15-1099.04</onet_code>
+            <uid>28786334</uid>
+            <link>http://my.jobs/80348F8490D649EB9B8A043C1FAF2E1710</link>
+            <title>Application Developer</title>
+            <date_modified>7/17/2012 9:16:18 AM</date_modified>
+            <hitkey>IADeveloperJobPosting.pdf</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>5/18/2012 9:55:52 AM</date_created>
+            <original>IA-Des Moines</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>IA</state_short>
+            <state>Iowa</state>
+            <city>Des Moines</city>
+            <zip>50312</zip>
+            <description><![CDATA[Title: Developer
 Reports to: Director of Development 
 Contact: resume@iowai.org 
 
@@ -317,7 +473,28 @@ In addition to salary NIC provides:
 ? life insurance 
 ? 401K plan 
 ? stock option plans 
-? casual and flexible work environment]]></description></job><job><company>NIC</company><onet_code version="14">15-1099.04</onet_code><uid>28666520</uid><link>http://my.jobs/F3537F4B8AED4BC0B267A462853621CC10</link><title>C# / ASP.net Application Developer</title><date_modified>7/17/2012 9:16:18 AM</date_modified><hitkey>OregonDeveloperPosition.docx</hitkey><reqid /><date_created>5/14/2012 9:52:47 AM</date_created><original>OR-Salem</original><country_short>USA</country_short><country>United States</country><state_short>OR</state_short><state>Oregon</state><city>Salem</city><zip>97309</zip><description><![CDATA[C# / ASP.NET Application Developer (Mid-Level)
+? casual and flexible work environment]]></description>
+        </job>
+        <job>
+            <company>NIC</company>
+            <onet_code version="14">15-1099.04</onet_code>
+            <uid>28666520</uid>
+            <link>http://my.jobs/F3537F4B8AED4BC0B267A462853621CC10</link>
+            <title>C# / ASP.net Application Developer</title>
+            <date_modified>7/17/2012 9:16:18 AM</date_modified>
+            <hitkey>OregonDeveloperPosition.docx</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>5/14/2012 9:52:47 AM</date_created>
+            <original>OR-Salem</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>OR</state_short>
+            <state>Oregon</state>
+            <city>Salem</city>
+            <zip>97309</zip>
+            <description><![CDATA[C# / ASP.NET Application Developer (Mid-Level)
 
 You will definitely need all this:
 • Minimum of 3 years of experience developing complex Internet and eCommerce web applications on Microsoft Windows platform preferred
@@ -365,7 +542,28 @@ Benefits:
 
 Interested applicants please send your resume to: pfairhurst@egov.com
 
-NIC is an Equal Opportunity Employer.]]></description></job><job><company>NIC</company><onet_code version="14">15-1099.04</onet_code><uid>28666518</uid><link>http://my.jobs/5A2C9B653D4F4318A2A5890F348E564710</link><title>UX Web Designer</title><date_modified>7/17/2012 9:16:19 AM</date_modified><hitkey>WebDesignerDeveloperTX.docx</hitkey><reqid /><date_created>5/14/2012 9:52:46 AM</date_created><original>TX-Austin</original><country_short>USA</country_short><country>United States</country><state_short>TX</state_short><state>Texas</state><city>Austin</city><zip>78789</zip><description><![CDATA[The Texas NIC UX/Creative Services division under the Development department is currently searching for a UX Web Designer.  
+NIC is an Equal Opportunity Employer.]]></description>
+        </job>
+        <job>
+            <company>NIC</company>
+            <onet_code version="14">15-1099.04</onet_code>
+            <uid>28666518</uid>
+            <link>http://my.jobs/5A2C9B653D4F4318A2A5890F348E564710</link>
+            <title>UX Web Designer</title>
+            <date_modified>7/17/2012 9:16:19 AM</date_modified>
+            <hitkey>WebDesignerDeveloperTX.docx</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>5/14/2012 9:52:46 AM</date_created>
+            <original>TX-Austin</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>TX</state_short>
+            <state>Texas</state>
+            <city>Austin</city>
+            <zip>78789</zip>
+            <description><![CDATA[The Texas NIC UX/Creative Services division under the Development department is currently searching for a UX Web Designer.
 Description: A UX Web designer is responsible for creating and developing user interfaces that are user-friendly, ADA compliant, performance optimized, and device/browser compatible. The UX web designer will work closely with other internal and cross-team members to communicate industry principles and best practices of interface design. This includes, but is not limited to usability, accessibility, design, and information architecture.
 A UX web designer will also possess a team-oriented mindset with drive to succeed and ability to multi-task; strong analytical and problem solving skills with attention to detail.
 Responsibilities
@@ -408,7 +606,28 @@ Strong organizational, time management, and prioritization skills
 Strong communication skills
 
 Interested applicants please send your resume to: rpolikepati@egov.com
-NIC is an Equal Opportunity Employer.]]></description></job><job><company>NIC</company><onet_code version="14">15-1099.04</onet_code><uid>28666530</uid><link>http://my.jobs/5EF362BF53DD4C3CB86A726C2FDDA67710</link><title>Production Support Developer</title><date_modified>7/17/2012 9:16:20 AM</date_modified><hitkey>ProductionSupportDeveloperPositionTN.doc</hitkey><reqid /><date_created>5/14/2012 10:05:04 AM</date_created><original>TN-Nashville</original><country_short>USA</country_short><country>United States</country><state_short>TN</state_short><state>Tennessee</state><city>Nashville</city><zip>37230</zip><description><![CDATA[Job Description 
+NIC is an Equal Opportunity Employer.]]></description>
+        </job>
+        <job>
+            <company>NIC</company>
+            <onet_code version="14">15-1099.04</onet_code>
+            <uid>28666530</uid>
+            <link>http://my.jobs/5EF362BF53DD4C3CB86A726C2FDDA67710</link>
+            <title>Production Support Developer</title>
+            <date_modified>7/17/2012 9:16:20 AM</date_modified>
+            <hitkey>ProductionSupportDeveloperPositionTN.doc</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>5/14/2012 10:05:04 AM</date_created>
+            <original>TN-Nashville</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>TN</state_short>
+            <state>Tennessee</state>
+            <city>Nashville</city>
+            <zip>37230</zip>
+            <description><![CDATA[Job Description
 NIC Inc.
 
 
@@ -536,7 +755,28 @@ NIC is an equal opportunity employer.
 
 
 
-NIC Confidential]]></description></job><job><company>NIC</company><onet_code version="14">15-1099.01</onet_code><uid>29025985</uid><link>http://my.jobs/0C074B9AF3314081B56E63B368F427D310</link><title>Quality Assurance Analyst</title><date_modified>7/17/2012 9:16:20 AM</date_modified><hitkey>QualityAssuranceAnalystKS.docx</hitkey><reqid /><date_created>5/30/2012 10:23:36 AM</date_created><original>KS-Topeka</original><country_short>USA</country_short><country>United States</country><state_short>KS</state_short><state>Kansas</state><city>Topeka</city><zip>66658</zip><description><![CDATA[Job Description 
+NIC Confidential]]></description>
+        </job>
+        <job>
+            <company>NIC</company>
+            <onet_code version="14">15-1099.01</onet_code>
+            <uid>29025985</uid>
+            <link>http://my.jobs/0C074B9AF3314081B56E63B368F427D310</link>
+            <title>Quality Assurance Analyst</title>
+            <date_modified>7/17/2012 9:16:20 AM</date_modified>
+            <hitkey>QualityAssuranceAnalystKS.docx</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>5/30/2012 10:23:36 AM</date_created>
+            <original>KS-Topeka</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>KS</state_short>
+            <state>Kansas</state>
+            <city>Topeka</city>
+            <zip>66658</zip>
+            <description><![CDATA[Job Description
 NIC Inc.
 Title: Quality Assurance Analyst
 Reports to: Director of Project Management
@@ -578,7 +818,28 @@ Casual and fun office environment
 Paid State holidays/vacation
 Tuition reimbursement
 
-NIC Confidential]]></description></job><job><company>NIC</company><onet_code version="14">15-1099.04</onet_code><uid>28666522</uid><link>http://my.jobs/8C10466E3D9D4F67A37C95D05DF625DB10</link><title>Senior Grails Developer</title><date_modified>7/17/2012 9:16:21 AM</date_modified><hitkey>Senior%20Grails%20Developer_TX%20Feb12.docx</hitkey><reqid /><date_created>5/14/2012 9:52:48 AM</date_created><original>TX-Austin</original><country_short>USA</country_short><country>United States</country><state_short>TX</state_short><state>Texas</state><city>Austin</city><zip>78789</zip><description><![CDATA[Senior Grails Developer
+NIC Confidential]]></description>
+        </job>
+        <job>
+            <company>NIC</company>
+            <onet_code version="14">15-1099.04</onet_code>
+            <uid>28666522</uid>
+            <link>http://my.jobs/8C10466E3D9D4F67A37C95D05DF625DB10</link>
+            <title>Senior Grails Developer</title>
+            <date_modified>7/17/2012 9:16:21 AM</date_modified>
+            <hitkey>Senior%20Grails%20Developer_TX%20Feb12.docx</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>5/14/2012 9:52:48 AM</date_created>
+            <original>TX-Austin</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>TX</state_short>
+            <state>Texas</state>
+            <city>Austin</city>
+            <zip>78789</zip>
+            <description><![CDATA[Senior Grails Developer
 Texas.gov is a subdivision of NIC Inc, located in Austin, TX. NIC is the leading provider of outsourced eGovernment services. We build and manage official government Web sites and eGovernment services for 23 states and hundreds of local governments in the United States. NIC designs, manages, and markets eGovernment services on behalf of state and local governments. We partner with government leaders and establish local offices to provide customized solutions for each government we serve. Our electronic government solutions use technology to increase efficiency and reduce costs for governments and their constituents.
 This position is responsible for performing high-level activities (e.g. client requirements collection/analysis, systems design etc.) related to all phases of the Web application development. The incumbent will work independently and in teams to develop software solutions for web applications., depending on the project. The member of development staff is also responsible for evaluating and developing reliable and efficient automated solutions to fulfill complex business requirements. Responsible for producing high quality deliverables in a timely fashion.
 
@@ -617,7 +878,28 @@ Paid State holidays/vacation
 Tuition Reimbursement
 
 Interested applicants please send your resume to: rpolikepati@egov.com
-NIC is an Equal Opportunity Employer.]]></description></job><job><company>NIC</company><onet_code version="14">15-1099.11</onet_code><uid>29025986</uid><link>http://my.jobs/DDC0A2A98FEA4AE7882670B722F1981510</link><title>Project Manager</title><date_modified>7/17/2012 9:16:22 AM</date_modified><hitkey>ProjectManagerAR.docx</hitkey><reqid /><date_created>5/30/2012 10:23:37 AM</date_created><original>AR-Little Rock</original><country_short>USA</country_short><country>United States</country><state_short>AR</state_short><state>Arkansas</state><city>Little Rock</city><zip>72205</zip><description><![CDATA[Description
+NIC is an Equal Opportunity Employer.]]></description>
+        </job>
+        <job>
+            <company>NIC</company>
+            <onet_code version="14">15-1099.11</onet_code>
+            <uid>29025986</uid>
+            <link>http://my.jobs/DDC0A2A98FEA4AE7882670B722F1981510</link>
+            <title>Project Manager</title>
+            <date_modified>7/17/2012 9:16:22 AM</date_modified>
+            <hitkey>ProjectManagerAR.docx</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>5/30/2012 10:23:37 AM</date_created>
+            <original>AR-Little Rock</original>
+            <country_short>USA</country_short>
+            <country>United States</country>
+            <state_short>AR</state_short>
+            <state>Arkansas</state>
+            <city>Little Rock</city>
+            <zip>72205</zip>
+            <description><![CDATA[Description
 The Arkansas Information Consortium is the official digital government solutions provider for the State of Arkansas. AIC builds, markets, manages and supports interactive government services on behalf of the state and is a wholly owned subsidiary of NIC Inc. (Nasdaq: EGOV). AIC is located in Little Rock, Arkansas and is actively seeking a qualified Project Manager. Candidates with strong project management and system analysis and design skills are encouraged to apply. The selected candidate will be part of a highly seasoned project management and development team and will be responsible for both enhancing and developing new leading edge Web applications. Our team members are self-motivated professionals who enjoy the challenge of implementing project management and business solutions in an entrepreneurial environment. 
 NIC builds and manages official government Web sites and eGovernment services for 24 states and hundreds of local governments in the United States. NIC designs, manages, and markets eGovernment services on behalf of state and local governments. We partner with government leaders and establish local offices to provide customized solutions for each government we serve. Our electronic government solutions use technology to increase efficiency and reduce costs for governments and their constituents. 
 Duties: 
@@ -662,4 +944,7 @@ Stock purchase plan
 Company wellness program
 Casual and fun office environment
 Qualified applicants should send a resume to: cathy@ark.org.
-NIC is an equal opportunity employer.]]></description></job></jobs></feed>
+NIC is an equal opportunity employer.]]></description>
+        </job>
+    </jobs>
+</feed>
