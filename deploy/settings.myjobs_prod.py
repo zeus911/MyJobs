@@ -6,13 +6,24 @@ import os
 DEBUG = False
 
 
-DATABASES = {'default': {'NAME': 'redirect',
-                         'ENGINE': 'django.db.backends.mysql',
-                         'USER': 'db_deuser',
-                         'PASSWORD': PROD_DB_PASSWD,
-                         'HOST': 'db-redirect.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
-                         'PORT': '3306', }
-            }
+DATABASES = {
+    'default': {
+        'NAME': 'redirect',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': 'db_deuser',
+        'PASSWORD': PROD_DB_PASSWD,
+        'HOST': 'db-redirect.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
+        'PORT': '3306',
+    },
+    'api': {
+        'NAME': 'api',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': 'db_deuser',
+        'PASSWORD': PROD_DB_PASSWD,
+        'HOST': 'db-api.c9shuxvtcmer.us-east-1.rds.amazonaws.com',
+        'PORT': '3306',
+    },
+}
 
 ALLOWED_HOSTS = ['secure.my.jobs', 'my.jobs', 'localhost']
 
