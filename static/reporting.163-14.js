@@ -30,8 +30,10 @@ Report.prototype.createFields = function(types) {
                         new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: "04/14/2015"}),
                         new StateField(this, "State", 'state', false, 'IN'),
                         new TextField(this, "City", "city", false),
-                        //id should be what you want to use for the key in data
                         new CheckListField(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all')]};
+                        new FilteredList(this, "Partners", "partner", false),
+                        new FilteredList(this, "Contacts", "contact", false)
+  ]};
 
   return fields[types[0]];
 };
@@ -150,12 +152,13 @@ Field.prototype.currentVal = function() {
 
 
 // TODO: Document namespacing for binding events.
-Field.prototype.bind = function(event, callback) {
-  if (typeof callback !== "function") {
-    throw "Callback parameter expecting function.";
+Field.prototype.bind = function(event, selector, callback) {
+  if (arguments.length === 2) {
+    callback = selector;
+    selector = undefined;
   }
 
-  $(this.dom()).on(event, function(e) {
+  $(this.dom()).on(event, selector, function(e) {
     callback(e);
   });
 
@@ -176,11 +179,11 @@ Field.prototype.showErrors = function() {
       $showModal = $("#show-modal");
 
   if (this.errors.length) {
-    if (!$field.parent('div.required').length) {
+    if (!$field.parent("div.required").length) {
       $field.wrap('<div class="required"></div>');
     }
 
-    if (!$field.prev('.show-errors').length) {
+    if (!$field.prev(".show-errors").length) {
       $field.before('<div class="show-errors">' + this.errors.join(', ') + '</div>');
     } else {
       $field.prev().html(this.errors.join(','));
@@ -194,8 +197,8 @@ Field.prototype.removeErrors = function() {
   var $field = $(this.dom()),
       $showModal = $("#show-modal");
 
-  if ($field.parent('div.required').length) {
-    $field.prev('.show-errors').remove();
+  if ($field.parent("div.required").length) {
+    $field.prev(".show-errors").remove();
     $field.unwrap();
   }
 
@@ -406,28 +409,15 @@ DateField.prototype.currentVal = function(id) {
 
 DateField.prototype.render = function() {
   var label = this.renderLabel(),
-      dateWidget = $("<div id='" + this.id + "' class='filter-option'><div class='date-picker'></div></div>"),
+      dateWidget = $('<div id="' + this.id + '" class="filter-option"><div class="date-picker"></div></div>'),
       datePicker = $(dateWidget).find(".date-picker"),
-      to = "<span id='activity-to-' class='datepicker'>to</span>",
-      start = "<input id='start-date' class='datepicker picker-left' type='text' value='" + (this.defaultVal ? this.defaultVal.start_date : "") + "' placeholder='Start Date' />",
-      end = "<input id='end-date' class='datepicker picker-right' type='text' value='" + (this.defaultVal ? this.defaultVal.end_date : "")  + "' placeholder='End Date' />";
+      to = '<span id="activity-to-" class="datepicker">to</span>',
+      start = '<input id="start-date" class="datepicker picker-left" type="text" value="' + (this.defaultVal ? this.defaultVal.start_date : "") + '" placeholder="Start Date" />',
+      end = '<input id="end-date" class="datepicker picker-right" type="text" value="' + (this.defaultVal ? this.defaultVal.end_date : "")  + '" placeholder="End Date" />';
 
   datePicker.append(start).append(to).append(end);
   dateWidget.append(datePicker);
   return label + dateWidget.prop("outerHTML");
-};
-
-
-DateField.prototype.bind = function(event, selector, callback) {
-  if (typeof callback !== "function") {
-    throw "Callback parameter expecting function.";
-  }
-
-  $(this.dom()).on(event, selector, function(e) {
-    callback(e);
-  });
-
-  return this;
 };
 
 
@@ -528,6 +518,28 @@ StateField.prototype.render = function() {
   return label + '<div class="state"></div>';
 };
 
+
+var FilteredList = function(report, label, id, required, defaultVal, helpText) {
+  Field.call(this, report, label, id, required, defaultVal, helpText);
+};
+
+FilteredList.prototype = Object.create(Field.prototype);
+
+
+FilteredList.prototype.renderLabel = function() {
+  return '<div id="'+ this.id +'-header" class="list-header">' +
+         '<input id="' + this.id + '-all-checkbox" type="checkbox" ' + (this.value ? "" : "checked") + ' />' +
+         ' All ' + this.label + ' ' +
+         '<span>(<span class="record-count">0</span> ' + this.label + ' Selected)</span>' +
+         '</div>';
+};
+
+
+FilteredList.prototype.render = function() {
+  var label = this.renderLabel(),
+      body = '<div id="' + this.type + '" class="list-body no-show"></div>';
+  return label + body;
+};
 
 // Capitalize first letter of a string.
 String.prototype.capitalize = function() {
