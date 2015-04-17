@@ -383,7 +383,7 @@ def get_solr_result(solr_search):
         return solr_search
 
     try:
-        solr = pysolr.Solr(settings.SOLR_LOCATION)
+        solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
         solr_search.results = solr.search(q=solr_search.query,
                                           **solr_search.solr_parameters)
     except Exception, e:

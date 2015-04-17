@@ -28,8 +28,9 @@ class APIBaseTestCase(TransactionTestCase):
         setattr(settings, "PROJECT", 'api')
         clear_url_caches()
 
-        settings.SOLR_LOCATION = 'http://127.0.0.1:8983/solr/seo'
-        self.solr = pysolr.Solr(settings.SOLR_LOCATION)
+        solr_location = 'http://127.0.0.1:8983/solr/seo'
+        settings.HAYSTACK_CONNECTIONS['default']['URL'] = solr_location
+        self.solr = pysolr.Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
         self.user = APIUserFactory()
         self.path = '/?key=%s&' % self.user.key
         self.countspath = '/countsapi.asp?key=%s&' % self.user.key
