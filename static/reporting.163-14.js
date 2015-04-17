@@ -728,6 +728,12 @@ List.prototype.filter = function(filter) {
       updateShowModal();
     },
     error: function(e) {
+      // work-around; this should be handled by my.jobs.xxx-x.js:31, but isn't
+      // for some reason
+      if (e.status === 403) {
+        window.location = '/';
+      }
+
       // TODO: change when testing is done to something more useful.
       console.error("Something horrible happened.");
     }
