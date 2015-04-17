@@ -156,7 +156,7 @@ class JobFeedTestCase(DirectSEOBase):
     def test_unused_fields(self):
         # Test that new fields don't break existing code
         results = DEv2JobFeed(self.unused_field_feed,
-                                        jsid=self.businessunit.id)
+                              jsid=self.businessunit.id)
         jobs = results.solr_jobs()
         self.assertEqual(len(results.jobparse()), 1)
 

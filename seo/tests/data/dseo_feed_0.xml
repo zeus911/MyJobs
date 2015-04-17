@@ -149,19 +149,19 @@
             <city/>
             <zip/>
             <description>**bold_markdown**
-                newline
-                header
-                ======
-                ## h2
-                - item1
-                - item2
+newline
+header
+======
+## h2
+- item1
+- item2
 
-                #hashtag
-                * asterisks
-                = equals
-                &#29305;&#27530;&#23383;&#31526;
-                &lt;testh1&gt;html tag that shouldn't be
-                here&lt;/testh1&gt;</description>
+#hashtag
+* asterisks
+= equals
+&#29305;&#27530;&#23383;&#31526;
+&lt;testh1&gt;html tag that shouldn't be
+here&lt;/testh1&gt;</description>
         </job>
         <job>
             <company>Test Company</company>

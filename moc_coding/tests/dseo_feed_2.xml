@@ -1,4 +1,36 @@
-<?xml version="1.0" encoding="utf-8"?><feed><meta><parent_company_name>Test Company</parent_company_name><parent_company_id>1505</parent_company_id><job_source_name>Test Company</job_source_name><job_source_id>1746</job_source_id><job_source_industries><industry>Food, Beverage &amp; Tobacco</industry></job_source_industries><date_modified>3/26/2020 10:39:19 AM</date_modified></meta><jobs><job><company>Test Company</company><onet_code version="14">33333333, 22222222</onet_code><uid>29769257</uid><link>http://fakelink.com137BC624AC194A710A47EF2058610</link><title><![CDATA[Production Supervisor]]></title><date_modified>3/26/2020 9:37:59 AM</date_modified><hitkey>1915754</hitkey><reqid /><date_created>6/29/2012 8:51:41 PM</date_created><original>CAN-Amherstburg</original><country_short>CAN</country_short><country>Canada</country><state_short /><state /><city /><zip /><description><![CDATA[External Job Title Production Supervisor
+<?xml version="1.0" encoding="utf-8"?>
+<feed>
+    <meta>
+        <parent_company_name>Test Company</parent_company_name>
+        <parent_company_id>1505</parent_company_id>
+        <job_source_name>Test Company</job_source_name>
+        <job_source_id>1746</job_source_id>
+        <job_source_industries>
+            <industry>Food, Beverage &amp; Tobacco</industry>
+        </job_source_industries>
+        <date_modified>3/26/2020 10:39:19 AM</date_modified>
+    </meta>
+    <jobs>
+        <job>
+            <company>Test Company</company>
+            <onet_code version="14">33333333, 22222222</onet_code>
+            <uid>29769257</uid>
+            <link>http://fakelink.com137BC624AC194A710A47EF2058610</link>
+            <title><![CDATA[Production Supervisor]]></title>
+            <date_modified>3/26/2020 9:37:59 AM</date_modified>
+            <hitkey>1915754</hitkey>
+            <fc>True</fc>
+            <reqid/>
+            <staffing_code>False</staffing_code>
+            <date_created>6/29/2012 8:51:41 PM</date_created>
+            <original>CAN-Amherstburg</original>
+            <country_short>CAN</country_short>
+            <country>Canada</country>
+            <state_short/>
+            <state/>
+            <city/>
+            <zip/>
+            <description><![CDATA[External Job Title Production Supervisor
 
 Function Operations
 Type of Job Full Time - Exempt
@@ -49,4 +81,7 @@ Experience
 BA/BS in Business, Management, or Engineering, five plus years of supervisory experience in high speed bottling plant; or equivalent combination of education and experience.
 In Distilling Operations: BS in Science or Engineering, preferably chemical engineering
 In Unionized facilities: Union experience an asset
-Thorough working knowledge and demonstrated expertise in all areas of high speed bottling activities, including machine operations, machine changeovers, start-up, shut-down, package quality, Applicable H&S laws & standards, and BATF and/or Excise compliance.]]></description></job></jobs></feed>
+Thorough working knowledge and demonstrated expertise in all areas of high speed bottling activities, including machine operations, machine changeovers, start-up, shut-down, package quality, Applicable H&S laws & standards, and BATF and/or Excise compliance.]]></description>
+        </job>
+    </jobs>
+</feed>
