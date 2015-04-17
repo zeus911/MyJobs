@@ -1,9 +1,3 @@
-/* 
- * This file is only concerned with the partner and contact forms in PRM.
- * However, it seemed like a bit of a stretch to have to name it
- * 'prm-partner-and-contact-form-only.xxx-x.js'.
- */
-
 /*
  * Checks if the vaue of an input is already in an array of objects
  *
@@ -47,7 +41,7 @@ function checkDuplicates(elementID, values, url) {
 }
 
 $(document).ready(function() {
-  var $otherInputs = $("input:gt(0)"),
+  var $otherInputs = $("input:gt(0), textarea"),
       $saveButton = $("#item-save, #init-partner-save"),
       validForm = false;
   
