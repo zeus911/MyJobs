@@ -167,11 +167,11 @@ Field.prototype.showErrors = function() {
       $showModal = $("#show-modal");
 
   if (this.errors.length) {
-    if (!$field.parent('div.required').length) {
+    if (!$field.parent("div.required").length) {
       $field.wrap('<div class="required"></div>');
     }
 
-    if (!$field.prev('.show-errors').length) {
+    if (!$field.prev(".show-errors").length) {
       $field.before('<div class="show-errors">' + this.errors.join(', ') + '</div>');
     } else {
       $field.prev().html(this.errors.join(','));
@@ -185,8 +185,8 @@ Field.prototype.removeErrors = function() {
   var $field = $(this.dom()),
       $showModal = $("#show-modal");
 
-  if ($field.parent('div.required').length) {
-    $field.prev('.show-errors').remove();
+  if ($field.parent("div.required").length) {
+    $field.prev(".show-errors").remove();
     $field.unwrap();
   }
 
@@ -274,11 +274,11 @@ DateField.prototype.currentVal = function(id) {
 
 DateField.prototype.render = function() {
   var label = this.renderLabel(),
-      dateWidget = $("<div id='" + this.id + "' class='filter-option'><div class='date-picker'></div></div>"),
+      dateWidget = $('<div id="' + this.id + '" class="filter-option"><div class="date-picker"></div></div>'),
       datePicker = $(dateWidget).find(".date-picker"),
-      to = "<span id='activity-to-' class='datepicker'>to</span>",
-      start = "<input id='start-date' class='datepicker picker-left' type='text' value='" + (this.defaultVal ? this.defaultVal.start_date : "") + "' placeholder='Start Date' />",
-      end = "<input id='end-date' class='datepicker picker-right' type='text' value='" + (this.defaultVal ? this.defaultVal.end_date : "")  + "' placeholder='End Date' />";
+      to = '<span id="activity-to-" class="datepicker">to</span>',
+      start = '<input id="start-date" class="datepicker picker-left" type="text" value="' + (this.defaultVal ? this.defaultVal.start_date : "") + '" placeholder="Start Date" />',
+      end = '<input id="end-date" class="datepicker picker-right" type="text" value="' + (this.defaultVal ? this.defaultVal.end_date : "")  + '" placeholder="End Date" />';
 
   datePicker.append(start).append(to).append(end);
   dateWidget.append(datePicker);
@@ -394,6 +394,11 @@ StateField.prototype.render = function() {
     });
   })();
   return label + '<div class="state"></div>';
+};
+
+
+var FilteredList = function(report, label, id, required, defaultVal, helpText) {
+  Field.call(this, report, label, id, required, defaultVal, helpText);
 };
 
 
