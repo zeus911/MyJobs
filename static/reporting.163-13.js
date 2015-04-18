@@ -17,24 +17,37 @@ var Report = function(types) {
 };
 
 
+
+
 Report.prototype.createFields = function(types) {
-  var fields = {"prm": [new TextField(this, "Report Name", "report_name", true),
+  var contactTypeChoices = [new CheckBoxField(this, "Email", "contact_type", "email"),
+                            new CheckBoxField(this,"Phone Call", "contact_type", "phone"),
+                            new CheckBoxField(this,"Meeting or Event", "contact_type", "meetingorevent"),
+                            new CheckBoxField(this,"Job Followup", "contact_type", "job"),
+                            new CheckBoxField(this,"Saved Search Email", "contact_type", "pssemail"),
+                            ],
+      fields = {"prm": [new TextField(this, "Report Name", "report_name", true),
                         new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: "04/14/2015"}),
                         new StateField(this, "State", 'state', false, 'IN'),
-                        new TextField(this, "City", "city", false)]};
-
+                        new TextField(this, "City", "city", false),
+                        new CheckListField(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
+                        new FilteredList(this, "Partners", "partner", false),
+                        new FilteredList(this, "Contacts", "contact", false)
+  ]};
 
   return fields[types[0]];
 };
 
 
-Report.prototype.renderFields = function(renderAt, fields) {
+Report.prototype.renderFields = function(renderAt, fields, clear) {
   var $renderAt = $(renderAt),
       field,
       i;
 
   // Clear what is currently in the container.
-  $renderAt.html("");
+  if (clear) {
+    $renderAt.html("");
+  }
 
   // for field in fields render.
   for (i = 0; i < fields.length; i++) {
@@ -70,7 +83,7 @@ Report.prototype.hasErrors = function() {
 Report.prototype.save = function() {
   var errors;
 
-  this.fields.every(function(field) {
+  this.fields.map(function(field) {
     field.validate();
   });
 
@@ -84,7 +97,7 @@ Report.prototype.save = function() {
     });
     return false;
   } else {
-    this.fields.every(function(field) {
+    this.fields.map(function(field) {
       field.onSave();
     });
   }
@@ -124,7 +137,7 @@ var Field = function(report, label, id, required, defaultVal, helpText) {
 
 
 Field.prototype.renderLabel = function() {
-  return '<label for="' + this.id + '">' + this.label + (this.required ? '<span style="color: red;">*</span>' : '') + '</label>';
+  return '<label for="' + this.id + '">' + this.label + (this.required ? '<span style="color: #990000;">*</span>' : '') + '</label>';
 };
 
 
@@ -139,12 +152,13 @@ Field.prototype.currentVal = function() {
 
 
 // TODO: Document namespacing for binding events.
-Field.prototype.bind = function(event, callback) {
-  if (typeof callback !== "function") {
-    throw "Callback parameter expecting function.";
+Field.prototype.bind = function(event, selector, callback) {
+  if (arguments.length === 2) {
+    callback = selector;
+    selector = undefined;
   }
 
-  $(this.dom()).on(event, function(e) {
+  $(this.dom()).on(event, selector, function(e) {
     callback(e);
   });
 
@@ -165,12 +179,12 @@ Field.prototype.showErrors = function() {
       $showModal = $("#show-modal");
 
   if (this.errors.length) {
-    if (!$field.parent('div.required').length) {
+    if (!$field.parent("div.required").length) {
       $field.wrap('<div class="required"></div>');
     }
 
-    if (!$field.prev('.show-errors').length) {
-      $field.before('<div class="show-errors">' + this.errors.join(',') + '</div>');
+    if (!$field.prev(".show-errors").length) {
+      $field.before('<div class="show-errors">' + this.errors.join(', ') + '</div>');
     } else {
       $field.prev().html(this.errors.join(','));
     }
@@ -183,8 +197,8 @@ Field.prototype.removeErrors = function() {
   var $field = $(this.dom()),
       $showModal = $("#show-modal");
 
-  if ($field.parent('div.required').length) {
-    $field.prev('.show-errors').remove();
+  if ($field.parent("div.required").length) {
+    $field.prev(".show-errors").remove();
     $field.unwrap();
   }
 
@@ -219,7 +233,6 @@ Field.prototype.onSave = function() {
   data[this.id] = this.currentVal();
   return data;
 };
-
 
 var TextField = function(report, label, id, required, defaultVal, helpText) {
   Field.call(this, report, label, id, required, defaultVal, helpText);
@@ -257,6 +270,130 @@ TextField.prototype.bindEvents = function() {
   this.bind("change.trim", trim);
 };
 
+var CheckBoxField = function(report, label, name, defaultVal, checked, helpText) {
+  this.checked = typeof checked === 'undefined' ? true : checked;
+  this.name = name;
+  id = name + '_' + defaultVal;
+
+  Field.call(this, report, label, id, false, defaultVal, helpText);
+};
+
+CheckBoxField.prototype = Object.create(Field.prototype);
+
+
+
+CheckBoxField.prototype.render = function(createLabel) {
+  createLabel = typeof createLabel === 'undefined' ? true : createLabel;
+
+  var label = this.renderLabel();
+      field = '<label class="field"><input id="' + this.id + '" name="' + this.name +
+              '" type="checkbox" value="' + this.defaultVal + 
+              (this.checked ? '" checked />' : '" />') + this.label + '</label>';
+      helpText = '<div class="help-text">' + this.helpText + '</div>';
+
+  return (createLabel ? label : '') + field + (this.helpText ? helpText : '');
+};
+
+var CheckListField = function(report, label, id, choices, required, defaultVal, helpText) {
+  this.choices = choices;
+
+  Field.call(this, report, label, id, required, defaultVal, helpText);
+};
+
+CheckListField.prototype = Object.create(Field.prototype);
+
+
+CheckListField.prototype.currentVal = function() {
+  return $.map(this.choices, function(c) {
+    if (c.checked) {
+      return c.currentVal();
+    }
+  });
+};
+
+
+CheckListField.prototype.render = function() {
+  var label = this.renderLabel();
+      html = $.map(this.choices, function(choice) {
+        return choice.render(false);
+      }).join("");
+
+  return label + '<div class="checklist" id="' + this.id + '">' +
+                 '<label style="display: inline;"><input value="all" type="checkbox" checked/ >All</label>' + html +
+                 '</div>';
+};
+
+CheckListField.prototype.bind = function(event, selector, callback) {
+  if (typeof callback !== "function") {
+    throw "Callback parameter expecting function.";
+  }
+
+  $(this.dom()).on(event, selector, function(e) {
+    callback(e);
+  });
+
+  return this;
+};
+
+
+CheckListField.prototype.findChoice = function(choiceID) {
+  return this.choices.filter(function(choice) {
+    return (choice.id == choiceID ? choice : undefined);
+  })[0];
+};
+
+
+CheckListField.prototype.bindEvents = function() {
+  var checklist = this,
+      validate = function(e) {
+        checklist.validate();
+        if (checklist.errors.length) {
+          checklist.showErrors();
+        } else {
+          checklist.removeErrors();
+        }
+      };
+
+  this.bind("change", "[value='all']", function(e) {
+    var $all = $(e.currentTarget);
+        $choices = $(checklist.dom()).find(".field input");
+
+    $choices.prop("checked", $all.is(":checked")).change();
+  });
+
+  this.bind("change", ".field input", function(e) {
+    var $choice = $(e.currentTarget),
+        choices = $(checklist.dom()).find(".field input").toArray(),
+        $all = $(checklist.dom()).find("[value='all']");
+
+    checked = choices.every(function(c) { return $(c).is(":checked"); });
+    $all.prop("checked", checked);
+
+    checklist.findChoice($choice.attr("id")).checked = $choice.is(":checked");
+  });
+
+  this.bind("change.validate", "[value='all']", validate);
+  this.bind("change.validate", ".field input", validate);
+
+};
+
+
+CheckListField.prototype.validate = function() {
+  var err = this.label + " is required",
+      index = this.errors.indexOf(err);
+
+  if (this.required && !this.currentVal().length) {
+    if (index === -1) {
+      this.errors.push(err);
+    }
+  } else {
+    if (index !== -1) {
+      this.errors.splice(index, 1);
+    }
+  }
+
+  return this;
+};
 
 var DateField = function(report, label, id, required, defaultVal, helpText) {
   Field.call(this, report, label, id, required, defaultVal, helpText);
@@ -272,32 +409,45 @@ DateField.prototype.currentVal = function(id) {
 
 DateField.prototype.render = function() {
   var label = this.renderLabel(),
-      dateWidget = $("<div id='" + this.id + "' class='filter-option'><div class='date-picker'></div></div>"),
+      dateWidget = $('<div id="' + this.id + '" class="filter-option"><div class="date-picker"></div></div>'),
       datePicker = $(dateWidget).find(".date-picker"),
-      to = "<span id='activity-to-' class='datepicker'>to</span>",
-      start = "<input id='start-date' class='datepicker picker-left' type='text' value='" + (this.defaultVal ? this.defaultVal.start_date : "") + "' placeholder='Start Date' />",
-      end = "<input id='end-date' class='datepicker picker-right' type='text' value='" + (this.defaultVal ? this.defaultVal.end_date : "")  + "' placeholder='End Date' />";
+      to = '<span id="activity-to-" class="datepicker">to</span>',
+      start = '<input id="start-date" class="datepicker picker-left" type="text" value="' + (this.defaultVal ? this.defaultVal.start_date : "") + '" placeholder="Start Date" />',
+      end = '<input id="end-date" class="datepicker picker-right" type="text" value="' + (this.defaultVal ? this.defaultVal.end_date : "")  + '" placeholder="End Date" />';
 
   datePicker.append(start).append(to).append(end);
   dateWidget.append(datePicker);
   return label + dateWidget.prop("outerHTML");
 };
 
-DateField.prototype.bind = function(event, selector, callback) {
-  if (typeof callback !== "function") {
-    throw "Callback parameter expecting function.";
-  }
 
-  $(this.dom()).on(event, selector, function(e) {
-    callback(e);
+DateField.prototype.validate = function() {
+  var dateField = this,
+      $dom = $(this.dom()),
+      $fields = $dom.find("input.datepicker"), // Both start and end inputs.
+      label,
+      err;
+
+  $.each($fields, function(index, field) {
+    label = $(field).attr('placeholder');
+    err = label + " is required";
+    index = dateField.errors.indexOf(err);
+    if ($(field).val() === "") {
+      if (index === -1) {
+        dateField.errors.push(label + " is required");
+      }
+    } else {
+      if (index !== -1) {
+        dateField.errors.splice(index, 1);
+      }
+    }
   });
-
-  return this;
 };
 
 
 DateField.prototype.bindEvents = function() {
-  var datePicker = function(e) {
+  var dateField = this,
+      datePicker = function(e) {
         var $targeted = $(e.currentTarget);
         $targeted.pickadate({
           format: "mm/dd/yyyy",
@@ -318,9 +468,18 @@ DateField.prototype.bindEvents = function() {
             }
           }
         });
-      };
+    },
+    validate = function(e) {
+      dateField.validate();
+      if (dateField.errors.length) {
+        dateField.showErrors();
+      } else {
+        dateField.removeErrors();
+      }
+    };
 
   this.bind("focus.datepicker", ".datepicker", datePicker);
+  this.bind("change.validate", ".datepicker", validate);
 };
 
 
@@ -360,12 +519,40 @@ StateField.prototype.render = function() {
 };
 
 
+var FilteredList = function(report, label, id, required, defaultVal, helpText) {
+  Field.call(this, report, label, id, required, defaultVal, helpText);
+};
+
+FilteredList.prototype = Object.create(Field.prototype);
+
+
+FilteredList.prototype.renderLabel = function() {
+  return '<div id="'+ this.id +'-header" class="list-header">' +
+         '<input id="' + this.id + '-all-checkbox" type="checkbox" ' + (this.value ? "" : "checked") + ' />' +
+         ' All ' + this.label + ' ' +
+         '<span>(<span class="record-count">0</span> ' + this.label + ' Selected)</span>' +
+         '</div>';
+};
+
+
+FilteredList.prototype.render = function() {
+  var label = this.renderLabel(),
+      body = '<div id="' + this.type + '" class="list-body no-show"></div>';
+  return label + body;
+};
+
+// Capitalize first letter of a string.
+String.prototype.capitalize = function() {
+  return this.charAt(0).toUpperCase() + this.slice(1);
+};
+
+
 $(document).ready(function() {
   $("body").append('<a id="test" class="btn">Click me!</a>').append('<div class="meh"></div>');
   $("#test").on("click", function() {
     $("#container").html("").addClass("rpt-container");
     report = new Report(['prm']);
-    report.renderFields(".rpt-container", report.fields);
+    report.renderFields(".rpt-container", report.fields, true);
   });
 });
 
