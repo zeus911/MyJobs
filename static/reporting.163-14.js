@@ -30,7 +30,7 @@ Report.prototype.createFields = function(types) {
                         new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: "04/14/2015"}),
                         new StateField(this, "State", 'state', false, 'IN'),
                         new TextField(this, "City", "city", false),
-                        new CheckListField(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all')]};
+                        new CheckListField(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
                         new FilteredList(this, "Partners", "partner", false),
                         new FilteredList(this, "Contacts", "contact", false)
   ]};
