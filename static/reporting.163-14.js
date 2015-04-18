@@ -137,7 +137,7 @@ var Field = function(report, label, id, required, defaultVal, helpText) {
 
 
 Field.prototype.renderLabel = function() {
-  return '<label class="rpt" for="' + this.id + '">' + this.label + (this.required ? '<span style="color: #990000;">*</span>' : '') + '</label>';
+  return '<label for="' + this.id + '">' + this.label + (this.required ? '<span style="color: #990000;">*</span>' : '') + '</label>';
 };
 
 
@@ -318,9 +318,9 @@ CheckListField.prototype.render = function() {
         return choice.render(false);
       }).join("");
 
-  return label + '<div id="' + this.id + 
-                 '"><label><input value="all" type="checkbox" checked/ >All' + html +
-                 '</label></div>';
+  return label + '<div class="checklist" id="' + this.id + '">' +
+                 '<label style="display: inline;"><input value="all" type="checkbox" checked/ >All</label>' + html +
+                 '</div>';
 };
 
 CheckListField.prototype.bind = function(event, selector, callback) {

@@ -1471,19 +1471,27 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
     position: relative;
 }
 
-.rpt-container .rpt {
+.rpt-container label {
     font-size: 16px;
     font-weight: 700;
     color: #5e6c82;
 }
 
-.rpt-container .field {
+.checklist label {
     display: inline;
+    font-size: 14px;
+    font-weight: normal;
+    color: #333;
 }
 
-.rpt-container input[type="checkbox"] {
+.checklist input {
     margin: 5px;
 }
+
+.checklist input:first-of-type {
+  margin-left: 0;
+}
+
 .rpt-container span.datepicker {
     margin: -1px;
 }
