@@ -43,7 +43,7 @@ from import_jobs import add_jobs, delete_by_guid
 from transform import transform_for_postajob
 
 from myblocks.views import BlockView
-from myblocks.models import Page
+from myblocks.models import SearchResultBlock, Page
 from myblocks import context_tools
 from seo.templatetags.seo_extras import facet_text, smart_truncate
 from seo.breadbox import Breadbox
@@ -76,6 +76,25 @@ items down to what we actually need.
 LOG = logging.getLogger('views')
 
 
+def find_page(request, page_type):
+    page = None
+    if request.user.is_authenticated() and request.user.is_staff:
+        page = Page.objects.filter(sites=settings.SITE,
+                                   status=Page.STAGING,
+                                   page_type=page_type).first()
+
+    if not page:
+        page = Page.objects.filter(sites=settings.SITE,
+                                   status=Page.PRODUCTION,
+                                   page_type=page_type).first()
+
+    if not page:
+        page = Page.objects.filter(sites__pk=1,
+                                   status=Page.PRODUCTION,
+                                   page_type=page_type).first()
+    return page
+
+
 class FallbackBlockView(BlockView):
     page_type = Page.SEARCH_RESULTS
     fallback = None
@@ -97,21 +116,7 @@ class FallbackBlockView(BlockView):
         return super(FallbackBlockView, self).post(request, *args, **kwargs)
 
     def set_page(self, request):
-        page = None
-        if request.user.is_authenticated() and request.user.is_staff:
-            page = Page.objects.filter(sites=settings.SITE,
-                                       status=Page.STAGING,
-                                       page_type=self.page_type).first()
-
-        if not page:
-            page = Page.objects.filter(sites=settings.SITE,
-                                       status=Page.PRODUCTION,
-                                       page_type=self.page_type).first()
-
-        if not page:
-            page = Page.objects.filter(sites__pk=1,
-                                       status=Page.PRODUCTION,
-                                       page_type=self.page_type).first()
+        page = find_page(request, self.page_type)
         setattr(self, 'page', page)
 
 
@@ -260,6 +265,21 @@ def ajax_get_facets(request, filter_path, facet_type):
 
 
 def ajax_get_jobs(request, filter_path):
+    # Allow for a SearchResult block to handle the requests if
+    # there is a SearchResult block associated with a SEARCH_RESULTS
+    # page for this site.
+    page = find_page(request, Page.SEARCH_RESULTS)
+    if page:
+        search_result_block = None
+        for block in page.all_blocks():
+            if isinstance(block, SearchResultBlock):
+                search_result_block = block
+                break
+
+        if search_result_block:
+            return HttpResponse(search_result_block.render_for_ajax(request))
+
+
     GET = request.GET
     # TODO: let's put the site_config onto the request object
     site_config = get_site_config(request)
@@ -314,62 +334,11 @@ def ajax_get_jobs(request, filter_path):
         'site_commitments_string': sitecommit_str,
         'site_tags': settings.SITE_TAGS
     }
+
     return render_to_response('listing_items.html',
                               data_dict,
                               context_instance=RequestContext(request),
                               content_type='text/html')
-
-
-def ajax_get_jobs_search(request):
-    """
-    Return async requests for more jobs on search result pages.
-
-    """
-    # This has a significant amount of overlap with the search_results
-    # view. Definitely a candidate for refactoring these two together.
-    site_config = get_site_config(request)
-    sqs = helpers.prepare_sqs_from_search_params(request.GET)
-    try:
-        offset = int(request.GET.get(u'offset', 0))
-    except ValueError:
-        offset = 0
-    try:
-        pagesize = int(site_config.num_job_items_to_show)
-    except ValueError:
-        pagesize = 0
-    sort_order = request.REQUEST.get('sort', 'relevance')
-    default_jobs = helpers.get_jobs(default_sqs=sqs,
-                                    custom_facets=settings.DEFAULT_FACET,
-                                    exclude_facets=settings.FEATURED_FACET,
-                                    jsids=settings.SITE_BUIDS,
-                                    facet_limit=pagesize, sort_order=sort_order)
-
-    featured_jobs = helpers.get_featured_jobs(default_sqs=sqs,
-                                              jsids=settings.SITE_BUIDS,
-                                              facet_limit=pagesize,
-                                              sort_order=sort_order)
-
-    (num_featured_jobs, num_default_jobs, featured_offset, default_offset) = \
-        helpers.featured_default_jobs(featured_jobs.count(),
-                                      default_jobs.count(),
-                                      pagesize,
-                                      site_config.percent_featured,
-                                      offset)
-
-    sitecommit_str = helpers.make_specialcommit_string(settings.COMMITMENTS.all())
-
-    data_dict = {
-        'default_jobs': default_jobs[default_offset:default_offset+num_default_jobs],
-        'featured_jobs': featured_jobs[featured_offset:featured_offset+num_featured_jobs],
-        'site_config': site_config,
-        'title_term': request.GET.get('q') or '\*',
-        'site_commitments_string': sitecommit_str
-    }
-
-    return render_to_response('listing_items.html',
-                              data_dict,
-                              context_instance=RequestContext(request),
-                              content_type="text/html")
 
 
 def robots_txt(request):

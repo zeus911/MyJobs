@@ -31,6 +31,16 @@ except InvalidCacheBackendError:
     blocks_cache = cache.get_cache('default')
 
 
+def templatetag_library():
+    """
+    Supplies any templatetags necessary for page rendering.
+
+    """
+    templatetags = (['{% load seo_extras %}', '{% load i18n %}',
+                    '{% load highlight %}', '{% load humanize %}', ])
+    return mark_safe(' '.join(templatetags))
+
+
 def raw_base_head(obj):
     """
     Gets the base head template for an object if one exists.
@@ -292,7 +302,7 @@ class MoreButtonBlock(Block):
         }
 
     def required_js(self):
-        return ['%spager.160-29.js' % settings.STATIC_URL]
+        return ['%spager.163-13.js' % settings.STATIC_URL]
 
 
 class RegistrationBlock(Block):
@@ -379,7 +389,7 @@ class SearchFilterBlock(Block):
         }
 
     def required_js(self):
-        return ['%spager.160-29.js' % settings.STATIC_URL]
+        return ['%spager.163-13.js' % settings.STATIC_URL]
 
 
 class SearchResultBlock(Block):
@@ -401,6 +411,51 @@ class SearchResultBlock(Block):
             'site_tags': settings.SITE_TAGS,
             'title_term': context_tools.get_title_term(request),
         }
+
+    def render_for_ajax(self, request, **kwargs):
+        """
+        Gets the template for a SearchResultBlock and renders it.
+        Results are cached in the blocks_cache using render_cache_prefix
+        as the cache key.
+
+        """
+        key = self.render_cache_prefix(request)
+        rendered_template = blocks_cache.get(key)
+        if rendered_template:
+            return rendered_template
+        context = self.context(request, **kwargs)
+        template = Template("%s %s" % (templatetag_library(), self.template))
+        rendered_template = template.render(RequestContext(request, context))
+        blocks_cache.set(key, rendered_template, settings.MINUTES_TO_CACHE*60)
+        return rendered_template
+
+    def render_cache_prefix(self, request):
+        """
+        Combines the current domain, the SearchResultBlock, the current path,
+        the current query string, the current site configuration,
+        and all business units for the current site into a
+        single string and then hashes it.
+
+        This can be used as a cache key for a Page. It will be change any
+        time any block, row, page, or configuration is updated.
+
+        """
+        domain = None
+        if request.user.is_authenticated() and request.user.is_staff:
+            domain = request.REQUEST.get('domain')
+        if domain is None:
+            domain = request.get_host()
+
+        block = '%s::%s' % (self.pk, self.updated)
+        path = request.path
+        query_string = context_tools.get_query_string(request)
+        config = context_tools.get_site_config(request)
+        config = '%s::%s' % (config.pk, config.revision)
+        buids = [str(buid) for buid in getattr(settings, 'SITE_BUIDS', [])]
+        buids = '#'.join(buids)
+        key = '###'.join([block, path, query_string, config,
+                          buids, domain]).encode('utf-8')
+        return hashlib.sha1(key).hexdigest()
 
 
 class SearchResultHeaderBlock(Block):
@@ -486,7 +541,9 @@ class Row(models.Model):
 class Page(models.Model):
     base_template = 'myblocks/myblocks_base.html'
     base_head = 'myblocks/head/page.html'
+    templatetag_library = templatetag_library()
 
+    AJAX_JOBS = 'ajax_jobs'
     ERROR_404 = '404'
     HOME_PAGE = 'home_page'
     JOB_DETAIL = 'job_detail'
@@ -610,7 +667,7 @@ class Page(models.Model):
         admin.
 
         """
-        return ''.join(self.sites.values_list('domain', flat=True))
+        return ', '.join(self.sites.values_list('domain', flat=True))
     human_readable_sites.short_description = 'Sites'
 
     def human_readable_status(self):
@@ -687,15 +744,6 @@ class Page(models.Model):
         key = '###'.join([page, path, query_string, config, blocks, rows,
                           buids, domain]).encode('utf-8')
         return hashlib.sha1(key).hexdigest()
-
-    def templatetag_library(self):
-        """
-        Supplies any templatetags necessary for page rendering.
-
-        """
-        templatetags = ['{% load seo_extras %}', '{% load i18n %}',
-                        '{% load highlight %}', '{% load humanize %}', ]
-        return ' '.join(templatetags)
 
     def to_js_tag(self, js_file):
         """

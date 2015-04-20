@@ -11,7 +11,8 @@ from myprofile.forms import generate_custom_widgets
 from mypartners.models import (Contact, Partner, ContactRecord, PRMAttachment,
                                ADDITION, CHANGE, MAX_ATTACHMENT_MB, Tag,
                                Location)
-from mypartners.helpers import log_change, get_attachment_link, tag_get_or_create
+from mypartners.helpers import (log_change, get_attachment_link,
+                                prm_worthy, tag_get_or_create)
 from mypartners.widgets import (MultipleFileField,
                                 SplitDateTimeDropDownField, TimeDropDownField)
 from universal.forms import NormalizedModelForm
@@ -307,14 +308,17 @@ class PartnerForm(NormalizedModelForm):
             for choice in choices:
                 if choice[0] == kwargs['instance'].primary_contact_id:
                     choices.insert(0, choices.pop(choices.index(choice)))
+
             if not kwargs['instance'].primary_contact:
                 choices.insert(0, ('', "No Primary Contact"))
             else:
                 choices.append(('', "No Primary Contact"))
         else:
             choices.insert(0, ('', "No Primary Contact"))
+
         self.fields['primary_contact'] = forms.ChoiceField(
-            label="Primary Contact", required=False, initial=choices[0][0],
+            label="Primary Contact", required=False,
+            initial=unicode(choices[0][0]),
             choices=choices)
 
         init_tags(self)
@@ -408,7 +412,8 @@ class ContactRecordForm(NormalizedModelForm):
                 label="Contact Type")
 
         self.fields["contact_name"] = forms.ChoiceField(
-            widget=forms.Select(), choices=choices, label="Contact")
+            widget=forms.Select(), choices=choices, label="Contact",
+            initial=unicode(choices[0][0]))
 
         # If there are attachments create a checkbox option to delete them.
         if instance:
@@ -540,3 +545,13 @@ class LocationForm(NormalizedModelForm):
     states.insert(0, ('', 'Select a State'))
     state = forms.ChoiceField(
         widget=forms.Select(), choices=states, label='State')
+
+    def save(self, request, commit=True):
+        new_or_change = CHANGE if self.instance.pk else ADDITION
+
+        instance = super(LocationForm, self).save(commit)
+        _, partner, _ = prm_worthy(request)
+        log_change(instance, self, request.user, partner, instance.label,
+                   action_type=new_or_change)
+
+        return instance
