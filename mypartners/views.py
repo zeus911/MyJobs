@@ -397,7 +397,7 @@ def edit_partner_tag(request):
 
     if request.POST:
         data = {'id': request.GET.get('id')}
-        tag = Tag.objects.from_search(company).filter(**data).first()
+        tag = Tag.objects.from_search(company, data).first()
         form = TagForm(instance=tag, auto_id=False, data=request.POST)
 
         if form.is_valid():
