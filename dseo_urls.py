@@ -88,11 +88,6 @@ from myjobs.views import Testimonials
 
 urlpatterns += patterns(
     '',
-    url(r'^(?P<page>about|privacy|contact|contact-faq)/',
-        secure_redirect),
-    # /terms/ is the only page out of these five mentioned by name.
-    url(r'^(?P<page>terms)/',
-        secure_redirect, name='terms'),
     url(r'^account/$',
         RedirectView.as_view(url='https://secure.my.jobs/account/edit')),
     url(r'^candidates/$',
@@ -104,6 +99,13 @@ urlpatterns += patterns(
     url(r'^accounts/', include('registration.urls')),
     url(r'^about/testimonials/$', Testimonials.as_view(), name='testimonials'),
 )
+
+for page in ['about', 'privacy', 'contact', 'contact-faq', 'terms']:
+    urlpatterns += patterns(
+        '',
+        url(r'^{page}/'.format(page=page), secure_redirect, {'page': page},
+            name=page)
+    )
 
 urlpatterns += patterns(
     'myjobs.views',
