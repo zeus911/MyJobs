@@ -273,9 +273,9 @@ TextField.prototype.bindEvents = function() {
 var CheckBoxField = function(report, label, name, defaultVal, checked, helpText) {
   this.checked = typeof checked === 'undefined' ? true : checked;
   this.name = name;
-  id = name + '_' + defaultVal;
+  this.id = name + '_' + defaultVal;
 
-  Field.call(this, report, label, id, false, defaultVal, helpText);
+  Field.call(this, report, label, this.id, false, defaultVal, helpText);
 };
 
 CheckBoxField.prototype = Object.create(Field.prototype);
@@ -285,10 +285,10 @@ CheckBoxField.prototype = Object.create(Field.prototype);
 CheckBoxField.prototype.render = function(createLabel) {
   createLabel = typeof createLabel === 'undefined' ? true : createLabel;
 
-  var label = this.renderLabel();
+  var label = this.renderLabel(),
       field = '<label class="field"><input id="' + this.id + '" name="' + this.name +
               '" type="checkbox" value="' + this.defaultVal + 
-              (this.checked ? '" checked />' : '" />') + this.label + '</label>';
+              (this.checked ? '" checked />' : '" />') + this.label + '</label>',
       helpText = '<div class="help-text">' + this.helpText + '</div>';
 
   return (createLabel ? label : '') + field + (this.helpText ? helpText : '');
@@ -313,13 +313,13 @@ CheckListField.prototype.currentVal = function() {
 
 
 CheckListField.prototype.render = function() {
-  var label = this.renderLabel();
+  var label = this.renderLabel(),
       html = $.map(this.choices, function(choice) {
         return choice.render(false);
-      }).join("");
+      }).join("  ");
 
   return label + '<div class="checklist" id="' + this.id + '">' +
-                 '<label style="display: inline;"><input value="all" type="checkbox" checked/ >All</label>' + html +
+                 '<label style="display: inline;"><input value="all" type="checkbox" checked/ >All</label>  ' + html +
                  '</div>';
 };
 
@@ -355,7 +355,7 @@ CheckListField.prototype.bindEvents = function() {
       };
 
   this.bind("change", "[value='all']", function(e) {
-    var $all = $(e.currentTarget);
+    var $all = $(e.currentTarget),
         $choices = $(checklist.dom()).find(".field input");
 
     $choices.prop("checked", $all.is(":checked")).change();
@@ -364,7 +364,8 @@ CheckListField.prototype.bindEvents = function() {
   this.bind("change", ".field input", function(e) {
     var $choice = $(e.currentTarget),
         choices = $(checklist.dom()).find(".field input").toArray(),
-        $all = $(checklist.dom()).find("[value='all']");
+        $all = $(checklist.dom()).find("[value='all']"),
+        checked;
 
     checked = choices.every(function(c) { return $(c).is(":checked"); });
     $all.prop("checked", checked);
