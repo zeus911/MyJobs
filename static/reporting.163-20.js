@@ -97,8 +97,8 @@ Report.prototype.save = function() {
     });
     return false;
   } else {
-    this.fields.map(function(field) {
-      field.onSave();
+    this.data = this.fields.map(function(field) {
+      return field.onSave();
     });
   }
   return true;
@@ -559,6 +559,7 @@ TagField.prototype.bindEvents = function() {
           // Initialize list of suggested tag names.
           suggestions;
 
+      $.ajaxSettings.traditional = true;
       $.ajax({
         type: "GET",
         url: "/reports/ajax/mypartners/tag",
@@ -579,6 +580,15 @@ TagField.prototype.bindEvents = function() {
       });
     }
   });
+};
+
+
+TagField.prototype.onSave = function() {
+  var data = {};
+  // Split on commas. Trim each element in array. Remove any elements that were blank strings.
+  // #2proud2linebreak
+  data.tags = this.currentVal().split(",").map(function(t) {return t.trim();}).filter(function(t) { if (!!t) {return t;} });
+  return data;
 };
 
 
