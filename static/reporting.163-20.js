@@ -17,8 +17,6 @@ var Report = function(types) {
 };
 
 
-
-
 Report.prototype.createFields = function(types) {
   var yesterday = (function(d){d.setDate(d.getDate() - 1); return d; })(new Date),
       contactTypeChoices = [new CheckBoxField(this, "Email", "contact_type", "email"),
@@ -31,6 +29,7 @@ Report.prototype.createFields = function(types) {
                         new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
                         new StateField(this, "State", 'state', false),
                         new TextField(this, "City", "city", false),
+                        new TagField(this, "Tags", "tag", false, undefined, "Use commas for multiple tags."),
                         new CheckListField(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
                         new FilteredList(this, "Partners", "partner", false),
                         new FilteredList(this, "Contacts", "contact", false)
@@ -519,6 +518,13 @@ StateField.prototype.render = function() {
   })();
   return label + '<div class="state"></div>';
 };
+
+
+var TagField = function(report, label, id, required, defaultVal, helpText) {
+  TextField.call(this, report, label, id, required, defaultVal, helpText);
+};
+
+TagField.prototype = Object.create(TextField.prototype);
 
 
 var FilteredList = function(report, label, id, required, defaultVal, helpText) {
