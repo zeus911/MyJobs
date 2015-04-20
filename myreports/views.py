@@ -215,6 +215,22 @@ class ReportView(View):
 
 
 @company_has_access('prm_access')
+def regenerate(request):
+    if request.method == 'GET':
+        report_id = request.GET.get('id', 0)
+        report = get_object_or_404(
+            get_model('myreports', 'report'), pk=report_id)
+
+        report.regenerate()
+
+        return HttpResponse("Report successfully regenerated",
+                            content_type='text/csv')
+
+    raise Http404(
+        "This view is only reachable via a GET request.")
+
+
+@company_has_access('prm_access')
 def downloads(request):
     report_id = request.GET.get('id', 0)
     report = get_object_or_404(
