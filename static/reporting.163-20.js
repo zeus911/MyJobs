@@ -24,11 +24,11 @@ Report.prototype.createFields = function(types) {
                             new CheckBoxField(this,"Phone Call", "contact_type", "phone"),
                             new CheckBoxField(this,"Meeting or Event", "contact_type", "meetingorevent"),
                             new CheckBoxField(this,"Job Followup", "contact_type", "job"),
-                            new CheckBoxField(this,"Saved Search Email", "contact_type", "pssemail"),
+                            new CheckBoxField(this,"Saved Search Email", "contact_type", "pssemail")
                             ],
-      fields = {"prm": [new TextField(this, "Report Name", "report_name", true),
+      fields = {"prm": [new TextField(this, "Report Name", "report_name", true, formatDate(new Date())),
                         new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: "04/14/2015"}),
-                        new StateField(this, "State", 'state', false, 'IN'),
+                        new StateField(this, "State", 'state', false),
                         new TextField(this, "City", "city", false),
                         new CheckListField(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
                         new FilteredList(this, "Partners", "partner", false),
@@ -562,4 +562,27 @@ $(document).ready(function() {
 function isIE() {
     var myNav = navigator.userAgent.toLowerCase();
     return (myNav.indexOf('msie') !== -1) ? parseInt(myNav.split('msie')[1]) : false;
+}
+
+
+function formatDate(date) {
+  var year = date.getFullYear(),
+      month = date.getMonth(),
+      day = date.getDate(),
+      hours = date.getHours(),
+      minutes = date.getMinutes(),
+      seconds = date.getSeconds(),
+      milliseconds = date.getMilliseconds();
+
+  function turnTwoDigit(value) {
+    return value < 10 ? "0" + value : value;
+  }
+
+  month = turnTwoDigit(parseInt(month) + 1);
+  day = turnTwoDigit(day);
+  hours = turnTwoDigit(hours);
+  minutes = turnTwoDigit(minutes);
+  seconds = turnTwoDigit(seconds);
+
+  return year + "-" + month + "-" + day + "_" + hours + ":" + minutes + ":" + seconds + "." + milliseconds;
 }
