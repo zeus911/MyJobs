@@ -10,6 +10,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.conf import settings
 from django.core.cache import cache
 from django.contrib.flatpages.models import FlatPage
+from django.contrib.redirects.models import Redirect
 from django.template import Template, Context
 from django.template import RequestContext as TemplateContext
 from django.test.client import RequestFactory
@@ -34,7 +35,7 @@ from seo import helpers
 from seo.tests.setup import (connection, DirectSEOBase, DirectSEOTestCase,
                              patch_settings)
 from seo.models import (BusinessUnit, Company, Configuration, CustomPage,
-                        SeoSite, SeoSiteFacet, SiteTag, User)
+                        SeoSite, SeoSiteFacet, SiteTag, User, SeoSiteRedirect)
 from seo.tests import factories
 import solr_settings
 from universal.helpers import build_url
@@ -2622,3 +2623,33 @@ class ProtectedSiteTestCase(DirectSEOBase):
         # Confirm that the key does in fact bypass the protected site.
         self.assertFalse(hasattr(response, 'redirect_chain'))
         self.assertEqual(response.request['PATH_INFO'], '/jobs/')
+
+
+class StaticPageOverrideTests(DirectSEOTestCase):
+    def setUp(self):
+        super(StaticPageOverrideTests, self).setUp()
+        self.site = SeoSite.objects.get()
+
+    def test_non_network_redirects(self):
+        """
+        Non-network sites either 404 on certain pages or redirect elsewhere
+        if an entry exists in the Django redirects app for a given path/domain.
+        """
+        response = self.client.get('/about/', HTTP_HOST=self.site.domain)
+        self.assertEqual(response.status_code, 404)
+
+        redirect = Redirect.objects.create(site=self.site, old_path='/about/',
+                                           new_path='http://example.com')
+
+        response = self.client.get('/about/', HTTP_HOST=self.site.domain)
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response['Location'], redirect.new_path)
+
+    def test_network_redirects(self):
+        """
+        Network sites redirect to secure.my.jobs for certain paths.
+        """
+        self.site.site_tags.add(SiteTag.objects.create(site_tag='network'))
+        response = self.client.get('/about/', HTTP_HOST=self.site.domain)
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response['Location'], 'https://secure.my.jobs/about')
