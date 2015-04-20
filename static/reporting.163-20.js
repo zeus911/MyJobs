@@ -137,7 +137,7 @@ var Field = function(report, label, id, required, defaultVal, helpText) {
 
 
 Field.prototype.renderLabel = function() {
-  return '<label for="' + this.id + '">' + this.label + (this.required ? '<span style="color: #990000;">*</span>' : '') + '</label>';
+  return '<label class="big-blu" for="' + this.id + '">' + this.label + (this.required ? '<span style="color: #990000;">*</span>' : '') + '</label>';
 };
 
 
@@ -538,8 +538,37 @@ FilteredList.prototype.renderLabel = function() {
 
 FilteredList.prototype.render = function() {
   var label = this.renderLabel(),
-      body = '<div id="' + this.type + '" class="list-body no-show"></div>';
+      body = '<div id="' + this.id + '" class="list-body no-show"></div>';
+  this.filter();
   return label + body;
+};
+
+
+FilteredList.prototype.filter = function() {
+  var data = {},
+      filteredList = this;
+
+  if (this.id === "partner") {
+    // annotate how many records a partner has.
+    $.extend(data, {count: "contactrecord",
+                    values: ["pk", "name", "count"],
+                    order_by: ["name"]}
+    );
+  } else if (this.id === "contact") {
+    $.extend(data, {values: ["name", "email"], order_by: "name"});
+  }
+
+  $.ajaxSettings.traditional = true;
+  $.ajax({
+    type: "GET",
+    url: "/reports/ajax/mypartners/" + this.id,
+    data: data,
+    success: function(data) {
+      $(".list-body#" + filteredList.id).append('<ul><li>' + data.map(function(element) {
+        return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name + '</label>';
+      }).join("</li><li>") + '</li></ul>').removeClass("no-show");
+    }
+  });
 };
 
 // Capitalize first letter of a string.

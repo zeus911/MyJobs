@@ -1471,10 +1471,18 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
     position: relative;
 }
 
-.rpt-container label {
+.rpt-container .big-blu {
     font-size: 16px;
     font-weight: 700;
     color: #5e6c82;
+}
+
+.list-body label {
+    margin-bottom: 0;
+}
+
+.list-body label:hover {
+    cursor: pointer;
 }
 
 .checklist label {
