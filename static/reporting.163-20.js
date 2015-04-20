@@ -81,9 +81,10 @@ Report.prototype.hasErrors = function() {
 
 
 Report.prototype.save = function() {
-  var errors;
+  var report = this,
+      errors;
 
-  this.fields.map(function(field) {
+  this.fields.forEach(function(field) {
     field.validate();
   });
 
@@ -92,13 +93,13 @@ Report.prototype.save = function() {
   });
 
   if (errors.length) {
-    errors.every(function(field) {
+    errors.forEach(function(field) {
       field.showErrors();
     });
     return false;
   } else {
-    this.data = this.fields.map(function(field) {
-      return field.onSave();
+    this.fields.forEach(function(field) {
+      $.extend(report.data, field.onSave());
     });
   }
   return true;
