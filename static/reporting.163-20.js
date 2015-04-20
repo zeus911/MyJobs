@@ -20,14 +20,15 @@ var Report = function(types) {
 
 
 Report.prototype.createFields = function(types) {
-  var contactTypeChoices = [new CheckBoxField(this, "Email", "contact_type", "email"),
+  var yesterday = (function(d){d.setDate(d.getDate() - 1); return d; })(new Date),
+      contactTypeChoices = [new CheckBoxField(this, "Email", "contact_type", "email"),
                             new CheckBoxField(this,"Phone Call", "contact_type", "phone"),
                             new CheckBoxField(this,"Meeting or Event", "contact_type", "meetingorevent"),
                             new CheckBoxField(this,"Job Followup", "contact_type", "job"),
                             new CheckBoxField(this,"Saved Search Email", "contact_type", "pssemail")
                             ],
-      fields = {"prm": [new TextField(this, "Report Name", "report_name", true, formatDate(new Date())),
-                        new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: "04/14/2015"}),
+      fields = {"prm": [new TextField(this, "Report Name", "report_name", true, reportNameDateFormat(new Date())),
+                        new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
                         new StateField(this, "State", 'state', false),
                         new TextField(this, "City", "city", false),
                         new CheckListField(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
@@ -594,7 +595,7 @@ function isIE() {
 }
 
 
-function formatDate(date) {
+function reportNameDateFormat(date) {
   var year = date.getFullYear(),
       month = date.getMonth(),
       day = date.getDate(),
@@ -603,10 +604,6 @@ function formatDate(date) {
       seconds = date.getSeconds(),
       milliseconds = date.getMilliseconds();
 
-  function turnTwoDigit(value) {
-    return value < 10 ? "0" + value : value;
-  }
-
   month = turnTwoDigit(parseInt(month) + 1);
   day = turnTwoDigit(day);
   hours = turnTwoDigit(hours);
@@ -614,4 +611,21 @@ function formatDate(date) {
   seconds = turnTwoDigit(seconds);
 
   return year + "-" + month + "-" + day + "_" + hours + ":" + minutes + ":" + seconds + "." + milliseconds;
+}
+
+
+function dateFieldFormat(date) {
+  var day = date.getDate(),
+      month = date.getMonth(),
+      year = date.getFullYear();
+
+  day = turnTwoDigit(day);
+  month = turnTwoDigit(parseInt(month) + 1);
+
+  return month + "/" + day + "/" + year;
+}
+
+
+function turnTwoDigit(value) {
+  return value < 10 ? "0" + value : value;
 }
