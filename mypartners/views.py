@@ -413,7 +413,7 @@ def edit_partner_tag(request):
                                       RequestContext(request))
     else:
         data = {'id': request.GET.get('id')}
-        tag = Tag.objects.from_search(company).filter(**data).first()
+        tag = Tag.objects.from_search(company, data).first()
         form = TagForm(instance=tag, auto_id=False)
 
         ctx = {
@@ -487,7 +487,7 @@ def delete_partner_tag(request):
     company = get_company_or_404(request)
 
     data = {'id': request.GET.get('id')}
-    tag = Tag.objects.from_search(company).filter(**data).first()
+    tag = Tag.objects.from_search(company, data).first()
     tag.delete()
 
     return HttpResponseRedirect(reverse('partner_tagging'))
@@ -1341,9 +1341,9 @@ def tag_names(request):
     if request.method == 'GET':
         company = get_company_or_404(request)
         value = request.GET.get('value')
-        data = {'name__icontains': value}
-        tag_names = list(Tag.objects.from_search(company).filter(
-            **data).values_list('name', flat=True))
+        data = {'name': value}
+        tag_names = list(Tag.objects.from_search(company, data).values_list(
+            'name', flat=True))
         tag_names = sorted(tag_names, key=lambda x: x if not x.startswith(value) else "-" + x)
         return HttpResponse(json.dumps(tag_names))
 
@@ -1354,8 +1354,8 @@ def tag_color(request):
         company = get_company_or_404(request)
         name = request.GET.get('name')
         data = {'name': name}
-        tag_color = list(Tag.objects.from_search(company).filter(
-            **data).values_list('hex_color', flat=True))
+        tag_color = list(Tag.objects.from_search(company, data).values_list(
+            'hex_color', flat=True))
         return HttpResponse(json.dumps(tag_color))
 
 
