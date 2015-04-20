@@ -359,7 +359,6 @@ def saved_search_widget(request):
                         content_type='text/javascript')
 
 
-@user_is_allowed(SavedSearch, pk_name='id')
 @user_passes_test(lambda u: u.is_superuser)
 def send_saved_search(request):
     if settings.DEBUG:
