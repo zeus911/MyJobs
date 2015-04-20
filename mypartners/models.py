@@ -128,9 +128,6 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
         return field_type
 
-    def for_comapny(self, company):
-        return self.from_search(company=company)
-
 
 class SearchParameterManager(models.Manager):
     def __init__(self, *args, **kwargs):
@@ -145,9 +142,6 @@ class SearchParameterManager(models.Manager):
 
     def sort_by(self, *fields):
         return self.get_query_set().sort_by(*fields)
-
-    def for_comapny(self, company):
-        return self.from_search(company=company)
 
 
 class Location(models.Model):
