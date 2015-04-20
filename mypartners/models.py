@@ -128,6 +128,9 @@ class SearchParameterQuerySet(models.query.QuerySet):
 
         return field_type
 
+    def for_comapny(self, company):
+        return self.from_search(company=company)
+
 
 class SearchParameterManager(models.Manager):
     def __init__(self, *args, **kwargs):
@@ -136,12 +139,15 @@ class SearchParameterManager(models.Manager):
     def get_query_set(self):
         return SearchParameterQuerySet(self.model, using=self._db)
 
-    def from_search(self, company, parameters):
+    def from_search(self, company=None, parameters=None):
         return self.get_query_set().from_search(
             company, parameters)
 
     def sort_by(self, *fields):
         return self.get_query_set().sort_by(*fields)
+
+    def for_comapny(self, company):
+        return self.from_search(company=company)
 
 
 class Location(models.Model):
@@ -830,16 +836,6 @@ class ContactLogEntry(models.Model):
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
 
 
-class TagManager(models.Manager):
-    def for_company(self, company, **kwargs):
-        tag_kwargs = {
-            'company': company,
-        }
-        tag_kwargs.update(kwargs)
-
-        return self.filter(**tag_kwargs)
-
-
 class Tag(models.Model):
     name = models.CharField(max_length=255)
     hex_color = models.CharField(max_length=6, default="d4d4d4", blank=True)
@@ -848,7 +844,7 @@ class Tag(models.Model):
     created_on = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
 
-    objects = TagManager()
+    objects = SearchParameterManager()
 
     def __unicode__(self):
         return "%s for %s" % (self.name, self.company.name)
