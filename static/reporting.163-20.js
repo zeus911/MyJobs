@@ -119,10 +119,51 @@ Report.prototype.events = function() {
     saved = report.save();
 
     if (saved) {
-      body.html();
+      body.html(report.readableData());
       modal.modal("show");
     }
   });
+};
+
+
+Report.prototype.readableData = function(d) {
+  var data = d || this.data,
+      html = '',
+      items,
+      value,
+      key,
+      i;
+
+  for (key in data) {
+    if (data.hasOwnProperty(key)) {
+      html += "<div>";
+      value = data[key];
+
+      // Replace all '_' instances with spaces
+      key = key.replace(/_/g, " ");
+
+      if (value && value.length) {
+        console.log(key, "Passed", value.length);
+        html += '<label>' + key.capitalize() + ':</label>';
+      }
+
+      // If value is an object (aka an array).
+      if (typeof value === "object" && value !== null && value.length) {
+        items = [];
+
+        for (i = 0; i < value.length; i++) {
+          //items.push($("#" + key + " input[value='" + value[i] + "']").next("span").html());
+          items.push(value[i]);
+        }
+
+        html += '<ul class="short-list"><li>' + items.join('</li><li>') + '</li></ul>';
+      } else {
+        html += value;
+      }
+      html += '</div>';
+    }
+  }
+  return html;
 };
 
 
