@@ -103,7 +103,7 @@ TEMPLATE_CONTEXT_PROCESSORS += (
 SOLR = {
     'all': 'http://ec2-23-20-67-65.compute-1.amazonaws.com:8983/solr/myjobs_test/',
     'current': 'http://ec2-23-20-67-65.compute-1.amazonaws.com:8983/solr/myjobs_test_current/',
-    }
+}
 
 ABSOLUTE_URL = '/'
 
