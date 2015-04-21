@@ -38,8 +38,8 @@ Report.prototype.createFields = function(types) {
                         new TextField(this, "City", "city", false),
                         new TagField(this, "Tags", "tag", false, undefined, "Use commas for multiple tags."),
                         new CheckList(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
-                        new FilteredList(this, "Partners", "partner", true, ['report_name']),
-                        new FilteredList(this, "Contacts", "contact", true, ['report_name'])
+                        new FilteredList(this, "Partners", "partner", true, ['report_name', 'partner', 'contact']),
+                        new FilteredList(this, "Contacts", "contact", true, ['report_name', 'contact', 'count'])
   ]};
 
   return fields[types[0]];
@@ -440,9 +440,12 @@ DateField.prototype.validate = function() {
         dateField.errors.splice(index, 1);
         dateField.removeErrors();
       }
-      dateField.report.extendData(dateField.onSave());
     }
   });
+
+  if (!dateField.errors.length) {
+    dateField.report.extendData(dateField.onSave());
+  }
 
   return this;
 };
@@ -615,8 +618,13 @@ FilteredList.prototype.render = function() {
 
 
 FilteredList.prototype.filter = function() {
-  var filteredList = this,
-  data = filteredList.report.data || {};
+  var filteredList = this;
+
+  filteredList.ignore.forEach(function(element) {
+    filteredList.report.data[element] = void 0;
+  });
+
+  var data = filteredList.report.data || {};
 
   if (this.id === "partner") {
     // annotate how many records a partner has.
@@ -625,7 +633,6 @@ FilteredList.prototype.filter = function() {
                     order_by: "name"}
     );
   } else if (this.id === "contact") {
-    delete data.count;
     $.extend(data, {values: ["pk", "name", "email"], order_by: "name"});
   }
 
@@ -715,6 +722,9 @@ FilteredList.prototype.validate = function() {
       this.removeErrors();
     }
   }
+
+  console.log(this.onSave());
+  this.report.extendData(this.onSave());
 
   return this;
 };

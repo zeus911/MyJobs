@@ -87,8 +87,6 @@ def view_records(request, app, model):
     Output:
        A JSON response containing the records queried for.
     """
-    view_records.count += 1
-    print view_records.count
     if request.is_ajax() and request.method == 'GET':
         company = get_company_or_404(request)
 
@@ -122,7 +120,6 @@ def view_records(request, app, model):
         return response
     else:
         raise Http404("This view is only reachable via an AJAX GET request.")
-view_records.count = 0
 
 
 @company_has_access('prm_access')
