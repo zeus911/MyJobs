@@ -213,16 +213,20 @@ Field.prototype.removeErrors = function() {
 
 
 Field.prototype.validate = function() {
-  var err = this.label + " is required",
+  console.log(this);
+  var $field = $(this.dom()),
+      err = this.label + " is required",
       index = this.errors.indexOf(err);
 
   if (this.required && this.currentVal().trim() === "") {
     if (index === -1) {
       this.errors.push(err);
+      this.showErrors();
     }
   } else {
     if (index !== -1) {
       this.errors.splice(index, 1);
+      this.removeErrors();
     }
   }
 
@@ -256,20 +260,15 @@ TextField.prototype.render = function() {
 TextField.prototype.bindEvents = function() {
   var textField = this,
       $field = $(textField.dom()),
-      validate = function() {
-        textField.validate();
-        if (textField.errors.length) {
-          textField.showErrors();
-        } else {
-          textField.removeErrors();
-        }
-      },
       trim = function() {
         var value = $field.val().trim();
         $field.val(value);
       };
 
-  this.bind("change.validate", validate);
+  this.bind("change.validate", function(e) {
+    textField.validate();
+  });
+
   this.bind("change.trim", trim);
 };
 
@@ -335,15 +334,7 @@ CheckListField.prototype.findChoice = function(choiceID) {
 
 
 CheckListField.prototype.bindEvents = function() {
-  var checklist = this,
-      validate = function(e) {
-        checklist.validate();
-        if (checklist.errors.length) {
-          checklist.showErrors();
-        } else {
-          checklist.removeErrors();
-        }
-      };
+  var checklist = this;
 
   this.bind("change", "[value='all']", function(e) {
     var $all = $(e.currentTarget),
@@ -364,8 +355,13 @@ CheckListField.prototype.bindEvents = function() {
     checklist.findChoice($choice.attr("id")).checked = $choice.is(":checked");
   });
 
-  this.bind("change.validate", "[value='all']", validate);
-  this.bind("change.validate", ".field input", validate);
+  this.bind("change.validate", "[value='all']", function(e) {
+    checklist.validate();
+  });
+
+  this.bind("change.validate", ".field input", function(e) {
+    checklist.validate();
+  });
 
 };
 
@@ -377,10 +373,12 @@ CheckListField.prototype.validate = function() {
   if (this.required && !this.currentVal().length) {
     if (index === -1) {
       this.errors.push(err);
+      this.showErrors();
     }
   } else {
     if (index !== -1) {
       this.errors.splice(index, 1);
+      this.removeErrors();
     }
   }
 
@@ -427,13 +425,17 @@ DateField.prototype.validate = function() {
     if ($(field).val() === "") {
       if (index === -1) {
         dateField.errors.push(label + " is required");
+        dateField.showErrors();
       }
     } else {
       if (index !== -1) {
         dateField.errors.splice(index, 1);
+        dateField.removeErrors();
       }
     }
   });
+
+  return this;
 };
 
 
@@ -460,18 +462,12 @@ DateField.prototype.bindEvents = function() {
             }
           }
         });
-    },
-    validate = function(e) {
-      dateField.validate();
-      if (dateField.errors.length) {
-        dateField.showErrors();
-      } else {
-        dateField.removeErrors();
-      }
     };
 
   this.bind("focus.datepicker", ".datepicker", datePicker);
-  this.bind("change.validate", ".datepicker", validate);
+  this.bind("change.validate", ".datepicker", function(e) {
+    dateField.validate();
+  });
 };
 
 
@@ -652,15 +648,7 @@ FilteredList.prototype.bindEvents = function() {
   var filteredList = this,
       $header = $('#' + filteredList.id + '-header'),
       $recordCount = $header.find(".record-count"),
-      $all = $header.find("input"),
-      validate = function(e) {
-        filteredList.validate();
-        if (filteredList.errors.length) {
-          filteredList.showErrors();
-        } else {
-          filteredList.removeErrors();
-        }
-      };
+      $all = $header.find("input");
 
   $header.find("input").on("change", function() {
     var $choices = $(filteredList.dom()).find("input");
@@ -678,8 +666,13 @@ FilteredList.prototype.bindEvents = function() {
     $recordCount.text(filteredList.currentVal().length);
   });
 
-  $all.on("change", validate);
-  $(this.dom()).bind("change", "input", validate);
+  $all.on("change", function(e) {
+    filteredList.validate();
+  });
+
+  $(this.dom()).bind("change", "input", function(e) {
+    filteredList.validate();
+  });
 };
 
 FilteredList.prototype.validate = function() {
@@ -689,12 +682,16 @@ FilteredList.prototype.validate = function() {
   if (this.required && !this.currentVal().length) {
     if (index === -1) {
       this.errors.push(err);
+      this.showErrors();
     }
   } else {
     if (index !== -1) {
       this.errors.splice(index, 1);
+      this.removeErrors();
     }
   }
+
+  return this;
 };
 
 // Capitalize first letter of a string.
