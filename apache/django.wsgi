@@ -11,8 +11,12 @@ if PROJECT_DIR_PARENT not in sys.path:
     sys.path.append(PROJECT_DIR_PARENT)
 
 os.environ['CELERY_LOADER'] = 'django'
-os.environ['DJANGO_SETTINGS_MODULE'] = 'deploy.settings.dseo_staging'
 
 import django.core.handlers.wsgi
-application = django.core.handlers.wsgi.WSGIHandler()
-application = newrelic.agent.wsgi_application()(application)
+_application = django.core.handlers.wsgi.WSGIHandler()
+_application = newrelic.agent.wsgi_application()(_application)
+
+
+def application(environ, start_response):
+    os.environ['DJANGO_SETTINGS_MODULE'] = environ['DJANGO_SETTINGS_MODULE']
+    return _application(environ, start_response)
