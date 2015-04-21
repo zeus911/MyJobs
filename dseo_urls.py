@@ -27,18 +27,20 @@ handler404 = Dseo404.as_view()
 handler500 = 'seo.views.search_views.dseo_500'
 
 # Custom Admin URLs
-urlpatterns = patterns('seo.views.search_views',
+urlpatterns = patterns(
+    'seo.views.search_views',
     url(r'^admin/groupsites/$', 'get_group_sites'),
     url(r'^admin/grouprelationships/$', 'get_group_relationships'),
 )
 
-urlpatterns += patterns('',
+urlpatterns += patterns(
+    '',
     url(r'^admin/', include(admin.site.urls)),
     url('', include('seo.urls.search_urls', app_name='seo')),
     url('settings/', include('seo.urls.settings_urls')),
     url('^mocmaps/', include('moc_coding.urls', app_name='moc_coding')),
     url(r'^logout/$', 'django.contrib.auth.views.logout', {'next_page': '/'},
-        name='auth_logout'),
+    name='auth_logout'),
     url(r'^posting/', include('postajob.urls', app_name='postajob')),
 )
 
@@ -68,7 +70,7 @@ urlpatterns += patterns(
         RedirectView.as_view(url='https://secure.my.jobs/saved-search/view')),
     url(r'^accounts/', include('registration.urls')),
     url(r'^about/testimonials/$', Testimonials.as_view(), name='testimonials'),
-
+)
 
 for page in ['about', 'privacy', 'contact', 'contact-faq', 'terms']:
     urlpatterns += patterns(
@@ -94,4 +96,3 @@ urlpatterns += patterns(
     '',
     url(r'^message/', include('mymessages.urls'))
 )
-
