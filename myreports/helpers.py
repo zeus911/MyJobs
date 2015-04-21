@@ -103,6 +103,7 @@ def serialize(fmt, data, counts=None, values=None, order_by=None):
 
     * Currently, only count with values passed in manually through `counts`.
     """
+
     if isinstance(data, query.QuerySet):
         data = [dict({'pk': record['pk']}, **record['fields'])
                 for record in serializers.serialize(

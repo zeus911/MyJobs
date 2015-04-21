@@ -4,6 +4,8 @@ import string
 import urllib
 import uuid
 from django.db.models import Q
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 import pytz
 
@@ -270,7 +272,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                                            help_text=_('Checking this allows '
                                                        'employers to send '
                                                        'emails to you.'))
-    
+
     last_response = models.DateField(default=datetime.datetime.now, blank=True)
 
     # Password Settings
@@ -371,7 +373,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             hashlib.md5(self.gravatar.lower()).hexdigest() + "?"
         gravatar_url += urllib.urlencode({'d': GRAVATAR_URL_DEFAULT,
                                           's': str(size)})
-        
+
         if urllib.urlopen(gravatar_url).getcode() == 404:
             # Determine background color for initials block based on the
             # same formula used for profile completion bars.
@@ -422,7 +424,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     def disable(self):
         self.is_disabled = True
         self.save()
-        
+
         custom_signals.user_disabled.send(sender=self, user=self,
                                           email=self.email)
 
@@ -431,7 +433,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         Updates the percent of modules in
         settings.PROFILE_COMPLETION_MODULES that a user has completed.
         """
-        profile_dict = self.profileunits_set.all()        
+        profile_dict = self.profileunits_set.all()
         num_complete = len(list(set([unit.get_model_name() for unit
                            in profile_dict if unit.get_model_name()
                            in settings.PROFILE_COMPLETION_MODULES])))
@@ -458,8 +460,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_messages(self):
         """
-        Gathers Messages based on user, user's groups and if message has started
-        and is not expired.
+        Gathers Messages based on user, user's groups and if message has
+        started and is not expired.
 
         Outputs:
         :active_messages:   A list of messages that starts before the current
@@ -589,7 +591,9 @@ class User(AbstractBaseUser, PermissionsMixin):
             # send notification email
             message = render_to_string(
                 "mysearches/email_opt_out.html",
-                {'user': self, 'partner': pss.partner, 'company': pss.provider})
+                {'user': self,
+                 'partner': pss.partner,
+                 'company': pss.provider})
 
             headers = {
                 'X-SMTPAPI': '{"category": "Partner Saved Search Opt Out '
@@ -603,7 +607,9 @@ class User(AbstractBaseUser, PermissionsMixin):
             # create PRM message
             body = render_to_string(
                 "mysearches/email_opt_out_message.html",
-                {'user': self, 'partner': pss.partner, 'company': pss.provider})
+                {'user': self,
+                 'partner': pss.partner,
+                 'company': pss.provider})
             Message.objects.create_message(
                 subject, body, users=[pss.created_by])
 
@@ -631,6 +637,18 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         return not packages.exists() or packages.filter(
             owner__in=self.company_set.all()).exists()
+
+
+@receiver(pre_delete, sender=User, dispatch_uid='pre_delete_user')
+def delete_user(sender, instance, using, **kwargs):
+    """
+    Fakes a combination of SET_NULL and CASCADE on_delete handlers. The user's
+    saved searches will be deleted and partner saved searches will have the
+    user nullified.
+    """
+    instance.savedsearch_set.filter(partnersavedsearch__isnull=False).update(
+        user=None)
+    instance.savedsearch_set.filter(partnersavedsearch__isnull=True).delete()
 
 
 class EmailLog(models.Model):
