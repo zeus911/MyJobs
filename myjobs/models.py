@@ -649,7 +649,8 @@ def delete_user(sender, instance, using, **kwargs):
     from mysearches.models import PartnerSavedSearch
     instance.send_opt_out_notifications()
     PartnerSavedSearch.objects.filter(user=instance).update(
-        user=None, is_active=False, unsubscribed=True)
+        user=None, is_active=False, unsubscribed=True,
+        unsubscriber=instance.email)
     instance.savedsearch_set.filter(partnersavedsearch__isnull=True).delete()
 
 
