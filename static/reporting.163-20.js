@@ -26,11 +26,11 @@ Report.prototype.extendData = function(data) {
 
 Report.prototype.createFields = function(types) {
   var yesterday = (function(d){d.setDate(d.getDate() - 1); return d; })(new Date),
-      contactTypeChoices = [new CheckBoxField(this, "Email", "contact_type", "email"),
-                            new CheckBoxField(this,"Phone Call", "contact_type", "phone"),
-                            new CheckBoxField(this,"Meeting or Event", "contact_type", "meetingorevent"),
-                            new CheckBoxField(this,"Job Followup", "contact_type", "job"),
-                            new CheckBoxField(this,"Saved Search Email", "contact_type", "pssemail")
+      contactTypeChoices = [new CheckBox(this, "Email", "contact_type", "email"),
+                            new CheckBox(this,"Phone Call", "contact_type", "phone"),
+                            new CheckBox(this,"Meeting or Event", "contact_type", "meetingorevent"),
+                            new CheckBox(this,"Job Followup", "contact_type", "job"),
+                            new CheckBox(this,"Saved Search Email", "contact_type", "pssemail")
                             ],
       fields = {"prm": [new TextField(this, "Report Name", "report_name", true, reportNameDateFormat(new Date())),
                         new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
@@ -224,6 +224,36 @@ Field.prototype.unbind = function(event) {
 };
 
 
+Field.prototype.onSave = function() {
+  var data = {};
+  data[this.id] = this.currentVal();
+
+  return data;
+};
+
+
+Field.prototype.validate = function() {
+  var $field = $(this.dom()),
+      err = this.label + " is required",
+      index = this.errors.indexOf(err);
+
+  if (this.required && this.currentVal().trim() === "") {
+    if (index === -1) {
+      this.errors.push(err);
+      this.showErrors();
+    }
+  } else {
+    if (index !== -1) {
+      this.errors.splice(index, 1);
+      this.removeErrors();
+    }
+    this.report.extendData(this.onSave());
+  }
+
+  return this;
+};
+
+
 Field.prototype.showErrors = function() {
   var $field = $(this.dom()),
       $showModal = $("#show-modal");
@@ -260,35 +290,6 @@ Field.prototype.removeErrors = function() {
 };
 
 
-Field.prototype.validate = function() {
-  var $field = $(this.dom()),
-      err = this.label + " is required",
-      index = this.errors.indexOf(err);
-
-  if (this.required && this.currentVal().trim() === "") {
-    if (index === -1) {
-      this.errors.push(err);
-      this.showErrors();
-    }
-  } else {
-    if (index !== -1) {
-      this.errors.splice(index, 1);
-      this.removeErrors();
-    }
-    this.report.extendData(this.onSave());
-  }
-
-  return this;
-};
-
-
-Field.prototype.onSave = function() {
-  var data = {};
-  data[this.id] = this.currentVal();
-
-  return data;
-};
-
 var TextField = function(report, label, id, required, defaultVal, helpText) {
   Field.call(this, report, label, id, required, defaultVal, helpText);
 };
@@ -320,7 +321,8 @@ TextField.prototype.bindEvents = function() {
   this.bind("change.trim", trim);
 };
 
-var CheckBoxField = function(report, label, name, defaultVal, checked, helpText) {
+
+var CheckBox = function(report, label, name, defaultVal, checked, helpText) {
   this.checked = typeof checked === 'undefined' ? true : checked;
   this.name = name;
   this.id = name + '_' + defaultVal;
@@ -328,11 +330,10 @@ var CheckBoxField = function(report, label, name, defaultVal, checked, helpText)
   Field.call(this, report, label, this.id, false, defaultVal, helpText);
 };
 
-CheckBoxField.prototype = Object.create(Field.prototype);
+CheckBox.prototype = Object.create(Field.prototype);
 
 
-
-CheckBoxField.prototype.render = function(createLabel) {
+CheckBox.prototype.render = function(createLabel) {
   createLabel = typeof createLabel === 'undefined' ? true : createLabel;
 
   var label = this.renderLabel(),
@@ -361,17 +362,6 @@ var CheckList = function(report, label, id, choices, required, defaultVal, helpT
 CheckList.prototype = Object.create(Field.prototype);
 
 
-CheckList.prototype.currentVal = function() {
-  var values = $.map(this.choices, function(c) {
-    if (c.checked) {
-      return c.currentVal();
-    }
-  });
-
-  return values.length ? values : ["0"];
-};
-
-
 CheckList.prototype.render = function() {
   var label = this.renderLabel(),
       html = $.map(this.choices, function(choice) {
@@ -381,6 +371,17 @@ CheckList.prototype.render = function() {
   return label + '<div class="checklist" id="' + this.id + '">' +
                  '<label style="display: inline;"><input value="all" type="checkbox" checked/ >All</label>  ' + html +
                  '</div>';
+};
+
+
+CheckList.prototype.currentVal = function() {
+  var values = $.map(this.choices, function(c) {
+    if (c.checked) {
+      return c.currentVal();
+    }
+  });
+
+  return values.length ? values : ["0"];
 };
 
 
@@ -434,16 +435,12 @@ CheckList.prototype.validate = function() {
   return this;
 };
 
+
 var DateField = function(report, label, id, required, defaultVal, helpText) {
   Field.call(this, report, label, id, required, defaultVal, helpText);
 };
 
 DateField.prototype = Object.create(Field.prototype);
-
-
-DateField.prototype.currentVal = function(id) {
-  return $(this.dom()).find("#" + id).val();
-};
 
 
 DateField.prototype.render = function() {
@@ -457,6 +454,11 @@ DateField.prototype.render = function() {
   datePicker.append(start).append(to).append(end);
   dateWidget.append(datePicker);
   return label + dateWidget.prop("outerHTML");
+};
+
+
+DateField.prototype.currentVal = function(id) {
+  return $(this.dom()).find("#" + id).val();
 };
 
 
@@ -769,6 +771,7 @@ FilteredList.prototype.validate = function() {
 
   return this;
 };
+
 
 // Capitalize first letter of a string.
 String.prototype.capitalize = function() {
