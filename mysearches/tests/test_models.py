@@ -14,7 +14,7 @@ from myjobs.tests.factories import UserFactory
 from mypartners.models import ContactRecord
 from mypartners.tests.factories import PartnerFactory, ContactFactory
 from myprofile.tests.factories import PrimaryNameFactory
-from mysearches.models import SavedSearch, SavedSearchLog
+from mysearches.models import SavedSearch, SavedSearchLog, PartnerSavedSearch
 from mysearches.templatetags.email_tags import get_activation_link
 from mysearches.tests.local.fake_feed_data import jobs, no_jobs
 from mysearches.tests.factories import (SavedSearchFactory,
@@ -648,3 +648,9 @@ class SavedSearchDeletionTests(MyJobsBase):
         with self.assertRaises(SavedSearch.DoesNotExist):
             SavedSearch.objects.get(pk=self.search.pk)
         SavedSearch.objects.get(pk=self.partner_search.pk)
+
+    def test_delete_user_unsubscribes_and_deactivates(self):
+        self.user.delete()
+        search = PartnerSavedSearch.objects.get(pk=self.partner_search.pk)
+        self.assertFalse(search.is_active)
+        self.assertTrue(search.unsubscribed)

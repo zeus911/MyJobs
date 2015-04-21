@@ -646,8 +646,10 @@ def delete_user(sender, instance, using, **kwargs):
     saved searches will be deleted and partner saved searches will have the
     user nullified.
     """
-    instance.savedsearch_set.filter(partnersavedsearch__isnull=False).update(
-        user=None)
+    from mysearches.models import PartnerSavedSearch
+    instance.send_opt_out_notifications()
+    PartnerSavedSearch.objects.filter(user=instance).update(
+        user=None, is_active=False, unsubscribed=True)
     instance.savedsearch_set.filter(partnersavedsearch__isnull=True).delete()
 
 
