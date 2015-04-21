@@ -17,8 +17,6 @@ var Report = function(types) {
 };
 
 
-
-
 Report.prototype.createFields = function(types) {
   var yesterday = (function(d){d.setDate(d.getDate() - 1); return d; })(new Date),
       contactTypeChoices = [new CheckBoxField(this, "Email", "contact_type", "email"),
@@ -31,6 +29,7 @@ Report.prototype.createFields = function(types) {
                         new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
                         new StateField(this, "State", 'state', false),
                         new TextField(this, "City", "city", false),
+                        new TagField(this, "Tags", "tag", false, undefined, "Use commas for multiple tags."),
                         new CheckListField(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
                         new FilteredList(this, "Partners", "partner", true),
                         new FilteredList(this, "Contacts", "contact", true)
@@ -82,9 +81,10 @@ Report.prototype.hasErrors = function() {
 
 
 Report.prototype.save = function() {
-  var errors;
+  var report = this,
+      errors;
 
-  this.fields.map(function(field) {
+  this.fields.forEach(function(field) {
     field.validate();
   });
 
@@ -93,13 +93,13 @@ Report.prototype.save = function() {
   });
 
   if (errors.length) {
-    errors.every(function(field) {
+    errors.forEach(function(field) {
       field.showErrors();
     });
     return false;
   } else {
-    this.fields.map(function(field) {
-      field.onSave();
+    this.fields.forEach(function(field) {
+      $.extend(report.data, field.onSave());
     });
   }
 
@@ -519,6 +519,78 @@ StateField.prototype.render = function() {
     });
   })();
   return label + '<div class="state"></div>';
+};
+
+
+var TagField = function(report, label, id, required, defaultVal, helpText) {
+  TextField.call(this, report, label, id, required, defaultVal, helpText);
+};
+
+TagField.prototype = Object.create(TextField.prototype);
+
+
+TagField.prototype.bindEvents = function() {
+  var $dom = $(this.dom());
+  $dom.autocomplete({
+    focus: function() {
+      // Prevent value inserted on focus.
+      return false;
+    },
+    select: function(event, ui) {
+      // Split string by "," then trim whitespace on either side of all inputs.
+      var inputs = this.value.split(",").map(function(i) {return i.trim();});
+
+      // Remove last element of inputs. Typically is an unfinished string.
+      inputs.pop();
+      // Add selected item from autocomplete
+      inputs.push(ui.item.value);
+      // Add placeholder for join to create an extra ", " for UX goodness.
+      inputs.push("");
+      // Combine everything in inputs with ", ".
+      this.value = inputs.join(", ");
+
+      // If there are any inputs already in the field make sure default functionality doesn't run.
+      if (inputs.length) {
+        return false;
+      }
+    },
+    source: function(request, response) {
+      var inputs = request.term.split(",").map(function(i) {return i.trim();}),
+          // Last element is always going to be what is being searched for.
+          keyword = inputs.pop(),
+          // Initialize list of suggested tag names.
+          suggestions;
+
+      $.ajaxSettings.traditional = true;
+      $.ajax({
+        type: "GET",
+        url: "/reports/ajax/mypartners/tag",
+        data: {name: keyword, values: ["pk", "name"], order_by: ["name"]},
+        success: function(data) {
+          suggestions = data.filter(function(d) {
+            // Don't suggest things that are already selected.
+            if (inputs.indexOf(d.name) === -1) {
+              return d;
+            }
+          }).map(function(d) {
+            // Only care about name string.
+            return d.name;
+          });
+
+          response(suggestions);
+        }
+      });
+    }
+  });
+};
+
+
+TagField.prototype.onSave = function() {
+  var data = {};
+  // Split on commas. Trim each element in array. Remove any elements that were blank strings.
+  // #2proud2linebreak
+  data.tags = this.currentVal().split(",").map(function(t) {return t.trim();}).filter(function(t) { if (!!t) {return t;} });
+  return data;
 };
 
 
