@@ -32,8 +32,8 @@ Report.prototype.createFields = function(types) {
                         new StateField(this, "State", 'state', false),
                         new TextField(this, "City", "city", false),
                         new CheckListField(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
-                        new FilteredList(this, "Partners", "partner", false),
-                        new FilteredList(this, "Contacts", "contact", false)
+                        new FilteredList(this, "Partners", "partner", true),
+                        new FilteredList(this, "Contacts", "contact", true)
   ]};
 
   return fields[types[0]];
@@ -102,6 +102,7 @@ Report.prototype.save = function() {
       field.onSave();
     });
   }
+
   return true;
 };
 
@@ -556,7 +557,7 @@ FilteredList.prototype.filter = function() {
                     order_by: ["name"]}
     );
   } else if (this.id === "contact") {
-    $.extend(data, {values: ["name", "email"], order_by: "name"});
+    $.extend(data, {values: ["pk", "name", "email"], order_by: "name"});
   }
 
   $.ajaxSettings.traditional = true;
@@ -565,11 +566,74 @@ FilteredList.prototype.filter = function() {
     url: "/reports/ajax/mypartners/" + this.id,
     data: data,
     success: function(data) {
+      $recordCount = $('#' + filteredList.id + '-header').find(".record-count");
       $(".list-body#" + filteredList.id).append('<ul><li>' + data.map(function(element) {
-        return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name + '</label>';
+        return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name + 
+               '<span class="pull-right">' + (filteredList.id === 'partner' ? element.count : "") + '</label>';
       }).join("</li><li>") + '</li></ul>').removeClass("no-show");
+  
+      $recordCount.text(filteredList.currentVal().length);
     }
   });
+};
+
+
+FilteredList.prototype.currentVal = function() {
+  return $.map($(this.dom()).find("input").toArray(), function(c) {
+    if (c.checked) {
+      return $(c).data("pk");
+    }
+  });
+};
+
+
+FilteredList.prototype.bindEvents = function() {
+  var filteredList = this,
+      $header = $('#' + filteredList.id + '-header'),
+      $recordCount = $header.find(".record-count"),
+      $all = $header.find("input"),
+      validate = function(e) {
+        filteredList.validate();
+        if (filteredList.errors.length) {
+          filteredList.showErrors();
+        } else {
+          filteredList.removeErrors();
+        }
+      };
+
+  $header.find("input").on("change", function() {
+    var $choices = $(filteredList.dom()).find("input");
+
+    $choices.prop("checked", $(this).is(":checked"));
+    $($choices[$choices.length - 1]).change();
+  });
+
+  $(this.dom()).bind("change", "input", function() {
+    var choices = $(filteredList.dom()).find("input").toArray(),
+        checked;
+
+    checked = choices.every(function(c) { return $(c).is(":checked"); });
+    $all.prop("checked", checked);
+    $recordCount.text(filteredList.currentVal().length);
+  });
+
+  $all.on("change", validate);
+  $(this.dom()).bind("change", "input", validate);
+};
+
+FilteredList.prototype.validate = function() {
+  var err = this.label + " is required",
+      index = this.errors.indexOf(err);
+
+  if (this.required && !this.currentVal().length) {
+    if (index === -1) {
+      this.errors.push(err);
+    }
+  } else {
+    if (index !== -1) {
+      this.errors.splice(index, 1);
+    }
+  }
 };
 
 // Capitalize first letter of a string.
