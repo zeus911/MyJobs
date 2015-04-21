@@ -625,3 +625,26 @@ class SavedSearchSendingTests(MyJobsBase):
         self.partner_search.send_email()
         email = mail.outbox.pop()
         self.assertIn('There are no results for today!', email.body)
+
+
+class SavedSearchDeletionTests(MyJobsBase):
+    # Creating an entire test class for this is kind of overkill but it doesn't
+    # fit with any of the others.
+    def setUp(self):
+        super(SavedSearchDeletionTests, self).setUp()
+        self.user = UserFactory()
+        self.creator = UserFactory(email='prm@example.com')
+        self.search = SavedSearchFactory(user=self.user)
+        self.partner_search = PartnerSavedSearchFactory(user=self.user,
+                                                        created_by=self.creator)
+
+    def test_deletion_and_preservation(self):
+        """
+        When a user is deleted, that user's saved searches should be deleted.
+        Partner saved searches should be left alone with the exception of
+        nullifying the recipient.
+        """
+        self.user.delete()
+        with self.assertRaises(SavedSearch.DoesNotExist):
+            SavedSearch.objects.get(pk=self.search.pk)
+        SavedSearch.objects.get(pk=self.partner_search.pk)
