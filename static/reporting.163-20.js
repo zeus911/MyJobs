@@ -343,13 +343,6 @@ CheckList.prototype.render = function() {
 };
 
 
-CheckList.prototype.findChoice = function(choiceID) {
-  return this.choices.filter(function(choice) {
-    return (choice.id == choiceID ? choice : undefined);
-  })[0];
-};
-
-
 CheckList.prototype.bindEvents = function() {
   var checklist = this;
 
@@ -357,7 +350,8 @@ CheckList.prototype.bindEvents = function() {
     var $all = $(e.currentTarget),
         $choices = $(checklist.dom()).find(".field input");
 
-    $choices.prop("checked", $all.is(":checked")).change();
+    $choices.prop("checked", $all.is(":checked"));
+    $($choices[$choices.length - 1]).change();
   });
 
   this.bind("change", ".field input", function(e) {
@@ -369,17 +363,12 @@ CheckList.prototype.bindEvents = function() {
     checked = choices.every(function(c) { return $(c).is(":checked"); });
     $all.prop("checked", checked);
 
-    checklist.findChoice($choice.attr("id")).checked = $choice.is(":checked");
-  });
+    checklist.choices.forEach(function(element) {
+      element.checked = $(element.dom()).is(":checked");
+    });
 
-  this.bind("change.validate", "[value='all']", function(e) {
-    checklist.validate();
+    checklist.validate(); 
   });
-
-  this.bind("change.validate", ".field input", function(e) {
-    checklist.validate();
-  });
-
 };
 
 
@@ -387,8 +376,8 @@ CheckList.prototype.validate = function() {
   var err = this.label + " is required",
       index = this.errors.indexOf(err),
       value = this.currentVal();
-
-  if (this.required && value.length && value.indexOf("0") !== -1) {
+  
+  if (this.required && value.indexOf("0") === 0 && value.length === 1) {
     if (index === -1) {
       this.errors.push(err);
       this.showErrors();
@@ -398,8 +387,8 @@ CheckList.prototype.validate = function() {
       this.errors.splice(index, 1);
       this.removeErrors();
     }
-    this.report.extendData(this.onSave());
   }
+  this.report.extendData(this.onSave());
 
   return this;
 };
