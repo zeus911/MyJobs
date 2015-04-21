@@ -17,6 +17,13 @@ var Report = function(types) {
 };
 
 
+Report.prototype.extendData = function(data) {
+  $.extend(this.data, data);
+
+  $.event.trigger("dataChanged", [data]);
+};
+
+
 Report.prototype.createFields = function(types) {
   var yesterday = (function(d){d.setDate(d.getDate() - 1); return d; })(new Date),
       contactTypeChoices = [new CheckBoxField(this, "Email", "contact_type", "email"),
@@ -30,9 +37,9 @@ Report.prototype.createFields = function(types) {
                         new StateField(this, "State", 'state', false),
                         new TextField(this, "City", "city", false),
                         new TagField(this, "Tags", "tag", false, undefined, "Use commas for multiple tags."),
-                        new CheckListField(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
-                        new FilteredList(this, "Partners", "partner", true),
-                        new FilteredList(this, "Contacts", "contact", true)
+                        new CheckList(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
+                        new FilteredList(this, "Partners", "partner", true, ['report_name']),
+                        new FilteredList(this, "Contacts", "contact", true, ['report_name'])
   ]};
 
   return fields[types[0]];
@@ -99,7 +106,7 @@ Report.prototype.save = function() {
     return false;
   } else {
     this.fields.forEach(function(field) {
-      $.extend(report.data, field.onSave());
+      report.extendData(field.onSave());
     });
   }
 
@@ -213,7 +220,6 @@ Field.prototype.removeErrors = function() {
 
 
 Field.prototype.validate = function() {
-  console.log(this);
   var $field = $(this.dom()),
       err = this.label + " is required",
       index = this.errors.indexOf(err);
@@ -228,6 +234,7 @@ Field.prototype.validate = function() {
       this.errors.splice(index, 1);
       this.removeErrors();
     }
+    this.report.extendData(this.onSave());
   }
 
   return this;
@@ -296,25 +303,35 @@ CheckBoxField.prototype.render = function(createLabel) {
   return (createLabel ? label : '') + field + (this.helpText ? helpText : '');
 };
 
-var CheckListField = function(report, label, id, choices, required, defaultVal, helpText) {
+
+var CheckList = function(report, label, id, choices, required, defaultVal, helpText) {
   this.choices = choices;
+
+  // currentVal doesn't work until field has been rendered
+  data = {};
+  data[id] = choices.map(function(element) {
+    return element.defaultVal;
+  });
+  report.extendData(data);
 
   Field.call(this, report, label, id, required, defaultVal, helpText);
 };
 
-CheckListField.prototype = Object.create(Field.prototype);
+CheckList.prototype = Object.create(Field.prototype);
 
 
-CheckListField.prototype.currentVal = function() {
-  return $.map(this.choices, function(c) {
+CheckList.prototype.currentVal = function() {
+  var values = $.map(this.choices, function(c) {
     if (c.checked) {
       return c.currentVal();
     }
   });
+
+  return values.length ? values : ["0"];
 };
 
 
-CheckListField.prototype.render = function() {
+CheckList.prototype.render = function() {
   var label = this.renderLabel(),
       html = $.map(this.choices, function(choice) {
         return choice.render(false);
@@ -326,14 +343,14 @@ CheckListField.prototype.render = function() {
 };
 
 
-CheckListField.prototype.findChoice = function(choiceID) {
+CheckList.prototype.findChoice = function(choiceID) {
   return this.choices.filter(function(choice) {
     return (choice.id == choiceID ? choice : undefined);
   })[0];
 };
 
 
-CheckListField.prototype.bindEvents = function() {
+CheckList.prototype.bindEvents = function() {
   var checklist = this;
 
   this.bind("change", "[value='all']", function(e) {
@@ -366,11 +383,12 @@ CheckListField.prototype.bindEvents = function() {
 };
 
 
-CheckListField.prototype.validate = function() {
+CheckList.prototype.validate = function() {
   var err = this.label + " is required",
-      index = this.errors.indexOf(err);
+      index = this.errors.indexOf(err),
+      value = this.currentVal();
 
-  if (this.required && !this.currentVal().length) {
+  if (this.required && value.length && value.indexOf("0") !== -1) {
     if (index === -1) {
       this.errors.push(err);
       this.showErrors();
@@ -380,6 +398,7 @@ CheckListField.prototype.validate = function() {
       this.errors.splice(index, 1);
       this.removeErrors();
     }
+    this.report.extendData(this.onSave());
   }
 
   return this;
@@ -432,6 +451,7 @@ DateField.prototype.validate = function() {
         dateField.errors.splice(index, 1);
         dateField.removeErrors();
       }
+      dateField.report.extendData(dateField.onSave());
     }
   });
 
@@ -579,7 +599,9 @@ TagField.prototype.onSave = function() {
 };
 
 
-var FilteredList = function(report, label, id, required, defaultVal, helpText) {
+var FilteredList = function(report, label, id, required, ignore, defaultVal, helpText) {
+  this.ignore = ignore || [];
+
   Field.call(this, report, label, id, required, defaultVal, helpText);
 };
 
@@ -604,16 +626,17 @@ FilteredList.prototype.render = function() {
 
 
 FilteredList.prototype.filter = function() {
-  var data = {},
-      filteredList = this;
+  var filteredList = this,
+  data = filteredList.report.data || {};
 
   if (this.id === "partner") {
     // annotate how many records a partner has.
     $.extend(data, {count: "contactrecord",
                     values: ["pk", "name", "count"],
-                    order_by: ["name"]}
+                    order_by: "name"}
     );
   } else if (this.id === "contact") {
+    delete data.count;
     $.extend(data, {values: ["pk", "name", "email"], order_by: "name"});
   }
 
@@ -624,7 +647,8 @@ FilteredList.prototype.filter = function() {
     data: data,
     success: function(data) {
       $recordCount = $('#' + filteredList.id + '-header').find(".record-count");
-      $(".list-body#" + filteredList.id).append('<ul><li>' + data.map(function(element) {
+      $('.list-body#' + filteredList.id).html("");
+      $('.list-body#' + filteredList.id).append('<ul><li>' + data.map(function(element) {
         return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name + 
                '<span class="pull-right">' + (filteredList.id === 'partner' ? element.count : "") + '</label>';
       }).join("</li><li>") + '</li></ul>').removeClass("no-show");
@@ -672,6 +696,18 @@ FilteredList.prototype.bindEvents = function() {
 
   $(this.dom()).bind("change", "input", function(e) {
     filteredList.validate();
+  });
+
+  // TODO: Figure out how to reduce queries; perhaps by diffing total changes
+  $(document).on("dataChanged", function(e, data) {
+    var callFilter = filteredList.ignore.every(function(element) {
+          return !(element in data);
+        });
+
+    if(callFilter) {
+      filteredList.filter();
+    }
+
   });
 };
 
