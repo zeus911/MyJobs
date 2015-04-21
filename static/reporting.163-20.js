@@ -25,7 +25,7 @@ Report.prototype.extendData = function(data) {
 
 
 Report.prototype.createFields = function(types) {
-  var yesterday = (function(d){d.setDate(d.getDate() - 1); return d; })(new Date),
+  var yesterday = (function(d){d.setDate(d.getDate() - 1); return d; })(new Date()),
       contactTypeChoices = [new CheckBox(this, "Email", "contact_type", "email"),
                             new CheckBox(this,"Phone Call", "contact_type", "phone"),
                             new CheckBox(this,"Meeting or Event", "contact_type", "meetingorevent"),
@@ -36,7 +36,7 @@ Report.prototype.createFields = function(types) {
                         new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
                         new StateField(this, "State", 'state', false),
                         new TextField(this, "City", "city", false),
-                        new TagField(this, "Tags", "tag", false, undefined, "Use commas for multiple tags."),
+                        new TagField(this, "Tags", "tags__name", false, undefined, "Use commas for multiple tags."),
                         new CheckList(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
                         new FilteredList(this, "Partners", "partner", true, ['report_name', 'partner', 'contact']),
                         new FilteredList(this, "Contacts", "contact", true, ['report_name', 'contact', 'count'])
@@ -151,7 +151,6 @@ Report.prototype.readableData = function(d) {
       key = key.replace(/_/g, " ");
 
       if (value && value.length) {
-        console.log(key, "Passed", value.length);
         html += '<label>' + key.capitalize() + ':</label>';
       }
 
@@ -562,7 +561,16 @@ StateField.prototype.render = function() {
 };
 
 
+StateField.prototype.bindEvents = function() {
+	var stateField = this;
+
+	$(document).on("change.validate", "#" + stateField.id, function(e) {
+		stateField.validate();	
+	});
+};
+
 var TagField = function(report, label, id, required, defaultVal, helpText) {
+	self.value = [];
   TextField.call(this, report, label, id, required, defaultVal, helpText);
 };
 
@@ -570,7 +578,9 @@ TagField.prototype = Object.create(TextField.prototype);
 
 
 TagField.prototype.bindEvents = function() {
-  var $dom = $(this.dom());
+  var tagField = this,
+			$dom = $(this.dom());
+
   $dom.autocomplete({
     focus: function() {
       // Prevent value inserted on focus.
@@ -605,7 +615,8 @@ TagField.prototype.bindEvents = function() {
       $.ajax({
         type: "GET",
         url: "/reports/ajax/mypartners/tag",
-        data: {name: keyword, values: ["pk", "name"], order_by: ["name"]},
+				//TODO: New backend changes will fix this monstrocity
+				data: {name: keyword, values: ["name", "pk"], order_by: "name"},
         success: function(data) {
           suggestions = data.filter(function(d) {
             // Don't suggest things that are already selected.
@@ -620,17 +631,31 @@ TagField.prototype.bindEvents = function() {
           response(suggestions);
         }
       });
-    }
+    },
   });
+
+	$dom.on("autocompleteopen", function() {
+		$dom.data("isOpen", true);
+	});
+
+	$dom.on("autocompleteclose", function() {
+		$dom.data("isOpen", false);
+		tagField.value = $dom.val();
+		tagField.validate();
+	});
+
+	$dom.on("change", function() {
+		if(!$dom.data("isOpen")) {
+			tagField.value = $dom.val();
+			tagField.validate();
+		}
+	});
 };
 
-
-TagField.prototype.onSave = function() {
-  var data = {};
+TagField.prototype.currentVal = function() {
   // Split on commas. Trim each element in array. Remove any elements that were blank strings.
   // #2proud2linebreak
-  data.tags = this.currentVal().split(",").map(function(t) {return t.trim();}).filter(function(t) { if (!!t) {return t;} });
-  return data;
+	return this.dom().value.split(",").map(function(t) { return t.trim(); }).filter(function(t) { if (!!t) { return t; } });
 };
 
 
@@ -766,7 +791,6 @@ FilteredList.prototype.validate = function() {
     }
   }
 
-  console.log(this.onSave());
   this.report.extendData(this.onSave());
 
   return this;
