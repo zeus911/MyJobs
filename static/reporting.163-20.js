@@ -233,6 +233,7 @@ Field.prototype.validate = function() {
 Field.prototype.onSave = function() {
   var data = {};
   data[this.id] = this.currentVal();
+
   return data;
 };
 
@@ -323,18 +324,6 @@ CheckListField.prototype.render = function() {
   return label + '<div class="checklist" id="' + this.id + '">' +
                  '<label style="display: inline;"><input value="all" type="checkbox" checked/ >All</label>  ' + html +
                  '</div>';
-};
-
-CheckListField.prototype.bind = function(event, selector, callback) {
-  if (typeof callback !== "function") {
-    throw "Callback parameter expecting function.";
-  }
-
-  $(this.dom()).on(event, selector, function(e) {
-    callback(e);
-  });
-
-  return this;
 };
 
 
