@@ -39,10 +39,6 @@ class About(TemplateView):
     template_name = "about.html"
 
 
-class Testimonials(TemplateView):
-    template_name = "testimonials.html"
-
-
 class Privacy(TemplateView):
     template_name = "privacy-policy.html"
 
