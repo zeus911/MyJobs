@@ -882,9 +882,9 @@ class SearchEditTests(MyPartnersTestCase):
         search = PartnerSavedSearch.objects.get()
 
         self.client.login_user(search.user)
-        data['id'] = search.pk
+        data['search_id'] = search.pk
         data['is_active'] = False
-        recipient_url = self.get_url('edit_search',
+        recipient_url = self.get_url('save_search_form',
                                      id=search.id,
                                      pss=True)
         mail.outbox = []
@@ -893,6 +893,7 @@ class SearchEditTests(MyPartnersTestCase):
         # Edit saved search to toggle status of is_active
         self.client.post(recipient_url, data)
         search = PartnerSavedSearch.objects.get()
+        self.assertTrue(search.unsubscribed)
 
         # This should result in one email...
         email = mail.outbox[0]
