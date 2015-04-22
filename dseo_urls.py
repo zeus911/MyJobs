@@ -5,6 +5,7 @@ from django.views.generic import RedirectView
 
 from seo.views.search_views import (BusinessUnitAdminFilter, SeoSiteAdminFilter,
                                     Dseo404)
+from seo.views.settings_views import secure_redirect
 from registration import views as registration_views
 
 # This is a bit of code pulled from a Django TRAC ticket describing a problem
@@ -55,26 +56,6 @@ urlpatterns = patterns('',
     url('^api/', include(v1_api.urls))
 )
 
-# secure.my.jobs redirects
-urlpatterns += patterns('',
-    url(r'^about/$',
-        RedirectView.as_view(url='https://secure.my.jobs/about')),
-    url(r'^account/$',
-        RedirectView.as_view(url='https://secure.my.jobs/account/edit')),
-    url(r'^candidates/$',
-        RedirectView.as_view(url='https://secure.my.jobs/candidates/view')),
-    url(r'^contact/$',
-        RedirectView.as_view(url='https://secure.my.jobs/contact/')),
-    url(r'^privacy/$',
-        RedirectView.as_view(url='https://secure.my.jobs/privacy/')),
-    url(r'^profile/$',
-        RedirectView.as_view(url='https://secure.my.jobs/profile/view')),
-    url(r'^savedsearch/$',
-        RedirectView.as_view(url='https://secure.my.jobs/saved-search/view')),
-    url(r'^terms/$',
-        RedirectView.as_view(url='https://secure.my.jobs/terms/')),
-    )
-
 # Custom Admin URLs
 urlpatterns += patterns('seo.views.search_views',
     url(r'^admin/groupsites/$', 'get_group_sites'),
@@ -103,18 +84,25 @@ urlpatterns += patterns(
 )
 
 
-from myjobs.views import About, Testimonials, Privacy, Terms
-
 urlpatterns += patterns(
     '',
+    url(r'^account/$',
+        RedirectView.as_view(url='https://secure.my.jobs/account/edit')),
+    url(r'^candidates/$',
+        RedirectView.as_view(url='https://secure.my.jobs/candidates/view')),
+    url(r'^profile/$',
+        RedirectView.as_view(url='https://secure.my.jobs/profile/view')),
+    url(r'^savedsearch/$',
+        RedirectView.as_view(url='https://secure.my.jobs/saved-search/view')),
     url(r'^accounts/', include('registration.urls')),
-    url(r'^about/$', About.as_view(), name='about'),
-    url(r'^about/testimonials/$', Testimonials.as_view(), name='testimonials'),
-    url(r'^privacy/$', Privacy.as_view(), name='privacy'),
-    url(r'^terms/$', Terms.as_view(), name='terms'),
-    url(r'^contact/$', 'contact', name='contact'),
-    url(r'^contact-faq', 'contact_faq', name='contact_faq'),
 )
+
+for page in ['about', 'privacy', 'contact', 'contact-faq', 'terms']:
+    urlpatterns += patterns(
+        '',
+        url(r'^{page}/'.format(page=page), secure_redirect, {'page': page},
+            name=page)
+    )
 
 urlpatterns += patterns(
     'myjobs.views',

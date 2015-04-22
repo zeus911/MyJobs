@@ -224,9 +224,9 @@
 
 {% block analytics_pixel %}
 {% if the_job %}
-    src="http://my.jobs/pixel.gif?{{request|make_pixel_qs:the_job|safe}}"
+    src="//my.jobs/pixel.gif?{{request|make_pixel_qs:the_job|safe}}"
 {% else %}
-    src="http://my.jobs/pixel.gif?{{request|make_pixel_qs|safe}}"
+    src="//my.jobs/pixel.gif?{{request|make_pixel_qs|safe}}"
 {% endif %}/>
 {% endblock %}{# analytics pixel #}
 

@@ -686,9 +686,9 @@ class Page(models.Model):
         return mark_safe("""
             <img style="display: none;" border="0" height="1" width="1" alt="My.jobs"
             {% if the_job %}
-                src="http://my.jobs/pixel.gif?{{request|make_pixel_qs:the_job|safe}}"
+                src="//my.jobs/pixel.gif?{{request|make_pixel_qs:the_job|safe}}"
             {% else %}
-                src="http://my.jobs/pixel.gif?{{request|make_pixel_qs|safe}}"
+                src="//my.jobs/pixel.gif?{{request|make_pixel_qs|safe}}"
             {% endif %}
             />
         """)
