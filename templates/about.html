@@ -5,49 +5,38 @@
 {% endblock site-title%}
 {% block meta-extra %}{% endblock %}
 {% block header %}
-    <h1>.JOBS Overview</h1>
+    <h1>About My.jobs</h1>
 {% endblock header %}
 {% block text %}
 
-    <iframe 
-        src="//player.vimeo.com/video/97523908?title=0&byline=0&portrait=0&color=999999" 
-        width="500" height="281" frameborder="0" 
-        webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
-
     <div>
-        <h2>.JOBS</h2>
-        <p>The .JOBS platform is a Top Level Domain (TLD) that provides an interactive, community-driven network of job related sites.</p>
-            <ul style="margin-top:-15px">
-                <li>Direct connection to hundreds of thousands of jobs from companies like IBM, Conoco Phillips, Newell Rubbermaid, AT&T and hundreds of other large and small organizations.</li>
-                <li>Direct connection to federal, state and local government agencies, educational institutions and non-profit organizations jobs are available.</li>
-                <li>New jobs are added daily with special emphasis on veterans and military, people with disabilities, diversity, green jobs and many others.</li>
-                <li>Share and Follow tabs make it a seamless and intuitive way to utilize social networking within your job search on the .JOBS platform.</li>
-                <li>Many unique personalization tools offer an enhanced experience for all visitors.</li>
-            </ul>
-        <a class="btn" href="http://www.my.jobs/">Search for jobs</a>
+        <p>
+        My.jobs is the hub for the my.jobs network, a system of sites using .jobs top level domain. The goal of 
+        the network is to match those looking for a new job with those who want to hire them. utilizing keywords 
+        and locations as domain names, the network strives to create a page that is relevant to each and every 
+        person, highlighting what is useful and trimming what is not. Thus engineers can start at 
+        <a href="http://engineering.jobs">http://engineering.jobs</a> and Buckeyes can start at 
+        <a href="http://ohio.jobs">http://ohio.jobs</a>, both knowing that jobs they are not interested in have 
+        already been filtered out. Or you can start http://www.my.jobs if you want to see everything.
+        </p><p>
+        My.jobs goal is to match you with the perfect job. We have over 1 million open positions from more than 
+        2000 employers in every US state (and even international positions). Employers on our sites are looking 
+        for you. We want to help you find them in turn.
+         </p>
+        <h2>What My.jobs is Not</h2>
+        <p>
+        My.jobs is not an applicant tracking system. This means you don’t actually apply for a job on the network 
+        site. Instead, when you click on the apply button, you will be directed to the listing on the employer’s 
+        system. This means you only have one application to fill out, and you are removing any middlemen between 
+        you and the employer. 
+        </p><p>
+        My.jobs is also not another social network. Our goal is to provide you tools you need to find and apply 
+        for a job. Extra bells and whistles just get in the way of that, and have been solved elsewhere.
+        </p>        
+        <h2>Who Runs My.jobs</h2>
+        <p>
+        My.jobs is a joint venture of <a href="http://directemployers.org" target="_blank">DirectEmployers Association</a> 
+        and <a href="http://www.goto.jobs" target="_blank">EmployMedia</a>.
+        </p>
     </div>
-
-    <div class="about-section">
-        <h2>About DirectEmployers</h2>
-        <p>Since October 2001, DirectEmployers has been committed to making the connection between employers and job seekers more efficient, quicker and easier, and the .JOBS platform is the next big step.</p>
-        <a class="btn" href="http://www.directemployers.org">About DirectEmployers</a>
-        <a class="btn" href="http://www.directemployers.org/about/member-companies/">Member Companies</a>
-    </div>
-
-    <div class="about-section">
-        <h2>About the .JOBS Top-Level Domain</h2>
-        <p>A place to find interested job seekers. People who are looking for you and your company. It is also a place where you can stay in touch with qualified job seekers, even when you don't have an opening right now.</p>
-        <a class="btn" href="http://www.goto.jobs/">About .JOBS TLD</a>
-    </div>
-
-    <div class="about-section">
-        <h2>Employer Solutions and Resources</h2>
-        <p>The international .JOBS Social Recruiting Platform contains over 40,000 geographical, occupational, and country-name domains ending in the intuitive .JOBS suffix. DirectEmployers Association helps you WIN the war on talent by providing customizable tools necessary to attract and engage relevant candidates, all while providing real-time candidate tracking and analytics during the ­apply process.</p>
-        <a class="btn" href="http://www.my.jobs/employers/">Solutions</a>
-        <a class="btn" href="http://de.nlx.org/pdfs/white-papers/wp-dotjobs.pdf" target="_blank">White Paper</a>
-        <a class="btn" href="http://casestudy.jobs/">Case Studies</a>
-        <a class="btn" href="{% url 'testimonials' %}">Testimonials</a>
-    </div>
-
 {% endblock text %}
-
