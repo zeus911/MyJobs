@@ -25,7 +25,7 @@ Report.prototype.createFields = function(types) {
                             new CheckBox(this,"Job Followup", "contact_type", "job"),
                             new CheckBox(this,"Saved Search Email", "contact_type", "pssemail")
                             ],
-      fields = {"prm": [new TextField(this, "Report Name", "report_name", true, reportNameDateFormat(new Date())),
+      reports = {"prm": [new TextField(this, "Report Name", "report_name", true, reportNameDateFormat(new Date())),
                         new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
                         new StateField(this, "State", 'state', false),
                         new TextField(this, "City", "city", false),
