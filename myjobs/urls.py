@@ -21,7 +21,6 @@ urlpatterns = patterns(
     url(r'^$', 'home', name='login'),
 
     url(r'^about/$', About.as_view(), name='about'),
-    url(r'^about/testimonials/$', Testimonials.as_view(), name='testimonials'),
     url(r'^privacy/$', Privacy.as_view(), name='privacy'),
     url(r'^terms/$', Terms.as_view(), name='terms'),
     url(r'^contact/$', 'contact', name='contact'),
