@@ -1,10 +1,56 @@
-window.onpopstate = function() {
+window.onpopstate = function(event) {
+  var state = event.state,
+      $sidebar = $(".sidebar"),
+      historyNew,
+      historyClone,
+      inputs,
+      report;
 
+  if (state.page && state.page === 'overview') {
+    navigation = false;
+    renderOverview();
+  } else if (state.page && state.page === 'new') {
+    historyNew = function() {
+      report = new Report(state.report.types);
+      $("#container").addClass("rpt-container");
+      report.renderFields(".rpt-container", report.fields, true);
+      renderNavigation();
+    };
+
+    navigation = true;
+    $sidebar.length > 0 ? historyNew() : renderOverview(historyNew);
+  } else if (state.page && state.page === 'view-report') {
+    var callback = function() {
+      renderNavigation(true);
+    };
+    navigation = true;
+    renderGraphs(state.reportId, callback);
+  } else if (state.page && state.page === 'report-archive') {
+    navigation = true;
+    renderArchive(renderNavigation);
+  } else if (state.page && state.page === 'report-download') {
+    renderDownload(state.report);
+  } else if (state.page && state.page === 'clone') {
+    historyClone = function() {
+      inputs = state.inputs;
+      report = new Report(["prm"]);
+      report.createCloneReport(inputs);
+      $("#container").addClass("rpt-container");
+      report.renderFields(".rpt-container", report.fields, true);
+      renderNavigation();
+    };
+
+    navigation = true;
+    $sidebar.length > 0 ? historyClone() : renderOverview(historyClone);
+  }
 };
 
 
 // Determines if IE10+ is being used.
 var modernBrowser = !(isIE() && isIE() < 10);
+
+// Determines if a navigation bar is needed.
+var navigation = false;
 
 
 // Handles storing data, rendering fields, and submitting report. See prototype functions
@@ -13,7 +59,7 @@ var Report = function(types) {
   this.fields = this.createFields(types);
   this.types = types;
 
-  this.events();
+  this.bindEvents();
 };
 
 
@@ -25,27 +71,37 @@ Report.prototype.createFields = function(types) {
                             new CheckBoxField(this,"Job Followup", "contact_type", "job"),
                             new CheckBoxField(this,"Saved Search Email", "contact_type", "pssemail")
                             ],
-      fields = {"prm": [new TextField(this, "Report Name", "report_name", true, reportNameDateFormat(new Date())),
-                        new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
-                        new StateField(this, "State", 'state', false),
-                        new TextField(this, "City", "city", false),
-                        new TagField(this, "Tags", "tag", false, undefined, "Use commas for multiple tags."),
-                        new CheckListField(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
-                        new FilteredList(this, "Partners", "partner", false),
-                        new FilteredList(this, "Contacts", "contact", false)
-  ]};
+      reports = {prm: [new TextField(this, "Report Name", "report_name", true, reportNameDateFormat(new Date())),
+                      new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
+                      new StateField(this, "State", 'state', false),
+                      new TextField(this, "City", "city", false),
+                      new TagField(this, "Tags", "tag", false, undefined, "Use commas for multiple tags."),
+                      new CheckListField(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
+                      new FilteredList(this, "Partners", "partner", false),
+                      new FilteredList(this, "Contacts", "contact", false)]
 
-  return fields[types[0]];
+      },
+      fields = [],
+      key;
+
+  for (key in types) {
+    if (reports.hasOwnProperty(types[key])) {
+      fields.push.apply(fields, reports[types[key]]);
+    }
+  }
+
+  return fields;
 };
 
 
 Report.prototype.renderFields = function(renderAt, fields, clear) {
   var $renderAt = $(renderAt),
+      c = clear || true,
       field,
       i;
 
   // Clear what is currently in the container.
-  if (clear) {
+  if (c) {
     $renderAt.html("");
   }
 
@@ -70,6 +126,48 @@ Report.prototype.findField = function(fieldID) {
   return this.fields.filter(function(field) {
     return (field.id === fieldID ? field : undefined);
   })[0];
+};
+
+
+Report.prototype.createCloneReport = function(json) {
+  var phony,
+      value,
+      date,
+      key;
+
+  for (key in json) {
+    if (json.hasOwnProperty(key)) {
+      value = json[key];
+      if (key === "start_date" || key === "end_date") {
+        phony = {};
+        phony[key] = value;
+        date = this.findField("date");
+        $.extend(date.defaultVal, phony);
+      } else {
+        this.findField(key).defaultVal = value;
+      }
+    }
+  }
+};
+
+
+Report.prototype.bindEvents = function() {
+  var report = this,
+      container = $("#main-container");
+
+  container.on("click", "#show-modal:not('.disabled')", function() {
+    var modal = $("#report-modal"),
+        body = modal.children(".modal-body"),
+        footer = modal.children(".modal-footer"),
+        saved;
+
+    saved = report.save();
+
+    if (saved) {
+      body.html(report.readableData());
+      modal.modal("show");
+    }
+  });
 };
 
 
@@ -106,26 +204,6 @@ Report.prototype.save = function() {
 };
 
 
-Report.prototype.events = function() {
-  var report = this,
-      container = $("#main-container");
-
-  container.on("click", "#show-modal:not('.disabled')", function() {
-    var modal = $("#report-modal"),
-        body = modal.children(".modal-body"),
-        footer = modal.children(".modal-footer"),
-        saved;
-
-    saved = report.save();
-
-    if (saved) {
-      body.html(report.readableData());
-      modal.modal("show");
-    }
-  });
-};
-
-
 Report.prototype.readableData = function(d) {
   var data = d || this.data,
       html = '',
@@ -143,7 +221,6 @@ Report.prototype.readableData = function(d) {
       key = key.replace(/_/g, " ");
 
       if (value && value.length) {
-        console.log(key, "Passed", value.length);
         html += '<label>' + key.capitalize() + ':</label>';
       }
 
@@ -380,7 +457,7 @@ CheckListField.prototype.bind = function(event, selector, callback) {
 
 CheckListField.prototype.findChoice = function(choiceID) {
   return this.choices.filter(function(choice) {
-    return (choice.id == choiceID ? choice : undefined);
+    return (choice.id === choiceID ? choice : undefined);
   })[0];
 };
 
@@ -439,7 +516,8 @@ CheckListField.prototype.validate = function() {
 };
 
 var DateField = function(report, label, id, required, defaultVal, helpText) {
-  Field.call(this, report, label, id, required, defaultVal, helpText);
+  var dVal = defaultVal || {};
+  Field.call(this, report, label, id, required, dVal, helpText);
 };
 
 DateField.prototype = Object.create(Field.prototype);
@@ -692,11 +770,117 @@ String.prototype.capitalize = function() {
 
 
 $(document).ready(function() {
-  $("body").append('<a id="test" class="btn">Click me!</a>').append('<div class="meh"></div>');
-  $("#test").on("click", function() {
-    $("#container").html("").addClass("rpt-container");
-    report = new Report(['prm']);
+  var subpage = $(".subpage");
+
+  $("#choices input[type='checkbox']:checked").prop("checked", false);
+
+  if (modernBrowser) {
+    history.replaceState({'page': 'overview'}, "Report Overview");
+  }
+
+  subpage.on("click", "#start-report:not(.disabled)", function(e) {
+    e.preventDefault();
+    var choices = $("#choices input[type='checkbox']:checked"),
+        types = [],
+        i = 0,
+        report;
+
+    // fill types with choices that are checked, see selector.
+    for (i; i < choices.length; i++) {
+      types.push(choices[i].value.toLowerCase());
+    }
+
+    // Create js Report object and set up next step.
+    report = new Report(types);
+    if (modernBrowser) {
+      history.pushState({'page': 'new', 'report': report}, 'Create Report');
+    }
+    $("#container").addClass("rpt-container");
     report.renderFields(".rpt-container", report.fields, true);
+  });
+
+  subpage.on("click", "#choices input[type='checkbox']", function() {
+    var $checkboxes = $("#choices input[type='checkbox']"),
+        $startReport = $("#start-report");
+
+    if ($checkboxes.is(":checked")) {
+      $startReport.removeClass("disabled");
+    } else {
+      $startReport.addClass("disabled");
+    }
+  });
+
+  // View Report
+  subpage.on("click", ".report > a, .fa-eye, .view-report", function() {
+    var report_id,
+        callback = function() {
+          renderNavigation(true);
+        };
+
+    if ($(this).attr("id") !== undefined) {
+      report_id = $(this).attr("id").split("-")[1];
+    } else {
+      report_id = $(this).parents("tr").data("report");
+    }
+
+    if (modernBrowser) {
+      history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
+    }
+
+    navigation = true;
+    renderGraphs(report_id, callback);
+  });
+
+  subpage.on("click", ".report > a, .fa-download", function() {
+    var report_id = $(this).attr("id").split("-")[1];
+
+    history.pushState({'page': 'report-download', 'report': report_id}, 'Download Report');
+
+    renderDownload(report_id);
+  });
+
+  // Clone Report
+  subpage.on("click", ".fa-copy, .clone-report", function() {
+    var data = {},
+        url = location.protocol + "//" + location.host, // https://secure.my.jobs
+        cloneReport = function() {
+          $.ajax({
+            type: "GET",
+            url: url + "/reports/ajax/get-inputs",
+            data: data,
+            dataType: "json",
+            success: function(data) {
+              if (modernBrowser) {
+                history.pushState({'page': 'clone', 'inputs': data, 'reportId': report_id}, "Clone Report");
+              }
+              var report = new Report(["prm"]);
+              report.createCloneReport(data);
+              $("#container").addClass("rpt-container");
+              report.renderFields(".rpt-container", report.fields, true);
+            }
+          });
+        },
+        report_id;
+
+    if ($(this).attr("id") !== undefined) {
+      data.id = $(this).attr("id").split("-")[1];
+      cloneReport();
+    } else {
+      data.id = $(this).parents("tr").data("report");
+      renderOverview(cloneReport);
+    }
+
+    navigation = true;
+    renderNavigation();
+  });
+
+  // View Archive
+  subpage.on("click", "#report-archive", function() {
+    if (modernBrowser) {
+      history.pushState({'page': 'report-archive'}, "Report Archive");
+    }
+    navigation = true;
+    renderArchive(renderNavigation);
   });
 });
 
@@ -741,4 +925,403 @@ function dateFieldFormat(date) {
 
 function turnTwoDigit(value) {
   return value < 10 ? "0" + value : value;
+}
+
+
+function pieOptions(height, width, chartArea_top, chartArea_left, chartArea_height, chartArea_width,
+                    piehole_radius, slice_colors, show_tooltips) {
+  var options = {legend: 'none', pieHole: piehole_radius, pieSliceText: 'none',
+                 height: height, width: width,
+                 chartArea: {top:chartArea_top, left:chartArea_left,
+                             height: chartArea_height, width: chartArea_width},
+                 slices: slice_colors
+                };
+  if(!show_tooltips) {
+    options.tooltip = { trigger: 'none' };
+  }
+  return options;
+}
+
+var $navigationBar = $("#navigation");
+
+function renderNavigation(download) {
+  var mainContainer = $('#main-container'),
+      $navigationBar = $navigationBar || $("#navigation");
+
+  if (navigation) {
+    if (!$navigationBar.length) {
+      $navigationBar = $('<div id="navigation" class="span12" style="display:none;"></div>').append(function() {
+        var $row = $('<div class="row"></div>'),
+            $column1 = $('<div class="span4"></div>'),
+            $column2 = $column1.clone(),
+            $column3 = $column1.clone(),
+            $span = $('<span id="goBack"> Back</span>'),
+            $i = $('<i class="fa fa-arrow-circle-o-left fa-2x"></i>'),
+            $download;
+
+        $span.prepend($i);
+        $span.on("click", function() {
+          if (modernBrowser) {
+            history.back();
+          } else {
+            renderOverview();
+          }
+        });
+        $row.append($column1.append($span));
+
+        if (download) {
+          $download = $('<i class="fa fa-download"></i>');
+          $column3.append($download);
+        }
+
+        $row.append($column2).append($column3);
+
+        return $row;
+      });
+      mainContainer.prepend($navigationBar);
+    }
+    // TODO: Uncomment once UI for navbar is done.
+    //$navigationBar.show();
+  } else {
+    $navigationBar.remove();
+  }
+}
+
+
+function renderOverview(callback) {
+  $.ajax({
+    type: 'GET',
+    url: window.location,
+    data: {},
+    global: false,
+    success: function(data) {
+      $(".subpage > .wrapper").html(data);
+    }
+  }).complete(function() {
+    if (typeof callback === "function") {
+      callback();
+    }
+  });
+}
+
+function renderDownload(report_id) {
+  var data = {'id': report_id};
+
+  $.ajaxSettings.traditional = true;
+  $.ajax({
+    type: "GET",
+    url: "downloads",
+    data: data,
+    success: function(data) {
+      var ctx,
+          values,
+          dragged,
+          $order,
+          $column,
+          $columnNames,
+          $allCheckbox,
+          $checkboxes,
+          $checked;
+
+      function updateValues() {
+        $checked = $(".column-container .enable-column:checked");
+        $order = $(".sort-order");
+        $column = $("#column-choices");
+        $columnNames = $("#column-choices option:not([value=''])");
+
+        values = $.map($checked, function(item, index) {
+          return $(item).val();
+        });
+
+        $columnNames.each(function() {
+          $(this).prop("disabled", values.indexOf($(this).val()) === -1);
+        });
+
+        ctx = {'id': report_id, 'values': values};
+        if ($column.val()) {
+          ctx.order_by = $order.val() + $column.val();
+        }
+
+        $("#download-csv").attr("href", "download?" + $.param(ctx));
+      }
+
+      $("#main-container").html(data);
+
+      $allCheckbox = $(".enable-all-columns .enable-column");
+      $checkboxes = $(".column-container .enable-column");
+      $checked = $(".column-container .enable-column:checked");
+
+      $allCheckbox.prop("checked", $checkboxes.length === $checked.length);
+      updateValues();
+
+      // Event Handlers
+      $(".column-container").sortable({
+        axis: "y",
+        placeholder: "placeholder",
+        containment: "parent",
+        tolerance: "pointer",
+        distance: 10,
+        start: function(e, ui) {
+          dragged = true;
+          ui.item.addClass("drag");
+        },
+        stop: function(e, ui) {
+          dragged = false;
+          ui.item.removeClass("drag");
+        },
+        update: updateValues
+      });
+
+      $(".enable-all-columns .enable-column").on("change", function() {
+        $("input.enable-column").prop("checked", $(this).is(":checked"));
+      });
+
+      $("input.enable-column").on("change", function() {
+        $checkboxes = $(".column-wrapper .enable-column");
+        $checked = $(".column-wrapper .enable-column:checked");
+        $allCheckbox = $(".enable-all-columns .enable-column");
+
+        $allCheckbox.prop("checked", $checkboxes.length === $checked.length);
+      });
+
+      $("#download-cancel").on("click", function() {
+        if (modernBrowser) {
+          history.back();
+        } else {
+          renderOverview();
+        }
+      });
+
+      $("#column-choices").on("change", updateValues);
+      $(".sort-order").on("change", updateValues);
+
+      $(".enable-column").on("change", function(e) {
+        updateValues();
+      });
+
+      $(".enable-column").on("click", function(e) {
+        e.stopPropagation();
+      });
+
+      $(".column-wrapper").on("mouseup", function() {
+        if (!dragged) {
+          var $checkbox = $(this).children(".enable-column");
+          $checkbox.prop("checked", !$checkbox.prop("checked")).change();
+        }
+      });
+    }
+  });
+}
+
+
+function renderGraphs(report_id, callback) {
+  var data = {'id': report_id},
+      url = location.protocol + "//" + location.host; // https://secure.my.jobs
+
+  navigation = true;
+
+  $.ajax({
+    type: "GET",
+    url: url + "/reports/view/mypartners/contactrecord",
+    data: data,
+    success: function(data) {
+      var contacts = data.contacts,
+          communications = data.communications || 0,
+          emails = data.emails || 0,
+          pss = data.searches || 0,
+          calls = data.calls || 0,
+          meetings = data.meetings || 0,
+          referrals = data.referrals || 0,
+          applications = data.applications || 0,
+          interviews = data.interviews || 0,
+          hires = data.hires || 0,
+          pChartInfo = {0: {'name': "Emails",            'count': emails,   'color': "#5EB95E"},
+                        1: {'name': "PSS Emails",        'count': pss,      'color': "#4BB1CF"},
+                        2: {'name': "Phone Calls",       'count': calls,    'color': "#FAA732"},
+                        3: {'name': "Meetings & Events", 'count': meetings, 'color': "#5F6C82"}},
+          bChartInfo = {0: {'name': "Applications", 'count': applications, 'style': "color: #5EB95E"},
+                        1: {'name': "Interviews",   'count': interviews,   'style': "color: #4BB1CF"},
+                        2: {'name': "Hires",        'count': hires,        'style': "color: #FAA732"},
+                        3: {'name': "Records",      'count': referrals,    'style': "color: #5F6C82"}};
+
+      // Grab google's jsapi to load chart files.
+      $.getScript("https://www.google.com/jsapi", function() {
+        // Had to use 'callback' with google.load otherwise after load google makes a new document
+        // with just <html> tags.
+        google.load("visualization", "1.0", {'packages':["corechart"], 'callback': function() {
+          var pDataTable = [['Records', 'All Records']], // p for pieChart
+              bDataTable = [['Activity', 'Amount', {'role': 'style'}]], // b for barChart
+              $mainContainer = $("#main-container"),// the container everything goes in
+              pSliceOptions = {}, // slice options for pieChart
+              pLegend = [], // array that will hold the report-boxes for pieChart
+              bLegend = [], // array that will hold the report-boxes for barChart
+              pChartData,
+              pKey,
+              pValue,
+              pBox,
+              pOptions,
+              pChart,
+              $pLegend,
+              $pChart,
+              bChartData,
+              bValue,
+              bKey,
+              bBox,
+              bOptions,
+              bChart,
+              $bLegend,
+              topThreeRow,
+              restRow,
+              contactContainer,
+              i;
+
+          $mainContainer.html('').append("<div class='span6'><h4>Communication Activity</h4><div id='d-chart'></div>" +
+                                         "</div><div class='span6'><h4>Referral Activity</h4><div id='b-chart'></div></div>");
+
+          for (pKey in pChartInfo) {
+            if (pChartInfo.hasOwnProperty(pKey)) {
+              pValue = pChartInfo[pKey];
+              pDataTable.push([pValue.name, pValue.count]);
+
+              // Used for PieChart to give data 'slices' color.
+              pSliceOptions[pKey] = {'color': pValue.color};
+
+              // Create legend boxes
+              pBox = $('<div class="report-box" style="background-color: ' +
+                       pValue.color + '"><div class="big-num">' + pValue.count +
+                       '</div><div class="reports-record-type">' + pValue.name + '</div></div>');
+              pLegend.push(pBox);
+            }
+          }
+
+          pChartData = google.visualization.arrayToDataTable(pDataTable);
+          pOptions = pieOptions(330, 350, 12, 12, 300, 330, 0.6, pSliceOptions, true);
+          pChart = new google.visualization.PieChart(document.getElementById('d-chart'));
+          pChart.draw(pChartData, pOptions);
+
+          $pChart = $("#d-chart > div");
+          $pChart.append("<div class='chart-box-holder legend'></div>");
+          $pLegend = $("#d-chart .legend");
+          pLegend.forEach(function(element) {
+            $pLegend.append(element);
+          });
+
+          $pChart.append('<div class="piehole report"><div class="piehole-big">' + communications +
+                         '</div><div class="piehole-topic">Contact Records</div></div>');
+
+          for (bKey in bChartInfo) {
+            if (bChartInfo.hasOwnProperty(bKey)) {
+              bValue = bChartInfo[bKey];
+              bDataTable.push([bValue.name, bValue.count, bValue.style]);
+
+              bBox = $('<div class="report-box" style="background-' + bValue.style +
+                       '"><div class="big-num">' + bValue.count +
+                       '</div><div class="reports-record-type">' + bValue.name + '</div></div>');
+              bLegend.push(bBox);
+            }
+          }
+
+          bChartData = google.visualization.arrayToDataTable(bDataTable);
+          bOptions = {title: 'Referral Records', width: 356, height: 360, legend: { position: "none" },
+                      chartArea: {top: 22, left: 37, height: 270, width: 290},
+                      animation: {startup: true, duration: 400}};
+          bChart = new google.visualization.ColumnChart(document.getElementById('b-chart'));
+          bChart.draw(bChartData, bOptions);
+
+          $bLegend = $('<div class="chart-box-holder legend"></div>').append(function() {
+            return bLegend.map(function(element) {
+              return element.prop("outerHTML");
+            }).join('');
+          });
+
+          $("#b-chart > div").append($bLegend);
+
+          // Show the top three contacts in a different format than the rest.
+          topThreeRow = $('<div class="row"></div>').append(function() {
+            var html = '',
+                cLength = contacts.length,
+                contact,
+                name,
+                email,
+                cReferrals,
+                commRecords,
+                div,
+                topLength;
+
+            // Determine how long topLength should be.
+            topLength = (cLength > 3) ? 3 : cLength;
+
+            // Just run for the first 3 contacts.
+            for (i = 0; i < topLength; i++) {
+              // remove first contact in array, returns the removed contact.
+              contact = contacts.shift();
+              name = contact.contact_name;
+              email = contact.contact_email;
+              cReferrals = contact.referrals;
+              commRecords = contact.records;
+
+              // create container
+              div = $('<div class="span4 panel top-contacts"></div>');
+              div.append('<div class="name">' + name + '</div><div>' + email + '</div><div class="top-three-box-container">' +
+                         '<div class="report-box small"><div class="big-num">' + commRecords +
+                         '</div><div class="reports-record-type">Contact Records</div></div>' +
+                         '<div class="report-box small"><div class="big-num">' + cReferrals +
+                         '</div><div class="reports-record-type">Referral Records</div></div></div>');
+
+              // add the rendered html as a string.
+              html += div.prop("outerHTML");
+            }
+            return html;
+          });
+
+          // Don't generate a table if cLength = 0
+          if (contacts.length) {
+            restRow = $('<div class="row"></div>').append(function() {
+              var div = $('<div class="span12"></div>'),
+                  table = $('<table class="table table-striped report-table"><thead><tr><th>Name</th>' +
+                            '<th>Email</th><th>Contact Records</th><th>Referral Reocrds</th>' +
+                            '</tr></thead></table>'),
+                  tbody = $('<tbody></tbody>');
+              tbody.append(function() {
+                // turn each element into cells of a table then join each group of cells with rows.
+                return "<tr>" + contacts.map(function(contact) {
+                  return "<td>" + contact.contact_name + "</td><td>" + contact.contact_email +
+                         "</td><td>" + contact.records + "</td><td>" + contact.referrals + "</td>";
+                }).join('</tr><tr>') + "</tr>";
+              });
+              return div.append(table.append(tbody));
+            });
+          } else {
+            // Make sure topThreeRow didn't run before saying there are no records.
+            if (topThreeRow.find("div.top-contacts").length === 0) {
+              restRow = $('<div class="row"><div class="span12">This report has no contacts with records.</div></div>');
+            }
+          }
+
+          contactContainer = $('<div id="report-contacts" class="span12"></div>').append(topThreeRow).append(restRow);
+          $("#main-container").append(contactContainer);
+
+          if (typeof callback === "function") {
+            callback();
+          }
+        }});
+      });
+    }
+  });
+}
+
+
+function renderArchive(callback) {
+  $.ajax({
+    type: "GET",
+    url: "archive",
+    data: {},
+    success: function(data) {
+      $("#main-container").html(data);
+    }
+  }).complete(function() {
+    if (typeof callback === "function") {
+      callback();
+    }
+  });
 }
