@@ -1,9 +1,9 @@
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.views.generic import View
+from django.views.generic import View, RedirectView
 
 from seo.forms import settings_forms
 from seo.models import SeoSite
@@ -53,3 +53,15 @@ class EmailDomainFormView(View):
         })
         return render_to_response(self.template, kwargs,
                                   context_instance=RequestContext(request))
+
+
+def secure_redirect(request, page):
+    """
+    Redirects to the correct path on secure.my.jobs if this is not a network
+    site, or 404 if it is.
+    """
+    if settings.SITE.site_tags.filter(site_tag='network').exists():
+        return RedirectView.as_view(
+            url='https://secure.my.jobs/%s' % page)(request)
+    else:
+        raise Http404
