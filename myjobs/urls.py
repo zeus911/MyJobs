@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url, include
 from django.views.generic import RedirectView
 
-from myjobs.views import About, Privacy, Testimonials, Terms
+from myjobs.views import About, Privacy, Terms
 
 accountpatterns = patterns('myjobs.views',
     url(r'^edit/$', 'edit_account', name='edit_account'),
