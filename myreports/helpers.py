@@ -7,7 +7,7 @@ import json
 from django.core import serializers
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import query
-from django.utils.html import strip_tags
+from lxml import html
 from mypartners.models import CONTACT_TYPES
 
 
@@ -34,8 +34,6 @@ def humanize(records):
         # make tag lists look pretty
         if 'tags' in record:
             record['tags'] = ', '.join(record['tags'])
-        # get rid of pks
-        record.pop('pk', None)
         # human readable contact types
         if 'contact_type' in record:
             record['contact_type'] = CONTACT_TYPES[record['contact_type']]
@@ -104,7 +102,9 @@ def serialize(fmt, data, counts=None, values=None, order_by=None):
     * Currently, only count with values passed in manually through `counts`.
     """
 
-    if isinstance(data, query.QuerySet):
+    if isinstance(data, query.ValuesQuerySet):
+        data = list(data)
+    elif isinstance(data, query.QuerySet):
         data = [dict({'pk': record['pk']}, **record['fields'])
                 for record in serializers.serialize(
                     'python', data, use_natural_keys=True, fields=values)]
@@ -113,39 +113,19 @@ def serialize(fmt, data, counts=None, values=None, order_by=None):
             data = [dict({'count': counts[record['pk']]}, **record)
                     for record in data]
 
-        # Cant' use a ValueQuerSet for serialize, which means we lose the
-        # ability to use distinct. As such, we fake it by doing so manually
-        records = []
-        haystack = []
+    values = values or sorted(data[0].keys())
+    order_by = order_by or values[0]
+    _, reverse, order_by = sorted(order_by.partition('-'))
 
-        for record in data:
-            needle = [record[value]
-                      for value in values] if values else record['pk']
-
-            if needle not in haystack:
-                haystack.append(needle)
-                records.append(record)
-
-        data = records
-
-        # strip HTML tags from string values
-        for index, record in enumerate(data[:]):
-            data[index] = {
-                key: strip_tags(record[key])
-                if isinstance(record[key], basestring) else value
-                for key, value in record.items()}
-
-    if data:
-        values = values or sorted(data[0].keys())
-        data = [OrderedDict([(value, record[value]) for value in values])
-                for record in data]
-
-        if order_by:
-            # if '-' isn't in order_by, reverse will be an empty string
-            _, reverse, order_by = sorted(order_by.partition('-'))
-            data = sorted(
-                data, key=lambda record:
-                    record[order_by], reverse=bool(reverse))
+    # Convert data to a list of `OrderedDict`s,
+    data = sorted([OrderedDict([(
+        # strip HTML from invidual values...
+        value, html.fromstring(record[value]).text_content()
+        # if they aren't empty strings.
+        if isinstance(record[value], basestring) and record[value].strip()
+        else record[value]) for value in values]) for record in data],
+            # and sort them by specified value (first column by default)
+            key=lambda record: record[order_by], reverse=bool(reverse))
 
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)
