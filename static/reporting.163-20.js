@@ -32,7 +32,7 @@ Report.prototype.createFields = function(types) {
                         new TagField(this, "Tags", "tags__name", false, undefined, "Use commas for multiple tags."),
                         new CheckList(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
                         new FilteredList(this, "Partners", "partner", true, ['report_name', 'partner', 'contact']),
-                        new FilteredList(this, "Contacts", "contact", true, ['report_name', 'contact'])
+                        new FilteredList(this, "Contacts", "contact", true, ['report_name', 'contact'], ['partner'])
   ]};
 
   return fields[types[0]];
@@ -654,8 +654,9 @@ TagField.prototype.currentVal = function() {
 };
 
 
-var FilteredList = function(report, label, id, required, ignore, defaultVal, helpText) {
+var FilteredList = function(report, label, id, required, ignore, dependencies, defaultVal, helpText) {
   this.ignore = ignore || [];
+	this.dependencies = dependencies || [];
 
   Field.call(this, report, label, id, required, defaultVal, helpText);
 };
@@ -675,7 +676,12 @@ FilteredList.prototype.renderLabel = function() {
 FilteredList.prototype.render = function() {
   var label = this.renderLabel(),
       body = '<div id="' + this.id + '" class="list-body no-show"></div>';
-  this.filter();
+
+	console.log(this.dependencies.length);
+	if (!this.dependencies.length) {
+		this.filter();
+	}
+
   return label + body;
 };
 
@@ -716,6 +722,8 @@ FilteredList.prototype.filter = function() {
       }).join("</li><li>") + '</li></ul>').removeClass("no-show");
 
       $recordCount.text(filteredList.currentVal().length);
+
+			$.event.trigger("filtered", [filteredList]);
     }
   });
 };
@@ -762,7 +770,7 @@ FilteredList.prototype.bindEvents = function() {
 
   // TODO: Figure out how to reduce queries; perhaps by diffing total changes
   $(document).on("dataChanged", function(e, data) {
-    var callFilter = filteredList.ignore.every(function(element) {
+    var callFilter = !filteredList.dependencies.length && filteredList.ignore.every(function(element) {
           return !(element in data);
         });
 
@@ -771,6 +779,12 @@ FilteredList.prototype.bindEvents = function() {
     }
 
   });
+
+	$(document).on("filtered", function(e, field) {
+		if (filteredList.dependencies.indexOf(field.id) !== -1) {
+			filteredList.filter();
+		}
+	});
 };
 
 FilteredList.prototype.validate = function(triggerEvent) {
