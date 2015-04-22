@@ -13,10 +13,11 @@ if PROJECT_DIR_PARENT not in sys.path:
 os.environ['CELERY_LOADER'] = 'django'
 
 import django.core.handlers.wsgi
-_application = django.core.handlers.wsgi.WSGIHandler()
-_application = newrelic.agent.wsgi_application()(_application)
-
 
 def application(environ, start_response):
     os.environ['DJANGO_SETTINGS_MODULE'] = environ['DJANGO_SETTINGS_MODULE']
+    os.environ['NEW_RELIC_APP_NAME'] = environ['NEW_RELIC_APP_NAME']
+    newrelic.app_name = environ['NEW_RELIC_APP_NAME']
+    _application = django.core.handlers.wsgi.WSGIHandler()
+    _application = newrelic.agent.wsgi_application(application=newrelic.app_name)(_application)
     return _application(environ, start_response)
