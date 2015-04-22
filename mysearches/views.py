@@ -63,6 +63,7 @@ def saved_search_main(request):
     else:
         form = None
         add_form = None
+    for pss in partner_saved_searches: print pss.is_active
     return render_to_response('mysearches/saved_search_main.html',
                               {'saved_searches': saved_searches,
                                'partner_saved_searches': partner_saved_searches,
@@ -230,7 +231,8 @@ def edit_search(request):
                 form = PartnerSubSavedSearchForm(
                     instance=saved_search.partnersavedsearch,
                     auto_id=False,
-                    request=request)
+                    request=request,
+                    initial=request.POST)
         else:
             raise Http404
 

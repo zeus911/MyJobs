@@ -123,6 +123,29 @@ class DigestForm(BaseUserForm):
         model = SavedSearchDigest
 
 
+def is_active_check(form, recipient=True):
+    """
+    Checks the status of is_active (current state and changed state) on partner
+    saved search forms. Sets unsubscriber and unsubscribed as appropriate and
+    notifies the member company if the recipient unchecks is_active.
+
+    Inputs:
+    :form: The form instance being checked
+    :recipient: Whether this call was initiated by the recipient editing or not
+    """
+    if 'is_active' in form.changed_data and form.instance.pk:
+        if form.instance.is_active:
+            # Saved search is being deactivated; set unsubscriber
+            form.instance.unsubscriber = form.request.user.email
+            form.instance.unsubscribed = True
+            if recipient:
+                form.instance.user.send_opt_out_notifications([form.instance])
+        else:
+            # Saved search is being activated; unset unsubscriber
+            form.instance.unsubscriber = ''
+            form.instance.unsubscribed = False
+
+
 class PartnerSavedSearchForm(RequestForm):
     def __init__(self, *args, **kwargs):
         choices = PartnerEmailChoices(kwargs.pop('partner', None))
@@ -171,7 +194,7 @@ class PartnerSavedSearchForm(RequestForm):
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
                   'frequency', 'day_of_month', 'day_of_week', 'jobs_per_email',
                   'partner_message', 'notes')
-        exclude = ('provider', 'sort_by', 'unsubscriber')
+        exclude = ('provider', 'sort_by', 'unsubscriber', 'unsubscribed')
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
             'url_extras': TextInput(attrs={
@@ -230,14 +253,7 @@ class PartnerSavedSearchForm(RequestForm):
             self._errors.setdefault('url', []).append(error_msg)
 
         self.cleaned_data['feed'] = feed
-
-        if 'is_active' in self.changed_data:
-            if self.instance.is_active:
-                # Saved search is being deactivated; set unsubscriber
-                self.instance.unsubscriber = self.request.user.email
-            else:
-                # Saved search is being activated; unset unsubscriber
-                self.instance.unsubscriber = ''
+        is_active_check(self, recipient=False)
         return cleaned_data
 
     def save(self, commit=True):
@@ -269,14 +285,7 @@ class PartnerSavedSearchForm(RequestForm):
 
 class PartnerSubSavedSearchForm(RequestForm):
     def clean(self):
-        if 'is_active' in self.changed_data:
-            #self.changed_data.append('unsubscriber')
-            if self.instance.is_active:
-                # Saved search is being deactivated; set unsubscriber
-                self.instance.unsubscriber = self.request.user.email
-            else:
-                # Saved search is being activated; unset unsubscriber
-                self.instance.unsubscriber = ''
+        is_active_check(self)
         return self.cleaned_data
 
     class Meta:
@@ -284,7 +293,7 @@ class PartnerSubSavedSearchForm(RequestForm):
         fields = ('sort_by', 'frequency', 'day_of_month', 'day_of_week',
                   'is_active')
         exclude = ('provider', 'url_extras', 'partner_message',
-                   'created_by', 'user',
+                   'created_by', 'user', 'unsubscribed',
                    'created_on', 'label', 'url', 'feed', 'email', 'notes',
                    'custom_message', 'tags', 'unsubscriber')
         widgets = {

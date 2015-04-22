@@ -13,6 +13,7 @@ from django.http import Http404
 from django.test.client import RequestFactory 
 from django.utils.timezone import utc
 import requests
+from mymessages.models import MessageInfo
 
 from tasks import PARTNER_LIBRARY_SOURCES
 
@@ -854,6 +855,54 @@ class SearchEditTests(MyPartnersTestCase):
             self.assertEqual(v, getattr(search, k),
                              msg="%s != %s for field %s" %
                                  (v, getattr(search, k), k))
+
+    def test_deactivate_partner_search(self):
+        data = {'feed': 'http://www.jobs.jobs/jobs/rss/jobs',
+                'label': 'Test',
+                'url': 'http://www.jobs.jobs/jobs',
+                'url_extras': '',
+                'email': self.contact.user.email,
+                'frequency': 'W',
+                'day_of_month': '',
+                'day_of_week': '3',
+                'jobs_per_email': 5,
+                'partner_message': '',
+                'notes': '',
+                'company': self.company.id,
+                'partner': self.partner.id,
+                'is_active': True}
+
+        self.search.delete()
+
+        # Create saved search
+        url = self.get_url('partner_savedsearch_save',
+                           company=self.company.id,
+                           partner=self.partner.id)
+        self.client.post(url, data)
+        search = PartnerSavedSearch.objects.get()
+
+        self.client.login_user(search.user)
+        data['id'] = search.pk
+        data['is_active'] = False
+        recipient_url = self.get_url('edit_search',
+                                     id=search.id,
+                                     pss=True)
+        mail.outbox = []
+        self.assertEqual(MessageInfo.objects.count(), 0)
+
+        # Edit saved search to toggle status of is_active
+        self.client.post(recipient_url, data)
+        search = PartnerSavedSearch.objects.get()
+
+        # This should result in one email...
+        email = mail.outbox[0]
+        self.assertEqual(email.to[0], search.created_by.email)
+        self.assertTrue('unsubscribed' in email.body)
+
+        # ... and one My.jobs message, both to the saved search creator.
+        message_info = MessageInfo.objects.get()
+        self.assertEqual(message_info.user, search.created_by)
+        self.assertTrue('unsubscribed' in message_info.message.body)
 
     def test_update_existing_saved_search(self):
         url = self.get_url('partner_savedsearch_save',
