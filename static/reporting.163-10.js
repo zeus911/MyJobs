@@ -1053,7 +1053,6 @@ function renderDownload(report_id) {
     success: function(data) {
       var ctx,
           values,
-          dragged,
           $order,
           $column,
           $columnNames,
@@ -1100,11 +1099,9 @@ function renderDownload(report_id) {
         tolerance: "pointer",
         distance: 10,
         start: function(e, ui) {
-          dragged = true;
           ui.item.addClass("drag");
         },
         stop: function(e, ui) {
-          dragged = false;
           ui.item.removeClass("drag");
         },
         update: updateValues
@@ -1132,21 +1129,6 @@ function renderDownload(report_id) {
 
       $("#column-choices").on("change", updateValues);
       $(".sort-order").on("change", updateValues);
-
-      $(".enable-column").on("change", function(e) {
-        updateValues();
-      });
-
-      $(".enable-column").on("click", function(e) {
-        e.stopPropagation();
-      });
-
-      $(".column-wrapper").on("mouseup", function() {
-        if (!dragged) {
-          var $checkbox = $(this).children(".enable-column");
-          $checkbox.prop("checked", !$checkbox.prop("checked")).change();
-        }
-      });
     }
   });
 }
