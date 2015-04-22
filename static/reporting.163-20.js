@@ -18,9 +18,8 @@ var Report = function(types) {
 
 
 Report.prototype.extendData = function(data) {
-  $.extend(this.data, data);
-
-  $.event.trigger("dataChanged", [data]);
+	$.extend(this.data, data);
+	$.event.trigger("dataChanged", [data]);
 };
 
 
@@ -106,7 +105,7 @@ Report.prototype.save = function() {
     return false;
   } else {
     this.fields.forEach(function(field) {
-      report.extendData(field.onSave());
+			report.extendData(field.onSave());
     });
   }
 
@@ -686,13 +685,16 @@ FilteredList.prototype.render = function() {
 
 
 FilteredList.prototype.filter = function() {
-  var filteredList = this;
+  var filteredList = this,
+			reportData = filteredList.report.data,
+		  data = {};
 
-  filteredList.ignore.forEach(function(element) {
-    filteredList.report.data[element] = void 0;
-  });
+	for (var key in reportData) {
+		if (reportData.hasOwnProperty(key) && filteredList.ignore.indexOf(key) === -1) {
+			data[key] = reportData[key];
+		}
+	}
 
-  var data = filteredList.report.data || {};
 
   if (this.id === "partner") {
     // annotate how many records a partner has.
@@ -709,6 +711,7 @@ FilteredList.prototype.filter = function() {
     type: "GET",
     url: "/reports/ajax/mypartners/" + this.id,
     data: data,
+		global: false,
     success: function(data) {
       $recordCount = $('#' + filteredList.id + '-header').find(".record-count");
       $('.list-body#' + filteredList.id).html("");
