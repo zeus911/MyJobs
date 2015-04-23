@@ -17,9 +17,9 @@ from mypartners.models import CONTACT_TYPES
 def humanize(records):
     """
     Converts values in a dict to their human-readable counterparts. At the
-    moment, this means converting tag ids to a list of tag names, removing the
-    primary key, and converting contact types. As such, this is specifically
-    only useful for contact records.
+    moment, this means converting tag ids to a list of tag names, and
+    converting contact types. As such, this is specifically only useful for
+    contact records.
 
     Inputs:
         :records: `dict` of records to be humanized
@@ -39,6 +39,7 @@ def humanize(records):
             record['contact_type'] = CONTACT_TYPES[record['contact_type']]
         # strip html and extra whitespace from notes
         if 'notes' in record:
+            # TODO: Find a faster way to do this
             record['notes'] = parser.unescape('\n'.join(
                 ' '.join(line.split())
                 for line in record['notes'].split('\n') if line))
@@ -80,23 +81,23 @@ def parse_params(querydict):
 
 
 # TODO:
-#   * find a better way to handle counts
 #   * do something other than isinstance checks (duck typing anyone?)
 def serialize(fmt, data, values=None, order_by=None):
     """
     Like `django.core.serializers.serialize`, but produces a simpler structure
-    and retains annotated fields*.
+    and retains annotated fields.
 
     Inputs:
         :fmt: The format to serialize to. Currently recognizes 'csv', 'json',
               and 'python'.
         :data: The data to be serialized.
+        :values: The fields to include in the serialized output.
+        :order_by: The field to sort the serialized records by.
 
     Outputs:
         Either a Python object or a string represention of the requested
         format.
 
-    * Currently, only count with values passed in manually through `counts`.
     """
 
     if isinstance(data, query.ValuesQuerySet):

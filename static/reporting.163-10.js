@@ -659,8 +659,7 @@ List.prototype.filter = function(filter) {
   // specific duties based on type.
   if (list.type === "partner") {
     // annotate how many records a partner has.
-    $.extend(data, {count: "contactrecord",
-                    values: ["pk", "name", "count"],
+    $.extend(data, {values: ["pk", "name"],
                     order_by: ["name"]}
     );
     url += "/reports/ajax/mypartners/partner";
@@ -692,11 +691,6 @@ List.prototype.filter = function(filter) {
 
         li = $("<li><input type='checkbox' value='"+ record.pk +"' /> <span>"+ record.name +"</span></li>");
         li.find("input").prop("checked", Boolean(!list.value));
-
-        // add record count to right of partners
-        if (list.type === "partner") {
-          li.append("<span class='pull-right'>"+ record.count +"</span>");
-        }
 
         if (list.type === "contact" && record.email) {
           li.append(" <span class='small'>("+ record.email + ")</span>");
