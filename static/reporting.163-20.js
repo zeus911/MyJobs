@@ -228,11 +228,15 @@ Report.prototype.readableData = function(d) {
       if (typeof value === "object" && value !== null && value.length) {
         items = [];
 
-        for (i = 0; i < value.length; i++) {
-          //items.push($("#" + key + " input[value='" + value[i] + "']").next("span").html());
-          items.push(value[i]);
+        if (key === "partner" || key === "contact") {
+          for (i = 0; i < value.length; i++) {
+            items.push($('#' + key + ' input[data-pk='+ value[i] + ']').parent().text());
+          }
+        } else {
+          for (i = 0; i < value.length; i++) {
+            items.push(value[i]);
+          }
         }
-
         html += '<ul class="short-list"><li>' + items.join('</li><li>') + '</li></ul>';
       } else {
         html += value;
