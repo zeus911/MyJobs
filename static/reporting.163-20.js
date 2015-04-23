@@ -693,7 +693,7 @@ TagField.prototype.bindEvents = function() {
         type: "GET",
         url: "/reports/ajax/mypartners/tag",
 				//TODO: New backend changes will fix this monstrocity
-				data: {name: keyword, values: ["name", "pk"], order_by: "name"},
+				data: {name: keyword, values: ["name"], order_by: "name"},
         success: function(data) {
           suggestions = data.filter(function(d) {
             // Don't suggest things that are already selected.

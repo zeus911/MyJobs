@@ -109,6 +109,9 @@ def view_records(request, app, model):
             company, params)
 
         if values:
+            if not hasattr(values, '__iter__'):
+                values = [values]
+
             records = records.values(*values)
 
         if order_by:
@@ -228,6 +231,9 @@ class ReportView(View):
                 company, params)
 
             if values:
+                if not hasattr(values, '__iter__'):
+                    values = [values]
+
                 records = records.values(*values)
 
             contents = serialize('json', records, values=values)
