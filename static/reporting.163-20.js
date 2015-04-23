@@ -795,14 +795,17 @@ FilteredList.prototype.filter = function() {
     data: filterData,
 		global: false,
     success: function(data) {
-      $recordCount = $('#' + filteredList.id + '-header').find(".record-count");
-      $('.list-body#' + filteredList.id).html("");
+      $recordCount = $('#' + filteredList.id + '-header .record-count');
+			$('#' + filteredList.id + '-header input').prop("checked", true);
+      $('.list-body#' + filteredList.id).html("").parent(".required").children().unwrap();
+			$('.list-body#' + filteredList.id).prev('.show-errors').remove();
       $('.list-body#' + filteredList.id).append('<ul><li>' + data.map(function(element) {
         return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name + 
                '<span class="pull-right">' + (filteredList.id === 'partner' ? element.count : "") + '</label>';
       }).join("</li><li>") + '</li></ul>').removeClass("no-show");
 
-      $recordCount.text(filteredList.currentVal().length);
+			var value = filteredList.currentVal();
+			$recordCount.text(value.length === 1 && value.indexOf("0") === 0 ? 0 : value.length);
 
 			$.event.trigger("filtered", [filteredList]);
     }
@@ -811,11 +814,13 @@ FilteredList.prototype.filter = function() {
 
 
 FilteredList.prototype.currentVal = function() {
-  return $.map($(this.dom()).find("input").toArray(), function(c) {
+  values = $.map($(this.dom()).find("input").toArray(), function(c) {
     if (c.checked) {
       return $(c).data("pk");
     }
   });
+
+  return values.length ? values : ["0"];
 };
 
 
@@ -838,14 +843,16 @@ FilteredList.prototype.bindEvents = function() {
 
     checked = choices.every(function(c) { return $(c).is(":checked"); });
     $all.prop("checked", checked);
-    $recordCount.text(filteredList.currentVal().length);
+		var value = filteredList.currentVal();
+		$recordCount.text(value.length === 1 && value.indexOf("0") === 0 ? 0 : value.length);
+		$.event.trigger("filtered", [filteredList]);
   });
 
   $all.on("change", function(e) {
     filteredList.validate();
   });
 
-  $(this.dom()).bind("change", "input", function(e) {
+  $(this.dom()).bind("change.validate", "input", function(e) {
     filteredList.validate();
   });
 
@@ -871,9 +878,10 @@ FilteredList.prototype.bindEvents = function() {
 FilteredList.prototype.validate = function(triggerEvent) {
 	triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
   var err = this.label + " is required",
-      index = this.errors.indexOf(err);
+      index = this.errors.indexOf(err),
+      value = this.currentVal();
 
-  if (this.required && !this.currentVal().length) {
+  if (this.required && value.indexOf("0") === 0 && value.length === 1) {
     if (index === -1) {
       this.errors.push(err);
       this.showErrors();
