@@ -776,10 +776,10 @@ FilteredList.prototype.filter = function() {
 
   if (this.id === "partner") {
     // annotate how many records a partner has.
-    $.extend(filterData, {count: "contactrecord",
-                    values: ["pk", "name", "count"],
-                    order_by: "name"}
-    );
+    $.extend(filterData, {
+			values: ["pk", "name"],
+			order_by: "name"
+		});
   } else if (this.id === "contact") {
     $.extend(filterData, {values: ["pk", "name", "email"], order_by: "name"});
   }
@@ -794,8 +794,7 @@ FilteredList.prototype.filter = function() {
       $recordCount = $('#' + filteredList.id + '-header').find(".record-count");
       $('.list-body#' + filteredList.id).html("");
       $('.list-body#' + filteredList.id).append('<ul><li>' + data.map(function(element) {
-        return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name + 
-               '<span class="pull-right">' + (filteredList.id === 'partner' ? element.count : "") + '</label>';
+        return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name + '</label>';
       }).join("</li><li>") + '</li></ul>').removeClass("no-show");
 
       $recordCount.text(filteredList.currentVal().length);
