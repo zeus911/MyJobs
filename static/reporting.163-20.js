@@ -752,8 +752,9 @@ FilteredList.prototype = Object.create(Field.prototype);
 
 FilteredList.prototype.renderLabel = function() {
   return '<div id="'+ this.id +'-header" class="list-header">' +
+         '<i class="fa fa-plus-square-o"></i>' +
          '<input id="' + this.id + '-all-checkbox" type="checkbox" ' + (this.value ? "" : "checked") + ' />' +
-         ' All ' + this.label + ' ' +
+         ' All ' + this.label + (this.required ? '<star style="color: #990000">*</star>' : '') + ' ' +
          '<span>(<span class="record-count">0</span> ' + this.label + ' Selected)</span>' +
          '</div>';
 };
@@ -761,7 +762,7 @@ FilteredList.prototype.renderLabel = function() {
 
 FilteredList.prototype.render = function() {
   var label = this.renderLabel(),
-      body = '<div id="' + this.id + '" class="list-body no-show"></div>';
+      body = '<div id="' + this.id + '" style="display: none;" class="list-body"></div>';
 
   return label + body;
 };
@@ -820,7 +821,7 @@ FilteredList.prototype.filter = function() {
   }).done(function() {
     filteredList.active--;
     if (!filteredList.active) {
-      $('#' + filteredList.id + '-header > .fa-spinner:first').remove();
+      $('#' + filteredList.id + '-header > .fa-spinner').remove();
       $('#' + filteredList.id + '-header > span').show();
     }
   });
@@ -842,7 +843,8 @@ FilteredList.prototype.bindEvents = function() {
   var filteredList = this,
       $header = $('#' + filteredList.id + '-header'),
       $recordCount = $header.find(".record-count"),
-      $all = $header.find("input");
+      $all = $header.find("input"),
+      $dom = $(this.dom());
 
   $header.find("input").on("change", function() {
     var $choices = $(filteredList.dom()).find("input");
@@ -851,7 +853,7 @@ FilteredList.prototype.bindEvents = function() {
     $($choices[$choices.length - 1]).change();
   });
 
-  $(this.dom()).bind("change", "input", function() {
+  $dom.bind("change", "input", function() {
     var choices = $(filteredList.dom()).find("input").toArray(),
         checked;
 
@@ -866,8 +868,21 @@ FilteredList.prototype.bindEvents = function() {
     filteredList.validate();
   });
 
-  $(this.dom()).bind("change.validate", "input", function(e) {
+  $dom.bind("change.validate", "input", function(e) {
     filteredList.validate();
+  });
+
+  $dom.prev("#" + filteredList.id + "-header").on("click", function(e) {
+    var $this = $(this),
+        $icon = $(this).children("i");
+
+    if ($icon.hasClass("fa-plus-square-o")) {
+      $icon.removeClass("fa-plus-square-o").addClass("fa-minus-square-o");
+    } else {
+      $icon.removeClass("fa-minus-square-o").addClass("fa-plus-square-o");
+    }
+
+    $this.next().stop(true, true).slideToggle();
   });
 
   // TODO: Figure out how to reduce queries; perhaps by diffing total changes
@@ -1070,7 +1085,7 @@ $(document).ready(function() {
           $div.removeClass("regenerate-report").addClass("export-report");
           $div.html($icon.prop("outerHTML") + " Export Report");
         }
-      },
+      }
     });
   });
 
