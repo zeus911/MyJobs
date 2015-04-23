@@ -167,19 +167,6 @@ class TestViewRecords(MyReportsTestCase):
 
         self.assertEqual(len(output), 10)
 
-    def test_counts(self):
-        """
-        When `count` is passed to the view, the resulting records should be
-        annotated as a `Count` for the field passed to count.
-        """
-
-        self.client.path += '/partner'
-        response = self.client.get(data={'count': 'contact'})
-        output = json.loads(response.content)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(all('count' in record for record in output))
-
 
 class TestReportView(MyReportsTestCase):
     """
