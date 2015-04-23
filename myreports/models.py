@@ -7,6 +7,17 @@ from myreports.helpers import serialize
 
 
 class Report(models.Model):
+    """
+    Models a Report which can be serialized in various formats.
+
+    A report instance can access it's results in three ways:
+        `json`: returns a JSON string of the results
+        `python`: returns a `dict` of the results
+        `queryset`: returns a queryset obtained by re-running `from_search`
+                    with the report's parameters. Useful for when you need to
+                    use attributes from a related model's instances (eg.
+                    `referrals` from the `ContactRecord` model).
+    """
     name = models.CharField(max_length=50)
     created_by = models.ForeignKey('myjobs.User')
     owner = models.ForeignKey('seo.Company')
@@ -48,6 +59,7 @@ class Report(models.Model):
         return self.name
 
     def regenerate(self):
+        """Regenerate the report file if it doesn't already exist on disk."""
         if not self.results:
             values = json.loads(self.values)
             contents = serialize('json', self.queryset, values=values)
