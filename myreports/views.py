@@ -102,7 +102,7 @@ def view_records(request, app, model):
         params = parse_params(request.GET)
 
         # remove non-query related params
-        values = params.pop('values', [])
+        values = params.pop('values', None)
         order_by = params.pop('order_by', None)
 
         records = get_model(app, model).objects.from_search(

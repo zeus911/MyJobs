@@ -854,6 +854,10 @@ input.datepicker {
     cursor: pointer;
 }
 
+tr.report {
+    cursor: pointer;
+}
+
 .sidebar a.selected.btn {
     background: white none no-repeat right top;
     border: 1px solid #5E6C82 !important;
