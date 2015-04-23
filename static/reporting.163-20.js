@@ -769,8 +769,8 @@ FilteredList.prototype.render = function() {
 
 FilteredList.prototype.filter = function() {
   var filteredList = this,
-			reportData = this.report.data,
-		  filterData = {};
+		  filterData = {},
+      $recordCount;
 
 	filteredList.report.fields.forEach(function(field) {
 		if (filteredList.ignore.indexOf(field.id) === -1) {
