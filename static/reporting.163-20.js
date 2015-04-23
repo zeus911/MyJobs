@@ -108,6 +108,9 @@ Report.prototype.renderFields = function(renderAt, fields, clear) {
   for (i = 0; i < fields.length; i++) {
     field = fields[i];
     $renderAt.append(field.render());
+    if (typeof field.filter !== "undefined" && !field.dependencies.length) {
+      field.filter();
+    }
     if (typeof field.bindEvents !== "undefined") {
       field.bindEvents();
     }
@@ -739,6 +742,7 @@ TagField.prototype.currentVal = function() {
 var FilteredList = function(report, label, id, required, ignore, dependencies, defaultVal, helpText) {
   this.ignore = ignore || [];
 	this.dependencies = dependencies || [];
+  this.active = 0;
 
   Field.call(this, report, label, id, required, defaultVal, helpText);
 };
@@ -759,10 +763,6 @@ FilteredList.prototype.render = function() {
   var label = this.renderLabel(),
       body = '<div id="' + this.id + '" class="list-body no-show"></div>';
 
-	if (!this.dependencies.length) {
-		this.filter();
-	}
-
   return label + body;
 };
 
@@ -770,7 +770,8 @@ FilteredList.prototype.render = function() {
 FilteredList.prototype.filter = function() {
   var filteredList = this,
 		  filterData = {},
-      $recordCount;
+      $recordCount,
+      $listBody;
 
 	filteredList.report.fields.forEach(function(field) {
 		if (filteredList.ignore.indexOf(field.id) === -1) {
@@ -794,12 +795,19 @@ FilteredList.prototype.filter = function() {
     url: "/reports/ajax/mypartners/" + this.id,
     data: filterData,
 		global: false,
+    beforeSend: function() {
+      $('#' + filteredList.id + '-header > span').hide();
+      if (!$('#' + filteredList.id + '-header > .fa-spinner').length) {
+        $('#' + filteredList.id + '-header').append('<i style="margin-left: 5px;" class="fa fa-spinner fa-pulse"></i>');
+      }
+      filteredList.active++;
+    },
     success: function(data) {
       $recordCount = $('#' + filteredList.id + '-header .record-count');
+      $listBody = $('.list-body#' + filteredList.id);
 			$('#' + filteredList.id + '-header input').prop("checked", true);
-      $('.list-body#' + filteredList.id).html("").parent(".required").children().unwrap();
-			$('.list-body#' + filteredList.id).prev('.show-errors').remove();
-      $('.list-body#' + filteredList.id).append('<ul><li>' + data.map(function(element) {
+      $listBody.html("").parent(".required").children().unwrap().prev('.show-errors').remove();
+      $listBody.append('<ul><li>' + data.map(function(element) {
         return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name + 
                '<span class="pull-right">' + (filteredList.id === 'partner' ? element.count : "") + '</label>';
       }).join("</li><li>") + '</li></ul>').removeClass("no-show");
@@ -809,12 +817,18 @@ FilteredList.prototype.filter = function() {
 
 			$.event.trigger("filtered", [filteredList]);
     }
+  }).done(function() {
+    filteredList.active--;
+    if (!filteredList.active) {
+      $('#' + filteredList.id + '-header > .fa-spinner:first').remove();
+      $('#' + filteredList.id + '-header > span').show();
+    }
   });
 };
 
 
 FilteredList.prototype.currentVal = function() {
-  values = $.map($(this.dom()).find("input").toArray(), function(c) {
+  var values = $.map($(this.dom()).find("input").toArray(), function(c) {
     if (c.checked) {
       return $(c).data("pk");
     }
