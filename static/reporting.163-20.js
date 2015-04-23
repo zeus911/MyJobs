@@ -64,22 +64,21 @@ var Report = function(types) {
 
 
 Report.prototype.createFields = function(types) {
-  var yesterday = (function(d){d.setDate(d.getDate() - 1); return d; })(new Date),
-      contactTypeChoices = [new CheckBoxField(this, "Email", "contact_type", "email"),
-                            new CheckBoxField(this,"Phone Call", "contact_type", "phone"),
-                            new CheckBoxField(this,"Meeting or Event", "contact_type", "meetingorevent"),
-                            new CheckBoxField(this,"Job Followup", "contact_type", "job"),
-                            new CheckBoxField(this,"Saved Search Email", "contact_type", "pssemail")
+  var yesterday = (function(d){d.setDate(d.getDate() - 1); return d; })(new Date()),
+      contactTypeChoices = [new CheckBox(this, "Email", "contact_type", "email"),
+                            new CheckBox(this,"Phone Call", "contact_type", "phone"),
+                            new CheckBox(this,"Meeting or Event", "contact_type", "meetingorevent"),
+                            new CheckBox(this,"Job Followup", "contact_type", "job"),
+                            new CheckBox(this,"Saved Search Email", "contact_type", "pssemail")
                             ],
-      reports = {prm: [new TextField(this, "Report Name", "report_name", true, reportNameDateFormat(new Date())),
-                      new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
-                      new StateField(this, "State", 'state', false),
-                      new TextField(this, "City", "city", false),
-                      new TagField(this, "Tags", "tag", false, undefined, "Use commas for multiple tags."),
-                      new CheckListField(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
-                      new FilteredList(this, "Partners", "partner", false),
-                      new FilteredList(this, "Contacts", "contact", false)]
-
+      reports = {"prm": [new TextField(this, "Report Name", "report_name", true, reportNameDateFormat(new Date())),
+                        new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
+                        new StateField(this, "State", 'state', false),
+                        new TextField(this, "City", "city", false),
+                        new TagField(this, "Tags", "tags__name", false, undefined, "Use commas for multiple tags."),
+                        new CheckList(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
+                        new FilteredList(this, "Partners", "partner", true, ['report_name', 'partner', 'contact']),
+                        new FilteredList(this, "Contacts", "contact", true, ['report_name', 'contact'], ['partner'])]
       },
       fields = [],
       key;
@@ -183,7 +182,7 @@ Report.prototype.save = function() {
       errors;
 
   this.fields.forEach(function(field) {
-    field.validate();
+    field.validate(false);
   });
 
   errors = this.fields.filter(function(field) {
@@ -197,9 +196,10 @@ Report.prototype.save = function() {
     return false;
   } else {
     this.fields.forEach(function(field) {
-      $.extend(report.data, field.onSave());
+			$.extend(report.data, field.onSave());
     });
   }
+
   return true;
 };
 
@@ -261,12 +261,12 @@ Field.prototype.renderLabel = function() {
 
 
 Field.prototype.dom = function() {
-  return document.getElementById(this.id);
+	return $("#" + this.id);
 };
 
 
 Field.prototype.currentVal = function() {
-  return this.dom().value;
+  return this.dom().val();
 };
 
 
@@ -288,6 +288,40 @@ Field.prototype.bind = function(event, selector, callback) {
 // Unbinds all events of event type on this field.
 Field.prototype.unbind = function(event) {
   $(this.dom()).off(event);
+
+  return this;
+};
+
+
+Field.prototype.onSave = function() {
+  var data = {};
+  data[this.id] = this.currentVal();
+
+  return data;
+};
+
+
+Field.prototype.validate = function(triggerEvent) {
+	triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
+  var $field = $(this.dom()),
+      err = this.label + " is required",
+      index = this.errors.indexOf(err);
+
+  if (this.required && this.currentVal().trim() === "") {
+    if (index === -1) {
+      this.errors.push(err);
+      this.showErrors();
+    }
+  } else {
+    if (index !== -1) {
+      this.errors.splice(index, 1);
+      this.removeErrors();
+    }
+
+		if (triggerEvent) {
+			$.event.trigger("dataChanged", [this.onSave()]);
+		}
+  }
 
   return this;
 };
@@ -329,30 +363,6 @@ Field.prototype.removeErrors = function() {
 };
 
 
-Field.prototype.validate = function() {
-  var err = this.label + " is required",
-      index = this.errors.indexOf(err);
-
-  if (this.required && this.currentVal().trim() === "") {
-    if (index === -1) {
-      this.errors.push(err);
-    }
-  } else {
-    if (index !== -1) {
-      this.errors.splice(index, 1);
-    }
-  }
-
-  return this;
-};
-
-
-Field.prototype.onSave = function() {
-  var data = {};
-  data[this.id] = this.currentVal();
-  return data;
-};
-
 var TextField = function(report, label, id, required, defaultVal, helpText) {
   Field.call(this, report, label, id, required, defaultVal, helpText);
 };
@@ -372,24 +382,20 @@ TextField.prototype.render = function() {
 TextField.prototype.bindEvents = function() {
   var textField = this,
       $field = $(textField.dom()),
-      validate = function() {
-        textField.validate();
-        if (textField.errors.length) {
-          textField.showErrors();
-        } else {
-          textField.removeErrors();
-        }
-      },
       trim = function() {
         var value = $field.val().trim();
         $field.val(value);
       };
 
-  this.bind("change.validate", validate);
+  this.bind("change.validate", function(e) {
+    textField.validate();
+  });
+
   this.bind("change.trim", trim);
 };
 
-var CheckBoxField = function(report, label, name, defaultVal, checked, helpText) {
+
+var CheckBox = function(report, label, name, defaultVal, checked, helpText) {
   this.checked = typeof checked === 'undefined' ? true : checked;
   this.name = name;
   this.id = name + '_' + defaultVal;
@@ -397,11 +403,10 @@ var CheckBoxField = function(report, label, name, defaultVal, checked, helpText)
   Field.call(this, report, label, this.id, false, defaultVal, helpText);
 };
 
-CheckBoxField.prototype = Object.create(Field.prototype);
+CheckBox.prototype = Object.create(Field.prototype);
 
 
-
-CheckBoxField.prototype.render = function(createLabel) {
+CheckBox.prototype.render = function(createLabel) {
   createLabel = typeof createLabel === 'undefined' ? true : createLabel;
 
   var label = this.renderLabel(),
@@ -413,25 +418,17 @@ CheckBoxField.prototype.render = function(createLabel) {
   return (createLabel ? label : '') + field + (this.helpText ? helpText : '');
 };
 
-var CheckListField = function(report, label, id, choices, required, defaultVal, helpText) {
+
+var CheckList = function(report, label, id, choices, required, defaultVal, helpText) {
   this.choices = choices;
 
   Field.call(this, report, label, id, required, defaultVal, helpText);
 };
 
-CheckListField.prototype = Object.create(Field.prototype);
+CheckList.prototype = Object.create(Field.prototype);
 
 
-CheckListField.prototype.currentVal = function() {
-  return $.map(this.choices, function(c) {
-    if (c.checked) {
-      return c.currentVal();
-    }
-  });
-};
-
-
-CheckListField.prototype.render = function() {
+CheckList.prototype.render = function() {
   var label = this.renderLabel(),
       html = $.map(this.choices, function(choice) {
         return choice.render(false);
@@ -442,42 +439,27 @@ CheckListField.prototype.render = function() {
                  '</div>';
 };
 
-CheckListField.prototype.bind = function(event, selector, callback) {
-  if (typeof callback !== "function") {
-    throw "Callback parameter expecting function.";
-  }
 
-  $(this.dom()).on(event, selector, function(e) {
-    callback(e);
+CheckList.prototype.currentVal = function() {
+  var values = $.map(this.choices, function(c) {
+    if (c.checked) {
+      return c.currentVal();
+    }
   });
 
-  return this;
+  return values.length ? values : ["0"];
 };
 
 
-CheckListField.prototype.findChoice = function(choiceID) {
-  return this.choices.filter(function(choice) {
-    return (choice.id === choiceID ? choice : undefined);
-  })[0];
-};
-
-
-CheckListField.prototype.bindEvents = function() {
-  var checklist = this,
-      validate = function(e) {
-        checklist.validate();
-        if (checklist.errors.length) {
-          checklist.showErrors();
-        } else {
-          checklist.removeErrors();
-        }
-      };
+CheckList.prototype.bindEvents = function() {
+  var checklist = this;
 
   this.bind("change", "[value='all']", function(e) {
     var $all = $(e.currentTarget),
         $choices = $(checklist.dom()).find(".field input");
 
-    $choices.prop("checked", $all.is(":checked")).change();
+    $choices.prop("checked", $all.is(":checked"));
+    $($choices[$choices.length - 1]).change();
   });
 
   this.bind("change", ".field input", function(e) {
@@ -489,31 +471,40 @@ CheckListField.prototype.bindEvents = function() {
     checked = choices.every(function(c) { return $(c).is(":checked"); });
     $all.prop("checked", checked);
 
-    checklist.findChoice($choice.attr("id")).checked = $choice.is(":checked");
+    checklist.choices.forEach(function(element) {
+      element.checked = $(element.dom()).is(":checked");
+    });
+
+    checklist.validate(); 
   });
-
-  this.bind("change.validate", "[value='all']", validate);
-  this.bind("change.validate", ".field input", validate);
-
 };
 
 
-CheckListField.prototype.validate = function() {
+CheckList.prototype.validate = function(triggerEvent) {
+	triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
   var err = this.label + " is required",
-      index = this.errors.indexOf(err);
-
-  if (this.required && !this.currentVal().length) {
+      index = this.errors.indexOf(err),
+      value = this.currentVal();
+  
+  if (this.required && value.indexOf("0") === 0 && value.length === 1) {
     if (index === -1) {
       this.errors.push(err);
+      this.showErrors();
     }
   } else {
     if (index !== -1) {
       this.errors.splice(index, 1);
+      this.removeErrors();
     }
   }
 
+	if (triggerEvent) {
+		$.event.trigger("dataChanged", [this.onSave()]);
+	}
+
   return this;
 };
+
 
 var DateField = function(report, label, id, required, defaultVal, helpText) {
   var dVal = defaultVal || {};
@@ -521,11 +512,6 @@ var DateField = function(report, label, id, required, defaultVal, helpText) {
 };
 
 DateField.prototype = Object.create(Field.prototype);
-
-
-DateField.prototype.currentVal = function(id) {
-  return $(this.dom()).find("#" + id).val();
-};
 
 
 DateField.prototype.render = function() {
@@ -542,7 +528,13 @@ DateField.prototype.render = function() {
 };
 
 
-DateField.prototype.validate = function() {
+DateField.prototype.currentVal = function(id) {
+  return $(this.dom()).find("#" + id).val();
+};
+
+
+DateField.prototype.validate = function(triggerEvent) {
+	triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
   var dateField = this,
       $dom = $(this.dom()),
       $fields = $dom.find("input.datepicker"), // Both start and end inputs.
@@ -556,13 +548,21 @@ DateField.prototype.validate = function() {
     if ($(field).val() === "") {
       if (index === -1) {
         dateField.errors.push(label + " is required");
+        dateField.showErrors();
       }
     } else {
       if (index !== -1) {
         dateField.errors.splice(index, 1);
+        dateField.removeErrors();
       }
     }
   });
+
+  if (!dateField.errors.length && triggerEvent) {
+		$.event.trigger("dataChanged", [dateField.onSave()]);
+  }
+
+  return this;
 };
 
 
@@ -589,18 +589,12 @@ DateField.prototype.bindEvents = function() {
             }
           }
         });
-    },
-    validate = function(e) {
-      dateField.validate();
-      if (dateField.errors.length) {
-        dateField.showErrors();
-      } else {
-        dateField.removeErrors();
-      }
     };
 
   this.bind("focus.datepicker", ".datepicker", datePicker);
-  this.bind("change.validate", ".datepicker", validate);
+  this.bind("change.validate", ".datepicker", function(e) {
+    dateField.validate();
+  });
 };
 
 
@@ -640,7 +634,16 @@ StateField.prototype.render = function() {
 };
 
 
+StateField.prototype.bindEvents = function() {
+	var stateField = this;
+
+	$(document).on("change.validate", "#" + stateField.id, function(e) {
+		stateField.validate();	
+	});
+};
+
 var TagField = function(report, label, id, required, defaultVal, helpText) {
+	self.value = [];
   TextField.call(this, report, label, id, required, defaultVal, helpText);
 };
 
@@ -648,7 +651,9 @@ TagField.prototype = Object.create(TextField.prototype);
 
 
 TagField.prototype.bindEvents = function() {
-  var $dom = $(this.dom());
+  var tagField = this,
+			$dom = $(this.dom());
+
   $dom.autocomplete({
     focus: function() {
       // Prevent value inserted on focus.
@@ -683,7 +688,8 @@ TagField.prototype.bindEvents = function() {
       $.ajax({
         type: "GET",
         url: "/reports/ajax/mypartners/tag",
-        data: {name: keyword, values: ["pk", "name"], order_by: ["name"]},
+				//TODO: New backend changes will fix this monstrocity
+				data: {name: keyword, values: ["name", "pk"], order_by: "name"},
         success: function(data) {
           suggestions = data.filter(function(d) {
             // Don't suggest things that are already selected.
@@ -698,21 +704,38 @@ TagField.prototype.bindEvents = function() {
           response(suggestions);
         }
       });
-    }
+    },
   });
+
+	$dom.on("autocompleteopen", function() {
+		$dom.data("isOpen", true);
+	});
+
+	$dom.on("autocompleteclose", function() {
+		$dom.data("isOpen", false);
+		tagField.value = $dom.val();
+		tagField.validate();
+	});
+
+	$dom.on("change", function() {
+		if(!$dom.data("isOpen")) {
+			tagField.value = $dom.val();
+			tagField.validate();
+		}
+	});
 };
 
-
-TagField.prototype.onSave = function() {
-  var data = {};
+TagField.prototype.currentVal = function() {
   // Split on commas. Trim each element in array. Remove any elements that were blank strings.
   // #2proud2linebreak
-  data.tags = this.currentVal().split(",").map(function(t) {return t.trim();}).filter(function(t) { if (!!t) {return t;} });
-  return data;
+	return this.dom().val().split(",").map(function(t) { return t.trim(); }).filter(function(t) { if (!!t) { return t; } });
 };
 
 
-var FilteredList = function(report, label, id, required, defaultVal, helpText) {
+var FilteredList = function(report, label, id, required, ignore, dependencies, defaultVal, helpText) {
+  this.ignore = ignore || [];
+	this.dependencies = dependencies || [];
+
   Field.call(this, report, label, id, required, defaultVal, helpText);
 };
 
@@ -731,37 +754,140 @@ FilteredList.prototype.renderLabel = function() {
 FilteredList.prototype.render = function() {
   var label = this.renderLabel(),
       body = '<div id="' + this.id + '" class="list-body no-show"></div>';
-  this.filter();
+
+	if (!this.dependencies.length) {
+		this.filter();
+	}
+
   return label + body;
 };
 
 
 FilteredList.prototype.filter = function() {
-  var data = {},
-      filteredList = this;
+  var filteredList = this,
+			reportData = this.report.data,
+		  filterData = {};
+
+	filteredList.report.fields.forEach(function(field) {
+		if (filteredList.ignore.indexOf(field.id) === -1) {
+			$.extend(filterData, field.onSave());
+		}
+	});
 
   if (this.id === "partner") {
     // annotate how many records a partner has.
-    $.extend(data, {count: "contactrecord",
+    $.extend(filterData, {count: "contactrecord",
                     values: ["pk", "name", "count"],
-                    order_by: ["name"]}
+                    order_by: "name"}
     );
   } else if (this.id === "contact") {
-    $.extend(data, {values: ["name", "email"], order_by: "name"});
+    $.extend(filterData, {values: ["pk", "name", "email"], order_by: "name"});
   }
 
   $.ajaxSettings.traditional = true;
   $.ajax({
     type: "GET",
     url: "/reports/ajax/mypartners/" + this.id,
-    data: data,
+    data: filterData,
+		global: false,
     success: function(data) {
-      $(".list-body#" + filteredList.id).append('<ul><li>' + data.map(function(element) {
-        return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name + '</label>';
+      $recordCount = $('#' + filteredList.id + '-header').find(".record-count");
+      $('.list-body#' + filteredList.id).html("");
+      $('.list-body#' + filteredList.id).append('<ul><li>' + data.map(function(element) {
+        return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name + 
+               '<span class="pull-right">' + (filteredList.id === 'partner' ? element.count : "") + '</label>';
       }).join("</li><li>") + '</li></ul>').removeClass("no-show");
+
+      $recordCount.text(filteredList.currentVal().length);
+
+			$.event.trigger("filtered", [filteredList]);
     }
   });
 };
+
+
+FilteredList.prototype.currentVal = function() {
+  return $.map($(this.dom()).find("input").toArray(), function(c) {
+    if (c.checked) {
+      return $(c).data("pk");
+    }
+  });
+};
+
+
+FilteredList.prototype.bindEvents = function() {
+  var filteredList = this,
+      $header = $('#' + filteredList.id + '-header'),
+      $recordCount = $header.find(".record-count"),
+      $all = $header.find("input");
+
+  $header.find("input").on("change", function() {
+    var $choices = $(filteredList.dom()).find("input");
+
+    $choices.prop("checked", $(this).is(":checked"));
+    $($choices[$choices.length - 1]).change();
+  });
+
+  $(this.dom()).bind("change", "input", function() {
+    var choices = $(filteredList.dom()).find("input").toArray(),
+        checked;
+
+    checked = choices.every(function(c) { return $(c).is(":checked"); });
+    $all.prop("checked", checked);
+    $recordCount.text(filteredList.currentVal().length);
+  });
+
+  $all.on("change", function(e) {
+    filteredList.validate();
+  });
+
+  $(this.dom()).bind("change", "input", function(e) {
+    filteredList.validate();
+  });
+
+  // TODO: Figure out how to reduce queries; perhaps by diffing total changes
+  $(document).on("dataChanged", function(e, data) {
+    var callFilter = !filteredList.dependencies.length && filteredList.ignore.every(function(element) {
+          return !(element in data);
+        });
+
+    if(callFilter) {
+      filteredList.filter();
+    }
+
+  });
+
+	$(document).on("filtered", function(e, field) {
+		if (filteredList.dependencies.indexOf(field.id) !== -1) {
+			filteredList.filter();
+		}
+	});
+};
+
+FilteredList.prototype.validate = function(triggerEvent) {
+	triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
+  var err = this.label + " is required",
+      index = this.errors.indexOf(err);
+
+  if (this.required && !this.currentVal().length) {
+    if (index === -1) {
+      this.errors.push(err);
+      this.showErrors();
+    }
+  } else {
+    if (index !== -1) {
+      this.errors.splice(index, 1);
+      this.removeErrors();
+    }
+  }
+
+	if (triggerEvent) {
+		$.event.trigger("dataChanged", [this.onSave()]);
+	}
+
+  return this;
+};
+
 
 // Capitalize first letter of a string.
 String.prototype.capitalize = function() {

@@ -117,6 +117,9 @@ class SearchParameterQuerySet(models.query.QuerySet):
         exist.
         """
 
+        if '__' in name:
+            return 'ForeignKey'
+
         # using get_fields isn't sufficient as it doesn't account
         field = self.model._meta.get_field_by_name(name)[0]
 
@@ -849,3 +852,14 @@ class Tag(models.Model):
     class Meta:
         unique_together = ('name', 'company')
         verbose_name = "tag"
+
+    @classmethod
+    def _parse_parameters(cls, parameters, records):
+        """Used to parse state during `from_search()`."""
+
+        query = models.Q(partner__isnull=False)
+        query |= models.Q(contact__isnull=False)
+        query &= models.Q(partner__contactrecord__isnull=False)
+        records = records.filter(query)
+
+        return records
