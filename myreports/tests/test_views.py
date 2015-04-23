@@ -1,8 +1,6 @@
 """Tests associated with myreports views."""
 
-import csv
 import json
-from cStringIO import StringIO
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
@@ -11,7 +9,6 @@ from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
 from mypartners.tests.factories import (ContactFactory, ContactRecordFactory,
                                         LocationFactory, PartnerFactory)
-from mypartners.models import ContactRecord
 from myreports.models import Report
 from seo.tests.factories import CompanyFactory, CompanyUserFactory
 
@@ -191,7 +188,8 @@ class TestReportView(MyReportsTestCase):
     """
     def setUp(self):
         super(TestReportView, self).setUp()
-        self.client = TestClient(path='/reports/view/mypartners/contactrecord')
+        self.client = TestClient(path=reverse('reports', kwargs={
+            'app': 'mypartners', 'model': 'contactrecord'}))
         self.client.login_user(self.user)
 
         ContactRecordFactory.create_batch(5, partner__owner=self.company)
@@ -235,12 +233,42 @@ class TestReportView(MyReportsTestCase):
         self.assertEqual(data['contacts'][0]['referrals'], 10)
 
 
+class TestDownloads(MyReportsTestCase):
+    """Tests the reports view."""
+
+    def setUp(self):
+        super(TestDownloads, self).setUp()
+        self.client = TestClient(path=reverse('downloads'),
+                                 HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.client.login_user(self.user)
+
+        ContactRecordFactory.create_batch(10, partner__owner=self.company)
+
+    def test_column_order(self):
+        """Tests that column order is preserved"""
+
+        # create a report whose results is for all contact records in the
+        # company
+        response = self.client.post(
+            path=reverse('reports', kwargs={
+                'app': 'mypartners', 'model': 'contactrecord'}),
+            data={'values': ['partner', 'contact_name', 'contact_type']})
+
+        report_name = response.content
+        report = Report.objects.get(name=report_name)
+
+        response = self.client.get(data={'id': report.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['columns'], {
+            'Partner': True, 'Contact Name': True, 'Contact Type': True})
+
+
 class TestDownloadReport(MyReportsTestCase):
     """Tests that reports can be downloaded."""
 
     def setUp(self):
         super(TestDownloadReport, self).setUp()
-        self.client = TestClient(path='/reports/download')
+        self.client = TestClient(path=reverse('download_report'))
         self.client.login_user(self.user)
 
         ContactRecordFactory.create_batch(5, partner__owner=self.company)
@@ -256,8 +284,8 @@ class TestDownloadReport(MyReportsTestCase):
 
         # create a report whose results is for all contact records in the
         # company
-        response = self.client.post(
-            path='/reports/view/mypartners/contactrecord')
+        response = self.client.post(path=reverse('reports', kwargs={
+            'app': 'mypartners', 'model': 'contactrecord'}))
         report_name = response.content
         report = Report.objects.get(name=report_name)
 

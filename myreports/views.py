@@ -153,7 +153,8 @@ class ReportView(View):
         """
         if request.method == 'GET':
             report_id = request.GET.get('id', 0)
-            report = Report.objects.get(id=report_id)
+            report = get_object_or_404(
+                get_model('myreports', 'report'), pk=report_id)
             records = report.queryset
 
             ctx = {
