@@ -82,7 +82,7 @@ def parse_params(querydict):
 # TODO:
 #   * find a better way to handle counts
 #   * do something other than isinstance checks (duck typing anyone?)
-def serialize(fmt, data, counts=None, values=None, order_by=None):
+def serialize(fmt, data, values=None, order_by=None):
     """
     Like `django.core.serializers.serialize`, but produces a simpler structure
     and retains annotated fields*.
@@ -91,9 +91,6 @@ def serialize(fmt, data, counts=None, values=None, order_by=None):
         :fmt: The format to serialize to. Currently recognizes 'csv', 'json',
               and 'python'.
         :data: The data to be serialized.
-        :counts: A dictionary mapping primary keys to actual counts. This is a
-                 cludge which should be deprecated in later version of this
-                 function if at all possible.
 
     Outputs:
         Either a Python object or a string represention of the requested
@@ -108,10 +105,6 @@ def serialize(fmt, data, counts=None, values=None, order_by=None):
         data = [dict({'pk': record['pk']}, **record['fields'])
                 for record in serializers.serialize(
                     'python', data, use_natural_keys=True, fields=values)]
-
-        if counts:
-            data = [dict({'count': counts[record['pk']]}, **record)
-                    for record in data]
 
     values = values or sorted(data[0].keys())
     order_by = order_by or values[0]

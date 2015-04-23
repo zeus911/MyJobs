@@ -94,17 +94,11 @@ def view_records(request, app, model):
         params = parse_params(request.GET)
 
         # remove non-query related params
-        count = params.pop('count', None)
         values = params.pop('values', [])
         order_by = params.pop('order_by', None)
 
         records = get_model(app, model).objects.from_search(
             company, params)
-
-        counts = {}
-        if count:
-            records = records.annotate(count=Count(count, distinct=True))
-            counts = {record.pk: record.count for record in records}
 
         if values:
             records = records.values(*values)
@@ -115,7 +109,7 @@ def view_records(request, app, model):
 
             records = records.order_by(*order_by)
 
-        ctx = serialize('json', records, counts=counts, values=values)
+        ctx = serialize('json', records, values=values)
 
         response = HttpResponse(
             ctx, content_type='application/json; charset=utf-8')
@@ -153,8 +147,7 @@ class ReportView(View):
         """
         if request.method == 'GET':
             report_id = request.GET.get('id', 0)
-            report = get_object_or_404(
-                get_model('myreports', 'report'), pk=report_id)
+            report = Report.objects.get(id=report_id)
             records = report.queryset
 
             ctx = {
