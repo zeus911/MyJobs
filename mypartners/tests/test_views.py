@@ -893,7 +893,11 @@ class SearchEditTests(MyPartnersTestCase):
         # Edit saved search to toggle status of is_active
         self.client.post(recipient_url, data)
         search = PartnerSavedSearch.objects.get()
+        print 'unsubscriber: ', search.unsubscriber
+        print 'unsubscribed: ', search.unsubscribed
+        print 'is_active: ', search.is_active
         self.assertTrue(search.unsubscribed)
+        self.assertFalse(search.is_active)
 
         # This should result in one email...
         email = mail.outbox[0]
@@ -904,6 +908,10 @@ class SearchEditTests(MyPartnersTestCase):
         message_info = MessageInfo.objects.get()
         self.assertEqual(message_info.user, search.created_by)
         self.assertTrue('unsubscribed' in message_info.message.body)
+
+        self.contact.user.delete()
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(MessageInfo.objects.count(), 2)
 
     def test_update_existing_saved_search(self):
         url = self.get_url('partner_savedsearch_save',

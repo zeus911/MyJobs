@@ -123,30 +123,36 @@ class DigestForm(BaseUserForm):
         model = SavedSearchDigest
 
 
-def is_active_check(form, recipient=True):
-    """
-    Checks the status of is_active (current state and changed state) on partner
-    saved search forms. Sets unsubscriber and unsubscribed as appropriate and
-    notifies the member company if the recipient unchecks is_active.
+class IsActiveChanged(RequestForm):
+    def is_active_check(self, recipient=True):
+        """
+        Checks the status of is_active (current state and changed state) on
+        partner saved search forms. Sets unsubscriber and unsubscribed as
+        appropriate and notifies the member company if the recipient unchecks
+        is_active.
 
-    Inputs:
-    :form: The form instance being checked
-    :recipient: Whether this call was initiated by the recipient editing or not
-    """
-    if 'is_active' in form.changed_data and form.instance.pk:
-        if form.instance.is_active:
-            # Saved search is being deactivated; set unsubscriber
-            form.instance.unsubscriber = form.request.user.email
-            form.instance.unsubscribed = True
-            if recipient:
-                form.instance.user.send_opt_out_notifications([form.instance])
-        else:
-            # Saved search is being activated; unset unsubscriber
-            form.instance.unsubscriber = ''
-            form.instance.unsubscribed = False
+        Inputs:
+        :recipient: Whether this call was initiated by the recipient editing or not
+        """
+        if 'is_active' in self.changed_data and self.instance.pk:
+            if self.instance.is_active:
+                print 'unsubscribing'
+                # Saved search is being deactivated; set unsubscriber
+                self.instance.unsubscriber = self.request.user.email
+                self.instance.unsubscribed = True
+                if recipient:
+                    self.instance.user.send_opt_out_notifications([self.instance])
+                print self.cleaned_data['is_active']
+            else:
+                # Saved search is being activated; unset unsubscriber
+                self.instance.unsubscriber = ''
+                self.instance.unsubscribed = False
+            self.cleaned_data.update({'unsubscriber': self.instance.unsubscriber,
+                                      'unsubscribed': self.instance.unsubscribed})
+            self.instance.save()
 
 
-class PartnerSavedSearchForm(RequestForm):
+class PartnerSavedSearchForm(IsActiveChanged):
     def __init__(self, *args, **kwargs):
         choices = PartnerEmailChoices(kwargs.pop('partner', None))
         super(PartnerSavedSearchForm, self).__init__(*args, **kwargs)
@@ -253,7 +259,7 @@ class PartnerSavedSearchForm(RequestForm):
             self._errors.setdefault('url', []).append(error_msg)
 
         self.cleaned_data['feed'] = feed
-        is_active_check(self, recipient=False)
+        self.is_active_check(recipient=False)
         return cleaned_data
 
     def save(self, commit=True):
@@ -283,9 +289,10 @@ class PartnerSavedSearchForm(RequestForm):
         return instance
 
 
-class PartnerSubSavedSearchForm(RequestForm):
+class PartnerSubSavedSearchForm(IsActiveChanged):
     def clean(self):
-        is_active_check(self)
+        print 'this one'
+        self.is_active_check()
         return self.cleaned_data
 
     class Meta:
