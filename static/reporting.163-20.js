@@ -874,7 +874,7 @@ FilteredList.prototype.bindEvents = function() {
 
   $dom.prev("#" + filteredList.id + "-header").on("click", function(e) {
     var $this = $(this),
-        $icon = $(this).children("i");
+        $icon = $this.children("i");
 
     if ($icon.hasClass("fa-plus-square-o")) {
       $icon.removeClass("fa-plus-square-o").addClass("fa-minus-square-o");
