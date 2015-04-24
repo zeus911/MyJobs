@@ -790,7 +790,7 @@ FilteredList.prototype = Object.create(Field.prototype);
 FilteredList.prototype.renderLabel = function() {
   return '<div id="'+ this.id +'-header" class="list-header">' +
          '<i class="fa fa-plus-square-o"></i>' +
-         '<input id="' + this.id + '-all-checkbox" type="checkbox" ' + (this.value ? "" : "checked") + ' />' +
+         '<input id="' + this.id + '-all-checkbox" type="checkbox" ' + (this.defaultVal ? "" : "checked") + ' />' +
          ' All ' + this.label + (this.required ? '<star style="color: #990000">*</star>' : '') + ' ' +
          '<span>(<span class="record-count">0</span> ' + this.label + ' Selected)</span>' +
          '</div>';
@@ -809,7 +809,8 @@ FilteredList.prototype.filter = function() {
   var filteredList = this,
 		  filterData = {},
       $recordCount,
-      $listBody;
+      $listBody,
+      $input;
 
 	filteredList.report.fields.forEach(function(field) {
 		if (filteredList.ignore.indexOf(field.id) === -1) {
@@ -846,7 +847,17 @@ FilteredList.prototype.filter = function() {
 			$('#' + filteredList.id + '-header input').prop("checked", true);
       $listBody.html("").parent(".required").children().unwrap().prev('.show-errors').remove();
       $listBody.append('<ul><li>' + data.map(function(element) {
-        return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name +
+        $input = $('<input type="checkbox" data-pk="' + element.pk + '" ' + (function () {
+          if (filteredList.defaultVal) {
+            if (filteredList.id === "contact") {
+              return filteredList.defaultVal.indexOf(element.name) >= 0 ? "checked" : "";
+            } else {
+              return filteredList.defaultVal.indexOf(element.pk.toString()) >= 0 ? "checked" : "";
+            }
+          }
+          return "checked";
+        })() +  '/>');
+        return '<label>' + $input.prop("outerHTML") + ' ' + element.name +
           (filteredList.id === 'contact' && element.email ? ' <span class="small">(' + element.email + ')</span>' : '') + '</label>';
       }).join("</li><li>") + '</li></ul>').removeClass("no-show");
 
