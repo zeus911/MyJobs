@@ -650,7 +650,7 @@ StateField.prototype.bindEvents = function() {
 };
 
 var TagField = function(report, label, id, required, defaultVal, helpText) {
-	self.value = [];
+	this.value = [];
   TextField.call(this, report, label, id, required, defaultVal, helpText);
 };
 
@@ -809,8 +809,8 @@ FilteredList.prototype.filter = function() {
 			$('#' + filteredList.id + '-header input').prop("checked", true);
       $listBody.html("").parent(".required").children().unwrap().prev('.show-errors').remove();
       $listBody.append('<ul><li>' + data.map(function(element) {
-        return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name + 
-               '<span class="pull-right">' + (filteredList.id === 'partner' ? element.count : "") + '</label>';
+        return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name +
+          (filteredList.id === 'contact' ? ' <span class="small">(' + element.email + ')</span>' : '') + '</label>';
       }).join("</li><li>") + '</li></ul>').removeClass("no-show");
 
 			var value = filteredList.currentVal();
