@@ -140,13 +140,14 @@ Report.prototype.createCloneReport = function(json) {
   for (key in json) {
     if (json.hasOwnProperty(key)) {
       value = json[key];
+      console.log(key, value);
       if (key === "start_date" || key === "end_date") {
         phony = {};
         phony[key] = value;
         date = this.findField("date");
         $.extend(date.defaultVal, phony);
       } else {
-        this.findField(key).defaultVal = value;
+        this.findField(key === "contact_name" ? "contact" : key).defaultVal = value;
       }
     }
   }
@@ -661,22 +662,19 @@ StateField.prototype = Object.create(Field.prototype);
 
 StateField.prototype.render = function() {
   var label = this.renderLabel(),
-      field = this;
-  (function() {
-    $.ajax({
-      type: "POST",
-      url: location.protocol + "//" + location.host + "/reports/ajax/get-states",
-      data: {"csrfmiddlewaretoken": read_cookie("csrftoken")},
-      success: function(data) {
-        var $state = $(".state");
-        $state.html(data);
-        if (field.defaultVal) {
-          $state.find("select").val(field.defaultVal);
-        }
-      }
-    });
-  })();
-  return label + '<div class="state"></div>';
+      $select = $('<select id="' + this.id + '"></select>'),
+      options = ['<option value>Select a State</option>'],
+      st;
+
+  // create options
+  for (st in states) {
+    if (states.hasOwnProperty(st)) {
+      options.push('<option value="' + st + '" ' + (this.defaultVal === st ? "selected" : "") + '>' + states[st] + '</option>');
+    }
+  }
+
+  $select.append(options.join(''));
+  return label + $select.prop("outerHTML");
 };
 
 
@@ -913,7 +911,7 @@ FilteredList.prototype.bindEvents = function() {
 
   $dom.prev("#" + filteredList.id + "-header").on("click", function(e) {
     var $this = $(this),
-        $icon = $this.children("i");
+        $icon = $this.children("i:first");
 
     if ($icon.hasClass("fa-plus-square-o")) {
       $icon.removeClass("fa-plus-square-o").addClass("fa-minus-square-o");

@@ -16,6 +16,11 @@
 {% endblock %}
 
 {% block extra-js %}
+{% autoescape off %}
+<script type="text/javascript">
+    var states = {{ states }};
+</script>
+{% endautoescape %}
 <!--[if IE]>
 <script src="{{ STATIC_URL }}es5-shim.min.js"></script>
 <script src="{{ STATIC_URL }}es5-sham.min.js"></script>
