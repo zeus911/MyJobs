@@ -108,6 +108,9 @@ Report.prototype.renderFields = function(renderAt, fields, clear) {
   for (i = 0; i < fields.length; i++) {
     field = fields[i];
     $renderAt.append(field.render());
+    if (typeof field.filter !== "undefined" && !field.dependencies.length) {
+      field.filter();
+    }
     if (typeof field.bindEvents !== "undefined") {
       field.bindEvents();
     }
@@ -739,6 +742,7 @@ TagField.prototype.currentVal = function() {
 var FilteredList = function(report, label, id, required, ignore, dependencies, defaultVal, helpText) {
   this.ignore = ignore || [];
 	this.dependencies = dependencies || [];
+  this.active = 0;
 
   Field.call(this, report, label, id, required, defaultVal, helpText);
 };
@@ -748,8 +752,9 @@ FilteredList.prototype = Object.create(Field.prototype);
 
 FilteredList.prototype.renderLabel = function() {
   return '<div id="'+ this.id +'-header" class="list-header">' +
+         '<i class="fa fa-plus-square-o"></i>' +
          '<input id="' + this.id + '-all-checkbox" type="checkbox" ' + (this.value ? "" : "checked") + ' />' +
-         ' All ' + this.label + ' ' +
+         ' All ' + this.label + (this.required ? '<star style="color: #990000">*</star>' : '') + ' ' +
          '<span>(<span class="record-count">0</span> ' + this.label + ' Selected)</span>' +
          '</div>';
 };
@@ -757,11 +762,7 @@ FilteredList.prototype.renderLabel = function() {
 
 FilteredList.prototype.render = function() {
   var label = this.renderLabel(),
-      body = '<div id="' + this.id + '" class="list-body no-show"></div>';
-
-	if (!this.dependencies.length) {
-		this.filter();
-	}
+      body = '<div id="' + this.id + '" style="display: none;" class="list-body"></div>';
 
   return label + body;
 };
@@ -769,8 +770,9 @@ FilteredList.prototype.render = function() {
 
 FilteredList.prototype.filter = function() {
   var filteredList = this,
-			reportData = this.report.data,
-		  filterData = {};
+		  filterData = {},
+      $recordCount,
+      $listBody;
 
 	filteredList.report.fields.forEach(function(field) {
 		if (filteredList.ignore.indexOf(field.id) === -1) {
@@ -794,13 +796,21 @@ FilteredList.prototype.filter = function() {
     url: "/reports/ajax/mypartners/" + this.id,
     data: filterData,
 		global: false,
+    beforeSend: function() {
+      $('#' + filteredList.id + '-header > span').hide();
+      if (!$('#' + filteredList.id + '-header > .fa-spinner').length) {
+        $('#' + filteredList.id + '-header').append('<i style="margin-left: 5px;" class="fa fa-spinner fa-pulse"></i>');
+      }
+      filteredList.active++;
+    },
     success: function(data) {
       $recordCount = $('#' + filteredList.id + '-header .record-count');
+      $listBody = $('.list-body#' + filteredList.id);
 			$('#' + filteredList.id + '-header input').prop("checked", true);
-      $('.list-body#' + filteredList.id).html("").parent(".required").children().unwrap();
-			$('.list-body#' + filteredList.id).prev('.show-errors').remove();
-      $('.list-body#' + filteredList.id).append('<ul><li>' + data.map(function(element) {
-        return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name + '</label>';
+      $listBody.html("").parent(".required").children().unwrap().prev('.show-errors').remove();
+      $listBody.append('<ul><li>' + data.map(function(element) {
+        return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name + 
+               '<span class="pull-right">' + (filteredList.id === 'partner' ? element.count : "") + '</label>';
       }).join("</li><li>") + '</li></ul>').removeClass("no-show");
 
 			var value = filteredList.currentVal();
@@ -808,12 +818,18 @@ FilteredList.prototype.filter = function() {
 
 			$.event.trigger("filtered", [filteredList]);
     }
+  }).done(function() {
+    filteredList.active--;
+    if (!filteredList.active) {
+      $('#' + filteredList.id + '-header > .fa-spinner').remove();
+      $('#' + filteredList.id + '-header > span').show();
+    }
   });
 };
 
 
 FilteredList.prototype.currentVal = function() {
-  values = $.map($(this.dom()).find("input").toArray(), function(c) {
+  var values = $.map($(this.dom()).find("input").toArray(), function(c) {
     if (c.checked) {
       return $(c).data("pk");
     }
@@ -827,7 +843,8 @@ FilteredList.prototype.bindEvents = function() {
   var filteredList = this,
       $header = $('#' + filteredList.id + '-header'),
       $recordCount = $header.find(".record-count"),
-      $all = $header.find("input");
+      $all = $header.find("input"),
+      $dom = $(this.dom());
 
   $header.find("input").on("change", function() {
     var $choices = $(filteredList.dom()).find("input");
@@ -836,7 +853,7 @@ FilteredList.prototype.bindEvents = function() {
     $($choices[$choices.length - 1]).change();
   });
 
-  $(this.dom()).bind("change", "input", function() {
+  $dom.bind("change", "input", function() {
     var choices = $(filteredList.dom()).find("input").toArray(),
         checked;
 
@@ -851,8 +868,21 @@ FilteredList.prototype.bindEvents = function() {
     filteredList.validate();
   });
 
-  $(this.dom()).bind("change.validate", "input", function(e) {
+  $dom.bind("change.validate", "input", function(e) {
     filteredList.validate();
+  });
+
+  $dom.prev("#" + filteredList.id + "-header").on("click", function(e) {
+    var $this = $(this),
+        $icon = $this.children("i");
+
+    if ($icon.hasClass("fa-plus-square-o")) {
+      $icon.removeClass("fa-plus-square-o").addClass("fa-minus-square-o");
+    } else {
+      $icon.removeClass("fa-minus-square-o").addClass("fa-plus-square-o");
+    }
+
+    $this.next().stop(true, true).slideToggle();
   });
 
   // TODO: Figure out how to reduce queries; perhaps by diffing total changes
@@ -1055,7 +1085,7 @@ $(document).ready(function() {
           $div.removeClass("regenerate-report").addClass("export-report");
           $div.html($icon.prop("outerHTML") + " Export Report");
         }
-      },
+      }
     });
   });
 
