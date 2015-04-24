@@ -791,8 +791,8 @@ FilteredList.prototype.renderLabel = function() {
   return '<div id="'+ this.id +'-header" class="list-header">' +
          '<i class="fa fa-plus-square-o"></i>' +
          '<input id="' + this.id + '-all-checkbox" type="checkbox" ' + (this.defaultVal ? "" : "checked") + ' />' +
-         ' All ' + this.label + (this.required ? '<star style="color: #990000">*</star>' : '') + ' ' +
-         '<span>(<span class="record-count">0</span> ' + this.label + ' Selected)</span>' +
+         ' All ' + this.label + (this.required ? '<star style="color: #990000">*</star>' : '') +
+         ' <span>(<span class="record-count">0</span> ' + this.label + ' Selected)</span>' +
          '</div>';
 };
 
@@ -844,7 +844,6 @@ FilteredList.prototype.filter = function() {
     success: function(data) {
       $recordCount = $('#' + filteredList.id + '-header .record-count');
       $listBody = $('.list-body#' + filteredList.id);
-			$('#' + filteredList.id + '-header input').prop("checked", true);
       $listBody.html("").parent(".required").children().unwrap().prev('.show-errors').remove();
       $listBody.append('<ul><li>' + data.map(function(element) {
         $input = $('<input type="checkbox" data-pk="' + element.pk + '" ' + (function () {
@@ -859,9 +858,10 @@ FilteredList.prototype.filter = function() {
         })() +  '/>');
         return '<label>' + $input.prop("outerHTML") + ' ' + element.name +
           (filteredList.id === 'contact' && element.email ? ' <span class="small">(' + element.email + ')</span>' : '') + '</label>';
-      }).join("</li><li>") + '</li></ul>').removeClass("no-show");
+      }).join("</li><li>") + '</li></ul>');
 
 			var value = filteredList.currentVal();
+      $('#' + filteredList.id + '-header input').prop("checked", $(filteredList.dom()).find("input").toArray().every(function(c) { return $(c).is(":checked"); }));
 			$recordCount.text(value.length === 1 && value.indexOf("0") === 0 ? 0 : value.length);
 
 			$.event.trigger("filtered", [filteredList]);
