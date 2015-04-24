@@ -59,7 +59,7 @@ var Report = function(types) {
   this.fields = this.createFields(types);
   this.types = types;
 
-  this.bindEvents();
+  this.unbindEvent().bindEvents();
 };
 
 
@@ -171,7 +171,7 @@ Report.prototype.bindEvents = function() {
     }
   });
 
-  $(document.body).on("click.submit", "#gen-report:not('disabled')", function() {
+  $("body").on("click.submit", "#gen-report:not('disabled')", function() {
     var csrf = read_cookie("csrftoken"),
         data = {"csrfmiddlewaretoken": csrf},
         url = location.protocol + "//" + location.host + "/reports/view/mypartners/contactrecord",
@@ -199,6 +199,16 @@ Report.prototype.bindEvents = function() {
       }
     });
   });
+
+  return this;
+};
+
+
+Report.prototype.unbindEvent = function() {
+  $("body").off(".submit");
+  $("#main-container").off("click");
+
+  return this;
 };
 
 
@@ -915,7 +925,7 @@ FilteredList.prototype.bindEvents = function() {
   });
 
   // TODO: Figure out how to reduce queries; perhaps by diffing total changes
-  $(document).on("dataChanged", function(e, data) {
+  $dom.on("dataChanged", function(e, data) {
     var callFilter = !filteredList.dependencies.length && filteredList.ignore.every(function(element) {
           return !(element in data);
         });
@@ -926,7 +936,7 @@ FilteredList.prototype.bindEvents = function() {
 
   });
 
-	$(document).on("filtered", function(e, field) {
+	$dom.on("filtered", function(e, field) {
 		if (filteredList.dependencies.indexOf(field.id) !== -1) {
 			filteredList.filter();
 		}
