@@ -780,6 +780,7 @@ var FilteredList = function(report, label, id, required, ignore, dependencies, d
   this.ignore = ignore || [];
 	this.dependencies = dependencies || [];
   this.active = 0;
+  this.hasRan = false;
 
   Field.call(this, report, label, id, required, defaultVal, helpText);
 };
@@ -847,7 +848,7 @@ FilteredList.prototype.filter = function() {
       $listBody.html("").parent(".required").children().unwrap().prev('.show-errors').remove();
       $listBody.append('<ul><li>' + data.map(function(element) {
         $input = $('<input type="checkbox" data-pk="' + element.pk + '" ' + (function () {
-          if (filteredList.defaultVal) {
+          if (filteredList.defaultVal && !filteredList.hasRan) {
             if (filteredList.id === "contact") {
               return filteredList.defaultVal.indexOf(element.name) >= 0 ? "checked" : "";
             } else {
@@ -861,7 +862,11 @@ FilteredList.prototype.filter = function() {
       }).join("</li><li>") + '</li></ul>');
 
 			var value = filteredList.currentVal();
-      $('#' + filteredList.id + '-header input').prop("checked", $(filteredList.dom()).find("input").toArray().every(function(c) { return $(c).is(":checked"); }));
+      if (!filteredList.hasRan) {
+        $('#' + filteredList.id + '-header input').prop("checked", $(filteredList.dom()).find("input").toArray().every(function(c) { return $(c).is(":checked"); }));
+      } else {
+        $('#' + filteredList.id + '-header input').prop("checked", true);
+      }
 			$recordCount.text(value.length === 1 && value.indexOf("0") === 0 ? 0 : value.length);
 
 			$.event.trigger("filtered", [filteredList]);
@@ -872,6 +877,7 @@ FilteredList.prototype.filter = function() {
       $('#' + filteredList.id + '-header > .fa-spinner').remove();
       $('#' + filteredList.id + '-header > span').show();
     }
+    filteredList.hasRan = true;
   });
 };
 
