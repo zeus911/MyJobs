@@ -48,6 +48,7 @@ def overview(request):
 
 @company_has_access('prm_access')
 def report_archive(request):
+    """Archive of previously run reports."""
     if request.is_ajax():
         company = get_company_or_404(request)
         reports = Report.objects.filter(owner=company).order_by("-created_on")
@@ -64,6 +65,7 @@ def report_archive(request):
 
 
 def get_states(request):
+    """Returns a select widget with states as options."""
     if request.is_ajax():
         response = HttpResponse()
         html = render_to_response('includes/state_dropdown.html',
@@ -84,6 +86,12 @@ def view_records(request, app, model):
         :app: Application to query.
         :model: Model to query.
 
+    Query String Parameters:
+        :values: The fields to include in the output.
+        :order_by: The field to order the results by. Prefix with a '-' to
+                   indiciate descending order.
+
+
     Output:
        A JSON response containing the records queried for.
     """
@@ -94,17 +102,11 @@ def view_records(request, app, model):
         params = parse_params(request.GET)
 
         # remove non-query related params
-        count = params.pop('count', None)
         values = params.pop('values', [])
         order_by = params.pop('order_by', None)
 
         records = get_model(app, model).objects.from_search(
             company, params)
-
-        counts = {}
-        if count:
-            records = records.annotate(count=Count(count, distinct=True))
-            counts = {record.pk: record.count for record in records}
 
         if values:
             records = records.values(*values)
@@ -115,7 +117,7 @@ def view_records(request, app, model):
 
             records = records.order_by(*order_by)
 
-        ctx = serialize('json', records, counts=counts, values=values)
+        ctx = serialize('json', records, values=values)
 
         response = HttpResponse(
             ctx, content_type='application/json; charset=utf-8')
@@ -127,6 +129,8 @@ def view_records(request, app, model):
 
 @company_has_access('prm_access')
 def get_inputs(request):
+    """Returns a report object's `params` field."""
+
     if request.is_ajax() and request.method == "GET":
         report_id = request.GET.get('id', 0)
         report = get_object_or_404(Report, pk=report_id)
@@ -137,7 +141,12 @@ def get_inputs(request):
 
 
 class ReportView(View):
-    """View for managing report objects."""
+    """
+    View for managing report objects.
+
+    A GET request will fetch a report, where as a POST will generate a new
+    report.
+    """
 
     app = 'mypartners'
     model = 'contactrecord'
@@ -150,6 +159,16 @@ class ReportView(View):
         """
         Get a report by ID and return interesting numbers as a JSON
         response. The only expected query parameter is 'id'.
+
+        Query String Parameters:
+            :id: The id of the report to retrieve
+
+        Outputs:
+            Renders a json object with counts for email, calls, searches,
+            meetings, applications, interviews, hires, communications,
+            referrals, and contacts. All these are integers except for
+            contacts, which is a list of objects, each of which has a name,
+            email, referral count, and communications count.
         """
         if request.method == 'GET':
             report_id = request.GET.get('id', 0)
@@ -186,6 +205,12 @@ class ReportView(View):
             :app: The app to which the model belongs.
             :model: The model to query on
 
+        Query String Parameters:
+            :csrfmiddlewaretoken: Used to prevent Cross Site Request Forgery.
+            :report_name: What to name the report. Spaces are converted to
+                          underscores.
+            :values: Fields to include in report output.
+
         Outputs:
            An HttpResponse indicating success or failure of report creation.
         """
@@ -195,7 +220,7 @@ class ReportView(View):
             params = parse_params(request.POST)
 
             params.pop('csrfmiddlewaretoken', None)
-            name = params.pop('report_name', 
+            name = params.pop('report_name',
                               str(datetime.now())).replace(' ', '_')
             values = params.pop('values', None)
 
@@ -222,6 +247,16 @@ class ReportView(View):
 
 @company_has_access('prm_access')
 def regenerate(request):
+    """
+    Regenerates a report. 
+    
+    Useful if the report json file is no longer available on disk. If called
+    and the report is already on disk, `Report.regenerate` does nothing.
+
+    Query String Parameters:
+        :id: ID of the report to regenerate.
+    """
+
     if request.method == 'GET':
         report_id = request.GET.get('id', 0)
         report = get_object_or_404(
@@ -238,6 +273,17 @@ def regenerate(request):
 
 @company_has_access('prm_access')
 def downloads(request):
+    """ Renders a download customization screen.
+
+        If the report has `values`, then the screen will render the checkboxes
+        representing those fields as checked and all others as unchecked. The
+        order of the rendered checklist follows these `values`, with all other
+        checkboxes being ordered aphabetically.
+
+        Query String Parameters:
+            :id: ID of the report to show options for.
+    """
+
     if request.is_ajax() and request.method == 'GET':
         report_id = request.GET.get('id', 0)
         report = get_object_or_404(
@@ -273,7 +319,18 @@ def downloads(request):
 
 @company_has_access('prm_access')
 def download_report(request):
-    """Download report as csv."""
+    """
+    Download report as CSV.
+
+    Query String Parameters:
+        :id: ID of the report to download
+        :values: Fields to include in the resulting CSV, as well as the order
+                 in which to include them.
+        :order_by: The sort order for the resulting CSV.
+
+    Outputs:
+        The report with the specified options rendered as a CSV file.
+    """
 
     report_id = request.GET.get('id', 0)
     values = request.GET.getlist('values', None)
