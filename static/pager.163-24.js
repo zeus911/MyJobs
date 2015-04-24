@@ -218,7 +218,10 @@ Pager.prototype = {
 $(document).ready(function(){
 	var pager = new Pager();
     var total_clicks = parseInt(window.location.hash.slice(1, 10));
-    window.location.hash = "";
+    if (!isNaN(total_clicks)) {
+        // Only set hash if one already existed.
+        window.location.hash = "";
+    }
 
     $(document).on("click", "a.direct_optionsMore", function(e) {
         var parent = $(this).parent();

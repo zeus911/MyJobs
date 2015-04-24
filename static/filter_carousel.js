@@ -14,7 +14,7 @@ window.onload = function() {
         }
     }).done(function() {
         if (typeof Pager == "undefined") {
-            $.getScript("//d2e48ltfsb5exy.cloudfront.net/content_ms/files/pager.163-13.js");
+            $.getScript("//d2e48ltfsb5exy.cloudfront.net/content_ms/files/pager.163-24.js");
         }
     });
 };
