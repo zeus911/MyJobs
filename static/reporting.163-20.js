@@ -170,6 +170,35 @@ Report.prototype.bindEvents = function() {
       modal.modal("show");
     }
   });
+
+  $(document.body).on("click.submit", "#gen-report:not('disabled')", function() {
+    var csrf = read_cookie("csrftoken"),
+        data = {"csrfmiddlewaretoken": csrf},
+        url = location.protocol + "//" + location.host + "/reports/view/mypartners/contactrecord",
+        newList = [];
+    if (report.data) {
+      $.extend(data, report.data);
+    }
+    if (data.contact) {
+      for (var i = 0; i < data.contact.length; i++) {
+        var value = data.contact[i],
+            name = $("#contact input[data-pk='" + value + "']").parent().text().split('(')[0].trim();
+        newList.push(name);
+      }
+      delete data.contact;
+      data.contact_name = newList;
+    }
+
+    $.ajaxSettings.traditional = true;
+    $.ajax({
+      type: 'POST',
+      url: url,
+      data: $.param(data, true),
+      success: function (data) {
+        window.location = location.protocol + '//' + location.host + location.pathname;
+      }
+    });
+  });
 };
 
 
@@ -810,7 +839,7 @@ FilteredList.prototype.filter = function() {
       $listBody.html("").parent(".required").children().unwrap().prev('.show-errors').remove();
       $listBody.append('<ul><li>' + data.map(function(element) {
         return '<label><input type="checkbox" data-pk="' + element.pk + '" checked /> ' + element.name +
-          (filteredList.id === 'contact' ? ' <span class="small">(' + element.email + ')</span>' : '') + '</label>';
+          (filteredList.id === 'contact' && element.email ? ' <span class="small">(' + element.email + ')</span>' : '') + '</label>';
       }).join("</li><li>") + '</li></ul>').removeClass("no-show");
 
 			var value = filteredList.currentVal();
