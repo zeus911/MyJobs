@@ -102,13 +102,16 @@ def view_records(request, app, model):
         params = parse_params(request.GET)
 
         # remove non-query related params
-        values = params.pop('values', [])
+        values = params.pop('values', None)
         order_by = params.pop('order_by', None)
 
         records = get_model(app, model).objects.from_search(
             company, params)
 
         if values:
+            if not hasattr(values, '__iter__'):
+                values = [values]
+
             records = records.values(*values)
 
         if order_by:
@@ -228,6 +231,9 @@ class ReportView(View):
                 company, params)
 
             if values:
+                if not hasattr(values, '__iter__'):
+                    values = [values]
+
                 records = records.values(*values)
 
             contents = serialize('json', records, values=values)

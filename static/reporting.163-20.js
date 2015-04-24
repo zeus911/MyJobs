@@ -696,7 +696,7 @@ TagField.prototype.bindEvents = function() {
         type: "GET",
         url: "/reports/ajax/mypartners/tag",
 				//TODO: New backend changes will fix this monstrocity
-				data: {name: keyword, values: ["name", "pk"], order_by: "name"},
+				data: {name: keyword, values: ["name"], order_by: "name"},
         success: function(data) {
           suggestions = data.filter(function(d) {
             // Don't suggest things that are already selected.
@@ -782,10 +782,10 @@ FilteredList.prototype.filter = function() {
 
   if (this.id === "partner") {
     // annotate how many records a partner has.
-    $.extend(filterData, {count: "contactrecord",
-                    values: ["pk", "name", "count"],
-                    order_by: "name"}
-    );
+    $.extend(filterData, {
+			values: ["pk", "name"],
+			order_by: "name"
+		});
   } else if (this.id === "contact") {
     $.extend(filterData, {values: ["pk", "name", "email"], order_by: "name"});
   }
@@ -1469,7 +1469,7 @@ function renderGraphs(report_id, callback) {
             // Just run for the first 3 contacts.
             for (i = 0; i < topLength; i++) {
               // remove first contact in array, returns the removed contact.
-              contact = contacts.shift();
+              contact = contacts[i];
               name = contact.contact_name;
               email = contact.contact_email;
               cReferrals = contact.referrals;
@@ -1494,17 +1494,28 @@ function renderGraphs(report_id, callback) {
             restRow = $('<div class="row"></div>').append(function() {
               var div = $('<div class="span12"></div>'),
                   table = $('<table class="table table-striped report-table"><thead><tr><th>Name</th>' +
-                            '<th>Email</th><th>Contact Records</th><th>Referral Reocrds</th>' +
+                            '<th>Email</th><th>Partner</th><th>Contact Records</th><th>Referral Reocrds</th>' +
                             '</tr></thead></table>'),
                   tbody = $('<tbody></tbody>');
               tbody.append(function() {
                 // turn each element into cells of a table then join each group of cells with rows.
-                return "<tr>" + contacts.map(function(contact) {
-                  return "<td>" + contact.contact_name + "</td><td>" + contact.contact_email +
-                         "</td><td>" + contact.records + "</td><td>" + contact.referrals + "</td>";
-                }).join('</tr><tr>') + "</tr>";
+                return "<tr class='report'>" + contacts.map(function(contact) {
+                  return "<td data-name='" + contact.contact_name + "' data-email='" + contact.contact_email + "' data-partner='" + contact.partner + "'>" + contact.contact_name + "</td><td>" + contact.contact_email +
+                         "</td><td>" + contact.partner__name + "</td><td>" + contact.records + "</td><td>" + contact.referrals + "</td>";
+                }).join('</tr><tr class="report">') + "</tr>";
               });
+							tbody.find("tr").on("click", function(e) {
+								var row = e.currentTarget,
+										$td = $(row).find("td:first"),
+										name = $td.data("name"),
+										email = $td.data("email"),
+										partner = $td.data("partner");
+								
+								window.open("/prm/view/records?partner=" + partner + "&contact=" + name + "&keywords=" + email, "_blank");
+							});
+
               return div.append(table.append(tbody));
+
             });
           } else {
             // Make sure topThreeRow didn't run before saying there are no records.

@@ -576,7 +576,7 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
     @property
     def contacts(self):
         contacts = self.exclude(contact_type='job').values(
-            'contact_name', 'contact_email').annotate(
+            'partner__name', 'partner', 'contact_name', 'contact_email').annotate(
                 records=models.Count('contact_name')).distinct().order_by(
                     '-records')
 
