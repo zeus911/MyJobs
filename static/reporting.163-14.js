@@ -659,8 +659,7 @@ List.prototype.filter = function(filter) {
   // specific duties based on type.
   if (list.type === "partner") {
     // annotate how many records a partner has.
-    $.extend(data, {count: "contactrecord",
-                    values: ["pk", "name", "count"],
+    $.extend(data, {values: ["pk", "name"],
                     order_by: ["name"]}
     );
     url += "/reports/ajax/mypartners/partner";
@@ -693,11 +692,6 @@ List.prototype.filter = function(filter) {
         li = $("<li><input type='checkbox' value='"+ record.pk +"' /> <span>"+ record.name +"</span></li>");
         li.find("input").prop("checked", Boolean(!list.value));
 
-        // add record count to right of partners
-        if (list.type === "partner") {
-          li.append("<span class='pull-right'>"+ record.count +"</span>");
-        }
-
         if (list.type === "contact" && record.email) {
           li.append(" <span class='small'>("+ record.email + ")</span>");
         }
@@ -728,6 +722,12 @@ List.prototype.filter = function(filter) {
       updateShowModal();
     },
     error: function(e) {
+      // work-around; this should be handled by my.jobs.xxx-x.js:31, but isn't
+      // for some reason
+      if (e.status === 403) {
+        window.location = '/';
+      }
+
       // TODO: change when testing is done to something more useful.
       console.error("Something horrible happened.");
     }
@@ -806,14 +806,61 @@ $(document).ready(function() {
     renderGraphs(report_id, callback);
   });
 
-  subpage.on("click", ".report > a, .fa-download", function() {
-    var report_id = $(this).attr("id").split("-")[1];
+  subpage.on("click", ".fa-download, .export-report", function() {
+    var report_id;
+    
+    if (typeof $(this).attr("id") !== "undefined") {
+      report_id = $(this).attr("id").split("-")[1];
+    } else {
+      report_id = $(this).parents("tr").data("report");
+    }
 
     history.pushState({'page': 'report-download', 'report': report_id}, 'Download Report');
 
     renderDownload(report_id);
   });
 
+  subpage.on("click", ".fa-refresh:not('.fa-spin'), .regenerate-report", function() {
+    var report_id,
+        data,
+        $icon = $(this),
+        $div,
+        archive = false,
+        url = location.protocol + "//" + location.host; // https://secure.my.jobs
+
+    if (typeof $(this).attr("id") !== "undefined") {
+      report_id = $(this).attr("id").split("-")[1];
+    } else {
+      $icon = $(this).children(".fa-refresh");
+      $div = $(this);
+      report_id = $(this).parents("tr").data("report");
+      archive = true;
+
+      if ($(this).children(".fa-spin").length) {
+        return false;
+      }
+    }
+
+    data = {'id': report_id};
+
+    $.ajax({
+      type: "GET",
+      url: url + "/reports/ajax/regenerate",
+      global: false,
+      data: data,
+      beforeSend: function() {
+        $icon.addClass("fa-spin");
+      },
+      success: function(data) {
+        $icon.removeClass("fa-refresh fa-spin").addClass("fa-download");
+
+        if (archive) {
+          $div.removeClass("regenerate-report").addClass("export-report");
+          $div.html($icon.prop("outerHTML") + " Export Report");
+        }
+      },
+    });
+  });
 
   // Clone Report
   subpage.on("click", ".fa-copy, .clone-report", function() {
@@ -1006,7 +1053,6 @@ function renderDownload(report_id) {
     success: function(data) {
       var ctx,
           values,
-          dragged,
           $order,
           $column,
           $columnNames,
@@ -1053,11 +1099,9 @@ function renderDownload(report_id) {
         tolerance: "pointer",
         distance: 10,
         start: function(e, ui) {
-          dragged = true;
           ui.item.addClass("drag");
         },
         stop: function(e, ui) {
-          dragged = false;
           ui.item.removeClass("drag");
         },
         update: updateValues
@@ -1085,21 +1129,6 @@ function renderDownload(report_id) {
 
       $("#column-choices").on("change", updateValues);
       $(".sort-order").on("change", updateValues);
-
-      $(".enable-column").on("change", function(e) {
-        updateValues();
-      });
-
-      $(".enable-column").on("click", function(e) {
-        e.stopPropagation();
-      });
-
-      $(".column-wrapper").on("mouseup", function() {
-        if (!dragged) {
-          var $checkbox = $(this).children(".enable-column");
-          $checkbox.prop("checked", !$checkbox.prop("checked")).change();
-        }
-      });
     }
   });
 }

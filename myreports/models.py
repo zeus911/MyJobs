@@ -1,9 +1,23 @@
 import json
+from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models.loading import get_model
 
+from myreports.helpers import serialize
+
 
 class Report(models.Model):
+    """
+    Models a Report which can be serialized in various formats.
+
+    A report instance can access it's results in three ways:
+        `json`: returns a JSON string of the results
+        `python`: returns a `dict` of the results
+        `queryset`: returns a queryset obtained by re-running `from_search`
+                    with the report's parameters. Useful for when you need to
+                    use attributes from a related model's instances (eg.
+                    `referrals` from the `ContactRecord` model).
+    """
     name = models.CharField(max_length=50)
     created_by = models.ForeignKey('myjobs.User')
     owner = models.ForeignKey('seo.Company')
@@ -20,7 +34,10 @@ class Report(models.Model):
     def __init__(self, *args, **kwargs):
         super(Report, self).__init__(*args, **kwargs)
         if self.results:
-            self._results = self.results.read()
+            try:
+                self._results = self.results.read()
+            except IOError:
+                self.results.delete()
         else:
             self._results = '{}'
 
@@ -40,3 +57,13 @@ class Report(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def regenerate(self):
+        """Regenerate the report file if it doesn't already exist on disk."""
+        if not self.results:
+            values = json.loads(self.values)
+            contents = serialize('json', self.queryset, values=values)
+            results = ContentFile(contents)
+
+            self.results.save('%s-%s.json' % (self.name, self.pk), results)
+            self._results = contents
