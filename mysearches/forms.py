@@ -127,6 +127,8 @@ class PartnerSavedSearchForm(RequestForm):
     def __init__(self, *args, **kwargs):
         choices = PartnerEmailChoices(kwargs.pop('partner', None))
         super(PartnerSavedSearchForm, self).__init__(*args, **kwargs)
+        setattr(self.instance, 'changed_data', self.changed_data)
+        setattr(self.instance, 'request', self.request)
         self.fields["email"] = ChoiceField(
             widget=Select(), choices=choices,
             initial=choices[0][0], label="Send Results to",
@@ -171,7 +173,7 @@ class PartnerSavedSearchForm(RequestForm):
         fields = ('label', 'url', 'url_extras', 'is_active', 'email',
                   'frequency', 'day_of_month', 'day_of_week', 'jobs_per_email',
                   'partner_message', 'notes')
-        exclude = ('provider', 'sort_by', 'unsubscriber')
+        exclude = ('provider', 'sort_by', 'unsubscriber', 'unsubscribed')
         widgets = {
             'notes': Textarea(attrs={'rows': 5, 'cols': 24}),
             'url_extras': TextInput(attrs={
@@ -268,16 +270,10 @@ class PartnerSavedSearchForm(RequestForm):
 
 
 class PartnerSubSavedSearchForm(RequestForm):
-    def clean(self):
-        if 'is_active' in self.changed_data:
-            #self.changed_data.append('unsubscriber')
-            if self.instance.is_active:
-                # Saved search is being deactivated; set unsubscriber
-                self.instance.unsubscriber = self.request.user.email
-            else:
-                # Saved search is being activated; unset unsubscriber
-                self.instance.unsubscriber = ''
-        return self.cleaned_data
+    def __init__(self, *args, **kwargs):
+        super(PartnerSubSavedSearchForm, self).__init__(*args, **kwargs)
+        setattr(self.instance, 'changed_data', self.changed_data)
+        setattr(self.instance, 'request', self.request)
 
     class Meta:
         model = PartnerSavedSearch
@@ -286,7 +282,7 @@ class PartnerSubSavedSearchForm(RequestForm):
         exclude = ('provider', 'url_extras', 'partner_message',
                    'created_by', 'user',
                    'created_on', 'label', 'url', 'feed', 'email', 'notes',
-                   'custom_message', 'tags', 'unsubscriber')
+                   'custom_message', 'tags', 'unsubscriber', 'unsubscribed')
         widgets = {
             'sort_by': RadioSelect(renderer=HorizontalRadioRenderer,
                                    attrs={'id': 'sort_by'}),
