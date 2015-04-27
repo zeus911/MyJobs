@@ -663,7 +663,7 @@ StateField.prototype = Object.create(Field.prototype);
 StateField.prototype.render = function() {
   var label = this.renderLabel(),
       $select = $('<select id="' + this.id + '"></select>'),
-      options = ['<option value>Select a State</option>'],
+      options = ['<option value="">Select a State</option>'],
       st;
 
   // create options
@@ -1140,7 +1140,9 @@ $(document).ready(function() {
       report_id = $(this).parents("tr").data("report");
     }
 
-    history.pushState({'page': 'report-download', 'report': report_id}, 'Download Report');
+		if (modernBrowser) {
+			history.pushState({'page': 'report-download', 'report': report_id}, 'Download Report');
+		}
 
     renderDownload(report_id);
   });
@@ -1328,7 +1330,6 @@ function renderDownload(report_id) {
     success: function(data) {
       var ctx,
           values,
-          dragged,
           $order,
           $column,
           $columnNames,
@@ -1375,11 +1376,9 @@ function renderDownload(report_id) {
         tolerance: "pointer",
         distance: 10,
         start: function(e, ui) {
-          dragged = true;
           ui.item.addClass("drag");
         },
         stop: function(e, ui) {
-          dragged = false;
           ui.item.removeClass("drag");
         },
         update: updateValues
@@ -1410,17 +1409,6 @@ function renderDownload(report_id) {
 
       $(".enable-column").on("change", function(e) {
         updateValues();
-      });
-
-      $(".enable-column").on("click", function(e) {
-        e.stopPropagation();
-      });
-
-      $(".column-wrapper").on("mouseup", function() {
-        if (!dragged) {
-          var $checkbox = $(this).children(".enable-column");
-          $checkbox.prop("checked", !$checkbox.prop("checked")).change();
-        }
       });
     }
   });
