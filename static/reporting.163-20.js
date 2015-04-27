@@ -989,6 +989,45 @@ FilteredList.prototype.validate = function(triggerEvent) {
 };
 
 
+FilteredList.prototype.showErrors = function() {
+  var $header = $('#' + this.id + '-header'),
+      $fuse = $('#' + this.id + '-header, #' + this.id),
+      $showModal = $('#show-modal');
+
+  if (this.errors.length) {
+    if (!$fuse.parent(".required").length) {
+      $fuse.wrapAll('<div class="required"></div>');
+    }
+
+    if (!$header.prev(".show-errors").length) {
+      $header.before('<div class="show-errors">' + this.errors.join(', ') + '</div>');
+    } else {
+      $header.prev().html(this.errors.join(','));
+    }
+    $showModal.addClass("disabled");
+  }
+
+  return this;
+};
+
+
+FilteredList.prototype.removeErrors = function() {
+  var $header = $('#' + this.id + '-header'),
+      $showModal = $('#show-modal');
+
+  if ($header.parent(".required").length) {
+    $header.prev(".show-errors").remove();
+    $header.unwrap();
+  }
+
+  if (!this.report.hasErrors()) {
+    $showModal.removeClass("disabled");
+  }
+
+  return this;
+};
+
+
 // Capitalize first letter of a string.
 String.prototype.capitalize = function() {
   return this.charAt(0).toUpperCase() + this.slice(1);
