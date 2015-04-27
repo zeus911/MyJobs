@@ -663,7 +663,7 @@ StateField.prototype = Object.create(Field.prototype);
 StateField.prototype.render = function() {
   var label = this.renderLabel(),
       $select = $('<select id="' + this.id + '"></select>'),
-      options = ['<option value>Select a State</option>'],
+      options = ['<option value="">Select a State</option>'],
       st;
 
   // create options
