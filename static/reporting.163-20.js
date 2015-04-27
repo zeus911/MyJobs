@@ -877,6 +877,7 @@ FilteredList.prototype.filter = function() {
       $('#' + filteredList.id + '-header > .fa-spinner').remove();
       $('#' + filteredList.id + '-header > span').show();
     }
+    filteredList.validate(false);
     filteredList.hasRan = true;
   });
 };
@@ -900,11 +901,28 @@ FilteredList.prototype.bindEvents = function() {
       $all = $header.find("input"),
       $dom = $(this.dom());
 
-  $header.find("input").on("change", function() {
+  $header.on("click", function() {
+    var $this = $(this),
+        $icon = $this.children("i:first");
+
+    if ($icon.hasClass("fa-plus-square-o")) {
+      $icon.removeClass("fa-plus-square-o").addClass("fa-minus-square-o");
+    } else {
+      $icon.removeClass("fa-minus-square-o").addClass("fa-plus-square-o");
+    }
+
+    $this.next().stop(true, true).slideToggle();
+  });
+
+  $header.on("change", "input", function() {
     var $choices = $(filteredList.dom()).find("input");
 
     $choices.prop("checked", $(this).is(":checked"));
     $($choices[$choices.length - 1]).change();
+  });
+
+  $header.on("click", "input", function(e) {
+    e.stopPropagation();
   });
 
   $dom.bind("change", "input", function() {
@@ -924,19 +942,6 @@ FilteredList.prototype.bindEvents = function() {
 
   $dom.bind("change.validate", "input", function(e) {
     filteredList.validate();
-  });
-
-  $dom.prev("#" + filteredList.id + "-header").on("click", function(e) {
-    var $this = $(this),
-        $icon = $this.children("i:first");
-
-    if ($icon.hasClass("fa-plus-square-o")) {
-      $icon.removeClass("fa-plus-square-o").addClass("fa-minus-square-o");
-    } else {
-      $icon.removeClass("fa-minus-square-o").addClass("fa-plus-square-o");
-    }
-
-    $this.next().stop(true, true).slideToggle();
   });
 
   // TODO: Figure out how to reduce queries; perhaps by diffing total changes
