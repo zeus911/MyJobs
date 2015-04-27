@@ -1101,7 +1101,9 @@ $(document).ready(function() {
       report_id = $(this).parents("tr").data("report");
     }
 
-    history.pushState({'page': 'report-download', 'report': report_id}, 'Download Report');
+		if (modernBrowser) {
+			history.pushState({'page': 'report-download', 'report': report_id}, 'Download Report');
+		}
 
     renderDownload(report_id);
   });
