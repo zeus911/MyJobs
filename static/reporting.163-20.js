@@ -877,6 +877,7 @@ FilteredList.prototype.filter = function() {
       $('#' + filteredList.id + '-header > .fa-spinner').remove();
       $('#' + filteredList.id + '-header > span').show();
     }
+    filteredList.validate(false);
     filteredList.hasRan = true;
   });
 };
@@ -900,7 +901,7 @@ FilteredList.prototype.bindEvents = function() {
       $all = $header.find("input"),
       $dom = $(this.dom());
 
-  $header.find("input").on("change", function() {
+  $header.on("change", "input", function(e) {
     var $choices = $(filteredList.dom()).find("input");
 
     $choices.prop("checked", $(this).is(":checked"));
