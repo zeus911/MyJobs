@@ -78,7 +78,7 @@ Report.prototype.createFields = function(types) {
                         new TagField(this, "Tags", "tags__name", false, undefined, "Use commas for multiple tags."),
                         new CheckList(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
                         new FilteredList(this, "Partners", "partner", true, ['report_name', 'partner', 'contact']),
-                        new FilteredList(this, "Contacts", "contact", true, ['report_name', 'contact'], ['partner'])]
+                        new FilteredList(this, "Contacts", "contact", true, ['report_name', 'contact', 'tags__name'], ['partner'])]
       },
       fields = [],
       key;
