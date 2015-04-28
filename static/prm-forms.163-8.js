@@ -15,7 +15,7 @@
 function checkDuplicates(elementID, values, url) {
   var $element = $(elementID),
       names = $.map(values, function(item, index) { return item.name.toLowerCase(); }),
-      index = names.indexOf($.trim($element.val()).toLowerCase()),
+      index = names.indexOf($element.val().trim().toLowerCase()),
       $editModal = $("#edit-item-modal");
 
   if (index > -1) {
