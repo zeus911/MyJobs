@@ -154,7 +154,7 @@ def serialize(fmt, data, counts=None, values=None, order_by=None):
             d = sorted(
                 d, key=lambda record: record[order_by], reverse=bool(reverse))
 
-    data = d
+        data = d
 
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)
