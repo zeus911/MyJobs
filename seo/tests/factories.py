@@ -38,7 +38,7 @@ class BusinessUnitFactory(factory.django.DjangoModelFactory):
         model = 'seo.BusinessUnit'
 
     id = factory.fuzzy.FuzzyInteger(1, high=99999)
-    title = "HSBC"
+    title = "Panasonic"
     title_slug = factory.LazyAttribute(lambda x: slugify(x.title))
     federal_contractor = True
     date_updated = "2010-10-18 10:59:24"
