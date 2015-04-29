@@ -411,7 +411,7 @@ class DseoLoginTests(DirectSEOBase):
         self.assertTrue(last_redirect.endswith(next_url['next']))
 
     def test_account_creation_custom_from_email(self):
-        site = SeoSite.objects.get()
+        site = SeoSite.objects.get(domain='secure.my.jobs')
         domain = 'new.domain'
         site.email_domain = domain
         site.save()
@@ -424,7 +424,7 @@ class DseoLoginTests(DirectSEOBase):
             'password2': 'Secret555!',
             block.submit_btn_name(): '',
         }
-        self.client.post(reverse('login'), data=data, follow=True)
+        response = self.client.post(reverse('login'), data=data, follow=True)
 
         email = mail.outbox.pop()
         # Default is my.jobs.

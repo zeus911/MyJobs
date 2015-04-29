@@ -203,7 +203,7 @@ class MultiHostMiddleware:
             except Site.MultipleObjectsReturned:
                 my_site = sites.filter(domain=host)[:1][0]
             except Site.DoesNotExist:
-                my_site = sites.get(id=1)
+                my_site = sites.get(domain='secure.my.jobs')
             cache.set(site_cache_key, my_site, MINUTES_TO_CACHE*60)
         settings.SITE = my_site
         my_buids = [bu.id for bu in my_site.business_units.all()]

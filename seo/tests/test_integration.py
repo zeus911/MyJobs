@@ -51,7 +51,7 @@ class SiteTestCase(DirectSEOBase):
         import_jobs.update_solr(self.buid, download=False, delete_feed=False,
                                 data_dir='seo/tests/data/')
         solr_jobs = self.conn.search("*:*")
-        resp = self.client.get('/')
+        resp = self.client.get('/', HTTP_HOST=self.site.domain)
         self.assertEqual(resp.context['total_jobs_count'], solr_jobs.hits)
 
         # test standard facets against Haystack query
