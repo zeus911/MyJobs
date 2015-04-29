@@ -374,7 +374,7 @@ function update_query(key, value, url) {
     }
 }
 
-// Checks to see if browser is IE. If it is then get version.
+// Checks to see if browser is IE8.
 function isIE8() {
     var myNav = navigator.userAgent.toLowerCase();
     if (myNav.indexOf('msie') !== -1) {
