@@ -492,8 +492,8 @@ h1 > small > a:hover {
 .partner-tag.female.button { box-shadow: 2px 2px 0 #2B9CBC; }
 .partner-tag.minority { background-color: #FAA732; }
 .partner-tag.minority.button { box-shadow: 2px 2px 0 #DE860A; }
-.partner-tag.disabled { background-color: #808A9A; }
-.partner-tag.disabled.button { box-shadow: 2px 2px 0 #5F6D83; }
+.partner-tag.disability { background-color: #808A9A; }
+.partner-tag.disability.button { box-shadow: 2px 2px 0 #5F6D83; }
 .partner-tag.disabled-veteran { background-color: #659274; }
 .partner-tag.disabled-veteran.button { box-shadow: 2px 2px 0 #467B58; }
 .partner-tag.disabled-tag { background-color: #BCBCC2; }
