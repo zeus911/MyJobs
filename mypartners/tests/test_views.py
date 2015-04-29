@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from bs4 import BeautifulSoup
 import csv
+from datetime import datetime, date
 import json
 import random
+import requests
 from StringIO import StringIO
 
 from django.conf import settings
@@ -12,7 +14,6 @@ from django.core import mail
 from django.http import Http404
 from django.test.client import RequestFactory 
 from django.utils.timezone import utc
-import requests
 
 from tasks import PARTNER_LIBRARY_SOURCES
 
@@ -20,11 +21,11 @@ from myjobs.tests.setup import MyJobsBase
 from myjobs.tests.test_views import TestClient
 from myjobs.tests.factories import UserFactory
 from mydashboard.tests.factories import CompanyFactory, CompanyUserFactory
+from mymessages.models import MessageInfo
 from mypartners.tests.factories import (PartnerFactory, ContactFactory,
                                         ContactLogEntryFactory, LocationFactory,
                                         ContactRecordFactory, TagFactory)
 from mysearches.tests.factories import PartnerSavedSearchFactory
-from datetime import datetime, date
 from mypartners import views
 from mypartners.models import (Contact, ContactRecord, ContactLogEntry, 
                                Partner, PartnerLibrary, ADDITION)
@@ -888,6 +889,33 @@ class SearchEditTests(MyPartnersTestCase):
             self.assertEqual(v, getattr(search, k),
                              msg="%s != %s for field %s" %
                                  (v, getattr(search, k), k))
+
+    def test_deactivate_partner_search(self):
+        mail.outbox = []
+        self.assertEqual(MessageInfo.objects.count(), 0)
+        search = PartnerSavedSearchFactory(user=self.contact_user,
+                                           created_by=self.staff_user)
+        self.client.login_user(search.user)
+        url = self.get_url('save_search_form',
+                           id=search.id, pss=True)
+
+        self.client.post(url, {'search_id': search.pk,
+                               'is_active': False,
+                               'day_of_week': search.day_of_week,
+                               'frequency': search.frequency,
+                               'sort_by': search.sort_by})
+        search = PartnerSavedSearch.objects.get(pk=search.pk)
+        self.assertFalse(search.is_active)
+        self.assertEqual(search.unsubscriber, search.user.email)
+        self.assertTrue(search.unsubscribed)
+
+        email = mail.outbox[0]
+        self.assertEqual(email.to, [search.created_by.email])
+        message_info = MessageInfo.objects.get()
+        self.assertEqual(message_info.user, search.created_by)
+        for text in ['unsubscribed', search.user.email]:
+            self.assertTrue(text in email.body)
+            self.assertTrue(text in message_info.message.body)
 
     def test_copy_existing_saved_search(self):
         saved_search = PartnerSavedSearch.objects.first()

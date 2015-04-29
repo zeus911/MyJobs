@@ -523,6 +523,20 @@ class PartnerSavedSearch(SavedSearch):
     unsubscriber = models.EmailField(max_length=255, blank=True, editable=False,
                                      verbose_name='Unsubscriber')
 
+    def save(self, *args, **kwargs):
+        if hasattr(self, 'changed_data') and hasattr(self, 'request'):
+            # This save was initiated by a form. Update unsubscriber and send
+            # notifications as appropriate.
+            if 'is_active' in self.changed_data and self.pk:
+                if self.is_active:
+                    self.unsubscriber = ''
+                    self.unsubscribed = False
+                else:
+                    self.unsubscriber = self.request.user.email
+                    self.unsubscribed = True
+                    self.user.send_opt_out_notifications([self])
+        super(PartnerSavedSearch, self).save(*args, **kwargs)
+
     def initial_email(self, custom_msg=None, send=True):
         """
         Calls the base initial_email function and then creates a record of it.
