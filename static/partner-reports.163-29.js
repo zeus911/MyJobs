@@ -303,11 +303,11 @@ function donut_options(height, width, chartArea_top, chartArea_left, chartArea_h
 
 
 function fill_piehole(totalrecs, size){
-    var doughnut = $("#donutchart");
-    var piediv = doughnut.children(":first-child").children(":first-child");
+    var doughnut = $("#donutchart"),
+        piediv = isIE8() ? doughnut.children(":first") : doughnut.find('div[dir="ltr"]');
+
     if(size === 'big'){
         piediv.prepend('<div class="piehole"><div class="piehole-big">'+String(totalrecs)+'</div><div class="piehole-topic">Contact Records</div><div class="piehole-filter"><a class="btn primary" id="reports-view-all">View All</a></div></div>');
-
     } else {
         piediv.prepend('<div class="piehole"><div class="piehole-big">'+String(totalrecs)+'</div><div class="piehole-topic">Contact Records</div><div class="piehole-filter">30 Days</div></div>');
     }
@@ -372,4 +372,15 @@ function update_query(key, value, url) {
         else
             return url;
     }
+}
+
+// Checks to see if browser is IE. If it is then get version.
+function isIE8() {
+    var myNav = navigator.userAgent.toLowerCase();
+    if (myNav.indexOf('msie') !== -1) {
+        if (parseInt(myNav.split('msie')[1]) === 8) {
+            return true;
+        }
+    }
+    return false;
 }
