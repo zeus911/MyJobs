@@ -11,32 +11,6 @@ window.onpopstate = function(event) {
 // isIE is used a lot, so lets make it a variable!
 isIE = isIE();
 
-// indexOf fix for IE8
-if (typeof(isIE) == "number" && isIE < 9) {
-    if (!Array.prototype.indexOf)
-    {
-      Array.prototype.indexOf = function(elt /*, from*/)
-      {
-        var len = this.length >>> 0;
-
-        var from = Number(arguments[1]) || 0;
-        from = (from < 0)
-             ? Math.ceil(from)
-             : Math.floor(from);
-        if (from < 0)
-          from += len;
-
-        for (; from < len; from++)
-        {
-          if (from in this &&
-              this[from] === elt)
-            return from;
-        }
-        return -1;
-      };
-    }
-}
-
 $(document).ready(function() {
     /*
     If someone loads the page with request.GET info
@@ -770,20 +744,6 @@ Builds URL from data that is usually built from build_data()
 Uses new HTML5 history API or if IE8, 9 reloads the page.
  */
 function update_search_url(data) {
-    // IE8 hates me
-    if (!Object.keys) {
-      Object.keys = function(obj) {
-        var keys = [];
-
-        for (var i in obj) {
-          if (obj.hasOwnProperty(i)) {
-            keys.push(i);
-          }
-        }
-
-        return keys;
-      };
-    }
     var search_url = "?",
         data_keys = Object.keys(data);
     for(var i = 0; i < data_keys.length; i++) {
