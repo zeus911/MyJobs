@@ -1500,7 +1500,7 @@ div[id$="-wrapper"] + div[id$="-wrapper"] > .list-header {
     cursor: move;
 }
 
-.placeholder {
+.column-container .placeholder {
     background-color: #F0FDD2;
     margin-right: 5px;
     border-bottom: 1px solid #E5E5E5;
