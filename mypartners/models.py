@@ -654,8 +654,8 @@ class ContactRecord(models.Model):
         start_date = parameters.pop('start_date', None)
         end_date = parameters.pop('end_date', None)
         # popping city and state so it doesn't get parsed again
-        parameters.pop('state', None)
-        parameters.pop('city', None)
+        state = parameters.pop('state', None)
+        city = parameters.pop('city', None)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -664,6 +664,47 @@ class ContactRecord(models.Model):
             records = records.filter(date_time__gte=start_date)
         elif end_date:
             records = records.filter(date_time__lte=end_date)
+
+        if city or state:
+            # no relationship from contact record to contact, so we get as
+            # close as we can by getting names and emails...
+            contact_info = records.values(
+                'contact_name', 'contact_email').distinct()
+            contacts = []
+
+            # then mapping them to real contacts.
+            q = models.Q()
+            for contact in contact_info:
+                q |= models.Q(**{'name': contact['contact_name'],
+                                 'email': contact['contact_email']})
+
+            # then we filter those contacts by state...
+            if state:
+                contacts = Contact.objects.filter(
+                    q, locations__state=state).values(
+                        'name', 'email').distinct()
+
+                q = models.Q()
+                for contact in contacts:
+                    q |= models.Q(**{'contact_name': contact['name'],
+                                     'contact_email': contact['email']})
+
+                records = records.filter(q)
+
+            # and/or city
+            q = models.Q()
+            if city:
+                contacts = Contact.objects.filter(
+                    q, locations__city=city).values(
+                        'name', 'email').distinct()
+
+                for contact in contacts:
+                    q |= models.Q(**{'contact_name': contact['name'],
+                                     'contact_email': contact['email']})
+
+                # and finally filter our contact records by the names and emails
+                # that still remain
+                records = records.filter(q)
 
         return records
 
