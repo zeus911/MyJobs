@@ -280,3 +280,46 @@ class TestDownloadReport(MyReportsTestCase):
         response = self.client.get(data={'id': report.pk})
 
         self.assertEqual(response['Content-Type'], 'text/csv')
+
+
+class TestRegenerate(MyReportsTestCase):
+    """Tests the reports can be regenerated."""
+
+    def setUp(self):
+        super(TestRegenerate, self).setUp()
+        self.client = TestClient(path=reverse('reports', kwargs={
+            'app': 'mypartners', 'model': 'contactrecord'}))
+        self.client.login_user(self.user)
+
+        ContactRecordFactory.create_batch(10, partner__owner=self.company)
+
+    def test_regenerate(self):
+        # create a report whose results is for all contact records in the
+        # company
+        response = self.client.post(
+            path=reverse('reports', kwargs={
+                'app': 'mypartners', 'model': 'contactrecord'}),
+            data={'values': ['partner', 'contact_name', 'contact_type']})
+
+        report_name = response.content
+        report = Report.objects.get(name=report_name)
+        results = report.results
+
+        response = self.client.get(data={'id': report.id})
+        self.assertEqual(response.status_code, 200)
+
+        # remove report results and ensure we can still get a resonable
+        # response
+        report.results.delete()
+        report.save()
+        self.assertFalse(report.results)
+
+        response = self.client.get(data={'id': report.id})
+        self.assertEqual(response.status_code, 200)
+
+        # regenerate results and ensure they are the same as the original
+        response = self.client.get(path=reverse('regenerate'), data={
+            'id': report.pk})
+        report = Report.objects.get(name=report_name)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(report.results)
