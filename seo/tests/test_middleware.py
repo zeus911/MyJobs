@@ -79,12 +79,11 @@ class MultiHostMiddlewareTestCase(DirectSEOBase):
         self.assertEqual(settings.SITE_NAME, self.test_site.name)
 
     def test_non_existant_site(self):
-        # 1 is the deafult site that we end up getting in middleware,
-        # so use that to compare the results to.
-        site = SeoSite.objects.get(pk=1)
+        # The default site is secure.my.jobs, so compare all results to that.
+        site = SeoSite.objects.get(domain='secure.my.jobs')
 
         # test that the site returned is the default site
         response = self.client.get('/', HTTP_HOST='jklsdasdfj.jobs')
-        self.assertEqual(settings.SITE_ID, 1)
+        self.assertEqual(settings.SITE_ID, site.id)
         self.assertEqual(settings.SITE_NAME, site.name)
         self.assertEqual(len(settings.SITE_BUIDS), site.business_units.all().count())

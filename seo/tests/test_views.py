@@ -48,7 +48,7 @@ class FallbackTestCase(DirectSEOTestCase):
         self.job = solr_settings.SOLR_FIXTURE[0]
         self.conn.add([self.job])
 
-        self.site = SeoSite.objects.get()
+        self.site = SeoSite.objects.get(domain='secure.my.jobs')
         self.buid = BusinessUnit.objects.get_or_create(pk=self.job['buid'])
         self.site.business_units.add(self.job['buid'])
         self.site.save()
@@ -184,7 +184,7 @@ class SearchBoxTests(DirectSEOTestCase):
         super(SearchBoxTests, self).setUp()
         # Add buid 0 to the site so we'll have jobs in the
         # "all_jobs" view.
-        self.site = SeoSite.objects.get()
+        self.site = SeoSite.objects.get(domain='secure.my.jobs')
         bu = BusinessUnit.objects.get(id=0)
         self.site.business_units.add(bu)
 
@@ -322,7 +322,7 @@ class SeoSiteTestCase(DirectSEOTestCase):
 
     def test_ajax_geolocation(self):
         base_url = reverse('ajax_geolocation_facet')
-        site = SeoSite.objects.get()
+        site = SeoSite.objects.get(domain='secure.my.jobs')
         bu = BusinessUnit.objects.get(id=0)
         site.business_units.add(bu)
 
@@ -1940,7 +1940,7 @@ class SeoViewsTestCase(DirectSEOTestCase):
             self.assertEqual(resp.status_code, 200)
 
             rss_link = '<link rel="alternate" type="application/rss+xml" ' \
-                       'title="Test - Retail Jobs in Indianapolis" ' \
+                       'title="My.jobs - Retail Jobs in Indianapolis" ' \
                        'href="http://buckconsultants.jobs/jobs/feed/' \
                        'rss?q=Retail&amp;amp;location=Indianapolis">'
             self.assertIn(rss_link, resp.content)
@@ -2436,20 +2436,15 @@ class SeoViewsTestCase(DirectSEOTestCase):
         response = self.client.get('/all-companies/')
         self.assertEqual(response.status_code, 200)
         
-    def test_static_page_analytics(self):    	    
-        site = factories.SeoSiteFactory.build(id=1, domain=u'www.my.jobs',
-                                              name='www.my.jobs')
-        site.save()
-        site_tag = SiteTag(site_tag='network')
-        site_tag.save()
+    def test_static_page_analytics(self):
+        site = SeoSite.objects.get(domain='testserver')
+        site_tag = SiteTag.objects.create(site_tag='network')
         site.site_tags.add(site_tag)
-        fp = FlatPage(url="/test-page/", content="About my company")
-        fp.save()
+        fp = FlatPage.objects.create(url="/test-page/",
+                                     content="About my company")
         fp.sites.add(site)
-        fp.save()
-        
-        ga = factories.GoogleAnalyticsFactory.build()
-        ga.save()
+
+        ga = factories.GoogleAnalyticsFactory.create()
         site.google_analytics.add(ga)
         
         resp = self.client.get('/test-page/')
@@ -2464,8 +2459,9 @@ class SeoViewsTestCase(DirectSEOTestCase):
         #Check that CSS for network sites is loaded properly
         self.assertContains(resp, '/style/def.ui.dotjobs.css')
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(settings.SITE_ID, 1)
-        self.assertEqual(settings.SITE_TITLE, "Test Site")
+        self.assertEqual(settings.SITE_ID, site.pk)
+        site_title = site.site_title if site.site_title else site.name
+        self.assertEqual(settings.SITE_TITLE, site_title)
 
     def footer_no_network_tag_test(self):
         """ 
@@ -2628,7 +2624,7 @@ class ProtectedSiteTestCase(DirectSEOBase):
 class StaticPageOverrideTests(DirectSEOTestCase):
     def setUp(self):
         super(StaticPageOverrideTests, self).setUp()
-        self.site = SeoSite.objects.get()
+        self.site = SeoSite.objects.get(domain='secure.my.jobs')
 
     def test_non_network_redirects(self):
         """

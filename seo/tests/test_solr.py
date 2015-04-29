@@ -21,7 +21,7 @@ class QueryCountTests(DirectSEOTestCase):
         self.query_range = range(2, 4+1)
 
         # Make a valid non-dns-homepage configuration to use.
-        site = SeoSite.objects.get()
+        site = SeoSite.objects.get(domain='secure.my.jobs')
         site.configurations.all().delete()
         site.configurations.add(factories.ConfigurationFactory(status=2))
         site.business_units.add(0)
