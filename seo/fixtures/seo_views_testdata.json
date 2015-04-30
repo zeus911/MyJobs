@@ -67,6 +67,24 @@
         }
     },
     {
+        "pk": 42852,
+        "model": "sites.site",
+        "fields": {
+            "name": "My.jobs",
+            "domain": "secure.my.jobs"
+        }
+    },
+    {
+        "pk": 42852,
+        "model": "seo.seosite",
+        "fields": {
+            "configurations": [
+                1,
+                2
+            ]
+        }
+    },
+    {
         "pk": 1, 
         "model": "seo.configuration", 
         "fields": {
