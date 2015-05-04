@@ -193,13 +193,13 @@ def send_email(email_body, email_type=settings.GENERIC,
             company_name = site.canonical_company.name
 
     kwargs['company_name'] = company_name
-    kwargs['domain'] = domain
+    kwargs['domain'] = domain.lower()
 
     sender = settings.EMAIL_FORMATS[email_type]['address']
     sender = sender.format(**kwargs)
 
     # Capitalize domain for display purposes.
-    kwargs['domain'] = kwargs['domain'].capitalize()
+    kwargs['domain'] = kwargs['domain'].lower()
     subject = settings.EMAIL_FORMATS[email_type]['subject']
     subject = subject.format(**kwargs)
 

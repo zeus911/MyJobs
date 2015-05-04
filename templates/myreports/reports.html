@@ -16,12 +16,17 @@
 {% endblock %}
 
 {% block extra-js %}
+{% autoescape off %}
+<script type="text/javascript">
+    var states = {{ states }};
+</script>
+{% endautoescape %}
 <!--[if IE]>
 <script src="{{ STATIC_URL }}es5-sham.min.js"></script>
 <![endif]-->
 <script src="{{ STATIC_URL }}bootstrap/bootstrap-modalmanager.js"></script>
 <script src="{{ STATIC_URL }}bootstrap/bootstrap-modal.js"></script>
-<script src="{{ STATIC_URL }}reporting.163-14.js"></script>
+<script src="{{ STATIC_URL }}reporting.163-27.js"></script>
 <script src="{{ STATIC_URL }}pickadate/picker.js"></script>
 <script src="{{ STATIC_URL }}pickadate/picker.date.js"></script>
 <script src="{{ STATIC_URL }}pickadate/legacy.js"></script>

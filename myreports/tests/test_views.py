@@ -216,7 +216,7 @@ class TestReportView(MyReportsTestCase):
             self.assertEqual(data[key], 5)
 
         # check contact stats
-        self.assertEqual(data['contacts'][0]['records'], 5)
+        self.assertEqual(data['contacts'][0]['records'], 1)
         self.assertEqual(data['contacts'][0]['referrals'], 10)
 
 

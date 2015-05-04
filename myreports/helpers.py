@@ -75,6 +75,11 @@ def parse_params(querydict):
         if len(value) == 1:
             value = value[0]
 
+        if value == 'false':
+            value = False
+        elif value == 'true':
+            value = True
+
         params[key] = value
 
     return params
@@ -107,19 +112,20 @@ def serialize(fmt, data, values=None, order_by=None):
                 for record in serializers.serialize(
                     'python', data, use_natural_keys=True, fields=values)]
 
-    values = values or sorted(data[0].keys())
-    order_by = order_by or values[0]
-    _, reverse, order_by = sorted(order_by.partition('-'))
+    if data:
+        values = values or sorted(data[0].keys())
+        order_by = order_by or values[0]
+        _, reverse, order_by = sorted(order_by.partition('-'))
 
-    # Convert data to a list of `OrderedDict`s,
-    data = sorted([OrderedDict([(
-        # strip HTML from invidual values...
-        value, html.fromstring(record[value]).text_content()
-        # if they aren't empty strings.
-        if isinstance(record[value], basestring) and record[value].strip()
-        else record[value]) for value in values]) for record in data],
-            # and sort them by specified value (first column by default)
-            key=lambda record: record[order_by], reverse=bool(reverse))
+        # Convert data to a list of `OrderedDict`s,
+        data = sorted([OrderedDict([(
+            # strip HTML from invidual values...
+            value, html.fromstring(record[value]).text_content()
+            # if they aren't empty strings.
+            if isinstance(record[value], basestring) and record[value].strip()
+            else record[value]) for value in values]) for record in data],
+                # and sort them by specified value (first column by default)
+                key=lambda record: record[order_by], reverse=bool(reverse))
 
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)

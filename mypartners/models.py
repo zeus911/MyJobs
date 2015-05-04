@@ -117,6 +117,9 @@ class SearchParameterQuerySet(models.query.QuerySet):
         exist.
         """
 
+        if '__' in name:
+            return 'ForeignKey'
+
         # using get_fields isn't sufficient as it doesn't account
         field = self.model._meta.get_field_by_name(name)[0]
 
@@ -136,7 +139,7 @@ class SearchParameterManager(models.Manager):
     def get_query_set(self):
         return SearchParameterQuerySet(self.model, using=self._db)
 
-    def from_search(self, company, parameters):
+    def from_search(self, company=None, parameters=None):
         return self.get_query_set().from_search(
             company, parameters)
 
@@ -202,6 +205,13 @@ class Contact(models.Model):
         end_date = parameters.pop('end_date', None)
         state = parameters.pop('state', None)
         city = parameters.pop('city', None)
+        tags = parameters.pop('tags__name', None)
+
+        if tags:
+            if not hasattr(tags, '__iter__'):
+                tags = [tags]
+            for tag in tags:
+                records = records.filter(tags__name__icontains=tag)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -353,6 +363,23 @@ class Partner(models.Model):
         state = parameters.pop('state', None)
         city = parameters.pop('city', None)
         contact_type = parameters.pop('contact_type', None)
+        tags = parameters.pop('tags__name', None)
+        contactrecord_tags = parameters.pop('contactrecord__tags__name', None)
+
+        if tags:
+            if not hasattr(tags, '__iter__'):
+                tags = [tags]
+
+            for tag in tags:
+                records = records.filter(tags__name__icontains=tag)
+
+        if contactrecord_tags:
+            if not hasattr(contactrecord_tags, '__iter__'):
+                contactrecord_tags = [contactrecord_tags]
+
+            for tag in contactrecord_tags:
+                records = records.filter(
+                    contactrecord__tags__name__icontains=tag)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -573,7 +600,7 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
     @property
     def contacts(self):
         contacts = self.exclude(contact_type='job').values(
-            'contact_name', 'contact_email').annotate(
+            'partner__name', 'partner', 'contact_name', 'contact_email').annotate(
                 records=models.Count('contact_name')).distinct().order_by(
                     '-records')
 
@@ -653,6 +680,13 @@ class ContactRecord(models.Model):
         # popping city and state so it doesn't get parsed again
         state = parameters.pop('state', None)
         city = parameters.pop('city', None)
+        tags = parameters.pop('tags__name', None)
+
+        if tags:
+            if not hasattr(tags, '__iter__'):
+                tags = [tags]
+            for tag in tags:
+                records = records.filter(tags__name__icontains=tag)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -871,16 +905,6 @@ class ContactLogEntry(models.Model):
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
 
 
-class TagManager(models.Manager):
-    def for_company(self, company, **kwargs):
-        tag_kwargs = {
-            'company': company,
-        }
-        tag_kwargs.update(kwargs)
-
-        return self.filter(**tag_kwargs)
-
-
 class Tag(models.Model):
     name = models.CharField(max_length=255)
     hex_color = models.CharField(max_length=6, default="d4d4d4", blank=True)
@@ -889,7 +913,7 @@ class Tag(models.Model):
     created_on = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
 
-    objects = TagManager()
+    objects = SearchParameterManager()
 
     def __unicode__(self):
         return "%s for %s" % (self.name, self.company.name)
@@ -900,3 +924,14 @@ class Tag(models.Model):
     class Meta:
         unique_together = ('name', 'company')
         verbose_name = "tag"
+
+    @classmethod
+    def _parse_parameters(cls, parameters, records):
+        """Used to parse state during `from_search()`."""
+
+        query = models.Q(partner__isnull=False)
+        query |= models.Q(contact__isnull=False)
+        query &= models.Q(partner__contactrecord__isnull=False)
+        records = records.filter(query)
+
+        return records
