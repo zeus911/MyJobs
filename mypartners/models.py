@@ -189,6 +189,7 @@ class Contact(models.Model):
     locations = models.ManyToManyField('Location', related_name='contacts')
     tags = models.ManyToManyField('Tag', null=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
+    is_archived = models.BooleanField(default=False)
 
     company_ref = 'partner__owner'
     objects = SearchParameterManager()
@@ -273,6 +274,10 @@ class Contact(models.Model):
                 else:
                     self.user = user
         return super(Contact, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.is_archived = True
+        self.save()
 
     def get_contact_url(self):
         base_urls = {
@@ -613,6 +618,7 @@ class ContactRecord(models.Model):
     created_on = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     partner = models.ForeignKey(Partner)
+    contact = models.ForeignKey(Contact, null=True)
     contact_type = models.CharField(choices=CONTACT_TYPE_CHOICES,
                                     max_length=50,
                                     verbose_name="Contact Type")
@@ -710,6 +716,13 @@ class ContactRecord(models.Model):
 
     def __unicode__(self):
         return "%s Contact Record - %s" % (self.contact_type, self.subject)
+
+    def save(self, *args, **kwargs):
+        if not self.pk and self.contact:
+            self.contact_name = self.contact.name
+            self.contact_email = self.contact.email
+
+        super(Contact, self).save(*args, **kwargs)
 
     def get_record_description(self):
         """

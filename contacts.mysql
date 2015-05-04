@@ -1,0 +1,39 @@
+USE db;
+
+/* Create archived contacts for relationships that can't be established.
+
+   For each contact record that can't be traced back to a contact, we create a
+   contact and set it as archived.
+*/
+INSERT INTO mypartners_contact (
+    partner_id,
+    name,
+    email,
+    is_archived
+)
+SELECT 
+    mypartners_partner.id,
+    mypartners_contactrecord.contact_name,
+    mypartners_contactrecord.contact_email,
+    1 # is_archived
+FROM mypartners_contactrecord
+INNER JOIN mypartners_partner
+    ON mypartners_partner.id = mypartners_contactrecord.partner_id
+WHERE mypartners_contactrecord.contact_name NOT IN (
+    SELECT mypartners_contact.name
+    FROM mypartners_contact
+)
+GROUP BY 
+    mypartners_partner.id,
+    mypartners_contactrecord.contact_name,
+    mypartners_contactrecord.contact_email
+;
+
+/* Assign contacts to contact records. */
+UPDATE mypartners_contactrecord
+INNER JOIN mypartners_contact
+    ON mypartners_contactrecord.partner_id = mypartners_contact.partner_id
+SET mypartners_contactrecord.contact_id = mypartners_contact.id
+WHERE mypartners_contactrecord.contact_name = mypartners_contact.name
+    AND mypartners_contactrecord.contact_email = mypartners_contact.email
+;
