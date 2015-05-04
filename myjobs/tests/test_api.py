@@ -31,7 +31,7 @@ class UserResourceTests(MyJobsBase):
         response = self.client.get()
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject,
-                         'Account Activation for My.jobs')
+                         'Account Activation for my.jobs')
         content = json.loads(response.content)
         self.assertEqual(content, 
                          {'user_created': True,
