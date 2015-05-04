@@ -30,6 +30,7 @@ secrets*
 
 # Local Settings
 local_settings.py
+deploy/settings.local.py
 
 # Log Files
 *.log
