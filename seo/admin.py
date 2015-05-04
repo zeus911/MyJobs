@@ -1244,3 +1244,127 @@ def check_inline_instance(obj, req):
         return obj.get_inline_instances(req)
     else:
         return obj.inline_instances
+
+
+def build_object_kwargs(copy_to, obj):
+    """
+    Generates the kwargs used for saving obj to the database. Creates any
+    foreign keys required for the kwargs.
+
+    :param copy_to: The database the data is being copied to.
+    :param obj: The object that the kwargs are needed for.
+    :return: kwargs that can be used to create a new database entry for
+             obj and any log files generated from creating foreign keys
+             or many-to-many relationships for obj.
+    """
+
+    kwargs = {}
+    logs = []
+
+    for field in obj._meta.local_fields:
+        if isinstance(field, models.ForeignKey):
+            fk_object = getattr(obj, field.attname, None)
+            if fk_object:
+                new_fk_obj, new_logs = get_or_create_object(copy_to, fk_object)
+                logs += new_logs
+                if new_fk_obj:
+                    kwargs[field.attname] = new_fk_obj
+
+        else:
+            kwargs[field.attname] = getattr(obj, field.attname)
+
+    return kwargs, logs
+
+
+def create_new_object(copy_to, model, **kwargs):
+    """
+    Creates a new object using the provided kwargs.
+
+    :param copy_to: The database the object is being created in.
+    :param model: The model for the new object.
+    :param kwargs:  The kwargs for the object that needs to be created
+    :return: The new object (or None) and any errors that were encountered
+             while creating the new object (or None).
+    """
+    new_obj = model(**kwargs)
+    error = None
+
+    try:
+        new_obj.save(using=copy_to)
+    except Exception, e:
+        error = e
+
+    return new_obj, error
+
+
+def update_existing_object(copy_to, obj, **kwargs):
+    """
+    Updates an existing object using the provided kwargs.
+
+    :param copy_to: The database the object is being created in.
+    :param obj: The existing object instance from the copy_to database.
+    :param kwargs:  The kwargs for the object that needs to be created
+    :return: The updated object (or None) and any errors that were encountered
+             while updating the object (or None).
+
+    """
+    error = None
+    for key, value in kwargs.items():
+        setattr(obj, key, value)
+
+    try:
+        obj.save(using=copy_to)
+    except Exception, e:
+        error = e
+
+    return obj, error
+
+
+def get_or_create_object(copy_to, obj):
+    log_dict = {
+        'added_fields': [],
+        'error': None,
+        'new_object': None,
+        'removed_fields': []
+    }
+
+    kwargs, logs = build_object_kwargs(copy_to, obj)
+
+    model = obj.__class__
+    try:
+        new_obj = model.objects.using(copy_to).get(pk=obj.pk)
+    except model.DoesNotExist:
+        new_obj = None
+
+    if new_obj:
+        new_obj, error = update_existing_object(copy_to, new_obj, **kwargs)
+    else:
+        new_obj, error = create_new_object(copy_to, model, **kwargs)
+
+    log_dict['new_object'] = new_obj
+    log_dict['error'] = error
+
+    logs.append(log_dict)
+    return new_obj, logs
+
+
+def copy_objects(copy_to, queryset):
+    logs = []
+    for obj in queryset:
+        new_obj, new_logs = get_or_create_object(copy_to, obj)
+        logs += new_logs
+    return logs
+
+
+def copy_to_qc(modeladmin, request, queryset):
+    # This shouldnt't be used to copy a large number of objects at once.
+    if queryset.count() > 5:
+        error_message = 'You cannot copy more than 5 items at once.'
+        modeladmin.message_user(request, error_message)
+        return
+    logs = copy_objects('qc-redirect', queryset)
+    print logs
+    modeladmin.message_user(request, 'stuff was done')
+
+
+admin.site.add_action(copy_to_qc, 'Copy to QC')
