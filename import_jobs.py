@@ -52,8 +52,8 @@ def update_job_source(guid, buid, name, clear_cache=False):
     jobs = [hr_xml_to_json(job, bu) for job in jobs]
     for job in jobs:
         job['link'] = make_redirect(job, bu).make_link()
-    remove_expired_jobs(buid, jobs)
     add_jobs(jobs)
+    remove_expired_jobs(buid, jobs)
 
     # Update business information
     bu.associated_jobs = len(jobs)
