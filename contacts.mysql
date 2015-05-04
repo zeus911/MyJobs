@@ -5,7 +5,6 @@ USE db;
    For each contact record that can't be traced back to a contact, we create a
    contact and set it as archived.
 */
-/*
 INSERT INTO mypartners_contact (
     partner_id,
     name,
@@ -22,13 +21,6 @@ WHERE mypartners_contactrecord.contact_name NOT IN (
     SELECT mypartners_contact.name
     FROM mypartners_contact
 );
-*/
-
-SELECT mypartners_contactrecord.contact_id, mypartners_contact.id
-FROM mypartners_contactrecord
-LEFT JOIN mypartners_contact
-    ON mypartners_contactrecord.partner_id = mypartners_contact.partner_id
-WHERE mypartners_contactrecord.contact_id = mypartners_contact.id;
 
 /* Assign contacts to contact records. */
 /*
@@ -36,5 +28,4 @@ UPDATE mypartners_contactrecord
 LEFT JOIN mypartners_contact
     ON mypartners_contactrecord.partner_id = mypartners_contact.partner_id
 SET mypartners_contactrecord.contact_id = mypartners_contact.id
-;
 */
