@@ -4,7 +4,41 @@ from myemails import models
 from myemails.forms import EventFieldForm
 
 
-class CronEventAdmin(admin.ModelAdmin):
+class RequestAdmin(admin.ModelAdmin):
+    def get_form(self, request, obj=None, **kwargs):
+        AdminForm = super(RequestAdmin, self).get_form(request, obj, **kwargs)
+
+        class AdminFormWithRequest(AdminForm):
+            def __new__(cls, *args, **kwargs):
+                kwargs['request'] = request
+                return AdminForm(*args, **kwargs)
+
+        return AdminFormWithRequest
+
+
+class CronEventAdmin(RequestAdmin):
+    fieldsets = [
+        ('', {
+            'fields': [
+                'name',
+                'email_template',
+                'is_active',
+                'owner',
+                'sites',
+            ]
+        }),
+        ('Comparison', {
+            'description': (
+                'Send an email after an amount of time has passed since an '
+                'event occurred. The current options are for demonstration '
+                'purposes only and may not be appropriate for actual events.'
+            ),
+            'fields': [
+                'model',
+                ('field', 'minutes'),
+            ]
+        }),
+    ]
     form = EventFieldForm
 
     class Media:
@@ -13,7 +47,7 @@ class CronEventAdmin(admin.ModelAdmin):
         )
 
 
-class ValueEventAdmin(admin.ModelAdmin):
+class ValueEventAdmin(RequestAdmin):
     fieldsets = [
         ('', {
             'fields': [
@@ -46,3 +80,5 @@ class ValueEventAdmin(admin.ModelAdmin):
 
 admin.site.register(models.CronEvent, CronEventAdmin)
 admin.site.register(models.ValueEvent, ValueEventAdmin)
+admin.site.register(models.EmailTemplate)
+admin.site.register(models.EmailSection)

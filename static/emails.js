@@ -21,7 +21,6 @@
                         // We've already retrieved the fields for this model;
                         // pull it from our cache and select its first value.
                         $select = model_fields[value];
-                        $select.val($select.find('option:first-of-type').val());
                     } else {
                         // We have not retrieved this model's field list yet.
                         $.getJSON('/emails/get-fields/', 'model=' + value,
@@ -45,9 +44,11 @@
                                 model_fields[value] = $select;
                             })
                     }
+                    $select.val(selected);
                     $input.replaceWith($select);
                 }
             })
+        $model.change()
     });
     // This will be used on admin and non-admin pages; ensure that jQuery is
     // usable regardless of location.

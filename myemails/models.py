@@ -13,14 +13,24 @@ class EmailSection(models.Model):
         (3, 'Footer'),
     )
 
+    name = models.CharField(max_length=255)
+    owner = models.ForeignKey('seo.Company', blank=True, null=True)
     section_type = models.PositiveIntegerField(choices=SECTION_TYPES)
     content = models.TextField()
 
+    def __unicode__(self):
+        return "%s (%s)" % (self.name, self.owner or "Global")
+
 
 class EmailTemplate(models.Model):
+    name = models.CharField(max_length=255)
+    owner = models.ForeignKey('seo.Company', blank=True, null=True)
     header = models.ForeignKey('EmailSection', related_name='header_for')
     body = models.ForeignKey('EmailSection', related_name='body_for')
     footer = models.ForeignKey('EmailSection', related_name='footer_for')
+
+    def __unicode__(self):
+        return "%s (%s)" % (self.name, self.owner or "Global")
 
     @staticmethod
     def build_context(for_object):
@@ -56,6 +66,9 @@ class Event(models.Model):
     sites = models.ManyToManyField('seo.SeoSite')
     name = models.CharField(max_length=255)
 
+    def __unicode__(self):
+        return "%s (%s)" % (self.name, self.owner)
+
     class Meta:
         abstract = True
 
@@ -71,7 +84,7 @@ class Event(models.Model):
 
 
 class CronEvent(Event):
-    model = models.ForeignKey(ContentType, blank=True, null=True,
+    model = models.ForeignKey(ContentType,
                               limit_choices_to={'model__in': [
                                   'purchasedjob',
                                   'purchasedproduct']})
