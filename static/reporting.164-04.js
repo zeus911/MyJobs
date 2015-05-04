@@ -54,31 +54,34 @@ var navigation = false;
 
 
 // Handles storing data, rendering fields, and submitting report. See prototype functions
-var Report = function(types) {
+function Report(type) {
   this.data = {};
-  this.fields = this.createFields(types);
-  this.types = types;
+  this.fields = this.createFields(type);
+  this.type = type;
 
-  this.unbindEvent().bindEvents();
-};
+  var report = this;
 
+  this.fields.forEach(function(field) {
+    field.report = report;
+  });
+}
 
 Report.prototype.createFields = function(types) {
   var yesterday = (function(d){d.setDate(d.getDate() - 1); return d; })(new Date()),
-      contactTypeChoices = [new CheckBox(this, "Email", "contact_type", "email"),
-                            new CheckBox(this,"Phone Call", "contact_type", "phone"),
-                            new CheckBox(this,"Meeting or Event", "contact_type", "meetingorevent"),
-                            new CheckBox(this,"Job Followup", "contact_type", "job"),
-                            new CheckBox(this,"Saved Search Email", "contact_type", "pssemail")
+      contactTypeChoices = [new CheckBox("Email", "contact_type", "email"),
+                            new CheckBox("Phone Call", "contact_type", "phone"),
+                            new CheckBox("Meeting or Event", "contact_type", "meetingorevent"),
+                            new CheckBox("Job Followup", "contact_type", "job"),
+                            new CheckBox("Saved Search Email", "contact_type", "pssemail")
                             ],
-      reports = {"prm": [new TextField(this, "Report Name", "report_name", true, reportNameDateFormat(new Date())),
-                        new DateField(this, "Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
-                        new StateField(this, "State", 'state', false),
-                        new TextField(this, "City", "city", false),
-                        new TagField(this, "Tags", "tags__name", false, undefined, "Use commas for multiple tags."),
-                        new CheckList(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
-                        new FilteredList(this, "Partners", "partner", true, ['report_name', 'partner', 'contact']),
-                        new FilteredList(this, "Contacts", "contact", true, ['report_name', 'contact'], ['partner'])]
+      reports = {"prm": [new TextField("Report Name", "report_name", true, reportNameDateFormat(new Date())),
+                        new DateField("Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
+                        new StateField("State", 'state', false),
+                        new TextField("City", "city", false),
+                        new TagField("Tags", "tags__name", false, undefined, "Use commas for multiple tags."),
+                        new CheckList("Contact Types", "contact_type", contactTypeChoices, true, 'all'),
+                        new FilteredList("Partners", "partner", true, ['report_name', 'partner', 'contact']),
+                        new FilteredList("Contacts", "contact", true, ['report_name', 'contact'], ['partner'])]
       },
       fields = [],
       key;
@@ -91,7 +94,6 @@ Report.prototype.createFields = function(types) {
 
   return fields;
 };
-
 
 Report.prototype.renderFields = function(renderAt, fields, clear) {
   var $renderAt = $(renderAt),
@@ -123,13 +125,11 @@ Report.prototype.renderFields = function(renderAt, fields, clear) {
   return this;
 };
 
-
 Report.prototype.findField = function(fieldID) {
   return this.fields.filter(function(field) {
     return (field.id === fieldID ? field : undefined);
   })[0];
 };
-
 
 Report.prototype.createCloneReport = function(json) {
   var phony,
@@ -152,7 +152,6 @@ Report.prototype.createCloneReport = function(json) {
     }
   }
 };
-
 
 Report.prototype.bindEvents = function() {
   var report = this,
@@ -204,7 +203,6 @@ Report.prototype.bindEvents = function() {
   return this;
 };
 
-
 Report.prototype.unbindEvent = function() {
   $("body").off(".submit");
   $("#main-container").off("click");
@@ -212,13 +210,11 @@ Report.prototype.unbindEvent = function() {
   return this;
 };
 
-
 Report.prototype.hasErrors = function() {
   return this.fields.some(function(field) {
     return field.errors.length;
   });
 };
-
 
 Report.prototype.save = function() {
   var report = this,
@@ -245,7 +241,6 @@ Report.prototype.save = function() {
 
   return true;
 };
-
 
 Report.prototype.readableData = function(d) {
   var data = d || this.data,
@@ -291,31 +286,26 @@ Report.prototype.readableData = function(d) {
 };
 
 
-var Field = function(report, label, id, required, defaultVal, helpText) {
-  this.report = report;
+function Field(label, id, required, defaultVal, helpText) {
   this.label = label;
   this.id = id;
   this.required = !!required || false;
   this.defaultVal = defaultVal || '';
   this.helpText = helpText || '';
   this.errors = [];
-};
-
+}
 
 Field.prototype.renderLabel = function() {
   return '<label class="big-blu" for="' + this.id + '">' + this.label + (this.required ? '<span style="color: #990000;">*</span>' : '') + '</label>';
 };
 
-
 Field.prototype.dom = function() {
 	return $("#" + this.id);
 };
 
-
 Field.prototype.currentVal = function() {
   return this.dom().val();
 };
-
 
 // TODO: Document namespacing for binding events.
 Field.prototype.bind = function(event, selector, callback) {
@@ -331,7 +321,6 @@ Field.prototype.bind = function(event, selector, callback) {
   return this;
 };
 
-
 // Unbinds all events of event type on this field.
 Field.prototype.unbind = function(event) {
   $(this.dom()).off(event);
@@ -339,14 +328,12 @@ Field.prototype.unbind = function(event) {
   return this;
 };
 
-
 Field.prototype.onSave = function() {
   var data = {};
   data[this.id] = this.currentVal();
 
   return data;
 };
-
 
 Field.prototype.validate = function(triggerEvent) {
 	triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
@@ -373,7 +360,6 @@ Field.prototype.validate = function(triggerEvent) {
   return this;
 };
 
-
 Field.prototype.showErrors = function() {
   var $field = $(this.dom()),
       $showModal = $("#show-modal");
@@ -392,7 +378,6 @@ Field.prototype.showErrors = function() {
   }
 };
 
-
 Field.prototype.removeErrors = function() {
   var $field = $(this.dom()),
       $showModal = $("#show-modal");
@@ -410,12 +395,11 @@ Field.prototype.removeErrors = function() {
 };
 
 
-var TextField = function(report, label, id, required, defaultVal, helpText) {
-  Field.call(this, report, label, id, required, defaultVal, helpText);
+var TextField = function(label, id, required, defaultVal, helpText) {
+  Field.call(this, label, id, required, defaultVal, helpText);
 };
 
 TextField.prototype = Object.create(Field.prototype);
-
 
 TextField.prototype.render = function() {
   var label = this.renderLabel(),
@@ -424,7 +408,6 @@ TextField.prototype.render = function() {
       helpText = '<div class="help-text">' + this.helpText + '</div>';
   return label + field + (this.helpText ? helpText : '');
 };
-
 
 TextField.prototype.bindEvents = function() {
   var textField = this,
@@ -442,16 +425,15 @@ TextField.prototype.bindEvents = function() {
 };
 
 
-var CheckBox = function(report, label, name, defaultVal, checked, helpText) {
+function CheckBox(label, name, defaultVal, checked, helpText) {
   this.checked = typeof checked === 'undefined' ? true : checked;
   this.name = name;
   this.id = name + '_' + defaultVal;
 
-  Field.call(this, report, label, this.id, false, defaultVal, helpText);
-};
+  Field.call(this, label, this.id, false, defaultVal, helpText);
+}
 
 CheckBox.prototype = Object.create(Field.prototype);
-
 
 CheckBox.prototype.render = function(createLabel) {
   createLabel = typeof createLabel === 'undefined' ? true : createLabel;
@@ -466,14 +448,13 @@ CheckBox.prototype.render = function(createLabel) {
 };
 
 
-var CheckList = function(report, label, id, choices, required, defaultVal, helpText) {
+function CheckList(label, id, choices, required, defaultVal, helpText) {
   this.choices = choices;
 
-  Field.call(this, report, label, id, required, defaultVal, helpText);
-};
+  Field.call(this, label, id, required, defaultVal, helpText);
+}
 
 CheckList.prototype = Object.create(Field.prototype);
-
 
 CheckList.prototype.render = function() {
   var label = this.renderLabel(),
@@ -486,7 +467,6 @@ CheckList.prototype.render = function() {
                  '</div>';
 };
 
-
 CheckList.prototype.currentVal = function() {
   var values = $.map(this.choices, function(c) {
     if (c.checked) {
@@ -496,7 +476,6 @@ CheckList.prototype.currentVal = function() {
 
   return values.length ? values : ["0"];
 };
-
 
 CheckList.prototype.bindEvents = function() {
   var checklist = this;
@@ -526,7 +505,6 @@ CheckList.prototype.bindEvents = function() {
   });
 };
 
-
 CheckList.prototype.validate = function(triggerEvent) {
 	triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
   var err = this.label + " is required",
@@ -553,13 +531,12 @@ CheckList.prototype.validate = function(triggerEvent) {
 };
 
 
-var DateField = function(report, label, id, required, defaultVal, helpText) {
+function DateField(label, id, required, defaultVal, helpText) {
   var dVal = defaultVal || {};
-  Field.call(this, report, label, id, required, dVal, helpText);
-};
+  Field.call(this, label, id, required, dVal, helpText);
+}
 
 DateField.prototype = Object.create(Field.prototype);
-
 
 DateField.prototype.render = function() {
   var label = this.renderLabel(),
@@ -574,11 +551,9 @@ DateField.prototype.render = function() {
   return label + dateWidget.prop("outerHTML");
 };
 
-
 DateField.prototype.currentVal = function(id) {
   return $(this.dom()).find("#" + id).val();
 };
-
 
 DateField.prototype.validate = function(triggerEvent) {
 	triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
@@ -612,7 +587,6 @@ DateField.prototype.validate = function(triggerEvent) {
   return this;
 };
 
-
 DateField.prototype.bindEvents = function() {
   var dateField = this,
       datePicker = function(e) {
@@ -644,7 +618,6 @@ DateField.prototype.bindEvents = function() {
   });
 };
 
-
 DateField.prototype.onSave = function() {
   var data = {};
   data.start_date = this.currentVal("start-date");
@@ -653,12 +626,11 @@ DateField.prototype.onSave = function() {
 };
 
 
-var StateField = function(report, label, id, required, defaultVal, helpText) {
-  Field.call(this, report, label, id, required, defaultVal, helpText);
-};
+function StateField(label, id, required, defaultVal, helpText) {
+  Field.call(this, label, id, required, defaultVal, helpText);
+}
 
 StateField.prototype = Object.create(Field.prototype);
-
 
 StateField.prototype.render = function() {
   var label = this.renderLabel(),
@@ -677,22 +649,21 @@ StateField.prototype.render = function() {
   return label + $select.prop("outerHTML");
 };
 
-
 StateField.prototype.bindEvents = function() {
 	var stateField = this;
 
-	$(document).on("change.validate", "#" + stateField.id, function(e) {
+	$(document).on("change.validate", "#" + stateField.id, function() {
 		stateField.validate();	
 	});
 };
 
-var TagField = function(report, label, id, required, defaultVal, helpText) {
+
+function TagField(label, id, required, defaultVal, helpText) {
 	this.value = [];
-  TextField.call(this, report, label, id, required, defaultVal, helpText);
-};
+  TextField.call(this, label, id, required, defaultVal, helpText);
+}
 
 TagField.prototype = Object.create(TextField.prototype);
-
 
 TagField.prototype.bindEvents = function() {
   var tagField = this,
@@ -748,7 +719,7 @@ TagField.prototype.bindEvents = function() {
           response(suggestions);
         }
       });
-    },
+    }
   });
 
 	$dom.on("autocompleteopen", function() {
@@ -776,17 +747,16 @@ TagField.prototype.currentVal = function() {
 };
 
 
-var FilteredList = function(report, label, id, required, ignore, dependencies, defaultVal, helpText) {
+function FilteredList(label, id, required, ignore, dependencies, defaultVal, helpText) {
   this.ignore = ignore || [];
 	this.dependencies = dependencies || [];
   this.active = 0;
   this.hasRan = false;
 
-  Field.call(this, report, label, id, required, defaultVal, helpText);
-};
+  Field.call(this, label, id, required, defaultVal, helpText);
+}
 
 FilteredList.prototype = Object.create(Field.prototype);
-
 
 FilteredList.prototype.renderLabel = function() {
   return '<div id="'+ this.id +'-header" class="list-header">' +
@@ -797,14 +767,12 @@ FilteredList.prototype.renderLabel = function() {
          '</div>';
 };
 
-
 FilteredList.prototype.render = function() {
   var label = this.renderLabel(),
       body = '<div id="' + this.id + '" style="display: none;" class="list-body"></div>';
 
   return label + body;
 };
-
 
 FilteredList.prototype.filter = function() {
   var filteredList = this,
@@ -882,7 +850,6 @@ FilteredList.prototype.filter = function() {
   });
 };
 
-
 FilteredList.prototype.currentVal = function() {
   var values = $.map($(this.dom()).find("input").toArray(), function(c) {
     if (c.checked) {
@@ -892,7 +859,6 @@ FilteredList.prototype.currentVal = function() {
 
   return values.length ? values : ["0"];
 };
-
 
 FilteredList.prototype.bindEvents = function() {
   var filteredList = this,
@@ -988,7 +954,6 @@ FilteredList.prototype.validate = function(triggerEvent) {
   return this;
 };
 
-
 FilteredList.prototype.showErrors = function() {
   var $header = $('#' + this.id + '-header'),
       $fuse = $('#' + this.id + '-header, #' + this.id),
@@ -1009,7 +974,6 @@ FilteredList.prototype.showErrors = function() {
 
   return this;
 };
-
 
 FilteredList.prototype.removeErrors = function() {
   var $header = $('#' + this.id + '-header'),
