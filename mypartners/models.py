@@ -205,6 +205,13 @@ class Contact(models.Model):
         end_date = parameters.pop('end_date', None)
         state = parameters.pop('state', None)
         city = parameters.pop('city', None)
+        tags = parameters.pop('tags__name', None)
+
+        if tags:
+            if not hasattr(tags, '__iter__'):
+                tags = [tags]
+            for tag in tags:
+                records = records.filter(tags__name__icontains=tag)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -356,6 +363,23 @@ class Partner(models.Model):
         state = parameters.pop('state', None)
         city = parameters.pop('city', None)
         contact_type = parameters.pop('contact_type', None)
+        tags = parameters.pop('tags__name', None)
+        contactrecord_tags = parameters.pop('contactrecord__tags__name', None)
+
+        if tags:
+            if not hasattr(tags, '__iter__'):
+                tags = [tags]
+
+            for tag in tags:
+                records = records.filter(tags__name__icontains=tag)
+
+        if contactrecord_tags:
+            if not hasattr(contactrecord_tags, '__iter__'):
+                contactrecord_tags = [contactrecord_tags]
+
+            for tag in contactrecord_tags:
+                records = records.filter(
+                    contactrecord__tags__name__icontains=tag)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -656,6 +680,13 @@ class ContactRecord(models.Model):
         # popping city and state so it doesn't get parsed again
         state = parameters.pop('state', None)
         city = parameters.pop('city', None)
+        tags = parameters.pop('tags__name', None)
+
+        if tags:
+            if not hasattr(tags, '__iter__'):
+                tags = [tags]
+            for tag in tags:
+                records = records.filter(tags__name__icontains=tag)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
