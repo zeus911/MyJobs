@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth.models import ContentType
 from django.db import models
 from django.template import Template, Context
+from django.utils.translation import ugettext_lazy as _
 
 
 class EmailSection(models.Model):
@@ -52,6 +53,8 @@ class Event(models.Model):
     email_template = models.ForeignKey('EmailTemplate')
     is_active = models.BooleanField(default=True)
     owner = models.ForeignKey('seo.Company')
+    sites = models.ManyToManyField('seo.SeoSite')
+    name = models.CharField(max_length=255)
 
     class Meta:
         abstract = True
@@ -68,7 +71,10 @@ class Event(models.Model):
 
 
 class CronEvent(Event):
-    model = models.ForeignKey(ContentType, blank=True, null=True)
+    model = models.ForeignKey(ContentType, blank=True, null=True,
+                              limit_choices_to={'model__in': [
+                                  'purchasedjob',
+                                  'purchasedproduct']})
     field = models.CharField(max_length=255, blank=True)
     minutes = models.PositiveIntegerField()
 
@@ -106,8 +112,13 @@ class ValueEvent(Event):
         ('__lte', 'is less than or equal to'),
     )
 
-    compare_using = models.CharField(max_length=255, choices=COMPARISON_CHOICES)
-    model = models.ForeignKey(ContentType)
+    compare_using = models.CharField(_('Comparison Type'),
+                                     max_length=255, choices=COMPARISON_CHOICES)
+    model = models.ForeignKey(ContentType,
+                              limit_choices_to={'model__in': [
+                                  'purchasedjob',
+                                  'purchasedproduct',
+                                  'request']})
     field = models.CharField(max_length=255)
     value = models.PositiveIntegerField()
 

@@ -265,6 +265,8 @@ class Job(BaseModel):
 
 
 class PurchasedJob(Job):
+    EVENT_FIELDS = {'value': ['is_approved'],
+                    'time': ['max_expired_date']}
     max_expired_date = models.DateField(editable=False)
     purchased_product = models.ForeignKey('PurchasedProduct')
     is_approved = models.BooleanField(default=False)
@@ -511,6 +513,8 @@ class SitePackage(Package):
 
 class PurchasedProduct(BaseModel):
     FILTER_BY_SITES_KWARGS = 'product__package__sitepackage__sites__in'
+    EVENT_FIELDS = {'value': ['jobs_remaining', 'is_approved'],
+                    'time': ['expiration_date']}
 
     product = models.ForeignKey('Product')
     offline_purchase = models.ForeignKey('OfflinePurchase', null=True,
@@ -755,6 +759,7 @@ class CompanyProfile(models.Model):
 
 class Request(BaseModel):
     FILTER_BY_SITES_KWARGS = 'related_sites__in'
+    EVENT_FIELDS = {'value': ['rejected']}
 
     content_type = models.ForeignKey(ContentType)
     object_id = models.IntegerField()
@@ -764,6 +769,10 @@ class Request(BaseModel):
     related_sites = models.ManyToManyField('seo.SeoSite', null=True)
     deny_reason = models.TextField(_('Reason for denying this request'),
                                    blank=True)
+
+    @property
+    def rejected(self):
+        return self.action_taken and self.deny_reason
 
     def template(self):
         model = self.content_type.model
