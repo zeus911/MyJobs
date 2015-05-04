@@ -659,8 +659,7 @@ List.prototype.filter = function(filter) {
   // specific duties based on type.
   if (list.type === "partner") {
     // annotate how many records a partner has.
-    $.extend(data, {count: "contactrecord",
-                    values: ["pk", "name", "count"],
+    $.extend(data, {values: ["pk", "name"],
                     order_by: ["name"]}
     );
     url += "/reports/ajax/mypartners/partner";
@@ -693,11 +692,6 @@ List.prototype.filter = function(filter) {
         li = $("<li><input type='checkbox' value='"+ record.pk +"' /> <span>"+ record.name +"</span></li>");
         li.find("input").prop("checked", Boolean(!list.value));
 
-        // add record count to right of partners
-        if (list.type === "partner") {
-          li.append("<span class='pull-right'>"+ record.count +"</span>");
-        }
-
         if (list.type === "contact" && record.email) {
           li.append(" <span class='small'>("+ record.email + ")</span>");
         }
@@ -728,6 +722,12 @@ List.prototype.filter = function(filter) {
       updateShowModal();
     },
     error: function(e) {
+      // work-around; this should be handled by my.jobs.xxx-x.js:31, but isn't
+      // for some reason
+      if (e.status === 403) {
+        window.location = '/';
+      }
+
       // TODO: change when testing is done to something more useful.
       console.error("Something horrible happened.");
     }
@@ -1053,7 +1053,6 @@ function renderDownload(report_id) {
     success: function(data) {
       var ctx,
           values,
-          dragged,
           $order,
           $column,
           $columnNames,
@@ -1100,11 +1099,9 @@ function renderDownload(report_id) {
         tolerance: "pointer",
         distance: 10,
         start: function(e, ui) {
-          dragged = true;
           ui.item.addClass("drag");
         },
         stop: function(e, ui) {
-          dragged = false;
           ui.item.removeClass("drag");
         },
         update: updateValues
@@ -1132,21 +1129,6 @@ function renderDownload(report_id) {
 
       $("#column-choices").on("change", updateValues);
       $(".sort-order").on("change", updateValues);
-
-      $(".enable-column").on("change", function(e) {
-        updateValues();
-      });
-
-      $(".enable-column").on("click", function(e) {
-        e.stopPropagation();
-      });
-
-      $(".column-wrapper").on("mouseup", function() {
-        if (!dragged) {
-          var $checkbox = $(this).children(".enable-column");
-          $checkbox.prop("checked", !$checkbox.prop("checked")).change();
-        }
-      });
     }
   });
 }

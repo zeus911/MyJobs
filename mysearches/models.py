@@ -42,7 +42,12 @@ class SavedSearch(models.Model):
     SORT_CHOICES = (('Relevance', _('Relevance')),
                     ('Date', _('Date')))
 
-    user = models.ForeignKey('myjobs.User', editable=False)
+    # User can be null on PartnerSavedSearch. As South doesn't like custom
+    # on_delete handlers and I'm not sure when 1.7 is coming, the actual
+    # decision on setting this to null or cascading the delete is done
+    # in the delete_user pre_delete signal defined in myjobs/models.py.
+    user = models.ForeignKey('myjobs.User', editable=False, null=True,
+                             on_delete=models.DO_NOTHING)
 
     created_on = models.DateTimeField(auto_now_add=True)
     label = models.CharField(max_length=60, verbose_name=_("Search Name"))
@@ -323,13 +328,18 @@ class SavedSearch(models.Model):
         Create a new saved search digest if one doesn't exist yet
         """
 
-        if not SavedSearchDigest.objects.filter(user=self.user):
+        if self.user and not SavedSearchDigest.objects.filter(user=self.user):
+            # Since user can be null on SavedSearch but not SavedSearchDigest,
+            # we need to ensure that a user exists before trying to use it.
             SavedSearchDigest.objects.create(user=self.user, email=self.email)
 
         super(SavedSearch, self).save(*args, **kwargs)
 
     def __unicode__(self):
-        return "Saved Search %s for %s" % (self.url, self.user.email)
+        if hasattr(self, 'user') and self.user is not None:
+            return "Saved Search %s for %s" % (self.url, self.user.email)
+        else:
+            return "Saved Search %s for %s" % (self.url, self.email)
 
     class Meta:
         verbose_name_plural = "saved searches"
@@ -512,12 +522,6 @@ class PartnerSavedSearch(SavedSearch):
                                    related_name='created_by')
     unsubscriber = models.EmailField(max_length=255, blank=True, editable=False,
                                      verbose_name='Unsubscriber')
-
-    def __unicode__(self):
-        if not hasattr(self, 'user'):
-            return "Saved Search %s for %s" % (self.url, self.email)
-        else:
-            return "Saved Search %s for %s" % (self.url, self.user.email)
 
     def initial_email(self, custom_msg=None, send=True):
         """

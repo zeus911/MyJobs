@@ -302,7 +302,7 @@ class MoreButtonBlock(Block):
         }
 
     def required_js(self):
-        return ['%spager.163-13.js' % settings.STATIC_URL]
+        return ['%spager.163-24.js' % settings.STATIC_URL]
 
 
 class RegistrationBlock(Block):
@@ -389,7 +389,7 @@ class SearchFilterBlock(Block):
         }
 
     def required_js(self):
-        return ['%spager.163-13.js' % settings.STATIC_URL]
+        return ['%spager.163-24.js' % settings.STATIC_URL]
 
 
 class SearchResultBlock(Block):
