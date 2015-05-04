@@ -13,6 +13,7 @@ from django.views.generic import View
 
 from myreports.helpers import humanize, parse_params, serialize
 from myreports.models import Report
+from postajob.location_data import states
 from universal.helpers import get_company_or_404
 from universal.decorators import company_has_access
 
@@ -31,6 +32,7 @@ def overview(request):
     ctx = {
         "company": company,
         "success": success,
+        "states": json.dumps(OrderedDict(sorted((v, k) for k, v in states.inv.iteritems()))),
         "past_reports": past_reports,
         "report_count": report_count
     }
@@ -102,13 +104,16 @@ def view_records(request, app, model):
         params = parse_params(request.GET)
 
         # remove non-query related params
-        values = params.pop('values', [])
+        values = params.pop('values', None)
         order_by = params.pop('order_by', None)
 
         records = get_model(app, model).objects.from_search(
             company, params)
 
         if values:
+            if not hasattr(values, '__iter__'):
+                values = [values]
+
             records = records.values(*values)
 
         if order_by:
@@ -228,6 +233,9 @@ class ReportView(View):
                 company, params)
 
             if values:
+                if not hasattr(values, '__iter__'):
+                    values = [values]
+
                 records = records.values(*values)
 
             contents = serialize('json', records, values=values)
