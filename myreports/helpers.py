@@ -34,6 +34,9 @@ def humanize(records):
         # make tag lists look pretty
         if 'tags' in record:
             record['tags'] = ', '.join(record['tags'])
+        # make locations look pretty
+        if 'locations' in record:
+            record['locations'] = '; '.join(record['locations'])
         # human readable contact types
         if 'contact_type' in record:
             record['contact_type'] = CONTACT_TYPES[record['contact_type']]
@@ -47,11 +50,9 @@ def humanize(records):
             record['notes'] = '\n'.join(
                 filter(bool, record['notes'].split('\n\n')))
 
-        # get rid of nones
-        if 'created_by' in record:
-            record['created_by'] = record['created_by'] or ''
-        if 'length' in record:
-            record['length'] = record['length'] or ''
+        for key, value in record.items():
+            if value is None:
+                record[key] = ''
 
     return records
 

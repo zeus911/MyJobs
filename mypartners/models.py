@@ -167,6 +167,9 @@ class Location(models.Model):
         return (", ".join([self.city, self.state]) if self.city and self.state
                 else self.city or self.state)
 
+    def natural_key(self):
+        return str(self)
+
     def save(self, **kwargs):
         super(Location, self).save(**kwargs)
 
@@ -516,6 +519,9 @@ class PartnerLibrary(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def natural_key(self):
+        return str(self)
 
     def save(self, *args, **kwargs):
         self.has_valid_location = self.st.upper() in states.keys()
