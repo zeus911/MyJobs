@@ -49,7 +49,9 @@ class Migration(DataMigration):
         db.execute(LINK_CONTACTS)
 
     def backwards(self, orm):
-        "Write your backwards methods here."
+        "Disassociate archived contacts and delete them."
+        orm.ContactRecord.objects.filter(contact__is_archived=True).update(contact=None)
+        orm.Contact.objects.filter(is_archived=True).delete()
 
     models = {
         u'auth.group': {
