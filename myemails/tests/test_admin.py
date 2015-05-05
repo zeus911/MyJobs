@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.admin import AdminSite
+from django.db import connection
 from django.test import RequestFactory
 
 from myemails.admin import ValueEventAdmin, CronEventAdmin
@@ -47,6 +48,8 @@ class AdminTests(MyJobsBase):
             if superuser:
                 self.assertFalse('WHERE' in query)
             else:
-                self.assertTrue(
-                    'WHERE ("myemails_emailtemplate"."owner_id" = %s' % (
-                        company.pk) in query)
+                if connection.vendor == 'sqlite':
+                    test = 'WHERE ("myemails_emailtemplate"."owner_id" = %s'
+                else:
+                    test = 'WHERE (`myemails_emailtemplate`.`owner_id` = %s'
+                self.assertTrue(test % company.pk in query)
