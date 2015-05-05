@@ -12,6 +12,7 @@ class EventFieldForm(ModelForm):
     def __init__(self, *args, **kwargs):
         request = kwargs.pop('request')
         super(EventFieldForm, self).__init__(*args, **kwargs)
+        setattr(self, 'request', request)
         initial = self.initial.get('field')
         choices = [('', '---------')]
         if initial:
