@@ -52,11 +52,21 @@ var modernBrowser = !(isIE() && isIE() < 10);
 // Determines if a navigation bar is needed.
 var navigation = false;
 
+function Form(reports) {
+  this.reports = reports;
+}
+
+Form.prototype.renderReports = function(renderAt) {
+  this.reports.forEach(function(report, index, array) {
+    report.renderFields(renderAt, report.fields, index === 0, index + 1 === array.length);
+  });
+};
+
 
 // Handles storing data, rendering fields, and submitting report. See prototype functions
-function Report(type) {
+function Report(type, fields) {
   this.data = {};
-  this.fields = this.createFields(type);
+  this.fields = fields;
   this.type = type;
 
   var report = this;
@@ -66,38 +76,10 @@ function Report(type) {
   });
 }
 
-Report.prototype.createFields = function(types) {
-  var yesterday = (function(d){d.setDate(d.getDate() - 1); return d; })(new Date()),
-      contactTypeChoices = [new CheckBox("Email", "contact_type", "email"),
-                            new CheckBox("Phone Call", "contact_type", "phone"),
-                            new CheckBox("Meeting or Event", "contact_type", "meetingorevent"),
-                            new CheckBox("Job Followup", "contact_type", "job"),
-                            new CheckBox("Saved Search Email", "contact_type", "pssemail")
-                            ],
-      reports = {"prm": [new TextField("Report Name", "report_name", true, reportNameDateFormat(new Date())),
-                        new DateField("Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
-                        new StateField("State", 'state', false),
-                        new TextField("City", "city", false),
-                        new TagField("Tags", "tags__name", false, undefined, "Use commas for multiple tags."),
-                        new CheckList("Contact Types", "contact_type", contactTypeChoices, true, 'all'),
-                        new FilteredList("Partners", "partner", true, ['report_name', 'partner', 'contact']),
-                        new FilteredList("Contacts", "contact", true, ['report_name', 'contact'], ['partner'])]
-      },
-      fields = [],
-      key;
-
-  for (key in types) {
-    if (reports.hasOwnProperty(types[key])) {
-      fields.push.apply(fields, reports[types[key]]);
-    }
-  }
-
-  return fields;
-};
-
-Report.prototype.renderFields = function(renderAt, fields, clear) {
+Report.prototype.renderFields = function(renderAt, fields, clear, btn) {
   var $renderAt = $(renderAt),
-      c = clear || true,
+      c = typeof clear !== "undefined" ? clear : true,
+      b = typeof btn !== "undefined" ? btn : true,
       field,
       i;
 
@@ -109,18 +91,22 @@ Report.prototype.renderFields = function(renderAt, fields, clear) {
   // for field in fields render.
   for (i = 0; i < fields.length; i++) {
     field = fields[i];
-    $renderAt.append(field.render());
-    if (typeof field.filter !== "undefined" && !field.dependencies.length) {
-      field.filter();
-    }
-    if (typeof field.bindEvents !== "undefined") {
-      field.bindEvents();
+    if (!field.dom().length) {
+      $renderAt.append(field.render());
+      if (typeof field.filter !== "undefined" && !field.dependencies.length) {
+        field.filter();
+      }
+      if (typeof field.bindEvents !== "undefined") {
+        field.bindEvents();
+      }
     }
   }
 
-  $renderAt.append('<div class="show-modal-holder">' +
+  if (b) {
+    $renderAt.append('<div class="show-modal-holder">' +
                    '<a id="show-modal" class="btn primary">Generate Report</a>' +
                    '</div>');
+  }
 
   return this;
 };
@@ -140,7 +126,6 @@ Report.prototype.createCloneReport = function(json) {
   for (key in json) {
     if (json.hasOwnProperty(key)) {
       value = json[key];
-      console.log(key, value);
       if (key === "start_date" || key === "end_date") {
         phony = {};
         phony[key] = value;
@@ -174,7 +159,7 @@ Report.prototype.bindEvents = function() {
   $("body").on("click.submit", "#gen-report:not('disabled')", function() {
     var csrf = read_cookie("csrftoken"),
         data = {"csrfmiddlewaretoken": csrf},
-        url = location.protocol + "//" + location.host + "/reports/view/mypartners/contactrecord",
+        url = location.protocol + "//" + location.host + "/reports/view/mypartners/" + report.type,
         newList = [];
     if (report.data) {
       $.extend(data, report.data);
@@ -395,9 +380,9 @@ Field.prototype.removeErrors = function() {
 };
 
 
-var TextField = function(label, id, required, defaultVal, helpText) {
+function TextField(label, id, required, defaultVal, helpText) {
   Field.call(this, label, id, required, defaultVal, helpText);
-};
+}
 
 TextField.prototype = Object.create(Field.prototype);
 
@@ -997,11 +982,41 @@ String.prototype.capitalize = function() {
   return this.charAt(0).toUpperCase() + this.slice(1);
 };
 
+var yesterday = (function(d){d.setDate(d.getDate() - 1); return d; })(new Date());
+
+var contactTypeChoices = [new CheckBox("Email", "contact_type", "email"),
+                          new CheckBox("Phone Call", "contact_type", "phone"),
+                          new CheckBox("Meeting or Event", "contact_type", "meetingorevent"),
+                          new CheckBox("Job Followup", "contact_type", "job"),
+                          new CheckBox("Saved Search Email", "contact_type", "pssemail")];
+
+var reports = {
+  contact: new Report("contact", [new TextField("Report Name", "report_name", true, reportNameDateFormat(new Date())),
+                                  new DateField("Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
+                                  new StateField("State", "state", false),
+                                  new TextField("City", "city", false),
+                                  new FilteredList("Partners", "partner", true, ["report_name", "partner"])]),
+  partner: new Report("partner", [new TextField("Report Name", "report_name", true, reportNameDateFormat(new Date())),
+                                  new DateField("Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
+                                  new StateField("State", "state", false),
+                                  new TextField("City", "city", false),
+                                  new TextField("URL", "uri", false),
+                                  new TextField("Source", "data_source", false)]),
+  contactrecord: new Report("contactrecord", [new TextField("Report Name", "report_name", true, reportNameDateFormat(new Date())),
+                          new DateField("Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
+                          new StateField("State", "state", false),
+                          new TextField("City", "city", false),
+                          new CheckList("Contact Types", "contact_type", contactTypeChoices, true, "all"),
+                          new TagField("Tags", "tags__name", false, undefined, "Use commas for multiple tags."),
+                          new FilteredList("Partners", "partner", true, ["report_name", "partner", "contact"]),
+                          new FilteredList("Contacts", "contact", true, ["report_name", "contact"], ["partner"])])
+};
+
 
 $(document).ready(function() {
   var subpage = $(".subpage");
 
-  $("#choices input[type='checkbox']:checked").prop("checked", false);
+  $("#choices input[name='report']:checked").prop("checked", false);
 
   if (modernBrowser) {
     history.replaceState({'page': 'overview'}, "Report Overview");
@@ -1009,9 +1024,11 @@ $(document).ready(function() {
 
   subpage.on("click", "#start-report:not(.disabled)", function(e) {
     e.preventDefault();
-    var choices = $("#choices input[type='checkbox']:checked"),
+    var choices = $("#choices input[name='report']:checked"),
         types = [],
         i = 0,
+        form,
+        rs,
         report;
 
     // fill types with choices that are checked, see selector.
@@ -1019,17 +1036,30 @@ $(document).ready(function() {
       types.push(choices[i].value.toLowerCase());
     }
 
+    if (types.length > 1) {
+      rs = types.map(function(type) {
+        return reports[type];
+      });
+      form = new Form(rs);
+    } else {
+      report = reports[types[0]];
+    }
+
     // Create js Report object and set up next step.
-    report = new Report(types);
     if (modernBrowser) {
       history.pushState({'page': 'new', 'report': report}, 'Create Report');
     }
     $("#container").addClass("rpt-container");
-    report.renderFields(".rpt-container", report.fields, true);
+    if (form) {
+      form.renderReports(".rpt-container");
+    } else {
+      report.renderFields(".rpt-container", report.fields, true);
+      report.unbindEvent().bindEvents();
+    }
   });
 
-  subpage.on("click", "#choices input[type='checkbox']", function() {
-    var $checkboxes = $("#choices input[type='checkbox']"),
+  subpage.on("click", "#choices input[name='report']", function() {
+    var $checkboxes = $("#choices input[name='report']"),
         $startReport = $("#start-report");
 
     if ($checkboxes.is(":checked")) {
