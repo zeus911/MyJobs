@@ -133,6 +133,8 @@ class TestHelpers(MyReportsTestCase):
         request = factory.post(
             '/reports/view/mypartners/contact',
             data=dict(
+                baz=u'',
+                biz=[u'bez', u''],
                 foo=['bar', 'baz'],
                 buz=['biz'],
                 quz='fizz'
@@ -143,5 +145,5 @@ class TestHelpers(MyReportsTestCase):
         # Singleton lists should be flattened into single elements, lists
         # should be converted to tuples, and already flat elements should
         # remain untouched.
-        self.assertEqual(
-            params, dict(buz='biz', quz='fizz', foo=('bar', 'baz')))
+        self.assertEqual(params, dict(
+            biz=u'bez', foo=('bar', 'baz'), buz='biz', quz='fizz'))

@@ -70,15 +70,16 @@ def parse_params(querydict):
     # get rid of empty params and flatten single-item lists
     params = {}
     for key in querydict.keys():
-        value = tuple(filter(bool, querydict.getlist(key)))
+        value = filter(bool, querydict.getlist(key))
 
         if len(value) == 1:
-            value = value[0]
+            params[key] = value[0]
+        else:
+            params[key] = tuple(value)
 
-        params[key] = value
+    params = {key: value for key, value in params.items() if value}
 
     return params
-
 
 # TODO:
 #   * do something other than isinstance checks (duck typing anyone?)
