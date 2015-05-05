@@ -14,7 +14,7 @@ CREATE_CONTACTS = """
         email,
         is_archived
     )
-    SELECT
+    SELECT DISTINCT
         mypartners_contactrecord.partner_id,
         contact_name,
         contact_email,
@@ -40,6 +40,7 @@ SET mypartners_contactrecord.contact_id = mypartners_contact.id
 WHERE (contact_name = name AND contact_email = email)
 ;
 """
+
 
 class Migration(DataMigration):
 
