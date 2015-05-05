@@ -189,7 +189,7 @@ class Contact(models.Model):
     locations = models.ManyToManyField('Location', related_name='contacts')
     tags = models.ManyToManyField('Tag', null=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
-    is_archived = models.BooleanField(default=False)
+    is_archived = models.BooleanField(null=False, default=False)
 
     company_ref = 'partner__owner'
     objects = SearchParameterManager()
