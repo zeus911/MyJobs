@@ -74,7 +74,7 @@ def parse_params(querydict):
     for key in querydict.keys():
         value = filter(bool, querydict.getlist(key))
         if len(value) == 1:
-            value = value[0]
+            params[key] = value[0]
         else:
             params[key] = tuple(value)
 

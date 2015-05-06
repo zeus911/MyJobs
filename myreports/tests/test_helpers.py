@@ -137,7 +137,8 @@ class TestHelpers(MyReportsTestCase):
                 biz=[u'bez', u''],
                 foo=['bar', 'baz'],
                 buz=['biz'],
-                quz='fizz'
+                quz='fizz',
+                quox='false'
             ))
 
         params = helpers.parse_params(request.POST)
@@ -146,4 +147,5 @@ class TestHelpers(MyReportsTestCase):
         # should be converted to tuples, and already flat elements should
         # remain untouched.
         self.assertEqual(params, dict(
-            biz=u'bez', foo=('bar', 'baz'), buz='biz', quz='fizz'))
+            biz=u'bez', foo=('bar', 'baz'), buz='biz', quz='fizz',
+            quox=False))
