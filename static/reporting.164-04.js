@@ -1621,7 +1621,6 @@ function renderViewPartner(id) {
     url: url + "/reports/view/mypartners/partner",
     data: data,
     success: function(data) {
-      console.log(data);
     }
   });
 }
@@ -1636,9 +1635,20 @@ function renderViewContact(id) {
     url: url + "/reports/view/mypartners/contact",
     data: data,
     success: function(data) {
-      var $table = $('<table class="table table-striped report-table"><thead><tr>' +
-                     '<th>Name</th><th>Email</th><th>Partner</th><th></th></tr></thead></table>');
-      console.log(data);
+      var $span = $('<div class="span12"></div>'),
+          $table = $('<table class="table table-striped report-table"><thead><tr>' +
+                     '<th>Partner</th><th>Name</th><th>Phone</th><th>Email</th><th>State</th></tr></thead></table>'),
+          $tbody = $('<tbody></tbody>'),
+          $mainContainer = $("#main-container");
+
+      $tbody.append(function() {
+        return '<tr class="record">' + data.map(function(record) {
+            return '<td>' + record.partner + '</td><td>' + record.name + '</td><td>' + record.phone + '</td>' +
+                   '<td>' + record.email + '</td><td>' + record.locations + '</td>';
+          }).join('</tr><tr>') + '</tr>';
+      });
+
+      $mainContainer.html("").append($span.append($table.append($tbody)));
     }
   });
 }
