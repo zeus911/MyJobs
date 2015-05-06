@@ -67,7 +67,7 @@ class ContactForm(NormalizedModelForm):
     class Meta:
         form_name = "Contact Information"
         model = Contact
-        exclude = ['user', 'partner', 'locations', 'library', 'is_archived']
+        exclude = ['user', 'partner', 'locations', 'library']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
@@ -372,7 +372,7 @@ class ContactRecordForm(NormalizedModelForm):
 
     class Meta:
         form_name = "Contact Record"
-        exclude = ('created_by', 'contact')
+        exclude = ('created_by', )
         fields = ('contact_type', 'contact_name',
                   'contact_email', 'contact_phone', 'location',
                   'length', 'subject', 'date_time', 'job_id',
@@ -383,17 +383,22 @@ class ContactRecordForm(NormalizedModelForm):
     def __init__(self, *args, **kwargs):
         partner = kwargs.pop('partner')
         instance = kwargs.get('instance')
-        choices = [(c.id, c.name) for c in Contact.objects.filter(
-            partner=partner, is_archived=False)]
-
+        contacts = Contact.objects.filter(partner=partner)
+        choices = [(c.id, c.name) for c in contacts]
         if not instance:
             choices.insert(0, ('None', '----------'))
         else:
-            index = [x[1] for x in choices].index(instance.contact_name)
-            tup = choices[index]
-            choices.pop(index)
-            choices.insert(0, tup)
-
+            try:
+                index = [x[1] for x in choices].index(instance.contact_name)
+            except ValueError:
+                # This is a ContactRecord for a contact that has been
+                # deleleted.
+                tup = (instance.contact_name, instance.contact_name)
+                choices.insert(0, tup)
+            else:
+                tup = choices[index]
+                choices.pop(index)
+                choices.insert(0, tup)
         super(ContactRecordForm, self).__init__(*args, **kwargs)
 
         if not instance or instance.contact_type != 'pssemail':
