@@ -1314,7 +1314,7 @@ class ContactLogEntryTests(MyPartnersTestCase):
 
         data = {
             'contact_type': 'email',
-            'contact_name': self.contact.id,
+            'contact_name': self.contact.name,
             'contact_email': 'test@email.com',
             'contact_phone': '',
             'location': '',

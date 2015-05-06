@@ -276,6 +276,7 @@ class Contact(models.Model):
         return super(Contact, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
+        pre_delete.send(sender=Contact, instance=self, using='default')
         self.archived_on = datetime.now()
         self.primary_contact.clear()
         self.save()

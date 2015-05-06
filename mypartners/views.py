@@ -727,7 +727,7 @@ def prm_records(request):
 
     contact_choices = [
         (c, c) for c in contact_records.order_by(
-            'contact_name').distinct().values_list('contact_name', flat=True)]
+            'contact__name').distinct().values_list('contact__name', flat=True)]
     contact_choices.insert(0, ('all', 'All'))
 
     ctx = {
@@ -762,6 +762,7 @@ def prm_edit_records(request):
                 instance = ContactRecord.objects.get(pk=record_id)
             except ContactRecord.DoesNotExist:
                 instance = None
+
         form = ContactRecordForm(request.POST, request.FILES,
                                  partner=partner, instance=instance)
         if form.is_valid():
@@ -1308,7 +1309,7 @@ def process_email(request):
                      (admin_user.get_full_name(), contact.name)
         record = ContactRecord.objects.create(partner=contact.partner,
                                               contact_type='email',
-                                              contact_name=contact.name,
+                                              contact=contact,
                                               contact_email=contact.email,
                                               contact_phone=contact.phone,
                                               created_by=admin_user,

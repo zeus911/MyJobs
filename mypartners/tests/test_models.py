@@ -41,7 +41,8 @@ class MyPartnerTests(MyJobsBase):
         contact.delete()
 
         partner = Partner.objects.get(name=self.partner.name)
-        self.assertFalse(Contact.objects.filter(partner=partner))
+        self.assertFalse(Contact.objects.filter(
+            partner=partner, archived_on__isnull=True))
         self.assertIsNone(partner.primary_contact)
 
     def test_contact_user_relationship(self):
