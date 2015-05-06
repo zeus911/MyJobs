@@ -63,6 +63,7 @@ Form.prototype.renderReports = function(renderAt) {
 };
 
 
+<<<<<<< HEAD:static/reporting.164-04.js
 // Handles storing data, rendering fields, and submitting report. See prototype functions
 function Report(type, fields) {
   this.data = {};
@@ -778,6 +779,10 @@ FilteredList.prototype.filter = function() {
 			values: ["pk", "name"],
 			order_by: "name"
 		});
+
+		filterData.contactrecord__tags__name = filterData.tags__name;
+		delete filterData.tags__name;
+
   } else if (this.id === "contact") {
     $.extend(filterData, {values: ["pk", "name", "email"], order_by: "name"});
   }
