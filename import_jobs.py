@@ -581,7 +581,7 @@ def chunk(l, chunk_size=1024):
     # Therefore, if the number of MOCs is above 10, arbitrarily use a lower chunk size.
     max_onet_count = max(len(job['mapped_moc']) for job in l)
     if max_onet_count > 10:
-        logger.warn("The number of MOCs per job exceeds 10, therefore we are reducing the chunk size.")
+        logger.warn("The number of MOCs (%s) per job exceeds 10, therefore we are reducing the chunk size.", max_onet_count)
         chunk_size = 64
     
     # Chunk the list now.
