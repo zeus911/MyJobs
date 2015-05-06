@@ -778,6 +778,10 @@ FilteredList.prototype.filter = function() {
 			values: ["pk", "name"],
 			order_by: "name"
 		});
+
+		filterData.contactrecord__tags__name = filterData.tags__name;
+		delete filterData.tags__name;
+
   } else if (this.id === "contact") {
     $.extend(filterData, {values: ["pk", "name", "email"], order_by: "name"});
   }

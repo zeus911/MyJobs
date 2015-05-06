@@ -131,7 +131,7 @@ class RegistrationViewTests(MyJobsBase):
         self.assertEqual(len(mail.outbox), 4)
 
     def test_site_name_in_password_reset_email(self):
-        domain = settings.SITE.domain.capitalize()
+        domain = settings.SITE.domain.lower()
         mail.outbox = []
         self.user.is_active = True
         self.user.save()
@@ -140,9 +140,10 @@ class RegistrationViewTests(MyJobsBase):
         self.assertEqual(len(mail.outbox), 1,
                          [msg.subject for msg in mail.outbox])
         msg = mail.outbox[0]
+        print domain
         self.assertEqual(msg.subject, "Password Reset on {0}".format(domain))
-        self.assertIn("The {0} Team".format(domain), msg.body)
-        self.assertIn("user account at {0}.".format(domain), msg.body)
+        self.assertIn("The {0} Team".format(domain.lower()), msg.body)
+        self.assertIn("user account at {0}.".format(domain.lower()), msg.body)
 
     def test_inactive_user_requesting_password_reset(self):
         """
