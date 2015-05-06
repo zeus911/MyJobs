@@ -189,7 +189,7 @@ class Contact(models.Model):
     locations = models.ManyToManyField('Location', related_name='contacts')
     tags = models.ManyToManyField('Tag', null=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
-    is_archived = models.BooleanField(null=False, default=False)
+    archived_on = models.DateTimeField(null=True)
 
     company_ref = 'partner__owner'
     objects = SearchParameterManager()
@@ -276,7 +276,7 @@ class Contact(models.Model):
         return super(Contact, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        self.is_archived = True
+        self.archived_on = datetime.now()
         self.save()
 
     def get_contact_url(self):

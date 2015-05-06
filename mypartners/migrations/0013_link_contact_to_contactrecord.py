@@ -12,13 +12,13 @@ CREATE_CONTACTS = """
         partner_id,
         name,
         email,
-        is_archived
+        archived_on
     )
     SELECT DISTINCT
         mypartners_contactrecord.partner_id,
         contact_name,
         contact_email,
-        1 # is_archived
+        NOW()
     FROM mypartners_contactrecord
     WHERE NOT EXISTS (
         SELECT NULL FROM mypartners_contact
@@ -51,8 +51,9 @@ class Migration(DataMigration):
 
     def backwards(self, orm):
         "Disassociate archived contacts and delete them."
-        orm.ContactRecord.objects.filter(contact__is_archived=True).update(contact=None)
-        orm.Contact.objects.filter(is_archived=True).delete()
+        orm.ContactRecord.objects.filter(
+            contact__archived_on__isnull=False).update(contact=None)
+        orm.Contact.objects.filter(archived_on__isnull=False).delete()
 
     models = {
         u'auth.group': {
@@ -107,7 +108,7 @@ class Migration(DataMigration):
             'Meta': {'object_name': 'Contact'},
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '255', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'is_archived': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'archived_on': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
             'library': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.PartnerLibrary']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'locations': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'contacts'", 'symmetrical': 'False', 'to': u"orm['mypartners.Location']"}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),

@@ -67,7 +67,7 @@ class ContactForm(NormalizedModelForm):
     class Meta:
         form_name = "Contact Information"
         model = Contact
-        exclude = ['user', 'partner', 'locations', 'library', 'is_archived']
+        exclude = ['user', 'partner', 'locations', 'library', 'archived_on']
         widgets = generate_custom_widgets(model)
         widgets['notes'] = forms.Textarea(
             attrs={'rows': 5, 'cols': 24,
@@ -384,7 +384,7 @@ class ContactRecordForm(NormalizedModelForm):
         partner = kwargs.pop('partner')
         instance = kwargs.get('instance')
         choices = [(c.id, c.name) for c in Contact.objects.filter(
-            partner=partner, is_archived=False)]
+            partner=partner, archived_on__isnull=True)]
 
         if not instance:
             choices.insert(0, ('None', '----------'))

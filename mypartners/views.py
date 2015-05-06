@@ -142,7 +142,8 @@ def partner_details(request):
 
     form = PartnerForm(instance=partner, auto_id=False)
 
-    contacts = Contact.objects.filter(partner=partner, is_archived=False)
+    contacts = Contact.objects.filter(
+        partner=partner, archived_on__isnull=False)
     contact_ct_id = ContentType.objects.get_for_model(Contact).id
     partner_ct_id = ContentType.objects.get_for_model(Partner).id
 
@@ -189,7 +190,8 @@ def edit_item(request):
             form = ContactForm(instance=item, auto_id=False)
         else:
             contacts = list(partner.contact_set.filter(
-                is_archived=False).values('pk', 'name', 'email', 'phone'))
+                archived_on__isnull=True).values(
+                    'pk', 'name', 'email', 'phone'))
             form = ContactForm()
             item = None
     elif request.path == reverse('create_partner'):

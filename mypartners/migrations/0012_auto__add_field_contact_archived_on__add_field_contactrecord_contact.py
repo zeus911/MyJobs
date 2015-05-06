@@ -8,9 +8,9 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Contact.is_archived'
-        db.add_column(u'mypartners_contact', 'is_archived',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
+        # Adding field 'Contact.archived_on'
+        db.add_column(u'mypartners_contact', 'archived_on',
+                      self.gf('django.db.models.fields.DateTimeField')(null=True),
                       keep_default=False)
 
         # Adding field 'ContactRecord.contact'
@@ -20,8 +20,8 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        # Deleting field 'Contact.is_archived'
-        db.delete_column(u'mypartners_contact', 'is_archived')
+        # Deleting field 'Contact.archived_on'
+        db.delete_column(u'mypartners_contact', 'archived_on')
 
         # Deleting field 'ContactRecord.contact'
         db.delete_column(u'mypartners_contactrecord', 'contact_id')
@@ -78,9 +78,9 @@ class Migration(SchemaMigration):
         },
         u'mypartners.contact': {
             'Meta': {'object_name': 'Contact'},
+            'archived_on': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '255', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'is_archived': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'library': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.PartnerLibrary']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'locations': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'contacts'", 'symmetrical': 'False', 'to': u"orm['mypartners.Location']"}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
