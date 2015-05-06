@@ -577,6 +577,14 @@ def chunk(l, chunk_size=1024):
     Create chunks from a list.
 
     """
+    # AT&T Showed that large numbers of MOCs can cause import issues due to the size of documents.
+    # Therefore, if the number of MOCs is above 10, arbitrarily use a lower chunk size.
+    max_onet_count = max(len(job['mapped_moc']) for job in l)
+    if max_onet_count > 10:
+        logger.warn("THe number of ONETs per job exceeds 10, therefore we are reducing the chunk size.")
+        chunk_size = 64
+    
+    # Chunk the list now.
     for i in xrange(0, len(l), chunk_size):
         yield l[i:i + chunk_size]
 
