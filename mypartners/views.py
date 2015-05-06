@@ -143,7 +143,7 @@ def partner_details(request):
     form = PartnerForm(instance=partner, auto_id=False)
 
     contacts = Contact.objects.filter(
-        partner=partner, archived_on__isnull=False)
+        partner=partner, archived_on__isnull=True)
     contact_ct_id = ContentType.objects.get_for_model(Contact).id
     partner_ct_id = ContentType.objects.get_for_model(Partner).id
 

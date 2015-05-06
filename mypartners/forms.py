@@ -301,7 +301,8 @@ class PartnerForm(NormalizedModelForm):
     """
     def __init__(self, *args, **kwargs):
         super(PartnerForm, self).__init__(*args, **kwargs)
-        contacts = Contact.objects.filter(partner=kwargs['instance'])
+        contacts = Contact.objects.filter(partner=kwargs['instance'], 
+                                          archived_on__isnull=True)
         choices = [(contact.id, contact.name) for contact in contacts]
 
         if kwargs['instance'].primary_contact:
@@ -373,7 +374,7 @@ class ContactRecordForm(NormalizedModelForm):
     class Meta:
         form_name = "Contact Record"
         exclude = ('created_by', 'contact')
-        fields = ('contact_type', 'contact_name',
+        fields = ('contact_type', 
                   'contact_email', 'contact_phone', 'location',
                   'length', 'subject', 'date_time', 'job_id',
                   'job_applications', 'job_interviews', 'job_hires',
@@ -389,7 +390,7 @@ class ContactRecordForm(NormalizedModelForm):
         if not instance:
             choices.insert(0, ('None', '----------'))
         else:
-            index = [x[1] for x in choices].index(instance.contact_name)
+            index = [x[1] for x in choices].index(instance.contact.name)
             tup = choices[index]
             choices.pop(index)
             choices.insert(0, tup)
@@ -405,10 +406,6 @@ class ContactRecordForm(NormalizedModelForm):
             self.fields["contact_type"] = forms.ChoiceField(
                 widget=forms.Select(), choices=contact_type_choices,
                 label="Contact Type")
-
-        self.fields["contact_name"] = forms.ChoiceField(
-            widget=forms.Select(), choices=choices, label="Contact",
-            initial=unicode(choices[0][0]))
 
         # If there are attachments create a checkbox option to delete them.
         if instance:
@@ -437,16 +434,6 @@ class ContactRecordForm(NormalizedModelForm):
         elif contact_type == 'job' and not self.cleaned_data['job_id']:
             self._errors['job_id'] = ErrorList([""])
         return self.cleaned_data
-
-    def clean_contact_name(self):
-        contact_id = self.cleaned_data['contact_name']
-        if contact_id == 'None' or not contact_id:
-            raise ValidationError('required')
-        try:
-            return Contact.objects.get(id=int(contact_id)).name
-        except (Contact.DoesNotExist, ValueError):
-            # Contact has been deleted. Preserve the contact name.
-            return self.cleaned_data['contact_name']
 
     def clean_attachment(self):
         attachments = self.cleaned_data.get('attachment', None)
@@ -491,8 +478,10 @@ class ContactRecordForm(NormalizedModelForm):
             PRMAttachment.objects.get(pk=attachment).delete()
 
         try:
-            identifier = instance.contact_email if instance.contact_email \
+            identifier = instance.contact.email if instance.contact.email \
+                else instance.contact_email if instance.contact.email \
                 else instance.contact_phone if instance.contact_phone \
+                else instance.contact.name if instance.contact.name \
                 else instance.contact_name
         except Contact.DoesNotExist:
             # This should only happen if the user is editing the ids in the drop

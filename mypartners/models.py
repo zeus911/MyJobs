@@ -277,6 +277,7 @@ class Contact(models.Model):
 
     def delete(self, *args, **kwargs):
         self.archived_on = datetime.now()
+        self.primary_contact.clear()
         self.save()
 
     def get_contact_url(self):
@@ -622,8 +623,6 @@ class ContactRecord(models.Model):
     contact_type = models.CharField(choices=CONTACT_TYPE_CHOICES,
                                     max_length=50,
                                     verbose_name="Contact Type")
-    contact_name = models.CharField(max_length=255, verbose_name='Contacts',
-                                    blank=True)
     # contact type fields, fields required depending on contact_type. Enforced
     # on the form level.
     contact_email = models.CharField(max_length=255,
