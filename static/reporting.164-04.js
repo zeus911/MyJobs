@@ -21,10 +21,15 @@ window.onpopstate = function(event) {
     $sidebar.length > 0 ? historyNew() : renderOverview(historyNew);
   } else if (state.page && state.page === 'view-report') {
     var callback = function() {
-      renderNavigation(true);
-    };
+          renderNavigation(true);
+        },
+        render = {
+          contact: function() {return renderViewContact(state.reportId);},
+          partner: function() {return renderViewPartner(state.reportId);},
+          contactrecord: function() {return renderGraphs(state.reportId, callback);}
+        };
     navigation = true;
-    renderGraphs(state.reportId, callback);
+    render[state.model]();
   } else if (state.page && state.page === 'report-archive') {
     navigation = true;
     renderArchive(renderNavigation);
@@ -1087,7 +1092,7 @@ $(document).ready(function() {
         };
 
     if (modernBrowser) {
-      history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
+      history.pushState({page: 'view-report', model: model, reportId: report_id}, 'View Report');
     }
 
     views[model]();
