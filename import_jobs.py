@@ -577,14 +577,6 @@ def chunk(l, chunk_size=1024):
     Create chunks from a list.
 
     """
-    # AT&T Showed that large numbers of MOCs can cause import issues due to the size of documents.
-    # Therefore, if the number of MOCs is above 10, arbitrarily use a lower chunk size.
-    max_onet_count = max(len(job['mapped_moc']) for job in l)
-    if max_onet_count > 10:
-        logger.warn("The number of MOCs (%s) per job exceeds 10, therefore we are reducing the chunk size.", max_onet_count)
-        chunk_size = 64
-    
-    # Chunk the list now.
     for i in xrange(0, len(l), chunk_size):
         yield l[i:i + chunk_size]
 
@@ -621,6 +613,14 @@ def add_jobs(jobs, upload_chunk_size=1024):
     """
     conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
     num_jobs = len(jobs)
+    
+    # AT&T Showed that large numbers of MOCs can cause import issues due to the size of documents.
+    # Therefore, if the number of MOCs is above 10, arbitrarily use a lower chunk size.
+    max_onet_count = max([len(job.get('mapped_moc', [])) for job in jobs])
+    if max_onet_count > 10:
+        logger.warn("The number of MOCs (%s) per job exceeds 10, therefore we are reducing the chunk size.", max_onet_count)
+        upload_chunk_size = 64
+    # Chunk them
     jobs = chunk(jobs, upload_chunk_size)
     for job_group in jobs:
         conn.add(list(job_group))
