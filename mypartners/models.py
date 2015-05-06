@@ -718,10 +718,9 @@ class ContactRecord(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk and self.contact:
-            self.contact_name = self.contact.name
-            self.contact_email = self.contact.email
+            self.contact_email = self.contact_email or self.contact.email
 
-        super(Contact, self).save(*args, **kwargs)
+        super(ContactRecord, self).save(*args, **kwargs)
 
     def get_record_description(self):
         """
