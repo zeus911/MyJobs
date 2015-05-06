@@ -70,17 +70,19 @@ def parse_params(querydict):
     """
     # get rid of empty params and flatten single-item lists
     params = {}
+    bools = {'true': True, 'false': False}
     for key in querydict.keys():
         value = filter(bool, querydict.getlist(key))
-
         if len(value) == 1:
-            params[key] = value[0]
+            value = value[0]
         else:
             params[key] = tuple(value)
 
-    params = {key: value for key, value in params.items() if value}
+    params = {key: bools.get(value, value)
+              for key, value in params.items() if value}
 
     return params
+
 
 # TODO:
 #   * do something other than isinstance checks (duck typing anyone?)
@@ -129,7 +131,7 @@ def serialize(fmt, data, values=None, order_by=None):
     elif fmt == 'csv':
         output = StringIO()
         writer = csv.writer(output)
-        columns = data[0].keys()
+        columns = data[0].keys() if data else []
         writer.writerow([column.replace('_', ' ').title()
                          for column in columns])
 
