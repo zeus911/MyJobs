@@ -997,18 +997,19 @@ var reports = {
                                   new TextField("City", "city", false),
                                   new FilteredList("Partners", "partner", true, ["report_name", "partner"])]),
   partner: new Report("partner", [new TextField("Report Name", "report_name", true, reportNameDateFormat(new Date())),
+                                  new DateField("Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
                                   new StateField("State", "state", false),
                                   new TextField("City", "city", false),
                                   new TextField("URL", "uri", false),
                                   new TextField("Source", "data_source", false)]),
   contactrecord: new Report("contactrecord", [new TextField("Report Name", "report_name", true, reportNameDateFormat(new Date())),
-                                              new DateField("Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
-                                              new StateField("State", "state", false),
-                                              new TextField("City", "city", false),
-                                              new CheckList("Contact Types", "contact_type", contactTypeChoices, true, "all"),
-                                              new TagField("Tags", "tags__name", false, undefined, "Use commas for multiple tags."),
-                                              new FilteredList("Partners", "partner", true, ["report_name", "partner", "contact"]),
-                                              new FilteredList("Contacts", "contact", true, ["report_name", "contact"], ["partner"])])
+                          new DateField("Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
+                          new StateField("State", "state", false),
+                          new TextField("City", "city", false),
+                          new CheckList("Contact Types", "contact_type", contactTypeChoices, true, "all"),
+                          new TagField("Tags", "tags__name", false, undefined, "Use commas for multiple tags."),
+                          new FilteredList("Partners", "partner", true, ["report_name", "partner", "contact"]),
+                          new FilteredList("Contacts", "contact", true, ["report_name", "contact"], ["partner"])])
 };
 
 
@@ -1048,7 +1049,6 @@ $(document).ready(function() {
     if (modernBrowser) {
       history.pushState({'page': 'new', 'report': report}, 'Create Report');
     }
-
     $("#container").addClass("rpt-container");
     if (form) {
       form.renderReports(".rpt-container");
@@ -1071,27 +1071,28 @@ $(document).ready(function() {
 
   // View Report
   subpage.on("click", ".report > a, .fa-eye, .view-report", function() {
-    var report_id = $(this).parents("tr, .report").data("report"),
-        model = $(this).parents("tr, .report").data("model"),
+    var report_id,
         callback = function() {
           renderNavigation(true);
-        },
-        views = {
-          partner: function() {return renderViewPartner(report_id);},
-          contact: function() {return renderViewContact(report_id);},
-          contactrecord: function() {return renderGraphs(report_id, callback);}
         };
+
+    if ($(this).attr("id") !== undefined) {
+      report_id = $(this).attr("id").split("-")[1];
+    } else {
+      report_id = $(this).parents("tr").data("report");
+    }
 
     if (modernBrowser) {
       history.pushState({'page': 'view-report', 'reportId': report_id}, 'View Report');
     }
 
-    views[model]();
+    navigation = true;
+    renderGraphs(report_id, callback);
   });
 
   // Clone Report
   subpage.on("click", ".fa-copy, .clone-report", function() {
-    var data = {id: $(this).parents("tr, .report").data("report")},
+    var data = {},
         url = location.protocol + "//" + location.host, // https://secure.my.jobs
         cloneReport = function() {
           $.ajax({
@@ -1113,8 +1114,10 @@ $(document).ready(function() {
         report_id;
 
     if ($(this).attr("id") !== undefined) {
+      data.id = $(this).attr("id").split("-")[1];
       cloneReport();
     } else {
+      data.id = $(this).parents("tr").data("report");
       renderOverview(cloneReport);
     }
 
@@ -1123,7 +1126,13 @@ $(document).ready(function() {
   });
 
   subpage.on("click", ".fa-download, .export-report", function() {
-    var report_id = $(this).parents("tr, .report").data("report");
+    var report_id;
+
+    if (typeof $(this).attr("id") !== "undefined") {
+      report_id = $(this).attr("id").split("-")[1];
+    } else {
+      report_id = $(this).parents("tr").data("report");
+    }
 
 		if (modernBrowser) {
 			history.pushState({'page': 'report-download', 'report': report_id}, 'Download Report');
@@ -1163,7 +1172,7 @@ $(document).ready(function() {
       beforeSend: function() {
         $icon.addClass("fa-spin");
       },
-      success: function() {
+      success: function(data) {
         $icon.removeClass("fa-refresh fa-spin").addClass("fa-download");
 
         if (archive) {
@@ -1328,7 +1337,7 @@ function renderDownload(report_id) {
         $column = $("#column-choices");
         $columnNames = $("#column-choices option:not([value=''])");
 
-        values = $.map($checked, function(item) {
+        values = $.map($checked, function(item, index) {
           return $(item).val();
         });
 
@@ -1392,7 +1401,7 @@ function renderDownload(report_id) {
       $("#column-choices").on("change", updateValues);
       $(".sort-order").on("change", updateValues);
 
-      $(".enable-column").on("change", function() {
+      $(".enable-column").on("change", function(e) {
         updateValues();
       });
     }
@@ -1603,38 +1612,6 @@ function renderGraphs(report_id, callback) {
           }
         }});
       });
-    }
-  });
-}
-
-
-function renderViewPartner(id) {
-  var data = {id: id},
-      url = location.protocol + "//" + location.host; // https://secure.my.jobs
-
-  $.ajax({
-    type: "GET",
-    url: url + "/reports/view/mypartners/partner",
-    data: data,
-    success: function(data) {
-      console.log(data);
-    }
-  });
-}
-
-
-function renderViewContact(id) {
-   var data = {id: id},
-      url = location.protocol + "//" + location.host; // https://secure.my.jobs
-
-  $.ajax({
-    type: "GET",
-    url: url + "/reports/view/mypartners/contact",
-    data: data,
-    success: function(data) {
-      var $table = $('<table class="table table-striped report-table"><thead><tr>' +
-                     '<th>Name</th><th>Email</th><th>Partner</th><th></th></tr></thead></table>');
-      console.log(data);
     }
   });
 }
