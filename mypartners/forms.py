@@ -372,40 +372,30 @@ class ContactRecordForm(NormalizedModelForm):
                                              MAX_ATTACHMENT_MB)
 
     class Meta:
+        model = ContactRecord
         form_name = "Contact Record"
-        exclude = ('created_by', 'contact')
-        fields = ('contact_type', 
+        fields = ('contact_type', 'contact',
                   'contact_email', 'contact_phone', 'location',
                   'length', 'subject', 'date_time', 'job_id',
                   'job_applications', 'job_interviews', 'job_hires',
                   'tags', 'notes', 'attachment')
-        model = ContactRecord
 
     def __init__(self, *args, **kwargs):
         partner = kwargs.pop('partner')
-        instance = kwargs.get('instance')
-        choices = [(c.id, c.name) for c in Contact.objects.filter(
-            partner=partner, archived_on__isnull=True)]
-
-        if not instance:
-            choices.insert(0, ('None', '----------'))
-        else:
-            index = [x[1] for x in choices].index(instance.contact.name)
-            tup = choices[index]
-            choices.pop(index)
-            choices.insert(0, tup)
-
         super(ContactRecordForm, self).__init__(*args, **kwargs)
+
+        instance = kwargs.get('instance')
+        self.fields["contact"].queryset = Contact.objects.filter(
+            partner=partner, archived_on__isnull=True)
 
         if not instance or instance.contact_type != 'pssemail':
             # Remove Partner Saved Search from the list of valid
             # contact type choices.
             contact_type_choices = self.fields["contact_type"].choices
-            index = [x[0] for x in contact_type_choices].index("pssemail")
-            contact_type_choices.pop(index)
-            self.fields["contact_type"] = forms.ChoiceField(
-                widget=forms.Select(), choices=contact_type_choices,
-                label="Contact Type")
+            pssemail = ('pssemail', 'Partner Saved Search Email')
+            if pssemail in contact_type_choices:
+                contact_type_choices.remove(pssemail)
+                self.fields["contact_type"].choices = contact_type_choices
 
         # If there are attachments create a checkbox option to delete them.
         if instance:
@@ -433,6 +423,7 @@ class ContactRecordForm(NormalizedModelForm):
             self._errors['location'] = ErrorList([""])
         elif contact_type == 'job' and not self.cleaned_data['job_id']:
             self._errors['job_id'] = ErrorList([""])
+
         return self.cleaned_data
 
     def clean_attachment(self):
