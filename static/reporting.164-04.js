@@ -244,7 +244,7 @@ Report.prototype.save = function() {
     return false;
   } else {
     this.fields.forEach(function(field) {
-			$.extend(report.data, field.onSave());
+      $.extend(report.data, field.onSave());
     });
   }
 
@@ -309,7 +309,7 @@ Field.prototype.renderLabel = function() {
 };
 
 Field.prototype.dom = function() {
-	return $("#" + this.id);
+  return $("#" + this.id);
 };
 
 Field.prototype.currentVal = function() {
@@ -345,7 +345,7 @@ Field.prototype.onSave = function() {
 };
 
 Field.prototype.validate = function(triggerEvent) {
-	triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
+  triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
   var $field = $(this.dom()),
       err = this.label + " is required",
       index = this.errors.indexOf(err);
@@ -361,9 +361,9 @@ Field.prototype.validate = function(triggerEvent) {
       this.removeErrors();
     }
 
-		if (triggerEvent) {
-			$.event.trigger("dataChanged", [this.onSave()]);
-		}
+    if (triggerEvent) {
+      $.event.trigger("dataChanged", [this.onSave()]);
+    }
   }
 
   return this;
@@ -515,7 +515,7 @@ CheckList.prototype.bindEvents = function() {
 };
 
 CheckList.prototype.validate = function(triggerEvent) {
-	triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
+  triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
   var err = this.label + " is required",
       index = this.errors.indexOf(err),
       value = this.currentVal();
@@ -532,9 +532,9 @@ CheckList.prototype.validate = function(triggerEvent) {
     }
   }
 
-	if (triggerEvent) {
-		$.event.trigger("dataChanged", [this.onSave()]);
-	}
+  if (triggerEvent) {
+    $.event.trigger("dataChanged", [this.onSave()]);
+  }
 
   return this;
 };
@@ -565,7 +565,7 @@ DateField.prototype.currentVal = function(id) {
 };
 
 DateField.prototype.validate = function(triggerEvent) {
-	triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
+  triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
   var dateField = this,
       $dom = $(this.dom()),
       $fields = $dom.find("input.datepicker"), // Both start and end inputs.
@@ -590,7 +590,7 @@ DateField.prototype.validate = function(triggerEvent) {
   });
 
   if (!dateField.errors.length && triggerEvent) {
-		$.event.trigger("dataChanged", [dateField.onSave()]);
+    $.event.trigger("dataChanged", [dateField.onSave()]);
   }
 
   return this;
@@ -659,16 +659,16 @@ StateField.prototype.render = function() {
 };
 
 StateField.prototype.bindEvents = function() {
-	var stateField = this;
+  var stateField = this;
 
-	$(document).on("change.validate", "#" + stateField.id, function() {
-		stateField.validate();	
-	});
+  $(document).on("change.validate", "#" + stateField.id, function() {
+    stateField.validate();  
+  });
 };
 
 
 function TagField(label, id, required, defaultVal, helpText) {
-	this.value = [];
+  this.value = [];
   TextField.call(this, label, id, required, defaultVal, helpText);
 }
 
@@ -676,7 +676,7 @@ TagField.prototype = Object.create(TextField.prototype);
 
 TagField.prototype.bindEvents = function() {
   var tagField = this,
-			$dom = $(this.dom());
+      $dom = $(this.dom());
 
   $dom.autocomplete({
     focus: function() {
@@ -712,8 +712,8 @@ TagField.prototype.bindEvents = function() {
       $.ajax({
         type: "GET",
         url: "/reports/ajax/mypartners/tag",
-				//TODO: New backend changes will fix this monstrocity
-				data: {name: keyword, values: ["name"], order_by: "name"},
+        //TODO: New backend changes will fix this monstrocity
+        data: {name: keyword, values: ["name"], order_by: "name"},
         success: function(data) {
           suggestions = data.filter(function(d) {
             // Don't suggest things that are already selected.
@@ -731,34 +731,34 @@ TagField.prototype.bindEvents = function() {
     }
   });
 
-	$dom.on("autocompleteopen", function() {
-		$dom.data("isOpen", true);
-	});
+  $dom.on("autocompleteopen", function() {
+    $dom.data("isOpen", true);
+  });
 
-	$dom.on("autocompleteclose", function() {
-		$dom.data("isOpen", false);
-		tagField.value = $dom.val();
-		tagField.validate();
-	});
+  $dom.on("autocompleteclose", function() {
+    $dom.data("isOpen", false);
+    tagField.value = $dom.val();
+    tagField.validate();
+  });
 
-	$dom.on("change", function() {
-		if(!$dom.data("isOpen")) {
-			tagField.value = $dom.val();
-			tagField.validate();
-		}
-	});
+  $dom.on("change", function() {
+    if(!$dom.data("isOpen")) {
+      tagField.value = $dom.val();
+      tagField.validate();
+    }
+  });
 };
 
 TagField.prototype.currentVal = function() {
   // Split on commas. Trim each element in array. Remove any elements that were blank strings.
   // #2proud2linebreak
-	return this.dom().val().split(",").map(function(t) { return t.trim(); }).filter(function(t) { if (!!t) { return t; } });
+  return this.dom().val().split(",").map(function(t) { return t.trim(); }).filter(function(t) { if (!!t) { return t; } });
 };
 
 
 function FilteredList(label, id, required, ignore, dependencies, defaultVal, helpText) {
   this.ignore = ignore || [];
-	this.dependencies = dependencies || [];
+  this.dependencies = dependencies || [];
   this.active = 0;
   this.hasRan = false;
 
@@ -785,26 +785,26 @@ FilteredList.prototype.render = function() {
 
 FilteredList.prototype.filter = function() {
   var filteredList = this,
-		  filterData = {},
+      filterData = {},
       $recordCount,
       $listBody,
       $input;
 
-	filteredList.report.fields.forEach(function(field) {
-		if (filteredList.ignore.indexOf(field.id) === -1) {
-			$.extend(filterData, field.onSave());
-		}
-	});
+  filteredList.report.fields.forEach(function(field) {
+    if (filteredList.ignore.indexOf(field.id) === -1) {
+      $.extend(filterData, field.onSave());
+    }
+  });
 
   if (this.id === "partner") {
     // annotate how many records a partner has.
     $.extend(filterData, {
-			values: ["pk", "name"],
-			order_by: "name"
-		});
+      values: ["pk", "name"],
+      order_by: "name"
+    });
 
-		filterData.contactrecord__tags__name = filterData.tags__name;
-		delete filterData.tags__name;
+    filterData.contactrecord__tags__name = filterData.tags__name;
+    delete filterData.tags__name;
 
   } else if (this.id === "contact") {
     $.extend(filterData, {values: ["pk", "name", "email"], order_by: "name"});
@@ -815,7 +815,7 @@ FilteredList.prototype.filter = function() {
     type: "GET",
     url: "/reports/ajax/mypartners/" + this.id,
     data: filterData,
-		global: false,
+    global: false,
     beforeSend: function() {
       $('#' + filteredList.id + '-header > span').hide();
       if (!$('#' + filteredList.id + '-header > .fa-spinner').length) {
@@ -842,15 +842,15 @@ FilteredList.prototype.filter = function() {
           (filteredList.id === 'contact' && element.email ? ' <span class="small">(' + element.email + ')</span>' : '') + '</label>';
       }).join("</li><li>") + '</li></ul>');
 
-			var value = filteredList.currentVal();
+      var value = filteredList.currentVal();
       if (!filteredList.hasRan) {
         $('#' + filteredList.id + '-header input').prop("checked", $(filteredList.dom()).find("input").toArray().every(function(c) { return $(c).is(":checked"); }));
       } else {
         $('#' + filteredList.id + '-header input').prop("checked", true);
       }
-			$recordCount.text(value.length === 1 && value.indexOf("0") === 0 ? 0 : value.length);
+      $recordCount.text(value.length === 1 && value.indexOf("0") === 0 ? 0 : value.length);
 
-			$.event.trigger("filtered", [filteredList]);
+      $.event.trigger("filtered", [filteredList]);
     }
   }).done(function() {
     filteredList.active--;
@@ -910,9 +910,9 @@ FilteredList.prototype.bindEvents = function() {
 
     checked = choices.every(function(c) { return $(c).is(":checked"); });
     $all.prop("checked", checked);
-		var value = filteredList.currentVal();
-		$recordCount.text(value.length === 1 && value.indexOf("0") === 0 ? 0 : value.length);
-		$.event.trigger("filtered", [filteredList]);
+    var value = filteredList.currentVal();
+    $recordCount.text(value.length === 1 && value.indexOf("0") === 0 ? 0 : value.length);
+    $.event.trigger("filtered", [filteredList]);
   });
 
   $all.on("change", function(e) {
@@ -935,15 +935,15 @@ FilteredList.prototype.bindEvents = function() {
 
   });
 
-	$dom.on("filtered", function(e, field) {
-		if (filteredList.dependencies.indexOf(field.id) !== -1) {
-			filteredList.filter();
-		}
-	});
+  $dom.on("filtered", function(e, field) {
+    if (filteredList.dependencies.indexOf(field.id) !== -1) {
+      filteredList.filter();
+    }
+  });
 };
 
 FilteredList.prototype.validate = function(triggerEvent) {
-	triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
+  triggerEvent = typeof triggerEvent === 'undefined' ? true : triggerEvent;
   var err = this.label + " is required",
       index = this.errors.indexOf(err),
       value = this.currentVal();
@@ -960,9 +960,9 @@ FilteredList.prototype.validate = function(triggerEvent) {
     }
   }
 
-	if (triggerEvent) {
-		$.event.trigger("dataChanged", [this.onSave()]);
-	}
+  if (triggerEvent) {
+    $.event.trigger("dataChanged", [this.onSave()]);
+  }
 
   return this;
 };
@@ -1153,9 +1153,9 @@ $(document).ready(function() {
   subpage.on("click", ".fa-download, .export-report", function() {
     var report_id = $(this).parents("tr, .report").data("report");
 
-		if (modernBrowser) {
-			history.pushState({'page': 'report-download', 'report': report_id}, 'Download Report');
-		}
+    if (modernBrowser) {
+      history.pushState({'page': 'report-download', 'report': report_id}, 'Download Report');
+    }
 
     renderDownload(report_id);
   });
@@ -1603,15 +1603,15 @@ function renderGraphs(report_id, callback) {
                          "</td><td>" + contact.partner__name + "</td><td>" + contact.records + "</td><td>" + contact.referrals + "</td>";
                 }).join('</tr><tr class="report">') + "</tr>";
               });
-							tbody.find("tr").on("click", function(e) {
-								var row = e.currentTarget,
-										$td = $(row).find("td:first"),
-										name = $td.data("name"),
-										email = $td.data("email"),
-										partner = $td.data("partner");
-								
-								window.open("/prm/view/records?partner=" + partner + "&contact=" + name + "&keywords=" + email, "_blank");
-							});
+              tbody.find("tr").on("click", function(e) {
+                var row = e.currentTarget,
+                    $td = $(row).find("td:first"),
+                    name = $td.data("name"),
+                    email = $td.data("email"),
+                    partner = $td.data("partner");
+                
+                window.open("/prm/view/records?partner=" + partner + "&contact=" + name + "&keywords=" + email, "_blank");
+              });
 
               return div.append(table.append(tbody));
 

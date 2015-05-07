@@ -4,7 +4,6 @@ import json
 
 from django.core.files.base import ContentFile
 from django.db.models.loading import get_model
-from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
