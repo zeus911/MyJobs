@@ -44,10 +44,10 @@ $(function() {
     });
 
     $("#id_contact").on("change", function() {
-        if($('[id$="id_contact"]').val() != 'None'){
-        var form = $('#contact-record-form');
+        if($('[id$="id_contact"]').val()) {
+            var form = $('#contact-record-form'),
+                data = form.serialize();
 
-        var data = form.serialize();
             $.ajax({
                 data: data,
                 type: 'POST',

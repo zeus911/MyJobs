@@ -566,7 +566,7 @@ class RecordsEditTests(MyPartnersTestCase):
         form = soup.find('fieldset')
 
         self.assertEqual(len(form(class_='profile-form-input')), 15)
-        self.assertEqual(len(form.find(id='id_contact')('option')), 2)
+        self.assertEqual(len(form.find(id='id_contact')('option')), 3)
 
         contact_type = form.find(id='id_contact_type')
         contact_type = contact_type.find(selected='selected').get_text()

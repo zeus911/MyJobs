@@ -320,7 +320,7 @@ def delete_prm_item(request):
                                            id=item_id)
         partner = get_object_or_404(Partner, id=partner_id, owner=company)
         log_change(contact_record, None, request.user, partner,
-                   contact_record.contact_name, action_type=DELETION)
+                   contact_record.contact.name, action_type=DELETION)
         contact_record.delete()
         return HttpResponseRedirect(reverse('partner_records')+'?company=' +
                                     str(company.id)+'&partner=' +
@@ -770,8 +770,6 @@ def prm_edit_records(request):
             return HttpResponseRedirect(reverse('record_view') +
                                         '?partner=%d&id=%d' %
                                         (partner.id, form.instance.id))
-        else:
-            import ipdb; ipdb.set_trace()
     else:
         form = ContactRecordForm(partner=partner, instance=instance)
 
