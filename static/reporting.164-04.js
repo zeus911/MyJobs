@@ -11,9 +11,28 @@ window.onpopstate = function(event) {
     renderOverview();
   } else if (state.page && state.page === 'new') {
     historyNew = function() {
-      report = new Report(state.report.types);
+      var types = state.types,
+          form,
+          report,
+          rs;
+
+      if (types.length > 1) {
+        rs = types.map(function(type) {
+          return reports[type];
+        });
+        form = new Form(rs);
+      } else {
+        report = reports[types[0]];
+      }
+
+
       $("#container").addClass("rpt-container");
-      report.renderFields(".rpt-container", report.fields, true);
+      if (form) {
+        form.renderReports(".rpt-container");
+      } else {
+        report.renderFields(".rpt-container", report.fields, true);
+        report.unbindEvent().bindEvents();
+      }
       renderNavigation();
     };
 
@@ -1055,7 +1074,7 @@ $(document).ready(function() {
 
     // Create js Report object and set up next step.
     if (modernBrowser) {
-      history.pushState({'page': 'new', 'report': report}, 'Create Report');
+      history.pushState({'page': 'new', 'report': report, types: types}, 'Create Report');
     }
 
     $("#container").addClass("rpt-container");
