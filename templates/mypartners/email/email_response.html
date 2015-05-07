@@ -7,14 +7,14 @@
     {% if created_records %}
         We have successfully created contact records for:<br/>
         {% for record in created_records %}
-            <a href="https://secure.my.jobs{{ record.get_record_url }}">{{ record.contact_name }}</a><br/>
+            <a href="https://secure.my.jobs{{ record.get_record_url }}">{{ record.contact.name }}</a><br/>
         {% endfor %}
     {% endif %}
 
     {% if attachment_failures %}
         <br />We were unable to associate your email attachments with the following individuals. Please add the attachments via the Partner Relationship Manager.<br />
         {% for individual in attachment_failures %}
-            <a href="https://secure.my.jobs{{ individual.get_record_url }}">{{ individual.contact_name }}</a><br />
+            <a href="https://secure.my.jobs{{ individual.get_record_url }}">{{ individual.contact.name }}</a><br />
         {% endfor %}
     {% endif %}
 

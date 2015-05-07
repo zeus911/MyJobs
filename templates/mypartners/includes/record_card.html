@@ -1,7 +1,7 @@
 {% load common_tags %}
 <div class="product-card">
     <div class="big-title">
-        {{ record.subject }} {% if record.contact_name %} {% if record.subject %}-{% endif %} {{record.contact_name}} {% endif %}
+        {{ record.subject }} {% if record.contact.name %} {% if record.subject %}-{% endif %} {{record.contact.name}} {% endif %}
     </div>
     <div class="sub-title">
         {{ record.date_time }} - {{ record.get_human_readable_contact_type }}

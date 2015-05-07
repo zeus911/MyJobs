@@ -178,22 +178,26 @@ class ReportView(View):
         if request.method == 'GET':
             report_id = request.GET.get('id', 0)
             report = Report.objects.get(id=report_id)
-            records = report.queryset
 
-            ctx = {
-                'emails': records.emails,
-                'calls': records.calls,
-                'searches': records.searches,
-                'meetings': records.meetings,
-                'applications': records.applications,
-                'interviews': records.interviews,
-                'hires': records.hires,
-                'communications': records.communication_activity.count(),
-                'referrals': records.referrals,
-                'contacts': list(records.contacts)}
+            if report.model == 'contactrecord':
+                records = report.queryset
+
+                ctx = json.dumps({
+                    'emails': records.emails,
+                    'calls': records.calls,
+                    'searches': records.searches,
+                    'meetings': records.meetings,
+                    'applications': records.applications,
+                    'interviews': records.interviews,
+                    'hires': records.hires,
+                    'communications': records.communication_activity.count(),
+                    'referrals': records.referrals,
+                    'contacts': list(records.contacts)})
+            else:
+                ctx = report.records
 
             return HttpResponse(
-                json.dumps(ctx),
+                ctx,
                 content_type='application/json; charset=utf-8')
         else:
             raise Http404(
