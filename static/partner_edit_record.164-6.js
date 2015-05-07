@@ -43,8 +43,8 @@ $(function() {
         show_fields();
     });
 
-    $("#id_contact_name").on("change", function() {
-        if($('[id$="id_contact_name"]').val() != 'None'){
+    $("#id_contact").on("change", function() {
+        if($('[id$="id_contact"]').val() != 'None'){
         var form = $('#contact-record-form');
 
         var data = form.serialize();

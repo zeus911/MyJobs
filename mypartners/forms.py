@@ -451,6 +451,7 @@ class ContactRecordForm(NormalizedModelForm):
     def save(self, user, partner, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
         self.instance.partner = partner
+
         if new_or_change == ADDITION:
             self.instance.created_by = user
         instance = super(ContactRecordForm, self).save(commit)
@@ -461,24 +462,13 @@ class ContactRecordForm(NormalizedModelForm):
             if attachment:
                 prm_attachment = PRMAttachment(attachment=attachment,
                                                contact_record=self.instance)
-                setattr(prm_attachment, 'partner', self.instance.partner)
+                prm_attachment.partner = self.instance.partner
                 prm_attachment.save()
 
-        attach_delete = self.cleaned_data.get('attach_delete', [])
-        for attachment in attach_delete:
+        for attachment in self.cleaned_data.get('attach_delete', []):
             PRMAttachment.objects.get(pk=attachment).delete()
 
-        try:
-            identifier = instance.contact.email if instance.contact.email \
-                else instance.contact_email if instance.contact.email \
-                else instance.contact_phone if instance.contact_phone \
-                else instance.contact.name if instance.contact.name \
-                else instance.contact_name
-        except Contact.DoesNotExist:
-            # This should only happen if the user is editing the ids in the drop
-            # down list of contacts. Since it's too late for a validation error
-            # the user can deal with the logging issues they created.
-            identifier = "unknown contact"
+        identifier = instance.contact.name
 
         log_change(instance, self, user, partner, identifier,
                    action_type=new_or_change)

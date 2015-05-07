@@ -708,8 +708,8 @@ class ContactRecord(models.Model):
                     q |= models.Q(**{'contact_name': contact['name'],
                                      'contact_email': contact['email']})
 
-                # and finally filter our contact records by the names and emails
-                # that still remain
+                # and finally filter our contact records by the names and
+                # emails that still remain
                 records = records.filter(q)
 
         return records
@@ -720,6 +720,7 @@ class ContactRecord(models.Model):
     def save(self, *args, **kwargs):
         if not self.pk and self.contact:
             self.contact_email = self.contact_email or self.contact.email
+            self.contact_phone = self.contact_phone or self.contact.phone
 
         super(ContactRecord, self).save(*args, **kwargs)
 

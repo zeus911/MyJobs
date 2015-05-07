@@ -831,32 +831,35 @@ def get_contact_information(request):
     phone number if they have one.
 
     """
-    _, partner, _ = prm_worthy(request)
+    if request.method == "POST" and request.is_ajax():
+        _, partner, _ = prm_worthy(request)
 
-    contact_id = request.REQUEST.get('contact_name')
-    try:
-        contact = Contact.objects.get(pk=contact_id)
-    except Contact.DoesNotExist:
-        data = {'error': 'Contact does not exist'}
-        return HttpResponse(json.dumps(data))
+        contact_id = request.POST.get('contact')
+        try:
+            contact = Contact.objects.get(pk=contact_id)
+        except Contact.DoesNotExist:
+            data = {'error': 'Contact does not exist'}
+            return HttpResponse(json.dumps(data))
 
-    if partner != contact.partner:
-        data = {'error': 'Permission denied'}
-        return HttpResponse(json.dumps(data))
+        if partner != contact.partner:
+            data = {'error': 'Permission denied'}
+            return HttpResponse(json.dumps(data))
 
-    if hasattr(contact, 'email'):
-        if hasattr(contact, 'phone'):
-            data = {'email': contact.email,
-                    'phone': contact.phone}
+        if hasattr(contact, 'email'):
+            if hasattr(contact, 'phone'):
+                data = {'email': contact.email,
+                        'phone': contact.phone}
+            else:
+                data = {'email': contact.email}
         else:
-            data = {'email': contact.email}
+            if hasattr(contact, 'phone'):
+                data = {'phone': contact.phone}
+            else:
+                data = {}
+
+        return HttpResponse(json.dumps(data))
     else:
-        if hasattr(contact, 'phone'):
-            data = {'phone': contact.phone}
-        else:
-            data = {}
-
-    return HttpResponse(json.dumps(data))
+        return Http404("This view is only reachable by an AJAX POST request.")
 
 
 @company_has_access('prm_access')

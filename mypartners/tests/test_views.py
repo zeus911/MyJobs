@@ -1307,14 +1307,14 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
 
 class ContactLogEntryTests(MyPartnersTestCase):
     def test_contact_record_update(self):
-        record = ContactRecordFactory()
+        record = ContactRecordFactory(contact=self.contact)
 
         url = self.get_url(partner=self.partner.id, company=self.company.id,
                            id=record.id, view='partner_edit_record')
 
         data = {
             'contact_type': 'email',
-            'contact_name': self.contact.name,
+            'contact': self.contact.id,
             'contact_email': 'test@email.com',
             'contact_phone': '',
             'location': '',
