@@ -60,8 +60,8 @@ def saved_searches(employer, company, candidate):
     candidate domains and return a list of urls.
 
     inputs:
-    :employer:	The employer that is looking at candidate's page
-    :candidate:	The job seeker that shows up in employer's activitiy feed
+    :employer:  The employer that is looking at candidate's page
+    :candidate: The job seeker that shows up in employer's activitiy feed
 
     outputs:
                 A list of candidate urls.
