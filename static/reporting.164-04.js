@@ -1676,14 +1676,18 @@ function renderViewContact(id) {
           $table = $('<table class="table table-striped report-table"><thead><tr>' +
                      '<th>Partner</th><th>Name</th><th>Phone</th><th>Email</th><th>State</th></tr></thead></table>'),
           $tbody = $('<tbody></tbody>'),
-          $mainContainer = $("#main-container");
+          $mainContainer = $("#main-container"),
+          location;
 
       $tbody.append(function() {
         return '<tr class="record">' + data.map(function(record) {
-            console.log(record.locations);
-            return '<td>' + record.partner + '</td><td>' + record.name + '</td><td>' + record.phone + '</td>' +
-                   '<td>' + record.email + '</td><td>' + record.locations.join('; ') + '</td>';
-          }).join('</tr><tr>') + '</tr>';
+          location = record.locations.map(function(location) {
+            return location.split(',')[1];
+          }).join();
+
+          return '<td>' + record.partner + '</td><td>' + record.name + '</td><td>' + record.phone + '</td>' +
+                 '<td>' + record.email + '</td><td>' + location + '</td>';
+        }).join('</tr><tr>') + '</tr>';
       });
 
       $mainContainer.html("").append($span.append($table.append($tbody)));
