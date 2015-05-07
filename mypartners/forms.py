@@ -86,9 +86,23 @@ class ContactForm(NormalizedModelForm):
     def save(self, user, partner, commit=True):
         new_or_change = CHANGE if self.instance.pk else ADDITION
         partner = Partner.objects.get(id=self.data['partner'])
-
         self.instance.partner = partner
-        contact = super(ContactForm, self).save(commit)
+
+        contact = None
+        if not self.instance.pk:
+            contact = Contact.objects.filter(
+                partner=partner, name=self.instance.name,
+                email=self.instance.email).first()
+
+            if contact:
+                contact.phone = contact.phone or self.instance.phone
+                contact.notes = contact.notes or self.instance.notes
+                contact.archived_on = None
+                contact.save()
+
+                self.instance = contact
+
+        contact = contact or super(ContactForm, self).save(commit)
 
         if any(self.cleaned_data.get(field) 
                for field in self.__LOCATION_FIELDS
