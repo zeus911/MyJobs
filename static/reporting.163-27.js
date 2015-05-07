@@ -78,7 +78,7 @@ Report.prototype.createFields = function(types) {
                         new TagField(this, "Tags", "tags__name", false, undefined, "Use commas for multiple tags."),
                         new CheckList(this, "Contact Types", "contact_type", contactTypeChoices, true, 'all'),
                         new FilteredList(this, "Partners", "partner", true, ['report_name', 'partner', 'contact']),
-                        new FilteredList(this, "Contacts", "contact", true, ['report_name', 'contact'], ['partner'])]
+                        new FilteredList(this, "Contacts", "contact", true, ['report_name', 'contact', 'tags__name'], ['partner'])]
       },
       fields = [],
       key;
@@ -825,6 +825,10 @@ FilteredList.prototype.filter = function() {
 			values: ["pk", "name"],
 			order_by: "name"
 		});
+
+		filterData.contactrecord__tags__name = filterData.tags__name;
+		delete filterData.tags__name;
+
   } else if (this.id === "contact") {
     $.extend(filterData, {values: ["pk", "name", "email"], order_by: "name"});
   }

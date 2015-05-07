@@ -313,7 +313,7 @@ class PartnerOverviewTests(MyPartnersTestCase):
             today = date.today()
             # native date time doesn't have AP format so we fake it
             month = today.strftime('%B')
-            if len(month) == 3:
+            if len(month) == 3 and month != 'May':
                 month += "."
             sub_title = "%s %s, %s" % (month, today.day,
                                        today.year)
