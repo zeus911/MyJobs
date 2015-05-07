@@ -3,7 +3,6 @@ window.onpopstate = function(event) {
       $sidebar = $(".sidebar"),
       historyNew,
       historyClone,
-      inputs,
       report;
 
   if (state.page && state.page === 'overview') {
@@ -18,11 +17,11 @@ window.onpopstate = function(event) {
 
       if (types.length > 1) {
         rs = types.map(function(type) {
-          return reports[type];
+          return createReport(type);
         });
         form = new Form(rs);
       } else {
-        report = reports[types[0]];
+        report = createReport(types[0]);
       }
 
 
@@ -56,11 +55,11 @@ window.onpopstate = function(event) {
     renderDownload(state.report);
   } else if (state.page && state.page === 'clone') {
     historyClone = function() {
-      inputs = state.inputs;
-      report = new Report(["prm"]);
-      report.createCloneReport(inputs);
+      report = createReport(state.type);
+      report.createCloneReport(state.inputs);
       $("#container").addClass("rpt-container");
       report.renderFields(".rpt-container", report.fields, true);
+      report.unbindEvent().bindEvents();
       renderNavigation();
     };
 
@@ -75,6 +74,9 @@ var modernBrowser = !(isIE() && isIE() < 10);
 
 // Determines if a navigation bar is needed.
 var navigation = false;
+
+// Gives the ability for AJAX to send Arrays.
+$.ajaxSettings.traditional = true;
 
 function Form(reports) {
   this.reports = reports;
@@ -198,7 +200,6 @@ Report.prototype.bindEvents = function() {
       data.contact_name = newList;
     }
 
-    $.ajaxSettings.traditional = true;
     $.ajax({
       type: 'POST',
       url: url,
@@ -708,7 +709,6 @@ TagField.prototype.bindEvents = function() {
           // Initialize list of suggested tag names.
           suggestions;
 
-      $.ajaxSettings.traditional = true;
       $.ajax({
         type: "GET",
         url: "/reports/ajax/mypartners/tag",
@@ -810,7 +810,6 @@ FilteredList.prototype.filter = function() {
     $.extend(filterData, {values: ["pk", "name", "email"], order_by: "name"});
   }
 
-  $.ajaxSettings.traditional = true;
   $.ajax({
     type: "GET",
     url: "/reports/ajax/mypartners/" + this.id,
@@ -1018,27 +1017,6 @@ var contactTypeChoices = [new CheckBox("Email", "contact_type", "email"),
                           new CheckBox("Job Followup", "contact_type", "job"),
                           new CheckBox("Saved Search Email", "contact_type", "pssemail")];
 
-var reports = {
-  contact: new Report("contact", [new TextField("Report Name", "report_name", true, reportNameDateFormat(new Date())),
-                                  new DateField("Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
-                                  new StateField("State", "state", false),
-                                  new TextField("City", "city", false),
-                                  new FilteredList("Partners", "partner", true, ["report_name", "partner"])]),
-  partner: new Report("partner", [new TextField("Report Name", "report_name", true, reportNameDateFormat(new Date())),
-                                  new StateField("State", "state", false),
-                                  new TextField("City", "city", false),
-                                  new TextField("URL", "uri", false),
-                                  new TextField("Source", "data_source", false)]),
-  contactrecord: new Report("contactrecord", [new TextField("Report Name", "report_name", true, reportNameDateFormat(new Date())),
-                                              new DateField("Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
-                                              new StateField("State", "state", false),
-                                              new TextField("City", "city", false),
-                                              new CheckList("Contact Types", "contact_type", contactTypeChoices, true, "all"),
-                                              new TagField("Tags", "tags__name", false, undefined, "Use commas for multiple tags."),
-                                              new FilteredList("Partners", "partner", true, ["report_name", "partner", "contact"]),
-                                              new FilteredList("Contacts", "contact", true, ["report_name", "contact"], ["partner"])])
-};
-
 
 $(document).ready(function() {
   var subpage = $(".subpage");
@@ -1065,11 +1043,11 @@ $(document).ready(function() {
 
     if (types.length > 1) {
       rs = types.map(function(type) {
-        return reports[type];
+        return createReport(type);
       });
       form = new Form(rs);
     } else {
-      report = reports[types[0]];
+      report = createReport(types[0]);
     }
 
     // Create js Report object and set up next step.
@@ -1119,26 +1097,35 @@ $(document).ready(function() {
 
   // Clone Report
   subpage.on("click", ".fa-copy, .clone-report", function() {
-    var data = {id: $(this).parents("tr, .report").data("report")},
+    var data = {id: $(this).parents("tr, .report").data("report"),
+                values: ['name', 'model', 'app', 'params']},
         url = location.protocol + "//" + location.host, // https://secure.my.jobs
         cloneReport = function() {
           $.ajax({
             type: "GET",
-            url: url + "/reports/ajax/get-inputs",
+            url: url + "/reports/ajax/myreports/report",
             data: data,
             dataType: "json",
             success: function(data) {
-              if (modernBrowser) {
-                history.pushState({'page': 'clone', 'inputs': data, 'reportId': report_id}, "Clone Report");
-              }
-              var report = new Report(["prm"]);
-              report.createCloneReport(data);
+              var reportData = data[0],
+                  model = reportData.model,
+                  params = JSON.parse(reportData.params),
+                  report = createReport(model);
+
+              $.extend(params, {report_name: "Copy of " + reportData.name.replace(/_/g, " ")});
+
+              report.createCloneReport(params);
+
               $("#container").addClass("rpt-container");
               report.renderFields(".rpt-container", report.fields, true);
+              report.unbindEvent().bindEvents();
+
+              if (modernBrowser) {
+                history.pushState({'page': 'clone', 'inputs': params, 'type': report.type}, "Clone Report");
+              }
             }
           });
-        },
-        report_id;
+        };
 
     if ($(this).attr("id") !== undefined) {
       cloneReport();
@@ -1217,6 +1204,38 @@ $(document).ready(function() {
 function isIE() {
     var myNav = navigator.userAgent.toLowerCase();
     return (myNav.indexOf('msie') !== -1) ? parseInt(myNav.split('msie')[1]) : false;
+}
+
+
+function createReport(type) {
+  var reports = {
+  contact: function() {
+    return new Report("contact", [new TextField("Report Name", "report_name", true, reportNameDateFormat(new Date())),
+                                  new DateField("Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
+                                  new StateField("State", "state", false),
+                                  new TextField("City", "city", false),
+                                  new FilteredList("Partners", "partner", true, ["report_name", "partner"])]);
+  },
+  partner: function() {
+    return new Report("partner", [new TextField("Report Name", "report_name", true, reportNameDateFormat(new Date())),
+                                  new StateField("State", "state", false),
+                                  new TextField("City", "city", false),
+                                  new TextField("URL", "uri", false),
+                                  new TextField("Source", "data_source", false)]);
+  },
+  contactrecord: function() {
+    return new Report("contactrecord", [new TextField("Report Name", "report_name", true, reportNameDateFormat(new Date())),
+                                        new DateField("Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
+                                        new StateField("State", "state", false),
+                                        new TextField("City", "city", false),
+                                        new CheckList("Contact Types", "contact_type", contactTypeChoices, true, "all"),
+                                        new TagField("Tags", "tags__name", false, undefined, "Use commas for multiple tags."),
+                                        new FilteredList("Partners", "partner", true, ["report_name", "partner", "contact"]),
+                                        new FilteredList("Contacts", "contact", true, ["report_name", "contact"], ["partner"])])
+  }
+};
+
+  return reports[type]();
 }
 
 
@@ -1335,7 +1354,6 @@ function renderOverview(callback) {
 function renderDownload(report_id) {
   var data = {'id': report_id};
 
-  $.ajaxSettings.traditional = true;
   $.ajax({
     type: "GET",
     url: "downloads",
