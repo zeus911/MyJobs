@@ -185,10 +185,12 @@ class Contact(models.Model):
                                 on_delete=models.SET_NULL)
     name = models.CharField(max_length=255, verbose_name='Full Name')
     email = models.EmailField(max_length=255, verbose_name='Email', blank=True)
-    phone = models.CharField(max_length=30, verbose_name='Phone', blank=True)
+    phone = models.CharField(max_length=30, verbose_name='Phone', blank=True,
+                             null=True)
     locations = models.ManyToManyField('Location', related_name='contacts')
     tags = models.ManyToManyField('Tag', null=True)
-    notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
+    notes = models.TextField(max_length=1000, verbose_name='Notes',
+                             blank=True, null=True)
     archived_on = models.DateTimeField(null=True)
 
     company_ref = 'partner__owner'
@@ -238,24 +240,12 @@ class Contact(models.Model):
         if city:
             records = records.filter(locations__city__icontains=city)
 
-        if contact_type and records:
-            if contact_type == '0':
-                return records.none()
-
+        if contact_type:
             if not hasattr(contact_type, '__iter__'):
                 contact_type = [contact_type]
 
-            owner = records.first().partner.owner
-            contacts = ContactRecord.objects.filter(
-                partner__owner=owner, contact_type__in=contact_type).values(
-                    'contact_name', 'contact_email').distinct()
-
-            q = models.Q()
-            for contact in contacts:
-                q |= models.Q(name=contact['contact_name'],
-                              email=contact['contact_email'])
-
-            records = records.filter(q)
+            records = records.filter(
+                contactrecord__contact_type__in=contact_type)
 
         return records
 
@@ -607,17 +597,18 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
     @property
     def contacts(self):
         contacts = self.exclude(contact_type='job').values(
-            'partner__name', 'partner', 'contact_name', 'contact_email').annotate(
-                records=models.Count('contact_name')).distinct().order_by(
+            'partner__name', 'partner', 'contact__name',
+            'contact_email').annotate(
+                records=models.Count('contact__name')).distinct().order_by(
                     '-records')
 
         referrals = dict(self.filter(contact_type='job').values_list(
-            'contact_name').annotate(
-                referrals=models.Count('contact_name')).distinct())
+            'contact__name').annotate(
+                referrals=models.Count('contact__name')).distinct())
 
         for contact in contacts:
 
-            contact['referrals'] = referrals.get(contact['contact_name'], 0)
+            contact['referrals'] = referrals.get(contact['contact__name'], 0)
 
         return contacts
 
@@ -715,33 +706,11 @@ class ContactRecord(models.Model):
                 q |= models.Q(**{'name': contact['contact_name'],
                                  'email': contact['contact_email']})
 
-            # then we filter those contacts by state...
             if state:
-                contacts = Contact.objects.filter(
-                    q, locations__state=state).values(
-                        'name', 'email').distinct()
+                records = records.filter(contact__locations__state=state)
 
-                q = models.Q()
-                for contact in contacts:
-                    q |= models.Q(**{'contact_name': contact['name'],
-                                     'contact_email': contact['email']})
-
-                records = records.filter(q)
-
-            # and/or city
-            q = models.Q()
             if city:
-                contacts = Contact.objects.filter(
-                    q, locations__city=city).values(
-                        'name', 'email').distinct()
-
-                for contact in contacts:
-                    q |= models.Q(**{'contact_name': contact['name'],
-                                     'contact_email': contact['email']})
-
-                # and finally filter our contact records by the names and
-                # emails that still remain
-                records = records.filter(q)
+                records = records.filter(contact__locations__city=city)
 
         return records
 
