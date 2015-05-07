@@ -19,18 +19,13 @@
                     // with that model.
                     if (model_fields.hasOwnProperty(value)) {
                         // We've already retrieved the fields for this model;
-                        // pull it from our cache and select its first value.
+                        // pull it from our cache.
                         $select = model_fields[value];
                     } else {
                         // We have not retrieved this model's field list yet.
                         $.getJSON('/emails/get-fields/', 'model=' + value,
                             function (data) {
-                                // TODO: Can I get by without an ever-expanding if chain?
-                                if (window.location.href.indexOf('valueevent') > -1) {
-                                    fields = data['value'];
-                                } else {
-                                    fields = data['time'];
-                                }
+                                fields = window.location.href.indexOf('valueevent') > -1 ? data['value'] : data['time'];
 
                                 for (field in fields) {
                                     if (fields.hasOwnProperty(field)) {
