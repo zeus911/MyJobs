@@ -265,6 +265,9 @@ class Contact(models.Model):
             return self.email
         return 'Contact object'
 
+    def natural_key(self):
+        return str(self)
+
     def save(self, *args, **kwargs):
         """
         Checks to see if there is a User that is using self.email add said User
