@@ -1645,6 +1645,19 @@ function renderViewPartner(id) {
     url: url + "/reports/view/mypartners/partner",
     data: data,
     success: function(data) {
+      var $span = $('<div class="span12"></div>'),
+          $table = $('<table class="table table-striped report-table"><thead><tr>' +
+                     '<th>Name</th><th>Primary Contact</th></tr></thead></table>'),
+          $tbody = $('<tbody></tbody>'),
+          $mainContainer = $("#main-container");
+
+      $tbody.append(function() {
+        return '<tr class="record">' + data.map(function(record) {
+            return '<td>' + record.name + '</td><td>' + record.primary_contact + '</td>';
+          }).join('</tr><tr>') + '</tr>';
+      });
+
+      $mainContainer.html("").append($span.append($table.append($tbody)));
     }
   });
 }
