@@ -620,6 +620,7 @@ def add_jobs(jobs, upload_chunk_size=1024):
     if max_onet_count > 10:
         logger.warn("The number of MOCs (%s) per job exceeds 10, therefore we are reducing the chunk size.", max_onet_count)
         upload_chunk_size = 64
+    
     # Chunk them
     jobs = chunk(jobs, upload_chunk_size)
     for job_group in jobs:
