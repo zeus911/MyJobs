@@ -770,6 +770,8 @@ def prm_edit_records(request):
             return HttpResponseRedirect(reverse('record_view') +
                                         '?partner=%d&id=%d' %
                                         (partner.id, form.instance.id))
+        else:
+            import ipdb; ipdb.set_trace()
     else:
         form = ContactRecordForm(partner=partner, instance=instance)
 
@@ -834,7 +836,7 @@ def get_contact_information(request):
     if request.method == "POST" and request.is_ajax():
         _, partner, _ = prm_worthy(request)
 
-        contact_id = request.POST.get('contact')
+        contact_id = request.POST.get('contact') or None
         try:
             contact = Contact.objects.get(pk=contact_id)
         except Contact.DoesNotExist:
