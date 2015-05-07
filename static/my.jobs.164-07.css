@@ -1606,6 +1606,25 @@ h3.bottom-bordered {
     padding: 0;
 }
 
+.choices-header {
+    border-bottom: 1px solid #000;
+    font-weight: 700;
+    margin-bottom: 2px;
+    margin-top: 5px;
+}
+
+.choices-header input[type="checkbox"] {
+    margin-top: -1px;
+}
+
+.choices-header + #choices {
+    margin-left: 15px;
+}
+
+#choices input[type="radio"] {
+    margin-top: -1px;
+}
+
 .rpt-buttons {
     bottom: 0;
     position: absolute;
