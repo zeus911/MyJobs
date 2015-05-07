@@ -1680,8 +1680,9 @@ function renderViewContact(id) {
 
       $tbody.append(function() {
         return '<tr class="record">' + data.map(function(record) {
+            console.log(record.locations);
             return '<td>' + record.partner + '</td><td>' + record.name + '</td><td>' + record.phone + '</td>' +
-                   '<td>' + record.email + '</td><td>' + record.locations + '</td>';
+                   '<td>' + record.email + '</td><td>' + record.locations.join('; ') + '</td>';
           }).join('</tr><tr>') + '</tr>';
       });
 
