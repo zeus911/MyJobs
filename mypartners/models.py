@@ -167,6 +167,9 @@ class Location(models.Model):
         return (", ".join([self.city, self.state]) if self.city and self.state
                 else self.city or self.state)
 
+    def natural_key(self):
+        return str(self)
+
     def save(self, **kwargs):
         super(Location, self).save(**kwargs)
 
@@ -264,6 +267,9 @@ class Contact(models.Model):
         if self.email:
             return self.email
         return 'Contact object'
+
+    def natural_key(self):
+        return str(self)
 
     def save(self, *args, **kwargs):
         """
