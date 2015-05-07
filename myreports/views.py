@@ -78,7 +78,7 @@ def get_states(request):
 
 
 @company_has_access('prm_access')
-def view_records(request, app, model):
+def view_records(request, app="myparters", model="contactrecord"):
     """
     Returns records as JSON.
 
@@ -129,19 +129,6 @@ def view_records(request, app, model):
         return response
     else:
         raise Http404("This view is only reachable via an AJAX GET request.")
-
-
-@company_has_access('prm_access')
-def get_inputs(request):
-    """Returns a report object's `params` field."""
-
-    if request.is_ajax() and request.method == "GET":
-        report_id = request.GET.get('id', 0)
-        report = get_object_or_404(Report, pk=report_id)
-        return HttpResponse(
-            report.params, content_type='application/json; charset=utf-8')
-    else:
-        return Http404("This view is only reachable via an AJAX GET request.")
 
 
 class ReportView(View):
