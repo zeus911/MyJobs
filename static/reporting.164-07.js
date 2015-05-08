@@ -1011,12 +1011,6 @@ String.prototype.capitalize = function() {
 
 var yesterday = (function(d){d.setDate(d.getDate() - 1); return d; })(new Date());
 
-var contactTypeChoices = [new CheckBox("Email", "contact_type", "email"),
-                          new CheckBox("Phone Call", "contact_type", "phone"),
-                          new CheckBox("Meeting or Event", "contact_type", "meetingorevent"),
-                          new CheckBox("Job Followup", "contact_type", "job"),
-                          new CheckBox("Saved Search Email", "contact_type", "pssemail")];
-
 
 $(document).ready(function() {
   var subpage = $(".subpage");
@@ -1224,6 +1218,12 @@ function createReport(type) {
                                   new TextField("Source", "data_source", false)]);
   },
   contactrecord: function() {
+    var contactTypeChoices = [new CheckBox("Email", "contact_type", "email"),
+                              new CheckBox("Phone Call", "contact_type", "phone"),
+                              new CheckBox("Meeting or Event", "contact_type", "meetingorevent"),
+                              new CheckBox("Job Followup", "contact_type", "job"),
+                              new CheckBox("Saved Search Email", "contact_type", "pssemail")];
+
     return new Report("contactrecord", [new TextField("Report Name", "report_name", true, reportNameDateFormat(new Date())),
                                         new DateField("Select Date", "date", true, {start_date: "01/01/2014", end_date: dateFieldFormat(yesterday)}),
                                         new StateField("State", "state", false),
@@ -1231,7 +1231,7 @@ function createReport(type) {
                                         new CheckList("Contact Types", "contact_type", contactTypeChoices, true, "all"),
                                         new TagField("Tags", "tags__name", false, undefined, "Use commas for multiple tags."),
                                         new FilteredList("Partners", "partner", true, ["report_name", "partner", "contact"]),
-                                        new FilteredList("Contacts", "contact", true, ["report_name", "contact"], ["partner"])])
+                                        new FilteredList("Contacts", "contact", true, ["report_name", "contact"], ["partner"])]);
   }
 };
 
@@ -1254,7 +1254,7 @@ function reportNameDateFormat(date) {
   minutes = turnTwoDigit(minutes);
   seconds = turnTwoDigit(seconds);
 
-  return year + "-" + month + "-" + day + "_" + hours + ":" + minutes + ":" + seconds + "." + milliseconds;
+  return year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds + "." + milliseconds;
 }
 
 
