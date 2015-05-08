@@ -46,7 +46,6 @@
                         <a>{% trans "Employers" %}</a>
                         <ul id="employer-apps" class="submenu">
                             {% if company.prm_access %}
-                                <li><a id="candidate-tab" href="{{ ABSOLUTE_URL }}candidates/view">{% trans "Candidates" %}</a></li>
                                 <li><a id="partner-tab" href="{{ ABSOLUTE_URL }}prm/view">{% trans "PRM" %}</a></li>
                             {% endif %}
                             {% if company.prm_access %}
@@ -119,7 +118,6 @@
 
                                             <li><a id="employer-tools" class="no-show desktop_hide" style="cursor: pointer;">{% trans "Employer" %}</a></li>
 
-                                            <li><a id="candidate-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}candidates/view?company={{ company.id }}">{% trans "Candidates" %}</a></li>
 
                                             <li><a id="partner-link" class="no-show sub-nav-item employer-menu" href="{{ ABSOLUTE_URL }}prm/view?company={{ company.id }}">{% trans "PRM" %}</a></li>
 
@@ -418,6 +416,8 @@
          */
         var path = window.location.pathname,
             // Apps that changing company IDs would be a problem.
+            // Despite being removed from navigation, candidates is still in
+            // this list to allow changing of company on the now-delisted page.
             app_names = ["candidates", "prm", "posting"],
             new_href = window.location.protocol + "//" + window.location.host,
             app_name,
@@ -448,10 +448,6 @@
         location.reload();
     }
 
-    {% else %}
-    });
-    {% endif %}
-    
     function set_cookie(company_id, days) {
         var expires;
         if(days) {
