@@ -28,6 +28,9 @@ def overview(request):
     report_count = reports.count()
     past_reports = reports[:10]
 
+    for report in past_reports:
+        report.name = report.name.replace("_", " ")
+
     ctx = {
         "company": company,
         "success": success,
@@ -53,6 +56,10 @@ def report_archive(request):
     if request.is_ajax():
         company = get_company_or_404(request)
         reports = Report.objects.filter(owner=company).order_by("-created_on")
+
+        for report in reports:
+            report.name = report.name.replace("_", " ")
+
         ctx = {
             "reports": reports
         }
