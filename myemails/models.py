@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from django.contrib.auth.models import ContentType
+from django.contrib.contenttypes.generic import GenericForeignKey
 from django.db import models
 from django.template import Template, Context
 from django.utils.translation import ugettext_lazy as _
@@ -99,12 +100,10 @@ class CronEvent(Event):
                            in the future.
         :return: The created EamilCronTask.
         """
-
-        return EmailCronTask.objects.create(
-            object_id=for_object.pk,
-            model=ContentType.objects.get_for_model(for_object._meta.model),
+        return EmailTask.objects.create(
+            act_on=for_object,
             related_event=self,
-            scheduled_for=self.scheduled_for(for_object),
+            scheduled_for=self.scheduled_for(for_object)
         )
 
     def scheduled_for(self, for_object):
@@ -135,12 +134,33 @@ class ValueEvent(Event):
     field = models.CharField(max_length=255)
     value = models.PositiveIntegerField()
 
+    def schedule_task(self, for_object):
+        return EmailTask.objects.create(
+            act_on=for_object,
+            related_event=self,
+            scheduled_for=datetime.now()
+        )
 
-class EmailCronTask(models.Model):
+    def schedule_for(self, for_object):
+        return datetime.now()
+
+
+class EmailTask(models.Model):
+    # Object being used to generate this email
     object_id = models.PositiveIntegerField()
-    model = models.ForeignKey(ContentType)
+    object_model = models.ForeignKey(ContentType, related_name='email_model')
+    act_on = GenericForeignKey('object_model', 'object_id')
+
+    # Event type of this email
+    event_id = models.PositiveIntegerField()
+    event_model = models.ForeignKey(ContentType, related_name='email_type')
+    related_event = GenericForeignKey('event_model', 'event_id')
 
     completed_on = models.DateTimeField(blank=True, null=True)
-    related_event = models.ForeignKey('CronEvent')
+
     scheduled_for = models.DateTimeField()
     scheduled_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def completed(self):
+        return bool(self.completed_on)
