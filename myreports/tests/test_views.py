@@ -53,7 +53,7 @@ class TestViewRecords(MyReportsTestCase):
         self.client.login_user(self.user)
 
         ContactRecordFactory.create_batch(
-            10, partner=self.partner, contact_name='Joe Shmoe')
+            10, partner=self.partner, contact__name='Joe Shmoe')
 
     def test_restricted_to_ajax(self):
         """View should only be reachable through AJAX."""
@@ -76,10 +76,10 @@ class TestViewRecords(MyReportsTestCase):
         """Test that filtering contact records through ajax works properly."""
 
         # records to be filtered out
-        ContactRecordFactory.create_batch(10, contact_name='John Doe')
+        ContactRecordFactory.create_batch(10, contact__name='John Doe')
 
         self.client.path += '/contactrecord'
-        response = self.client.get(data={'contact_name': 'Joe Shmoe'})
+        response = self.client.get(data={'contact__name': 'Joe Shmoe'})
         output = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
@@ -239,7 +239,7 @@ class TestDownloads(MyReportsTestCase):
         response = self.client.post(
             path=reverse('reports', kwargs={
                 'app': 'mypartners', 'model': 'contactrecord'}),
-            data={'values': ['partner', 'contact_name', 'contact_type']})
+            data={'values': ['partner', 'contact__name', 'contact_type']})
 
         report_name = response.content
         report = Report.objects.get(name=report_name)
@@ -299,7 +299,7 @@ class TestRegenerate(MyReportsTestCase):
         response = self.client.post(
             path=reverse('reports', kwargs={
                 'app': 'mypartners', 'model': 'contactrecord'}),
-            data={'values': ['partner', 'contact_name', 'contact_type']})
+            data={'values': ['partner', 'contact__name', 'contact_type']})
 
         report_name = response.content
         report = Report.objects.get(name=report_name)
