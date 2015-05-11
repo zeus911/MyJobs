@@ -641,6 +641,7 @@ class ContactRecord(models.Model):
     created_on = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     partner = models.ForeignKey(Partner)
+    contact = models.ForeignKey(Contact, null=True)
     contact_type = models.CharField(choices=CONTACT_TYPE_CHOICES,
                                     max_length=50,
                                     verbose_name="Contact Type")
