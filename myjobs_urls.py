@@ -32,6 +32,7 @@ urlpatterns = patterns(
     url(r'^prm/', include('mypartners.urls')),
     url(r'^posting/', include('postajob.urls')),
     url(r'^reports/', include('myreports.urls')),
+    url(r'^emails/', include('myemails.urls')),
 )
 
 
