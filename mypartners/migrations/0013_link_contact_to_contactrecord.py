@@ -34,7 +34,9 @@ if connection.vendor == 'sqlite':
 
     LINK_CONTACTS = """
     UPDATE mypartners_contactrecord
-    SET contact_id = (
+    SET contact_phone = '', location = '', subject = '', job_id = '',
+        job_applications = '', job_interviews = '', job_hires = '',
+        contact_id = (
         SELECT id
         FROM mypartners_contact
         WHERE
@@ -43,7 +45,7 @@ if connection.vendor == 'sqlite':
             mypartners_contactrecord.contact_name = mypartners_contact.name
           AND
             mypartners_contactrecord.contact_email = mypartners_contact.email
-    );
+        );
     """
 else:
     CREATE_CONTACTS = """
@@ -75,7 +77,9 @@ else:
     UPDATE mypartners_contactrecord
     INNER JOIN mypartners_contact
             ON mypartners_contactrecord.partner_id = mypartners_contact.partner_id
-    SET mypartners_contactrecord.contact_id = mypartners_contact.id
+    SET mypartners_contactrecord.contact_id = mypartners_contact.id,
+        contact_phone = '', location = '', subject = '', job_id = '',
+        job_applications = '', job_interviews = '', job_hires = ''
     WHERE (contact_name = name AND contact_email = email)
     ;
     """
@@ -88,11 +92,20 @@ class Migration(DataMigration):
         db.execute(CREATE_CONTACTS)
         db.execute(LINK_CONTACTS)
 
+        "Deleting field 'ContactRecord.contact_name'"
+        db.delete_column(u'mypartners_contactrecord', 'contact_name')
+
     def backwards(self, orm):
+        "Adding field 'ContactRecord.contact_name'"
+        db.add_column(u'mypartners_contactrecord', 'contact_name',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
+                      keep_default=False)
+
         "Disassociate archived contacts and delete them."
         orm.ContactRecord.objects.filter(
             contact__archived_on__isnull=False).update(contact=None)
         orm.Contact.objects.filter(archived_on__isnull=False).delete()
+
 
     models = {
         u'auth.group': {

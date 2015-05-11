@@ -186,7 +186,7 @@ class Contact(models.Model):
     name = models.CharField(max_length=255, verbose_name='Full Name')
     email = models.EmailField(max_length=255, verbose_name='Email', blank=True)
     phone = models.CharField(max_length=30, verbose_name='Phone', blank=True,
-                             null=True)
+            default='')
     locations = models.ManyToManyField('Location', related_name='contacts')
     tags = models.ManyToManyField('Tag', null=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes',
@@ -641,31 +641,33 @@ class ContactRecord(models.Model):
                                     verbose_name="Contact Type")
     # contact type fields, fields required depending on contact_type. Enforced
     # on the form level.
+    contact_name = models.CharField(max_length=255, verbose_name='Contacts',
+                                    blank=True)
     contact_email = models.CharField(max_length=255,
                                      verbose_name="Contact Email",
                                      blank=True)
     contact_phone = models.CharField(verbose_name="Contact Phone Number",
-                                     max_length=30, blank=True)
+                                     max_length=30, blank=True, default="")
     location = models.CharField(verbose_name="Meeting Location",
-                                max_length=255, blank=True)
+                                max_length=255, blank=True, default="")
     length = models.TimeField(verbose_name="Meeting Length", blank=True,
                               null=True)
     subject = models.CharField(verbose_name="Subject or Topic", max_length=255,
-                               blank=True)
+                               blank=True, default="")
     date_time = models.DateTimeField(verbose_name="Date & Time", blank=True)
     notes = models.TextField(max_length=1000,
                              verbose_name='Details, Notes or Transcripts',
-                             blank=True)
+                             blank=True, default="")
     job_id = models.CharField(max_length=40, verbose_name='Job Number/ID',
-                              blank=True)
+                              blank=True, default="")
     job_applications = models.CharField(max_length=6,
                                         verbose_name="Number of Applications",
-                                        blank=True)
+                                        blank=True, default="")
     job_interviews = models.CharField(max_length=6,
                                       verbose_name="Number of Interviews",
-                                      blank=True)
+                                      blank=True, default="")
     job_hires = models.CharField(max_length=6, verbose_name="Number of Hires",
-                                 blank=True)
+                                 blank=True, default="")
     tags = models.ManyToManyField('Tag', null=True)
 
     @classmethod
