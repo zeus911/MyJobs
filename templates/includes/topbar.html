@@ -448,6 +448,10 @@
         location.reload();
     }
 
+    {% else %}
+    });
+    {% endif %}
+
     function set_cookie(company_id, days) {
         var expires;
         if(days) {
