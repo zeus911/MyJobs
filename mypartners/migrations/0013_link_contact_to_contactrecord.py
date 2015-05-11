@@ -2,44 +2,83 @@
 from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import DataMigration
-from django.db import models
+from django.db import models, connection
 
 # Create archived contacts for relationships that can't be established.
 # For each contact record that can't be traced back to a contact, we
 # create a contact and set it as archived.
-CREATE_CONTACTS = """
-    INSERT INTO mypartners_contact (
-        partner_id,
-        name,
-        email,
-        archived_on
-    )
-    SELECT DISTINCT
-        mypartners_contactrecord.partner_id,
-        contact_name,
-        contact_email,
-        NOW()
-    FROM mypartners_contactrecord
-    WHERE NOT EXISTS (
-        SELECT NULL FROM mypartners_contact
+
+if connection.vendor == 'sqlite':
+    CREATE_CONTACTS = """
+        INSERT INTO mypartners_contact (
+            partner_id,
+            name,
+            email,
+            archived_on
+        )
+        SELECT DISTINCT
+            mypartners_contactrecord.partner_id,
+            contact_name,
+            contact_email,
+            CURRENT_TIMESTAMP
+        FROM mypartners_contactrecord
+        WHERE NOT EXISTS (
+            SELECT NULL
+            FROM mypartners_contact
+            WHERE
+                mypartners_contactrecord.partner_id = mypartners_contact.partner_id
+              AND
+                (contact_name = name AND contact_email = email)
+        );
+    """
+
+    LINK_CONTACTS = """
+    UPDATE mypartners_contactrecord
+    SET contact_id = (
+        SELECT id
+        FROM mypartners_contact
         WHERE
             mypartners_contactrecord.partner_id = mypartners_contact.partner_id
           AND
-            (contact_name = name AND contact_email = email)
+            mypartners_contactrecord.contact_name = mypartners_contact.name
+          AND
+            mypartners_contactrecord.contact_email = mypartners_contact.email
     );
-"""
+    """
+else:
+    CREATE_CONTACTS = """
+        INSERT INTO mypartners_contact (
+            partner_id,
+            name,
+            email,
+            archived_on
+        )
+        SELECT DISTINCT
+            mypartners_contactrecord.partner_id,
+            contact_name,
+            contact_email,
+            NOW()
+        FROM mypartners_contactrecord
+        WHERE NOT EXISTS (
+            SELECT NULL FROM mypartners_contact
+            WHERE
+                mypartners_contactrecord.partner_id = mypartners_contact.partner_id
+              AND
+                (contact_name = name AND contact_email = email)
+        );
+    """
 
-# Assign contacts to contact records.
-# Assign a contact to a contact record if they share contact ids and either
-# have the same name and email or share either name or email
-LINK_CONTACTS = """
-UPDATE mypartners_contactrecord
-INNER JOIN mypartners_contact
-        ON mypartners_contactrecord.partner_id = mypartners_contact.partner_id
-SET mypartners_contactrecord.contact_id = mypartners_contact.id
-WHERE (contact_name = name AND contact_email = email)
-;
-"""
+    # Assign contacts to contact records.
+    # Assign a contact to a contact record if they share contact ids and either
+    # have the same name and email or share either name or email
+    LINK_CONTACTS = """
+    UPDATE mypartners_contactrecord
+    INNER JOIN mypartners_contact
+            ON mypartners_contactrecord.partner_id = mypartners_contact.partner_id
+    SET mypartners_contactrecord.contact_id = mypartners_contact.id
+    WHERE (contact_name = name AND contact_email = email)
+    ;
+    """
 
 
 class Migration(DataMigration):
