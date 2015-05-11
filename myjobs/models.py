@@ -298,9 +298,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     objects = CustomUserManager()
 
-    def natural_key(self):
-        return self.email
-
     def __init__(self, *args, **kwargs):
         super(User, self).__init__(*args, **kwargs)
         # Get a copy of the original password so we can determine if
@@ -310,6 +307,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __unicode__(self):
         return self.email
+
+    natural_key = __unicode__
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
