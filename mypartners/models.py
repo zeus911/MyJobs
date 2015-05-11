@@ -923,7 +923,8 @@ class Tag(models.Model):
     def __unicode__(self):
         return "%s for %s" % (self.name, self.company.name)
 
-    natural_key = __unicode__
+    def natural_key(self):
+        return self.name
 
     class Meta:
         unique_together = ('name', 'company')
