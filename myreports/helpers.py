@@ -34,6 +34,9 @@ def humanize(records):
         # make tag lists look pretty
         if 'tags' in record:
             record['tags'] = ', '.join(record['tags'])
+        # make locations look pretty
+        if 'locations' in record:
+            record['locations'] = '; '.join(record['locations'])
         # human readable contact types
         if 'contact_type' in record:
             record['contact_type'] = CONTACT_TYPES[record['contact_type']]
@@ -47,11 +50,9 @@ def humanize(records):
             record['notes'] = '\n'.join(
                 filter(bool, record['notes'].split('\n\n')))
 
-        # get rid of nones
-        if 'created_by' in record:
-            record['created_by'] = record['created_by'] or ''
-        if 'length' in record:
-            record['length'] = record['length'] or ''
+        for key, value in record.items():
+            if value is None:
+                record[key] = ''
 
     return records
 
@@ -69,18 +70,16 @@ def parse_params(querydict):
     """
     # get rid of empty params and flatten single-item lists
     params = {}
+    bools = {'true': True, 'false': False}
     for key in querydict.keys():
-        value = tuple(filter(bool, querydict.getlist(key)))
-
+        value = filter(bool, querydict.getlist(key))
         if len(value) == 1:
-            value = value[0]
+            params[key] = value[0]
+        else:
+            params[key] = tuple(value)
 
-        if value == 'false':
-            value = False
-        elif value == 'true':
-            value = True
-
-        params[key] = value
+    params = {key: bools.get(value, value)
+              for key, value in params.items() if value}
 
     return params
 
@@ -134,7 +133,7 @@ def serialize(fmt, data, values=None, order_by=None):
     elif fmt == 'csv':
         output = StringIO()
         writer = csv.writer(output)
-        columns = data[0].keys()
+        columns = data[0].keys() if data else []
         writer.writerow([column.replace('_', ' ').title()
                          for column in columns])
 

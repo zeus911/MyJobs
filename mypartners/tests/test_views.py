@@ -1154,10 +1154,10 @@ class EmailTests(MyPartnersTestCase):
         ContactRecord.objects.all().delete()
 
         self.data['text'] = ("-------- Original Message --------\n"
-                             "Subject: 	Test\n"
-                             "Date: 	Wed, 17 Aug 2011 11:39:46 -0400\n"
-                             "From: 	A New Person <anewperson@my.jobs>\n"
-                             "To: 	prm@my.jobs\n")
+                             "Subject:  Test\n"
+                             "Date:     Wed, 17 Aug 2011 11:39:46 -0400\n"
+                             "From:     A New Person <anewperson@my.jobs>\n"
+                             "To:       prm@my.jobs\n")
 
         self.client.post(reverse('process_email'), self.data)
         ContactRecord.objects.get(contact_email='anewperson@my.jobs')
