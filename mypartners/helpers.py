@@ -232,7 +232,7 @@ def contact_record_val_to_str(value):
 
 def get_records_from_request(request):
     """
-    Filters a list of records on partner, date_time, contact_name, and
+    Filters a list of records on partner, date_time, contact.name, and
     contact_type based on the request
 
     outputs:
@@ -240,7 +240,7 @@ def get_records_from_request(request):
     date filtered on, and the filtered records.
     """
     sort_types = {
-        'name': 'contact_name', 'date': 'date_time', None: 'date_time'}
+        'name': 'contact__name', 'date': 'date_time', None: 'date_time'}
     _, partner, _ = prm_worthy(request)
     # extract reelvant values from the request object
     contact, contact_type, admin, range_start, range_end, sort_by, desc = [

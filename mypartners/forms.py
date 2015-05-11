@@ -120,53 +120,6 @@ class ContactForm(NormalizedModelForm):
         return contact
 
 
-class PartnerInitialForm(NormalizedModelForm):
-    """
-    This form is used when an employer currently has no partner to create a
-    partner (short and sweet version).
-
-    """
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', '')
-        super(PartnerInitialForm, self).__init__(*args, **kwargs)
-        self.fields['pc-contactname'] = forms.CharField(
-            label="Primary Contact Name", max_length=255, required=False,
-            widget=forms.TextInput(
-                attrs={'placeholder': 'Primary Contact Name'}))
-        self.fields['pc-contactemail'] = forms.EmailField(
-            label="Primary Contact Email", max_length=255, required=False,
-            widget=forms.TextInput(
-                attrs={'placeholder': 'Primary Contact Email'}))
-
-    class Meta:
-        form_name = "Partner Information"
-        model = Partner
-        fields = ['name', 'uri']
-        widgets = generate_custom_widgets(model)
-
-    def save(self, commit=True):
-        new_or_change = CHANGE if self.instance.pk else ADDITION
-        self.instance.owner_id = self.data['company_id']
-        partner = super(PartnerInitialForm, self).save(commit)
-
-        contact_name = self.data.get('pc-contactname')
-        contact_email = self.data.get('pc-contactemail', '')
-        if contact_name:
-            contact = Contact.objects.create(name=contact_name,
-                                             email=contact_email,
-                                             partner=partner)
-            contact.save()
-            log_change(contact, self, self.user, partner, contact.name,
-                       action_type=ADDITION)
-            partner.primary_contact = contact
-            partner.save()
-
-        log_change(partner, self, self.user, partner, partner.name,
-                   action_type=new_or_change)
-
-        return partner
-
-
 class NewPartnerForm(NormalizedModelForm):
 
     # used to identify if location info is entered into a form

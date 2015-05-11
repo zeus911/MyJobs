@@ -646,8 +646,6 @@ class ContactRecord(models.Model):
                                     verbose_name="Contact Type")
     # contact type fields, fields required depending on contact_type. Enforced
     # on the form level.
-    contact_name = models.CharField(max_length=255, verbose_name='Contacts',
-                                    blank=True)
     contact_email = models.CharField(max_length=255,
                                      verbose_name="Contact Email",
                                      blank=True)
@@ -701,18 +699,6 @@ class ContactRecord(models.Model):
             records = records.filter(date_time__lte=end_date)
 
         if city or state:
-            # no relationship from contact record to contact, so we get as
-            # close as we can by getting names and emails...
-            contact_info = records.values(
-                'contact_name', 'contact_email').distinct()
-            contacts = []
-
-            # then mapping them to real contacts.
-            q = models.Q()
-            for contact in contact_info:
-                q |= models.Q(**{'name': contact['contact_name'],
-                                 'email': contact['contact_email']})
-
             if state:
                 records = records.filter(contact__locations__state=state)
 
@@ -753,7 +739,7 @@ class ContactRecord(models.Model):
 
         contact_str = "A%s record for %s was %s" % \
                       (contact_type.lower(),
-                       self.contact_name, ACTIVITY_TYPES[log.action_flag])
+                       self.contact.name, ACTIVITY_TYPES[log.action_flag])
 
         if log.user:
             user = log.user.email

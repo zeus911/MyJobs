@@ -34,7 +34,7 @@ from mysearches.models import PartnerSavedSearch
 from mysearches.helpers import (url_sort_options, parse_feed,
                                 get_interval_from_frequency)
 from mysearches.forms import PartnerSavedSearchForm
-from mypartners.forms import (PartnerForm, ContactForm, PartnerInitialForm,
+from mypartners.forms import (PartnerForm, ContactForm,
                               NewPartnerForm, ContactRecordForm, TagForm,
                               LocationForm)
 from mypartners.models import (Partner, Contact, ContactRecord,
@@ -226,10 +226,8 @@ def edit_item(request):
 
 @company_has_access('prm_access')
 def save_init_partner_form(request):
-    if 'partnername' in request.POST:
-        form = NewPartnerForm(user=request.user, data=request.POST)
-    else:
-        form = PartnerInitialForm(user=request.user, data=request.POST)
+    form = NewPartnerForm(user=request.user, data=request.POST)
+
     if form.is_valid():
         form.save()
         return HttpResponse(status=200)
@@ -950,20 +948,20 @@ def partner_main_reports(request):
     referral = records.filter(contact_type='job').count()
 
     # need to order_by -count to keep the "All Contacts" list in proper order
-    all_contacts_with_records = records\
-        .values('contact_name', 'contact_email')\
-        .annotate(count=Count('contact_name')).order_by('-count')
+    all_contacts_with_records = records.values(
+        'contact__name', 'contact_email').annotate(
+            count=Count('contact__name')).order_by('-count')
 
     # Used for Top Contacts
-    contact_records = records\
-        .exclude(contact_type='job')\
-        .values('contact_name', 'contact_email')\
-        .annotate(count=Count('contact_name')).order_by('-count')
+    contact_records = records.exclude(
+        contact_type='job').values(
+            'contact__name', 'contact_email').annotate(
+                count=Count('contact__name')).order_by('-count')
 
     # Individual Referral Records count
-    referral_list = records.filter(contact_type='job')\
-        .values('contact_name', 'contact_email')\
-        .annotate(count=Count('contact_name'))
+    referral_list = records.filter(contact_type='job').values(
+        'contact__name', 'contact_email').annotate(
+            count=Count('contact__name'))
 
     # Merge contact_records with referral_list and have all contacts
     # A contact can have 0 contact records and 1 referral record and still show
@@ -971,17 +969,17 @@ def partner_main_reports(request):
     contacts = []
     for contact_obj in all_contacts_with_records:
         contact = {}
-        name = contact_obj['contact_name']
+        name = contact_obj['contact__name']
         email = contact_obj['contact_email']
         contact['name'] = name
         contact['email'] = email
         for cr in contact_records:
-            if cr['contact_name'] == name and cr['contact_email'] == email:
+            if cr['contact__name'] == name and cr['contact_email'] == email:
                 contact['cr_count'] = cr['count']
         if not 'cr_count' in contact:
             contact['cr_count'] = 0
         for ref in referral_list:
-            if ref['contact_name'] == name and ref['contact_email'] == email:
+            if ref['contact__name'] == name and ref['contact_email'] == email:
                 contact['ref_count'] = ref['count']
         if not 'ref_count' in contact:
             contact['ref_count'] = 0
