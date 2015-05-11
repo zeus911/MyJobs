@@ -49,7 +49,7 @@ class CronEventTests(MyJobsBase):
         task = self.cron_event_no_field.schedule_task(self.saved_search)
 
         self.assertEqual(task.object_id, self.saved_search.id)
-        self.assertEqual(task.model, self.saved_search_contenttype)
+        self.assertEqual(task.object_model, self.saved_search_contenttype)
         self.assertEqual(task.related_event, self.cron_event_no_field)
         self.assertEqual(task.scheduled_for.date(), today)
         self.assertEqual(task.scheduled_at.date(), today)
@@ -61,7 +61,7 @@ class CronEventTests(MyJobsBase):
         task = self.cron_event_with_field.schedule_task(self.saved_search)
 
         self.assertEqual(task.object_id, self.saved_search.id)
-        self.assertEqual(task.model, self.saved_search_contenttype)
+        self.assertEqual(task.object_model, self.saved_search_contenttype)
         self.assertEqual(task.related_event, self.cron_event_with_field)
         self.assertEqual(task.scheduled_for.date(), yesterday)
         self.assertEqual(task.scheduled_at.date(), today)
