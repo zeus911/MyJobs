@@ -642,6 +642,8 @@ class Company(models.Model):
     def __unicode__(self):
         return self.name
 
+    natural_key = __unicode__
+
     class Meta:
         verbose_name = 'Company'
         verbose_name_plural = 'Companies'
