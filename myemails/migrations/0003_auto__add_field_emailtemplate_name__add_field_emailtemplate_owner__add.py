@@ -30,7 +30,7 @@ class Migration(SchemaMigration):
 
 
         # Changing field 'CronEvent.model'
-        db.alter_column(u'myemails_cronevent', 'model_id', self.gf('django.db.models.fields.related.ForeignKey')(default=0, to=orm['contenttypes.ContentType']))
+        db.alter_column(u'myemails_cronevent', 'model_id', self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['contenttypes.ContentType']))
 
     def backwards(self, orm):
         # Deleting field 'EmailTemplate.name'
