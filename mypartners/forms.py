@@ -321,13 +321,14 @@ class PartnerForm(NormalizedModelForm):
 
 def PartnerEmailChoices(partner):
     choices = [(None, '----------')]
-    contacts = Contact.objects.filter(partner=partner)
+    contacts = Contact.objects.filter(
+        partner=partner, archived_on__isnull=True)
     for contact in contacts:
         if contact.user:
-            choices.append((contact.user.email, contact ))
+            choices.append((contact.user.email, contact))
         else:
             if contact.email:
-                choices.append((contact.email, contact ))
+                choices.append((contact.email, contact))
     return choices
 
 

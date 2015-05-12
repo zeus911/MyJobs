@@ -1587,7 +1587,7 @@ function renderGraphs(report_id, callback) {
             for (i = 0; i < topLength; i++) {
               // remove first contact in array, returns the removed contact.
               contact = contacts[i];
-              name = contact.name;
+              name = contact.contact__name;
               email = contact.contact_email;
               cReferrals = contact.referrals;
               commRecords = contact.records;
@@ -1617,7 +1617,6 @@ function renderGraphs(report_id, callback) {
               tbody.append(function() {
                 // turn each element into cells of a table then join each group of cells with rows.
                 return "<tr class='report'>" + contacts.map(function(contact) {
-                  console.log(contact.contact__name)
                   return "<td data-name='" + contact.contact__name + "' data-email='" + contact.contact_email + "' data-partner='" + contact.partner + "'>" + contact.contact__name + "</td><td>" + contact.contact_email +
                          "</td><td>" + contact.partner__name + "</td><td>" + contact.records + "</td><td>" + contact.referrals + "</td>";
                 }).join('</tr><tr class="report">') + "</tr>";
