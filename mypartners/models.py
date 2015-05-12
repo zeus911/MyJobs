@@ -432,8 +432,8 @@ class Partner(models.Model):
 
     def get_contact_locations(self):
         return Location.objects.filter(
-            contacts__in=self.contact_set).exclude(
-                archived_on__isnull=False).order_by('state', 'city')
+            contacts__in=self.contact_set.all()).exclude(
+                contacts__archived_on__isnull=False).order_by('state', 'city')
 
     # get_contact_records_for_partner
     def get_contact_records(self, contact_name=None, record_type=None,
