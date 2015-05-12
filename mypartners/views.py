@@ -1009,48 +1009,27 @@ def partner_get_referrals(request):
     if request.method == 'GET':
         prm_worthy(request)
         dt_range, date_str, records = get_records_from_request(request)
-        referrals = records.filter(contact_type='job')
-
-        # (job application, job interviews, job hires)
-        nums = referrals.values_list('job_applications', 'job_interviews',
-                                     'job_hires')
-
-        applications, interviews, hires = 0, 0, 0
-        # add numbers together
-        for num_set in nums:
-            try:
-                applications += int(num_set[0])
-            except (ValueError, KeyError):
-                pass
-            try:
-                interviews += int(num_set[1])
-            except (ValueError, KeyError):
-                pass
-            try:
-                hires += int(num_set[2])
-            except (ValueError, KeyError):
-                pass
 
         # figure names
-        if applications != 1:
+        if records.applications != 1:
             app_name = 'Applications'
         else:
             app_name = 'Application'
-        if interviews != 1:
+        if records.interviews != 1:
             interview_name = 'Interviews'
         else:
             interview_name = 'Interview'
-        if hires != 1:
+        if records.hires != 1:
             hire_name = 'Hires'
         else:
             hire_name = 'Hire'
 
         data = {
-            'applications': {'count': applications, 'name': app_name,
+            'applications': {'count': records.applications, 'name': app_name,
                              'typename': 'job'},
-            'interviews': {'count': interviews, 'name': interview_name,
+            'interviews': {'count': records.interviews, 'name': interview_name,
                            'typename': 'job'},
-            'hires': {'count': hires, 'name': hire_name,
+            'hires': {'count': records.hires, 'name': hire_name,
                       'typename': 'job'},
         }
 
