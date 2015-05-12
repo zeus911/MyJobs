@@ -14,12 +14,14 @@ if connection.vendor == 'sqlite':
             partner_id,
             name,
             email,
+            phone,
             archived_on
         )
         SELECT DISTINCT
             mypartners_contactrecord.partner_id,
             contact_name,
             contact_email,
+            '',
             CURRENT_TIMESTAMP
         FROM mypartners_contactrecord
         WHERE NOT EXISTS (
@@ -53,12 +55,14 @@ else:
             partner_id,
             name,
             email,
+            phone,
             archived_on
         )
         SELECT DISTINCT
             mypartners_contactrecord.partner_id,
             contact_name,
             contact_email,
+            '',
             NOW()
         FROM mypartners_contactrecord
         WHERE NOT EXISTS (

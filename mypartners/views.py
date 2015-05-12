@@ -944,76 +944,16 @@ def get_uploaded_file(request):
 def partner_main_reports(request):
     company, partner, user = prm_worthy(request)
     dt_range, date_str, records = get_records_from_request(request)
-    total_records_wo_followup = records.exclude(contact_type='job').count()
-    referral = records.filter(contact_type='job').count()
-
-    # need to order_by -count to keep the "All Contacts" list in proper order
-    all_contacts_with_records = records.values(
-        'contact__name', 'contact_email').annotate(
-            count=Count('contact__name')).order_by('-count')
-
-    # Used for Top Contacts
-    contact_records = records.exclude(
-        contact_type='job').values(
-            'contact__name', 'contact_email').annotate(
-                count=Count('contact__name')).order_by('-count')
-
-    # Individual Referral Records count
-    referral_list = records.filter(contact_type='job').values(
-        'contact__name', 'contact_email').annotate(
-            count=Count('contact__name'))
-
-    # Merge contact_records with referral_list and have all contacts
-    # A contact can have 0 contact records and 1 referral record and still show
-    # up vice versa with 1 contact record and 0 referrals
-    contacts = []
-    for contact_obj in all_contacts_with_records:
-        contact = {}
-        name = contact_obj['contact__name']
-        email = contact_obj['contact_email']
-        contact['name'] = name
-        contact['email'] = email
-        for cr in contact_records:
-            if cr['contact__name'] == name and cr['contact_email'] == email:
-                contact['cr_count'] = cr['count']
-        if not 'cr_count' in contact:
-            contact['cr_count'] = 0
-        for ref in referral_list:
-            if ref['contact__name'] == name and ref['contact_email'] == email:
-                contact['ref_count'] = ref['count']
-        if not 'ref_count' in contact:
-            contact['ref_count'] = 0
-        contacts.append(contact)
-
-    # Find all contacts that have no contact records
-    # Based off of contacts list
-    contacts_to_be_added = [contact for contact in partner.contact_set.all()
-                            if contact.email not in
-                            [record['email'] for record in contacts]]
-
-    # Add Contacts that have no contact records
-    for contact_obj in contacts_to_be_added:
-        contact = {'name': contact_obj.name, 'email': contact_obj.email,
-                   'cr_count': 0, 'ref_count': 0}
-        contacts.append(contact)
-
-    # calculate 'All Others' in Top Contacts (when more than 3)
-    total_others = 0
-    if contact_records.count() > 3:
-        others = contact_records[3:]
-        contact_records = contact_records[:3]
-        for contact in others:
-            total_others += contact['count']
 
     ctx = {
         'admin_id': request.REQUEST.get('admin'),
         'partner': partner,
         'company': company,
-        'contacts': contacts,
-        'total_records': total_records_wo_followup,
-        'referral': referral,
-        'top_contacts': contact_records,
-        'others': total_others,
+        'contacts': records.contacts,
+        'total_records': records.communication_activity.count(),
+        'referral': records.referrals,
+        'top_contacts': records.contacts[:3],
+        'others': sum(contact['records'] for contact in records.contacts[3:]),
         'view_name': 'PRM',
         'date_start': dt_range[0],
         'date_end': dt_range[1],

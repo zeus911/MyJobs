@@ -601,18 +601,18 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
 
     @property
     def contacts(self):
-        contacts = self.exclude(contact_type='job').values(
-            'partner__name', 'partner', 'contact__name',
-            'contact_email').annotate(
-                records=models.Count('contact__name')).distinct().order_by(
-                    '-records')
+        contacts = self.exclude(
+            contact_type='job', contact__archived_on__isnull=False).values(
+                'partner__name', 'partner', 'contact__name',
+                'contact_email').annotate(
+                    records=models.Count('contact__name')).distinct().order_by(
+                        '-records')
 
         referrals = dict(self.filter(contact_type='job').values_list(
             'contact__name').annotate(
                 referrals=models.Count('contact__name')).distinct())
 
         for contact in contacts:
-
             contact['referrals'] = referrals.get(contact['contact__name'], 0)
 
         return contacts
