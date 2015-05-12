@@ -52,7 +52,7 @@
                     </td>
                     <td>
                         {{ contact.contact__name }}<br>
-                        {{ contact.email }}
+                        {{ contact.contact_email }}
                     </td>
                     <td>
                         <a class="chart-box-link" href="{% url 'partner_records' %}?partner={{ partner.id }}&contact={{ contact.contact__name }}&contact_type=job&date_start={{ date_start|date:'m/d/Y' }}&date_end={{ date_end|date:'m/d/Y' }}{%if admin_id %}&admin={{ admin_id }}{% endif %}">

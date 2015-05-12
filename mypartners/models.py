@@ -602,7 +602,7 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
     @property
     def contacts(self):
         contacts = self.exclude(
-            contact_type='job', contact__archived_on__isnull=False).values(
+            contact_type='job').values(
                 'partner__name', 'partner', 'contact__name',
                 'contact_email').annotate(
                     records=models.Count('contact__name')).distinct().order_by(
