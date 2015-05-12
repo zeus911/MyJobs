@@ -11,9 +11,7 @@ urlpatterns = patterns(
     url(r'^ajax/regenerate', 'regenerate', name='regenerate'),
     url(r'^ajax/(?P<app>\w+)/(?P<model>\w+)$',
         'view_records',
-        {'app': 'mypartners'},
         name='view_records'),
     url(r'download$', 'download_report', name='download_report'),
     url(r'view/downloads$', 'downloads', name='downloads'),
-    url(r'ajax/get-inputs', 'get_inputs', name='get_inputs'),
 )

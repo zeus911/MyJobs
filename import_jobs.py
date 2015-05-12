@@ -52,8 +52,8 @@ def update_job_source(guid, buid, name, clear_cache=False):
     jobs = [hr_xml_to_json(job, bu) for job in jobs]
     for job in jobs:
         job['link'] = make_redirect(job, bu).make_link()
-    remove_expired_jobs(buid, jobs)
     add_jobs(jobs)
+    remove_expired_jobs(buid, jobs)
 
     # Update business information
     bu.associated_jobs = len(jobs)
@@ -613,6 +613,16 @@ def add_jobs(jobs, upload_chunk_size=1024):
     """
     conn = Solr(settings.HAYSTACK_CONNECTIONS['default']['URL'])
     num_jobs = len(jobs)
+    
+    # AT&T Showed that large numbers of MOCs can cause import issues due to the size of documents.
+    # Therefore, if the number of MOCs is above 10, arbitrarily use a lower chunk size.
+    for job in jobs:
+        if len(job.get('mapped_moc', [])) > 100:
+            logger.warn("The number of MOCs (%s) per job exceeds 10, therefore we are reducing the chunk size.", max_onet_count)
+            upload_chunk_size = 64
+            break
+    
+    # Chunk them
     jobs = chunk(jobs, upload_chunk_size)
     for job_group in jobs:
         conn.add(list(job_group))

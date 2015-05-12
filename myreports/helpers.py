@@ -34,6 +34,9 @@ def humanize(records):
         # make tag lists look pretty
         if 'tags' in record:
             record['tags'] = ', '.join(record['tags'])
+        # make locations look pretty
+        if 'locations' in record:
+            record['locations'] = '; '.join(record['locations'])
         # human readable contact types
         if 'contact_type' in record:
             record['contact_type'] = CONTACT_TYPES[record['contact_type']]
@@ -47,11 +50,9 @@ def humanize(records):
             record['notes'] = '\n'.join(
                 filter(bool, record['notes'].split('\n\n')))
 
-        # get rid of nones
-        if 'created_by' in record:
-            record['created_by'] = record['created_by'] or ''
-        if 'length' in record:
-            record['length'] = record['length'] or ''
+        for key, value in record.items():
+            if value is None:
+                record[key] = ''
 
     return records
 
@@ -69,13 +70,16 @@ def parse_params(querydict):
     """
     # get rid of empty params and flatten single-item lists
     params = {}
+    bools = {'true': True, 'false': False}
     for key in querydict.keys():
-        value = tuple(filter(bool, querydict.getlist(key)))
-
+        value = filter(bool, querydict.getlist(key))
         if len(value) == 1:
-            value = value[0]
+            params[key] = value[0]
+        else:
+            params[key] = tuple(value)
 
-        params[key] = value
+    params = {key: bools.get(value, value)
+              for key, value in params.items() if value}
 
     return params
 
@@ -107,26 +111,27 @@ def serialize(fmt, data, values=None, order_by=None):
                 for record in serializers.serialize(
                     'python', data, use_natural_keys=True, fields=values)]
 
-    values = values or sorted(data[0].keys())
-    order_by = order_by or values[0]
-    _, reverse, order_by = sorted(order_by.partition('-'))
+    if data:
+        values = values or sorted(data[0].keys())
+        order_by = order_by or values[0]
+        _, reverse, order_by = sorted(order_by.partition('-'))
 
-    # Convert data to a list of `OrderedDict`s,
-    data = sorted([OrderedDict([(
-        # strip HTML from invidual values...
-        value, html.fromstring(record[value]).text_content()
-        # if they aren't empty strings.
-        if isinstance(record[value], basestring) and record[value].strip()
-        else record[value]) for value in values]) for record in data],
-            # and sort them by specified value (first column by default)
-            key=lambda record: record[order_by], reverse=bool(reverse))
+        # Convert data to a list of `OrderedDict`s,
+        data = sorted([OrderedDict([(
+            # strip HTML from invidual values...
+            value, html.fromstring(record[value]).text_content()
+            # if they aren't empty strings.
+            if isinstance(record[value], basestring) and record[value].strip()
+            else record[value]) for value in values]) for record in data],
+                # and sort them by specified value (first column by default)
+                key=lambda record: record[order_by], reverse=bool(reverse))
 
     if fmt == 'json':
         return json.dumps(data, cls=DjangoJSONEncoder)
     elif fmt == 'csv':
         output = StringIO()
         writer = csv.writer(output)
-        columns = data[0].keys()
+        columns = data[0].keys() if data else []
         writer.writerow([column.replace('_', ' ').title()
                          for column in columns])
 

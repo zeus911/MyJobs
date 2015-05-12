@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models.loading import get_model
 
 from myreports.helpers import serialize
+from mypartners.models import SearchParameterManager
 
 
 class Report(models.Model):
@@ -30,6 +31,10 @@ class Report(models.Model):
     # json encoded string of the params used to filter
     params = models.TextField()
     results = models.FileField(upload_to='reports')
+
+    company_ref = 'owner'
+
+    objects = SearchParameterManager()
 
     def __init__(self, *args, **kwargs):
         super(Report, self).__init__(*args, **kwargs)

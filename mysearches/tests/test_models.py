@@ -11,6 +11,7 @@ from mock import patch, Mock
 from myjobs.tests.setup import MyJobsBase
 from mydashboard.tests.factories import CompanyFactory
 from myjobs.tests.factories import UserFactory
+from mymessages.models import MessageInfo
 from mypartners.models import ContactRecord
 from mypartners.tests.factories import PartnerFactory, ContactFactory
 from myprofile.tests.factories import PrimaryNameFactory
@@ -644,7 +645,11 @@ class SavedSearchDeletionTests(MyJobsBase):
         Partner saved searches should be left alone with the exception of
         nullifying the recipient.
         """
+        mail.outbox = []
+        self.assertEqual(MessageInfo.objects.count(), 0)
         self.user.delete()
         with self.assertRaises(SavedSearch.DoesNotExist):
             SavedSearch.objects.get(pk=self.search.pk)
         SavedSearch.objects.get(pk=self.partner_search.pk)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(MessageInfo.objects.count(), 1)
