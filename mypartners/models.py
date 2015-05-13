@@ -192,7 +192,7 @@ class Contact(models.Model):
     locations = models.ManyToManyField('Location', related_name='contacts')
     tags = models.ManyToManyField('Tag', null=True)
     notes = models.TextField(max_length=1000, verbose_name='Notes',
-                             blank=True, null=True)
+                             blank=True, default="")
     archived_on = models.DateTimeField(null=True)
 
     company_ref = 'partner__owner'
