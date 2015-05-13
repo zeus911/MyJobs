@@ -35,7 +35,7 @@ FEED_FILE_PREFIX = "dseo_feed_"
 
 
 def update_job_source(guid, buid, name, clear_cache=False):
-    """Composed method for resopnding to a guid update."""
+    """Composed method for responding to a guid update."""
 
     logger.info("Updating Job Source %s", guid)
     # Make the BusinessUnit and Company
@@ -45,6 +45,11 @@ def update_job_source(guid, buid, name, clear_cache=False):
     bu.save()
     add_company(bu)
 
+    # Determine what sites these jobs should be on
+    on_sites = set(bu.seosite_set.values_list('sitepackage', flat=True))
+    on_sites = filter(None, on_sites)
+    on_sites = on_sites or [0]
+
     # Lookup the jobs, filter then, transform them, and then load the jobs
     zf = get_jobsfs_zipfile(guid)
     jobs = get_jobs_from_zipfile(zf, guid)
@@ -52,6 +57,7 @@ def update_job_source(guid, buid, name, clear_cache=False):
     jobs = [hr_xml_to_json(job, bu) for job in jobs]
     for job in jobs:
         job['link'] = make_redirect(job, bu).make_link()
+        job['on_sites'] = on_sites
     add_jobs(jobs)
     remove_expired_jobs(buid, jobs)
 
