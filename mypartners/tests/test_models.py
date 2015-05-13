@@ -165,5 +165,3 @@ class MyPartnerTests(MyJobsBase):
         self.contact.delete()
         self.assertEqual(len(Contact.objects.all()), 1)
         self.assertTrue(self.contact.archived_on)
-
-

@@ -1,10 +1,11 @@
 from django.core.urlresolvers import reverse
 from myjobs.tests.factories import UserFactory
-from mypartners.forms import ContactForm
+from mypartners.forms import ContactForm, ContactRecordForm
 from mypartners.models import Contact
 from mypartners.tests.factories import ContactFactory
 from mypartners.tests.test_views import MyPartnersTestCase
 from mysearches.tests.factories import PartnerSavedSearchFactory
+from mysearches.forms import PartnerSavedSearchForm
 
 
 class ContactFormTests(MyPartnersTestCase):
@@ -60,3 +61,15 @@ class PartnerSavedSearchFormTests(MyPartnersTestCase):
                                        self.partner.pk,
                                        partner_saved_search.pk))
         self.assertTrue(partner_saved_search.feed in response.content)
+
+
+class ContactRecordFormTests(MyPartnersTestCase):
+    def test_archived_contacts_not_shown(self):
+        """Test that archived contacts aren't selectable."""
+
+        form = ContactRecordForm(partner=self.partner)
+        self.assertIn(self.contact, form.fields['contact'].queryset)
+
+        self.contact.delete()
+        form = ContactRecordForm(partner=self.partner)
+        self.assertNotIn(self.contact, form.fields['contact'].queryset)
