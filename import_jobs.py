@@ -616,8 +616,10 @@ def add_jobs(jobs, upload_chunk_size=1024):
     # AT&T Showed that large numbers of MOCs can cause import issues due to the size of documents.
     # Therefore, if the number of MOCs is above 100, arbitrarily use a lower chunk size.
     for job in jobs:
+
         if type(job['mapped_moc']) == list and len(job['mapped_moc']) > 100:
-            logger.warn("The number of MOCs (%s) per job exceeds 100, therefore we are reducing the chunk size.", len(job['mapped_moc']))
+            logger.warn("The number of MOCs (%s) per job exceeds 100, therefore we are reducing the chunk size.", 
+                        len(job['mapped_moc']))
             upload_chunk_size = 64
             break
             
