@@ -157,3 +157,13 @@ class MyPartnerTests(MyJobsBase):
         self.partner.tags.add(tag2)
         self.partner.save()
         self.assertEquals(2, len(self.partner.tags.all()))
+
+    def test_contact_archived(self):
+        """Test that attempting to delete a contact archives it instead."""
+
+        self.assertFalse(self.contact.archived_on)
+        self.contact.delete()
+        self.assertEqual(len(Contact.objects.all()), 1)
+        self.assertTrue(self.contact.archived_on)
+
+
