@@ -4,7 +4,6 @@ import json
 
 from django.core.files.base import ContentFile
 from django.db.models.loading import get_model
-from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
@@ -13,6 +12,7 @@ from django.views.generic import View
 
 from myreports.helpers import humanize, parse_params, serialize
 from myreports.models import Report
+from postajob.location_data import states
 from universal.helpers import get_company_or_404
 from universal.decorators import company_has_access
 
@@ -28,9 +28,13 @@ def overview(request):
     report_count = reports.count()
     past_reports = reports[:10]
 
+    for report in past_reports:
+        report.name = report.name.replace("_", " ")
+
     ctx = {
         "company": company,
         "success": success,
+        "states": json.dumps(OrderedDict(sorted((v, k) for k, v in states.inv.iteritems()))),
         "past_reports": past_reports,
         "report_count": report_count
     }
@@ -52,6 +56,10 @@ def report_archive(request):
     if request.is_ajax():
         company = get_company_or_404(request)
         reports = Report.objects.filter(owner=company).order_by("-created_on")
+
+        for report in reports:
+            report.name = report.name.replace("_", " ")
+
         ctx = {
             "reports": reports
         }
@@ -77,7 +85,7 @@ def get_states(request):
 
 
 @company_has_access('prm_access')
-def view_records(request, app, model):
+def view_records(request, app="myparters", model="contactrecord"):
     """
     Returns records as JSON.
 
@@ -102,13 +110,16 @@ def view_records(request, app, model):
         params = parse_params(request.GET)
 
         # remove non-query related params
-        values = params.pop('values', [])
+        values = params.pop('values', None)
         order_by = params.pop('order_by', None)
 
         records = get_model(app, model).objects.from_search(
             company, params)
 
         if values:
+            if not hasattr(values, '__iter__'):
+                values = [values]
+
             records = records.values(*values)
 
         if order_by:
@@ -125,19 +136,6 @@ def view_records(request, app, model):
         return response
     else:
         raise Http404("This view is only reachable via an AJAX GET request.")
-
-
-@company_has_access('prm_access')
-def get_inputs(request):
-    """Returns a report object's `params` field."""
-
-    if request.is_ajax() and request.method == "GET":
-        report_id = request.GET.get('id', 0)
-        report = get_object_or_404(Report, pk=report_id)
-        return HttpResponse(
-            report.params, content_type='application/json; charset=utf-8')
-    else:
-        return Http404("This view is only reachable via an AJAX GET request.")
 
 
 class ReportView(View):
@@ -170,12 +168,13 @@ class ReportView(View):
             contacts, which is a list of objects, each of which has a name,
             email, referral count, and communications count.
         """
-        if request.method == 'GET':
-            report_id = request.GET.get('id', 0)
-            report = Report.objects.get(id=report_id)
-            records = report.queryset
 
-            ctx = {
+        report_id = request.GET.get('id', 0)
+        report = Report.objects.get(id=report_id)
+        records = report.queryset
+
+        if report.model == "contactrecord":
+            ctx = json.dumps({
                 'emails': records.emails,
                 'calls': records.calls,
                 'searches': records.searches,
@@ -185,14 +184,13 @@ class ReportView(View):
                 'hires': records.hires,
                 'communications': records.communication_activity.count(),
                 'referrals': records.referrals,
-                'contacts': list(records.contacts)}
-
-            return HttpResponse(
-                json.dumps(ctx),
-                content_type='application/json; charset=utf-8')
+                'contacts': list(records.contacts)})
         else:
-            raise Http404(
-                "This view is only reachable via a GET request.")
+            ctx = report.json
+
+        return HttpResponse(
+            ctx,
+            content_type='application/json; charset=utf-8')
 
     def post(self, request, app='mypartners', model='contactrecords'):
         """
@@ -214,35 +212,33 @@ class ReportView(View):
         Outputs:
            An HttpResponse indicating success or failure of report creation.
         """
+        company = get_company_or_404(request)
+        params = parse_params(request.POST)
 
-        if request.method == 'POST':
-            company = get_company_or_404(request)
-            params = parse_params(request.POST)
+        params.pop('csrfmiddlewaretoken', None)
+        name = params.pop('report_name',
+                          str(datetime.now())).replace(' ', '_')
+        values = params.pop('values', None)
 
-            params.pop('csrfmiddlewaretoken', None)
-            name = params.pop('report_name',
-                              str(datetime.now())).replace(' ', '_')
-            values = params.pop('values', None)
+        records = get_model(app, model).objects.from_search(
+            company, params)
 
-            records = get_model(app, model).objects.from_search(
-                company, params)
+        if values:
+            if not hasattr(values, '__iter__'):
+                values = [values]
 
-            if values:
-                records = records.values(*values)
+            records = records.values(*values)
 
-            contents = serialize('json', records, values=values)
-            results = ContentFile(contents)
-            report, created = Report.objects.get_or_create(
-                name=name, created_by=request.user,
-                owner=company, app=app, model=model,
-                values=json.dumps(values), params=json.dumps(params))
+        contents = serialize('json', records, values=values)
+        results = ContentFile(contents)
+        report, created = Report.objects.get_or_create(
+            name=name, created_by=request.user,
+            owner=company, app=app, model=model,
+            values=json.dumps(values), params=json.dumps(params))
 
-            report.results.save('%s-%s.json' % (name, report.pk), results)
+        report.results.save('%s-%s.json' % (name, report.pk), results)
 
-            return HttpResponse(name, content_type='text/plain')
-        else:
-            raise Http404(
-                "This view is only reachable via a POST request.")
+        return HttpResponse(name, content_type='text/plain')
 
 
 @company_has_access('prm_access')
@@ -288,9 +284,11 @@ def downloads(request):
         report_id = request.GET.get('id', 0)
         report = get_object_or_404(
             get_model('myreports', 'report'), pk=report_id)
+        report.regenerate()
 
         fields = sorted([field for field in report.python[0].keys()
                          if field != 'pk'])
+
         values = json.loads(report.values) or fields
         fields = values + [field for field in fields if field not in values]
 

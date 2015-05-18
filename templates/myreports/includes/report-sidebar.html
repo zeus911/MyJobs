@@ -1,12 +1,12 @@
 <div class="sidebar">
     <h2 class="top">Past Reports</h2>
     {% for report in past_reports %}
-        <div class="report">
-            <a id="report-{{ report.id }}">{{ report.name }}</a>
+        <div class="report" data-report="{{ report.id }}" data-model="{{ report.model }}">
+            <a>{{ report.name }}</a>
             <div class="icon-set">
                 <i id="view-{{ report.id }}" class="fa fa-eye" title="View"></i>
                 <i id="clone-{{ report.id }}" class="fa fa-copy" title="Clone Report"></i>
-                <i id="export-{{ report.id }}" class="fa {% if report.results %}fa-download{% else %}fa-refresh{% endif %}" title="Export Report"></i>
+                <i id="export-{{ report.id }}" class="fa {% if report.results %}fa-download{% else %}fa-refresh{% endif %}" title="{% if report.results %}Export Report{% else %}Regenerate Report{% endif %}"></i>
             </div>
         </div>
     {% empty %}

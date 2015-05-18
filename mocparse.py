@@ -126,12 +126,12 @@ def parse_moc_data(file_in, file_out):
             dupe_list.append(dupe_string)
             i += 1
             
-	moc_file.close()
-	# The crosswalk file size is pretty large, so we just create a file
-	# with the JSON in it.
-	fixture_file = open(file_out, 'w')
-	fixture_file.write(simplejson.dumps(mocs))
-	fixture_file.close()
+        moc_file.close()
+        # The crosswalk file size is pretty large, so we just create a file
+        # with the JSON in it.
+        fixture_file = open(file_out, 'w')
+        fixture_file.write(simplejson.dumps(mocs))
+        fixture_file.close()
 
         
 def parse_onet_codes(file_name):
@@ -176,7 +176,7 @@ def parse_onet_codes(file_name):
 
     map_file.close()
     return simplejson.dumps(mappings)
-	
+        
 def find_moc_with_non_matching_onet(onet_file, moc_file):
     """
     This function is used to find any MOCs, from the Excel spreadsheet
@@ -217,6 +217,6 @@ def find_moc_with_non_matching_onet(onet_file, moc_file):
             non_matches.append(onet3)
         if onet4 and onet4 not in onets + non_matches:
             non_matches.append(onet4)
-			
+                        
     for match in non_matches:
         print match

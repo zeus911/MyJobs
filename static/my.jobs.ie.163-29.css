@@ -53,3 +53,7 @@
 .row-filler input {
     display: none;
 }
+
+.small-chart .piehole {
+    left: 21.5%;
+}
