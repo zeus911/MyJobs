@@ -617,7 +617,7 @@ def add_jobs(jobs, upload_chunk_size=1024):
     # Therefore, if the number of MOCs is above 100, arbitrarily use a lower chunk size.
     for job in jobs:
 
-        if type(job['mapped_moc']) == list and len(job['mapped_moc']) > 100:
+        if type(job.get('mapped_moc', None)) == list and len(job.get('mapped_moc', None)) > 100:
             logger.warn("The number of MOCs (%s) per job exceeds 100, therefore we are reducing the chunk size.", 
                         len(job['mapped_moc']))
             upload_chunk_size = 64
