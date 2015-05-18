@@ -1,29 +1,121 @@
 # -*- coding: utf-8 -*-
 from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import SchemaMigration
-from django.db import models
+from south.v2 import DataMigration
+from django.db import models, connection
+
+# Create archived contacts for relationships that can't be established.
+# For each contact record that can't be traced back to a contact, we
+# create a contact and set it as archived.
+
+if connection.vendor == 'sqlite':
+    CREATE_CONTACTS = """
+        INSERT INTO mypartners_contact (
+            partner_id,
+            name,
+            email,
+            phone,
+            archived_on
+        )
+        SELECT DISTINCT
+            mypartners_contactrecord.partner_id,
+            contact_name,
+            contact_email,
+            '',
+            CURRENT_TIMESTAMP
+        FROM mypartners_contactrecord
+        WHERE NOT EXISTS (
+            SELECT NULL
+            FROM mypartners_contact
+            WHERE
+                mypartners_contactrecord.partner_id = mypartners_contact.partner_id
+              AND
+                (contact_name = name AND contact_email = email)
+        );
+    """
+
+    LINK_CONTACTS = """
+    UPDATE mypartners_contactrecord
+    SET contact_phone = '', location = '', subject = '', job_id = '',
+        job_applications = '', job_interviews = '', job_hires = '',
+        contact_id = (
+        SELECT id
+        FROM mypartners_contact
+        WHERE
+            mypartners_contactrecord.partner_id = mypartners_contact.partner_id
+          AND
+            mypartners_contactrecord.contact_name = mypartners_contact.name
+          AND
+            mypartners_contactrecord.contact_email = mypartners_contact.email
+        );
+    """
+else:
+    CREATE_CONTACTS = """
+        INSERT INTO mypartners_contact (
+            partner_id,
+            name,
+            email,
+            phone,
+            archived_on
+        )
+        SELECT DISTINCT
+            mypartners_contactrecord.partner_id,
+            contact_name,
+            contact_email,
+            '',
+            NOW()
+        FROM mypartners_contactrecord
+        WHERE NOT EXISTS (
+            SELECT NULL FROM mypartners_contact
+            WHERE
+                mypartners_contactrecord.partner_id = mypartners_contact.partner_id
+              AND
+                (contact_name = name AND contact_email = email)
+        );
+    """
+
+    # Assign contacts to contact records.
+    # Assign a contact to a contact record if they share contact ids and either
+    # have the same name and email or share either name or email
+    LINK_CONTACTS = """
+    UPDATE mypartners_contactrecord
+    INNER JOIN mypartners_contact
+            ON mypartners_contactrecord.partner_id = mypartners_contact.partner_id
+    SET mypartners_contactrecord.contact_id = mypartners_contact.id,
+        contact_phone = '', location = '', subject = '', job_id = '',
+        job_applications = '', job_interviews = '', job_hires = ''
+    WHERE (contact_name = name AND contact_email = email)
+    ;
+    """
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
-        # Adding field 'Report.order_by'
-        db.add_column(u'myreports_report', 'order_by',
-                      self.gf('django.db.models.fields.CharField')(max_length=50, blank=True),
-                      keep_default=False)
+        "Create archived contacts and associate them to contact records."
+        db.execute(CREATE_CONTACTS)
+        db.execute(LINK_CONTACTS)
 
-
-        # Changing field 'Report.values'
-        db.alter_column(u'myreports_report', 'values', self.gf('django.db.models.fields.CharField')(max_length=500))
+        "Deleting field 'ContactRecord.contact_name'"
+        db.delete_column(u'mypartners_contactrecord', 'contact_name')
 
     def backwards(self, orm):
-        # Deleting field 'Report.order_by'
-        db.delete_column(u'myreports_report', 'order_by')
+        "Adding field 'ContactRecord.contact_name'"
+        db.add_column(u'mypartners_contactrecord', 'contact_name',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255, blank=True),
+                      keep_default=False)
+
+        "Add contact names back to contact records"
+        for record in orm.ContactRecord.objects.all():
+            record.contact_name = record.contact.name
+            record.save()
 
 
-        # Changing field 'Report.values'
-        db.alter_column(u'myreports_report', 'values', self.gf('django.db.models.fields.CharField')(max_length=500))
+        "Disassociate archived contacts and delete them."
+        orm.ContactRecord.objects.filter(
+            contact__archived_on__isnull=False).update(contact=None)
+        orm.Contact.objects.filter(archived_on__isnull=False).delete()
+
 
     models = {
         u'auth.group': {
@@ -74,19 +166,118 @@ class Migration(SchemaMigration):
             'user_guid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'related_name': "u'user_set'", 'blank': 'True', 'to': u"orm['auth.Permission']"})
         },
-        u'myreports.report': {
-            'Meta': {'object_name': 'Report'},
-            'app': ('django.db.models.fields.CharField', [], {'default': "'mypartners'", 'max_length': '50'}),
-            'created_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"}),
-            'created_on': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+        u'mypartners.contact': {
+            'Meta': {'object_name': 'Contact'},
+            'email': ('django.db.models.fields.EmailField', [], {'max_length': '255', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'model': ('django.db.models.fields.CharField', [], {'default': "'contactrecord'", 'max_length': '50'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'archived_on': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'library': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.PartnerLibrary']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
+            'locations': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'contacts'", 'symmetrical': 'False', 'to': u"orm['mypartners.Location']"}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'notes': ('django.db.models.fields.TextField', [], {'max_length': '1000', 'blank': 'True'}),
+            'partner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Partner']"}),
+            'phone': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
+            'tags': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['mypartners.Tag']", 'null': 'True', 'symmetrical': 'False'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'null': 'True', 'on_delete': 'models.SET_NULL', 'blank': 'True'})
+        },
+        u'mypartners.contactlogentry': {
+            'Meta': {'object_name': 'ContactLogEntry'},
+            'action_flag': ('django.db.models.fields.PositiveSmallIntegerField', [], {}),
+            'action_time': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'change_message': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'contact_identifier': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']", 'null': 'True', 'blank': 'True'}),
+            'delta': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'object_id': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'object_repr': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'partner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Partner']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'null': 'True', 'on_delete': 'models.SET_NULL'})
+        },
+        u'mypartners.contactrecord': {
+            'Meta': {'object_name': 'ContactRecord'},
+            'contact': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Contact']", 'null': 'True'}),
+            'contact_email': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'contact_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'contact_phone': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
+            'contact_type': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'created_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
+            'created_on': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'date_time': ('django.db.models.fields.DateTimeField', [], {'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'job_applications': ('django.db.models.fields.CharField', [], {'max_length': '6', 'blank': 'True'}),
+            'job_hires': ('django.db.models.fields.CharField', [], {'max_length': '6', 'blank': 'True'}),
+            'job_id': ('django.db.models.fields.CharField', [], {'max_length': '40', 'blank': 'True'}),
+            'job_interviews': ('django.db.models.fields.CharField', [], {'max_length': '6', 'blank': 'True'}),
+            'length': ('django.db.models.fields.TimeField', [], {'null': 'True', 'blank': 'True'}),
+            'location': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'notes': ('django.db.models.fields.TextField', [], {'max_length': '1000', 'blank': 'True'}),
+            'partner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.Partner']"}),
+            'subject': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'tags': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['mypartners.Tag']", 'null': 'True', 'symmetrical': 'False'})
+        },
+        u'mypartners.location': {
+            'Meta': {'object_name': 'Location'},
+            'address_line_one': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'address_line_two': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'city': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'country_code': ('django.db.models.fields.CharField', [], {'default': "'USA'", 'max_length': '3'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'label': ('django.db.models.fields.CharField', [], {'max_length': '60', 'blank': 'True'}),
+            'postal_code': ('django.db.models.fields.CharField', [], {'max_length': '12', 'blank': 'True'}),
+            'state': ('django.db.models.fields.CharField', [], {'max_length': '200'})
+        },
+        u'mypartners.partner': {
+            'Meta': {'object_name': 'Partner'},
+            'data_source': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'library': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.PartnerLibrary']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
-            'params': ('django.db.models.fields.TextField', [], {}),
-            'results': ('django.db.models.fields.files.FileField', [], {'max_length': '100'}),
-            'order_by': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
-            'values': ('django.db.models.fields.CharField', [], {'default': "'[]'", 'max_length': '500'})
+            'primary_contact': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'primary_contact'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': u"orm['mypartners.Contact']"}),
+            'tags': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['mypartners.Tag']", 'null': 'True', 'symmetrical': 'False'}),
+            'uri': ('django.db.models.fields.URLField', [], {'max_length': '200', 'blank': 'True'})
+        },
+        u'mypartners.partnerlibrary': {
+            'Meta': {'object_name': 'PartnerLibrary'},
+            'alt_phone': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
+            'area': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'contact_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'data_source': ('django.db.models.fields.CharField', [], {'default': "'Employment Referral Resource Directory'", 'max_length': '255'}),
+            'email': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'fax': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_disabled': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'is_disabled_veteran': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'is_female': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'is_minority': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'is_veteran': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'phone': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
+            'phone_ext': ('django.db.models.fields.CharField', [], {'max_length': '10', 'blank': 'True'}),
+            'region': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
+            'st': ('django.db.models.fields.CharField', [], {'max_length': '10', 'blank': 'True'}),
+            'state': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
+            'street1': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'street2': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'uri': ('django.db.models.fields.URLField', [], {'max_length': '200', 'blank': 'True'}),
+            'zip_code': ('django.db.models.fields.CharField', [], {'max_length': '12', 'blank': 'True'})
+        },
+        u'mypartners.prmattachment': {
+            'Meta': {'object_name': 'PRMAttachment'},
+            'attachment': ('django.db.models.fields.files.FileField', [], {'max_length': '767', 'null': 'True', 'blank': 'True'}),
+            'contact_record': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mypartners.ContactRecord']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+        },
+        u'mypartners.tag': {
+            'Meta': {'unique_together': "(('name', 'company'),)", 'object_name': 'Tag'},
+            'company': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
+            'created_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
+            'created_on': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'hex_color': ('django.db.models.fields.CharField', [], {'default': "'d4d4d4'", 'max_length': '6', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'})
         },
         u'postajob.package': {
             'Meta': {'object_name': 'Package'},
@@ -342,4 +533,5 @@ class Migration(SchemaMigration):
         }
     }
 
-    complete_apps = ['myreports']
+    complete_apps = ['mypartners']
+    symmetrical = True

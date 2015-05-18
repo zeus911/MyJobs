@@ -127,8 +127,8 @@ class PartnerSavedSearchForm(RequestForm):
     def __init__(self, *args, **kwargs):
         choices = PartnerEmailChoices(kwargs.pop('partner', None))
         super(PartnerSavedSearchForm, self).__init__(*args, **kwargs)
-        setattr(self.instance, 'changed_data', self.changed_data)
-        setattr(self.instance, 'request', self.request)
+        self.instance.changed_data = self.changed_data
+        self.instance.request = self.request
         self.fields["email"] = ChoiceField(
             widget=Select(), choices=choices,
             initial=choices[0][0], label="Send Results to",

@@ -303,7 +303,8 @@ def downloads(request):
 
         columns = OrderedDict()
         for field in fields:
-            columns[field.replace('_', ' ').title()] = field in values
+            columns[' '.join(
+                filter(bool, field.split('_'))).title()] = field in values
 
         ctx = {'columns': columns,
                'sort_order': sort_order,

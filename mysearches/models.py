@@ -587,7 +587,7 @@ class PartnerSavedSearch(SavedSearch):
         record = ContactRecord.objects.create(
             partner=self.partner,
             contact_type='pssemail',
-            contact_name=contact.name,
+            contact=contact,
             contact_email=self.user.email,
             created_by=self.created_by,
             date_time=datetime.now(),

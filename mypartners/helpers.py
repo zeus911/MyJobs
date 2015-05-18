@@ -232,7 +232,7 @@ def contact_record_val_to_str(value):
 
 def get_records_from_request(request):
     """
-    Filters a list of records on partner, date_time, contact_name, and
+    Filters a list of records on partner, date_time, contact.name, and
     contact_type based on the request
 
     outputs:
@@ -240,7 +240,7 @@ def get_records_from_request(request):
     date filtered on, and the filtered records.
     """
     sort_types = {
-        'name': 'contact_name', 'date': 'date_time', None: 'date_time'}
+        'name': 'contact__name', 'date': 'date_time', None: 'date_time'}
     _, partner, _ = prm_worthy(request)
     # extract reelvant values from the request object
     contact, contact_type, admin, range_start, range_end, sort_by, desc = [
@@ -485,18 +485,29 @@ def filter_partners(request, partner_library=False):
 
     for keyword in keywords:
         query &= (Q(name__icontains=keyword) | Q(uri__icontains=keyword) |
-                  (Q(contact_name__icontains=keyword) if partner_library else
-                   Q(contact__name__icontains=keyword)) |
+                  Q(contact__name__icontains=keyword,
+                    contact__archived_on__isnull=True) |
                   (Q(email__icontains=keyword) if partner_library else
-                   Q(contact__email__icontains=keyword)))
+                   Q(contact__email__icontains=keyword,
+                     contact__archived_on__isnull=True)))
 
     if city:
-        query &= Q(**{'%s__icontains' % contact_city: city})
+        if partner_library:
+            query &= Q(**{'%s__icontains' % contact_city: city})
+        else:
+            query &= Q(**{'%s__icontains' % contact_city: city,
+                          'contact__archived_on__isnull': True})
 
     if state:
+        
         state_query = Q()
-        for synonym in states.synonyms[state.strip().lower()]:
-            state_query |= Q(**{'%s__iexact' % contact_state: synonym})
+        if partner_library:
+            for synonym in states.synonyms[state.strip().lower()]:
+                state_query |= Q(**{'%s__iexact' % contact_state: synonym})
+        else:
+            for synonym in states.synonyms[state.strip().lower()]:
+                state_query |= Q(**{'%s__iexact' % contact_state: synonym,
+                                    'contact__archived_on__isnull': True})
 
         query &= state_query
 
@@ -516,8 +527,10 @@ def filter_partners(request, partner_library=False):
                     *['%s%s' % (sort_order, column)
                       for column in ['state', 'city', 'no_state', 'no_city']])
         else:
-            null_locations = (Q(contact__locations__state='') |
-                              Q(contact__locations__isnull=True))
+            null_locations = (Q(contact__locations__state='',
+                                contact__archived_on__isnull=True) |
+                              Q(contact__locations__isnull=True,
+                                contact__archived_on__isnull=True))
 
             with_locations = partners.exclude(
                 null_locations).order_by(
