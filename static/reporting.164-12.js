@@ -158,7 +158,7 @@ Report.prototype.createCloneReport = function(json) {
         date = this.findField("date");
         $.extend(date.defaultVal, phony);
       } else {
-        this.findField(key === "contact_name" ? "contact" : key).defaultVal = value;
+        this.findField(key === "name" ? "contact" : key).defaultVal = value;
       }
     }
   }
@@ -197,7 +197,7 @@ Report.prototype.bindEvents = function() {
         newList.push(name);
       }
       delete data.contact;
-      data.contact_name = newList;
+      data.contact__name = newList;
     }
 
     $.ajax({
@@ -1587,7 +1587,7 @@ function renderGraphs(report_id, callback) {
             for (i = 0; i < topLength; i++) {
               // remove first contact in array, returns the removed contact.
               contact = contacts[i];
-              name = contact.contact_name;
+              name = contact.contact__name;
               email = contact.contact_email;
               cReferrals = contact.referrals;
               commRecords = contact.records;
@@ -1617,7 +1617,7 @@ function renderGraphs(report_id, callback) {
               tbody.append(function() {
                 // turn each element into cells of a table then join each group of cells with rows.
                 return "<tr class='report'>" + contacts.map(function(contact) {
-                  return "<td data-name='" + contact.contact_name + "' data-email='" + contact.contact_email + "' data-partner='" + contact.partner + "'>" + contact.contact_name + "</td><td>" + contact.contact_email +
+                  return "<td data-name='" + contact.contact__name + "' data-email='" + contact.contact_email + "' data-partner='" + contact.partner + "'>" + contact.contact__name + "</td><td>" + contact.contact_email +
                          "</td><td>" + contact.partner__name + "</td><td>" + contact.records + "</td><td>" + contact.referrals + "</td>";
                 }).join('</tr><tr class="report">') + "</tr>";
               });

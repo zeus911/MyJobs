@@ -43,12 +43,12 @@ class ContactRecordFactory(factory.django.DjangoModelFactory):
         model = 'mypartners.ContactRecord'
 
     contact_type = 'email'
-    contact_name = 'example-contact'
     contact_email = 'example@email.com'
     subject = 'Test Subject'
     notes = 'Some notes go here.'
     date_time = datetime.now()
 
+    contact = factory.SubFactory(ContactFactory, name='example-contact')
     partner = factory.SubFactory(PartnerFactory)
 
     @factory.post_generation

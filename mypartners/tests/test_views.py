@@ -527,7 +527,7 @@ class RecordsEditTests(MyPartnersTestCase):
 
         # Create a ContactRecord
         self.contact_record = ContactRecordFactory(partner=self.partner,
-                                                   contact_name=self.contact.name)
+                                                   contact=self.contact)
         self.contact_log_entry = ContactLogEntryFactory(partner=self.partner,
                                                         user=self.contact.user,
                                                         object_id=self.contact_record.id)
@@ -543,7 +543,7 @@ class RecordsEditTests(MyPartnersTestCase):
         form = soup.find('fieldset')
 
         self.assertEqual(len(form(class_='profile-form-input')), 15)
-        self.assertEqual(len(form.find(id='id_contact_name')('option')), 3)
+        self.assertEqual(len(form.find(id='id_contact')('option')), 3)
 
         # Add contact
         ContactFactory(partner=self.partner,
@@ -552,7 +552,7 @@ class RecordsEditTests(MyPartnersTestCase):
         # Test form is updated with new contact
         response = self.client.get(url)
         soup = BeautifulSoup(response.content)
-        form = soup.find(id='id_contact_name')
+        form = soup.find(id='id_contact')
         self.assertEqual(len(form('option')), 4)
 
     def test_render_existing_data(self):
@@ -566,14 +566,14 @@ class RecordsEditTests(MyPartnersTestCase):
         form = soup.find('fieldset')
 
         self.assertEqual(len(form(class_='profile-form-input')), 15)
-        self.assertEqual(len(form.find(id='id_contact_name')('option')), 2)
+        self.assertEqual(len(form.find(id='id_contact')('option')), 3)
 
         contact_type = form.find(id='id_contact_type')
         contact_type = contact_type.find(selected='selected').get_text()
         self.assertEqual(contact_type, 'Email')
 
         self.assertIn(self.contact.name,
-                      form.find(id='id_contact_name').get_text())
+                      form.find(id='id_contact').get_text())
         self.assertIn('example@email.com',
                       form.find(id='id_contact_email')['value'])
         self.assertIn(self.contact_record.subject,
@@ -596,7 +596,7 @@ class RecordsEditTests(MyPartnersTestCase):
                            company=self.company.id)
 
         data = {'contact_type': 'email',
-                'contact_name': self.contact.id,
+                'contact': self.contact.id,
                 'contact_email': 'test@email.com',
                 'contact_phone': '',
                 'location': '',
@@ -631,7 +631,7 @@ class RecordsEditTests(MyPartnersTestCase):
                            id=self.contact_record.id)
 
         data = {'contact_type': 'email',
-                'contact_name': self.contact.id,
+                'contact': self.contact.id,
                 'contact_email': 'test@email.com',
                 'contact_phone': '',
                 'location': '',
@@ -1307,14 +1307,14 @@ class PartnerLibraryViewTests(PartnerLibraryTestCase):
 
 class ContactLogEntryTests(MyPartnersTestCase):
     def test_contact_record_update(self):
-        record = ContactRecordFactory()
+        record = ContactRecordFactory(contact=self.contact)
 
         url = self.get_url(partner=self.partner.id, company=self.company.id,
                            id=record.id, view='partner_edit_record')
 
         data = {
             'contact_type': 'email',
-            'contact_name': self.contact.id,
+            'contact': self.contact.id,
             'contact_email': 'test@email.com',
             'contact_phone': '',
             'location': '',
