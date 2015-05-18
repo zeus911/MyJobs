@@ -67,7 +67,7 @@ class SavedSearch(models.Model):
                                        blank=True, null=True,
                                        verbose_name=_("on"))
     day_of_week = models.CharField(max_length=2, choices=DOW_CHOICES,
-                                   blank=True, defaul='',
+                                   blank=True, default='',
                                    verbose_name=_("on"))
     jobs_per_email = models.PositiveSmallIntegerField(
         default=5, choices=JOBS_PER_EMAIL_CHOICES,
