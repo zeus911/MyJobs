@@ -402,21 +402,21 @@ class EmploymentHistory(ProfileUnits):
 
     # Optional fields
     end_date = models.DateField(blank=True, null=True)
-    city_name = models.CharField(max_length=255, blank=True, null=True)
+    city_name = models.CharField(max_length=255, blank=True, default='')
     country_sub_division_code = models.CharField(max_length=5, blank=True,
                                                  verbose_name=_("State/Region"))
-    country_code = models.CharField(max_length=3, blank=True, null=True,
+    country_code = models.CharField(max_length=3, blank=True, default='',
                                     verbose_name=_("country"))
-    description = models.TextField(blank=True, null=True)
+    description = models.TextField(blank=True, default='')
 
     # Hidden fields
-    industry_code = models.CharField(max_length=255, blank=True, null=True,
+    industry_code = models.CharField(max_length=255, blank=True, default='',
                                      verbose_name=_("industry"),
                                      editable=False)
-    job_category_code = models.CharField(max_length=255, blank=True, null=True,
+    job_category_code = models.CharField(max_length=255, blank=True,
                                          verbose_name=_("job category"),
-                                         editable=False)
-    onet_code = models.CharField(max_length=255, blank=True, null=True,
+                                         editable=False, default='')
+    onet_code = models.CharField(max_length=255, blank=True, default='',
                                  editable=False)
 
     @classmethod
@@ -457,7 +457,7 @@ class EmploymentHistory(ProfileUnits):
 class SecondaryEmail(ProfileUnits):
     email = models.EmailField(max_length=255, unique=True, error_messages={
         'unique': 'This email is already registered.'})
-    label = models.CharField(max_length=30, blank=True, null=True)
+    label = models.CharField(max_length=30, blank=True, default='')
     verified = models.BooleanField(default=False, editable=False)
     verified_date = models.DateTimeField(blank=True, null=True, editable=False)
 

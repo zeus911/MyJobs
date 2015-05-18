@@ -843,7 +843,7 @@ class ContactLogEntry(models.Model):
     contact_identifier = models.CharField(max_length=255)
     content_type = models.ForeignKey(ContentType, blank=True, null=True)
     delta = models.TextField(blank=True)
-    object_id = models.TextField('object id', blank=True, null=True)
+    object_id = models.TextField('object id', blank=True, default='')
     object_repr = models.CharField('object repr', max_length=200)
     partner = models.ForeignKey(Partner, null=True, on_delete=models.SET_NULL)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)

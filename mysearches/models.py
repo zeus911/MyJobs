@@ -67,17 +67,17 @@ class SavedSearch(models.Model):
                                        blank=True, null=True,
                                        verbose_name=_("on"))
     day_of_week = models.CharField(max_length=2, choices=DOW_CHOICES,
-                                   blank=True, null=True,
+                                   blank=True, defaul='',
                                    verbose_name=_("on"))
     jobs_per_email = models.PositiveSmallIntegerField(
         default=5, choices=JOBS_PER_EMAIL_CHOICES,
         verbose_name=_("Jobs per Email"))
-    notes = models.TextField(blank=True, null=True,
+    notes = models.TextField(blank=True, default='',
                              verbose_name=_("Comments"))
     last_sent = models.DateTimeField(blank=True, null=True, editable=False)
 
     # Custom messages were created for PartnerSavedSearches
-    custom_message = models.TextField(max_length=300, blank=True, null=True)
+    custom_message = models.TextField(max_length=300, blank=True, default='')
 
     @property
     def content_type(self):

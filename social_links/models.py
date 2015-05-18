@@ -143,7 +143,7 @@ class MicrositeCarousel(models.Model):
                                                                 (5,5), (6,6),
                                                                 (7,7), (8,8)])
     carousel_title = models.CharField('Carousel Title', max_length=200,
-                                      null=True, blank=True)
+                                      default='', blank=True)
 
 @receiver(post_save, sender=SocialLink)
 def clear_slink_cache(sender, **kwargs):

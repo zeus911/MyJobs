@@ -1056,9 +1056,9 @@ class Configuration(models.Model):
     status = models.IntegerField('Status', default=1, choices=STATUS_CHOICES,
                                  null=True, blank=True, db_index=True)
     # navigation section
-    defaultBlurb = models.TextField('Blurb Text', blank=True, null=True)
+    defaultBlurb = models.TextField('Blurb Text', blank=True, default='')
     defaultBlurbTitle = models.CharField('Blurb Title', max_length=100,
-                                         blank=True, null=True)
+                                         blank=True, default='')
     #default_blurb_always_show = models.BooleanField('Always Show',
     #                                                default=False)
     browse_country_show = models.BooleanField('Show', default=True)
@@ -1130,12 +1130,12 @@ class Configuration(models.Model):
     moc_tag = models.CharField(max_length=50, default='vet-jobs')
     company_tag = models.CharField(max_length=50, default='careers')
     # template section
-    meta = models.TextField(null=True, blank=True)
-    wide_header = models.TextField(null=True, blank=True)
-    header = models.TextField(null=True, blank=True)
-    body = models.TextField('Custom Homepage Body', null=True, blank=True)
-    wide_footer = models.TextField(null=True, blank=True)
-    footer = models.TextField(null=True, blank=True)
+    meta = models.TextField(default='', blank=True)
+    wide_header = models.TextField(default='', blank=True)
+    header = models.TextField(default='', blank=True)
+    body = models.TextField('Custom Homepage Body', default='', blank=True)
+    wide_footer = models.TextField(default='', blank=True)
+    footer = models.TextField(default='', blank=True)
     view_all_jobs_detail = models.BooleanField(
         'Use detailed "View All Jobs" label',
         help_text='Include site title details in "View All Jobs" link text',
@@ -1148,7 +1148,7 @@ class Configuration(models.Model):
                                                        'on job listing pages.')
 
     # stylesheet manytomany relationship
-    backgroundColor = models.CharField(max_length=6, blank=True, null=True)
+    backgroundColor = models.CharField(max_length=6, blank=True, default='')
     fontColor = models.CharField(max_length=6, default='666666')
     primaryColor = models.CharField(max_length=6, default='990000')
     # manage authorization
@@ -1268,8 +1268,8 @@ class BusinessUnit(models.Model):
 
     id = models.IntegerField('Business Unit Id', max_length=10,
                              primary_key=True)
-    title = models.CharField(max_length=500, null=True, blank=True)
-    title_slug = models.SlugField(max_length=500, null=True, blank=True)
+    title = models.CharField(max_length=500, default='', blank=True)
+    title_slug = models.SlugField(max_length=500, default='', blank=True)
     date_crawled = models.DateTimeField('Date Crawled')
     date_updated = models.DateTimeField('Date Updated')
     associated_jobs = models.IntegerField('Associated Jobs', default=0)
@@ -1292,9 +1292,9 @@ class BusinessUnit(models.Model):
 
 class Country(models.Model):
     name = models.CharField(max_length=255, db_index=True)
-    abbrev = models.CharField(max_length=255, blank=True, null=True,
+    abbrev = models.CharField(max_length=255, blank=True, default='',
                               db_index=True)
-    abbrev_short = models.CharField(max_length=255, blank=True, null=True,
+    abbrev_short = models.CharField(max_length=255, blank=True, default='',
                                     db_index=True)
 
     def __unicode__(self):
