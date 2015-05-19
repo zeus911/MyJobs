@@ -203,8 +203,11 @@ class JobFeed(object):
 
     @staticmethod
     def city_slab(obj):
-        url = "%s/%s/%s/jobs" % (slugify(obj['city']), slugify(obj['state']), 
-                                 obj['country_short'].lower())
+        try:
+            url = "%s/%s/%s/jobs" % (slugify(obj['city']), slugify(obj['state']), 
+                                     obj['country_short'].lower())
+        except TypeError:
+            import ipdb; ipdb.set_trace()
         return "%s::%s" % (url, obj['location'])
 
     @staticmethod
@@ -273,7 +276,8 @@ class DEJobFeed(JobFeed):
             if element.text == 'null':
                 job_dict[element.tag] = self.unescape('')
             else:
-                job_dict[element.tag] = self.unescape(element.text)
+                job_dict[element.tag] = self.unescape(element.text) or ''
+
         return job_dict
         
     @staticmethod

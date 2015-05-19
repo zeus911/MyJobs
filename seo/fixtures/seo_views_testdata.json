@@ -28,7 +28,7 @@
         "pk": 1,
         "model": "seo.businessunit",
         "fields": {
-            "title_slug": null,
+            "title_slug": "",
             "title": "Test1",
             "date_updated": "2010-10-18 10:59:24",
             "associated_jobs": 317,
@@ -39,7 +39,7 @@
         "pk": 2,
         "model": "seo.businessunit",
         "fields": {
-            "title_slug": null,
+            "title_slug": "",
             "title": "Test2",
             "date_updated": "2010-10-18 10:59:26",
             "associated_jobs": 167,

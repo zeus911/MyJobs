@@ -192,12 +192,12 @@ class CustomFacet(BaseSavedSearch):
     group = models.ForeignKey(Group, blank=True, null=True)
     business_units = models.ManyToManyField('BusinessUnit', blank=True,
                                             null=True)
-    country = models.CharField(max_length=800, null=True, blank=True)
-    state = models.CharField(max_length=800, null=True, blank=True)
-    city = models.CharField(max_length=800, null=True, blank=True)
+    country = models.CharField(max_length=800, default='', blank=True)
+    state = models.CharField(max_length=800, default='', blank=True)
+    city = models.CharField(max_length=800, default='', blank=True)
     keyword = TaggableManager()
-    company = models.CharField(max_length=800, null=True, blank=True)
-    onet = models.CharField(max_length=10, null=True, blank=True)
+    company = models.CharField(max_length=800, default='', blank=True)
+    onet = models.CharField(max_length=10, default='', blank=True)
     always_show = models.BooleanField("Show With or Without Results",
                                       default=False)
 
@@ -384,27 +384,27 @@ class jobListing (models.Model):
         verbose_name = 'Job Listing'
         verbose_name_plural = 'Job Listings'
 
-    city = models.CharField(max_length=200, blank=True, null=True)
+    city = models.CharField(max_length=200, blank=True, default='')
     citySlug = models.SlugField(blank=True, null=True)
-    country = models.CharField(max_length=200, blank=True, null=True)
+    country = models.CharField(max_length=200, blank=True, default='')
     countrySlug = models.SlugField(blank=True, null=True)
-    country_short = models.CharField(max_length=3, blank=True, null=True,
+    country_short = models.CharField(max_length=3, blank=True, default='',
                                      db_index=True)
     date_new = models.DateTimeField('date new')
     date_updated = models.DateTimeField('date updated')
     description = models.TextField()
     hitkey = models.CharField(max_length=50)
     link = models.URLField(max_length=200)
-    location = models.CharField(max_length=200, blank=True, null=True)
-    reqid = models.CharField(max_length=50, blank=True, null=True)
-    state = models.CharField(max_length=200, blank=True, null=True)
+    location = models.CharField(max_length=200, blank=True, default='')
+    reqid = models.CharField(max_length=50, blank=True, default='')
+    state = models.CharField(max_length=200, blank=True, default='')
     stateSlug = models.SlugField(blank=True, null=True)
-    state_short = models.CharField(max_length=3, blank=True, null=True)
+    state_short = models.CharField(max_length=3, blank=True, default='')
     title = models.CharField(max_length=200)
     titleSlug = models.SlugField(max_length=200, blank=True, null=True,
                                  db_index=True)
     uid = models.IntegerField(db_index=True, unique=True)
-    zipcode = models.CharField(max_length=15, null=True, blank=True)
+    zipcode = models.CharField(max_length=15, default='', blank=True)
 
     objects = models.Manager()
     this_site = JobsByBuidManager()
@@ -699,7 +699,7 @@ class Company(models.Model):
                                blank=True, help_text="The url for the 100x50 "
                                "logo image for this company.")
     linkedin_id = models.CharField('LinkedIn Company ID',
-                                   max_length=20, null=True, blank=True,
+                                   max_length=20, default='', blank=True,
                                    help_text="The LinkedIn issued company "
                                    "ID for this company.")
     og_img = models.URLField('Open Graph Image URL', max_length=200, null=True,
