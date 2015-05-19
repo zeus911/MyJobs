@@ -21,7 +21,7 @@ class TestHelpers(MyReportsTestCase):
         # Returns a list rather than a QuerySet, which is what the helper
         # functions use, so saving this to a variable isn't really helpful
         ContactRecordFactory.create_batch(
-            10, partner=self.partner, contact_name='Joe Shmoe', tags=tags)
+            10, partner=self.partner, contact__name='Joe Shmoe', tags=tags)
         self.records = ContactRecord.objects.all()
 
     def test_serialize_python(self):
@@ -49,7 +49,7 @@ class TestHelpers(MyReportsTestCase):
 
         # when values are specified, output records should respec the nubmer
         # and order of fields specified
-        values = ['contact_name', 'contact_email', 'tags']
+        values = ['contact', 'contact_email', 'tags']
         data = helpers.serialize('python', self.records, values=values)
 
         self.assertEqual(data[0].keys(), values)
@@ -133,9 +133,12 @@ class TestHelpers(MyReportsTestCase):
         request = factory.post(
             '/reports/view/mypartners/contact',
             data=dict(
+                baz=u'',
+                biz=[u'bez', u''],
                 foo=['bar', 'baz'],
                 buz=['biz'],
-                quz='fizz'
+                quz='fizz',
+                quox='false'
             ))
 
         params = helpers.parse_params(request.POST)
@@ -143,5 +146,6 @@ class TestHelpers(MyReportsTestCase):
         # Singleton lists should be flattened into single elements, lists
         # should be converted to tuples, and already flat elements should
         # remain untouched.
-        self.assertEqual(
-            params, dict(buz='biz', quz='fizz', foo=('bar', 'baz')))
+        self.assertEqual(params, dict(
+            biz=u'bez', foo=('bar', 'baz'), buz='biz', quz='fizz',
+            quox=False))

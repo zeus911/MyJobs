@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta
 
 from django.contrib.auth.models import ContentType
+from django.contrib.contenttypes.generic import GenericForeignKey
 from django.db import models
 from django.template import Template, Context
+from django.utils.translation import ugettext_lazy as _
 
 
 class EmailSection(models.Model):
@@ -12,14 +14,24 @@ class EmailSection(models.Model):
         (3, 'Footer'),
     )
 
+    name = models.CharField(max_length=255)
+    owner = models.ForeignKey('seo.Company', blank=True, null=True)
     section_type = models.PositiveIntegerField(choices=SECTION_TYPES)
     content = models.TextField()
 
+    def __unicode__(self):
+        return "%s (%s)" % (self.name, self.owner or "Global")
+
 
 class EmailTemplate(models.Model):
+    name = models.CharField(max_length=255)
+    owner = models.ForeignKey('seo.Company', blank=True, null=True)
     header = models.ForeignKey('EmailSection', related_name='header_for')
     body = models.ForeignKey('EmailSection', related_name='body_for')
     footer = models.ForeignKey('EmailSection', related_name='footer_for')
+
+    def __unicode__(self):
+        return "%s (%s)" % (self.name, self.owner or "Global")
 
     @staticmethod
     def build_context(for_object):
@@ -52,6 +64,11 @@ class Event(models.Model):
     email_template = models.ForeignKey('EmailTemplate')
     is_active = models.BooleanField(default=True)
     owner = models.ForeignKey('seo.Company')
+    sites = models.ManyToManyField('seo.SeoSite')
+    name = models.CharField(max_length=255)
+
+    def __unicode__(self):
+        return "%s (%s)" % (self.name, self.owner)
 
     class Meta:
         abstract = True
@@ -68,7 +85,10 @@ class Event(models.Model):
 
 
 class CronEvent(Event):
-    model = models.ForeignKey(ContentType, blank=True, null=True)
+    model = models.ForeignKey(ContentType,
+                              limit_choices_to={'model__in': [
+                                  'purchasedjob',
+                                  'purchasedproduct']})
     field = models.CharField(max_length=255, blank=True)
     minutes = models.PositiveIntegerField()
 
@@ -80,12 +100,10 @@ class CronEvent(Event):
                            in the future.
         :return: The created EamilCronTask.
         """
-
-        return EmailCronTask.objects.create(
-            object_id=for_object.pk,
-            model=ContentType.objects.get_for_model(for_object._meta.model),
+        return EmailTask.objects.create(
+            act_on=for_object,
             related_event=self,
-            scheduled_for=self.scheduled_for(for_object),
+            scheduled_for=self.scheduled_for(for_object)
         )
 
     def scheduled_for(self, for_object):
@@ -106,17 +124,43 @@ class ValueEvent(Event):
         ('__lte', 'is less than or equal to'),
     )
 
-    compare_using = models.CharField(max_length=255, choices=COMPARISON_CHOICES)
-    model = models.ForeignKey(ContentType)
+    compare_using = models.CharField(_('Comparison Type'),
+                                     max_length=255, choices=COMPARISON_CHOICES)
+    model = models.ForeignKey(ContentType,
+                              limit_choices_to={'model__in': [
+                                  'purchasedjob',
+                                  'purchasedproduct',
+                                  'request']})
     field = models.CharField(max_length=255)
     value = models.PositiveIntegerField()
 
+    def schedule_task(self, for_object):
+        return EmailTask.objects.create(
+            act_on=for_object,
+            related_event=self,
+            scheduled_for=datetime.now()
+        )
 
-class EmailCronTask(models.Model):
+    def schedule_for(self, for_object):
+        return datetime.now()
+
+
+class EmailTask(models.Model):
+    # Object being used to generate this email
     object_id = models.PositiveIntegerField()
-    model = models.ForeignKey(ContentType)
+    object_model = models.ForeignKey(ContentType, related_name='email_model')
+    act_on = GenericForeignKey('object_model', 'object_id')
+
+    # Event type of this email
+    event_id = models.PositiveIntegerField()
+    event_model = models.ForeignKey(ContentType, related_name='email_type')
+    related_event = GenericForeignKey('event_model', 'event_id')
 
     completed_on = models.DateTimeField(blank=True, null=True)
-    related_event = models.ForeignKey('CronEvent')
+
     scheduled_for = models.DateTimeField()
     scheduled_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def completed(self):
+        return bool(self.completed_on)

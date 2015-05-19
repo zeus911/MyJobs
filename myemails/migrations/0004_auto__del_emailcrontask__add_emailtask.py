@@ -8,22 +8,39 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Report.order_by'
-        db.add_column(u'myreports_report', 'order_by',
-                      self.gf('django.db.models.fields.CharField')(max_length=50, blank=True),
-                      keep_default=False)
+        # Deleting model 'EmailCronTask'
+        db.delete_table(u'myemails_emailcrontask')
 
+        # Adding model 'EmailTask'
+        db.create_table(u'myemails_emailtask', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('object_id', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('object_model', self.gf('django.db.models.fields.related.ForeignKey')(related_name='email_model', to=orm['contenttypes.ContentType'])),
+            ('completed_on', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
+            ('event_id', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('event_model', self.gf('django.db.models.fields.related.ForeignKey')(related_name='email_type', to=orm['contenttypes.ContentType'])),
+            ('scheduled_for', self.gf('django.db.models.fields.DateTimeField')()),
+            ('scheduled_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+        ))
+        db.send_create_signal(u'myemails', ['EmailTask'])
 
-        # Changing field 'Report.values'
-        db.alter_column(u'myreports_report', 'values', self.gf('django.db.models.fields.CharField')(max_length=500))
 
     def backwards(self, orm):
-        # Deleting field 'Report.order_by'
-        db.delete_column(u'myreports_report', 'order_by')
+        # Adding model 'EmailCronTask'
+        db.create_table(u'myemails_emailcrontask', (
+            ('related_event', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['myemails.CronEvent'])),
+            ('completed_on', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
+            ('model', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['contenttypes.ContentType'])),
+            ('scheduled_for', self.gf('django.db.models.fields.DateTimeField')()),
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('object_id', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('scheduled_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+        ))
+        db.send_create_signal(u'myemails', ['EmailCronTask'])
 
+        # Deleting model 'EmailTask'
+        db.delete_table(u'myemails_emailtask')
 
-        # Changing field 'Report.values'
-        db.alter_column(u'myreports_report', 'values', self.gf('django.db.models.fields.CharField')(max_length=500))
 
     models = {
         u'auth.group': {
@@ -45,6 +62,59 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
+        },
+        u'myemails.cronevent': {
+            'Meta': {'object_name': 'CronEvent'},
+            'email_template': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myemails.EmailTemplate']"}),
+            'field': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'minutes': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'model': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
+            'sites': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['seo.SeoSite']", 'symmetrical': 'False'})
+        },
+        u'myemails.emailsection': {
+            'Meta': {'object_name': 'EmailSection'},
+            'content': ('django.db.models.fields.TextField', [], {}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']", 'null': 'True', 'blank': 'True'}),
+            'section_type': ('django.db.models.fields.PositiveIntegerField', [], {})
+        },
+        u'myemails.emailtask': {
+            'Meta': {'object_name': 'EmailTask'},
+            'completed_on': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            'event_id': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'event_model': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'email_type'", 'to': u"orm['contenttypes.ContentType']"}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'object_id': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'object_model': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'email_model'", 'to': u"orm['contenttypes.ContentType']"}),
+            'scheduled_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'scheduled_for': ('django.db.models.fields.DateTimeField', [], {})
+        },
+        u'myemails.emailtemplate': {
+            'Meta': {'object_name': 'EmailTemplate'},
+            'body': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'body_for'", 'to': u"orm['myemails.EmailSection']"}),
+            'footer': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'footer_for'", 'to': u"orm['myemails.EmailSection']"}),
+            'header': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'header_for'", 'to': u"orm['myemails.EmailSection']"}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']", 'null': 'True', 'blank': 'True'})
+        },
+        u'myemails.valueevent': {
+            'Meta': {'object_name': 'ValueEvent'},
+            'compare_using': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'email_template': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myemails.EmailTemplate']"}),
+            'field': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'model': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['contenttypes.ContentType']"}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
+            'sites': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['seo.SeoSite']", 'symmetrical': 'False'}),
+            'value': ('django.db.models.fields.PositiveIntegerField', [], {})
         },
         u'myjobs.user': {
             'Meta': {'object_name': 'User'},
@@ -73,20 +143,6 @@ class Migration(SchemaMigration):
             'timezone': ('django.db.models.fields.CharField', [], {'default': "'America/New_York'", 'max_length': '255'}),
             'user_guid': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'related_name': "u'user_set'", 'blank': 'True', 'to': u"orm['auth.Permission']"})
-        },
-        u'myreports.report': {
-            'Meta': {'object_name': 'Report'},
-            'app': ('django.db.models.fields.CharField', [], {'default': "'mypartners'", 'max_length': '50'}),
-            'created_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['myjobs.User']"}),
-            'created_on': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'model': ('django.db.models.fields.CharField', [], {'default': "'contactrecord'", 'max_length': '50'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['seo.Company']"}),
-            'params': ('django.db.models.fields.TextField', [], {}),
-            'results': ('django.db.models.fields.files.FileField', [], {'max_length': '100'}),
-            'order_by': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
-            'values': ('django.db.models.fields.CharField', [], {'default': "'[]'", 'max_length': '500'})
         },
         u'postajob.package': {
             'Meta': {'object_name': 'Package'},
@@ -342,4 +398,4 @@ class Migration(SchemaMigration):
         }
     }
 
-    complete_apps = ['myreports']
+    complete_apps = ['myemails']

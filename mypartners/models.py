@@ -91,7 +91,7 @@ class SearchParameterQuerySet(models.query.QuerySet):
                 parameters['end_date'], '%m/%d/%Y').date() + timedelta(1)
 
         # do special parsing
-        if hasattr(self.model, '_parse_parameters'):
+        if parameters and hasattr(self.model, '_parse_parameters'):
             self = self.model._parse_parameters(parameters, self)
 
         for key, value in parameters.items():
@@ -117,6 +117,9 @@ class SearchParameterQuerySet(models.query.QuerySet):
         exist.
         """
 
+        if '__' in name:
+            return 'ForeignKey'
+
         # using get_fields isn't sufficient as it doesn't account
         field = self.model._meta.get_field_by_name(name)[0]
 
@@ -136,7 +139,7 @@ class SearchParameterManager(models.Manager):
     def get_query_set(self):
         return SearchParameterQuerySet(self.model, using=self._db)
 
-    def from_search(self, company, parameters):
+    def from_search(self, company=None, parameters=None):
         return self.get_query_set().from_search(
             company, parameters)
 
@@ -164,6 +167,8 @@ class Location(models.Model):
         return (", ".join([self.city, self.state]) if self.city and self.state
                 else self.city or self.state)
 
+    natural_key = __unicode__
+
     def save(self, **kwargs):
         super(Location, self).save(**kwargs)
 
@@ -182,10 +187,13 @@ class Contact(models.Model):
                                 on_delete=models.SET_NULL)
     name = models.CharField(max_length=255, verbose_name='Full Name')
     email = models.EmailField(max_length=255, verbose_name='Email', blank=True)
-    phone = models.CharField(max_length=30, verbose_name='Phone', blank=True)
+    phone = models.CharField(max_length=30, verbose_name='Phone', blank=True,
+            default='')
     locations = models.ManyToManyField('Location', related_name='contacts')
     tags = models.ManyToManyField('Tag', null=True)
-    notes = models.TextField(max_length=1000, verbose_name='Notes', blank=True)
+    notes = models.TextField(max_length=1000, verbose_name='Notes',
+                             blank=True, default="")
+    archived_on = models.DateTimeField(null=True)
 
     company_ref = 'partner__owner'
     objects = SearchParameterManager()
@@ -202,6 +210,13 @@ class Contact(models.Model):
         end_date = parameters.pop('end_date', None)
         state = parameters.pop('state', None)
         city = parameters.pop('city', None)
+        tags = parameters.pop('tags__name', None)
+
+        if tags:
+            if not hasattr(tags, '__iter__'):
+                tags = [tags]
+            for tag in tags:
+                records = records.filter(tags__name__icontains=tag)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -227,24 +242,12 @@ class Contact(models.Model):
         if city:
             records = records.filter(locations__city__icontains=city)
 
-        if contact_type and records:
-            if contact_type == '0':
-                return records.none()
-
+        if contact_type:
             if not hasattr(contact_type, '__iter__'):
                 contact_type = [contact_type]
 
-            owner = records.first().partner.owner
-            contacts = ContactRecord.objects.filter(
-                partner__owner=owner, contact_type__in=contact_type).values(
-                    'contact_name', 'contact_email').distinct()
-
-            q = models.Q()
-            for contact in contacts:
-                q |= models.Q(name=contact['contact_name'],
-                              email=contact['contact_email'])
-
-            records = records.filter(q)
+            records = records.filter(
+                contactrecord__contact_type__in=contact_type)
 
         return records
 
@@ -254,6 +257,8 @@ class Contact(models.Model):
         if self.email:
             return self.email
         return 'Contact object'
+
+    natural_key = __unicode__
 
     def save(self, *args, **kwargs):
         """
@@ -270,6 +275,12 @@ class Contact(models.Model):
                 else:
                     self.user = user
         return super(Contact, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pre_delete.send(sender=Contact, instance=self, using='default')
+        self.archived_on = datetime.now()
+        self.primary_contact.clear()
+        self.save()
 
     def get_contact_url(self):
         base_urls = {
@@ -353,6 +364,23 @@ class Partner(models.Model):
         state = parameters.pop('state', None)
         city = parameters.pop('city', None)
         contact_type = parameters.pop('contact_type', None)
+        tags = parameters.pop('tags__name', None)
+        contactrecord_tags = parameters.pop('contactrecord__tags__name', None)
+
+        if tags:
+            if not hasattr(tags, '__iter__'):
+                tags = [tags]
+
+            for tag in tags:
+                records = records.filter(tags__name__icontains=tag)
+
+        if contactrecord_tags:
+            if not hasattr(contactrecord_tags, '__iter__'):
+                contactrecord_tags = [contactrecord_tags]
+
+            for tag in contactrecord_tags:
+                records = records.filter(
+                    contactrecord__tags__name__icontains=tag)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -387,8 +415,7 @@ class Partner(models.Model):
     def __unicode__(self):
         return self.name
 
-    def natural_key(self):
-        return self.name
+    natural_key = __unicode__
 
     # get_searches_for_partner
     def get_searches(self):
@@ -405,7 +432,8 @@ class Partner(models.Model):
 
     def get_contact_locations(self):
         return Location.objects.filter(
-            contacts__in=self.contact_set.all()).order_by('state', 'city')
+            contacts__in=self.contact_set.all()).exclude(
+                contacts__archived_on__isnull=False).order_by('state', 'city')
 
     # get_contact_records_for_partner
     def get_contact_records(self, contact_name=None, record_type=None,
@@ -414,7 +442,7 @@ class Partner(models.Model):
 
         records = self.contactrecord_set.prefetch_related('tags').all()
         if contact_name:
-            records = records.filter(contact_name=contact_name)
+            records = records.filter(contact__name=contact_name)
         if date_start:
             records = records.filter(date_time__gte=date_start)
         if date_end:
@@ -514,6 +542,8 @@ class PartnerLibrary(models.Model):
     def __unicode__(self):
         return self.name
 
+    natural_key = __unicode__
+
     def save(self, *args, **kwargs):
         self.has_valid_location = self.st.upper() in states.keys()
 
@@ -572,18 +602,19 @@ class ContactRecordQuerySet(SearchParameterQuerySet):
 
     @property
     def contacts(self):
-        contacts = self.exclude(contact_type='job').values(
-            'contact_name', 'contact_email').annotate(
-                records=models.Count('contact_name')).distinct().order_by(
-                    '-records')
+        contacts = self.exclude(
+            contact_type='job').values(
+                'partner__name', 'partner', 'contact__name',
+                'contact_email').annotate(
+                    records=models.Count('contact__name')).distinct().order_by(
+                        '-records')
 
         referrals = dict(self.filter(contact_type='job').values_list(
-            'contact_name').annotate(
-                referrals=models.Count('contact_name')).distinct())
+            'contact__name').annotate(
+                referrals=models.Count('contact__name')).distinct())
 
         for contact in contacts:
-
-            contact['referrals'] = referrals.get(contact['contact_name'], 0)
+            contact['referrals'] = referrals.get(contact['contact__name'], 0)
 
         return contacts
 
@@ -610,38 +641,37 @@ class ContactRecord(models.Model):
     created_on = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     partner = models.ForeignKey(Partner)
+    contact = models.ForeignKey(Contact, null=True)
     contact_type = models.CharField(choices=CONTACT_TYPE_CHOICES,
                                     max_length=50,
                                     verbose_name="Contact Type")
-    contact_name = models.CharField(max_length=255, verbose_name='Contacts',
-                                    blank=True)
     # contact type fields, fields required depending on contact_type. Enforced
     # on the form level.
     contact_email = models.CharField(max_length=255,
                                      verbose_name="Contact Email",
                                      blank=True)
     contact_phone = models.CharField(verbose_name="Contact Phone Number",
-                                     max_length=30, blank=True)
+                                     max_length=30, blank=True, default="")
     location = models.CharField(verbose_name="Meeting Location",
-                                max_length=255, blank=True)
+                                max_length=255, blank=True, default="")
     length = models.TimeField(verbose_name="Meeting Length", blank=True,
                               null=True)
     subject = models.CharField(verbose_name="Subject or Topic", max_length=255,
-                               blank=True)
+                               blank=True, default="")
     date_time = models.DateTimeField(verbose_name="Date & Time", blank=True)
     notes = models.TextField(max_length=1000,
                              verbose_name='Details, Notes or Transcripts',
-                             blank=True)
+                             blank=True, default="")
     job_id = models.CharField(max_length=40, verbose_name='Job Number/ID',
-                              blank=True)
+                              blank=True, default="")
     job_applications = models.CharField(max_length=6,
                                         verbose_name="Number of Applications",
-                                        blank=True)
+                                        blank=True, default="")
     job_interviews = models.CharField(max_length=6,
                                       verbose_name="Number of Interviews",
-                                      blank=True)
+                                      blank=True, default="")
     job_hires = models.CharField(max_length=6, verbose_name="Number of Hires",
-                                 blank=True)
+                                 blank=True, default="")
     tags = models.ManyToManyField('Tag', null=True)
 
     @classmethod
@@ -653,6 +683,13 @@ class ContactRecord(models.Model):
         # popping city and state so it doesn't get parsed again
         state = parameters.pop('state', None)
         city = parameters.pop('city', None)
+        tags = parameters.pop('tags__name', None)
+
+        if tags:
+            if not hasattr(tags, '__iter__'):
+                tags = [tags]
+            for tag in tags:
+                records = records.filter(tags__name__icontains=tag)
 
         # using a foreign relationship, so can't just filter twice
         if start_date and end_date:
@@ -663,50 +700,23 @@ class ContactRecord(models.Model):
             records = records.filter(date_time__lte=end_date)
 
         if city or state:
-            # no relationship from contact record to contact, so we get as
-            # close as we can by getting names and emails...
-            contact_info = records.values(
-                'contact_name', 'contact_email').distinct()
-            contacts = []
-
-            # then mapping them to real contacts.
-            q = models.Q()
-            for contact in contact_info:
-                q |= models.Q(**{'name': contact['contact_name'],
-                                 'email': contact['contact_email']})
-
-            # then we filter those contacts by state...
             if state:
-                contacts = Contact.objects.filter(
-                    q, locations__state=state).values(
-                        'name', 'email').distinct()
+                records = records.filter(contact__locations__state=state)
 
-                q = models.Q()
-                for contact in contacts:
-                    q |= models.Q(**{'contact_name': contact['name'],
-                                     'contact_email': contact['email']})
-
-                records = records.filter(q)
-
-            # and/or city
-            q = models.Q()
             if city:
-                contacts = Contact.objects.filter(
-                    q, locations__city=city).values(
-                        'name', 'email').distinct()
-
-                for contact in contacts:
-                    q |= models.Q(**{'contact_name': contact['name'],
-                                     'contact_email': contact['email']})
-
-                # and finally filter our contact records by the names and emails
-                # that still remain
-                records = records.filter(q)
+                records = records.filter(contact__locations__city=city)
 
         return records
 
     def __unicode__(self):
         return "%s Contact Record - %s" % (self.contact_type, self.subject)
+
+    def save(self, *args, **kwargs):
+        if not self.pk and self.contact:
+            self.contact_email = self.contact_email or self.contact.email
+            self.contact_phone = self.contact_phone or self.contact.phone
+
+        super(ContactRecord, self).save(*args, **kwargs)
 
     def get_record_description(self):
         """
@@ -730,7 +740,7 @@ class ContactRecord(models.Model):
 
         contact_str = "A%s record for %s was %s" % \
                       (contact_type.lower(),
-                       self.contact_name, ACTIVITY_TYPES[log.action_flag])
+                       self.contact.name, ACTIVITY_TYPES[log.action_flag])
 
         if log.user:
             user = log.user.email
@@ -871,16 +881,6 @@ class ContactLogEntry(models.Model):
         return "%s?%s" % (base_urls[self.content_type.name], query_string)
 
 
-class TagManager(models.Manager):
-    def for_company(self, company, **kwargs):
-        tag_kwargs = {
-            'company': company,
-        }
-        tag_kwargs.update(kwargs)
-
-        return self.filter(**tag_kwargs)
-
-
 class Tag(models.Model):
     name = models.CharField(max_length=255)
     hex_color = models.CharField(max_length=6, default="d4d4d4", blank=True)
@@ -889,7 +889,7 @@ class Tag(models.Model):
     created_on = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
 
-    objects = TagManager()
+    objects = SearchParameterManager()
 
     def __unicode__(self):
         return "%s for %s" % (self.name, self.company.name)
@@ -900,3 +900,14 @@ class Tag(models.Model):
     class Meta:
         unique_together = ('name', 'company')
         verbose_name = "tag"
+
+    @classmethod
+    def _parse_parameters(cls, parameters, records):
+        """Used to parse state during `from_search()`."""
+
+        query = models.Q(partner__isnull=False)
+        query |= models.Q(contact__isnull=False)
+        query &= models.Q(partner__contactrecord__isnull=False)
+        records = records.filter(query)
+
+        return records
