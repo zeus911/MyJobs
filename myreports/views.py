@@ -12,7 +12,7 @@ from django.views.generic import View
 
 from myreports.helpers import humanize, parse_params, serialize
 from myreports.models import Report
-from postajob.location_data import states
+from postajob import location_data
 from universal.helpers import get_company_or_404
 from universal.decorators import company_has_access
 
@@ -23,18 +23,16 @@ def overview(request):
     company = get_company_or_404(request)
 
     success = 'success' in request.POST
-
     reports = Report.objects.filter(owner=company).order_by("-created_on")
     report_count = reports.count()
     past_reports = reports[:10]
-
-    for report in past_reports:
-        report.name = report.name.replace("_", " ")
+    states = OrderedDict(
+        sorted((v, k) for k, v in location_data.states.inv.iteritems()))
 
     ctx = {
         "company": company,
         "success": success,
-        "states": json.dumps(OrderedDict(sorted((v, k) for k, v in states.inv.iteritems()))),
+        "states": json.dumps(states),
         "past_reports": past_reports,
         "report_count": report_count
     }
@@ -56,9 +54,6 @@ def report_archive(request):
     if request.is_ajax():
         company = get_company_or_404(request)
         reports = Report.objects.filter(owner=company).order_by("-created_on")
-
-        for report in reports:
-            report.name = report.name.replace("_", " ")
 
         ctx = {
             "reports": reports
@@ -217,7 +212,7 @@ class ReportView(View):
 
         params.pop('csrfmiddlewaretoken', None)
         name = params.pop('report_name',
-                          str(datetime.now())).replace(' ', '_')
+                          str(datetime.now()))
         values = params.pop('values', None)
 
         records = get_model(app, model).objects.from_search(
@@ -351,7 +346,7 @@ def download_report(request):
     response = HttpResponse(content_type='text/csv')
     content_disposition = "attachment; filename=%s-%s.csv"
     response['Content-Disposition'] = content_disposition % (
-        report.name, report.pk)
+        report.name.replace(' ', '_'), report.pk)
 
     response.write(serialize('csv', records, values=values, order_by=order_by))
 
