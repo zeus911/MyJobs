@@ -215,12 +215,13 @@ class Breadbox(object):
             if ending_slug in slugs and len(location_filters) < 2:
                 slugs.remove(ending_slug)
 
-            location_slugs = location_slug.split('/')
-            left = slugs.index(location_slugs[0])
-            right = left + len(location_slugs)
+            if location_slug in new_path:
+                location_slugs = location_slug.split('/')
+                left = slugs.index(location_slugs[0])
+                right = left + len(location_slugs)
 
-            new_path = '/'.join(slugs[:left] + location_filters[1:] + 
-                                slugs[right:])
+                new_path = '/'.join(slugs[:left] + location_filters[1:] + 
+                                    slugs[right:])
 
             kwargs = {
                 # This class name is different because of the way we used to
