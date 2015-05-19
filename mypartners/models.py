@@ -91,7 +91,7 @@ class SearchParameterQuerySet(models.query.QuerySet):
                 parameters['end_date'], '%m/%d/%Y').date() + timedelta(1)
 
         # do special parsing
-        if hasattr(self.model, '_parse_parameters'):
+        if parameters and hasattr(self.model, '_parse_parameters'):
             self = self.model._parse_parameters(parameters, self)
 
         for key, value in parameters.items():

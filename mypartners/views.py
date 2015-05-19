@@ -1267,7 +1267,8 @@ def tag_names(request):
         data = {'name': value}
         tag_names = list(Tag.objects.from_search(company, data).values_list(
             'name', flat=True))
-        tag_names = sorted(tag_names, key=lambda x: x if not x.startswith(value) else "-" + x)
+        tag_names = sorted(
+            tag_names, key=lambda x: x if not x.startswith(value) else "-" + x)
         return HttpResponse(json.dumps(tag_names))
 
 
