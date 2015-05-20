@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 ERROR = -1
@@ -20,6 +21,7 @@ def add_to_queue(queue_object, queue):
         'error': None,
         'foreign_keys': get_foreign_key_objects(queue_object),
         'many_to_manys': get_many_to_many_objects(queue_object),
+        'null_foreign_keys': get_foreign_key_objects(queue_object, null=True),
         'new_object': None,
         'object': queue_object,
         'status': NOT_STARTED
@@ -27,38 +29,89 @@ def add_to_queue(queue_object, queue):
     return queue
 
 
-def build_object_kwargs(copy_to, obj, queue):
+def build_object_kwargs(obj, queue, include_null=False):
     kwargs = {}
 
     for field in obj._meta.local_fields:
-        if isinstance(field, models.ForeignKey):
-            fk_object = getattr(obj, field.attname, None)
+        if isinstance(field, models.ForeignKey) and field.null == include_null:
+            fk_object = get_foreign_key_object_for_field(obj, field)
             if fk_object:
-                new_fk_obj, new_logs = get_or_create_object(copy_to, fk_object)
-                if new_fk_obj:
-                    kwargs[field.attname] = new_fk_obj
+                fk_queue_key = object_to_key(fk_object)
+                fk_queue_entry = queue[fk_queue_key]
+                new_fk_object = fk_queue_entry['new_object']
+                if not new_fk_object:
+                    # This point should never be reached. All associated
+                    # foreign key objects should be made before
+                    # we actually attempt to create the object
+                    # itself.
+                    raise ObjectDoesNotExist('The foreign key %s was not '
+                                             'already created when attempting '
+                                             'to create object %s.'
+                                             % fk_object, obj)
 
-        else:
+        elif not isinstance(field, models.ForeignKey):
             kwargs[field.attname] = getattr(obj, field.attname)
+
+    kwargs['pk'] = obj.pk
 
     return kwargs
 
 
 def copy_following_relationships(queryset, copy_to='qc-redirect'):
     queue = populate_queue(queryset)
-    queue = create_in_order(queue)
+    queue = create_in_order(copy_to, queue)
+    return queue
 
 
-def get_foreign_keys(obj):
+def create_in_order(copy_to, queue):
+    iterator = len(queue.items()) - 1
+    done_states = [COMPLETE, ERROR]
+
+    while [item for item in queue.items() if item[1]['status'] not in done_states]:
+        obj = queue.items()[iterator][1]['object']
+        key = object_to_key(obj)
+
+        can_save = True
+        for fk in queue[key]['foreign_keys']:
+            fk_key = object_to_key(fk)
+            fk_dict = queue[fk_key]
+
+            if fk_dict['status'] == ERROR:
+                queue[fk_key]['error'] = ("Cannot save because of related "
+                                          "error:", fk_dict['error'])
+                queue[fk_key]['status'] = ERROR
+            elif not fk_dict['new_object'] or fk_dict['status'] == NOT_STARTED:
+                can_save = False
+
+        if can_save:
+            queue = save_object(copy_to, obj, queue)
+            queue = full_save_object(copy_to, obj, queue)
+
+        iterator -= 1
+        if iterator < 0:
+            iterator = len(queue.items()) - 1
+
+    return queue
+
+
+def create_new_object(copy_to, model, **kwargs):
+    new_obj = model(**kwargs)
+    new_obj.save(using=copy_to)
+    print new_obj.pk, model
+    return new_obj
+
+
+def get_foreign_keys(obj, null=False):
     fields = obj._meta.local_fields
 
-    return [field for field in fields if isinstance(field, models.ForeignKey)]
+    return [field for field in fields
+            if isinstance(field, models.ForeignKey) and field.null == null]
 
 
-def get_foreign_key_objects(obj):
+def get_foreign_key_objects(obj, null=False):
     objects = []
 
-    for fk_field in get_foreign_keys(obj):
+    for fk_field in get_foreign_keys(obj, null=null):
         objects.append(get_foreign_key_object_for_field(obj, fk_field))
 
     return objects
@@ -101,10 +154,28 @@ def get_many_to_many_objects_for_field(obj, field):
         return field.all()
 
 
-def full_save_object(obj, queue):
+def get_or_create_object(copy_to, obj, queue, include_null=False):
+    kwargs = build_object_kwargs(obj, queue, include_null=include_null)
+
+    model = obj.__class__
+    try:
+        new_obj = model.objects.using(copy_to).get(pk=obj.pk)
+    except model.DoesNotExist:
+        new_obj = None
+
+    if new_obj:
+        new_obj = update_existing_object(copy_to, new_obj, **kwargs)
+    else:
+        new_obj = create_new_object(copy_to, model, **kwargs)
+
+    return new_obj
+
+
+def full_save_object(copy_to, obj, queue):
     key = object_to_key(obj)
 
-    queue[key]['new_object'] = obj
+    queue[key]['new_object'] = get_or_create_object(copy_to, obj, queue,
+                                                    include_null=False)
     queue[key]['status'] = COMPLETE
 
     return queue
@@ -147,101 +218,19 @@ def populate_queue(queryset):
     return queue
 
 
-def create_in_order(queue):
-    iterator = len(queue.items()) - 1
-    done_states = [COMPLETE, ERROR]
-    while [item for item in queue.items() if item[1]['status'] not in done_states]:
-        obj = queue.items()[iterator][1]['object']
-        key = object_to_key(obj)
-
-
-
-        can_save = True
-        for fk in queue[key]['foreign_keys']:
-            fk_key = object_to_key(fk)
-            fk_dict = queue[fk_key]
-
-            print fk_key
-
-            if fk_dict['status'] == ERROR:
-                queue[fk_key]['error'] = ("Cannot save because of related "
-                                          "error:", fk_dict['error'])
-                queue[fk_key]['status'] = ERROR
-            elif not fk_dict['new_object'] or fk_dict['status'] == NOT_STARTED:
-                can_save = False
-
-        if can_save:
-            queue = save_object(obj, queue)
-            queue = full_save_object(obj, queue)
-
-        iterator -= 1
-        if iterator < 0:
-            iterator = len(queue.items()) - 1
-
-    return queue
-
-
-def save_object(obj, queue):
+def save_object(copy_to, obj, queue):
     key = object_to_key(obj)
 
-    queue[key]['new_object'] = obj
+    queue[key]['new_object'] = get_or_create_object(copy_to, obj, queue)
     queue[key]['status'] = SAVED
 
     return queue
 
 
-
-
-
-
-def create_new_object(copy_to, model, **kwargs):
-    new_obj = model(**kwargs)
-    error = None
-
-    try:
-        new_obj.save(using=copy_to)
-    except Exception, e:
-        error = e
-
-    return new_obj, error
-
-
 def update_existing_object(copy_to, obj, **kwargs):
-    error = None
     for key, value in kwargs.items():
         setattr(obj, key, value)
 
-    try:
-        obj.save(using=copy_to)
-    except Exception, e:
-        error = e
+    obj.save(using=copy_to)
 
-    return obj, error
-
-
-def get_or_create_object(copy_to, obj):
-    log_dict = {
-        'added_fields': [],
-        'error': None,
-        'new_object': None,
-        'removed_fields': []
-    }
-
-    kwargs, logs = build_object_kwargs(copy_to, obj)
-
-    model = obj.__class__
-    try:
-        new_obj = model.objects.using(copy_to).get(pk=obj.pk)
-    except model.DoesNotExist:
-        new_obj = None
-
-    if new_obj:
-        new_obj, error = update_existing_object(copy_to, new_obj, **kwargs)
-    else:
-        new_obj, error = create_new_object(copy_to, model, **kwargs)
-
-    log_dict['new_object'] = new_obj
-    log_dict['error'] = error
-
-    logs.append(log_dict)
-    return new_obj, logs
+    return obj
