@@ -1676,6 +1676,8 @@ function renderViewPartner(id) {
       });
 
       $mainContainer.html("").append($span.append($table.append($tbody)));
+      // make table sortable by column
+      $table.find("th").on("click", sortTable);
     }
   });
 }
@@ -1717,10 +1719,39 @@ function renderViewContact(id) {
       );
 
       $mainContainer.html("").append($span.append($table.append($tbody)));
+      // make table sortable by column
+      $table.find("th").on("click", sortTable);
     }
   });
 }
 
+function sortTable() {
+  var $table = $(this).parents('table').eq(0),
+      rows = $table.find('tr:gt(0)').toArray().sort(compare($(this).index()));
+
+  this.asc = !this.asc;
+
+  if (!this.asc) {
+    rows = rows.reverse();
+  }
+
+  for (var i = 0; i < rows.length; i++) {
+    $table.append(rows[i]);
+  }
+}
+
+function compare(index) {
+  return function(a, b) {
+    var valA = getCellValue(a, index),
+        valB = getCellValue(b, index);
+
+    return $.isNumeric(valA) && $.isNumeric(valB) ? valA - valB : valA.localeCompare(valB);
+  };
+}
+
+function getCellValue(row, index) {
+  return $(row).children('td').eq(index).html();
+}
 
 function renderArchive(callback) {
   $.ajax({
