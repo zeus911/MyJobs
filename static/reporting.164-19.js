@@ -1658,6 +1658,8 @@ function renderViewPartner(id) {
   var data = {id: id},
       url = location.protocol + "//" + location.host; // https://secure.my.jobs
 
+         '<i class="fa fa-plus-square-o"></i>' +
+
   $.ajax({
     type: "GET",
     url: url + "/reports/view/mypartners/partner",
@@ -1668,6 +1670,10 @@ function renderViewPartner(id) {
                      '<th>Name</th><th>Primary Contact</th></tr></thead></table>'),
           $tbody = $('<tbody></tbody>'),
           $mainContainer = $("#main-container");
+
+      $table.find('th').each(function(e) {
+        e.append('<i class="fa fa-pulse-squre-o"></i>');
+      });
 
       $tbody.append(function() {
         return '<tr class="record">' + data.map(function(record) {
@@ -1730,6 +1736,9 @@ function sortTable() {
       rows = $table.find('tr:gt(0)').toArray().sort(compare($(this).index()));
 
   this.asc = !this.asc;
+
+  $table.find("i.fa").remove();
+  $(this).append(' <i class="fa fa-sort-' + (this.asc ? 'asc' : 'desc') + '"></i>');
 
   if (!this.asc) {
     rows = rows.reverse();
