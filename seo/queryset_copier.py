@@ -306,12 +306,6 @@ def get_or_create_object(copy_to, obj, queue, include_null=False):
     else:
         new_obj = create_new_object(copy_to, model, **kwargs)
 
-    # Now that we know the object is definitely created, if "nullable"
-    # objects are supposed to be included the many-to-many relationships
-    # can be added.
-    if include_null:
-        pass
-
     return new_obj
 
 
