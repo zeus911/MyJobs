@@ -9,12 +9,12 @@ class QuerysetCopier(DirectSEOBase):
 
     def setUp(self):
         super(QuerysetCopier, self).setUp()
-        self.copy_to = 'qc-redirect'
+        self.copy_to = factories.copy_to_database
 
         # Using SeoSite for the object being copied because it covers
         # most types of recursive relationships, foreign keys and
         # many to many relationships.
-        self.seosite = factories.SeoSiteFactory(domain='qccopiertest.jobs')
+        self.seosite = factories.SeoSiteFactory()
 
         # copy_objects() expects a queryset
         self.seosites = models.SeoSite.objects.filter(pk=self.seosite.pk)
@@ -91,9 +91,7 @@ class QuerysetCopier(DirectSEOBase):
         from the default database.
 
         """
-        self.seosite.save(using=self.copy_to)
-        self.seosite.domain = 'anupdateddomain.jobs'
-        self.seosite.save()
+        factories.SeoSiteCopyToFactory(id=self.seosite.pk)
 
         # Confirm we're working with two different objects.
         site = models.SeoSite.objects.get(pk=self.seosite)
