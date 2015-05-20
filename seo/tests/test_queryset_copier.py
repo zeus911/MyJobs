@@ -72,7 +72,6 @@ class QuerysetCopier(DirectSEOBase):
 
         query_base = models.SeoSite.objects.using(self.copy_to)
         new_seosite = query_base.get(pk=self.seosite.pk)
-
         self.confirm_copy(self.seosite, new_seosite,
                           self.site_foreign_key_field_names,
                           self.site_null_foreign_key_field_names,
@@ -92,15 +91,28 @@ class QuerysetCopier(DirectSEOBase):
         from the default database.
 
         """
+        self.seosite.save(using=self.copy_to)
+        self.seosite.domain = 'anupdateddomain.jobs'
+        self.seosite.save()
+
+        # Confirm we're working with two different objects.
+        site = models.SeoSite.objects.get(pk=self.seosite)
+        query_base = models.SeoSite.objects.using(self.copy_to)
+        copied_site = query_base.get(pk=self.seosite)
+        self.assertNotEqual(site.domain, copied_site.domain)
+
         queue = qc.copy_following_relationships(self.seosites, copy_to=self.copy_to)
 
         self.confirm_complete(queue)
 
-        query_base = models.SeoSite.objects.using(self.copy_to)
         new_obj = query_base.get(pk=self.seosite.pk)
-
         self.confirm_copy(self.seosite, new_obj,
                           self.site_foreign_key_field_names,
                           self.site_null_foreign_key_field_names,
                           self.site_many_to_many_field_names)
 
+        # Confirm the object has been updated in the self.copy_to database.
+        site = models.SeoSite.objects.get(pk=self.seosite)
+        query_base = models.SeoSite.objects.using(self.copy_to)
+        copied_site = query_base.get(pk=self.seosite)
+        self.assertEqual(site.domain, copied_site.domain)

@@ -19,6 +19,7 @@ def add_to_queue(queue_object, queue):
 
     :param queue_object: The object that needs inserted into the queue.
     :param queue: The queue the object is being inserted into.
+
     :return: The queue with the object inserted.
     """
     queue_key = object_to_key(queue_object)
@@ -35,6 +36,17 @@ def add_to_queue(queue_object, queue):
 
 
 def build_object_kwargs(obj, queue, include_null=False):
+    """
+    Builds all the kwargs required to create a copy of an object.
+
+    :param obj: The object the kwargs are being built for
+    :param queue: The creation queue.
+    :param include_null: True if non-required foreign keys and many-to-many
+                         relationships should be included.
+
+    :return: A dictionary of kwargs required to create a copy of obj.
+
+    """
     kwargs = {}
 
     for field in obj._meta.local_fields:
@@ -69,12 +81,36 @@ def build_object_kwargs(obj, queue, include_null=False):
 
 
 def copy_following_relationships(queryset, copy_to='qc-redirect'):
+    """
+    Copies all of the objects and all objects related to those objects
+    from the default database to the copy_to database.
+
+    :param queryset: A queryset of objects to be copied.
+    :param copy_to: The database the queryset is being copied to.
+
+    :return: The ordered queue dictionary containing the existing objects,
+             the newly created objects, and any errors that happened
+             during the process.
+
+    """
     queue = populate_queue(queryset)
     queue = create_in_order(copy_to, queue)
     return queue
 
 
 def create_in_order(copy_to, queue):
+    """
+    Creates all the objects based on the order of the queue.
+
+    :param copy_to: The database the objects are being copied to.
+    :param queue: An ordered dictionary of dictionaries, where the dictionries
+                  are mapped to the object. The expected format of the
+                  dictionary can be found in add_to_queue()
+
+    :return: An updated queue with all the new objects created and/or
+             relevant errors recorded.
+
+    """
     iterator = len(queue.items()) - 1
 
     # Create all the objects with only the non-relationship fields and
@@ -115,12 +151,33 @@ def create_in_order(copy_to, queue):
 
 
 def create_new_object(copy_to, model, **kwargs):
+    """
+    Saves a new object to the specified database.
+
+    :param copy_to: The database the object should be saved to.
+    :param model: The model for the object.
+    :param kwargs: The relevant kwargs for the object.
+
+    :return: The new object
+
+    """
     new_obj = model(**kwargs)
     new_obj.save(using=copy_to)
     return new_obj
 
 
 def get_foreign_keys(obj, null=False):
+    """
+    Gets a list of foreign key fields on an object.
+
+    :param obj: The object you want foreign keys for.
+    :param null: True if you want only foreign keys where null=True in the
+                 model definition. False if you only want foreign keys
+                 where null=False in the model definition.
+
+    :return: A list of fields that are foreign keys on obj.
+
+    """
     fields = obj._meta.local_fields
 
     return [field for field in fields
@@ -128,6 +185,17 @@ def get_foreign_keys(obj, null=False):
 
 
 def get_foreign_key_objects(obj, null=False):
+    """
+    Gets a list of objects that a specified object has a foreign key to.
+
+    :param obj: The object you want the foreign keys for.
+    :param null: True if you want to consider only foreign keys where
+                 null=True in the model definition. False if you only want
+                 foreign keys where null=False in the model definition.
+
+    :return: A list of fields objects that obj has a foreign key to.
+
+    """
     objects = []
 
     for fk_field in get_foreign_keys(obj, null=null):
@@ -137,14 +205,40 @@ def get_foreign_key_objects(obj, null=False):
 
 
 def get_foreign_key_object_for_field(obj, field):
+    """
+    Gets the related object for a given foreign key field.
+
+    :param obj: The object that you want the foreign key from.
+    :param field: The field the objects are related on.
+
+    :return: The related object.
+
+    """
     return getattr(obj, field.name)
 
 
 def get_many_to_many(obj):
+    """
+    Gets a list of all many-to-many fields.
+
+    :param obj: The object you want all the many-to-many fields for.
+
+    :return: A list of fields.
+
+    """
     return obj._meta.local_many_to_many
 
 
 def get_many_to_many_objects(obj):
+    """
+    Gets all of the objects that a specified object has a many-to-many
+    relationship to.
+
+    :param obj: The object you want all the related many-to-many objects for.
+
+    :return: A list of objects that obj has a many-to-many relationship to.
+
+    """
     objects = []
     for m2m_field in get_many_to_many(obj):
         m2m_field = getattr(obj, m2m_field.attname)
@@ -161,6 +255,16 @@ def get_many_to_many_objects(obj):
 
 
 def get_many_to_many_objects_for_field(obj, field):
+    """
+    Gets the related objects for a given many-to-many field.
+
+    :param obj: The object that you want the related many-to-many objects
+                from.
+    :param field: The field the objects are related on.
+
+    :return: All related objects for that fields.
+
+    """
     field = getattr(obj, field.attname)
     if hasattr(field, 'through'):
         # The field is related through an explicitly defined
@@ -174,6 +278,21 @@ def get_many_to_many_objects_for_field(obj, field):
 
 
 def get_or_create_object(copy_to, obj, queue, include_null=False):
+    """
+    Adds or updates an object from the default database to a new database.
+
+    :param copy_to: The location the object is being copied or added to
+    :param obj: The object being added/updated.
+    :param queue: The creation queue.
+    :param include_null: True if you also want to copy objects in non-required
+                         relationships and False otherwise. This should
+                         never be set to True unless you know all
+                         related objects have been created.
+
+    :return: The newly created object.
+
+    """
+
     kwargs = build_object_kwargs(obj, queue, include_null=include_null)
 
     model = obj.__class__
@@ -197,6 +316,18 @@ def get_or_create_object(copy_to, obj, queue, include_null=False):
 
 
 def full_save_object(copy_to, obj, queue):
+    """
+    Saves an object with all relationships included. This should never
+    be run unless all releated objects have already been created.
+
+    :param copy_to: The database you are copying the object too.
+    :param obj: The object being copied.
+    :param queue: The creation queue.
+
+    :return: The creation queue updated with the new object
+             and new status.
+
+    """
     key = object_to_key(obj)
 
     queue[key]['new_object'] = get_or_create_object(copy_to, obj, queue,
@@ -220,6 +351,16 @@ def object_to_key(obj):
 
 
 def populate_queue(queryset):
+    """
+    Adds everything in the queryset and all related objects to the queue
+    in an attempted order.
+
+    :param queryset: A queryset of objects that you're attempting to copy.
+
+    :return: A creation queue with all the items added. The queue items
+             follow the format defined in add_to_queue().
+    """
+
     queue = OrderedDict({})
     for obj in queryset:
         queue = add_to_queue(obj, queue)
@@ -249,6 +390,19 @@ def populate_queue(queryset):
 
 
 def save_object(copy_to, obj, queue):
+    """
+    Saves an object only necessary foreign key relationships included.
+    This should never be run unless all required foreign key objects have
+    already been created.
+
+    :param copy_to: The database you are copying the object too.
+    :param obj: The object being copied.
+    :param queue: The creation queue.
+
+    :return: The creation queue updated with the new object
+             and new status.
+
+    """
     key = object_to_key(obj)
 
     queue[key]['new_object'] = get_or_create_object(copy_to, obj, queue)
@@ -263,6 +417,16 @@ def save_object(copy_to, obj, queue):
 
 
 def update_existing_object(copy_to, obj, **kwargs):
+    """
+    Overwrites an existing object on a specified database with data.
+
+    :param copy_to: The database the object should be saved to.
+    :param obj: The existing object from the copy_to database.
+    :param kwargs: The relevant kwargs for the object.
+
+    :return: The new object
+
+    """
     for key, value in kwargs.items():
         setattr(obj, key, value)
 
