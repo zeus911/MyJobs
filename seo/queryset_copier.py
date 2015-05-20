@@ -8,6 +8,9 @@ NOT_STARTED = 0
 SAVED = 1
 COMPLETE = 2
 
+saved_states = [SAVED, COMPLETE, ERROR]
+complete_states = [COMPLETE, ERROR]
+
 
 def add_to_queue(queue_object, queue):
     """
@@ -15,6 +18,8 @@ def add_to_queue(queue_object, queue):
     into the queue. Overwrites any existing information.
 
     :param queue_object: The object that needs inserted into the queue.
+    :param queue: The queue the object is being inserted into.
+    :return: The queue with the object inserted.
     """
     queue_key = object_to_key(queue_object)
     queue[queue_key] = {
@@ -33,6 +38,12 @@ def build_object_kwargs(obj, queue, include_null=False):
     kwargs = {}
 
     for field in obj._meta.local_fields:
+
+        if hasattr(field, 'through'):
+            # It's a many-to-many. Discard it, since this shouldn't
+            # be handled until after the object is fully created.
+            continue
+
         if isinstance(field, models.ForeignKey) and field.null == include_null:
             fk_object = get_foreign_key_object_for_field(obj, field)
             if fk_object:
@@ -48,7 +59,7 @@ def build_object_kwargs(obj, queue, include_null=False):
                                              'already created when attempting '
                                              'to create object %s.'
                                              % fk_object, obj)
-
+                kwargs[field.name] = new_fk_object
         elif not isinstance(field, models.ForeignKey):
             kwargs[field.attname] = getattr(obj, field.attname)
 
@@ -65,9 +76,10 @@ def copy_following_relationships(queryset, copy_to='qc-redirect'):
 
 def create_in_order(copy_to, queue):
     iterator = len(queue.items()) - 1
-    done_states = [COMPLETE, ERROR]
 
-    while [item for item in queue.items() if item[1]['status'] not in done_states]:
+    # Create all the objects with only the non-relationship fields and
+    # required foreign keys.
+    while [item for item in queue.items() if item[1]['status'] not in saved_states]:
         obj = queue.items()[iterator][1]['object']
         key = object_to_key(obj)
 
@@ -85,11 +97,19 @@ def create_in_order(copy_to, queue):
 
         if can_save:
             queue = save_object(copy_to, obj, queue)
-            queue = full_save_object(copy_to, obj, queue)
 
         iterator -= 1
         if iterator < 0:
             iterator = len(queue.items()) - 1
+
+    # Resave all objects with the extra "unnecessary" relationships
+    # (i.e. nullable foreign keys and many-to-manys)
+    for queue_entry in queue.values():
+        obj = queue_entry['object']
+
+        # At this point we've saved every object at least once,
+        # so we don't have to check if we can save like we did last time.
+        queue = full_save_object(copy_to, obj, queue)
 
     return queue
 
@@ -97,7 +117,6 @@ def create_in_order(copy_to, queue):
 def create_new_object(copy_to, model, **kwargs):
     new_obj = model(**kwargs)
     new_obj.save(using=copy_to)
-    print new_obj.pk, model
     return new_obj
 
 
@@ -168,6 +187,12 @@ def get_or_create_object(copy_to, obj, queue, include_null=False):
     else:
         new_obj = create_new_object(copy_to, model, **kwargs)
 
+    # Now that we know the object is definitely created, if "nullable"
+    # objects are supposed to be included the many-to-many relationships
+    # can be added.
+    if include_null:
+        pass
+
     return new_obj
 
 
@@ -175,7 +200,7 @@ def full_save_object(copy_to, obj, queue):
     key = object_to_key(obj)
 
     queue[key]['new_object'] = get_or_create_object(copy_to, obj, queue,
-                                                    include_null=False)
+                                                    include_null=True)
     queue[key]['status'] = COMPLETE
 
     return queue
@@ -186,7 +211,7 @@ def object_to_key(obj):
     Creates the queue key for an object.
 
     :param obj: A database model instance.
-    :return: The key representing that object for the dictionary queue.
+    :return: The key representing that object's entry in the queue dictionary.
     """
 
     module = "%s.%s" % (obj.__module__,
@@ -208,10 +233,15 @@ def populate_queue(queryset):
             if fk:
                 queue = add_to_queue(fk, queue)
 
-            m2m_objects = get_many_to_many_objects(obj)
+        for fk_field in get_foreign_keys(obj, null=True):
+            fk = get_foreign_key_object_for_field(obj, fk_field)
+            if fk:
+                queue = add_to_queue(fk, queue)
 
-            for m2m in m2m_objects:
-                queue = add_to_queue(m2m, queue)
+        m2m_objects = get_many_to_many_objects(obj)
+
+        for m2m in m2m_objects:
+            queue = add_to_queue(m2m, queue)
 
         iterator += 1
 
@@ -223,6 +253,11 @@ def save_object(copy_to, obj, queue):
 
     queue[key]['new_object'] = get_or_create_object(copy_to, obj, queue)
     queue[key]['status'] = SAVED
+
+    # If there aren't additional foreign keys or many-to-manys that need
+    # added we can mark the object as completed now.
+    if not queue[key]['null_foreign_keys'] and not queue[key]['many_to_manys']:
+        queue[key]['status'] = COMPLETE
 
     return queue
 
