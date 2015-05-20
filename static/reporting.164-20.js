@@ -713,7 +713,13 @@ TagField.prototype.bindEvents = function() {
         type: "GET",
         url: "/reports/ajax/mypartners/tag",
         //TODO: New backend changes will fix this monstrocity
-        data: {name: keyword, values: ["name"], order_by: "name"},
+        data: {name: keyword,
+               contact__isnull: true,
+               partner__isnull: true,
+               partnersavedsearch__isnull: true,
+               contactrecord__isnull: false,
+               values: ["name"],
+               order_by: "name"},
         success: function(data) {
           suggestions = data.filter(function(d) {
             // Don't suggest things that are already selected.
@@ -803,12 +809,12 @@ FilteredList.prototype.filter = function() {
       order_by: "name"
     });
 
-    filterData.contactrecord__tags__name = filterData.tags__name;
-    delete filterData.tags__name;
-
   } else if (this.id === "contact") {
     $.extend(filterData, {values: ["pk", "name", "email"], order_by: "name"});
   }
+
+  filterData.contactrecord__tags__name = filterData.tags__name;
+  delete filterData.tags__name;
 
   $.ajax({
     type: "GET",
